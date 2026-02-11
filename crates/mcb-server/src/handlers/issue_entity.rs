@@ -37,8 +37,9 @@ impl IssueEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
-                let issue: ProjectIssue = serde_json::from_value(data)
+                let mut issue: ProjectIssue = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                issue.org_id = org_id.to_string();
                 self.service
                     .create_issue(&issue)
                     .await
@@ -69,8 +70,9 @@ impl IssueEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for update", None))?;
-                let issue: ProjectIssue = serde_json::from_value(data)
+                let mut issue: ProjectIssue = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                issue.org_id = org_id.to_string();
                 self.service
                     .update_issue(&issue)
                     .await
@@ -130,8 +132,9 @@ impl IssueEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
-                let label: IssueLabel = serde_json::from_value(data)
+                let mut label: IssueLabel = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                label.org_id = org_id.to_string();
                 self.service
                     .create_label(&label)
                     .await

@@ -2,9 +2,7 @@
 
 use mcb_domain::constants::keys as schema;
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, CheckpointType};
-use mcb_domain::entities::memory::{
-    Observation, ObservationMetadata, ObservationType, SessionSummary,
-};
+use mcb_domain::entities::memory::{Observation, ObservationMetadata, SessionSummary};
 use mcb_domain::entities::project::Project;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::SqlRow;
@@ -26,7 +24,9 @@ pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
     let obs_type_str: String = row
         .try_get_string(COL_OBSERVATION_TYPE)?
         .unwrap_or_else(|| "context".to_string());
-    let observation_type = obs_type_str.parse().unwrap_or(ObservationType::Context);
+    let observation_type = obs_type_str
+        .parse()
+        .map_err(|e| Error::memory(format!("Invalid observation_type: {e}")))?;
 
     let metadata_json: Option<String> = row.try_get_string("metadata")?;
     let metadata: ObservationMetadata = metadata_json

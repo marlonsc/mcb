@@ -36,8 +36,9 @@ impl PlanEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
-                let plan: Plan = serde_json::from_value(data)
+                let mut plan: Plan = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                plan.org_id = org_id.to_string();
                 self.service
                     .create_plan(&plan)
                     .await
@@ -68,8 +69,9 @@ impl PlanEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for update", None))?;
-                let plan: Plan = serde_json::from_value(data)
+                let mut plan: Plan = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                plan.org_id = org_id.to_string();
                 self.service
                     .update_plan(&plan)
                     .await

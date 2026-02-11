@@ -27,6 +27,7 @@ pub struct Plan {
 
 /// Lifecycle status for a plan.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum PlanStatus {
     /// Plan is in draft state.
     Draft,
@@ -113,6 +114,7 @@ pub struct PlanReview {
 
 /// Verdict values for a plan review.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ReviewVerdict {
     /// Review approved the plan version.
     Approved,

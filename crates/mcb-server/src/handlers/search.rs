@@ -6,6 +6,7 @@ use std::time::Instant;
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::ports::services::SearchServiceInterface;
+use mcb_domain::value_objects::OrgContext;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
@@ -44,6 +45,9 @@ impl SearchHandler {
         if let Err(e) = args.validate() {
             return Ok(to_opaque_tool_error(e));
         }
+
+        let org_ctx = OrgContext::default();
+        let _org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
 
         let query = args.query.trim();
         if query.is_empty() {

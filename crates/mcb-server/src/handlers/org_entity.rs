@@ -1,9 +1,9 @@
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::{ApiKey, Organization, Team, TeamMember, User};
 use mcb_domain::ports::services::OrgEntityServiceInterface;
+use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
@@ -27,7 +27,8 @@ impl OrgEntityHandler {
         &self,
         Parameters(args): Parameters<OrgEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let org_id = args.org_id.as_deref().unwrap_or(DEFAULT_ORG_ID);
+        let org_ctx = OrgContext::default();
+        let org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
 
         match (args.action, args.resource) {
             (OrgEntityAction::Create, OrgEntityResource::Org) => {
@@ -83,8 +84,9 @@ impl OrgEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
-                let user: User = serde_json::from_value(data)
+                let mut user: User = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                user.org_id = org_id.to_string();
                 self.service
                     .create_user(&user)
                     .await
@@ -117,8 +119,9 @@ impl OrgEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for update", None))?;
-                let user: User = serde_json::from_value(data)
+                let mut user: User = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                user.org_id = org_id.to_string();
                 self.service
                     .update_user(&user)
                     .await
@@ -137,8 +140,9 @@ impl OrgEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
-                let team: Team = serde_json::from_value(data)
+                let mut team: Team = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                team.org_id = org_id.to_string();
                 self.service
                     .create_team(&team)
                     .await
@@ -213,8 +217,9 @@ impl OrgEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
-                let key: ApiKey = serde_json::from_value(data)
+                let mut key: ApiKey = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                key.org_id = org_id.to_string();
                 self.service
                     .create_api_key(&key)
                     .await
