@@ -48,7 +48,8 @@ impl IndexHandler {
             ));
         }
         let collection_name = args.collection.as_deref().unwrap_or("default");
-        let collection_id = normalize_collection_name(collection_name);
+        let collection_id = normalize_collection_name(collection_name)
+            .map_err(|reason| CallToolResult::error(vec![rmcp::model::Content::text(reason)]))?;
         Ok((path, collection_id))
     }
 
@@ -79,7 +80,7 @@ impl IndexHandler {
                         timer.elapsed(),
                     )),
                     Err(e) => {
-                        let _ = e;
+                        tracing::warn!(error = %e, path = ?path, "indexing failed");
                         Ok(ResponseFormatter::format_indexing_error(
                             "Indexing failed",
                             &path,
@@ -93,7 +94,14 @@ impl IndexHandler {
             }
             IndexAction::Clear => {
                 let collection_name = args.collection.as_deref().unwrap_or("default");
-                let milvus_collection = normalize_collection_name(collection_name);
+                let milvus_collection = match normalize_collection_name(collection_name) {
+                    Ok(id) => id,
+                    Err(reason) => {
+                        return Ok(CallToolResult::error(vec![rmcp::model::Content::text(
+                            reason,
+                        )]));
+                    }
+                };
                 match self
                     .indexing_service
                     .clear_collection(&milvus_collection)

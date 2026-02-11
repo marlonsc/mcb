@@ -24,6 +24,10 @@ on: # yamllint disable-line rule:truthy
     types: [closed]
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   tag-release:
     name: Create Version Tag

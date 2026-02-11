@@ -23,6 +23,10 @@ on: # yamllint disable-line rule:truthy
     tags:
       - "v*"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   CARGO_TERM_COLOR: always
   MCB_RUN_DOCKER_INTEGRATION_TESTS: "0"
@@ -42,6 +46,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
         with:
           components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
       - run: make lint CI_MODE=1
       - name: Run Rust tests
         run: make test-rust TEST_THREADS="$(nproc)"

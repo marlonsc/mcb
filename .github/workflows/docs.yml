@@ -17,10 +17,13 @@ on: # yamllint disable-line rule:truthy
       - "v*"
     paths:
       - "docs/**"
-      - "crates/**"
       - "scripts/docs/**"
       - "Makefile"
       - "make/*.mk"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
