@@ -234,7 +234,7 @@
             selectNode(node) {
                 if (!node.is_dir) {
                     // Navigate to file viewer
-                    window.location.href = '/ui/browse/collections/' + this.selectedCollection + '/files/' + encodeURIComponent(node.path);
+                    window.location.href = '/ui/browse/' + encodeURIComponent(this.selectedCollection) + '/file?path=' + encodeURIComponent(node.path);
                 }
             }
         };

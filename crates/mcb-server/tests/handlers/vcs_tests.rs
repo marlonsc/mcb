@@ -22,6 +22,7 @@ async fn test_vcs_list_repositories_success() {
         branches: None,
         include_commits: None,
         depth: None,
+        org_id: None,
         limit: Some(10),
     };
 
@@ -48,6 +49,7 @@ async fn test_vcs_list_repositories_with_limit() {
         branches: None,
         include_commits: None,
         depth: None,
+        org_id: None,
         limit: Some(5),
     };
 
@@ -74,6 +76,7 @@ async fn test_vcs_list_repositories_no_limit() {
         branches: None,
         include_commits: None,
         depth: None,
+        org_id: None,
         limit: None,
     };
 
@@ -100,6 +103,7 @@ async fn test_vcs_index_repository_success() {
         branches: Some(vec!["main".to_string(), "develop".to_string()]),
         include_commits: Some(true),
         depth: Some(50),
+        org_id: None,
         limit: None,
     };
 
@@ -126,6 +130,7 @@ async fn test_vcs_index_repository_with_repo_path() {
         branches: None,
         include_commits: None,
         depth: None,
+        org_id: None,
         limit: None,
     };
 
@@ -151,6 +156,7 @@ async fn test_vcs_analyze_impact_with_defaults() {
         branches: None,
         include_commits: None,
         depth: None,
+        org_id: None,
         limit: None,
     };
 
@@ -176,6 +182,7 @@ async fn test_vcs_analyze_impact_missing_repo_path() {
         branches: None,
         include_commits: None,
         depth: None,
+        org_id: None,
         limit: None,
     };
 

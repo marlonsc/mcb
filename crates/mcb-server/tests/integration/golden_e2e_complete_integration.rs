@@ -36,6 +36,7 @@ fn search_args(query: &str, collection: Option<String>, limit: Option<u32>) -> S
         filters: None,
         limit,
         min_score: None,
+        org_id: None,
         tags: None,
         session_id: None,
         token: None,

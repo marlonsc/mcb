@@ -191,7 +191,7 @@ impl EntityCrudAdapter for TeamAdapter {
         to_json(&team)
     }
     async fn update_from_json(&self, _data: Value) -> Result<(), String> {
-        Err("Team update not supported via service interface".to_string())
+        Err("Team update not supported via repository interface".to_string())
     }
     async fn delete_by_id(&self, id: &str) -> Result<(), String> {
         self.0.delete_team(id).await.map_err(map_err)

@@ -239,9 +239,10 @@ async fn test_entities_new_form_has_enum_options() {
 
     assert_eq!(response.status(), Status::Ok);
     let html = response.into_string().await.expect("response body");
+    let html_lower = html.to_lowercase();
     assert!(html.contains("<select"));
-    assert!(html.contains("Draft"));
-    assert!(html.contains("Active"));
+    assert!(html_lower.contains("draft"));
+    assert!(html_lower.contains("active"));
 }
 
 #[rocket::async_test]

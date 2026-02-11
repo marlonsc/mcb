@@ -101,6 +101,7 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
             branches: None,
             include_commits: None,
             depth: None,
+            org_id: None,
             limit: None,
         }))
         .await;
@@ -153,6 +154,7 @@ async fn test_gap3_session_list_works_without_agent_type() {
             agent_type: None, // Omitted, should be allowed now
             data: None,
             project_id: None,
+            org_id: None,
             worktree_id: None,
             status: None,
             limit: Some(3),
