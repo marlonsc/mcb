@@ -2,7 +2,7 @@
 adr: 4
 title: Event Bus (Local and Distributed)
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: []
 supersedes: []

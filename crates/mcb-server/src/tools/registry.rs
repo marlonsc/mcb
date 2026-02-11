@@ -148,6 +148,7 @@ impl ToolDefinitions {
             output_schema: None,
             annotations: None,
             icons: None,
+            execution: None,
             meta: Default::default(),
         })
     }

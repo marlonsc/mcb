@@ -1,8 +1,8 @@
 # MCB MCP Tools Validation Report
 
-**Date**: 2026-02-08  
-**Version**: MCB v0.2.0  
-**Tester**: Sisyphus (OpenCode)  
+**Date**: 2026-02-08
+**Version**: MCB v0.2.0
+**Tester**: Sisyphus (OpenCode)
 **Environment**: Milvus @ localhost:19530, Ollama @ localhost:11434 (nomic-embed-text)
 
 ---
@@ -86,6 +86,7 @@ mcp_mcb_validate(action="analyze", path="/path/to/file.py")
 
 ```
 mcp_mcb_validate(action="run", path="/path", scope="file")
+
 # Error: JSON Parse error: Unexpected identifier "file"
 ```
 
@@ -148,6 +149,7 @@ mcp_mcb_session(action="list", limit=5)
 
 ```
 mcp_mcb_session(action="create", data={"agent_type": "test", "project_id": "opencode"})
+
 # Error: Missing agent_type for create
 ```
 
@@ -168,20 +170,23 @@ All Actions fail.
 
 **Root Causes**:
 
-1.  **Data payload parsing**: JSON object in `data` parameter not being extracted
-2.  **SQL errors**: Database table may not exist or have wrong schema
-3.  **Error patterns not implemented**: Feature stub in code
+1. **Data payload parsing**: JSON object in `data` parameter not being extracted
+2. **SQL errors**: Database table may not exist or have wrong schema
+3. **Error patterns not implemented**: Feature stub in code
 
 **Broken Commands:**
 
 ```
 mcp_mcb_memory(action="store", resource="observation", data={"content": "test", "tags": ["t1"]})
+
 # Error: Missing data payload for observation store
 
 mcp_mcb_memory(action="list", resource="observation", limit=5)
+
 # Error: SQL query_all failed
 
 mcp_mcb_memory(action="timeline", resource="observation", depth_before=5, depth_after=5)
+
 # Error: Missing anchor_id or query for timeline
 ```
 
@@ -219,9 +224,11 @@ All Actions fail with data parsing error.
 
 ```
 mcp_mcb_agent(action="log_tool", session_id="test", data={"tool_name": "edit", "success": true})
+
 # Error: Data must be a JSON object
 
 mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explore", "task": "..."})
+
 # Error: Data must be a JSON object
 ```
 
@@ -322,47 +329,52 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 
 ### Immediate (v0.2.1 Hotfix)
 
-1.  **Fix JSON data payload parsing** - This is blocking 3 major tools
+1. **Fix JSON data payload parsing** - This is blocking 3 major tools
 
 -   Debug why `serde_json::Value` from MCP is not deserializing
 -   Add logging to trace the actual received payload
 -   Consider using raw JSON String and parsing explicitly
 
-1.  **Fix memory SQL errors** - Ensure tables exist and have correct schema
+1. **Fix memory SQL errors** - Ensure tables exist and have correct schema
 
 -   Add migration check on startup
 -   Return clearer error messages
 
 ### Short-term (v0.3.0)
 
-1.  **Fix validate scope enum** - Use String matching instead of enum deserialization
-2.  **Improve VCS repo_id documentation** - Clarify that hash from index is required
-3.  **Implement project handler** - Core workflow feature
+1. **Fix validate scope enum** - Use String matching instead of enum deserialization
+2. **Improve VCS repo_id documentation** - Clarify that hash from index is required
+3. **Implement project handler** - Core workflow feature
 
 ### Medium-term (v0.4.0)
 
-1.  **Implement error_pattern store** - Complete memory feature set
-2.  **Add E2E MCP tool tests** - Catch these issues before release
+1. **Implement error_pattern store** - Complete memory feature set
+2. **Add E2E MCP tool tests** - Catch these issues before release
 
 ---
 
 ## Test Environment
 
 ```bash
+
 # MCB Version
 mcb --version
+
 # v0.2.0
 
 # Milvus
 docker ps | grep milvus
+
 # milvus-standalone running on 19530
 
 # Ollama
 curl http://localhost:11434/api/tags
+
 # nomic-embed-text available
 
 # OpenCode Config
 cat ~/.config/opencode/opencode.jsonc | grep mcb
+
 # MCB MCP server configured with bash wrapper
 ```
 
@@ -371,6 +383,7 @@ cat ~/.config/opencode/opencode.jsonc | grep mcb
 ## Appendix: All Test Commands
 
 ```bash
+
 # Index
 mcp_mcb_index(action="status")
 mcp_mcb_index(action="start", path="/home/marlonsc/.config/opencode", collection="test", extensions=[".md"])
@@ -407,5 +420,5 @@ mcp_mcb_agent(action="log_tool", session_id="test", data={"tool": "x"})  # BROKE
 
 ---
 
-**Report Generated**: 2026-02-08T19:37:00-03:00  
+**Report Generated**: 2026-02-08T19:37:00-03:00
 **Next Review**: After v0.2.1 fixes deployed

@@ -44,7 +44,7 @@ fn unique_temp_path(name: &str) -> PathBuf {
 }
 
 fn config_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/test.toml")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/tests.toml")
 }
 
 fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {

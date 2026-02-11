@@ -50,7 +50,7 @@ fn get_mcb_path() -> PathBuf {
 /// Spawn mcb with test-safe configuration (no external service dependencies)
 fn create_test_command(mcb_path: &PathBuf) -> Command {
     let mut cmd = Command::new(mcb_path);
-    let config_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/test.toml");
+    let config_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/tests.toml");
     let unique_db = format!(
         "/tmp/mcb-stdio-{}-{}.db",
         std::process::id(),

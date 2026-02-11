@@ -2,7 +2,7 @@
 adr: 34
 title: Workflow Core — Finite State Machine and Persistence
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-06
 related: [13, 19, 23, 25, 29]
 supersedes: [32]
@@ -31,10 +31,10 @@ ADR-032 proposed extending MCB's domain with 24 MCP tools and 9 SQLite tables fo
 
 ### Problem Statement
 
-1.  **No session continuity** — Workflow state is lost between OpenCode sessions. A resumed session cannot know where the previous session stopped.
-2.  **No transition audit** — There is no record of what state transitions occurred, who triggered them, or why they failed.
-3.  **No state validation** — Invalid transitions (e.g., executing before planning) are not enforced at the type level.
-4.  **No time travel** — Impossible to reconstruct what the workflow state was at a specific point in time.
+1. **No session continuity** — Workflow state is lost between OpenCode sessions. A resumed session cannot know where the previous session stopped.
+2. **No transition audit** — There is no record of what state transitions occurred, who triggered them, or why they failed.
+3. **No state validation** — Invalid transitions (e.g., executing before planning) are not enforced at the type level.
+4. **No time travel** — Impossible to reconstruct what the workflow state was at a specific point in time.
 
 ### Requirements
 
@@ -155,7 +155,7 @@ pub enum TransitionTrigger {
     EndSession,
     Error { message: String },
     Recover,
-    
+
     // New triggers (extended states)
     Suspend { reason: String },                    // → Suspended
     Resume,                                        // Suspended → Planning|Executing
@@ -419,12 +419,12 @@ The workflow engine uses **two complementary persistence layers**: per-operation
 
 **Hybrid Transaction Pattern:**
 
-1.  **Per-Operation Transactions**: Every `transition()` call wraps read + validate + write in a SQLite transaction (10-20ms per operation).
+1. **Per-Operation Transactions**: Every `transition()` call wraps read + validate + write in a SQLite transaction (10-20ms per operation).
 
 -   Ensures no lost updates if multiple sessions compete for the same resource.
 -   Provides rollback on validation failure.
 
-1.  **Append-Only Event Log**: After every transition, write immutable event to `workflow_events` table.
+1. **Append-Only Event Log**: After every transition, write immutable event to `workflow_events` table.
 
 -   Never updated or deleted — only INSERT.
 -   Enables time-travel queries without replaying mutations.
@@ -661,7 +661,7 @@ impl WorkflowSession {
 
             // Any non-terminal state → Suspended
             (state, TransitionTrigger::Suspend { reason }) if !matches!(state, WorkflowState::Completed | WorkflowState::Failed { .. } | WorkflowState::Cancelled { .. } | WorkflowState::Abandoned { .. } | WorkflowState::Timeout { .. }) => {
-                WorkflowState::Suspended { 
+                WorkflowState::Suspended {
                     reason: reason.clone(),
                     suspended_at: Utc::now(),
                 }
@@ -1096,10 +1096,10 @@ static SQLITE_DB: DatabaseProviderEntry = DatabaseProviderEntry {
 
 async fn sqlite_db_factory(config: &Figment) -> Result<Arc<dyn DatabaseProvider>> {
     let db_config: DatabaseConnectionConfig = config.extract_inner("workflow.database")?;
-    
+
     let pool = SqlitePool::connect_lazy(&db_config.url)?;
     pool.acquire().await?;  // Verify connection
-    
+
     // Enable WAL mode and transaction isolation
     sqlx::query("PRAGMA journal_mode = WAL;")
         .execute(&pool)
@@ -1107,7 +1107,7 @@ async fn sqlite_db_factory(config: &Figment) -> Result<Arc<dyn DatabaseProvider>
     sqlx::query("PRAGMA transaction_isolation = DEFERRED;")
         .execute(&pool)
         .await?;
-    
+
     Ok(Arc::new(SqliteDatabase { pool }))
 }
 ```
@@ -1187,7 +1187,7 @@ pub async fn transition_with_compensation(
             // Verification failed → compute compensations
             let mut compensations = Vec::new();
             let mut manual_needed = false;
-            
+
             for effect in effects {
                 if let Some(comp) = effect.compensation() {
                     compensations.push(comp);
@@ -1195,7 +1195,7 @@ pub async fn transition_with_compensation(
                     manual_needed = true;
                 }
             }
-            
+
             if manual_needed {
                 // Transition to ManualReview state (requires operator decision)
                 session.current_state = WorkflowState::Failed {
@@ -1210,7 +1210,7 @@ pub async fn transition_with_compensation(
                 // Re-attempt transition
                 transition(session, TransitionTrigger::Recover)?;
             }
-            
+
             Err(WorkflowError::VerificationFailed { reason })
         }
         Err(e) => Err(e),
@@ -1245,12 +1245,12 @@ CREATE INDEX idx_effects_by_session ON workflow_effects(session_id);
 
 **Concurrency Model**:
 
-1.  **Per-session mutual exclusion**: Only one thread may call `transition()` per session concurrently.
+1. **Per-session mutual exclusion**: Only one thread may call `transition()` per session concurrently.
 
 -   Enforced via RwLock in `SqliteWorkflowEngine`
 -   **Implementation**: `Arc<RwLock<WorkflowSession>>`
 
-1.  **SQLite transaction isolation**: Use SERIALIZABLE isolation for `workflow_sessions` updates.
+1. **SQLite transaction isolation**: Use SERIALIZABLE isolation for `workflow_sessions` updates.
 
 -   **Schema change**: Add `version` column for optimistic concurrency detection.
 
@@ -1263,7 +1263,7 @@ UPDATE workflow_sessions
   WHERE id = ? AND version = ?;  -- Detects concurrent writes
 ```
 
-1.  **Multi-session parallelism**: Different sessions may transition in parallel (no global lock).
+1. **Multi-session parallelism**: Different sessions may transition in parallel (no global lock).
 
 -   SQLite WAL mode enables concurrent reads from one writer.
 -   Use connection pool to service multiple sessions simultaneously.
@@ -1287,21 +1287,21 @@ impl SqliteWorkflowEngine {
             .entry(session_id.to_string())
             .or_insert_with(|| Arc::new(RwLock::new(())))
             .clone();
-        
+
         let _guard = lock.write().await;  // Exclusive access for this session
-        
+
         // Load session (read)
         let mut session = self.load_session(session_id).await?;
-        
+
         // Compute new state
         let transition = mcb_providers::workflow::transitions::transition(
             &mut session,
             trigger,
         )?;
-        
+
         // Atomic write with version check (optimistic concurrency)
         let rows_affected = sqlx::query(
-            "UPDATE workflow_sessions 
+            "UPDATE workflow_sessions
              SET state_data = ?, version = version + 1, updated_at = NOW()
              WHERE id = ? AND version = ?",
         )
@@ -1311,16 +1311,16 @@ impl SqliteWorkflowEngine {
         .execute(&self.pool)
         .await?
         .rows_affected();
-        
+
         if rows_affected == 0 {
             return Err(WorkflowError::OptimisticLockConflict {
                 session_id: session_id.to_string(),
             });
         }
-        
+
         // Log transition
         self.log_transition(transition.clone()).await?;
-        
+
         Ok(transition)
     }
 }
@@ -1383,13 +1383,13 @@ impl SqliteWorkflowEngine {
 
 ### Code Changes
 
-1.  Add `workflow.rs` entities to `mcb-domain/src/entities/`
-2.  Add `workflow.rs` port trait to `mcb-domain/src/ports/providers/`
-3.  Add `WorkflowError` to `mcb-domain/src/errors/`
-4.  Add `WORKFLOW_PROVIDERS` slice to `mcb-application/src/registry/`
-5.  Add `workflow/` module to `mcb-providers/src/` with SQLite implementation
-6.  Add `WorkflowConfig` to `mcb-infrastructure/src/config/`
-7.  Add `[workflow]` section to `config/default.toml`
+1. Add `workflow.rs` entities to `mcb-domain/src/entities/`
+2. Add `workflow.rs` port trait to `mcb-domain/src/ports/providers/`
+3. Add `WorkflowError` to `mcb-domain/src/errors/`
+4. Add `WORKFLOW_PROVIDERS` slice to `mcb-application/src/registry/`
+5. Add `workflow/` module to `mcb-providers/src/` with SQLite implementation
+6. Add `WorkflowConfig` to `mcb-infrastructure/src/config/`
+7. Add `[workflow]` section to `config/default.toml`
 
 ### Migration
 

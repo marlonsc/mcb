@@ -2,7 +2,7 @@
 adr: 5
 title: Context Cache Support (Moka and Redis)
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: []
 supersedes: []

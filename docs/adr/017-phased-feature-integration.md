@@ -2,7 +2,7 @@
 adr: 17
 title: Phased Feature Integration Roadmap
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-05
 related: [12, 13, 16, 20]
 supersedes: []
@@ -130,10 +130,10 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 ## Migration Principles
 
-1.  **No Breaking Changes**: Each version is backward compatible
-2.  **Feature Flags**: New features behind Cargo features
-3.  **Incremental Testing**: Port PMAT tests alongside code
-4.  **Parallel Development**: MCB features continue during integration
+1. **No Breaking Changes**: Each version is backward compatible
+2. **Feature Flags**: New features behind Cargo features
+3. **Incremental Testing**: Port PMAT tests alongside code
+4. **Parallel Development**: MCB features continue during integration
 
 ## Consequences
 

@@ -125,8 +125,10 @@ test)
 
 	log_info "Running tests (make test)..."
 	log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	# shellcheck disable=SC2155
 	REDIS_URL="$(read_test_service_url redis_url)"
 	export REDIS_URL
+	# shellcheck disable=SC2155
 	NATS_URL="$(read_test_service_url nats_url)"
 	export NATS_URL
 	export MCB_RUN_DOCKER_INTEGRATION_TESTS="${MCB_RUN_DOCKER_INTEGRATION_TESTS:-1}"

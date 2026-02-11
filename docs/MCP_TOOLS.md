@@ -1,6 +1,6 @@
 # MCP Tools Schema Documentation
 
-**Version**: 0.2.0  
+**Version**: 0.2.0
 **Last Updated**: 2026-02-05
 
 This document provides complete schema documentation for all 8 MCP tools available in MCB v0.2.0.

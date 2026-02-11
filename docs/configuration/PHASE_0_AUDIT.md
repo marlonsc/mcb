@@ -20,21 +20,21 @@
 
 **✅ PASSED AUDIT CRITERIA**:
 
-1.  All core configuration parameters support environment variable overrides
-2.  Consistent naming convention: `MCP_<SUBSYSTEM>_<PARAMETER>`
-3.  All defaults documented
-4.  Type safety implemented (enums where appropriate)
-5.  Validation rules present
-6.  No hardcoded secrets in application code
+1. All core configuration parameters support environment variable overrides
+2. Consistent naming convention: `MCP_<SUBSYSTEM>_<PARAMETER>`
+3. All defaults documented
+4. Type safety implemented (enums where appropriate)
+5. Validation rules present
+6. No hardcoded secrets in application code
 
 **⚠️ MINOR FINDINGS**:
 
-1.  Cache backend selection uses magic String detection (empty vs non-empty `redis_url`)
+1. Cache backend selection uses magic String detection (empty vs non-empty `redis_url`)
 
 -   **Impact**: Low - works fine, but not type-safe
 -   **Fix**: Phase 2 refactoring will introduce `CacheBackendConfig` enum
 
-1.  Admin interface has default implementations for testing
+1. Admin interface has default implementations for testing
 
 -   **Impact**: Low - gracefully disables if credentials not provided
 -   **Status**: Acceptable - matches security-first design

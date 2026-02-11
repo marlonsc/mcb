@@ -1,7 +1,7 @@
 # MCP CONSOLIDATION ANALYSIS REPORT
 
-**Generated**: 2025-02-05  
-**Project**: MCB (Memory Context Browser)  
+**Generated**: 2025-02-05
+**Project**: MCB (Memory Context Browser)
 **Scope**: Mapping MCP endpoints for Admin UI reuse
 
 ---
@@ -16,7 +16,7 @@
 
 ### 1.1 INDEX HANDLER
 
-**Location**: `handlers/index.rs`  
+**Location**: `handlers/index.rs`
 **Dependencies**: `IndexingServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -47,7 +47,7 @@ pub async fn handle(
 
 ### 1.2 SEARCH HANDLER
 
-**Location**: `handlers/search.rs`  
+**Location**: `handlers/search.rs`
 **Dependencies**: `SearchServiceInterface`, `MemoryServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -78,7 +78,7 @@ pub async fn handle(
 
 ### 1.3 VALIDATE HANDLER
 
-**Location**: `handlers/validate.rs`  
+**Location**: `handlers/validate.rs`
 **Dependencies**: `ValidationServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -109,7 +109,7 @@ pub async fn handle(
 
 ### 1.4 AGENT HANDLER
 
-**Location**: `handlers/agent.rs`  
+**Location**: `handlers/agent.rs`
 **Dependencies**: `AgentSessionServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -139,7 +139,7 @@ pub async fn handle(
 
 ### 1.5 SESSION HANDLER
 
-**Location**: `handlers/session/mod.rs`  
+**Location**: `handlers/session/mod.rs`
 **Dependencies**: `AgentSessionServiceInterface`, `MemoryServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -173,7 +173,7 @@ pub async fn handle(
 
 ### 1.6 MEMORY HANDLER
 
-**Location**: `handlers/memory/mod.rs`  
+**Location**: `handlers/memory/mod.rs`
 **Dependencies**: `MemoryServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -212,7 +212,7 @@ pub async fn handle(
 
 ### 1.7 VCS HANDLER
 
-**Location**: `handlers/vcs/mod.rs`  
+**Location**: `handlers/vcs/mod.rs`
 **Dependencies**: `VcsProvider`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -246,7 +246,7 @@ pub async fn handle(
 
 ### 1.8 PROJECT HANDLER
 
-**Location**: `handlers/project.rs`  
+**Location**: `handlers/project.rs`
 **Status**: NOT YET IMPLEMENTED
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
@@ -390,7 +390,7 @@ impl IndexHandler {
         // Validation
         args.validate()
             .map_err(|e| McpError::invalid_params(format!("Invalid: {}", e), None))?;
-        
+
         // Route to action
         match args.action {
             Action::Start => { /* ... */ },
@@ -419,7 +419,7 @@ pub fn handler_name(
 ) -> Json<ResponseType> {
     // Extract from state
     let data = state.metrics.get_performance_metrics();
-    
+
     // Return JSON
     Json(response)
 }
@@ -599,35 +599,35 @@ pub struct ApiResult<T: Serialize> {
 
 **HIGH REUSE POTENTIAL** (Can consume MCP endpoints directly):
 
-1.  **Index Status Data**
+1. **Index Status Data**
 
 -   MCP: `IndexHandler::handle(IndexAction::Status)` → JSON
 -   Admin: Could call MCP instead of calling indexing service directly
 -   **Adaptation**: Wrap MCP Result in HTTP response
 -   **ROI**: ✅ HIGH - Eliminates duplicate status queries
 
-1.  **Collection Information**
+1. **Collection Information**
 
 -   MCP: Browse API endpoint data structure
 -   Admin: Already has `/collections`, `/collections/:name/files`, `/collections/:name/chunks`
 -   **Reuse**: Response types match exactly
 -   **ROI**: ✅ HIGH - Could unify data sources
 
-1.  **Search Results**
+1. **Search Results**
 
 -   MCP: `SearchHandler::handle(SearchResource::Code)` → results JSON
 -   Admin: Could expose search via HTTP + admin UI
 -   **Adaptation**: Add HTTP endpoint wrapper
 -   **ROI**: ✅ MEDIUM - New feature, enables search UI
 
-1.  **Memory/Observations**
+1. **Memory/Observations**
 
 -   MCP: `MemoryHandler` endpoints
 -   Admin: Could expose memory timeline via new HTTP endpoints
 -   **Adaptation**: Add HTTP wrapper for read-only memory browsing
 -   **ROI**: ✅ MEDIUM - Debug feature for admin
 
-1.  **Validation Reports**
+1. **Validation Reports**
 
 -   MCP: `ValidateHandler::handle(ValidateAction::Run)` → report
 -   Admin: Could expose analysis UI
@@ -638,21 +638,21 @@ pub struct ApiResult<T: Serialize> {
 
 ### 5.3 What Needs Significant Adaptation
 
-1.  **Session Management**
+1. **Session Management**
 
 -   MCP: `SessionHandler` - agent session lifecycle
 -   Admin: Session management is different (HTTP session vs agent session)
 -   **Blocker**: Different domain models
 -   **Option**: Create adapter layer for HTTP-based session browsing
 
-1.  **VCS Operations**
+1. **VCS Operations**
 
 -   MCP: `VcsHandler` - git operations
 -   Admin: Currently browse-only (no VCS operations exposed)
 -   **Blocker**: Would require new HTTP endpoints + authorization
 -   **Option**: Expose read-only VCS browsing first
 
-1.  **Agent Logging**
+1. **Agent Logging**
 
 -   MCP: `AgentHandler::log_tool()` / `log_delegation()`
 -   Admin: No agent-specific UI currently
@@ -812,7 +812,7 @@ impl IndexHandler {
     pub fn new(indexing_service: Arc<dyn IndexingServiceInterface>) -> Self {
         Self { indexing_service }
     }
-    
+
     // Async MCP tool handler
     pub async fn handle(
         &self,
@@ -846,7 +846,7 @@ impl SearchHandler {
             memory_service,
         }
     }
-    
+
     pub async fn handle(
         &self,
         Parameters(args): Parameters<SearchArgs>,
@@ -875,7 +875,7 @@ impl MemoryHandler {
     pub fn new(memory_service: Arc<dyn MemoryServiceInterface>) -> Self {
         Self { memory_service }
     }
-    
+
     pub async fn handle(
         &self,
         Parameters(args): Parameters<MemoryArgs>,
@@ -888,7 +888,7 @@ impl MemoryHandler {
             MemoryAction::Inject => self.handle_inject(&args).await,
         }
     }
-    
+
     async fn handle_store(&self, args: &MemoryArgs) -> Result<CallToolResult, McpError> {
         match args.resource {
             MemoryResource::Observation => observation::store_observation(&self.memory_service, args).await,
@@ -919,7 +919,7 @@ impl SessionHandler {
     ) -> Self {
         Self { agent_service, memory_service }
     }
-    
+
     pub async fn handle(
         &self,
         Parameters(args): Parameters<SessionArgs>,
@@ -947,7 +947,7 @@ impl SessionHandler {
 pub fn health_check(state: &State<AdminState>) -> Json<AdminHealthResponse> {
     let metrics = state.metrics.get_performance_metrics();
     let operations = state.indexing.get_operations();
-    
+
     Json(AdminHealthResponse {
         status: "healthy",
         uptime_seconds: metrics.uptime_seconds,
@@ -995,7 +995,7 @@ pub async fn get_cache_stats(
             }),
         ));
     };
-    
+
     match cache.stats().await {
         Ok(stats) => Ok(Json(stats)),
         Err(e) => Err((
@@ -1023,16 +1023,16 @@ pub fn shutdown(
     request: Json<ShutdownRequest>,
 ) -> (Status, Json<ShutdownResponse>) {
     let request = request.into_inner();
-    
+
     let Some(coordinator) = &state.shutdown_coordinator else {
         return (
             Status::ServiceUnavailable,
             Json(ShutdownResponse::error("Shutdown coordinator not available", 0)),
         );
     };
-    
+
     // [validation and execution]
-    
+
     (Status::Ok, Json(ShutdownResponse::success(msg, timeout_secs)))
 }
 ```
@@ -1053,7 +1053,7 @@ pub async fn list_collection_files(
     limit: Option<usize>,
 ) -> Result<Json<FileListResponse>, (Status, Json<BrowseErrorResponse>)> {
     let limit = limit.unwrap_or(100);
-    
+
     let files = state
         .browser
         .list_file_paths(name, limit)
@@ -1066,7 +1066,7 @@ pub async fn list_collection_files(
                 (Status::InternalServerError, Json(BrowseErrorResponse::internal(error_msg)))
             }
         })?;
-    
+
     // [...]
     Ok(Json(FileListResponse { files: file_responses, total, collection }))
 }
@@ -1088,7 +1088,7 @@ pub async fn get_file_chunks(
     path: std::path::PathBuf,
 ) -> Result<Json<ChunkListResponse>, (Status, Json<BrowseErrorResponse>)> {
     let file_path = path.to_string_lossy().to_string();
-    
+
     let chunks = state
         .browser
         .get_chunks_by_file(name, &file_path)
@@ -1101,7 +1101,7 @@ pub async fn get_file_chunks(
                 (Status::InternalServerError, Json(BrowseErrorResponse::internal(error_msg)))
             }
         })?;
-    
+
     // [...]
 }
 ```
@@ -1170,21 +1170,21 @@ match async_operation.await {
 
 ### Quick Wins (< 1 hour each)
 
-1.  Create `ApiResponse<T>` wrapper for consistent error responses
-2.  Add `pagination` helper for handlers with list operations
-3.  Create helper module for JSON parsing (replace MemoryHelpers duplication)
+1. Create `ApiResponse<T>` wrapper for consistent error responses
+2. Add `pagination` helper for handlers with list operations
+3. Create helper module for JSON parsing (replace MemoryHelpers duplication)
 
 ### Medium Effort (1-4 hours each)
 
-1.  Wrap MCP endpoints as HTTP endpoints in admin
-2.  Create admin handlers for validation, search, memory browsing
-3.  Implement response type unification
+1. Wrap MCP endpoints as HTTP endpoints in admin
+2. Create admin handlers for validation, search, memory browsing
+3. Implement response type unification
 
 ### Long-term (4+ hours)
 
-1.  Implement Project handler in MCP (service lifecycle)
-2.  Create unified service interface for HTTP+MCP access
-3.  Add role-based filtering across all endpoints
+1. Implement Project handler in MCP (service lifecycle)
+2. Create unified service interface for HTTP+MCP access
+3. Add role-based filtering across all endpoints
 
 ---
 
@@ -1210,23 +1210,23 @@ Legend:
 
 ### Key Findings
 
-1.  **8 MCP handlers** provide comprehensive tooling for code, memory, and session management
-2.  **Admin UI** has 15+ HTTP endpoints for monitoring, config, and browsing
-3.  **Minimal overlap** in current implementations; opportunities for reuse
-4.  **Handler patterns** are consistent and well-structured (good foundation for refactoring)
-5.  **Response types** could be with ~2 hours of refactoring
+1. **8 MCP handlers** provide comprehensive tooling for code, memory, and session management
+2. **Admin UI** has 15+ HTTP endpoints for monitoring, config, and browsing
+3. **Minimal overlap** in current implementations; opportunities for reuse
+4. **Handler patterns** are consistent and well-structured (good foundation for refactoring)
+5. **Response types** could be with ~2 hours of refactoring
 
 ### Top 3 Immediate Actions
 
-1.  **Wrap Index Status as HTTP endpoint** (30 min) → Unified data source
-2.  **Add HTTP search endpoint** (2 hours) → Enables semantic search UI
-3.  **Create `ApiResponse<T>` wrapper** (4 hours) → Reduces boilerplate by 30%
+1. **Wrap Index Status as HTTP endpoint** (30 min) → Unified data source
+2. **Add HTTP search endpoint** (2 hours) → Enables semantic search UI
+3. **Create `ApiResponse<T>` wrapper** (4 hours) → Reduces boilerplate by 30%
 
 ### Medium-term Goals
 
-1.  Implement Project handler in MCP for service lifecycle management
-2.  Add memory/observation browsing endpoints to admin
-3.  Create VCS browsing UI (view branches, commits, impact analysis)
+1. Implement Project handler in MCP for service lifecycle management
+2. Add memory/observation browsing endpoints to admin
+3. Create VCS browsing UI (view branches, commits, impact analysis)
 
 ### Long-term Vision
 

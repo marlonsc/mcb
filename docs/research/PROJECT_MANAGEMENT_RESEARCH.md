@@ -137,19 +137,19 @@ use async_trait::async_trait;
 pub trait ProjectProvider: Send + Sync {
     /// List all indexed projects
     async fn list_projects(&self) -> Result<Vec<Project>, ProjectError>;
-    
+
     /// Get project by ID
     async fn get_project(&self, id: Uuid) -> Result<Option<Project>, ProjectError>;
-    
+
     /// Get project by filesystem path
     async fn get_project_by_path(&self, path: &str) -> Result<Option<Project>, ProjectError>;
-    
+
     /// Create new project from Cargo.toml
     async fn create_project(&self, path: &str) -> Result<Project, ProjectError>;
-    
+
     /// Update project metadata
     async fn update_project(&self, project: &Project) -> Result<(), ProjectError>;
-    
+
     /// Delete project
     async fn delete_project(&self, id: Uuid) -> Result<(), ProjectError>;
 }
@@ -158,10 +158,10 @@ pub trait ProjectProvider: Send + Sync {
 pub trait DependencyProvider: Send + Sync {
     /// Get all dependencies of a project
     async fn get_dependencies(&self, project_id: Uuid) -> Result<Vec<ProjectDependency>, ProjectError>;
-    
+
     /// Get projects that depend on this one
     async fn get_dependents(&self, project_id: Uuid) -> Result<Vec<ProjectDependency>, ProjectError>;
-    
+
     /// Add dependency relationship
     async fn add_dependency(
         &self,
@@ -170,10 +170,10 @@ pub trait DependencyProvider: Send + Sync {
         version_req: &str,
         is_dev: bool,
     ) -> Result<ProjectDependency, ProjectError>;
-    
+
     /// Remove dependency
     async fn remove_dependency(&self, from: Uuid, to: Uuid) -> Result<(), ProjectError>;
-    
+
     /// Check for circular dependencies
     async fn has_circular_dependency(&self, from: Uuid, to: Uuid) -> Result<bool, ProjectError>;
 }
@@ -182,16 +182,16 @@ pub trait DependencyProvider: Send + Sync {
 pub enum ProjectError {
     #[error("Project not found: {0}")]
     NotFound(String),
-    
+
     #[error("Invalid Cargo.toml: {0}")]
     InvalidManifest(String),
-    
+
     #[error("Circular dependency detected: {0} -> {1}")]
     CircularDependency(String, String),
-    
+
     #[error("Database error: {0}")]
     Database(String),
-    
+
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 }
@@ -222,44 +222,44 @@ impl ProjectService {
             dependency_provider,
         }
     }
-    
+
     /// Get project with all its dependencies
     pub async fn get_project_with_deps(&self, id: Uuid) -> Result<ProjectWithDeps, ProjectError> {
         let project = self.project_provider
             .get_project(id)
             .await?
             .ok_or(ProjectError::NotFound(id.to_string()))?;
-        
+
         let dependencies = self.dependency_provider
             .get_dependencies(id)
             .await?;
-        
+
         let dependents = self.dependency_provider
             .get_dependents(id)
             .await?;
-        
+
         Ok(ProjectWithDeps {
             project,
             dependencies,
             dependents,
         })
     }
-    
+
     /// Analyze dependency graph for issues
     pub async fn analyze_dependencies(&self, project_id: Uuid) -> Result<DependencyAnalysis, ProjectError> {
         let deps = self.dependency_provider.get_dependencies(project_id).await?;
-        
+
         let mut analysis = DependencyAnalysis::default();
         analysis.total_dependencies = deps.len();
         analysis.dev_dependencies = deps.iter().filter(|d| d.is_dev).count();
-        
+
         // Check for circular dependencies
         for dep in &deps {
             if self.dependency_provider.has_circular_dependency(project_id, dep.to_project_id).await? {
                 analysis.circular_dependencies.push((project_id, dep.to_project_id));
             }
         }
-        
+
         Ok(analysis)
     }
 }
@@ -296,19 +296,19 @@ pub struct SqliteProjectProvider {
 impl ProjectProvider for SqliteProjectProvider {
     async fn list_projects(&self) -> Result<Vec<Project>, ProjectError> {
         sqlx::query_as::<_, Project>(
-            r#"SELECT id, name, version, path, created_at, updated_at 
-               FROM projects 
+            r#"SELECT id, name, version, path, created_at, updated_at
+               FROM projects
                ORDER BY created_at DESC"#
         )
         .fetch_all(&self.pool)
         .await
         .map_err(|e| ProjectError::Database(e.to_string()))
     }
-    
+
     async fn get_project(&self, id: Uuid) -> Result<Option<Project>, ProjectError> {
         sqlx::query_as::<_, Project>(
-            r#"SELECT id, name, version, path, created_at, updated_at 
-               FROM projects 
+            r#"SELECT id, name, version, path, created_at, updated_at
+               FROM projects
                WHERE id = $1"#
         )
         .bind(id)
@@ -316,12 +316,12 @@ impl ProjectProvider for SqliteProjectProvider {
         .await
         .map_err(|e| ProjectError::Database(e.to_string()))
     }
-    
+
     async fn create_project(&self, path: &str) -> Result<Project, ProjectError> {
         // Parse Cargo.toml
         let manifest = parse_cargo_toml(path)?;
         let id = Uuid::new_v4();
-        
+
         sqlx::query_as::<_, Project>(
             r#"INSERT INTO projects (id, name, version, path, created_at, updated_at)
                VALUES ($1, $2, $3, $4, NOW(), NOW())
@@ -351,7 +351,7 @@ impl DependencyProvider for SqliteProjectProvider {
         .await
         .map_err(|e| ProjectError::Database(e.to_string()))
     }
-    
+
     async fn add_dependency(
         &self,
         from: Uuid,
@@ -366,10 +366,10 @@ impl DependencyProvider for SqliteProjectProvider {
                 to.to_string(),
             ));
         }
-        
+
         let id = Uuid::new_v4();
         sqlx::query_as::<_, ProjectDependency>(
-            r#"INSERT INTO project_dependencies 
+            r#"INSERT INTO project_dependencies
                (id, from_project_id, to_project_id, version_requirement, is_dev, created_at)
                VALUES ($1, $2, $3, $4, $5, NOW())
                RETURNING id, from_project_id, to_project_id, version_requirement, is_dev, created_at"#
@@ -383,14 +383,14 @@ impl DependencyProvider for SqliteProjectProvider {
         .await
         .map_err(|e| ProjectError::Database(e.to_string()))
     }
-    
+
     async fn has_circular_dependency(&self, from: Uuid, to: Uuid) -> Result<bool, ProjectError> {
         // Recursive check: if `to` depends on `from`, it's circular
         let count: (i64,) = sqlx::query_as(
             r#"WITH RECURSIVE dep_chain AS (
                  SELECT from_project_id, to_project_id FROM project_dependencies WHERE from_project_id = $2
                  UNION ALL
-                 SELECT d.from_project_id, d.to_project_id 
+                 SELECT d.from_project_id, d.to_project_id
                  FROM project_dependencies d
                  JOIN dep_chain ON d.from_project_id = dep_chain.to_project_id
                )
@@ -401,7 +401,7 @@ impl DependencyProvider for SqliteProjectProvider {
         .fetch_one(&self.pool)
         .await
         .map_err(|e| ProjectError::Database(e.to_string()))?;
-        
+
         Ok(count.0 > 0)
     }
 }
@@ -426,7 +426,7 @@ pub async fn index_projects(
     let projects = service.list_projects()
         .await
         .map_err(|e| e.to_string())?;
-    
+
     Ok(CallToolResult {
         content: vec![Content {
             type_: "text".to_string(),
@@ -444,14 +444,14 @@ pub async fn get_project_details(
     let project_id = params["project_id"]
         .as_str()
         .ok_or("Missing project_id")?;
-    
+
     let uuid = uuid::Uuid::parse_str(project_id)
         .map_err(|e| e.to_string())?;
-    
+
     let project_with_deps = service.get_project_with_deps(uuid)
         .await
         .map_err(|e| e.to_string())?;
-    
+
     Ok(CallToolResult {
         content: vec![Content {
             type_: "text".to_string(),
@@ -470,14 +470,14 @@ pub async fn add_project_dependency(
     let to_id = params["to_project_id"].as_str().ok_or("Missing to_project_id")?;
     let version_req = params["version_requirement"].as_str().unwrap_or("*");
     let is_dev = params["is_dev"].as_bool().unwrap_or(false);
-    
+
     let from = uuid::Uuid::parse_str(from_id).map_err(|e| e.to_string())?;
     let to = uuid::Uuid::parse_str(to_id).map_err(|e| e.to_string())?;
-    
+
     let dep = service.add_dependency(from, to, version_req, is_dev)
         .await
         .map_err(|e| e.to_string())?;
-    
+
     Ok(CallToolResult {
         content: vec![Content {
             type_: "text".to_string(),
@@ -494,11 +494,11 @@ pub async fn analyze_project_dependencies(
 ) -> Result<CallToolResult, String> {
     let project_id = params["project_id"].as_str().ok_or("Missing project_id")?;
     let uuid = uuid::Uuid::parse_str(project_id).map_err(|e| e.to_string())?;
-    
+
     let analysis = service.analyze_dependencies(uuid)
         .await
         .map_err(|e| e.to_string())?;
-    
+
     Ok(CallToolResult {
         content: vec![Content {
             type_: "text".to_string(),
@@ -594,24 +594,24 @@ pub async fn analyze_project_dependencies(
 mod tests {
     use super::*;
     use uuid::Uuid;
-    
+
     struct MockProjectProvider {
         projects: Vec<Project>,
     }
-    
+
     #[async_trait]
     impl ProjectProvider for MockProjectProvider {
         async fn list_projects(&self) -> Result<Vec<Project>, ProjectError> {
             Ok(self.projects.clone())
         }
-        
+
         async fn get_project(&self, id: Uuid) -> Result<Option<Project>, ProjectError> {
             Ok(self.projects.iter().find(|p| p.id == id).cloned())
         }
-        
+
         // ... other methods
     }
-    
+
     #[tokio::test]
     async fn test_get_project_with_deps() {
         let project = Project {
@@ -622,31 +622,31 @@ mod tests {
             created_at: Utc::now(),
             updated_at: Utc::now(),
         };
-        
+
         let provider = Arc::new(MockProjectProvider {
             projects: vec![project.clone()],
         });
-        
+
         let service = ProjectService::new(provider, Arc::new(MockDependencyProvider::new()));
         let result = service.get_project_with_deps(project.id).await;
-        
+
         assert!(result.is_ok());
         assert_eq!(result.unwrap().project.id, project.id);
     }
-    
+
     #[tokio::test]
     async fn test_circular_dependency_detection() {
         // Create projects A -> B -> C -> A (circular)
         let a_id = Uuid::new_v4();
         let b_id = Uuid::new_v4();
         let c_id = Uuid::new_v4();
-        
+
         let provider = Arc::new(MockDependencyProvider::with_deps(vec![
             (a_id, b_id, false),
             (b_id, c_id, false),
             (c_id, a_id, false),
         ]));
-        
+
         let result = provider.has_circular_dependency(a_id, b_id).await;
         assert!(result.is_ok());
         assert!(result.unwrap());
@@ -803,11 +803,11 @@ pub struct ProjectResponse {
 
 ## 10. NEXT STEPS
 
-1.  **Create ADR-030**: "Project Management Domain Model"
-2.  **Create ADR-031**: "Project Dependency Tracking via Linkme Registry"
-3.  **Create feature branch**: `feature/project-management`
-4.  **Start Phase 1**: Domain entities in `mcb-domain`
-5.  **Create beads issues**: One per phase (5 issues total)
+1. **Create ADR-030**: "Project Management Domain Model"
+2. **Create ADR-031**: "Project Dependency Tracking via Linkme Registry"
+3. **Create feature branch**: `feature/project-management`
+4. **Start Phase 1**: Domain entities in `mcb-domain`
+5. **Create beads issues**: One per phase (5 issues total)
 
 ---
 

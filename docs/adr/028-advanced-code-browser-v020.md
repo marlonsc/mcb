@@ -2,7 +2,7 @@
 adr: 28
 title: Advanced Code Browser UI v0.2.0
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: [7, 8, 26]
 supersedes: []
@@ -18,17 +18,17 @@ implementation_status: Partial
 
 > Not yet implemented. Key dependencies:
 >
-> -   v0.1.2 basic browse feature (REST APIs + UI pages)
-> -   Syntax highlighting library integration
-> -   Optional: Language Server Protocol support
+> - v0.1.2 basic browse feature (REST APIs + UI pages)
+> - Syntax highlighting library integration
+> - Optional: Language Server Protocol support
 >
 > **v0.1.2 Foundation (Implemented)**:
 >
-> -   `crates/mcb-domain/src/ports/providers/vector_store.rs` - VectorStoreBrowser trait
-> -   `crates/mcb-domain/src/value_objects/browse.rs` - CollectionInfo struct
-> -   `crates/mcb-providers/src/vector_store/*.rs` - 6 provider implementations
-> -   `crates/mcb-server/src/admin/browse_handlers.rs` - REST API handlers
-> -   `crates/mcb-server/src/admin/web/templates/browse*.html` - UI pages
+> - `crates/mcb-domain/src/ports/providers/vector_store.rs` - VectorStoreBrowser trait
+> - `crates/mcb-domain/src/value_objects/browse.rs` - CollectionInfo struct
+> - `crates/mcb-providers/src/vector_store/*.rs` - 6 provider implementations
+> - `crates/mcb-server/src/admin/browse_handlers.rs` - REST API handlers
+> - `crates/mcb-server/src/admin/web/templates/browse*.html` - UI pages
 
 ## Context
 

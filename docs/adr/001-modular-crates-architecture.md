@@ -2,7 +2,7 @@
 adr: 1
 title: Modular Crates Architecture
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: [2, 3, 4, 5]
 supersedes: []

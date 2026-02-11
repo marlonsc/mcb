@@ -29,11 +29,11 @@ The oh-my-opencode workflow system currently uses:
 
 Pain points:
 
-1.  No persistent state in hooks
-2.  Context pollution (~2000+ lines/session)
-3.  No execution history tracking
-4.  Duplicate data stores (Beads SQLite vs MCB SQLite)
-5.  No semantic search across workflow data
+1. No persistent state in hooks
+2. Context pollution (~2000+ lines/session)
+3. No execution history tracking
+4. Duplicate data stores (Beads SQLite vs MCB SQLite)
+5. No semantic search across workflow data
 
 ## Decision
 
@@ -109,22 +109,22 @@ project_log_decision    → Log decision
 
 ### Positive
 
-1.  **Single source of truth** - No sync conflicts
-2.  **Simpler architecture** - No import/export/sync code
-3.  **Semantic search** - All data has embeddings
-4.  **Unified queries** - One query language
-5.  **~100 LOC saved** - No parser code
+1. **Single source of truth** - No sync conflicts
+2. **Simpler architecture** - No import/export/sync code
+3. **Semantic search** - All data has embeddings
+4. **Unified queries** - One query language
+5. **~100 LOC saved** - No parser code
 
 ### Negative
 
-1.  **Migration cost** - Existing projects need manual migration
-2.  **Learning curve** - New tools to learn
-3.  **MCB dependency** - Requires MCB server running
+1. **Migration cost** - Existing projects need manual migration
+2. **Learning curve** - New tools to learn
+3. **MCB dependency** - Requires MCB server running
 
 ### Neutral
 
-1.  Legacy projects continue using bd CLI separately
-2.  No backward compatibility burden
+1. Legacy projects continue using bd CLI separately
+2. No backward compatibility burden
 
 ## Implementation Plan
 

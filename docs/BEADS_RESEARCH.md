@@ -95,10 +95,10 @@ Complete SQL schema with:
 
 ### Git Integration
 
-1.  **bd sync**: Export SQLite → JSONL → git commit → git push
-2.  **Auto-sync**: Daemon auto-flushes on mutations (debounced)
-3.  **Merge conflicts**: Intelligent JSONL merge driver
-4.  **Worktrees**: `.git/beads-worktrees/beads-sync/` for parallel sync
+1. **bd sync**: Export SQLite → JSONL → git commit → git push
+2. **Auto-sync**: Daemon auto-flushes on mutations (debounced)
+3. **Merge conflicts**: Intelligent JSONL merge driver
+4. **Worktrees**: `.git/beads-worktrees/beads-sync/` for parallel sync
 
 ### CLI Commands
 
@@ -126,13 +126,13 @@ Complete SQL schema with:
 
 **Tables to Create**:
 
-1.  issues (with all 50+ fields)
-2.  labels (many-to-many)
-3.  dependencies (relationships)
-4.  comments (discussions)
-5.  events (audit trail)
-6.  config (settings)
-7.  metadata (database metadata)
+1. issues (with all 50+ fields)
+2. labels (many-to-many)
+3. dependencies (relationships)
+4. comments (discussions)
+5. events (audit trail)
+6. config (settings)
+7. metadata (database metadata)
 
 **Key Relationships**:
 
@@ -248,25 +248,25 @@ Key settings in `config.yaml`:
 
 This documentation was created by:
 
-1.  Examining the `.beads/` directory structure
-2.  Analyzing the SQLite database schema
-3.  Reviewing JSONL export format with real examples
-4.  Studying configuration files
-5.  Documenting CLI commands and their data requirements
-6.  Extracting database views and indexes
-7.  Analyzing git integration points
-8.  Documenting advanced features and constraints
+1. Examining the `.beads/` directory structure
+2. Analyzing the SQLite database schema
+3. Reviewing JSONL export format with real examples
+4. Studying configuration files
+5. Documenting CLI commands and their data requirements
+6. Extracting database views and indexes
+7. Analyzing git integration points
+8. Documenting advanced features and constraints
 
 ## Next Steps for Migration
 
-1.  **Schema Design**: Use beads-sql-schema.sql as template
-2.  **Data Mapping**: Map Beads fields to target database
-3.  **Relationship Handling**: Implement dependency graph queries
-4.  **JSONL Import**: Create import script from JSONL format
-5.  **Git Integration**: Adapt sync workflow for new database
-6.  **Testing**: Validate data integrity and query performance
-7.  **Migration**: Gradual migration with parallel systems
-8.  **Validation**: Verify all relationships and constraints
+1. **Schema Design**: Use beads-sql-schema.sql as template
+2. **Data Mapping**: Map Beads fields to target database
+3. **Relationship Handling**: Implement dependency graph queries
+4. **JSONL Import**: Create import script from JSONL format
+5. **Git Integration**: Adapt sync workflow for new database
+6. **Testing**: Validate data integrity and query performance
+7. **Migration**: Gradual migration with parallel systems
+8. **Validation**: Verify all relationships and constraints
 
 ---
 

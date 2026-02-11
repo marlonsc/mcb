@@ -4,27 +4,27 @@
 
 Phase 9 implements the **Integrated Context System** for v0.4.0, building on Phase 8's workflow FSM and policy framework. This phase introduces knowledge graphs, freshness tracking, time-travel queries, and hybrid search capabilities.
 
-**Timeline**: Feb 17 - Mar 16, 2026 (4 weeks)  
-**ADRs**: ADR-041 through ADR-046 (6 decisions)  
-**Tests**: 70+ (unit, integration, end-to-end)  
+**Timeline**: Feb 17 - Mar 16, 2026 (4 weeks)
+**ADRs**: ADR-041 through ADR-046 (6 decisions)
+**Tests**: 70+ (unit, integration, end-to-end)
 **Deliverables**: Context architecture, graph implementation, hybrid search, versioning, MCP integration
 
 ## ADRs
 
 ### ADR-041: Context Architecture
 
-**Status**: Proposed  
-**Date**: Feb 2026  
+**Status**: Proposed
+**Date**: Feb 2026
 **Scope**: System design for integrated context system
 
 **Summary**:
 Defines the 5-layer context system architecture:
 
-1.  Code Indexing & Embeddings (AST parsing, vector embeddings)
-2.  Knowledge Graph (code relationships, freshness metadata)
-3.  Hybrid Search Engine (semantic + keyword search, RRF fusion)
-4.  Versioning & Snapshots (temporal queries, snapshot management)
-5.  Integration & Policies (policy enforcement, compensation triggers)
+1. Code Indexing & Embeddings (AST parsing, vector embeddings)
+2. Knowledge Graph (code relationships, freshness metadata)
+3. Hybrid Search Engine (semantic + keyword search, RRF fusion)
+4. Versioning & Snapshots (temporal queries, snapshot management)
+5. Integration & Policies (policy enforcement, compensation triggers)
 
 **Key Decisions**:
 
@@ -42,8 +42,8 @@ Defines the 5-layer context system architecture:
 
 ### ADR-042: Knowledge Graph
 
-**Status**: Proposed  
-**Date**: Feb 2026  
+**Status**: Proposed
+**Date**: Feb 2026
 **Scope**: Graph structure and relationship modeling
 
 **Summary**:
@@ -87,8 +87,8 @@ Defines the knowledge graph structure for representing code relationships:
 
 ### ADR-043: Hybrid Search Engine
 
-**Status**: Proposed  
-**Date**: Feb 2026  
+**Status**: Proposed
+**Date**: Feb 2026
 **Scope**: Search algorithm design and implementation
 
 **Summary**:
@@ -116,9 +116,9 @@ Where k=60 (constant), rank is position in each ranking
 
 **Result Ranking**:
 
-1.  RRF score (semantic + keyword)
-2.  Freshness score (recency + staleness)
-3.  Relevance score (combined)
+1. RRF score (semantic + keyword)
+2. Freshness score (recency + staleness)
+3. Relevance score (combined)
 
 **Related**: ADR-041, ADR-044 (Model Selection)
 
@@ -128,8 +128,8 @@ Where k=60 (constant), rank is position in each ranking
 
 ### ADR-044: Model Selection
 
-**Status**: Proposed  
-**Date**: Feb 2026  
+**Status**: Proposed
+**Date**: Feb 2026
 **Scope**: Embedding and search model choices
 
 **Summary**:
@@ -167,8 +167,8 @@ Evaluates and selects embedding and search models for v0.4.0:
 
 ### ADR-045: Context Versioning
 
-**Status**: Proposed  
-**Date**: Feb 2026  
+**Status**: Proposed
+**Date**: Feb 2026
 **Scope**: Snapshot and temporal query design
 
 **Summary**:
@@ -207,8 +207,8 @@ Defines snapshot-based versioning for time-travel queries:
 
 ### ADR-046: Integration Patterns
 
-**Status**: Proposed  
-**Date**: Feb 2026  
+**Status**: Proposed
+**Date**: Feb 2026
 **Scope**: MCP tool integration and policy enforcement
 
 **Summary**:
@@ -322,8 +322,8 @@ See [`docs/implementation/phase-9-roadmap.md`](../../implementation/phase-9-road
 
 ## Next Steps
 
-1.  Review ADR-034-037 (Phase 8 foundation)
-2.  Review ADR-041-046 (Phase 9 design)
-3.  Create Beads issues for each ADR
-4.  Start Week 1 implementation (Feb 17)
-5.  Track progress weekly
+1. Review ADR-034-037 (Phase 8 foundation)
+2. Review ADR-041-046 (Phase 9 design)
+3. Create Beads issues for each ADR
+4. Start Week 1 implementation (Feb 17)
+5. Track progress weekly

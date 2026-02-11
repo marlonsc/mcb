@@ -2,7 +2,7 @@
 adr: 16
 title: Integration Points and Adapter Pattern
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-05
 related: [13, 15, 19]
 supersedes: []
@@ -119,10 +119,10 @@ impl ComplexityAnalysisInterface for ComplexityAnalysisService {
 
 ### Adapter Responsibilities
 
-1.  **Type Conversion**: PMAT types ↔ MCB types
-2.  **Error Translation**: anyhow::Error → MCB's typed errors
-3.  **Async Bridging**: Wrap blocking PMAT code in `spawn_blocking`
-4.  **Minimal Logic**: <50 LOC, pure translation
+1. **Type Conversion**: PMAT types ↔ MCB types
+2. **Error Translation**: anyhow::Error → MCB's typed errors
+3. **Async Bridging**: Wrap blocking PMAT code in `spawn_blocking`
+4. **Minimal Logic**: <50 LOC, pure translation
 
 ### Integration Point Definition
 

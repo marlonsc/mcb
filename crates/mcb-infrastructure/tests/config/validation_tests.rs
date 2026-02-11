@@ -99,7 +99,9 @@ fn test_cache_config_ttl_when_enabled() {
     let redis_cache = CacheSystemConfig {
         enabled: true,
         provider: CacheProvider::Redis,
-        redis_url: Some("redis://localhost:6379".to_string()),
+        redis_url: Some(mcb_domain::test_services_config::required_test_service_url(
+            "redis_url",
+        )),
         redis_pool_size: 16,
         ..Default::default()
     };

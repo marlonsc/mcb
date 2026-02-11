@@ -180,6 +180,9 @@ mod vector_store_registry_tests {
     #[test]
     fn test_config_builder() {
         let milvus_uri = test_service_url("milvus_address");
+        let strict_milvus_uri =
+            mcb_domain::test_services_config::required_test_service_url("milvus_address");
+        assert_eq!(milvus_uri, strict_milvus_uri);
         let config = VectorStoreProviderConfig::new("milvus")
             .with_uri(&milvus_uri)
             .with_collection("embeddings")
@@ -247,6 +250,9 @@ mod cache_registry_tests {
     #[test]
     fn test_config_builder() {
         let redis_uri = test_service_url("redis_url");
+        let strict_redis_uri =
+            mcb_domain::test_services_config::required_test_service_url("redis_url");
+        assert_eq!(redis_uri, strict_redis_uri);
         let config = CacheProviderConfig::new("redis")
             .with_uri(&redis_uri)
             .with_max_size(10000)

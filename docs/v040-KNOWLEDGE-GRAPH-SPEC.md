@@ -65,10 +65,10 @@ MCB uses `tree-sitter` for high-performance, language-agnostic AST parsing and r
 
 ### Extraction Approach
 
-1.  **AST Parsing**: Generate a concrete syntax tree using language-specific tree-sitter grammars.
-2.  **TSG Rules**: Use TreeSitter Graph (TSG) DSL to map AST patterns to graph nodes and edges.
-3.  **Symbol Resolution**: Resolve local references to Fully Qualified Names (FQNs) to link nodes across modules.
-4.  **Incremental Updates**: Only re-extract files with changed hashes, patching the existing graph.
+1. **AST Parsing**: Generate a concrete syntax tree using language-specific tree-sitter grammars.
+2. **TSG Rules**: Use TreeSitter Graph (TSG) DSL to map AST patterns to graph nodes and edges.
+3. **Symbol Resolution**: Resolve local references to Fully Qualified Names (FQNs) to link nodes across modules.
+4. **Incremental Updates**: Only re-extract files with changed hashes, patching the existing graph.
 
 ### Extraction Port
 
@@ -94,10 +94,10 @@ $$score(d) = \sum_{r \in R} \frac{1}{k + rank(d, r)}$$
 
 ### Search Composition
 
-1.  **FTS (BM25)**: Lexical matching on code content and documentation.
-2.  **Vector (Cosine)**: Semantic similarity using code embeddings.
-3.  **Graph (PageRank/Traversal)**: Structural importance and proximity (e.g., "find callers of X").
-4.  **Freshness Weighting**: Penalty applied to stale context ($score = score \times penalty$).
+1. **FTS (BM25)**: Lexical matching on code content and documentation.
+2. **Vector (Cosine)**: Semantic similarity using code embeddings.
+3. **Graph (PageRank/Traversal)**: Structural importance and proximity (e.g., "find callers of X").
+4. **Freshness Weighting**: Penalty applied to stale context ($score = score \times penalty$).
 
 ## 4. Context Snapshot Design
 

@@ -12,9 +12,9 @@ The primary blocker for v0.2.0 stabilization is the missing `context_search` imp
 
 ### Diagnosis
 
-1.  **Missing Enum Variant**: `SearchResource` in `mcb-server/src/args/consolidated.rs` only supports `Code` and `Memory`. It is missing `Context`.
-2.  **Missing Handler Logic**: `SearchHandler` in `mcb-server/src/handlers/search.rs` does not handle `SearchResource::Context` requests.
-3.  **Service Injection**: `SearchHandler` needs access to `ContextServiceInterface` (defined in `mcb-domain/src/ports/services/context.rs`) but currently only has `SearchServiceInterface` and `MemoryServiceInterface`.
+1. **Missing Enum Variant**: `SearchResource` in `mcb-server/src/args/consolidated.rs` only supports `Code` and `Memory`. It is missing `Context`.
+2. **Missing Handler Logic**: `SearchHandler` in `mcb-server/src/handlers/search.rs` does not handle `SearchResource::Context` requests.
+3. **Service Injection**: `SearchHandler` needs access to `ContextServiceInterface` (defined in `mcb-domain/src/ports/services/context.rs`) but currently only has `SearchServiceInterface` and `MemoryServiceInterface`.
 
 ## 2. Context Search Implementation Plan
 
@@ -70,17 +70,17 @@ match args.resource {
 
 ### Candidates for `#[ignore]`
 
-1.  `tests/golden/test_end_to_end.rs`: Full system flow is expensive.
-2.  `tests/golden/test_git_awareness_e2e.rs`: Git operations are slow.
-3.  `tests/golden/test_memory_operations_e2e.rs`: Database/Memory interactions are slow.
+1. `tests/golden/test_end_to_end.rs`: Full system flow is expensive.
+2. `tests/golden/test_git_awareness_e2e.rs`: Git operations are slow.
+3. `tests/golden/test_memory_operations_e2e.rs`: Database/Memory interactions are slow.
 
 **Action**: Add `#[ignore]` attribute to these tests. Run them explicitly via `cargo test -- --ignored` in a separate CI stage.
 
 ## 4. Next Steps (Phase 1 Execution)
 
-1.  Create feature branch `fix/context-search`.
-2.  Apply changes to `consolidated.rs` and `search.rs`.
-3.  Verify compilation and unit tests.
-4.  Apply `#[ignore]` to slow tests.
-5.  Run `cargo test` to verify speed improvement (< 30s target).
-6.  Commit and push to unblock beads issues.
+1. Create feature branch `fix/context-search`.
+2. Apply changes to `consolidated.rs` and `search.rs`.
+3. Verify compilation and unit tests.
+4. Apply `#[ignore]` to slow tests.
+5. Run `cargo test` to verify speed improvement (< 30s target).
+6. Commit and push to unblock beads issues.

@@ -31,7 +31,7 @@ pub fn test_services_table() -> Option<&'static toml::value::Table> {
             let value = toml::from_str::<toml::Value>(&content).unwrap_or_else(|e| {
                 panic!("Failed to parse TOML from {:?}: {}", config_path, e)
             });
-            
+
             match value.get("test_services") {
                 Some(v) => Some(v.as_table().unwrap_or_else(|| {
                     panic!("'test_services' in {:?} must be a table", config_path)

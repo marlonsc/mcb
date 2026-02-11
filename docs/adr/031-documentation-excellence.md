@@ -2,7 +2,7 @@
 adr: 31
 title: Documentation Excellence
 status: IMPLEMENTED
-created: 
+created:
 updated: 2026-02-05
 related: [3, 6, 12, 13]
 supersedes: []
@@ -18,10 +18,10 @@ Accepted
 
 > Documentation automation implemented in `scripts/docs/`:
 >
-> -   ADR validation via automation.sh (100% compliance verification)
-> -   mdbook integration for documentation publishing
-> -   make docs commands for build/serve/check
-> -   Structured ADR directory with README and graph
+> - ADR validation via automation.sh (100% compliance verification)
+> - mdbook integration for documentation publishing
+> - make docs commands for build/serve/check
+> - Structured ADR directory with README and graph
 
 ## Context
 
@@ -184,10 +184,10 @@ pub struct DocumentationMetrics {
 
 ### Migration Strategy
 
-1.  **Phase 1**: Tool installation and basic integration (Week 1)
-2.  **Phase 2**: ADR framework and validation system (Week 2)
-3.  **Phase 3**: Interactive platform and quality gates (Week 3)
-4.  **Phase 4**: CI/CD integration and optimization (Week 4)
+1. **Phase 1**: Tool installation and basic integration (Week 1)
+2. **Phase 2**: ADR framework and validation system (Week 2)
+3. **Phase 3**: Interactive platform and quality gates (Week 3)
+4. **Phase 4**: CI/CD integration and optimization (Week 4)
 
 ### Risk Mitigation
 

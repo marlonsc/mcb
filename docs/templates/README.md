@@ -61,22 +61,22 @@ See [Contributing Guide](developer/CONTRIBUTING.md) for guidelines.
 
 ### Creating New Documents
 
-1.  **Choose appropriate category**:
+1. **Choose appropriate category**:
 
     -   `user-guide/` - User-facing documentation
     -   `developer/` - Development guides
     -   `architecture/` - Technical architecture
     -   `operations/` - Deployment & operations
 
-2.  **Copy appropriate template**:
+2. **Copy appropriate template**:
 
     ```bash
     cp docs/templates/adr-template.md docs/adr/new-adr.md
     ```
 
-3.  **Follow naming conventions**
+3. **Follow naming conventions**
 
-4.  **Validate before committing**:
+4. **Validate before committing**:
 
    ```bash
    make docs-validate
@@ -112,6 +112,7 @@ See [Contributing Guide](developer/CONTRIBUTING.md) for guidelines.
 Templates are integrated with the build system:
 
 ```bash
+
 # Create new ADR
 make adr-new
 

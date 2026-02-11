@@ -414,55 +414,71 @@ CREATE VIEW blocked_issues AS
 -   All fields from the `issues` table
 -   `labels` - Array of label strings
 -   `dependencies` - Array of dependency objects with:
-    -   `issue_id` - The issue
-    -   `depends_on_id` - What it depends on
-    -   `type` - Dependency type
-    -   `created_at` - When dependency was created
-    -   `created_by` - Who created it
+  -   `issue_id` - The issue
+  -   `depends_on_id` - What it depends on
+  -   `type` - Dependency type
+  -   `created_at` - When dependency was created
+  -   `created_by` - Who created it
 
 ---
 
 ## 6. Configuration File (config.yaml)
 
 ```yaml
+
 # Issue prefix for this repository
+
 # issue-prefix: "mcb"
 
 # Use no-db mode (load from JSONL, no SQLite)
+
 # no-db: false
 
 # Disable daemon for RPC communication
+
 # no-daemon: false
 
 # Disable auto-flush of database to JSONL
+
 # no-auto-flush: false
 
 # Disable auto-import from JSONL when newer
+
 # no-auto-import: false
 
 # Enable JSON output by default
+
 # json: false
 
 # Default actor for audit trails
+
 # actor: ""
 
 # Path to database
+
 # db: ""
 
 # Auto-start daemon if not running
+
 # auto-start-daemon: true
 
 # Debounce interval for auto-flush
+
 # flush-debounce: "5s"
 
 # Git branch for beads commits (IMPORTANT for team projects)
 sync-branch: "beads-sync"
 
 # Multi-repo configuration (experimental)
+
 # repos:
+
 #   primary: "."
+
 #   additional:
+
 #     - ~/beads-planning
+
 #     - ~/work-planning
 ```
 
@@ -496,19 +512,19 @@ sync-branch: "beads-sync"
 
 ### 8.1 Sync Workflow
 
-1.  **bd sync** command:
+1. **bd sync** command:
 
 -   Exports SQLite database to `.beads/issues.jsonl`
 -   Commits changes to git
 -   Pushes to remote on `sync-branch` (default: `beads-sync`)
 
-1.  **Auto-sync**:
+1. **Auto-sync**:
 
 -   Daemon monitors database changes
 -   Auto-flushes to JSONL on mutations
 -   Debounced to prevent excessive writes
 
-1.  **Merge Conflict Resolution**:
+1. **Merge Conflict Resolution**:
 
 -   Beads provides intelligent JSONL merge driver
 -   Handles concurrent edits gracefully
@@ -785,13 +801,13 @@ CHECK (
 
 ### 13.1 Key Tables to Create
 
-1.  **issues** - Main issue table (see 2.1)
-2.  **labels** - Many-to-many label mapping
-3.  **dependencies** - Issue relationships
-4.  **comments** - Discussion threads
-5.  **events** - Audit trail
-6.  **config** - Configuration storage
-7.  **metadata** - Database metadata
+1. **issues** - Main issue table (see 2.1)
+2. **labels** - Many-to-many label mapping
+3. **dependencies** - Issue relationships
+4. **comments** - Discussion threads
+5. **events** - Audit trail
+6. **config** - Configuration storage
+7. **metadata** - Database metadata
 
 ### 13.2 Relationships
 

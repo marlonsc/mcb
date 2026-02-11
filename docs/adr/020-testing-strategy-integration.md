@@ -2,7 +2,7 @@
 adr: 20
 title: Testing Strategy for Integrated Code
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-05
 related: [12, 13, 17]
 supersedes: []

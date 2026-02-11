@@ -2,7 +2,7 @@
 adr: 46
 title: Integration with ADR-034-037 & Policies
 status: PROPOSED
-created: 
+created:
 updated: 2026-02-05
 related: []
 supersedes: []
@@ -10,10 +10,10 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-**Status**: Proposed  
-**Date**: 2026-02-05  
-**Deciders**: MCB Architecture Team  
-**Related**: ADR-034-037 (Workflow series), ADR-041-045 (Context system)  
+**Status**: Proposed
+**Date**: 2026-02-05
+**Deciders**: MCB Architecture Team
+**Related**: ADR-034-037 (Workflow series), ADR-041-045 (Context system)
 **Series Finale**: Completes ADR-041-046 (v0.4.0 architecture)
 
 ## Context
@@ -22,10 +22,10 @@ ADR-041-045 define the integrated context system layers. ADR-046 **bridges** thi
 
 Key integration points:
 
-1.  **FSM gates context freshness requirements** (state determines what freshness is acceptable)
-2.  **Policies define context boundaries** (scope isolation, access control)
-3.  **Compensation triggers context re-validation** (if operation fails, re-check context)
-4.  **Context snapshots enable rollback** (time-travel to pre-operation state)
+1. **FSM gates context freshness requirements** (state determines what freshness is acceptable)
+2. **Policies define context boundaries** (scope isolation, access control)
+3. **Compensation triggers context re-validation** (if operation fails, re-check context)
+4. **Context snapshots enable rollback** (time-travel to pre-operation state)
 
 ## Decision
 
@@ -58,7 +58,7 @@ pub enum ExecutionState {
             update_frequency: Duration::from_secs(300),  // Hourly refresh OK
         },
     },
-    
+
     Ready {
         // Ready to execute: need recent context, all non-blocking policies
         requirements: ContextRequirements {
@@ -68,7 +68,7 @@ pub enum ExecutionState {
             update_frequency: Duration::from_secs(60),  // Per-minute refresh
         },
     },
-    
+
     Executing {
         // Actively executing: need fresh context, all policies strict
         requirements: ContextRequirements {
@@ -83,7 +83,7 @@ pub enum ExecutionState {
             update_frequency: Duration::from_secs(5),  // Real-time refresh
         },
     },
-    
+
     Suspended {
         // Paused: context can be stale (user reviewing)
         requirements: ContextRequirements {
@@ -102,7 +102,7 @@ pub async fn validate_transition(
     context: &ContextSnapshot,
 ) -> Result<TransitionValidation> {
     let requirements = &to.context_requirements;
-    
+
     // Check freshness
     if context.freshness.severity() < requirements.freshness_minimum.severity() {
         return Err(TransitionError::InsufficientFreshness {
@@ -110,18 +110,18 @@ pub async fn validate_transition(
             actual: context.freshness,
         });
     }
-    
+
     // Check policies
     let policy_violations = validate_policies(context, &requirements.required_policies).await?;
     if !policy_violations.is_empty() {
         return Err(TransitionError::PolicyViolations(policy_violations));
     }
-    
+
     // Check scope
     if !context.scope.matches(&requirements.scope_level) {
         return Err(TransitionError::ScopeInsufficient);
     }
-    
+
     Ok(TransitionValidation::allowed())
 }
 ```
@@ -181,10 +181,10 @@ impl PolicyGuard for SecurityScanPolicy {
     ) -> Result<PolicyEvaluationResult> {
         // Collect code in scope
         let code_nodes = context.graph.nodes_in_scope(scope)?;
-        
+
         // Run security checks (SAST)
         let violations = security_scanner.scan(&code_nodes)?;
-        
+
         Ok(PolicyEvaluationResult {
             policy_id: PolicyId::SecurityScan,
             passed: violations.is_empty(),
@@ -228,20 +228,20 @@ pub struct CompensationHandler {
 impl CompensationPolicy for CompensationHandler {
     async fn execute(&self, action: &CompensationAction) -> Result<()> {
         self.logger.info(&format!("Executing compensation: {:?}", action));
-        
+
         match action {
             CompensationAction::RestoreSnapshot { snapshot_id } => {
                 // Time-travel to previous context
                 let snapshot = self.context_store.snapshot(snapshot_id).await?;
-                
+
                 // Revert code to match snapshot
                 self.vcs_provider.reset_to_commit(
                     &snapshot.vcs_state.commit_hash
                 ).await?;
-                
+
                 // Revalidate policies on restored context
                 self.revalidate_after_compensation(&snapshot).await?;
-                
+
                 self.logger.info("Snapshot restoration succeeded");
                 Ok(())
             },
@@ -256,11 +256,11 @@ impl CompensationPolicy for CompensationHandler {
             },
         }
     }
-    
+
     async fn revalidate_after_compensation(&self, snapshot: &ContextSnapshot) -> Result<()> {
         // Re-check all policies after compensation
         let results = policies.evaluate_all(snapshot).await?;
-        
+
         if results.iter().any(|r| !r.passed) {
             self.logger.error("Policies still failing after compensation");
             return Err(CompensationError::StillFailing {
@@ -269,7 +269,7 @@ impl CompensationPolicy for CompensationHandler {
                     .collect(),
             });
         }
-        
+
         self.logger.info("All policies passing after compensation");
         Ok(())
     }
@@ -292,21 +292,21 @@ pub trait EventBusProvider: Send + Sync {
 pub enum WorkflowEvent {
     // FSM transitions
     StateTransitioned { from: ExecutionState, to: ExecutionState, timestamp: SystemTime },
-    
+
     // Context changes
     ContextRefreshed { snapshot_id: ContextId, freshness: ContextFreshness },
     ContextStale { snapshot_id: ContextId, reason: String },
     ContextInvalidated { reason: StalenessSignal },
-    
+
     // Policy checks
     PolicyEvaluated { result: PolicyEvaluationResult },
     PolicyViolation { policy_id: PolicyId, severity: Severity },
-    
+
     // Compensation
     CompensationTriggered { action: CompensationAction, reason: String },
     CompensationSucceeded { action: CompensationAction },
     CompensationFailed { action: CompensationAction, error: String },
-    
+
     // Session lifecycle
     SessionStarted { session_id: SessionId, initial_context: ContextId },
     SessionEnded { session_id: SessionId, final_context: ContextId },
@@ -374,7 +374,7 @@ impl MpcHandler for ContextHandler {
     fn resource_type(&self) -> &'static str {
         "context"
     }
-    
+
     async fn handle(&self, action: &str, input: serde_json::Value) -> Result<serde_json::Value> {
         match action {
             "search" => self.handle_search(input).await,
@@ -391,37 +391,37 @@ impl ContextHandler {
         let query: String = input.get("query")?.as_str()?.into();
         let task_id: String = input.get("task_id")?.as_str()?.into();
         let filters: SearchFilters = serde_json::from_value(input.get("filters")?)?;
-        
+
         // Implementation (same as before)
         let results = self.search_engine.search(&query, &filters).await?;
         Ok(serde_json::to_value(results)?)
     }
-    
+
     async fn handle_snapshot(&self, input: serde_json::Value) -> Result<serde_json::Value> {
         let id: String = input.get("id")?.as_str()?.into();
         let snapshot = self.context_store.snapshot(&id).await?;
         Ok(serde_json::to_value(snapshot)?)
     }
-    
+
     async fn handle_timeline(&self, input: serde_json::Value) -> Result<serde_json::Value> {
         let task_id: String = input.get("task_id")?.as_str()?.into();
         let start: SystemTime = serde_json::from_value(input.get("start")?)?;
         let end: SystemTime = serde_json::from_value(input.get("end")?)?;
-        
+
         let timeline = self.context_store.timeline(&task_id, start, end).await?;
         Ok(serde_json::to_value(timeline)?)
     }
-    
+
     async fn handle_validate(&self, input: serde_json::Value) -> Result<serde_json::Value> {
         let snapshot_id: String = input.get("snapshot_id")?.as_str()?.into();
         let policies: Vec<PolicyId> = serde_json::from_value(input.get("policies")?)?;
-        
+
         let snapshot = self.context_store.snapshot(&snapshot_id).await?;
         let results = futures::join_all(
             policies.iter()
                 .map(|p| self.policy_guard.evaluate(&snapshot, p))
         ).await;
-        
+
         Ok(serde_json::to_value(results?)?)
     }
 }
@@ -463,46 +463,46 @@ impl ContextToolHandler {
             ContextTool::ContextSearch { query, task_id, filters } => {
                 // **Architecture Correction 7**: BeadsTask is an EXTERNAL DTO from the beads issue tracker.
                 // It must be mapped to an internal WorkflowTask entity at the infrastructure boundary.
-                
+
                 // 1. Load external BeadsTask DTO from Beads issue tracker
                 let beads_task = self.beads_client.get_task(task_id).await?;
-                
+
                 // 2. Map external DTO → internal entity at infrastructure boundary
                 let workflow_task = self.task_adapter.adapt_beads_to_workflow(beads_task).await?;
-                
+
                 // 3. Get current context snapshot
                 let context = self.context_store.get_current().await?;
-                
+
                 // 4. Validate freshness for task
                 if context.freshness == ContextFreshness::StaleWithRisk {
                     // Trigger context refresh
                     let new_context = self.refresh_context(&workflow_task).await?;
                     context = new_context;
                 }
-                
+
                 // 5. Route search by task type (using internal WorkflowTask)
                 let routed_results = self.route_search(&context, &workflow_task, query).await?;
-                
+
                 // 6. Return results with provenance
                 Ok(ToolResult::SearchResults(routed_results))
             },
-            
+
             ContextTool::ContextValidate { snapshot_id, policies } => {
                 let snapshot = self.context_store.snapshot(snapshot_id).await?;
-                
+
                 // Evaluate requested policies
                 let results = futures::join_all(
                     policies.iter()
                         .map(|p| self.policy_guard.evaluate(&snapshot, p))
                 ).await;
-                
+
                 Ok(ToolResult::ValidationResults {
                     snapshot_id: snapshot_id.clone(),
                     policy_results: results?,
                     compensation_needed: results.iter().any(|r| !r.passed),
                 })
             },
-            
+
             _ => Err(Error::UnknownTool),
         }
     }
@@ -513,28 +513,28 @@ impl ContextToolHandler {
 
 **Applied Corrections (v0.4.0 Alignment)**:
 
-1.  **Correction 2 (mcb-z1f)**: WorkflowEventBus → Reuse EventBusProvider
+1. **Correction 2 (mcb-z1f)**: WorkflowEventBus → Reuse EventBusProvider
 
 -   ✅ Removed duplicate `WorkflowEventBus` type
 -   ✅ Defined `WorkflowEvent` as variant publishable through existing `EventBusProvider` port
 -   ✅ Subscribers implement `EventHandler` trait (existing pattern)
 -   **Impact**: Single event bus infrastructure, no duplication
 
-1.  **Correction 7 (mcb-d26)**: BeadsTask contract clarification
+1. **Correction 7 (mcb-d26)**: BeadsTask contract clarification
 
 -   ✅ Documented BeadsTask as EXTERNAL DTO from beads issue tracker
 -   ✅ Added mapping: external BeadsTask → internal WorkflowTask at infrastructure boundary
 -   ✅ Task routing: external DTO → adapter → internal entity → orchestrator
 -   **Impact**: Clear contract, proper separation of concerns
 
-1.  **Correction 8 (mcb-ehk)**: CompensationHandler layer placement
+1. **Correction 8 (mcb-ehk)**: CompensationHandler layer placement
 
 -   ✅ Moved from application to infrastructure: `mcb-infrastructure/src/compensation/handler.rs`
 -   ✅ Application layer defines `CompensationPolicy` port trait
 -   ✅ Infrastructure implements `CompensationPolicy` with rollback, retry, logging
 -   **Impact**: Proper layer separation, infrastructure concerns isolated
 
-1.  **Correction 9 (mcb-tmg)**: MCP tool registration pattern
+1. **Correction 9 (mcb-tmg)**: MCP tool registration pattern
 
 -   ✅ Replaced with ADR-033 ConsolidatedHandler pattern
 -   ✅ Handlers in `mcb-server/src/handlers/context_handlers.rs`

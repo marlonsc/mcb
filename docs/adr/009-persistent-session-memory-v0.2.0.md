@@ -2,7 +2,7 @@
 adr: 9
 title: Persistent Session Memory v0.2.0
 status: PROPOSED
-created: 
+created:
 updated: 2026-02-05
 related: [1, 2, 3, 7, 8, 10, 12, 13]
 supersedes: []
@@ -21,15 +21,15 @@ implementation_status: Partial
 > tools and ensure stable API surface for v1.0.0.
 > Not yet implemented. Target crate structure for v0.2.0:
 >
-> -   `crates/mcb-domain/src/memory.rs` - Memory domain types
-> -   `crates/mcb-application/src/ports/providers/memory.rs` - MemoryProvider port trait
-> -   `crates/mcb-application/src/use_cases/session.rs` - Session manager service
-> -   `crates/mcb-application/src/use_cases/memory (action=list, resource=observation).rs` - Memory search service
-> -   `crates/mcb-application/src/use_cases/context_injection.rs` - Context injection
-> -   `crates/mcb-providers/src/memory/` - Memory provider implementations
-> -   `crates/mcb-server/src/handlers/memory_tools.rs` - MCP tool handlers
-> -   `crates/mcb-infrastructure/src/config/memory.rs` - Memory configuration
-> -   Requires ADR-008 git integration for git-tagged observations
+> - `crates/mcb-domain/src/memory.rs` - Memory domain types
+> - `crates/mcb-application/src/ports/providers/memory.rs` - MemoryProvider port trait
+> - `crates/mcb-application/src/use_cases/session.rs` - Session manager service
+> - `crates/mcb-application/src/use_cases/memory (action=list, resource=observation).rs` - Memory search service
+> - `crates/mcb-application/src/use_cases/context_injection.rs` - Context injection
+> - `crates/mcb-providers/src/memory/` - Memory provider implementations
+> - `crates/mcb-server/src/handlers/memory_tools.rs` - MCP tool handlers
+> - `crates/mcb-infrastructure/src/config/memory.rs` - Memory configuration
+> - Requires ADR-008 git integration for git-tagged observations
 
 ## Context
 
@@ -89,10 +89,10 @@ All memory-related MCP tools use the `memory_` prefix to avoid namespace collisi
 
 **Compatibility policy**:
 
-1.  Aliases kept for at least one major version cycle
-2.  New tools MUST use `memory_` prefix
-3.  Experimental tools marked in description until stable
-4.  Response envelope includes `_api_version` field for client compatibility
+1. Aliases kept for at least one major version cycle
+2. New tools MUST use `memory_` prefix
+3. Experimental tools marked in description until stable
+4. Response envelope includes `_api_version` field for client compatibility
 
 ### Architecture Overview
 
@@ -1413,10 +1413,10 @@ fn reciprocal_rank_fusion(
 
 ### Search Flow
 
-1.  **FTS retrieval**: `observations_fts MATCH ?` → ranked by BM25
-2.  **Vector retrieval**: `VectorStoreProvider::search_similar("memories", query_embedding, limit)`
-3.  **Fusion**: RRF merge with k=60
-4.  **Return**: `ObservationIndex` with fused scores
+1. **FTS retrieval**: `observations_fts MATCH ?` → ranked by BM25
+2. **Vector retrieval**: `VectorStoreProvider::search_similar("memories", query_embedding, limit)`
+3. **Fusion**: RRF merge with k=60
+4. **Return**: `ObservationIndex` with fused scores
 
 ## Related ADRs
 

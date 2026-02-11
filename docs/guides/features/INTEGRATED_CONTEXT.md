@@ -132,9 +132,9 @@ See **ADR-037: Compensation & Orchestration** for orchestration patterns.
 1. User submits query: "How to handle errors?"
 2. System searches code graph + embeddings
 3. Results ranked by:
-   - Semantic relevance (embedding similarity)
-   - Keyword match (TF-IDF)
-   - Freshness score (recency + staleness signals)
+   -   Semantic relevance (embedding similarity)
+   -   Keyword match (TF-IDF)
+   -   Freshness score (recency + staleness signals)
 4. Return top results with freshness metadata
 5. User can filter by freshness threshold
 ```
@@ -157,9 +157,9 @@ See **ADR-037: Compensation & Orchestration** for orchestration patterns.
 3. System applies policy filter during search
 4. Results filtered to only include fresh docs
 5. If no fresh results, trigger compensation:
-   - Refresh docs from source
-   - Notify user of update
-   - Cache new version
+   -   Refresh docs from source
+   -   Notify user of update
+   -   Cache new version
 ```
 
 ### Workflow 4: Compensation & Rollback
@@ -168,13 +168,13 @@ See **ADR-037: Compensation & Orchestration** for orchestration patterns.
 1. Context in use: "Use endpoint /api/v1/auth"
 2. Breaking change detected: Endpoint deprecated
 3. System triggers compensation:
-   - Fetch new endpoint: /api/v2/auth
-   - Update context snapshot
-   - Notify dependent systems
+   -   Fetch new endpoint: /api/v2/auth
+   -   Update context snapshot
+   -   Notify dependent systems
 4. If compensation fails:
-   - Rollback to previous snapshot
-   - Mark context as invalid
-   - Suggest manual review
+   -   Rollback to previous snapshot
+   -   Mark context as invalid
+   -   Suggest manual review
 ```
 
 ## Integration Points
@@ -204,6 +204,7 @@ New MCP tools expose context system capabilities:
 
 ```toml
 [freshness]
+
 # Default staleness threshold (days)
 default_max_age = 30
 
@@ -218,6 +219,7 @@ patterns = { max_age = 60, signal = "legacy" }
 
 ```toml
 [snapshots]
+
 # Keep snapshots for last N commits
 retention_commits = 100
 
@@ -233,18 +235,23 @@ frequency = 10
 ### Example 1: Search with Freshness
 
 ```bash
+
 # Search for authentication patterns, only fresh results
 mcb search --query "authenticate user" --freshness-max-age 7
 
 # Returns:
+
 # 1. OAuth2 implementation (2 days old) ✓
+
 # 2. JWT pattern (5 days old) ✓
+
 # 3. Session-based auth (45 days old) ⚠ [STALE]
 ```
 
 ### Example 2: Time-Travel Query
 
 ```bash
+
 # Show authentication patterns from v0.2.0
 mcb search --query "authenticate" --snapshot v0.2.0
 
@@ -252,18 +259,23 @@ mcb search --query "authenticate" --snapshot v0.2.0
 mcb search --query "authenticate" --snapshot v0.2.0 --compare-current
 
 # Output shows evolution:
+
 # v0.2.0: Session-based auth
+
 # v0.3.0: Added JWT support
+
 # v0.4.0: OAuth2 + JWT + Session (multi-strategy)
 ```
 
 ### Example 3: Policy-Driven Search
 
 ```bash
+
 # Apply "API docs must be fresh" policy
 mcb search --query "API reference" --policy api_docs
 
 # Only returns docs < 7 days old
+
 # If no fresh docs found, triggers compensation
 ```
 
@@ -282,7 +294,7 @@ mcb search --query "API reference" --policy api_docs
 
 ## Next Steps
 
-1.  Review ADR-034-037 for workflow and policy foundations
-2.  Review ADR-041-046 for context system implementation
-3.  See [`docs/implementation/phase-9-roadmap.md`](../implementation/phase-9-roadmap.md) for 4-week execution plan
-4.  Check [`docs/migration/v0.3-to-v0.4.md`](../migration/v0.3-to-v0.4.md) for upgrade guide
+1. Review ADR-034-037 for workflow and policy foundations
+2. Review ADR-041-046 for context system implementation
+3. See [`docs/implementation/phase-9-roadmap.md`](../implementation/phase-9-roadmap.md) for 4-week execution plan
+4. Check [`docs/migration/v0.3-to-v0.4.md`](../migration/v0.3-to-v0.4.md) for upgrade guide

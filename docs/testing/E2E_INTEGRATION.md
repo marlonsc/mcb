@@ -4,9 +4,9 @@
 
 MCB has a **3-layer testing strategy** to ensure admin web UI routes are always accessible:
 
-1.  **Unit Tests (Rust)**: Test isolated route handlers
-2.  **Integration Tests (Rust)**: Test full Rocket server with `admin_rocket()`  
-3.  **E2E Tests (Playwright)**: Test actual HTTP server end-to-end
+1. **Unit Tests (Rust)**: Test isolated route handlers
+2. **Integration Tests (Rust)**: Test full Rocket server with `admin_rocket()`
+3. **E2E Tests (Playwright)**: Test actual HTTP server end-to-end
 
 ## Why All 3 Layers?
 
@@ -35,7 +35,7 @@ async fn test_dashboard_returns_html() {
 }
 ```
 
-**What they catch**: Route handler bugs, template rendering issues.  
+**What they catch**: Route handler bugs, template rendering issues.
 **What they miss**: Routes not mounted in production `admin_rocket()`.
 
 ### Layer 2: Integration Tests (Rust)
@@ -49,7 +49,7 @@ Tests the **REAL production server** using `admin_rocket()`:
 async fn test_admin_rocket_dashboard_is_accessible() {
     let (client, _, _) = AdminTestHarness::new().build_client().await;
     let response = client.get("/").dispatch().await;
-    
+
     assert_eq!(
         response.status(),
         Status::Ok,
@@ -58,7 +58,7 @@ async fn test_admin_rocket_dashboard_is_accessible() {
 }
 ```
 
-**What they catch**: Routes not mounted in `admin_rocket()`, production config issues.  
+**What they catch**: Routes not mounted in `admin_rocket()`, production config issues.
 **What they miss**: HTTP server startup issues, network problems, browser rendering.
 
 ### Layer 3: E2E Tests (Playwright)
@@ -75,7 +75,7 @@ test('Dashboard (/) should return 200 OK with HTML', async ({ page }) => {
 });
 ```
 
-**What they catch**: Everything - HTTP server config, routing, rendering, browser compatibility.  
+**What they catch**: Everything - HTTP server config, routing, rendering, browser compatibility.
 **What they miss**: Nothing (but slowest to run).
 
 ## Running Tests
@@ -83,6 +83,7 @@ test('Dashboard (/) should return 200 OK with HTML', async ({ page }) => {
 ### Quick (Development)
 
 ```bash
+
 # Run just the critical integration tests (Layer 2)
 make test SCOPE=integration
 
@@ -93,6 +94,7 @@ cargo test --package mcb-server --test integration golden_admin_web_e2e
 ### Full (Pre-commit)
 
 ```bash
+
 # Run all Rust tests + E2E
 make quality  # Runs fmt + lint + test SCOPE=all
 make test-e2e  # Runs Playwright E2E tests
@@ -101,6 +103,7 @@ make test-e2e  # Runs Playwright E2E tests
 ### E2E Only
 
 ```bash
+
 # Run all Playwright tests
 make test-e2e
 
@@ -126,14 +129,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Run Rust tests
+      -   uses: actions/checkout@v4
+      -   name: Run Rust tests
         run: make test SCOPE=all
-      
-      - name: Install Playwright
+
+      -   name: Install Playwright
         run: npm ci
-      
-      - name: Run E2E tests
+
+      -   name: Run E2E tests
         run: make test-e2e
 ```
 
@@ -176,6 +179,7 @@ MCB server not running. Playwright config auto-starts server via `webServer.comm
 **Fix**:
 
 ```bash
+
 # Manual server start for debugging
 ./target/release/mcb serve --server &
 MCB_BASE_URL=http://localhost:8080 npx playwright test
@@ -194,7 +198,7 @@ Playwright dependencies not installed.
 **Fix**: Add to CI workflow:
 
 ```yaml
-- name: Install Playwright browsers
+-   name: Install Playwright browsers
   run: npx playwright install --with-deps chromium
 ```
 

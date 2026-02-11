@@ -39,6 +39,7 @@ on: # yamllint disable-line rule:truthy
 
 env:
   CARGO_TERM_COLOR: always
+  MCB_RUN_DOCKER_INTEGRATION_TESTS: "0"
 
 jobs:
   lint:

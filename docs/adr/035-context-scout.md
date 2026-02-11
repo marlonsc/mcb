@@ -2,7 +2,7 @@
 adr: 35
 title: Context Scout — Project State Discovery
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-06
 related: [23, 25, 29]
 supersedes: []
@@ -115,7 +115,7 @@ pub enum RepoState {
 }
 
 /// Full abstraction for version control operations
-/// 
+///
 /// All VCS operations flow through this trait. Implementations may use:
 /// - git2 library (MVP)
 /// - GitHub/GitLab HTTP APIs (Phase 2+)
@@ -126,21 +126,21 @@ pub enum RepoState {
 #[async_trait]
 pub trait VcsProvider: Send + Sync {
     // ============ Read Operations ============
-    
+
     /// Current branch name (e.g., "release/v0.3.0")
     async fn get_current_branch(&self) -> Result<String, WorkflowError>;
-    
+
     /// List of staged files (index changes)
     async fn get_staged_files(&self) -> Result<Vec<String>, WorkflowError>;
-    
+
     /// List of unstaged modified files (working tree changes)
     async fn get_unstaged_files(&self) -> Result<Vec<String>, WorkflowError>;
-    
+
     /// List of untracked files
     async fn get_untracked_files(&self) -> Result<Vec<String>, WorkflowError>;
-    
+
     /// Commit history (most recent first)
-    /// 
+    ///
     /// # Arguments
     /// * `limit` - Maximum number of commits to return
     /// * `branch` - Optional: branch to query (default: HEAD)
@@ -149,17 +149,17 @@ pub trait VcsProvider: Send + Sync {
         limit: usize,
         branch: Option<&str>,
     ) -> Result<Vec<CommitSummary>, WorkflowError>;
-    
+
     /// Repository state (clean, merge in progress, etc.)
     async fn get_repo_state(&self) -> Result<RepoState, WorkflowError>;
-    
+
     /// Count of stash entries
     async fn get_stash_count(&self) -> Result<u32, WorkflowError>;
-    
+
     // ============ Write Operations ============
-    
+
     /// Create a new branch
-    /// 
+    ///
     /// # Arguments
     /// * `name` - Branch name (e.g., "feature/new-auth")
     /// * `from` - Source branch (default: current HEAD)
@@ -168,9 +168,9 @@ pub trait VcsProvider: Send + Sync {
         name: &str,
         from: Option<&str>,
     ) -> Result<(), WorkflowError>;
-    
+
     /// Create a worktree (isolated working directory for branch)
-    /// 
+    ///
     /// Each workflow session gets its own worktree for isolation.
     /// Worktree path is typically: `{repo_root}/.worktrees/{session_id}`
     ///
@@ -182,15 +182,15 @@ pub trait VcsProvider: Send + Sync {
         path: &Path,
         branch: &str,
     ) -> Result<(), WorkflowError>;
-    
+
     /// Remove a worktree
     async fn remove_worktree(&self, path: &Path) -> Result<(), WorkflowError>;
-    
+
     /// Stage files for commit
     async fn stage_files(&self, paths: &[String]) -> Result<(), WorkflowError>;
-    
+
     /// Commit staged changes
-    /// 
+    ///
     /// # Arguments
     /// * `message` - Commit message
     /// * `author_name` - Committer name (optional)
@@ -203,21 +203,21 @@ pub trait VcsProvider: Send + Sync {
         author_name: Option<&str>,
         author_email: Option<&str>,
     ) -> Result<String, WorkflowError>;
-    
+
     /// Push branch to remote
-    /// 
+    ///
     /// # Arguments
     /// * `branch` - Branch name to push
     /// * `force` - Force push (use carefully)
     async fn push(&self, branch: &str, force: bool) -> Result<(), WorkflowError>;
-    
+
     /// Pull updates from remote
     async fn pull(&self, branch: Option<&str>) -> Result<(), WorkflowError>;
-    
+
     // ============ Pull Request Operations ============
-    
+
     /// Create a pull request
-    /// 
+    ///
     /// # Arguments
     /// * `from_branch` - Source branch (feature branch)
     /// * `to_branch` - Target branch (typically main/master)
@@ -236,9 +236,9 @@ pub trait VcsProvider: Send + Sync {
         labels: Option<&[String]>,
         assignees: Option<&[String]>,
     ) -> Result<PullRequest, WorkflowError>;
-    
+
     /// Merge a pull request
-    /// 
+    ///
     /// # Arguments
     /// * `pr_id` - Pull request ID
     /// * `strategy` - Merge strategy (merge, squash, rebase)
@@ -247,9 +247,9 @@ pub trait VcsProvider: Send + Sync {
         pr_id: u64,
         strategy: MergeStrategy,
     ) -> Result<(), WorkflowError>;
-    
+
     /// List pull requests
-    /// 
+    ///
     /// # Arguments
     /// * `state` - Filter by state (open, closed, all)
     /// * `limit` - Max results
@@ -258,11 +258,11 @@ pub trait VcsProvider: Send + Sync {
         state: PrState,
         limit: usize,
     ) -> Result<Vec<PullRequest>, WorkflowError>;
-    
+
     // ============ Webhook Operations (Phase 2+) ============
-    
+
     /// Register webhook for events
-    /// 
+    ///
     /// # Arguments
     /// * `url` - Webhook target URL
     /// * `events` - Events to subscribe to
@@ -273,7 +273,7 @@ pub trait VcsProvider: Send + Sync {
         events: &[WebhookEvent],
         secret: Option<&str>,
     ) -> Result<String, WorkflowError>; // Returns webhook ID
-    
+
     /// Unregister webhook
     async fn unregister_webhook(&self, id: &str) -> Result<(), WorkflowError>;
 }
@@ -312,7 +312,7 @@ impl Git2Provider {
             repo_path: repo_path.into(),
         }
     }
-    
+
     /// Open repository (internal, runs on blocking thread)
     fn open_repo(&self) -> Result<Repository, WorkflowError> {
         Repository::open(&self.repo_path).map_err(|e| {
@@ -332,7 +332,7 @@ impl VcsProvider for Git2Provider {
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to open repo: {}", e),
                 })?;
-            
+
             match repo.head() {
                 Ok(head) => {
                     Ok(head.shorthand()
@@ -352,7 +352,7 @@ impl VcsProvider for Git2Provider {
             message: format!("Task panicked: {}", e),
         })?
     }
-    
+
     async fn get_staged_files(&self) -> Result<Vec<String>, WorkflowError> {
         let repo_path = self.repo_path.clone();
         tokio::task::spawn_blocking(move || {
@@ -360,19 +360,19 @@ impl VcsProvider for Git2Provider {
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to open repo: {}", e),
                 })?;
-            
+
             let mut opts = StatusOptions::new();
             opts.include_untracked(false);
-            
+
             let statuses = repo.statuses(Some(&mut opts))
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to get status: {}", e),
                 })?;
-            
+
             let mut staged = Vec::new();
             for entry in statuses.iter() {
                 let s = entry.status();
-                if s.contains(Status::INDEX_NEW | Status::INDEX_MODIFIED | 
+                if s.contains(Status::INDEX_NEW | Status::INDEX_MODIFIED |
                             Status::INDEX_DELETED | Status::INDEX_RENAMED |
                             Status::INDEX_TYPECHANGE) {
                     if let Some(path) = entry.path() {
@@ -387,7 +387,7 @@ impl VcsProvider for Git2Provider {
             message: format!("Task panicked: {}", e),
         })?
     }
-    
+
     async fn get_unstaged_files(&self) -> Result<Vec<String>, WorkflowError> {
         let repo_path = self.repo_path.clone();
         tokio::task::spawn_blocking(move || {
@@ -395,15 +395,15 @@ impl VcsProvider for Git2Provider {
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to open repo: {}", e),
                 })?;
-            
+
             let mut opts = StatusOptions::new();
             opts.include_untracked(false);
-            
+
             let statuses = repo.statuses(Some(&mut opts))
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to get status: {}", e),
                 })?;
-            
+
             let mut unstaged = Vec::new();
             for entry in statuses.iter() {
                 let s = entry.status();
@@ -420,7 +420,7 @@ impl VcsProvider for Git2Provider {
             message: format!("Task panicked: {}", e),
         })?
     }
-    
+
     async fn get_untracked_files(&self) -> Result<Vec<String>, WorkflowError> {
         let repo_path = self.repo_path.clone();
         tokio::task::spawn_blocking(move || {
@@ -428,15 +428,15 @@ impl VcsProvider for Git2Provider {
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to open repo: {}", e),
                 })?;
-            
+
             let mut opts = StatusOptions::new();
             opts.include_untracked(true);
-            
+
             let statuses = repo.statuses(Some(&mut opts))
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to get status: {}", e),
                 })?;
-            
+
             let mut untracked = Vec::new();
             for entry in statuses.iter() {
                 if entry.status().contains(Status::WT_NEW) {
@@ -452,7 +452,7 @@ impl VcsProvider for Git2Provider {
             message: format!("Task panicked: {}", e),
         })?
     }
-    
+
     async fn get_commit_history(
         &self,
         limit: usize,
@@ -460,46 +460,46 @@ impl VcsProvider for Git2Provider {
     ) -> Result<Vec<CommitSummary>, WorkflowError> {
         let repo_path = self.repo_path.clone();
         let branch = branch.map(String::from);
-        
+
         tokio::task::spawn_blocking(move || {
             let repo = Repository::open(&repo_path)
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to open repo: {}", e),
                 })?;
-            
+
             let head_oid = repo.head()
                 .ok()
                 .and_then(|h| h.target())
                 .ok_or_else(|| WorkflowError::ContextError {
                     message: "No commits found".to_string(),
                 })?;
-            
+
             let mut revwalk = repo.revwalk()
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to walk history: {}", e),
                 })?;
-            
+
             revwalk.push(head_oid)
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to push to revwalk: {}", e),
                 })?;
-            
+
             revwalk.simplify_first_parent()
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to simplify: {}", e),
                 })?;
-            
+
             let mut commits = Vec::with_capacity(limit);
             for oid in revwalk.take(limit) {
                 let oid = oid.map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to get OID: {}", e),
                 })?;
-                
+
                 let commit = repo.find_commit(oid)
                     .map_err(|e| WorkflowError::ContextError {
                         message: format!("Failed to find commit: {}", e),
                     })?;
-                
+
                 let hash = oid.to_string();
                 let short_hash = hash[..7.min(hash.len())].to_string();
                 let message = commit.summary().unwrap_or("").to_string();
@@ -508,7 +508,7 @@ impl VcsProvider for Git2Provider {
                 let timestamp = chrono::DateTime::from_timestamp(time.seconds(), 0)
                     .unwrap_or_default()
                     .with_timezone(&chrono::Utc);
-                
+
                 commits.push(CommitSummary {
                     hash,
                     short_hash,
@@ -517,7 +517,7 @@ impl VcsProvider for Git2Provider {
                     timestamp,
                 });
             }
-            
+
             Ok(commits)
         })
         .await
@@ -525,7 +525,7 @@ impl VcsProvider for Git2Provider {
             message: format!("Task panicked: {}", e),
         })?
     }
-    
+
     async fn get_repo_state(&self) -> Result<RepoState, WorkflowError> {
         let repo_path = self.repo_path.clone();
         tokio::task::spawn_blocking(move || {
@@ -533,7 +533,7 @@ impl VcsProvider for Git2Provider {
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to open repo: {}", e),
                 })?;
-            
+
             Ok(match repo.state() {
                 git2::RepositoryState::Clean => RepoState::Clean,
                 git2::RepositoryState::Merge => RepoState::Merge,
@@ -549,7 +549,7 @@ impl VcsProvider for Git2Provider {
             message: format!("Task panicked: {}", e),
         })?
     }
-    
+
     async fn get_stash_count(&self) -> Result<u32, WorkflowError> {
         let repo_path = self.repo_path.clone();
         tokio::task::spawn_blocking(move || {
@@ -557,7 +557,7 @@ impl VcsProvider for Git2Provider {
                 .map_err(|e| WorkflowError::ContextError {
                     message: format!("Failed to open repo: {}", e),
                 })?;
-            
+
             let mut count = 0u32;
             repo.stash_foreach(|_, _, _| {
                 count += 1;
@@ -566,7 +566,7 @@ impl VcsProvider for Git2Provider {
             .map_err(|e| WorkflowError::ContextError {
                 message: format!("Failed to count stashes: {}", e),
             })?;
-            
+
             Ok(count)
         })
         .await
@@ -574,7 +574,7 @@ impl VcsProvider for Git2Provider {
             message: format!("Task panicked: {}", e),
         })?
     }
-    
+
     // Write operations...
     async fn create_branch(
         &self,
@@ -584,7 +584,7 @@ impl VcsProvider for Git2Provider {
         // TODO: Implementation following spawn_blocking pattern
         unimplemented!("create_branch")
     }
-    
+
     async fn create_worktree(
         &self,
         path: &Path,
@@ -593,17 +593,17 @@ impl VcsProvider for Git2Provider {
         // TODO: Implementation using git2::Repository::open_worktree or git2-sys raw calls
         unimplemented!("create_worktree")
     }
-    
+
     async fn remove_worktree(&self, path: &Path) -> Result<(), WorkflowError> {
         // TODO: Implementation
         unimplemented!("remove_worktree")
     }
-    
+
     async fn stage_files(&self, paths: &[String]) -> Result<(), WorkflowError> {
         // TODO: Implementation
         unimplemented!("stage_files")
     }
-    
+
     async fn commit(
         &self,
         message: &str,
@@ -613,17 +613,17 @@ impl VcsProvider for Git2Provider {
         // TODO: Implementation
         unimplemented!("commit")
     }
-    
+
     async fn push(&self, branch: &str, force: bool) -> Result<(), WorkflowError> {
         // TODO: Implementation
         unimplemented!("push")
     }
-    
+
     async fn pull(&self, branch: Option<&str>) -> Result<(), WorkflowError> {
         // TODO: Implementation
         unimplemented!("pull")
     }
-    
+
     async fn create_pr(
         &self,
         from_branch: &str,
@@ -636,7 +636,7 @@ impl VcsProvider for Git2Provider {
         // Phase 2+: GitHub/GitLab API via separate provider
         unimplemented!("create_pr - requires Phase 2 implementation")
     }
-    
+
     async fn merge_pr(
         &self,
         pr_id: u64,
@@ -645,7 +645,7 @@ impl VcsProvider for Git2Provider {
         // Phase 2+: GitHub/GitLab API
         unimplemented!("merge_pr - requires Phase 2 implementation")
     }
-    
+
     async fn list_prs(
         &self,
         state: PrState,
@@ -654,7 +654,7 @@ impl VcsProvider for Git2Provider {
         // Phase 2+: GitHub/GitLab API
         unimplemented!("list_prs - requires Phase 2 implementation")
     }
-    
+
     async fn register_webhook(
         &self,
         url: &str,
@@ -664,7 +664,7 @@ impl VcsProvider for Git2Provider {
         // Phase 2+: GitHub/GitLab API
         unimplemented!("register_webhook - requires Phase 2 implementation")
     }
-    
+
     async fn unregister_webhook(&self, id: &str) -> Result<(), WorkflowError> {
         // Phase 2+: GitHub/GitLab API
         unimplemented!("unregister_webhook - requires Phase 2 implementation")
@@ -674,10 +674,10 @@ impl VcsProvider for Git2Provider {
 
 **Key Implementation Patterns:**
 
-1.  **spawn_blocking() for git2 FFI**: All git2 calls run on Tokio's blocking thread pool
-2.  **No direct git2 exposure**: Other crates never import `git2`
-3.  **Trait-based dispatch**: Consumers depend only on `VcsProvider` trait
-4.  **Phase 2+ extensibility**: PR/webhook operations can be implemented by GitHub/GitLab providers later
+1. **spawn_blocking() for git2 FFI**: All git2 calls run on Tokio's blocking thread pool
+2. **No direct git2 exposure**: Other crates never import `git2`
+3. **Trait-based dispatch**: Consumers depend only on `VcsProvider` trait
+4. **Phase 2+ extensibility**: PR/webhook operations can be implemented by GitHub/GitLab providers later
 
 ---
 
@@ -808,10 +808,10 @@ Result: No interference. Both sessions progress independently.
 
 pub struct GitContext {
     // ...existing fields...
-    
+
     /// Active worktrees (path → branch mapping)
     pub active_worktrees: std::collections::HashMap<PathBuf, String>,
-    
+
     /// Worktree cleanup needed (orphaned worktrees after crash)
     pub needs_worktree_cleanup: bool,
 }
@@ -821,14 +821,14 @@ pub struct GitContext {
 
 **Scenario: Operator crashes or session is cancelled mid-flight**
 
-1.  Worktree exists but is orphaned (no active session references it)
-2.  On next `WorkflowService.initialize()` or periodic cleanup task:
+1. Worktree exists but is orphaned (no active session references it)
+2. On next `WorkflowService.initialize()` or periodic cleanup task:
 
 -   Scan `.worktrees/` directory
 -   For each worktree without corresponding in-progress session:
-    -   `vcs.remove_worktree()` (prune unused worktrees)
+  -   `vcs.remove_worktree()` (prune unused worktrees)
 
-1.  Operator can retry task with new session ID → new worktree created
+1. Operator can retry task with new session ID → new worktree created
 
 ---
 
@@ -861,7 +861,7 @@ pub struct ProjectContext {
 }
 
 /// Context freshness indicator.
-/// 
+///
 /// **Decision (Voted 2026-02-05):** Explicit freshness tracking (ADR-039).
 /// Prevents race conditions in distributed workflows by tracking context age.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -1365,10 +1365,13 @@ impl ContextScoutProvider for CachedContextScout {
 ### 8. Configuration
 
 ```toml
+
 # config/default.toml — [context] section
 
 [context]
+
 # Cache TTL in seconds (default 30s).
+
 # Lower for active development, higher for CI.
 cache_ttl_seconds = 30
 
@@ -1568,13 +1571,13 @@ WHERE i.status = 'open'
 
 ### Code Changes
 
-1.  Add `context.rs` entities to `mcb-domain/src/entities/`
-2.  Add `context_scout.rs` port to `mcb-domain/src/ports/providers/`
-3.  Add `CONTEXT_PROVIDERS` slice to `mcb-application/src/registry/`
-4.  Add `context/` module to `mcb-providers/src/` with git discovery, tracker discovery, and cached scout
-5.  Add `ContextScoutConfig` to `mcb-infrastructure/src/config/`
-6.  Add `[context]` section to `config/default.toml`
-7.  Create issue/phase/decision tables (if not created by ADR-034's workflow tables)
+1. Add `context.rs` entities to `mcb-domain/src/entities/`
+2. Add `context_scout.rs` port to `mcb-domain/src/ports/providers/`
+3. Add `CONTEXT_PROVIDERS` slice to `mcb-application/src/registry/`
+4. Add `context/` module to `mcb-providers/src/` with git discovery, tracker discovery, and cached scout
+5. Add `ContextScoutConfig` to `mcb-infrastructure/src/config/`
+6. Add `[context]` section to `config/default.toml`
+7. Create issue/phase/decision tables (if not created by ADR-034's workflow tables)
 
 ### Migration
 

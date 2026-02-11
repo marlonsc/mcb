@@ -26,9 +26,11 @@ curl -s http://localhost:8222/healthz
 ### Run All Integration Tests
 
 ```bash
+
 # Option 1: Start all infrastructure services
 make docker-up
 make test
+
 # make docker-down when done
 
 # Option 2: Full stack including test-runner container
@@ -44,6 +46,7 @@ docker-compose up
 **Using Docker containers (recommended)**
 
 ```bash
+
 # Start all services
 make docker-up
 
@@ -151,15 +154,15 @@ Tests automatically detect services using these environment variables (in order 
 
 ### Redis
 
-1.  `REDIS_URL` - Primary: `redis://host:port`
-2.  `MCP_CACHE__URL` - Fallback: `redis://host:port`
-3.  Default: `redis://127.0.0.1:6379`
+1. `REDIS_URL` - Primary: `redis://host:port`
+2. `MCP_CACHE__URL` - Fallback: `redis://host:port`
+3. Default: `redis://127.0.0.1:6379`
 
 ### NATS
 
-1.  `NATS_URL` - Primary: `nats://host:port`
-2.  `MCP_NATS_URL` - Fallback: `nats://host:port`
-3.  Default: `nats://127.0.0.1:4222`
+1. `NATS_URL` - Primary: `nats://host:port`
+2. `MCP_NATS_URL` - Fallback: `nats://host:port`
+3. Default: `nats://127.0.0.1:4222`
 
 Example:
 
@@ -206,6 +209,7 @@ The project uses a unified `docker-compose.yml` for all infrastructure needs.
 **Usage:**
 
 ```bash
+
 # Start all services
 make docker-up
 
@@ -249,6 +253,7 @@ For Redis + NATS only, use `docker-compose up -d redis nats` (and `docker-compos
 ### Redis Connection Refused
 
 ```bash
+
 # Check if Redis is running
 redis-cli ping
 
@@ -262,6 +267,7 @@ docker-compose up -d redis
 ### NATS Connection Refused
 
 ```bash
+
 # Check if NATS is running
 telnet localhost 4222
 
@@ -293,6 +299,7 @@ Increase timeout and add debugging:
 
 ```bash
 RUST_LOG=debug make test
+
 # Or, for a single test: cargo test <test_name> -- --nocapture --test-threads=1
 ```
 
@@ -398,19 +405,19 @@ jobs:
 
 When adding new integration tests:
 
-1.  Use existing patterns in `crates/mcb-server/tests/integration/helpers.rs` and `crates/mcb-providers/src/cache/redis.rs`
-2.  Include environment variable support for flexible service locations
-3.  Use `skip_if_service_unavailable!("Service", is_*_available())` for graceful skipping
-4.  Add cleanup code to prevent test pollution
-5.  Include both success and failure paths
-6.  Document expected behavior in test comments
+1. Use existing patterns in `crates/mcb-server/tests/integration/helpers.rs` and `crates/mcb-providers/src/cache/redis.rs`
+2. Include environment variable support for flexible service locations
+3. Use `skip_if_service_unavailable!("Service", is_*_available())` for graceful skipping
+4. Add cleanup code to prevent test pollution
+5. Include both success and failure paths
+6. Document expected behavior in test comments
 
 ## Support
 
 For issues or questions:
 
-1.  Check the Troubleshooting section above
-2.  Review test output with `--nocapture` flag
-3.  Check Docker logs: `docker-compose logs`
-4.  Check service health: `make docker`
-5.  Open an issue on GitHub with test output
+1. Check the Troubleshooting section above
+2. Review test output with `--nocapture` flag
+3. Check Docker logs: `docker-compose logs`
+4. Check service health: `make docker`
+5. Open an issue on GitHub with test output

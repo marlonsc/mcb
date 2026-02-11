@@ -2,7 +2,7 @@
 adr: 21
 title: Dependency Management Strategy
 status: ACCEPTED
-created: 
+created:
 updated: 2026-02-05
 related: [13, 15, 17]
 supersedes: []

@@ -1,7 +1,7 @@
 # MCB Gaps Report - Integration Blockers
 
-**Date**: 2026-02-08  
-**Reporter**: Sisyphus Agent  
+**Date**: 2026-02-08
+**Reporter**: Sisyphus Agent
 **Context**: OpenCode MCP Integration Validation
 
 ---
@@ -16,8 +16,8 @@ MCB v0.2.0 was validated for OpenCode integration. While basic search works, **c
 
 ### GAP-1: Project Workflow Not Implemented (CRITICAL)
 
-**Tool**: `mcp_mcb_project`  
-**Status**: Returns "Project workflow not yet implemented"  
+**Tool**: `mcp_mcb_project`
+**Status**: Returns "Project workflow not yet implemented"
 **Impact**: Cannot link collections to projects, cannot use project-scoped memory
 
 **Expected Behavior**:
@@ -49,8 +49,8 @@ Project workflow not yet implemented
 
 ### GAP-2: Memory List/Query Fails (CRITICAL)
 
-**Tool**: `mcp_mcb_memory`  
-**Status**: SQL query_all error on list operation  
+**Tool**: `mcp_mcb_memory`
+**Status**: SQL query_all error on list operation
 **Impact**: Cannot retrieve stored observations
 
 **Error**:
@@ -71,17 +71,17 @@ The observations table has `project_id TEXT NOT NULL REFERENCES projects(id)`. I
 
 **Required Fix**:
 
-1.  Check if projects table has entries
-2.  Memory store should auto-create default project if none exists
-3.  Memory list should handle empty project gracefully
-4.  Add better error messages
+1. Check if projects table has entries
+2. Memory store should auto-create default project if none exists
+3. Memory list should handle empty project gracefully
+4. Add better error messages
 
 ---
 
 ### GAP-3: VCS Has 500+ Test Collections (LOW)
 
-**Tool**: `mcp_mcb_vcs`  
-**Status**: Working but polluted with test data  
+**Tool**: `mcp_mcb_vcs`
+**Status**: Working but polluted with test data
 **Impact**: Performance degradation, confusing output
 
 **Observation**:
@@ -106,8 +106,8 @@ repositories: [
 
 ### GAP-4: Context Search Handler Missing (BLOCKED)
 
-**Tool**: `mcp_mcb_search` with `resource="context"`  
-**Status**: SearchResource enum only has Code and Memory  
+**Tool**: `mcp_mcb_search` with `resource="context"`
+**Status**: SearchResource enum only has Code and Memory
 **Impact**: Cannot search unified context (code + memory + session)
 
 **Per v030-IMPLEMENTATION.md**:
@@ -169,11 +169,11 @@ The intended integration pattern uses **Project as Central Hub**:
 
 **Key Architecture Decisions**:
 
-1.  **Project = Repository**: 1:1 mapping to git repository
-2.  **Collection per Worktree**: Each git worktree has its own index
-3.  **Memory is Project-Scoped**: Observations belong to project, not session
-4.  **Sessions are Multi-Dimensional**: Track user + agent + worktree
-5.  **Operators Control Access**: Users and automated agents have roles
+1. **Project = Repository**: 1:1 mapping to git repository
+2. **Collection per Worktree**: Each git worktree has its own index
+3. **Memory is Project-Scoped**: Observations belong to project, not session
+4. **Sessions are Multi-Dimensional**: Track user + agent + worktree
+5. **Operators Control Access**: Users and automated agents have roles
 
 **Current State**: Only single collection works. Project entity, multi-worktree, multi-user, and multi-agent support are NOT implemented.
 
@@ -206,15 +206,15 @@ bd create --title "GAP-3: Cleanup test collections from Milvus" --type task --pr
 
 Until gaps are fixed, OpenCode can use MCB for:
 
-1.  **Code search only** - `mcp_mcb_search(resource="code", collection="opencode")`
-2.  **Manual session tracking** - Use `mcp_mcb_session` for basic lifecycle
-3.  **Skip project/memory** - Use existing `mcp_memory` skill instead
+1. **Code search only** - `mcp_mcb_search(resource="code", collection="opencode")`
+2. **Manual session tracking** - Use `mcp_mcb_session` for basic lifecycle
+3. **Skip project/memory** - Use existing `mcp_memory` skill instead
 
 ---
 
 ## Next Steps
 
-1.  Agent should implement GAP-2 fix (memory query)
-2.  Then implement GAP-1 (project workflow)
-3.  Then GAP-4 (context search)
-4.  Revalidate integration after each fix
+1. Agent should implement GAP-2 fix (memory query)
+2. Then implement GAP-1 (project workflow)
+3. Then GAP-4 (context search)
+4. Revalidate integration after each fix

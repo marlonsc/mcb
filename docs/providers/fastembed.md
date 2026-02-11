@@ -109,9 +109,9 @@ For better performance:
 
 **Solution**:
 
-1.  Check internet connection
-2.  Check write permissions in cache directory
-3.  Try again (downloads are resumable)
+1. Check internet connection
+2. Check write permissions in cache directory
+3. Try again (downloads are resumable)
 
 ## Comparison with Other Providers
 
@@ -126,11 +126,11 @@ For better performance:
 
 The FastEmbed Provider:
 
-1.  Uses the `fastembed` library for ONNX inference
-2.  Loads optimized sentence-transformers models
-3.  Implements the `EmbeddingProvider` trait of Memory Context Browser
-4.  Provides a consistent interface with other providers
-5.  Manages automatic model cache
+1. Uses the `fastembed` library for ONNX inference
+2. Loads optimized sentence-transformers models
+3. Implements the `EmbeddingProvider` trait of Memory Context Browser
+4. Provides a consistent interface with other providers
+5. Manages automatic model cache
 
 ## Next Steps
 

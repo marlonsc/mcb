@@ -2,7 +2,7 @@
 adr: 10
 title: Hooks Subsystem with Agent-Backed Processing
 status: PROPOSED
-created: 
+created:
 updated: 2026-02-05
 related: [1, 2, 7, 8, 9, 12, 13]
 supersedes: []
@@ -18,15 +18,15 @@ implementation_status: Partial
 
 > Not yet implemented. Target crate structure for v0.2.0:
 >
-> -   `crates/mcb-domain/src/hooks.rs` - Hook domain types
-> -   `crates/mcb-application/src/ports/providers/hooks.rs` - HookProcessor port trait
-> -   `crates/mcb-application/src/use_cases/hooks.rs` - HookService
-> -   `crates/mcb-providers/src/hooks/` - Hook provider implementations
-> -   `crates/mcb-server/src/handlers/hook_tools.rs` - MCP tool handlers
-> -   `crates/mcb-infrastructure/src/config/hooks.rs` - Hooks configuration
-> -   `crates/mcb-infrastructure/src/di/hooks_registry.rs` - Hook processor registry
-> -   EventBus exists in `crates/mcb-infrastructure/src/events/mod.rs`
-> -   Requires ADR-009 memory integration for hook observations
+> - `crates/mcb-domain/src/hooks.rs` - Hook domain types
+> - `crates/mcb-application/src/ports/providers/hooks.rs` - HookProcessor port trait
+> - `crates/mcb-application/src/use_cases/hooks.rs` - HookService
+> - `crates/mcb-providers/src/hooks/` - Hook provider implementations
+> - `crates/mcb-server/src/handlers/hook_tools.rs` - MCP tool handlers
+> - `crates/mcb-infrastructure/src/config/hooks.rs` - Hooks configuration
+> - `crates/mcb-infrastructure/src/di/hooks_registry.rs` - Hook processor registry
+> - EventBus exists in `crates/mcb-infrastructure/src/events/mod.rs`
+> - Requires ADR-009 memory integration for hook observations
 
 ## Context
 

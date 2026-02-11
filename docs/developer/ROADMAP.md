@@ -8,8 +8,8 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 
 ### v0.3.0 — Workflow System
 
-**Status:** Planning  
-**Target:** Q1 2026  
+**Status:** Planning
+**Target:** Q1 2026
 **Key ADRs:** 034 (FSM), 035 (Scout), 036 (Policies), 037 (Orchestrator), 038 (Tiers)
 
 Implements complete workflow system with FSM-based task orchestration, context scouting, and policy enforcement.
@@ -24,10 +24,10 @@ Implements complete workflow system with FSM-based task orchestration, context s
 
 **Quality Gates:**
 
-- `make quality` passes (0 errors)
-- `make validate` passes (0 violations)
-- Performance benchmarks established
-- Migration guide from v0.2.0
+-   `make quality` passes (0 errors)
+-   `make validate` passes (0 violations)
+-   Performance benchmarks established
+-   Migration guide from v0.2.0
 
 **Unblocks:** v0.4.0 Integrated Context System
 
@@ -35,8 +35,8 @@ Implements complete workflow system with FSM-based task orchestration, context s
 
 ### v0.4.0 — Integrated Context System
 
-**Status:** Design phase (parallel to v0.3.0)  
-**Target:** Q2 2026 (after v0.3.0)  
+**Status:** Design phase (parallel to v0.3.0)
+**Target:** Q2 2026 (after v0.3.0)
 **Key ADRs:** 041-046
 
 Multi-source integrated context with knowledge graphs, hybrid search, and temporal queries.
@@ -55,7 +55,7 @@ Multi-source integrated context with knowledge graphs, hybrid search, and tempor
 
 ### v1.0.0 — Production Enterprise
 
-**Status:** Conceptual  
+**Status:** Conceptual
 **Target:** After v0.4.0
 
 Enterprise-grade platform with SLA guarantees, compliance certifications, and high-availability deployment.
@@ -80,7 +80,7 @@ Enterprise-grade platform with SLA guarantees, compliance certifications, and hi
 
 ## Cross-References
 
-- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
-- **Changelog**: [CHANGELOG.md](../operations/CHANGELOG.md)
-- **Contributing**: [CONTRIBUTING.md](./CONTRIBUTING.md)
-- **ADR Index**: [docs/adr/README.md](../adr/README.md)
+-   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+-   **Changelog**: [CHANGELOG.md](../operations/CHANGELOG.md)
+-   **Contributing**: [CONTRIBUTING.md](./CONTRIBUTING.md)
+-   **ADR Index**: [docs/adr/README.md](../adr/README.md)

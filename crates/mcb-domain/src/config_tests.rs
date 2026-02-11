@@ -2,7 +2,8 @@
 
 #[cfg(test)]
 mod tests {
-    use mcb_domain::{EmbeddingConfig, VectorStoreConfig};
+    use crate::test_services_config::required_test_service_url;
+    use crate::{EmbeddingConfig, VectorStoreConfig};
 
     #[test]
     fn test_embedding_config_creation() {
@@ -44,17 +45,18 @@ mod tests {
 
     #[test]
     fn test_embedding_config_with_base_url() {
+        let ollama_url = required_test_service_url("ollama_url");
         let config = EmbeddingConfig {
             provider: "ollama".to_string(),
             model: "llama2".to_string(),
             api_key: None,
-            base_url: Some("http://localhost:11434".to_string()),
+            base_url: Some(ollama_url.clone()),
             dimensions: Some(4096),
             max_tokens: Some(4096),
         };
 
         assert_eq!(config.provider, "ollama");
-        assert_eq!(config.base_url, Some("http://localhost:11434".to_string()));
+        assert_eq!(config.base_url, Some(ollama_url));
         assert_eq!(config.dimensions, Some(4096));
     }
 
@@ -96,9 +98,10 @@ mod tests {
 
     #[test]
     fn test_vector_store_config_remote() {
+        let milvus_address = required_test_service_url("milvus_address");
         let config = VectorStoreConfig {
             provider: "milvus".to_string(),
-            address: Some("milvus-service:19530".to_string()),
+            address: Some(milvus_address.clone()),
             token: Some("root:Milvus".to_string()),
             collection: Some("embeddings".to_string()),
             dimensions: Some(768),
@@ -106,7 +109,7 @@ mod tests {
         };
 
         assert_eq!(config.provider, "milvus");
-        assert_eq!(config.address, Some("milvus-service:19530".to_string()));
+        assert_eq!(config.address, Some(milvus_address));
         assert_eq!(config.token, Some("root:Milvus".to_string()));
         assert_eq!(config.timeout_secs, Some(60));
     }
