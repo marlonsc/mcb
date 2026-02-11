@@ -247,10 +247,7 @@ impl VcsEntityHandler {
             }
 
             _ => Err(McpError::invalid_params(
-                format!(
-                    "Unsupported action {:?} for resource {:?}",
-                    args.action, args.resource
-                ),
+                "unsupported action/resource combination",
                 None,
             )),
         }

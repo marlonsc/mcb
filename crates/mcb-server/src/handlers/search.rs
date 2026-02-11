@@ -59,12 +59,7 @@ impl SearchHandler {
         match args.resource {
             SearchResource::Code => {
                 let collection_name = args.collection.as_deref().unwrap_or("default");
-                let collection_id = match normalize_collection_name(collection_name) {
-                    Ok(id) => id,
-                    Err(e) => {
-                        return Ok(to_opaque_tool_error(e));
-                    }
-                };
+                let collection_id = normalize_collection_name(collection_name);
                 let timer = Instant::now();
                 let limit = args.limit.unwrap_or(10) as usize;
                 match self
