@@ -1,8 +1,6 @@
 //! Admin Web UI Module
 //!
 //! Provides a web interface for the admin panel.
-//! Templates are embedded at compile time for zero-dependency deployment.
-//! All pages share a unified layout via `shared.js` app-shell injection.
 //!
 //! ## Pages
 //!
@@ -17,7 +15,8 @@
 pub mod entity_handlers;
 pub mod handlers;
 pub mod router;
+pub mod view_model;
 
 // Re-export public functions
 pub use handlers::{config_page, dashboard, dashboard_ui, favicon, health_page, jobs_page};
-pub use router::{web_rocket, web_routes};
+pub use router::web_rocket;

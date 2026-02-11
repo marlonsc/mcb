@@ -57,4 +57,4 @@ pub use models::{AdminActionResponse, CollectionStats, ServerInfo};
 pub use propagation::{ConfigPropagator, PropagatorHandle};
 pub use registry::{AdminEntityMeta, AdminFieldMeta, AdminRegistry};
 pub use routes::admin_rocket;
-pub use web::{web_rocket, web_routes};
+pub use web::web_rocket;

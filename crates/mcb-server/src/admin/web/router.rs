@@ -131,30 +131,3 @@ pub fn web_rocket() -> Rocket<Build> {
             ],
         )
 }
-
-/// Get routes for mounting in a parent Rocket instance
-pub fn web_routes() -> Vec<rocket::Route> {
-    routes![
-        handlers::dashboard,
-        handlers::dashboard_ui,
-        handlers::config_page,
-        handlers::health_page,
-        handlers::jobs_page,
-        handlers::browse_page,
-        handlers::browse_collection_page,
-        handlers::browse_file_page,
-        handlers::browse_tree_page,
-        handlers::shared_js,
-        handlers::theme_css,
-        handlers::favicon,
-        entity_handlers::entities_index,
-        entity_handlers::entities_list,
-        entity_handlers::entities_new_form,
-        entity_handlers::entities_detail,
-        entity_handlers::entities_edit_form,
-        entity_handlers::entities_delete_confirm,
-        entity_handlers::entities_create,
-        entity_handlers::entities_update,
-        entity_handlers::entities_delete,
-    ]
-}

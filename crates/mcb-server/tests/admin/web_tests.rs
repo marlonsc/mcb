@@ -18,6 +18,8 @@ async fn test_dashboard_returns_html() {
     let html = response.into_string().await.expect("response body");
     assert!(html.contains("<!DOCTYPE html>"));
     assert!(html.contains("Dashboard"));
+    assert!(html.contains("Entity Coverage"));
+    assert!(html.contains("Domain Entities"));
 }
 
 #[rocket::async_test]
@@ -115,6 +117,8 @@ async fn test_entities_list_returns_html() {
     assert!(html.contains("<!DOCTYPE html>"));
     assert!(html.contains("Organizations"));
     assert!(html.contains("org"));
+    assert!(html.contains("Dashboard"));
+    assert!(html.contains("Domain Entities"));
 }
 
 #[rocket::async_test]
