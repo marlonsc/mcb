@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use regex::Regex;
+use tracing::warn;
 
 use crate::ValidationConfig;
 use crate::config::FileConfig;
@@ -86,10 +87,12 @@ impl DeclarativeValidator {
 
     fn collect_rs_files(&self, config: &ValidationConfig) -> Vec<PathBuf> {
         let mut files = Vec::new();
-        let _ = for_each_scan_rs_path(config, true, |path, _src_dir| {
+        if let Err(e) = for_each_scan_rs_path(config, true, |path, _src_dir| {
             files.push(path.to_path_buf());
             Ok(())
-        });
+        }) {
+            warn!(error = %e, "Failed to scan workspace for Rust files");
+        }
         files
     }
 
@@ -118,9 +121,20 @@ impl DeclarativeValidator {
             let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
             for file in files {
-                if let Ok(file_violations) = analyzer.find_violations(file) {
-                    let typed: Vec<MetricViolation> = file_violations;
-                    violations.extend(typed.into_iter().map(|v| Box::new(v) as Box<dyn Violation>));
+                match analyzer.find_violations(file) {
+                    Ok(file_violations) => {
+                        let typed: Vec<MetricViolation> = file_violations;
+                        violations
+                            .extend(typed.into_iter().map(|v| Box::new(v) as Box<dyn Violation>));
+                    }
+                    Err(e) => {
+                        warn!(
+                            rule_id = %rule.id,
+                            file = %file.display(),
+                            error = %e,
+                            "Metrics analysis failed"
+                        );
+                    }
                 }
             }
         }
@@ -145,21 +159,34 @@ impl DeclarativeValidator {
         let file_refs: Vec<&Path> = files.iter().map(PathBuf::as_path).collect();
         let mut violations: Vec<Box<dyn Violation>> = Vec::new();
 
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(rt) => rt,
-            Err(_) => return violations,
-        };
+        let block_on: Box<dyn Fn(_) -> _> =
+            if let Ok(handle) = tokio::runtime::Handle::try_current() {
+                Box::new(move |fut| handle.block_on(fut))
+            } else {
+                match tokio::runtime::Runtime::new() {
+                    Ok(rt) => Box::new(move |fut| rt.block_on(fut)),
+                    Err(e) => {
+                        warn!(error = %e, "Failed to create Tokio runtime for lint execution");
+                        return violations;
+                    }
+                }
+            };
 
         for rule in &lint_rules {
-            match rt.block_on(YamlRuleExecutor::execute_rule(rule, &file_refs)) {
+            match block_on(YamlRuleExecutor::execute_rule(rule, &file_refs)) {
                 Ok(lint_violations) => {
-                    violations.extend(
-                        lint_violations
-                            .into_iter()
-                            .map(|v| Box::new(v) as Box<dyn Violation>),
+                    violations.extend(lint_violations.into_iter().map(|mut v| {
+                        v.ensure_file_path();
+                        Box::new(v) as Box<dyn Violation>
+                    }));
+                }
+                Err(e) => {
+                    warn!(
+                        rule_id = %rule.id,
+                        error = %e,
+                        "Lint rule execution failed"
                     );
                 }
-                Err(_) => continue,
             }
         }
 
@@ -197,14 +224,22 @@ impl DeclarativeValidator {
                 continue;
             };
 
-            let compiled: Vec<(&str, Regex)> = patterns_obj
-                .iter()
-                .filter_map(|(name, val)| {
-                    val.as_str()
-                        .and_then(|pat| Regex::new(pat).ok())
-                        .map(|rx| (name.as_str(), rx))
-                })
-                .collect();
+            let mut compiled: Vec<(&str, Regex)> = Vec::new();
+            for (name, val) in patterns_obj {
+                if let Some(pat) = val.as_str() {
+                    match Regex::new(pat) {
+                        Ok(rx) => compiled.push((name.as_str(), rx)),
+                        Err(e) => {
+                            warn!(
+                                rule_id = %rule.id,
+                                pattern_name = %name,
+                                error = %e,
+                                "Malformed regex pattern in rule"
+                            );
+                        }
+                    }
+                }
+            }
 
             if compiled.is_empty() {
                 continue;
@@ -213,7 +248,14 @@ impl DeclarativeValidator {
             for file in files {
                 let content = match std::fs::read_to_string(file) {
                     Ok(c) => c,
-                    Err(_) => continue,
+                    Err(e) => {
+                        warn!(
+                            file = %file.display(),
+                            error = %e,
+                            "Failed to read file for regex validation"
+                        );
+                        continue;
+                    }
                 };
 
                 for (line_num, line) in content.lines().enumerate() {
@@ -246,9 +288,9 @@ impl DeclarativeValidator {
             .collect();
 
         if !ast_rules.is_empty() {
-            eprintln!(
-                "DeclarativeValidator: {} AST rules skipped (not yet implemented)",
-                ast_rules.len()
+            warn!(
+                count = ast_rules.len(),
+                "DeclarativeValidator: AST rules skipped (not yet implemented)"
             );
         }
 

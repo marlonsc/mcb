@@ -358,9 +358,7 @@ impl HybridRuleEngine {
         let file_refs: Vec<&std::path::Path> =
             files.iter().map(std::path::PathBuf::as_path).collect();
 
-        let lint_violations = YamlRuleExecutor::execute_rule(&stub_rule, &file_refs)
-            .await
-            .unwrap_or_default();
+        let lint_violations = YamlRuleExecutor::execute_rule(&stub_rule, &file_refs).await?;
 
         let violations: Vec<RuleViolation> = lint_violations
             .into_iter()
