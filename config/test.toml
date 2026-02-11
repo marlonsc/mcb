@@ -20,3 +20,11 @@ provider = "edgevec"
 
 [system.infrastructure.cache]
 enabled = false
+
+[test_services]
+api_mock_url = "http://127.0.0.1:21080"
+redis_url = "redis://127.0.0.1:26379"
+nats_url = "nats://127.0.0.1:24222"
+milvus_address = "http://127.0.0.1:29530"
+ollama_url = "http://127.0.0.1:21434"
+postgres_url = "postgresql://mcb_test:mcb_test_pass@127.0.0.1:25432/mcb_test"

@@ -1,11 +1,10 @@
 services:
-  # OpenAI API Mock Server
-  openai-mock:
+  api-mock:
     image: mockserver/mockserver:5.15.0
-    container_name: mcp-openai-mock
+    container_name: mcp-api-mock
     restart: unless-stopped
     ports:
-      - "1080:1080"
+      - "21080:1080"
     environment:
       MOCKSERVER_INITIALIZATION_JSON_PATH: /config/mockserver-initializer.json
       MOCKSERVER_LOG_LEVEL: INFO
@@ -18,11 +17,11 @@ services:
 
   # Redis - Cache layer
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     container_name: mcp-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "26379:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --appendfsync everysec
@@ -36,12 +35,12 @@ services:
 
   # NATS - Event bus
   nats:
-    image: nats:2-alpine
+    image: nats:2.10-alpine
     container_name: mcp-nats
     restart: unless-stopped
     ports:
-      - "4222:4222"
-      - "8222:8222"
+      - "24222:4222"
+      - "28222:8222"
     volumes:
       - nats_data:/data
     command:
@@ -90,8 +89,8 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
     ports:
-      - "9001:9001"
-      - "9000:9000"
+      - "29001:9001"
+      - "29000:9000"
     volumes:
       - milvus_minio:/minio_data
     command: minio server /minio_data --console-address ":9001"
@@ -123,11 +122,48 @@ services:
       timeout: 20s
       retries: 3
     ports:
-      - "19530:19530"
-      - "9091:9091"
+      - "29530:19530"
+      - "29091:9091"
     depends_on:
       - milvus-etcd
       - milvus-minio
+    networks:
+      - mcp-test
+
+  ollama:
+    image: ollama/ollama:0.6.2
+    container_name: mcp-ollama
+    restart: unless-stopped
+    ports:
+      - "21434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - mcp-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: mcp-postgres
+    restart: unless-stopped
+    ports:
+      - "25432:5432"
+    environment:
+      POSTGRES_USER: mcb_test
+      POSTGRES_PASSWORD: mcb_test_pass
+      POSTGRES_DB: mcb_test
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcb_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
       - mcp-test
 
@@ -140,11 +176,12 @@ services:
     profiles:
       - test
     environment:
-      - OPENAI_BASE_URL=http://mcp-openai-mock:1080
-      - OLLAMA_BASE_URL=http://localhost:11434
+      - OPENAI_BASE_URL=http://mcp-api-mock:1080
+      - OLLAMA_BASE_URL=http://mcp-ollama:11434
       - MILVUS_ADDRESS=http://mcp-milvus-standalone:19530
       - REDIS_URL=redis://mcp-redis:6379
       - NATS_URL=nats://mcp-nats:4222
+      - DATABASE_URL=postgresql://mcb_test:mcb_test_pass@mcp-postgres:5432/mcb_test
       - MCP_CACHE__BACKEND=redis
       - MCP_CACHE__URL=redis://mcp-redis:6379
       - MCP_EVENT_BUS_TYPE=nats
@@ -152,13 +189,17 @@ services:
       - RUST_BACKTRACE=1
     working_dir: /app
     depends_on:
-      openai-mock:
+      api-mock:
         condition: service_started
       milvus-standalone:
         condition: service_healthy
       redis:
         condition: service_healthy
       nats:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     networks:
       - mcp-test
@@ -177,6 +218,8 @@ volumes:
   milvus_standalone:
   redis_data:
   nats_data:
+  ollama_data:
+  postgres_data:
   cargo_cache:
 
 networks:
