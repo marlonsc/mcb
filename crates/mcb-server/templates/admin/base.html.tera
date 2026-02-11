@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Memory Context Browser Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="/ui/theme.css">
+    <script src="/ui/shared.js"></script>
+    <style>
+        .card { background: var(--card-bg, white); border-radius: 0.5rem; box-shadow: 0 1px 3px var(--card-shadow, rgba(0,0,0,0.1)); padding: 1.5rem; }
+        .card:hover { box-shadow: 0 4px 6px var(--card-shadow, rgba(0,0,0,0.15)); }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.2s; cursor: pointer; text-decoration: none; display: inline-block; border: none; }
+        .btn-primary { background: var(--accent, #2563eb); color: white; }
+        .btn-primary:hover { background: var(--accent-hover, #1d4ed8); }
+        .btn-secondary { background: var(--bg-tertiary, #f3f4f6); color: var(--text-primary, #111827); }
+        .btn-secondary:hover { background: var(--bg-secondary, #f9fafb); }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
+        .stat-value { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); }
+        .stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color, #e5e7eb); }
+        td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color, #e5e7eb); }
+        tr:hover td { background: var(--bg-secondary, #f9fafb); }
+        label { display: block; margin-bottom: 0.375rem; font-weight: 600; font-size: 0.875rem; color: var(--text-primary); }
+        input, textarea, select {
+            width: 100%; box-sizing: border-box;
+            border: 1px solid var(--border-color, #e5e7eb);
+            border-radius: 0.375rem; padding: 0.625rem 0.75rem; margin-bottom: 1rem;
+            background: var(--bg-primary, #ffffff); color: var(--text-primary, #111827);
+            font-size: 0.875rem;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none; border-color: var(--accent, #3b82f6);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        input[readonly], textarea[readonly], select[disabled] {
+            background: var(--bg-tertiary, #f3f4f6); cursor: not-allowed; opacity: 0.7;
+        }
+        .breadcrumb { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem; }
+        .breadcrumb a { color: var(--accent); text-decoration: none; }
+        .breadcrumb a:hover { text-decoration: underline; }
+        .breadcrumb .separator { color: var(--text-muted); }
+        .badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-gray { background: var(--bg-tertiary); color: var(--text-secondary); }
+    </style>
+    {% block head_extra %}{% endblock head_extra %}
+</head>
+<body class="bg-primary text-primary min-h-screen">
+    <div id="app-shell" class="min-h-screen" data-current-page="{{ current_page }}">
+        <div class="flex min-h-screen">
+            <aside class="w-72 border-r" style="border-color: var(--border-color, #e5e7eb); background: var(--bg-secondary, #f9fafb);">
+                <div class="px-6 py-5 border-b" style="border-color: var(--border-color, #e5e7eb);">
+                    <p class="text-xs uppercase tracking-wider text-secondary">Admin</p>
+                    <h1 class="text-lg font-semibold mt-1">Memory Context Browser</h1>
+                </div>
+
+                <nav class="p-4 space-y-6">
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-secondary mb-2">Overview</p>
+                        <div class="space-y-1">
+                            <a href="/ui" class="nav-link block px-3 py-2 rounded-md" data-page="dashboard">Dashboard</a>
+                            <a href="/ui/config" class="nav-link block px-3 py-2 rounded-md" data-page="config">Configuration</a>
+                            <a href="/ui/health" class="nav-link block px-3 py-2 rounded-md" data-page="health">Health</a>
+                            <a href="/ui/jobs" class="nav-link block px-3 py-2 rounded-md" data-page="jobs">Jobs</a>
+                            <a href="/ui/browse" class="nav-link block px-3 py-2 rounded-md" data-page="browse">Browse</a>
+                            <a href="/ui/browse/tree" class="nav-link block px-3 py-2 rounded-md" data-page="browse-tree">Browse Tree</a>
+                            <a href="/ui/entities" class="nav-link block px-3 py-2 rounded-md" data-page="entities">Entities</a>
+                        </div>
+                    </div>
+
+                    {% if nav_groups %}
+                    <div>
+                        <p class="text-xs uppercase tracking-wider text-secondary mb-2">Domain Entities</p>
+                        <div class="space-y-3">
+                            {% for group in nav_groups %}
+                            <div>
+                                <p class="px-3 text-xs text-secondary mb-1">{{ group.name }}</p>
+                                <div class="space-y-1">
+                                    {% for entity in group.entities %}
+                                    <a href="/ui/entities/{{ entity.slug }}" class="nav-link block px-3 py-2 rounded-md text-sm" data-page="{{ entity.slug }}">{{ entity.title }}</a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </nav>
+            </aside>
+
+            <main class="flex-1">
+                <div class="max-w-7xl mx-auto px-6 py-8">
+                    {% block page %}{% endblock page %}
+                </div>
+            </main>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var shell = document.getElementById('app-shell');
+            if (!shell) return;
+            var current = shell.getAttribute('data-current-page') || '';
+            var links = shell.querySelectorAll('.nav-link');
+            links.forEach(function (link) {
+                var isActive = link.getAttribute('data-page') === current;
+                if (isActive) {
+                    link.style.background = 'var(--accent, #2563eb)';
+                    link.style.color = '#ffffff';
+                    link.style.fontWeight = '600';
+                } else {
+                    link.style.color = 'var(--text-primary, #111827)';
+                }
+            });
+        })();
+    </script>
+    {% block page_scripts %}{% endblock page_scripts %}
+</body>
+</html>

@@ -11,4 +11,5 @@ mod integration_tests;
 mod lifecycle_handlers_tests;
 mod propagation_tests;
 mod sse_tests;
+mod tera_engine_tests;
 mod web_tests;

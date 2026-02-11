@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use rocket::{Build, Rocket, routes};
-use rocket_dyn_templates::Template;
+use rocket_dyn_templates::{Engines, Template};
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::{
@@ -69,7 +69,9 @@ pub fn admin_rocket(
     let mut rocket = rocket::custom(figment)
         .manage(state)
         .manage(auth_config)
-        .attach(Template::fairing());
+        .attach(Template::custom(|_engines: &mut Engines| {
+            // T15 will register Tera custom filters here
+        }));
 
     // Mount base routes
     rocket = rocket.mount(
