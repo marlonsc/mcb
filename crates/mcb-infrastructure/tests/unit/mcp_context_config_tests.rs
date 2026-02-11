@@ -1,6 +1,4 @@
 //! Unit tests for MCP context config (GitConfig, McpContextConfig).
-//!
-//! Moved from inline tests in src/config/mcp_context_config.rs.
 
 use mcb_infrastructure::config::{GitConfig, McpContextConfig};
 

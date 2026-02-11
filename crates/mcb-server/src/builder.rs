@@ -120,21 +120,25 @@ impl McpServerBuilder {
         self
     }
 
+    /// Set the VCS entity repository used by admin CRUD endpoints.
     pub fn with_vcs_entity_repository(mut self, repo: Arc<dyn VcsEntityRepository>) -> Self {
         self.vcs_entity_repository = Some(repo);
         self
     }
 
+    /// Set the plan entity repository used by admin CRUD endpoints.
     pub fn with_plan_entity_repository(mut self, repo: Arc<dyn PlanEntityRepository>) -> Self {
         self.plan_entity_repository = Some(repo);
         self
     }
 
+    /// Set the issue entity repository used by admin CRUD endpoints.
     pub fn with_issue_entity_repository(mut self, repo: Arc<dyn IssueEntityRepository>) -> Self {
         self.issue_entity_repository = Some(repo);
         self
     }
 
+    /// Set the organization entity repository used by admin CRUD endpoints.
     pub fn with_org_entity_repository(mut self, repo: Arc<dyn OrgEntityRepository>) -> Self {
         self.org_entity_repository = Some(repo);
         self

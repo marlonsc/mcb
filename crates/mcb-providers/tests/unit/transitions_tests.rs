@@ -1,6 +1,4 @@
 //! Unit tests for workflow FSM transitions.
-//!
-//! Moved from inline tests in src/workflow/transitions.rs.
 
 use mcb_domain::entities::{TransitionTrigger, WorkflowSession, WorkflowState};
 use mcb_providers::workflow::apply_transition;

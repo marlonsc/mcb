@@ -296,5 +296,3 @@ impl std::fmt::Display for AvailableProviders {
         Ok(())
     }
 }
-
-// Tests moved to tests/unit/di.rs per test organization standards

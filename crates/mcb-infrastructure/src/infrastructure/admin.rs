@@ -1,7 +1,6 @@
 //! Admin Service Implementations
 //!
 //! Real and null implementations of admin port traits.
-//! Moved from mcb-providers to mcb-infrastructure per Clean Architecture.
 
 use std::collections::HashMap;
 use std::sync::Arc;

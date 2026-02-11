@@ -7,8 +7,6 @@
 //! - Module composition
 //! - Provider resolution
 //! - Architecture validation and bypass detection
-//!
-//! Note: Full-stack and error recovery tests moved to mcb-server/tests/integration/
 
 mod architecture_validation_tests;
 mod catalog_tests;

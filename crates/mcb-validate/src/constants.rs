@@ -14,7 +14,7 @@ pub const DEFAULT_COMPLEXITY_THRESHOLD: u32 = 15;
 pub const DEFAULT_TDG_THRESHOLD: u32 = 50;
 
 // ============================================================================
-// REFACTORING COMPLETENESS
+// VALIDATION ALLOW-LISTS
 // ============================================================================
 
 /// Utility types that are intentionally duplicated to avoid cross-crate dependencies

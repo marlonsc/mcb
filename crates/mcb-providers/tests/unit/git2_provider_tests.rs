@@ -1,6 +1,4 @@
 //! Unit tests for Git2 VCS provider.
-//!
-//! Moved from inline tests in src/git/git2_provider/tests.rs.
 
 use std::error::Error;
 use std::path::Path;

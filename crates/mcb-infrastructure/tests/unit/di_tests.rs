@@ -1,6 +1,4 @@
-//! Unit tests for DI resolver module
-//!
-//! Moved from inline tests in src/di/resolver.rs to comply with test organization standards.
+//! Unit tests for DI resolver module.
 
 use mcb_infrastructure::di::{AvailableProviders, list_available_providers};
 

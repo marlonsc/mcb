@@ -208,6 +208,3 @@ macro_rules! impl_validator {
         }
     };
 }
-
-// Tests are moved to integration tests to avoid macro expansion issues
-// with unused format arguments in the test module.

@@ -1,6 +1,4 @@
 //! Unit tests for YAML rule validator.
-//!
-//! Moved from inline tests in `src/rules/yaml_validator.rs`.
 
 use mcb_validate::rules::YamlRuleValidator;
 
