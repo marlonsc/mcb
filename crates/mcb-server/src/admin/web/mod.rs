@@ -12,8 +12,6 @@
 //! - `/ui/jobs` - Background jobs monitoring
 //! - `/ui/browse` - Browse indexed collections, files, and chunks
 //! - `/ui/browse/tree` - Tree view for navigating codebases
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
 /// Schema-driven entity CRUD handlers using Handlebars templates.
 pub mod entity_handlers;

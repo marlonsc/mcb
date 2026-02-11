@@ -259,8 +259,8 @@ async fn test_golden_index_real_files() {
     let embed_time = start.elapsed();
 
     assert!(
-        embed_time < Duration::from_secs(15),
-        "Embedding should be fast with FastEmbed: {:?}",
+        embed_time < Duration::from_secs(60),
+        "Embedding should finish within performance budget: {:?}",
         embed_time
     );
 

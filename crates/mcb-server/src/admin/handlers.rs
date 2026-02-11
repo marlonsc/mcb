@@ -2,9 +2,6 @@
 //!
 //! HTTP handlers for admin API endpoints including health checks,
 //! performance metrics, indexing status, and runtime configuration management.
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
-//! Authentication guards added in v0.1.2.
 
 use std::path::PathBuf;
 use std::sync::Arc;
