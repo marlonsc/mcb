@@ -17,49 +17,61 @@ pub fn check_service_available(host: &str, port: u16) -> bool {
     }
 }
 
-/// Milvus vector database service (default port 19530)
+/// Milvus vector database service (default port 29530)
 pub fn is_milvus_available() -> bool {
     let host = std::env::var("MILVUS_ADDRESS")
-        .unwrap_or_else(|_| "http://127.0.0.1:19530".to_string())
+        .unwrap_or_else(|_| "http://127.0.0.1:29530".to_string())
         .replace("http://", "");
     let parts: Vec<&str> = host.split(':').collect();
-    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(19530);
+    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(29530);
     check_service_available(parts[0], port)
 }
 
-/// Ollama LLM service (default port 11434)
+/// Ollama LLM service (default port 21434)
 pub fn is_ollama_available() -> bool {
     let host = std::env::var("OLLAMA_BASE_URL")
-        .unwrap_or_else(|_| "http://127.0.0.1:11434".to_string())
+        .unwrap_or_else(|_| "http://127.0.0.1:21434".to_string())
         .replace("http://", "");
     let parts: Vec<&str> = host.split(':').collect();
-    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(11434);
+    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(21434);
     check_service_available(parts[0], port)
 }
 
-/// Redis cache service (default port 6379)
+/// Redis cache service (default port 26379)
 pub fn is_redis_available() -> bool {
     let host = std::env::var("REDIS_URL")
-        .unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string())
+        .unwrap_or_else(|_| "redis://127.0.0.1:26379".to_string())
         .replace("redis://", "");
     let parts: Vec<&str> = host.split(':').collect();
-    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(6379);
+    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(26379);
     check_service_available(parts[0], port)
 }
 
-/// NATS event bus service (default port 4222)
+/// NATS event bus service (default port 24222)
 pub fn is_nats_available() -> bool {
     let host = std::env::var("NATS_URL")
-        .unwrap_or_else(|_| "nats://127.0.0.1:4222".to_string())
+        .unwrap_or_else(|_| "nats://127.0.0.1:24222".to_string())
         .replace("nats://", "");
     let parts: Vec<&str> = host.split(':').collect();
-    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(4222);
+    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(24222);
     check_service_available(parts[0], port)
 }
 
-/// PostgreSQL service (default port 5432)
+/// PostgreSQL service (default port 25432)
 pub fn is_postgres_available() -> bool {
-    check_service_available("127.0.0.1", 5432) || check_service_available("localhost", 5432)
+    let host = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        "postgresql://mcb_test:mcb_test_pass@127.0.0.1:25432/mcb_test".to_string()
+    });
+    let host_port = host
+        .split('@')
+        .next_back()
+        .unwrap_or("127.0.0.1:25432")
+        .split('/')
+        .next()
+        .unwrap_or("127.0.0.1:25432");
+    let parts: Vec<&str> = host_port.split(':').collect();
+    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(25432);
+    check_service_available(parts[0], port)
 }
 
 /// Check if running in CI environment

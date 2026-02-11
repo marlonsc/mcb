@@ -95,8 +95,8 @@ test)
 
 	log_info "Running tests (make test)..."
 	log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:6379}"
-	export NATS_URL="${NATS_URL:-nats://127.0.0.1:4222}"
+	export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:26379}"
+	export NATS_URL="${NATS_URL:-nats://127.0.0.1:24222}"
 	if make test; then
 		log_success "All tests passed"
 	else

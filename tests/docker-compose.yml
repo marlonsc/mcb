@@ -1,12 +1,10 @@
-version: "3.8"
-
 services:
-  # OpenAI API Mock Server
-  openai-mock:
+  api-mock:
     image: mockserver/mockserver:5.15.0
-    container_name: mcp-openai-mock
+    container_name: mcp-api-mock
+    restart: unless-stopped
     ports:
-      - "1080:1080"
+      - "21080:1080"
     environment:
       MOCKSERVER_INITIALIZATION_JSON_PATH: /config/mockserver-initializer.json
       MOCKSERVER_LOG_LEVEL: INFO
@@ -15,38 +13,15 @@ services:
     networks:
       - mcp-test
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:1080/mockserver/status"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-#  # Ollama for embeddings
-#  ollama:
-#    image: ollama/ollama:latest
-#    container_name: mcp-ollama
-#    ports:
-#      - "11434:11434"
-#    volumes:
-#      - ollama_data:/root/.ollama
-#      - ./docker/init-ollama.sh:/init-ollama.sh:ro
-#    networks:
-#      - mcp-test
-#    environment:
-#      - OLLAMA_HOST=0.0.0.0
-#      - OLLAMA_KEEP_ALIVE=24h
-#    healthcheck:
-#      test: ["CMD", "ollama", "list", "|", "grep", "nomic-embed-text"]
-#      interval: 15s
-#      timeout: 10s
-#      retries: 10
-#    command: ["sh", "-c", "serve & /init-ollama.sh && wait"]
+      disable: true
 
   # Redis - Cache layer
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     container_name: mcp-redis
+    restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "26379:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --appendfsync everysec
@@ -60,11 +35,12 @@ services:
 
   # NATS - Event bus
   nats:
-    image: nats:2-alpine
+    image: nats:2.10-alpine
     container_name: mcp-nats
+    restart: unless-stopped
     ports:
-      - "4222:4222"
-      - "8222:8222"
+      - "24222:4222"
+      - "28222:8222"
     volumes:
       - nats_data:/data
     command:
@@ -88,6 +64,7 @@ services:
   milvus-etcd:
     container_name: mcp-milvus-etcd
     image: quay.io/coreos/etcd:v3.5.25
+    restart: unless-stopped
     environment:
       - ETCD_AUTO_COMPACTION_MODE=revision
       - ETCD_AUTO_COMPACTION_RETENTION=1000
@@ -107,12 +84,13 @@ services:
   milvus-minio:
     container_name: mcp-milvus-minio
     image: minio/minio:RELEASE.2024-05-28T17-19-04Z
+    restart: unless-stopped
     environment:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
     ports:
-      - "9001:9001"
-      - "9000:9000"
+      - "29001:9001"
+      - "29000:9000"
     volumes:
       - milvus_minio:/minio_data
     command: minio server /minio_data --console-address ":9001"
@@ -127,6 +105,7 @@ services:
   milvus-standalone:
     container_name: mcp-milvus-standalone
     image: milvusdb/milvus:v2.6.9
+    restart: unless-stopped
     command: ["milvus", "run", "standalone"]
     security_opt:
       - seccomp:unconfined
@@ -143,47 +122,84 @@ services:
       timeout: 20s
       retries: 3
     ports:
-      - "19530:19530"
-      - "9091:9091"
+      - "29530:19530"
+      - "29091:9091"
     depends_on:
       - milvus-etcd
       - milvus-minio
     networks:
       - mcp-test
 
-  # Test runner
+  ollama:
+    image: ollama/ollama:0.6.2
+    container_name: mcp-ollama
+    restart: unless-stopped
+    ports:
+      - "21434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - mcp-test
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: mcp-postgres
+    restart: unless-stopped
+    ports:
+      - "25432:5432"
+    environment:
+      POSTGRES_USER: mcb_test
+      POSTGRES_PASSWORD: mcb_test_pass
+      POSTGRES_DB: mcb_test
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcb_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - mcp-test
+
+  # Test runner (on-demand only: docker compose --profile test up test-runner)
   test-runner:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.test
+      dockerfile: tests/docker/Dockerfile.test
     container_name: mcp-test-runner
+    profiles:
+      - test
     environment:
-      # Internal services (Docker network)
-      - OPENAI_BASE_URL=http://mcp-openai-mock:1080
-      # - OLLAMA_BASE_URL=http://mcp-ollama:11434
-      - OLLAMA_BASE_URL=http://localhost:11434
+      - OPENAI_BASE_URL=http://mcp-api-mock:1080
+      - OLLAMA_BASE_URL=http://mcp-ollama:11434
       - MILVUS_ADDRESS=http://mcp-milvus-standalone:19530
       - REDIS_URL=redis://mcp-redis:6379
       - NATS_URL=nats://mcp-nats:4222
+      - DATABASE_URL=postgresql://mcb_test:mcb_test_pass@mcp-postgres:5432/mcb_test
       - MCP_CACHE__BACKEND=redis
       - MCP_CACHE__URL=redis://mcp-redis:6379
       - MCP_EVENT_BUS_TYPE=nats
       - MCP_NATS_URL=nats://mcp-nats:4222
       - RUST_BACKTRACE=1
-    volumes:
-      - ..:/app
-      - cargo_cache:/usr/local/cargo/registry
     working_dir: /app
     depends_on:
-      openai-mock:
-        condition: service_healthy
-      #ollama:
-      #  condition: service_healthy
+      api-mock:
+        condition: service_started
       milvus-standalone:
         condition: service_healthy
       redis:
         condition: service_healthy
       nats:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     networks:
       - mcp-test
@@ -193,16 +209,17 @@ services:
       [
         "sh",
         "-c",
-        "echo '⏳ Waiting for all services to be ready...' && sleep 10 && echo '🚀 Starting integration tests...' && make test",
+        "echo '⏳ Waiting for all services to be ready...' && sleep 10 && echo '🚀 Starting integration tests...' && make test-rust",
       ]
 
 volumes:
-  ollama_data:
   milvus_etcd:
   milvus_minio:
   milvus_standalone:
   redis_data:
   nats_data:
+  ollama_data:
+  postgres_data:
   cargo_cache:
 
 networks:
