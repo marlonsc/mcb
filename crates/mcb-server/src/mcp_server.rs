@@ -5,12 +5,14 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::repositories::{
+    IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
+    VcsEntityRepository,
+};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
-    ContextServiceInterface, IndexingServiceInterface, IssueEntityServiceInterface,
-    MemoryServiceInterface, OrgEntityServiceInterface, PlanEntityServiceInterface,
-    ProjectDetectorService, ProjectServiceInterface, SearchServiceInterface,
-    ValidationServiceInterface, VcsEntityServiceInterface,
+    ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
+    ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
 };
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
@@ -57,18 +59,18 @@ pub struct McpServices {
     pub agent_session: Arc<dyn AgentSessionServiceInterface>,
     /// Project detector service
     pub project: Arc<dyn ProjectDetectorService>,
-    /// Project workflow service
-    pub project_workflow: Arc<dyn ProjectServiceInterface>,
+    /// Project workflow repository
+    pub project_workflow: Arc<dyn ProjectRepository>,
     /// VCS provider
     pub vcs: Arc<dyn VcsProvider>,
-    /// VCS entity service (repos, branches, worktrees)
-    pub vcs_entity: Arc<dyn VcsEntityServiceInterface>,
-    /// Plan entity service (plans, versions, reviews)
-    pub plan_entity: Arc<dyn PlanEntityServiceInterface>,
-    /// Issue entity service (issues, comments, labels, assignments)
-    pub issue_entity: Arc<dyn IssueEntityServiceInterface>,
-    /// Org entity service (orgs, users, teams, members, api keys)
-    pub org_entity: Arc<dyn OrgEntityServiceInterface>,
+    /// VCS entity repository (repos, branches, worktrees)
+    pub vcs_entity: Arc<dyn VcsEntityRepository>,
+    /// Plan entity repository (plans, versions, reviews)
+    pub plan_entity: Arc<dyn PlanEntityRepository>,
+    /// Issue entity repository (issues, comments, labels, assignments)
+    pub issue_entity: Arc<dyn IssueEntityRepository>,
+    /// Org entity repository (orgs, users, teams, members, api keys)
+    pub org_entity: Arc<dyn OrgEntityRepository>,
 }
 
 impl McpServer {
@@ -147,28 +149,23 @@ impl McpServer {
         Arc::clone(&self.services.project)
     }
 
-    /// Access to project workflow service
-    pub fn project_workflow_service(&self) -> Arc<dyn ProjectServiceInterface> {
+    pub fn project_workflow_repository(&self) -> Arc<dyn ProjectRepository> {
         Arc::clone(&self.services.project_workflow)
     }
 
-    /// Access to VCS entity service.
-    pub fn vcs_entity_service(&self) -> Arc<dyn VcsEntityServiceInterface> {
+    pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
         Arc::clone(&self.services.vcs_entity)
     }
 
-    /// Access to plan entity service.
-    pub fn plan_entity_service(&self) -> Arc<dyn PlanEntityServiceInterface> {
+    pub fn plan_entity_repository(&self) -> Arc<dyn PlanEntityRepository> {
         Arc::clone(&self.services.plan_entity)
     }
 
-    /// Access to issue entity service.
-    pub fn issue_entity_service(&self) -> Arc<dyn IssueEntityServiceInterface> {
+    pub fn issue_entity_repository(&self) -> Arc<dyn IssueEntityRepository> {
         Arc::clone(&self.services.issue_entity)
     }
 
-    /// Access to org entity service.
-    pub fn org_entity_service(&self) -> Arc<dyn OrgEntityServiceInterface> {
+    pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
         Arc::clone(&self.services.org_entity)
     }
 

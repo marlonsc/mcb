@@ -6,12 +6,14 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::repositories::{
+    IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
+    VcsEntityRepository,
+};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use mcb_domain::ports::services::{
-    ContextServiceInterface, IndexingServiceInterface, IssueEntityServiceInterface,
-    MemoryServiceInterface, OrgEntityServiceInterface, PlanEntityServiceInterface,
-    ProjectDetectorService, ProjectServiceInterface, SearchServiceInterface,
-    ValidationServiceInterface, VcsEntityServiceInterface,
+    ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
+    ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
 };
 
 use crate::McpServer;
@@ -29,12 +31,12 @@ pub struct McpServerBuilder {
     memory_service: Option<Arc<dyn MemoryServiceInterface>>,
     agent_session_service: Option<Arc<dyn AgentSessionServiceInterface>>,
     project_service: Option<Arc<dyn ProjectDetectorService>>,
-    project_workflow_service: Option<Arc<dyn ProjectServiceInterface>>,
+    project_workflow_service: Option<Arc<dyn ProjectRepository>>,
     vcs_provider: Option<Arc<dyn VcsProvider>>,
-    vcs_entity_service: Option<Arc<dyn VcsEntityServiceInterface>>,
-    plan_entity_service: Option<Arc<dyn PlanEntityServiceInterface>>,
-    issue_entity_service: Option<Arc<dyn IssueEntityServiceInterface>>,
-    org_entity_service: Option<Arc<dyn OrgEntityServiceInterface>>,
+    vcs_entity_service: Option<Arc<dyn VcsEntityRepository>>,
+    plan_entity_service: Option<Arc<dyn PlanEntityRepository>>,
+    issue_entity_service: Option<Arc<dyn IssueEntityRepository>>,
+    org_entity_service: Option<Arc<dyn OrgEntityRepository>>,
 }
 
 impl McpServerBuilder {
@@ -112,42 +114,28 @@ impl McpServerBuilder {
         self
     }
 
-    /// Set the project workflow service
-    pub fn with_project_workflow_service(
-        mut self,
-        service: Arc<dyn ProjectServiceInterface>,
-    ) -> Self {
-        self.project_workflow_service = Some(service);
+    pub fn with_project_workflow_service(mut self, repo: Arc<dyn ProjectRepository>) -> Self {
+        self.project_workflow_service = Some(repo);
         self
     }
 
-    /// Set the VCS entity service
-    pub fn with_vcs_entity_service(mut self, service: Arc<dyn VcsEntityServiceInterface>) -> Self {
-        self.vcs_entity_service = Some(service);
+    pub fn with_vcs_entity_service(mut self, repo: Arc<dyn VcsEntityRepository>) -> Self {
+        self.vcs_entity_service = Some(repo);
         self
     }
 
-    /// Set the plan entity service
-    pub fn with_plan_entity_service(
-        mut self,
-        service: Arc<dyn PlanEntityServiceInterface>,
-    ) -> Self {
-        self.plan_entity_service = Some(service);
+    pub fn with_plan_entity_service(mut self, repo: Arc<dyn PlanEntityRepository>) -> Self {
+        self.plan_entity_service = Some(repo);
         self
     }
 
-    /// Set the issue entity service
-    pub fn with_issue_entity_service(
-        mut self,
-        service: Arc<dyn IssueEntityServiceInterface>,
-    ) -> Self {
-        self.issue_entity_service = Some(service);
+    pub fn with_issue_entity_service(mut self, repo: Arc<dyn IssueEntityRepository>) -> Self {
+        self.issue_entity_service = Some(repo);
         self
     }
 
-    /// Set the org entity service
-    pub fn with_org_entity_service(mut self, service: Arc<dyn OrgEntityServiceInterface>) -> Self {
-        self.org_entity_service = Some(service);
+    pub fn with_org_entity_service(mut self, repo: Arc<dyn OrgEntityRepository>) -> Self {
+        self.org_entity_service = Some(repo);
         self
     }
 

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use mcb_domain::entities::repository::{Branch, Repository};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
-use mcb_domain::ports::services::VcsEntityServiceInterface;
+use mcb_domain::ports::repositories::VcsEntityRepository;
 use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
@@ -13,13 +13,12 @@ use crate::handler_helpers::{ok_json, ok_text, require_id};
 
 /// Handler for the consolidated `vcs_entity` MCP tool.
 pub struct VcsEntityHandler {
-    service: Arc<dyn VcsEntityServiceInterface>,
+    repo: Arc<dyn VcsEntityRepository>,
 }
 
 impl VcsEntityHandler {
-    /// Create a new handler wrapping the given service.
-    pub fn new(service: Arc<dyn VcsEntityServiceInterface>) -> Self {
-        Self { service }
+    pub fn new(repo: Arc<dyn VcsEntityRepository>) -> Self {
+        Self { repo }
     }
 
     /// Route an incoming `vcs_entity` tool call to the appropriate CRUD operation.
@@ -41,7 +40,7 @@ impl VcsEntityHandler {
                 let mut repo: Repository = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 repo.org_id = org_id.to_string();
-                self.service
+                self.repo
                     .create_repository(&repo)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -50,7 +49,7 @@ impl VcsEntityHandler {
             (VcsEntityAction::Get, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
                 let repo = self
-                    .service
+                    .repo
                     .get_repository(org_id, &id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -61,7 +60,7 @@ impl VcsEntityHandler {
                     McpError::invalid_params("project_id required for list", None)
                 })?;
                 let repos = self
-                    .service
+                    .repo
                     .list_repositories(org_id, project_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -74,7 +73,7 @@ impl VcsEntityHandler {
                 let mut repo: Repository = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 repo.org_id = org_id.to_string();
-                self.service
+                self.repo
                     .update_repository(&repo)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -82,7 +81,7 @@ impl VcsEntityHandler {
             }
             (VcsEntityAction::Delete, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
-                self.service
+                self.repo
                     .delete_repository(org_id, &id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -96,7 +95,7 @@ impl VcsEntityHandler {
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let branch: Branch = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.service
+                self.repo
                     .create_branch(&branch)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -105,7 +104,7 @@ impl VcsEntityHandler {
             (VcsEntityAction::Get, VcsEntityResource::Branch) => {
                 let id = require_id(&args.id)?;
                 let branch = self
-                    .service
+                    .repo
                     .get_branch(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -117,7 +116,7 @@ impl VcsEntityHandler {
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("repository_id required", None))?;
                 let branches = self
-                    .service
+                    .repo
                     .list_branches(repo_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -129,7 +128,7 @@ impl VcsEntityHandler {
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let branch: Branch = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.service
+                self.repo
                     .update_branch(&branch)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -137,7 +136,7 @@ impl VcsEntityHandler {
             }
             (VcsEntityAction::Delete, VcsEntityResource::Branch) => {
                 let id = require_id(&args.id)?;
-                self.service
+                self.repo
                     .delete_branch(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -151,7 +150,7 @@ impl VcsEntityHandler {
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let wt: Worktree = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.service
+                self.repo
                     .create_worktree(&wt)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -160,7 +159,7 @@ impl VcsEntityHandler {
             (VcsEntityAction::Get, VcsEntityResource::Worktree) => {
                 let id = require_id(&args.id)?;
                 let wt = self
-                    .service
+                    .repo
                     .get_worktree(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -172,7 +171,7 @@ impl VcsEntityHandler {
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("repository_id required", None))?;
                 let wts = self
-                    .service
+                    .repo
                     .list_worktrees(repo_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -184,7 +183,7 @@ impl VcsEntityHandler {
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let wt: Worktree = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.service
+                self.repo
                     .update_worktree(&wt)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -192,7 +191,7 @@ impl VcsEntityHandler {
             }
             (VcsEntityAction::Delete, VcsEntityResource::Worktree) => {
                 let id = require_id(&args.id)?;
-                self.service
+                self.repo
                     .delete_worktree(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -206,7 +205,7 @@ impl VcsEntityHandler {
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let asgn: AgentWorktreeAssignment = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.service
+                self.repo
                     .create_assignment(&asgn)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -215,7 +214,7 @@ impl VcsEntityHandler {
             (VcsEntityAction::Get, VcsEntityResource::Assignment) => {
                 let id = require_id(&args.id)?;
                 let asgn = self
-                    .service
+                    .repo
                     .get_assignment(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -227,7 +226,7 @@ impl VcsEntityHandler {
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("worktree_id required", None))?;
                 let asgns = self
-                    .service
+                    .repo
                     .list_assignments_by_worktree(wt_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -239,7 +238,7 @@ impl VcsEntityHandler {
                     .duration_since(std::time::UNIX_EPOCH)
                     .unwrap_or_default()
                     .as_secs() as i64;
-                self.service
+                self.repo
                     .release_assignment(&id, now)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -278,7 +277,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl VcsEntityServiceInterface for MockVcsEntityService {
+    impl VcsEntityRepository for MockVcsEntityService {
         async fn create_repository(&self, repo: &Repository) -> Result<()> {
             self.repos.lock().unwrap().push(repo.clone());
             Ok(())

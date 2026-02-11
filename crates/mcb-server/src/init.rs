@@ -144,11 +144,11 @@ async fn run_server_mode(
         event_bus,
         service_manager: Some(std::sync::Arc::new(service_manager)),
         cache: Some(app_context.cache_handle().get()),
-        project_workflow: Some(server.project_workflow_service()),
-        vcs_entity: Some(server.vcs_entity_service()),
-        plan_entity: Some(server.plan_entity_service()),
-        issue_entity: Some(server.issue_entity_service()),
-        org_entity: Some(server.org_entity_service()),
+        project_workflow: Some(server.project_workflow_repository()),
+        vcs_entity: Some(server.vcs_entity_repository()),
+        plan_entity: Some(server.plan_entity_repository()),
+        issue_entity: Some(server.issue_entity_repository()),
+        org_entity: Some(server.org_entity_repository()),
     };
 
     let browse_state = BrowseState {
@@ -280,12 +280,12 @@ async fn create_mcp_server(
         memory: services.memory_service,
         agent_session: services.agent_session_service,
         project: services.project_service,
-        project_workflow: services.project_workflow_service,
+        project_workflow: services.project_repository,
         vcs: services.vcs_provider,
-        vcs_entity: services.vcs_entity_service,
-        plan_entity: services.plan_entity_service,
-        issue_entity: services.issue_entity_service,
-        org_entity: services.org_entity_service,
+        vcs_entity: services.vcs_entity_repository,
+        plan_entity: services.plan_entity_repository,
+        issue_entity: services.issue_entity_repository,
+        org_entity: services.org_entity_repository,
     };
     let server = McpServer::from_services(mcp_services);
 

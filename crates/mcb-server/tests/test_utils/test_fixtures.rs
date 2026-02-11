@@ -202,12 +202,12 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
         .with_memory_service(services.memory_service)
         .with_agent_session_service(services.agent_session_service)
         .with_project_service(services.project_service)
-        .with_project_workflow_service(ctx.project_workflow_service())
+        .with_project_workflow_service(services.project_repository)
         .with_vcs_provider(services.vcs_provider)
-        .with_vcs_entity_service(services.vcs_entity_service)
-        .with_plan_entity_service(services.plan_entity_service)
-        .with_issue_entity_service(services.issue_entity_service)
-        .with_org_entity_service(services.org_entity_service)
+        .with_vcs_entity_service(services.vcs_entity_repository)
+        .with_plan_entity_service(services.plan_entity_repository)
+        .with_issue_entity_service(services.issue_entity_repository)
+        .with_org_entity_service(services.org_entity_repository)
         .build()
         .expect("Failed to build MCP server");
 

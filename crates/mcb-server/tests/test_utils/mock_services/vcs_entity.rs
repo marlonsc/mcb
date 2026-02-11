@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use mcb_domain::entities::repository::{Branch, Repository};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::services::VcsEntityServiceInterface;
+use mcb_domain::ports::repositories::VcsEntityRepository;
 
 #[allow(dead_code)]
 pub struct MockVcsEntityService;
@@ -21,7 +21,7 @@ impl Default for MockVcsEntityService {
 }
 
 #[async_trait]
-impl VcsEntityServiceInterface for MockVcsEntityService {
+impl VcsEntityRepository for MockVcsEntityService {
     async fn create_repository(&self, _repo: &Repository) -> Result<()> {
         Ok(())
     }

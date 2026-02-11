@@ -6,8 +6,8 @@ use mcb_server::builder::{BuilderError, McpServerBuilder};
 
 use crate::test_utils::mock_services::{
     MockAgentSessionService, MockContextService, MockIndexingService, MockIssueEntityService,
-    MockMemoryService, MockOrgEntityService, MockPlanEntityService, MockProjectService,
-    MockProjectWorkflowService, MockSearchService, MockValidationService, MockVcsEntityService,
+    MockMemoryService, MockOrgEntityService, MockPlanEntityService, MockProjectRepository,
+    MockProjectService, MockSearchService, MockValidationService, MockVcsEntityService,
     MockVcsProvider,
 };
 
@@ -30,7 +30,7 @@ fn test_builder_all_services_provided() {
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
         .with_project_service(Arc::new(MockProjectService::new()))
-        .with_project_workflow_service(Arc::new(MockProjectWorkflowService::new()))
+        .with_project_workflow_service(Arc::new(MockProjectRepository::new()))
         .with_vcs_entity_service(Arc::new(MockVcsEntityService::new()))
         .with_plan_entity_service(Arc::new(MockPlanEntityService::new()))
         .with_issue_entity_service(Arc::new(MockIssueEntityService::new()))
@@ -174,7 +174,7 @@ fn test_try_build_success() {
         .with_agent_session_service(agent_session_service)
         .with_vcs_provider(vcs_provider)
         .with_project_service(Arc::new(MockProjectService::new()))
-        .with_project_workflow_service(Arc::new(MockProjectWorkflowService::new()))
+        .with_project_workflow_service(Arc::new(MockProjectRepository::new()))
         .with_vcs_entity_service(Arc::new(MockVcsEntityService::new()))
         .with_plan_entity_service(Arc::new(MockPlanEntityService::new()))
         .with_issue_entity_service(Arc::new(MockIssueEntityService::new()))

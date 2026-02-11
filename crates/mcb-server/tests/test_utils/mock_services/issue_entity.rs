@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::ProjectIssue;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::services::IssueEntityServiceInterface;
+use mcb_domain::ports::repositories::IssueEntityRepository;
 
 #[allow(dead_code)]
 pub struct MockIssueEntityService;
@@ -21,7 +21,7 @@ impl Default for MockIssueEntityService {
 }
 
 #[async_trait]
-impl IssueEntityServiceInterface for MockIssueEntityService {
+impl IssueEntityRepository for MockIssueEntityService {
     async fn create_issue(&self, _issue: &ProjectIssue) -> Result<()> {
         Ok(())
     }

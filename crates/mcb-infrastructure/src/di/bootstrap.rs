@@ -16,11 +16,7 @@ use mcb_domain::ports::repositories::{
     AgentRepository, FileHashRepository, IssueEntityRepository, MemoryRepository,
     OrgEntityRepository, PlanEntityRepository, ProjectRepository, VcsEntityRepository,
 };
-use mcb_domain::ports::services::{
-    IssueEntityServiceInterface, OrgEntityServiceInterface, PlanEntityServiceInterface,
-    ProjectDetectorService, ProjectServiceInterface as ProjectWorkflowService,
-    VcsEntityServiceInterface,
-};
+use mcb_domain::ports::services::ProjectDetectorService;
 
 use mcb_providers::database::{
     SqliteMemoryRepository, create_agent_repository_from_executor,
@@ -97,15 +93,10 @@ pub struct AppContext {
     project_repository: Arc<dyn ProjectRepository>,
     vcs_provider: Arc<dyn VcsProvider>,
     project_service: Arc<dyn ProjectDetectorService>,
-    project_workflow_service: Arc<dyn ProjectWorkflowService>,
     vcs_entity_repository: Arc<dyn VcsEntityRepository>,
-    vcs_entity_service: Arc<dyn VcsEntityServiceInterface>,
     plan_entity_repository: Arc<dyn PlanEntityRepository>,
-    plan_entity_service: Arc<dyn PlanEntityServiceInterface>,
     issue_entity_repository: Arc<dyn IssueEntityRepository>,
-    issue_entity_service: Arc<dyn IssueEntityServiceInterface>,
     org_entity_repository: Arc<dyn OrgEntityRepository>,
-    org_entity_service: Arc<dyn OrgEntityServiceInterface>,
     file_hash_repository: Arc<dyn FileHashRepository>,
 
     // ========================================================================
@@ -221,19 +212,9 @@ impl AppContext {
         self.project_service.clone()
     }
 
-    /// Get project workflow service
-    pub fn project_workflow_service(&self) -> Arc<dyn ProjectWorkflowService> {
-        self.project_workflow_service.clone()
-    }
-
     /// Get VCS entity repository
     pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
         self.vcs_entity_repository.clone()
-    }
-
-    /// Get VCS entity service
-    pub fn vcs_entity_service(&self) -> Arc<dyn VcsEntityServiceInterface> {
-        self.vcs_entity_service.clone()
     }
 
     /// Get plan entity repository
@@ -241,29 +222,14 @@ impl AppContext {
         self.plan_entity_repository.clone()
     }
 
-    /// Get plan entity service
-    pub fn plan_entity_service(&self) -> Arc<dyn PlanEntityServiceInterface> {
-        self.plan_entity_service.clone()
-    }
-
     /// Get issue entity repository
     pub fn issue_entity_repository(&self) -> Arc<dyn IssueEntityRepository> {
         self.issue_entity_repository.clone()
     }
 
-    /// Get issue entity service
-    pub fn issue_entity_service(&self) -> Arc<dyn IssueEntityServiceInterface> {
-        self.issue_entity_service.clone()
-    }
-
     /// Get org entity repository
     pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
         self.org_entity_repository.clone()
-    }
-
-    /// Get org entity service
-    pub fn org_entity_service(&self) -> Arc<dyn OrgEntityServiceInterface> {
-        self.org_entity_service.clone()
     }
 
     /// Get file hash repository
@@ -321,11 +287,11 @@ impl AppContext {
             agent_repository,
             vcs_provider,
             project_service,
-            project_workflow_service: self.project_workflow_service(),
-            vcs_entity_service: self.vcs_entity_service(),
-            plan_entity_service: self.plan_entity_service(),
-            issue_entity_service: self.issue_entity_service(),
-            org_entity_service: self.org_entity_service(),
+            project_repository: self.project_repository(),
+            vcs_entity_repository: self.vcs_entity_repository(),
+            plan_entity_repository: self.plan_entity_repository(),
+            issue_entity_repository: self.issue_entity_repository(),
+            org_entity_repository: self.org_entity_repository(),
         };
 
         crate::di::modules::domain_services::DomainServicesFactory::create_services(deps).await
@@ -472,43 +438,18 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 
     let vcs_provider = crate::di::vcs::default_vcs_provider();
     let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new());
-    let project_workflow_service: Arc<dyn ProjectWorkflowService> = Arc::new(
-        mcb_application::use_cases::project_service::ProjectServiceImpl::new(
-            project_repository.clone(),
-        ),
-    );
 
     let vcs_entity_repository: Arc<dyn VcsEntityRepository> = Arc::new(
         mcb_providers::database::SqliteVcsEntityRepository::new(Arc::clone(&db_executor)),
     );
-    let vcs_entity_service: Arc<dyn VcsEntityServiceInterface> = Arc::new(
-        mcb_application::use_cases::vcs_entity_service::VcsEntityServiceImpl::new(
-            vcs_entity_repository.clone(),
-        ),
-    );
     let plan_entity_repository: Arc<dyn PlanEntityRepository> = Arc::new(
         mcb_providers::database::SqlitePlanEntityRepository::new(Arc::clone(&db_executor)),
-    );
-    let plan_entity_service: Arc<dyn PlanEntityServiceInterface> = Arc::new(
-        mcb_application::use_cases::plan_entity_service::PlanEntityServiceImpl::new(
-            plan_entity_repository.clone(),
-        ),
     );
     let issue_entity_repository: Arc<dyn IssueEntityRepository> = Arc::new(
         mcb_providers::database::SqliteIssueEntityRepository::new(Arc::clone(&db_executor)),
     );
-    let issue_entity_service: Arc<dyn IssueEntityServiceInterface> = Arc::new(
-        mcb_application::use_cases::issue_entity_service::IssueEntityServiceImpl::new(
-            issue_entity_repository.clone(),
-        ),
-    );
     let org_entity_repository: Arc<dyn OrgEntityRepository> = Arc::new(
         mcb_providers::database::SqliteOrgEntityRepository::new(Arc::clone(&db_executor)),
-    );
-    let org_entity_service: Arc<dyn OrgEntityServiceInterface> = Arc::new(
-        mcb_application::use_cases::org_entity_service::OrgEntityServiceImpl::new(
-            org_entity_repository.clone(),
-        ),
     );
 
     let highlight_service: Arc<dyn HighlightServiceInterface> =
@@ -545,15 +486,10 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         project_repository,
         vcs_provider,
         project_service,
-        project_workflow_service,
         vcs_entity_repository,
-        vcs_entity_service,
         plan_entity_repository,
-        plan_entity_service,
         issue_entity_repository,
-        issue_entity_service,
         org_entity_repository,
-        org_entity_service,
         file_hash_repository,
         highlight_service,
         crypto_service,

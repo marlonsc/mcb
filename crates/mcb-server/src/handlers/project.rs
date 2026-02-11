@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::services::ProjectServiceInterface;
+use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
@@ -15,13 +15,12 @@ use crate::handler_helpers::ok_json;
 
 /// Handler for the consolidated `project` MCP tool.
 pub struct ProjectHandler {
-    service: Arc<dyn ProjectServiceInterface>,
+    repo: Arc<dyn ProjectRepository>,
 }
 
 impl ProjectHandler {
-    /// Create a new handler wrapping the given service.
-    pub fn new(service: Arc<dyn ProjectServiceInterface>) -> Self {
-        Self { service }
+    pub fn new(repo: Arc<dyn ProjectRepository>) -> Self {
+        Self { repo }
     }
 
     /// Route an incoming `project` tool call to the appropriate operation.
@@ -51,18 +50,14 @@ impl ProjectHandler {
         match (args.action, args.resource) {
             (ProjectAction::Get, ProjectResource::Project) => {
                 let project = self
-                    .service
-                    .get_project(org_id, project_id)
+                    .repo
+                    .get_by_id(org_id, project_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&project)
             }
             (ProjectAction::List, ProjectResource::Project) => {
-                let projects = self
-                    .service
-                    .list_projects(org_id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                let projects = self.repo.list(org_id).await.map_err(to_opaque_mcp_error)?;
                 ok_json(&projects)
             }
 
@@ -99,8 +94,11 @@ mod tests {
     }
 
     #[async_trait]
-    impl ProjectServiceInterface for MockProjectService {
-        async fn get_project(&self, _org_id: &str, id: &str) -> Result<Project> {
+    impl ProjectRepository for MockProjectService {
+        async fn create(&self, _project: &Project) -> Result<()> {
+            Ok(())
+        }
+        async fn get_by_id(&self, _org_id: &str, id: &str) -> Result<Project> {
             let projects = self.projects.lock().unwrap();
             projects
                 .iter()
@@ -110,10 +108,21 @@ mod tests {
                     resource: format!("Project {}", id),
                 })
         }
-
-        async fn list_projects(&self, _org_id: &str) -> Result<Vec<Project>> {
+        async fn get_by_name(&self, _org_id: &str, _name: &str) -> Result<Project> {
+            Err(mcb_domain::error::Error::not_found("not found"))
+        }
+        async fn get_by_path(&self, _org_id: &str, _path: &str) -> Result<Project> {
+            Err(mcb_domain::error::Error::not_found("not found"))
+        }
+        async fn list(&self, _org_id: &str) -> Result<Vec<Project>> {
             let projects = self.projects.lock().unwrap();
             Ok(projects.clone())
+        }
+        async fn update(&self, _project: &Project) -> Result<()> {
+            Ok(())
+        }
+        async fn delete(&self, _org_id: &str, _id: &str) -> Result<()> {
+            Ok(())
         }
     }
 

@@ -28,7 +28,7 @@ pub use org_entity::MockOrgEntityService;
 #[allow(unused_imports)]
 pub use plan_entity::MockPlanEntityService;
 #[allow(unused_imports)]
-pub use project::{MockProjectRepository, MockProjectService, MockProjectWorkflowService};
+pub use project::{MockProjectRepository, MockProjectService};
 pub use search::MockSearchService;
 pub use validation::MockValidationService;
 pub use vcs::MockVcsProvider;

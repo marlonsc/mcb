@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
-use mcb_domain::ports::services::PlanEntityServiceInterface;
+use mcb_domain::ports::repositories::PlanEntityRepository;
 use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
@@ -12,13 +12,12 @@ use crate::handler_helpers::{ok_json, ok_text, require_id};
 
 /// Handler for the consolidated `plan_entity` MCP tool.
 pub struct PlanEntityHandler {
-    service: Arc<dyn PlanEntityServiceInterface>,
+    repo: Arc<dyn PlanEntityRepository>,
 }
 
 impl PlanEntityHandler {
-    /// Create a new handler wrapping the given service.
-    pub fn new(service: Arc<dyn PlanEntityServiceInterface>) -> Self {
-        Self { service }
+    pub fn new(repo: Arc<dyn PlanEntityRepository>) -> Self {
+        Self { repo }
     }
 
     /// Route an incoming `plan_entity` tool call to the appropriate CRUD operation.
@@ -39,7 +38,7 @@ impl PlanEntityHandler {
                 let mut plan: Plan = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 plan.org_id = org_id.to_string();
-                self.service
+                self.repo
                     .create_plan(&plan)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -48,7 +47,7 @@ impl PlanEntityHandler {
             (PlanEntityAction::Get, PlanEntityResource::Plan) => {
                 let id = require_id(&args.id)?;
                 let plan = self
-                    .service
+                    .repo
                     .get_plan(org_id, &id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -59,7 +58,7 @@ impl PlanEntityHandler {
                     McpError::invalid_params("project_id required for list", None)
                 })?;
                 let plans = self
-                    .service
+                    .repo
                     .list_plans(org_id, project_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -72,7 +71,7 @@ impl PlanEntityHandler {
                 let mut plan: Plan = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 plan.org_id = org_id.to_string();
-                self.service
+                self.repo
                     .update_plan(&plan)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -80,7 +79,7 @@ impl PlanEntityHandler {
             }
             (PlanEntityAction::Delete, PlanEntityResource::Plan) => {
                 let id = require_id(&args.id)?;
-                self.service
+                self.repo
                     .delete_plan(org_id, &id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -92,7 +91,7 @@ impl PlanEntityHandler {
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let version: PlanVersion = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.service
+                self.repo
                     .create_plan_version(&version)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -101,7 +100,7 @@ impl PlanEntityHandler {
             (PlanEntityAction::Get, PlanEntityResource::Version) => {
                 let id = require_id(&args.id)?;
                 let version = self
-                    .service
+                    .repo
                     .get_plan_version(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -113,7 +112,7 @@ impl PlanEntityHandler {
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("plan_id required", None))?;
                 let versions = self
-                    .service
+                    .repo
                     .list_plan_versions_by_plan(plan_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -125,7 +124,7 @@ impl PlanEntityHandler {
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
                 let review: PlanReview = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.service
+                self.repo
                     .create_plan_review(&review)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -134,7 +133,7 @@ impl PlanEntityHandler {
             (PlanEntityAction::Get, PlanEntityResource::Review) => {
                 let id = require_id(&args.id)?;
                 let review = self
-                    .service
+                    .repo
                     .get_plan_review(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -146,7 +145,7 @@ impl PlanEntityHandler {
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("plan_version_id required", None))?;
                 let reviews = self
-                    .service
+                    .repo
                     .list_plan_reviews_by_version(plan_version_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -184,7 +183,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl PlanEntityServiceInterface for MockPlanEntityService {
+    impl PlanEntityRepository for MockPlanEntityService {
         async fn create_plan(&self, plan: &Plan) -> Result<()> {
             self.plans.lock().expect("lock plans").push(plan.clone());
             Ok(())

@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::entities::{ApiKey, Organization, Team, TeamMember, User};
-use mcb_domain::ports::services::OrgEntityServiceInterface;
+use mcb_domain::ports::repositories::OrgEntityRepository;
 use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
@@ -13,13 +13,13 @@ use crate::handler_helpers::{ok_json, ok_text, require_id};
 
 /// Handler for the consolidated `org_entity` MCP tool.
 pub struct OrgEntityHandler {
-    service: Arc<dyn OrgEntityServiceInterface>,
+    repo: Arc<dyn OrgEntityRepository>,
 }
 
 impl OrgEntityHandler {
-    /// Create a new handler wrapping the given service.
-    pub fn new(service: Arc<dyn OrgEntityServiceInterface>) -> Self {
-        Self { service }
+    /// Create a new handler backed by the given repository.
+    pub fn new(repo: Arc<dyn OrgEntityRepository>) -> Self {
+        Self { repo }
     }
 
     /// Route an incoming `org_entity` tool call to the appropriate CRUD operation.
@@ -37,7 +37,7 @@ impl OrgEntityHandler {
                     .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
                 let org: Organization = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.service
+                self.repo
                     .create_org(&org)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -45,19 +45,11 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Get, OrgEntityResource::Org) => {
                 let id = require_id(&args.id)?;
-                let org = self
-                    .service
-                    .get_org(&id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                let org = self.repo.get_org(&id).await.map_err(to_opaque_mcp_error)?;
                 ok_json(&org)
             }
             (OrgEntityAction::List, OrgEntityResource::Org) => {
-                let orgs = self
-                    .service
-                    .list_orgs()
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                let orgs = self.repo.list_orgs().await.map_err(to_opaque_mcp_error)?;
                 ok_json(&orgs)
             }
             (OrgEntityAction::Update, OrgEntityResource::Org) => {
@@ -66,7 +58,7 @@ impl OrgEntityHandler {
                     .ok_or_else(|| McpError::invalid_params("data required for update", None))?;
                 let org: Organization = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.service
+                self.repo
                     .update_org(&org)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -74,7 +66,7 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Delete, OrgEntityResource::Org) => {
                 let id = require_id(&args.id)?;
-                self.service
+                self.repo
                     .delete_org(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -87,7 +79,7 @@ impl OrgEntityHandler {
                 let mut user: User = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 user.org_id = org_id.to_string();
-                self.service
+                self.repo
                     .create_user(&user)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -95,9 +87,9 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Get, OrgEntityResource::User) => {
                 let user = if let Some(id) = args.id.as_deref() {
-                    self.service.get_user(id).await
+                    self.repo.get_user(id).await
                 } else if let Some(email) = args.email.as_deref() {
-                    self.service.get_user_by_email(org_id, email).await
+                    self.repo.get_user_by_email(org_id, email).await
                 } else {
                     return Err(McpError::invalid_params(
                         "id or email required for user get",
@@ -109,7 +101,7 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::List, OrgEntityResource::User) => {
                 let users = self
-                    .service
+                    .repo
                     .list_users(org_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -122,7 +114,7 @@ impl OrgEntityHandler {
                 let mut user: User = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 user.org_id = org_id.to_string();
-                self.service
+                self.repo
                     .update_user(&user)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -130,7 +122,7 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Delete, OrgEntityResource::User) => {
                 let id = require_id(&args.id)?;
-                self.service
+                self.repo
                     .delete_user(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -143,7 +135,7 @@ impl OrgEntityHandler {
                 let mut team: Team = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 team.org_id = org_id.to_string();
-                self.service
+                self.repo
                     .create_team(&team)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -151,16 +143,12 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Get, OrgEntityResource::Team) => {
                 let id = require_id(&args.id)?;
-                let team = self
-                    .service
-                    .get_team(&id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                let team = self.repo.get_team(&id).await.map_err(to_opaque_mcp_error)?;
                 ok_json(&team)
             }
             (OrgEntityAction::List, OrgEntityResource::Team) => {
                 let teams = self
-                    .service
+                    .repo
                     .list_teams(org_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -168,7 +156,7 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Delete, OrgEntityResource::Team) => {
                 let id = require_id(&args.id)?;
-                self.service
+                self.repo
                     .delete_team(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -180,7 +168,7 @@ impl OrgEntityHandler {
                     .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
                 let member: TeamMember = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.service
+                self.repo
                     .add_team_member(&member)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -192,7 +180,7 @@ impl OrgEntityHandler {
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("team_id required for list", None))?;
                 let members = self
-                    .service
+                    .repo
                     .list_team_members(team_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -207,7 +195,7 @@ impl OrgEntityHandler {
                     .user_id
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("user_id required for delete", None))?;
-                self.service
+                self.repo
                     .remove_team_member(team_id, user_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -220,7 +208,7 @@ impl OrgEntityHandler {
                 let mut key: ApiKey = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
                 key.org_id = org_id.to_string();
-                self.service
+                self.repo
                     .create_api_key(&key)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -229,7 +217,7 @@ impl OrgEntityHandler {
             (OrgEntityAction::Get, OrgEntityResource::ApiKey) => {
                 let id = require_id(&args.id)?;
                 let key = self
-                    .service
+                    .repo
                     .get_api_key(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -237,7 +225,7 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::List, OrgEntityResource::ApiKey) => {
                 let keys = self
-                    .service
+                    .repo
                     .list_api_keys(org_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -246,7 +234,7 @@ impl OrgEntityHandler {
             (OrgEntityAction::Update, OrgEntityResource::ApiKey) => {
                 let id = require_id(&args.id)?;
                 let revoked_at = extract_revoked_at(args.data.as_ref());
-                self.service
+                self.repo
                     .revoke_api_key(&id, revoked_at)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -254,7 +242,7 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Delete, OrgEntityResource::ApiKey) => {
                 let id = require_id(&args.id)?;
-                self.service
+                self.repo
                     .delete_api_key(&id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
@@ -303,7 +291,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl OrgEntityServiceInterface for MockOrgEntityService {
+    impl OrgEntityRepository for MockOrgEntityService {
         async fn create_org(&self, org: &Organization) -> Result<()> {
             self.orgs.lock().expect("lock orgs").push(org.clone());
             Ok(())

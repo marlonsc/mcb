@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::services::PlanEntityServiceInterface;
+use mcb_domain::ports::repositories::PlanEntityRepository;
 
 #[allow(dead_code)]
 pub struct MockPlanEntityService;
@@ -20,7 +20,7 @@ impl Default for MockPlanEntityService {
 }
 
 #[async_trait]
-impl PlanEntityServiceInterface for MockPlanEntityService {
+impl PlanEntityRepository for MockPlanEntityService {
     async fn create_plan(&self, _plan: &Plan) -> Result<()> {
         Ok(())
     }

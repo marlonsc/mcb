@@ -18,9 +18,9 @@ use mcb_domain::ports::admin::{
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::jobs::{Job, JobStatus, JobType};
 use mcb_domain::ports::providers::CacheProvider;
-use mcb_domain::ports::services::{
-    IssueEntityServiceInterface, OrgEntityServiceInterface, PlanEntityServiceInterface,
-    ProjectServiceInterface, VcsEntityServiceInterface,
+use mcb_domain::ports::repositories::{
+    IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
+    VcsEntityRepository,
 };
 use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::AppConfig;
@@ -57,16 +57,11 @@ pub struct AdminState {
     pub service_manager: Option<Arc<ServiceManager>>,
     /// Cache provider for stats
     pub cache: Option<Arc<dyn CacheProvider>>,
-    /// Project workflow service for project/phase/issue navigation
-    pub project_workflow: Option<Arc<dyn ProjectServiceInterface>>,
-    /// VCS entity service for repository/branch/worktree navigation
-    pub vcs_entity: Option<Arc<dyn VcsEntityServiceInterface>>,
-    /// Plan entity service for plan/version/review navigation
-    pub plan_entity: Option<Arc<dyn PlanEntityServiceInterface>>,
-    /// Issue entity service for issue/comment/label navigation
-    pub issue_entity: Option<Arc<dyn IssueEntityServiceInterface>>,
-    /// Org entity service for organization navigation
-    pub org_entity: Option<Arc<dyn OrgEntityServiceInterface>>,
+    pub project_workflow: Option<Arc<dyn ProjectRepository>>,
+    pub vcs_entity: Option<Arc<dyn VcsEntityRepository>>,
+    pub plan_entity: Option<Arc<dyn PlanEntityRepository>>,
+    pub issue_entity: Option<Arc<dyn IssueEntityRepository>>,
+    pub org_entity: Option<Arc<dyn OrgEntityRepository>>,
 }
 
 /// Health check response for admin API
@@ -182,10 +177,7 @@ pub async fn list_browse_projects(
 
     // TODO(phase-1): extract org_id from admin auth context
     let org_ctx = mcb_domain::value_objects::OrgContext::default();
-    match project_workflow
-        .list_projects(org_ctx.org_id.as_str())
-        .await
-    {
+    match project_workflow.list(org_ctx.org_id.as_str()).await {
         Ok(projects) => {
             let total = projects.len();
             Ok(Json(ProjectsBrowseResponse { projects, total }))

@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use mcb_domain::entities::{ApiKey, Organization, Team, TeamMember, User};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::services::OrgEntityServiceInterface;
+use mcb_domain::ports::repositories::OrgEntityRepository;
 
 #[allow(dead_code)]
 pub struct MockOrgEntityService;
@@ -20,7 +20,7 @@ impl Default for MockOrgEntityService {
 }
 
 #[async_trait]
-impl OrgEntityServiceInterface for MockOrgEntityService {
+impl OrgEntityRepository for MockOrgEntityService {
     async fn create_org(&self, _org: &Organization) -> Result<()> {
         Ok(())
     }
