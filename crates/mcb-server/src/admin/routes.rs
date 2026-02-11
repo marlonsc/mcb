@@ -30,6 +30,7 @@ use super::web::handlers::{
     browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
     dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
 };
+use super::web::router::template_dir;
 
 /// Create the admin API rocket instance
 ///
@@ -64,7 +65,9 @@ pub fn admin_rocket(
     auth_config: Arc<AdminAuthConfig>,
     browse_state: Option<BrowseState>,
 ) -> Rocket<Build> {
-    let mut rocket = rocket::build()
+    let figment = rocket::Config::figment().merge(("template_dir", template_dir()));
+
+    let mut rocket = rocket::custom(figment)
         .manage(state)
         .manage(auth_config)
         .attach(Template::fairing());

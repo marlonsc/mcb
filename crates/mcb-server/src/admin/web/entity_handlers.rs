@@ -46,11 +46,14 @@ pub fn entities_index() -> Template {
         })
         .collect::<Vec<_>>();
 
+    let entity_count = entities.len();
+
     Template::render(
         "admin/entity_index",
         context! {
             title: "Entities",
             entities: entities,
+            entity_count: entity_count,
             nav_items: nav_items(),
         },
     )
@@ -72,6 +75,9 @@ pub fn entities_list(slug: &str) -> Result<Template, status::Custom<String>> {
         .map(|field| field.name.clone())
         .collect::<Vec<_>>();
 
+    let records = Vec::<serde_json::Value>::new();
+    let has_records = !records.is_empty();
+
     Ok(Template::render(
         "admin/entity_list",
         context! {
@@ -80,7 +86,8 @@ pub fn entities_list(slug: &str) -> Result<Template, status::Custom<String>> {
             entity_group: entity.group,
             fields: fields,
             field_names: field_names,
-            records: Vec::<serde_json::Value>::new(),
+            records: records,
+            has_records: has_records,
             nav_items: nav_items(),
         },
     ))

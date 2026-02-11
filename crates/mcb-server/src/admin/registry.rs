@@ -321,3 +321,95 @@ fn to_title(value: &str) -> String {
         .collect::<Vec<_>>()
         .join(" ")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_registry_has_16_entities() {
+        assert_eq!(AdminRegistry::all().len(), 16);
+    }
+
+    #[test]
+    fn test_registry_find_known_slug() {
+        let entity = AdminRegistry::find("organizations");
+        assert!(entity.is_some());
+        let entity = entity.unwrap();
+        assert_eq!(entity.title, "Organizations");
+        assert_eq!(entity.group, "org");
+    }
+
+    #[test]
+    fn test_registry_find_unknown_slug_returns_none() {
+        assert!(AdminRegistry::find("nonexistent").is_none());
+    }
+
+    #[test]
+    fn test_entity_fields_returns_nonempty() {
+        let entity = AdminRegistry::find("users").unwrap();
+        let fields = entity.fields();
+        assert!(!fields.is_empty());
+        assert!(fields.iter().any(|f| f.name == "id"));
+    }
+
+    #[test]
+    fn test_id_field_is_readonly() {
+        let entity = AdminRegistry::find("organizations").unwrap();
+        let fields = entity.fields();
+        let id_field = fields.iter().find(|f| f.name == "id").unwrap();
+        assert!(id_field.readonly);
+    }
+
+    #[test]
+    fn test_hidden_fields_detected() {
+        let entity = AdminRegistry::find("api-keys").unwrap();
+        let fields = entity.fields();
+        let hidden = fields.iter().filter(|f| f.hidden).count();
+        assert!(hidden > 0, "API keys should have hidden hash fields");
+    }
+
+    #[test]
+    fn test_to_title_converts_snake_case() {
+        assert_eq!(to_title("created_at"), "Created At");
+        assert_eq!(to_title("id"), "Id");
+        assert_eq!(to_title("settings_json"), "Settings Json");
+    }
+
+    #[test]
+    fn test_all_entity_schemas_are_valid_json() {
+        for entity in AdminRegistry::all() {
+            let schema = (entity.schema)();
+            assert!(
+                schema.get("properties").is_some() || schema.get("type").is_some(),
+                "Schema for {} should have properties or type",
+                entity.slug
+            );
+        }
+    }
+
+    #[test]
+    fn test_field_meta_boolean_flags_consistent() {
+        for entity in AdminRegistry::all() {
+            for field in entity.fields() {
+                if field.is_textarea {
+                    assert_eq!(
+                        field.input_type, "textarea",
+                        "{}.{}",
+                        entity.slug, field.name
+                    );
+                }
+                if field.is_checkbox {
+                    assert_eq!(
+                        field.input_type, "checkbox",
+                        "{}.{}",
+                        entity.slug, field.name
+                    );
+                }
+                if field.is_select {
+                    assert_eq!(field.input_type, "select", "{}.{}", entity.slug, field.name);
+                }
+            }
+        }
+    }
+}

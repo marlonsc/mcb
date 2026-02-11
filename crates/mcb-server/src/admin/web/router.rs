@@ -10,6 +10,24 @@ use rocket_dyn_templates::Template;
 use super::entity_handlers;
 use super::handlers;
 
+/// Returns the path to the Handlebars templates directory.
+///
+/// Searches multiple candidate locations to support both workspace-level
+/// execution (cargo test from root) and crate-level execution.
+#[must_use]
+pub fn template_dir() -> String {
+    let candidates = ["crates/mcb-server/templates", "templates"];
+    for candidate in &candidates {
+        let path = std::path::Path::new(candidate);
+        if path.exists() && path.is_dir() {
+            tracing::debug!(template_dir = %candidate, "Resolved template directory");
+            return (*candidate).to_string();
+        }
+    }
+    tracing::warn!("No template directory found, using default 'templates'");
+    "templates".to_string()
+}
+
 /// Create the admin web UI rocket instance
 ///
 /// Routes:
@@ -24,7 +42,9 @@ use super::handlers;
 /// - GET `/ui/browse/tree` - Browse tree view page (Wave 3)
 /// - GET `/favicon.ico` - Favicon
 pub fn web_rocket() -> Rocket<Build> {
-    rocket::build().attach(Template::fairing()).mount(
+    let figment = rocket::Config::figment().merge(("template_dir", template_dir()));
+
+    rocket::custom(figment).attach(Template::fairing()).mount(
         "/",
         routes![
             handlers::dashboard,

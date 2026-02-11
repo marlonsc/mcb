@@ -87,3 +87,72 @@ async fn test_favicon_returns_svg() {
         Some("image/svg+xml".to_string())
     );
 }
+
+#[rocket::async_test]
+async fn test_entities_index_returns_html() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/entities").dispatch().await;
+
+    assert_eq!(response.status(), Status::Ok);
+    let html = response.into_string().await.expect("response body");
+    assert!(html.contains("<!DOCTYPE html>"));
+    assert!(html.contains("Entities"));
+    assert!(html.contains("Organizations"));
+    assert!(html.contains("Users"));
+}
+
+#[rocket::async_test]
+async fn test_entities_list_returns_html() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/entities/organizations").dispatch().await;
+
+    assert_eq!(response.status(), Status::Ok);
+    let html = response.into_string().await.expect("response body");
+    assert!(html.contains("<!DOCTYPE html>"));
+    assert!(html.contains("Organizations"));
+    assert!(html.contains("org"));
+}
+
+#[rocket::async_test]
+async fn test_entities_list_unknown_slug_returns_404() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/entities/nonexistent").dispatch().await;
+
+    assert_eq!(response.status(), Status::NotFound);
+}
+
+#[rocket::async_test]
+async fn test_entities_new_form_returns_html() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/entities/users/new").dispatch().await;
+
+    assert_eq!(response.status(), Status::Ok);
+    let html = response.into_string().await.expect("response body");
+    assert!(html.contains("<!DOCTYPE html>"));
+    assert!(html.contains("New Users"));
+    assert!(html.contains("<form"));
+    assert!(html.contains("Save"));
+}
+
+#[rocket::async_test]
+async fn test_entities_new_form_unknown_slug_returns_404() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/entities/nonexistent/new").dispatch().await;
+
+    assert_eq!(response.status(), Status::NotFound);
+}
