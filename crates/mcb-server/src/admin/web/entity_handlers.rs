@@ -9,14 +9,8 @@ use serde::Serialize;
 
 use crate::admin::crud_adapter::resolve_adapter;
 use crate::admin::handlers::AdminState;
+use crate::admin::web::view_model::nav_groups;
 use crate::admin::{AdminRegistry, registry::AdminFieldMeta};
-
-#[derive(Debug, Clone, Serialize)]
-struct EntityNavItem {
-    slug: String,
-    title: String,
-    group: String,
-}
 
 #[derive(Debug, Clone, Serialize)]
 struct EntitySummary {
@@ -24,17 +18,6 @@ struct EntitySummary {
     title: String,
     group: String,
     field_count: usize,
-}
-
-fn nav_items() -> Vec<EntityNavItem> {
-    AdminRegistry::all()
-        .iter()
-        .map(|entity| EntityNavItem {
-            slug: entity.slug.to_string(),
-            title: entity.title.to_string(),
-            group: entity.group.to_string(),
-        })
-        .collect()
 }
 
 fn find_or_404(
@@ -58,14 +41,17 @@ pub fn entities_index() -> Template {
         .collect::<Vec<_>>();
 
     let entity_count = entities.len();
+    let group_count = nav_groups().len();
 
     Template::render(
         "admin/entity_index",
         context! {
             title: "Entities",
+            current_page: "entities",
             entities: entities,
             entity_count: entity_count,
-            nav_items: nav_items(),
+            group_count: group_count,
+            nav_groups: nav_groups(),
         },
     )
 }
@@ -91,13 +77,14 @@ pub async fn entities_list(
         "admin/entity_list",
         context! {
             title: entity.title,
+            current_page: entity.slug,
             entity_slug: entity.slug,
             entity_group: entity.group,
             fields: fields,
             field_names: field_names,
             records: records,
             has_records: has_records,
-            nav_items: nav_items(),
+            nav_groups: nav_groups(),
         },
     ))
 }
@@ -117,11 +104,12 @@ pub fn entities_new_form(slug: &str) -> Result<Template, status::Custom<String>>
         "admin/entity_form",
         context! {
             title: format!("New {}", entity.title),
+            current_page: entity.slug,
             entity_slug: entity.slug,
             entity_group: entity.group,
             fields: fields,
             is_edit: false,
-            nav_items: nav_items(),
+            nav_groups: nav_groups(),
         },
     ))
 }
@@ -148,13 +136,14 @@ pub async fn entities_detail(
         "admin/entity_detail",
         context! {
             title: entity.title,
+            current_page: entity.slug,
             entity_slug: entity.slug,
             entity_group: entity.group,
             entity_id: id,
             fields: fields,
             record: record,
             has_record: has_record,
-            nav_items: nav_items(),
+            nav_groups: nav_groups(),
         },
     ))
 }
@@ -181,13 +170,14 @@ pub async fn entities_edit_form(
         "admin/entity_form",
         context! {
             title: format!("Edit {}", entity.title),
+            current_page: entity.slug,
             entity_slug: entity.slug,
             entity_group: entity.group,
             entity_id: id,
             fields: fields,
             is_edit: true,
             record: record,
-            nav_items: nav_items(),
+            nav_groups: nav_groups(),
         },
     ))
 }
@@ -201,10 +191,11 @@ pub fn entities_delete_confirm(slug: &str, id: &str) -> Result<Template, status:
         "admin/entity_delete",
         context! {
             title: format!("Delete {}", entity.title),
+            current_page: entity.slug,
             entity_slug: entity.slug,
             entity_group: entity.group,
             entity_id: id,
-            nav_items: nav_items(),
+            nav_groups: nav_groups(),
         },
     ))
 }

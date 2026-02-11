@@ -1,13 +1,19 @@
 //! Web Handlers Module
 //!
 //! HTTP handlers for the admin web interface.
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
-//! Migrated from include_str! to Handlebars templates in Wave 4 (Task 14).
 
+use rocket::State;
 use rocket::get;
 use rocket::http::ContentType;
 use rocket_dyn_templates::{Template, context};
+use serde::Serialize;
+
+use crate::admin::AdminRegistry;
+use crate::admin::crud_adapter::resolve_adapter;
+use crate::admin::handlers::AdminState;
+use crate::admin::web::view_model::{
+    DashboardEntityCard, format_timestamp, nav_groups, pluralize, truncate_text,
+};
 
 // Static assets remain as compile-time embeds (not Handlebars templates)
 const SHARED_JS: &str = include_str!("templates/shared.js");
@@ -15,37 +21,58 @@ const THEME_CSS: &str = include_str!("templates/theme.css");
 
 /// Dashboard page handler
 #[get("/")]
-pub fn dashboard() -> Template {
+pub async fn dashboard(state: Option<&State<AdminState>>) -> Template {
     tracing::info!("dashboard called");
-    Template::render("admin/dashboard", context! { title: "Dashboard" })
+    render_dashboard_template("Dashboard", state).await
 }
 
 /// Dashboard page handler (alias)
 #[get("/ui")]
-pub fn dashboard_ui() -> Template {
+pub async fn dashboard_ui(state: Option<&State<AdminState>>) -> Template {
     tracing::info!("dashboard_ui called");
-    Template::render("admin/dashboard", context! { title: "Dashboard" })
+    render_dashboard_template("Dashboard", state).await
 }
 
 /// Configuration page handler
 #[get("/ui/config")]
 pub fn config_page() -> Template {
     tracing::info!("config_page called");
-    Template::render("admin/config", context! { title: "Configuration" })
+    Template::render(
+        "admin/config",
+        context! {
+            title: "Configuration",
+            current_page: "config",
+            nav_groups: nav_groups(),
+        },
+    )
 }
 
 /// Health status page handler
 #[get("/ui/health")]
 pub fn health_page() -> Template {
     tracing::info!("health_page called");
-    Template::render("admin/health", context! { title: "Health Status" })
+    Template::render(
+        "admin/health",
+        context! {
+            title: "Health Status",
+            current_page: "health",
+            nav_groups: nav_groups(),
+        },
+    )
 }
 
 /// Jobs page handler
 #[get("/ui/jobs")]
 pub fn jobs_page() -> Template {
     tracing::info!("jobs_page called");
-    Template::render("admin/jobs", context! { title: "Jobs" })
+    Template::render(
+        "admin/jobs",
+        context! {
+            title: "Jobs",
+            current_page: "jobs",
+            nav_groups: nav_groups(),
+        },
+    )
 }
 
 /// Favicon handler - returns a simple SVG icon
@@ -76,7 +103,14 @@ pub fn shared_js() -> (ContentType, &'static str) {
 #[get("/ui/browse")]
 pub fn browse_page() -> Template {
     tracing::info!("browse_page called");
-    Template::render("admin/browse", context! { title: "Browse Indexed Code" })
+    Template::render(
+        "admin/browse",
+        context! {
+            title: "Browse Indexed Code",
+            current_page: "browse",
+            nav_groups: nav_groups(),
+        },
+    )
 }
 
 /// Browse collection files page handler
@@ -85,7 +119,11 @@ pub fn browse_collection_page(_collection: &str) -> Template {
     tracing::info!("browse_collection_page called");
     Template::render(
         "admin/browse_collection",
-        context! { title: "Browse Files" },
+        context! {
+            title: "Browse Files",
+            current_page: "browse",
+            nav_groups: nav_groups(),
+        },
     )
 }
 
@@ -93,7 +131,14 @@ pub fn browse_collection_page(_collection: &str) -> Template {
 #[get("/ui/browse/<_collection>/file")]
 pub fn browse_file_page(_collection: &str) -> Template {
     tracing::info!("browse_file_page called");
-    Template::render("admin/browse_file", context! { title: "View Code" })
+    Template::render(
+        "admin/browse_file",
+        context! {
+            title: "View Code",
+            current_page: "browse",
+            nav_groups: nav_groups(),
+        },
+    )
 }
 
 /// Browse tree view page handler (Phase 8b Wave 3)
@@ -102,6 +147,79 @@ pub fn browse_tree_page() -> Template {
     tracing::info!("browse_tree_page called");
     Template::render(
         "admin/browse_tree",
-        context! { title: "Browse Collection Tree" },
+        context! {
+            title: "Browse Collection Tree",
+            current_page: "browse-tree",
+            nav_groups: nav_groups(),
+        },
+    )
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct RecentActivityItem {
+    entity_title: String,
+    detail: String,
+    timestamp: String,
+}
+
+async fn render_dashboard_template(title: &str, state: Option<&State<AdminState>>) -> Template {
+    let mut cards = Vec::<DashboardEntityCard>::new();
+    let mut recent_activity = Vec::<RecentActivityItem>::new();
+    let timestamp = format_timestamp(chrono::Utc::now().timestamp());
+    let mut total_records = 0usize;
+
+    for entity in AdminRegistry::all() {
+        let record_count = match state.and_then(|s| resolve_adapter(entity.slug, s.inner())) {
+            Some(adapter) => adapter.list_all().await.map(|rows| rows.len()).unwrap_or(0),
+            None => 0,
+        };
+        total_records += record_count;
+
+        let field_count = entity.fields().iter().filter(|field| !field.hidden).count();
+        cards.push(DashboardEntityCard {
+            slug: entity.slug.to_string(),
+            title: entity.title.to_string(),
+            group: entity.group.to_string(),
+            field_count,
+            record_count,
+            summary: format!(
+                "{} visible {}",
+                field_count,
+                pluralize(field_count, "field", "fields")
+            ),
+        });
+
+        if record_count > 0 {
+            recent_activity.push(RecentActivityItem {
+                entity_title: entity.title.to_string(),
+                detail: truncate_text(
+                    &format!(
+                        "{} {} currently indexed",
+                        record_count,
+                        pluralize(record_count, "record", "records")
+                    ),
+                    64,
+                ),
+                timestamp: timestamp.clone(),
+            });
+        }
+    }
+
+    recent_activity.truncate(10);
+    let entity_count = cards.len();
+    let active_entity_count = cards.iter().filter(|card| card.record_count > 0).count();
+
+    Template::render(
+        "admin/dashboard",
+        context! {
+            title: title,
+            current_page: "dashboard",
+            nav_groups: nav_groups(),
+            entity_cards: cards,
+            entity_count: entity_count,
+            active_entity_count: active_entity_count,
+            total_records: total_records,
+            recent_activity: recent_activity,
+        },
     )
 }

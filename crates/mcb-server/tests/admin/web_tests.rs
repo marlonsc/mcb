@@ -1,8 +1,6 @@
 //! Tests for Admin Web UI
 //!
 //! Tests the web dashboard pages and routes.
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
 use mcb_server::admin::web::web_rocket;
 use rocket::http::Status;
@@ -20,6 +18,8 @@ async fn test_dashboard_returns_html() {
     let html = response.into_string().await.expect("response body");
     assert!(html.contains("<!DOCTYPE html>"));
     assert!(html.contains("Dashboard"));
+    assert!(html.contains("Entity Coverage"));
+    assert!(html.contains("Domain Entities"));
 }
 
 #[rocket::async_test]
@@ -117,6 +117,8 @@ async fn test_entities_list_returns_html() {
     assert!(html.contains("<!DOCTYPE html>"));
     assert!(html.contains("Organizations"));
     assert!(html.contains("org"));
+    assert!(html.contains("Dashboard"));
+    assert!(html.contains("Domain Entities"));
 }
 
 #[rocket::async_test]

@@ -12,9 +12,6 @@
 //! | `/services/{name}/start` | POST | Start a specific service (protected) |
 //! | `/services/{name}/stop` | POST | Stop a specific service (protected) |
 //! | `/services/{name}/restart` | POST | Restart a specific service (protected) |
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
-//! Authentication guards added in v0.1.2.
 
 use rocket::http::Status;
 use rocket::serde::json::Json;

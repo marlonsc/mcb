@@ -42,6 +42,60 @@
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="card">
+        <h3 class="text-sm font-medium text-secondary uppercase tracking-wider">Registered Entities</h3>
+        <p class="mt-2 text-3xl font-semibold">{{entity_count}}</p>
+    </div>
+    <div class="card">
+        <h3 class="text-sm font-medium text-secondary uppercase tracking-wider">Active Entities</h3>
+        <p class="mt-2 text-3xl font-semibold">{{active_entity_count}}</p>
+    </div>
+    <div class="card">
+        <h3 class="text-sm font-medium text-secondary uppercase tracking-wider">Indexed Records</h3>
+        <p class="mt-2 text-3xl font-semibold">{{total_records}}</p>
+    </div>
+</div>
+
+{{#if entity_cards}}
+<div class="card mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">Entity Coverage</h2>
+        <a class="btn btn-secondary btn-sm" href="/ui/entities">Open Catalog</a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {{#each entity_cards}}
+        <div class="rounded-lg border p-4" style="border-color: var(--border-color, #e5e7eb)">
+            <div class="flex items-center justify-between">
+                <h3 class="font-semibold">{{title}}</h3>
+                <span class="badge badge-blue">{{group}}</span>
+            </div>
+            <p class="text-sm text-secondary mt-2">{{summary}}</p>
+            <p class="text-sm mt-2"><strong>{{record_count}}</strong> records indexed</p>
+            <a class="btn btn-primary btn-sm mt-3" href="/ui/entities/{{slug}}">Manage</a>
+        </div>
+        {{/each}}
+    </div>
+</div>
+{{/if}}
+
+{{#if recent_activity}}
+<div class="card mb-8">
+    <h2 class="text-lg font-semibold mb-4">Recent Entity Activity</h2>
+    <div class="space-y-3">
+        {{#each recent_activity}}
+        <div class="flex items-start justify-between gap-4 pb-3 border-b" style="border-color: var(--border-color, #e5e7eb)">
+            <div>
+                <p class="font-medium">{{entity_title}}</p>
+                <p class="text-sm text-secondary">{{detail}}</p>
+            </div>
+            <span class="text-xs text-secondary whitespace-nowrap">{{timestamp}}</span>
+        </div>
+        {{/each}}
+    </div>
+</div>
+{{/if}}
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="card" id="health-card">
         <h3 class="text-sm font-medium text-secondary uppercase tracking-wider">Status</h3>
         <p class="mt-2 text-3xl font-semibold text-muted" id="status-value">Loading...</p>

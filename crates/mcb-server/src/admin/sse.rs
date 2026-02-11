@@ -28,8 +28,6 @@
 //!     console.log('Service state:', JSON.parse(e.data));
 //! });
 //! ```
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
 use futures::StreamExt;
 use mcb_domain::events::DomainEvent;
