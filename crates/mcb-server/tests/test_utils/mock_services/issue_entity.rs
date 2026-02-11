@@ -4,22 +4,22 @@ use mcb_domain::entities::project::ProjectIssue;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::repositories::IssueEntityRepository;
 
-pub struct MockIssueEntityService;
+pub struct MockIssueEntityRepository;
 
-impl MockIssueEntityService {
+impl MockIssueEntityRepository {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for MockIssueEntityService {
+impl Default for MockIssueEntityRepository {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl IssueEntityRepository for MockIssueEntityService {
+impl IssueEntityRepository for MockIssueEntityRepository {
     async fn create_issue(&self, _issue: &ProjectIssue) -> Result<()> {
         Ok(())
     }
