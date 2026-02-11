@@ -19,21 +19,16 @@ fn get_host_port_from_url(url: &str) -> Option<(String, u16)> {
     let host_port_str = after_auth.split('/').next().unwrap_or(after_auth);
 
     // Handle hostname:port (simplified)
-    if let Some((host, port_str)) = host_port_str.rsplit_once(':') {
-        if let Ok(port) = port_str.parse::<u16>() {
-            return Some((host.to_string(), port));
-        }
-    }
-    None
+    let (host, port_str) = host_port_str.rsplit_once(':')?;
+    let port = port_str.parse::<u16>().ok()?;
+    Some((host.to_string(), port))
 }
 
 fn is_service_available_from_config(key: &str) -> bool {
-    if let Some(url) = test_service_url(key) {
-        if let Some((host, port)) = get_host_port_from_url(&url) {
-            return check_service_available(&host, port);
-        }
-    }
-    false
+    test_service_url(key)
+        .and_then(|url| get_host_port_from_url(&url))
+        .map(|(host, port)| check_service_available(&host, port))
+        .unwrap_or(false)
 }
 
 /// Milvus vector database service (default port 29530)
