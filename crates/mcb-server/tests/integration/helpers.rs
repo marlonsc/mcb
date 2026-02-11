@@ -69,7 +69,13 @@ pub fn should_run_docker_integration_tests() -> bool {
         Ok(value) => match value.trim().to_ascii_lowercase().as_str() {
             "1" | "true" | "yes" => true,
             "0" | "false" | "no" => false,
-            _ => !is_ci(),
+            other => {
+                eprintln!(
+                    "⚠️ WARNING: Unknown value for MCB_RUN_DOCKER_INTEGRATION_TESTS: '{}'. Falling back to !is_ci()",
+                    other
+                );
+                !is_ci()
+            }
         },
         Err(_) => !is_ci(),
     }
@@ -174,6 +180,16 @@ mod tests {
         assert_eq!(
             get_host_port_from_url("redis://127.0.0.1:6379"),
             Some(("127.0.0.1".to_string(), 6379))
+        );
+
+        // IPv6
+        assert_eq!(
+            get_host_port_from_url("http://[::1]:8080"),
+            Some(("[::1]".to_string(), 8080))
+        );
+        assert_eq!(
+            get_host_port_from_url("[::1]:8080"),
+            Some(("[::1]".to_string(), 8080))
         );
 
         // No scheme

@@ -62,11 +62,15 @@ pub mod registry;
 pub mod repositories;
 /// Generic schema definitions for persistence (backend-agnostic model)
 pub mod schema;
+#[cfg(any(test, feature = "test-utils"))]
 pub mod test_services_config;
 /// Common utilities
 pub mod utils;
 /// Immutable value objects
 pub mod value_objects;
+
+#[cfg(test)]
+mod config_tests;
 
 // Re-export commonly used types for convenience
 pub use constants::*;

@@ -11,9 +11,6 @@ mod code_chunk;
 #[path = "unit/codebase_tests.rs"]
 mod codebase;
 
-#[path = "unit/config_tests.rs"]
-mod config;
-
 #[path = "unit/constants_tests.rs"]
 mod constants;
 

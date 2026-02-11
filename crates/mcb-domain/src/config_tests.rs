@@ -2,8 +2,8 @@
 
 #[cfg(test)]
 mod tests {
-    use mcb_domain::test_services_config::required_test_service_url;
-    use mcb_domain::{EmbeddingConfig, VectorStoreConfig};
+    use crate::test_services_config::required_test_service_url;
+    use crate::{EmbeddingConfig, VectorStoreConfig};
 
     #[test]
     fn test_embedding_config_creation() {

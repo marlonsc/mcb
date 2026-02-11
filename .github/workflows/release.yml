@@ -44,7 +44,7 @@ jobs:
           components: rustfmt, clippy
       - run: make lint CI_MODE=1
       - name: Run Rust tests
-        run: make test-rust TEST_THREADS=$(nproc)
+        run: make test-rust TEST_THREADS="$(nproc)"
         timeout-minutes: 15
       - run: make validate STRICT=1
       - run: make audit
