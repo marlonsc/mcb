@@ -167,8 +167,8 @@ fn test_project_schema_contains_all_fk_references() {
     let schema_def = ProjectSchema::definition();
     assert_eq!(
         schema_def.foreign_keys.len(),
-        46,
-        "Expected 46 total FK definitions, got {}",
+        48,
+        "Expected 48 total FK definitions, got {}",
         schema_def.foreign_keys.len()
     );
 }
@@ -243,8 +243,10 @@ fn test_project_schema_contains_all_indexes() {
         "idx_plans_org",
         "idx_plans_project",
         "idx_plans_status",
+        "idx_plan_versions_org",
         "idx_plan_versions_plan",
         "idx_plan_versions_created_by",
+        "idx_plan_reviews_org",
         "idx_plan_reviews_version",
         "idx_plan_reviews_reviewer",
         // VCS entity indexes
