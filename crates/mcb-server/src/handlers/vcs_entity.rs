@@ -246,13 +246,17 @@ impl VcsEntityHandler {
                 ok_text("released")
             }
 
-            _ => Err(McpError::invalid_params(
-                format!(
-                    "Unsupported action {:?} for resource {:?}",
-                    args.action, args.resource
-                ),
-                None,
-            )),
+            (action, resource) => {
+                tracing::warn!(
+                    ?action,
+                    ?resource,
+                    "unsupported action/resource combination"
+                );
+                Err(McpError::invalid_params(
+                    "unsupported action/resource combination",
+                    None,
+                ))
+            }
         }
     }
 }
