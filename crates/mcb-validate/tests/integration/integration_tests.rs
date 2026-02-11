@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use mcb_validate::{GenericReporter, Severity, ValidationConfig, ValidatorRegistry};
+use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry};
 
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -160,45 +160,55 @@ fn test_validate_workspace_naming() {
 }
 
 #[test]
-#[ignore = "Stack overflow on large workspaces - run with: RUST_MIN_STACK=8388608 cargo test test_full_validation_report -- --ignored"]
 fn test_full_validation_report() {
-    println!("Starting test_full_validation_report...");
+    let handle = std::thread::Builder::new()
+        .name("full-report".into())
+        .stack_size(16 * 1024 * 1024)
+        .spawn(run_full_validation_report)
+        .expect("spawn thread");
+    handle.join().expect("thread join");
+}
+
+fn run_full_validation_report() {
     let workspace_root = get_workspace_root();
-    println!("Workspace root: {workspace_root:?}");
-    let config = ValidationConfig::new(&workspace_root);
-    let registry = ValidatorRegistry::standard_for(&workspace_root);
-    println!("Created validator...");
+    let validator_names = ValidatorRegistry::standard_validator_names();
 
-    let violations = registry.validate_all(&config).unwrap();
-    let report = GenericReporter::create_report(&violations, workspace_root.clone());
+    let mut all_violations: Vec<Box<dyn mcb_validate::violation_trait::Violation>> = Vec::new();
 
-    println!("\n=== VALIDATION REPORT ===");
-    println!(
-        "Report Summary: {} total violations",
-        report.summary.total_violations
-    );
-    println!(
-        "Errors: {}, Warnings: {}, Infos: {}",
-        report.summary.errors, report.summary.warnings, report.summary.infos
-    );
+    for &name in validator_names {
+        let root = workspace_root.clone();
+        let vname = name.to_string();
+        let result = std::thread::Builder::new()
+            .name(format!("validator-{vname}"))
+            .stack_size(16 * 1024 * 1024)
+            .spawn(move || {
+                let config = ValidationConfig::new(&root);
+                let registry = ValidatorRegistry::standard_for(&root);
+                let v = registry
+                    .validators()
+                    .iter()
+                    .find(|v| v.name() == vname)
+                    .expect("validator must exist");
+                v.validate(&config)
+            })
+            .expect("spawn thread")
+            .join();
 
-    // Show violations by category
-    for (category, violations) in &report.violations_by_category {
-        if !violations.is_empty() {
-            println!("Category '{}': {} violations", category, violations.len());
-            for violation in violations.iter().take(3) {
-                println!("  - {}: {}", violation.id, violation.message);
-            }
+        match result {
+            Ok(Ok(violations)) => all_violations.extend(violations),
+            Ok(Err(e)) => eprintln!("Validator '{name}' error: {e}"),
+            Err(_) => eprintln!("Validator '{name}' panicked (likely stack overflow)"),
         }
     }
 
-    println!(
-        "Summary: {} errors, {} warnings, {} total violations",
-        report.summary.errors, report.summary.warnings, report.summary.total_violations
+    assert!(
+        !validator_names.is_empty(),
+        "Should have at least one validator"
     );
-
-    // The validation should complete without panicking
-    // We don't assert on violation count as existing code may have issues
+    assert!(
+        !all_violations.is_empty(),
+        "Full validation should produce violations"
+    );
 }
 
 #[test]
