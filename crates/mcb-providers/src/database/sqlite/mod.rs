@@ -8,6 +8,7 @@
 
 mod agent_repository;
 mod ddl;
+pub(crate) mod ensure_parent;
 pub mod executor;
 pub mod issue_entity_repository;
 mod memory_repository;
