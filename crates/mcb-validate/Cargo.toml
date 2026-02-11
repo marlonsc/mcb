@@ -116,3 +116,6 @@ path = "tests/integration.rs"
 [dev-dependencies]
 tempfile.workspace = true
 serde_yaml.workspace = true
+rstest = { workspace = true }
+mockall = { workspace = true }
+insta = { workspace = true }
