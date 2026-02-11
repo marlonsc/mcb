@@ -48,16 +48,7 @@ impl IndexHandler {
             ));
         }
         let collection_name = args.collection.as_deref().unwrap_or("default");
-        let collection_id = match normalize_collection_name(collection_name) {
-            Ok(id) => id,
-            Err(e) => {
-                let _ = e;
-                return Err(ResponseFormatter::format_indexing_error(
-                    &format!("Failed to map collection name '{}'", collection_name),
-                    &path,
-                ));
-            }
-        };
+        let collection_id = normalize_collection_name(collection_name);
         Ok((path, collection_id))
     }
 
@@ -102,16 +93,7 @@ impl IndexHandler {
             }
             IndexAction::Clear => {
                 let collection_name = args.collection.as_deref().unwrap_or("default");
-                let milvus_collection = match normalize_collection_name(collection_name) {
-                    Ok(id) => id,
-                    Err(e) => {
-                        let _ = e;
-                        return Ok(ResponseFormatter::format_indexing_error(
-                            &format!("Failed to map collection name '{}'", collection_name),
-                            &PathBuf::from("."),
-                        ));
-                    }
-                };
+                let milvus_collection = normalize_collection_name(collection_name);
                 match self
                     .indexing_service
                     .clear_collection(&milvus_collection)
