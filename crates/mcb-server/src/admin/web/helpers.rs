@@ -5,7 +5,9 @@
 //! with [`register_helpers`].
 
 use chrono::{DateTime, Utc};
-use handlebars::{Context, Handlebars, Helper, HelperDef, HelperResult, Output, RenderContext};
+use handlebars::{
+    Context, Handlebars, Helper, HelperDef, HelperResult, Output, RenderContext, Renderable,
+};
 use serde_json::Value;
 
 /// Formats a Unix-epoch timestamp as `YYYY-MM-DD HH:MM:SS UTC`.
@@ -302,9 +304,80 @@ impl HelperDef for PriorityBadgeHelper {
     }
 }
 
-/// Register all custom Handlebars helpers on the given registry.
+/// Truncates text to a maximum length, appending `"…"` when shortened.
 ///
-/// Call this once during application startup before rendering any template.
+/// Usage: `{{truncate_text text 60}}`
+#[derive(Clone, Copy)]
+struct TruncateTextHelper;
+
+impl HelperDef for TruncateTextHelper {
+    fn call<'reg: 'rc, 'rc>(
+        &self,
+        h: &Helper<'rc>,
+        _: &'reg Handlebars<'reg>,
+        _: &'rc Context,
+        _: &mut RenderContext<'reg, 'rc>,
+        out: &mut dyn Output,
+    ) -> HelperResult {
+        let input = h
+            .param(0)
+            .map(|p| match p.value() {
+                Value::String(s) => s.clone(),
+                other => other.to_string(),
+            })
+            .unwrap_or_default();
+
+        let max_len = h.param(1).and_then(|p| p.value().as_i64()).unwrap_or(80) as usize;
+
+        let char_count = input.chars().count();
+        if char_count <= max_len {
+            out.write(&input)?;
+        } else {
+            let truncated: String = input.chars().take(max_len).collect();
+            out.write(&truncated)?;
+            out.write("\u{2026}")?;
+        }
+        Ok(())
+    }
+}
+
+/// Block helper for equality comparison.
+///
+/// Usage: `{{#eq a b}}matched{{else}}not matched{{/eq}}`
+#[derive(Clone, Copy)]
+struct EqHelper;
+
+impl HelperDef for EqHelper {
+    fn call<'reg: 'rc, 'rc>(
+        &self,
+        h: &Helper<'rc>,
+        hbs: &'reg Handlebars<'reg>,
+        ctx: &'rc Context,
+        rc: &mut RenderContext<'reg, 'rc>,
+        out: &mut dyn Output,
+    ) -> HelperResult {
+        let a = h.param(0).map(|p| p.value());
+        let b = h.param(1).map(|p| p.value());
+
+        let equal = match (a, b) {
+            (Some(a), Some(b)) => a == b,
+            (None, None) => true,
+            _ => false,
+        };
+
+        if equal {
+            if let Some(template) = h.template() {
+                template.render(hbs, ctx, rc, out)?;
+            }
+        } else if let Some(template) = h.inverse() {
+            template.render(hbs, ctx, rc, out)?;
+        }
+
+        Ok(())
+    }
+}
+
+/// Register all custom Handlebars helpers on the given registry.
 pub fn register_helpers(hbs: &mut Handlebars<'static>) {
     hbs.register_helper("timestamp", Box::new(TimestampHelper));
     hbs.register_helper("relative_time", Box::new(RelativeTimeHelper));
@@ -314,6 +387,8 @@ pub fn register_helpers(hbs: &mut Handlebars<'static>) {
     hbs.register_helper("badge", Box::new(BadgeHelper));
     hbs.register_helper("status_badge", Box::new(StatusBadgeHelper));
     hbs.register_helper("priority_badge", Box::new(PriorityBadgeHelper));
+    hbs.register_helper("truncate_text", Box::new(TruncateTextHelper));
+    hbs.register_helper("eq", Box::new(EqHelper));
 }
 
 #[cfg(test)]
@@ -543,5 +618,41 @@ mod tests {
             .render_template(r#"{{pluralize n "item" "items"}}"#, &json!({"n": 0}))
             .unwrap();
         assert_eq!(result, "items");
+    }
+
+    #[test]
+    fn test_eq_matching() {
+        let hbs = make_registry();
+        let result = hbs
+            .render_template(
+                r#"{{#eq a b}}yes{{else}}no{{/eq}}"#,
+                &json!({"a": "x", "b": "x"}),
+            )
+            .unwrap();
+        assert_eq!(result, "yes");
+    }
+
+    #[test]
+    fn test_eq_not_matching() {
+        let hbs = make_registry();
+        let result = hbs
+            .render_template(
+                r#"{{#eq a b}}yes{{else}}no{{/eq}}"#,
+                &json!({"a": "x", "b": "y"}),
+            )
+            .unwrap();
+        assert_eq!(result, "no");
+    }
+
+    #[test]
+    fn test_eq_with_integers() {
+        let hbs = make_registry();
+        let result = hbs
+            .render_template(
+                r#"{{#eq a b}}yes{{else}}no{{/eq}}"#,
+                &json!({"a": 42, "b": 42}),
+            )
+            .unwrap();
+        assert_eq!(result, "yes");
     }
 }

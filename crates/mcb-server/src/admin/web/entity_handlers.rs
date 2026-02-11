@@ -110,6 +110,7 @@ pub fn entities_new_form(slug: &str) -> Result<Template, status::Custom<String>>
             entity_group: entity.group,
             fields: fields,
             is_edit: false,
+            record: serde_json::Value::Object(Default::default()),
             nav_groups: nav_groups(),
         },
     ))
@@ -185,8 +186,21 @@ pub async fn entities_edit_form(
 
 /// Delete confirmation page.
 #[rocket::get("/ui/entities/<slug>/<id>/delete")]
-pub fn entities_delete_confirm(slug: &str, id: &str) -> Result<Template, status::Custom<String>> {
+pub async fn entities_delete_confirm(
+    slug: &str,
+    id: &str,
+    state: Option<&State<AdminState>>,
+) -> Result<Template, status::Custom<String>> {
     let entity = find_or_404(slug)?;
+    let fields: Vec<AdminFieldMeta> = entity.fields().into_iter().filter(|f| !f.hidden).collect();
+
+    let (record, has_record) = match state.and_then(|s| resolve_adapter(slug, s.inner())) {
+        Some(adapter) => match adapter.get_by_id(id).await {
+            Ok(val) => (val, true),
+            Err(_) => (serde_json::Value::Null, false),
+        },
+        None => (serde_json::Value::Null, false),
+    };
 
     Ok(Template::render(
         "admin/entity_delete",
@@ -196,6 +210,9 @@ pub fn entities_delete_confirm(slug: &str, id: &str) -> Result<Template, status:
             entity_slug: entity.slug,
             entity_group: entity.group,
             entity_id: id,
+            fields: fields,
+            record: record,
+            has_record: has_record,
             nav_groups: nav_groups(),
         },
     ))

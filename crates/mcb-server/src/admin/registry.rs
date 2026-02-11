@@ -33,6 +33,9 @@ pub struct AdminFieldMeta {
     pub is_checkbox: bool,
     /// Pre-computed: `input_type == "select"`.
     pub is_select: bool,
+    /// Pre-computed: field holds a Unix-epoch timestamp (`name` ends with `_at`
+    /// and the detected input type is numeric).
+    pub is_timestamp: bool,
     /// Enum variant names for `<select>` dropdowns (empty when not an enum).
     pub enum_values: Vec<String>,
 }
@@ -258,6 +261,8 @@ fn extract_fields(schema: &Value) -> Vec<AdminFieldMeta> {
                     let resolved = resolve_ref(field_schema, defs);
                     let input_type = detect_input_type(name, &resolved);
                     let enum_values = extract_enum_values(&resolved);
+                    let is_timestamp = name.ends_with("_at")
+                        && matches!(input_type.as_ref(), "number" | "datetime-local");
                     AdminFieldMeta {
                         name: name.clone(),
                         label: to_title(name),
@@ -266,6 +271,7 @@ fn extract_fields(schema: &Value) -> Vec<AdminFieldMeta> {
                         is_textarea: input_type.as_ref() == "textarea",
                         is_checkbox: input_type.as_ref() == "checkbox",
                         is_select: input_type.as_ref() == "select",
+                        is_timestamp,
                         input_type: input_type.into_owned(),
                         enum_values,
                     }
@@ -484,6 +490,19 @@ mod tests {
             name_field.enum_values.is_empty(),
             "string fields should have no enum values"
         );
+    }
+
+    #[test]
+    fn test_timestamp_fields_detected() {
+        let entity = AdminRegistry::find("organizations").unwrap();
+        let fields = entity.fields();
+        let created_at = fields.iter().find(|f| f.name == "created_at").unwrap();
+        assert!(
+            created_at.is_timestamp,
+            "created_at should be detected as timestamp"
+        );
+        let name = fields.iter().find(|f| f.name == "name").unwrap();
+        assert!(!name.is_timestamp, "name should not be a timestamp");
     }
 
     #[test]
