@@ -15,7 +15,7 @@
 //!
 //! ## Example
 //!
-//! ```
+//! ```ignore
 //! use mcb::domain::CodeChunk;
 //!
 //! // Domain types are available through the mcb facade

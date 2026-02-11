@@ -4,16 +4,16 @@ use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_domain::ports::services::ProjectDetectorService;
 use std::path::Path;
 
-pub struct MockProjectService;
+pub struct MockProjectDetectorService;
 
-impl MockProjectService {
+impl MockProjectDetectorService {
     pub fn new() -> Self {
         Self
     }
 }
 
 #[async_trait]
-impl ProjectDetectorService for MockProjectService {
+impl ProjectDetectorService for MockProjectDetectorService {
     async fn detect_all(&self, _path: &Path) -> Vec<ProjectType> {
         vec![]
     }

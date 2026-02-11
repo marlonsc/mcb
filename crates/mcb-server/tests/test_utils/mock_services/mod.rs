@@ -28,7 +28,7 @@ pub use org_entity::MockOrgEntityService;
 #[allow(unused_imports)]
 pub use plan_entity::MockPlanEntityService;
 #[allow(unused_imports)]
-pub use project::{MockProjectRepository, MockProjectService};
+pub use project::{MockProjectDetectorService, MockProjectRepository};
 pub use search::MockSearchService;
 pub use validation::MockValidationService;
 pub use vcs::MockVcsProvider;
@@ -105,6 +105,6 @@ mod constructibility {
         let vcs = MockVcsProvider::new().with_failure();
         assert!(vcs.should_fail.load(Ordering::SeqCst));
 
-        let _project = MockProjectService::new();
+        let _project = MockProjectDetectorService::new();
     }
 }

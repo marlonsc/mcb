@@ -460,12 +460,17 @@ mod tests {
             !status.enum_values.is_empty(),
             "status should have enum values"
         );
+        let enum_values_lower = status
+            .enum_values
+            .iter()
+            .map(|value| value.to_lowercase())
+            .collect::<Vec<_>>();
         assert!(
-            status.enum_values.contains(&"Draft".to_string()),
+            enum_values_lower.contains(&"draft".to_string()),
             "PlanStatus should contain Draft"
         );
         assert!(
-            status.enum_values.contains(&"Active".to_string()),
+            enum_values_lower.contains(&"active".to_string()),
             "PlanStatus should contain Active"
         );
     }

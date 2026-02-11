@@ -12,10 +12,9 @@ use mcb_domain::entities::{
     Organization, Plan, PlanReview, PlanVersion, ProjectIssue, Repository, Team, TeamMember, User,
     Worktree,
 };
-use mcb_domain::ports::services::issue_entity::IssueEntityServiceInterface;
-use mcb_domain::ports::services::org_entity::OrgEntityServiceInterface;
-use mcb_domain::ports::services::plan_entity::PlanEntityServiceInterface;
-use mcb_domain::ports::services::vcs_entity::VcsEntityServiceInterface;
+use mcb_domain::ports::repositories::{
+    IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, VcsEntityRepository,
+};
 use serde_json::Value;
 
 use super::handlers::AdminState;
@@ -122,7 +121,7 @@ fn map_err(e: mcb_domain::error::Error) -> String {
 
 // ─── Org group ───────────────────────────────────────────────────────
 
-struct OrgAdapter(Arc<dyn OrgEntityServiceInterface>);
+struct OrgAdapter(Arc<dyn OrgEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for OrgAdapter {
@@ -148,7 +147,7 @@ impl EntityCrudAdapter for OrgAdapter {
     }
 }
 
-struct UserAdapter(Arc<dyn OrgEntityServiceInterface>);
+struct UserAdapter(Arc<dyn OrgEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for UserAdapter {
@@ -174,7 +173,7 @@ impl EntityCrudAdapter for UserAdapter {
     }
 }
 
-struct TeamAdapter(Arc<dyn OrgEntityServiceInterface>);
+struct TeamAdapter(Arc<dyn OrgEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for TeamAdapter {
@@ -192,14 +191,14 @@ impl EntityCrudAdapter for TeamAdapter {
         to_json(&team)
     }
     async fn update_from_json(&self, _data: Value) -> Result<(), String> {
-        Err("Team update not supported via service interface".to_string())
+        Err("Team update not supported via repository interface".to_string())
     }
     async fn delete_by_id(&self, id: &str) -> Result<(), String> {
         self.0.delete_team(id).await.map_err(map_err)
     }
 }
 
-struct TeamMemberAdapter(Arc<dyn OrgEntityServiceInterface>);
+struct TeamMemberAdapter(Arc<dyn OrgEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for TeamMemberAdapter {
@@ -222,7 +221,7 @@ impl EntityCrudAdapter for TeamMemberAdapter {
     }
 }
 
-struct ApiKeyAdapter(Arc<dyn OrgEntityServiceInterface>);
+struct ApiKeyAdapter(Arc<dyn OrgEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for ApiKeyAdapter {
@@ -253,7 +252,7 @@ impl EntityCrudAdapter for ApiKeyAdapter {
 
 // ─── Issue group ─────────────────────────────────────────────────────
 
-struct ProjectIssueAdapter(Arc<dyn IssueEntityServiceInterface>);
+struct ProjectIssueAdapter(Arc<dyn IssueEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for ProjectIssueAdapter {
@@ -290,7 +289,7 @@ impl EntityCrudAdapter for ProjectIssueAdapter {
     }
 }
 
-struct IssueCommentAdapter(Arc<dyn IssueEntityServiceInterface>);
+struct IssueCommentAdapter(Arc<dyn IssueEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for IssueCommentAdapter {
@@ -314,7 +313,7 @@ impl EntityCrudAdapter for IssueCommentAdapter {
     }
 }
 
-struct IssueLabelAdapter(Arc<dyn IssueEntityServiceInterface>);
+struct IssueLabelAdapter(Arc<dyn IssueEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for IssueLabelAdapter {
@@ -343,7 +342,7 @@ impl EntityCrudAdapter for IssueLabelAdapter {
     }
 }
 
-struct IssueLabelAssignmentAdapter(Arc<dyn IssueEntityServiceInterface>);
+struct IssueLabelAssignmentAdapter(Arc<dyn IssueEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for IssueLabelAssignmentAdapter {
@@ -368,7 +367,7 @@ impl EntityCrudAdapter for IssueLabelAssignmentAdapter {
 
 // ─── Plan group ──────────────────────────────────────────────────────
 
-struct PlanAdapter(Arc<dyn PlanEntityServiceInterface>);
+struct PlanAdapter(Arc<dyn PlanEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for PlanAdapter {
@@ -401,7 +400,7 @@ impl EntityCrudAdapter for PlanAdapter {
     }
 }
 
-struct PlanVersionAdapter(Arc<dyn PlanEntityServiceInterface>);
+struct PlanVersionAdapter(Arc<dyn PlanEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for PlanVersionAdapter {
@@ -425,7 +424,7 @@ impl EntityCrudAdapter for PlanVersionAdapter {
     }
 }
 
-struct PlanReviewAdapter(Arc<dyn PlanEntityServiceInterface>);
+struct PlanReviewAdapter(Arc<dyn PlanEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for PlanReviewAdapter {
@@ -451,7 +450,7 @@ impl EntityCrudAdapter for PlanReviewAdapter {
 
 // ─── VCS group ───────────────────────────────────────────────────────
 
-struct RepositoryAdapter(Arc<dyn VcsEntityServiceInterface>);
+struct RepositoryAdapter(Arc<dyn VcsEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for RepositoryAdapter {
@@ -488,7 +487,7 @@ impl EntityCrudAdapter for RepositoryAdapter {
     }
 }
 
-struct BranchAdapter(Arc<dyn VcsEntityServiceInterface>);
+struct BranchAdapter(Arc<dyn VcsEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for BranchAdapter {
@@ -513,7 +512,7 @@ impl EntityCrudAdapter for BranchAdapter {
     }
 }
 
-struct WorktreeAdapter(Arc<dyn VcsEntityServiceInterface>);
+struct WorktreeAdapter(Arc<dyn VcsEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for WorktreeAdapter {
@@ -538,7 +537,7 @@ impl EntityCrudAdapter for WorktreeAdapter {
     }
 }
 
-struct AgentWorktreeAssignmentAdapter(Arc<dyn VcsEntityServiceInterface>);
+struct AgentWorktreeAssignmentAdapter(Arc<dyn VcsEntityRepository>);
 
 #[async_trait]
 impl EntityCrudAdapter for AgentWorktreeAssignmentAdapter {
