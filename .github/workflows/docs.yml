@@ -48,6 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: true # zizmor:ignore[artipacked] -- required for git push
       - run: bash .github/setup-ci.sh
@@ -59,10 +60,10 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add README.md docs/generated/METRICS.md || true
+          git add -f README.md docs/generated/METRICS.md || true
           if ! git diff --staged --quiet; then
             git commit -m "docs: auto-update README and project metrics [skip ci]"
-            git push
+            git push origin main
           else
             echo "No changes to commit"
           fi
