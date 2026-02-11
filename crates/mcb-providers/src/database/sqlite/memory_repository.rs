@@ -30,37 +30,13 @@ impl SqliteMemoryRepository {
 #[async_trait]
 impl MemoryRepository for SqliteMemoryRepository {
     async fn store_observation(&self, observation: &Observation) -> Result<()> {
-        // Ensure default org exists (FK: projects.org_id → organizations.id)
-        self.executor
-            .execute(
-                "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                &[
-                    SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
-                    SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_NAME.to_string()),
-                    SqlParam::String("default".to_string()),
-                    SqlParam::String("{}".to_string()),
-                    SqlParam::I64(observation.created_at),
-                    SqlParam::I64(observation.created_at),
-                ],
-            )
-            .await
-            .map_err(|e| Error::memory_with_source("auto-create default org", e))?;
-
-        // Auto-create project if missing to prevent FK constraint violation
-        self.executor
-            .execute(
-                "INSERT OR IGNORE INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                &[
-                    SqlParam::String(observation.project_id.clone()),
-                    SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
-                    SqlParam::String(format!("Project {}", observation.project_id)),
-                    SqlParam::String("default".to_string()),
-                    SqlParam::I64(observation.created_at),
-                    SqlParam::I64(observation.created_at),
-                ],
-            )
-            .await
-            .map_err(|e| Error::memory_with_source("auto-create project", e))?;
+        // Ensure default org and project exist
+        super::ensure_parent::ensure_org_and_project(
+            self.executor.as_ref(),
+            &observation.project_id,
+            observation.created_at,
+        )
+        .await?;
 
         let tags_json = serde_json::to_string(&observation.tags)
             .map_err(|e| Error::memory_with_source("serialize tags", e))?;
@@ -267,37 +243,13 @@ impl MemoryRepository for SqliteMemoryRepository {
     }
 
     async fn store_session_summary(&self, summary: &SessionSummary) -> Result<()> {
-        // Ensure default org exists (FK: projects.org_id → organizations.id)
-        self.executor
-            .execute(
-                "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                &[
-                    SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
-                    SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_NAME.to_string()),
-                    SqlParam::String("default".to_string()),
-                    SqlParam::String("{}".to_string()),
-                    SqlParam::I64(summary.created_at),
-                    SqlParam::I64(summary.created_at),
-                ],
-            )
-            .await
-            .map_err(|e| Error::memory_with_source("auto-create default org", e))?;
-
-        // Auto-create project if missing to prevent FK constraint violation
-        self.executor
-            .execute(
-                "INSERT OR IGNORE INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                &[
-                    SqlParam::String(summary.project_id.clone()),
-                    SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
-                    SqlParam::String(format!("Project {}", summary.project_id)),
-                    SqlParam::String("default".to_string()),
-                    SqlParam::I64(summary.created_at),
-                    SqlParam::I64(summary.created_at),
-                ],
-            )
-            .await
-            .map_err(|e| Error::memory_with_source("auto-create project", e))?;
+        // Ensure default org and project exist
+        super::ensure_parent::ensure_org_and_project(
+            self.executor.as_ref(),
+            &summary.project_id,
+            summary.created_at,
+        )
+        .await?;
 
         let topics_json = serde_json::to_string(&summary.topics)
             .map_err(|e| Error::memory_with_source("serialize topics", e))?;

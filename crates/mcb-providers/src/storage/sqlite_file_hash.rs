@@ -30,6 +30,7 @@ impl Default for SqliteFileHashConfig {
 /// SQLite implementation of file hash tracking
 pub struct SqliteFileHashRepository {
     pool: SqlitePool,
+    executor: Arc<dyn DatabaseExecutor>,
     config: SqliteFileHashConfig,
     project_id: String,
 }
@@ -40,12 +41,12 @@ impl SqliteFileHashRepository {
     /// Create a new SqliteFileHashRepository
     pub fn new(executor: Arc<dyn DatabaseExecutor>, config: SqliteFileHashConfig) -> Self {
         // Downcast executor to SqliteExecutor to get the pool
-        let executor = executor
+        let sqlite_executor = executor
             .as_any()
             .downcast_ref::<SqliteExecutor>()
             .expect("SqliteFileHashRepository requires a SqliteExecutor");
 
-        let pool = executor.pool().clone();
+        let pool = sqlite_executor.pool().clone();
 
         let project_id = std::env::var("MCB_PROJECT_ID")
             .ok()
@@ -59,6 +60,7 @@ impl SqliteFileHashRepository {
 
         Self {
             pool,
+            executor,
             config,
             project_id,
         }
@@ -74,40 +76,12 @@ impl SqliteFileHashRepository {
 
     async fn ensure_project_exists(&self) -> Result<()> {
         let now = Self::now();
-        // Ensure default org exists (FK: projects.org_id → organizations.id)
-        sqlx::query(
-            r#"
-            INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-            "#,
+        crate::database::sqlite::ensure_parent::ensure_org_and_project(
+            self.executor.as_ref(),
+            &self.project_id,
+            now,
         )
-        .bind(mcb_domain::constants::keys::DEFAULT_ORG_ID)
-        .bind(mcb_domain::constants::keys::DEFAULT_ORG_NAME)
-        .bind("default")
-        .bind("{}")
-        .bind(now)
-        .bind(now)
-        .execute(&self.pool)
         .await
-        .map_err(|e| Error::database(format!("Failed to ensure default org exists: {e}")))?;
-
-        sqlx::query(
-            r#"
-            INSERT OR IGNORE INTO projects (id, org_id, name, path, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-            "#,
-        )
-        .bind(&self.project_id)
-        .bind(mcb_domain::constants::keys::DEFAULT_ORG_ID)
-        .bind(&self.project_id)
-        .bind(&self.project_id)
-        .bind(now)
-        .bind(now)
-        .execute(&self.pool)
-        .await
-        .map_err(|e| Error::database(format!("Failed to ensure project exists: {e}")))?;
-
-        Ok(())
     }
 }
 
