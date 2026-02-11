@@ -210,83 +210,24 @@ fn find_workspace_root(start: &Path) -> Option<std::path::PathBuf> {
 }
 
 fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {
-    // Return a list of known validation rules
-    let all_rules = vec![
-        // Clean Architecture rules
-        RuleInfo {
-            id: "CA001".into(),
-            category: "clean_architecture".into(),
-            severity: "error".into(),
-            description: "Domain layer must not depend on infrastructure".into(),
-            engine: "rust-validator".into(),
-        },
-        RuleInfo {
-            id: "CA002".into(),
-            category: "clean_architecture".into(),
-            severity: "error".into(),
-            description: "Application layer must not depend on infrastructure".into(),
-            engine: "rust-validator".into(),
-        },
-        RuleInfo {
-            id: "CA003".into(),
-            category: "clean_architecture".into(),
-            severity: "error".into(),
-            description: "Ports must be defined in domain layer".into(),
-            engine: "rust-validator".into(),
-        },
-        // SOLID rules
-        RuleInfo {
-            id: "SOLID001".into(),
-            category: "solid".into(),
-            severity: "warning".into(),
-            description: "Single Responsibility Principle violation".into(),
-            engine: "rust-validator".into(),
-        },
-        RuleInfo {
-            id: "SOLID002".into(),
-            category: "solid".into(),
-            severity: "warning".into(),
-            description: "Open/Closed Principle violation".into(),
-            engine: "rust-validator".into(),
-        },
-        // Quality rules
-        RuleInfo {
-            id: "QUAL001".into(),
-            category: "quality".into(),
-            severity: "error".into(),
-            description: "No unwrap() in production code".into(),
-            engine: "rust-validator".into(),
-        },
-        RuleInfo {
-            id: "QUAL002".into(),
-            category: "quality".into(),
-            severity: "error".into(),
-            description: "No expect() in production code".into(),
-            engine: "rust-validator".into(),
-        },
-        RuleInfo {
-            id: "QUAL003".into(),
-            category: "quality".into(),
-            severity: "warning".into(),
-            description: "Magic number detected".into(),
-            engine: "rust-validator".into(),
-        },
-        // KISS rules
-        RuleInfo {
-            id: "KISS001".into(),
-            category: "kiss".into(),
-            severity: "warning".into(),
-            description: "Function too long".into(),
-            engine: "rca-metrics".into(),
-        },
-        RuleInfo {
-            id: "KISS002".into(),
-            category: "kiss".into(),
-            severity: "warning".into(),
-            description: "Cyclomatic complexity too high".into(),
-            engine: "rca-metrics".into(),
-        },
-    ];
+    let embedded = mcb_validate::EmbeddedRules::all_yaml();
+    let mut loader = mcb_validate::YamlRuleLoader::from_embedded(&embedded)
+        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
+    let validated = loader
+        .load_embedded_rules()
+        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
+
+    let all_rules: Vec<RuleInfo> = validated
+        .into_iter()
+        .filter(|r| r.enabled)
+        .map(|r| RuleInfo {
+            id: r.id,
+            category: r.category,
+            severity: r.severity,
+            description: r.description,
+            engine: r.engine,
+        })
+        .collect();
 
     if let Some(cat) = category {
         Ok(all_rules
