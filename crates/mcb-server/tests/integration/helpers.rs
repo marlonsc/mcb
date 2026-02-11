@@ -1,14 +1,8 @@
-/// Unified integration test helpers
-/// Detects external service availability and skips tests if services are unavailable
-///
-/// Usage: Call `skip_if_service_unavailable!("ServiceName", is_service_available())`
-/// at the start of your test function to skip if the service is unavailable.
 use std::net::TcpStream;
-use std::path::PathBuf;
-use std::sync::OnceLock;
 use std::time::Duration;
 
-/// Check if a service is available on given host:port
+use mcb_domain::test_services_config::test_service_url;
+
 pub fn check_service_available(host: &str, port: u16) -> bool {
     let addr = format!("{}:{}", host, port);
     match addr.parse() {
@@ -19,46 +13,9 @@ pub fn check_service_available(host: &str, port: u16) -> bool {
     }
 }
 
-fn find_test_config_path() -> Option<PathBuf> {
-    let mut candidates = Vec::new();
-
-    if let Ok(current_dir) = std::env::current_dir() {
-        for dir in current_dir.ancestors() {
-            candidates.push(dir.join("config").join("test.toml"));
-        }
-    }
-
-    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    for dir in manifest_dir.ancestors() {
-        candidates.push(dir.join("config").join("test.toml"));
-    }
-
-    candidates.into_iter().find(|path| path.exists())
-}
-
-fn test_services_table() -> Option<&'static toml::value::Table> {
-    static TEST_SERVICES: OnceLock<Option<toml::value::Table>> = OnceLock::new();
-
-    TEST_SERVICES
-        .get_or_init(|| {
-            let config_path = find_test_config_path()?;
-            let content = std::fs::read_to_string(config_path).ok()?;
-            let value = toml::from_str::<toml::Value>(&content).ok()?;
-            value.get("test_services")?.as_table().cloned()
-        })
-        .as_ref()
-}
-
-fn get_test_service_url(key: &str) -> Option<String> {
-    test_services_table()?
-        .get(key)
-        .and_then(|v| v.as_str())
-        .map(str::to_string)
-}
-
 /// Milvus vector database service (default port 29530)
 pub fn is_milvus_available() -> bool {
-    let host = match get_test_service_url("milvus_address") {
+    let host = match test_service_url("milvus_address") {
         Some(url) => url.replace("http://", "").replace("https://", ""),
         None => return false,
     };
@@ -72,7 +29,7 @@ pub fn is_milvus_available() -> bool {
 
 /// Ollama LLM service (default port 21434)
 pub fn is_ollama_available() -> bool {
-    let host = match get_test_service_url("ollama_url") {
+    let host = match test_service_url("ollama_url") {
         Some(url) => url.replace("http://", "").replace("https://", ""),
         None => return false,
     };
@@ -86,7 +43,7 @@ pub fn is_ollama_available() -> bool {
 
 /// Redis cache service (default port 26379)
 pub fn is_redis_available() -> bool {
-    let host = match get_test_service_url("redis_url") {
+    let host = match test_service_url("redis_url") {
         Some(url) => url.replace("redis://", ""),
         None => return false,
     };
@@ -100,7 +57,7 @@ pub fn is_redis_available() -> bool {
 
 /// NATS event bus service (default port 24222)
 pub fn is_nats_available() -> bool {
-    let host = match get_test_service_url("nats_url") {
+    let host = match test_service_url("nats_url") {
         Some(url) => url.replace("nats://", ""),
         None => return false,
     };
@@ -114,7 +71,7 @@ pub fn is_nats_available() -> bool {
 
 /// PostgreSQL service (default port 25432)
 pub fn is_postgres_available() -> bool {
-    let host = match get_test_service_url("postgres_url") {
+    let host = match test_service_url("postgres_url") {
         Some(url) => url,
         None => return false,
     };

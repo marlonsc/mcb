@@ -139,8 +139,8 @@ mod vector_store_registry_tests {
 
     #[test]
     fn test_config_builder() {
-        let milvus_uri = std::env::var("MILVUS_ADDRESS")
-            .unwrap_or_else(|_| "http://127.0.0.1:29530".to_string());
+        let milvus_uri =
+            mcb_domain::test_services_config::required_test_service_url("milvus_address");
         let config = VectorStoreProviderConfig::new("milvus")
             .with_uri(&milvus_uri)
             .with_collection("embeddings")
@@ -207,8 +207,7 @@ mod cache_registry_tests {
 
     #[test]
     fn test_config_builder() {
-        let redis_uri =
-            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:26379".to_string());
+        let redis_uri = mcb_domain::test_services_config::required_test_service_url("redis_url");
         let config = CacheProviderConfig::new("redis")
             .with_uri(&redis_uri)
             .with_max_size(10000)

@@ -62,6 +62,7 @@ pub mod registry;
 pub mod repositories;
 /// Generic schema definitions for persistence (backend-agnostic model)
 pub mod schema;
+pub mod test_services_config;
 /// Common utilities
 pub mod utils;
 /// Immutable value objects
