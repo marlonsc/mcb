@@ -177,7 +177,8 @@ pub async fn list_browse_projects(
         ));
     };
 
-    // TODO(phase-1): extract org_id from admin auth context
+    // TODO(multi-tenant): Extract org_id from auth context.
+    tracing::warn!("Using default org context - multi-tenant auth not yet implemented");
     let org_ctx = mcb_domain::value_objects::OrgContext::default();
     match project_workflow.list(org_ctx.org_id.as_str()).await {
         Ok(projects) => {
@@ -249,7 +250,8 @@ pub async fn list_browse_repositories(
         ));
     };
 
-    // TODO(phase-1): extract org_id from admin auth context
+    // TODO(multi-tenant): Extract org_id from auth context.
+    tracing::warn!("Using default org context - multi-tenant auth not yet implemented");
     let org_ctx = mcb_domain::value_objects::OrgContext::default();
     let pid = project_id.as_deref().unwrap_or("");
 

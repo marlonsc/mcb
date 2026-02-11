@@ -82,6 +82,8 @@ impl std::str::FromStr for PlanStatus {
 pub struct PlanVersion {
     /// Unique identifier (UUID).
     pub id: String,
+    /// Organization that owns this plan version.
+    pub org_id: String,
     /// Parent plan identifier.
     pub plan_id: String,
     /// Monotonic version number for the plan.
@@ -101,6 +103,8 @@ pub struct PlanVersion {
 pub struct PlanReview {
     /// Unique identifier (UUID).
     pub id: String,
+    /// Organization that owns this review.
+    pub org_id: String,
     /// Plan version that was reviewed.
     pub plan_version_id: String,
     /// Reviewer user identifier.

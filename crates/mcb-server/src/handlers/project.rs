@@ -33,7 +33,8 @@ impl ProjectHandler {
         let project_id = &args.project_id;
         let _data = args.data.unwrap_or(Value::Null);
 
-        // TODO(phase-1): extract org_id from auth token / request context
+        // TODO(multi-tenant): Extract org_id from auth context.
+        tracing::warn!("Using default org context - multi-tenant auth not yet implemented");
         let org_ctx = OrgContext::default();
         let org_id = org_ctx.org_id.as_str();
 

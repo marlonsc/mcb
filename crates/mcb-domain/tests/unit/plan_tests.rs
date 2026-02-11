@@ -71,6 +71,7 @@ fn plan_serialization_roundtrip() {
 fn plan_version_construction() {
     let version = PlanVersion {
         id: "pv-001".to_string(),
+        org_id: "org-001".to_string(),
         plan_id: "plan-001".to_string(),
         version_number: 1,
         content_json: "{\"steps\":[\"a\",\"b\"]}".to_string(),
@@ -88,6 +89,7 @@ fn plan_version_construction() {
 fn plan_version_serialization_roundtrip() {
     let version = PlanVersion {
         id: "pv-002".to_string(),
+        org_id: "org-001".to_string(),
         plan_id: "plan-002".to_string(),
         version_number: 2,
         content_json: "{\"milestones\":2}".to_string(),
@@ -147,6 +149,7 @@ fn review_verdict_from_str_case_insensitive() {
 fn plan_review_construction() {
     let review = PlanReview {
         id: "pr-001".to_string(),
+        org_id: "org-001".to_string(),
         plan_version_id: "pv-001".to_string(),
         reviewer_id: "user-003".to_string(),
         verdict: ReviewVerdict::Approved,
@@ -163,6 +166,7 @@ fn plan_review_construction() {
 fn plan_review_serialization_roundtrip() {
     let review = PlanReview {
         id: "pr-002".to_string(),
+        org_id: "org-001".to_string(),
         plan_version_id: "pv-002".to_string(),
         reviewer_id: "user-004".to_string(),
         verdict: ReviewVerdict::NeedsRevision,

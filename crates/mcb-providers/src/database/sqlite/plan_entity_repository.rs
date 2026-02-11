@@ -62,6 +62,7 @@ fn row_to_plan(row: &dyn SqlRow) -> Result<Plan> {
 fn row_to_plan_version(row: &dyn SqlRow) -> Result<PlanVersion> {
     Ok(PlanVersion {
         id: req_str(row, "id")?,
+        org_id: req_str(row, "org_id")?,
         plan_id: req_str(row, "plan_id")?,
         version_number: req_i64(row, "version_number")?,
         content_json: req_str(row, "content_json")?,
@@ -78,6 +79,7 @@ fn row_to_plan_review(row: &dyn SqlRow) -> Result<PlanReview> {
 
     Ok(PlanReview {
         id: req_str(row, "id")?,
+        org_id: req_str(row, "org_id")?,
         plan_version_id: req_str(row, "plan_version_id")?,
         reviewer_id: req_str(row, "reviewer_id")?,
         verdict,
@@ -173,9 +175,10 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
     async fn create_plan_version(&self, version: &PlanVersion) -> Result<()> {
         self.executor
             .execute(
-                "INSERT INTO plan_versions (id, plan_id, version_number, content_json, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO plan_versions (id, org_id, plan_id, version_number, content_json, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 &[
                     SqlParam::String(version.id.clone()),
+                    SqlParam::String(version.org_id.clone()),
                     SqlParam::String(version.plan_id.clone()),
                     SqlParam::I64(version.version_number),
                     SqlParam::String(version.content_json.clone()),
@@ -209,9 +212,10 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
     async fn create_plan_review(&self, review: &PlanReview) -> Result<()> {
         self.executor
             .execute(
-                "INSERT INTO plan_reviews (id, plan_version_id, reviewer_id, verdict, feedback, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                "INSERT INTO plan_reviews (id, org_id, plan_version_id, reviewer_id, verdict, feedback, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
                 &[
                     SqlParam::String(review.id.clone()),
+                    SqlParam::String(review.org_id.clone()),
                     SqlParam::String(review.plan_version_id.clone()),
                     SqlParam::String(review.reviewer_id.clone()),
                     SqlParam::String(review.verdict.to_string()),

@@ -88,6 +88,7 @@ fn create_test_version(id: &str, plan_id: &str, version_number: i64) -> PlanVers
     let now = 1_000_000_i64;
     PlanVersion {
         id: id.to_string(),
+        org_id: DEFAULT_ORG_ID.to_string(),
         plan_id: plan_id.to_string(),
         version_number,
         content_json: format!("{{\"v\": {version_number}}}"),
@@ -101,6 +102,7 @@ fn create_test_review(id: &str, plan_version_id: &str, verdict: ReviewVerdict) -
     let now = 1_000_000_i64;
     PlanReview {
         id: id.to_string(),
+        org_id: DEFAULT_ORG_ID.to_string(),
         plan_version_id: plan_version_id.to_string(),
         reviewer_id: "user-1".to_string(),
         verdict,
