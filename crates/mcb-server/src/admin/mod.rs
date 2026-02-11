@@ -36,6 +36,8 @@ pub mod handlers;
 pub mod lifecycle_handlers;
 pub mod models;
 pub mod propagation;
+/// Schema-driven entity registry for auto-generated admin UI.
+pub mod registry;
 pub mod routes;
 pub mod sse;
 pub mod web;
@@ -51,5 +53,6 @@ pub use config::{
 pub use handlers::AdminState;
 pub use models::{AdminActionResponse, CollectionStats, ServerInfo};
 pub use propagation::{ConfigPropagator, PropagatorHandle};
+pub use registry::{AdminEntityMeta, AdminFieldMeta, AdminRegistry};
 pub use routes::admin_rocket;
 pub use web::{web_rocket, web_routes};

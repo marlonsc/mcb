@@ -9,6 +9,7 @@
 use std::sync::Arc;
 
 use rocket::{Build, Rocket, routes};
+use rocket_dyn_templates::Template;
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::{
@@ -24,6 +25,7 @@ use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,
 };
 use super::sse::events_stream;
+use super::web::entity_handlers::{entities_index, entities_list, entities_new_form};
 use super::web::handlers::{
     browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
     dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
@@ -62,7 +64,10 @@ pub fn admin_rocket(
     auth_config: Arc<AdminAuthConfig>,
     browse_state: Option<BrowseState>,
 ) -> Rocket<Build> {
-    let mut rocket = rocket::build().manage(state).manage(auth_config);
+    let mut rocket = rocket::build()
+        .manage(state)
+        .manage(auth_config)
+        .attach(Template::fairing());
 
     // Mount base routes
     rocket = rocket.mount(
@@ -109,6 +114,9 @@ pub fn admin_rocket(
             browse_tree_page,
             theme_css,
             shared_js,
+            entities_index,
+            entities_list,
+            entities_new_form,
         ],
     );
 

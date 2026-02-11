@@ -38,7 +38,6 @@ async fn test_golden_memory_store_with_default_project() {
     let store_args = MemoryArgs {
         action: MemoryAction::Store,
         resource: MemoryResource::Observation,
-        org_id: None,
         data: Some(json!({
             "content": "This is a test observation",
             "observation_type": "context",
@@ -79,7 +78,6 @@ async fn test_golden_memory_list_empty_graceful() {
     let list_args = MemoryArgs {
         action: MemoryAction::List,
         resource: MemoryResource::Observation,
-        org_id: None,
         data: None,
         ids: None,
         project_id: Some("project-empty".to_string()),
@@ -124,7 +122,6 @@ async fn test_golden_context_search_basic() {
         .handle(Parameters(MemoryArgs {
             action: MemoryAction::Store,
             resource: MemoryResource::Observation,
-            org_id: None,
             data: Some(json!({
                 "content": "The reactor core temperature is critical.",
                 "observation_type": "context",
@@ -151,7 +148,6 @@ async fn test_golden_context_search_basic() {
     let search_args = SearchArgs {
         query: "reactor temperature".to_string(),
         resource: SearchResource::Context,
-        org_id: None,
         collection: None,
         extensions: None,
         filters: None,

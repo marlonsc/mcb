@@ -6,7 +6,6 @@ fn test_search_args_valid() {
     let args = SearchArgs {
         query: "find authentication functions".to_string(),
         resource: SearchResource::Code,
-        org_id: None,
         collection: Some("test".to_string()),
         extensions: None,
         filters: None,
@@ -25,7 +24,6 @@ fn test_search_args_empty_query() {
     let args = SearchArgs {
         query: "".to_string(),
         resource: SearchResource::Code,
-        org_id: None,
         collection: None,
         extensions: None,
         filters: None,
@@ -44,7 +42,6 @@ fn test_search_args_invalid_score() {
     let args = SearchArgs {
         query: "test".to_string(),
         resource: SearchResource::Code,
-        org_id: None,
         collection: None,
         extensions: None,
         filters: None,

@@ -1,9 +1,10 @@
 //! Plan, plan version, and plan review entities.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// A plan definition owned by an organization and project.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Plan {
     /// Unique identifier (UUID).
     pub id: String,
@@ -26,7 +27,7 @@ pub struct Plan {
 }
 
 /// Lifecycle status for a plan.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum PlanStatus {
     /// Plan is in draft state.
     Draft,
@@ -76,7 +77,7 @@ impl std::str::FromStr for PlanStatus {
 }
 
 /// A versioned snapshot of a plan's content.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct PlanVersion {
     /// Unique identifier (UUID).
     pub id: String,
@@ -95,7 +96,7 @@ pub struct PlanVersion {
 }
 
 /// A review decision for a specific plan version.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct PlanReview {
     /// Unique identifier (UUID).
     pub id: String,
@@ -112,7 +113,7 @@ pub struct PlanReview {
 }
 
 /// Verdict values for a plan review.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum ReviewVerdict {
     /// Review approved the plan version.
     Approved,

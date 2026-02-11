@@ -1,0 +1,47 @@
+{{#*inline "page"}}
+<div class="breadcrumb">
+    <a href="/ui/entities">Entities</a>
+    <span class="separator">/</span>
+    <a href="/ui/entities/{{entity_slug}}">{{entity_slug}}</a>
+    <span class="separator">/</span>
+    <span>New</span>
+</div>
+
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-primary">{{title}}</h1>
+        <p class="mt-2 text-secondary">Group: <span class="badge badge-blue">{{entity_group}}</span></p>
+    </div>
+    <a class="btn btn-secondary" href="/ui/entities/{{entity_slug}}">Back to List</a>
+</div>
+
+<div class="card" style="max-width: 48rem;">
+    <form method="post" action="/ui/entities/{{entity_slug}}">
+        {{#each fields}}
+        {{#unless hidden}}
+        <div class="mb-1">
+            <label for="{{name}}">{{label}}{{#if readonly}} <span class="badge badge-gray">readonly</span>{{/if}}</label>
+            {{#if is_textarea}}
+            <textarea id="{{name}}" name="{{name}}" rows="4" {{#if readonly}}readonly{{/if}}></textarea>
+            {{else if is_checkbox}}
+            <div style="margin-bottom: 1rem;">
+                <input id="{{name}}" name="{{name}}" type="checkbox" style="width: auto; margin-right: 0.5rem;" {{#if readonly}}disabled{{/if}} />
+            </div>
+            {{else if is_select}}
+            <select id="{{name}}" name="{{name}}" {{#if readonly}}disabled{{/if}}>
+                <option value="">Select...</option>
+            </select>
+            {{else}}
+            <input id="{{name}}" name="{{name}}" type="{{input_type}}" {{#if readonly}}readonly{{/if}} />
+            {{/if}}
+        </div>
+        {{/unless}}
+        {{/each}}
+        <div class="flex gap-3 mt-6">
+            <button class="btn btn-primary" type="submit">Save</button>
+            <a class="btn btn-secondary" href="/ui/entities/{{entity_slug}}">Cancel</a>
+        </div>
+    </form>
+</div>
+{{/inline}}
+{{> admin/layout}}

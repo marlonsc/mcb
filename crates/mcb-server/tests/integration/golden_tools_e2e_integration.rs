@@ -103,7 +103,6 @@ async fn test_golden_e2e_complete_workflow() {
     let search_args = SearchArgs {
         query: "embedding or vector".to_string(),
         resource: SearchResource::Code,
-        org_id: None,
         collection: Some(coll.to_string()),
         extensions: None,
         filters: None,
@@ -230,7 +229,6 @@ async fn test_golden_search_returns_relevant_results() {
         .handle(Parameters(SearchArgs {
             query: "embedding vector".to_string(),
             resource: SearchResource::Code,
-            org_id: None,
             collection: Some(collection.to_string()),
             extensions: None,
             filters: None,
@@ -251,7 +249,6 @@ async fn test_golden_search_handles_empty_query() {
     let r = search_h.handle(Parameters(SearchArgs {
         query: "   ".to_string(),
         resource: SearchResource::Code,
-        org_id: None,
         collection: None,
         extensions: None,
         filters: None,
@@ -293,7 +290,6 @@ async fn test_golden_search_respects_limit_parameter() {
         .handle(Parameters(SearchArgs {
             query: "function code".to_string(),
             resource: SearchResource::Code,
-            org_id: None,
             collection: Some(collection.to_string()),
             extensions: None,
             filters: None,

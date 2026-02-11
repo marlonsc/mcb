@@ -1,11 +1,12 @@
 //! Team and TeamMember entities — groups of users within an organization.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// A team groups users within an organization for access control and
 /// project assignment. Teams are used in the GitHub-like RBAC model:
 /// Organization → Teams → Projects.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Team {
     /// Unique identifier (UUID).
     pub id: String,
@@ -19,7 +20,7 @@ pub struct Team {
 
 /// A membership link between a user and a team, with a role describing
 /// the user's authority within that team.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct TeamMember {
     /// Team the user belongs to.
     pub team_id: String,
@@ -32,7 +33,7 @@ pub struct TeamMember {
 }
 
 /// Role a user holds within a specific team.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum TeamMemberRole {
     /// Team lead with management capabilities.
     Lead,

@@ -4,6 +4,7 @@
 //! and [`VcsBranch`] models used by the VCS provider.  They carry `org_id`
 //! and timestamps for row-level tenant isolation.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
@@ -11,7 +12,7 @@ use serde::{Deserialize, Serialize};
 // ---------------------------------------------------------------------------
 
 /// A tracked VCS repository belonging to a project within an organization.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Repository {
     /// Unique identifier (UUID).
     pub id: String,
@@ -34,7 +35,7 @@ pub struct Repository {
 }
 
 /// Type of version control system.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum VcsType {
     /// Git repository.
     Git,
@@ -80,7 +81,7 @@ impl std::str::FromStr for VcsType {
 // ---------------------------------------------------------------------------
 
 /// A tracked branch within a repository.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Branch {
     /// Unique identifier (UUID).
     pub id: String,

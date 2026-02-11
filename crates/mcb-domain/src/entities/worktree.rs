@@ -4,6 +4,7 @@
 //! Agent sessions can be assigned to worktrees to avoid concurrent
 //! modifications to the same working directory.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
@@ -11,7 +12,7 @@ use serde::{Deserialize, Serialize};
 // ---------------------------------------------------------------------------
 
 /// A git worktree checkout associated with a repository and branch.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Worktree {
     /// Unique identifier (UUID).
     pub id: String,
@@ -32,7 +33,7 @@ pub struct Worktree {
 }
 
 /// Lifecycle status of a worktree.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum WorktreeStatus {
     /// Worktree is available for use.
     Active,
@@ -78,7 +79,7 @@ impl std::str::FromStr for WorktreeStatus {
 // ---------------------------------------------------------------------------
 
 /// Tracks which agent session is/was assigned to which worktree.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct AgentWorktreeAssignment {
     /// Unique identifier (UUID).
     pub id: String,

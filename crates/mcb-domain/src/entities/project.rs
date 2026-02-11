@@ -1,5 +1,6 @@
 //! Project entities for repository management and detection.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Registered project in MCB - serves as root entity linking collections, observations, and file hashes.
@@ -159,7 +160,7 @@ impl std::str::FromStr for PhaseStatus {
 }
 
 /// Classifies the nature of a project issue.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum IssueType {
     /// Represents a unit of work to be performed.
     Task,
@@ -203,7 +204,7 @@ impl std::str::FromStr for IssueType {
 }
 
 /// Tracks the lifecycle state of an issue.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum IssueStatus {
     /// Indicates the issue is new and awaiting action.
     Open,
@@ -312,7 +313,7 @@ pub struct ProjectPhase {
 }
 
 /// Represents a unit of work, bug, or feature request within a project.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ProjectIssue {
     /// Unique identifier for the issue.
     pub id: String,

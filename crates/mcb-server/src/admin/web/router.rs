@@ -5,7 +5,9 @@
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
 use rocket::{Build, Rocket, routes};
+use rocket_dyn_templates::Template;
 
+use super::entity_handlers;
 use super::handlers;
 
 /// Create the admin web UI rocket instance
@@ -22,7 +24,7 @@ use super::handlers;
 /// - GET `/ui/browse/tree` - Browse tree view page (Wave 3)
 /// - GET `/favicon.ico` - Favicon
 pub fn web_rocket() -> Rocket<Build> {
-    rocket::build().mount(
+    rocket::build().attach(Template::fairing()).mount(
         "/",
         routes![
             handlers::dashboard,
@@ -37,6 +39,9 @@ pub fn web_rocket() -> Rocket<Build> {
             handlers::shared_js,
             handlers::theme_css,
             handlers::favicon,
+            entity_handlers::entities_index,
+            entity_handlers::entities_list,
+            entity_handlers::entities_new_form,
         ],
     )
 }
@@ -56,5 +61,8 @@ pub fn web_routes() -> Vec<rocket::Route> {
         handlers::shared_js,
         handlers::theme_css,
         handlers::favicon,
+        entity_handlers::entities_index,
+        entity_handlers::entities_list,
+        entity_handlers::entities_new_form,
     ]
 }
