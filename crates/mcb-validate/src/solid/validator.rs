@@ -7,7 +7,7 @@ use walkdir::WalkDir;
 
 use super::violation::SolidViolation;
 use crate::pattern_registry::PATTERNS;
-use crate::thresholds::{MAX_IMPL_METHODS, MAX_MATCH_ARMS, MAX_STRUCT_LINES, MAX_TRAIT_METHODS};
+use crate::thresholds::thresholds;
 use crate::{Result, Severity, ValidationConfig};
 
 /// SOLID principles validator
@@ -32,12 +32,13 @@ impl SolidValidator {
 
     /// Create a validator with custom configuration for multi-directory support
     pub fn with_config(config: ValidationConfig) -> Self {
+        let t = thresholds();
         Self {
             config,
-            max_trait_methods: MAX_TRAIT_METHODS,
-            max_struct_lines: MAX_STRUCT_LINES,
-            max_match_arms: MAX_MATCH_ARMS,
-            max_impl_methods: MAX_IMPL_METHODS,
+            max_trait_methods: t.max_trait_methods,
+            max_struct_lines: t.max_struct_lines,
+            max_match_arms: t.max_match_arms,
+            max_impl_methods: t.max_impl_methods,
         }
     }
 
