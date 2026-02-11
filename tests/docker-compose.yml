@@ -13,7 +13,10 @@ services:
     networks:
       - mcp-test
     healthcheck:
-      disable: true
+      test: ["CMD-SHELL", "nc -z localhost 1080"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   # Redis - Cache layer
   redis:
@@ -141,11 +144,11 @@ services:
     networks:
       - mcp-test
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 30s
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   postgres:
     image: postgres:17-alpine
@@ -190,7 +193,7 @@ services:
     working_dir: /app
     depends_on:
       api-mock:
-        condition: service_started
+        condition: service_healthy
       milvus-standalone:
         condition: service_healthy
       redis:
@@ -209,7 +212,7 @@ services:
       [
         "sh",
         "-c",
-        "echo '⏳ Waiting for all services to be ready...' && sleep 10 && echo '🚀 Starting integration tests...' && make test-rust",
+        "echo '🚀 Starting integration tests...' && make test-rust",
       ]
 
 volumes:

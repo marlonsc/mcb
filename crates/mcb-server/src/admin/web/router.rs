@@ -1,8 +1,6 @@
 //! Web Router Module
 //!
 //! Router configuration for the admin web interface.
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
 use rocket::{Build, Rocket, routes};
 

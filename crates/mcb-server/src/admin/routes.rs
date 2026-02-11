@@ -1,10 +1,6 @@
 //! Admin API routes
 //!
 //! Route definitions for the admin API endpoints.
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
-//! Authentication integration added in v0.1.2.
-//! Browse API added in v0.1.2 for code navigation.
 
 use std::sync::Arc;
 

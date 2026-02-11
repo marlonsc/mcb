@@ -48,7 +48,9 @@ fn test_provider_selection_pattern() {
         "default".to_string(),
         VectorStoreConfig {
             provider: "milvus".to_string(),
-            address: Some("localhost:19530".to_string()),
+            address: Some(mcb_domain::test_services_config::required_test_service_url(
+                "milvus_address",
+            )),
             token: Some("user:password".to_string()),
             collection: Some("test_collection".to_string()),
             dimensions: Some(384),

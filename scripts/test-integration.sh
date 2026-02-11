@@ -6,6 +6,31 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+TEST_CONFIG_PATH="$PROJECT_ROOT/config/tests.toml"
+
+read_test_service_url() {
+	local key="$1"
+	python3 - "$TEST_CONFIG_PATH" "$key" <<'PY'
+import sys
+
+config_path = sys.argv[1]
+key = sys.argv[2]
+
+try:
+	import tomllib
+except ModuleNotFoundError:
+	import tomli as tomllib  # type: ignore
+
+with open(config_path, "rb") as f:
+	config = tomllib.load(f)
+
+value = config.get("test_services", {}).get(key)
+if not isinstance(value, str) or not value:
+	raise SystemExit(f"Missing test_services.{key} in {config_path}")
+
+print(value)
+PY
+}
 
 # Color codes
 GREEN='\033[0;32m'
@@ -43,6 +68,11 @@ if ! command -v docker-compose &>/dev/null; then
 fi
 
 cd "$PROJECT_ROOT"
+
+if [ ! -f "$TEST_CONFIG_PATH" ]; then
+	log_error "Missing test config: $TEST_CONFIG_PATH"
+	exit 1
+fi
 
 case "${1:-}" in
 start)
@@ -95,8 +125,13 @@ test)
 
 	log_info "Running tests (make test)..."
 	log_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:26379}"
-	export NATS_URL="${NATS_URL:-nats://127.0.0.1:24222}"
+	# shellcheck disable=SC2155
+	REDIS_URL="$(read_test_service_url redis_url)"
+	export REDIS_URL
+	# shellcheck disable=SC2155
+	NATS_URL="$(read_test_service_url nats_url)"
+	export NATS_URL
+	export MCB_RUN_DOCKER_INTEGRATION_TESTS="${MCB_RUN_DOCKER_INTEGRATION_TESTS:-1}"
 	if make test; then
 		log_success "All tests passed"
 	else

@@ -187,3 +187,7 @@ workspace = true
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 serial_test = { workspace = true }
+rstest = { workspace = true }
+mockall = { workspace = true }
+insta = { workspace = true }
+mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }

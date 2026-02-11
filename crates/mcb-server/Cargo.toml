@@ -126,3 +126,4 @@ fs2 = { workspace = true }
 [dev-dependencies]
 tempfile = { workspace = true }
 fastembed = { workspace = true }
+mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }

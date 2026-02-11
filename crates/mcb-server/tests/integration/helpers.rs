@@ -1,12 +1,8 @@
-/// Unified integration test helpers
-/// Detects external service availability and skips tests if services are unavailable
-///
-/// Usage: Call `skip_if_service_unavailable!("ServiceName", is_service_available())`
-/// at the start of your test function to skip if the service is unavailable.
+use mcb_domain::test_services_config::test_service_url;
 use std::net::TcpStream;
 use std::time::Duration;
 
-/// Check if a service is available on given host:port
+/// Check if a service is available by attempting a TCP connection
 pub fn check_service_available(host: &str, port: u16) -> bool {
     let addr = format!("{}:{}", host, port);
     match addr.parse() {
@@ -17,67 +13,72 @@ pub fn check_service_available(host: &str, port: u16) -> bool {
     }
 }
 
+fn get_host_port_from_url(url: &str) -> Option<(String, u16)> {
+    let after_scheme = url.rsplit("://").next().unwrap_or(url);
+    let after_auth = after_scheme.rsplit('@').next().unwrap_or(after_scheme);
+    let host_port_str = after_auth.split('/').next().unwrap_or(after_auth);
+
+    // Handle hostname:port (simplified)
+    let (host, port_str) = host_port_str.rsplit_once(':')?;
+    let port = port_str.parse::<u16>().ok()?;
+    Some((host.to_string(), port))
+}
+
+fn is_service_available_from_config(key: &str) -> bool {
+    test_service_url(key)
+        .and_then(|url| get_host_port_from_url(&url))
+        .map(|(host, port)| check_service_available(&host, port))
+        .unwrap_or(false)
+}
+
 /// Milvus vector database service (default port 29530)
 pub fn is_milvus_available() -> bool {
-    let host = std::env::var("MILVUS_ADDRESS")
-        .unwrap_or_else(|_| "http://127.0.0.1:29530".to_string())
-        .replace("http://", "");
-    let parts: Vec<&str> = host.split(':').collect();
-    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(29530);
-    check_service_available(parts[0], port)
+    is_service_available_from_config("milvus_address")
 }
 
 /// Ollama LLM service (default port 21434)
 pub fn is_ollama_available() -> bool {
-    let host = std::env::var("OLLAMA_BASE_URL")
-        .unwrap_or_else(|_| "http://127.0.0.1:21434".to_string())
-        .replace("http://", "");
-    let parts: Vec<&str> = host.split(':').collect();
-    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(21434);
-    check_service_available(parts[0], port)
+    is_service_available_from_config("ollama_url")
 }
 
 /// Redis cache service (default port 26379)
 pub fn is_redis_available() -> bool {
-    let host = std::env::var("REDIS_URL")
-        .unwrap_or_else(|_| "redis://127.0.0.1:26379".to_string())
-        .replace("redis://", "");
-    let parts: Vec<&str> = host.split(':').collect();
-    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(26379);
-    check_service_available(parts[0], port)
+    is_service_available_from_config("redis_url")
 }
 
 /// NATS event bus service (default port 24222)
 pub fn is_nats_available() -> bool {
-    let host = std::env::var("NATS_URL")
-        .unwrap_or_else(|_| "nats://127.0.0.1:24222".to_string())
-        .replace("nats://", "");
-    let parts: Vec<&str> = host.split(':').collect();
-    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(24222);
-    check_service_available(parts[0], port)
+    is_service_available_from_config("nats_url")
 }
 
 /// PostgreSQL service (default port 25432)
 pub fn is_postgres_available() -> bool {
-    let host = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-        "postgresql://mcb_test:mcb_test_pass@127.0.0.1:25432/mcb_test".to_string()
-    });
-    let host_port = host
-        .split('@')
-        .next_back()
-        .unwrap_or("127.0.0.1:25432")
-        .split('/')
-        .next()
-        .unwrap_or("127.0.0.1:25432");
-    let parts: Vec<&str> = host_port.split(':').collect();
-    let port = parts.get(1).and_then(|p| p.parse().ok()).unwrap_or(25432);
-    check_service_available(parts[0], port)
+    is_service_available_from_config("postgres_url")
 }
 
 /// Check if running in CI environment
 /// Returns true if CI environment variable is set
 pub fn is_ci() -> bool {
     std::env::var("CI").is_ok() || std::env::var("GITHUB_ACTIONS").is_ok()
+}
+
+/// Check if Docker integration tests should run based on environment variable
+/// or CI status. Defaults to !is_ci() if variable not set.
+pub fn should_run_docker_integration_tests() -> bool {
+    match std::env::var("MCB_RUN_DOCKER_INTEGRATION_TESTS") {
+        Ok(value) => match value.trim().to_ascii_lowercase().as_str() {
+            "1" | "true" | "yes" => true,
+            "0" | "false" | "no" => false,
+            other => {
+                eprintln!(
+                    "⚠️ WARNING: Unknown value for MCB_RUN_DOCKER_INTEGRATION_TESTS: '{}'. Falling back to !is_ci()",
+                    other
+                );
+                !is_ci()
+            }
+        },
+        Err(_) => !is_ci(),
+    }
 }
 
 /// Skip test if service is not available or if in CI
@@ -96,8 +97,8 @@ pub fn is_ci() -> bool {
 #[macro_export]
 macro_rules! skip_if_service_unavailable {
     ($service:expr, $is_available:expr) => {
-        if $crate::helpers::is_ci() {
-            println!("⊘ SKIPPED: Running in CI environment (skipping test)");
+        if !$crate::helpers::should_run_docker_integration_tests() {
+            println!("⊘ SKIPPED: Docker integration tests disabled in this environment");
             return;
         }
         if !$is_available {
@@ -120,8 +121,8 @@ macro_rules! skip_if_service_unavailable {
 #[macro_export]
 macro_rules! skip_if_any_service_unavailable {
     ($($service:expr => $is_available:expr),+ $(,)?) => {
-        if $crate::helpers::is_ci() {
-            println!("⊘ SKIPPED: Running in CI environment (skipping test)");
+        if !$crate::helpers::should_run_docker_integration_tests() {
+            println!("⊘ SKIPPED: Docker integration tests disabled in this environment");
             return;
         }
         $(
@@ -143,6 +144,7 @@ mod tests {
     #[test]
     fn test_service_detection_logic() {
         let _ = is_ci();
+        let _ = should_run_docker_integration_tests();
         let milvus = is_milvus_available();
         let ollama = is_ollama_available();
         let redis = is_redis_available();
@@ -156,5 +158,48 @@ mod tests {
         assert!(matches!(postgres, true | false));
 
         println!("✓ Service detection logic verified");
+    }
+
+    #[test]
+    fn test_get_host_port_from_url() {
+        // Standard HTTP/HTTPS
+        assert_eq!(
+            get_host_port_from_url("http://localhost:8080"),
+            Some(("localhost".to_string(), 8080))
+        );
+        assert_eq!(
+            get_host_port_from_url("https://api.example.com:443"),
+            Some(("api.example.com".to_string(), 443))
+        );
+
+        // Database URLs
+        assert_eq!(
+            get_host_port_from_url("postgres://user:pass@db-host:5432/db"),
+            Some(("db-host".to_string(), 5432))
+        );
+        assert_eq!(
+            get_host_port_from_url("redis://127.0.0.1:6379"),
+            Some(("127.0.0.1".to_string(), 6379))
+        );
+
+        // IPv6
+        assert_eq!(
+            get_host_port_from_url("http://[::1]:8080"),
+            Some(("[::1]".to_string(), 8080))
+        );
+        assert_eq!(
+            get_host_port_from_url("[::1]:8080"),
+            Some(("[::1]".to_string(), 8080))
+        );
+
+        // No scheme
+        assert_eq!(
+            get_host_port_from_url("localhost:3000"),
+            Some(("localhost".to_string(), 3000))
+        );
+
+        // Invalid or missing port
+        assert_eq!(get_host_port_from_url("http://localhost"), None);
+        assert_eq!(get_host_port_from_url("postgres://user:pass@db-host"), None);
     }
 }
