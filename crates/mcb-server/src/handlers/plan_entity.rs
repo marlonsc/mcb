@@ -90,8 +90,9 @@ impl PlanEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
-                let version: PlanVersion = serde_json::from_value(data)
+                let mut version: PlanVersion = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                version.org_id = org_id.to_string();
                 self.repo
                     .create_plan_version(&version)
                     .await
@@ -123,8 +124,9 @@ impl PlanEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required", None))?;
-                let review: PlanReview = serde_json::from_value(data)
+                let mut review: PlanReview = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                review.org_id = org_id.to_string();
                 self.repo
                     .create_plan_review(&review)
                     .await

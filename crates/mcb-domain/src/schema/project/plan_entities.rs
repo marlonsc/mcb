@@ -21,6 +21,7 @@ pub fn tables() -> Vec<TableDef> {
             "plan_versions",
             [
                 crate::col!("id", Text, pk),
+                crate::col!("org_id", Text),
                 crate::col!("plan_id", Text),
                 crate::col!("version_number", Integer),
                 crate::col!("content_json", Text),
@@ -33,6 +34,7 @@ pub fn tables() -> Vec<TableDef> {
             "plan_reviews",
             [
                 crate::col!("id", Text, pk),
+                crate::col!("org_id", Text),
                 crate::col!("plan_version_id", Text),
                 crate::col!("reviewer_id", Text),
                 crate::col!("verdict", Text),
@@ -48,12 +50,14 @@ pub fn indexes() -> Vec<IndexDef> {
         index!("idx_plans_org", "plans", ["org_id"]),
         index!("idx_plans_project", "plans", ["project_id"]),
         index!("idx_plans_status", "plans", ["status"]),
+        index!("idx_plan_versions_org", "plan_versions", ["org_id"]),
         index!("idx_plan_versions_plan", "plan_versions", ["plan_id"]),
         index!(
             "idx_plan_versions_created_by",
             "plan_versions",
             ["created_by"]
         ),
+        index!("idx_plan_reviews_org", "plan_reviews", ["org_id"]),
         index!(
             "idx_plan_reviews_version",
             "plan_reviews",
@@ -85,6 +89,12 @@ pub fn foreign_keys() -> Vec<ForeignKeyDef> {
         },
         ForeignKeyDef {
             from_table: "plan_versions".to_string(),
+            from_column: "org_id".to_string(),
+            to_table: "organizations".to_string(),
+            to_column: "id".to_string(),
+        },
+        ForeignKeyDef {
+            from_table: "plan_versions".to_string(),
             from_column: "plan_id".to_string(),
             to_table: "plans".to_string(),
             to_column: "id".to_string(),
@@ -93,6 +103,12 @@ pub fn foreign_keys() -> Vec<ForeignKeyDef> {
             from_table: "plan_versions".to_string(),
             from_column: "created_by".to_string(),
             to_table: "users".to_string(),
+            to_column: "id".to_string(),
+        },
+        ForeignKeyDef {
+            from_table: "plan_reviews".to_string(),
+            from_column: "org_id".to_string(),
+            to_table: "organizations".to_string(),
             to_column: "id".to_string(),
         },
         ForeignKeyDef {
