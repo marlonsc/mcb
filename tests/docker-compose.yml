@@ -1,10 +1,9 @@
-version: "3.8"
-
 services:
   # OpenAI API Mock Server
   openai-mock:
     image: mockserver/mockserver:5.15.0
     container_name: mcp-openai-mock
+    restart: unless-stopped
     ports:
       - "1080:1080"
     environment:
@@ -15,36 +14,13 @@ services:
     networks:
       - mcp-test
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:1080/mockserver/status"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
-#  # Ollama for embeddings
-#  ollama:
-#    image: ollama/ollama:latest
-#    container_name: mcp-ollama
-#    ports:
-#      - "11434:11434"
-#    volumes:
-#      - ollama_data:/root/.ollama
-#      - ./docker/init-ollama.sh:/init-ollama.sh:ro
-#    networks:
-#      - mcp-test
-#    environment:
-#      - OLLAMA_HOST=0.0.0.0
-#      - OLLAMA_KEEP_ALIVE=24h
-#    healthcheck:
-#      test: ["CMD", "ollama", "list", "|", "grep", "nomic-embed-text"]
-#      interval: 15s
-#      timeout: 10s
-#      retries: 10
-#    command: ["sh", "-c", "serve & /init-ollama.sh && wait"]
+      disable: true
 
   # Redis - Cache layer
   redis:
     image: redis:7-alpine
     container_name: mcp-redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
@@ -62,6 +38,7 @@ services:
   nats:
     image: nats:2-alpine
     container_name: mcp-nats
+    restart: unless-stopped
     ports:
       - "4222:4222"
       - "8222:8222"
@@ -88,6 +65,7 @@ services:
   milvus-etcd:
     container_name: mcp-milvus-etcd
     image: quay.io/coreos/etcd:v3.5.25
+    restart: unless-stopped
     environment:
       - ETCD_AUTO_COMPACTION_MODE=revision
       - ETCD_AUTO_COMPACTION_RETENTION=1000
@@ -107,6 +85,7 @@ services:
   milvus-minio:
     container_name: mcp-milvus-minio
     image: minio/minio:RELEASE.2024-05-28T17-19-04Z
+    restart: unless-stopped
     environment:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
@@ -127,6 +106,7 @@ services:
   milvus-standalone:
     container_name: mcp-milvus-standalone
     image: milvusdb/milvus:v2.6.9
+    restart: unless-stopped
     command: ["milvus", "run", "standalone"]
     security_opt:
       - seccomp:unconfined
@@ -151,16 +131,16 @@ services:
     networks:
       - mcp-test
 
-  # Test runner
+  # Test runner (on-demand only: docker compose --profile test up test-runner)
   test-runner:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.test
+      dockerfile: tests/docker/Dockerfile.test
     container_name: mcp-test-runner
+    profiles:
+      - test
     environment:
-      # Internal services (Docker network)
       - OPENAI_BASE_URL=http://mcp-openai-mock:1080
-      # - OLLAMA_BASE_URL=http://mcp-ollama:11434
       - OLLAMA_BASE_URL=http://localhost:11434
       - MILVUS_ADDRESS=http://mcp-milvus-standalone:19530
       - REDIS_URL=redis://mcp-redis:6379
@@ -170,15 +150,10 @@ services:
       - MCP_EVENT_BUS_TYPE=nats
       - MCP_NATS_URL=nats://mcp-nats:4222
       - RUST_BACKTRACE=1
-    volumes:
-      - ..:/app
-      - cargo_cache:/usr/local/cargo/registry
     working_dir: /app
     depends_on:
       openai-mock:
-        condition: service_healthy
-      #ollama:
-      #  condition: service_healthy
+        condition: service_started
       milvus-standalone:
         condition: service_healthy
       redis:
@@ -193,11 +168,10 @@ services:
       [
         "sh",
         "-c",
-        "echo '⏳ Waiting for all services to be ready...' && sleep 10 && echo '🚀 Starting integration tests...' && make test",
+        "echo '⏳ Waiting for all services to be ready...' && sleep 10 && echo '🚀 Starting integration tests...' && make test-rust",
       ]
 
 volumes:
-  ollama_data:
   milvus_etcd:
   milvus_minio:
   milvus_standalone:
