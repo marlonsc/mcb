@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
+use mcb_domain::error::Error;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::PlanEntityRepository;
 use mcb_providers::database::{SqlitePlanEntityRepository, create_memory_repository_with_executor};
@@ -108,6 +109,10 @@ fn create_test_review(id: &str, plan_version_id: &str, verdict: ReviewVerdict) -
     }
 }
 
+fn assert_not_found<T>(result: mcb_domain::error::Result<T>) {
+    assert!(matches!(result, Err(Error::NotFound { .. })));
+}
+
 #[tokio::test]
 async fn test_plan_crud() {
     let (repo, _executor, _temp) = setup_repo().await;
@@ -115,11 +120,7 @@ async fn test_plan_crud() {
 
     repo.create_plan(&plan).await.expect("create");
 
-    let retrieved = repo
-        .get_plan(DEFAULT_ORG_ID, "plan-1")
-        .await
-        .expect("get")
-        .unwrap();
+    let retrieved = repo.get_plan(DEFAULT_ORG_ID, "plan-1").await.expect("get");
     assert_eq!(retrieved.title, "Plan plan-1");
     assert_eq!(retrieved.status, PlanStatus::Draft);
 
@@ -134,22 +135,13 @@ async fn test_plan_crud() {
     updated.updated_at = 2_000_000;
     repo.update_plan(&updated).await.expect("update");
 
-    let after_update = repo
-        .get_plan(DEFAULT_ORG_ID, "plan-1")
-        .await
-        .expect("get")
-        .unwrap();
+    let after_update = repo.get_plan(DEFAULT_ORG_ID, "plan-1").await.expect("get");
     assert_eq!(after_update.status, PlanStatus::Active);
 
     repo.delete_plan(DEFAULT_ORG_ID, "plan-1")
         .await
         .expect("delete");
-    assert!(
-        repo.get_plan(DEFAULT_ORG_ID, "plan-1")
-            .await
-            .expect("get")
-            .is_none()
-    );
+    assert_not_found(repo.get_plan(DEFAULT_ORG_ID, "plan-1").await);
 }
 
 #[tokio::test]
@@ -163,7 +155,7 @@ async fn test_plan_version_lifecycle() {
     repo.create_plan_version(&v1).await.expect("create v1");
     repo.create_plan_version(&v2).await.expect("create v2");
 
-    let retrieved = repo.get_plan_version("v1").await.expect("get").unwrap();
+    let retrieved = repo.get_plan_version("v1").await.expect("get");
     assert_eq!(retrieved.version_number, 1);
 
     let versions = repo
@@ -188,7 +180,7 @@ async fn test_plan_review_lifecycle() {
     repo.create_plan_review(&r1).await.expect("create r1");
     repo.create_plan_review(&r2).await.expect("create r2");
 
-    let retrieved = repo.get_plan_review("r1").await.expect("get").unwrap();
+    let retrieved = repo.get_plan_review("r1").await.expect("get");
     assert_eq!(retrieved.verdict, ReviewVerdict::NeedsRevision);
 
     let reviews = repo.list_plan_reviews_by_version("v1").await.expect("list");
@@ -264,8 +256,8 @@ async fn test_org_isolation_plans() {
     };
     repo.create_plan(&plan).await.expect("create");
 
-    assert!(repo.get_plan("org-A", "plan-iso").await.unwrap().is_some());
-    assert!(repo.get_plan("org-B", "plan-iso").await.unwrap().is_none());
+    assert!(repo.get_plan("org-A", "plan-iso").await.is_ok());
+    assert_not_found(repo.get_plan("org-B", "plan-iso").await);
     assert!(
         repo.list_plans("org-B", "proj-org-B")
             .await
@@ -305,8 +297,7 @@ async fn test_plan_versioning_flow() {
     let final_plan = repo
         .get_plan(DEFAULT_ORG_ID, "plan-flow")
         .await
-        .expect("get")
-        .unwrap();
+        .expect("get");
     assert_eq!(final_plan.status, PlanStatus::Active);
 
     let versions = repo

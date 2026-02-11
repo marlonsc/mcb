@@ -3,6 +3,7 @@ use std::sync::Arc;
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::{IssueStatus, IssueType, ProjectIssue};
+use mcb_domain::error::Error;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::IssueEntityRepository;
 use mcb_providers::database::{
@@ -121,6 +122,10 @@ fn create_test_label(id: &str, name: &str, color: &str) -> IssueLabel {
     }
 }
 
+fn assert_not_found<T>(result: mcb_domain::error::Result<T>) {
+    assert!(matches!(result, Err(Error::NotFound { .. })));
+}
+
 #[tokio::test]
 async fn test_issue_crud() {
     let (repo, _executor, _temp) = setup_repo().await;
@@ -131,8 +136,7 @@ async fn test_issue_crud() {
     let retrieved = repo
         .get_issue(DEFAULT_ORG_ID, "issue-1")
         .await
-        .expect("get")
-        .unwrap();
+        .expect("get");
     assert_eq!(retrieved.title, "Issue issue-1");
     assert_eq!(retrieved.status, IssueStatus::Open);
 
@@ -150,19 +154,13 @@ async fn test_issue_crud() {
     let after_update = repo
         .get_issue(DEFAULT_ORG_ID, "issue-1")
         .await
-        .expect("get")
-        .unwrap();
+        .expect("get");
     assert_eq!(after_update.status, IssueStatus::InProgress);
 
     repo.delete_issue(DEFAULT_ORG_ID, "issue-1")
         .await
         .expect("delete");
-    assert!(
-        repo.get_issue(DEFAULT_ORG_ID, "issue-1")
-            .await
-            .expect("get")
-            .is_none()
-    );
+    assert_not_found(repo.get_issue(DEFAULT_ORG_ID, "issue-1").await);
 }
 
 #[tokio::test]
@@ -176,7 +174,7 @@ async fn test_comment_lifecycle() {
     repo.create_comment(&c1).await.expect("create c1");
     repo.create_comment(&c2).await.expect("create c2");
 
-    let retrieved = repo.get_comment("c1").await.expect("get").unwrap();
+    let retrieved = repo.get_comment("c1").await.expect("get");
     assert_eq!(retrieved.content, "Comment c1");
 
     let comments = repo.list_comments_by_issue("issue-1").await.expect("list");
@@ -197,7 +195,7 @@ async fn test_label_lifecycle() {
     repo.create_label(&l1).await.expect("create l1");
     repo.create_label(&l2).await.expect("create l2");
 
-    let retrieved = repo.get_label("lbl-1").await.expect("get").unwrap();
+    let retrieved = repo.get_label("lbl-1").await.expect("get");
     assert_eq!(retrieved.name, "bug");
     assert_eq!(retrieved.color, "#ff0000");
 
@@ -336,18 +334,8 @@ async fn test_org_isolation_issues() {
     };
     repo.create_issue(&issue).await.expect("create");
 
-    assert!(
-        repo.get_issue("org-A", "issue-iso")
-            .await
-            .unwrap()
-            .is_some()
-    );
-    assert!(
-        repo.get_issue("org-B", "issue-iso")
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(repo.get_issue("org-A", "issue-iso").await.is_ok());
+    assert_not_found(repo.get_issue("org-B", "issue-iso").await);
     assert!(
         repo.list_issues("org-B", "proj-org-B")
             .await

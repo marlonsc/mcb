@@ -19,6 +19,7 @@ pub struct ProjectHandler {
 }
 
 impl ProjectHandler {
+    /// Create a new project handler backed by a repository implementation.
     pub fn new(repo: Arc<dyn ProjectRepository>) -> Self {
         Self { repo }
     }

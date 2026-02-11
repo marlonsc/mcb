@@ -57,10 +57,15 @@ pub struct AdminState {
     pub service_manager: Option<Arc<ServiceManager>>,
     /// Cache provider for stats
     pub cache: Option<Arc<dyn CacheProvider>>,
+    /// Project workflow repository used by admin CRUD pages.
     pub project_workflow: Option<Arc<dyn ProjectRepository>>,
+    /// VCS entity repository used by admin CRUD pages.
     pub vcs_entity: Option<Arc<dyn VcsEntityRepository>>,
+    /// Plan entity repository used by admin CRUD pages.
     pub plan_entity: Option<Arc<dyn PlanEntityRepository>>,
+    /// Issue entity repository used by admin CRUD pages.
     pub issue_entity: Option<Arc<dyn IssueEntityRepository>>,
+    /// Organization entity repository used by admin CRUD pages.
     pub org_entity: Option<Arc<dyn OrgEntityRepository>>,
 }
 

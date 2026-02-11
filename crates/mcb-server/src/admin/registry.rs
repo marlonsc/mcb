@@ -239,7 +239,7 @@ fn schema_agent_worktree_assignment() -> Value {
 }
 
 fn schema_json<T: JsonSchema>() -> Value {
-    match serde_json::to_value(&schema_for!(T)) {
+    match serde_json::to_value(schema_for!(T)) {
         Ok(value) => value,
         Err(_) => Value::Null,
     }
@@ -326,10 +326,10 @@ fn detect_input_type<'a>(name: &str, field_schema: &'a Value) -> Cow<'a, str> {
             "array" => Cow::Borrowed("textarea"),
             "object" => Cow::Borrowed("textarea"),
             "string" => {
-                if let Some(format) = field_schema.get("format").and_then(Value::as_str) {
-                    if format == "date-time" {
-                        return Cow::Borrowed("datetime-local");
-                    }
+                if let Some(format) = field_schema.get("format").and_then(Value::as_str)
+                    && format == "date-time"
+                {
+                    return Cow::Borrowed("datetime-local");
                 }
                 if name.ends_with("_json") {
                     Cow::Borrowed("textarea")
@@ -461,12 +461,12 @@ mod tests {
             "status should have enum values"
         );
         assert!(
-            status.enum_values.contains(&"Draft".to_string()),
-            "PlanStatus should contain Draft"
+            status.enum_values.contains(&"draft".to_string()),
+            "PlanStatus should contain draft"
         );
         assert!(
-            status.enum_values.contains(&"Active".to_string()),
-            "PlanStatus should contain Active"
+            status.enum_values.contains(&"active".to_string()),
+            "PlanStatus should contain active"
         );
     }
 

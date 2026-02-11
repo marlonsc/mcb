@@ -3,6 +3,7 @@ use std::sync::Arc;
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::repository::{Branch, Repository, VcsType};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
+use mcb_domain::error::Error;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::VcsEntityRepository;
 use mcb_providers::database::{SqliteVcsEntityRepository, create_memory_repository_with_executor};
@@ -138,6 +139,10 @@ async fn seed_agent_session(executor: &dyn DatabaseExecutor) {
         .expect("seed agent session");
 }
 
+fn assert_not_found<T>(result: mcb_domain::error::Result<T>) {
+    assert!(matches!(result, Err(Error::NotFound { .. })));
+}
+
 #[tokio::test]
 async fn test_repository_crud() {
     let (repo, _executor, _temp) = setup_repo().await;
@@ -149,8 +154,7 @@ async fn test_repository_crud() {
         .get_repository(DEFAULT_ORG_ID, "repo-1")
         .await
         .expect("get");
-    assert!(retrieved.is_some());
-    let r = retrieved.unwrap();
+    let r = retrieved;
     assert_eq!(r.id, "repo-1");
     assert_eq!(r.name, "repo-repo-1");
 
@@ -168,18 +172,13 @@ async fn test_repository_crud() {
     let after_update = repo
         .get_repository(DEFAULT_ORG_ID, "repo-1")
         .await
-        .expect("get after update")
-        .unwrap();
+        .expect("get after update");
     assert_eq!(after_update.name, "updated-name");
 
     repo.delete_repository(DEFAULT_ORG_ID, "repo-1")
         .await
         .expect("delete");
-    let after_delete = repo
-        .get_repository(DEFAULT_ORG_ID, "repo-1")
-        .await
-        .expect("get after delete");
-    assert!(after_delete.is_none());
+    assert_not_found(repo.get_repository(DEFAULT_ORG_ID, "repo-1").await);
 }
 
 #[tokio::test]
@@ -193,7 +192,7 @@ async fn test_branch_crud() {
     let branch = create_test_branch("branch-1", "repo-1", "main");
     repo.create_branch(&branch).await.expect("create branch");
 
-    let retrieved = repo.get_branch("branch-1").await.expect("get").unwrap();
+    let retrieved = repo.get_branch("branch-1").await.expect("get");
     assert_eq!(retrieved.name, "main");
     assert!(retrieved.is_default);
 
@@ -204,11 +203,11 @@ async fn test_branch_crud() {
     updated.head_commit = "def456".to_string();
     repo.update_branch(&updated).await.expect("update");
 
-    let after_update = repo.get_branch("branch-1").await.expect("get").unwrap();
+    let after_update = repo.get_branch("branch-1").await.expect("get");
     assert_eq!(after_update.head_commit, "def456");
 
     repo.delete_branch("branch-1").await.expect("delete");
-    assert!(repo.get_branch("branch-1").await.expect("get").is_none());
+    assert_not_found(repo.get_branch("branch-1").await);
 }
 
 #[tokio::test]
@@ -224,7 +223,7 @@ async fn test_worktree_crud() {
     let wt = create_test_worktree("wt-1", "repo-1", "branch-1");
     repo.create_worktree(&wt).await.expect("create worktree");
 
-    let retrieved = repo.get_worktree("wt-1").await.expect("get").unwrap();
+    let retrieved = repo.get_worktree("wt-1").await.expect("get");
     assert_eq!(retrieved.path, "/tmp/worktree-wt-1");
 
     let list = repo.list_worktrees("repo-1").await.expect("list");
@@ -235,11 +234,11 @@ async fn test_worktree_crud() {
     updated.updated_at = 2_000_000;
     repo.update_worktree(&updated).await.expect("update");
 
-    let after_update = repo.get_worktree("wt-1").await.expect("get").unwrap();
+    let after_update = repo.get_worktree("wt-1").await.expect("get");
     assert_eq!(after_update.status, WorktreeStatus::InUse);
 
     repo.delete_worktree("wt-1").await.expect("delete");
-    assert!(repo.get_worktree("wt-1").await.expect("get").is_none());
+    assert_not_found(repo.get_worktree("wt-1").await);
 }
 
 #[tokio::test]
@@ -266,7 +265,7 @@ async fn test_assignment_lifecycle() {
         .await
         .expect("create assignment");
 
-    let retrieved = repo.get_assignment("asgn-1").await.expect("get").unwrap();
+    let retrieved = repo.get_assignment("asgn-1").await.expect("get");
     assert_eq!(retrieved.agent_session_id, "agent-1");
     assert!(retrieved.released_at.is_none());
 
@@ -280,7 +279,7 @@ async fn test_assignment_lifecycle() {
         .await
         .expect("release");
 
-    let after_release = repo.get_assignment("asgn-1").await.expect("get").unwrap();
+    let after_release = repo.get_assignment("asgn-1").await.expect("get");
     assert_eq!(after_release.released_at, Some(2_000_000));
 }
 
@@ -337,18 +336,8 @@ async fn test_org_isolation_repositories() {
     };
     repo.create_repository(&vcs_repo).await.expect("create");
 
-    assert!(
-        repo.get_repository("org-A", "repo-iso")
-            .await
-            .unwrap()
-            .is_some()
-    );
-    assert!(
-        repo.get_repository("org-B", "repo-iso")
-            .await
-            .unwrap()
-            .is_none()
-    );
+    assert!(repo.get_repository("org-A", "repo-iso").await.is_ok());
+    assert_not_found(repo.get_repository("org-B", "repo-iso").await);
     assert!(
         repo.list_repositories("org-B", "proj-org-B")
             .await
