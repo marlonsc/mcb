@@ -49,10 +49,12 @@
         .badge-green { background: #dcfce7; color: #166534; }
         .badge-gray { background: var(--bg-tertiary); color: var(--text-secondary); }
     </style>
+    {{#> head_extra}}{{/head_extra}}
 </head>
 <body class="bg-primary text-primary min-h-screen">
     <div id="app-shell">
         {{~> page}}
     </div>
+    {{#> page_scripts}}{{/page_scripts}}
 </body>
 </html>

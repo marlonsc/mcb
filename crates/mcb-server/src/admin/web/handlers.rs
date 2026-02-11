@@ -3,56 +3,49 @@
 //! HTTP handlers for the admin web interface.
 //!
 //! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
+//! Migrated from include_str! to Handlebars templates in Wave 4 (Task 14).
 
 use rocket::get;
 use rocket::http::ContentType;
-use rocket::response::content::RawHtml;
+use rocket_dyn_templates::{Template, context};
 
-// Embed templates at compile time
-const INDEX_HTML: &str = include_str!("templates/index.html");
-const CONFIG_HTML: &str = include_str!("templates/config.html");
-const HEALTH_HTML: &str = include_str!("templates/health.html");
-const JOBS_HTML: &str = include_str!("templates/jobs.html");
-const BROWSE_HTML: &str = include_str!("templates/browse.html");
-const BROWSE_COLLECTION_HTML: &str = include_str!("templates/browse_collection.html");
-const BROWSE_FILE_HTML: &str = include_str!("templates/browse_file.html");
-const BROWSE_TREE_HTML: &str = include_str!("templates/browse_tree.html");
+// Static assets remain as compile-time embeds (not Handlebars templates)
 const SHARED_JS: &str = include_str!("templates/shared.js");
 const THEME_CSS: &str = include_str!("templates/theme.css");
 
 /// Dashboard page handler
 #[get("/")]
-pub fn dashboard() -> RawHtml<&'static str> {
+pub fn dashboard() -> Template {
     tracing::info!("dashboard called");
-    RawHtml(INDEX_HTML)
+    Template::render("admin/dashboard", context! { title: "Dashboard" })
 }
 
 /// Dashboard page handler (alias)
 #[get("/ui")]
-pub fn dashboard_ui() -> RawHtml<&'static str> {
+pub fn dashboard_ui() -> Template {
     tracing::info!("dashboard_ui called");
-    RawHtml(INDEX_HTML)
+    Template::render("admin/dashboard", context! { title: "Dashboard" })
 }
 
 /// Configuration page handler
 #[get("/ui/config")]
-pub fn config_page() -> RawHtml<&'static str> {
+pub fn config_page() -> Template {
     tracing::info!("config_page called");
-    RawHtml(CONFIG_HTML)
+    Template::render("admin/config", context! { title: "Configuration" })
 }
 
 /// Health status page handler
 #[get("/ui/health")]
-pub fn health_page() -> RawHtml<&'static str> {
+pub fn health_page() -> Template {
     tracing::info!("health_page called");
-    RawHtml(HEALTH_HTML)
+    Template::render("admin/health", context! { title: "Health Status" })
 }
 
 /// Jobs page handler
 #[get("/ui/jobs")]
-pub fn jobs_page() -> RawHtml<&'static str> {
+pub fn jobs_page() -> Template {
     tracing::info!("jobs_page called");
-    RawHtml(JOBS_HTML)
+    Template::render("admin/jobs", context! { title: "Jobs" })
 }
 
 /// Favicon handler - returns a simple SVG icon
@@ -81,28 +74,34 @@ pub fn shared_js() -> (ContentType, &'static str) {
 
 /// Browse collections page handler
 #[get("/ui/browse")]
-pub fn browse_page() -> RawHtml<&'static str> {
+pub fn browse_page() -> Template {
     tracing::info!("browse_page called");
-    RawHtml(BROWSE_HTML)
+    Template::render("admin/browse", context! { title: "Browse Indexed Code" })
 }
 
 /// Browse collection files page handler
 #[get("/ui/browse/<_collection>")]
-pub fn browse_collection_page(_collection: &str) -> RawHtml<&'static str> {
+pub fn browse_collection_page(_collection: &str) -> Template {
     tracing::info!("browse_collection_page called");
-    RawHtml(BROWSE_COLLECTION_HTML)
+    Template::render(
+        "admin/browse_collection",
+        context! { title: "Browse Files" },
+    )
 }
 
 /// Browse file chunks page handler
 #[get("/ui/browse/<_collection>/file")]
-pub fn browse_file_page(_collection: &str) -> RawHtml<&'static str> {
+pub fn browse_file_page(_collection: &str) -> Template {
     tracing::info!("browse_file_page called");
-    RawHtml(BROWSE_FILE_HTML)
+    Template::render("admin/browse_file", context! { title: "View Code" })
 }
 
 /// Browse tree view page handler (Phase 8b Wave 3)
 #[get("/ui/browse/tree")]
-pub fn browse_tree_page() -> RawHtml<&'static str> {
+pub fn browse_tree_page() -> Template {
     tracing::info!("browse_tree_page called");
-    RawHtml(BROWSE_TREE_HTML)
+    Template::render(
+        "admin/browse_tree",
+        context! { title: "Browse Collection Tree" },
+    )
 }
