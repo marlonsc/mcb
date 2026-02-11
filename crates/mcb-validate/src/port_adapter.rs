@@ -272,8 +272,6 @@ impl PortAdapterValidator {
                                 line: start_line,
                             });
                         }
-                        // Note: Removed PortTooSmall check. Single-method interfaces
-                        // follow Interface Segregation Principle (ISP) and are valid.
                     }
                 }
             }

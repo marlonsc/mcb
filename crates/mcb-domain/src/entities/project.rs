@@ -112,7 +112,7 @@ pub struct DetectedProject {
 }
 
 // ============================================================================
-// Phase 5: Workflow State (ADR-032)
+// Workflow State
 // ============================================================================
 
 /// Represents the execution state of a project phase.

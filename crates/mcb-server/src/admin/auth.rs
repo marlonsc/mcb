@@ -14,8 +14,6 @@
 //! The following routes are exempt from authentication:
 //! - `/live` - Kubernetes liveness probe
 //! - `/ready` - Kubernetes readiness probe
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
 use std::sync::Arc;
 

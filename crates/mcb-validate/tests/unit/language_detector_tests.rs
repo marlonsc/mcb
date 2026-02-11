@@ -1,6 +1,4 @@
 //! Unit tests for language detection (filters).
-//!
-//! Moved from inline tests in `src/filters/language_detector.rs`.
 
 use std::path::Path;
 

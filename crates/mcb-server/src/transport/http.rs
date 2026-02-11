@@ -32,11 +32,6 @@
 //!     "id": 1
 //! }
 //! ```
-//!
-//! # Migration Note
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
-//! Consolidated Admin API into single port in v0.2.0.
 
 use std::net::SocketAddr;
 use std::sync::Arc;

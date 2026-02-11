@@ -1,6 +1,4 @@
 //! Unit tests for workflow entities (WorkflowState, WorkflowSession).
-//!
-//! Moved from inline tests in src/entities/workflow.rs.
 
 use mcb_domain::entities::{WorkflowSession, WorkflowState};
 

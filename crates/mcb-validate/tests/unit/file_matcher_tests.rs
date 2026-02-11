@@ -1,6 +1,4 @@
 //! Unit tests for `FilePatternMatcher`.
-//!
-//! Moved from inline tests in `src/filters/file_matcher.rs`.
 
 use std::path::Path;
 

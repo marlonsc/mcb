@@ -247,9 +247,7 @@ interface Person {
     assert_eq!(root_kind, "program");
 }
 
-// Note: Go parser tests removed - LANG::Go doesn't exist in rust-code-analysis
-
-// ==================== AST Query Tests (unchanged - uses internal AstNode) ====================
+// ==================== AST Query Tests ====================
 
 #[test]
 fn test_ast_query_builder() {

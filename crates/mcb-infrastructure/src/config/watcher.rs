@@ -259,8 +259,4 @@ impl ConfigWatcherUtils {
     ) -> Result<ConfigWatcher> {
         ConfigWatcher::new(config_path, initial_config, event_bus).await
     }
-
-    // NOTE: is_file_watching_supported() was removed per ADR-025.
-    // Use config.system.data.sync.watching_enabled instead.
-    // Configure via MCP__SYSTEM__DATA__SYNC__WATCHING_ENABLED=false to disable.
 }

@@ -1,7 +1,4 @@
-//! Unit tests for browse handlers
-//!
-//! Moved from inline tests in src/admin/browse_handlers.rs
-//! per test organization standards.
+//! Unit tests for browse handlers.
 
 use mcb_server::admin::browse_handlers::BrowseErrorResponse;
 

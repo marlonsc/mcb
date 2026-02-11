@@ -1,6 +1,4 @@
 //! Unit tests for highlight service.
-//!
-//! Moved from inline tests in src/handlers/highlight_service.rs.
 
 use std::time::Instant;
 

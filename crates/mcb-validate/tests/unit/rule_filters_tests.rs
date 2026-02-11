@@ -1,6 +1,4 @@
 //! Unit tests for rule filter executor.
-//!
-//! Moved from inline tests in `src/filters/rule_filters.rs`.
 
 use std::fs;
 use std::path::Path;

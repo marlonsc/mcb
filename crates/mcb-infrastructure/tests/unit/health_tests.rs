@@ -76,7 +76,6 @@ async fn test_system_health_checker() {
 
 // =============================================================================
 // REAL METRICS VALIDATION TESTS
-// Phase 3 of v0.1.2: Verify SystemHealthChecker returns REAL system metrics
 // =============================================================================
 
 #[tokio::test]
