@@ -23,9 +23,14 @@ pub fn test_services_table() -> Option<&'static toml::value::Table> {
 
     TEST_SERVICES
         .get_or_init(|| {
-            let config_path = find_test_config_path()?;
-            let content = std::fs::read_to_string(config_path).ok()?;
-            let value = toml::from_str::<toml::Value>(&content).ok()?;
+            let config_path = find_test_config_path().expect(
+                "CRITICAL: config/tests.toml not found! Integration tests require this configuration.",
+            );
+            let content = std::fs::read_to_string(&config_path)
+                .unwrap_or_else(|e| panic!("Failed to read config file at {:?}: {}", config_path, e));
+            let value = toml::from_str::<toml::Value>(&content).unwrap_or_else(|e| {
+                panic!("Failed to parse TOML from {:?}: {}", config_path, e)
+            });
             value.get("test_services")?.as_table().cloned()
         })
         .as_ref()

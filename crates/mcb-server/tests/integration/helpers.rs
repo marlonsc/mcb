@@ -162,16 +162,31 @@ mod tests {
     #[test]
     fn test_get_host_port_from_url() {
         // Standard HTTP/HTTPS
-        assert_eq!(get_host_port_from_url("http://localhost:8080"), Some(("localhost".to_string(), 8080)));
-        assert_eq!(get_host_port_from_url("https://api.example.com:443"), Some(("api.example.com".to_string(), 443)));
-        
+        assert_eq!(
+            get_host_port_from_url("http://localhost:8080"),
+            Some(("localhost".to_string(), 8080))
+        );
+        assert_eq!(
+            get_host_port_from_url("https://api.example.com:443"),
+            Some(("api.example.com".to_string(), 443))
+        );
+
         // Database URLs
-        assert_eq!(get_host_port_from_url("postgres://user:pass@db-host:5432/db"), Some(("db-host".to_string(), 5432)));
-        assert_eq!(get_host_port_from_url("redis://127.0.0.1:6379"), Some(("127.0.0.1".to_string(), 6379)));
-        
+        assert_eq!(
+            get_host_port_from_url("postgres://user:pass@db-host:5432/db"),
+            Some(("db-host".to_string(), 5432))
+        );
+        assert_eq!(
+            get_host_port_from_url("redis://127.0.0.1:6379"),
+            Some(("127.0.0.1".to_string(), 6379))
+        );
+
         // No scheme
-        assert_eq!(get_host_port_from_url("localhost:3000"), Some(("localhost".to_string(), 3000)));
-        
+        assert_eq!(
+            get_host_port_from_url("localhost:3000"),
+            Some(("localhost".to_string(), 3000))
+        );
+
         // Invalid or missing port
         assert_eq!(get_host_port_from_url("http://localhost"), None);
         assert_eq!(get_host_port_from_url("postgres://user:pass@db-host"), None);
