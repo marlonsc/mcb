@@ -42,7 +42,7 @@ jobs:
         with:
           components: rustfmt, clippy
       - run: make lint CI_MODE=1
-      - run: make test
+      - run: make test-rust TEST_THREADS=4
       - run: make validate STRICT=1
       - run: make audit
       - name: Extract version from tag
