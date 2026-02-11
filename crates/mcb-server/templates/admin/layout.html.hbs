@@ -77,11 +77,14 @@
                     {{#if nav_groups}}
                     <div>
                         <p class="text-xs uppercase tracking-wider text-secondary mb-2">Domain Entities</p>
-                        <div class="space-y-3">
+                        <div class="space-y-1">
                             {{#each nav_groups}}
-                            <div>
-                                <p class="px-3 text-xs text-secondary mb-1">{{name}}</p>
-                                <div class="space-y-1">
+                            <div class="nav-group">
+                                <button class="nav-group-toggle w-full flex items-center justify-between px-3 py-2 rounded-md text-xs text-secondary" style="cursor:pointer;background:none;border:none;text-align:left;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;" data-group="{{name}}">
+                                    <span>{{name}}</span>
+                                    <span class="nav-group-arrow" style="transition:transform 0.15s;">&#9662;</span>
+                                </button>
+                                <div class="nav-group-items space-y-1" style="padding-left:0.25rem;">
                                     {{#each entities}}
                                     <a href="/ui/entities/{{slug}}" class="nav-link block px-3 py-2 rounded-md text-sm" data-page="{{slug}}">{{title}}</a>
                                     {{/each}}
@@ -107,15 +110,34 @@
             if (!shell) return;
             var current = shell.getAttribute('data-current-page') || '';
             var links = shell.querySelectorAll('.nav-link');
+            var activeGroup = null;
             links.forEach(function (link) {
                 var isActive = link.getAttribute('data-page') === current;
                 if (isActive) {
                     link.style.background = 'var(--accent, #2563eb)';
                     link.style.color = '#ffffff';
                     link.style.fontWeight = '600';
+                    var group = link.closest('.nav-group');
+                    if (group) activeGroup = group;
                 } else {
                     link.style.color = 'var(--text-primary, #111827)';
                 }
+            });
+            shell.querySelectorAll('.nav-group').forEach(function (group) {
+                var items = group.querySelector('.nav-group-items');
+                var arrow = group.querySelector('.nav-group-arrow');
+                var toggle = group.querySelector('.nav-group-toggle');
+                if (!items || !toggle) return;
+                var isActive = group === activeGroup;
+                if (!isActive) {
+                    items.style.display = 'none';
+                    if (arrow) arrow.style.transform = 'rotate(-90deg)';
+                }
+                toggle.addEventListener('click', function () {
+                    var hidden = items.style.display === 'none';
+                    items.style.display = hidden ? '' : 'none';
+                    if (arrow) arrow.style.transform = hidden ? '' : 'rotate(-90deg)';
+                });
             });
         })();
     </script>
