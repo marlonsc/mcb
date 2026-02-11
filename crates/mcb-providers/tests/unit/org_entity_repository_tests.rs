@@ -80,7 +80,7 @@ async fn test_org_crud() {
 
     repo.create_org(&org).await.expect("create");
 
-    let retrieved = repo.get_org("org-1").await.expect("get").unwrap();
+    let retrieved = repo.get_org("org-1").await.expect("get");
     assert_eq!(retrieved.name, "Test Org");
     assert_eq!(retrieved.slug, "test-org");
 
@@ -92,11 +92,11 @@ async fn test_org_crud() {
     updated.updated_at = 2_000_000;
     repo.update_org(&updated).await.expect("update");
 
-    let after_update = repo.get_org("org-1").await.expect("get").unwrap();
+    let after_update = repo.get_org("org-1").await.expect("get");
     assert_eq!(after_update.name, "Updated Org");
 
     repo.delete_org("org-1").await.expect("delete");
-    assert!(repo.get_org("org-1").await.expect("get").is_none());
+    assert!(repo.get_org("org-1").await.is_err());
 }
 
 #[tokio::test]
@@ -108,7 +108,7 @@ async fn test_user_crud() {
     let user = create_test_user("user-1", DEFAULT_ORG_ID, "user1@test.com");
     repo.create_user(&user).await.expect("create user");
 
-    let retrieved = repo.get_user("user-1").await.expect("get").unwrap();
+    let retrieved = repo.get_user("user-1").await.expect("get");
     assert_eq!(retrieved.email, "user1@test.com");
     assert_eq!(retrieved.role, UserRole::Member);
 
@@ -121,12 +121,12 @@ async fn test_user_crud() {
     updated.updated_at = 2_000_000;
     repo.update_user(&updated).await.expect("update");
 
-    let after_update = repo.get_user("user-1").await.expect("get").unwrap();
+    let after_update = repo.get_user("user-1").await.expect("get");
     assert_eq!(after_update.display_name, "Updated User");
     assert_eq!(after_update.role, UserRole::Admin);
 
     repo.delete_user("user-1").await.expect("delete");
-    assert!(repo.get_user("user-1").await.expect("get").is_none());
+    assert!(repo.get_user("user-1").await.is_err());
 }
 
 #[tokio::test]
@@ -141,15 +141,14 @@ async fn test_get_user_by_email() {
     let found = repo
         .get_user_by_email(DEFAULT_ORG_ID, "alice@example.com")
         .await
-        .expect("get by email")
-        .unwrap();
+        .expect("get by email");
     assert_eq!(found.id, "user-1");
 
-    let not_found = repo
-        .get_user_by_email(DEFAULT_ORG_ID, "nobody@example.com")
-        .await
-        .expect("get missing");
-    assert!(not_found.is_none());
+    assert!(
+        repo.get_user_by_email(DEFAULT_ORG_ID, "nobody@example.com")
+            .await
+            .is_err()
+    );
 }
 
 #[tokio::test]
@@ -166,7 +165,7 @@ async fn test_team_and_members() {
     let team = create_test_team("team-1", DEFAULT_ORG_ID, "Backend Team");
     repo.create_team(&team).await.expect("create team");
 
-    let retrieved = repo.get_team("team-1").await.expect("get").unwrap();
+    let retrieved = repo.get_team("team-1").await.expect("get");
     assert_eq!(retrieved.name, "Backend Team");
 
     let teams = repo.list_teams(DEFAULT_ORG_ID).await.expect("list teams");
@@ -206,7 +205,7 @@ async fn test_team_and_members() {
         .expect("remove m2");
 
     repo.delete_team("team-1").await.expect("delete team");
-    assert!(repo.get_team("team-1").await.expect("get").is_none());
+    assert!(repo.get_team("team-1").await.is_err());
 }
 
 #[tokio::test]
@@ -220,7 +219,7 @@ async fn test_api_key_lifecycle() {
     let key = create_test_api_key("key-1", "user-1", DEFAULT_ORG_ID, "CI Key");
     repo.create_api_key(&key).await.expect("create key");
 
-    let retrieved = repo.get_api_key("key-1").await.expect("get").unwrap();
+    let retrieved = repo.get_api_key("key-1").await.expect("get");
     assert_eq!(retrieved.name, "CI Key");
     assert!(retrieved.revoked_at.is_none());
 
@@ -230,11 +229,11 @@ async fn test_api_key_lifecycle() {
     repo.revoke_api_key("key-1", 2_000_000)
         .await
         .expect("revoke");
-    let after_revoke = repo.get_api_key("key-1").await.expect("get").unwrap();
+    let after_revoke = repo.get_api_key("key-1").await.expect("get");
     assert_eq!(after_revoke.revoked_at, Some(2_000_000));
 
     repo.delete_api_key("key-1").await.expect("delete");
-    assert!(repo.get_api_key("key-1").await.expect("get").is_none());
+    assert!(repo.get_api_key("key-1").await.is_err());
 }
 
 #[tokio::test]

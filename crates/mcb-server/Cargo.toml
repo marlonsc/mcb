@@ -127,3 +127,6 @@ fs2 = { workspace = true }
 [dev-dependencies]
 tempfile = { workspace = true }
 fastembed = { workspace = true }
+rstest = { workspace = true }
+mockall = { workspace = true }
+insta = { workspace = true }

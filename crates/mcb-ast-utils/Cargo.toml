@@ -40,3 +40,6 @@ tracing.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+rstest = { workspace = true }
+mockall = { workspace = true }
+insta = { workspace = true }

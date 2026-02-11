@@ -38,6 +38,7 @@ async fn test_validation_agent_sql_storage_flow() {
         .handle(Parameters(AgentArgs {
             action: AgentAction::LogTool,
             session_id: mcb_domain::value_objects::SessionId::new("missing-session"),
+            org_id: None,
             data: json!({
                 "tool_name": "test",
                 "success": true,
@@ -74,6 +75,7 @@ async fn test_validation_session_create_schema_fallback() {
                 "agent_type": "sisyphus" // FALLBACK
             })),
             project_id: None,
+            org_id: None,
             worktree_id: None,
             session_id: None,
             limit: None,
@@ -108,6 +110,7 @@ async fn test_validation_memory_observation_enum_error() {
             })),
             ids: None,
             project_id: Some("p1".to_string()),
+            org_id: None,
             repo_id: None,
             session_id: None,
             tags: None,

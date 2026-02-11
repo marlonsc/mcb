@@ -31,3 +31,6 @@ serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 tempfile.workspace = true
+rstest = { workspace = true }
+mockall = { workspace = true }
+insta = { workspace = true }
