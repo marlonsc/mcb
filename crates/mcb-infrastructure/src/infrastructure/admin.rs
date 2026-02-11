@@ -176,7 +176,7 @@ impl DefaultIndexingOperations {
             status: mcb_domain::ports::admin::IndexingOperationStatus::Starting,
             total_files,
             processed_files: 0,
-            started_at: chrono::Utc::now(),
+            started_at: chrono::Utc::now().timestamp(),
         };
         self.operations.insert(id.clone(), operation);
         id
