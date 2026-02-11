@@ -1,3 +1,5 @@
+//! Schema inspection example for mcb-domain entities.
+
 use mcb_domain::entities::OrgStatus;
 use schemars::schema_for;
 
