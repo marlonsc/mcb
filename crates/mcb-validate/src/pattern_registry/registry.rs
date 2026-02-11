@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
+use tracing::{error, warn};
 use walkdir::WalkDir;
 
 use crate::Result;
@@ -46,10 +47,10 @@ impl PatternRegistry {
             .filter(|e| !is_template_path(e.path()))
         {
             if let Err(e) = registry.load_rule_file(entry.path(), naming_config, project_prefix) {
-                eprintln!(
-                    "Warning: Failed to load patterns/config from {}: {}",
-                    entry.path().display(),
-                    e
+                warn!(
+                    path = %entry.path().display(),
+                    error = %e,
+                    "Failed to load patterns/config"
                 );
             }
         }
@@ -105,10 +106,10 @@ impl PatternRegistry {
         let engine = TemplateEngine::new();
         let variables_value = serde_yaml::Value::Mapping(variables);
         if let Err(e) = engine.substitute_variables(&mut yaml, &variables_value) {
-            eprintln!(
-                "Warning: Failed to substitute variables in {}: {}",
-                path.display(),
-                e
+            warn!(
+                path = %path.display(),
+                error = %e,
+                "Failed to substitute variables"
             );
         }
 
@@ -285,7 +286,7 @@ pub static PATTERNS: std::sync::LazyLock<PatternRegistry> = std::sync::LazyLock:
     let project_prefix = &file_config.general.project_prefix;
     PatternRegistry::load_from_rules(&rules_dir, naming_config, project_prefix).unwrap_or_else(
         |e| {
-            eprintln!("Error: Failed to load pattern registry: {e}");
+            error!(error = %e, "Failed to load pattern registry");
             PatternRegistry::new()
         },
     )

@@ -7,7 +7,7 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
 use crate::args::MemoryArgs;
-use crate::error_mapping::{to_opaque_mcp_error, to_opaque_tool_error};
+use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
 
 /// Lists semantic memories based on the provided search query and filters.
@@ -130,6 +130,6 @@ pub async fn get_timeline(
                 "timeline": items,
             }))
         }
-        Err(e) => Ok(to_opaque_tool_error(e)),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }

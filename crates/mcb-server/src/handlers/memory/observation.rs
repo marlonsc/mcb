@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Stores a new semantic observation with the provided content, type, and tags.
@@ -70,7 +70,7 @@ pub async fn store_observation(
             "observation_id": observation_id,
             "deduplicated": deduplicated,
         })),
-        Err(e) => Ok(to_opaque_tool_error(e)),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }
 
@@ -117,6 +117,6 @@ pub async fn get_observations(
                 "observations": observations,
             }))
         }
-        Err(e) => Ok(to_opaque_tool_error(e)),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }
