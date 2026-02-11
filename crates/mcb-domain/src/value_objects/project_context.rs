@@ -15,6 +15,10 @@ pub struct ProjectContext {
     pub project_id: String,
     /// Human-readable short name (e.g. `"mcb"`).
     pub project_name: String,
+    /// Whether this repository is a git submodule.
+    pub is_submodule: bool,
+    /// The superproject's owner/repo if this is a submodule.
+    pub superproject_id: Option<String>,
 }
 
 impl ProjectContext {
@@ -23,6 +27,8 @@ impl ProjectContext {
         Self {
             project_id: project_id.into(),
             project_name: project_name.into(),
+            is_submodule: false,
+            superproject_id: None,
         }
     }
 
@@ -40,15 +46,30 @@ impl ProjectContext {
     }
 
     fn detect() -> Self {
+        let superproject_id = Self::detect_superproject();
+        let is_submodule = superproject_id.is_some();
+
         if let Some(ctx) = Self::from_git_remote() {
-            return ctx;
+            return Self {
+                project_id: ctx.project_id,
+                project_name: ctx.project_name,
+                is_submodule,
+                superproject_id,
+            };
         }
         if let Some(ctx) = Self::from_git_toplevel() {
-            return ctx;
+            return Self {
+                project_id: ctx.project_id,
+                project_name: ctx.project_name,
+                is_submodule,
+                superproject_id,
+            };
         }
         Self {
             project_id: "default".to_string(),
             project_name: "default".to_string(),
+            is_submodule,
+            superproject_id,
         }
     }
 
@@ -73,6 +94,8 @@ impl ProjectContext {
         Some(Self {
             project_id: owner_repo,
             project_name: name,
+            is_submodule: false,
+            superproject_id: None,
         })
     }
 
@@ -92,7 +115,41 @@ impl ProjectContext {
         Some(Self {
             project_id: name.clone(),
             project_name: name,
+            is_submodule: false,
+            superproject_id: None,
         })
+    }
+
+    /// Detect if the current repo is a git submodule.
+    /// Returns the superproject's owner/repo if it is.
+    fn detect_superproject() -> Option<String> {
+        let output = Command::new("git")
+            .args(["rev-parse", "--show-superproject-working-tree"])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let superproject_path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if superproject_path.is_empty() {
+            return None;
+        }
+        // Get the superproject's remote URL
+        let output = Command::new("git")
+            .args([
+                "-C",
+                &superproject_path,
+                "config",
+                "--get",
+                "remote.origin.url",
+            ])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let url = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        parse_remote_url(&url)
     }
 }
 
@@ -118,10 +175,15 @@ pub fn parse_remote_url(url: &str) -> Option<String> {
     normalize_owner_repo(path)
 }
 
+/// Normalize any git URL to `owner/repo` form. Falls back to raw URL if unparseable.
+pub fn normalize_repo_url(url: &str) -> String {
+    parse_remote_url(url).unwrap_or_else(|| url.to_string())
+}
+
 fn normalize_owner_repo(path: &str) -> Option<String> {
     let parts: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
     if parts.len() >= 2 {
-        Some(format!("{}/{}", parts[0], parts[1]))
+        Some(parts.join("/"))
     } else if parts.len() == 1 {
         Some(parts[0].to_string())
     } else {
@@ -169,7 +231,7 @@ mod tests {
     fn parse_gitlab_subgroup() {
         assert_eq!(
             parse_remote_url("git@gitlab.com:org/subgroup/repo.git"),
-            Some("org/subgroup".to_string())
+            Some("org/subgroup/repo".to_string())
         );
     }
 
@@ -183,5 +245,26 @@ mod tests {
         let ctx1 = ProjectContext::resolve();
         let ctx2 = ProjectContext::resolve();
         assert_eq!(ctx1.project_id, ctx2.project_id);
+    }
+
+    #[test]
+    fn parse_gitlab_subgroup_https() {
+        assert_eq!(
+            parse_remote_url("https://gitlab.com/org/subgroup/repo.git"),
+            Some("org/subgroup/repo".to_string())
+        );
+    }
+
+    #[test]
+    fn normalize_repo_url_ssh() {
+        assert_eq!(
+            normalize_repo_url("git@github.com:marlonsc/mcb.git"),
+            "marlonsc/mcb"
+        );
+    }
+
+    #[test]
+    fn normalize_repo_url_unparseable() {
+        assert_eq!(normalize_repo_url("not-a-url"), "not-a-url");
     }
 }
