@@ -27,6 +27,28 @@ impl IndexHandler {
         Self { indexing_service }
     }
 
+    /// Validates indexing request arguments and extracts the target path and normalized collection id.
+    ///
+    /// Checks that `args.path` is present and points to an existing directory, and derives the collection
+    /// identifier from `args.collection` (defaults to `"default"`). Returns a formatted `CallToolResult`
+    /// describing the validation error when the path is missing, does not exist, or is not a directory.
+    ///
+    /// # Parameters
+    ///
+    /// - `args`: Indexing arguments containing `path` and optional `collection`.
+    ///
+    /// # Returns
+    ///
+    /// A `(PathBuf, CollectionId)` tuple with the validated directory path and the normalized collection id,
+    /// or a `CallToolResult` containing a user-facing error message.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// // Construct IndexArgs with a valid directory and optional collection, then validate:
+    /// // let args = IndexArgs { path: Some("/some/dir".into()), collection: Some("my_col".into()), ... };
+    /// // let (path, collection_id) = validate_request(&args).expect("valid request");
+    /// ```
     fn validate_request(args: &IndexArgs) -> Result<(PathBuf, CollectionId), CallToolResult> {
         let missing_path_err = || {
             CallToolResult::error(vec![rmcp::model::Content::text(
@@ -52,7 +74,29 @@ impl IndexHandler {
         Ok((path, collection_id))
     }
 
-    /// Handle an index tool request.
+    /// Dispatches an indexing-related command from parsed arguments and returns a formatted tool response.
+    ///
+    /// This method validates the provided `IndexArgs` and performs one of three actions:
+    /// - Start: validate request inputs, invoke the indexing service to index a codebase, and return a formatted success or error response.
+    /// - Status: query the indexing service for current status and return a formatted status response.
+    /// - Clear: normalize the target collection name, attempt to clear that collection via the indexing service, and return a formatted confirmation or error response.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(CallToolResult)` containing a formatted response appropriate to the requested action; `Err(McpError)` only when the supplied arguments fail validation.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,ignore
+    /// // Construct handler and args (setup omitted)
+    /// let handler = /* IndexHandler::new(indexing_service) */;
+    /// let params = Parameters(IndexArgs { action: IndexAction::Status, collection: None, path: None });
+    /// let result = handler.handle(params).await;
+    /// match result {
+    ///     Ok(call_tool_result) => println!("{:?}", call_tool_result),
+    ///     Err(e) => eprintln!("Invalid parameters: {:?}", e),
+    /// }
+    /// ```
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,

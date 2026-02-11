@@ -36,7 +36,38 @@ impl SearchHandler {
         }
     }
 
-    /// Handle a search tool request.
+    /// Process a search request and return a tool-formatted search result.
+    ///
+    /// This validates the provided `SearchArgs`, ensures the query is non-empty, and
+    /// dispatches the request to the appropriate service based on the requested
+    /// resource (code or memory/context). On success, returns a `CallToolResult`
+    /// containing a formatted response; on validation or service errors returns an
+    /// opaque tool error encapsulated in a `CallToolResult`.
+    ///
+    /// # Returns
+    ///
+    /// `CallToolResult` containing the formatted search response on success, or an
+    /// opaque tool error when validation fails or a backend service call fails.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use std::sync::Arc;
+    /// # use crate::{SearchHandler, SearchArgs, Parameters};
+    /// # async fn example() {
+    /// // Construct services and handler (omitted)
+    /// // let search_service = Arc::new(...);
+    /// // let memory_service = Arc::new(...);
+    /// // let handler = SearchHandler::new(search_service, memory_service);
+    ///
+    /// let args = SearchArgs {
+    ///     query: "find this".to_string(),
+    ///     resource: /* e.g., SearchResource::Code */ unimplemented!(),
+    ///     ..Default::default()
+    /// };
+    /// let result = handler.handle(Parameters(args)).await;
+    /// # }
+    /// ```
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,

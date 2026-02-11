@@ -22,7 +22,37 @@ impl VcsEntityHandler {
         Self { repo }
     }
 
-    /// Route an incoming `vcs_entity` tool call to the appropriate CRUD operation.
+    /// Dispatches a VCS entity tool call to the repository layer and returns the resulting MCP response.
+    ///
+    /// This handler extracts organization context, validates required parameters for the requested
+    /// action/resource pair, deserializes input payloads when needed, invokes the corresponding
+    /// repository method, and converts repository results or errors into MCP tool results.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use tokio::runtime::Runtime;
+    ///
+    /// // Construct handler with a repository implementation (a mock can be used in tests).
+    /// let repo = Arc::new(crate::tests::MockVcsEntityService::default());
+    /// let handler = crate::VcsEntityHandler::new(repo);
+    ///
+    /// let args = crate::VcsEntityArgs {
+    ///     action: crate::VcsEntityAction::List,
+    ///     resource: crate::VcsEntityResource::Repository,
+    ///     org_id: None,
+    ///     project_id: Some("p1".into()),
+    ///     id: None,
+    ///     repository_id: None,
+    ///     worktree_id: None,
+    ///     data: None,
+    /// };
+    ///
+    /// let rt = Runtime::new().unwrap();
+    /// let result = rt.block_on(async { handler.handle(crate::Parameters(args)).await.unwrap() });
+    /// assert!(!result.content.is_empty());
+    /// ```
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
