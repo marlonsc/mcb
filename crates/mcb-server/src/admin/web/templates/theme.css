@@ -99,6 +99,9 @@
   }
 }
 
+/* Alpine.js cloak — hide elements until Alpine initialises */
+[x-cloak] { display: none !important; }
+
 /* Syntax highlight classes */
 .hl-keyword { color: var(--hl-keyword); }
 .hl-string { color: var(--hl-string); }
