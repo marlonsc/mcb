@@ -16,13 +16,11 @@ use mcb_domain::value_objects::{Embedding, ObservationId, SessionId};
 
 use crate::test_utils::helpers::{arc_mutex, arc_mutex_vec};
 
-#[allow(dead_code)]
 pub struct MockMemoryRepository {
     pub observations: Arc<Mutex<Vec<Observation>>>,
     pub summaries: Arc<Mutex<Vec<SessionSummary>>>,
 }
 
-#[allow(dead_code)]
 impl MockMemoryRepository {
     pub fn new() -> Self {
         Self {

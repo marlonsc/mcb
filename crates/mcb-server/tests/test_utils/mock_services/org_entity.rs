@@ -3,10 +3,8 @@ use mcb_domain::entities::{ApiKey, Organization, Team, TeamMember, User};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::repositories::OrgEntityRepository;
 
-#[allow(dead_code)]
 pub struct MockOrgEntityService;
 
-#[allow(dead_code)]
 impl MockOrgEntityService {
     pub fn new() -> Self {
         Self

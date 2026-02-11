@@ -71,17 +71,6 @@ pub mod cache;
 /// Implements `EventPublisher` trait for event bus backends.
 pub mod events;
 
-/// HTTP client abstractions
-///
-/// Provides `HttpClientProvider` trait and configuration for API-based providers.
-pub mod http;
-
-/// Code chunking provider implementations
-///
-/// Implements `CodeChunker` trait for intelligent code chunking.
-/// Provides `IntelligentChunker` using tree-sitter and language-specific processors.
-pub mod chunking;
-
 /// Language chunking provider implementations
 ///
 /// Implements `LanguageChunkingProvider` trait for AST-based code parsing.

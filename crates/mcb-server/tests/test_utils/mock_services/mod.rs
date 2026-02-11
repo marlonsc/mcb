@@ -102,6 +102,9 @@ mod constructibility {
         let memory = MockMemoryService::new();
         assert!(memory.observations.lock().unwrap().is_empty());
 
+        let _agent_repo = MockAgentRepository::new();
+        let _memory_repo = MockMemoryRepository::new();
+
         let vcs = MockVcsProvider::new().with_failure();
         assert!(vcs.should_fail.load(Ordering::SeqCst));
 

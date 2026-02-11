@@ -4,10 +4,8 @@ use mcb_domain::entities::project::ProjectIssue;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::repositories::IssueEntityRepository;
 
-#[allow(dead_code)]
 pub struct MockIssueEntityService;
 
-#[allow(dead_code)]
 impl MockIssueEntityService {
     pub fn new() -> Self {
         Self

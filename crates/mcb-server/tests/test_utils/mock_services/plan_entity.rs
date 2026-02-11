@@ -3,10 +3,8 @@ use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::repositories::PlanEntityRepository;
 
-#[allow(dead_code)]
 pub struct MockPlanEntityService;
 
-#[allow(dead_code)]
 impl MockPlanEntityService {
     pub fn new() -> Self {
         Self

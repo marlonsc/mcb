@@ -61,11 +61,6 @@ pub async fn create_test_app_context() -> Result<AppContext> {
     init_app(config).await
 }
 
-/// Create AppContext with custom configuration
-pub async fn create_test_app_context_with_config(config: AppConfig) -> Result<AppContext> {
-    init_app(config).await
-}
-
 /// Context for full-stack integration tests
 ///
 /// Provides convenient access to providers resolved through the DI container.
@@ -78,11 +73,6 @@ impl FullStackTestContext {
     pub async fn new() -> Result<Self> {
         let app_context = create_test_app_context().await?;
         Ok(Self { app_context })
-    }
-
-    /// Get the underlying AppContext
-    pub fn app_context(&self) -> &AppContext {
-        &self.app_context
     }
 
     /// Get embedding provider (via DI handle)
@@ -145,34 +135,6 @@ impl FullStackTestContext {
         self.vector_store()
             .insert_vectors(&collection_id, &embeddings, metadata)
             .await
-    }
-
-    /// Search with real embedding and vector search
-    pub async fn search(
-        &self,
-        collection: &str,
-        query: &str,
-        limit: usize,
-    ) -> Result<SearchResult> {
-        // Embed query
-        let query_embeddings = self.embed_texts(&[query.to_string()]).await?;
-        let query_embedding = &query_embeddings[0];
-
-        // Search vector store using search_similar
-        let collection_id = CollectionId::new(collection);
-        self.vector_store()
-            .search_similar(&collection_id, &query_embedding.vector, limit, None)
-            .await
-            .map(|results| {
-                results.into_iter().next().unwrap_or_else(|| SearchResult {
-                    id: String::new(),
-                    file_path: String::new(),
-                    content: String::new(),
-                    start_line: 0,
-                    score: 0.0,
-                    language: String::new(),
-                })
-            })
     }
 
     /// Search and return all results
@@ -284,26 +246,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             metadata: json!({"type": "function", "name": "main"}),
         },
     ]
-}
-
-/// Create a single test chunk with custom content
-pub fn create_test_chunk(
-    id: &str,
-    file_path: &str,
-    content: &str,
-    start_line: u32,
-    end_line: u32,
-    language: &str,
-) -> CodeChunk {
-    CodeChunk {
-        id: id.to_string(),
-        file_path: file_path.to_string(),
-        content: content.to_string(),
-        start_line,
-        end_line,
-        language: language.to_string(),
-        metadata: json!({"type": "custom"}),
-    }
 }
 
 #[cfg(test)]

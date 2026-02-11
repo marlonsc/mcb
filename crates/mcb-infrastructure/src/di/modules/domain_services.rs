@@ -156,7 +156,7 @@ impl DomainServicesFactory {
     /// Returns an error if service initialization fails.
     pub async fn create_services(deps: ServiceDependencies) -> Result<DomainServicesContainer> {
         let context_service: Arc<dyn ContextServiceInterface> = Arc::new(ContextServiceImpl::new(
-            deps.cache.into(),
+            deps.cache.as_provider(),
             Arc::clone(&deps.embedding_provider),
             Arc::clone(&deps.vector_store_provider),
         ));

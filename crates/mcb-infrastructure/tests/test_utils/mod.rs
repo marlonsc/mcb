@@ -3,11 +3,7 @@
 //! Provides factories and helpers for creating real (not mocked) test contexts
 //! that exercise the full DI container and provider stack.
 
-#[allow(dead_code)]
 pub mod real_providers;
-
-#[allow(unused_imports)]
-pub use real_providers::*;
 
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 

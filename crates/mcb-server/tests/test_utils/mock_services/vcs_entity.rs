@@ -4,10 +4,8 @@ use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::repositories::VcsEntityRepository;
 
-#[allow(dead_code)]
 pub struct MockVcsEntityService;
 
-#[allow(dead_code)]
 impl MockVcsEntityService {
     pub fn new() -> Self {
         Self
