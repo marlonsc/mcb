@@ -17,7 +17,6 @@ async fn test_agent_log_tool_success() {
         org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new("test-session"),
-        org_id: None,
         data: json!({
             "tool_name": "search_code",
             "params_summary": "query: test",
@@ -42,7 +41,6 @@ async fn test_agent_log_tool_missing_tool_name() {
         org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new("test-session"),
-        org_id: None,
         data: json!({
             "params_summary": "query: test",
             "success": true
@@ -68,7 +66,6 @@ async fn test_agent_log_tool_with_error() {
         org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new("test-session"),
-        org_id: None,
         data: json!({
             "tool_name": "search_code",
             "success": false,
@@ -93,7 +90,6 @@ async fn test_agent_log_tool_invalid_data_format() {
         org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new("test-session"),
-        org_id: None,
         data: json!("not an object"),
     };
 
@@ -116,7 +112,6 @@ async fn test_agent_log_delegation_success() {
         org_id: None,
         action: AgentAction::LogDelegation,
         session_id: SessionId::new("test-session"),
-        org_id: None,
         data: json!({
             "child_session_id": "child-session-123",
             "agent_type": "search_agent",
@@ -141,7 +136,6 @@ async fn test_agent_log_delegation_missing_child_session_id() {
         org_id: None,
         action: AgentAction::LogDelegation,
         session_id: SessionId::new("test-session"),
-        org_id: None,
         data: json!({
             "agent_type": "search_agent",
             "task_description": "Search for patterns"
@@ -167,7 +161,6 @@ async fn test_agent_log_delegation_with_result() {
         org_id: None,
         action: AgentAction::LogDelegation,
         session_id: SessionId::new("test-session"),
-        org_id: None,
         data: json!({
             "child_session_id": "child-session-456",
             "agent_type": "analysis_agent",
@@ -193,7 +186,6 @@ async fn test_agent_log_delegation_invalid_data_format() {
         org_id: None,
         action: AgentAction::LogDelegation,
         session_id: SessionId::new("test-session"),
-        org_id: None,
         data: json!(["not", "an", "object"]),
     };
 
@@ -216,7 +208,6 @@ async fn test_agent_log_tool_empty_session_id() {
         org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new(""),
-        org_id: None,
         data: json!({
             "tool_name": "search_code",
             "success": true
@@ -237,7 +228,6 @@ async fn test_agent_log_tool_with_all_optional_fields() {
         org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new("test-session"),
-        org_id: None,
         data: json!({
             "tool_name": "index_codebase",
             "params_summary": "path: /home/user/project, collection: main",
