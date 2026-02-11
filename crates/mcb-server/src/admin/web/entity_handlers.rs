@@ -6,20 +6,11 @@ use rocket::State;
 use rocket::form::Form;
 use rocket::http::Status;
 use rocket::response::{Redirect, status};
-use serde::Serialize;
 
 use crate::admin::crud_adapter::resolve_adapter;
 use crate::admin::handlers::AdminState;
 use crate::admin::web::view_model::nav_groups;
 use crate::admin::{AdminRegistry, registry::AdminFieldMeta};
-
-#[derive(Debug, Clone, Serialize)]
-struct EntitySummary {
-    slug: String,
-    title: String,
-    group: String,
-    field_count: usize,
-}
 
 fn find_or_404(
     slug: &str,
@@ -30,16 +21,24 @@ fn find_or_404(
 
 /// Entity catalog page — lists all registered entities with field counts.
 #[rocket::get("/ui/entities")]
-pub fn entities_index() -> Template {
-    let entities = AdminRegistry::all()
-        .iter()
-        .map(|entity| EntitySummary {
+pub async fn entities_index(state: Option<&State<AdminState>>) -> Template {
+    let mut entities = Vec::new();
+    let mut total_records: usize = 0;
+
+    for entity in AdminRegistry::all() {
+        let record_count = match state.and_then(|s| resolve_adapter(entity.slug, s.inner())) {
+            Some(adapter) => adapter.list_all().await.map(|v| v.len()).unwrap_or(0),
+            None => 0,
+        };
+        total_records += record_count;
+        entities.push(crate::admin::web::view_model::DashboardEntityCard {
             slug: entity.slug.to_string(),
             title: entity.title.to_string(),
             group: entity.group.to_string(),
             field_count: entity.fields().iter().filter(|field| !field.hidden).count(),
-        })
-        .collect::<Vec<_>>();
+            record_count,
+        });
+    }
 
     let entity_count = entities.len();
     let group_count = nav_groups().len();
@@ -52,6 +51,7 @@ pub fn entities_index() -> Template {
             entities: entities,
             entity_count: entity_count,
             group_count: group_count,
+            total_records: total_records,
             nav_groups: nav_groups(),
         },
     )
