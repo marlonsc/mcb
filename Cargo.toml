@@ -228,6 +228,9 @@ linkme = "0.3"
 # Development/testing
 tempfile = "3.19"
 serial_test = "3.2"
+rstest = "0.26"
+mockall = "0.14"
+insta = { version = "1.41", features = ["json", "yaml", "redactions"] }
 
 # ============================================
 # mcb-validate specific dependencies

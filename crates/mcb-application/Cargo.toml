@@ -63,3 +63,6 @@ tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 # Real providers for integration tests - forces linkme registration
 mcb-providers = { path = "../mcb-providers" }
+rstest = { workspace = true }
+mockall = { workspace = true }
+insta = { workspace = true }

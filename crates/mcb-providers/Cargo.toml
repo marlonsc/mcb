@@ -139,3 +139,6 @@ workspace = true
 [dev-dependencies]
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+rstest = { workspace = true }
+mockall = { workspace = true }
+insta = { workspace = true }
