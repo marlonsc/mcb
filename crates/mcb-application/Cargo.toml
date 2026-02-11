@@ -67,3 +67,4 @@ rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
 toml = { workspace = true }
+mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
