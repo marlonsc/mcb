@@ -44,7 +44,7 @@ impl SqlitePlanEntityRepository {
 fn row_to_plan(row: &dyn SqlRow) -> Result<Plan> {
     let status = req_str(row, "status")?
         .parse::<PlanStatus>()
-        .unwrap_or(PlanStatus::Draft);
+        .map_err(|e| Error::memory(format!("Invalid plan status: {e}")))?;
 
     Ok(Plan {
         id: req_str(row, "id")?,
@@ -74,7 +74,7 @@ fn row_to_plan_version(row: &dyn SqlRow) -> Result<PlanVersion> {
 fn row_to_plan_review(row: &dyn SqlRow) -> Result<PlanReview> {
     let verdict = req_str(row, "verdict")?
         .parse::<ReviewVerdict>()
-        .unwrap_or(ReviewVerdict::NeedsRevision);
+        .map_err(|e| Error::memory(format!("Invalid review verdict: {e}")))?;
 
     Ok(PlanReview {
         id: req_str(row, "id")?,

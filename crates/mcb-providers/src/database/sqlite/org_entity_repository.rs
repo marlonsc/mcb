@@ -60,7 +60,9 @@ fn row_to_user(row: &dyn SqlRow) -> Result<User> {
         org_id: req_str(row, "org_id")?,
         email: req_str(row, "email")?,
         display_name: req_str(row, "display_name")?,
-        role: req_str(row, "role").map(|value| value.parse().unwrap_or(UserRole::Member))?,
+        role: req_str(row, "role")?
+            .parse::<UserRole>()
+            .map_err(|e| Error::memory(format!("Invalid user role: {e}")))?,
         api_key_hash: opt_str(row, "api_key_hash")?,
         created_at: req_i64(row, "created_at")?,
         updated_at: req_i64(row, "updated_at")?,
@@ -80,7 +82,9 @@ fn row_to_team_member(row: &dyn SqlRow) -> Result<TeamMember> {
     Ok(TeamMember {
         team_id: req_str(row, "team_id")?,
         user_id: req_str(row, "user_id")?,
-        role: req_str(row, "role").map(|value| value.parse().unwrap_or(TeamMemberRole::Member))?,
+        role: req_str(row, "role")?
+            .parse::<TeamMemberRole>()
+            .map_err(|e| Error::memory(format!("Invalid team member role: {e}")))?,
         joined_at: req_i64(row, "joined_at")?,
     })
 }

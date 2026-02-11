@@ -33,6 +33,7 @@ pub struct Worktree {
 
 /// Lifecycle status of a worktree.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum WorktreeStatus {
     /// Worktree is available for use.
     Active,

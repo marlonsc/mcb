@@ -35,6 +35,7 @@ pub struct Repository {
 
 /// Type of version control system.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum VcsType {
     /// Git repository.
     Git,

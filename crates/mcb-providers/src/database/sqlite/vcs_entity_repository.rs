@@ -45,7 +45,7 @@ impl SqliteVcsEntityRepository {
 fn row_to_repository(row: &dyn SqlRow) -> Result<Repository> {
     let vcs_type = req_str(row, "vcs_type")?
         .parse::<VcsType>()
-        .unwrap_or(VcsType::Git);
+        .map_err(|e| Error::memory(format!("Invalid vcs_type: {e}")))?;
 
     Ok(Repository {
         id: req_str(row, "id")?,
@@ -76,7 +76,7 @@ fn row_to_branch(row: &dyn SqlRow) -> Result<Branch> {
 fn row_to_worktree(row: &dyn SqlRow) -> Result<Worktree> {
     let status = req_str(row, "status")?
         .parse::<WorktreeStatus>()
-        .unwrap_or(WorktreeStatus::Active);
+        .map_err(|e| Error::memory(format!("Invalid worktree status: {e}")))?;
 
     Ok(Worktree {
         id: req_str(row, "id")?,

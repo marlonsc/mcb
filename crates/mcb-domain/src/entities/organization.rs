@@ -1,11 +1,12 @@
 //! Organization entity — the root tenant for multi-tenant isolation.
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// An organization is the top-level tenant. Every user, team, project,
 /// and piece of data belongs to exactly one organization. Row-level
 /// isolation in the database is enforced via `org_id` foreign keys.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Organization {
     /// Unique identifier (UUID).
     pub id: String,
@@ -22,7 +23,7 @@ pub struct Organization {
 }
 
 /// Status of an organization in its lifecycle.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum OrgStatus {
     /// Organization is active and operational.
     Active,

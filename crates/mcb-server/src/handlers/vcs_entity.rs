@@ -38,8 +38,9 @@ impl VcsEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
-                let repo: Repository = serde_json::from_value(data)
+                let mut repo: Repository = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                repo.org_id = org_id.to_string();
                 self.service
                     .create_repository(&repo)
                     .await
@@ -70,8 +71,9 @@ impl VcsEntityHandler {
                 let data = args
                     .data
                     .ok_or_else(|| McpError::invalid_params("data required for update", None))?;
-                let repo: Repository = serde_json::from_value(data)
+                let mut repo: Repository = serde_json::from_value(data)
                     .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                repo.org_id = org_id.to_string();
                 self.service
                     .update_repository(&repo)
                     .await

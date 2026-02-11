@@ -14,10 +14,7 @@ use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
 use crate::config::KISSRulesConfig;
-use crate::thresholds::{
-    MAX_BUILDER_FIELDS, MAX_DI_CONTAINER_FIELDS, MAX_FUNCTION_LINES, MAX_FUNCTION_PARAMS,
-    MAX_NESTING_DEPTH, MAX_STRUCT_FIELDS,
-};
+use crate::thresholds::thresholds;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -332,14 +329,15 @@ impl KissValidator {
 
     /// Create a validator with custom configuration for multi-directory support
     pub fn with_config(config: ValidationConfig, rules: &KISSRulesConfig) -> Self {
+        let t = thresholds();
         Self {
             config,
             rules: rules.clone(),
-            max_struct_fields: MAX_STRUCT_FIELDS,
-            max_function_params: MAX_FUNCTION_PARAMS,
-            max_builder_fields: MAX_BUILDER_FIELDS,
-            max_nesting_depth: MAX_NESTING_DEPTH,
-            max_function_lines: MAX_FUNCTION_LINES,
+            max_struct_fields: t.max_struct_fields,
+            max_function_params: t.max_function_params,
+            max_builder_fields: t.max_builder_fields,
+            max_nesting_depth: t.max_nesting_depth,
+            max_function_lines: t.max_function_lines,
         }
     }
 
@@ -430,7 +428,7 @@ impl KissValidator {
                             || struct_name.ends_with("State");
 
                         let max_fields = if is_di_container {
-                            MAX_DI_CONTAINER_FIELDS
+                            thresholds().max_di_container_fields
                         } else {
                             self.max_struct_fields
                         };
