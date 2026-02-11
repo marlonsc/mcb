@@ -11,6 +11,8 @@ pub trait AgentSessionServiceInterface: Send + Sync {
     async fn get_session(&self, id: &str) -> Result<Option<AgentSession>>;
     async fn update_session(&self, session: AgentSession) -> Result<()>;
     async fn list_sessions(&self, query: AgentSessionQuery) -> Result<Vec<AgentSession>>;
+    async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>>;
+    async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>>;
     async fn end_session(
         &self,
         id: &str,

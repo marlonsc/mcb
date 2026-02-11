@@ -36,4 +36,8 @@ pub struct AgentSession {
     pub tool_calls_count: Option<i64>,
     /// Number of delegations made during this session.
     pub delegations_count: Option<i64>,
+    /// Optional project ID this session belongs to.
+    pub project_id: Option<String>,
+    /// Optional worktree ID this session is working in.
+    pub worktree_id: Option<String>,
 }

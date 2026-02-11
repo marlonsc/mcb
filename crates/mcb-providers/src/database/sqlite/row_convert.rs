@@ -116,6 +116,8 @@ pub fn row_to_agent_session(row: &dyn SqlRow) -> Result<AgentSession> {
         token_count: row.try_get_i64(schema::TOKEN_COUNT)?,
         tool_calls_count: row.try_get_i64(schema::TOOL_CALLS_COUNT)?,
         delegations_count: row.try_get_i64(schema::DELEGATIONS_COUNT)?,
+        project_id: row.try_get_string("project_id")?,
+        worktree_id: row.try_get_string("worktree_id")?,
     })
 }
 

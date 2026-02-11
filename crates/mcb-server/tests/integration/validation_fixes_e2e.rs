@@ -74,6 +74,7 @@ async fn test_validation_session_create_schema_fallback() {
                 "agent_type": "sisyphus" // FALLBACK
             })),
             project_id: None,
+            worktree_id: None,
             session_id: None,
             limit: None,
             status: None,

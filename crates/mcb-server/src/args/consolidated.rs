@@ -374,6 +374,10 @@ pub struct SessionArgs {
     #[schemars(description = "Filter by project ID", with = "String")]
     pub project_id: Option<String>,
 
+    /// Filter by worktree ID.
+    #[schemars(description = "Filter by worktree ID", with = "String")]
+    pub worktree_id: Option<String>,
+
     /// Filter by agent type.
     #[schemars(description = "Filter by agent type", with = "String")]
     pub agent_type: Option<String>,

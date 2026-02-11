@@ -111,6 +111,8 @@ fn test_project_schema_contains_all_fk_references() {
         // Agent FKs
         ("agent_sessions", "REFERENCES session_summaries(id)"),
         ("agent_sessions", "REFERENCES agent_sessions(id)"),
+        ("agent_sessions", "REFERENCES projects(id)"),
+        ("agent_sessions", "REFERENCES worktrees(id)"),
         ("delegations", "REFERENCES agent_sessions(id)"),
         ("tool_calls", "REFERENCES agent_sessions(id)"),
         ("checkpoints", "REFERENCES agent_sessions(id)"),
@@ -165,8 +167,8 @@ fn test_project_schema_contains_all_fk_references() {
     let schema_def = ProjectSchema::definition();
     assert_eq!(
         schema_def.foreign_keys.len(),
-        44,
-        "Expected 44 total FK definitions, got {}",
+        46,
+        "Expected 46 total FK definitions, got {}",
         schema_def.foreign_keys.len()
     );
 }
@@ -197,6 +199,8 @@ fn test_project_schema_contains_all_indexes() {
         "idx_agent_sessions_summary",
         "idx_agent_sessions_parent",
         "idx_agent_sessions_type",
+        "idx_agent_sessions_project",
+        "idx_agent_sessions_worktree",
         "idx_agent_sessions_started",
         "idx_delegations_parent",
         "idx_delegations_child",

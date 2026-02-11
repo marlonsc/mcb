@@ -29,6 +29,8 @@ pub async fn list_sessions(
             .map(|value| value.parse())
             .transpose()
             .map_err(|_| McpError::invalid_params("Invalid status", None))?,
+        project_id: args.project_id.clone(),
+        worktree_id: args.worktree_id.clone(),
         limit: Some(args.limit.unwrap_or(10) as usize),
     };
     match agent_service.list_sessions(query).await {

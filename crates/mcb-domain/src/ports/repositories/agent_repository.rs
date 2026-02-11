@@ -21,6 +21,10 @@ pub struct AgentSessionQuery {
     pub agent_type: Option<AgentType>,
     /// Filter by session status
     pub status: Option<AgentSessionStatus>,
+    /// Filter by project ID
+    pub project_id: Option<String>,
+    /// Filter by worktree ID
+    pub worktree_id: Option<String>,
     /// Maximum number of results to return
     pub limit: Option<usize>,
 }
@@ -72,6 +76,30 @@ pub trait AgentRepository: Send + Sync {
     /// # Errors
     /// Returns an error if the query fails (e.g., storage error).
     async fn list_sessions(&self, query: AgentSessionQuery) -> Result<Vec<AgentSession>>;
+
+    /// Lists agent sessions belonging to a specific project.
+    ///
+    /// # Arguments
+    /// * `project_id` - The project ID to filter by
+    ///
+    /// # Returns
+    /// A vector of sessions associated with the project.
+    ///
+    /// # Errors
+    /// Returns an error if the query fails (e.g., storage error).
+    async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>>;
+
+    /// Lists agent sessions associated with a specific worktree.
+    ///
+    /// # Arguments
+    /// * `worktree_id` - The worktree ID to filter by
+    ///
+    /// # Returns
+    /// A vector of sessions associated with the worktree.
+    ///
+    /// # Errors
+    /// Returns an error if the query fails (e.g., storage error).
+    async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>>;
 
     /// Stores a delegation record for an agent session.
     ///

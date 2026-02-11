@@ -45,6 +45,14 @@ impl AgentSessionServiceInterface for MockAgentSessionService {
         Ok(vec![])
     }
 
+    async fn list_sessions_by_project(&self, _project_id: &str) -> Result<Vec<AgentSession>> {
+        Ok(vec![])
+    }
+
+    async fn list_sessions_by_worktree(&self, _worktree_id: &str) -> Result<Vec<AgentSession>> {
+        Ok(vec![])
+    }
+
     async fn end_session(
         &self,
         _session_id: &str,
@@ -119,6 +127,18 @@ impl MockAgentRepository {
             return false;
         }
 
+        if let Some(project_id) = &query.project_id
+            && session.project_id.as_ref() != Some(project_id)
+        {
+            return false;
+        }
+
+        if let Some(worktree_id) = &query.worktree_id
+            && session.worktree_id.as_ref() != Some(worktree_id)
+        {
+            return false;
+        }
+
         true
     }
 }
@@ -156,6 +176,22 @@ impl AgentRepository for MockAgentRepository {
         }
 
         Ok(all)
+    }
+
+    async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>> {
+        self.list_sessions(AgentSessionQuery {
+            project_id: Some(project_id.to_string()),
+            ..AgentSessionQuery::default()
+        })
+        .await
+    }
+
+    async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>> {
+        self.list_sessions(AgentSessionQuery {
+            worktree_id: Some(worktree_id.to_string()),
+            ..AgentSessionQuery::default()
+        })
+        .await
     }
 
     async fn store_delegation(&self, delegation: &Delegation) -> Result<()> {

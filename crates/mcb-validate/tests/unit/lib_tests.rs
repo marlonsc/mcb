@@ -43,7 +43,7 @@ fn test_validation_config_should_exclude() {
 }
 
 #[test]
-fn test_architecture_validator_with_config() {
+fn test_validator_registry_with_config() {
     let config = ValidationConfig::new("/tmp/test-workspace")
         .with_additional_path("../legacy-src")
         .with_exclude_pattern("target/");

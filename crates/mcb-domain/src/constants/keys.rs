@@ -57,6 +57,12 @@ pub const RESULT_SUMMARY: &str = "result_summary";
 /// Column/Field name for "session_summary_id"
 pub const SESSION_SUMMARY_ID: &str = "session_summary_id";
 
+/// Project ID column key.
+pub const PROJECT_ID: &str = "project_id";
+
+/// Worktree ID column key.
+pub const WORKTREE_ID: &str = "worktree_id";
+
 // Metadata keys for code chunks
 /// Metadata key for "start_line"
 pub const METADATA_KEY_START_LINE: &str = "start_line";

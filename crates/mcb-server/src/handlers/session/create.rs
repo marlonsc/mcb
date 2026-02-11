@@ -71,6 +71,9 @@ pub async fn create_session(
         token_count: None,
         tool_calls_count: None,
         delegations_count: None,
+        project_id: SessionHelpers::get_str(data, schema::PROJECT_ID).or(args.project_id.clone()),
+        worktree_id: SessionHelpers::get_str(data, schema::WORKTREE_ID)
+            .or(args.worktree_id.clone()),
     };
     match agent_service.create_session(session).await {
         Ok(id) => ResponseFormatter::json_success(&serde_json::json!({

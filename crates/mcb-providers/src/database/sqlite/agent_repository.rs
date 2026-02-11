@@ -57,6 +57,14 @@ impl AgentRepository for SqliteAgentRepository {
             session
                 .delegations_count
                 .map_or(SqlParam::Null, SqlParam::I64),
+            session
+                .project_id
+                .as_ref()
+                .map_or(SqlParam::Null, |s| SqlParam::String(s.clone())),
+            session
+                .worktree_id
+                .as_ref()
+                .map_or(SqlParam::Null, |s| SqlParam::String(s.clone())),
         ];
 
         self.executor
@@ -76,8 +84,10 @@ impl AgentRepository for SqliteAgentRepository {
                     result_summary,
                     token_count,
                     tool_calls_count,
-                    delegations_count
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    delegations_count,
+                    project_id,
+                    worktree_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ",
                 &params,
             )
@@ -133,6 +143,14 @@ impl AgentRepository for SqliteAgentRepository {
             session
                 .delegations_count
                 .map_or(SqlParam::Null, SqlParam::I64),
+            session
+                .project_id
+                .as_ref()
+                .map_or(SqlParam::Null, |s| SqlParam::String(s.clone())),
+            session
+                .worktree_id
+                .as_ref()
+                .map_or(SqlParam::Null, |s| SqlParam::String(s.clone())),
             SqlParam::String(session.id.clone()),
         ];
 
@@ -152,7 +170,9 @@ impl AgentRepository for SqliteAgentRepository {
                     result_summary = ?,
                     token_count = ?,
                     tool_calls_count = ?,
-                    delegations_count = ?
+                    delegations_count = ?,
+                    project_id = ?,
+                    worktree_id = ?
                 WHERE id = ?
                 ",
                 &params,
@@ -183,6 +203,14 @@ impl AgentRepository for SqliteAgentRepository {
             sql.push_str(" AND status = ?");
             params.push(SqlParam::String(status.as_str().to_string()));
         }
+        if let Some(project_id) = &query.project_id {
+            sql.push_str(" AND project_id = ?");
+            params.push(SqlParam::String(project_id.clone()));
+        }
+        if let Some(worktree_id) = &query.worktree_id {
+            sql.push_str(" AND worktree_id = ?");
+            params.push(SqlParam::String(worktree_id.clone()));
+        }
 
         sql.push_str(" ORDER BY started_at DESC");
         if let Some(limit) = query.limit {
@@ -191,6 +219,44 @@ impl AgentRepository for SqliteAgentRepository {
         }
 
         let rows = self.executor.query_all(&sql, &params).await?;
+        let mut sessions = Vec::with_capacity(rows.len());
+        for row in rows {
+            sessions.push(
+                row_convert::row_to_agent_session(row.as_ref())
+                    .map_err(|e| Error::memory_with_source("decode agent session row", e))?,
+            );
+        }
+        Ok(sessions)
+    }
+
+    async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>> {
+        let rows = self
+            .executor
+            .query_all(
+                "SELECT * FROM agent_sessions WHERE project_id = ? ORDER BY started_at DESC",
+                &[SqlParam::String(project_id.to_string())],
+            )
+            .await?;
+
+        let mut sessions = Vec::with_capacity(rows.len());
+        for row in rows {
+            sessions.push(
+                row_convert::row_to_agent_session(row.as_ref())
+                    .map_err(|e| Error::memory_with_source("decode agent session row", e))?,
+            );
+        }
+        Ok(sessions)
+    }
+
+    async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>> {
+        let rows = self
+            .executor
+            .query_all(
+                "SELECT * FROM agent_sessions WHERE worktree_id = ? ORDER BY started_at DESC",
+                &[SqlParam::String(worktree_id.to_string())],
+            )
+            .await?;
+
         let mut sessions = Vec::with_capacity(rows.len());
         for row in rows {
             sessions.push(

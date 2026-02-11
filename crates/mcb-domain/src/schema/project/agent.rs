@@ -24,6 +24,8 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!(keys::TOKEN_COUNT, Integer, nullable),
                 crate::col!(keys::TOOL_CALLS_COUNT, Integer, nullable),
                 crate::col!(keys::DELEGATIONS_COUNT, Integer, nullable),
+                crate::col!(keys::PROJECT_ID, Text, nullable),
+                crate::col!(keys::WORKTREE_ID, Text, nullable),
             ]
         ),
         table!(
@@ -85,6 +87,16 @@ pub fn indexes() -> Vec<IndexDef> {
         ),
         index!("idx_agent_sessions_type", "agent_sessions", ["agent_type"]),
         index!(
+            "idx_agent_sessions_project",
+            "agent_sessions",
+            ["project_id"]
+        ),
+        index!(
+            "idx_agent_sessions_worktree",
+            "agent_sessions",
+            ["worktree_id"]
+        ),
+        index!(
             "idx_agent_sessions_started",
             "agent_sessions",
             ["started_at"]
@@ -114,6 +126,18 @@ pub fn foreign_keys() -> Vec<ForeignKeyDef> {
             from_table: "agent_sessions".to_string(),
             from_column: "parent_session_id".to_string(),
             to_table: "agent_sessions".to_string(),
+            to_column: "id".to_string(),
+        },
+        ForeignKeyDef {
+            from_table: "agent_sessions".to_string(),
+            from_column: "project_id".to_string(),
+            to_table: "projects".to_string(),
+            to_column: "id".to_string(),
+        },
+        ForeignKeyDef {
+            from_table: "agent_sessions".to_string(),
+            from_column: "worktree_id".to_string(),
+            to_table: "worktrees".to_string(),
             to_column: "id".to_string(),
         },
         ForeignKeyDef {

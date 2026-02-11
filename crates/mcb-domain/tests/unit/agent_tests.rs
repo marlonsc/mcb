@@ -40,6 +40,8 @@ fn test_agent_session_serialization() {
         token_count: Some(1000),
         tool_calls_count: Some(5),
         delegations_count: Some(2),
+        project_id: None,
+        worktree_id: None,
     };
 
     let json = serde_json::to_string(&session).expect("serialize");
