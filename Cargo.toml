@@ -190,7 +190,7 @@ humantime = "2.1"
 async-nats = "0.46"
 
 # Local embeddings without external services
-fastembed = { version = "5.8", default-features = false, features = [
+fastembed = { version = "5.9", default-features = false, features = [
     "default",
 ] }
 
@@ -226,7 +226,7 @@ dill = "0.15"
 linkme = "0.3"
 
 # Development/testing
-tempfile = "3.19"
+tempfile = "3.25"
 serial_test = "3.2"
 rstest = "0.26"
 mockall = "0.14"
