@@ -16,6 +16,8 @@ pub mod entity_handlers;
 pub mod filter;
 pub mod handlers;
 pub mod helpers;
+/// List-of-Values handlers for FK dropdown population.
+pub mod lov_handlers;
 pub mod router;
 pub mod view_model;
 

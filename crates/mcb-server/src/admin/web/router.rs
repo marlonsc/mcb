@@ -15,6 +15,7 @@ use rocket::{Build, Rocket, routes};
 
 use super::entity_handlers;
 use super::handlers;
+use super::lov_handlers;
 use crate::admin::handlers::AdminState;
 
 /// Minimal no-op event bus for the standalone web UI Rocket instance.
@@ -97,6 +98,7 @@ pub fn template_dir() -> String {
 /// - GET `/ui/browse/<collection>` - Browse collection files page
 /// - GET `/ui/browse/<collection>/file` - Browse file chunks page
 /// - GET `/ui/browse/tree` - Browse tree view page (Wave 3)
+/// - GET `/ui/lov/<entity_slug>` - LOV endpoint for FK dropdown selects
 /// - GET `/favicon.ico` - Favicon
 pub fn web_rocket() -> Rocket<Build> {
     let figment = rocket::Config::figment().merge(("template_dir", template_dir()));
@@ -132,6 +134,7 @@ pub fn web_rocket() -> Rocket<Build> {
                 entity_handlers::entities_create,
                 entity_handlers::entities_update,
                 entity_handlers::entities_delete,
+                lov_handlers::lov_endpoint,
             ],
         )
 }
