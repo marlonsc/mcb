@@ -101,6 +101,7 @@ async fn test_golden_e2e_complete_workflow() {
 
     // 4. Search
     let search_args = SearchArgs {
+        org_id: None,
         query: "embedding or vector".to_string(),
         resource: SearchResource::Code,
         collection: Some(coll.to_string()),
@@ -227,6 +228,7 @@ async fn test_golden_search_returns_relevant_results() {
     let search_h = server.search_handler();
     let r = search_h
         .handle(Parameters(SearchArgs {
+            org_id: None,
             query: "embedding vector".to_string(),
             resource: SearchResource::Code,
             collection: Some(collection.to_string()),
@@ -247,6 +249,7 @@ async fn test_golden_search_handles_empty_query() {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let search_h = server.search_handler();
     let r = search_h.handle(Parameters(SearchArgs {
+        org_id: None,
         query: "   ".to_string(),
         resource: SearchResource::Code,
         collection: None,
@@ -288,6 +291,7 @@ async fn test_golden_search_respects_limit_parameter() {
     let search_h = server.search_handler();
     let r = search_h
         .handle(Parameters(SearchArgs {
+            org_id: None,
             query: "function code".to_string(),
             resource: SearchResource::Code,
             collection: Some(collection.to_string()),

@@ -9,6 +9,7 @@ pub(crate) fn create_base_memory_args(
     session_id: Option<String>,
 ) -> MemoryArgs {
     MemoryArgs {
+        org_id: None,
         action,
         resource,
         data,
