@@ -56,21 +56,16 @@ jobs:
       - name: Update README and metrics
         run: |
           make docs-auto
-      - name: Commit changes
+      - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          # Stage generated files individually — warn on failure but don't abort
-          # (files may not exist on first run or if docs-auto skipped generation)
-          for f in README.md docs/generated/METRICS.md; do
-            if [ -f "$f" ]; then
-              git add -f "$f" || echo "::warning::Failed to stage $f"
-            else
-              echo "::notice::$f not found, skipping"
-            fi
-          done
+          # Stage all docs-auto output (metrics, README, and any lint-fixed files)
+          git add -A README.md docs/generated/ docs/ || true
           if ! git diff --staged --quiet; then
             git commit -m "docs: auto-update README and project metrics [skip ci]"
+            # Discard any remaining unstaged changes before rebase
+            git checkout -- . 2>/dev/null || true
             git pull origin main --rebase
             git push origin main
           else
