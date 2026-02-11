@@ -25,6 +25,7 @@ on: # yamllint disable-line rule:truthy
 
 env:
   CARGO_TERM_COLOR: always
+  MCB_RUN_DOCKER_INTEGRATION_TESTS: "0"
 
 jobs:
   # Validate everything passes before building release
@@ -42,7 +43,9 @@ jobs:
         with:
           components: rustfmt, clippy
       - run: make lint CI_MODE=1
-      - run: make test-rust TEST_THREADS=4
+      - name: Run Rust tests
+        run: make test-rust TEST_THREADS=$(nproc)
+        timeout-minutes: 15
       - run: make validate STRICT=1
       - run: make audit
       - name: Extract version from tag

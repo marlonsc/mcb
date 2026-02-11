@@ -11,8 +11,6 @@
 //!   `AdminState` has a config watcher; otherwise GET /config returns 503 and PATCH is unusable.
 //! - **Browse (GET /collections, ...)**: Call `.with_browse_state(browse_state)` so browse routes
 //!   are mounted; otherwise /collections returns 404.
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
 use std::net::IpAddr;
 use std::path::PathBuf;

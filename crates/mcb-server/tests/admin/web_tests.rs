@@ -1,8 +1,6 @@
 //! Tests for Admin Web UI
 //!
 //! Tests the web dashboard pages and routes.
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
 use mcb_server::admin::web::web_rocket;
 use rocket::http::Status;
