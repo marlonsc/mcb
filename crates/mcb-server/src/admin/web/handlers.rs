@@ -1,8 +1,6 @@
 //! Web Handlers Module
 //!
 //! HTTP handlers for the admin web interface.
-//!
-//! Migrated from Axum to Rocket in v0.1.2 (ADR-026).
 
 use rocket::get;
 use rocket::http::ContentType;
