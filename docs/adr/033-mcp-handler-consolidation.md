@@ -23,7 +23,7 @@ The MCP server has grown to 38 tools, creating cognitive overhead for users and 
 ### Current Tool Inventory (38 tools)
 
 | Category | Tools | Count |
-|----------|-------|-------|
+| ---------- | ------- | ------- |
 | Index/Search | index (action=start), search (resource=code), index (action=status), index (action=clear) | 4 |
 | Validation | validate (action=run, scope=project), validate (action=run, scope=file), validate (action=list_rules), validate (action=list_rules), validate (action=analyze) | 5 |
 | Memory (Legacy) | memory (action=store, resource=observation), search (resource=memory), session (action=summarize), session (action=summarize) | 4 |
@@ -39,7 +39,7 @@ Consolidate to **8 tools** using resource-action parameterization pattern:
 ### New Tool Architecture
 
 | Tool | Replaces | Pattern |
-|------|----------|---------|
+| ------ | ---------- | --------- |
 | `index` | index (action=start), index (action=status), index (action=clear) | action: start, status, clear |
 | `search` | search (resource=code), search (resource=memory), memory (action=list, resource=observation) | resource: code, memory; mode: semantic, keyword |
 | `validate` | validate (action=run, scope=project), validate (action=run, scope=file), validate (action=list_rules), validate (action=list_rules), validate (action=analyze) | action: run, list_rules; scope: file, project |
@@ -117,7 +117,7 @@ struct ProjectArgs {
 ### Tool Count Reduction
 
 | Category | Before | After | Reduction |
-|----------|--------|-------|-----------|
+| ---------- | -------- | ------- | | ----------- |
 | Index | 4 | 1 | -3 |
 | Search | 3 | 1 | -2 |
 | Validation | 5 | 1 | -4 |

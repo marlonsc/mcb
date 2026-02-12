@@ -91,7 +91,7 @@ Claude will use `search (resource=code)` to find relevant code.
 ## Available MCP Tools
 
 | Tool | What it does |
-|------|--------------|
+| ------ | -------------- |
 | `index (action=start)` | Index a directory for semantic search |
 | `search (resource=code)` | Search indexed code with natural language |
 | `index (action=status)` | Check indexing progress |
@@ -104,7 +104,7 @@ Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Ko
 ## Vector Store Options
 
 | Provider | Best for | Setup |
-|----------|----------|-------|
+| ---------- | ---------- | ------- |
 | `in-memory` | Development, testing | None |
 | `filesystem` | Persistent storage | None |
 | `milvus` | Production scale | Docker/Kubernetes |

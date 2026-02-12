@@ -13,7 +13,7 @@
 //! ## Metrics Provided
 //!
 //! | Metric | Description |
-//! |--------|-------------|
+//! | -------- | ------------- |
 //! | Cyclomatic Complexity | Number of independent paths through code |
 //! | Cognitive Complexity | Mental effort required to understand code |
 //! | Maintainability Index | Combined metric for code maintainability |

@@ -9,30 +9,30 @@
 //!
 //! ### Security & Authentication
 //! | Module | Description |
-//! |--------|-------------|
+//! | -------- | ------------- |
 //! | [`crypto`] | AES-GCM encryption, secure key generation |
 //!
 //! ### Data & Storage
 //! | Module | Description |
-//! |--------|-------------|
+//! | -------- | ------------- |
 //! | [`cache`] | Moka/Redis caching with TTL and namespaces |
 //!
 //! ### Configuration & DI
 //! | Module | Description |
-//! |--------|-------------|
+//! | -------- | ------------- |
 //! | [`config`] | TOML configuration with hot-reload |
 //! | [`di`] | Handle-based dependency injection |
 //! | [`constants`] | Centralized configuration constants |
 //!
 //! ### Observability
 //! | Module | Description |
-//! |--------|-------------|
+//! | -------- | ------------- |
 //! | [`health`] | Health check endpoints |
 //! | [`logging`] | Structured logging with tracing |
 //!
 //! ### Routing & Selection
 //! | Module | Description |
-//! |--------|-------------|
+//! | -------- | ------------- |
 //! | [`routing`] | Provider routing and selection |
 
 // Clippy allows for complex patterns in infrastructure code

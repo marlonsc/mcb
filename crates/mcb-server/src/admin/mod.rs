@@ -15,7 +15,7 @@
 //! ## Endpoints
 //!
 //! | Path | Method | Description |
-//! |------|--------|-------------|
+//! | ------ | -------- | ------------- |
 //! | `/health` | GET | Health check with uptime |
 //! | `/health/extended` | GET | Extended health with dependency status |
 //! | `/metrics` | GET | Performance metrics |

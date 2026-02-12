@@ -65,7 +65,7 @@ pub struct AuthConfig {
 ## Environment Variables
 
 | Variable | Description | Default |
-|----------|-------------|---------|
+| ---------- | ------------- | --------- |
 | `MCP__SERVER__NETWORK__PORT` | Server port | 3000 |
 | `MCP__SERVER__NETWORK__HOST` | Server host | 0.0.0.0 |
 | `MCP_JWT_SECRET` | JWT signing secret | (required) |

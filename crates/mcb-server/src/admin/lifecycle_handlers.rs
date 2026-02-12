@@ -7,7 +7,7 @@
 //! ## Endpoints
 //!
 //! | Path | Method | Description |
-//! |------|--------|-------------|
+//! | ------ | -------- | ------------- |
 //! | `/services` | GET | List all registered services and their states (protected) |
 //! | `/services/{name}/start` | POST | Start a specific service (protected) |
 //! | `/services/{name}/stop` | POST | Stop a specific service (protected) |

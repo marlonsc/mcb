@@ -51,7 +51,7 @@ embedding:
 ## Supported Models
 
 | Model | Dimensions | Description |
-|--------|-----------|-----------|
+| -------- | ----------- | ----------- |
 | AllMiniLML6V2 | 384 | Default model, good balance of quality/performance |
 | AllMiniLML12V2 | 384 | Larger version with better quality |
 | AllMpnetBaseV2 | 768 | High-quality model |
@@ -116,7 +116,7 @@ For better performance:
 ## Comparison with Other Providers
 
 | Provider | Local | API Key | Performance | Quality |
-|----------|-------|---------|-------------|-----------|
+| ---------- | ------- | --------- | ------------- | ----------- |
 | FastEmbed | ✅ | ❌ | High | High |
 | Ollama | ✅ | ❌ | Medium | High |
 | OpenAI | ❌ | ✅ | Very High | Very High |

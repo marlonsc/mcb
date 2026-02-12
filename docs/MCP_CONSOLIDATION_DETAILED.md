@@ -20,7 +20,7 @@
 **Dependencies**: `IndexingServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
-|----------|--------|----------|---------|------|---------|
+| ---------- | -------- | ---------- | --------- | ------ | --------- |
 | `index/start` | MCP Tool | `IndexHandler::handle` | `CallToolResult` with indexing progress | N/A | Start codebase indexing |
 | `index/status` | MCP Tool | `IndexHandler::handle` | `CallToolResult` with status JSON | N/A | Get indexing status |
 | `index/clear` | MCP Tool | `IndexHandler::handle` | `CallToolResult` with success/error | N/A | Clear indexed collection |
@@ -51,7 +51,7 @@ pub async fn handle(
 **Dependencies**: `SearchServiceInterface`, `MemoryServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
-|----------|--------|----------|---------|------|---------|
+| ---------- | -------- | ---------- | --------- | ------ | --------- |
 | `search/code` | MCP Tool | `SearchHandler::handle` | `CallToolResult` with results | N/A | Semantic code search |
 | `search/memory` | MCP Tool | `SearchHandler::handle` | `CallToolResult` with memory results | N/A | Search memory/observations |
 
@@ -82,7 +82,7 @@ pub async fn handle(
 **Dependencies**: `ValidationServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
-|----------|--------|----------|---------|------|---------|
+| ---------- | -------- | ---------- | --------- | ------ | --------- |
 | `validate/run` | MCP Tool | `ValidateHandler::handle` | `CallToolResult` with validation report | N/A | Run validation on code |
 | `validate/list-rules` | MCP Tool | `ValidateHandler::handle` | `CallToolResult` with rules | N/A | List validation rules |
 | `validate/analyze` | MCP Tool | `ValidateHandler::handle` | `CallToolResult` with complexity metrics | N/A | Analyze code complexity |
@@ -113,7 +113,7 @@ pub async fn handle(
 **Dependencies**: `AgentSessionServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
-|----------|--------|----------|---------|------|---------|
+| ---------- | -------- | ---------- | --------- | ------ | --------- |
 | `agent/log-tool` | MCP Tool | `AgentHandler::handle` | `CallToolResult` with tool call ID | N/A | Log tool invocation |
 | `agent/log-delegation` | MCP Tool | `AgentHandler::handle` | `CallToolResult` with delegation ID | N/A | Log agent delegation |
 
@@ -143,7 +143,7 @@ pub async fn handle(
 **Dependencies**: `AgentSessionServiceInterface`, `MemoryServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
-|----------|--------|----------|---------|------|---------|
+| ---------- | -------- | ---------- | --------- | ------ | --------- |
 | `session/create` | MCP Tool | `create::create_session` | `CallToolResult` with session ID | N/A | Create agent session |
 | `session/get` | MCP Tool | `get::get_session` | `CallToolResult` with session data | N/A | Get session details |
 | `session/update` | MCP Tool | `update::update_session` | `CallToolResult` with updated status | N/A | Update session |
@@ -177,7 +177,7 @@ pub async fn handle(
 **Dependencies**: `MemoryServiceInterface`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
-|----------|--------|----------|---------|------|---------|
+| ---------- | -------- | ---------- | --------- | ------ | --------- |
 | `memory/store/observation` | MCP Tool | `observation::store_observation` | `CallToolResult` with observation ID | N/A | Store observation |
 | `memory/get/observation` | MCP Tool | `observation::get_observations` | `CallToolResult` with observation data | N/A | Retrieve observations |
 | `memory/store/execution` | MCP Tool | `execution::store_execution` | `CallToolResult` with execution ID | N/A | Store execution record |
@@ -216,7 +216,7 @@ pub async fn handle(
 **Dependencies**: `VcsProvider`
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
-|----------|--------|----------|---------|------|---------|
+| ---------- | -------- | ---------- | --------- | ------ | --------- |
 | `vcs/list-repositories` | MCP Tool | `list_repos::list_repositories` | `CallToolResult` with repo list | N/A | List available repositories |
 | `vcs/index-repository` | MCP Tool | `index_repo::index_repository` | `CallToolResult` with index Result | N/A | Index git repository |
 | `vcs/compare-branches` | MCP Tool | `compare_branches::compare_branches` | `CallToolResult` with diff | N/A | Compare git branches |
@@ -250,7 +250,7 @@ pub async fn handle(
 **Status**: NOT YET IMPLEMENTED
 
 | Endpoint | Method | Function | Returns | Auth | Purpose |
-|----------|--------|----------|---------|------|---------|
+| ---------- | -------- | ---------- | --------- | ------ | --------- |
 | `project/*` | MCP Tool | `ProjectHandler::handle` | Error: "Not implemented" | N/A | (Reserved for future) |
 
 ---
@@ -262,7 +262,7 @@ pub async fn handle(
 **File**: `admin/handlers.rs`
 
 | Endpoint | Method | Function | Auth | Response Type | Usage |
-|----------|--------|----------|------|---------------|-------|
+| ---------- | -------- | ---------- | ------ | --------------- | ------- |
 | `/health` | GET | `health_check` | Public | `AdminHealthResponse` | Server health probe |
 | `/health/extended` | GET | `extended_health_check` | Protected | `ExtendedHealthResponse` | Full health with dependencies |
 | `/metrics` | GET | `get_metrics` | Protected | `PerformanceMetricsData` | Performance metrics |
@@ -287,7 +287,7 @@ pub struct AdminHealthResponse {
 **File**: `admin/handlers.rs`
 
 | Endpoint | Method | Function | Auth | Response Type | Usage |
-|----------|--------|----------|------|---------------|-------|
+| ---------- | -------- | ---------- | ------ | --------------- | ------- |
 | `/shutdown` | POST | `shutdown` | Protected | `ShutdownResponse` | Graceful shutdown |
 | `/cache/stats` | GET | `get_cache_stats` | Protected | `CacheStats` | Cache statistics |
 
@@ -298,7 +298,7 @@ pub struct AdminHealthResponse {
 **File**: `admin/config_handlers.rs`
 
 | Endpoint | Method | Function | Auth | Response Type | Usage |
-|----------|--------|----------|------|---------------|-------|
+| ---------- | -------- | ---------- | ------ | --------------- | ------- |
 | `/config` | GET | `get_config` | Protected | `ConfigResponse` | Get current config (sanitized) |
 | `/config/reload` | POST | `reload_config` | Protected | `ConfigReloadResponse` | Reload config from file |
 | `/config/:section` | PATCH | `update_config_section` | Protected | `ConfigSectionUpdateResponse` | Update config section |
@@ -310,7 +310,7 @@ pub struct AdminHealthResponse {
 **File**: `admin/lifecycle_handlers.rs`
 
 | Endpoint | Method | Function | Auth | Response Type | Usage |
-|----------|--------|----------|------|---------------|-------|
+| ---------- | -------- | ---------- | ------ | --------------- | ------- |
 | `/services` | GET | `list_services` | Protected | `ServiceListResponse` | List all services |
 | `/services/health` | GET | `services_health` | Protected | `ServicesHealthResponse` | Health of all services |
 | `/services/:name/start` | POST | `start_service` | Protected | `ServiceActionResponse` | Start a service |
@@ -324,7 +324,7 @@ pub struct AdminHealthResponse {
 **File**: `admin/browse_handlers.rs`
 
 | Endpoint | Method | Function | Auth | Response Type | Usage |
-|----------|--------|----------|------|---------------|-------|
+| ---------- | -------- | ---------- | ------ | --------------- | ------- |
 | `/collections` | GET | `list_collections` | Protected | `CollectionListResponse` | List indexed collections |
 | `/collections/:name/files` | GET | `list_collection_files` | Protected | `FileListResponse` | List files in collection |
 | `/collections/:name/chunks/:path` | GET | `get_file_chunks` | Protected | `ChunkListResponse` | Get code chunks for file |
@@ -354,7 +354,7 @@ pub struct CollectionInfoResponse {
 **File**: `admin/web/handlers.rs`
 
 | Endpoint | Method | Function | Auth | Purpose |
-|----------|--------|----------|------|---------|
+| ---------- | -------- | ---------- | ------ | --------- |
 | `/` | GET | `dashboard` | Public | Main dashboard HTML |
 | `/ui` | GET | `dashboard_ui` | Public | Dashboard alias |
 | `/ui/config` | GET | `config_page` | Public | Config UI page |
@@ -584,7 +584,7 @@ pub struct ApiResult<T: Serialize> {
 ### 5.1 What Admin UI Needs That MCP Doesn't Provide
 
 | Need | MCP Status | Admin Has | Gap |
-|------|-----------|-----------|-----|
+| ------ | ----------- | ----------- | ----- |
 | HTTP REST endpoints | ❌ No (MCP only) | ✅ Yes (Rocket) | **CRITICAL**: Admin needs HTTP wrapper for web UI |
 | Health probes (K8s) | ❌ No | ✅ Yes (/ready, /live) | Admin endpoints are HTTP-specific |
 | Service lifecycle mgmt | ⚠️ Partial (Project handler unimplemented) | ✅ Yes (start/stop/restart) | MCP missing lifecycle, admin has it |
@@ -664,7 +664,7 @@ pub struct ApiResult<T: Serialize> {
 ### 5.4 Authentication Requirements
 
 | Endpoint Type | MCP | Admin HTTP |
-|--------------|-----|-----------|
+| -------------- | ----- | ----------- |
 | Public tools | ✅ No auth (MCP protocol handles it) | Public endpoints (health, ready, live) |
 | Protected operations | N/A (MCP context implies auth) | `AdminAuth` guard (X-Admin-Key header) |
 | Query auth | N/A | Optional (can add role-based filtering) |
@@ -676,7 +676,7 @@ pub struct ApiResult<T: Serialize> {
 ### 5.5 Pagination & Filtering Opportunities
 
 | Endpoint | Current | Potential Enhancement |
-|----------|---------|----------------------|
+| ---------- | --------- | ---------------------- |
 | `list_observations` | No limit | Add `limit` + `offset` |
 | `list_sessions` | No limit | Add `limit` + `offset` |
 | `list_file_paths` | Has `limit` | Consistent with others |
@@ -1190,7 +1190,7 @@ match async_operation.await {
 
 ## 10. REUSE MATRIX: ADMIN UI ↔ MCP
 
-```
+```ascii
                     INDEX   SEARCH  MEMORY  SESSION VCS     VALIDATE
 HTTP Endpoint       ✅✅    ✅✅    ⚠️      ⚠️      ⚠️      ✅
 Response Type Match ✅      ✅      ✅      ⚠️      ⚠️      ✅

@@ -389,7 +389,7 @@ impl ContextService {
 ### Ownership Map
 
 | Concept | Owner | Importers |
-|---------|-------|-----------|
+| --------- | ------- | ----------- |
 | Port traits | `mcb-domain` | `mcb-application`, `mcb-providers` |
 | Domain entities | `mcb-domain` | All layers |
 | Services | `mcb-application` | `mcb-infrastructure`, `mcb-server` |
@@ -536,7 +536,7 @@ make validate QUICK=1  # Fast validation
 ## Version History
 
 | Version | Date | Changes |
-|---------|------|---------|
+| --------- | ------ | --------- |
 | v0.2.0 | 2026-01-28 | Baseline documentation for architecture boundaries |
 
 ---

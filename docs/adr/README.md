@@ -100,7 +100,7 @@ This directory contains all Architecture Decision Records (ADRs) for the Memory 
 ## ADR Status Legend
 
 | Status | Meaning |
-|--------|---------|
+| -------- | --------- |
 | Proposed | Under discussion |
 | Accepted | Approved and to be implemented |
 | Implemented | Completed in codebase |

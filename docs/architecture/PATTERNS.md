@@ -29,7 +29,7 @@ MCB uses a three-layer dependency injection pattern that combines compile-time d
 
 2. **dill** — Runtime IoC `Catalog` wiring (`mcb-infrastructure/src/di/catalog.rs`). The catalog assembles the full dependency graph at startup, resolving traits to concrete implementations based on configuration.
 
-3. **Handle<T>** — `RwLock<Arc<dyn T>>` for runtime provider switching (`di/handle.rs`). Handles allow hot-swapping provider implementations without restarting the server — useful for failover and configuration changes.
+3. **Handle\<T\>** — `RwLock<Arc<dyn T>>` for runtime provider switching (`di/handle.rs`). Handles allow hot-swapping provider implementations without restarting the server — useful for failover and configuration changes.
 
 **Why three layers?** linkme discovers *what's available*, dill wires *what's active*, and Handle enables *runtime switching*. This separation means adding a new provider requires only a `#[distributed_slice]` annotation — zero changes to wiring code.
 
@@ -89,7 +89,7 @@ let result = provider.embed(text).await.unwrap();
 ## Macros (`mcb-domain/src/macros.rs`)
 
 | Macro | Purpose | Example |
-|-------|---------|---------|
+| ------- | --------- | --------- |
 | `impl_from_str!` | Case-insensitive enum parsing from config strings | `impl_from_str!(ProjectType, Cargo, Npm, Python)` |
 | `impl_registry!` | Full registry boilerplate (entry, slice, resolve, list) | `impl_registry!(embedding, EmbeddingProvider, EmbeddingConfigContainer)` |
 | `table!`, `col!`, `index!` | Schema DDL with less boilerplate | `table!("code_chunks")`, `col!("file_path")` |
@@ -132,12 +132,12 @@ MCB uses a layered testing approach:
 ## Key Patterns Summary
 
 | Pattern | Key Location | When to Use |
-|---------|-------------|-------------|
+| --------- | ------------- | ------------- |
 | Clean Architecture | `*/lib.rs` | All new features |
 | linkme registration | `mcb-domain/src/registry/` | New provider types |
 | Three-layer DI | `mcb-infrastructure/src/di/` | Service wiring |
 | Error factories | `mcb-domain/src/error/mod.rs` | All error handling |
-| Handle<T> | `di/handle.rs` | Runtime-switchable providers |
+| Handle\<T\> | `di/handle.rs` | Runtime-switchable providers |
 | define_id! | `value_objects/ids.rs` | New domain IDs |
 | EntityCrudAdapter | `mcb-server/src/admin/crud_adapter.rs` | Admin CRUD entities |
 | Decorator | `mcb-application/src/decorators/` | Cross-cutting concerns |

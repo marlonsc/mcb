@@ -103,7 +103,7 @@ Complete SQL schema with:
 ### CLI Commands
 
 | Command | Purpose |
-|---------|---------|
+| --------- | --------- |
 | `bd create "title"` | Create issue |
 | `bd list [--status open]` | List issues |
 | `bd show <id>` | Show details |

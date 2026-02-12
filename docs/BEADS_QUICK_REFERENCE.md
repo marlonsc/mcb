@@ -98,7 +98,7 @@ One JSON object per line:
 ## CLI Commands Summary
 
 | Command | Purpose |
-|---------|---------|
+| --------- | --------- |
 | `bd create "title"` | Create issue |
 | `bd list [--status open]` | List issues |
 | `bd show <id>` | Show issue details |

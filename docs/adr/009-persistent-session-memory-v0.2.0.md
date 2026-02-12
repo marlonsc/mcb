@@ -73,7 +73,7 @@ Implement persistent session memory in mcb v0.2.0 by porting Claude-mem's core a
 All memory-related MCP tools use the `memory_` prefix to avoid namespace collisions:
 
 | ADR Original Name | Canonical Name (v1.0.0) | Rationale |
-|-------------------|-------------------------|-----------|
+| ------------------- | ------------------------- | ----------- |
 | `search` | `memory (action=list, resource=observation)` | Avoids collision with `search (resource=code)` |
 | `timeline` | `memory (action=timeline, resource=observation)` | Explicit memory domain |
 | `get_observations` | `memory (action=get, resource=observation)` | Consistent namespace |
@@ -889,7 +889,7 @@ impl ContextInjectionService {
         for (date, obs) in grouped {
             output.push_str(&format!("### {}\n\n", date));
             output.push_str("| ID | Time | T | Title | Read | Work |\n");
-            output.push_str("|----|------|---|-------|------|------|\n");
+            output.push_str("| ---- | ------ | --- | ------- | ------ | ------ |\n");
 
             for o in obs {
                 output.push_str(&format!(
@@ -1306,7 +1306,7 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 ## Files to Create
 
 | File | Purpose |
-|------|---------|
+| ------ | --------- |
 | `crates/mcb-domain/src/memory.rs` | Memory domain types |
 | `crates/mcb-application/src/ports/providers/memory.rs` | MemoryProvider trait |
 | `crates/mcb-providers/src/memory/mod.rs` | Memory providers module |
@@ -1321,7 +1321,7 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 ## Files to Modify
 
 | File | Change |
-|------|--------|
+| ------ | -------- |
 | `crates/mcb-providers/Cargo.toml` | Add `sqlx` dependency |
 | `crates/mcb-domain/src/mod.rs` | Export memory module |
 | `crates/mcb-application/src/ports/providers/mod.rs` | Export MemoryProvider |
@@ -1354,7 +1354,7 @@ let git_metadata = if let Some(git_provider) = &self.git_provider {
 ## Success Metrics
 
 | Metric | Before | Target v0.2.0 |
-|--------|--------|---------------|
+| -------- | -------- | --------------- |
 | Cross-session memory | No | Yes |
 | Observation storage | No | Yes |
 | Session summaries | No | Yes |
@@ -1365,7 +1365,7 @@ let git_metadata = if let Some(git_provider) = &self.git_provider {
 ## Configuration Defaults
 
 | Setting | Default | Override |
-|---------|---------|----------|
+| --------- | --------- | ---------- |
 | Database | ~/.mcb/memory.db | Per-instance |
 | Observation types | decision, bugfix, feature | Per-project |
 | Observation limit | 20 | Per-request |
@@ -1379,7 +1379,7 @@ Memory search uses hybrid retrieval (BM25 + vector) with Reciprocal Rank Fusion 
 ### Layer Separation (Clean Architecture)
 
 | Layer | Responsibility | Implementation |
-|-------|----------------|----------------|
+| ------- | | ---------------- | ---------------- |
 | Domain | `MemoryRepository` port with `search(query_embedding, filter, limit)` | No engine-specific logic |
 | Application | `MemorySearchService` orchestrates FTS + vector retrieval, performs RRF fusion | Pure business logic |
 | Infrastructure | `SqliteMemoryRepository` implements FTS5 queries + calls VectorStoreProvider | Database-specific |

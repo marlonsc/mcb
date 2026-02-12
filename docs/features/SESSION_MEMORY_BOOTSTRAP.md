@@ -147,7 +147,7 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 **3-Layer Workflow Analysis:**
 
 | Layer | Operation | Avg Tokens | Count |
-|-------|-----------|-----------|-------|
+| ------- | ----------- | ----------- | ------- |
 | 1 | memory (action=inject, resource=observation) (index) | 50-100 | 1 |
 | 2 | Response context String | 1000-1500 | 1 |
 | 3 | Observation details (if needed) | 300-500 | per obs |

@@ -11,7 +11,7 @@ The Knowledge Graph is the core semantic layer of the MCB Integrated Context Sys
 Nodes represent semantic entities extracted from the source code.
 
 | Node Type | Description | Attributes |
-|-----------|-------------|------------|
+| ----------- | ------------- | ------------ |
 | `Module` | A file or logical grouping of code | `path`, `is_external` |
 | `Function` | A callable unit of code | `name`, `signature`, `is_async` |
 | `Class` / `Struct` | A data structure or object definition | `name`, `fields`, `methods` |
@@ -24,11 +24,11 @@ Nodes represent semantic entities extracted from the source code.
 Edges define directed relationships between semantic entities.
 
 | Edge Type | Source | Target | Description |
-|-----------|--------|--------|-------------|
+| ----------- | -------- | -------- | ------------- |
 | `CALLS` | `Function` | `Function` | Function execution flow |
 | `IMPORTS` | `Module` | `Module` | Dependency relationship |
 | `EXTENDS` | `Class` | `Class` | Inheritance relationship |
-| `IMPLEMENTS`| `Class` | `Interface`| Contract fulfillment |
+| `IMPLEMENTS` | `Class` | `Interface`| Contract fulfillment |
 | `CONTAINS` | `Module` | `Entity` | Ownership hierarchy |
 | `TYPE_REF` | `Variable` | `Class` | Data type association |
 

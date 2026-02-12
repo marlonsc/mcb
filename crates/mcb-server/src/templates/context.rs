@@ -225,7 +225,9 @@ mod manager {
         }
 
         pub fn context(&self) -> impl Deref<Target = Context> + '_ {
-            self.context.read().unwrap()
+            self.context
+                .read()
+                .expect("template context RwLock poisoned")
         }
 
         pub fn is_reloading(&self) -> bool {
@@ -233,7 +235,9 @@ mod manager {
         }
 
         fn context_mut(&self) -> impl DerefMut<Target = Context> + '_ {
-            self.context.write().unwrap()
+            self.context
+                .write()
+                .expect("template context RwLock poisoned")
         }
 
         pub fn reload_if_needed(&self, callback: &Callback) {
@@ -269,7 +273,10 @@ fn remove_extension(path: &Path) -> PathBuf {
 }
 
 fn split_path(root: &Path, path: &Path) -> (String, Option<String>) {
-    let rel_path = path.strip_prefix(root).unwrap().to_path_buf();
+    let rel_path = path
+        .strip_prefix(root)
+        .expect("template path must be under root directory")
+        .to_path_buf();
     let path_no_ext = remove_extension(&rel_path);
     let data_type = path_no_ext.extension();
     let mut name = remove_extension(&path_no_ext)

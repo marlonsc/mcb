@@ -13,13 +13,13 @@ fn default_server_url() -> String {
 /// Operating mode for MCB
 ///
 /// Determines how MCB behaves when started without the `--server` flag:
-/// - `Standalone`: Run with local providers (default, backwards compatible)
+/// - `Standalone`: Run with local providers (default)
 /// - `Client`: Connect to a remote MCB server via HTTP
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum OperatingMode {
     /// Standalone mode: run with local providers
-    /// This is the default for backwards compatibility
+    /// This is the default mode
     #[default]
     Standalone,
 
@@ -82,7 +82,7 @@ fn default_max_reconnect_attempts() -> u32 {
 
 /// Default configuration for standalone mode operation.
 ///
-/// Provides sensible defaults for local development and backwards compatibility:
+/// Provides sensible defaults for local development:
 /// - Mode: Standalone (local providers)
 /// - Server URL: http://127.0.0.1:3000 (used only in client mode)
 /// - Timeout: 30 seconds

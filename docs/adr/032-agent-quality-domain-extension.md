@@ -25,7 +25,7 @@ The oh-my-opencode workflow system currently uses:
 - **6 shell hook scripts** - Stateless
 - **9 markdown skill files** - Inject ~200 lines each
 - **Beads CLI** - Separate SQLite database
-- **GSD markdown files** - .planning/ directory
+- **GSD markdown files** - legacy-planning/ directory
 
 Pain points:
 
@@ -37,7 +37,7 @@ Pain points:
 
 ## Decision
 
-**Extend MCB domain to be the SINGLE SOURCE OF TRUTH for workflow management.** No support for legacy file formats (.planning/, .beads/).
+**Extend MCB domain to be the SINGLE SOURCE OF TRUTH for workflow management.** No support for legacy file formats (legacy-planning/, .beads/).
 
 ### Key Decisions
 
@@ -59,7 +59,7 @@ Pain points:
 │  │ • checkpt  │            │             │               │ │
 │  └────────────────────────────────────────────────────────┘ │
 │                                                              │
-│  ❌ NO .planning/ files                                     │
+│  ❌ NO legacy-planning/ files                                     │
 │  ❌ NO .beads/ files                                        │
 │  ❌ NO bd CLI                                               │
 │  ❌ NO bidirectional sync                                   │
@@ -69,7 +69,7 @@ Pain points:
 #### 2. Tool Naming (per ADR-009)
 
 | Prefix | Domain | Count |
-|--------|--------|-------|
+| -------- | -------- | ------- |
 | `agent_` | Session/delegation tracking | 7 |
 | `quality_` | Quality gate enforcement | 3 |
 | `memory_` | Executions, errors, context | 5 |
@@ -96,8 +96,8 @@ project_log_decision    → Log decision
 #### 4. No Legacy Support
 
 | What | Decision |
-|------|----------|
-| .planning/ import | NOT SUPPORTED |
+| ------ | ---------- |
+| legacy-planning/ import | NOT SUPPORTED |
 | .beads/ import | NOT SUPPORTED |
 | bd CLI compatibility | NOT SUPPORTED |
 | Markdown export | NOT SUPPORTED |
@@ -129,7 +129,7 @@ project_log_decision    → Log decision
 ## Implementation Plan
 
 | Phase | Goal | LOC | Tools |
-|-------|------|-----|-------|
+| ------- | | ------ | --- | ------- |-- |
 | 1 | Agent Sessions | ~700 | 7 `agent_*` |
 | 2 | Executions | ~400 | 2 `memory_*` |
 | 3 | Quality Gates | ~500 | 3 `quality_*` |
@@ -143,7 +143,7 @@ project_log_decision    → Log decision
 
 ### 1. Keep Bidirectional Sync
 
-Maintain .planning/ and .beads/ compatibility.
+Maintain legacy-planning/ and .beads/ compatibility.
 
 **Rejected because:**
 
@@ -183,7 +183,7 @@ Add MCB features to Beads CLI.
 ### Performance
 
 | Tool | Target |
-|------|--------|
+| ------ | -------- |
 | `agent_start_session` | < 10ms |
 | `quality_check_gate` | < 50ms |
 | `project_get_ready_work` | < 50ms |
@@ -194,4 +194,4 @@ Add MCB features to Beads CLI.
 - [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
 - [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
 - [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md)
-- [Planning Documents](../design/workflow-management/.planning/)
+- [Planning Documents](../design/workflow-management/legacy-planning/)

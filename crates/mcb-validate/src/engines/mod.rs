@@ -3,7 +3,7 @@
 //! Five engines, each serving a distinct purpose:
 //!
 //! | Engine | Purpose | External crate |
-//! |--------|---------|----------------|
+//! | -------- | --------- | ---------------- |
 //! | `ReteEngine` | RETE-UL algorithm with GRL when/then syntax | `rust-rule-engine` |
 //! | `ExpressionEngine` | Simple boolean expressions (file_count > 500) | `evalexpr` |
 //! | `RustyRulesEngineWrapper` | JSON DSL with all/any/not composition | `rusty-rules` |

@@ -145,7 +145,7 @@ jobs:
 ### Routes That MUST Always Return 200
 
 | Route | Layer 1 | Layer 2 | Layer 3 |
-|-------|---------|---------|---------|
+| ------- | --------- | --------- | --------- |
 | `/` | ✅ `test_dashboard_returns_html` | ✅ `test_admin_rocket_dashboard_is_accessible` | ✅ `Dashboard should return 200` |
 | `/ui/config` | ✅ `test_config_page_returns_html` | ✅ `test_admin_rocket_config_page_is_accessible` | ✅ `config should return 200` |
 | `/ui/health` | ✅ `test_health_page_returns_html` | ✅ `test_admin_rocket_health_page_is_accessible` | ✅ `health should return 200` |

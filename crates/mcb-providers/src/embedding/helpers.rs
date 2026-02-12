@@ -6,7 +6,7 @@
 //! ## Available Helpers
 //!
 //! | Helper | Purpose |
-//! |--------|---------|
+//! | -------- | --------- |
 //! | [`constructor`] | API key/URL validation, defaults |
 //! | [`http`] | HTTP client creation (re-exported from utils) |
 

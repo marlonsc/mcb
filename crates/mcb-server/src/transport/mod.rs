@@ -6,7 +6,7 @@
 //! ## Available Transports
 //!
 //! | Transport | Description | Use Case |
-//! |-----------|-------------|----------|
+//! | ----------- | ------------- | ---------- |
 //! | [`stdio`] | Standard I/O streams | CLI tools, IDE integrations |
 //! | [`http`] | HTTP server with SSE | Web clients, REST APIs |
 //! | [`http_client`] | HTTP client (stdio bridge) | Client mode connecting to server |

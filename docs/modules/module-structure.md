@@ -1,85 +1,71 @@
 # Module Structure
 
-This document shows the hierarchical structure of modules in the Memory Context Browser.
+This document shows the current module hierarchy for the Memory Context Browser workspace.
 
-## Crate Structure (Clean Architecture Monorepo)
+## Crate Structure
 
-```
+```text
 mcb/
 ├── Cargo.toml (workspace root)
 ├── crates/
-│   ├── mcb/                          # Facade crate (re-exports public API)
+│   ├── mcb/                          # Facade crate (public re-exports)
 │   │   └── src/lib.rs
 │   │
-│   ├── mcb-domain/                   # Domain layer (core business logic)
+│   ├── mcb-domain/                   # Domain layer (entities, value objects, ports)
 │   │   └── src/
-│   │       ├── ports/                # Port traits (interfaces)
-│   │       │   ├── providers/        # Provider port traits
-│   │       │   │   ├── embedding.rs
-│   │       │   │   ├── vector_store.rs
-│   │       │   │   ├── cache.rs
-│   │       │   │   └── crypto.rs
-│   │       │   ├── infrastructure/   # Infrastructure port traits
-│   │       │   │   ├── sync.rs
-│   │       │   │   ├── snapshot.rs
-│   │       │   │   └── events.rs
-│   │       │   └── admin.rs          # Admin port traits
-│   │       ├── entities/             # Domain entities
-│   │       ├── value_objects/        # Value objects
-│   │       ├── repositories/         # Repository port traits
-│   │       ├── error.rs              # Domain errors
-│   │       └── types.rs              # Domain types
+│   │       ├── ports/
+│   │       │   ├── providers/
+│   │       │   ├── infrastructure/
+│   │       │   ├── repositories/
+│   │       │   ├── services/
+│   │       │   └── *.rs
+│   │       ├── entities/
+│   │       ├── value_objects/
+│   │       ├── events/
+│   │       └── error.rs
 │   │
-│   ├── mcb-application/              # Application layer (business services)
+│   ├── mcb-application/              # Application layer (use cases)
 │   │   └── src/
-│   │       ├── services/             # Application services
-│   │       │   ├── context.rs        # ContextService
-│   │       │   ├── search.rs         # SearchService
-│   │       │   └── indexing.rs       # IndexingService
-│   │       ├── domain_services/      # Domain service implementations
-│   │       │   └── chunking.rs       # ChunkingOrchestrator
-│   │       └── ports/                # Application-level ports
+│   │       ├── use_cases/
+│   │       │   ├── agent_session_service.rs
+│   │       │   ├── context_service.rs
+│   │       │   ├── indexing_service.rs
+│   │       │   ├── memory_service.rs
+│   │       │   ├── search_service.rs
+│   │       │   ├── validation_service.rs
+│   │       │   └── mod.rs
+│   │       ├── decorators/
+│   │       │   └── instrumented_embedding.rs
+│   │       ├── constants.rs
+│   │       └── lib.rs
 │   │
-│   ├── mcb-infrastructure/           # Infrastructure layer (technical services)
+│   ├── mcb-infrastructure/           # Infrastructure layer (DI, config, utilities)
 │   │   └── src/
-│   │       ├── di/                   # dill IoC (ADR-029), handle-based DI
-│   │       │   ├── catalog.rs        # dill Catalog
-│   │       │   ├── handles.rs        # RwLock provider handles
-│   │       │   ├── admin.rs          # Runtime switching
-│   │       │   └── bootstrap.rs      # AppContext initialization
-│   │       ├── config/               # Configuration management
-│   │       ├── cache/                # Cache infrastructure
-│   │       ├── crypto/               # Encryption and hashing
-│   │       ├── health/               # Health checks
-│   │       ├── logging/              # Logging configuration
-│   │       ├── adapters/             # Infrastructure adapters
-│   │       │   ├── infrastructure/   # Null adapters for DI
-│   │       │   ├── providers/        # Provider adapters
-│   │       │   └── repository/       # Repository adapters
-│   │       └── infrastructure/       # Re-exports and facades
+│   │       ├── di/
+│   │       ├── config/
+│   │       ├── constants/
+│   │       ├── project/
+│   │       ├── services/
+│   │       ├── validation/
+│   │       ├── routing/
+│   │       ├── utils/
+│   │       ├── cache/
+│   │       ├── crypto/
+│   │       └── infrastructure/
 │   │
-│   ├── mcb-providers/                # Provider implementations (adapters)
+│   ├── mcb-providers/                # Adapter implementations
 │   │   └── src/
-│   │       ├── embedding/            # Embedding providers (6)
-│   │       │   ├── openai.rs
-│   │       │   ├── ollama.rs
-│   │       │   ├── voyageai.rs
-│   │       │   ├── gemini.rs
-│   │       │   ├── fastembed.rs
-│   │       │   └── null.rs
-│   │       ├── vector_store/         # Vector store providers (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
-│   │       │   ├── in_memory.rs
-│   │       │   ├── encrypted.rs
-│   │       │   ├── null.rs
-│   │       │   └── ...
-│   │       ├── cache/                # Cache providers
-│   │       │   ├── moka.rs
-│   │       │   └── redis.rs
-│   │       ├── language/             # Language processors (12)
+│   │       ├── embedding/
+│   │       ├── vector_store/
+│   │       ├── database/sqlite/
+│   │       ├── cache/
+│   │       ├── events/
+│   │       ├── git/
+│   │       ├── hybrid_search/
+│   │       ├── language/
 │   │       │   ├── rust.rs
 │   │       │   ├── python.rs
 │   │       │   ├── javascript.rs
-│   │       │   ├── typescript.rs
 │   │       │   ├── go.rs
 │   │       │   ├── java.rs
 │   │       │   ├── c.rs
@@ -88,61 +74,50 @@ mcb/
 │   │       │   ├── ruby.rs
 │   │       │   ├── php.rs
 │   │       │   ├── swift.rs
-│   │       │   └── kotlin.rs
-│   │       ├── routing/              # Routing logic
-│   │       │   ├── circuit_breaker.rs
-│   │       │   └── health.rs
-│   │       └── admin/                # Admin providers
-│   │           └── metrics.rs
+│   │       │   ├── kotlin.rs
+│   │       │   ├── detection.rs
+│   │       │   ├── engine.rs
+│   │       │   └── mod.rs
+│   │       ├── routing/
+│   │       ├── storage/
+│   │       ├── workflow/
+│   │       └── admin/
 │   │
-│   ├── mcb-server/                   # MCP protocol server
+│   ├── mcb-server/                   # MCP server and web/admin APIs
 │   │   └── src/
-│   │       ├── handlers/             # MCP tool handlers
-│   │       ├── transport/            # Stdio transport
-│   │       ├── tools/                # Tool registry
-│   │       ├── admin/                # Admin API
-│   │       └── init.rs               # Server initialization
+│   │       ├── handlers/
+│   │       ├── tools/
+│   │       ├── transport/
+│   │       ├── admin/
+│   │       │   └── web/
+│   │       ├── hooks/
+│   │       ├── session/
+│   │       ├── templates/
+│   │       ├── utils/
+│   │       └── main.rs
 │   │
-│   └── mcb-validate/                 # Architecture validation
+│   └── mcb-validate/                 # Architecture and quality validation
 │       └── src/
-│           ├── validators/           # Individual validators
-│           └── report.rs             # Validation reporting
+│           ├── validators/
+│           └── report.rs
 ```
 
 ## Architecture Layers
 
-| Layer | Crate | Purpose | Key Components |
-|-------|-------|---------|----------------|
-| **Domain** | `mcb-domain` | Business entities and rules | Ports, types, entities, repositories |
-| **Application** | `mcb-application` | Use case orchestration | ContextService, IndexingService, SearchService |
-| **Infrastructure** | `mcb-infrastructure` | Technical services | dill DI (ADR-029), Figment config, cache, health |
-| **Providers** | `mcb-providers` | External service adapters | Embedding (6), VectorStore (6), Cache (Moka, Redis, Null), Language (12) |
-| **Server** | `mcb-server` | Protocol implementation | MCP handlers, admin API |
-| **Validation** | `mcb-validate` | Architecture enforcement | CA001–CA009, duplication, metrics, violation reporting |
-| **Facade** | `mcb` | Public API | Re-exports from all crates |
-
-## Dependency Graph
-
-```
-mcb-domain (innermost - no external deps)
-    ↑
-mcb-application → mcb-domain
-    ↑
-mcb-infrastructure → mcb-domain
-    ↑
-mcb-providers → mcb-domain, mcb-application
-    ↑
-mcb-server → mcb-domain, mcb-infrastructure, mcb-providers
-    ↑
-mcb (facade) → all above
-```
+| Layer | Crate | Purpose |
+| ------- | ------- | --------- |
+| Domain | `mcb-domain` | Entities, value objects, domain ports |
+| Application | `mcb-application` | Use-case orchestration |
+| Infrastructure | `mcb-infrastructure` | DI, config, routing, technical services |
+| Providers | `mcb-providers` | External adapters and implementations |
+| Server | `mcb-server` | MCP protocol handlers and admin/web surfaces |
+| Validation | `mcb-validate` | Architecture and quality gates |
+| Facade | `mcb` | Public API re-exports |
 
 ## Feature Flags
 
-Provider features are controlled via Cargo.toml feature flags:
-
 | Feature | Default | Description |
-|---------|---------|-------------|
+| --------- | --------- | ------------- |
 | `embedding-ollama` | Yes | Ollama embedding provider |
 | `embedding-openai` | No | OpenAI embedding provider |
 | `embedding-voyageai` | No | VoyageAI embedding provider |
@@ -152,6 +127,6 @@ Provider features are controlled via Cargo.toml feature flags:
 | `vectorstore-encrypted` | No | AES-GCM encrypted store |
 | `cache-moka` | Yes | Moka cache provider |
 | `cache-redis` | No | Redis cache provider |
-| `lang-all` | Yes | All 12 language processors |
+| `lang-all` | Yes | 13 languages (12 parsers; JavaScript processor handles TypeScript mode) |
 
-*Updated: 2026-01-28 - Reflects modular crate architecture (v0.2.1)*
+*Updated: 2026-02-12 - Reflects modular crate architecture (v0.2.1)*

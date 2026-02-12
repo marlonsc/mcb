@@ -6,7 +6,7 @@
 //! ## Available Decorators
 //!
 //! | Decorator | Purpose |
-//! |-----------|---------|
+//! | ----------- | --------- |
 //! | [`InstrumentedEmbeddingProvider`] | Adds timing metrics to embedding operations |
 //!
 //! ## Design Pattern

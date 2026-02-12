@@ -7,7 +7,7 @@
 //! ## Provider Categories
 //!
 //! | Category | Port | Implementations |
-//! |----------|------|-----------------|
+//! | ---------- | ------ | ----------------- |
 //! | Embedding | `EmbeddingProvider` | OpenAI, Ollama, VoyageAI, Gemini, FastEmbed |
 //! | Vector Store | `VectorStoreProvider` | EdgeVec, Encrypted, Milvus, Pinecone, Qdrant |
 //! | Cache | `CacheProvider` | Moka, Redis |

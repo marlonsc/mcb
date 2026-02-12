@@ -59,7 +59,9 @@ impl SearchHandler {
 
         match args.resource {
             SearchResource::Code => {
-                let collection_name = args.collection.as_deref().unwrap_or("default");
+                let collection_name = args.collection.as_deref().ok_or_else(|| {
+                    McpError::invalid_params("collection parameter is required", None)
+                })?;
                 let collection_id = match normalize_collection_name(collection_name) {
                     Ok(id) => id,
                     Err(reason) => {

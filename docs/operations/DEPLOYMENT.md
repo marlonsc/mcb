@@ -59,7 +59,7 @@ provider = "memory"  # Options: memory, milvus, filesystem, encrypted
 ### Configuration Options
 
 | Setting | Description | Default | Status |
-|---------|-------------|---------|--------|
+| --------- | ------------- | --------- | -------- |
 | `embedding_provider.provider` | Embedding provider to use | `"mock"` | ✅ Available |
 | `vector_store.provider` | Vector storage backend | `"memory"` | ✅ Available |
 

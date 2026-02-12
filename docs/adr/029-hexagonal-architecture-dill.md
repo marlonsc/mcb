@@ -146,7 +146,7 @@ pub fn get_embedding_provider(catalog: &Catalog) -> Result<Arc<dyn EmbeddingProv
 New mcb-validate rules enforce the architecture:
 
 | Rule ID | Description |
-|---------|-------------|
+| --------- | ------------- |
 | CA007 | Infrastructure cannot import concrete types from Application |
 | CA008 | Application must import ports from mcb-domain |
 

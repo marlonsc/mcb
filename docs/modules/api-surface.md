@@ -55,9 +55,9 @@ HTTP server and MCP protocol:
 External integrations:
 
 - 6 embedding providers
-- 3 vector store providers
+- 5 vector store providers
 - 2 cache providers
-- 12 language processors
+- 13 languages (12 parsers; JavaScript processor handles JavaScript and TypeScript)
 
 ### mcb-infrastructure
 
@@ -78,7 +78,7 @@ Architecture validation (internal tooling):
 
 ### Current Status
 
-- **Version**: 0.1.1 (First Stable Release)
+- **Version**: 0.2.1-dev
 - **Stability**: Stable for documented APIs
 - **Compatibility**: Semantic versioning from v0.1.0+
 
@@ -97,4 +97,4 @@ Architecture validation (internal tooling):
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*
+*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*

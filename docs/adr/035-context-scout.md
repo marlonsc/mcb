@@ -28,11 +28,11 @@ ADR-034 defines the workflow FSM and its persistence layer. The FSM transitions 
 Today, context discovery is scattered:
 
 | Source | Current Mechanism | Problem |
-|--------|-------------------|---------|
+| -------- | ------------------- | --------- |
 | Git status | Shell `git status --porcelain` | Parsed ad-hoc, not typed, not cached |
 | Branch info | Shell `git branch --show-current` | Same |
 | Issue tracker | `bd ready`, `bd list` (Beads CLI) | External process, JSON parsing, slow |
-| Project phases | `.planning/STATE.md` (GSD) | Markdown, no schema, no search |
+| Project phases | `legacy-planning/STATE.md` (GSD) | Markdown, no schema, no search |
 | Stash/commits | Shell commands | No integration with MCB |
 
 **This ADR** defines a typed `ProjectContext` entity and a `ContextScoutProvider` port that discovers and caches project state using `git2` (already in MCB's dependency tree) and direct SQLite queries (for issues/phases stored by the workflow engine).
@@ -282,7 +282,7 @@ pub trait VcsProvider: Send + Sync {
 #### Design Rationale
 
 | Aspect | Decision | Why |
-|--------|----------|-----|
+| -------- | ---------- | ----- |
 | **Trait-based** | All consumers use `VcsProvider` trait | Enables multiple backends without code changes |
 | **Async throughout** | `async fn` everywhere | Aligns with MCB's async-first architecture |
 | **No git2 exposure** | git2 only in implementation | Prevents coupling to library details |
@@ -793,7 +793,7 @@ Result: No interference. Both sessions progress independently.
 #### Benefits
 
 | Benefit | Why It Matters |
-|---------|----------------|
+| --------- | ---------------- |
 | **Isolation** | Multiple sessions work independently without merge conflicts in main repo |
 | **Safety** | Entire worktree can be discarded if needed; main repo unaffected |
 | **Rollback** | If task fails, just `remove_worktree()` and retry with new session |
@@ -862,7 +862,7 @@ pub struct ProjectContext {
 
 /// Context freshness indicator.
 ///
-/// **Decision (Voted 2026-02-05):** Explicit freshness tracking (ADR-039).
+/// **Decision (Voted 2026-02-05):** Explicit freshness tracking (ADR-045 context versioning alignment).
 /// Prevents race conditions in distributed workflows by tracking context age.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum ContextFreshness {
@@ -1507,7 +1507,7 @@ WHERE i.status = 'open'
 ### 11. Module Locations
 
 | Crate | Path | Content |
-|-------|------|---------|
+| ------- | ------ | --------- |
 | `mcb-domain` | `src/ports/providers/vcs.rs` | `VcsProvider` trait (read, write, PR, webhooks), `MergeStrategy`, `PrState`, `RepoState`, `PullRequest` |
 | `mcb-domain` | `src/entities/context.rs` | `ProjectContext`, `GitContext`, `TrackerContext`, `CommitSummary`, `IssueSummary`, `PhaseSummary`, `ProjectConfig` |
 | `mcb-domain` | `src/ports/providers/context_scout.rs` | `ContextScoutProvider` trait |
@@ -1528,7 +1528,7 @@ WHERE i.status = 'open'
 - **VCS Provider Abstraction**: All VCS operations flow through `VcsProvider` trait (never direct git2). Enables MVP with git2 + Phase 2+ with GitHub/GitLab APIs.
 - **Worktree Isolation**: Each workflow session gets dedicated worktree. Multiple sessions work independently without conflicts.
 - **Worktree Safety**: Entire worktree can be discarded if task fails; main repo unaffected. Enables easy rollback and retry.
-- **Zero shell dependencies**: All discovery via `git2` FFI and direct SQLite — no `git`, `bd`, or `.planning/` commands.
+- **Zero shell dependencies**: All discovery via `git2` FFI and direct SQLite — no `git`, `bd`, or `legacy-planning/` commands.
 - **Typed state**: `ProjectContext` with strong types eliminates String parsing errors.
 - **Performant**: Moka cache with 30s TTL. Cold: 5–20ms (git2). Warm: < 1ms.
 - **Composable**: `git_status()` and `tracker_state()` can be called independently for partial discovery.
@@ -1595,7 +1595,7 @@ WHERE i.status = 'open'
 ### Performance Targets
 
 | Operation | Cold | Warm (Cached) |
-|-----------|------|---------------|
+| ----------- | ------ | --------------- |
 | `git_status()` | < 20ms | < 1ms |
 | `tracker_state()` | < 10ms | < 1ms |
 | `discover()` (full) | < 30ms | < 1ms |
@@ -1603,14 +1603,19 @@ WHERE i.status = 'open'
 
 ### Security
 
-- `git2` may expose file paths and commit messages. No credentials are stored in `ProjectContext`.
+- `git2` may expose file paths and commit messages. No credentials are stored
+  in `ProjectContext`.
 - SQLite pool uses same security model as workflow engine (local file, no network).
 
 ## References
 
 - [git2 crate](https://crates.io/crates/git2) — Rust bindings for libgit2
 - [moka crate](https://crates.io/crates/moka) — Concurrent cache (already in MCB)
-- [gitui source](https://github.com/extrawurst/gitui) — Reference for git2 status patterns
-- [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — FSM and persistence layer (dependency)
-- [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI pattern
-- [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md) — Schema reference
+- [gitui source](https://github.com/extrawurst/gitui) — Reference for git2
+  status patterns
+- [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — FSM and
+  persistence layer (dependency)
+- [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md)
+  — DI pattern
+- [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md)
+  — Schema reference

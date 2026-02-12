@@ -32,7 +32,7 @@ make check      # Full quality pipeline
 ## 📝 Naming Conventions
 
 | Element | Convention | Example |
-|---------|-----------|---------|
+| --------- | ----------- | --------- |
 | Crates | kebab-case, `mcb-` prefix | `mcb-domain`, `mcb-server` |
 | Library names | snake_case | `mcb_domain`, `mcb_server` |
 | Functions | snake_case | `embed_batch()`, `search_similar()` |
@@ -165,7 +165,7 @@ cargo test test_name -- --nocapture     # Specific test with output
 ## 🔨 Make-First Workflow
 
 | Command | Purpose |
-|---------|---------|
+| --------- | --------- |
 | `make build` | Build all crates |
 | `make fmt` | Auto-format code |
 | `make lint` | Format check + clippy |
@@ -184,7 +184,7 @@ cargo test test_name -- --nocapture     # Specific test with output
 ## ✅ Enforcement
 
 | Convention | Tool | Level |
-|-----------|------|-------|
+| ----------- | ------ | ------- |
 | Formatting | rustfmt + CI | Required |
 | Lints | Cargo workspace lints | Deny/Warn |
 | Import order | rustfmt | Required |

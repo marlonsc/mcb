@@ -65,7 +65,7 @@ export MCP__SYSTEM__DATA__SYNC__WATCHING_ENABLED=false
 When `auth.enabled = true`, the following **MUST** be configured:
 
 | Variable | Required | Description |
-|----------|----------|-------------|
+| ---------- | ---------- | ------------- |
 | `MCP__AUTH__JWT__SECRET` | **Yes** | JWT signing secret (minimum 32 characters) |
 
 The JWT secret is intentionally not auto-generated. This ensures:
@@ -79,7 +79,7 @@ The JWT secret is intentionally not auto-generated. This ensures:
 When not using TOML configuration:
 
 | Variable | Required | Description |
-|----------|----------|-------------|
+| ---------- | ---------- | ------------- |
 | `MCP__PROVIDERS__EMBEDDING__PROVIDER` | Yes | Embedding provider name (`ollama`, `openai`, etc.) |
 | `MCP__PROVIDERS__VECTOR_STORE__PROVIDER` | Yes | Vector store provider name (`memory`, `milvus`, etc.) |
 
@@ -263,11 +263,11 @@ export MCP__GIT__IGNORE_PATTERNS="target/,*.log,node_modules/"
 The following environment variables are **no longer supported**:
 
 | Old Variable | New Variable | Notes |
-|-------------|--------------|-------|
+| ------------- | -------------- | ------- |
 | `MCB_ADMIN_API_KEY` | `MCP__AUTH__ADMIN__KEY` | Prefix changed to `MCP__` |
 | `DISABLE_CONFIG_WATCHING` | `MCP__SYSTEM__DATA__SYNC__WATCHING_ENABLED=false` | Now part of config |
 
-### Breaking Changes in v0.1.2
+### Breaking Changes in v0.2.1
 
 1. **JWT Secret Required**: The default JWT secret is now empty. When authentication is enabled, you **must** configure `MCP__AUTH__JWT__SECRET` with at least 32 characters.
 
@@ -293,7 +293,7 @@ Configuration is validated at startup. The following cause startup failure:
 ### Embedding Providers
 
 | Provider | Required Config |
-|----------|-----------------|
+| ---------- | ----------------- |
 | `ollama` | `base_url`, `model` |
 | `openai` | `api_key`, `model` |
 | `voyageai` | `api_key`, `model` |
@@ -304,7 +304,7 @@ Configuration is validated at startup. The following cause startup failure:
 ### Vector Store Providers
 
 | Provider | Required Config |
-|----------|-----------------|
+| ---------- | ----------------- |
 | `memory` | (none) |
 | `milvus` | `address` |
 | `filesystem` | `address` (path) |
@@ -314,7 +314,7 @@ Configuration is validated at startup. The following cause startup failure:
 ### Cache Providers
 
 | Provider | Required Config |
-|----------|-----------------|
+| ---------- | ----------------- |
 | `moka` | (none) |
 | `redis` | `redis_url` |
 | `null` | (none, for testing) |
@@ -331,11 +331,11 @@ This will log which config file was loaded and from where.
 
 ## Related Documentation
 
-- [Architecture Overview](./architecture/ARCHITECTURE.md) - v0.1.2 Eight-Crate Structure
+- [Architecture Overview](./architecture/ARCHITECTURE.md) - v0.2.1 eight-crate structure
 - [ADR-025: Figment Configuration](./adr/025-figment-configuration.md) - Configuration management
 - [ADR-029: Hexagonal Architecture](./adr/029-hexagonal-architecture-dill.md) - DI and provider patterns
 
 ---
 
 **Last Updated:** 2026-01-20
-**Version:** 0.1.2
+**Version:** 0.2.1-dev

@@ -55,7 +55,7 @@ pub fn handler(_auth: AdminAuth, state: &State<AdminState>) -> Json<Response>
 ### Key Differences
 
 | Aspect | MCP | Admin |
-|--------|-----|-------|
+| -------- | ----- | ------- |
 | Transport | MCP protocol | HTTP |
 | Return | `CallToolResult` | `Json<T>` |
 | Errors | `McpError` | `(Status, Json<Error>)` |
@@ -65,7 +65,7 @@ pub fn handler(_auth: AdminAuth, state: &State<AdminState>) -> Json<Response>
 ## 🔗 Alignment Matrix (MCP ↔ Admin)
 
 | Handler | Endpoint Ready | Response Match | Notes |
-|---------|---|---|---|
+| --------- | --- | --- | --- |
 | **INDEX** | ✅✅ | ✅ | Can wrap directly |
 | **SEARCH** | ✅✅ | ✅ | New feature |
 | **VALIDATE** | ✅ | ✅ | Needs HTTP wrapper |
@@ -184,7 +184,7 @@ match service.operation().await {
 ## ✅ Success Metrics
 
 | Metric | Target | Current |
-|--------|--------|---------|
+| -------- | -------- | --------- |
 | Admin reusing MCP | 60% | 0% |
 | Single-use types | 0 | 9 |
 | Code duplication | <5% | 15% |

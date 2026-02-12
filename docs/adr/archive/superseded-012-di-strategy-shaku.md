@@ -142,7 +142,7 @@ let services = DomainServicesFactory::create_services(
 ### Where to Put What
 
 | Category | Layer | Location |
-|----------|-------|----------|
+| ---------- | ------- | ---------- |
 | Null providers | Shaku | `mcb-infrastructure/src/infrastructure/` |
 | Production providers | Factory | `mcb-providers/src/` |
 | Port traits | Neither | `mcb-application/src/ports/` |

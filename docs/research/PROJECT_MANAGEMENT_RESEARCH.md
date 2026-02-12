@@ -777,7 +777,7 @@ pub struct ProjectResponse {
 ## 8. ESTIMATED EFFORT FOR MCB
 
 | Component | Effort | Notes |
-|-----------|--------|-------|
+| ----------- | -------- | ------- |
 | Domain entities | 1 day | Simple structs + error types |
 | Database schema | 1 day | 3 tables + indices |
 | Providers (SQLite) | 3 days | CRUD + circular dep detection |
@@ -792,7 +792,7 @@ pub struct ProjectResponse {
 ## 9. RISKS & MITIGATIONS
 
 | Risk | Mitigation |
-|------|-----------|
+| ------ | ----------- |
 | Circular dependency detection performance | Use recursive CTE with depth limit |
 | Large dependency graphs (1000+ projects) | Add pagination + caching |
 | Cargo.toml parsing errors | Fallback to raw TOML storage |

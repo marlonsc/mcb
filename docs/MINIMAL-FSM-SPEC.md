@@ -26,7 +26,7 @@ This document defines the minimal viable Finite State Machine (FSM) for MCB work
 ## 2. State Definitions
 
 | State | Description |
-|-------|-------------|
+| ------- | ------------- |
 | **Idle** | Initial state. Session created, no active work performing. |
 | **Active** | Primary execution state. Operations are being performed. |
 | **Paused** | Temporarily suspended. State is preserved but no work occurs. |
@@ -37,9 +37,9 @@ This document defines the minimal viable Finite State Machine (FSM) for MCB work
 Transitions are triggered by `WorkflowEvent` and must pass associated `Policy` guards.
 
 | From | Trigger | To | Guards / Policies |
-|------|---------|----|-------------------|
+| ------ | --------- | ---- | ------------------- |
 | Idle | `Start` | Active | **FreshnessPolicy**: Context must be < 5s old. |
-| Active | `Suspend`| Paused | None (always allowed). |
+| Active | `Suspend` | Paused | None (always allowed). |
 | Paused | `Resume` | Active | **FreshnessPolicy**: Re-validate context. |
 | Active | `Finish` | Complete | **ValidationPolicy**: All tasks must be closed. |
 

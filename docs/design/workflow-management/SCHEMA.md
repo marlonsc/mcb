@@ -332,7 +332,7 @@ LIMIT 100;
 ### New Tables (9 total)
 
 | Category | Tables |
-|----------|--------|
+| ---------- | -------- |
 | Agent (4) | `agent_sessions`, `delegations`, `tool_calls`, `checkpoints` |
 | Project (4) | `phases`, `issues`, `issue_dependencies`, `decisions` |
 | Quality (1) | `quality_gate_configs` |
@@ -340,14 +340,14 @@ LIMIT 100;
 ### Entity Extensions
 
 | Entity | Extension |
-|--------|-----------|
+| -------- | ----------- |
 | `ObservationType` | Add `Execution` variant |
 | `Observation` (Error) | Add `fix_pattern`, `fix_verified` to metadata |
 
 ### Size Estimates
 
 | Table | Est. Rows/year | Est. Size |
-|-------|----------------|-----------|
+| ------- | ---------------- | ----------- |
 | agent_sessions | ~10K | ~2 MB |
 | delegations | ~50K | ~5 MB |
 | tool_calls | ~500K | ~50 MB |

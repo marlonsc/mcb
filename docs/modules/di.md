@@ -125,7 +125,7 @@ pub use admin::{
 ## Architecture Rules (mcb-validate)
 
 | Rule ID | Description |
-|---------|-------------|
+| --------- | ------------- |
 | CA007 | Infrastructure cannot import concrete types from Application |
 | CA008 | Application must import ports from mcb-domain |
 

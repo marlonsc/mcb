@@ -9,7 +9,7 @@
 //! ## Violation Types
 //!
 //! | ID | Type | Description |
-//! |----|------|-------------|
+//! | ---- | ------ | ------------- |
 //! | CA001 | DomainContainsImplementation | Domain layer has impl logic |
 //! | CA002 | HandlerCreatesService | Handler creates service directly |
 //! | CA003 | PortMissingComponentDerive | Port impl missing DI registration |

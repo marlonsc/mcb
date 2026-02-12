@@ -117,18 +117,18 @@ Memory Context Browser serves as a semantic code intelligence layer between AI a
 ### Primary Interfaces
 
 | Interface | Protocol | Purpose | Status |
-|-----------|----------|---------|--------|
-|**MCP Protocol**| JSON-RPC 2.0 over stdio | AI assistant integration | ✅ Implemented |
-|**REST API**| HTTP/JSON | Direct API access | 🚧 Planned |
-|**WebSocket**| Real-time protocol | Live indexing updates | 🚧 Planned |
+| ----------- | ---------- | --------- | -------- |
+| **MCP Protocol** | JSON-RPC 2.0 over stdio | AI assistant integration | ✅ Implemented |
+| **REST API** | HTTP/JSON | Direct API access | 🚧 Planned |
+| **WebSocket** | Real-time protocol | Live indexing updates | 🚧 Planned |
 
 #### Secondary Interfaces
 
 | Interface | Protocol | Purpose | Status |
-|-----------|----------|---------|--------|
-|**Embedding APIs**| REST/gRPC | AI model integration | ⚠️ Framework ready |
-|**Vector Databases**| Native protocols | Vector storage | ⚠️ Framework ready |
-|**Git Integration**| Git protocol | Repository access | 🚧 Planned |
+| ----------- | ---------- | --------- | -------- |
+| **Embedding APIs** | REST/gRPC | AI model integration | ⚠️ Framework ready |
+| **Vector Databases** | Native protocols | Vector storage | ⚠️ Framework ready |
+| **Git Integration** | Git protocol | Repository access | 🚧 Planned |
 
 ### Quality Attributes
 
@@ -208,34 +208,34 @@ graph TB
 #### API Containers
 
 | Container | Technology | Responsibility | Interfaces |
-|-----------|------------|----------------|------------|
-|**MCP Server**| Rust/Tokio | Protocol translation, request routing | MCP Protocol (stdio), Internal APIs |
-|**REST API**| Rust/Axum | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
-|**WebSocket**| Rust/Tokio | Real-time notifications, live updates | WebSocket protocol |
+| ----------- | ------------ | ---------------- | ------------ |
+| **MCP Server** | Rust/Tokio | Protocol translation, request routing | MCP Protocol (stdio), Internal APIs |
+| **REST API** | Rust/Axum | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
+| **WebSocket** | Rust/Tokio | Real-time notifications, live updates | WebSocket protocol |
 
 #### Application Containers
 
 | Container | Technology | Responsibility | Interfaces |
-|-----------|------------|----------------|------------|
-|**Core Services**| Rust | Business logic orchestration | Provider interfaces, data access |
-|**Task Scheduler**| Rust/Tokio | Background job processing | Internal queues, provider APIs |
-|**Cache Manager**| Rust/Redis | Caching layer abstraction | Redis protocol, internal APIs |
+| ----------- | ------------ | ---------------- | ------------ |
+| **Core Services** | Rust | Business logic orchestration | Provider interfaces, data access |
+| **Task Scheduler** | Rust/Tokio | Background job processing | Internal queues, provider APIs |
+| **Cache Manager** | Rust/Redis | Caching layer abstraction | Redis protocol, internal APIs |
 
 #### Provider Containers
 
 | Container | Technology | Responsibility | Interfaces |
-|-----------|------------|----------------|------------|
-|**Embedding Providers**| Rust + AI SDKs | Text-to-vector conversion | AI provider APIs, internal interfaces |
-|**Vector Store Providers**| Rust + DB SDKs | Vector storage and retrieval | Database protocols, internal interfaces |
-|**VCS Providers**| Rust/Git2 | Repository access and monitoring | Git/SSH protocols, internal interfaces |
+| ----------- | ------------ | ---------------- | ------------ |
+| **Embedding Providers** | Rust + AI SDKs | Text-to-vector conversion | AI provider APIs, internal interfaces |
+| **Vector Store Providers** | Rust + DB SDKs | Vector storage and retrieval | Database protocols, internal interfaces |
+| **VCS Providers** | Rust/Git2 | Repository access and monitoring | Git/SSH protocols, internal interfaces |
 
 #### Data Containers
 
 | Container | Technology | Responsibility | Interfaces |
-|-----------|------------|----------------|------------|
-|**Metadata Store**| PostgreSQL | Structured data, user management | SQL, connection pooling |
-|**Vector Database**| Milvus/Qdrant | High-dimensional vector storage | gRPC/REST, bulk operations |
-|**Cache Store**| Redis | Fast data caching, sessions | Redis protocol, pub/sub |
+| ----------- | ------------ | ---------------- | ------------ |
+| **Metadata Store** | PostgreSQL | Structured data, user management | SQL, connection pooling |
+| **Vector Database** | Milvus/Qdrant | High-dimensional vector storage | gRPC/REST, bulk operations |
+| **Cache Store** | Redis | Fast data caching, sessions | Redis protocol, pub/sub |
 
 ### Container Interactions
 
@@ -479,13 +479,13 @@ pub trait EmbeddingProvider: Send + Sync {
 **Supported Providers**:
 
 | Provider | Technology | Dimensions | Cost Model | Status |
-|----------|------------|------------|------------|--------|
-|**OpenAI**| text-embedding-3-small | 1536 | Pay-per-token | ✅ Production |
-|**Ollama**| nomic-embed-text | 768 | Self-hosted | ✅ Production |
-|**Gemini**| text-embedding-004 | 768 | Pay-per-token | ✅ Production |
-|**VoyageAI**| voyage-3-lite | 512 | Pay-per-token | ✅ Production |
-|**Anthropic**| N/A | N/A | Pay-per-token | 🚧 Planned |
-|**Mock**| Fixed vectors | 128 | Free | ✅ Development |
+| ---------- | ------------ | ------------ | ------------ | -------- |
+| **OpenAI** | text-embedding-3-small | 1536 | Pay-per-token | ✅ Production |
+| **Ollama** | nomic-embed-text | 768 | Self-hosted | ✅ Production |
+| **Gemini** | text-embedding-004 | 768 | Pay-per-token | ✅ Production |
+| **VoyageAI** | voyage-3-lite | 512 | Pay-per-token | ✅ Production |
+| **Anthropic** | N/A | N/A | Pay-per-token | 🚧 Planned |
+| **Mock** | Fixed vectors | 128 | Free | ✅ Development |
 
 ##### Vector Store Providers
 
@@ -505,18 +505,18 @@ pub trait VectorStoreProvider: Send + Sync {
 **Supported Providers**:
 
 | Provider | Technology | Index Type | Scalability | Status |
-|----------|------------|------------|-------------|--------|
-|**Milvus**| C++ + Go | IVF_FLAT, HNSW | 100M+ vectors | ✅ Production |
-|**Pinecone**| Cloud-native | HNSW | 1B+ vectors | 🚧 Planned |
-|**Qdrant**| Rust | HNSW | 10M+ vectors | 🚧 Planned |
-|**In-Memory**| Rust + DashMap | Brute force | <1M vectors | ✅ Development |
+| ---------- | ------------ | ------------ | ------------- | -------- |
+| **Milvus** | C++ + Go | IVF_FLAT, HNSW | 100M+ vectors | ✅ Production |
+| **Pinecone** | Cloud-native | HNSW | 1B+ vectors | 🚧 Planned |
+| **Qdrant** | Rust | HNSW | 10M+ vectors | 🚧 Planned |
+| **In-Memory** | Rust + DashMap | Brute force | <1M vectors | ✅ Development |
 
 ##### Additional Domain Ports
 
 Beyond embedding and vector store providers, the system defines 12 additional port traits for comprehensive DI:
 
 | Port | Purpose | Implementation |
-|------|---------|----------------|
+| ------ | --------- | ---------------- |
 | `HybridSearchProvider` | Combined BM25 + semantic search | `HybridSearchAdapter` |
 | `CodeChunker` | AST-based code chunking | `IntelligentChunker` |
 | `EventPublisher` | Domain event publishing | `EventBus` |
@@ -571,7 +571,7 @@ The project enforces strict dependency rules to maintain Clean Architecture comp
 #### Forbidden Dependencies
 
 | Crate | MUST NOT depend on | Allowed Dependencies |
-|-------|--------------------|----------------------|
+| ------- | -------------------- | ---------------------- |
 | mcb-domain | Any internal crate | None (pure domain) |
 | mcb-application | mcb-infrastructure, mcb-server, mcb-providers | mcb-domain only |
 | mcb-providers | mcb-infrastructure, mcb-server | mcb-domain, mcb-application* |
@@ -600,7 +600,7 @@ Run `make validate` to check compliance. The mcb-validate crate enforces:
 Provider port traits are defined in `mcb-domain/src/ports/providers/`:
 
 | Trait | Purpose |
-|-------|---------|
+| ------- | | --------- |
 | `EmbeddingProvider` | Generate vector embeddings from text |
 | `VectorStoreProvider` | Store and search vector embeddings |
 | `CacheProvider` | Caching abstraction |
@@ -771,7 +771,7 @@ impl EmbeddingProviderHandle {
 **Why This Pattern?**
 
 | Aspect | dill Catalog | Provider Handles |
-|--------|--------------|------------------|
+| -------- | -------------- | ------------------ |
 | **When** | Runtime | Runtime |
 | **Purpose** | Service resolution | Provider switching |
 | **Configuration** | `add_value()` | Via admin API |
@@ -807,7 +807,7 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 **Port Categories**:
 
 | Category | Location | Examples |
-|----------|----------|----------|
+| ---------- | ---------- | ---------- |
 | Provider Ports | `mcb-domain/src/ports/providers/` | EmbeddingProvider, VectorStoreProvider, CacheProvider |
 | Infrastructure Ports | `mcb-application/src/ports/infrastructure/` | SyncProvider, SnapshotProvider, EventPublisher |
 | Admin Ports | `mcb-application/src/ports/admin.rs` | PerformanceMetrics, IndexingOperations |
@@ -1234,11 +1234,11 @@ impl VectorRecord {
 **Storage Options**:
 
 | Database | Use Case | Performance | Scalability |
-|----------|----------|-------------|-------------|
-|**Milvus**| Production, large scale | High (HNSW index) | 100M+ vectors |
-|**Pinecone**| Cloud-native, managed | High (optimized) | 1B+ vectors |
-|**Qdrant**| Self-hosted, Rust-native | High (HNSW) | 10M+ vectors |
-|**In-Memory**| Development, testing | Fast (brute force) | <1M vectors |
+| ---------- | ---------- | ------------- | ------------- |
+| **Milvus** | Production, large scale | High (HNSW index) | 100M+ vectors |
+| **Pinecone** | Cloud-native, managed | High (optimized) | 1B+ vectors |
+| **Qdrant** | Self-hosted, Rust-native | High (HNSW) | 10M+ vectors |
+| **In-Memory** | Development, testing | Fast (brute force) | <1M vectors |
 
 #### Metadata Storage
 
@@ -1341,13 +1341,13 @@ impl Default for RetentionPolicy {
 #### STRIDE Analysis
 
 | Threat Category | Description | Mitigations |
-|----------------|-------------|-------------|
-|**Spoofing**| Unauthorized access to MCP server | JWT authentication, API key validation |
-|**Tampering**| Modification of code or data in transit | TLS 1.3, message integrity checks |
-|**Repudiation**| Denial of Actions performed | Comprehensive audit logging |
-|**Information Disclosure**| Exposure of sensitive code/data | Encryption at rest, access controls |
-|**Denial of Service**| Resource exhaustion attacks | Rate limiting, resource quotas |
-|**Elevation of Privilege**| Unauthorized privilege escalation | RBAC, input validation |
+| ---------------- | ------------- | ------------- |
+| **Spoofing** | Unauthorized access to MCP server | JWT authentication, API key validation |
+| **Tampering** | Modification of code or data in transit | TLS 1.3, message integrity checks |
+| **Repudiation** | Denial of Actions performed | Comprehensive audit logging |
+| **Information Disclosure** | Exposure of sensitive code/data | Encryption at rest, access controls |
+| **Denial of Service** | Resource exhaustion attacks | Rate limiting, resource quotas |
+| **Elevation of Privilege** | Unauthorized privilege escalation | RBAC, input validation |
 
 ### Authentication & Authorization
 
@@ -1510,11 +1510,11 @@ impl SecurityMonitor {
 #### Compliance Requirements
 
 | Standard | Requirement | Implementation |
-|----------|-------------|----------------|
-|**GDPR**| Data protection, consent | Data minimization, encryption, audit logs |
-|**SOC 2**| Security controls | Access controls, monitoring, incident response |
-|**ISO 27001**| Information security | Risk assessment, security policies |
-|**HIPAA**| Health data protection | N/A (not applicable) |
+| ---------- | ------------- | ---------------- |
+| **GDPR** | Data protection, consent | Data minimization, encryption, audit logs |
+| **SOC 2** | Security controls | Access controls, monitoring, incident response |
+| **ISO 27001** | Information security | Risk assessment, security policies |
+| **HIPAA** | Health data protection | N/A (not applicable) |
 
 #### Audit & Compliance Logging
 
@@ -1554,19 +1554,19 @@ impl ComplianceLogger {
 #### Latency Requirements
 
 | Operation | Target Latency | Current Status | Measurement |
-|-----------|----------------|----------------|-------------|
-|**Text Embedding**| <200ms | ✅ Achieved | P95 embedding time |
-|**Vector Search**| <100ms | ⚠️ Near target | P95 search time |
-|**MCP Response**| <500ms | ✅ Achieved | End-to-end response time |
-|**Indexing (1000 files)**| <30s | ⚠️ Near target | Total indexing time |
+| ----------- | ---------------- | ---------------- | ------------- |
+| **Text Embedding** | <200ms | ✅ Achieved | P95 embedding time |
+| **Vector Search** | <100ms | ⚠️ Near target | P95 search time |
+| **MCP Response** | <500ms | ✅ Achieved | End-to-end response time |
+| **Indexing (1000 files)** | <30s | ⚠️ Near target | Total indexing time |
 
 #### Throughput Requirements
 
 | Metric | Target | Current Status | Scaling Strategy |
-|--------|--------|----------------|------------------|
-|**Concurrent Users**| 1000 | 🚧 Testing | Horizontal scaling |
-|**Queries/Minute**| 10,000 | ⚠️ In progress | Load balancing |
-|**Indexing Rate**| 100 files/sec | ✅ Achieved | Parallel processing |
+| -------- | -------- | ---------------- | ------------------ |
+| **Concurrent Users** | 1000 | 🚧 Testing | Horizontal scaling |
+| **Queries/Minute** | 10,000 | ⚠️ In progress | Load balancing |
+| **Indexing Rate** | 100 files/sec | ✅ Achieved | Parallel processing |
 
 ### Scalability Architecture
 
@@ -2372,7 +2372,7 @@ impl BackupManager {
 **New Capabilities**:
 
 | Capability | Example | Benefit |
-|------------|---------|---------|
+| ------------ | --------- | --------- |
 | Freshness-Aware Search | `search --freshness-max-age 7` | Find current, relevant patterns |
 | Time-Travel Queries | `search --snapshot v0.2.0` | Understand code evolution |
 | Knowledge Graph | Graph relationships (calls, imports) | Understand code structure |

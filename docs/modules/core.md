@@ -9,7 +9,7 @@ Foundational types, traits, and utilities used throughout the system.
 The core module functionality is split across Clean Architecture layers:
 
 - **Domain types** (`crates/mcb-domain/src/types.rs`): Embedding, CodeChunk, SearchResult, Language
-- **Port traits** (`crates/mcb-application/src/ports/`): 20+ interfaces including EmbeddingProvider, VectorStoreProvider, HybridSearchProvider, LanguageChunkingProvider, EventBusProvider, SyncCoordinator, SnapshotProvider, and service interfaces
+- **Port traits** (`crates/mcb-domain/src/ports/`): provider, repository, service, infrastructure, and top-level interfaces used across layers
 - **Infrastructure utilities** (`crates/mcb-infrastructure/src/`): auth, cache, crypto, health, logging
 
 ## Submodules
@@ -107,4 +107,4 @@ Infrastructure tests are in `crates/mcb-infrastructure/tests/`.
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*
+*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*

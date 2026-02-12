@@ -28,7 +28,7 @@ pub trait EmbeddingProvider: Send + Sync {
 ```
 
 | Provider | Protocol | Auth | Models (dimensions) | Env Key Suffix | Use Case |
-|----------|----------|------|---------------------|----------------|----------|
+| ---------- | ---------- | ------ | --------------------- | ---------------- | ---------- |
 | OpenAI | HTTP REST | Bearer | 3-small (1536), 3-large (3072), ada-002 (1536) | `OPENAI__API_KEY` | Production |
 | VoyageAI | HTTP REST | Bearer | voyage-code-3 (1024), voyage-3 (1024) | `VOYAGEAI__API_KEY` | Code-specialized |
 | Ollama | HTTP REST | None | nomic (768), minilm (384), mxbai (1024) | `OLLAMA__BASE_URL` | Self-hosted |
@@ -56,7 +56,7 @@ pub trait VectorStoreProvider: Send + Sync {
 ```
 
 | Provider | Protocol | Auth | Algorithm | Use Case |
-|----------|----------|------|-----------|----------|
+| ---------- | ---------- | ------ | ----------- | ---------- |
 | EdgeVec | In-process | None | HNSW (M=16, EF=100) | Dev/test, single-instance |
 | Milvus | gRPC | Optional | IVF_FLAT (NLIST=128) | Production cloud |
 | Qdrant | HTTP REST | API key | HNSW configurable | Production cloud |
@@ -73,7 +73,7 @@ pub trait VectorStoreProvider: Send + Sync {
 **Repository implementations** (7 total):
 
 | Repository | Domain Port | Purpose |
-|-----------|-------------|---------|
+| ----------- | ------------- | --------- |
 | MemoryRepo | `MemoryRepository` | Observation storage + FTS search |
 | AgentRepo | `AgentRepository` | Agent session persistence + query |
 | OrgRepo | `OrgEntityRepository` | Multi-tenant org data |
@@ -91,14 +91,14 @@ Combines BM25 lexical search (via FTS5) with semantic vector search for improved
 ## Cache Providers (`cache/`)
 
 | Provider | Backend | Protocol | Use Case |
-|----------|---------|----------|----------|
+| ---------- | --------- | ---------- | ---------- |
 | Moka | In-memory LRU (v0.12) | In-process | Default, high-performance |
 | Redis | Redis server (v1.0) | TCP | Distributed caching |
 
 ## Events (`events/`)
 
 | Type | Local | Distributed |
-|------|-------|-------------|
+| ------ | ------- | ------------- |
 | Events | Tokio broadcast channels | NATS v0.46 (TCP) |
 
 ## Git Provider (`git/`)
@@ -110,14 +110,14 @@ Combines BM25 lexical search (via FTS5) with semantic vector search for improved
 
 ## Language Processors (`language/`)
 
-AST-based code chunking via **tree-sitter v0.26** for **13 languages**. Language-specific processors with fallback to generic chunking. File extension → language detection.
+AST-based code chunking via **tree-sitter v0.26** for **13 languages (12 parsers; JavaScript handles both JS and TS)**. Language-specific processors with fallback to generic chunking. File extension → language detection.
 
 | Language | Parser | Status |
-|----------|--------|--------|
+| ---------- | -------- | -------- |
 | Rust | tree-sitter-Rust | Production |
 | Python | tree-sitter-python | Production |
 | JavaScript | tree-sitter-JavaScript | Production |
-| TypeScript | tree-sitter-TypeScript | Production |
+| TypeScript | JavaScript processor (TS mode) | Production |
 | Go | tree-sitter-go | Production |
 | Java | tree-sitter-java | Production |
 | C | tree-sitter-c | Production |
@@ -157,7 +157,7 @@ MCP__INFRASTRUCTURE__CACHE__PROVIDER=moka
 ## Integration Summary
 
 | Integration | Type | Protocol | Auth | Source File |
-|-------------|------|----------|------|-------------|
+| ------------- | ------ | ---------- | ------ | ------------- |
 | OpenAI | Embedding | HTTP | Bearer | `embedding/openai.rs` |
 | VoyageAI | Embedding | HTTP | Bearer | `embedding/voyageai.rs` |
 | Ollama | Embedding | HTTP | None | `embedding/ollama.rs` |
@@ -207,8 +207,7 @@ crates/mcb-providers/src/
 ├── language/
 │   ├── rust.rs         # Rust processor
 │   ├── python.rs       # Python processor
-│   ├── javascript.rs   # JavaScript processor
-│   ├── typescript.rs   # TypeScript processor
+│   ├── javascript.rs   # JavaScript + TypeScript (mode)
 │   ├── go.rs           # Go processor
 │   ├── java.rs         # Java processor
 │   ├── c.rs            # C processor
@@ -239,4 +238,4 @@ Provider tests are located in `crates/mcb-providers/tests/`.
 
 ---
 
-*Updated 2026-02-12 — Enriched with Anthropic embedding, external vector stores (Milvus/Qdrant/Pinecone), SQLite/FTS5, hybrid search, git, events, config, and full integration summary (v0.2.1)*
+*Updated 2026-02-12 — Enriched with Anthropic embedding, external vector stores (Milvus/Qdrant/Pinecone), SQLite/FTS5, hybrid search, git, events, config, and 13-language support via 12 parser implementations (v0.2.1)*

@@ -1,91 +1,57 @@
 # chunking Module
 
-**Source**: `crates/mcb-application/src/domain_services/chunking.rs` (orchestrator) and `crates/mcb-providers/src/language/` (processors)
-**Crates**: `mcb-application`, `mcb-providers`
+**Source**: `crates/mcb-providers/src/language/`
+**Crate**: `mcb-providers`
 
 ## Overview
 
-The chunking system provides AST-based code parsing for 12 programming languages. In v0.2.1, this functionality is split across two crates:
+Chunking uses tree-sitter processors for **13 languages** via **12 parser implementations**. JavaScript processor handles both JavaScript and TypeScript using mode-specific behavior.
 
-- **mcb-application**: ChunkingOrchestrator (domain service)
-- **mcb-providers**: Language processors (12 languages)
+## Language Processors
 
-## Components
-
-### ChunkingOrchestrator (`mcb-application`)
-
-Coordinates batch chunking operations:
-
-```rust
-pub struct ChunkingOrchestrator {
-    pub fn process_files(&self, files: &[PathBuf]) -> Result<Vec<CodeChunk>>;
-    pub fn process_file(&self, path: &Path) -> Result<Vec<CodeChunk>>;
-}
-```
-
-### Language Processors (`mcb-providers`)
-
-Tree-sitter based processors for 12 languages:
-
-| Processor | Language | Parser |
-|-----------|----------|--------|
-| `RustProcessor` | Rust | tree-sitter-Rust |
-| `PythonProcessor` | Python | tree-sitter-python |
-| `JavaScriptProcessor` | JavaScript | tree-sitter-JavaScript |
-| `TypeScriptProcessor` | TypeScript | tree-sitter-TypeScript |
-| `GoProcessor` | Go | tree-sitter-go |
-| `JavaProcessor` | Java | tree-sitter-java |
-| `CProcessor` | C | tree-sitter-c |
-| `CppProcessor` | C++ | tree-sitter-cpp |
-| `CSharpProcessor` | C# | tree-sitter-c-sharp |
-| `RubyProcessor` | Ruby | tree-sitter-ruby |
-| `PhpProcessor` | PHP | tree-sitter-php |
-| `SwiftProcessor` | Swift | tree-sitter-swift |
-| `KotlinProcessor` | Kotlin | tree-sitter-kotlin-ng |
+| Language | Processor File | Parser |
+| ---------- | ---------------- | -------- |
+| Rust | `rust.rs` | tree-sitter-rust |
+| Python | `python.rs` | tree-sitter-python |
+| JavaScript | `javascript.rs` | tree-sitter-javascript |
+| TypeScript | `javascript.rs` (TS mode) | tree-sitter-javascript (TS handling in processor) |
+| Go | `go.rs` | tree-sitter-go |
+| Java | `java.rs` | tree-sitter-java |
+| C | `c.rs` | tree-sitter-c |
+| C++ | `cpp.rs` | tree-sitter-cpp |
+| C# | `csharp.rs` | tree-sitter-c-sharp |
+| Ruby | `ruby.rs` | tree-sitter-ruby |
+| PHP | `php.rs` | tree-sitter-php |
+| Swift | `swift.rs` | tree-sitter-swift |
+| Kotlin | `kotlin.rs` | tree-sitter-kotlin |
 
 ## File Structure
 
 ```text
-crates/mcb-application/src/domain_services/
-└── chunking.rs              # ChunkingOrchestrator
-
 crates/mcb-providers/src/language/
-├── rust.rs                  # Rust processor
-├── python.rs                # Python processor
-├── javascript.rs            # JavaScript processor
-├── typescript.rs            # TypeScript processor
-├── go.rs                    # Go processor
-├── java.rs                  # Java processor
-├── c.rs                     # C processor
-├── cpp.rs                   # C++ processor
-├── csharp.rs                # C# processor
-├── ruby.rs                  # Ruby processor
-├── php.rs                   # PHP processor
-├── swift.rs                 # Swift processor
-├── kotlin.rs                # Kotlin processor
-└── mod.rs                   # Module exports
-```
-
-## Feature Flags
-
-Language processors are controlled by feature flags in `mcb-providers`:
-
-```toml
-[features]
-lang-all = ["lang-rust", "lang-python", "lang-javascript", ...]
-lang-rust = ["tree-sitter-rust"]
-lang-python = ["tree-sitter-python"]
-
-# ... etc
+├── rust.rs
+├── python.rs
+├── javascript.rs
+├── go.rs
+├── java.rs
+├── c.rs
+├── cpp.rs
+├── csharp.rs
+├── ruby.rs
+├── php.rs
+├── swift.rs
+├── kotlin.rs
+├── detection.rs
+├── engine.rs
+└── mod.rs
 ```
 
 ## Cross-References
 
-- **Providers**: [providers.md](./providers.md) (language processors)
-- **Application**: [application.md](./application.md) (ChunkingOrchestrator)
-- **Domain**: [domain.md](./domain.md) (CodeChunk type)
-- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Providers**: [providers.md](./providers.md)
+- **Application services**: [services.md](./services.md)
+- **Domain types**: [domain.md](./domain.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*
+*Updated 2026-02-12 - Reflects current language processing architecture (v0.2.1)*

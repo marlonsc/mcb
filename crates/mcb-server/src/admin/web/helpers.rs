@@ -46,7 +46,7 @@ impl HelperDef for TimestampHelper {
 /// Usage: `{{relative_time ts}}`
 ///
 /// | Delta              | Output            |
-/// |--------------------|-------------------|
+/// | -------------------- | ------------------- |
 /// | < 60 s             | "just now"        |
 /// | < 3 600 s          | "N minutes ago"   |
 /// | < 86 400 s         | "N hours ago"     |
@@ -227,7 +227,7 @@ impl HelperDef for BadgeHelper {
 /// Usage: `{{{status_badge status}}}`
 ///
 /// | Status                          | Colour  |
-/// |---------------------------------|---------|
+/// | --------------------------------- | --------- |
 /// | Draft, Stopped                  | gray    |
 /// | Active, Running, Healthy        | green   |
 /// | InProgress, Starting            | blue    |
@@ -269,7 +269,7 @@ impl HelperDef for StatusBadgeHelper {
 /// Usage: `{{{priority_badge priority}}}`
 ///
 /// | Priority | Label | Colour |
-/// |----------|-------|--------|
+/// | ---------- | ------- | -------- |
 /// | 0        | P0    | red    |
 /// | 1        | P1    | orange |
 /// | 2        | P2    | yellow |

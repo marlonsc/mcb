@@ -18,7 +18,7 @@
 //! MCB supports three operating modes:
 //!
 //! | Mode | Trigger | Description |
-//! |------|---------|-------------|
+//! | ------ | --------- | ------------- |
 //! | **Server** | `--server` flag | HTTP daemon accepting client connections |
 //! | **Standalone** | Config `mode.type = "standalone"` | Local providers, stdio transport |
 //! | **Client** | Config `mode.type = "client"` | Connects to remote server via HTTP |

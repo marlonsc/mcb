@@ -6,7 +6,7 @@
 //! ## Endpoints
 //!
 //! | Path | Method | Description |
-//! |------|--------|-------------|
+//! | ------ | -------- | ------------- |
 //! | `/config` | GET | View current configuration (sanitized) |
 //! | `/config/reload` | POST | Trigger configuration reload |
 //! | `/config/:section` | PATCH | Update configuration section |

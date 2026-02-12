@@ -338,7 +338,7 @@ ignore_patterns = [
 In v0.1.x, all indexing used fixed defaults. v0.2.0 allows customization:
 
 | Feature | v0.1.x | v0.2.0 |
-|---------|--------|--------|
+| --------- | -------- | -------- |
 | Depth | Hardcoded | Configurable via `.mcp-context.toml` |
 | Branches | All branches | Select specific branches |
 | Patterns | None | Glob patterns supported |

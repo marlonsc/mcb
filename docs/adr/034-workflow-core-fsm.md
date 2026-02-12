@@ -24,7 +24,7 @@ implementation_status: Complete
 
 ## Context
 
-MCB currently provides semantic code search (indexing, embedding, vector store). The `oh-my-opencode` workflow layer depends on external shell scripts, markdown skill files, and disconnected tools (Beads CLI, GSD `.planning/` files) that have no shared state, no type safety, and no persistence across sessions.
+MCB currently provides semantic code search (indexing, embedding, vector store). The `oh-my-opencode` workflow layer depends on external shell scripts, markdown skill files, and disconnected tools (Beads CLI, GSD `legacy-planning/` files) that have no shared state, no type safety, and no persistence across sessions.
 
 ADR-032 proposed extending MCB's domain with 24 MCP tools and 9 SQLite tables for agent/quality/project tracking. This ADR supersedes that proposal with a narrower, layered approach: four sequential ADRs (034–037) that each define one architectural concern and expose traits consumed by the next layer.
 
@@ -491,7 +491,7 @@ CREATE INDEX idx_workflow_compensations_session
 **Rationale for Hybrid Model:**
 
 | Concern | Per-Operation TX | Append-Only Log | Coverage |
-|---------|------------------|-----------------|----------|
+| --------- | ------------------ | ----------------- | ---------- |
 | **Consistency** | ✅ ACID per-operation | Immutable writes only | Complete |
 | **Durability** | ✅ WAL mode | ✅ INSERT-only, no rewrites | Complete |
 | **Isolation** | ✅ SQLite serialization | N/A (read-only) | Complete |
@@ -563,7 +563,7 @@ impl WorkflowEngine for SqliteWorkflowEngine {
 
 Valid transitions are enforced at runtime. Invalid transitions return `WorkflowError::InvalidTransition`.
 
-```
+```text
 From \ Trigger         │ CtxDisc │ StartPlan │ StartExec │ ClaimTask │ ComplTask │ StartVer │ VerPass │ VerFail │ CompPhase │ EndSess │ Error │ Suspend │ Resume │ TimeoutDet │ Cancel │ MarkAband
 ───────────────────────┼─────────┼───────────┼───────────┼───────────┼───────────┼──────────┼─────────┼─────────┼───────────┼─────────┼───────┼─────────┼────────┼────────────┼────────┼───────────
 Initializing           │ Ready   │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │ Compl   │ Fail  │    ✗    │   ✗    │    ✗       │ Cancel │    ✗
@@ -1044,7 +1044,7 @@ fn sqlite_workflow_factory(
 ### 10. Module Locations
 
 | Crate | Path | Content |
-|-------|------|---------|
+| ------- | ------ | --------- |
 | `mcb-domain` | `src/entities/workflow.rs` | `WorkflowState`, `TransitionTrigger`, `Transition`, `WorkflowSession` |
 | `mcb-domain` | `src/ports/providers/workflow.rs` | `WorkflowEngine` trait |
 | `mcb-domain` | `src/errors/workflow.rs` | `WorkflowError` enum |
@@ -1420,9 +1420,14 @@ impl SqliteWorkflowEngine {
 ## References
 
 - [statig crate](https://crates.io/crates/statig) — Hierarchical state machine (evaluated, not selected)
-- [smlang-rs](https://crates.io/crates/smlang) — Declarative FSM macro (evaluated, not selected)
+- [smlang-rs](https://crates.io/crates/smlang) — Declarative FSM macro
+  (evaluated, not selected)
 - [sqlx](https://crates.io/crates/sqlx) — Async SQLite driver
-- [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI pattern
-- [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Auto-registration
-- [ADR-032: Agent & Quality Domain Extension](./032-agent-quality-domain-extension.md) — Superseded
-- [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md) — Schema reference
+- [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md)
+  — DI pattern
+- [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md)
+  — Auto-registration
+- [ADR-032: Agent & Quality Domain Extension](./032-agent-quality-domain-extension.md)
+  — Superseded
+- [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md)
+  — Schema reference

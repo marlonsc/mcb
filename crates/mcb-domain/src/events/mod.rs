@@ -7,7 +7,7 @@
 //! ## Domain Events
 //!
 //! | Event | Description |
-//! |-------|-------------|
+//! | ------- | ------------- |
 //! | [`DomainEvent`] | Base trait for all domain events |
 //! | [`EventPublisher`] | Interface for publishing domain events |
 //! | [`ServiceState`] | Service lifecycle states |

@@ -38,7 +38,7 @@ The current dependency injection system uses Shaku (version 0.6), a compile-time
 We evaluated modern Rust DI alternatives:
 
 | Library | Type | Cross-Crate | Async | Verdict |
-|---------|------|-------------|-------|---------|
+| --------- | ------ | ------------- | ------- | --------- |
 | **Shaku** (current) | Compile-time | Yes | No | High boilerplate |
 | **nject** | Compile-time | **NO** | No | Rejected (cross-crate limitation) |
 | **dill** | Runtime | Yes | Tokio | Partial use |
@@ -246,7 +246,7 @@ let embedding = context.embedding_handle().get();  // Now OpenAI
 ## Implementation Summary (2026-01-19)
 
 | Component | Pattern | Status |
-|-----------|---------|--------|
+| ----------- | --------- | -------- |
 | EmbeddingProvider | Handle + Resolver + AdminService | Implemented |
 | VectorStoreProvider | Handle + Resolver + AdminService | Implemented |
 | CacheProvider | Handle + Resolver + AdminService | Implemented |

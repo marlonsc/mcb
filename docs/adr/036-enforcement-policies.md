@@ -28,7 +28,7 @@ ADR-034 defines the workflow FSM with state transitions. ADR-035 provides typed 
 Today, enforcement is either absent or ad-hoc:
 
 | Scenario | Current Behavior | Desired Behavior |
-|----------|-----------------|------------------|
+| ---------- | ----------------- | ------------------ |
 | Commit with dirty worktree | Allowed (no check) | Block or warn depending on transition |
 | Start execution with 5 tasks already in-progress | Allowed | Block: WIP limit exceeded |
 | Branch name doesn't follow convention | No validation | Warn: `feature/...` or `fix/...` expected |
@@ -1649,7 +1649,7 @@ pub struct Violation {
 **Remediation Examples**:
 
 | Policy | Violation | Suggestion |
-|--------|-----------|-----------|
+| -------- | ----------- | ----------- |
 | clean_worktree | "Worktree not clean" | "Commit or stash changes before this transition" |
 | require_tests | "Test suite failed" | "Run `cargo test` locally; fix failing tests" |
 | wip_limit | "WIP limit exceeded" | "Complete or close existing in-progress issues" |
@@ -2059,7 +2059,7 @@ fn configurable_guard_factory(
 ### 11. Module Locations
 
 | Crate | Path | Content |
-|-------|------|---------|
+| ------- | ------ | --------- |
 | `mcb-domain` | `src/entities/policy.rs` | `Severity`, `Violation`, `PolicyResult`, `PolicyConfig` |
 | `mcb-domain` | `src/ports/providers/policy_guard.rs` | `PolicyGuardProvider` trait |
 | `mcb-domain` | `src/ports/providers/policy.rs` | `Policy` trait (individual policies) |
@@ -2145,7 +2145,7 @@ fn configurable_guard_factory(
 ### Performance Targets
 
 | Operation | Target |
-|-----------|--------|
+| ----------- | -------- |
 | `WipLimitPolicy.check()` | < 1ms (reads from `TrackerContext`, no I/O) |
 | `CleanWorktreePolicy.check()` | < 1ms (reads from `GitContext`, no I/O) |
 | `BranchNamingPolicy.check()` | < 1ms (regex match) |

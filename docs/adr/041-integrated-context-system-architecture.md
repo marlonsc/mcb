@@ -140,7 +140,7 @@ pub trait ContextGraphTraversal: Send + Sync {
 ### 4. Integration with ADR-034-037
 
 | ADR | Integration Point | Interaction |
-|-----|-------------------|-------------|
+| ----- | ------------------- | ------------- |
 | **ADR-034 (FSM)** | ContextSnapshot.workflow_state | State determines freshness requirements: "Executing" requires Fresh, "Planning" allows Stale |
 | **ADR-035 (Context Scout)** | ContextSnapshot.freshness | Explicit freshness enum embedded in every snapshot; gates search results |
 | **ADR-036 (Policies)** | ContextValidationResult | Policies define scope boundaries and access control for context |
@@ -213,7 +213,7 @@ mcb-server/
 ## Alternatives Considered
 
 | Alternative | Pros | Cons | Decision |
-|-------------|------|------|----------|
+| ------------- | ------ | ------ | ---------- |
 | **External Graph DB (Neo4j)** | Powerful, mature, scalable | Operational overhead, licensing, network latency | ❌ Rejected: Embedded-first (v0.5.0 optional) |
 | **Separate snapshot storage (S3/DuckDB)** | Scalable to 1M+ snapshots | Added complexity, latency | ❌ Rejected: SQLite sufficient for MVP |
 | **ML-based context ranking (Candle)** | High-quality relevance | Training overhead, slow inference | ❌ Rejected for v0.4.0 (v0.5.0) |
@@ -233,7 +233,7 @@ mcb-server/
 ## Risks & Mitigations
 
 | Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|-----------|
+| ------ | ------------- | -------- | ----------- |
 | ADR-034-037 changes mid-Phase-9 | Low | Critical | Lock ADR-034-037 before Phase 9 Week 1 |
 | Snapshot memory overhead (1000+ snapshots) | Low | Medium | Add TTL-based GC (keep 24h, archive older) |
 | Cross-layer dependency bugs | Medium | High | Comprehensive integration tests; phase-based validation |

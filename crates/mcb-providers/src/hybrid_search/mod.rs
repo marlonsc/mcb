@@ -49,7 +49,7 @@
 //! ## Providers
 //!
 //! | Provider | Description | Use Case |
-//! |----------|-------------|----------|
+//! | ---------- | ------------- | ---------- |
 //! | `HybridSearchEngine` | Full BM25 + semantic hybrid | Production search |
 //!
 //! ## BM25 Algorithm

@@ -7,7 +7,7 @@
 //! ## Infrastructure Ports
 //!
 //! | Port | Description |
-//! |------|-------------|
+//! | ------ | ------------- |
 //! | [`SyncCoordinator`] | File system synchronization services |
 //! | [`SnapshotProvider`] | Codebase snapshot management |
 //! | [`AuthServiceInterface`] | Authentication and token services |

@@ -7,7 +7,7 @@
 //! ## Value Objects
 //!
 //! | Value Object | Description |
-//! |--------------|-------------|
+//! | -------------- | ------------- |
 //! | [`Embedding`] | Vector representation of text for semantic search |
 //! | [`SearchResult`] | Ranked result from semantic search operation |
 //! | [`Language`] | Programming language identifier |

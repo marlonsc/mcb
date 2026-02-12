@@ -7,7 +7,7 @@
 //! ## Clone Types
 //!
 //! | Type | Rule ID | Description |
-//! |------|---------|-------------|
+//! | ------ | --------- | ------------- |
 //! | Type 1 | DUP001 | Exact clones (100% identical) |
 //! | Type 2 | DUP002 | Renamed clones (identifiers changed) |
 //! | Type 3 | DUP003 | Gapped clones (small modifications) |

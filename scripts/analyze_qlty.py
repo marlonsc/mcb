@@ -213,7 +213,7 @@ class AnalysisReport:
         lines.append("## Severity Distribution")
         lines.append("")
         lines.append("| Severity | Count | Percentage |")
-        lines.append("|----------|-------|------------|")
+        lines.append("| ---------- | ------- | ------------ |")
         for sev in [Severity.ERROR, Severity.WARNING, Severity.NOTE]:
             count = self.by_severity.get(sev, 0)
             pct = (count / self.total_issues * 100) if self.total_issues > 0 else 0
@@ -224,7 +224,7 @@ class AnalysisReport:
         lines.append("## Category Breakdown")
         lines.append("")
         lines.append("| Category | Count | Percentage |")
-        lines.append("|----------|-------|------------|")
+        lines.append("| ---------- | ------- | ------------ |")
         for cat, count in self.by_category.most_common():
             pct = (count / self.total_issues * 100) if self.total_issues > 0 else 0
             lines.append(f"| {cat} | {count} | {pct:.1f}% |")
@@ -234,7 +234,7 @@ class AnalysisReport:
         lines.append("## Top Rules")
         lines.append("")
         lines.append("| Rule | Count | Percentage |")
-        lines.append("|------|-------|------------|")
+        lines.append("| ------ | ------- | ------------ |")
         for rule, count in self.top_rules[:20]:
             pct = (count / self.total_issues * 100) if self.total_issues > 0 else 0
             lines.append(f"| `{rule}` | {count} | {pct:.1f}% |")
@@ -244,7 +244,7 @@ class AnalysisReport:
         lines.append("## Most Affected Files")
         lines.append("")
         lines.append("| File | Issues |")
-        lines.append("|------|--------|")
+        lines.append("| ------ | -------- |")
         for file_path, count in self.top_files[:20]:
             lines.append(f"| `{file_path}` | {count} |")
         lines.append("")

@@ -7,7 +7,7 @@
 //! ## Provider Ports
 //!
 //! | Port | Description |
-//! |------|-------------|
+//! | ------ | ------------- |
 //! | EmbeddingProvider | Text embedding generation services |
 //! | VectorStoreProvider | Vector storage and similarity search |
 //! | VectorStoreBrowser | Collection and file browsing for Admin UI |

@@ -68,7 +68,7 @@ digraph {
 ## Crate Descriptions
 
 | Crate | Purpose | Dependencies |
-|-------|---------|--------------|
+| ------- | --------- | -------------- |
 | `mcb` | Unified facade, public API | All crates |
 | `mcb-domain` | Core types, ports, entities | None (innermost) |
 | `mcb-application` | Business logic, use cases | domain, providers |
@@ -89,7 +89,7 @@ digraph {
 Major external crates:
 
 | Category | Crate | Purpose |
-|----------|-------|---------|
+| ---------- | ------- | | --------- |
 | Async | `tokio` | Async runtime |
 | HTTP | `axum` | HTTP server |
 | DI | `dill` | IoC container, handle-based DI (ADR-029) |

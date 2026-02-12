@@ -14,7 +14,7 @@
 //! # Supported MCP Methods
 //!
 //! | Method | Description |
-//! |--------|-------------|
+//! | -------- | ------------- |
 //! | `initialize` | Initialize the MCP session |
 //! | `tools/list` | List available tools |
 //! | `tools/call` | Call a tool with arguments |

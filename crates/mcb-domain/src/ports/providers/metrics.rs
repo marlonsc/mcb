@@ -9,7 +9,7 @@
 //! ## Metric Types
 //!
 //! | Type | Description | Example |
-//! |------|-------------|---------|
+//! | ------ | ------------- | --------- |
 //! | Counter | Monotonically increasing value | `requests_total` |
 //! | Gauge | Value that can go up or down | `active_connections` |
 //! | Histogram | Distribution of values | `request_duration_seconds` |

@@ -77,7 +77,7 @@ Add to your `claude_desktop_config.json`:
 MCB exposes 8 tools through the MCP protocol:
 
 | Tool | Description | Status |
-|------|-------------|--------|
+| ------ | ------------- | -------- |
 | `mcb_index` | Index codebases for semantic search (start, status, clear) | ✅ Stable |
 | `mcb_search` | Semantic search across code and memory | ✅ Stable |
 | `mcb_memory` | Store, retrieve, and query persistent observations | ✅ Stable |

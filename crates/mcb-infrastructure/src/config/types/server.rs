@@ -13,7 +13,7 @@ use crate::constants::http::*;
 /// # Modes
 ///
 /// | Mode | Description | Use Case |
-/// |------|-------------|----------|
+/// | ------ | ------------- | ---------- |
 /// | `Stdio` | Standard I/O streams | CLI tools, IDE integrations |
 /// | `Http` | HTTP with SSE | Web clients, REST APIs |
 /// | `Hybrid` | Both simultaneously | Dual-interface servers |

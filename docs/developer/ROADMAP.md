@@ -9,7 +9,7 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 ## Current State
 
 | Field | Value |
-|-------|-------|
+| ------- | ------- |
 | **Version** | v0.2.1-dev |
 | **Branch** | `release/v0.2.1` (only active release branch) |
 | **Build** | ✅ `cargo check --workspace` passes |
@@ -20,7 +20,7 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 ### Project Metrics
 
 | Metric | Value |
-|--------|-------|
+| -------- | ------- | |
 | Beads issues | 306 total (76 open, 229 closed, 38 ready, 38 blocked) |
 | Avg lead time | 9.7 hours |
 | TODO/FIXME | 241 code + docs debt markers |
@@ -46,7 +46,7 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 Consolidates all pre-v0.3.0 work: admin UI, data model hardening, modernization cleanup. There is no v0.2.2 — everything lands here.
 
 | Area | Status |
-|------|--------|
+| ------ | -------- |
 | Admin UI (Handlebars CRUD) | ✅ Complete |
 | P0 modernization (org context, lock/cache, dead code) | ✅ Complete |
 | P1/P2 modernization (provider consolidation, docs) | In progress |
@@ -63,7 +63,7 @@ Consolidates all pre-v0.3.0 work: admin UI, data model hardening, modernization 
 Implements complete workflow system with FSM-based task orchestration, context scouting, and policy enforcement.
 
 | Component | Description |
-|-----------|-------------|
+| ----------- | ------------- |
 | **WorkflowFSM** | 12-state machine for task orchestration with transitions and compensation |
 | **ContextScout** | Freshness tracking (Fresh/Acceptable/Stale/StaleWithRisk) |
 | **PolicyEngine** | 11+ policies for workflow validation and enforcement |
@@ -90,7 +90,7 @@ Implements complete workflow system with FSM-based task orchestration, context s
 Multi-source integrated context with knowledge graphs, hybrid search, and temporal queries.
 
 | Component | Description |
-|-----------|-------------|
+| ----------- | ------------- |
 | **Knowledge Graph** | petgraph-based relationships (calls, imports, extends) |
 | **Hybrid Search** | RRF fusion of semantic embeddings + BM25 keyword ranking |
 | **Freshness Tracking** | Temporal metadata, immutable snapshots, time-travel queries |
@@ -109,7 +109,7 @@ Multi-source integrated context with knowledge graphs, hybrid search, and tempor
 Enterprise-grade platform with SLA guarantees, compliance certifications, and high-availability deployment.
 
 | Feature | Description |
-|---------|-------------|
+| --------- | ------------- |
 | SLA Guarantees | 99.9% uptime with monitoring |
 | High Availability | Multi-region with automatic failover |
 | Disaster Recovery | Backup/restore with point-in-time recovery |

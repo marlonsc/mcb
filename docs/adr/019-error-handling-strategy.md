@@ -88,7 +88,7 @@ pub enum AnalysisError {
 Current error types in the eight-crate structure:
 
 | Crate | Error File | Error Type |
-|-------|-----------|------------|
+| ------- | ----------- | ------------ |
 | mcb-domain | `src/error.rs` | `DomainError` |
 | mcb-application | `src/error.rs` | `ApplicationError` |
 | mcb-providers | `src/error.rs` | `ProviderError` |

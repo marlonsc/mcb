@@ -6,7 +6,7 @@
 ## Current Metrics (v0.2.1-dev)
 
 | Metric | Value |
-|--------|-------|
+| -------- | ------- |
 | **Version** | 0.2.1-dev |
 | **Languages** | 14 |
 | **Embedding Providers** | 6 |

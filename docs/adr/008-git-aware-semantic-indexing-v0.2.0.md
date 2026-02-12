@@ -397,7 +397,7 @@ pub struct CodeChunk {
 **Collection naming strategy:**
 
 | Pattern | Purpose |
-|---------|---------|
+| --------- | --------- |
 | `{repo_id}_{branch}` | Branch-specific search |
 | `{repo_id}_all` | Cross-branch search |
 | `{repo_id}_{commit_short}` | Point-in-time snapshot (optional) |
@@ -532,7 +532,7 @@ impl ImpactAnalyzer {
 **Create**: `crates/mcb-server/src/handlers/git_tools.rs`
 
 | Tool | Description | Parameters |
-|------|-------------|------------|
+| ------ | ------------- | ------------ |
 | `index_git_repository` | Index repository with branch awareness | path, branches?, include_submodules?, include_history? |
 | `vcs (action=search_branch)` | Search within specific branch | query, repository?, branch?, limit? |
 | `vcs (action=compare_branches)` | Compare code between branches | path, from_branch, to_branch |
@@ -589,7 +589,7 @@ git2 = "0.20"
 ## Files to Create
 
 | File | Purpose |
-|------|---------|
+| ------ | --------- |
 | `crates/mcb-domain/src/git.rs` | Git domain types |
 | `crates/mcb-application/src/ports/providers/git.rs` | GitProvider trait |
 | `crates/mcb-providers/src/git/mod.rs` | Git module |
@@ -604,7 +604,7 @@ git2 = "0.20"
 ## Files to Modify
 
 | File | Change |
-|------|--------|
+| ------ | -------- |
 | `crates/mcb-providers/Cargo.toml` | Add `git2 = "0.20"` dependency |
 | `crates/mcb-domain/src/entities/code_chunk.rs` | Add `git_metadata` field to CodeChunk |
 | `crates/mcb-application/src/ports/providers/mod.rs` | Export GitProvider |
@@ -619,7 +619,7 @@ git2 = "0.20"
 ## Success Metrics
 
 | Metric | Before | Target v0.2.0 |
-|--------|--------|---------------|
+| -------- | -------- | --------------- |
 | Portability | Filesystem path | Root commit ID |
 | Multi-branch | No | Yes |
 | Submodules | No | Yes |
@@ -629,7 +629,7 @@ git2 = "0.20"
 ## Configuration Defaults
 
 | Setting | Default | Override |
-|---------|---------|----------|
+| --------- | --------- | ---------- |
 | Branches | main, HEAD, current | Per-repo |
 | History depth | 50 commits | Per-repo |
 | Submodules | Recursive indexing | Per-repo |

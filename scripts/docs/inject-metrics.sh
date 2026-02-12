@@ -213,7 +213,7 @@ generate_metrics_file() {
 ## Current Metrics (v${MCP_VERSION})
 
 | Metric | Value |
-|--------|-------|
+| -------- | ------- |
 | **Version** | ${MCP_VERSION} |
 | **Languages** | ${MCP_LANGUAGE_COUNT} |
 | **Embedding Providers** | ${MCP_EMBEDDING_COUNT} |

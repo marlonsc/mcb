@@ -77,7 +77,7 @@ impl HybridAnalysisCache {
 ## Cache Layers
 
 | Layer | Purpose | Invalidation | TTL |
-|-------|---------|--------------|-----|
+| ------- | --------- | -------------- | ----- |
 | **Memory (Moka)** | Fast lookups | SHA256 mismatch | 1 hour |
 | **SHA256 Tracker** | Change detection | File modification | Persistent |
 | **Disk** (future) | Long-term storage | LRU eviction | 7 days |

@@ -41,6 +41,13 @@ fn build_chunk_metadata(chunk: &CodeChunk) -> HashMap<String, serde_json::Value>
     ])
 }
 
+fn extract_vector_count(stats: &HashMap<String, serde_json::Value>) -> i64 {
+    ["vectors_count", "row_count", "vector_count"]
+        .iter()
+        .find_map(|key| stats.get(*key).and_then(serde_json::Value::as_i64))
+        .unwrap_or(0)
+}
+
 /// Context service implementation - manages embeddings and vector storage
 pub struct ContextServiceImpl {
     cache: Arc<dyn mcb_domain::ports::providers::cache::CacheProvider>,
@@ -150,7 +157,26 @@ impl ContextServiceInterface for ContextServiceImpl {
     }
 
     async fn get_stats(&self) -> Result<(i64, i64)> {
-        Ok((0, 0))
+        let collections = self.vector_store_provider.list_collections().await?;
+        let collection_count = collections.len() as i64;
+
+        let mut chunk_count = 0_i64;
+        for collection in &collections {
+            let stats = self.vector_store_provider.get_stats(&collection.id).await;
+            chunk_count += match stats {
+                Ok(stats) => {
+                    let from_stats = extract_vector_count(&stats);
+                    if from_stats > 0 {
+                        from_stats
+                    } else {
+                        collection.vector_count as i64
+                    }
+                }
+                Err(_) => collection.vector_count as i64,
+            };
+        }
+
+        Ok((collection_count, chunk_count))
     }
 
     fn embedding_dimensions(&self) -> usize {

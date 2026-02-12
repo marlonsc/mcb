@@ -7,7 +7,7 @@
 //! ## Supported Events
 //!
 //! | Event Type | Description |
-//! |------------|-------------|
+//! | ------------ | ------------- |
 //! | `ConfigReloaded` | Configuration was hot-reloaded |
 //! | `ServiceStateChanged` | Service lifecycle state changed |
 //! | `IndexingProgress` | Indexing operation progress update |

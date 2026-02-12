@@ -30,7 +30,7 @@ HTTP API for metrics access via admin router.
 **Endpoints**:
 
 | Endpoint | Method | Purpose |
-|----------|--------|---------|
+| ---------- | -------- | --------- |
 | `/health` | GET | Health check |
 | `/health/ready` | GET | Readiness probe |
 | `/health/live` | GET | Liveness probe |

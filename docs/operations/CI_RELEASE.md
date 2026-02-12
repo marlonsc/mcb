@@ -121,7 +121,7 @@ lint → test ──┬→ validate → release-build
 **Job Details:**
 
 | Job | Purpose | Timeout | Prerequisites |
-|-----|---------|---------|---------------|
+| ----- | --------- | --------- | --------------- |
 | `lint` | Format & clippy checks | 15 min | None (runs first) |
 | `test` | Unit & integration tests | 30 min | lint passes |
 | `validate` | Architecture validation | 15 min | lint passes |
@@ -273,7 +273,7 @@ make test SCOPE=golden THREADS=2  # Acceptance tests with 2 threads
 ### Available THREADS Values
 
 | Value | Use Case | Default |
-|-------|----------|---------|
+| ------- | ---------- | --------- |
 | `0` | Auto (all available cores) | ✓ Local only |
 | `1` | Sequential (slowest, fewest timeouts) | For slow CI |
 | `2` | Limited parallelization | Acceptance tests |

@@ -22,7 +22,7 @@ Analysis of ADR-035 (Context Scout) against production-grade context management 
 ### ADR-035's Current Model
 
 | Component | Implementation | Approach |
-|-----------|---|----------|
+| ----------- | --- | ---------- |
 | Git state | `git2` library (blocking FFI) | Binary repo scan, no watch |
 | Tracker state | SQLite direct query | Read-only to workflow DB |
 | Config | TOML via Figment | Load-time only |
@@ -52,7 +52,7 @@ Analysis of ADR-035 (Context Scout) against production-grade context management 
 **From research:**
 
 | Aspect | git2 | gix |
-|--------|------|-----|
+| -------- | ------ | ----- |
 | **Downloads/month** | 2.79M | 1,042 (v0.49.0 CLI only) |
 | **C FFI** | Yes (libgit2 C) | Pure Rust |
 | **Performance** | 5-20ms per query | 500-1000x faster (benchmarks) |
@@ -311,7 +311,7 @@ let git_cache = Cache::builder()
 **Evaluation:**
 
 | Aspect | ADR-035 | Production Grade |
-|--------|---------|------------------|
+| -------- | --------- | ------------------ |
 | **TTL Strategy** | Fixed 30s | Differential per entry |
 | **Invalidation** | Time only | Time + events |
 | **Hit rate** | Good (~95% with 30s TTL) | Very good (~98%+) |
@@ -406,7 +406,7 @@ pub async fn after_commit(&self, repo_path: &Path) -> Result<()> {
 ### What ADR-035 Gets Right ✅
 
 | Aspect | Evaluation |
-|--------|-----------|
+| -------- | ----------- |
 | **Git library choice** | ✅ Correct for MCB's scale |
 | **Blocking FFI isolation** | ✅ `spawn_blocking()` pattern sound |
 | **Entity design** | ✅ `ProjectContext` well-typed |
@@ -418,7 +418,7 @@ pub async fn after_commit(&self, repo_path: &Path) -> Result<()> {
 ### Critical Gaps ❌
 
 | Gap | Impact | Severity |
-|-----|--------|----------|
+| ----- | -------- | ---------- |
 | **No external tracker support** | Can't discover GitHub/GitLab/Jira issues | **HIGH** |
 | **No event-driven invalidation** | Cache stays stale 30s even after git push | **MEDIUM** |
 | **No rate limiting abstraction** | Will hit GitHub API limits without backoff | **HIGH** |
@@ -627,7 +627,7 @@ pub trait TrackerWithFallback: IssueTrackerProvider {
 ### Cold Start Latency
 
 | Scenario | Current (ADR-035) | With Enhancements |
-|----------|------------------|-------------------|
+| ---------- | ------------------ | ------------------- |
 | **Git only** | 15ms | 15ms (unchanged) |
 | **SQLite tracker** | 8ms | 8ms (unchanged) |
 | **GitHub API tracker** | N/A | 500-1000ms (first call) |
@@ -670,7 +670,7 @@ pub trait TrackerWithFallback: IssueTrackerProvider {
 ### Tools Shipping with Similar Discovery Patterns
 
 | Tool | Approach | Notes |
-|------|----------|-------|
+| ------ | ---------- | ------- |
 | **GitKraken Desktop** | git2 + local git, no external trackers | Similar to MCB |
 | **GitHub CLI (gh)** | REST API + local git | Multiple trackers |
 | **GitLab Runner** | git2 + API integration | Fallback to cache |

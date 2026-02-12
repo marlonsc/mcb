@@ -75,7 +75,7 @@ Figment (version 0.10, workspace-managed) provides a unified configuration appro
 #### Key Advantages Over Config Crate
 
 | Feature | Config Crate | Figment |
-|---------|--------------|---------|
+| --------- | -------------- | --------- |
 | **API Style** | Builder pattern with manual source addition | Fluent composition with `merge()` |
 | **Error Messages** | Basic deserialization errors | Rich, contextual error messages |
 | **Profile Support** | Manual implementation | Built-in profile system |
@@ -112,7 +112,7 @@ The migration affected the following configuration loading points:
 Figment provides dedicated providers for common configuration sources:
 
 | Source Type | Config Crate | Figment Provider |
-|-------------|--------------|------------------|
+| ------------- | -------------- | ------------------ |
 | **TOML files** | `config::File` | `figment::providers::Toml` |
 | **Environment vars** | `config::Environment` | `figment::providers::Env` |
 | **JSON files** | `config::File` | `figment::providers::Json` |

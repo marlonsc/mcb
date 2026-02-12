@@ -15,7 +15,7 @@ The adapters layer has been split into two crates in v0.2.1:
 ## Migration Mapping
 
 | Old Location | New Location |
-|--------------|--------------|
+| -------------- | -------------- |
 | `src/adapters/providers/embedding/` | `crates/mcb-providers/src/embedding/` |
 | `src/adapters/providers/vector_store/` | `crates/mcb-providers/src/vector_store/` |
 | `src/adapters/providers/routing/` | `crates/mcb-providers/src/routing/` |

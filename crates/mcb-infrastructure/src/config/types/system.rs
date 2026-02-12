@@ -129,7 +129,7 @@ pub struct AuthConfig {
 
 /// Default authentication configuration.
 ///
-/// - `enabled`: false (disabled by default for backwards compatibility)
+/// - `enabled`: false (disabled by default)
 /// - `jwt`: JwtConfig::default()
 /// - `api_key`: ApiKeyConfig::default()
 /// - `admin`: AdminApiKeyConfig::default()

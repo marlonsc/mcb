@@ -1,45 +1,28 @@
 # Services Module
 
 **Source**: `crates/mcb-application/src/use_cases/`
-**Traits**: `crates/mcb-application/src/ports/`
+**Traits**: `crates/mcb-domain/src/ports/services/`
 **Crate**: `mcb-application`
 
-Orchestrates the semantic code search workflow - from codebase ingestion to search results.
+Orchestrates semantic indexing, search, memory, validation, and session workflows.
 
 ## Overview
 
-The services module contains core business logic that powers the semantic code search platform. Each service encapsulates specific capabilities that work together to deliver code intelligence.
-
-All services implement interface traits defined in `crates/mcb-application/src/ports/`. DI is handle-based via dill Catalog (ADR-029).
+The services module contains the application-layer use cases. Implementations are in `mcb-application`, and service interfaces are defined in domain ports under `mcb-domain/src/ports/services/`.
 
 ## Service Interface Traits
 
-Service interfaces use `Send + Sync` and are resolved via dill (see ADR-029). Examples:
+Service interfaces are defined in domain ports and resolved through DI.
 
 ```rust
-pub trait ContextServiceInterface: Send + Sync {
-    fn initialize(&self) -> impl Future<Output = Result<()>> + Send;
-    fn store_chunks(&self, collection: &str, chunks: &[CodeChunk]) -> impl Future<Output = Result<()>> + Send;
-    fn search_similar(&self, collection: &str, query: &str, limit: usize) -> impl Future<Output = Result<Vec<SearchResult>>> + Send;
-    fn embed_text(&self, text: &str) -> impl Future<Output = Result<Embedding>> + Send;
-    fn clear_collection(&self, collection: &str) -> impl Future<Output = Result<()>> + Send;
-    fn embedding_dimensions(&self) -> usize;
-}
-
-pub trait SearchServiceInterface: Send + Sync {
-    fn search(&self, collection: &str, query: &str, limit: usize) -> impl Future<Output = Result<Vec<SearchResult>>> + Send;
-}
-
+pub trait ContextServiceInterface: Send + Sync { /* ... */ }
+pub trait SearchServiceInterface: Send + Sync { /* ... */ }
 pub trait IndexingServiceInterface: Send + Sync {
-    fn index (action=start)(&self, path: &Path, collection: &str) -> impl Future<Output = Result<IndexingResult>> + Send;
-    fn get_status(&self) -> IndexingStatus;
-    fn clear_collection(&self, collection: &str) -> impl Future<Output = Result<()>> + Send;
+    fn index(&self, path: &Path, collection: &str) -> impl Future<Output = Result<IndexingResult>> + Send;
 }
-
-pub trait ChunkingOrchestratorInterface: Send + Sync {
-    fn process_files(&self, files: &[PathBuf], collection: &str) -> impl Future<Output = Result<Vec<CodeChunk>>> + Send;
-    fn process_file(&self, path: &Path, collection: &str) -> impl Future<Output = Result<Vec<CodeChunk>>> + Send;
-}
+pub trait MemoryServiceInterface: Send + Sync { /* ... */ }
+pub trait AgentSessionServiceInterface: Send + Sync { /* ... */ }
+pub trait ValidationServiceInterface: Send + Sync { /* ... */ }
 ```
 
 ## Services
@@ -50,121 +33,87 @@ Coordinates embedding generation and vector storage operations.
 
 **Location**: `crates/mcb-application/src/use_cases/context_service.rs`
 
-**Constructor**:
-
-```rust
-pub fn new_with_providers(
-    embedding_provider: Arc<dyn EmbeddingProvider>,
-    vector_store_provider: Arc<dyn VectorStoreProvider>,
-) -> Self
-```
-
-**Responsibilities**:
-
-1. Generate embeddings via AI providers
-2. Store and retrieve vectors
-3. Handle batch processing
-4. Collect performance metrics
-
-**Related**: [providers.md](./providers.md), [domain.md](./domain.md)
-
 ### IndexingService
 
-Processes codebases and creates searchable vector indexes.
+Processes codebases and creates searchable indexes.
 
 **Location**: `crates/mcb-application/src/use_cases/indexing_service.rs`
 
-**Responsibilities**:
-
-1. Repository scanning and file discovery
-2. Language detection and AST parsing
-3. Incremental indexing with change detection
-4. Chunk generation and metadata extraction
-
-**Related**: [chunking.md](./chunking.md), [domain.md](./domain.md)
-
 ### SearchService
 
-Executes semantic similarity searches across indexed codebases.
+Executes semantic and hybrid searches.
 
 **Location**: `crates/mcb-application/src/use_cases/search_service.rs`
 
-**Responsibilities**:
+### MemoryService
 
-1. Query processing and embedding generation
-2. Vector similarity search execution
-3. Result ranking and filtering
-4. Response caching and optimization
+Handles memory/observation workflows.
 
-**Related**: [providers.md](./providers.md)
+**Location**: `crates/mcb-application/src/use_cases/memory_service.rs`
 
-### ChunkingOrchestrator
+### AgentSessionService
 
-Coordinates batch chunking operations across files.
+Manages agent session lifecycle operations.
 
-**Location**: `crates/mcb-application/src/domain_services/chunking.rs`
+**Location**: `crates/mcb-application/src/use_cases/agent_session_service.rs`
 
-**Responsibilities**:
+### ValidationService
 
-1. Process multiple files in parallel
-2. Coordinate with language processors
-3. Handle file batching and error recovery
+Runs validation workflows and quality checks.
+
+**Location**: `crates/mcb-application/src/use_cases/validation_service.rs`
 
 ## Integration Points
 
-### AI Providers
-
-1. OpenAI, Ollama, Gemini, VoyageAI, FastEmbed
-2. Intelligent routing with failover
-3. See [providers.md](./providers.md)
-
-### Vector Storage
-
-1. InMemory (development), Encrypted (sensitive data)
-2. See [providers.md](./providers.md)
-
-### MCP Protocol
-
-1. Standardized interface with AI assistants
-2. See [server.md](./server.md)
+- **Providers**: [providers.md](./providers.md)
+- **Domain ports**: [domain.md](./domain.md)
+- **Server handlers**: [server.md](./server.md)
 
 ## Key Exports
 
 ```rust
+pub use use_cases::agent_session_service::AgentSessionServiceImpl;
 pub use use_cases::context_service::ContextServiceImpl;
 pub use use_cases::indexing_service::IndexingServiceImpl;
+pub use use_cases::memory_service::MemoryServiceImpl;
 pub use use_cases::search_service::SearchServiceImpl;
-pub use domain_services::chunking::ChunkingOrchestrator;
+pub use use_cases::validation_service::ValidationServiceImpl;
 ```
 
 ## File Structure
 
 ```text
 crates/mcb-application/src/
+├── constants.rs
+├── decorators/
+│   └── instrumented_embedding.rs
 ├── use_cases/
-│   ├── context_service.rs      # Embedding and vector operations
-│   ├── indexing_service.rs     # Codebase ingestion and processing
-│   ├── search_service.rs       # Query processing and ranking
+│   ├── agent_session_service.rs
+│   ├── context_service.rs
+│   ├── indexing_service.rs
+│   ├── memory_service.rs
+│   ├── search_service.rs
+│   ├── validation_service.rs
 │   └── mod.rs
-├── domain_services/
-│   ├── chunking.rs             # Batch chunking coordination
-│   └── search.rs               # Search domain logic
-└── mod.rs
+└── lib.rs
 
-crates/mcb-application/src/ports/    # Service interface traits
+crates/mcb-domain/src/ports/services/
+├── agent.rs
+├── chunking.rs
+├── context.rs
+├── hash.rs
+├── indexing.rs
+├── memory.rs
+├── project.rs
+├── search.rs
+├── validation.rs
+└── mod.rs
 ```
 
 ## Testing
 
-See `crates/mcb-application/tests/` for service-specific tests.
-
-## Cross-References
-
-- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
-- **Domain Ports**: [domain.md](./domain.md)
-- **Providers**: [providers.md](./providers.md)
-- **Server**: [server.md](./server.md)
+See `crates/mcb-application/tests/` for service tests.
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*
+*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*

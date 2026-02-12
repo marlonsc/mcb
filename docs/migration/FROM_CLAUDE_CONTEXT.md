@@ -5,15 +5,15 @@ This guide helps you migrate from [zilliztech/Claude-context](https://github.com
 ## Why Migrate?
 
 | Feature | Claude-context | mcb |
-|---------|----------------|---------------------|
-|**Runtime**| Node.js 20-23 | Native Rust binary |
-|**MCP Tools**| 4 tools | 4 tools (same interface) |
-|**Hybrid Search**| BM25 + vector | BM25 + vector |
-|**Embedding Providers**| 4 | 6 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) |
-|**Vector Stores**| 2 (Milvus/Zilliz) | 6 (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null) |
-|**Languages**| 13+ | 13 (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin) |
-|**Performance**| Node.js interpreter | Native compiled |
-|**Dependencies**| npm packages | Single binary |
+| --------- | ---------------- | --------------------- |
+| **Runtime** | Node.js 20-23 | Native Rust binary |
+| **MCP Tools** | 4 tools | 4 tools (same interface) |
+| **Hybrid Search** | BM25 + vector | BM25 + vector |
+| **Embedding Providers** | 4 | 6 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) |
+| **Vector Stores** | 2 (Milvus/Zilliz) | 6 (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null) |
+| **Languages** | 13+ | 13 (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin) |
+| **Performance** | Node.js interpreter | Native compiled |
+| **Dependencies** | npm packages | Single binary |
 
 ## Quick Migration
 
@@ -32,7 +32,7 @@ sudo mv mcb /usr/local/bin/
 mcb is fully compatible with Claude-context environment variables:
 
 | Claude-context | mcb | Status |
-|----------------|---------------------|--------|
+| ---------------- | --------------------- | -------- |
 | `OPENAI_API_KEY` | `OPENAI_API_KEY` | Direct support |
 | `VOYAGE_API_KEY` | `VOYAGE_API_KEY` | Direct support |
 | `OLLAMA_BASE_URL` | `OLLAMA_BASE_URL` | Direct support |
@@ -97,7 +97,7 @@ mcb --version
 Both tools provide the same 4 MCP tools with identical interfaces:
 
 | Tool | Description | Compatibility |
-|------|-------------|---------------|
+| ------ | ------------- | --------------- |
 | `index (action=start)` | Index a directory with AST-aware chunking | 100% compatible |
 | `search (resource=code)` | Semantic + BM25 hybrid search | 100% compatible |
 | `index (action=status)` | Check indexing progress | 100% compatible |
@@ -178,7 +178,7 @@ Both tools support the same core languages. mcb v0.1.0 now includes:
 ### Behavioral Differences
 
 | Aspect | Claude-context | mcb |
-|--------|----------------|---------------------|
+| -------- | ---------------- | --------------------- |
 | Config format | convict.js schema | TOML config |
 | Config location | `~/.context/config.json` | `~/.context/config.toml` |
 | Default model (OpenAI) | text-embedding-3-small | text-embedding-3-small |

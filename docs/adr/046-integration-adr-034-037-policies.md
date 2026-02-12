@@ -577,7 +577,7 @@ impl ContextToolHandler {
 **ADR-041-046 form a complete system:**
 
 | ADR | Component | Status |
-|-----|-----------|--------|
+| ----- | ----------- | -------- |
 | **041** | 5-layer architecture | ✅ Proposed |
 | **042** | Knowledge graph | ✅ Proposed |
 | **043** | Hybrid search | ✅ Proposed |

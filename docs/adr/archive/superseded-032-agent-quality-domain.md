@@ -57,7 +57,7 @@ Pain points:
 #### 2. Tool Naming (per ADR-009)
 
 | Prefix | Domain | Count |
-|--------|--------|-------|
+| -------- | -------- | ------- |
 | `agent_` | Session/delegation tracking | 7 |
 | `quality_` | Quality gate enforcement | 3 |
 | `memory_` | Executions, errors, context | 5 |
@@ -84,7 +84,7 @@ project_log_decision    → Log decision
 #### 4. No Legacy Support
 
 | What | Decision |
-|------|----------|
+| ------ | ---------- |
 | .planning/ import | NOT SUPPORTED |
 | .beads/ import | NOT SUPPORTED |
 | bd CLI compatibility | NOT SUPPORTED |
@@ -117,7 +117,7 @@ project_log_decision    → Log decision
 ## Implementation Plan
 
 | Phase | Goal | LOC | Tools |
-|-------|------|-----|-------|
+| ------- | | ------ | --- | ------- |-- |
 | 1 | Agent Sessions | ~700 | 7 `agent_*` |
 | 2 | Executions | ~400 | 2 `memory_*` |
 | 3 | Quality Gates | ~500 | 3 `quality_*` |
@@ -171,7 +171,7 @@ Add MCB features to Beads CLI.
 ### Performance
 
 | Tool | Target |
-|------|--------|
+| ------ | -------- |
 | `agent_start_session` | < 10ms |
 | `quality_check_gate` | < 50ms |
 | `project_get_ready_work` | < 50ms |

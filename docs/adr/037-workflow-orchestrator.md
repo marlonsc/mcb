@@ -26,7 +26,7 @@ implementation_status: Complete
 ADRs 034–036 define three independent providers:
 
 | Provider | ADR | Responsibility |
-|----------|-----|---------------|
+| ---------- | ----- | --------------- |
 | `WorkflowEngine` | 034 | FSM state transitions, persistence, history |
 | `ContextScoutProvider` | 035 | Git/tracker/config state discovery |
 | `PolicyGuardProvider` | 036 | Policy evaluation before transitions |
@@ -71,7 +71,7 @@ Project (scope boundary)
 #### Entity Definitions
 
 | Tier | Definition | Source | Responsibility |
-|------|-----------|--------|-----------------|
+| ------ | ----------- | -------- | ----------------- |
 | **Project** | Top-level scope boundary | User-provided | Contains all work, configurations, and history |
 | **Plan** | Multi-phase roadmap with dependencies | Beads issue tracker | Organizes work into logical phases |
 | **Task** | Atomic work unit (feature, bug, refactor) | Beads task/issue | Single unit of work with clear acceptance criteria |
@@ -1590,7 +1590,7 @@ fn default_channel_capacity() -> usize { 256 }
 ### 12. Module Locations
 
 | Crate | Path | Content |
-|-------|------|---------|
+| ------- | ------ | --------- |
 | `mcb-application` | `src/services/workflow_service.rs` | `WorkflowService`, `WorkflowEvent`, `WorkflowStatus` |
 | `mcb-application` | `src/services/session_manager.rs` | `SessionManager` |
 | `mcb-server` | `src/handlers/workflow.rs` | `WorkflowArgs`, `WorkflowAction`, `handle_workflow()` |
@@ -1672,7 +1672,7 @@ fn default_channel_capacity() -> usize { 256 }
 ### Performance Targets
 
 | Operation | Target |
-|-----------|--------|
+| ----------- | -------- |
 | `start_session()` | < 50ms (create + discover + evaluate + transition) |
 | `transition()` (guarded) | < 40ms (discover + evaluate + transition) |
 | `status()` | < 35ms (state read + discover) |

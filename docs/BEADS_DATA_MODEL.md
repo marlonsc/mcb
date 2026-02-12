@@ -43,7 +43,7 @@ Beads is an AI-native issue tracking system designed to live in Git repositories
 ### 2.1 Core Issue Fields (SQLite `issues` Table)
 
 | Field | Type | Constraints | Description |
-|-------|------|-------------|-------------|
+| ------- | ------ | ------------- | ------------- |
 | `id` | TEXT | PRIMARY KEY | Issue ID (e.g., `mcb-123`, `bd-xyz`) |
 | `content_hash` | TEXT | | Hash of issue content for change detection |
 | `title` | TEXT | NOT NULL, ≤500 chars | Issue title |

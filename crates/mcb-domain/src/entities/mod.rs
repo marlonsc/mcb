@@ -7,7 +7,7 @@
 //! ## Entities
 //!
 //! | Entity | Description |
-//! |--------|-------------|
+//! | -------- | ------------- |
 //! | [`CodeChunk`] | Core entity representing a semantically meaningful code segment |
 //! | [`CodebaseSnapshot`] | Entity representing a complete codebase state at a point in time |
 //! | [`FileSnapshot`] | Entity representing a file's state for change tracking |

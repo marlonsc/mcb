@@ -66,7 +66,7 @@ Implement a Hooks Subsystem that**maximally reuses existing infrastructure**:
 ### Component Reuse Strategy
 
 | Existing Component | Hooks Reuse |
-|-------------------|-------------|
+| ------------------- | ------------- |
 | `SystemEvent` enum | Extend with `HookExecuted`, `HookBlocked` events |
 | `EventBus` | Publish hook events for monitoring/admin UI |
 | `ProviderRegistry` pattern | `HookProviderRegistry` for hook processors |
@@ -1108,7 +1108,7 @@ fn default_cache_ttl() -> u64 { 300 }
 ### New Files (minimal)
 
 | File | LOC | Purpose |
-|------|-----|---------|
+| ------ | ----- | --------- |
 | `crates/mcb-domain/src/hooks.rs` | ~120 | Hook domain types |
 | `crates/mcb-application/src/ports/providers/hooks.rs` | ~30 | HookProcessor trait |
 | `crates/mcb-infrastructure/src/di/hooks_registry.rs` | ~50 | Registry (pattern copy) |
@@ -1123,7 +1123,7 @@ fn default_cache_ttl() -> u64 { 300 }
 ### Modified Files
 
 | File | Change |
-|------|--------|
+| ------ | -------- |
 | `crates/mcb-domain/src/error.rs` | Add `Hook` variant |
 | `crates/mcb-infrastructure/src/events/mod.rs` | Add 3 hook events |
 | `crates/mcb-domain/src/mod.rs` | Export hooks module |

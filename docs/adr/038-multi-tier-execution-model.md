@@ -246,7 +246,7 @@ OR at any point:
 **State Transitions** (from ADR-034):
 
 | From | To | Trigger | Policy Checks | Compensation |
-|------|----|---------|----|---|
+| ------ | ---- | --------- | ---- | --- |
 | Created | Initializing | auto | — | — |
 | Initializing | Ready | context_discovered | — | — |
 | Ready | Planning | operator_ready | WIP limit, phase open | — |
@@ -593,7 +593,7 @@ Session A (task_id = beads-123)
   │  └─ Modifies: src/foo.rs, tests/foo_test.rs
   │
   ├─ Agent 2 (Documenter)
-  │  └─ Modifies: docs/foo.md, README.md
+  │  └─ Modifies: docs/modules/domain.md, README.md
   │
   └─ Agent 3 (Tester)
      └─ Runs: make test (reads both previous modifications)
@@ -618,7 +618,7 @@ Operator processes decisions one at a time (implicit bottleneck).
 **Concurrency Model Summary**:
 
 | Level | Max Concurrent | Bounded By | Lock Required |
-|-------|---|---|---|
+| ------- | --- | --- | --- |
 | Project | ∞ | System resources | No |
 | Plan | ∞ | Task dependencies | No |
 | Task | 1 (exclusive) | Design | Per-task Mutex |

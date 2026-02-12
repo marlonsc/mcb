@@ -37,7 +37,7 @@
 //! The most important types for users:
 //!
 //! | Type | Description |
-//! |------|-------------|
+//! | ------ | ------------- |
 //! | [`McpServer`] | Main server struct |
 //! | [`McpServerBuilder`] | Builder for server configuration |
 //!

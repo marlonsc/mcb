@@ -231,7 +231,7 @@ pub fn browse_events(name: &str) -> EventStream![Event + '_]
 ## Files to Create (v0.2.0)
 
 | File | Purpose |
-|------|---------|
+| ------ | --------- |
 | `crates/mcb-server/src/admin/web/templates/browse_tree.html` | Tree view component |
 | `crates/mcb-server/src/admin/web/templates/browse_code.html` | Enhanced code view |
 | `crates/mcb-server/src/admin/web/templates/browse_search.html` | Search results page |
@@ -242,7 +242,7 @@ pub fn browse_events(name: &str) -> EventStream![Event + '_]
 ## Files to Modify (v0.2.0)
 
 | File | Change |
-|------|--------|
+| ------ | -------- |
 | `crates/mcb-server/src/admin/browse_handlers.rs` | Add tree and search endpoints |
 | `crates/mcb-server/src/admin/routes.rs` | Mount new routes |
 | `crates/mcb-server/src/admin/web/handlers.rs` | Add page handlers |
@@ -252,7 +252,7 @@ pub fn browse_events(name: &str) -> EventStream![Event + '_]
 ## Success Metrics
 
 | Metric | v0.1.2 | Target v0.2.0 |
-|--------|--------|---------------|
+| -------- | -------- | --------------- |
 | File navigation | List view | Tree view |
 | Code display | Basic Prism.js | Tree-sitter + chunks |
 | Search integration | None | Inline highlighting |

@@ -6,7 +6,7 @@
 //! ## Architecture
 //!
 //! | Component | Description |
-//! |-----------|-------------|
+//! | ----------- | ------------- |
 //! | [`entities`] | Core business entities with identity |
 //! | [`value_objects`] | Immutable value objects |
 //! | [`ports`] | External provider port interfaces |

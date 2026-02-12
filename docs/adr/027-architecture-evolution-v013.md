@@ -33,7 +33,7 @@ MCB v0.1.2 established a SOLID Clean Architecture foundation with:
 Analysis of the [kamu-cli](https://github.com/kamu-data/kamu-cli) production codebase revealed opportunities to evolve MCB without rewriting:
 
 | Aspect | MCB Current | kamu-cli Pattern | Opportunity |
-|--------|-------------|------------------|-------------|
+| -------- | ------------- | ------------------ | ------------- |
 | Module Organization | By layer (entities/, ports/, services/) | By bounded context (workspace/, indexing/, search/) | Feature-centric navigation |
 | Engine Contracts | Implicit via providers | Explicit engine traits | Plugin ecosystem |
 | Indexing | Full re-index | Incremental with checkpoints | 90%+ time reduction |

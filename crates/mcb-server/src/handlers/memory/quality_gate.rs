@@ -77,7 +77,9 @@ pub async fn store_quality_gate(
         .project_id
         .clone()
         .or_else(|| MemoryHelpers::get_str(data, "project_id"))
-        .unwrap_or_else(|| "default".to_string());
+        .ok_or_else(|| {
+            McpError::invalid_params("project_id is required for quality gate store", None)
+        })?;
 
     match memory_service
         .store_observation(

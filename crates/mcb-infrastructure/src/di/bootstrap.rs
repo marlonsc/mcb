@@ -265,7 +265,11 @@ impl AppContext {
         let project_id = std::env::current_dir()
             .ok()
             .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
-            .unwrap_or_else(|| "default".to_string());
+            .ok_or_else(|| {
+                mcb_domain::error::Error::config(
+                    "cannot determine project ID from current directory",
+                )
+            })?;
 
         let memory_repository = self.memory_repository();
         let agent_repository = self.agent_repository();

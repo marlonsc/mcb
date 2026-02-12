@@ -37,8 +37,8 @@ Technical architecture documentation following C4 model principles.
 - [ADR 001: Modular Crates Architecture](adr/001-modular-crates-architecture.md)
 - [ADR 002: Async-First Architecture](adr/002-async-first-architecture.md)
 - [ADR 003: Unified Provider Architecture](adr/003-unified-provider-architecture.md)
-- [ADR 012: Two-Layer DI Strategy](adr/012-di-strategy-two-layer-approach.md) - v0.1.2
-- [ADR 013: Clean Architecture Crate Separation](adr/013-clean-architecture-crate-separation.md) - v0.1.2
+- [ADR 012: Two-Layer DI Strategy](adr/012-di-strategy-two-layer-approach.md) - historical
+- [ADR 013: Clean Architecture Crate Separation](adr/013-clean-architecture-crate-separation.md) - historical
 - [ADR 024: Simplified Dependency Injection](adr/024-simplified-dependency-injection.md) → ADR-029
 - [ADR 029: Hexagonal Architecture with dill](adr/029-hexagonal-architecture-dill.md) - DI IoC
 - [ADR 030: Multi-Provider Strategy](adr/030-multi-provider-strategy.md)
@@ -104,12 +104,12 @@ make adr-new
 ## 📊 Documentation Quality
 
 | Aspect | Status | Description |
-|--------|--------|-------------|
-|**Automation**| ✅ Automated | Fully automated generation and validation |
-|**Consistency**| ✅ Validated | Cross-references and structure validation |
-|**Architecture**| ✅ C4 Model | Structured architectural documentation |
-|**Diagrams**| ✅ Generated | PlantUML-generated architecture diagrams |
-|**Validation**| ✅ CI/CD | Automated validation in CI pipeline |
+| -------- | -------- | ------------- |
+| **Automation** | ✅ Automated | Fully automated generation and validation |
+| **Consistency** | ✅ Validated | Cross-references and structure validation |
+| **Architecture** | ✅ C4 Model | Structured architectural documentation |
+| **Diagrams** | ✅ Generated | PlantUML-generated architecture diagrams |
+| **Validation** | ✅ CI/CD | Automated validation in CI pipeline |
 
 ## 🎯 Documentation Principles
 

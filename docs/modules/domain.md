@@ -4,7 +4,7 @@
 **Crate**: `mcb-domain`
 **Files**: 25+
 **Lines of Code**: ~2,500
-**Traits**: 22 (8 provider ports + 8 repository ports + 6 service ports)
+**Traits**: 41 (13 provider ports + 8 repository ports + 9 service ports + 8 infrastructure ports + 3 top-level ports)
 **Structs**: 20+
 **Enums**: 8
 
@@ -16,12 +16,12 @@ The domain module defines the core business entities, value objects, and reposit
 
 MCB delivers semantic code search by combining vector embeddings, git context, agent session tracking, and MCP tooling. Organization is the root tenant boundary.
 
-> **Note**: Port traits (EmbeddingProvider, VectorStoreProvider, etc.) are defined in `mcb-application/src/ports/`, not in mcb-domain. The domain layer contains only entities, value objects, and repository interfaces.
+> **Note**: Port traits (EmbeddingProvider, VectorStoreProvider, etc.) are defined in `mcb-domain/src/ports/`. The domain layer includes entities, value objects, and all port trait boundaries.
 
 ## Core Entities (`entities/`)
 
 | Entity | File | Purpose |
-|--------|------|---------|
+| -------- | ------ | --------- |
 | **CodeChunk** | `code_chunk.rs` | Atomic unit of semantic indexing — AST-parsed code segment with metadata |
 | **Codebase** | `codebase.rs` | Repository metadata container |
 | **Project** | `project.rs` | Root aggregate — registered codebase with type detection (Cargo, npm, Python, Go, Maven) |
@@ -41,7 +41,7 @@ MCB delivers semantic code search by combining vector embeddings, git context, a
 ## Value Objects (`value_objects/`)
 
 | Value Object | File | Purpose |
-|-------------|------|---------|
+| ------------- | ------ | --------- |
 | **Embedding** | `embedding.rs` | Semantic vector (`Vec<f32>`) with model name and dimensions |
 | **SearchResult** | `search.rs` | Ranked result with score (0.0–1.0), file path, content snippet |
 | **Strong-Typed IDs** | `ids.rs` | `CollectionId`, `ChunkId`, `SessionId`, `OrgId`, etc. |
@@ -54,7 +54,7 @@ MCB delivers semantic code search by combining vector embeddings, git context, a
 ## Repository Interfaces (`repositories/`)
 
 | Port | File | Purpose |
-|------|------|---------|
+| ------ | ------ | --------- |
 | `ChunkRepository` | `chunk_repository.rs` | Code chunk CRUD (`Send + Sync`; DI via dill, ADR-029) |
 | `SearchRepository` | `search_repository.rs` | Search operations (`Send + Sync`; DI via dill, ADR-029) |
 
@@ -72,10 +72,10 @@ Events published through the `EventPublisher` interface:
 
 ## Port Interfaces (Domain Boundaries)
 
-### Provider Ports (`mcb-application/src/ports/` — External Services)
+### Provider Ports (`mcb-domain/src/ports/providers/` — External Services)
 
 | Port | Operations | Implementations |
-|------|-----------|----------------|
+| ------ | ----------- | ---------------- |
 | `EmbeddingProvider` | `embed`, `embed_batch`, `dimensions`, `health_check` | OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic |
 | `VectorStoreProvider` | `create_collection`, `insert`, `search_similar`, `delete` | EdgeVec, Milvus, Qdrant, Pinecone, Encrypted |
 | `HybridSearchProvider` | BM25 lexical + semantic combined search | Composite implementation |
@@ -88,7 +88,7 @@ Events published through the `EventPublisher` interface:
 ### Repository Ports (`mcb-domain` — Persistence)
 
 | Port | Purpose | Implementation Location |
-|------|---------|------------------------|
+| ------ | --------- | ------------------------ |
 | `ChunkRepository` | Code chunk CRUD | `mcb-providers/` |
 | `MemoryRepository` | Observation storage + FTS search | `mcb-providers/src/database/sqlite/` |
 | `AgentRepository` | Agent session persistence + query | `mcb-providers/src/database/sqlite/` |
@@ -98,10 +98,10 @@ Events published through the `EventPublisher` interface:
 | `IssueEntityRepository` | Issue tracking persistence | `mcb-providers/src/database/sqlite/` |
 | `OrgEntityRepository` | Multi-tenant org data | `mcb-providers/src/database/sqlite/` |
 
-### Service Ports (`mcb-application/src/` — Business Logic)
+### Service Ports (`mcb-domain/src/ports/services/` — Business Logic)
 
 | Port | Purpose |
-|------|---------|
+| ------ | --------- |
 | `IndexingServiceInterface` | Codebase indexing orchestration |
 | `SearchServiceInterface` | Semantic search with filters |
 | `ContextServiceInterface` | Context aggregation |
@@ -112,7 +112,7 @@ Events published through the `EventPublisher` interface:
 ## Key Enums & State Machines
 
 | Enum | Values |
-|------|--------|
+| ------ | -------- |
 | `ProjectType` | Cargo, Npm, Python, Go, Maven |
 | `VcsType` | Git, Mercurial, Svn |
 | `ObservationType` | Code, Decision, Context, Error, Summary, Execution, QualityGate |

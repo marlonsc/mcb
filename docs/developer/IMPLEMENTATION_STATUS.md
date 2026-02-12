@@ -9,7 +9,7 @@
 ## Legend
 
 | Status | Meaning |
-|--------|---------|
+| -------- | --------- |
 | **Verified** | Files exist AND tests pass |
 | **Exists** | Files created but functionality NOT verified |
 | **Partial** | Some expected files exist, others missing |
@@ -21,12 +21,12 @@
 
 ## mcb-validate Implementation Tracking
 
-**Plan Reference**: `~/.claude/plans/snoopy-rolling-catmull.md`
+**Plan Reference**: `.sisyphus/plans/`
 
 ### Phase Status Summary
 
 | Phase | Description | Files | Integration Test | Status |
-|-------|-------------|-------|------------------|--------|
+| ------- | ------------- | ------- | ------------------ | -------- |
 | 1 | Linters | Exists | 17/17 pass | **Verified** ✅ |
 | 2 | AST Queries | Exists | 26/26 pass | **Verified** ✅ |
 | 3 | Dual Rule Engine | Exists | 30/30 pass | **Verified** ✅ |
@@ -50,7 +50,7 @@
 **Actual Files**:
 
 | File | Exists | Size |
-|------|--------|------|
+| ------ | -------- | ------ |
 | `src/linters/mod.rs` | Yes | 12,063 bytes |
 | `src/linters/clippy.rs` | No | - |
 | `src/linters/ruff.rs` | No | - |
@@ -71,7 +71,7 @@
 **Actual Files**:
 
 | File | Exists | Size |
-|------|--------|------|
+| ------ | -------- | ------ |
 | `src/ast/mod.rs` | Yes | 4,478 bytes |
 | `src/ast/query.rs` | Yes | 9,716 bytes |
 | `src/ast/decoder.rs` | Yes | 7,718 bytes |
@@ -90,7 +90,7 @@
 **Actual Files**:
 
 | File | Exists | Size |
-|------|--------|------|
+| ------ | -------- | ------ |
 | `src/engines/mod.rs` | Yes | 1,179 bytes |
 | `src/engines/expression_engine.rs` | Yes | 10,956 bytes |
 | `src/engines/rete_engine.rs` | Yes | 20,840 bytes |
@@ -115,7 +115,7 @@
 **Actual Files**:
 
 | File | Exists | Size |
-|------|--------|------|
+| ------ | -------- | ------ |
 | `src/metrics/mod.rs` | Yes | ~600 lines |
 | `src/metrics/analyzer.rs` | Yes | ~676 lines |
 | `src/metrics/rca_analyzer.rs` | Yes | Feature-gated (enabled by default) |
@@ -126,7 +126,7 @@
 **RCA Metrics Available** (via Rust-code-analysis fork):
 
 | Metric | Description |
-|--------|-------------|
+| -------- | ------------- |
 | Cyclomatic Complexity | Number of linearly independent paths |
 | Cognitive Complexity | Difficulty to understand code |
 | Halstead Volume | Size of implementation |
@@ -155,7 +155,7 @@
 **Actual Files**:
 
 | File | Exists | Size | Description |
-|------|--------|------|-------------|
+| ------ | -------- | ------ | ------------- |
 | `src/duplication/mod.rs` | Yes | ~500 lines | DuplicationViolation, DuplicationAnalyzer facade |
 | `src/duplication/thresholds.rs` | Yes | ~170 lines | DuplicationType, DuplicationThresholds |
 | `src/duplication/fingerprint.rs` | Yes | ~300 lines | Rabin-Karp rolling hash, TokenFingerprinter |
@@ -168,7 +168,7 @@
 **Clone Types Supported**:
 
 | Type | Rule ID | Description | Similarity |
-|------|---------|-------------|------------|
+| ------ | --------- | ------------- | ------------ |
 | Type 1 | DUP001 | Exact clones (100% identical) | 1.0 |
 | Type 2 | DUP002 | Renamed clones (identifiers changed) | 0.95+ |
 | Type 3 | DUP003 | Gapped clones (small modifications) | 0.80+ |
@@ -185,7 +185,7 @@
 **Actual Files**:
 
 | File | Exists | Size | Description |
-|------|--------|------|-------------|
+| ------ | -------- | ------ | ------------- |
 | `src/clean_architecture.rs` | Yes | 584 lines | CleanArchitectureValidator (CA001-CA006 violations) |
 | `tests/integration_architecture.rs` | Yes | ~500 lines | 11 integration tests for architecture validation |
 
@@ -194,7 +194,7 @@
 **Violation Types Implemented**:
 
 | ID | Type | Description |
-|----|------|-------------|
+| ---- | ------ | ------------- |
 | CA001 | DomainContainsImplementation | Domain layer has implementation logic |
 | CA002 | HandlerCreatesService | Handler creates service directly (DI violation) |
 | CA003 | PortMissingComponentDerive | Port impl missing DI registration |
@@ -213,7 +213,7 @@
 **Actual Files**:
 
 | Component | Status | Details |
-|-----------|--------|---------|
+| ----------- | -------- | --------- |
 | CLI (validate command) | Exists | In lib.rs with ValidatorRegistry |
 | Benchmarks | Exists | `benches/validation_benchmark.rs` - 7 benchmark groups |
 | `tests/integration_full.rs` | Exists | 14 integration tests for full pipeline |
@@ -221,7 +221,7 @@
 **Benchmark Groups**:
 
 | Group | Description |
-|-------|-------------|
+| ------- | | ------------- |
 | unwrap_detection | UnwrapDetector performance |
 | tokenization | Source code tokenization |
 | duplication_analysis | DuplicationAnalyzer performance |
@@ -234,12 +234,12 @@
 
 ## v0.1.2 Infrastructure Tracking
 
-**Plan Reference**: `~/.claude/plans/logical-rolling-glade.md`
+**Plan Reference**: `.sisyphus/plans/`
 
 ### Phase Status Summary
 
 | Phase | Description | Indicator | Current State |
-|-------|-------------|-----------|---------------|
+| ------- | | ------------- | ----------- | --------------- |
 | 1 | ADR Alignment | ADR-023 status | **Complete** ✅ |
 | 2 | mcb-validate Evolution | migration/*.yml | **Complete** ✅ |
 | 3.1 | Linkme Cleanup | inventory in Cargo.toml | **Complete** ✅ |
@@ -251,7 +251,7 @@
 ### Phase 1: ADR Alignment - COMPLETE ✅
 
 | ADR | Expected Status | Actual Status |
-|-----|-----------------|---------------|
+| ----- | ----------------- | --------------- |
 | ADR-023 (Linkme) | Accepted | **Accepted** |
 | ADR-024 (Shaku → dill) | Accepted | **Accepted** |
 | ADR-025 (Figment) | Proposed | **Proposed** |
@@ -262,7 +262,7 @@
 **Migration Rules Created** (12 total):
 
 | Rule File | Exists |
-|-----------|--------|
+| ----------- | -------- |
 | `rules/migration/inventory-migration.yml` | Yes |
 | `rules/migration/linkme-slice-declaration.yml` | Yes |
 | `rules/migration/linkme-slice-usage.yml` | Yes |
@@ -281,7 +281,7 @@
 The Shaku → manual DI migration was completed via handle-based pattern with linkme registry:
 
 | Component | Status |
-|-----------|--------|
+| ----------- | -------- |
 | shaku dependencies | Removed |
 | Manual DI handles | Implemented in `mcb-infrastructure/src/di/handles.rs` |
 | Provider registry | Linkme-based auto-registration |
@@ -351,7 +351,7 @@ This document was created by:
 ### Summary
 
 | Validator | Violations | Status |
-|-----------|------------|--------|
+| ----------- | ------------ | -------- |
 | Legacy Validators | 0 | **PASSED** |
 | YAML Rules | 17 | Warnings |
 
@@ -360,7 +360,7 @@ This document was created by:
 **No violations detected** in these categories:
 
 | Category | Count |
-|----------|-------|
+| ---------- | ------- | |
 | Dependency | 0 |
 | Quality | 0 |
 | Patterns | 0 |
@@ -380,7 +380,7 @@ This document was created by:
 ### YAML Rule Results (Non-blocking warnings)
 
 | Category | Count | Description |
-|----------|-------|-------------|
+| ---------- | ------- | | ------------- |
 | Organization (VIS001) | 10 | Internal helpers with `pub` visibility (consider `pub(crate)`) |
 | Architecture (CA004) | 5 | Entities missing id/uuid field |
 | Architecture (LAYER002) | 2 | Circular dependency warnings |
@@ -392,7 +392,7 @@ This document was created by:
 ## Document History
 
 | Version | Date | Changes |
-|---------|------|---------|
+| --------- | ------ | --------- |
 | 1.0 | 2026-01-18 | Initial creation with full traceability audit |
 | 2.0 | 2026-01-19 | Updated Phases 4-7 status, added duplication module, fixed infrastructure tracking |
 | 3.0 | 2026-01-19 | Phase 6 (Architecture) and Phase 7 (Integration) now VERIFIED - integration tests and benchmarks complete |

@@ -110,7 +110,7 @@ Poem (modern async web framework) offers a programmatic approach:
 ### Framework Comparison
 
 | Aspect | Axum (Current) | Rocket (Chosen) | Poem (Alternative) |
-|--------|----------------|-----------------|-------------------|
+| -------- | ---------------- | ----------------- | ------------------- |
 | **Routing Style** | Programmatic | Attribute-based | Programmatic |
 | **Learning Curve** | Medium | Low | Medium |
 | **Ecosystem Maturity** | High | Very High | Medium |

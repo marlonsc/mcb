@@ -9,7 +9,7 @@
 ## Timeline
 
 | Week | Dates | Focus | Deliverables |
-|------|-------|-------|--------------|
+| ------ | ------- | ------- | -------------- |
 | 1 | Feb 17-23 | Context Architecture & Graph | ADR-041, ADR-042, CodeGraph implementation |
 | 2 | Feb 24-Mar 2 | Hybrid Search & Versioning | ADR-043, ADR-044, HybridSearchEngine, ContextSnapshot |
 | 3 | Mar 3-9 | Integration & Policies | ADR-045, ADR-046, MCP tools, policy enforcement |
