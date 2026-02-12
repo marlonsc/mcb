@@ -171,7 +171,7 @@ fn apply_filter_pipeline(
     valid_sort_fields: &HashSet<String>,
 ) -> FilteredResult {
     // Search
-    if let Some(ref q) = params.search.as_ref().filter(|q| !q.is_empty()) {
+    if let Some(q) = params.search.as_ref().filter(|q| !q.is_empty()) {
         let q_lower = q.to_lowercase();
         records.retain(|rec| {
             if let Value::Object(map) = rec {
