@@ -19,7 +19,9 @@ use mcb_domain::ports::repositories::{
 use serde_json::Value;
 
 use super::handlers::AdminState;
-use super::web::filter::{FilterParams, FilteredResult, SortOrder};
+use super::web::filter::{
+    FilterParams, FilteredResult, SortOrder, parse_iso_date_to_epoch, parse_iso_date_to_epoch_end,
+};
 
 /// Async CRUD operations that map entity slugs to domain service calls.
 #[async_trait]
@@ -173,8 +175,23 @@ fn apply_filter_pipeline(
         }
     }
 
-    // Date-range filter
-    if params.date_from.is_some() || params.date_to.is_some() {
+    // Date-range filter — parse ISO strings to epoch for comparison
+    let epoch_from = params.date_from.as_deref().and_then(|s| {
+        if s.is_empty() {
+            None
+        } else {
+            parse_iso_date_to_epoch(s)
+        }
+    });
+    let epoch_to = params.date_to.as_deref().and_then(|s| {
+        if s.is_empty() {
+            None
+        } else {
+            parse_iso_date_to_epoch_end(s)
+        }
+    });
+
+    if epoch_from.is_some() || epoch_to.is_some() {
         records.retain(|rec| {
             if let Value::Object(map) = rec {
                 map.iter()
@@ -185,8 +202,8 @@ fn apply_filter_pipeline(
                             _ => None,
                         };
                         if let Some(ts) = ts {
-                            let after = params.date_from.map_or(true, |from| ts >= from);
-                            let before = params.date_to.map_or(true, |to| ts <= to);
+                            let after = epoch_from.map_or(true, |from| ts >= from);
+                            let before = epoch_to.map_or(true, |to| ts <= to);
                             after && before
                         } else {
                             true

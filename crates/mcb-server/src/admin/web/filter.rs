@@ -46,10 +46,10 @@ pub struct FilterParams {
     /// Records per page.
     #[field(default = 20)]
     pub per_page: usize,
-    /// Unix-epoch lower bound for timestamp filtering.
-    pub date_from: Option<i64>,
-    /// Unix-epoch upper bound for timestamp filtering.
-    pub date_to: Option<i64>,
+    /// ISO date string lower bound for timestamp filtering (e.g. "2026-01-15").
+    pub date_from: Option<String>,
+    /// ISO date string upper bound for timestamp filtering (e.g. "2026-02-11").
+    pub date_to: Option<String>,
 }
 
 impl FilterParams {
@@ -67,6 +67,23 @@ impl FilterParams {
             date_to: None,
         }
     }
+}
+
+/// Parse an ISO date string ("YYYY-MM-DD") to a Unix epoch timestamp (start of day UTC).
+/// Returns `None` if the string is empty or unparseable.
+pub fn parse_iso_date_to_epoch(date_str: &str) -> Option<i64> {
+    chrono::NaiveDate::parse_from_str(date_str.trim(), "%Y-%m-%d")
+        .ok()
+        .and_then(|d| d.and_hms_opt(0, 0, 0))
+        .map(|dt| dt.and_utc().timestamp())
+}
+
+/// Parse an ISO date string to end-of-day epoch (23:59:59 UTC).
+pub fn parse_iso_date_to_epoch_end(date_str: &str) -> Option<i64> {
+    chrono::NaiveDate::parse_from_str(date_str.trim(), "%Y-%m-%d")
+        .ok()
+        .and_then(|d| d.and_hms_opt(23, 59, 59))
+        .map(|dt| dt.and_utc().timestamp())
 }
 
 /// Paginated result returned by `EntityCrudAdapter::list_filtered`.
@@ -99,6 +116,32 @@ mod tests {
         assert!(params.parent_id.is_none());
         assert!(params.date_from.is_none());
         assert!(params.date_to.is_none());
+    }
+
+    #[test]
+    fn test_parse_iso_date_to_epoch() {
+        let epoch = super::parse_iso_date_to_epoch("2026-01-15");
+        assert!(epoch.is_some());
+        let ts = epoch.unwrap();
+        assert!(ts > 0);
+        // 2026-01-15 00:00:00 UTC
+        assert_eq!(ts, 1768435200);
+    }
+
+    #[test]
+    fn test_parse_iso_date_to_epoch_end() {
+        let epoch = super::parse_iso_date_to_epoch_end("2026-01-15");
+        assert!(epoch.is_some());
+        let ts = epoch.unwrap();
+        // 2026-01-15 23:59:59 UTC
+        assert_eq!(ts, 1768521599);
+    }
+
+    #[test]
+    fn test_parse_iso_date_invalid() {
+        assert!(super::parse_iso_date_to_epoch("not-a-date").is_none());
+        assert!(super::parse_iso_date_to_epoch("").is_none());
+        assert!(super::parse_iso_date_to_epoch_end("xyz").is_none());
     }
 
     #[test]
