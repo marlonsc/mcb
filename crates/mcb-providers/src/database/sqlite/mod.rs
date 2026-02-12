@@ -8,7 +8,6 @@
 
 mod agent_repository;
 mod ddl;
-#[allow(dead_code)]
 pub(crate) mod ensure_parent;
 pub mod executor;
 mod file_hash_repository;

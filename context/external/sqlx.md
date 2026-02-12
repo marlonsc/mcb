@@ -1,4 +1,4 @@
-# SQLx in MCB: SQLite Persistence, Repository Boundaries, and Query Discipline
+# sqlx
 
 Last updated: 2026-02-12  
 Scope: SQLx usage in MCB, repository execution patterns, operational risks, and validation guidance.  
@@ -6,7 +6,7 @@ Cross-reference: `context/external/tokio.md`, `context/external/thiserror.md`, `
 
 ---
 
-## 1. Why SQLx Is Critical Here
+## Executive Summary
 
 SQLx is the persistence engine for core MCB data paths, especially SQLite-backed workflows:
 
@@ -19,16 +19,31 @@ In this repository, SQLx is not just a data access library. It is part of the re
 
 ---
 
-## 2. Architecture Placement and Boundaries
+## Context7 + External Research
 
-### 2.1 Where SQLx is allowed
+Context7 ID: `/websites/rs_sqlx_sqlx`
+
+Official documentation:
+- https://docs.rs/sqlx
+- https://docs.rs/sqlx/latest/sqlx/sqlite/
+
+Upstream repository:
+- https://github.com/launchbadge/sqlx
+
+---
+
+## Actual MCB Usage (Current Source of Truth)
+
+### Architecture Placement and Boundaries
+
+#### Where SQLx is allowed
 
 SQLx usage is intentionally concentrated in infrastructure/provider layers:
 
 - `crates/mcb-providers/src/database/sqlite/*`
 - selected infrastructure test or bootstrap paths
 
-### 2.2 Where SQLx is not supposed to leak
+#### Where SQLx is not supposed to leak
 
 Domain and application contract layers should not expose SQLx-specific error or row types.
 
@@ -39,11 +54,7 @@ Related evidence:
 
 This boundary is a clean-architecture requirement, not stylistic preference.
 
----
-
-## 3. Real SQLx Usage Patterns in MCB
-
-### 3.1 Connection pool lifecycle
+### Connection pool lifecycle
 
 Primary anchor:
 
@@ -55,7 +66,7 @@ Observed behaviors:
 - schema application during initialization
 - reconnect/error-path handling around initialization failures
 
-### 3.2 Executor wrapper pattern
+### Executor wrapper pattern
 
 Primary anchor:
 
@@ -69,7 +80,7 @@ Observed behaviors:
 
 This wrapper keeps repositories consistent and reduces direct SQLx API sprawl.
 
-### 3.3 Repository implementation pattern
+### Repository implementation pattern
 
 Representative repositories:
 
@@ -87,7 +98,7 @@ Common shape:
 3. map rows into domain entities/value objects
 4. convert lower-level failures into domain/infrastructure error taxonomy
 
-### 3.4 SQLite-specific operational behavior
+### SQLite-specific operational behavior
 
 Observed operational touchpoints:
 
@@ -97,11 +108,9 @@ Observed operational touchpoints:
 
 These are high-impact areas for release reliability.
 
----
+### Query and Transaction Discipline
 
-## 4. Query and Transaction Discipline
-
-### 4.1 Parameterization is mandatory
+#### Parameterization is mandatory
 
 All dynamic values should flow through bind/param APIs or executor param objects.
 
@@ -111,7 +120,7 @@ Rationale:
 - improve consistency and readability
 - make query assembly easier to audit
 
-### 4.2 Keep transactions explicit and short
+#### Keep transactions explicit and short
 
 Even in SQLite, long transactions can serialize write behavior and degrade concurrency.
 
@@ -121,7 +130,7 @@ Policy:
 - avoid embedding non-DB async work inside transaction window
 - fail fast and rollback quickly on error paths
 
-### 4.3 Avoid query-shape drift across repositories
+#### Avoid query-shape drift across repositories
 
 Repository methods with similar semantics should preserve shape conventions:
 
@@ -132,9 +141,7 @@ Repository methods with similar semantics should preserve shape conventions:
 
 Inconsistency here creates subtle API divergence at higher layers.
 
----
-
-## 5. Error Mapping and Boundary Hygiene
+### Error Mapping and Boundary Hygiene
 
 SQLx errors should be transformed near repository boundaries.
 
@@ -150,9 +157,19 @@ Cross-reference:
 
 ---
 
-## 6. Known Risks and Failure Modes
+## ADR Alignment (Critical)
 
-### 6.1 Runtime-only query validation risk
+This document aligns with the following Architecture Decision Records:
+
+- **ADR-009**: Database abstraction and repository patterns
+- **ADR-021**: Error handling and boundary hygiene
+- **ADR-034**: Query discipline and transaction management
+
+---
+
+## Common Pitfalls
+
+### Runtime-only query validation risk
 
 Current style uses runtime query strings heavily (`query`/`query_as` style through wrappers).
 
@@ -165,7 +182,7 @@ Mitigation:
 - strong integration test coverage per repository path
 - optional targeted adoption of compile-time checked macros where practical
 
-### 6.2 SQLite write contention under load
+### SQLite write contention under load
 
 Risk:
 
@@ -177,7 +194,7 @@ Mitigation:
 - keep transaction scopes short
 - separate read/write heavy workflows when possible
 
-### 6.3 Schema drift between code and runtime DB
+### Schema drift between code and runtime DB
 
 Risk:
 
@@ -188,7 +205,7 @@ Mitigation:
 - deterministic schema application order
 - migration verification in CI/integration tests
 
-### 6.4 Row mapping fragility
+### Row mapping fragility
 
 Risk:
 
@@ -199,9 +216,7 @@ Mitigation:
 - centralize row conversion helpers
 - add coverage for nullability and optional fields
 
----
-
-## 7. Contributor Guidelines
+### Contributor Guidelines
 
 Do:
 
@@ -220,7 +235,29 @@ Do not:
 
 ---
 
-## 8. Verification Checklist (SQLx Changes)
+## GitHub Evidence (Upstream + In-Repo)
+
+### Upstream Repository
+
+- https://github.com/launchbadge/sqlx
+- https://github.com/launchbadge/sqlx/blob/main/tests/sqlite/sqlite.rs
+
+### In-Repository Anchors
+
+- `crates/mcb-providers/src/database/sqlite/provider.rs`
+- `crates/mcb-providers/src/database/sqlite/executor.rs`
+- `crates/mcb-providers/src/database/sqlite/memory_repository.rs`
+- `crates/mcb-providers/src/database/sqlite/row_convert.rs`
+
+### External Examples
+
+- https://github.com/edo1z/rust-rocket-sqlx-sample
+
+---
+
+## References
+
+### Verification Checklist (SQLx Changes)
 
 When modifying SQLx-related code:
 
@@ -238,33 +275,9 @@ rg -n "sqlx::|SqlitePool|query\(|query_as\(" crates/mcb-providers crates/mcb-inf
 cargo test
 ```
 
----
-
-## 9. Cross-Document Map
+### Cross-Document Map
 
 - Async runtime and concurrency around DB work: `context/external/tokio.md`
 - Typed error conversion and propagation: `context/external/thiserror.md`
 - Transport handlers that call persistence paths: `context/external/rocket.md`
 - Central index of library responsibilities: `context/external/mcb-main-libraries-reference.md`
-
----
-
-## 10. References
-
-Official:
-
-- https://docs.rs/sqlx
-- https://docs.rs/sqlx/latest/sqlx/sqlite/index.html
-- https://github.com/launchbadge/sqlx
-
-Repository anchors:
-
-- `crates/mcb-providers/src/database/sqlite/provider.rs`
-- `crates/mcb-providers/src/database/sqlite/executor.rs`
-- `crates/mcb-providers/src/database/sqlite/memory_repository.rs`
-- `crates/mcb-providers/src/database/sqlite/row_convert.rs`
-
-External examples:
-
-- https://github.com/launchbadge/sqlx/blob/main/tests/sqlite/sqlite.rs
-- https://github.com/edo1z/rust-rocket-sqlx-sample

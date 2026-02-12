@@ -67,22 +67,22 @@ Avoid generic library summaries. Every recommendation should be traceable to:
 
 | Library guide | Coverage status | Notes |
 |---|---|---|
-| `tokio.md` | medium | good runtime notes; can expand cancellation/shutdown patterns |
-| `serde.md` | medium | good attrs overview; can add schema-compat migration playbook |
-| `sqlx.md` | medium | good basics; can add transaction discipline and query audit patterns |
-| `thiserror.md` | medium | strong error taxonomy guidance needed by boundary |
-| `async-trait.md` | low/medium | should add trait-object vs generic tradeoff matrix |
-| `tracing.md` | medium | should add telemetry cardinality and sensitive-field policy |
-| `figment.md` | low/medium | should add deterministic merge precedence and validation gates |
-| `linkme.md` | low/medium | should add registration debugging and linker pitfalls |
-| `dill.md` | low/medium | should add runtime wiring and test catalog strategy |
-| `git2.md` | low/medium | should add spawn_blocking constraints and large-repo handling |
-| `tree-sitter.md` | low/medium | should add parser lifecycle, offsets, and query versioning |
-| `rocket.md` | medium | should add state mutability strategy and request-guard policy |
-| `handlebars.md` | low/medium | should add helper safety and template registration fail-fast policy |
-| `rmcp.md` | medium | should add tool schema compatibility and protocol error mapping |
-| `clap.md` | medium | should add CLI/config precedence and UX consistency rules |
-| `moka.md` | medium | should add cache invalidation and capacity sizing guidance |
+| `tokio.md` | expanded (320 lines) | runtime, concurrency, blocking-boundary, verification checklist |
+| `serde.md` | expanded (238 lines) | contract evolution, compatibility, derive patterns |
+| `sqlx.md` | expanded (270 lines) | repository boundaries, query discipline, migration guidance |
+| `thiserror.md` | expanded (230 lines) | typed taxonomy, boundary mapping, error propagation |
+| `tracing.md` | expanded (225 lines) | instrumentation, logging safety, cardinality control |
+| `rmcp.md` | expanded (1207 lines) | protocol-layer deep analysis, tool compatibility |
+| `figment.md` | medium-high (161 lines) | ADR/context analysis, merge precedence |
+| `linkme.md` | medium-high (143 lines) | registration patterns, linker behavior |
+| `dill.md` | medium-high (133 lines) | composition-root, IoC decisions |
+| `rocket.md` | expanding | HTTP framework, admin transport, guards |
+| `git2.md` | expanding | VCS operations, spawn_blocking, repo metadata |
+| `tree-sitter.md` | expanding | parser lifecycle, chunking, highlighting |
+| `clap.md` | expanding | CLI contract, subcommand routing |
+| `async-trait.md` | expanding | async trait objects, port design, Send+Sync |
+| `handlebars.md` | expanding | template rendering, helper safety |
+| `moka.md` | expanding | cache provider, TTL, invalidation |
 
 ## Review cadence
 

@@ -13,7 +13,6 @@ use mcb_domain::ports::repositories::VcsEntityRepository;
 use mcb_domain::value_objects::project_context::ProjectContext;
 use std::sync::Arc;
 
-#[allow(dead_code)]
 pub fn test_resolver() -> Arc<RepositoryResolver> {
     let mock_vcs: Arc<dyn VcsEntityRepository> =
         Arc::new(mock_services::MockVcsEntityRepository::new());

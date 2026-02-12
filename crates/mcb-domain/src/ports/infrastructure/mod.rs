@@ -14,7 +14,6 @@
 //! | [`EventBusProvider`] | Event publish/subscribe services |
 //! | [`SystemMetricsCollectorInterface`] | System metrics collection |
 //! | [`PerformanceMetricsCollector`](crate::ports::infrastructure::performance::PerformanceMetricsCollector) | Provider performance metrics (Prometheus) |
-//! | [`LockProvider`] | Distributed lock coordination |
 //! | [`StateStoreProvider`] | Key-value state persistence |
 //! | [`ProviderRouter`] | Provider routing and selection services |
 //! | [`DatabaseExecutor`] | SQL execution (repositories use via DI, no direct driver) |
@@ -25,8 +24,7 @@ pub mod auth;
 pub mod database;
 /// Event bus provider port
 pub mod events;
-/// Distributed lock provider port
-pub mod lock;
+
 /// System metrics collector port
 pub mod metrics;
 /// Performance metrics collector port (Prometheus histograms/counters)
@@ -44,7 +42,6 @@ pub mod sync;
 pub use auth::AuthServiceInterface;
 pub use database::{DatabaseExecutor, DatabaseProvider, SqlParam, SqlRow};
 pub use events::{DomainEventStream, EventBusProvider};
-pub use lock::{LockGuard, LockProvider};
 pub use metrics::{SystemMetrics, SystemMetricsCollectorInterface};
 pub use performance::PerformanceMetricsCollector;
 pub use routing::{ProviderContext, ProviderHealthStatus, ProviderRouter};

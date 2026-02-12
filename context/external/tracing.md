@@ -1,12 +1,11 @@
-# tracing in MCB: Structured Telemetry, Runtime Diagnostics, and Logging Safety
+# tracing
 
-Last updated: 2026-02-12  
+Last updated: 2026-02-12
+
 Scope: tracing usage patterns in MCB, initialization strategy, instrumentation quality, and risk controls.  
 Cross-reference: `context/external/tokio.md`, `context/external/rmcp.md`, `context/external/rocket.md`, `context/external/thiserror.md`.
 
----
-
-## 1. Executive Summary
+## Executive Summary
 
 Tracing is a first-class operational dependency in MCB, used across server, infrastructure, providers, and validation paths.
 
@@ -22,9 +21,31 @@ Key risks to manage:
 - sensitive field leakage
 - initialization/filter misconfiguration at runtime
 
----
+Tracing in MCB is infrastructure-aligned, not business-logic-owned.
 
-## 2. Primary Internal Anchors
+Expected layering behavior:
+
+- domain describes errors/contracts
+- transport/infrastructure emits diagnostics context
+- providers emit external-system operation details
+
+This is consistent with clean architecture separation and error mapping patterns.
+
+## Context7 + External Research
+
+Context7 ID: `/websites/rs_tracing`
+
+Official documentation:
+- https://docs.rs/tracing
+- https://docs.rs/tracing-subscriber
+- https://tokio.rs/tokio/topics/tracing
+
+Upstream repository:
+- https://github.com/tokio-rs/tracing
+
+## Actual MCB Usage (Current Source of Truth)
+
+### Primary Internal Anchors
 
 Initialization and subscriber configuration:
 
@@ -44,9 +65,7 @@ Provider/infrastructure examples:
 
 The platform/integration exploration also flagged broad `tracing` usage (including `#[instrument]` in handler flows), which aligns with observability expectations for this architecture.
 
----
-
-## 3. Core Tracing Patterns in MCB
+### Core Tracing Patterns in MCB
 
 ### 3.1 Event-level structured logging
 
@@ -74,49 +93,33 @@ Operational value:
 
 `tracing-subscriber` with env-driven filtering is used to control verbosity by deployment context.
 
----
+### Project-Specific Best Practices
 
-## 4. Architecture Fit
-
-Tracing in MCB is infrastructure-aligned, not business-logic-owned.
-
-Expected layering behavior:
-
-- domain describes errors/contracts
-- transport/infrastructure emits diagnostics context
-- providers emit external-system operation details
-
-This is consistent with clean architecture separation and error mapping patterns.
-
----
-
-## 5. Project-Specific Best Practices
-
-### 5.1 Log meaningful context, not just text
+### 3.4 Log meaningful context, not just text
 
 Required fields should include operation-specific identifiers where available (session/tool/resource/action identifiers).
 
-### 5.2 Keep instrumentation selective in hot paths
+### 3.5 Keep instrumentation selective in hot paths
 
 Use `skip_all` or explicit `skip(...)` where payload capture is expensive or sensitive.
 
-### 5.3 Preserve failure context at mapping boundaries
+### 3.6 Preserve failure context at mapping boundaries
 
 When errors are mapped (e.g., server error mapping), log source/variant context so diagnosis remains possible.
 
-### 5.4 Keep log volume bounded
+### 3.7 Keep log volume bounded
 
 Tight loops/retry loops should avoid high-cardinality unbounded logs.
 
-### 5.5 Align tracing with async lifecycle semantics
+### 3.8 Align tracing with async lifecycle semantics
 
 Spawned tasks and background operations should preserve enough context to correlate with origin operations.
 
----
+## Common Pitfalls
 
-## 6. Failure Modes and Fragile Areas
+### Failure Modes and Fragile Areas
 
-### 6.1 Invalid filter configuration behavior
+### 4.1 Invalid filter configuration behavior
 
 Risk:
 
@@ -126,7 +129,7 @@ Mitigation:
 
 - validate configuration defaults and fail clearly when filter parsing is invalid.
 
-### 6.2 Sensitive data leakage
+### 4.2 Sensitive data leakage
 
 Risk:
 
@@ -136,7 +139,7 @@ Mitigation:
 
 - enforce skip/redaction patterns in instrumented functions and helper utilities.
 
-### 6.3 Signal-to-noise degradation
+### 4.3 Signal-to-noise degradation
 
 Risk:
 
@@ -146,7 +149,7 @@ Mitigation:
 
 - cap repetitive logs, use appropriate levels, and consolidate repeated warnings.
 
-### 6.4 Incomplete span propagation in async boundaries
+### 4.4 Incomplete span propagation in async boundaries
 
 Risk:
 
@@ -156,9 +159,7 @@ Mitigation:
 
 - ensure spawned tasks carry explicit context fields or inherited span linkage where needed.
 
----
-
-## 7. Contributor Guidance
+### Contributor Guidance
 
 Do:
 
@@ -174,9 +175,38 @@ Do not:
 - add high-frequency info/debug logs in tight loops without controls
 - rely only on message text where structured fields should exist
 
----
+## ADR Alignment (Critical)
 
-## 8. Verification Checklist
+This document aligns with the following architectural decision records:
+
+- **ADR-037**: Observability and structured logging strategy
+- **ADR-010**: Error handling and mapping patterns
+- **ADR-021**: Async task lifecycle and context propagation
+
+These ADRs establish the foundational principles for tracing instrumentation, error context preservation, and async boundary management in MCB.
+
+## GitHub Evidence (Upstream + In-Repo)
+
+### Upstream Repository
+- https://github.com/tokio-rs/tracing (primary tracing crate)
+
+### In-Repository Anchors
+
+Initialization and subscriber configuration:
+- `crates/mcb-infrastructure/src/logging.rs`
+
+High-traffic server and admin paths:
+- `crates/mcb-server/src/handlers/*`
+- `crates/mcb-server/src/admin/*`
+- `crates/mcb-server/src/transport/http.rs`
+- `crates/mcb-server/src/error_mapping.rs`
+
+Provider/infrastructure examples:
+- `crates/mcb-providers/src/git/submodule.rs`
+- `crates/mcb-providers/src/database/sqlite/provider.rs`
+- `crates/mcb-application/src/use_cases/indexing_service.rs`
+
+### Verification Checklist
 
 When changing tracing behavior:
 
@@ -193,33 +223,16 @@ rg -n "tracing::|#\[tracing::instrument" crates
 cargo test
 ```
 
----
+## References
 
-## 9. Cross-Document Map
+### Cross-Document Map
 
 - Async/task lifecycle and spawn semantics: `context/external/tokio.md`
 - MCP handler and tool protocol context: `context/external/rmcp.md`
 - Transport/web boundary behavior: `context/external/rocket.md`
 - Typed error taxonomy feeding logs: `context/external/thiserror.md`
 
----
-
-## 10. References
-
-Official:
-
-- https://docs.rs/tracing
-- https://docs.rs/tracing-subscriber
-- https://tokio.rs/tokio/topics/tracing
-
-Repository anchors:
-
-- `crates/mcb-infrastructure/src/logging.rs`
-- `crates/mcb-server/src/error_mapping.rs`
-- `crates/mcb-server/src/handlers/`
-- `crates/mcb-server/src/admin/`
-
-External examples:
+### External Examples
 
 - https://github.com/availproject/avail-light/blob/main/fat/src/main.rs
 - https://github.com/netdata/netdata/blob/master/src/crates/netdata-log-viewer/journal-viewer-plugin/src/main.rs

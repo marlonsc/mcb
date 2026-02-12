@@ -19,6 +19,8 @@ Dedicated guides:
 - `context/external/tree-sitter.md`
 - `context/external/rocket.md`
 - `context/external/handlebars.md`
+- `context/external/moka.md`
+- `context/external/clap.md`
 - `context/external/rmcp.md`
 
 ## How to Use This Index
@@ -44,6 +46,8 @@ Dedicated guides:
 | `tree-sitter` (+ highlight) | parsing/chunking/highlighting | `crates/mcb-infrastructure/src/services/highlight_service.rs` |
 | `rocket` | HTTP server/admin transport | `crates/mcb-server/src/transport/http.rs` |
 | `handlebars` | server-side template rendering | `crates/mcb-server/src/templates/engine/handlebars_engine.rs` |
+| `moka` | in-memory cache with TTL (CacheProvider) | `crates/mcb-providers/src/cache/moka.rs` |
+| `clap` | CLI argument parsing and subcommand routing | `crates/mcb/src/main.rs`, `crates/mcb/src/cli/` |
 | `rmcp` | MCP protocol server/tool contracts | `crates/mcb-server/src/mcp_server.rs` |
 
 ## Guide Status (Depth Snapshot)
@@ -59,6 +63,13 @@ Dedicated guides:
 | `figment.md` | medium-high | strong ADR/context analysis |
 | `linkme.md` | medium-high | registration and linker behavior |
 | `dill.md` | medium-high | composition-root and IoC decisions |
+| `rocket.md` | expanding | HTTP framework and admin transport |
+| `git2.md` | expanding | VCS operations and repository metadata |
+| `tree-sitter.md` | expanding | parsing, chunking, and highlighting pipelines |
+| `clap.md` | expanding | CLI contract and subcommand routing |
+| `async-trait.md` | expanding | async trait objects for domain ports |
+| `handlebars.md` | expanding | server-side template rendering |
+| `moka.md` | expanding | in-memory cache provider with TTL |
 
 ## Boundary-Critical Rules (Cross-Library)
 
@@ -71,6 +82,11 @@ Dedicated guides:
 - `tracing`: preserve structured context, avoid sensitive-field leaks, and control log cardinality.
 - `tree-sitter`: isolate heavy parsing/highlighting and guard performance-sensitive paths.
 - `rmcp`: keep tool handlers thin and deterministic; maintain schema/runtime compatibility.
+- `moka`: always set `max_capacity`; invalidate on source-of-truth changes; TTL cleanup is async.
+- `clap`: keep parse and execution separate; use subcommands over flag overloading.
+- `async-trait`: narrow trait surfaces; remember `Send + Sync` on trait objects across tasks.
+- `handlebars`: register templates once at startup; validate template fields strictly.
+- `git2`: isolate blocking libgit2 calls with `spawn_blocking`; scope repo scans.
 
 ## Recommended Reading Order by Change Type
 
@@ -78,6 +94,12 @@ Dedicated guides:
 - MCP/tooling change: `rmcp.md` -> `tracing.md` -> `thiserror.md`
 - Admin/API transport change: `rocket.md` -> `tracing.md` -> `serde.md`
 - Provider registration/wiring change: `linkme.md` -> `dill.md` -> `figment.md`
+- Cache/performance change: `moka.md` -> `tokio.md` -> `tracing.md`
+- VCS/git change: `git2.md` -> `tokio.md` -> `thiserror.md`
+- CLI/binary change: `clap.md` -> `figment.md`
+- Template/UI change: `handlebars.md` -> `rocket.md`
+- Domain port change: `async-trait.md` -> `dill.md` -> `thiserror.md`
+- Language/parsing change: `tree-sitter.md` -> `tokio.md`
 
 ## Official References
 
@@ -93,5 +115,7 @@ Dedicated guides:
 - dill: https://docs.rs/dill
 - git2: https://docs.rs/git2 and https://github.com/rust-lang/git2-rs
 - tree-sitter: https://docs.rs/tree-sitter and https://tree-sitter.github.io/tree-sitter/
-- Handlebars (Rust): https://docs.rs/handlebars
+- Handlebars (Rust): https://docs.rs/handlebars and https://github.com/sunng87/handlebars-rust
+- Moka: https://docs.rs/moka and https://github.com/moka-rs/moka
+- Clap: https://docs.rs/clap and https://github.com/clap-rs/clap
 - RMCP: https://docs.rs/rmcp
