@@ -6,11 +6,13 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::PlanEntityRepository;
 
+/// SQLite-backed plan entity repository.
 pub struct SqlitePlanEntityRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }
 
 impl SqlitePlanEntityRepository {
+    /// Creates a new instance with the given database executor.
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }

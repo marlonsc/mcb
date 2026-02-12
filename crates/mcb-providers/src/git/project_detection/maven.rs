@@ -165,6 +165,7 @@ fn maven_factory(
     Ok(Arc::new(MavenDetector::new(config)))
 }
 
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(PROJECT_DETECTORS)]
 static MAVEN_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "maven",
