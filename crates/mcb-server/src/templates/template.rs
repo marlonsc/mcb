@@ -47,9 +47,9 @@ impl Template {
     ///
     /// Unlike [`Template::fairing()`], this method allows you to configure
     /// templating engines via the function `f`.
-    pub fn custom<F: Send + Sync + 'static>(f: F) -> impl Fairing
+    pub fn custom<F>(f: F) -> impl Fairing
     where
-        F: Fn(&mut Engines),
+        F: Send + Sync + 'static + Fn(&mut Engines),
     {
         Self::try_custom(move |engines| {
             f(engines);
@@ -60,9 +60,9 @@ impl Template {
     /// Returns a fairing that initializes and maintains templating state.
     ///
     /// This variant of [`Template::custom()`] allows a fallible `f`.
-    pub fn try_custom<F: Send + Sync + 'static>(f: F) -> impl Fairing
+    pub fn try_custom<F>(f: F) -> impl Fairing
     where
-        F: Fn(&mut Engines) -> Result<(), Box<dyn std::error::Error>>,
+        F: Send + Sync + 'static + Fn(&mut Engines) -> Result<(), Box<dyn std::error::Error>>,
     {
         TemplateFairing {
             callback: Box::new(f),

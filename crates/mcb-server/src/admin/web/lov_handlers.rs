@@ -98,41 +98,37 @@ pub async fn lov_endpoint(
         })
         .collect();
 
-    if let Some(pid) = parent_id {
-        if !pid.is_empty() {
-            let pid_lower = pid.to_lowercase();
-            let matching_ids: std::collections::HashSet<String> = records
-                .iter()
-                .filter_map(|rec| {
-                    let obj = rec.as_object()?;
-                    let has_match = obj.iter().any(|(k, v)| {
-                        k.ends_with("_id")
-                            && k != "id"
-                            && match v {
-                                Value::String(s) => s.to_lowercase() == pid_lower,
-                                _ => v.to_string().trim_matches('"').to_lowercase() == pid_lower,
-                            }
-                    });
-                    if has_match {
-                        match obj.get("id") {
-                            Some(Value::String(s)) => Some(s.clone()),
-                            Some(v) => Some(v.to_string().trim_matches('"').to_string()),
-                            None => None,
+    if let Some(pid) = parent_id.filter(|p| !p.is_empty()) {
+        let pid_lower = pid.to_lowercase();
+        let matching_ids: std::collections::HashSet<String> = records
+            .iter()
+            .filter_map(|rec| {
+                let obj = rec.as_object()?;
+                let has_match = obj.iter().any(|(k, v)| {
+                    k.ends_with("_id")
+                        && k != "id"
+                        && match v {
+                            Value::String(s) => s.to_lowercase() == pid_lower,
+                            _ => v.to_string().trim_matches('"').to_lowercase() == pid_lower,
                         }
-                    } else {
-                        None
+                });
+                if has_match {
+                    match obj.get("id") {
+                        Some(Value::String(s)) => Some(s.clone()),
+                        Some(v) => Some(v.to_string().trim_matches('"').to_string()),
+                        None => None,
                     }
-                })
-                .collect();
-            items.retain(|item| matching_ids.contains(&item.id));
-        }
+                } else {
+                    None
+                }
+            })
+            .collect();
+        items.retain(|item| matching_ids.contains(&item.id));
     }
 
-    if let Some(query) = q {
-        if !query.is_empty() {
-            let q_lower = query.to_lowercase();
-            items.retain(|item| item.label.to_lowercase().contains(&q_lower));
-        }
+    if let Some(query) = q.filter(|q| !q.is_empty()) {
+        let q_lower = query.to_lowercase();
+        items.retain(|item| item.label.to_lowercase().contains(&q_lower));
     }
 
     items.truncate(LOV_LIMIT);

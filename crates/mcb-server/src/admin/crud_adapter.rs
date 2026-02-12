@@ -170,20 +170,18 @@ fn apply_filter_pipeline(
     valid_sort_fields: &HashSet<String>,
 ) -> FilteredResult {
     // Search
-    if let Some(ref q) = params.search {
-        if !q.is_empty() {
-            let q_lower = q.to_lowercase();
-            records.retain(|rec| {
-                if let Value::Object(map) = rec {
-                    map.values().any(|v| match v {
-                        Value::String(s) => s.to_lowercase().contains(&q_lower),
-                        _ => v.to_string().to_lowercase().contains(&q_lower),
-                    })
-                } else {
-                    false
-                }
-            });
-        }
+    if let Some(ref q) = params.search.as_ref().filter(|q| !q.is_empty()) {
+        let q_lower = q.to_lowercase();
+        records.retain(|rec| {
+            if let Value::Object(map) = rec {
+                map.values().any(|v| match v {
+                    Value::String(s) => s.to_lowercase().contains(&q_lower),
+                    _ => v.to_string().to_lowercase().contains(&q_lower),
+                })
+            } else {
+                false
+            }
+        });
     }
 
     // Date-range filter — parse ISO strings to epoch for comparison
@@ -213,8 +211,8 @@ fn apply_filter_pipeline(
                             _ => None,
                         };
                         if let Some(ts) = ts {
-                            let after = epoch_from.map_or(true, |from| ts >= from);
-                            let before = epoch_to.map_or(true, |to| ts <= to);
+                            let after = epoch_from.is_none_or(|from| ts >= from);
+                            let before = epoch_to.is_none_or(|to| ts <= to);
                             after && before
                         } else {
                             true
@@ -227,16 +225,18 @@ fn apply_filter_pipeline(
     }
 
     // Sort
-    if let Some(ref field) = params.sort_field {
-        if valid_sort_fields.contains(field.as_str()) {
-            let desc = matches!(params.sort_order, Some(SortOrder::Desc));
-            records.sort_by(|a, b| {
-                let va = a.get(field).map(|v| json_sort_key(v));
-                let vb = b.get(field).map(|v| json_sort_key(v));
-                let cmp = va.cmp(&vb);
-                if desc { cmp.reverse() } else { cmp }
-            });
-        }
+    if let Some(ref field) = params
+        .sort_field
+        .as_ref()
+        .filter(|f| valid_sort_fields.contains(f.as_str()))
+    {
+        let desc = matches!(params.sort_order, Some(SortOrder::Desc));
+        records.sort_by(|a, b| {
+            let va = a.get(field).map(json_sort_key);
+            let vb = b.get(field).map(json_sort_key);
+            let cmp = va.cmp(&vb);
+            if desc { cmp.reverse() } else { cmp }
+        });
     }
 
     // Paginate
@@ -249,7 +249,7 @@ fn apply_filter_pipeline(
     let total_pages = if total_count == 0 {
         0
     } else {
-        (total_count + per_page - 1) / per_page
+        total_count.div_ceil(per_page)
     };
     let page = if params.page == 0 { 1 } else { params.page };
     let start = (page - 1) * per_page;
