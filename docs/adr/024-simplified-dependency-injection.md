@@ -14,21 +14,33 @@ implementation_status: Complete
 
 ## Status
 
-**Superseded by [ADR 029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md)** (v0.1.2)
+**Superseded by [ADR 029: Hexagonal Architecture with dill]
+(029-hexagonal-architecture-dill.md)** (v0.1.2)
 
-> Original replacement for [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md) using a handle-based DI pattern with linkme registry.
+> Original replacement for [ADR 002: Dependency Injection with Shaku]
+> (002-dependency-injection-shaku.md) using a handle-based DI pattern with
+> linkme registry.
 >
-> **Update (2026-01-20)**: dill Catalog is now implemented as IoC container with `add_value()` pattern. See [ADR 029](029-hexagonal-architecture-dill.md) for current architecture.
+> **Update (2026-01-20)**: dill Catalog is now implemented as IoC container
+> with `add_value()` pattern. See [ADR 029]
+> (029-hexagonal-architecture-dill.md) for current architecture.
 >
-> **Implementation Note (2026-01-19)**: The dill `#[component]` macro is incompatible with our domain error types and manual constructors. We use a handle-based pattern instead: Provider Handles (RwLock wrappers), Resolvers (linkme registry), and Admin Services (runtime switching via API).
+> **Implementation Note (2026-01-19)**: The dill `#[component]` macro is
+> incompatible with our domain error types and manual constructors. We use a
+> handle-based pattern instead: Provider Handles (RwLock wrappers), Resolvers
+> (linkme registry), and Admin Services (runtime switching via API).
 
 ## Context
 
-The current dependency injection system uses Shaku (version 0.6), a compile-time DI container that provides trait-based dependency resolution. While effective, this approach introduces substantial complexity that impacts development velocity and maintainability.
+The current dependency injection system uses Shaku (version 0.6), a compile-time
+DI container that provides trait-based dependency resolution. While effective,
+this approach introduces substantial complexity that impacts development
+velocity and maintainability.
 
 ### Problems with Shaku
 
-1. **Macro complexity**: `#[derive(Component)]`, `#[shaku(interface = ...)]`, `#[shaku(inject)]` everywhere
+1. **Macro complexity**: `#[derive(Component)]`, `#[shaku(interface = ...)]`,
+   `#[shaku(inject)]` everywhere
 2. **Build time impact**: Extensive macro expansion slows compilation
 3. **Module sync**: Manual maintenance of module definitions as services change
 4. **Over-engineering**: DI container complexity exceeds project needs
@@ -46,7 +58,9 @@ We evaluated modern Rust DI alternatives:
 
 ### Why Handle-Based Pattern
 
-After implementing the dill catalog approach, we discovered that `dill::Catalog::get_one()` doesn't work well with `add_value` for interface resolution. Instead, we adopted a handle-based pattern that provides:
+After implementing the dill catalog approach, we discovered that
+`dill::Catalog::get_one()` doesn't work well with `add_value` for interface
+resolution. Instead, we adopted a handle-based pattern that provides:
 
 1. **Runtime provider switching** via RwLock handles
 2. **Compile-time discovery** via linkme distributed slices
@@ -111,12 +125,17 @@ impl EmbeddingProviderResolver {
         Self { config }
     }
 
-    pub fn resolve_from_config(&self) -> Result<Arc<dyn EmbeddingProvider>, String> {
+    pub fn resolve_from_config(&self)
+        -> Result<Arc<dyn EmbeddingProvider>, String>
+    {
         let registry_config = /* extract from config */;
         resolve_embedding_provider(&registry_config)  // linkme registry
     }
 
-    pub fn resolve_from_override(&self, config: &EmbeddingProviderConfig) -> Result<Arc<dyn EmbeddingProvider>, String> {
+    pub fn resolve_from_override(
+        &self,
+        config: &EmbeddingProviderConfig
+    ) -> Result<Arc<dyn EmbeddingProvider>, String> {
         resolve_embedding_provider(config)
     }
 
@@ -140,7 +159,10 @@ impl EmbeddingAdminService {
     pub fn list_providers(&self) -> Vec<ProviderInfo> {
         self.resolver.list_available()
             .into_iter()
-            .map(|(name, desc)| ProviderInfo { name: name.to_string(), description: desc.to_string() })
+            .map(|(name, desc)| ProviderInfo {
+                name: name.to_string(),
+                description: desc.to_string()
+            })
             .collect()
     }
 
@@ -148,7 +170,9 @@ impl EmbeddingAdminService {
         self.handle.provider_name()
     }
 
-    pub fn switch_provider(&self, config: EmbeddingProviderConfig) -> Result<(), String> {
+    pub fn switch_provider(&self, config: EmbeddingProviderConfig)
+        -> Result<(), String>
+    {
         let new_provider = self.resolver.resolve_from_override(&config)?;
         self.handle.set(new_provider);
         Ok(())
@@ -257,7 +281,7 @@ let embedding = context.embedding_handle().get();  // Now OpenAI
 
 ### File Structure
 
-```
+```text
 crates/mcb-infrastructure/src/di/
 ├── admin.rs           # Admin services for runtime switching
 ├── bootstrap.rs       # Composition root (AppContext, init_app)
@@ -271,12 +295,19 @@ crates/mcb-infrastructure/src/di/
 
 ## Related ADRs
 
-- [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md) - **SUPERSEDED** by this ADR
-- [ADR 012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - **SUPERSEDED**
-- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Multi-crate organization
-- **Extended by**: [ADR 027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Formalizes engine contracts using handle pattern
+- [ADR 002: Dependency Injection with Shaku]
+(002-dependency-injection-shaku.md) - **SUPERSEDED** by this ADR
+- [ADR 012: Two-Layer DI Strategy]
+(012-di-strategy-two-layer-approach.md) - **SUPERSEDED**
+- [ADR 013: Clean Architecture Crate Separation]
+(013-clean-architecture-crate-separation.md) - Multi-crate organization
+- **Extended by**: [ADR 027: Architecture Evolution v0.1.3]
+(027-architecture-evolution-v013.md) - Formalizes engine contracts using
+  handle pattern
 
 ## References
 
-- [linkme crate](https://docs.rs/linkme) - Compile-time distributed slices for provider registration
-- [dill-rs GitHub](https://github.com/sergiimk/dill-rs) - Evaluated but `add_value` pattern insufficient
+- [linkme crate](https://docs.rs/linkme) -
+  Compile-time distributed slices for provider registration
+- [dill-rs GitHub](https://github.com/sergiimk/dill-rs) -
+  Evaluated but `add_value` pattern insufficient

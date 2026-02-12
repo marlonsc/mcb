@@ -1,9 +1,9 @@
 # Memory Context Browser - Documentation
 
 [![Documentation Status](https://img.shields.io/badge/docs-automated-green)](https://github.com/marlonsc/mcb/actions)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases)
+[![Version](https://img.shields.io/badge/version-0.2.1--dev-blue)](https://github.com/marlonsc/mcb/releases)
 [![Architecture](https://img.shields.io/badge/architecture-C4--model-blue)](docs/architecture/ARCHITECTURE.md)
-[![ADRs](https://img.shields.io/badge/ADRs-46-blue)](adr/README.md)
+[![ADRs](https://img.shields.io/badge/ADRs-47-blue)](adr/README.md)
 
 **Comprehensive documentation for the Memory Context Browser project**
 
@@ -33,7 +33,7 @@ Technical architecture documentation following C4 model principles.
 - **[Architecture Diagrams](diagrams/)** - Visual architecture documentation
 - [System Context](diagrams/generated/index.html) - System boundaries and external systems
 - [Container Architecture](diagrams/generated/index.html) - Service and deployment architecture
-- **[Architecture Decision Records](adr/README.md)** - Historical architectural decisions (46 ADRs total)
+- **[Architecture Decision Records](adr/README.md)** - Historical architectural decisions (47 ADRs total)
 - [ADR 001: Modular Crates Architecture](adr/001-modular-crates-architecture.md)
 - [ADR 002: Async-First Architecture](adr/002-async-first-architecture.md)
 - [ADR 003: Unified Provider Architecture](adr/003-unified-provider-architecture.md)
@@ -44,13 +44,13 @@ Technical architecture documentation following C4 model principles.
 - [ADR 030: Multi-Provider Strategy](adr/030-multi-provider-strategy.md)
 - [ADR 031: Documentation Excellence](adr/031-documentation-excellence.md)
 - [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.3-v0.4.0)
-- [Full ADR Index](adr/README.md) - 46 ADRs total
+- [Full ADR Index](adr/README.md) - 47 ADRs total
 
 ### 📦 Modules (v0.2.0 Crate Structure)
 
 Module documentation organized by the eight-crate Clean Architecture:
 
-- **[Module Index](modules/)** - Complete module documentation
+- **[Module Index](modules/README.md)** - Complete module documentation
 - [Domain Layer](modules/domain.md) - Core business logic (`mcb-domain`)
 - [Application Layer](modules/application.md) - Business services (`mcb-application`)
 - [Providers](modules/providers.md) - External integrations (`mcb-providers`)
@@ -64,12 +64,26 @@ Operational documentation for deployment and maintenance.
 
 - **[Deployment Guide](operations/DEPLOYMENT.md)** - Deployment configurations and environments
 - **[Changelog](operations/CHANGELOG.md)** - Version history and release notes
+- **[CI Optimization](operations/CI_OPTIMIZATION.md)** - CI performance and workflow tuning
+- **[CodeQL Setup](operations/CODEQL_SETUP.md)** - Static analysis setup
 
 ### 📋 Templates
 
 Documentation templates and standards.
 
 - **[ADR Template](templates/adr-template.md)** - Template for new Architecture Decision Records
+
+### 📚 Additional References
+
+- **[API Reference](API_REFERENCE.md)** - API and tool reference index
+- **[Environment Variables](configuration/ENVIRONMENT_VARIABLES.md)** - Full environment variable matrix
+- **[MCB Context Config](configuration/MCB_CONTEXT.md)** - `.mcp-context.toml` reference
+- **[Generated Metrics](generated/METRICS.md)** - Generated repository metrics
+- **[Testing Integration](testing/E2E_INTEGRATION.md)** - End-to-end testing strategy
+- **[Context Discovery Research](research/CONTEXT_DISCOVERY_GIT_INTEGRATION.md)** - Git-aware context findings
+- **[Project Management Research](research/PROJECT_MANAGEMENT_RESEARCH.md)** - Planning and workflow research
+- **[FastEmbed Provider](providers/fastembed.md)** - Provider-specific documentation
+- **[v0.4.0 Knowledge Graph Spec](v040-KNOWLEDGE-GRAPH-SPEC.md)** - Advanced context system specification
 
 ## 🔧 Documentation Automation
 

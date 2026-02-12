@@ -26,24 +26,34 @@ Accepted
 >
 > **v0.1.1 Modular Architecture Updates:**
 >
-> - ✅ **Eight-crate Clean Architecture** implemented (see [ADR-013](013-clean-architecture-crate-separation.md))
+> - ✅ **Eight-crate Clean Architecture** implemented (see [ADR-013]
+(013-clean-architecture-crate-separation.md))
 > - ✅ **20+ port traits** in `crates/mcb-application/src/ports/`
-> - ✅ **Two-layer DI strategy** (see [ADR-012](012-di-strategy-two-layer-approach.md))
+> - ✅ **Two-layer DI strategy** (see [ADR-012]
+(012-di-strategy-two-layer-approach.md))
 > - ✅ **All traits extend `shaku::Interface`** for DI compatibility
 > - ✅ **mcb-validate crate** enforces architecture boundaries
 
 ## Context
 
-The Memory Context Browser codebase has grown organically and accumulated several anti-patterns and technical debt that impact maintainability, reliability, and development velocity. A comprehensive code audit identified critical issues that need addressing before stable release.
+The Memory Context Browser codebase has grown organically and accumulated several
+anti-patterns and technical debt that impact maintainability, reliability, and
+development velocity. A comprehensive code audit identified critical issues that
+need addressing before stable release.
 
 Key problems identified:
 
-- **Giant structures**: Files with 1000+ lines violating Single Responsibility Principle
-- **Excessive unwrap/expect usage**: 157 occurrences across 28 files causing potential runtime crashes
-- **Tight coupling**: Direct concrete type dependencies instead of trait-based abstractions
-- **Missing input validation**: Lack of robust validation leading to runtime errors
+- **Giant structures**: Files with 1000+ lines violating Single Responsibility
+  Principle
+- **Excessive unwrap/expect usage**: 157 occurrences across 28 files causing
+  potential runtime crashes
+- **Tight coupling**: Direct concrete type dependencies instead of trait-based
+  abstractions
+- **Missing input validation**: Lack of robust validation leading to runtime
+  errors
 - **Inadequate error handling**: Generic error types without proper context
-- **Missing design patterns**: No Builder, Strategy, or Repository patterns implemented
+- **Missing design patterns**: No Builder, Strategy, or Repository patterns
+  implemented
 - **Poor testability**: High coupling making unit testing difficult
 
 Current state analysis:
@@ -56,7 +66,9 @@ Current state analysis:
 
 ## Decision
 
-Implement comprehensive architectural improvements following SOLID principles, modern Rust best practices, and established design patterns to eliminate anti-patterns and establish a maintainable codebase foundation.
+Implement comprehensive architectural improvements following SOLID principles,
+modern Rust best practices, and established design patterns to eliminate
+anti-patterns and establish a maintainable codebase foundation.
 
 Key architectural decisions:
 
@@ -65,20 +77,23 @@ Key architectural decisions:
 3. **Implement Strategy Pattern**for provider abstractions
 4. **Add Builder Pattern**for complex configuration objects
 5. **Introduce Repository Pattern**for data access layers
-6. **Establish proper Dependency Injection**using trait bounds instead of `Arc<ConcreteType>`
+6. **Establish proper Dependency Injection**using trait bounds instead of
+   `Arc<ConcreteType>`
 7. **Add comprehensive input validation**using the validator crate
 8. **Implement TDD approach**with mockall for comprehensive testing
 
 ## Consequences
 
-These architectural improvements will significantly enhance code quality but require substantial refactoring effort.
+These architectural improvements will significantly enhance code quality but
+require substantial refactoring effort.
 
 ### Positive Consequences
 
 - **Maintainability**: Smaller, focused modules easier to understand and modify
 - **Reliability**: Proper error handling eliminates unexpected crashes
 - **Testability**: Dependency injection enables comprehensive unit testing
-- **Extensibility**: Design patterns allow easy addition of new providers/features
+- **Extensibility**: Design patterns allow easy addition of new
+  providers/features
 - **Performance**: Better resource management and optimization opportunities
 - **Security**: Input validation prevents malicious or malformed data
 - **Developer Experience**: Clearer APIs and better error messages
@@ -100,18 +115,21 @@ These architectural improvements will significantly enhance code quality but req
 - **Description**: Address anti-patterns gradually over multiple releases
 - **Pros**: Less disruptive, allows feature development in parallel
 - **Cons**: Accumulates more technical debt, inconsistent codebase
-- **Rejection Reason**: Current issues are critical and blocking quality improvements
+- **Rejection Reason**: Current issues are critical and blocking quality
+  improvements
 
 ### Alternative 2: Complete Rewrite
 
 - **Description**: Rewrite entire codebase with clean architecture from scratch
 - **Pros**: Clean slate, no legacy constraints, modern patterns throughout
 - **Cons**: Extremely high risk, long development time, potential feature loss
-- **Rejection Reason**: Too risky for production system, better to evolve existing code
+- **Rejection Reason**: Too risky for production system, better to evolve
+  existing code
 
 ### Alternative 3: Minimal Fixes Only
 
-- **Description**: Only fix critical unwrap/expect issues, leave architecture as-is
+- **Description**: Only fix critical unwrap/expect issues, leave architecture
+  as-is
 - **Pros**: Quick implementation, minimal disruption
 - **Cons**: Doesn't address root causes, technical debt continues growing
 - **Rejection Reason**: Doesn't solve systemic architectural problems
@@ -183,9 +201,12 @@ impl ConfigBuilder {
 ```rust
 #[async_trait]
 pub trait ChunkRepository {
-    async fn save(&self, chunk: &CodeChunk) -> Result<String>;
-    async fn find_by_id(&self, id: &str) -> Result<Option<CodeChunk>>;
-    async fn search_similar(&self, vector: &[f32], limit: usize) -> Result<Vec<CodeChunk>>;
+    async fn save(&self, chunk: &CodeChunk)
+        -> Result<String>;
+    async fn find_by_id(&self, id: &str)
+        -> Result<Option<CodeChunk>>;
+    async fn search_similar(&self, vector: &[f32], limit: usize)
+        -> Result<Vec<CodeChunk>>;
 }
 ```
 
@@ -203,7 +224,8 @@ mod tests {
         pub EmbeddingProviderImpl {}
         impl EmbeddingProvider for EmbeddingProviderImpl {
             async fn embed(&self, text: &str) -> Result<Embedding>;
-            async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>>;
+            async fn embed_batch(&self, texts: &[String])
+                -> Result<Vec<Embedding>>;
             fn dimensions(&self) -> usize;
         }
     }
@@ -273,7 +295,7 @@ config = "0.13"
 ## Success Metrics
 
 | Metric | Before | Target v0.1.0 | Measurement |
-| -------- | -------- | ---------------- | ------------- |
+| :--- | :--- | :--- | :--- |
 | Lines per file | >1000 | <500 | Static analysis |
 | unwrap/expect count | 157 | 0 | Code search |
 | Test coverage | ~60% | >85% | Cargo-tarpaulin |
@@ -281,18 +303,22 @@ config = "0.13"
 | Cyclomatic complexity | >15 | <10 | Cargo +nightly rustc -- -Zunpretty=hir |
 | Memory usage | Baseline | <10% increase | Valgrind massif |
 | Error handling coverage | Partial | Complete | Manual review |
+<!-- markdownlint-disable MD013 -->
+&nbsp;
+<!-- markdownlint-enable MD013 -->
 
 ## Update for v0.3.0: Multi-Domain Architecture Preparation
 
 **Date**: 2026-01-14
 
-The code audit work has been extended to prepare the codebase for multi-domain architecture supporting future analysis capabilities:
+The code audit work has been extended to prepare the codebase for multi-domain
+architecture supporting future analysis capabilities:
 
 ### New Domains (to be implemented)
 
 **v0.3.0+**:
 
-1. **Analysis Domain**: Complexity analysis, technical debt detection, quality metrics
+1. **Analysis Domain**: Complexity analysis, technical debt detection, qualitymetrics
 2. **Quality Domain**: Quality gates, metric aggregation, baseline comparisons
 3. **Git Domain**: Repository operations, commit analysis, context generation
 
@@ -300,7 +326,7 @@ The code audit work has been extended to prepare the codebase for multi-domain a
 
 **Domain Refactoring** (based on current crate structure):
 
-```
+```text
 crates/mcb-domain/src/
 ├── entities/         # Core domain entities
 ├── value_objects/    # Value objects
@@ -316,7 +342,7 @@ crates/mcb-application/src/
 
 **Workspace Libraries** (shared code):
 
-```
+```text
 libs/
 ├── tree-sitter-analysis/  # Unified AST processing
 ├── code-metrics/          # Analysis algorithms (v0.3.0)
@@ -325,7 +351,8 @@ libs/
 
 **Provider Integration** (current structure):
 
-```
+<!-- markdownlint-disable MD013 -->
+```text
 crates/mcb-providers/src/
 ├── embedding/        # 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 ├── vector_store/     # 3 vector store providers (In-Memory, Encrypted, Null)
@@ -333,6 +360,7 @@ crates/mcb-providers/src/
 ├── cache/            # Cache providers (Moka, Null)
 └── events/           # Event providers
 ```
+<!-- markdownlint-enable MD013 -->
 
 ### Quality Implications
 
@@ -355,19 +383,28 @@ v0.2.0 is purely architectural:
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Trait-based DI patterns
-- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async provider execution
-- [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) - Architecture visualization
-- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider routing and failover
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI patterns
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
+- [ADR-001: Modular Crates Architecture]
+(001-modular-crates-architecture.md) - Trait-based DI patterns
+- [ADR-002: Async-First Architecture]
+(002-async-first-architecture.md) - Async provider execution
+- [ADR-003: Unified Provider Architecture]
+(003-unified-provider-architecture.md) - Architecture visualization
+- [ADR-003: Unified Provider Architecture & Routing]
+(003-unified-provider-architecture.md) - Provider routing and failover
+- [ADR-012: Two-Layer DI Strategy]
+(012-di-strategy-two-layer-approach.md) - Shaku DI patterns
+- [ADR-013: Clean Architecture Crate Separation]
+(013-clean-architecture-crate-separation.md) - Eight-crate organization
 
 ## References
 
 - [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
-- [SOLID Principles in Rust](https://www.fpcomplete.com/blog/solid-principles-rust/)
-- [Error Handling in Rust](https://blog.yoshuawuyts.com/error-handling-survey/)
+- [SOLID Principles in Rust]
+(<https://www.fpcomplete.com/blog/solid-principles-rust/>)
+- [Error Handling in Rust]
+(<https://blog.yoshuawuyts.com/error-handling-survey/>)
 - [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
 - [Builder Pattern](https://refactoring.guru/design-patterns/builder)
 - [Strategy Pattern](https://refactoring.guru/design-patterns/strategy)
-- [Shaku Documentation](https://docs.rs/shaku) (historical; DI is now dill, ADR-029)
+- [Shaku Documentation]
+(<https://docs.rs/shaku>) (historical; DI is now dill, ADR-029)

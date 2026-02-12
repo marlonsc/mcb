@@ -1,7 +1,7 @@
 ---
 adr: 33
 title: MCP Handler Consolidation
-status: IMPLEMENTED
+status: ACCEPTED
 created:
 updated: 2026-02-05
 related: []

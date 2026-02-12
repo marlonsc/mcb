@@ -12,7 +12,7 @@ implementation_status: Incomplete
 
 ## ADR-032: Agent & Quality Domain Extension (MCB-Only)
 
-**Status:** Superseded by [ADR-034](034-agent-workflow-domain.md)
+**Status:** Superseded by [ADR-034](034-workflow-core-fsm.md)
 **Date:** 2026-02-03
 **Deciders:** Architecture Team
 **Supersedes:** None
@@ -194,4 +194,4 @@ Add MCB features to Beads CLI.
 - [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
 - [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
 - [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md)
-- [Planning Documents](../design/workflow-management/legacy-planning/)
+- [Planning Documents](../plans/archive/LEGACY_PLANNING_PROJECT.md)

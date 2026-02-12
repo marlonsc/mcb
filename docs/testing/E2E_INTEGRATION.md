@@ -205,5 +205,5 @@ Playwright dependencies not installed.
 ## Related Documentation
 
 - [GOLDEN_TESTS_CONTRACT.md](./GOLDEN_TESTS_CONTRACT.md) - Test contract specifications
-- [Testing Strategy](../developer/TESTING.md) - Overall testing approach
-- [CI/CD Pipeline](.github/workflows/ci.yml) - Continuous integration config
+- [Testing Strategy](./INTEGRATION_TESTS.md) - Overall testing approach
+- [CI/CD Pipeline](../../.github/workflows/ci.yml) - Continuous integration config

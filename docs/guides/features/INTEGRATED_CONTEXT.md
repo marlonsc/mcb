@@ -296,5 +296,5 @@ mcb search --query "API reference" --policy api_docs
 
 1. Review ADR-034-037 for workflow and policy foundations
 2. Review ADR-041-046 for context system implementation
-3. See [`docs/implementation/phase-9-roadmap.md`](../implementation/phase-9-roadmap.md) for 4-week execution plan
-4. Check [`docs/migration/v0.3-to-v0.4.md`](../migration/v0.3-to-v0.4.md) for upgrade guide
+3. See [`docs/implementation/phase-9-roadmap.md`](../../implementation/phase-9-roadmap.md) for 4-week execution plan
+4. Check [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) for upgrade guide

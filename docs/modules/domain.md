@@ -103,11 +103,16 @@ Events published through the `EventPublisher` interface:
 | Port | Purpose |
 | ------ | --------- |
 | `IndexingServiceInterface` | Codebase indexing orchestration |
+| `BatchIndexingServiceInterface` | Batch indexing orchestration |
 | `SearchServiceInterface` | Semantic search with filters |
 | `ContextServiceInterface` | Context aggregation |
 | `ValidationServiceInterface` | Code quality validation (12 rules) |
 | `MemoryServiceInterface` | Observation management |
 | `AgentSessionServiceInterface` | Agent lifecycle management |
+| `ProjectDetectorService` | Project type detection orchestration |
+| `FileHashService` | File hashing service boundary |
+| `ChunkingOrchestratorInterface` | Chunking orchestration boundary |
+| `CodeChunker` | Language chunking service boundary |
 
 ## Key Enums & State Machines
 

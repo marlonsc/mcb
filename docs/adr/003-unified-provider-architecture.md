@@ -38,8 +38,10 @@ varying reliability, cost structures, and performance characteristics.
 Single-provider architectures create vendor lock-in, single points of failure,
 and cost optimization challenges. External dependencies include:
 
-- **AI Providers**: OpenAI (expensive, reliable), Ollama (free, local), Anthropic (premium)
-- **Vector Databases**: Milvus (scalable, complex), Pinecone (managed, expensive), Qdrant (simple, limited scale)
+- **AI Providers**: OpenAI (expensive, reliable), Ollama (free, local),
+  Anthropic (premium)
+- **Vector Databases**: Milvus (scalable, complex), Pinecone (managed,
+  expensive), Qdrant (simple, limited scale)
 - **Service Outages**: Any provider can experience downtime
 - **API Limits**: Rate limits, quotas, and cost controls needed
 - **Performance Variation**: Different providers have different latency characteristics
@@ -272,7 +274,9 @@ impl CostTracker {
         units: u64,
     ) -> Result<f64> {
         let cost_info = self.costs.get(provider_id)
-            .ok_or_else(|| Error::not_found(format!("Cost info for provider: {}", provider_id)))?;
+            .ok_or_else(|| Error::not_found(
+                format!("Cost info for provider: {}", provider_id)
+            ))?;
 
         let total_cost = if let Some(free_limit) = cost_info.free_tier_limit {
             if units <= free_limit {

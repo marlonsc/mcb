@@ -15,7 +15,7 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 | **Build** | ✅ `cargo check --workspace` passes |
 | **Tests** | 10,028 test functions across all crates |
 | **Crates** | 9 (Clean Architecture workspace) |
-| **ADRs** | 46 (including Phase 8-9) |
+| **ADRs** | 47 (including Phase 8-9) |
 
 ### Project Metrics
 
@@ -43,7 +43,7 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 **Status:** In progress
 **Branch:** `release/v0.2.1`
 
-Consolidates all pre-v0.3.0 work: admin UI, data model hardening, modernization cleanup. There is no v0.2.2 — everything lands here.
+Consolidates all pre-v0.3.0 work: admin UI, data model hardening, modernization cleanup. No intermediate 0.2.x release exists between this track and v0.3.0.
 
 | Area | Status |
 | ------ | -------- |
@@ -132,3 +132,4 @@ Enterprise-grade platform with SLA guarantees, compliance certifications, and hi
 - **Changelog**: [CHANGELOG.md](../operations/CHANGELOG.md)
 - **Contributing**: [CONTRIBUTING.md](./CONTRIBUTING.md)
 - **ADR Index**: [docs/adr/README.md](../adr/README.md)
+- **Knowledge Graph Spec**: [v040-KNOWLEDGE-GRAPH-SPEC.md](../v040-KNOWLEDGE-GRAPH-SPEC.md)

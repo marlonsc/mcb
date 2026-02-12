@@ -22,12 +22,14 @@ Accepted
 > **Async Distribution by Crate**:
 >
 > - `mcb-domain` - Port traits with async methods (`async_trait`)
-> - `mcb-application` - Use case services (ContextService, SearchService, IndexingService)
+> - `mcb-application` - Use case services (ContextService, SearchService,
+>   IndexingService)
 > - `mcb-providers` - Provider implementations (embedding, vector_store, cache)
 > - `mcb-infrastructure` - DI bootstrap, factories, event bus
 > - `mcb-server` - MCP protocol handlers, admin API
 >
-> All provider ports use `async_trait` and extend `shaku::Interface` for DI compatibility.
+> All provider ports use `async_trait` and extend `shaku::Interface` for DI
+> compatibility.
 > Structured concurrency with `tokio::spawn` and async channels.
 
 ## Context
@@ -46,7 +48,8 @@ Key performance requirements:
 - Support streaming and background processing
 - Integrate with external APIs (OpenAI, vector databases)
 
-Traditional synchronous programming would create bottlenecks and poor resource utilization for these I/O-bound operations.
+Traditional synchronous programming would create bottlenecks and poor resource
+utilization for these I/O-bound operations.
 
 ## Decision
 
@@ -99,7 +102,8 @@ requires careful error handling and increases code complexity.
 - **Description**: Sync core with async wrappers for external operations
 - **Pros**: Gradual adoption, less complexity
 - **Cons**: Inconsistent patterns, performance bottlenecks at boundaries
-- **Rejection Reason**: Creates architectural inconsistency and performance issues
+- **Rejection Reason**: Creates architectural inconsistency and performance
+  issues
 
 ### Alternative 3: Actor Model (Actix)
 
@@ -410,20 +414,26 @@ fn compute_complexity(content: &str) -> Result<ComplexityReport> {
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) -
+- [ADR-001: Modular Crates Architecture]
+(001-modular-crates-architecture.md) -
   Provider interfaces with async traits
-- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) -
+- [ADR-003: Unified Provider Architecture & Routing]
+(003-unified-provider-architecture.md) -
   Async provider selection and failover
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) -
+- [ADR-012: Two-Layer DI Strategy]
+(012-di-strategy-two-layer-approach.md) -
   Async initialization in factories
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+- [ADR-013: Clean Architecture Crate Separation]
+(013-clean-architecture-crate-separation.md) -
   Crate organization
 
 ## References
 
 - [Tokio Documentation](https://tokio.rs/)
 - [Async Programming in Rust](https://rust-lang.github.io/async-book/)
-- [Structured Concurrency](https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/)
+- [Structured Concurrency]
+(<https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/>)
 - [Rayon: Data Parallelism](https://docs.rs/rayon/latest/rayon/)
-- [Tokio spawn_blocking](https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html)
+- [Tokio spawn_blocking]
+(<https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html>)
 - [Shaku Documentation](https://docs.rs/shaku) (historical; see ADR-029)

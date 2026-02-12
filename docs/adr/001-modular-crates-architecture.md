@@ -63,7 +63,8 @@ pub trait EmbeddingProvider: Interface + Send + Sync {
 
 Important: All port traits must:
 
-- Extend `shaku::Interface` (which implies `'static + Send + Sync` with thread_safe feature)
+- Extend `shaku::Interface` (which implies `'static + Send + Sync` with
+  thread_safe feature)
 - Be object-safe (no generic methods, no `Self` returns)
 - Use `async_trait` for async methods
 
@@ -182,7 +183,8 @@ The system uses a two-layer approach for DI (see [ADR-012](012-di-strategy-two-l
 **Layer 1: Shaku Modules** - Provide null implementations as defaults for testing:
 
 ```rust
-// Testing with Shaku modules (null providers) — HISTORICAL; DI is now dill (ADR-029)
+// Testing with Shaku modules (null providers) — HISTORICAL; DI is now dill
+// (ADR-029)
 let container = DiContainerBuilder::new().build().await?;
 // Uses NullEmbeddingProvider, NullVectorStoreProvider, etc.
 ```
@@ -223,7 +225,16 @@ mod tests {
 
 ## Consequences
 
-This change to multiple crates improved code maintainability and scalability. Developers can evolve modules in isolation and even publish reusable crates. The modular architecture also facilitates unit testing and integration testing focused per module. On the other hand, it added complexity in managing versions between internal crates and required an orchestration layer (ServiceManager/ShutdownCoordinator) to coordinate dependencies and initialization order. These additional structures increase robustness at the cost of a small coordination overhead. Overall, the decision aligned with the goal of a pluggable and extensible design, allowing inclusion or removal of functionalities (crates) without significantly impacting the rest of the system.
+This change to multiple crates improved code maintainability and scalability.
+Developers can evolve modules in isolation and even publish reusable crates. The
+modular architecture also facilitates unit testing and integration testing
+focused per module. On the other hand, it added complexity in managing versions
+between internal crates and required an orchestration layer
+(ServiceManager/ShutdownCoordinator) to coordinate dependencies and
+initialization order. These additional structures increase robustness at the cost
+of a small coordination overhead. Overall, the decision aligned with the goal of
+a pluggable and extensible design, allowing inclusion or removal of
+functionalities (crates) without significantly impacting the rest of the system.
 
 ## Crate Structure
 

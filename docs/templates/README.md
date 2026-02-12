@@ -54,7 +54,7 @@ pub fn example_function() -> Result<()> {
 See [Architecture Overview](../architecture/ARCHITECTURE.md) for details.
 
 <!-- Use absolute paths from docs root -->
-See [Contributing Guide](developer/CONTRIBUTING.md) for guidelines.
+See [Contributing Guide](../developer/CONTRIBUTING.md) for guidelines.
 ```
 
 ## 🛠️ Template Usage

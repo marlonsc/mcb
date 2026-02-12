@@ -96,6 +96,6 @@ Projects will track active agent sessions, allowing parallel agents to work on t
 
 ## References
 
-- [MCB Comprehensive Gap Analysis](../plan/MCB-COMPREHENSIVE-GAPS.md)
+- [MCB Comprehensive Gap Analysis](../plans/archive/MCB-COMPREHENSIVE-GAPS.md)
 - [ADR-014: Multi-Domain Architecture Strategy](./014-multi-domain-architecture.md)
 - [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md)

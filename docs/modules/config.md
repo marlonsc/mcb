@@ -87,4 +87,4 @@ pub use loader::ConfigLoader;
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*
+*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*

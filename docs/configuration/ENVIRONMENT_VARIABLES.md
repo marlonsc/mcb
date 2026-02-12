@@ -383,7 +383,7 @@ export MCP_PROVIDERS__VECTOR_STORE__DIMENSIONS=768
 
 ## Admin Defaults
 
-See [admin_defaults.rs](../../src/server/admin/service/helpers/admin_defaults.rs) for operational defaults:
+See [admin helpers](../../crates/mcb-server/src/admin/web/helpers.rs) for operational defaults and helper constants.
 
 | Variable | Default | Description |
 | ---------- | --------- | ------------- |
@@ -587,6 +587,6 @@ redis-cli ping  # Should respond with PONG
 
 ## See Also
 
-- [Configuration Types](../../src/infrastructure/config/) - Source code
-- [Admin Defaults](../../src/server/admin/service/helpers/admin_defaults.rs) - Operational settings
+- [Configuration Types](../../crates/mcb-infrastructure/src/config/) - Source code
+- [Admin Helpers](../../crates/mcb-server/src/admin/web/helpers.rs) - Operational settings
 - [CONFIGURATION.md](../CONFIGURATION.md) - General configuration guide

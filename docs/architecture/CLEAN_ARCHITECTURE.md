@@ -500,4 +500,4 @@ Layers can be used independently:
 - **ADR-023**: Inventory to Linkme Migration
 - **ADR-029**: Hexagonal Architecture with dill
 - [`docs/architecture/ARCHITECTURE.md`](./ARCHITECTURE.md) – Complete architecture overview
-- [`CLAUDE.md`](../../CLAUDE.md) – Development guide
+- [`docs/developer/CONTRIBUTING.md`](../developer/CONTRIBUTING.md) – Development guide

@@ -205,7 +205,7 @@ pub struct DocumentationMetrics {
 
 ## References
 
-- [Documentation Automation Plan (v0.1.0)](../archive/2025-01-07-documentation-automation-improvement.md)
+- [Documentation Automation Practices](../README.md)
 - [ADR Tools (`adrs`)](https://github.com/joshrotenberg/adrs)
 - [`cargo-modules` Documentation](https://github.com/regexident/cargo-modules)
 - [mdBook Documentation](https://rust-lang.github.io/mdBook/)

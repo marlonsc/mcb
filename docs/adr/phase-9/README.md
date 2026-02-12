@@ -205,7 +205,7 @@ Defines snapshot-based versioning for time-travel queries:
 
 ---
 
-### ADR-046: Integration Patterns
+### ADR-046: Integration with ADR-034-037 & Policies
 
 **Status**: Proposed
 **Date**: Feb 2026
