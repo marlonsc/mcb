@@ -160,11 +160,11 @@ See `crates/mcb-application/tests/` for service-specific tests.
 
 ## Cross-References
 
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
--   **Domain Ports**: [domain.md](./domain.md)
--   **Providers**: [providers.md](./providers.md)
--   **Server**: [server.md](./server.md)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Domain Ports**: [domain.md](./domain.md)
+- **Providers**: [providers.md](./providers.md)
+- **Server**: [server.md](./server.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*

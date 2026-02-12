@@ -49,10 +49,10 @@ Application initialization and AppContext creation.
 
 RwLock wrappers for runtime provider switching:
 
--   `EmbeddingProviderHandle`
--   `VectorStoreProviderHandle`
--   `CacheProviderHandle`
--   `LanguageProviderHandle`
+- `EmbeddingProviderHandle`
+- `VectorStoreProviderHandle`
+- `CacheProviderHandle`
+- `LanguageProviderHandle`
 
 ### Provider Resolvers (`provider_resolvers.rs`)
 
@@ -62,10 +62,10 @@ Components that access the linkme registry to resolve providers by name.
 
 Runtime provider switching via API:
 
--   `EmbeddingAdminService` (implements `EmbeddingAdminInterface`)
--   `VectorStoreAdminService` (implements `VectorStoreAdminInterface`)
--   `CacheAdminService` (implements `CacheAdminInterface`)
--   `LanguageAdminService` (implements `LanguageAdminInterface`)
+- `EmbeddingAdminService` (implements `EmbeddingAdminInterface`)
+- `VectorStoreAdminService` (implements `VectorStoreAdminInterface`)
+- `CacheAdminService` (implements `CacheAdminInterface`)
+- `LanguageAdminService` (implements `LanguageAdminInterface`)
 
 ## File Structure
 
@@ -131,11 +131,11 @@ pub use admin::{
 
 ## Cross-References
 
--   **ADR-024**: [Simplified Dependency Injection](../adr/024-simplified-dependency-injection.md) (superseded)
--   **ADR-029**: [Hexagonal Architecture with dill](../adr/029-hexagonal-architecture-dill.md) (current)
--   **Domain Ports**: [mcb-domain/src/ports/providers/](../../crates/mcb-domain/src/ports/providers/)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **ADR-024**: [Simplified Dependency Injection](../adr/024-simplified-dependency-injection.md) (superseded)
+- **ADR-029**: [Hexagonal Architecture with dill](../adr/029-hexagonal-architecture-dill.md) (current)
+- **Domain Ports**: [mcb-domain/src/ports/providers/](../../crates/mcb-domain/src/ports/providers/)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-*Updated 2026-01-20 - Reflects dill IoC + handle-based DI (v0.1.2)*
+*Updated 2026-01-20 - Reflects dill IoC + handle-based DI (v0.2.1)*

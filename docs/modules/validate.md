@@ -36,119 +36,119 @@ Validation Pipeline (Pure Rust):
 
 Code quality linting via external tools:
 
--   **Clippy**: Rust linter for common mistakes and style issues
--   **Ruff**: Python linter (for Python code analysis)
--   **Status**: ✅ 17/17 tests pass
+- **Clippy**: Rust linter for common mistakes and style issues
+- **Ruff**: Python linter (for Python code analysis)
+- **Status**: ✅ 17/17 tests pass
 
 ### AST Queries (`ast/`)
 
 Tree-sitter based AST parsing and querying:
 
--   `query.rs` - AST query execution
--   `decoder.rs` - AST node decoding
--   `languages.rs` - Language support (Rust, Python, JS, TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
--   `mod.rs` - Module exports
--   **Status**: ✅ 26/26 tests pass
+- `query.rs` - AST query execution
+- `decoder.rs` - AST node decoding
+- `languages.rs` - Language support (Rust, Python, JS, TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
+- `mod.rs` - Module exports
+- **Status**: ✅ 26/26 tests pass
 
 ### Rule Engines (`engines/`)
 
 Multiple rule engine implementations:
 
--   `expression_engine.rs` - evalexpr-based expression evaluation
--   `rete_engine.rs` - RETE algorithm for pattern matching
--   `router.rs` - Rule routing and selection
--   `hybrid_engine.rs` - Combined engine approach
--   `rust_rule_engine.rs` - Rust-specific rule engine
--   `rusty_rules_engine.rs` - Rusty-rules integration
--   `validator_engine.rs` - Validator trait implementation
--   **Status**: ✅ 30/30 tests pass
+- `expression_engine.rs` - evalexpr-based expression evaluation
+- `rete_engine.rs` - RETE algorithm for pattern matching
+- `router.rs` - Rule routing and selection
+- `hybrid_engine.rs` - Combined engine approach
+- `rust_rule_engine.rs` - Rust-specific rule engine
+- `rusty_rules_engine.rs` - Rusty-rules integration
+- `validator_engine.rs` - Validator trait implementation
+- **Status**: ✅ 30/30 tests pass
 
 ### Metrics (`metrics/`)
 
 Code metrics analysis using Rust-code-analysis:
 
--   `analyzer.rs` - Metrics computation
--   `rca_analyzer.rs` - Rust-code-analysis integration (feature-gated)
--   `thresholds.rs` - Metric threshold definitions
--   **Supported Metrics**:
-  -   Cyclomatic Complexity
-  -   Cognitive Complexity
-  -   Halstead Volume/Difficulty/Effort
-  -   Maintainability Index
-  -   SLOC/PLOC/LLOC/CLOC
--   **Status**: ✅ 9/9 tests pass
+- `analyzer.rs` - Metrics computation
+- `rca_analyzer.rs` - Rust-code-analysis integration (feature-gated)
+- `thresholds.rs` - Metric threshold definitions
+- **Supported Metrics**:
+- Cyclomatic Complexity
+- Cognitive Complexity
+- Halstead Volume/Difficulty/Effort
+- Maintainability Index
+- SLOC/PLOC/LLOC/CLOC
+- **Status**: ✅ 9/9 tests pass
 
 ### Duplication Detection (`duplication/`)
 
 Code clone detection using Rabin-Karp algorithm:
 
--   `detector.rs` - Clone detection logic
--   `fingerprint.rs` - Token fingerprinting
--   `thresholds.rs` - Duplication type definitions
--   **Clone Types**:
-  -   Type 1: Exact clones (100% identical)
-  -   Type 2: Renamed clones (identifiers changed, 95%+ similarity)
-  -   Type 3: Gapped clones (small modifications, 80%+ similarity)
-  -   Type 4: Semantic clones (future, 70%+ similarity)
--   **Status**: ✅ 11/11 tests pass
+- `detector.rs` - Clone detection logic
+- `fingerprint.rs` - Token fingerprinting
+- `thresholds.rs` - Duplication type definitions
+- **Clone Types**:
+- Type 1: Exact clones (100% identical)
+- Type 2: Renamed clones (identifiers changed, 95%+ similarity)
+- Type 3: Gapped clones (small modifications, 80%+ similarity)
+- Type 4: Semantic clones (future, 70%+ similarity)
+- **Status**: ✅ 11/11 tests pass
 
 ### Clean Architecture (`clean_architecture.rs`)
 
 Architecture rule enforcement:
 
--   **CA001**: Domain layer independence
--   **CA002**: Application layer boundaries
--   **CA003**: Domain traits only
--   **CA004**: Handler dependency injection
--   **CA005**: Entity identity requirements
--   **CA006**: Value object immutability
--   **CA007**: Infrastructure cannot import concrete types from Application
--   **CA008**: Application must import ports from mcb-domain
--   **CA009**: Infrastructure must NOT depend on Application layer
--   **Status**: ✅ 11/11 tests pass
+- **CA001**: Domain layer independence
+- **CA002**: Application layer boundaries
+- **CA003**: Domain traits only
+- **CA004**: Handler dependency injection
+- **CA005**: Entity identity requirements
+- **CA006**: Value object immutability
+- **CA007**: Infrastructure cannot import concrete types from Application
+- **CA008**: Application must import ports from mcb-domain
+- **CA009**: Infrastructure must NOT depend on Application layer
+- **Status**: ✅ 11/11 tests pass
 
 ### Rules (`rules/`)
 
 YAML-based rule definitions:
 
--   `yaml_loader.rs` - Rule loading from YAML files
--   `yaml_validator.rs` - Rule schema validation
--   `registry.rs` - Rule registry and lookup
--   `templates/` - Rule templates for common patterns
--   **Rule Categories**:
-  -   `clean-architecture/` - CA001-CA009
-  -   `migration/` - 12 migration detection rules (inventory→linkme, shaku→dill, etc.)
-  -   `quality/` - Code quality rules
-  -   `metrics/` - Metric thresholds
-  -   `duplication/` - Clone detection rules
-  -   `testing/` - Test organization rules
-  -   `solid/` - SOLID principle enforcement
+- `yaml_loader.rs` - Rule loading from YAML files
+- `yaml_validator.rs` - Rule schema validation
+- `registry.rs` - Rule registry and lookup
+- `templates/` - Rule templates for common patterns
+- **Rule Categories**:
+- `clean-architecture/` - CA001-CA009
+- `migration/` - 12 migration detection rules (inventory→linkme, shaku→dill, etc.)
+- `quality/` - Code quality rules
+- `metrics/` - Metric thresholds
+- `duplication/` - Clone detection rules
+- `testing/` - Test organization rules
+- `solid/` - SOLID principle enforcement
 
 ### Integration Tests (`tests/integration/`)
 
 Comprehensive integration test suite:
 
--   `integration_linters.rs` - Linter integration tests
--   `integration_ast.rs` - AST query integration tests
--   `integration_engines.rs` - Rule engine integration tests
--   `integration_rca_metrics.rs` - Metrics integration tests
--   `integration_duplication.rs` - Duplication detection tests
--   `integration_architecture.rs` - Architecture validation tests
--   `integration_full.rs` - End-to-end validation pipeline tests
--   **Status**: ✅ 14/14 integration tests pass
+- `integration_linters.rs` - Linter integration tests
+- `integration_ast.rs` - AST query integration tests
+- `integration_engines.rs` - Rule engine integration tests
+- `integration_rca_metrics.rs` - Metrics integration tests
+- `integration_duplication.rs` - Duplication detection tests
+- `integration_architecture.rs` - Architecture validation tests
+- `integration_full.rs` - End-to-end validation pipeline tests
+- **Status**: ✅ 14/14 integration tests pass
 
 ### Benchmarks (`benches/`)
 
 Performance benchmarks:
 
--   `validation_benchmark.rs` - 7 benchmark groups:
-  -   unwrap_detection
-  -   tokenization
-  -   duplication_analysis
-  -   architecture_validation
-  -   report_generation
-  -   config
-  -   scalability
+- `validation_benchmark.rs` - 7 benchmark groups:
+- unwrap_detection
+- tokenization
+- duplication_analysis
+- architecture_validation
+- report_generation
+- config
+- scalability
 
 ## Usage
 
@@ -178,12 +178,12 @@ let violations = registry.validate_all(&config)?;
 
 ## Validation Status
 
-**Phases 1-7**: ✅ **All VERIFIED** (v0.1.4)
+**Phases 1-7**: ✅ **All VERIFIED** (v0.2.1)
 
--   **Total Tests**: 750+ in mcb-validate crate
--   **Project-Wide Tests**: 1634+ (includes all crates)
--   **Verification Date**: 2026-01-28
--   **Architecture Violations**: 0
+- **Total Tests**: 750+ in mcb-validate crate
+- **Project-Wide Tests**: 1634+ (includes all crates)
+- **Verification Date**: 2026-01-28
+- **Architecture Violations**: 0
 
 ## File Structure
 
@@ -212,10 +212,10 @@ crates/mcb-validate/rules/
 
 ## Related Documentation
 
--   [Architecture Overview](../architecture/ARCHITECTURE.md#validation-layer) - Validation layer details
--   [Implementation Status](../developer/IMPLEMENTATION_STATUS.md) - Detailed traceability
--   [ADR-013](../adr/013-clean-architecture-crate-separation.md) - Clean Architecture separation
--   [ADR-029](../adr/029-hexagonal-architecture-dill.md) - DI architecture (CA007-CA009)
+- [Architecture Overview](../architecture/ARCHITECTURE.md#validation-layer) - Validation layer details
+- [Implementation Status](../developer/IMPLEMENTATION_STATUS.md) - Detailed traceability
+- [ADR-013](../adr/013-clean-architecture-crate-separation.md) - Clean Architecture separation
+- [ADR-029](../adr/029-hexagonal-architecture-dill.md) - DI architecture (CA007-CA009)
 
 ---
 

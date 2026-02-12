@@ -17,66 +17,66 @@ The infrastructure module provides shared technical services and cross-cutting c
 
 dill IoC Container with handle-based runtime switching (ADR-024 → ADR-029):
 
--   `catalog.rs` - dill Catalog configuration and service resolution
--   `bootstrap.rs` - Application initialization and AppContext creation
--   `handles.rs` - RwLock provider handles for runtime switching
--   `admin.rs` - Admin services for provider switching via API
--   `provider_resolvers.rs` - linkme registry access
+- `catalog.rs` - dill Catalog configuration and service resolution
+- `bootstrap.rs` - Application initialization and AppContext creation
+- `handles.rs` - RwLock provider handles for runtime switching
+- `admin.rs` - Admin services for provider switching via API
+- `provider_resolvers.rs` - linkme registry access
 
 ### Configuration (`config/`)
 
 Application configuration management:
 
--   Type-safe configuration with nested structures
--   Environment variable overrides
--   Server, auth, cache, and provider configurations
+- Type-safe configuration with nested structures
+- Environment variable overrides
+- Server, auth, cache, and provider configurations
 
 ### Cache (`cache/`)
 
 Caching infrastructure:
 
--   Cache configuration and management
--   Integration with mcb-providers cache implementations
+- Cache configuration and management
+- Integration with mcb-providers cache implementations
 
 ### Crypto (`crypto/`)
 
 Encryption and hashing utilities:
 
--   AES-GCM encryption support
--   Hash computation utilities
+- AES-GCM encryption support
+- Hash computation utilities
 
 ### Health (`health/`)
 
 Health check infrastructure:
 
--   Component health monitoring
--   Readiness and liveness checks
+- Component health monitoring
+- Readiness and liveness checks
 
 ### Logging (`logging/`)
 
 Structured logging configuration:
 
--   Tracing integration
--   Log level management
+- Tracing integration
+- Log level management
 
 ### Adapters (`adapters/`)
 
 Null implementations for DI testing:
 
--   `infrastructure/` - Null adapters for infrastructure ports
-  -   `NullAuthService`
-  -   `NullEventBus`
-  -   `NullSyncProvider`
-  -   `NullLockProvider`
-  -   `NullSnapshotProvider`
-  -   `NullStateStoreProvider`
-  -   `NullPerformanceMetrics`
-  -   `NullIndexingOperations`
-  -   `NullSystemMetricsCollector`
--   `providers/` - Provider adapter bindings
--   `repository/` - Repository adapters
-  -   `NullChunkRepository`
-  -   `NullSearchRepository`
+- `infrastructure/` - Null adapters for infrastructure ports
+- `NullAuthService`
+- `NullEventBus`
+- `NullSyncProvider`
+- `NullLockProvider`
+- `NullSnapshotProvider`
+- `NullStateStoreProvider`
+- `NullPerformanceMetrics`
+- `NullIndexingOperations`
+- `NullSystemMetricsCollector`
+- `providers/` - Provider adapter bindings
+- `repository/` - Repository adapters
+- `NullChunkRepository`
+- `NullSearchRepository`
 
 ## File Structure
 
@@ -143,9 +143,9 @@ Infrastructure tests are located in `crates/mcb-infrastructure/tests/`.
 
 ## Project Alignment
 
--   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the layered wiring and documents linkme/provider registration so every adapter matches compiled routing expectations.
--   **Roadmap signals**: Anchor infrastructure decisions in `docs/developer/ROADMAP.md` (validated requirements, debt) so features like provider health checks and session memory inherit the correct dependencies.
--   **Operational metrics**: Sync with `docs/operations/CHANGELOG.md`/`docs/operations/CI_OPTIMIZATION_VALIDATION.md` for metrics when adjusting caches, health, or DI to maintain the declared `0 architecture violations` and `~1805 tests` commitments.
+- **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the layered wiring and documents linkme/provider registration so every adapter matches compiled routing expectations.
+- **Roadmap signals**: Anchor infrastructure decisions in `docs/developer/ROADMAP.md` (validated requirements, debt) so features like provider health checks and session memory inherit the correct dependencies.
+- **Operational metrics**: Sync with `docs/operations/CHANGELOG.md`/`docs/operations/CI_OPTIMIZATION_VALIDATION.md` for metrics when adjusting caches, health, or DI to maintain the declared `0 architecture violations` and `~1805 tests` commitments.
 
 ---
 

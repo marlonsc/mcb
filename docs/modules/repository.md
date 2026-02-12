@@ -16,15 +16,15 @@ Repository pattern implementation for data access abstraction. Provides reposito
 
 Port definitions for repositories:
 
--   `ChunkRepository` - Code chunk persistence operations
--   `SearchRepository` - Search Result retrieval operations
+- `ChunkRepository` - Code chunk persistence operations
+- `SearchRepository` - Search Result retrieval operations
 
 ### Null Implementations (`mcb-infrastructure`)
 
 Test/development implementations:
 
--   `NullChunkRepository` - No-op chunk repository
--   `NullSearchRepository` - No-op search repository
+- `NullChunkRepository` - No-op chunk repository
+- `NullSearchRepository` - No-op search repository
 
 ## File Structure
 
@@ -74,10 +74,10 @@ pub use adapters::repository::{NullChunkRepository, NullSearchRepository};
 
 ## Cross-References
 
--   **Domain**: [domain.md](./domain.md) (trait definitions)
--   **Infrastructure**: [infrastructure.md](./infrastructure.md) (null implementations)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Domain**: [domain.md](./domain.md) (trait definitions)
+- **Infrastructure**: [infrastructure.md](./infrastructure.md) (null implementations)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*

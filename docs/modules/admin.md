@@ -15,10 +15,10 @@ The admin module provides administrative endpoints for health checks, metrics, c
 
 HTTP endpoint handlers:
 
--   Health check endpoints (readiness, liveness)
--   Metrics retrieval
--   Graceful shutdown
--   Configuration management
+- Health check endpoints (readiness, liveness)
+- Metrics retrieval
+- Graceful shutdown
+- Configuration management
 
 ### Routes (`routes.rs`)
 
@@ -28,9 +28,9 @@ Axum router configuration for admin API endpoints.
 
 Request/response types:
 
--   `HealthResponse` - Health status response
--   `MetricsResponse` - Performance metrics
--   `ConfigResponse` - Configuration data
+- `HealthResponse` - Health status response
+- `MetricsResponse` - Performance metrics
+- `ConfigResponse` - Configuration data
 
 ### Service (`service.rs`)
 
@@ -69,10 +69,10 @@ pub use models::{HealthResponse, MetricsResponse};
 
 ## Cross-References
 
--   **Server**: [server.md](./server.md) (parent module)
--   **Metrics**: [metrics.md](./metrics.md) (metrics collection)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Server**: [server.md](./server.md) (parent module)
+- **Metrics**: [metrics.md](./metrics.md) (metrics collection)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*

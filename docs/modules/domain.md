@@ -20,25 +20,25 @@ The domain module defines the core business entities, value objects, and reposit
 
 ### Repository Interfaces (`repositories/`)
 
--   `ChunkRepository` - Code chunk persistence (`Send + Sync`; DI via dill, ADR-029)
--   `SearchRepository` - Search operations (`Send + Sync`; DI via dill, ADR-029)
+- `ChunkRepository` - Code chunk persistence (`Send + Sync`; DI via dill, ADR-029)
+- `SearchRepository` - Search operations (`Send + Sync`; DI via dill, ADR-029)
 
 ### Domain Events (`events/`)
 
--   `DomainEvent` - Base event trait
--   `EventPublisher` - Event publishing interface
--   `ServiceState` - Service lifecycle states
+- `DomainEvent` - Base event trait
+- `EventPublisher` - Event publishing interface
+- `ServiceState` - Service lifecycle states
 
 ### Entities (`entities/`)
 
--   `CodeChunk` - Parsed code segment with metadata
--   `Codebase` - Repository metadata
+- `CodeChunk` - Parsed code segment with metadata
+- `Codebase` - Repository metadata
 
 ### Value Objects (`value_objects/`)
 
--   `Embedding` - Vector representation with metadata
--   `SearchResult` - Ranked search results
--   Config types - Configuration value objects
+- `Embedding` - Vector representation with metadata
+- `SearchResult` - Ranked search results
+- Config types - Configuration value objects
 
 ## File Structure (Actual)
 

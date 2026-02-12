@@ -30,7 +30,7 @@ digraph {
     "mcb-validate" [fillcolor=lightyellow];
     "mcb-validate" -> "mcb-domain";
 
-    label="Memory Context Browser Crate Dependencies (v0.1.4)";
+    label="Memory Context Browser Crate Dependencies (v0.2.1)";
 }
 ```
 
@@ -100,4 +100,4 @@ Major external crates:
 
 ---
 
-*Updated 2026-01-28 - dill DI, v0.1.4*
+*Updated 2026-01-28 - dill DI, v0.2.1*

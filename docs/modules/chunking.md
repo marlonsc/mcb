@@ -5,10 +5,10 @@
 
 ## Overview
 
-The chunking system provides AST-based code parsing for 12 programming languages. In v0.1.1, this functionality is split across two crates:
+The chunking system provides AST-based code parsing for 12 programming languages. In v0.2.1, this functionality is split across two crates:
 
--   **mcb-application**: ChunkingOrchestrator (domain service)
--   **mcb-providers**: Language processors (12 languages)
+- **mcb-application**: ChunkingOrchestrator (domain service)
+- **mcb-providers**: Language processors (12 languages)
 
 ## Components
 
@@ -81,11 +81,11 @@ lang-python = ["tree-sitter-python"]
 
 ## Cross-References
 
--   **Providers**: [providers.md](./providers.md) (language processors)
--   **Application**: [application.md](./application.md) (ChunkingOrchestrator)
--   **Domain**: [domain.md](./domain.md) (CodeChunk type)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Providers**: [providers.md](./providers.md) (language processors)
+- **Application**: [application.md](./application.md) (ChunkingOrchestrator)
+- **Domain**: [domain.md](./domain.md) (CodeChunk type)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*

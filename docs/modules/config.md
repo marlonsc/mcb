@@ -15,20 +15,20 @@ Application configuration management with type-safe structures, environment vari
 
 Hierarchical configuration structures:
 
--   `AppConfig` - Root configuration
--   `ServerConfig` - Server settings (network, SSL, CORS, timeouts)
--   `AuthConfig` - Authentication (JWT settings)
--   `CacheConfig` - Cache configuration
--   `ProviderConfig` - Provider settings
+- `AppConfig` - Root configuration
+- `ServerConfig` - Server settings (network, SSL, CORS, timeouts)
+- `AuthConfig` - Authentication (JWT settings)
+- `CacheConfig` - Cache configuration
+- `ProviderConfig` - Provider settings
 
 ### Configuration Loader (`loader.rs`)
 
 Multi-source configuration loading:
 
--   File-based configuration (TOML, JSON)
--   Environment variable overrides
--   Validation and defaults
--   Hot-reload support
+- File-based configuration (TOML, JSON)
+- Environment variable overrides
+- Validation and defaults
+- Hot-reload support
 
 ## File Structure
 
@@ -81,10 +81,10 @@ pub use loader::ConfigLoader;
 
 ## Cross-References
 
--   **Infrastructure**: [infrastructure.md](./infrastructure.md) (parent module)
--   **Server**: [server.md](./server.md) (uses config)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Infrastructure**: [infrastructure.md](./infrastructure.md) (parent module)
+- **Server**: [server.md](./server.md) (uses config)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*

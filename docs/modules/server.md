@@ -1,8 +1,8 @@
 ## Project links
 
--   `docs/architecture/ARCHITECTURE.md` (MCP tool expectations and architecture).
--   `docs/modules/domain.md` and `docs/developer/ROADMAP.md` (v0.2.1 vision).
--   `docs/operations/CHANGELOG.md` for metrics that change when server components are added.
+- `docs/architecture/ARCHITECTURE.md` (MCP tool expectations and architecture).
+- `docs/modules/domain.md` and `docs/developer/ROADMAP.md` (v0.2.1 vision).
+- `docs/operations/CHANGELOG.md` for metrics that change when server components are added.
 
 # server Module
 
@@ -25,33 +25,33 @@ Core MCP protocol server implementation with JSON-RPC handling.
 
 MCP tool implementations:
 
--   `index` - Index operations (start/status/clear)
--   `search` - Unified search (code/memory)
--   `validate` - Validation + complexity analysis
--   `memory` - Memory storage, retrieval, timeline, inject
--   `session` - Session lifecycle + summaries
--   `agent` - Agent activity logging
--   `project` - Project workflow operations
--   `vcs` - Repository operations
+- `index` - Index operations (start/status/clear)
+- `search` - Unified search (code/memory)
+- `validate` - Validation + complexity analysis
+- `memory` - Memory storage, retrieval, timeline, inject
+- `session` - Session lifecycle + summaries
+- `agent` - Agent activity logging
+- `project` - Project workflow operations
+- `vcs` - Repository operations
 
 ### Admin API (`admin/`)
 
 Administrative endpoints:
 
--   `handlers.rs` - Health check, metrics, shutdown handlers
--   `config_handlers.rs` - Configuration management handlers
--   `routes.rs` - Axum router configuration
--   `models.rs` - Request/response types
--   `service.rs` - Admin service orchestration
+- `handlers.rs` - Health check, metrics, shutdown handlers
+- `config_handlers.rs` - Configuration management handlers
+- `routes.rs` - Axum router configuration
+- `models.rs` - Request/response types
+- `service.rs` - Admin service orchestration
 
 ### Transport (`transport/`)
 
 HTTP transport layer:
 
--   `http.rs` - HTTP server setup
--   `session.rs` - Session management
--   `config.rs` - Transport configuration
--   `versioning.rs` - API versioning
+- `http.rs` - HTTP server setup
+- `session.rs` - Session management
+- `config.rs` - Transport configuration
+- `versioning.rs` - API versioning
 
 ### Authentication (`auth.rs`)
 
@@ -118,9 +118,9 @@ Server tests are located in `crates/mcb-server/tests/`.
 
 ## Project Alignment
 
--   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` describes the layering that this module sits atop and captures patterns for MCP tooling and provider registration.
--   **Roadmap signals**: Refer to `docs/developer/ROADMAP.md` for the v0.2.1 objectives (git-aware indexing, session memory, advanced browser) and `docs/modules/domain.md` for domain usage.
--   **Operational metrics**: When tools or admin handlers change, reflect the counts in `docs/operations/CHANGELOG.md` and `docs/operations/CI_OPTIMIZATION_VALIDATION.md` so the documentation and tests stay aligned.
+- **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` describes the layering that this module sits atop and captures patterns for MCP tooling and provider registration.
+- **Roadmap signals**: Refer to `docs/developer/ROADMAP.md` for the v0.2.1 objectives (git-aware indexing, session memory, advanced browser) and `docs/modules/domain.md` for domain usage.
+- **Operational metrics**: When tools or admin handlers change, reflect the counts in `docs/operations/CHANGELOG.md` and `docs/operations/CI_OPTIMIZATION_VALIDATION.md` so the documentation and tests stay aligned.
 
 ---
 

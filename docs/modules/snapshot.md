@@ -1,6 +1,6 @@
 # snapshot Module
 
-**Note**: Snapshot functionality is defined as a port trait in v0.1.1.
+**Note**: Snapshot functionality is defined as a port trait in v0.2.1.
 
 **Trait**: `crates/mcb-application/src/ports/infrastructure/snapshot.rs`
 **Null Adapter**: `crates/mcb-infrastructure/src/adapters/infrastructure/snapshot.rs`
@@ -43,9 +43,9 @@ crates/mcb-infrastructure/src/adapters/infrastructure/
 
 Related types in `mcb-domain`:
 
--   `CodebaseSnapshot` - Point-in-time codebase state
--   `FileSnapshot` - Individual file state with hash
--   `SnapshotChanges` - Delta between snapshots
+- `CodebaseSnapshot` - Point-in-time codebase state
+- `FileSnapshot` - Individual file state with hash
+- `SnapshotChanges` - Delta between snapshots
 
 ## Key Exports
 
@@ -59,11 +59,11 @@ pub use adapters::infrastructure::snapshot::{NullSnapshotProvider, NullStateStor
 
 ## Cross-References
 
--   **Domain**: [domain.md](./domain.md) (trait definition)
--   **Infrastructure**: [infrastructure.md](./infrastructure.md) (null adapter)
--   **Sync**: [sync.md](./sync.md) (uses snapshots)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Domain**: [domain.md](./domain.md) (trait definition)
+- **Infrastructure**: [infrastructure.md](./infrastructure.md) (null adapter)
+- **Sync**: [sync.md](./sync.md) (uses snapshots)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*

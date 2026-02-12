@@ -154,4 +154,4 @@ Provider features are controlled via Cargo.toml feature flags:
 | `cache-redis` | No | Redis cache provider |
 | `lang-all` | Yes | All 12 language processors |
 
-*Updated: 2026-01-28 - Reflects modular crate architecture (v0.1.4)*
+*Updated: 2026-01-28 - Reflects modular crate architecture (v0.2.1)*

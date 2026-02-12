@@ -91,8 +91,8 @@ AST-based code chunking for 12 programming languages.
 
 Intelligent provider selection and management.
 
--   **CircuitBreaker** - Failure detection and recovery
--   **HealthMonitor** - Continuous health checking
+- **CircuitBreaker** - Failure detection and recovery
+- **HealthMonitor** - Continuous health checking
 
 ## File Structure
 
@@ -160,8 +160,8 @@ Provider tests are located in `crates/mcb-providers/tests/`.
 
 ## Project Alignment
 
--   **Architecture guidance**: Use `docs/architecture/ARCHITECTURE.md` for linkme/async/error expectations when adding new providers.
--   **Roadmap signals**: Refer to `docs/developer/ROADMAP.md` for validated requirements (MCP protocol, embeddings, vector stores) and v0.2.1 objectives (git-aware indexing, session memory, advanced browser) to keep provider health, routing, and config compatible.
+- **Architecture guidance**: Use `docs/architecture/ARCHITECTURE.md` for linkme/async/error expectations when adding new providers.
+- **Roadmap signals**: Refer to `docs/developer/ROADMAP.md` for validated requirements (MCP protocol, embeddings, vector stores) and v0.2.1 objectives (git-aware indexing, session memory, advanced browser) to keep provider health, routing, and config compatible.
 
 ---
 
