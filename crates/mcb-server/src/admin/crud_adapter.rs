@@ -260,7 +260,10 @@ fn apply_filter_pipeline(
 
 // ─── Org group ───────────────────────────────────────────────────────
 
-impl_crud_adapter!(OrgAdapter(dyn OrgEntityRepository) {
+struct OrgAdapter(Arc<dyn OrgEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for OrgAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         let orgs = self.0.list_orgs().await.map_err(map_err)?;
         to_json_vec(&orgs)
@@ -281,9 +284,12 @@ impl_crud_adapter!(OrgAdapter(dyn OrgEntityRepository) {
     async fn delete_by_id(&self, id: &str) -> Result<(), String> {
         self.0.delete_org(id).await.map_err(map_err)
     }
-});
+}
 
-impl_crud_adapter!(UserAdapter(dyn OrgEntityRepository) {
+struct UserAdapter(Arc<dyn OrgEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for UserAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         let users = self.0.list_users(DEFAULT_ORG_ID).await.map_err(map_err)?;
         to_json_vec(&users)
@@ -304,9 +310,12 @@ impl_crud_adapter!(UserAdapter(dyn OrgEntityRepository) {
     async fn delete_by_id(&self, id: &str) -> Result<(), String> {
         self.0.delete_user(id).await.map_err(map_err)
     }
-});
+}
 
-impl_crud_adapter!(TeamAdapter(dyn OrgEntityRepository) {
+struct TeamAdapter(Arc<dyn OrgEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for TeamAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         let teams = self.0.list_teams(DEFAULT_ORG_ID).await.map_err(map_err)?;
         to_json_vec(&teams)
@@ -326,9 +335,12 @@ impl_crud_adapter!(TeamAdapter(dyn OrgEntityRepository) {
     async fn delete_by_id(&self, id: &str) -> Result<(), String> {
         self.0.delete_team(id).await.map_err(map_err)
     }
-});
+}
 
-impl_crud_adapter!(TeamMemberAdapter(dyn OrgEntityRepository) {
+struct TeamMemberAdapter(Arc<dyn OrgEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for TeamMemberAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
@@ -360,9 +372,12 @@ impl_crud_adapter!(TeamMemberAdapter(dyn OrgEntityRepository) {
     async fn delete_by_id(&self, _id: &str) -> Result<(), String> {
         Err("TeamMember delete requires team_id and user_id".to_string())
     }
-});
+}
 
-impl_crud_adapter!(ApiKeyAdapter(dyn OrgEntityRepository) {
+struct ApiKeyAdapter(Arc<dyn OrgEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for ApiKeyAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         let keys = self
             .0
@@ -386,11 +401,14 @@ impl_crud_adapter!(ApiKeyAdapter(dyn OrgEntityRepository) {
     async fn delete_by_id(&self, id: &str) -> Result<(), String> {
         self.0.delete_api_key(id).await.map_err(map_err)
     }
-});
+}
 
 // ─── Issue group ─────────────────────────────────────────────────────
 
-impl_crud_adapter!(ProjectIssueAdapter(dyn IssueEntityRepository) {
+struct ProjectIssueAdapter(Arc<dyn IssueEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for ProjectIssueAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         let issues = self
             .0
@@ -422,9 +440,12 @@ impl_crud_adapter!(ProjectIssueAdapter(dyn IssueEntityRepository) {
             .await
             .map_err(map_err)
     }
-});
+}
 
-impl_crud_adapter!(IssueCommentAdapter(dyn IssueEntityRepository) {
+struct IssueCommentAdapter(Arc<dyn IssueEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for IssueCommentAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
@@ -457,9 +478,12 @@ impl_crud_adapter!(IssueCommentAdapter(dyn IssueEntityRepository) {
     async fn delete_by_id(&self, id: &str) -> Result<(), String> {
         self.0.delete_comment(id).await.map_err(map_err)
     }
-});
+}
 
-impl_crud_adapter!(IssueLabelAdapter(dyn IssueEntityRepository) {
+struct IssueLabelAdapter(Arc<dyn IssueEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for IssueLabelAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         let labels = self
             .0
@@ -483,9 +507,12 @@ impl_crud_adapter!(IssueLabelAdapter(dyn IssueEntityRepository) {
     async fn delete_by_id(&self, id: &str) -> Result<(), String> {
         self.0.delete_label(id).await.map_err(map_err)
     }
-});
+}
 
-impl_crud_adapter!(IssueLabelAssignmentAdapter(dyn IssueEntityRepository) {
+struct IssueLabelAssignmentAdapter(Arc<dyn IssueEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for IssueLabelAssignmentAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
@@ -517,11 +544,14 @@ impl_crud_adapter!(IssueLabelAssignmentAdapter(dyn IssueEntityRepository) {
     async fn delete_by_id(&self, _id: &str) -> Result<(), String> {
         Err("IssueLabelAssignment delete requires issue_id and label_id".to_string())
     }
-});
+}
 
 // ─── Plan group ──────────────────────────────────────────────────────
 
-impl_crud_adapter!(PlanAdapter(dyn PlanEntityRepository) {
+struct PlanAdapter(Arc<dyn PlanEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for PlanAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         let plans = self
             .0
@@ -549,9 +579,12 @@ impl_crud_adapter!(PlanAdapter(dyn PlanEntityRepository) {
             .await
             .map_err(map_err)
     }
-});
+}
 
-impl_crud_adapter!(PlanVersionAdapter(dyn PlanEntityRepository) {
+struct PlanVersionAdapter(Arc<dyn PlanEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for PlanVersionAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
@@ -588,9 +621,12 @@ impl_crud_adapter!(PlanVersionAdapter(dyn PlanEntityRepository) {
     async fn delete_by_id(&self, _id: &str) -> Result<(), String> {
         Err("PlanVersion delete not supported".to_string())
     }
-});
+}
 
-impl_crud_adapter!(PlanReviewAdapter(dyn PlanEntityRepository) {
+struct PlanReviewAdapter(Arc<dyn PlanEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for PlanReviewAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
@@ -627,11 +663,14 @@ impl_crud_adapter!(PlanReviewAdapter(dyn PlanEntityRepository) {
     async fn delete_by_id(&self, _id: &str) -> Result<(), String> {
         Err("PlanReview delete not supported".to_string())
     }
-});
+}
 
 // ─── VCS group ───────────────────────────────────────────────────────
 
-impl_crud_adapter!(RepositoryAdapter(dyn VcsEntityRepository) {
+struct RepositoryAdapter(Arc<dyn VcsEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for RepositoryAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         let repos = self
             .0
@@ -663,9 +702,12 @@ impl_crud_adapter!(RepositoryAdapter(dyn VcsEntityRepository) {
             .await
             .map_err(map_err)
     }
-});
+}
 
-impl_crud_adapter!(BranchAdapter(dyn VcsEntityRepository) {
+struct BranchAdapter(Arc<dyn VcsEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for BranchAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
@@ -699,9 +741,12 @@ impl_crud_adapter!(BranchAdapter(dyn VcsEntityRepository) {
     async fn delete_by_id(&self, id: &str) -> Result<(), String> {
         self.0.delete_branch(id).await.map_err(map_err)
     }
-});
+}
 
-impl_crud_adapter!(WorktreeAdapter(dyn VcsEntityRepository) {
+struct WorktreeAdapter(Arc<dyn VcsEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for WorktreeAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
@@ -735,9 +780,12 @@ impl_crud_adapter!(WorktreeAdapter(dyn VcsEntityRepository) {
     async fn delete_by_id(&self, id: &str) -> Result<(), String> {
         self.0.delete_worktree(id).await.map_err(map_err)
     }
-});
+}
 
-impl_crud_adapter!(AgentWorktreeAssignmentAdapter(dyn VcsEntityRepository) {
+struct AgentWorktreeAssignmentAdapter(Arc<dyn VcsEntityRepository>);
+
+#[async_trait]
+impl EntityCrudAdapter for AgentWorktreeAssignmentAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
@@ -774,4 +822,4 @@ impl_crud_adapter!(AgentWorktreeAssignmentAdapter(dyn VcsEntityRepository) {
     async fn delete_by_id(&self, _id: &str) -> Result<(), String> {
         Err("AgentWorktreeAssignment delete not supported — release instead".to_string())
     }
-});
+}
