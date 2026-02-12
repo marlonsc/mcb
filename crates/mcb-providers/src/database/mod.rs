@@ -9,6 +9,7 @@
 //! - **mysql** – (future) MySQL adapter and DDL
 
 pub mod sqlite;
+pub use crate::storage::{SqliteFileHashConfig, SqliteFileHashRepository};
 pub use sqlite::{
     SqliteAgentRepository, SqliteDatabaseProvider, SqliteExecutor, SqliteIssueEntityRepository,
     SqliteMemoryDdlGenerator, SqliteMemoryRepository, SqliteOrgEntityRepository,

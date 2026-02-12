@@ -13,26 +13,19 @@ pub mod validation;
 pub mod vcs;
 pub mod vcs_entity;
 
-#[allow(unused_imports)]
 pub use agent::MockAgentRepository;
 pub use agent::MockAgentSessionService;
 pub use context::MockContextService;
 pub use indexing::MockIndexingService;
-#[allow(unused_imports)]
 pub use issue_entity::MockIssueEntityRepository;
-#[allow(unused_imports)]
 pub use memory::MockMemoryRepository;
 pub use memory::MockMemoryService;
-#[allow(unused_imports)]
 pub use org_entity::MockOrgEntityRepository;
-#[allow(unused_imports)]
 pub use plan_entity::MockPlanEntityRepository;
-#[allow(unused_imports)]
 pub use project::{MockProjectDetectorService, MockProjectRepository};
 pub use search::MockSearchService;
 pub use validation::MockValidationService;
 pub use vcs::MockVcsProvider;
-#[allow(unused_imports)]
 pub use vcs_entity::MockVcsEntityRepository;
 
 #[cfg(test)]

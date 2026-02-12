@@ -4,6 +4,7 @@ use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_domain::ports::services::ProjectDetectorService;
 use std::path::Path;
 
+#[allow(dead_code)]
 pub struct MockProjectDetectorService;
 
 impl MockProjectDetectorService {

@@ -29,6 +29,9 @@ max_request_body_size = 10485760
 cors_enabled = true
 cors_origins = ["*"]
 
+[providers]
+database = "sqlite"
+
 [providers.embedding]
 provider = "fastembed"
 

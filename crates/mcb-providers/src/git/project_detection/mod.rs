@@ -1,4 +1,5 @@
 //! Project detection with auto-registration via linkme.
+#![allow(unsafe_code)]
 
 mod cargo;
 mod detector;

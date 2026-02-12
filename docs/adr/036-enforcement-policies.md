@@ -14,7 +14,7 @@ implementation_status: Complete
 
 ## Status
 
-**Proposed** — 2026-02-05
+**Accepted** — 2026-02-06
 
 -   **Deciders:** Project team
 -   **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout)

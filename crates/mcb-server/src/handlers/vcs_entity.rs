@@ -8,7 +8,9 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
-use crate::handler_helpers::{ok_json, ok_text, require_id, resolve_org_id};
+use crate::handler_helpers::{
+    current_timestamp, map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
+};
 
 /// Handler for the consolidated `vcs_entity` MCP tool.
 pub struct VcsEntityHandler {
@@ -50,183 +52,113 @@ impl VcsEntityHandler {
             {
             // -- Repository --
             (VcsEntityAction::Create, VcsEntityResource::Repository) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
-                let mut repo: Repository = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                let mut repo: Repository = require_data(args.data, "data required for create")?;
                 repo.org_id = org_id.to_string();
-                self.repo.create_repository(&repo).await.map_err(to_mcp)?;
+                map_opaque_error(self.repo.create_repository(&repo).await)?;
                 ok_json(&repo)
             }
             (VcsEntityAction::Get, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
-                let repo = self
-                    .repo
-                    .get_repository(&org_id, &id)
-                    .await
-                    .map_err(to_mcp)?;
-                ok_json(&repo)
+                ok_json(&map_opaque_error(self.repo.get_repository(&org_id, &id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Repository) => {
                 let project_id = args.project_id.as_deref().ok_or_else(|| {
                     McpError::invalid_params("project_id required for list", None)
                 })?;
-                let repos = self
-                    .repo
-                    .list_repositories(&org_id, project_id)
-                    .await
-                    .map_err(to_mcp)?;
-                ok_json(&repos)
+                ok_json(&map_opaque_error(self.repo.list_repositories(&org_id, project_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Repository) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required for update", None))?;
-                let mut repo: Repository = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                let mut repo: Repository = require_data(args.data, "data required for update")?;
                 repo.org_id = org_id.to_string();
-                self.repo.update_repository(&repo).await.map_err(to_mcp)?;
+                map_opaque_error(self.repo.update_repository(&repo).await)?;
                 ok_text("updated")
             }
             (VcsEntityAction::Delete, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
-                self.repo
-                    .delete_repository(&org_id, &id)
-                    .await
-                    .map_err(to_mcp)?;
+                map_opaque_error(self.repo.delete_repository(&org_id, &id).await)?;
                 ok_text("deleted")
             }
 
             // -- Branch --
             (VcsEntityAction::Create, VcsEntityResource::Branch) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required", None))?;
-                let branch: Branch = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.repo.create_branch(&branch).await.map_err(to_mcp)?;
+                let branch: Branch = require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.create_branch(&branch).await)?;
                 ok_json(&branch)
             }
             (VcsEntityAction::Get, VcsEntityResource::Branch) => {
                 let id = require_id(&args.id)?;
-                let branch = self.repo.get_branch(&id).await.map_err(to_mcp)?;
-                ok_json(&branch)
+                ok_json(&map_opaque_error(self.repo.get_branch(&id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Branch) => {
                 let repo_id = args
                     .repository_id
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("repository_id required", None))?;
-                let branches = self.repo.list_branches(repo_id).await.map_err(to_mcp)?;
-                ok_json(&branches)
+                ok_json(&map_opaque_error(self.repo.list_branches(repo_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Branch) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required", None))?;
-                let branch: Branch = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.repo.update_branch(&branch).await.map_err(to_mcp)?;
+                let branch: Branch = require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.update_branch(&branch).await)?;
                 ok_text("updated")
             }
             (VcsEntityAction::Delete, VcsEntityResource::Branch) => {
                 let id = require_id(&args.id)?;
-                self.repo.delete_branch(&id).await.map_err(to_mcp)?;
+                map_opaque_error(self.repo.delete_branch(&id).await)?;
                 ok_text("deleted")
             }
 
             // -- Worktree --
             (VcsEntityAction::Create, VcsEntityResource::Worktree) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required", None))?;
-                let wt: Worktree = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.repo.create_worktree(&wt).await.map_err(to_mcp)?;
+                let wt: Worktree = require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.create_worktree(&wt).await)?;
                 ok_json(&wt)
             }
             (VcsEntityAction::Get, VcsEntityResource::Worktree) => {
                 let id = require_id(&args.id)?;
-                let wt = self.repo.get_worktree(&id).await.map_err(to_mcp)?;
-                ok_json(&wt)
+                ok_json(&map_opaque_error(self.repo.get_worktree(&id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Worktree) => {
                 let repo_id = args
                     .repository_id
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("repository_id required", None))?;
-                let wts = self.repo.list_worktrees(repo_id).await.map_err(to_mcp)?;
-                ok_json(&wts)
+                ok_json(&map_opaque_error(self.repo.list_worktrees(repo_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Worktree) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required", None))?;
-                let wt: Worktree = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.repo.update_worktree(&wt).await.map_err(to_mcp)?;
+                let wt: Worktree = require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.update_worktree(&wt).await)?;
                 ok_text("updated")
             }
             (VcsEntityAction::Delete, VcsEntityResource::Worktree) => {
                 let id = require_id(&args.id)?;
-                self.repo.delete_worktree(&id).await.map_err(to_mcp)?;
+                map_opaque_error(self.repo.delete_worktree(&id).await)?;
                 ok_text("deleted")
             }
 
             // -- Assignment --
             (VcsEntityAction::Create, VcsEntityResource::Assignment) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required", None))?;
-                let asgn: AgentWorktreeAssignment = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.repo.create_assignment(&asgn).await.map_err(to_mcp)?;
+                let asgn: AgentWorktreeAssignment = require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.create_assignment(&asgn).await)?;
                 ok_json(&asgn)
             }
             (VcsEntityAction::Get, VcsEntityResource::Assignment) => {
                 let id = require_id(&args.id)?;
-                let asgn = self.repo.get_assignment(&id).await.map_err(to_mcp)?;
-                ok_json(&asgn)
+                ok_json(&map_opaque_error(self.repo.get_assignment(&id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Assignment) => {
                 let wt_id = args
                     .worktree_id
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("worktree_id required", None))?;
-                let asgns = self
-                    .repo
-                    .list_assignments_by_worktree(wt_id)
-                    .await
-                    .map_err(to_mcp)?;
-                ok_json(&asgns)
+                ok_json(&map_opaque_error(self.repo.list_assignments_by_worktree(wt_id).await)?)
             }
             (VcsEntityAction::Release, VcsEntityResource::Assignment) => {
                 let id = require_id(&args.id)?;
-                let now = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_secs() as i64;
-                self.repo
-                    .release_assignment(&id, now)
-                    .await
-                    .map_err(to_mcp)?;
+                map_opaque_error(self.repo.release_assignment(&id, current_timestamp()).await)?;
                 ok_text("released")
             }
 
             }
-        }
-    }
-}
-
-fn to_mcp(e: Error) -> McpError {
-    match &e {
-        Error::NotFound { .. } | Error::InvalidArgument { .. } => {
-            McpError::invalid_params(e.to_string(), None)
-        }
-        other => {
-            tracing::error!(error = %other, "Internal error in VCS entity handler");
-            McpError::internal_error("Internal server error", None)
         }
     }
 }

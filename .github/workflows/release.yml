@@ -166,8 +166,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: Release ${{ env.RELEASE_VERSION }}
+          tag_name: ${{ steps.extract_version.outputs.tag }}
+          name: Release ${{ steps.extract_version.outputs.version }}
           body_path: RELEASE_NOTES.md
           files: |
             release-artifacts/release-artifacts-x86_64-unknown-linux-gnu/mcb-x86_64-linux-gnu
@@ -178,7 +178,7 @@ jobs:
 
       - name: Release Summary
         env:
-          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          RELEASE_TAG: ${{ steps.extract_version.outputs.tag }}
           REPO: ${{ github.repository }}
         run: |
           echo "✓ Release $RELEASE_TAG created successfully"

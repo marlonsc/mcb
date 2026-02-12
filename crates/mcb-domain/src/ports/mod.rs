@@ -42,10 +42,10 @@ pub use admin::{
 };
 pub use browse::{BrowseError, BrowseServiceInterface, HighlightError, HighlightServiceInterface};
 pub use infrastructure::{
-    AuthServiceInterface, DatabaseExecutor, DomainEventStream, EventBusProvider, LockGuard,
-    LockProvider, ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator,
-    SnapshotProvider, SqlParam, SqlRow, StateStoreProvider, SyncCoordinator, SyncOptions,
-    SyncProvider, SyncResult, SystemMetrics, SystemMetricsCollectorInterface,
+    AuthServiceInterface, DatabaseExecutor, DomainEventStream, EventBusProvider, ProviderContext,
+    ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator, SnapshotProvider, SqlParam,
+    SqlRow, StateStoreProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult,
+    SystemMetrics, SystemMetricsCollectorInterface,
 };
 pub use jobs::{
     Job, JobCounts, JobId, JobManagerInterface, JobProgressUpdate, JobResult, JobStatus, JobType,

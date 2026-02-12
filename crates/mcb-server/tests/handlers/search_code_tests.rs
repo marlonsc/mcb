@@ -15,7 +15,6 @@ async fn test_search_code_success() {
     let handler = SearchHandler::new(Arc::new(search_service), Arc::new(memory_service));
 
     let args = SearchArgs {
-        org_id: None,
         query: "test query".to_string(),
         resource: SearchResource::Code,
         collection: Some("test".to_string()),
@@ -42,7 +41,6 @@ async fn test_search_code_empty_query() {
     let handler = SearchHandler::new(Arc::new(search_service), Arc::new(memory_service));
 
     let args = SearchArgs {
-        org_id: None,
         query: "".to_string(),
         resource: SearchResource::Code,
         collection: Some("test".to_string()),

@@ -186,7 +186,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
       - run: make coverage LCOV=1 TEST_THREADS=4
-      - uses: codecov/codecov-action@18283e04ce6e62d37312384ff67ab1fd00d0d27f # v5.4.3
+      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false

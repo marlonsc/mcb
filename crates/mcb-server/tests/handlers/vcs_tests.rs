@@ -12,7 +12,6 @@ async fn test_vcs_list_repositories_success() {
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
-        org_id: None,
         action: VcsAction::ListRepositories,
         repo_id: None,
         repo_path: None,
@@ -38,7 +37,6 @@ async fn test_vcs_list_repositories_with_limit() {
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
-        org_id: None,
         action: VcsAction::ListRepositories,
         repo_id: None,
         repo_path: None,
@@ -64,7 +62,6 @@ async fn test_vcs_list_repositories_no_limit() {
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
-        org_id: None,
         action: VcsAction::ListRepositories,
         repo_id: None,
         repo_path: None,
@@ -90,7 +87,6 @@ async fn test_vcs_index_repository_success() {
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
-        org_id: None,
         action: VcsAction::IndexRepository,
         repo_id: Some("repo-123".to_string()),
         repo_path: Some("/path/to/repo".to_string()),
@@ -116,7 +112,6 @@ async fn test_vcs_index_repository_with_repo_path() {
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
-        org_id: None,
         action: VcsAction::IndexRepository,
         repo_id: None,
         repo_path: Some("/path/to/repo".to_string()),
@@ -141,7 +136,6 @@ async fn test_vcs_analyze_impact_with_defaults() {
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
-        org_id: None,
         action: VcsAction::AnalyzeImpact,
         repo_id: Some("repo-123".to_string()),
         repo_path: Some("/path/to/repo".to_string()),
@@ -166,7 +160,6 @@ async fn test_vcs_analyze_impact_missing_repo_path() {
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
-        org_id: None,
         action: VcsAction::AnalyzeImpact,
         repo_id: None,
         repo_path: None,

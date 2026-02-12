@@ -85,7 +85,7 @@ impl ProjectContext {
         if url.is_empty() {
             return None;
         }
-        let owner_repo = parse_remote_url(&url)?;
+        let owner_repo = parse_owner_repo(&url)?;
         let name = owner_repo
             .rsplit('/')
             .next()
@@ -149,7 +149,7 @@ impl ProjectContext {
             return None;
         }
         let url = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        parse_remote_url(&url)
+        parse_owner_repo(&url)
     }
 }
 
@@ -158,7 +158,7 @@ impl ProjectContext {
 /// Supports SSH shorthand (`git@host:owner/repo.git`),
 /// SSH URL (`ssh://git@host/owner/repo.git`),
 /// and HTTPS (`https://host/owner/repo[.git]`).
-pub fn parse_remote_url(url: &str) -> Option<String> {
+fn parse_owner_repo(url: &str) -> Option<String> {
     // SSH shorthand: git@host:owner/repo.git
     if let Some((_host, path)) = url.strip_prefix("git@").and_then(|s| s.split_once(':')) {
         let path = path.trim_end_matches(".git");
@@ -173,11 +173,6 @@ pub fn parse_remote_url(url: &str) -> Option<String> {
         .map(|(_, path)| path)?;
     let path = path.trim_end_matches(".git");
     normalize_owner_repo(path)
-}
-
-/// Normalize any git URL to `owner/repo` form. Falls back to raw URL if unparseable.
-pub fn normalize_repo_url(url: &str) -> String {
-    parse_remote_url(url).unwrap_or_else(|| url.to_string())
 }
 
 fn normalize_owner_repo(path: &str) -> Option<String> {
@@ -198,7 +193,7 @@ mod tests {
     #[test]
     fn parse_ssh_shorthand() {
         assert_eq!(
-            parse_remote_url("git@github.com:marlonsc/mcb.git"),
+            parse_owner_repo("git@github.com:marlonsc/mcb.git"),
             Some("marlonsc/mcb".to_string())
         );
     }
@@ -206,7 +201,7 @@ mod tests {
     #[test]
     fn parse_https() {
         assert_eq!(
-            parse_remote_url("https://github.com/marlonsc/mcb.git"),
+            parse_owner_repo("https://github.com/marlonsc/mcb.git"),
             Some("marlonsc/mcb".to_string())
         );
     }
@@ -214,7 +209,7 @@ mod tests {
     #[test]
     fn parse_https_no_suffix() {
         assert_eq!(
-            parse_remote_url("https://github.com/marlonsc/mcb"),
+            parse_owner_repo("https://github.com/marlonsc/mcb"),
             Some("marlonsc/mcb".to_string())
         );
     }
@@ -222,7 +217,7 @@ mod tests {
     #[test]
     fn parse_ssh_url() {
         assert_eq!(
-            parse_remote_url("ssh://git@github.com/marlonsc/mcb.git"),
+            parse_owner_repo("ssh://git@github.com/marlonsc/mcb.git"),
             Some("marlonsc/mcb".to_string())
         );
     }
@@ -230,14 +225,14 @@ mod tests {
     #[test]
     fn parse_gitlab_subgroup() {
         assert_eq!(
-            parse_remote_url("git@gitlab.com:org/subgroup/repo.git"),
+            parse_owner_repo("git@gitlab.com:org/subgroup/repo.git"),
             Some("org/subgroup/repo".to_string())
         );
     }
 
     #[test]
     fn parse_empty_returns_none() {
-        assert_eq!(parse_remote_url(""), None);
+        assert_eq!(parse_owner_repo(""), None);
     }
 
     #[test]
@@ -250,21 +245,13 @@ mod tests {
     #[test]
     fn parse_gitlab_subgroup_https() {
         assert_eq!(
-            parse_remote_url("https://gitlab.com/org/subgroup/repo.git"),
+            parse_owner_repo("https://gitlab.com/org/subgroup/repo.git"),
             Some("org/subgroup/repo".to_string())
         );
     }
 
     #[test]
-    fn normalize_repo_url_ssh() {
-        assert_eq!(
-            normalize_repo_url("git@github.com:marlonsc/mcb.git"),
-            "marlonsc/mcb"
-        );
-    }
-
-    #[test]
-    fn normalize_repo_url_unparseable() {
-        assert_eq!(normalize_repo_url("not-a-url"), "not-a-url");
+    fn parse_unparseable_returns_none() {
+        assert_eq!(parse_owner_repo("not-a-url"), None);
     }
 }

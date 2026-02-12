@@ -1,84 +1,106 @@
 # Technical Patterns Context
 
-**Last updated:** 2026-02-02
-**Source:** `README.md` (project overview) and `docs/architecture/ARCHITECTURE.md` (system architecture)
+**Last updated:** 2026-02-11
+**Source:** Codebase analysis across 9 crates
 
-## Overview
+## Architecture: Clean Architecture + Hexagonal
 
-The Memory Context Browser keeps its codebase aligned with Clean Architecture layers and distributed-provider discovery so the runtime stays lean while each crate can evolve independently.
-
-## Key Patterns
-
-### Clean Architecture crate layering
-
-**Used in:** `README.md` "Architecture" summary and `docs/architecture/ARCHITECTURE.md`
+**Dependency direction:** `mcb-server → mcb-infrastructure → mcb-application → mcb-domain`
+Providers (`mcb-providers`) implement domain ports — never depend upstream.
 
 ```
-crates/
-├── mcb/             # Facade re-exporting the public API
-├── mcb-domain/      # Entities, ports, and errors
-├── mcb-application/ # Use cases, services, linkme registry
-├── mcb-providers/   # Embedding/vector-store implementations
-├── mcb-infrastructure/# DI, config, crypto, logging
-├── mcb-server/      # MCP protocol handlers
-├── mcb-validate/    # Architecture validation tooling
-├── mcb-language-support/ # Language detection
-└── mcb-ast-utils/   # AST parsing helpers
+mcb-domain         → Entities, ports (traits), errors, value objects, macros, registry
+mcb-application    → Use cases, decorators, services (orchestration)
+mcb-infrastructure → DI (dill+Handle), config, crypto, logging, health, routing
+mcb-providers      → Embedding, vector store, cache, database, git, language, events
+mcb-server         → MCP handlers, admin UI (Handlebars), transport (stdio/HTTP), hooks
+mcb-validate       → Architecture rules, AST analysis, linters, metrics
 ```
 
-**When to use:** Keep new functionality within this layered structure and respect the dependency direction: `mcb-server → mcb-infrastructure → mcb-application → mcb-domain` with `mcb-providers` being consumed but never depending upstream.
+## Three-Layer DI: linkme → dill → Handle
 
-### Linkme provider registration
+1. **linkme** — Compile-time discovery via `#[distributed_slice]`
+2. **dill** — Runtime IoC `Catalog` wiring (`mcb-infrastructure/src/di/catalog.rs`)
+3. **Handle<T>** — `RwLock<Arc<dyn T>>` for runtime provider switching (`di/handle.rs`)
 
-**Used in:** `docs/architecture/ARCHITECTURE.md` provider registration section
+## Provider Registration
 
 ```rust
+// Registry macro → entry struct + distributed_slice + resolve/list
+impl_registry!(embedding, EmbeddingProvider, EmbeddingConfigContainer);
+
+// Self-registration per provider
 #[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-static NULL_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-    name: "null",
-    description: "Null provider for testing",
-    factory: null_embedding_factory,
+static OPENAI: EmbeddingProviderEntry = EmbeddingProviderEntry {
+    name: "openai", description: "...", factory: openai_embedding_factory,
 };
 ```
 
-**When to use:** Any new embedding/vector-store provider must follow this registration so the distributed slice auto-discovers it at compile time and no manual wiring is required.
+Registries: `embedding`, `vector_store`, `cache`, `database`, `language` in `mcb-domain/src/registry/`
 
-### Async traits and error factory methods
+## Trait Patterns
 
-**Used in:** `docs/architecture/ARCHITECTURE.md` and `mcb-domain` module docs covering errors and ports
+- All async traits: `#[async_trait]` + `Send + Sync` for `Arc<dyn Trait>` usage
+- Composition: `VectorStoreProvider` extends `VectorStoreAdmin + VectorStoreBrowser`
+- Port hierarchy: `ports/{providers, services, repositories, infrastructure, admin, browse}`
 
-```rust
-#[async_trait]
-pub trait EmbeddingProvider: Send + Sync {
-    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>>;
-}
+## Error Handling
 
-impl Error {
-    pub fn io<S: Into<String>>(message: S) -> Self { ... }
-}
-```
+- **Single enum**: `mcb-domain/src/error/mod.rs` with `#[derive(thiserror::Error)]`
+- **Factory methods**: `Error::io("msg")`, `Error::embedding("msg")` — never construct variants directly
+- **Context trait**: `ErrorContext<T>` adds `.context("msg")` (`mcb-infrastructure/src/error_ext.rs`)
+- **Rule**: No `unwrap()`/`expect()` outside tests. Always `?` propagation.
 
-**When to use:** Implement providers with `#[async_trait]`, return workspace `Result` types, and create helper constructors for custom errors instead of `panic!`ing or using `unwrap()`.
+## Macros (`mcb-domain/src/macros.rs`)
 
-## Project-phase Patterns
+| Macro | Purpose |
+|-------|---------|
+| `impl_from_str!` | Case-insensitive enum parsing from config strings |
+| `impl_registry!` | Full registry boilerplate (entry, slice, resolve, list) |
+| `table!`, `col!`, `index!` | Schema DDL with less boilerplate |
+| `define_id!` | Strong-typed ID newtype with From/Into/Display/AsRef |
 
-### Hybrid Search (Phase 6)
+## Module Organization
 
-**Used in:** `.planning/STATE.md` and `docs/developer/ROADMAP.md` latest sections
+- **lib.rs as hub**: Declares modules, re-exports key types
+- **File-per-trait**: Each major trait in own file (`embedding.rs`, `vector_store.rs`)
+- **Functional grouping**: `ports/providers/`, `ports/services/`, `ports/repositories/`
 
--   Phase 6 "Memory Search" is in progress with plan 06-02 (Hybrid Search Implementation) next in line.
--   The project batches FTS5 infrastructure work (triggers, deduplication by SHA256) before layering vector search on top again.
-**When to use:** Align any new feature with the release branch `release/v0.2.0` and cross-check against the plan checklist so Phase 6 artifacts stay coordinated.
+## Configuration
 
-### Metrics awareness
+- **Hierarchical**: `AppConfig → {ProvidersConfig, ServerConfig, AuthConfig}`
+- **Loader**: TOML/env vars with validation (`config/loader.rs`)
+- **Hot-reload**: `ConfigWatcher` monitors changes (`config/watcher.rs`)
 
-**Used in:** `.planning/PROJECT.md`
+## Testing
 
--   Track provider counts (7), vector stores (8), languages (14), and 1805+ tests as part of documentation metrics injection.
--   Pre-commit hooks automatically refresh badges and metrics in `docs/user-guide/README.md`, `docs/developer/ROADMAP.md`, and `docs/operations/CHANGELOG.md`.
-**When to use:** Update metrics data whenever capability counts change so the `docs/generated/METRICS.md` stays accurate and the documentation reflects the live project state.
+- **Mocks**: `Arc<Mutex<Vec<T>>>` state tracking in `test_utils/mock_services/`
+- **Real providers**: `extern crate mcb_providers` forces linkme in integration tests
+- **Fixtures**: Shared data in `test_utils` modules per crate
+
+## Key Patterns Summary
+
+| Pattern | Key Location | When to Use |
+|---------|-------------|-------------|
+| Clean Architecture | `*/lib.rs` | All new features |
+| linkme registration | `mcb-domain/src/registry/` | New provider types |
+| Three-layer DI | `mcb-infrastructure/src/di/` | Service wiring |
+| Error factories | `mcb-domain/src/error/mod.rs` | All error handling |
+| Handle<T> | `di/handle.rs` | Runtime-switchable providers |
+| define_id! | `value_objects/ids.rs` | New domain IDs |
+| EntityCrudAdapter | `mcb-server/src/admin/crud_adapter.rs` | Admin CRUD entities |
+| Decorator | `mcb-application/src/decorators/` | Cross-cutting concerns |
 
 ## Related Context
 
--   `docs/architecture/ARCHITECTURE.md` (system-level architecture description)
--   `docs/adr/023-inventory-to-linkme-migration.md` (provider migration rationale)
+- `docs/context/domain-concepts.md` — entity model
+- `docs/context/conventions.md` — coding style
+- `docs/architecture/ARCHITECTURE.md` — system architecture
+
+## Mirror Context
+
+- `context/project-intelligence/technical-patterns.md` — compact operational mirror
+
+## Change Notes
+
+- 2026-02-11T23:26:00-03:00 - Reconciled with `context/project-intelligence/technical-patterns.md` and added mirror reference.

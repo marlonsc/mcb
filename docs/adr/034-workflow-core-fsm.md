@@ -14,12 +14,13 @@ implementation_status: Complete
 
 ## Status
 
-**Proposed** — 2026-02-05
+**Accepted** — 2026-02-06
 
 -   **Deciders:** Project team
 -   **Supersedes:** [ADR-032](./032-agent-quality-domain-extension.md) (Agent & Quality Domain Extension)
 -   **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
 -   **Series:** ADR-034 → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
+-   **Resolution note:** Compensation/rollback follows the hybrid strategy defined in "Refinement 2: Compensation and Rollback Logic".
 
 ## Context
 

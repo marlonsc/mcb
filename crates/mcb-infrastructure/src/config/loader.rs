@@ -2,8 +2,6 @@
 //!
 //! Handles loading configuration from various sources including
 //! TOML files, environment variables, and default values.
-//!
-//! Uses Figment for configuration management (migrated from config crate in v0.1.2).
 
 use std::env;
 use std::path::{Path, PathBuf};

@@ -17,6 +17,6 @@
 //! - Adds behavior (metrics, logging, caching) without modification
 //! - Can be stacked: `Instrumented(Cached(Provider))`
 
-pub mod instrumented_embedding;
+mod instrumented_embedding;
 
 pub use instrumented_embedding::InstrumentedEmbeddingProvider;

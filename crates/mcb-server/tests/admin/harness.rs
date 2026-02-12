@@ -15,7 +15,6 @@
 //!     .await;
 //! ```
 
-use std::path::Path;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -124,7 +123,7 @@ impl AdminTestHarness {
         self
     }
 
-    /// Get shared reference to indexing operations.
+    /// Get shared reference to indexing operations (for pre-test setup before build_client).
     pub fn indexing(&self) -> &Arc<DefaultIndexingOperations> {
         &self.indexing
     }

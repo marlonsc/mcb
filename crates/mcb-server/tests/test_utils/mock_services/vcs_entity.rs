@@ -35,7 +35,6 @@ impl VcsEntityRepository for MockVcsEntityRepository {
     async fn delete_repository(&self, _org_id: &str, _id: &str) -> Result<()> {
         Ok(())
     }
-
     async fn create_branch(&self, _branch: &Branch) -> Result<()> {
         Ok(())
     }

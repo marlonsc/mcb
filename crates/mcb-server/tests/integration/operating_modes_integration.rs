@@ -622,6 +622,7 @@ async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
         .with_plan_entity_repository(services.plan_entity_repository)
         .with_issue_entity_repository(services.issue_entity_repository)
         .with_org_entity_repository(services.org_entity_repository)
+        .with_resolver(services.resolver)
         .build()
         .expect("Failed to build MCP server");
 
