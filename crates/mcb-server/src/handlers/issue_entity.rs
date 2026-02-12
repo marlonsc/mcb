@@ -3,13 +3,12 @@ use std::sync::Arc;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::ProjectIssue;
 use mcb_domain::ports::repositories::IssueEntityRepository;
-use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{IssueEntityAction, IssueEntityArgs, IssueEntityResource};
 use crate::error_mapping::to_opaque_mcp_error;
-use crate::handler_helpers::{ok_json, ok_text, require_id};
+use crate::handler_helpers::{ok_json, ok_text, require_id, resolve_org_id};
 
 /// Handler for the consolidated `issue_entity` MCP tool.
 pub struct IssueEntityHandler {
@@ -28,11 +27,12 @@ impl IssueEntityHandler {
         &self,
         Parameters(args): Parameters<IssueEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        // TODO(phase-1): extract org_id from auth token / request context
-        let org_ctx = OrgContext::default();
-        let org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
+        let org_id = resolve_org_id(args.org_id.as_deref());
 
-        match (args.action, args.resource) {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (IssueEntityAction::Create, IssueEntityResource::Issue) => {
                 let data = args
                     .data
@@ -50,7 +50,7 @@ impl IssueEntityHandler {
                 let id = require_id(&args.id)?;
                 let issue = self
                     .repo
-                    .get_issue(org_id, &id)
+                    .get_issue(org_id.as_str(), &id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&issue)
@@ -61,7 +61,7 @@ impl IssueEntityHandler {
                 })?;
                 let issues = self
                     .repo
-                    .list_issues(org_id, project_id)
+                    .list_issues(org_id.as_str(), project_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&issues)
@@ -82,7 +82,7 @@ impl IssueEntityHandler {
             (IssueEntityAction::Delete, IssueEntityResource::Issue) => {
                 let id = require_id(&args.id)?;
                 self.repo
-                    .delete_issue(org_id, &id)
+                    .delete_issue(org_id.as_str(), &id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_text("deleted")
@@ -156,7 +156,7 @@ impl IssueEntityHandler {
                 })?;
                 let labels = self
                     .repo
-                    .list_labels(org_id, project_id)
+                    .list_labels(org_id.as_str(), project_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&labels)
@@ -208,13 +208,7 @@ impl IssueEntityHandler {
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&labels)
             }
-            _ => Err(McpError::invalid_params(
-                format!(
-                    "Unsupported action {:?} for resource {:?}",
-                    args.action, args.resource
-                ),
-                None,
-            )),
+            }
         }
     }
 }

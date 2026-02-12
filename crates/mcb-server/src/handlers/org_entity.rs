@@ -3,13 +3,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::entities::{ApiKey, Organization, Team, TeamMember, User};
 use mcb_domain::ports::repositories::OrgEntityRepository;
-use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use crate::error_mapping::to_opaque_mcp_error;
-use crate::handler_helpers::{ok_json, ok_text, require_id};
+use crate::handler_helpers::{ok_json, ok_text, require_id, resolve_org_id};
 
 /// Handler for the consolidated `org_entity` MCP tool.
 pub struct OrgEntityHandler {
@@ -27,10 +26,12 @@ impl OrgEntityHandler {
         &self,
         Parameters(args): Parameters<OrgEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let org_ctx = OrgContext::default();
-        let org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
+        let org_id = resolve_org_id(args.org_id.as_deref());
 
-        match (args.action, args.resource) {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (OrgEntityAction::Create, OrgEntityResource::Org) => {
                 let data = args
                     .data
@@ -89,7 +90,7 @@ impl OrgEntityHandler {
                 let user = if let Some(id) = args.id.as_deref() {
                     self.repo.get_user(id).await
                 } else if let Some(email) = args.email.as_deref() {
-                    self.repo.get_user_by_email(org_id, email).await
+                    self.repo.get_user_by_email(org_id.as_str(), email).await
                 } else {
                     return Err(McpError::invalid_params(
                         "id or email required for user get",
@@ -102,7 +103,7 @@ impl OrgEntityHandler {
             (OrgEntityAction::List, OrgEntityResource::User) => {
                 let users = self
                     .repo
-                    .list_users(org_id)
+                    .list_users(org_id.as_str())
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&users)
@@ -149,7 +150,7 @@ impl OrgEntityHandler {
             (OrgEntityAction::List, OrgEntityResource::Team) => {
                 let teams = self
                     .repo
-                    .list_teams(org_id)
+                    .list_teams(org_id.as_str())
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&teams)
@@ -226,7 +227,7 @@ impl OrgEntityHandler {
             (OrgEntityAction::List, OrgEntityResource::ApiKey) => {
                 let keys = self
                     .repo
-                    .list_api_keys(org_id)
+                    .list_api_keys(org_id.as_str())
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&keys)
@@ -248,13 +249,7 @@ impl OrgEntityHandler {
                     .map_err(to_opaque_mcp_error)?;
                 ok_text("deleted")
             }
-            _ => Err(McpError::invalid_params(
-                format!(
-                    "Unsupported action {:?} for resource {:?}",
-                    args.action, args.resource
-                ),
-                None,
-            )),
+            }
         }
     }
 }

@@ -30,6 +30,7 @@ use serde::Serialize;
 use tracing::info;
 
 use super::auth::AdminAuth;
+use crate::handler_helpers::resolve_org_id;
 
 /// Admin handler state containing shared service references
 #[derive(Clone)]
@@ -177,10 +178,8 @@ pub async fn list_browse_projects(
         ));
     };
 
-    // TODO(multi-tenant): Extract org_id from auth context.
-    tracing::warn!("Using default org context - multi-tenant auth not yet implemented");
-    let org_ctx = mcb_domain::value_objects::OrgContext::default();
-    match project_workflow.list(org_ctx.org_id.as_str()).await {
+    let org_id = resolve_org_id(None);
+    match project_workflow.list(org_id.as_str()).await {
         Ok(projects) => {
             let total = projects.len();
             Ok(Json(ProjectsBrowseResponse { projects, total }))
@@ -250,15 +249,10 @@ pub async fn list_browse_repositories(
         ));
     };
 
-    // TODO(multi-tenant): Extract org_id from auth context.
-    tracing::warn!("Using default org context - multi-tenant auth not yet implemented");
-    let org_ctx = mcb_domain::value_objects::OrgContext::default();
+    let org_id = resolve_org_id(None);
     let pid = project_id.as_deref().unwrap_or("");
 
-    match vcs_entity
-        .list_repositories(org_ctx.org_id.as_str(), pid)
-        .await
-    {
+    match vcs_entity.list_repositories(org_id.as_str(), pid).await {
         Ok(repositories) => {
             let total = repositories.len();
             Ok(Json(RepositoriesBrowseResponse {
@@ -295,11 +289,10 @@ pub async fn list_browse_plans(
         ));
     };
 
-    // TODO(phase-1): extract org_id from admin auth context
-    let org_ctx = mcb_domain::value_objects::OrgContext::default();
+    let org_id = resolve_org_id(None);
     let pid = project_id.as_deref().unwrap_or("");
 
-    match plan_entity.list_plans(org_ctx.org_id.as_str(), pid).await {
+    match plan_entity.list_plans(org_id.as_str(), pid).await {
         Ok(plans) => {
             let total = plans.len();
             Ok(Json(PlansBrowseResponse { plans, total }))
@@ -333,10 +326,10 @@ pub async fn list_browse_issues(
         ));
     };
 
-    let org_ctx = mcb_domain::value_objects::OrgContext::default();
+    let org_id = resolve_org_id(None);
     let pid = project_id.as_deref().unwrap_or("");
 
-    match issue_entity.list_issues(org_ctx.org_id.as_str(), pid).await {
+    match issue_entity.list_issues(org_id.as_str(), pid).await {
         Ok(issues) => {
             let total = issues.len();
             Ok(Json(IssuesBrowseResponse { issues, total }))

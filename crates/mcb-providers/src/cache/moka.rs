@@ -17,7 +17,7 @@
 //! let provider = MokaCacheProvider::with_config(1000, Duration::from_secs(300));
 //! ```
 
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
@@ -35,8 +35,14 @@ use crate::constants::CACHE_DEFAULT_SIZE_LIMIT;
 /// For testing, use `MokaCacheProvider::new()` (local in-memory).
 #[derive(Clone)]
 pub struct MokaCacheProvider {
-    cache: Cache<String, Vec<u8>>,
+    cache: Cache<String, CachedValue>,
     max_size: usize,
+}
+
+#[derive(Clone)]
+struct CachedValue {
+    bytes: Vec<u8>,
+    expires_at: Option<Instant>,
 }
 
 impl Default for MokaCacheProvider {
@@ -72,25 +78,8 @@ impl MokaCacheProvider {
     pub fn max_size(&self) -> usize {
         self.max_size
     }
-}
 
-#[async_trait]
-impl CacheProvider for MokaCacheProvider {
-    async fn get_json(&self, key: &str) -> Result<Option<String>> {
-        if let Some(bytes) = self.cache.get(key).await {
-            let json = String::from_utf8(bytes).map_err(|e| Error::Infrastructure {
-                message: format!("Invalid UTF-8 in cached value: {}", e),
-                source: Some(Box::new(e)),
-            })?;
-            Ok(Some(json))
-        } else {
-            Ok(None)
-        }
-    }
-
-    async fn set_json(&self, key: &str, value: &str, _config: CacheEntryConfig) -> Result<()> {
-        let bytes = value.as_bytes();
-
+    async fn set(&self, key: &str, bytes: Vec<u8>, config: CacheEntryConfig) -> Result<()> {
         // Check if the value exceeds our size limit
         if bytes.len() > self.max_size {
             return Err(Error::Infrastructure {
@@ -103,8 +92,40 @@ impl CacheProvider for MokaCacheProvider {
             });
         }
 
-        self.cache.insert(key.to_string(), bytes.to_vec()).await;
+        let expires_at = config.ttl.and_then(|ttl| Instant::now().checked_add(ttl));
+
+        self.cache
+            .insert(key.to_string(), CachedValue { bytes, expires_at })
+            .await;
         Ok(())
+    }
+}
+
+#[async_trait]
+impl CacheProvider for MokaCacheProvider {
+    async fn get_json(&self, key: &str) -> Result<Option<String>> {
+        if let Some(cached_value) = self.cache.get(key).await {
+            if cached_value
+                .expires_at
+                .is_some_and(|expires_at| Instant::now() >= expires_at)
+            {
+                self.cache.invalidate(key).await;
+                return Ok(None);
+            }
+
+            let json =
+                String::from_utf8(cached_value.bytes).map_err(|e| Error::Infrastructure {
+                    message: format!("Invalid UTF-8 in cached value: {}", e),
+                    source: Some(Box::new(e)),
+                })?;
+            Ok(Some(json))
+        } else {
+            Ok(None)
+        }
+    }
+
+    async fn set_json(&self, key: &str, value: &str, config: CacheEntryConfig) -> Result<()> {
+        self.set(key, value.as_bytes().to_vec(), config).await
     }
 
     async fn delete(&self, key: &str) -> Result<bool> {

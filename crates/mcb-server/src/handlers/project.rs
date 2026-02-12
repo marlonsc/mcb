@@ -3,7 +3,6 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::repositories::ProjectRepository;
-use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 use serde_json::Value;
@@ -11,7 +10,7 @@ use tracing::info;
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
 use crate::error_mapping::to_opaque_mcp_error;
-use crate::handler_helpers::ok_json;
+use crate::handler_helpers::{ok_json, resolve_org_id};
 
 /// Handler for the consolidated `project` MCP tool.
 pub struct ProjectHandler {
@@ -33,10 +32,7 @@ impl ProjectHandler {
         let project_id = &args.project_id;
         let _data = args.data.unwrap_or(Value::Null);
 
-        // TODO(multi-tenant): Extract org_id from auth context.
-        tracing::warn!("Using default org context - multi-tenant auth not yet implemented");
-        let org_ctx = OrgContext::default();
-        let org_id = org_ctx.org_id.as_str();
+        let org_id = resolve_org_id(None);
 
         if project_id.trim().is_empty() && !matches!(args.action, ProjectAction::List) {
             return Err(McpError::invalid_params("project_id is required", None));
@@ -53,13 +49,17 @@ impl ProjectHandler {
             (ProjectAction::Get, ProjectResource::Project) => {
                 let project = self
                     .repo
-                    .get_by_id(org_id, project_id)
+                    .get_by_id(org_id.as_str(), project_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&project)
             }
             (ProjectAction::List, ProjectResource::Project) => {
-                let projects = self.repo.list(org_id).await.map_err(to_opaque_mcp_error)?;
+                let projects = self
+                    .repo
+                    .list(org_id.as_str())
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&projects)
             }
 

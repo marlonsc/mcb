@@ -2,13 +2,12 @@ use std::sync::Arc;
 
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
 use mcb_domain::ports::repositories::PlanEntityRepository;
-use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{PlanEntityAction, PlanEntityArgs, PlanEntityResource};
 use crate::error_mapping::to_opaque_mcp_error;
-use crate::handler_helpers::{ok_json, ok_text, require_id};
+use crate::handler_helpers::{ok_json, ok_text, require_id, resolve_org_id};
 
 /// Handler for the consolidated `plan_entity` MCP tool.
 pub struct PlanEntityHandler {
@@ -27,11 +26,12 @@ impl PlanEntityHandler {
         &self,
         Parameters(args): Parameters<PlanEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        // TODO(phase-1): extract org_id from auth token / request context
-        let org_ctx = OrgContext::default();
-        let org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
+        let org_id = resolve_org_id(args.org_id.as_deref());
 
-        match (args.action, args.resource) {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (PlanEntityAction::Create, PlanEntityResource::Plan) => {
                 let data = args
                     .data
@@ -49,7 +49,7 @@ impl PlanEntityHandler {
                 let id = require_id(&args.id)?;
                 let plan = self
                     .repo
-                    .get_plan(org_id, &id)
+                    .get_plan(org_id.as_str(), &id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&plan)
@@ -60,7 +60,7 @@ impl PlanEntityHandler {
                 })?;
                 let plans = self
                     .repo
-                    .list_plans(org_id, project_id)
+                    .list_plans(org_id.as_str(), project_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&plans)
@@ -81,7 +81,7 @@ impl PlanEntityHandler {
             (PlanEntityAction::Delete, PlanEntityResource::Plan) => {
                 let id = require_id(&args.id)?;
                 self.repo
-                    .delete_plan(org_id, &id)
+                    .delete_plan(org_id.as_str(), &id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_text("deleted")
@@ -154,13 +154,7 @@ impl PlanEntityHandler {
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&reviews)
             }
-            _ => Err(McpError::invalid_params(
-                format!(
-                    "Unsupported action {:?} for resource {:?}",
-                    args.action, args.resource
-                ),
-                None,
-            )),
+            }
         }
     }
 }

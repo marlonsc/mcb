@@ -4,7 +4,6 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::ErrorPattern;
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::value_objects::OrgContext;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
@@ -15,6 +14,7 @@ use super::{execution, inject, list_timeline, observation, quality_gate, session
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handler_helpers::resolve_org_id;
 
 /// Handler for memory-related MCP tool operations.
 ///
@@ -42,8 +42,7 @@ impl MemoryHandler {
         };
         args.validate().map_err(validate_err)?;
 
-        let org_ctx = OrgContext::default();
-        let _org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
+        let _org_id = resolve_org_id(args.org_id.as_deref());
 
         match args.action {
             MemoryAction::Store => self.handle_store(&args).await,

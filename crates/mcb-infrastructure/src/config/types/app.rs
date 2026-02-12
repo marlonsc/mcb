@@ -56,6 +56,9 @@ pub struct VectorStoreConfigContainer {
 /// Provider configurations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProvidersConfig {
+    /// Database provider name (e.g. "sqlite", "postgres")
+    #[serde(default = "default_database_provider")]
+    pub database: String,
     /// Embedding provider configuration
     #[serde(default)]
     pub embedding: EmbeddingConfigContainer,
@@ -64,9 +67,14 @@ pub struct ProvidersConfig {
     pub vector_store: VectorStoreConfigContainer,
 }
 
+fn default_database_provider() -> String {
+    "sqlite".to_string()
+}
+
 impl Default for ProvidersConfig {
     fn default() -> Self {
         Self {
+            database: default_database_provider(),
             embedding: EmbeddingConfigContainer {
                 provider: Some("fastembed".to_string()),
                 ..Default::default()

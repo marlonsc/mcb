@@ -6,7 +6,6 @@ use std::time::Instant;
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::ports::services::SearchServiceInterface;
-use mcb_domain::value_objects::OrgContext;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
@@ -15,6 +14,7 @@ use validator::Validate;
 use crate::args::{SearchArgs, SearchResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handler_helpers::resolve_org_id;
 use crate::utils::collections::normalize_collection_name;
 
 /// Handler for code and memory search MCP tool operations.
@@ -48,8 +48,7 @@ impl SearchHandler {
             ))]));
         }
 
-        let org_ctx = OrgContext::default();
-        let _org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
+        let _org_id = resolve_org_id(args.org_id.as_deref());
 
         let query = args.query.trim();
         if query.is_empty() {

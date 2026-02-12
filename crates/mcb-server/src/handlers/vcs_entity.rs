@@ -4,12 +4,11 @@ use mcb_domain::entities::repository::{Branch, Repository};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
 use mcb_domain::error::Error;
 use mcb_domain::ports::repositories::VcsEntityRepository;
-use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
-use crate::handler_helpers::{ok_json, ok_text, require_id};
+use crate::handler_helpers::{ok_json, ok_text, require_id, resolve_org_id};
 
 /// Handler for the consolidated `vcs_entity` MCP tool.
 pub struct VcsEntityHandler {
@@ -31,17 +30,24 @@ impl VcsEntityHandler {
         &self,
         Parameters(args): Parameters<VcsEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        // TODO(multi-tenant): Extract org_id from auth context.
-        let org_id = if let Some(org_id) = args.org_id {
-            org_id
-        } else {
-            tracing::warn!("Using default org context - multi-tenant auth not yet implemented");
-            let org_ctx = OrgContext::default();
-            org_ctx.org_id.to_string()
-        };
+        let org_id = resolve_org_id(args.org_id.as_deref());
         tracing::Span::current().record("org_id", org_id.as_str());
 
-        match (args.action, args.resource) {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            fallback = |action, resource| {
+                tracing::warn!(
+                    ?action,
+                    ?resource,
+                    "unsupported action/resource combination"
+                );
+                Err(McpError::invalid_params(
+                    "unsupported action/resource combination",
+                    None,
+                ))
+            },
+            {
             // -- Repository --
             (VcsEntityAction::Create, VcsEntityResource::Repository) => {
                 let data = args
@@ -208,16 +214,6 @@ impl VcsEntityHandler {
                 ok_text("released")
             }
 
-            (action, resource) => {
-                tracing::warn!(
-                    ?action,
-                    ?resource,
-                    "unsupported action/resource combination"
-                );
-                Err(McpError::invalid_params(
-                    "unsupported action/resource combination",
-                    None,
-                ))
             }
         }
     }

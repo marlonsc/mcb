@@ -63,7 +63,10 @@ impl<T: ?Sized + Send + Sync> Handle<T> {
     pub fn get(&self) -> Arc<T> {
         self.inner
             .read()
-            .expect("Handle lock poisoned") // mcb-validate-ignore: lock_poisoning_recovery
+            .unwrap_or_else(|poisoned| {
+                tracing::error!("Handle lock poisoned, recovering with poisoned value");
+                poisoned.into_inner()
+            })
             .clone()
     }
 
@@ -72,7 +75,10 @@ impl<T: ?Sized + Send + Sync> Handle<T> {
     /// Replaces the current provider with a new one. Existing references
     /// to the old provider remain valid until dropped.
     pub fn set(&self, new_provider: Arc<T>) {
-        *self.inner.write().expect("Handle lock poisoned") = new_provider; // mcb-validate-ignore: lock_poisoning_recovery
+        *self.inner.write().unwrap_or_else(|poisoned| {
+            tracing::error!("Handle lock poisoned during set, recovering");
+            poisoned.into_inner()
+        }) = new_provider;
     }
 }
 

@@ -138,6 +138,17 @@ fn map_err(e: mcb_domain::error::Error) -> String {
     e.to_string()
 }
 
+macro_rules! impl_crud_adapter {
+    ($name:ident($repo_ty:ty) { $($methods:item)* }) => {
+        struct $name(Arc<$repo_ty>);
+
+        #[async_trait]
+        impl EntityCrudAdapter for $name {
+            $($methods)*
+        }
+    };
+}
+
 fn json_sort_key(v: &Value) -> String {
     match v {
         Value::String(s) => s.to_lowercase(),

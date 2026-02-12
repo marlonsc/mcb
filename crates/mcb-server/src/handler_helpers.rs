@@ -1,3 +1,4 @@
+use mcb_domain::value_objects::OrgContext;
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 use serde::Serialize;
 
@@ -17,4 +18,13 @@ pub fn ok_json<T: Serialize>(val: &T) -> Result<CallToolResult, McpError> {
 /// Returns a plain-text successful tool response.
 pub fn ok_text(msg: &str) -> Result<CallToolResult, McpError> {
     Ok(CallToolResult::success(vec![Content::text(msg)]))
+}
+
+pub fn resolve_org_id(explicit: Option<&str>) -> String {
+    if let Some(org_id) = explicit {
+        return org_id.to_string();
+    }
+
+    tracing::debug!("Using default org context");
+    OrgContext::default().org_id.to_string()
 }
