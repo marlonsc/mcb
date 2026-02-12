@@ -10,9 +10,11 @@ mod agent_repository;
 mod ddl;
 pub(crate) mod ensure_parent;
 pub mod executor;
-mod issue_entity_repository;
+/// SQLite-backed issue entity repository implementation.
+pub mod issue_entity_repository;
 mod memory_repository;
-mod org_entity_repository;
+/// SQLite-backed organization entity repository implementation.
+pub mod org_entity_repository;
 mod plan_entity_repository;
 mod project_repository;
 mod provider;

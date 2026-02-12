@@ -100,18 +100,11 @@ health = { workspace = true }
 # Hashing for simple embeddings
 sha2 = { workspace = true }
 
-# Event bus
-async-nats = { workspace = true }
-
 # Configuration watching
 notify = { workspace = true }
 
 # Directory paths
 dirs = { workspace = true }
-
-# Compression
-flate2 = { workspace = true }
-tar = { workspace = true }
 
 # Async streaming for HTTP SSE
 futures = { workspace = true }
@@ -119,7 +112,6 @@ async-stream = { workspace = true }
 
 # Providers - MUST be in dependencies for linkme inventory registration
 mcb-providers = { path = "../mcb-providers" }
-fs2 = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

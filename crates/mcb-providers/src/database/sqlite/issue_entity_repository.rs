@@ -13,7 +13,7 @@ pub struct SqliteIssueEntityRepository {
 }
 
 impl SqliteIssueEntityRepository {
-    /// Creates a new repository using the provided database executor.
+    /// Creates a new instance with the given database executor.
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
