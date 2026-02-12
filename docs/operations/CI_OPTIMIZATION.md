@@ -104,7 +104,7 @@ exclude_files = [
 ```bash
 coverage: ## Code coverage (MCB_CI=1 for CI format)
 ifeq ($(MCB_CI),1)
- @echo "Generating LCOV coverage (excluding integration tests)..."
+ @echo "Generating lcov coverage (excluding integration tests)..."
  cargo tarpaulin --out Lcov --output-dir coverage \
   --exclude-files 'crates/*/tests/integration/*' \
   --exclude-files 'crates/*/tests/admin/*' \
