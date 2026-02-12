@@ -42,15 +42,15 @@ Project workflow not yet implemented
 
 **Required Fix**:
 
--   Implement ProjectService in mcb-application
--   Wire project MCP handlers in mcb-server
--   Link project_id to collections and observations
+- Implement ProjectService in mcb-application
+- Wire project MCP handlers in mcb-server
+- Link project_id to collections and observations
 
 **Blocked Features**:
 
--   Project-scoped semantic search
--   Project-linked memory/observations
--   Phase tracking via MCB
+- Project-scoped semantic search
+- Project-linked memory/observations
+- Phase tracking via MCB
 
 ---
 
@@ -68,10 +68,10 @@ Failed to list memories: Observation storage error: SQL query_all failed
 
 **Database Status**:
 
--   Tables exist: `observations`, `observations_fts`, etc.
--   Schema correct with FTS triggers
--   0 rows in observations table
--   projects table may be empty (foreign key constraint)
+- Tables exist: `observations`, `observations_fts`, etc.
+- Schema correct with FTS triggers
+- 0 rows in observations table
+- projects table may be empty (foreign key constraint)
 
 **Root Cause Hypothesis**:
 The observations table has `project_id TEXT NOT NULL REFERENCES projects(id)`. If no projects exist, observations cannot be created. The memory store operation may silently fail or the list query joins on non-existent projects.
@@ -105,9 +105,9 @@ repositories: [
 
 **Required Fix**:
 
--   Add cleanup script for test collections
--   Consider test isolation (separate Milvus namespace)
--   Add `mcb cleanup --test-data` command
+- Add cleanup script for test collections
+- Consider test isolation (separate Milvus namespace)
+- Add `mcb cleanup --test-data` command
 
 ---
 
@@ -119,9 +119,9 @@ repositories: [
 
 **Per v030-IMPLEMENTATION.md**:
 
--   SearchResource needs Context variant
--   SearchHandler needs ContextServiceInterface injection
--   This is blocking 15+ beads issues
+- SearchResource needs Context variant
+- SearchHandler needs ContextServiceInterface injection
+- This is blocking 15+ beads issues
 
 ---
 

@@ -14,6 +14,7 @@
 ## Recent Activity (Feb 5-12)
 
 Heavy admin feature development and modernization:
+
 - **Admin UI**: Handlebars templates, entity CRUD, LOV endpoints, dashboards, navigation
 - **Refactoring**: Tera → Handlebars migration, agent type definitions, tracing integration
 - **Data model**: project_context module, ensure_parent for SQLite, repository resolver

@@ -56,10 +56,10 @@ The core gap is **Project as Central Hub** not being implemented. MCB currently 
 
 **Missing States**:
 
--   `Suspended` - Workflow paused by policy
--   `Timeout` - Workflow exceeded time limit
--   `Cancelled` - Workflow cancelled by user
--   `Abandoned` - Workflow abandoned (no resume)
+- `Suspended` - Workflow paused by policy
+- `Timeout` - Workflow exceeded time limit
+- `Cancelled` - Workflow cancelled by user
+- `Abandoned` - Workflow abandoned (no resume)
 
 ---
 
@@ -297,11 +297,11 @@ bd create --title "GAP-P5: Improve error handling - preserve driver context" --t
 
 ## Cross-References
 
--   **Initial Gaps Report**: `docs/plan/MCB-GAPS-REPORT.md`
--   **Integration Plan**: `docs/plan/OPENCODE-INTEGRATION-PLAN.md`
--   **v0.3.0 Implementation Spec**: `docs/v030-IMPLEMENTATION.md`
--   **Roadmap**: `docs/developer/ROADMAP.md`
--   **ADRs**: `docs/adr/034-046`
+- **Initial Gaps Report**: `docs/plan/MCB-GAPS-REPORT.md`
+- **Integration Plan**: `docs/plan/OPENCODE-INTEGRATION-PLAN.md`
+- **v0.3.0 Implementation Spec**: `docs/v030-IMPLEMENTATION.md`
+- **Roadmap**: `docs/developer/ROADMAP.md`
+- **ADRs**: `docs/adr/034-046`
 
 ---
 
