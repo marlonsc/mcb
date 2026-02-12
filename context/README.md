@@ -19,7 +19,8 @@ context/
 │   ├── domain-concepts.md
 │   ├── integrations.md
 │   ├── conventions.md
-│   └── project-state.md
+│   ├── project-state.md
+│   └── v0.2.2-history-and-pending.md
 └── external/
     └── mcp-and-agents.md
 ```
