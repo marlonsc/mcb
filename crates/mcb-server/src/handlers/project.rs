@@ -34,8 +34,8 @@ impl ProjectHandler {
     ) -> Result<CallToolResult, McpError> {
         let _data = args.data.unwrap_or(Value::Null);
 
-        let org_ctx = OrgContext::default();
-        let org_id = org_ctx.org_id.as_str();
+        let org_ctx = OrgContext::current();
+        let org_id = org_ctx.id_str();
         let project_id = self.resolver.resolve_project_id(org_id).await;
 
         if project_id.trim().is_empty() && !matches!(args.action, ProjectAction::List) {

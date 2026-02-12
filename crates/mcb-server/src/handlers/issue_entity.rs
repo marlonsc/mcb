@@ -29,8 +29,8 @@ impl IssueEntityHandler {
         &self,
         Parameters(args): Parameters<IssueEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let org_ctx = OrgContext::default();
-        let org_id = org_ctx.org_id.as_str();
+        let org_ctx = OrgContext::current();
+        let org_id = org_ctx.id_str();
 
         match (args.action, args.resource) {
             (IssueEntityAction::Create, IssueEntityResource::Issue) => {

@@ -58,12 +58,14 @@ pub trait ChunkingOrchestratorInterface: Send + Sync {
 /// Domain Port for Code Chunking Operations
 #[async_trait]
 pub trait CodeChunker: Send + Sync {
+    /// Chunk a file from disk
     async fn chunk_file(
         &self,
         file_path: &Path,
         options: ChunkingOptions,
     ) -> Result<ChunkingResult>;
 
+    /// Chunk content of a file
     async fn chunk_content(
         &self,
         content: &str,
@@ -72,14 +74,17 @@ pub trait CodeChunker: Send + Sync {
         options: ChunkingOptions,
     ) -> Result<ChunkingResult>;
 
+    /// Chunk a batch of files
     async fn chunk_batch(
         &self,
         file_paths: &[&Path],
         options: ChunkingOptions,
     ) -> Result<Vec<ChunkingResult>>;
 
+    /// Get the supported languages
     fn supported_languages(&self) -> Vec<Language>;
 
+    /// Check if a language is supported
     fn is_language_supported(&self, language: &Language) -> bool {
         self.supported_languages().contains(language)
     }

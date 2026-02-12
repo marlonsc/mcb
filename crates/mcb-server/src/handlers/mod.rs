@@ -4,6 +4,7 @@
 //! organized by domain: agent, index, memory, project, search, session, validate, vcs.
 
 pub mod agent;
+pub(crate) mod entity_helpers;
 pub mod index;
 /// Issue entity CRUD handler.
 pub mod issue_entity;

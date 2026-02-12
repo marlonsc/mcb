@@ -49,8 +49,8 @@ impl MemoryHandler {
         };
         args.validate().map_err(validate_err)?;
 
-        let org_ctx = OrgContext::default();
-        let org_id = org_ctx.org_id.as_str();
+        let org_ctx = OrgContext::current();
+        let org_id = org_ctx.id_str();
         let project_id = self.resolver.resolve_project_id(org_id).await;
 
         match args.action {

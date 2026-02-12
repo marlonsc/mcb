@@ -32,7 +32,7 @@ impl VcsEntityHandler {
         &self,
         Parameters(args): Parameters<VcsEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let org_ctx = OrgContext::default();
+        let org_ctx = OrgContext::current();
         let org_id = org_ctx.org_id.to_string();
         tracing::Span::current().record("org_id", org_id.as_str());
 

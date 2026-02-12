@@ -24,11 +24,8 @@ impl DatabaseProviderResolver {
     }
 
     /// Resolve and connect to the database provider configured in AppConfig.
-    /// Uses "sqlite" as default if not specified.
     pub async fn resolve_and_connect(&self, path: &Path) -> Result<Arc<dyn DatabaseExecutor>> {
-        // In the future, AppConfig might have `database.provider` field.
-        // For now, we default to "sqlite" to maintain backward compatibility and current requirements.
-        let provider_name = "sqlite";
+        let provider_name = self._config.database.provider.as_str();
 
         let config = DatabaseProviderConfig::new(provider_name);
         let provider = self.resolve_from_override(&config)?;

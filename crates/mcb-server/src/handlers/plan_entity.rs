@@ -28,8 +28,8 @@ impl PlanEntityHandler {
         &self,
         Parameters(args): Parameters<PlanEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let org_ctx = OrgContext::default();
-        let org_id = org_ctx.org_id.as_str();
+        let org_ctx = OrgContext::current();
+        let org_id = org_ctx.id_str();
 
         match (args.action, args.resource) {
             (PlanEntityAction::Create, PlanEntityResource::Plan) => {

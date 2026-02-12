@@ -53,6 +53,29 @@ pub struct VectorStoreConfigContainer {
     pub configs: HashMap<String, VectorStoreConfig>,
 }
 
+/// Database configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatabaseConfig {
+    /// Provider name (e.g. "sqlite", "postgres").
+    /// Resolved via the linkme provider registry.
+    #[serde(default = "DatabaseConfig::default_provider")]
+    pub provider: String,
+}
+
+impl DatabaseConfig {
+    fn default_provider() -> String {
+        "sqlite".to_string()
+    }
+}
+
+impl Default for DatabaseConfig {
+    fn default() -> Self {
+        Self {
+            provider: Self::default_provider(),
+        }
+    }
+}
+
 /// Provider configurations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProvidersConfig {
@@ -131,6 +154,9 @@ pub struct AppConfig {
     pub mode: ModeConfig,
     /// Server configuration
     pub server: ServerConfig,
+    /// Database configuration
+    #[serde(default)]
+    pub database: DatabaseConfig,
     /// Provider configurations
     pub providers: ProvidersConfig,
     /// Logging configuration
