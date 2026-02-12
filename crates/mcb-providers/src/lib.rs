@@ -101,4 +101,3 @@ pub mod git;
 ///
 /// Implements state machine transitions and session management
 pub mod workflow;
-

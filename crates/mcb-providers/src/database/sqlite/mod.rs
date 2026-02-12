@@ -11,6 +11,7 @@ mod ddl;
 #[allow(dead_code)]
 pub(crate) mod ensure_parent;
 pub mod executor;
+mod file_hash_repository;
 pub mod issue_entity_repository;
 mod memory_repository;
 pub mod org_entity_repository;
@@ -23,6 +24,7 @@ mod vcs_entity_repository;
 pub use agent_repository::SqliteAgentRepository;
 pub use ddl::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
 pub use executor::SqliteExecutor;
+pub use file_hash_repository::{SqliteFileHashConfig, SqliteFileHashRepository};
 pub use issue_entity_repository::SqliteIssueEntityRepository;
 pub use memory_repository::SqliteMemoryRepository;
 pub use org_entity_repository::SqliteOrgEntityRepository;

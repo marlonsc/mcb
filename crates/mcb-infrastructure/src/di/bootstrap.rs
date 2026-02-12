@@ -19,10 +19,9 @@ use mcb_domain::ports::repositories::{
 use mcb_domain::ports::services::ProjectDetectorService;
 
 use mcb_providers::database::{
-    SqliteMemoryRepository, create_agent_repository_from_executor,
-    create_project_repository_from_executor,
+    SqliteFileHashConfig, SqliteFileHashRepository, SqliteMemoryRepository,
+    create_agent_repository_from_executor, create_project_repository_from_executor,
 };
-use mcb_providers::storage::{SqliteFileHashConfig, SqliteFileHashRepository};
 use tracing::info;
 
 use crate::config::AppConfig;
