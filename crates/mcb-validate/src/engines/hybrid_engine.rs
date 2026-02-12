@@ -11,11 +11,7 @@ use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use tracing::{error, warn};
 
-use super::expression_engine::ExpressionEngine;
-use super::rete_engine::ReteEngine;
-use super::router::RuleEngineRouter;
-
-use super::rusty_rules_engine::RustyRulesEngineWrapper;
+use super::router::{RoutedEngine, RuleEngineRouter};
 use super::validator_engine::ValidatorEngine;
 use crate::Result;
 use crate::ValidationConfig;
@@ -163,11 +159,28 @@ pub struct RuleContext {
     pub graph: Arc<DependencyGraph>,
 }
 
-/// Hybrid engine that coordinates multiple rule engines
+/// Hybrid engine that coordinates multiple rule engines.
+///
+/// ## Architecture
+///
+/// The `HybridRuleEngine` is the top-level orchestrator. It delegates all rule
+/// execution to the [`RuleEngineRouter`], which owns the three rule engines
+/// (RETE, Expression, RustyRules) and selects the appropriate one per rule.
+///
+/// Additionally, the `ValidatorEngine` handles rule _definition_ validation
+/// (field-level checks on rule JSON structure) — this is a separate concern
+/// from rule _execution_.
+///
+/// ```text
+/// HybridRuleEngine (orchestrator)
+///   ├── RuleEngineRouter (dispatch + execution)
+///   │   ├── ReteEngine        (GRL / when-then)
+///   │   ├── ExpressionEngine   (evalexpr booleans)
+///   │   └── RustyRulesEngineWrapper (JSON DSL)
+///   ├── ValidatorEngine (rule definition validation)
+///   └── cache: HashMap<String, Vec<u8>> (compiled rule cache)
+/// ```
 pub struct HybridRuleEngine {
-    rusty_rules_engine: RustyRulesEngineWrapper,
-    expression_engine: ExpressionEngine,
-    rete_engine: ReteEngine,
     router: RuleEngineRouter,
     validator_engine: ValidatorEngine,
     cache: HashMap<String, Vec<u8>>, // Compiled rule cache
@@ -177,9 +190,6 @@ impl HybridRuleEngine {
     /// Create a new hybrid rule engine
     pub fn new() -> Self {
         Self {
-            rusty_rules_engine: RustyRulesEngineWrapper::new(),
-            expression_engine: ExpressionEngine::new(),
-            rete_engine: ReteEngine::new(),
             router: RuleEngineRouter::new(),
             validator_engine: ValidatorEngine::new(),
             cache: HashMap::new(),
@@ -198,22 +208,21 @@ impl HybridRuleEngine {
 
         let violations = match engine_type {
             RuleEngineType::RustRuleEngine => {
-                self.rete_engine.execute(rule_definition, context).await?
+                self.router
+                    .execute_with_engine(RoutedEngine::Rete, rule_definition, context)
+                    .await?
             }
             RuleEngineType::RustyRules => {
-                self.rusty_rules_engine
-                    .execute(rule_definition, context)
+                self.router
+                    .execute_with_engine(RoutedEngine::RustyRules, rule_definition, context)
                     .await?
             }
             RuleEngineType::Expression => {
-                self.expression_engine
-                    .execute(rule_definition, context)
+                self.router
+                    .execute_with_engine(RoutedEngine::Expression, rule_definition, context)
                     .await?
             }
-            RuleEngineType::Auto => {
-                // Use router to auto-detect and execute
-                self.router.execute(rule_definition, context).await?
-            }
+            RuleEngineType::Auto => self.router.execute(rule_definition, context).await?,
         };
 
         #[allow(clippy::cast_possible_truncation)]
@@ -398,9 +407,6 @@ impl Default for HybridRuleEngine {
 impl Clone for HybridRuleEngine {
     fn clone(&self) -> Self {
         Self {
-            rusty_rules_engine: self.rusty_rules_engine.clone(),
-            expression_engine: self.expression_engine.clone(),
-            rete_engine: self.rete_engine.clone(),
             router: self.router.clone(),
             validator_engine: self.validator_engine.clone(),
             cache: self.cache.clone(),

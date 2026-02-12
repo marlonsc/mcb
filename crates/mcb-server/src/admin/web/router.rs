@@ -72,9 +72,17 @@ fn default_admin_state() -> AdminState {
 ///
 /// Searches multiple candidate locations to support both workspace-level
 /// execution (cargo test from root) and crate-level execution.
+/// Falls back to `"templates"` when no directory is found on disk;
+/// the embedded template fallback in `Context::initialize` handles
+/// the case where this path does not exist at runtime.
 #[must_use]
 pub fn template_dir() -> String {
-    let candidates = ["crates/mcb-server/templates", "templates"];
+    const MANIFEST_TEMPLATE_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/templates");
+    let candidates = [
+        MANIFEST_TEMPLATE_DIR,
+        "crates/mcb-server/templates",
+        "templates",
+    ];
     for candidate in &candidates {
         let path = std::path::Path::new(candidate);
         if path.exists() && path.is_dir() {
@@ -82,7 +90,7 @@ pub fn template_dir() -> String {
             return (*candidate).to_string();
         }
     }
-    tracing::warn!("No template directory found, using default 'templates'");
+    tracing::info!("No template directory found on disk, embedded templates will be used");
     "templates".to_string()
 }
 

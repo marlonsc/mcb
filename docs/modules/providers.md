@@ -3,7 +3,7 @@
 **Source**: `crates/mcb-providers/src/`
 **Crate**: `mcb-providers`
 
-**Project links**: `docs/context/technical-patterns.md`, `docs/context/project-state.md`, `.planning/STATE.md` (Phase 6 Hybrid Search), `docs/context/integrations.md`, and `docs/developer/ROADMAP.md`. Provider expansions should reference these tracked artifacts so embedding/vector capabilities align with the validated requirements and roadmap signals.
+**Project links**: See `docs/architecture/ARCHITECTURE.md`, `docs/modules/providers.md`, and `docs/developer/ROADMAP.md` for provider architecture and v0.2.1 roadmap alignment.
 
 ## Overview
 
@@ -160,11 +160,9 @@ Provider tests are located in `crates/mcb-providers/tests/`.
 
 ## Project Alignment
 
--   **Phase context**: Sync provider feature work with `docs/context/project-state.md` and `.planning/STATE.md` so Phase 6 Hybrid Search, the 06-02 plan, and the release branch `release/v0.2.0` share the same provider contracts.
--   **Architecture guidance**: Use `docs/architecture/ARCHITECTURE.md` and `docs/context/technical-patterns.md` for linkme/async/error expectations when adding new providers.
--   **Roadmap signals**: Refer to `docs/developer/ROADMAP.md` and `.planning/PROJECT.md` for validated requirements (MCP protocol, embeddings, vector stores) and v0.2.0 objectives (git-aware indexing, session memory, advanced browser) to keep provider health, routing, and config compatible.
--   **Integrations**: `docs/context/integrations.md` lists provider/vector-store matrices; updating that file alongside new provider capabilities keeps the documentation ecosystem coherent.
+-   **Architecture guidance**: Use `docs/architecture/ARCHITECTURE.md` for linkme/async/error expectations when adding new providers.
+-   **Roadmap signals**: Refer to `docs/developer/ROADMAP.md` for validated requirements (MCP protocol, embeddings, vector stores) and v0.2.1 objectives (git-aware indexing, session memory, advanced browser) to keep provider health, routing, and config compatible.
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*

@@ -5,7 +5,7 @@
 **Files**: 40+
 **Lines of Code**: ~6,000
 
-**Project links**: `docs/context/technical-patterns.md` (DI/provider patterns), `docs/context/project-state.md` (phase progress), `docs/context/domain-concepts.md`, `.planning/STATE.md` (Phase 6), and `docs/developer/ROADMAP.md`; every infrastructure change should reference these artifacts so system wiring stays aligned with the Hybrid Search roadmap and validated requirements.
+**Project links**: See `docs/architecture/ARCHITECTURE.md` (DI/provider patterns), `docs/modules/domain.md`, and `docs/developer/ROADMAP.md` for infrastructure architecture and v0.2.1 roadmap alignment.
 
 ## Overview
 
@@ -143,11 +143,10 @@ Infrastructure tests are located in `crates/mcb-infrastructure/tests/`.
 
 ## Project Alignment
 
--   **Phase context**: Keep infrastructure work tied to `docs/context/project-state.md` and `.planning/STATE.md`, ensuring Phase 6 Hybrid Search (06-02 plan) uses these DI/configuration layers without drifting ahead of the release control branch (`release/v0.2.0`).
--   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the layered wiring and `docs/context/technical-patterns.md` documents linkme/provider registration so every adapter matches compiled routing expectations.
--   **Roadmap signals**: Anchor infrastructure decisions in `docs/developer/ROADMAP.md` and `.planning/PROJECT.md` (validated requirements, debt) so features like provider health checks and session memory inherit the correct dependencies.
+-   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the layered wiring and documents linkme/provider registration so every adapter matches compiled routing expectations.
+-   **Roadmap signals**: Anchor infrastructure decisions in `docs/developer/ROADMAP.md` (validated requirements, debt) so features like provider health checks and session memory inherit the correct dependencies.
 -   **Operational metrics**: Sync with `docs/operations/CHANGELOG.md`/`docs/operations/CI_OPTIMIZATION_VALIDATION.md` for metrics when adjusting caches, health, or DI to maintain the declared `0 architecture violations` and `~1805 tests` commitments.
 
 ---
 
-*Updated 2026-01-28 - Reflects dill IoC, Figment config (v0.1.4)*
+*Updated 2026-01-28 - Reflects dill IoC, Figment config (v0.2.1)*

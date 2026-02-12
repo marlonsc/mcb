@@ -1,5 +1,12 @@
 # MCB Gaps Report - Integration Blockers
 
+> **SUPERSEDED** (2026-02-12): This report was created during initial v0.2.0
+> integration validation. GAP-2 (memory SQL error) was partially fixed in
+> v0.2.0. GAP-3 (test data pollution) is operational, not code. GAP-1
+> (project workflow) and GAP-4 (context search) are **v0.3.0 scope**. All
+> items have corresponding Beads issues. Do not use this document as an
+> active blocker list.
+
 **Date**: 2026-02-08
 **Reporter**: Sisyphus Agent
 **Context**: OpenCode MCP Integration Validation

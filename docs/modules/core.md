@@ -1,6 +1,6 @@
 # Core Module
 
-**Source**: `crates/mcb-domain/` (types, ports) and `crates/mcb-infrastructure/` (utilities); see `docs/context/technical-patterns.md` and `docs/context/domain-concepts.md` for how these exports tie into the project phases.
+**Source**: `crates/mcb-domain/` (types, ports) and `crates/mcb-infrastructure/` (utilities); see `docs/architecture/ARCHITECTURE.md` and `docs/modules/domain.md` for how these exports tie into the project architecture.
 
 Foundational types, traits, and utilities used throughout the system.
 
@@ -101,11 +101,10 @@ Infrastructure tests are in `crates/mcb-infrastructure/tests/`.
 
 ## Project Alignment
 
--   **Phase context**: Align new domain work with `docs/context/project-state.md` and `.planning/STATE.md`, which track Phase 6 (Memory Search) progress and the Hybrid Search plan (`06-02-PLAN.md`).
--   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the Clean Architecture layering that the core module serves, while `docs/context/technical-patterns.md` documents the provider registration and async/error expectations used throughout these crates.
--   **Roadmap signals**: `docs/developer/ROADMAP.md` and `.planning/PROJECT.md` cover the validated requirements (MCP protocol tools, embedding/vector arrays) and the v0.2.0 objectives (git-aware indexing, session memory, advanced browser) that depend on these core abstractions.
+-   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the Clean Architecture layering that the core module serves and documents the provider registration and async/error expectations used throughout these crates.
+-   **Roadmap signals**: `docs/developer/ROADMAP.md` covers the v0.2.1 objectives (git-aware indexing, session memory, advanced browser) that depend on these core abstractions.
 -   **Operational anchors**: Use `docs/operations/CHANGELOG.md` and `docs/operations/CI_OPTIMIZATION_VALIDATION.md` for current metrics (test counts, architecture violations) when documenting behavior or tests relying on these types.
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+*Updated 2026-01-18 - Reflects modular crate architecture (v0.2.1)*

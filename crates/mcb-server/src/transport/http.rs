@@ -39,7 +39,6 @@
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use crate::templates::Template;
 use rmcp::ServerHandler;
 use rmcp::model::CallToolRequestParams;
 use rocket::fairing::{Fairing, Info, Kind};
@@ -53,7 +52,7 @@ use crate::McpServer;
 use crate::admin::auth::AdminAuthConfig;
 use crate::admin::browse_handlers::BrowseState;
 use crate::admin::handlers::AdminState;
-use crate::admin::web::router::template_dir;
+use crate::admin::routes::admin_rocket;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
 use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
 use mcb_infrastructure::config::ConfigLoader;
@@ -144,95 +143,24 @@ impl HttpTransport {
         self
     }
 
-    /// Build the Rocket application with MCP and optional Admin routes
+    /// Build the Rocket application with MCP and optional Admin routes.
+    ///
+    /// Delegates all admin/web routes to [`admin_rocket()`] as the single source
+    /// of truth, then layers MCP-specific routes on top.
     pub fn rocket(&self) -> Rocket<Build> {
-        use crate::admin::browse_handlers::{
-            get_collection_tree, get_file_chunks, list_collection_files, list_collections,
-        };
-        use crate::admin::config_handlers::{get_config, reload_config, update_config_section};
-        use crate::admin::handlers::{
-            extended_health_check, get_cache_stats, get_jobs_status, get_metrics, health_check,
-            list_browse_issues, list_browse_organizations, list_browse_plans, list_browse_projects,
-            liveness_check, readiness_check, shutdown,
-        };
-        use crate::admin::lifecycle_handlers::{
-            list_services, restart_service, services_health, start_service, stop_service,
-        };
-        use crate::admin::sse::events_stream;
-        use crate::admin::web::handlers::{
-            browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
-            dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
+        let mut rocket = if let Some(ref admin_state) = self.admin_state {
+            let auth_config = self
+                .auth_config
+                .clone()
+                .unwrap_or_else(|| Arc::new(AdminAuthConfig::default()));
+            admin_rocket(admin_state.clone(), auth_config, self.browse_state.clone())
+        } else {
+            rocket::custom(rocket::Config::figment())
         };
 
-        let figment = rocket::Config::figment().merge(("template_dir", template_dir()));
-
-        let mut rocket = rocket::custom(figment)
+        rocket = rocket
             .manage(self.state.clone())
-            .attach(Template::fairing())
             .mount("/", routes![handle_mcp_request, healthz, readyz]);
-
-        // Mount admin routes if admin state is provided
-        // Note: /events and /metrics routes are provided by admin routes (events_stream, get_metrics)
-        if let Some(ref admin_state) = self.admin_state {
-            rocket = rocket
-                .manage(admin_state.clone())
-                .manage(
-                    self.auth_config
-                        .clone()
-                        .unwrap_or_else(|| Arc::new(AdminAuthConfig::default())),
-                )
-                .mount(
-                    "/",
-                    routes![
-                        health_check,
-                        extended_health_check,
-                        get_metrics,
-                        get_jobs_status,
-                        list_browse_projects,
-                        list_browse_plans,
-                        list_browse_issues,
-                        list_browse_organizations,
-                        readiness_check,
-                        liveness_check,
-                        shutdown,
-                        get_config,
-                        reload_config,
-                        update_config_section,
-                        list_services,
-                        services_health,
-                        start_service,
-                        stop_service,
-                        restart_service,
-                        get_cache_stats,
-                        events_stream,
-                        dashboard,
-                        dashboard_ui,
-                        favicon,
-                        config_page,
-                        health_page,
-                        jobs_page,
-                        browse_page,
-                        browse_collection_page,
-                        browse_file_page,
-                        browse_tree_page,
-                        theme_css,
-                        shared_js,
-                    ],
-                );
-
-            // Add browse routes if BrowseState is available
-            if let Some(ref browse) = self.browse_state {
-                rocket = rocket.manage(browse.clone()).mount(
-                    "/",
-                    routes![
-                        list_collections,
-                        list_collection_files,
-                        get_file_chunks,
-                        get_collection_tree,
-                    ],
-                );
-            }
-        }
 
         if self.config.enable_cors {
             rocket = rocket.attach(Cors);
@@ -248,8 +176,7 @@ impl HttpTransport {
 
         let figment = rocket::Config::figment()
             .merge(("address", self.config.host.clone()))
-            .merge(("port", self.config.port))
-            .merge(("template_dir", template_dir()));
+            .merge(("port", self.config.port));
 
         let rocket = self.rocket().configure(figment);
 

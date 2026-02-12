@@ -8,7 +8,7 @@
 **Structs**: 10+
 **Enums**: 5
 
-**Project links**: `docs/context/domain-concepts.md`, `docs/context/project-state.md`, `docs/context/technical-patterns.md`, `.planning/STATE.md` (Phase 6), and `docs/developer/ROADMAP.md` so new domain work stays aligned with Phase 6 Hybrid Search and the v0.2.0 objectives.
+**Project links**: See `docs/modules/domain.md`, `docs/architecture/ARCHITECTURE.md`, and `docs/developer/ROADMAP.md` for domain architecture and v0.2.1 objectives.
 
 ## Overview
 
@@ -82,4 +82,4 @@ crates/mcb-domain/src/
 
 ---
 
-*Updated 2026-01-18 - Reflects v0.1.2 crate architecture*
+*Updated 2026-01-18 - Reflects v0.2.1 crate architecture*

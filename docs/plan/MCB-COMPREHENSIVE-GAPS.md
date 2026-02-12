@@ -1,5 +1,12 @@
 # MCB Comprehensive Gap Analysis
 
+> **SUPERSEDED** (2026-02-12): This gap report was created during v0.2.0
+> validation. Handler-level gaps (GAP-H1 through GAP-H4) and provider gaps
+> (GAP-P3, GAP-P4) were partially addressed in v0.2.0/v0.2.1. Domain-layer
+> gaps (GAP-D1 through GAP-D7) and remaining provider gaps (GAP-P1, GAP-P2)
+> are **v0.3.0/v0.4.0 roadmap items**, not v0.2.1 blockers. Beads issues
+> exist for all items. Do not treat this document as an active work queue.
+
 **Date**: 2026-02-08
 **Analyzed By**: Sisyphus + 3 Explore Agents
 **Scope**: Domain Layer, MCP Handlers, Providers vs v0.3.0/v0.4.0 Roadmap

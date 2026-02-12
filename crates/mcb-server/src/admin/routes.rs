@@ -22,13 +22,15 @@ use super::lifecycle_handlers::{
 };
 use super::sse::events_stream;
 use super::web::entity_handlers::{
-    entities_create, entities_delete, entities_delete_confirm, entities_detail, entities_edit_form,
-    entities_index, entities_list, entities_new_form, entities_update,
+    entities_bulk_delete, entities_create, entities_delete, entities_delete_confirm,
+    entities_detail, entities_edit_form, entities_index, entities_list, entities_new_form,
+    entities_update,
 };
 use super::web::handlers::{
     browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
     dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
 };
+use super::web::lov_handlers::lov_endpoint;
 use super::web::router::template_dir;
 
 /// Create the admin API rocket instance
@@ -129,6 +131,8 @@ pub fn admin_rocket(
             entities_create,
             entities_update,
             entities_delete,
+            entities_bulk_delete,
+            lov_endpoint,
         ],
     );
 

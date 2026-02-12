@@ -1,22 +1,27 @@
 # Project State Context
 
-**Last updated:** 2026-02-11
-**Source:** Cargo.toml, git log, Beads stats, ROADMAP.md, PHASE-8-9-DEPENDENCY-MAP.md
+**Last updated:** 2026-02-12
+**Source:** Cargo.toml, git log, Beads stats, ROADMAP.md, CI pipeline results
 
 ## Current State
 
 - **Version:** v0.2.1-dev (on branch `release/v0.2.1`)
-- **Active branches:** `release/v0.2.1` (current), `release/v0.2.1`, `feat/data-model-v2`
-- **Build:** ⚠️ Check `cargo check` — storage module issue reported in `mcb-providers/src/lib.rs`
-- **Phase:** 8-9 planning — Phase 8 not started, Phase 9 ADRs complete
+- **Active branches:** `release/v0.2.1` (current)
+- **Build:** ✅ All green — `cargo check`, `cargo fmt`, `make lint`, `make test` (28 suites)
+- **CI:** ✅ Modernized — SHA-pinned Actions, `save-if` cache poisoning mitigation, `paths-filter`
+- **Phase:** v0.2.1 modernization epic (`mcb-b9qd`) COMPLETED. Phase 8-9 planning next.
 
-## Recent Activity (Feb 5-11)
+## Recent Activity (Feb 5-12)
 
-Heavy admin feature development (412 commits in 6 days):
+Heavy admin feature development and modernization:
 - **Admin UI**: Handlebars templates, entity CRUD, LOV endpoints, dashboards, navigation
 - **Refactoring**: Tera → Handlebars migration, agent type definitions, tracing integration
 - **Data model**: project_context module, ensure_parent for SQLite, repository resolver
-- **Fixes**: Contextual errors, FK auto-create, DDL test counts, CI pipeline optimization
+- **CI modernization** (2026-02-12): SHA-pinned all GitHub Actions, `save-if` cache protection,
+  `dorny/paths-filter` change detection, unified test matrix, Windows `shell: pwsh`
+- **v0.2.1 closure** (2026-02-12): Epic `mcb-b9qd` completed — 8/8 items closed (P0: org-context,
+  lock/cache, dead-code; P1: entity dispatch, provider boilerplate, config-driven DB; P2: validation
+  engine rationalization, documentation drift reconciliation)
 
 ## Phase 8 (v0.3.0) — NOT STARTED
 
@@ -44,7 +49,7 @@ Heavy admin feature development (412 commits in 6 days):
 | Embedding providers | 7 | OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic, Null |
 | Vector stores | 5+ | EdgeVec, Milvus, Qdrant, Pinecone, Encrypted |
 | Languages | 13 | Via tree-sitter |
-| Beads issues | 291 total | 75 open, 37 blocked, 38 ready, 216 closed |
+| Beads issues | 306 total | 76 open, 38 blocked, 38 ready, 229 closed |
 | TODO/FIXME | 241 | Code + docs debt markers |
 | Docs files | 145 | Well-documented project |
 
@@ -88,3 +93,4 @@ Heavy admin feature development (412 commits in 6 days):
 ## Change Notes
 
 - 2026-02-11T23:26:00-03:00 - Reconciled with `context/` hierarchy and added mirror reference.
+- 2026-02-12 - Updated for v0.2.1 closure: build status green, CI modernized, epic `mcb-b9qd` complete, Beads stats refreshed.

@@ -126,14 +126,24 @@ impl RuleEngineRouter {
         false
     }
 
-    /// Route and execute rule
+    /// Route and execute rule (auto-detects engine from rule content)
     pub async fn execute(
         &self,
         rule_definition: &Value,
         context: &RuleContext,
     ) -> Result<Vec<RuleViolation>> {
         let engine = self.detect_engine(rule_definition);
+        self.execute_with_engine(engine, rule_definition, context)
+            .await
+    }
 
+    /// Execute rule with a specific engine (bypasses auto-detection)
+    pub async fn execute_with_engine(
+        &self,
+        engine: RoutedEngine,
+        rule_definition: &Value,
+        context: &RuleContext,
+    ) -> Result<Vec<RuleViolation>> {
         match engine {
             RoutedEngine::Rete => self.execute_with_rete(rule_definition, context).await,
             RoutedEngine::Expression => {

@@ -126,3 +126,39 @@ async fn test_admin_rocket_shared_js_is_accessible() {
         content_type
     );
 }
+
+/// Test that /ui/entities/organizations/bulk-delete is accessible via admin_rocket
+#[rocket::async_test]
+async fn test_admin_rocket_entities_bulk_delete_is_accessible() {
+    let (client, _, _) = AdminTestHarness::new().build_client().await;
+
+    let response = client
+        .post("/ui/entities/organizations/bulk-delete")
+        .header(rocket::http::ContentType::Form)
+        .body("ids=a,b")
+        .dispatch()
+        .await;
+
+    assert_eq!(
+        response.status(),
+        Status::SeeOther,
+        "Bulk delete must redirect (SeeOther), not 404. Route must be mounted in admin_rocket."
+    );
+}
+
+/// Test that /ui/lov/organizations is accessible via admin_rocket
+#[rocket::async_test]
+async fn test_admin_rocket_lov_endpoint_is_accessible() {
+    let (client, _, _) = AdminTestHarness::new().build_client().await;
+
+    let response = client.get("/ui/lov/organizations").dispatch().await;
+
+    assert_eq!(
+        response.status(),
+        Status::Ok,
+        "LOV endpoint must return 200, not 404. Route must be mounted in admin_rocket."
+    );
+
+    let body = response.into_string().await.expect("response body");
+    assert!(body.starts_with('['), "LOV endpoint must return JSON array");
+}

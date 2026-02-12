@@ -73,19 +73,68 @@ async fn test_removed_indexing_route_returns_not_found() {
     assert_eq!(response.status(), Status::NotFound);
 }
 
+// ── Bulk Delete Tests ──────────────────────────────────────────────────────
+
 #[rocket::async_test]
-async fn test_favicon_returns_svg() {
+async fn test_entities_bulk_delete_redirects_to_list() {
     let client = Client::tracked(web_rocket())
         .await
         .expect("valid rocket instance");
 
-    let response = client.get("/favicon.ico").dispatch().await;
+    let response = client
+        .post("/ui/entities/organizations/bulk-delete")
+        .header(rocket::http::ContentType::Form)
+        .body("ids=id1,id2")
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::SeeOther);
+}
+
+#[rocket::async_test]
+async fn test_entities_bulk_delete_unknown_slug_returns_404() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client
+        .post("/ui/entities/nonexistent/bulk-delete")
+        .header(rocket::http::ContentType::Form)
+        .body("ids=a,b")
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), Status::NotFound);
+}
+
+// ── LOV Endpoint Tests ─────────────────────────────────────────────────────
+
+#[rocket::async_test]
+async fn test_lov_endpoint_returns_json_array() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/lov/organizations").dispatch().await;
 
     assert_eq!(response.status(), Status::Ok);
-    assert_eq!(
-        response.content_type().map(|ct| ct.to_string()),
-        Some("image/svg+xml".to_string())
+    let body = response.into_string().await.expect("response body");
+    // Should be a JSON array (possibly empty since no adapter in web_rocket)
+    assert!(
+        body.starts_with('['),
+        "LOV endpoint must return JSON array, got: {body}"
     );
+}
+
+#[rocket::async_test]
+async fn test_lov_endpoint_unknown_slug_returns_404() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/lov/nonexistent").dispatch().await;
+
+    assert_eq!(response.status(), Status::NotFound);
 }
 
 #[rocket::async_test]

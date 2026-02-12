@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use normpath::PathExt;
 use rocket::http::ContentType;
 
+use super::embedded;
 use super::engine::Engines;
 use super::template::TemplateInfo;
 
@@ -29,9 +30,12 @@ impl Context {
 
         let root = match root.normalize() {
             Ok(root) => root.into_path_buf(),
-            Err(e) => {
-                error!("Invalid template directory '{}': {}.", root.display(), e);
-                return None;
+            Err(_) => {
+                info!(
+                    "Template directory '{}' not found on disk, using embedded templates.",
+                    root.display()
+                );
+                return Self::initialize_embedded(callback);
             }
         };
 
@@ -98,6 +102,57 @@ impl Context {
 
         Some(Context {
             root,
+            templates,
+            engines,
+        })
+    }
+
+    fn initialize_embedded(callback: &Callback) -> Option<Context> {
+        let mut engines = Engines::init_embedded()?;
+        if let Err(e) = callback(&mut engines) {
+            error_!("Template customization callback failed: {}", e);
+            return None;
+        }
+
+        let mut templates = HashMap::new();
+        for &(name, _) in embedded::EMBEDDED_TEMPLATES {
+            let data_type = Path::new(name)
+                .extension()
+                .and_then(|osstr| osstr.to_str())
+                .and_then(ContentType::from_extension)
+                .unwrap_or(ContentType::HTML);
+
+            templates.insert(
+                name.to_string(),
+                TemplateInfo {
+                    path: None,
+                    engine_ext: "hbs",
+                    data_type,
+                },
+            );
+        }
+
+        for (name, engine_ext) in engines.templates() {
+            if !templates.contains_key(name) {
+                let data_type = Path::new(name)
+                    .extension()
+                    .and_then(|osstr| osstr.to_str())
+                    .and_then(ContentType::from_extension)
+                    .unwrap_or(ContentType::Text);
+
+                templates.insert(
+                    name.to_string(),
+                    TemplateInfo {
+                        path: None,
+                        engine_ext,
+                        data_type,
+                    },
+                );
+            }
+        }
+
+        Some(Context {
+            root: PathBuf::from("<embedded>"),
             templates,
             engines,
         })

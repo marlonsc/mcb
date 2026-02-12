@@ -4,6 +4,7 @@ use std::path::Path;
 use handlebars::Handlebars;
 use rocket::serde::Serialize;
 
+use super::embedded;
 use super::template::TemplateInfo;
 
 mod handlebars_engine;
@@ -15,10 +16,7 @@ pub(crate) trait Engine: Send + Sync + Sized + 'static {
     fn render<C: Serialize>(&self, name: &str, context: C) -> Option<String>;
 }
 
-/// A structure exposing access to the Handlebars templating engine.
-///
-/// When calling methods on the `Handlebars` instance, ensure you use types
-/// imported from the `handlebars` crate to avoid version mismatches.
+/// Manages template engine instances.
 pub struct Engines {
     /// The Handlebars templating engine.
     pub handlebars: Handlebars<'static>,
@@ -38,6 +36,15 @@ impl Engines {
         Some(Engines { handlebars })
     }
 
+    pub(crate) fn init_embedded() -> Option<Engines> {
+        let mut hb = Handlebars::new();
+        if embedded::register_embedded(&mut hb) {
+            Some(Engines { handlebars: hb })
+        } else {
+            None
+        }
+    }
+
     pub(crate) fn render<C: Serialize>(
         &self,
         name: &str,
@@ -51,7 +58,6 @@ impl Engines {
         None
     }
 
-    /// Returns iterator over template (name, engine_extension).
     pub(crate) fn templates(&self) -> impl Iterator<Item = (&str, &'static str)> {
         self.handlebars
             .get_templates()

@@ -1,4 +1,5 @@
 mod context;
+pub(crate) mod embedded;
 pub(crate) mod engine;
 mod fairing;
 mod metadata;
