@@ -23,9 +23,6 @@ thiserror.workspace = true
 tokio.workspace = true
 async-trait.workspace = true
 
-# Logging
-tracing.workspace = true
-
 # Serialization (for LanguageId)
 serde = { workspace = true, features = ["derive"] }
 

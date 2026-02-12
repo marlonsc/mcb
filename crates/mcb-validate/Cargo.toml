@@ -58,25 +58,13 @@ clap = { workspace = true }
 
 # Rule Engines - Core do sistema
 rust-rule-engine.workspace = true
-rusty-rules.workspace = true
 evalexpr.workspace = true
 
 # Validation libraries - Para estruturas e campos
 validator = { workspace = true, features = ["derive"] }
-garde.workspace = true
 
 # JSON Schema validation - Para validar regras YAML
 jsonschema.workspace = true
-
-# Pest parser - Para DSL avançada
-pest.workspace = true
-pest_derive.workspace = true
-
-# JSON Path - Para navegação complexa
-jsonpath-rust.workspace = true
-
-# Lazy static values
-once_cell.workspace = true
 
 # Graph algorithms
 petgraph.workspace = true
@@ -101,7 +89,6 @@ tokio.workspace = true
 
 # Logging
 tracing.workspace = true
-criterion.workspace = true
 
 # Explicit test targets — prevents test_utils.rs and test_constants.rs
 # from being auto-discovered as standalone test binaries.

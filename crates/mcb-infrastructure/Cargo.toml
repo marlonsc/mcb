@@ -61,9 +61,6 @@ chrono = { workspace = true }
 # Template engines
 handlebars = { workspace = true }
 
-# Markdown processing
-pulldown-cmark = { workspace = true }
-
 # Cryptography
 aes-gcm = { workspace = true }
 rand = { workspace = true }
@@ -72,13 +69,6 @@ rand = { workspace = true }
 bcrypt = { workspace = true }
 argon2 = { workspace = true }
 base64 = { workspace = true }
-
-# Database
-r2d2 = { workspace = true }
-r2d2_postgres = { workspace = true }
-
-# Hostname
-hostname = { workspace = true }
 
 # Hashing
 sha2 = { workspace = true }
@@ -90,7 +80,6 @@ dirs = { workspace = true }
 
 # System metrics
 sysinfo = { workspace = true }
-nix = { workspace = true }
 
 # Fast globbing
 glob = { workspace = true }
@@ -134,11 +123,6 @@ humantime = { workspace = true }
 # Shell expansion
 shellexpand = { workspace = true }
 
-# Compression
-flate2 = { workspace = true }
-tar = { workspace = true }
-seahash = { workspace = true }
-
 # Additional crypto
 pbkdf2 = { workspace = true }
 hmac = { workspace = true }
@@ -152,7 +136,6 @@ sqlx = { workspace = true }
 # Syntax highlighting
 tree-sitter = { workspace = true }
 tree-sitter-highlight = { workspace = true }
-html-escape = { workspace = true }
 tree-sitter-rust = { workspace = true }
 tree-sitter-python = { workspace = true }
 tree-sitter-javascript = { workspace = true }
@@ -161,14 +144,9 @@ tree-sitter-go = { workspace = true }
 tree-sitter-java = { workspace = true }
 tree-sitter-c = { workspace = true }
 tree-sitter-cpp = { workspace = true }
-tree-sitter-c-sharp = { workspace = true }
 tree-sitter-ruby = { workspace = true }
 tree-sitter-php = { workspace = true }
 tree-sitter-swift = { workspace = true }
-tree-sitter-kotlin-ng = { workspace = true }
-
-# Benchmarking
-criterion = { workspace = true }
 
 # Links providers into linkme distributed slices
 mcb-providers = { path = "../mcb-providers" }

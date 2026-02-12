@@ -32,12 +32,6 @@ tree-sitter-kotlin-ng.workspace = true
 # Error handling
 thiserror.workspace = true
 
-# Async runtime
-tokio.workspace = true
-
-# Logging
-tracing.workspace = true
-
 [dev-dependencies]
 tempfile.workspace = true
 rstest = { workspace = true }
