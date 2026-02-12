@@ -1,3 +1,4 @@
+//! Provides ids domain definitions.
 use std::fmt;
 
 use serde::{Deserialize, Serialize};

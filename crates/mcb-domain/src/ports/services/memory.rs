@@ -1,3 +1,4 @@
+//! Provides memory domain definitions.
 use async_trait::async_trait;
 
 use crate::entities::memory::{
@@ -65,6 +66,7 @@ pub trait MemoryServiceInterface: Send + Sync {
     /// Get an observation by ID.
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>>;
 
+    /// Performs the delete observation operation.
     async fn delete_observation(&self, id: &ObservationId) -> Result<()>;
 
     /// Generate embedding for content (for external use).

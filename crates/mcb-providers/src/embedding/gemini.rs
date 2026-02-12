@@ -12,7 +12,8 @@ use reqwest::Client;
 
 use crate::constants::{CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_GEMINI};
 use crate::embedding::helpers::constructor;
-use crate::utils::{HttpResponseUtils, handle_request_error};
+use crate::provider_utils::{parse_float_array_lossy, send_json_request};
+use crate::utils::http::RequestErrorKind;
 
 /// Gemini embedding provider
 ///
@@ -124,30 +125,32 @@ impl GeminiEmbeddingProvider {
             self.api_model_name()
         );
 
-        let response = self
-            .http_client
-            .post(&url)
-            .header("Content-Type", CONTENT_TYPE_JSON)
-            .header("x-goog-api-key", &self.api_key)
-            .timeout(self.timeout)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| handle_request_error(e, self.timeout, "Gemini"))?;
+        let headers = vec![
+            ("Content-Type", CONTENT_TYPE_JSON.to_string()),
+            ("x-goog-api-key", self.api_key.clone()),
+        ];
 
-        HttpResponseUtils::check_and_parse(response, "Gemini").await
+        send_json_request(
+            &self.http_client,
+            reqwest::Method::POST,
+            url,
+            self.timeout,
+            "Gemini",
+            "embedContent",
+            RequestErrorKind::Embedding,
+            &headers,
+            Some(&payload),
+        )
+        .await
     }
 
     /// Parse embedding from response data
     fn parse_embedding(&self, response_data: &serde_json::Value) -> Result<Embedding> {
-        let embedding_vec = response_data["embedding"]["values"]
-            .as_array()
-            .ok_or_else(|| {
-                Error::embedding("Invalid response format: missing embedding values".to_string())
-            })?
-            .iter()
-            .map(|v| v.as_f64().unwrap_or(0.0) as f32)
-            .collect::<Vec<f32>>();
+        let embedding_vec = parse_float_array_lossy(
+            response_data,
+            "/embedding/values",
+            "Invalid response format: missing embedding values",
+        )?;
 
         let dimensions = embedding_vec.len();
         Ok(Embedding {

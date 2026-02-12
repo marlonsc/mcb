@@ -194,8 +194,10 @@ pub enum Error {
     /// Observation storage operation error
     #[error("Observation storage error: {message}")]
     ObservationStorage {
+        /// Stores the message value.
         message: String,
         #[source]
+        /// Stores the source value.
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
 

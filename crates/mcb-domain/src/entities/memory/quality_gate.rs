@@ -9,9 +9,13 @@ use serde::{Deserialize, Serialize};
 /// - `Skipped`: The check was not executed
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum QualityGateStatus {
+    /// Represents the Passed variant.
     Passed,
+    /// Represents the Failed variant.
     Failed,
+    /// Represents the Warning variant.
     Warning,
+    /// Represents the Skipped variant.
     Skipped,
 }
 
@@ -59,6 +63,7 @@ pub struct QualityGateResult {
     pub status: QualityGateStatus,
     /// Optional message providing additional details about the result.
     pub message: Option<String>,
+    /// Stores the timestamp value.
     pub timestamp: i64,
     /// Optional identifier linking this result to a specific execution context.
     pub execution_id: Option<String>,
