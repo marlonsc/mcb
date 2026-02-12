@@ -7,7 +7,7 @@ updated: 2026-02-05
 related: []
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: Partial
 ---
 
 ## ADR-033: MCP Handler Consolidation
@@ -18,10 +18,13 @@ Accepted
 
 ## Context
 
-The MCP server has grown to 38 tools, creating cognitive overhead for users and maintenance burden. Many tools follow CRUD patterns that can be using parameterization.
+The MCP server has grown to 38 tools, creating cognitive overhead for users and
+maintenance burden. Many tools follow CRUD patterns that can be using
+parameterization.
 
 ### Current Tool Inventory (38 tools)
 
+<!-- markdownlint-disable MD013 -->
 | Category | Tools | Count |
 | ---------- | ------- | ------- |
 | Index/Search | index (action=start), search (resource=code), index (action=status), index (action=clear) | 4 |
@@ -31,6 +34,7 @@ The MCP server has grown to 38 tools, creating cognitive overhead for users and 
 | Agent Sessions | session (action=create), session (action=get), session (action=update), session (action=list), agent (action=log_tool), agent (action=log_delegation) | 6 |
 | Project Workflow | project_* (9 tools) | 9 |
 | **Total** | | **38** |
+<!-- markdownlint-enable MD013 -->
 
 ## Decision
 
@@ -38,6 +42,7 @@ Consolidate to **8 tools** using resource-action parameterization pattern:
 
 ### New Tool Architecture
 
+<!-- markdownlint-disable MD013 -->
 | Tool | Replaces | Pattern |
 | ------ | ---------- | --------- |
 | `index` | index (action=start), index (action=status), index (action=clear) | action: start, status, clear |

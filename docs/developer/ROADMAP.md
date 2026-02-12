@@ -13,7 +13,7 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 | **Version** | v0.2.1-dev |
 | **Branch** | `release/v0.2.1` (only active release branch) |
 | **Build** | ✅ `cargo check --workspace` passes |
-| **Tests** | 10,028 test functions across all crates |
+| **Tests** | 1,485 passing (`cargo test --workspace`), 1,559 listed |
 | **Crates** | 9 (Clean Architecture workspace) |
 | **ADRs** | 47 (including Phase 8-9) |
 
@@ -21,9 +21,9 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 
 | Metric | Value |
 | -------- | ------- | |
-| Beads issues | 306 total (76 open, 229 closed, 38 ready, 38 blocked) |
-| Avg lead time | 9.7 hours |
-| TODO/FIXME | 241 code + docs debt markers |
+| Beads issues | 312 total (75 open, 237 closed, 39 ready, 36 blocked) |
+| Avg lead time | 9.5 hours |
+| TODO/FIXME | 164 markers in `crates/` |
 | Languages | 13 via tree-sitter |
 | Embedding providers | 7 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic, Null) |
 | Vector stores | 5+ (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted) |
@@ -49,7 +49,7 @@ Consolidates all pre-v0.3.0 work: admin UI, data model hardening, modernization 
 | ------ | -------- |
 | Admin UI (Handlebars CRUD) | ✅ Complete |
 | P0 modernization (org context, lock/cache, dead code) | ✅ Complete |
-| P1/P2 modernization (provider consolidation, docs) | In progress |
+| P1/P2 modernization (provider consolidation, docs) | ✅ Complete |
 | CI pipeline modernization | ✅ Complete |
 
 ---

@@ -1,7 +1,7 @@
 # Implementation Status - Traceability Document
 
 **Purpose**: Map what EXISTS (files created) vs what PLANS require.
-**Last Audit**: 2026-01-28
+**Last Audit**: 2026-02-12
 **Audit Scope**: File existence AND functionality verification
 
 ---
@@ -16,6 +16,26 @@
 | **Missing** | Files do not exist |
 
 **Note**: "Verified" means integration tests were executed and passed.
+
+---
+
+## v0.2.1 Tracking (Pre-v0.3.0 Closure)
+
+### Completed Since v0.2.0
+
+- Data model v2 merge and consolidation into `release/v0.2.1`
+- Admin UI expansion (CRUD metadata, LOV endpoints, filtering, dashboard, UI partials)
+- CI modernization and workflow cleanup
+- Dead code and dependency cleanup (`-913` lines, 30+ unused deps removed)
+- Handler/provider consolidation and routing cleanup
+- Documentation restructuring and ADR normalization passes
+
+### Current Verification Snapshot (2026-02-12)
+
+- `cargo check --workspace`: PASS
+- `cargo test --workspace`: PASS (1,485 passing tests)
+- `cargo test -p mcb-validate -- --list`: 382 listed tests
+- Open beads issues triaged with scope tags: 50/50
 
 ---
 
@@ -35,8 +55,8 @@
 | 6 | Architecture | Exists | 11/11 pass | **Verified** ✅ |
 | 7 | Integration | Exists | 14/14 pass + benchmarks | **Verified** ✅ |
 
-**Total Tests**: 750+ in mcb-validate (lib + integration)
-**Verification Date**: 2026-01-19 15:10 GMT-3 via `make test`
+**Total Tests**: 382 listed tests in mcb-validate (`cargo test -p mcb-validate -- --list`)
+**Verification Date**: 2026-02-12 via `cargo test -p mcb-validate -- --list`
 
 ### Phase 1: Linters - VERIFIED ✅
 
@@ -346,7 +366,7 @@ This document was created by:
 
 ## Workspace Validation Results
 
-**Last Run**: 2026-01-28 via `make validate`
+**Last Run**: 2026-02-12 via `make validate`
 
 ### Summary
 
@@ -400,3 +420,4 @@ This document was created by:
 | 5.0 | 2026-01-19 | RCA dependency updated to master branch - all 750+ tests pass, validation detects 26 test organization violations |
 | 6.0 | 2026-01-20 | Phase 0 SOLID validation fixes complete - 0 legacy violations, YAML rules show 17 non-blocking warnings |
 | 7.0 | 2026-01-28 | Documentation refresh: ADR index, modules, ROADMAP, ARCHITECTURE aligned to v0.1.4 |
+| 8.0 | 2026-02-12 | v0.2.1 audit refresh: added v0.2.1 tracking section, updated verification snapshot and test counts |

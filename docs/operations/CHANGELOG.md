@@ -13,6 +13,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.1] - 2026-02-XX
+
+### Summary
+
+Pre-v0.3.0 consolidation release focused on v0.2.1 branch hardening: data-model-v2 merge, admin UI expansion, CI modernization, dead-code cleanup, MCP handler/provider consolidation, and documentation reconciliation.
+
+### Fixed
+
+- Session optionality and validation/doc alignment cleanup (`df781ce2`).
+- Context stats and implicit-default behavior cleanup (`2e43b431`).
+- Rustdoc/import hygiene and clippy/merge-fix follow-ups (`78699c98`, `be77523c`).
+- Honesty and persistence integrity fixes with contextual error handling (`24cb7f83`).
+
+### Added
+
+- Admin UI capabilities: LOV endpoint system, filtered listing, entity dashboards, collapsible groups, advanced UI partials, and bulk actions (`ec2a952e`, `663a532e`, `807d43cc`, `4d5d1632`, `257f61c3`, `783f8370`).
+- Data model v2 work merged into v0.2.1 (`9fe5a8f3`, `871f7d26`).
+- Expanded provider/config support for SQLite/project context (`25348f3b`, `bed5a3f5`).
+
+### Changed
+
+- CI pipeline/workflow modernization and hardening (`2ba91d63`, `eb9e647d`, `f461c915`).
+- Dead code and dependency reduction (`c3452805`, `9f36d616`, `787ec7a3`).
+- Template engine and admin rendering consolidation toward Handlebars (`0c126590`, `b7b3c95d`, `4ca9cdd4`).
+- Version stream consolidation: v0.2.2 track removed and folded into v0.2.1 (`e776cd86`).
+- Documentation/model restructuring and ADR normalization (`f427d367`, `d76861af`, `1c8f309a`, `20eb9563`).
+
+### Metrics
+
+- Commits since v0.2.0: 63
+- Rust Tests: 1,485 passing (`cargo test --workspace`)
+- mcb-validate listed tests: 382 (`cargo test -p mcb-validate -- --list`)
+- Crates: 9 workspace members
+- Beads open issues triaged with scope tags: 50/50
+
+---
+
 ## [0.2.0] - 2026-02-10
 
 ### Summary
