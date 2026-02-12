@@ -60,7 +60,6 @@ chrono = { workspace = true }
 
 # Template engines
 handlebars = { workspace = true }
-tera = { workspace = true }
 
 # Markdown processing
 pulldown-cmark = { workspace = true }

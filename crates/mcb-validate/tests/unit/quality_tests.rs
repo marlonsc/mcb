@@ -5,7 +5,10 @@
 
 use mcb_validate::{QualityValidator, QualityViolation};
 
-use crate::test_constants::*;
+use crate::test_constants::{
+    DOMAIN_CRATE, FILE_SIZE_LOW_THRESHOLD, FIXTURE_DOMAIN_SERVICE_PATH,
+    FIXTURE_SERVER_HANDLER_PATH, INFRA_CRATE, LIB_RS, SERVER_CRATE, TEST_CRATE,
+};
 use crate::test_utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -19,38 +22,41 @@ fn test_quality_full_workspace() {
     let validator = QualityValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
+    let server_handler = format!("{SERVER_CRATE}/src/{FIXTURE_SERVER_HANDLER_PATH}");
+    let domain_service = format!("{DOMAIN_CRATE}/src/{FIXTURE_DOMAIN_SERVICE_PATH}");
+    let test_lib = format!("{TEST_CRATE}/src/{LIB_RS}");
     assert_violations_exact(
         &violations,
         &[
             // ── UnwrapInProduction ──────────────────────────────────────
-            (SERVER_CRATE_HANDLER, 42, "UnwrapInProduction"),
-            (DOMAIN_CRATE_SERVICE, 69, "UnwrapInProduction"),
-            (TEST_CRATE_LIB, 17, "UnwrapInProduction"),
-            (TEST_CRATE_LIB, 114, "UnwrapInProduction"),
-            (TEST_CRATE_LIB, 294, "UnwrapInProduction"),
+            (&server_handler, 42, "UnwrapInProduction"),
+            (&domain_service, 69, "UnwrapInProduction"),
+            (&test_lib, 17, "UnwrapInProduction"),
+            (&test_lib, 114, "UnwrapInProduction"),
+            (&test_lib, 294, "UnwrapInProduction"),
             // ── ExpectInProduction ──────────────────────────────────────
-            (SERVER_CRATE_HANDLER, 91, "ExpectInProduction"),
-            (TEST_CRATE_LIB, 19, "ExpectInProduction"),
+            (&server_handler, 91, "ExpectInProduction"),
+            (&test_lib, 19, "ExpectInProduction"),
             // ── PanicInProduction ──────────────────────────────────────
-            (TEST_CRATE_LIB, 39, "PanicInProduction"),
+            (&test_lib, 39, "PanicInProduction"),
             // ── TodoComment ────────────────────────────────────────────
-            (DOMAIN_CRATE_SERVICE, 66, "TodoComment"),
-            (DOMAIN_CRATE_SERVICE, 71, "TodoComment"),
-            (DOMAIN_CRATE_SERVICE, 151, "TodoComment"),
-            (DOMAIN_CRATE_SERVICE, 159, "TodoComment"),
-            (DOMAIN_CRATE_SERVICE, 180, "TodoComment"),
-            (DOMAIN_CRATE_SERVICE, 183, "TodoComment"),
-            (TEST_CRATE_LIB, 9, "TodoComment"),
-            (TEST_CRATE_LIB, 15, "TodoComment"),
-            (TEST_CRATE_LIB, 18, "TodoComment"),
-            (TEST_CRATE_LIB, 24, "TodoComment"),
-            (TEST_CRATE_LIB, 26, "TodoComment"),
-            (TEST_CRATE_LIB, 334, "TodoComment"),
-            (TEST_CRATE_LIB, 336, "TodoComment"),
+            (&domain_service, 66, "TodoComment"),
+            (&domain_service, 71, "TodoComment"),
+            (&domain_service, 151, "TodoComment"),
+            (&domain_service, 159, "TodoComment"),
+            (&domain_service, 180, "TodoComment"),
+            (&domain_service, 183, "TodoComment"),
+            (&test_lib, 9, "TodoComment"),
+            (&test_lib, 15, "TodoComment"),
+            (&test_lib, 18, "TodoComment"),
+            (&test_lib, 24, "TodoComment"),
+            (&test_lib, 26, "TodoComment"),
+            (&test_lib, 334, "TodoComment"),
+            (&test_lib, 336, "TodoComment"),
             // ── DeadCodeAllowNotPermitted ──────────────────────────────
-            (TEST_CRATE_LIB, 43, "DeadCodeAllowNotPermitted"),
-            (TEST_CRATE_LIB, 44, "DeadCodeAllowNotPermitted"),
-            (TEST_CRATE_LIB, 50, "DeadCodeAllowNotPermitted"),
+            (&test_lib, 43, "DeadCodeAllowNotPermitted"),
+            (&test_lib, 44, "DeadCodeAllowNotPermitted"),
+            (&test_lib, 50, "DeadCodeAllowNotPermitted"),
         ],
         "QualityValidator full workspace",
     );

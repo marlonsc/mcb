@@ -13,7 +13,6 @@ pub(crate) fn create_base_memory_args(
         resource,
         data,
         ids,
-        project_id: Some("test-project".to_string()),
         repo_id: None,
         session_id: session_id.map(Into::into),
         tags: None,

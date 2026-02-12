@@ -33,6 +33,15 @@ pub struct AdminFieldMeta {
     pub is_checkbox: bool,
     /// Pre-computed: `input_type == "select"`.
     pub is_select: bool,
+    /// Pre-computed: field holds a Unix-epoch timestamp (`name` ends with `_at`
+    /// and the detected input type is numeric).
+    pub is_timestamp: bool,
+    /// True when this field references another entity (name ends in `_id` with a known target).
+    pub is_foreign_key: bool,
+    /// Entity slug of the FK target (e.g. `"organizations"` for `org_id`).
+    pub fk_target_slug: Option<String>,
+    /// True when the field holds a JSON blob (name ends with `_json` or schema type is `object`).
+    pub is_json_field: bool,
     /// Enum variant names for `<select>` dropdowns (empty when not an enum).
     pub enum_values: Vec<String>,
 }
@@ -258,6 +267,11 @@ fn extract_fields(schema: &Value) -> Vec<AdminFieldMeta> {
                     let resolved = resolve_ref(field_schema, defs);
                     let input_type = detect_input_type(name, &resolved);
                     let enum_values = extract_enum_values(&resolved);
+                    let is_timestamp = name.ends_with("_at")
+                        && matches!(input_type.as_ref(), "number" | "datetime-local");
+                    let fk_target = detect_fk_target(name);
+                    let is_json_field = name.ends_with("_json")
+                        || matches!(resolved.get("type").and_then(Value::as_str), Some("object"));
                     AdminFieldMeta {
                         name: name.clone(),
                         label: to_title(name),
@@ -266,6 +280,10 @@ fn extract_fields(schema: &Value) -> Vec<AdminFieldMeta> {
                         is_textarea: input_type.as_ref() == "textarea",
                         is_checkbox: input_type.as_ref() == "checkbox",
                         is_select: input_type.as_ref() == "select",
+                        is_timestamp,
+                        is_foreign_key: fk_target.is_some(),
+                        fk_target_slug: fk_target.map(String::from),
+                        is_json_field,
                         input_type: input_type.into_owned(),
                         enum_values,
                     }
@@ -312,6 +330,23 @@ fn is_hidden_field(name: &str) -> bool {
 
 fn is_readonly_field(name: &str) -> bool {
     matches!(name, "id" | "created_at" | "updated_at")
+}
+
+fn detect_fk_target(field_name: &str) -> Option<&'static str> {
+    match field_name {
+        "org_id" => Some("organizations"),
+        "user_id" | "created_by" | "assignee" | "author_id" | "reviewer_id" => Some("users"),
+        "team_id" => Some("teams"),
+        "project_id" => Some("projects"),
+        "issue_id" | "parent_issue_id" => Some("project-issues"),
+        "label_id" => Some("issue-labels"),
+        "plan_id" => Some("plans"),
+        "plan_version_id" => Some("plan-versions"),
+        "repository_id" => Some("repositories"),
+        "branch_id" => Some("branches"),
+        "worktree_id" => Some("worktrees"),
+        _ => None,
+    }
 }
 
 fn detect_input_type<'a>(name: &str, field_schema: &'a Value) -> Cow<'a, str> {
@@ -484,6 +519,84 @@ mod tests {
             name_field.enum_values.is_empty(),
             "string fields should have no enum values"
         );
+    }
+
+    #[test]
+    fn test_timestamp_fields_detected() {
+        let entity = AdminRegistry::find("organizations").unwrap();
+        let fields = entity.fields();
+        let created_at = fields.iter().find(|f| f.name == "created_at").unwrap();
+        assert!(
+            created_at.is_timestamp,
+            "created_at should be detected as timestamp"
+        );
+        let name = fields.iter().find(|f| f.name == "name").unwrap();
+        assert!(!name.is_timestamp, "name should not be a timestamp");
+    }
+
+    #[test]
+    fn test_fk_detection_known_fields() {
+        assert_eq!(detect_fk_target("org_id"), Some("organizations"));
+        assert_eq!(detect_fk_target("user_id"), Some("users"));
+        assert_eq!(detect_fk_target("created_by"), Some("users"));
+        assert_eq!(detect_fk_target("assignee"), Some("users"));
+        assert_eq!(detect_fk_target("author_id"), Some("users"));
+        assert_eq!(detect_fk_target("reviewer_id"), Some("users"));
+        assert_eq!(detect_fk_target("team_id"), Some("teams"));
+        assert_eq!(detect_fk_target("project_id"), Some("projects"));
+        assert_eq!(detect_fk_target("issue_id"), Some("project-issues"));
+        assert_eq!(detect_fk_target("parent_issue_id"), Some("project-issues"));
+        assert_eq!(detect_fk_target("label_id"), Some("issue-labels"));
+        assert_eq!(detect_fk_target("plan_id"), Some("plans"));
+        assert_eq!(detect_fk_target("plan_version_id"), Some("plan-versions"));
+        assert_eq!(detect_fk_target("repository_id"), Some("repositories"));
+        assert_eq!(detect_fk_target("branch_id"), Some("branches"));
+        assert_eq!(detect_fk_target("worktree_id"), Some("worktrees"));
+    }
+
+    #[test]
+    fn test_fk_detection_unknown_fields() {
+        assert_eq!(detect_fk_target("name"), None);
+        assert_eq!(detect_fk_target("id"), None);
+        assert_eq!(detect_fk_target("status"), None);
+        assert_eq!(detect_fk_target("created_at"), None);
+    }
+
+    #[test]
+    fn test_fk_fields_detected_in_entities() {
+        let entity = AdminRegistry::find("team-members").unwrap();
+        let fields = entity.fields();
+        let team_id = fields.iter().find(|f| f.name == "team_id").unwrap();
+        assert!(team_id.is_foreign_key);
+        assert_eq!(team_id.fk_target_slug.as_deref(), Some("teams"));
+
+        let user_id = fields.iter().find(|f| f.name == "user_id").unwrap();
+        assert!(user_id.is_foreign_key);
+        assert_eq!(user_id.fk_target_slug.as_deref(), Some("users"));
+    }
+
+    #[test]
+    fn test_non_fk_fields_not_flagged() {
+        let entity = AdminRegistry::find("organizations").unwrap();
+        let fields = entity.fields();
+        let name = fields.iter().find(|f| f.name == "name").unwrap();
+        assert!(!name.is_foreign_key);
+        assert!(name.fk_target_slug.is_none());
+    }
+
+    #[test]
+    fn test_json_field_detection() {
+        for entity in AdminRegistry::all() {
+            for field in entity.fields() {
+                if field.name.ends_with("_json") {
+                    assert!(
+                        field.is_json_field,
+                        "{}.{} should be detected as json field",
+                        entity.slug, field.name
+                    );
+                }
+            }
+        }
     }
 
     #[test]

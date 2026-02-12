@@ -8,6 +8,7 @@
 
 mod agent_repository;
 mod ddl;
+#[allow(dead_code)]
 pub(crate) mod ensure_parent;
 pub mod executor;
 pub mod issue_entity_repository;

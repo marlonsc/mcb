@@ -7,11 +7,12 @@ use serde_json::json;
 
 use crate::handlers::test_helpers::create_base_memory_args;
 use crate::test_utils::mock_services::MockMemoryService;
+use crate::test_utils::test_resolver;
 
 #[tokio::test]
 async fn test_memory_store_observation_success() {
     let mock_service = MockMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
+    let handler = MemoryHandler::new(Arc::new(mock_service), test_resolver());
 
     let args = create_base_memory_args(
         MemoryAction::Store,
@@ -34,7 +35,7 @@ async fn test_memory_store_observation_success() {
 #[tokio::test]
 async fn test_memory_store_observation_missing_data() {
     let mock_service = MockMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
+    let handler = MemoryHandler::new(Arc::new(mock_service), test_resolver());
 
     let args = create_base_memory_args(
         MemoryAction::Store,
@@ -57,7 +58,7 @@ async fn test_memory_store_observation_missing_data() {
 #[tokio::test]
 async fn test_memory_store_execution_success() {
     let mock_service = MockMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
+    let handler = MemoryHandler::new(Arc::new(mock_service), test_resolver());
 
     let args = MemoryArgs {
         action: MemoryAction::Store,
@@ -70,7 +71,6 @@ async fn test_memory_store_execution_success() {
             "execution_type": "build"
         })),
         ids: None,
-        project_id: Some("test-project".to_string()),
         repo_id: None,
         session_id: Some("test-session".to_string().into()),
         tags: None,
@@ -94,7 +94,7 @@ async fn test_memory_store_execution_success() {
 #[tokio::test]
 async fn test_memory_store_quality_gate_success() {
     let mock_service = MockMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
+    let handler = MemoryHandler::new(Arc::new(mock_service), test_resolver());
 
     let args = MemoryArgs {
         action: MemoryAction::Store,
@@ -105,7 +105,6 @@ async fn test_memory_store_quality_gate_success() {
             "metrics": {}
         })),
         ids: None,
-        project_id: Some("test-project".to_string()),
         repo_id: None,
         session_id: Some("test-session".to_string().into()),
         tags: None,
@@ -129,7 +128,7 @@ async fn test_memory_store_quality_gate_success() {
 #[tokio::test]
 async fn test_memory_store_session_success() {
     let mock_service = MockMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
+    let handler = MemoryHandler::new(Arc::new(mock_service), test_resolver());
 
     let args = MemoryArgs {
         action: MemoryAction::Store,
@@ -139,7 +138,6 @@ async fn test_memory_store_session_success() {
             "summary": "Test session summary"
         })),
         ids: None,
-        project_id: Some("test-project".to_string()),
         repo_id: None,
         session_id: Some("test-session".to_string().into()),
         tags: None,
@@ -163,14 +161,13 @@ async fn test_memory_store_session_success() {
 #[tokio::test]
 async fn test_memory_get_observation_success() {
     let mock_service = MockMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
+    let handler = MemoryHandler::new(Arc::new(mock_service), test_resolver());
 
     let args = MemoryArgs {
         action: MemoryAction::Get,
         resource: MemoryResource::Observation,
         data: None,
         ids: Some(vec!["obs-1".to_string(), "obs-2".to_string()]),
-        project_id: Some("test-project".to_string()),
         repo_id: None,
         session_id: None,
         tags: None,
@@ -194,14 +191,13 @@ async fn test_memory_get_observation_success() {
 #[tokio::test]
 async fn test_memory_get_observation_missing_ids() {
     let mock_service = MockMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
+    let handler = MemoryHandler::new(Arc::new(mock_service), test_resolver());
 
     let args = MemoryArgs {
         action: MemoryAction::Get,
         resource: MemoryResource::Observation,
         data: None,
         ids: None,
-        project_id: Some("test-project".to_string()),
         repo_id: None,
         session_id: None,
         tags: None,
@@ -228,14 +224,13 @@ async fn test_memory_get_observation_missing_ids() {
 #[tokio::test]
 async fn test_memory_get_execution_success() {
     let mock_service = MockMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
+    let handler = MemoryHandler::new(Arc::new(mock_service), test_resolver());
 
     let args = MemoryArgs {
         action: MemoryAction::Get,
         resource: MemoryResource::Execution,
         data: None,
         ids: Some(vec!["exec-1".to_string()]),
-        project_id: Some("test-project".to_string()),
         repo_id: None,
         session_id: None,
         tags: None,
@@ -259,14 +254,13 @@ async fn test_memory_get_execution_success() {
 #[tokio::test]
 async fn test_memory_get_quality_gate_success() {
     let mock_service = MockMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
+    let handler = MemoryHandler::new(Arc::new(mock_service), test_resolver());
 
     let args = MemoryArgs {
         action: MemoryAction::Get,
         resource: MemoryResource::QualityGate,
         data: None,
         ids: Some(vec!["qg-1".to_string()]),
-        project_id: Some("test-project".to_string()),
         repo_id: None,
         session_id: None,
         tags: None,
@@ -290,14 +284,13 @@ async fn test_memory_get_quality_gate_success() {
 #[tokio::test]
 async fn test_memory_get_session_success() {
     let mock_service = MockMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
+    let handler = MemoryHandler::new(Arc::new(mock_service), test_resolver());
 
     let args = MemoryArgs {
         action: MemoryAction::Get,
         resource: MemoryResource::Session,
         data: None,
         ids: None,
-        project_id: Some("test-project".to_string()),
         repo_id: None,
         session_id: Some("test-session".to_string().into()),
         tags: None,
@@ -320,14 +313,13 @@ async fn test_memory_get_session_success() {
 #[tokio::test]
 async fn test_memory_inject_with_filters() {
     let mock_service = MockMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
+    let handler = MemoryHandler::new(Arc::new(mock_service), test_resolver());
 
     let args = MemoryArgs {
         action: MemoryAction::Inject,
         resource: MemoryResource::Observation,
         data: None,
         ids: None,
-        project_id: Some("test-project".to_string()),
         repo_id: Some("repo-123".to_string()),
         session_id: None,
         tags: Some(vec!["important".to_string()]),

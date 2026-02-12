@@ -21,8 +21,7 @@ impl RepositoryResolver {
         }
     }
 
-    #[cfg(test)]
-    /// Create a resolver with a custom project context for testing.
+    /// Create a resolver with a custom project context (for testing or custom setups).
     pub fn with_context(
         vcs_repo: Arc<dyn VcsEntityRepository>,
         project_ctx: ProjectContext,

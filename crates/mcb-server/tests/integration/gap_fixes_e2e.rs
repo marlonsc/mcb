@@ -150,7 +150,6 @@ async fn test_gap3_session_list_works_without_agent_type() {
             session_id: None,
             agent_type: None, // Omitted, should be allowed now
             data: None,
-            project_id: None,
             worktree_id: None,
             status: None,
             limit: Some(3),

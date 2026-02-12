@@ -10,6 +10,7 @@ use crate::test_utils::mock_services::{
     MockProjectDetectorService, MockProjectRepository, MockSearchService, MockValidationService,
     MockVcsEntityRepository, MockVcsProvider,
 };
+use crate::test_utils::test_resolver;
 
 #[test]
 fn test_builder_all_services_provided() {
@@ -35,6 +36,7 @@ fn test_builder_all_services_provided() {
         .with_plan_entity_repository(Arc::new(MockPlanEntityRepository::new()))
         .with_issue_entity_repository(Arc::new(MockIssueEntityRepository::new()))
         .with_org_entity_repository(Arc::new(MockOrgEntityRepository::new()))
+        .with_resolver(test_resolver())
         .build();
 
     assert!(result.is_ok());
@@ -179,6 +181,7 @@ fn test_try_build_success() {
         .with_plan_entity_repository(Arc::new(MockPlanEntityRepository::new()))
         .with_issue_entity_repository(Arc::new(MockIssueEntityRepository::new()))
         .with_org_entity_repository(Arc::new(MockOrgEntityRepository::new()))
+        .with_resolver(test_resolver())
         .build();
 
     assert!(server.is_ok());

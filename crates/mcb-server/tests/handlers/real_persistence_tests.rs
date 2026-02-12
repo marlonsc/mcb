@@ -45,7 +45,7 @@ fn extract_text(content: &[rmcp::model::Content]) -> String {
 async fn test_real_memory_store_observation_persists() {
     let (server, _temp) = create_test_mcp_server().await;
     let memory_h = server.memory_handler();
-    let project_id = "real-persist-test";
+    let _project_id = "real-persist-test";
 
     // 1. Store an observation
     let store_args = MemoryArgs {
@@ -58,7 +58,6 @@ async fn test_real_memory_store_observation_persists() {
             "metadata": { "session_id": "sess-real-001" }
         })),
         ids: None,
-        project_id: Some(project_id.to_string()),
         repo_id: None,
         session_id: None,
         tags: None,
@@ -93,7 +92,6 @@ async fn test_real_memory_store_observation_persists() {
         resource: MemoryResource::Observation,
         data: None,
         ids: None,
-        project_id: Some(project_id.to_string()),
         repo_id: None,
         session_id: None,
         tags: None,
@@ -126,7 +124,7 @@ async fn test_real_memory_store_observation_persists() {
 async fn test_real_memory_store_multiple_observations_counted() {
     let (server, _temp) = create_test_mcp_server().await;
     let memory_h = server.memory_handler();
-    let project_id = "real-multi-store";
+    let _project_id = "real-multi-store";
 
     // Store 3 observations
     for i in 0..3 {
@@ -140,7 +138,6 @@ async fn test_real_memory_store_multiple_observations_counted() {
                 "metadata": { "session_id": "sess-batch" }
             })),
             ids: None,
-            project_id: Some(project_id.to_string()),
             repo_id: None,
             session_id: None,
             tags: None,
@@ -170,7 +167,6 @@ async fn test_real_memory_store_multiple_observations_counted() {
         resource: MemoryResource::Observation,
         data: None,
         ids: None,
-        project_id: Some(project_id.to_string()),
         repo_id: None,
         session_id: None,
         tags: None,
@@ -216,7 +212,6 @@ async fn test_real_memory_store_missing_data_returns_contextual_error() {
         resource: MemoryResource::Observation,
         data: None, // Missing required data
         ids: None,
-        project_id: Some("error-test-project".to_string()),
         repo_id: None,
         session_id: None,
         tags: None,
@@ -270,7 +265,6 @@ async fn test_real_session_summary_store_and_retrieve() {
             "key_files": ["src/main.rs"]
         })),
         ids: None,
-        project_id: Some("roundtrip-project".to_string()),
         repo_id: None,
         session_id: Some("sess-roundtrip".to_string().into()),
         tags: None,
@@ -305,7 +299,6 @@ async fn test_real_session_summary_store_and_retrieve() {
         resource: MemoryResource::Session,
         data: None,
         ids: None,
-        project_id: None,
         repo_id: None,
         session_id: Some("sess-roundtrip".to_string().into()),
         tags: None,
@@ -348,7 +341,6 @@ async fn test_real_session_create_invalid_agent_type_contextual_error() {
             "model": "claude-3-sonnet",
             "project_id": "bad-type-project"
         })),
-        project_id: Some("bad-type-project".to_string()),
         worktree_id: None,
         agent_type: Some("nonexistent_agent_xyz".to_string()),
         status: None,
@@ -452,7 +444,6 @@ async fn test_real_agent_session_create_and_retrieve() {
             "key_files": []
         })),
         ids: None,
-        project_id: Some("agent-roundtrip-project".to_string()),
         repo_id: None,
         session_id: Some("sess-agent-roundtrip".to_string().into()),
         tags: None,
@@ -491,7 +482,6 @@ async fn test_real_agent_session_create_and_retrieve() {
             "model": "claude-opus-4-20250514",
             "project_id": "agent-roundtrip-project"
         })),
-        project_id: Some("agent-roundtrip-project".to_string()),
         worktree_id: None,
         agent_type: Some("sisyphus".to_string()),
         status: None,
@@ -524,7 +514,6 @@ async fn test_real_agent_session_create_and_retrieve() {
         action: SessionAction::Get,
         session_id: Some(agent_session_id.to_string().into()),
         data: None,
-        project_id: None,
         worktree_id: None,
         agent_type: None,
         status: None,
@@ -571,7 +560,6 @@ async fn test_real_session_list_empty_returns_gracefully() {
         action: SessionAction::List,
         session_id: None,
         data: None,
-        project_id: None,
         worktree_id: None,
         agent_type: None,
         status: None,

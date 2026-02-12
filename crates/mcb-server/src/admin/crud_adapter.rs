@@ -3,6 +3,7 @@
 //! Each entity slug maps to an adapter implementation that knows how to
 //! call the correct service methods and serialize results to JSON.
 
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -18,6 +19,7 @@ use mcb_domain::ports::repositories::{
 use serde_json::Value;
 
 use super::handlers::AdminState;
+use super::web::filter::{FilterParams, FilteredResult, SortOrder};
 
 /// Async CRUD operations that map entity slugs to domain service calls.
 #[async_trait]
@@ -32,6 +34,21 @@ pub trait EntityCrudAdapter: Send + Sync {
     async fn update_from_json(&self, data: Value) -> Result<(), String>;
     /// Delete a record by its primary key.
     async fn delete_by_id(&self, id: &str) -> Result<(), String>;
+
+    /// List records with in-memory filtering, sorting, and pagination.
+    ///
+    /// The default implementation fetches all records via [`list_all`](Self::list_all),
+    /// then applies search, date-range, sort, and pagination in memory.
+    /// `valid_sort_fields` restricts which field names are accepted for sorting;
+    /// an unrecognised sort field is silently ignored (no sort applied).
+    async fn list_filtered(
+        &self,
+        params: &FilterParams,
+        valid_sort_fields: &HashSet<String>,
+    ) -> Result<FilteredResult, String> {
+        let records = self.list_all().await?;
+        Ok(apply_filter_pipeline(records, params, valid_sort_fields))
+    }
 }
 
 /// Resolves a CRUD adapter for the given entity slug from AdminState.
@@ -119,6 +136,111 @@ fn map_err(e: mcb_domain::error::Error) -> String {
     e.to_string()
 }
 
+fn json_sort_key(v: &Value) -> String {
+    match v {
+        Value::String(s) => s.to_lowercase(),
+        Value::Number(n) => format!("{:020}", n.as_f64().unwrap_or(0.0)),
+        Value::Bool(b) => format!("{b}"),
+        Value::Null => String::new(),
+        other => other.to_string(),
+    }
+}
+
+/// Apply in-memory filtering, sorting, and pagination to a pre-fetched record list.
+///
+/// Shared by the default `list_filtered()` trait method and by dependent-entity
+/// adapters that override `list_filtered()` to first fetch scoped records via
+/// a parent-context repository method.
+fn apply_filter_pipeline(
+    mut records: Vec<Value>,
+    params: &FilterParams,
+    valid_sort_fields: &HashSet<String>,
+) -> FilteredResult {
+    // Search
+    if let Some(ref q) = params.search {
+        if !q.is_empty() {
+            let q_lower = q.to_lowercase();
+            records.retain(|rec| {
+                if let Value::Object(map) = rec {
+                    map.values().any(|v| match v {
+                        Value::String(s) => s.to_lowercase().contains(&q_lower),
+                        _ => v.to_string().to_lowercase().contains(&q_lower),
+                    })
+                } else {
+                    false
+                }
+            });
+        }
+    }
+
+    // Date-range filter
+    if params.date_from.is_some() || params.date_to.is_some() {
+        records.retain(|rec| {
+            if let Value::Object(map) = rec {
+                map.iter()
+                    .filter(|(k, _)| k.ends_with("_at"))
+                    .any(|(_, v)| {
+                        let ts = match v {
+                            Value::Number(n) => n.as_i64(),
+                            _ => None,
+                        };
+                        if let Some(ts) = ts {
+                            let after = params.date_from.map_or(true, |from| ts >= from);
+                            let before = params.date_to.map_or(true, |to| ts <= to);
+                            after && before
+                        } else {
+                            true
+                        }
+                    })
+            } else {
+                true
+            }
+        });
+    }
+
+    // Sort
+    if let Some(ref field) = params.sort_field {
+        if valid_sort_fields.contains(field.as_str()) {
+            let desc = matches!(params.sort_order, Some(SortOrder::Desc));
+            records.sort_by(|a, b| {
+                let va = a.get(field).map(|v| json_sort_key(v));
+                let vb = b.get(field).map(|v| json_sort_key(v));
+                let cmp = va.cmp(&vb);
+                if desc { cmp.reverse() } else { cmp }
+            });
+        }
+    }
+
+    // Paginate
+    let total_count = records.len();
+    let per_page = if params.per_page == 0 {
+        20
+    } else {
+        params.per_page
+    };
+    let total_pages = if total_count == 0 {
+        0
+    } else {
+        (total_count + per_page - 1) / per_page
+    };
+    let page = if params.page == 0 { 1 } else { params.page };
+    let start = (page - 1) * per_page;
+    let page_records = if start >= total_count {
+        Vec::new()
+    } else {
+        let end = (start + per_page).min(total_count);
+        records[start..end].to_vec()
+    };
+
+    FilteredResult {
+        records: page_records,
+        total_count,
+        page,
+        per_page,
+        total_pages,
+    }
+}
+
 // ─── Org group ───────────────────────────────────────────────────────
 
 struct OrgAdapter(Arc<dyn OrgEntityRepository>);
@@ -204,6 +326,20 @@ struct TeamMemberAdapter(Arc<dyn OrgEntityRepository>);
 impl EntityCrudAdapter for TeamMemberAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
+    }
+    async fn list_filtered(
+        &self,
+        params: &FilterParams,
+        valid_sort_fields: &HashSet<String>,
+    ) -> Result<FilteredResult, String> {
+        let records = match (params.parent_field.as_deref(), params.parent_id.as_deref()) {
+            (Some("team_id"), Some(pid)) => {
+                let items = self.0.list_team_members(pid).await.map_err(map_err)?;
+                to_json_vec(&items)?
+            }
+            _ => self.list_all().await?,
+        };
+        Ok(apply_filter_pipeline(records, params, valid_sort_fields))
     }
     async fn get_by_id(&self, _id: &str) -> Result<Value, String> {
         Err("TeamMember get requires team_id context".to_string())
@@ -296,6 +432,20 @@ impl EntityCrudAdapter for IssueCommentAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
+    async fn list_filtered(
+        &self,
+        params: &FilterParams,
+        valid_sort_fields: &HashSet<String>,
+    ) -> Result<FilteredResult, String> {
+        let records = match (params.parent_field.as_deref(), params.parent_id.as_deref()) {
+            (Some("issue_id"), Some(pid)) => {
+                let items = self.0.list_comments_by_issue(pid).await.map_err(map_err)?;
+                to_json_vec(&items)?
+            }
+            _ => self.list_all().await?,
+        };
+        Ok(apply_filter_pipeline(records, params, valid_sort_fields))
+    }
     async fn get_by_id(&self, id: &str) -> Result<Value, String> {
         let c = self.0.get_comment(id).await.map_err(map_err)?;
         to_json(&c)
@@ -348,6 +498,20 @@ struct IssueLabelAssignmentAdapter(Arc<dyn IssueEntityRepository>);
 impl EntityCrudAdapter for IssueLabelAssignmentAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
+    }
+    async fn list_filtered(
+        &self,
+        params: &FilterParams,
+        valid_sort_fields: &HashSet<String>,
+    ) -> Result<FilteredResult, String> {
+        let records = match (params.parent_field.as_deref(), params.parent_id.as_deref()) {
+            (Some("issue_id"), Some(pid)) => {
+                let items = self.0.list_labels_for_issue(pid).await.map_err(map_err)?;
+                to_json_vec(&items)?
+            }
+            _ => self.list_all().await?,
+        };
+        Ok(apply_filter_pipeline(records, params, valid_sort_fields))
     }
     async fn get_by_id(&self, _id: &str) -> Result<Value, String> {
         Err("IssueLabelAssignment has composite key".to_string())
@@ -407,6 +571,24 @@ impl EntityCrudAdapter for PlanVersionAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
+    async fn list_filtered(
+        &self,
+        params: &FilterParams,
+        valid_sort_fields: &HashSet<String>,
+    ) -> Result<FilteredResult, String> {
+        let records = match (params.parent_field.as_deref(), params.parent_id.as_deref()) {
+            (Some("plan_id"), Some(pid)) => {
+                let items = self
+                    .0
+                    .list_plan_versions_by_plan(pid)
+                    .await
+                    .map_err(map_err)?;
+                to_json_vec(&items)?
+            }
+            _ => self.list_all().await?,
+        };
+        Ok(apply_filter_pipeline(records, params, valid_sort_fields))
+    }
     async fn get_by_id(&self, id: &str) -> Result<Value, String> {
         let v = self.0.get_plan_version(id).await.map_err(map_err)?;
         to_json(&v)
@@ -430,6 +612,24 @@ struct PlanReviewAdapter(Arc<dyn PlanEntityRepository>);
 impl EntityCrudAdapter for PlanReviewAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
+    }
+    async fn list_filtered(
+        &self,
+        params: &FilterParams,
+        valid_sort_fields: &HashSet<String>,
+    ) -> Result<FilteredResult, String> {
+        let records = match (params.parent_field.as_deref(), params.parent_id.as_deref()) {
+            (Some("plan_version_id"), Some(pid)) => {
+                let items = self
+                    .0
+                    .list_plan_reviews_by_version(pid)
+                    .await
+                    .map_err(map_err)?;
+                to_json_vec(&items)?
+            }
+            _ => self.list_all().await?,
+        };
+        Ok(apply_filter_pipeline(records, params, valid_sort_fields))
     }
     async fn get_by_id(&self, id: &str) -> Result<Value, String> {
         let r = self.0.get_plan_review(id).await.map_err(map_err)?;
@@ -494,6 +694,20 @@ impl EntityCrudAdapter for BranchAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
+    async fn list_filtered(
+        &self,
+        params: &FilterParams,
+        valid_sort_fields: &HashSet<String>,
+    ) -> Result<FilteredResult, String> {
+        let records = match (params.parent_field.as_deref(), params.parent_id.as_deref()) {
+            (Some("repository_id"), Some(pid)) => {
+                let items = self.0.list_branches(pid).await.map_err(map_err)?;
+                to_json_vec(&items)?
+            }
+            _ => self.list_all().await?,
+        };
+        Ok(apply_filter_pipeline(records, params, valid_sort_fields))
+    }
     async fn get_by_id(&self, id: &str) -> Result<Value, String> {
         let b = self.0.get_branch(id).await.map_err(map_err)?;
         to_json(&b)
@@ -519,6 +733,20 @@ impl EntityCrudAdapter for WorktreeAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
     }
+    async fn list_filtered(
+        &self,
+        params: &FilterParams,
+        valid_sort_fields: &HashSet<String>,
+    ) -> Result<FilteredResult, String> {
+        let records = match (params.parent_field.as_deref(), params.parent_id.as_deref()) {
+            (Some("repository_id"), Some(pid)) => {
+                let items = self.0.list_worktrees(pid).await.map_err(map_err)?;
+                to_json_vec(&items)?
+            }
+            _ => self.list_all().await?,
+        };
+        Ok(apply_filter_pipeline(records, params, valid_sort_fields))
+    }
     async fn get_by_id(&self, id: &str) -> Result<Value, String> {
         let w = self.0.get_worktree(id).await.map_err(map_err)?;
         to_json(&w)
@@ -543,6 +771,24 @@ struct AgentWorktreeAssignmentAdapter(Arc<dyn VcsEntityRepository>);
 impl EntityCrudAdapter for AgentWorktreeAssignmentAdapter {
     async fn list_all(&self) -> Result<Vec<Value>, String> {
         Ok(Vec::new())
+    }
+    async fn list_filtered(
+        &self,
+        params: &FilterParams,
+        valid_sort_fields: &HashSet<String>,
+    ) -> Result<FilteredResult, String> {
+        let records = match (params.parent_field.as_deref(), params.parent_id.as_deref()) {
+            (Some("worktree_id"), Some(pid)) => {
+                let items = self
+                    .0
+                    .list_assignments_by_worktree(pid)
+                    .await
+                    .map_err(map_err)?;
+                to_json_vec(&items)?
+            }
+            _ => self.list_all().await?,
+        };
+        Ok(apply_filter_pipeline(records, params, valid_sort_fields))
     }
     async fn get_by_id(&self, id: &str) -> Result<Value, String> {
         let a = self.0.get_assignment(id).await.map_err(map_err)?;

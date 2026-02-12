@@ -73,7 +73,6 @@ async fn test_validation_session_create_schema_fallback() {
                 "model": "test-model",
                 "agent_type": "sisyphus" // FALLBACK
             })),
-            project_id: None,
             worktree_id: None,
             session_id: None,
             limit: None,
@@ -107,7 +106,6 @@ async fn test_validation_memory_observation_enum_error() {
                 "observation_type": "INVALID_TYPE"
             })),
             ids: None,
-            project_id: Some("p1".to_string()),
             repo_id: None,
             session_id: None,
             tags: None,

@@ -55,6 +55,9 @@
 // Documentation configuration for docs.rs
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+#[macro_use]
+extern crate rocket;
+
 pub mod admin;
 pub mod args;
 pub mod auth;
@@ -70,6 +73,8 @@ pub mod hooks;
 pub mod init;
 pub mod mcp_server;
 pub mod session;
+/// Internal template engine (Handlebars-only, forked from Rocket contrib).
+pub mod templates;
 pub mod tools;
 pub mod transport;
 /// Shared utility functions.

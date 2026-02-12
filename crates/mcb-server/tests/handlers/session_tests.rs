@@ -7,6 +7,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use crate::test_utils::mock_services::{MockAgentSessionService, MockMemoryService};
+use crate::test_utils::test_resolver;
 
 macro_rules! session_test {
     ($test_name:ident, $action:expr, session_id: $session_id:expr, expect_ok) => {
@@ -14,13 +15,16 @@ macro_rules! session_test {
         async fn $test_name() {
             let agent_service = MockAgentSessionService::new();
             let memory_service = MockMemoryService::new();
-            let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
+            let handler = SessionHandler::new(
+                Arc::new(agent_service),
+                Arc::new(memory_service),
+                test_resolver(),
+            );
 
             let args = SessionArgs {
                 action: $action,
                 session_id: Some($session_id),
                 data: None,
-                project_id: None,
                 worktree_id: None,
                 agent_type: None,
                 status: None,
@@ -33,18 +37,21 @@ macro_rules! session_test {
         }
     };
 
-    ($test_name:ident, $action:expr, data: $data:expr, $(project_id: $project_id:expr,)? $(agent_type: $agent_type:expr,)? expect_ok) => {
+    ($test_name:ident, $action:expr, data: $data:expr, $(agent_type: $agent_type:expr,)? expect_ok) => {
         #[tokio::test]
         async fn $test_name() {
             let agent_service = MockAgentSessionService::new();
             let memory_service = MockMemoryService::new();
-            let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
+            let handler = SessionHandler::new(
+                Arc::new(agent_service),
+                Arc::new(memory_service),
+                test_resolver(),
+            );
 
             let args = SessionArgs {
                 action: $action,
                 session_id: None,
                 data: Some($data),
-                project_id: None $(.or($project_id))?,
                 worktree_id: None,
                 agent_type: None $(.or($agent_type))?,
                 status: None,
@@ -58,18 +65,21 @@ macro_rules! session_test {
         }
     };
 
-    ($test_name:ident, $action:expr, data: $data:expr, $(project_id: $project_id:expr,)? $(agent_type: $agent_type:expr,)? expect_error) => {
+    ($test_name:ident, $action:expr, data: $data:expr, $(agent_type: $agent_type:expr,)? expect_error) => {
         #[tokio::test]
         async fn $test_name() {
             let agent_service = MockAgentSessionService::new();
             let memory_service = MockMemoryService::new();
-            let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
+            let handler = SessionHandler::new(
+                Arc::new(agent_service),
+                Arc::new(memory_service),
+                test_resolver(),
+            );
 
             let args = SessionArgs {
                 action: $action,
                 session_id: None,
                 data: $data,
-                project_id: None $(.or($project_id))?,
                 worktree_id: None,
                 agent_type: None $(.or($agent_type))?,
                 status: None,
@@ -92,7 +102,6 @@ session_test!(
         "model": "claude-3-sonnet",
         "project_id": "test-project"
     }),
-    project_id: Some("test-project".to_string()),
     agent_type: Some("explore".to_string()),
     expect_ok
 );
@@ -101,7 +110,6 @@ session_test!(
     test_session_create_missing_data,
     SessionAction::Create,
     data: None,
-    project_id: Some("test-project".to_string()),
     agent_type: Some("explore".to_string()),
     expect_error
 );
@@ -110,7 +118,6 @@ session_test!(
     test_session_create_invalid_data,
     SessionAction::Create,
     data: Some(json!("not an object")),
-    project_id: Some("test-project".to_string()),
     agent_type: Some("explore".to_string()),
     expect_error
 );

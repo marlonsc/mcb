@@ -5,7 +5,9 @@
 
 use mcb_validate::SolidValidator;
 
-use crate::test_constants::*;
+use crate::test_constants::{
+    DOMAIN_CRATE, FIXTURE_DOMAIN_SERVICE_PATH, INFRA_CRATE, SERVER_CRATE, TEST_CRATE,
+};
 use crate::test_utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -19,16 +21,17 @@ fn test_solid_full_workspace() {
     let validator = SolidValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
+    let domain_service = format!("{DOMAIN_CRATE}/src/{FIXTURE_DOMAIN_SERVICE_PATH}");
     assert_violations_exact(
         &violations,
         &[
             // ── TraitTooLarge (ISP) ─────────────────────────────────────
-            (DOMAIN_CRATE_SERVICE, 137, "TraitTooLarge"),
+            (&domain_service, 137, "TraitTooLarge"),
             // ── PartialTraitImplementation (LSP) ────────────────────────
-            (DOMAIN_CRATE_SERVICE, 158, "PartialTraitImplementation"),
-            (DOMAIN_CRATE_SERVICE, 164, "PartialTraitImplementation"),
-            (DOMAIN_CRATE_SERVICE, 179, "PartialTraitImplementation"),
-            (DOMAIN_CRATE_SERVICE, 182, "PartialTraitImplementation"),
+            (&domain_service, 158, "PartialTraitImplementation"),
+            (&domain_service, 164, "PartialTraitImplementation"),
+            (&domain_service, 179, "PartialTraitImplementation"),
+            (&domain_service, 182, "PartialTraitImplementation"),
         ],
         "SolidValidator full workspace",
     );

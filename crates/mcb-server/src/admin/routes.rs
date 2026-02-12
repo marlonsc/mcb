@@ -4,8 +4,8 @@
 
 use std::sync::Arc;
 
+use crate::templates::Template;
 use rocket::{Build, Rocket, routes};
-use rocket_dyn_templates::Template;
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::{
@@ -69,7 +69,11 @@ pub fn admin_rocket(
     let mut rocket = rocket::custom(figment)
         .manage(state)
         .manage(auth_config)
-        .attach(Template::fairing());
+        .attach(Template::custom(
+            |engines: &mut crate::templates::Engines| {
+                crate::admin::web::helpers::register_helpers(&mut engines.handlebars);
+            },
+        ));
 
     // Mount base routes
     rocket = rocket.mount(

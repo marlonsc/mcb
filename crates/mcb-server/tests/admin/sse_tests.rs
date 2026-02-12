@@ -18,7 +18,7 @@ fn test_get_event_name_service_state_changed() {
 #[test]
 fn test_get_event_name_metrics_snapshot() {
     let event = DomainEvent::MetricsSnapshot {
-        timestamp: chrono::Utc::now(),
+        timestamp: chrono::Utc::now().timestamp(),
     };
     assert_eq!(get_event_name(&event), "MetricsSnapshot");
 }
@@ -57,7 +57,7 @@ fn test_get_event_name_indexing_completed() {
 fn test_get_event_name_config_reloaded() {
     let event = DomainEvent::ConfigReloaded {
         section: "embedding".to_string(),
-        timestamp: chrono::Utc::now(),
+        timestamp: chrono::Utc::now().timestamp(),
     };
     assert_eq!(get_event_name(&event), "ConfigReloaded");
 }

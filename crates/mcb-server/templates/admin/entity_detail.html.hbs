@@ -4,20 +4,25 @@
     <span class="separator">/</span>
     <a href="/ui/entities/{{entity_slug}}">{{title}}</a>
     <span class="separator">/</span>
-    <span>{{entity_id}}</span>
+    <span>{{truncate_id entity_id}}</span>
 </div>
 
 <div class="mb-8 flex items-center justify-between">
     <div>
         <h1 class="text-3xl font-bold text-primary">{{title}}</h1>
         <p class="mt-2 text-secondary">
-            <span class="badge badge-blue">{{entity_group}}</span>
-            <span class="badge badge-gray ml-2">{{entity_id}}</span>
+            {{{status_badge entity_group}}}
+            <span class="badge badge-gray ml-2" title="{{entity_id}}">{{truncate_id entity_id 12}}</span>
         </p>
     </div>
     <div class="flex gap-3">
         <a class="btn btn-primary" href="/ui/entities/{{entity_slug}}/{{entity_id}}/edit">Edit</a>
-        <a class="btn btn-danger" href="/ui/entities/{{entity_slug}}/{{entity_id}}/delete">Delete</a>
+        <button class="btn btn-danger"
+                @click="$dispatch('confirm-delete', {
+                    title: 'Delete Record',
+                    message: 'Are you sure you want to delete this record? This action cannot be undone.',
+                    action: '/ui/entities/{{entity_slug}}/{{entity_id}}/delete'
+                })">Delete</button>
         <a class="btn btn-secondary" href="/ui/entities/{{entity_slug}}">Back to List</a>
     </div>
 </div>
@@ -26,9 +31,30 @@
 <div class="card" style="max-width: 48rem;">
     <dl>
         {{#each fields}}
-        <div class="flex py-3" style="border-bottom: 1px solid var(--border-color, #e5e7eb);">
+        <div class="detail-row flex py-3" style="border-bottom: 1px solid var(--border-color, #e5e7eb);">
             <dt class="w-1/3 font-semibold text-sm" style="color: var(--text-secondary);">{{label}}</dt>
-            <dd class="w-2/3">{{lookup ../record name}}</dd>
+            <dd class="w-2/3">
+                {{#if is_timestamp}}
+                    {{timestamp (lookup ../record name)}}
+                    <span class="text-xs ml-2" style="color: var(--text-muted);">({{relative_time (lookup ../record name)}})</span>
+                {{else if is_select}}
+                    {{{status_badge (lookup ../record name)}}}
+                {{else if is_textarea}}
+                    {{{json_pretty (lookup ../record name)}}}
+                {{else if is_checkbox}}
+                    {{#if (lookup ../record name)}}
+                        <span class="badge badge-green">Yes</span>
+                    {{else}}
+                        <span class="badge badge-gray">No</span>
+                    {{/if}}
+                {{else}}
+                    {{#if (lookup ../record name)}}
+                        {{lookup ../record name}}
+                    {{else}}
+                        <span style="color: var(--text-muted);">&mdash;</span>
+                    {{/if}}
+                {{/if}}
+            </dd>
         </div>
         {{/each}}
     </dl>
@@ -36,9 +62,10 @@
 {{else}}
 <div class="card" style="max-width: 48rem;">
     <p class="text-secondary text-center py-8">
-        Record not found. Service bindings will be connected in Wave 3.
+        Record <strong>{{entity_id}}</strong> not found.
     </p>
 </div>
 {{/if}}
+{{> admin/partials/confirm_dialog}}
 {{/inline}}
 {{> admin/layout}}

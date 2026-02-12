@@ -124,8 +124,10 @@ fn test_project_schema_contains_all_fk_references() {
         ("plans", "REFERENCES organizations(id)"),
         ("plans", "REFERENCES projects(id)"),
         ("plans", "REFERENCES users(id)"),
+        ("plan_versions", "REFERENCES organizations(id)"),
         ("plan_versions", "REFERENCES plans(id)"),
         ("plan_versions", "REFERENCES users(id)"),
+        ("plan_reviews", "REFERENCES organizations(id)"),
         ("plan_reviews", "REFERENCES plan_versions(id)"),
         ("plan_reviews", "REFERENCES users(id)"),
         // Issue entity FKs

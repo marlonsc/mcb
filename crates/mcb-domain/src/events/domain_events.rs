@@ -7,7 +7,6 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
@@ -125,8 +124,8 @@ pub enum DomainEvent {
     ConfigReloaded {
         /// Section that was reloaded
         section: String,
-        /// Timestamp of reload
-        timestamp: DateTime<Utc>,
+        /// Timestamp of reload (Unix epoch seconds)
+        timestamp: i64,
     },
 
     // === Health Events ===
@@ -143,8 +142,8 @@ pub enum DomainEvent {
     // === Metrics Events ===
     /// Periodic metrics snapshot
     MetricsSnapshot {
-        /// Timestamp of snapshot
-        timestamp: DateTime<Utc>,
+        /// Timestamp of snapshot (Unix epoch seconds)
+        timestamp: i64,
     },
 
     // === Search Events ===

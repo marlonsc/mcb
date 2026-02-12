@@ -47,7 +47,6 @@ async fn test_golden_memory_store_with_default_project() {
             }
         })),
         ids: None,
-        project_id: Some("project-auto-create".to_string()),
         repo_id: None,
         session_id: None,
         tags: None,
@@ -80,7 +79,6 @@ async fn test_golden_memory_list_empty_graceful() {
         resource: MemoryResource::Observation,
         data: None,
         ids: None,
-        project_id: Some("project-empty".to_string()),
         repo_id: None,
         session_id: None,
         tags: None,
@@ -115,7 +113,7 @@ async fn test_golden_context_search_basic() {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
     let search_h = server.search_handler();
-    let project_id = "search-project";
+    let _project_id = "search-project";
 
     // 1. Store context observations
     let _ = memory_h
@@ -129,7 +127,6 @@ async fn test_golden_context_search_basic() {
                 "metadata": { "session_id": "s1" }
             })),
             ids: None,
-            project_id: Some(project_id.to_string()),
             repo_id: None,
             session_id: None,
             tags: None,

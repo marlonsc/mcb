@@ -5,7 +5,9 @@
 
 use mcb_validate::KissValidator;
 
-use crate::test_constants::*;
+use crate::test_constants::{
+    DOMAIN_CRATE, FIXTURE_DOMAIN_SERVICE_PATH, INFRA_CRATE, LIB_RS, SERVER_CRATE, TEST_CRATE,
+};
 use crate::test_utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -19,18 +21,20 @@ fn test_kiss_full_workspace() {
     let validator = KissValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
+    let domain_service = format!("{DOMAIN_CRATE}/src/{FIXTURE_DOMAIN_SERVICE_PATH}");
+    let test_lib = format!("{TEST_CRATE}/src/{LIB_RS}");
     assert_violations_exact(
         &violations,
         &[
             // ── FunctionTooManyParams (KISS002) ──────────────────────────
-            (DOMAIN_CRATE_SERVICE, 94, "FunctionTooManyParams"),
-            (TEST_CRATE_LIB, 77, "FunctionTooManyParams"),
+            (&domain_service, 94, "FunctionTooManyParams"),
+            (&test_lib, 77, "FunctionTooManyParams"),
             // ── BuilderTooComplex (KISS003) ──────────────────────────────
-            (TEST_CRATE_LIB, 204, "BuilderTooComplex"),
+            (&test_lib, 204, "BuilderTooComplex"),
             // ── DeepNesting (KISS004) ────────────────────────────────────
-            (TEST_CRATE_LIB, 221, "DeepNesting"),
+            (&test_lib, 221, "DeepNesting"),
             // ── FunctionTooLong (KISS005) ────────────────────────────────
-            (TEST_CRATE_LIB, 233, "FunctionTooLong"),
+            (&test_lib, 233, "FunctionTooLong"),
         ],
         "KissValidator full workspace",
     );

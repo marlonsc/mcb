@@ -1,24 +1,19 @@
 //! Entity CRUD handlers — schema-driven Handlebars template rendering.
 
+use crate::context;
+use crate::templates::Template;
 use rocket::State;
 use rocket::form::Form;
 use rocket::http::Status;
 use rocket::response::{Redirect, status};
-use rocket_dyn_templates::{Template, context};
-use serde::Serialize;
+
+use std::collections::HashSet;
 
 use crate::admin::crud_adapter::resolve_adapter;
 use crate::admin::handlers::AdminState;
+use crate::admin::web::filter::FilterParams;
 use crate::admin::web::view_model::nav_groups;
 use crate::admin::{AdminRegistry, registry::AdminFieldMeta};
-
-#[derive(Debug, Clone, Serialize)]
-struct EntitySummary {
-    slug: String,
-    title: String,
-    group: String,
-    field_count: usize,
-}
 
 fn find_or_404(
     slug: &str,
@@ -29,16 +24,24 @@ fn find_or_404(
 
 /// Entity catalog page — lists all registered entities with field counts.
 #[rocket::get("/ui/entities")]
-pub fn entities_index() -> Template {
-    let entities = AdminRegistry::all()
-        .iter()
-        .map(|entity| EntitySummary {
+pub async fn entities_index(state: Option<&State<AdminState>>) -> Template {
+    let mut entities = Vec::new();
+    let mut total_records: usize = 0;
+
+    for entity in AdminRegistry::all() {
+        let record_count = match state.and_then(|s| resolve_adapter(entity.slug, s.inner())) {
+            Some(adapter) => adapter.list_all().await.map(|v| v.len()).unwrap_or(0),
+            None => 0,
+        };
+        total_records += record_count;
+        entities.push(crate::admin::web::view_model::DashboardEntityCard {
             slug: entity.slug.to_string(),
             title: entity.title.to_string(),
             group: entity.group.to_string(),
             field_count: entity.fields().iter().filter(|field| !field.hidden).count(),
-        })
-        .collect::<Vec<_>>();
+            record_count,
+        });
+    }
 
     let entity_count = entities.len();
     let group_count = nav_groups().len();
@@ -51,27 +54,39 @@ pub fn entities_index() -> Template {
             entities: entities,
             entity_count: entity_count,
             group_count: group_count,
+            total_records: total_records,
             nav_groups: nav_groups(),
         },
     )
 }
 
-/// Entity list page — fetches records via service adapter when available.
-#[rocket::get("/ui/entities/<slug>")]
+/// Entity list page with filtering, sorting, and pagination.
+#[rocket::get("/ui/entities/<slug>?<params..>")]
 pub async fn entities_list(
     slug: &str,
+    params: FilterParams,
     state: Option<&State<AdminState>>,
 ) -> Result<Template, status::Custom<String>> {
     let entity = find_or_404(slug)?;
 
     let fields: Vec<AdminFieldMeta> = entity.fields().into_iter().filter(|f| !f.hidden).collect();
-    let field_names = fields.iter().map(|f| f.name.clone()).collect::<Vec<_>>();
+    let field_names: Vec<String> = fields.iter().map(|f| f.name.clone()).collect();
+    let valid_sort_fields: HashSet<String> = field_names.iter().cloned().collect();
 
-    let records = match state.and_then(|s| resolve_adapter(slug, s.inner())) {
-        Some(adapter) => adapter.list_all().await.unwrap_or_default(),
-        None => Vec::new(),
+    let result = match state.and_then(|s| resolve_adapter(slug, s.inner())) {
+        Some(adapter) => adapter
+            .list_filtered(&params, &valid_sort_fields)
+            .await
+            .unwrap_or_default(),
+        None => crate::admin::web::filter::FilteredResult {
+            records: Vec::new(),
+            total_count: 0,
+            page: params.page,
+            per_page: params.per_page,
+            total_pages: 0,
+        },
     };
-    let has_records = !records.is_empty();
+    let has_records = !result.records.is_empty();
 
     Ok(Template::render(
         "admin/entity_list",
@@ -82,8 +97,12 @@ pub async fn entities_list(
             entity_group: entity.group,
             fields: fields,
             field_names: field_names,
-            records: records,
+            records: result.records,
             has_records: has_records,
+            total_count: result.total_count,
+            page: result.page,
+            per_page: result.per_page,
+            total_pages: result.total_pages,
             nav_groups: nav_groups(),
         },
     ))
@@ -109,6 +128,7 @@ pub fn entities_new_form(slug: &str) -> Result<Template, status::Custom<String>>
             entity_group: entity.group,
             fields: fields,
             is_edit: false,
+            record: serde_json::Value::Object(Default::default()),
             nav_groups: nav_groups(),
         },
     ))
@@ -184,8 +204,21 @@ pub async fn entities_edit_form(
 
 /// Delete confirmation page.
 #[rocket::get("/ui/entities/<slug>/<id>/delete")]
-pub fn entities_delete_confirm(slug: &str, id: &str) -> Result<Template, status::Custom<String>> {
+pub async fn entities_delete_confirm(
+    slug: &str,
+    id: &str,
+    state: Option<&State<AdminState>>,
+) -> Result<Template, status::Custom<String>> {
     let entity = find_or_404(slug)?;
+    let fields: Vec<AdminFieldMeta> = entity.fields().into_iter().filter(|f| !f.hidden).collect();
+
+    let (record, has_record) = match state.and_then(|s| resolve_adapter(slug, s.inner())) {
+        Some(adapter) => match adapter.get_by_id(id).await {
+            Ok(val) => (val, true),
+            Err(_) => (serde_json::Value::Null, false),
+        },
+        None => (serde_json::Value::Null, false),
+    };
 
     Ok(Template::render(
         "admin/entity_delete",
@@ -195,6 +228,9 @@ pub fn entities_delete_confirm(slug: &str, id: &str) -> Result<Template, status:
             entity_slug: entity.slug,
             entity_group: entity.group,
             entity_id: id,
+            fields: fields,
+            record: record,
+            has_record: has_record,
             nav_groups: nav_groups(),
         },
     ))
@@ -218,11 +254,11 @@ pub async fn entities_create(
             .map_err(|e| status::Custom(Status::InternalServerError, e))?;
     }
 
-    Ok(Redirect::to(format!("/ui/entities/{slug}")))
+    Ok(Redirect::to(format!("/ui/entities/{slug}?toast=created")))
 }
 
 /// Update entity — persists via service adapter and redirects to the detail page.
-#[rocket::post("/ui/entities/<slug>/<id>", data = "<form>")]
+#[rocket::post("/ui/entities/<slug>/<id>", data = "<form>", rank = 2)]
 pub async fn entities_update(
     slug: &str,
     id: &str,
@@ -242,7 +278,40 @@ pub async fn entities_update(
             .map_err(|e| status::Custom(Status::InternalServerError, e))?;
     }
 
-    Ok(Redirect::to(format!("/ui/entities/{slug}/{id}")))
+    Ok(Redirect::to(format!(
+        "/ui/entities/{slug}/{id}?toast=updated"
+    )))
+}
+
+/// Bulk delete — deletes multiple records by comma-separated IDs.
+#[rocket::post("/ui/entities/<slug>/bulk-delete", data = "<form>", rank = 1)]
+pub async fn entities_bulk_delete(
+    slug: &str,
+    form: Form<std::collections::HashMap<String, String>>,
+    state: Option<&State<AdminState>>,
+) -> Result<Redirect, status::Custom<String>> {
+    find_or_404(slug)?;
+
+    let ids_raw = form.get("ids").map(|s| s.as_str()).unwrap_or("");
+    let ids: Vec<&str> = ids_raw
+        .split(',')
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    if let Some(adapter) = state.and_then(|s| resolve_adapter(slug, s.inner())) {
+        let mut errors = Vec::new();
+        for id in &ids {
+            if let Err(e) = adapter.delete_by_id(id).await {
+                errors.push(format!("{id}: {e}"));
+            }
+        }
+        if !errors.is_empty() {
+            return Ok(Redirect::to(format!("/ui/entities/{slug}?toast=deleted")));
+        }
+    }
+
+    Ok(Redirect::to(format!("/ui/entities/{slug}?toast=deleted")))
 }
 
 /// Delete entity — removes via service adapter and redirects to the list page.
@@ -261,5 +330,5 @@ pub async fn entities_delete(
             .map_err(|e| status::Custom(Status::InternalServerError, e))?;
     }
 
-    Ok(Redirect::to(format!("/ui/entities/{slug}")))
+    Ok(Redirect::to(format!("/ui/entities/{slug}?toast=deleted")))
 }
