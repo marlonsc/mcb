@@ -258,31 +258,32 @@ impl HybridRuleEngine {
         rules: Vec<(String, RuleEngineType, serde_json::Value)>,
         context: &RuleContext,
     ) -> Result<Vec<(String, RuleResult)>> {
-        let mut handles: Vec<(String, tokio::task::JoinHandle<_>)> = Vec::new();
+        let mut handles = Vec::new();
 
         for (rule_id, engine_type, rule_def) in rules {
             let engine = self.clone();
             let ctx = context.clone();
-            let rule_id_for_task = rule_id.clone();
+            let rule_id_clone = rule_id.clone();
 
             let handle = tokio::spawn(async move {
-                engine
-                    .execute_rule(&rule_id_for_task, engine_type, &rule_def, &ctx)
-                    .await
+                let result = engine
+                    .execute_rule(&rule_id_clone, engine_type, &rule_def, &ctx)
+                    .await;
+                (rule_id_clone, result)
             });
 
-            handles.push((rule_id, handle));
+            handles.push(handle);
         }
 
         let mut results = Vec::new();
-        for (rule_id, handle) in handles {
+        for handle in handles {
             match handle.await {
-                Ok(Ok(result)) => results.push((rule_id, result)),
-                Ok(Err(e)) => {
+                Ok((rule_id, Ok(result))) => results.push((rule_id, result)),
+                Ok((rule_id, Err(e))) => {
                     warn!(rule_id = %rule_id, error = %e, "Rule execution error");
                 }
                 Err(e) => {
-                    error!(rule_id = %rule_id, error = %e, "Task join error");
+                    error!(error = %e, "Task join error");
                 }
             }
         }

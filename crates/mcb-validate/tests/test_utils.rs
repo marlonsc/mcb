@@ -13,7 +13,11 @@ use std::fs;
 
 use tempfile::TempDir;
 
-use crate::test_constants::*;
+use crate::test_constants::{
+    CARGO_TOML_TEMPLATE, CONFIG_FILE_NAME, CONSTANTS_RS, CRATE_LAYER_MAPPINGS, CRATES_DIR,
+    DEFAULT_VERSION, GRL_SIMPLE_RULE, LIB_RS, NULL_RS, PROJECT_PREFIX, TEST_WORKSPACE_PATH,
+    WORKSPACE_CARGO_TOML,
+};
 
 // ---------------------------------------------------------------------------
 // Crate creation utilities (for inline / generated code)
@@ -167,6 +171,39 @@ pub fn assert_no_violations<V: std::fmt::Debug>(violations: &[V], context: &str)
         violations.is_empty(),
         "{}: expected no violations, got {} - {:?}",
         context,
+        violations.len(),
+        violations
+    );
+}
+
+/// Assert that violations list has expected count
+pub fn assert_violation_count<V: std::fmt::Debug>(
+    violations: &[V],
+    expected: usize,
+    context: &str,
+) {
+    assert_eq!(
+        violations.len(),
+        expected,
+        "{}: expected {} violations, got {} - {:?}",
+        context,
+        expected,
+        violations.len(),
+        violations
+    );
+}
+
+/// Assert that violations list has at least a minimum count
+pub fn assert_min_violations<V: std::fmt::Debug>(
+    violations: &[V],
+    min_expected: usize,
+    context: &str,
+) {
+    assert!(
+        violations.len() >= min_expected,
+        "{}: expected at least {} violations, got {} - {:?}",
+        context,
+        min_expected,
         violations.len(),
         violations
     );
@@ -391,7 +428,7 @@ pub fn setup_fixture_crate(temp: &TempDir, crate_name: &str, src_path: &str, fix
     let cargo_dest = crate_dir.join("Cargo.toml");
     if !cargo_dest.exists() {
         let fixture_cargo = fixtures_dir()
-            .join(CRATES_DIR)
+            .join("crates")
             .join(crate_name)
             .join("Cargo.toml");
         if fixture_cargo.exists() {

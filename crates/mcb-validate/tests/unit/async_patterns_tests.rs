@@ -24,20 +24,24 @@ fn test_async_full_workspace() {
         &[
             // ── BlockingInAsync ────────────────────────────────────────
             // std::fs::read in server handler
-            (SERVER_CRATE_HANDLER, 106, "BlockingInAsync"),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                106,
+                "BlockingInAsync",
+            ),
             // std::fs::read in async fn
-            (TEST_CRATE_LIB, 102, "BlockingInAsync"),
+            ("my-test/src/lib.rs", 102, "BlockingInAsync"),
             // thread::sleep in async fn (two patterns match same line)
-            (TEST_CRATE_LIB, 105, "BlockingInAsync"),
-            (TEST_CRATE_LIB, 105, "BlockingInAsync"),
+            ("my-test/src/lib.rs", 105, "BlockingInAsync"),
+            ("my-test/src/lib.rs", 105, "BlockingInAsync"),
             // ── BlockOnInAsync ─────────────────────────────────────────
             // async fn def triggers block_on detection
-            (TEST_CRATE_LIB, 293, "BlockOnInAsync"),
+            ("my-test/src/lib.rs", 293, "BlockOnInAsync"),
             // actual block_on call
-            (TEST_CRATE_LIB, 295, "BlockOnInAsync"),
+            ("my-test/src/lib.rs", 295, "BlockOnInAsync"),
             // ── WrongMutexType ─────────────────────────────────────────
             // std::sync::Mutex in OveruseExample struct (also triggers PERF003)
-            (TEST_CRATE_LIB, 169, "WrongMutexType"),
+            ("my-test/src/lib.rs", 169, "WrongMutexType"),
         ],
         "AsyncPatternValidator full workspace",
     );

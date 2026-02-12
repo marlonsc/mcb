@@ -1,33 +1,34 @@
 # Domain Concepts
 
-Last updated: 2026-02-11
-Source baseline: `docs/context/domain-concepts.md`
+Last updated: 2026-02-11 (America/Sao_Paulo)
 
-Core domain model:
+## Product Model
 
-- `Project`, `Repository`, and `CodeChunk` drive indexing and search.
-- `Organization` is the tenant isolation root (`org_id` everywhere).
-- `Observation` stores memory artifacts (code, decisions, context, errors, summaries).
-- `AgentSession` and workflow entities track execution lifecycle.
+- MCB is an MCP server for semantic code intelligence and project memory.
+- Core domains: indexing, search, memory observations, sessions,
+  validation, VCS context.
 
-Important value objects:
+## Context Lifecycle Concepts
 
-- `Embedding`, `SearchResult`, and strong-typed IDs.
-- Browse value objects under `mcb-domain/src/value_objects/browse/`.
+- Workflow state is explicit (FSM-driven, ADR-034).
+- Project context is discovered and cached (Context Scout, ADR-035).
+- Policy gates validate transitions/actions (ADR-036).
+- Orchestration coordinates execution and compensation (ADR-037).
 
-Domain boundaries (ports):
+## Integrated Context Concepts (Planned/Active)
 
-- Provider ports: embedding, vector store, chunking, vcs, cache, crypto.
-- Repository ports: memory, project, plan, issue, org, vcs entities.
-- Service ports: indexing, search, context assembly, validation, memory, sessions.
+- Unified snapshot model combining VCS, memory, graph, and workflow state.
+- Freshness levels and staleness signals guide safe reuse.
+- Time-travel and versioned context snapshots are first-class design goals.
 
-Invariants:
+## Sources
 
-1. Multi-tenant isolation is mandatory.
-2. Search combines semantic and hybrid strategies.
-3. Memory observations remain queryable for context recall.
+- `README.md`
+- `docs/context/domain-concepts.md`
+- `docs/adr/034-workflow-core-fsm.md`
+- `docs/adr/035-context-scout.md`
+- `docs/adr/045-context-versioning-freshness.md`
 
-Related:
+## Update Notes
 
-- `context/project-intelligence/technical-patterns.md`
-- `context/project-intelligence/integrations.md`
+- 2026-02-11: Re-harvested from docs/context + Phase 8/9 ADR set.

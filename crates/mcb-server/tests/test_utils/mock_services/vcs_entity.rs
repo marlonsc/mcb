@@ -26,13 +26,6 @@ impl VcsEntityRepository for MockVcsEntityRepository {
     async fn get_repository(&self, _org_id: &str, _id: &str) -> Result<Repository> {
         Err(Error::not_found("not found"))
     }
-    async fn find_repository_by_url(
-        &self,
-        _org_id: &str,
-        _url: &str,
-    ) -> Result<Option<Repository>> {
-        Ok(None)
-    }
     async fn list_repositories(&self, _org_id: &str, _project_id: &str) -> Result<Vec<Repository>> {
         Ok(vec![])
     }
@@ -42,10 +35,6 @@ impl VcsEntityRepository for MockVcsEntityRepository {
     async fn delete_repository(&self, _org_id: &str, _id: &str) -> Result<()> {
         Ok(())
     }
-    async fn ensure_org_and_project(&self, _project_id: &str) -> Result<()> {
-        Ok(())
-    }
-
     async fn create_branch(&self, _branch: &Branch) -> Result<()> {
         Ok(())
     }

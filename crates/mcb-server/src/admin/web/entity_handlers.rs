@@ -300,18 +300,27 @@ pub async fn entities_bulk_delete(
         .collect();
 
     if let Some(adapter) = state.and_then(|s| resolve_adapter(slug, s.inner())) {
-        let mut errors = Vec::new();
+        let total = ids.len();
+        let mut failed = 0usize;
         for id in &ids {
-            if let Err(e) = adapter.delete_by_id(id).await {
-                errors.push(format!("{id}: {e}"));
+            if adapter.delete_by_id(id).await.is_err() {
+                failed += 1;
             }
         }
-        if !errors.is_empty() {
-            return Ok(Redirect::to(format!("/ui/entities/{slug}?toast=deleted")));
-        }
+        let success = total - failed;
+        let toast = if failed == 0 {
+            format!("bulk_deleted&count={success}")
+        } else if success == 0 {
+            format!("bulk_error&count={failed}")
+        } else {
+            format!("bulk_partial&success={success}&failed={failed}")
+        };
+        return Ok(Redirect::to(format!("/ui/entities/{slug}?toast={toast}")));
     }
 
-    Ok(Redirect::to(format!("/ui/entities/{slug}?toast=deleted")))
+    Ok(Redirect::to(format!(
+        "/ui/entities/{slug}?toast=bulk_error&count=0"
+    )))
 }
 
 /// Delete entity — removes via service adapter and redirects to the list page.

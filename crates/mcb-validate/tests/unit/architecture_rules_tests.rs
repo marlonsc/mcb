@@ -28,14 +28,14 @@ async fn test_ca001_rule_loading() {
     let ca001_rule = rules.iter().find(|r| r.id == RULE_CA001);
 
     if let Some(rule) = ca001_rule {
-        println!("Found {RULE_CA001} rule: {:?}", rule.name);
+        println!("Found CA001 rule: {:?}", rule.name);
         assert_eq!(
             rule.engine, ENGINE_RUST_RULE,
-            "{RULE_CA001} should use {ENGINE_RUST_RULE}"
+            "CA001 should use {ENGINE_RUST_RULE}"
         );
         assert!(
             rule.name.contains(RULE_CA001_NAME_KEYWORD),
-            "{RULE_CA001} should be about domain layer"
+            "CA001 should be about domain layer"
         );
     } else {
         println!(

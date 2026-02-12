@@ -27,15 +27,15 @@ fn test_performance_full_workspace() {
         &violations,
         &[
             // ── PERF001: CloneInLoop ─────────────────────────────────────
-            (TEST_CRATE_LIB, 155, "CloneInLoop"),
+            ("my-test/src/lib.rs", 155, "CloneInLoop"),
             // ── PERF002: AllocationInLoop ────────────────────────────────
-            (TEST_CRATE_LIB, 162, "AllocationInLoop"),
+            ("my-test/src/lib.rs", 162, "AllocationInLoop"),
             // ── PERF003: ArcMutexOveruse ────────────────────────────────
-            (TEST_CRATE_LIB, 169, "ArcMutexOveruse"),
+            ("my-test/src/lib.rs", 169, "ArcMutexOveruse"),
             // ── PERF004: InefficientIterator ────────────────────────────
-            (TEST_CRATE_LIB, 174, "InefficientIterator"),
+            ("my-test/src/lib.rs", 174, "InefficientIterator"),
             // ── PERF005: InefficientString ──────────────────────────────
-            (TEST_CRATE_LIB, 179, "InefficientString"),
+            ("my-test/src/lib.rs", 179, "InefficientString"),
         ],
         "PerformanceValidator full workspace",
     );

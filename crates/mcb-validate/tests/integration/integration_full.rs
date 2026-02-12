@@ -22,8 +22,6 @@ mod full_integration_tests {
     use mcb_validate::violation_trait::{Severity, Violation, ViolationCategory};
     use tempfile::TempDir;
 
-    use crate::test_constants::TEST_WORKSPACE_PATH;
-
     fn create_test_workspace(dir: &TempDir) -> PathBuf {
         let root = dir.path().to_path_buf();
 
@@ -146,7 +144,7 @@ pub fn risky_function(data: Option<String>) -> String {
 
         let report = GenericReport {
             timestamp: "2026-01-19 12:00:00 UTC".to_string(),
-            workspace_root: PathBuf::from(TEST_WORKSPACE_PATH),
+            workspace_root: PathBuf::from("/test/workspace"),
             summary,
             violations_by_category: HashMap::new(),
         };

@@ -1,34 +1,38 @@
 # Technical Patterns
 
-Last updated: 2026-02-11
-Source baseline: `docs/context/technical-patterns.md`
+Last updated: 2026-02-11 (America/Sao_Paulo)
 
-Architecture:
+## Architecture Pattern
 
-- Clean Architecture flow: `mcb-server -> mcb-infrastructure -> mcb-application -> mcb-domain`
-- Provider implementations in `mcb-providers` depend on domain ports only.
+- Clean Architecture with strict inward dependencies.
+- Main flow: `mcb-server -> mcb-infrastructure -> mcb-application -> mcb-domain`.
+- Supporting crates: `mcb-providers`, `mcb-validate`, `mcb-language-support`, `mcb-ast-utils`.
 
-Dependency injection stack:
+## Registration Pattern
 
-1. `linkme` distributed slices for compile-time discovery
-2. `dill` catalog wiring at runtime
-3. `Handle<T>` for runtime provider switching
+- Provider discovery uses `linkme` distributed slices (compile-time registration).
+- New providers should integrate via trait + distributed slice entry.
 
-High-value patterns:
+## Async/Error Pattern
 
-- Registry macros in `mcb-domain/src/registry/` for provider discovery.
-- Error factories in `mcb-domain/src/error/mod.rs` (`Error::io`, `Error::embedding`, etc.).
-- `define_id!` macro for strong typed IDs in `mcb-domain/src/value_objects/ids.rs`.
-- Decorator pattern in `mcb-application/src/decorators/`.
+- Traits are async-oriented (`#[async_trait]`) where required.
+- Prefer explicit domain errors and propagation over panics.
 
-Implementation guidance:
+## Context System Pattern (ADR Series)
 
-- New features follow existing crate layering; avoid cross-layer leakage.
-- New providers should self-register via distributed slices.
-- Avoid `unwrap()` and `expect()` outside tests.
+- ADR-034..037 define workflow FSM, context scout, policies, orchestrator.
+- ADR-041..046 define integrated context architecture
+  (versioning, graph, hybrid search, freshness).
 
-Related:
+## Sources
 
-- `context/project-intelligence/domain-concepts.md`
-- `context/project-intelligence/integrations.md`
-- `context/project-intelligence/conventions.md`
+- `README.md`
+- `docs/architecture/ARCHITECTURE.md`
+- `docs/adr/034-workflow-core-fsm.md`
+- `docs/adr/035-context-scout.md`
+- `docs/adr/041-integrated-context-system-architecture.md`
+
+## Update Notes
+
+- 2026-02-11: Harvested and condensed from existing
+  `docs/context/technical-patterns.md` plus ADR updates.

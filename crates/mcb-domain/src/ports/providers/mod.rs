@@ -32,7 +32,7 @@ pub mod http;
 /// Hybrid search provider port
 pub mod hybrid_search;
 /// Language chunking provider port
-pub mod language_chunking;
+mod language_chunking;
 /// Observability metrics provider port (Prometheus/OpenTelemetry)
 pub mod metrics;
 /// Code metrics analysis provider port

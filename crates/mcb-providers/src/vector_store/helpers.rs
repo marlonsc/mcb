@@ -7,6 +7,8 @@ use std::time::Duration;
 
 use mcb_domain::error::Error;
 
+use crate::utils::http::{RequestErrorKind, handle_request_error_with_kind};
+
 /// Handle HTTP request errors for vector store operations
 ///
 /// Converts reqwest errors into domain errors with proper timeout detection.
@@ -25,17 +27,13 @@ pub fn handle_vector_request_error(
     provider: &str,
     operation: &str,
 ) -> Error {
-    if error.is_timeout() {
-        Error::vector_db(format!(
-            "{} {} request timed out after {:?}",
-            provider, operation, timeout
-        ))
-    } else {
-        Error::vector_db(format!(
-            "{} HTTP request for {} failed: {}",
-            provider, operation, error
-        ))
-    }
+    handle_request_error_with_kind(
+        error,
+        timeout,
+        provider,
+        operation,
+        RequestErrorKind::VectorDb,
+    )
 }
 
 /// Parse vector from JSON response

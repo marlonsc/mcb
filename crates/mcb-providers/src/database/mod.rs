@@ -9,12 +9,12 @@
 //! - **mysql** – (future) MySQL adapter and DDL
 
 pub mod sqlite;
+pub use crate::storage::{SqliteFileHashConfig, SqliteFileHashRepository};
 pub use sqlite::{
-    SqliteAgentRepository, SqliteDatabaseProvider, SqliteExecutor, SqliteFileHashConfig,
-    SqliteFileHashRepository, SqliteIssueEntityRepository, SqliteMemoryDdlGenerator,
-    SqliteMemoryRepository, SqliteOrgEntityRepository, SqlitePlanEntityRepository,
-    SqliteProjectRepository, SqliteSchemaDdlGenerator, SqliteVcsEntityRepository,
-    create_agent_repository, create_agent_repository_from_executor, create_memory_repository,
-    create_memory_repository_with_executor, create_project_repository,
+    SqliteAgentRepository, SqliteDatabaseProvider, SqliteExecutor, SqliteIssueEntityRepository,
+    SqliteMemoryDdlGenerator, SqliteMemoryRepository, SqliteOrgEntityRepository,
+    SqlitePlanEntityRepository, SqliteProjectRepository, SqliteSchemaDdlGenerator,
+    SqliteVcsEntityRepository, create_agent_repository, create_agent_repository_from_executor,
+    create_memory_repository, create_memory_repository_with_executor, create_project_repository,
     create_project_repository_from_executor,
 };

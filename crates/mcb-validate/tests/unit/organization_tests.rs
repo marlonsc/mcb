@@ -23,15 +23,39 @@ fn test_organization_full_workspace() {
         &violations,
         &[
             // ── MagicNumber ─────────────────────────────────────────────
-            (SERVER_CRATE_HANDLER, 82, "MagicNumber"),
-            (TEST_CRATE_LIB, 323, "MagicNumber"),
+            ("my-server/src/handlers/user_handler.rs", 82, "MagicNumber"),
+            ("my-test/src/lib.rs", 323, "MagicNumber"),
             // ── DomainLayerImplementation ────────────────────────────────
-            (DOMAIN_CRATE_SERVICE, 17, "DomainLayerImplementation"),
-            (DOMAIN_CRATE_SERVICE, 38, "DomainLayerImplementation"),
-            (DOMAIN_CRATE_SERVICE, 49, "DomainLayerImplementation"),
-            (DOMAIN_CRATE_SERVICE, 59, "DomainLayerImplementation"),
-            (DOMAIN_CRATE_SERVICE, 67, "DomainLayerImplementation"),
-            (DOMAIN_CRATE_SERVICE, 94, "DomainLayerImplementation"),
+            (
+                "my-domain/src/domain/service.rs",
+                17,
+                "DomainLayerImplementation",
+            ),
+            (
+                "my-domain/src/domain/service.rs",
+                38,
+                "DomainLayerImplementation",
+            ),
+            (
+                "my-domain/src/domain/service.rs",
+                49,
+                "DomainLayerImplementation",
+            ),
+            (
+                "my-domain/src/domain/service.rs",
+                59,
+                "DomainLayerImplementation",
+            ),
+            (
+                "my-domain/src/domain/service.rs",
+                67,
+                "DomainLayerImplementation",
+            ),
+            (
+                "my-domain/src/domain/service.rs",
+                94,
+                "DomainLayerImplementation",
+            ),
         ],
         "OrganizationValidator full workspace",
     );

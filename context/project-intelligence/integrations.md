@@ -1,29 +1,32 @@
 # Integrations
 
-Last updated: 2026-02-11
-Source baseline: `docs/context/integrations.md`
+Last updated: 2026-02-11 (America/Sao_Paulo)
 
-Primary integration surfaces:
+## Internal Integrations
 
-- Embedding providers: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic.
-- Vector stores: EdgeVec, Milvus, Qdrant, Pinecone, encrypted wrapper.
-- Database: SQLite via `sqlx` with FTS5 and repository implementations.
-- MCP server: stdio and HTTP transports in `mcb-server/src/transport/`.
-- Git integration: `git2` provider and repository discovery.
-- Language parsing: tree-sitter processors for multi-language chunking.
-- Runtime systems: Moka/Redis cache and Tokio/NATS event pathways.
+- MCP tool surface exposes indexing, search, memory, validation, VCS,
+  sessions, agent logging, and project workflows.
+- Providers layer integrates embedding models and vector stores behind traits.
+- Documentation and validation pipelines are integrated through Make targets.
 
-Configuration convention:
+## Data/Context Integrations
 
-- Hierarchical config with `MCP__*` env var overrides.
-- Provider choice and network settings are env-driven.
+- Vector search + metadata + git context combine for retrieval quality.
+- Freshness and snapshot versioning are integrated design constraints in ADR-041/045.
 
-Operational notes:
+## Tooling Integrations
 
-- Keep provider docs aligned with `docs/CONFIGURATION.md`.
-- New integration adapters must map to existing domain ports.
+- Beads issue tracking syncs with git workflow (`bd sync`).
+- Docs tooling includes lint/sync/validate scripts for consistency checks.
 
-Related:
+## Sources
 
-- `context/project-intelligence/technical-patterns.md`
-- `context/project-intelligence/domain-concepts.md`
+- `README.md`
+- `docs/context/integrations.md`
+- `docs/adr/041-integrated-context-system-architecture.md`
+- `docs/adr/045-context-versioning-freshness.md`
+- `docs/BEADS_QUICK_REFERENCE.md`
+
+## Update Notes
+
+- 2026-02-11: Integrated repository and ADR signals into a compact integration map.

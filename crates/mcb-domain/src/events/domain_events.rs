@@ -4,8 +4,6 @@
 //! enables services to publish events without coupling to specific implementations
 //! (tokio broadcast, NATS, etc.).
 
-use std::sync::Arc;
-
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
@@ -235,6 +233,3 @@ pub trait EventPublisher: Send + Sync {
     /// Useful for avoiding unnecessary event creation if no one is listening.
     fn has_subscribers(&self) -> bool;
 }
-
-/// Shared event publisher for dependency injection
-pub type SharedEventPublisher = Arc<dyn EventPublisher>;

@@ -15,11 +15,10 @@ use crate::formatter::ResponseFormatter;
 pub async fn inject_context(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
-    project_id: &str,
 ) -> Result<CallToolResult, McpError> {
     let filter = MemoryFilter {
         id: None,
-        project_id: Some(project_id.to_string()),
+        project_id: args.project_id.clone(),
         tags: None,
         r#type: None,
         session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),

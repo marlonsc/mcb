@@ -14,18 +14,20 @@ use crate::config::AppConfig;
 
 /// Resolver for database providers
 pub struct DatabaseProviderResolver {
-    _config: Arc<AppConfig>,
+    config: Arc<AppConfig>,
 }
 
 impl DatabaseProviderResolver {
     /// Create a new resolver
     pub fn new(config: Arc<AppConfig>) -> Self {
-        Self { _config: config }
+        Self { config }
     }
 
     /// Resolve and connect to the database provider configured in AppConfig.
+    ///
+    /// Reads the provider name from `config.providers.database` (defaults to "sqlite").
     pub async fn resolve_and_connect(&self, path: &Path) -> Result<Arc<dyn DatabaseExecutor>> {
-        let provider_name = self._config.database.provider.as_str();
+        let provider_name = self.config.providers.database.as_str();
 
         let config = DatabaseProviderConfig::new(provider_name);
         let provider = self.resolve_from_override(&config)?;

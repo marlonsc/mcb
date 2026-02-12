@@ -2,9 +2,7 @@
 
 use std::sync::Arc;
 
-use mcb_application::services::RepositoryResolver;
 use mcb_domain::ports::repositories::ProjectRepository;
-use mcb_domain::value_objects::OrgContext;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 use serde_json::Value;
@@ -12,18 +10,17 @@ use tracing::info;
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
 use crate::error_mapping::to_opaque_mcp_error;
-use crate::handler_helpers::ok_json;
+use crate::handler_helpers::{ok_json, resolve_org_id};
 
 /// Handler for the consolidated `project` MCP tool.
 pub struct ProjectHandler {
     repo: Arc<dyn ProjectRepository>,
-    resolver: Arc<RepositoryResolver>,
 }
 
 impl ProjectHandler {
     /// Create a new project handler backed by a repository implementation.
-    pub fn new(repo: Arc<dyn ProjectRepository>, resolver: Arc<RepositoryResolver>) -> Self {
-        Self { repo, resolver }
+    pub fn new(repo: Arc<dyn ProjectRepository>) -> Self {
+        Self { repo }
     }
 
     /// Route an incoming `project` tool call to the appropriate operation.
@@ -32,11 +29,10 @@ impl ProjectHandler {
         &self,
         Parameters(args): Parameters<ProjectArgs>,
     ) -> Result<CallToolResult, McpError> {
+        let project_id = &args.project_id;
         let _data = args.data.unwrap_or(Value::Null);
 
-        let org_ctx = OrgContext::current();
-        let org_id = org_ctx.id_str();
-        let project_id = self.resolver.resolve_project_id(org_id).await;
+        let org_id = resolve_org_id(None);
 
         if project_id.trim().is_empty() && !matches!(args.action, ProjectAction::List) {
             return Err(McpError::invalid_params("project_id is required", None));
@@ -53,13 +49,17 @@ impl ProjectHandler {
             (ProjectAction::Get, ProjectResource::Project) => {
                 let project = self
                     .repo
-                    .get_by_id(org_id, &project_id)
+                    .get_by_id(org_id.as_str(), project_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&project)
             }
             (ProjectAction::List, ProjectResource::Project) => {
-                let projects = self.repo.list(org_id).await.map_err(to_opaque_mcp_error)?;
+                let projects = self
+                    .repo
+                    .list(org_id.as_str())
+                    .await
+                    .map_err(to_opaque_mcp_error)?;
                 ok_json(&projects)
             }
 
@@ -81,134 +81,7 @@ mod tests {
     use mcb_domain::constants::keys::DEFAULT_ORG_ID;
     use mcb_domain::entities::project::*;
     use mcb_domain::error::Result;
-    use mcb_domain::ports::repositories::VcsEntityRepository;
-    use mcb_domain::value_objects::project_context::ProjectContext;
     use std::sync::Mutex;
-
-    fn test_resolver() -> Arc<RepositoryResolver> {
-        let mock_vcs: Arc<dyn VcsEntityRepository> = Arc::new(MockVcsEntityService);
-        Arc::new(RepositoryResolver::with_context(
-            mock_vcs,
-            ProjectContext::new("test/project", "project"),
-        ))
-    }
-
-    struct MockVcsEntityService;
-
-    #[async_trait]
-    impl VcsEntityRepository for MockVcsEntityService {
-        async fn create_repository(
-            &self,
-            _repo: &mcb_domain::entities::repository::Repository,
-        ) -> Result<()> {
-            Ok(())
-        }
-        async fn get_repository(
-            &self,
-            _org_id: &str,
-            _id: &str,
-        ) -> Result<mcb_domain::entities::repository::Repository> {
-            Err(mcb_domain::error::Error::not_found("repo"))
-        }
-        async fn find_repository_by_url(
-            &self,
-            _org_id: &str,
-            _url: &str,
-        ) -> Result<Option<mcb_domain::entities::repository::Repository>> {
-            Ok(None)
-        }
-        async fn list_repositories(
-            &self,
-            _org_id: &str,
-            _project_id: &str,
-        ) -> Result<Vec<mcb_domain::entities::repository::Repository>> {
-            Ok(vec![])
-        }
-        async fn update_repository(
-            &self,
-            _repo: &mcb_domain::entities::repository::Repository,
-        ) -> Result<()> {
-            Ok(())
-        }
-        async fn delete_repository(&self, _org_id: &str, _id: &str) -> Result<()> {
-            Ok(())
-        }
-        async fn ensure_org_and_project(&self, _project_id: &str) -> Result<()> {
-            Ok(())
-        }
-        async fn create_branch(
-            &self,
-            _branch: &mcb_domain::entities::repository::Branch,
-        ) -> Result<()> {
-            Ok(())
-        }
-        async fn get_branch(&self, _id: &str) -> Result<mcb_domain::entities::repository::Branch> {
-            Err(mcb_domain::error::Error::not_found("branch"))
-        }
-        async fn list_branches(
-            &self,
-            _repo_id: &str,
-        ) -> Result<Vec<mcb_domain::entities::repository::Branch>> {
-            Ok(vec![])
-        }
-        async fn update_branch(
-            &self,
-            _branch: &mcb_domain::entities::repository::Branch,
-        ) -> Result<()> {
-            Ok(())
-        }
-        async fn delete_branch(&self, _id: &str) -> Result<()> {
-            Ok(())
-        }
-        async fn create_worktree(
-            &self,
-            _wt: &mcb_domain::entities::worktree::Worktree,
-        ) -> Result<()> {
-            Ok(())
-        }
-        async fn get_worktree(
-            &self,
-            _id: &str,
-        ) -> Result<mcb_domain::entities::worktree::Worktree> {
-            Err(mcb_domain::error::Error::not_found("worktree"))
-        }
-        async fn list_worktrees(
-            &self,
-            _repo_id: &str,
-        ) -> Result<Vec<mcb_domain::entities::worktree::Worktree>> {
-            Ok(vec![])
-        }
-        async fn update_worktree(
-            &self,
-            _wt: &mcb_domain::entities::worktree::Worktree,
-        ) -> Result<()> {
-            Ok(())
-        }
-        async fn delete_worktree(&self, _id: &str) -> Result<()> {
-            Ok(())
-        }
-        async fn create_assignment(
-            &self,
-            _asgn: &mcb_domain::entities::worktree::AgentWorktreeAssignment,
-        ) -> Result<()> {
-            Ok(())
-        }
-        async fn get_assignment(
-            &self,
-            _id: &str,
-        ) -> Result<mcb_domain::entities::worktree::AgentWorktreeAssignment> {
-            Err(mcb_domain::error::Error::not_found("assignment"))
-        }
-        async fn list_assignments_by_worktree(
-            &self,
-            _worktree_id: &str,
-        ) -> Result<Vec<mcb_domain::entities::worktree::AgentWorktreeAssignment>> {
-            Ok(vec![])
-        }
-        async fn release_assignment(&self, _id: &str, _released_at: i64) -> Result<()> {
-            Ok(())
-        }
-    }
 
     struct MockProjectService {
         projects: Mutex<Vec<Project>>,
@@ -270,10 +143,11 @@ mod tests {
             });
         }
 
-        let handler = ProjectHandler::new(service, test_resolver());
+        let handler = ProjectHandler::new(service);
         let args = ProjectArgs {
             action: ProjectAction::List,
             resource: ProjectResource::Project,
+            project_id: "ignored".to_string(),
             data: None,
             filters: None,
         };
@@ -290,10 +164,8 @@ mod tests {
         let service = Arc::new(MockProjectService::new());
         {
             let mut projects = service.projects.lock().unwrap();
-            let resolver = test_resolver();
-            let project_id = resolver.resolve_project_id(DEFAULT_ORG_ID).await;
             projects.push(Project {
-                id: project_id,
+                id: "p1".to_string(),
                 org_id: DEFAULT_ORG_ID.to_string(),
                 name: "Test Project".to_string(),
                 path: "/tmp/test".to_string(),
@@ -302,10 +174,11 @@ mod tests {
             });
         }
 
-        let handler = ProjectHandler::new(service, test_resolver());
+        let handler = ProjectHandler::new(service);
         let args = ProjectArgs {
             action: ProjectAction::Get,
             resource: ProjectResource::Project,
+            project_id: "p1".to_string(),
             data: None,
             filters: None,
         };
@@ -315,5 +188,24 @@ mod tests {
             .await
             .expect("Handler failed");
         let _content = &result.content[0];
+    }
+
+    #[tokio::test]
+    async fn test_empty_project_id_rejected_for_get() {
+        let service = Arc::new(MockProjectService::new());
+        let handler = ProjectHandler::new(service);
+        let args = ProjectArgs {
+            action: ProjectAction::Get,
+            resource: ProjectResource::Project,
+            project_id: "  ".to_string(),
+            data: None,
+            filters: None,
+        };
+
+        let err = handler
+            .handle(Parameters(args))
+            .await
+            .expect_err("Should reject empty project_id");
+        assert!(err.message.contains("project_id is required"));
     }
 }

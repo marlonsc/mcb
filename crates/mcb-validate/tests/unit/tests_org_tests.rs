@@ -26,7 +26,7 @@ fn test_test_org_full_workspace() {
         &violations,
         &[
             // ── InlineTestModule ────────────────────────────────────────
-            (TEST_CRATE_LIB, 366, "InlineTestModule"),
+            ("my-test/src/lib.rs", 366, "InlineTestModule"),
             // ── BadTestFileName — no line field, use 0 ──────────────────
             ("my-test/tests", 0, "BadTestFileName"),
             ("integration_test.rs", 0, "BadTestFileName"),

@@ -320,9 +320,13 @@ impl IndexingServiceImpl {
         let duration_ms = start.elapsed().as_millis() as u64;
         let error_count = failed_files.len();
 
-        let result =
-            IndexingProgress::with_counts(files_processed, chunks_created, 0, failed_files.clone())
-                .into_result(Some(operation_id), "completed");
+        let result = IndexingProgress::with_counts(
+            files_processed,
+            chunks_created,
+            error_count,
+            failed_files.clone(),
+        )
+        .into_result(Some(operation_id), "completed");
 
         if let Err(e) = service
             .event_bus

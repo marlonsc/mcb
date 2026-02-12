@@ -235,7 +235,7 @@ impl MemoryServiceImpl {
             ),
         );
         let fts_results = fts_result?;
-        let (vector_results, vector_search_failed) = match vector_result {
+        let (vector_results, _vector_search_failed) = match vector_result {
             Ok(results) => (results, false),
             Err(e) => {
                 tracing::warn!(
@@ -245,10 +245,6 @@ impl MemoryServiceImpl {
                 (Vec::new(), true)
             }
         };
-
-        if vector_search_failed {
-            tracing::debug!(vector_search_failed, "Hybrid search degraded to FTS-only");
-        }
 
         let mut rrf_scores: HashMap<String, f32> = HashMap::new();
 

@@ -63,13 +63,13 @@ Dedicated guides:
 | `figment.md` | medium-high | strong ADR/context analysis |
 | `linkme.md` | medium-high | registration and linker behavior |
 | `dill.md` | medium-high | composition-root and IoC decisions |
-| `rocket.md` | expanding | HTTP framework and admin transport |
-| `git2.md` | expanding | VCS operations and repository metadata |
-| `tree-sitter.md` | expanding | parsing, chunking, and highlighting pipelines |
-| `clap.md` | expanding | CLI contract and subcommand routing |
-| `async-trait.md` | expanding | async trait objects for domain ports |
-| `handlebars.md` | expanding | server-side template rendering |
-| `moka.md` | expanding | in-memory cache provider with TTL |
+| `rocket.md` | expanded (179 lines) | HTTP framework, admin transport, guards, verification |
+| `git2.md` | expanded (174 lines) | VCS operations, spawn_blocking, provider abstraction |
+| `tree-sitter.md` | expanded (169 lines) | parsing, chunking, highlighting, grammar versioning |
+| `clap.md` | expanded (158 lines) | CLI contract, subcommand routing, config precedence |
+| `async-trait.md` | expanded (156 lines) | async trait objects, port design, Send+Sync, mocking |
+| `handlebars.md` | expanded (156 lines) | template rendering, helpers, strict mode, XSS safety |
+| `moka.md` | expanded (170 lines) | cache provider, TTL, invalidation, capacity planning |
 
 ## Boundary-Critical Rules (Cross-Library)
 

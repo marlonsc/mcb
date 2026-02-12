@@ -254,7 +254,6 @@ fn test_project_schema_contains_all_indexes() {
         // VCS entity indexes
         "idx_repositories_org",
         "idx_repositories_project",
-        "idx_repositories_url_org",
         "idx_branches_repo",
         "idx_worktrees_repo",
         "idx_worktrees_branch",

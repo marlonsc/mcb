@@ -1,32 +1,31 @@
-# Project Conventions
+# Conventions
 
-Last updated: 2026-02-11
-Source baseline: `docs/context/conventions.md`
+Last updated: 2026-02-11 (America/Sao_Paulo)
 
-Coding style:
+## Development Conventions
 
-- Rust naming: snake_case for functions/modules, PascalCase for types/traits.
-- Crate naming: `mcb-*` for package names and `mcb_*` for library names.
-- Import order follows rustfmt defaults (std, external, workspace, local).
+- Prefer make targets for build/test/lint/validate workflows.
+- Keep changes aligned with crate boundaries and existing import patterns.
+- Update docs/context when architecture or process behavior changes.
 
-Quality and safety:
+## Safety Conventions
 
-- Workspace lints deny unsafe code, dead code, unused vars/imports.
-- Error handling uses domain `Error` factories and `Result<T>` propagation.
-- `unwrap()` and `expect()` are test-only.
+- No suppressed type/runtime errors.
+- No silent failure paths.
+- No destructive git operations unless explicitly requested.
 
-Workflow:
+## Context File Conventions
 
-- Make-first execution: `make fmt`, `make lint`, `make test`, `make validate`.
-- Conventional commits: `type(scope): description`.
-- Tests primarily in crate `tests/` trees.
+- Keep each file concise (MVI target: <200 lines).
+- Include `Last updated`, source paths, and update notes.
+- Prefer explicit, searchable headings over long prose.
 
-Documentation:
+## Sources
 
-- Public API docs expected (`//!`, `///` patterns).
-- Keep context files concise and actionable.
+- `docs/context/conventions.md`
+- `docs/developer/CONTRIBUTING.md`
+- `README.md`
 
-Related:
+## Update Notes
 
-- `context/development/git-workflow.md`
-- `context/development/testing-patterns.md`
+- 2026-02-11: Added context-management conventions for long-term assistant recall.

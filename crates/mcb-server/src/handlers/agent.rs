@@ -14,6 +14,7 @@ use validator::Validate;
 
 use crate::args::{AgentAction, AgentArgs};
 use crate::formatter::ResponseFormatter;
+use crate::handler_helpers::resolve_org_id;
 use crate::utils::json::{get_bool, get_i64, get_str};
 
 /// Handler for agent tool call and delegation logging operations.
@@ -36,6 +37,8 @@ impl AgentHandler {
     ) -> Result<CallToolResult, McpError> {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
+
+        let _org_id = resolve_org_id(args.org_id.as_deref());
 
         if args.session_id.to_string().is_empty() {
             return Err(McpError::invalid_params("session_id is required", None));

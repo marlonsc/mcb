@@ -1,32 +1,44 @@
 # Agent Patterns
 
-Last updated: 2026-02-11
+Last updated: 2026-02-11 (America/Sao_Paulo)
 
-Execution principles:
+## Purpose
 
-- Prefer explore-first behavior before asking questions.
-- Match existing repository patterns before introducing new structures.
-- Verify all modified files with diagnostics and project checks.
+Capture high-signal orchestration patterns for autonomous work in this repository.
 
-Delegation patterns:
+## Execution Pattern
 
-- Use specialized agents for broad exploration and external research.
-- Keep implementation edits local and verifiable.
-- Use background research when parallelizable.
+- Start with repo search (`glob`, `grep`, `ast-grep`) before edits.
+- Prefer narrow, verifiable changes over broad refactors.
+- Keep workflow state explicit: explore -> implement -> verify.
+- Run verification locally before reporting completion.
 
-Memory behavior:
+## Delegation Pattern
 
-- Recall memory before major tasks.
-- Store high-value learnings (patterns, errors, decisions).
-- Sync stable learnings into context files for durable reuse.
+- Use `explore` for internal pattern discovery.
+- Use `librarian` for external docs/examples and best practices.
+- Run independent searches in parallel to reduce blind spots.
 
-Recent synced learnings (2026-02-11):
+## Safety Pattern
 
-- Existing project context baseline already maintained in `docs/context/`.
-- Phase 8 context assembly is tracked in issue `mcb-qt3`.
-- Current high-value context includes architecture layering, provider matrix, and roadmap risk state.
+- Never suppress type/runtime issues with ignore directives.
+- Never leave partial broken changes after failed attempts.
+- Preserve existing user edits not related to current context task.
 
-Related:
+## Evidence Pattern
 
-- `context/core/tool-usage.md`
-- `context/core/error-handling.md`
+- Every context update should name source files.
+- Keep context files small enough for fast scanning (MVI target: <200 lines).
+- Include freshness metadata (`Last updated`, assumptions, update notes).
+
+## Sources
+
+- `README.md`
+- `docs/architecture/ARCHITECTURE.md`
+- `docs/adr/034-workflow-core-fsm.md`
+- `docs/adr/035-context-scout.md`
+
+## Update Notes
+
+- 2026-02-11: Initial context/core baseline created from repository docs
+  and ADR workflow series.

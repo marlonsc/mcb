@@ -38,7 +38,6 @@
 
 pub mod constants;
 pub mod decorators;
-pub mod services;
 pub mod use_cases;
 
 pub use decorators::*;

@@ -60,7 +60,7 @@ impl AgentType {
     }
 }
 
-impl_from_str!(AgentType, "Unknown agent type: {}. Valid types: sisyphus, oracle, explore, prometheus, momus, librarian, metis, sisyphus-junior (aliases: junior, sisyphus_junior), hephaestus, atlas, multimodal-looker (aliases: looker, multimodal_looker)", {
+impl_from_str!(AgentType, "Unknown agent type: {}. Valid types: sisyphus, oracle, explore, prometheus, momus, librarian, metis, sisyphus-junior, hephaestus, atlas, multimodal-looker", {
     "sisyphus" => Self::Sisyphus,
     "oracle" => Self::Oracle,
     "explore" => Self::Explore,

@@ -1,19 +1,36 @@
 # Testing Patterns
 
-Last updated: 2026-02-11
+Last updated: 2026-02-11 (America/Sao_Paulo)
 
-Project defaults:
+## Purpose
 
-- Prefer crate-level integration tests in `tests/`.
-- Use shared fixtures/helpers under `tests/test_utils/` where available.
-- Keep test names explicit about scenario and expected behavior.
+Keep high-value testing and validation expectations visible for
+contributors and agents.
 
-Execution:
+## Core Checks
 
-- Standard path: `make test`.
-- For targeted verification, run crate-specific test commands.
+- `make test` for full test suite.
+- `make lint` for style and static quality.
+- `make validate` for architecture rules.
+- `make quality` for end-to-end quality pipeline.
 
-Quality expectation:
+## Documentation Checks
 
-- New logic should include test updates in the same session.
-- Preserve existing failing tests unless issue explicitly addresses them.
+- `make docs-lint`
+- `make docs-validate QUICK=1`
+
+## Practical Rules
+
+- Run the narrowest useful test loop while iterating.
+- Run broader checks before closing work.
+- Treat architecture validation as a required gate, not optional.
+
+## Sources
+
+- `README.md`
+- `docs/developer/CONTRIBUTING.md`
+- `docs/operations/CI_RELEASE.md`
+
+## Update Notes
+
+- 2026-02-11: Added condensed validation matrix for fast execution decisions.

@@ -43,26 +43,8 @@ pub async fn run_linter_command(
 pub fn parse_ruff_output(output: &str) -> Vec<LintViolation> {
     let mut violations = Vec::new();
 
-    // Try parsing as JSON array first (ruff's default format)
     if let Ok(ruff_violations) = serde_json::from_str::<Vec<RuffViolation>>(output) {
         for ruff_violation in ruff_violations {
-            violations.push(LintViolation {
-                rule: ruff_violation.code.clone(),
-                file_path_cache: Some(std::path::PathBuf::from(&ruff_violation.filename)),
-                file: ruff_violation.filename,
-                line: ruff_violation.location.row,
-                column: ruff_violation.location.column,
-                message: ruff_violation.message,
-                severity: map_ruff_severity(&ruff_violation.code),
-                category: "quality".to_string(),
-            });
-        }
-        return violations;
-    }
-
-    // Fallback: try parsing as JSON lines (legacy/alternative format)
-    for line in output.lines() {
-        if let Ok(ruff_violation) = serde_json::from_str::<RuffViolation>(line) {
             violations.push(LintViolation {
                 rule: ruff_violation.code.clone(),
                 file_path_cache: Some(std::path::PathBuf::from(&ruff_violation.filename)),

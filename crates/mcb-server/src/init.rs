@@ -286,7 +286,6 @@ async fn create_mcp_server(
         plan_entity: services.plan_entity_repository,
         issue_entity: services.issue_entity_repository,
         org_entity: services.org_entity_repository,
-        resolver: services.resolver,
     };
     let server = McpServer::from_services(mcp_services);
 

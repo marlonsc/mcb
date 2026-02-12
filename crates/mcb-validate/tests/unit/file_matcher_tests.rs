@@ -2,7 +2,6 @@
 
 use std::path::Path;
 
-use crate::test_constants::LIB_RS;
 use mcb_validate::filters::FilePatternMatcher;
 
 #[test]
@@ -10,7 +9,7 @@ fn test_simple_includes() {
     let matcher = FilePatternMatcher::new(&["*.rs".to_string()], &[]).unwrap();
 
     assert!(matcher.should_include(Path::new("main.rs")));
-    assert!(matcher.should_include(Path::new(LIB_RS)));
+    assert!(matcher.should_include(Path::new("lib.rs")));
     assert!(!matcher.should_include(Path::new("main.py")));
     assert!(!matcher.should_include(Path::new("README.md")));
 }

@@ -2,10 +2,8 @@
 
 use std::sync::Arc;
 
-use mcb_application::services::RepositoryResolver;
 use mcb_domain::entities::memory::ErrorPattern;
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::value_objects::OrgContext;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
@@ -16,6 +14,7 @@ use super::{execution, inject, list_timeline, observation, quality_gate, session
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handler_helpers::resolve_org_id;
 
 /// Handler for memory-related MCP tool operations.
 ///
@@ -24,18 +23,12 @@ use crate::formatter::ResponseFormatter;
 #[derive(Clone)]
 pub struct MemoryHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
-    resolver: Arc<RepositoryResolver>,
 }
 
 impl MemoryHandler {
-    pub fn new(
-        memory_service: Arc<dyn MemoryServiceInterface>,
-        resolver: Arc<RepositoryResolver>,
-    ) -> Self {
-        Self {
-            memory_service,
-            resolver,
-        }
+    /// Creates a new MemoryHandler with the given memory service.
+    pub fn new(memory_service: Arc<dyn MemoryServiceInterface>) -> Self {
+        Self { memory_service }
     }
 
     /// Handles a memory tool invocation.
@@ -49,88 +42,47 @@ impl MemoryHandler {
         };
         args.validate().map_err(validate_err)?;
 
-        let org_ctx = OrgContext::current();
-        let org_id = org_ctx.id_str();
-        let project_id = self.resolver.resolve_project_id(org_id).await;
+        let _org_id = resolve_org_id(args.org_id.as_deref());
 
         match args.action {
-            MemoryAction::Store => self.handle_store(&args, &project_id).await,
-            MemoryAction::Get => self.handle_get(&args, &project_id).await,
-            MemoryAction::List => self.handle_list(&args, &project_id).await,
-            MemoryAction::Timeline => self.handle_timeline(&args, &project_id).await,
-            MemoryAction::Inject => self.handle_inject(&args, &project_id).await,
+            MemoryAction::Store => self.handle_store(&args).await,
+            MemoryAction::Get => self.handle_get(&args).await,
+            MemoryAction::List => self.handle_list(&args).await,
+            MemoryAction::Timeline => self.handle_timeline(&args).await,
+            MemoryAction::Inject => self.handle_inject(&args).await,
         }
     }
 
-    async fn handle_store(
-        &self,
-        args: &MemoryArgs,
-        project_id: &str,
-    ) -> Result<CallToolResult, McpError> {
+    async fn handle_store(&self, args: &MemoryArgs) -> Result<CallToolResult, McpError> {
         match args.resource {
             MemoryResource::Observation => {
-                observation::store_observation(&self.memory_service, args, project_id).await
+                observation::store_observation(&self.memory_service, args).await
             }
             MemoryResource::Execution => {
-                execution::store_execution(&self.memory_service, args, project_id).await
+                execution::store_execution(&self.memory_service, args).await
             }
             MemoryResource::QualityGate => {
-                quality_gate::store_quality_gate(&self.memory_service, args, project_id).await
+                quality_gate::store_quality_gate(&self.memory_service, args).await
             }
             MemoryResource::ErrorPattern => self.handle_store_error_pattern(args).await,
             MemoryResource::Session => session::store_session(&self.memory_service, args).await,
         }
     }
 
-    async fn handle_get(
-        &self,
-        args: &MemoryArgs,
-        project_id: &str,
-    ) -> Result<CallToolResult, McpError> {
+    async fn handle_get(&self, args: &MemoryArgs) -> Result<CallToolResult, McpError> {
         match args.resource {
             MemoryResource::Observation => {
                 observation::get_observations(&self.memory_service, args).await
             }
             MemoryResource::Execution => {
-                execution::get_executions(&self.memory_service, args, project_id).await
+                execution::get_executions(&self.memory_service, args).await
             }
             MemoryResource::QualityGate => {
-                quality_gate::get_quality_gates(&self.memory_service, args, project_id).await
+                quality_gate::get_quality_gates(&self.memory_service, args).await
             }
-            MemoryResource::ErrorPattern => self.handle_get_error_pattern(args, project_id).await,
+            MemoryResource::ErrorPattern => self.handle_get_error_pattern(args).await,
             MemoryResource::Session => session::get_session(&self.memory_service, args).await,
         }
-    }
-
-    async fn handle_list(
-        &self,
-        args: &MemoryArgs,
-        project_id: &str,
-    ) -> Result<CallToolResult, McpError> {
-        match args.resource {
-            MemoryResource::Observation => {
-                list_timeline::list_observations(&self.memory_service, args, project_id).await
-            }
-            _ => Ok(CallToolResult::error(vec![Content::text(
-                "List action is only supported for observation resource",
-            )])),
-        }
-    }
-
-    async fn handle_timeline(
-        &self,
-        args: &MemoryArgs,
-        project_id: &str,
-    ) -> Result<CallToolResult, McpError> {
-        list_timeline::get_timeline(&self.memory_service, args, project_id).await
-    }
-
-    async fn handle_inject(
-        &self,
-        args: &MemoryArgs,
-        project_id: &str,
-    ) -> Result<CallToolResult, McpError> {
-        inject::inject_context(&self.memory_service, args, project_id).await
     }
 
     async fn handle_store_error_pattern(
@@ -168,9 +120,10 @@ impl MemoryHandler {
     async fn handle_get_error_pattern(
         &self,
         args: &MemoryArgs,
-        project_id: &str,
     ) -> Result<CallToolResult, McpError> {
-        let project_id = project_id.to_string();
+        let project_id = args.project_id.clone().ok_or_else(|| {
+            McpError::invalid_params("project_id is required for error pattern search", None)
+        })?;
 
         let query = args.query.clone().unwrap_or_default();
         let limit = args.limit.unwrap_or(10) as usize;
@@ -186,5 +139,24 @@ impl MemoryHandler {
             })),
             Err(e) => Ok(to_contextual_tool_error(e)),
         }
+    }
+
+    async fn handle_list(&self, args: &MemoryArgs) -> Result<CallToolResult, McpError> {
+        match args.resource {
+            MemoryResource::Observation => {
+                list_timeline::list_observations(&self.memory_service, args).await
+            }
+            _ => Ok(CallToolResult::error(vec![Content::text(
+                "List action is only supported for observation resource",
+            )])),
+        }
+    }
+
+    async fn handle_timeline(&self, args: &MemoryArgs) -> Result<CallToolResult, McpError> {
+        list_timeline::get_timeline(&self.memory_service, args).await
+    }
+
+    async fn handle_inject(&self, args: &MemoryArgs) -> Result<CallToolResult, McpError> {
+        inject::inject_context(&self.memory_service, args).await
     }
 }

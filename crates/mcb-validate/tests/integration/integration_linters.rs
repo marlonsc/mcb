@@ -137,18 +137,6 @@ fn test_ruff_json_array_parsing() {
 }
 
 #[test]
-fn test_ruff_json_lines_fallback() {
-    // Legacy JSON lines format (fallback)
-    let json_output = r#"{"code": "W291", "message": "Trailing whitespace", "filename": "foo.py", "location": {"row": 5, "column": 10}}"#;
-
-    let violations = LinterType::Ruff.parse_output(json_output);
-
-    assert_eq!(violations.len(), 1);
-    assert_eq!(violations[0].rule, "W291");
-    assert_eq!(violations[0].file, "foo.py");
-}
-
-#[test]
 fn test_ruff_empty_output() {
     let violations = LinterType::Ruff.parse_output("[]");
     assert!(

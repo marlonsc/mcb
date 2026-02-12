@@ -90,7 +90,6 @@ pub struct FunctionComplexity {
 /// Architecture Validation Service Interface
 #[async_trait]
 pub trait ValidationServiceInterface: Send + Sync {
-    /// Validate a workspace
     async fn validate(
         &self,
         workspace_root: &Path,
@@ -98,20 +97,16 @@ pub trait ValidationServiceInterface: Send + Sync {
         severity_filter: Option<&str>,
     ) -> Result<ValidationReport>;
 
-    /// List all validators
     async fn list_validators(&self) -> Result<Vec<String>>;
 
-    /// Validate a file
     async fn validate_file(
         &self,
         file_path: &Path,
         validators: Option<&[String]>,
     ) -> Result<ValidationReport>;
 
-    /// Get all rules
     async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>>;
 
-    /// Analyze complexity of a file
     async fn analyze_complexity(
         &self,
         file_path: &Path,

@@ -9,13 +9,9 @@ pub trait VcsEntityRepository: Send + Sync {
     // -- Repository CRUD --
     async fn create_repository(&self, repo: &Repository) -> Result<()>;
     async fn get_repository(&self, org_id: &str, id: &str) -> Result<Repository>;
-    async fn find_repository_by_url(&self, org_id: &str, url: &str) -> Result<Option<Repository>>;
     async fn list_repositories(&self, org_id: &str, project_id: &str) -> Result<Vec<Repository>>;
     async fn update_repository(&self, repo: &Repository) -> Result<()>;
     async fn delete_repository(&self, org_id: &str, id: &str) -> Result<()>;
-
-    // -- Auto-create helpers --
-    async fn ensure_org_and_project(&self, project_id: &str) -> Result<()>;
 
     // -- Branch CRUD --
     async fn create_branch(&self, branch: &Branch) -> Result<()>;

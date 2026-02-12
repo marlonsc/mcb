@@ -105,6 +105,7 @@ async fn test_memory_store_quality_gate_success() {
             "metrics": {}
         })),
         ids: None,
+
         repo_id: None,
         session_id: Some("test-session".to_string().into()),
         tags: None,

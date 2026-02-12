@@ -23,22 +23,50 @@ fn test_error_boundary_full_workspace() {
         &violations,
         &[
             // ── MissingErrorContext (bare ?) ─────────────────────────────
-            (SERVER_CRATE_HANDLER, 30, "MissingErrorContext"),
-            (SERVER_CRATE_HANDLER, 32, "MissingErrorContext"),
-            (SERVER_CRATE_HANDLER, 36, "MissingErrorContext"),
-            (SERVER_CRATE_HANDLER, 106, "MissingErrorContext"),
-            (SERVER_CRATE_HANDLER, 109, "MissingErrorContext"),
-            (SERVER_CRATE_HANDLER, 112, "MissingErrorContext"),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                30,
+                "MissingErrorContext",
+            ),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                32,
+                "MissingErrorContext",
+            ),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                36,
+                "MissingErrorContext",
+            ),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                106,
+                "MissingErrorContext",
+            ),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                109,
+                "MissingErrorContext",
+            ),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                112,
+                "MissingErrorContext",
+            ),
             // ── WrongLayerError (infra types in domain) ─────────────────
-            (DOMAIN_CRATE_SERVICE, 17, "WrongLayerError"),
-            (DOMAIN_CRATE_SERVICE, 19, "WrongLayerError"),
-            (DOMAIN_CRATE_SERVICE, 20, "WrongLayerError"),
-            (DOMAIN_CRATE_SERVICE, 38, "WrongLayerError"),
-            (DOMAIN_CRATE_SERVICE, 49, "WrongLayerError"),
-            (DOMAIN_CRATE_SERVICE, 59, "WrongLayerError"),
-            (DOMAIN_CRATE_SERVICE, 76, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 17, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 19, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 20, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 38, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 49, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 59, "WrongLayerError"),
+            ("my-domain/src/domain/service.rs", 76, "WrongLayerError"),
             // ── LeakedInternalError (.to_string() in response) ──────────
-            (SERVER_CRATE_HANDLER, 123, "LeakedInternalError"),
+            (
+                "my-server/src/handlers/user_handler.rs",
+                123,
+                "LeakedInternalError",
+            ),
         ],
         "ErrorBoundaryValidator full workspace",
     );

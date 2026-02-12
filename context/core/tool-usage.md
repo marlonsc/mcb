@@ -1,28 +1,45 @@
 # Tool Usage
 
-Last updated: 2026-02-11
+Last updated: 2026-02-11 (America/Sao_Paulo)
 
-Default strategy:
+## Purpose
 
-- Use targeted file tools for reads/searches/edits.
-- Use shell for execution workflows (tests, build, git, tracker commands).
-- Run independent searches in parallel to reduce latency.
+Define practical tool selection rules for efficient and verifiable repository work.
 
-Context operations mapping:
+## Primary Rules
 
-- harvest: scan code/docs and produce compact context artifacts.
-- learn: capture successful patterns and fixes into memory.
-- recall: query memory before implementation.
-- compact: reduce file size while preserving actionable content.
-- validate: check references and freshness.
-- sync: merge memory insights into context hierarchy.
+- Use dedicated file tools for file operations:
+  - `read` for inspection
+  - `glob` for file discovery
+  - `grep` for content search
+  - `apply_patch` for surgical edits
+- Use `bash` for execution tasks (build, tests, git, bd CLI).
+- Prefer parallel calls when commands are independent.
 
-Validation baseline:
+## Search Strategy
 
-- Broken link/reference checks must pass.
-- Freshness checks should flag files older than 30 days.
-- Context files should stay under 200 lines each.
+- First pass: broad `grep` terms for architecture and workflow keywords.
+- Second pass: targeted `ast-grep` for structural code patterns.
+- Third pass: deep file reads for authoritative docs/ADRs.
 
-Standard lifecycle:
+## Validation Strategy
 
-- `recall -> harvest -> organize -> validate -> sync`
+- Validate context references and freshness after edits.
+- Record stale files and unresolved references explicitly.
+- Keep output concise, path-based, and reproducible.
+
+## Beads Notes
+
+- Use `bd` via `bash` in this environment.
+- Prefer JSON output (`--json`) for structured parsing.
+
+## Sources
+
+- `README.md`
+- `docs/BEADS_QUICK_REFERENCE.md`
+- `docs/BEADS_DATA_MODEL.md`
+- `docs/adr/035-context-scout.md`
+
+## Update Notes
+
+- 2026-02-11: Added repository-specific tooling defaults for context operations.

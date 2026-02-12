@@ -238,7 +238,7 @@ where
 }
 
 // ============================================================================
-// Type Aliases (Concrete Service Specializations)
+// Type Aliases (Backward Compatibility)
 // ============================================================================
 
 /// Admin service for managing embedding providers at runtime

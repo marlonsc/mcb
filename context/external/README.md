@@ -76,13 +76,13 @@ Avoid generic library summaries. Every recommendation should be traceable to:
 | `figment.md` | medium-high (161 lines) | ADR/context analysis, merge precedence |
 | `linkme.md` | medium-high (143 lines) | registration patterns, linker behavior |
 | `dill.md` | medium-high (133 lines) | composition-root, IoC decisions |
-| `rocket.md` | expanding | HTTP framework, admin transport, guards |
-| `git2.md` | expanding | VCS operations, spawn_blocking, repo metadata |
-| `tree-sitter.md` | expanding | parser lifecycle, chunking, highlighting |
-| `clap.md` | expanding | CLI contract, subcommand routing |
-| `async-trait.md` | expanding | async trait objects, port design, Send+Sync |
-| `handlebars.md` | expanding | template rendering, helper safety |
-| `moka.md` | expanding | cache provider, TTL, invalidation |
+| `rocket.md` | expanded (179 lines) | HTTP framework, admin transport, guards, verification |
+| `git2.md` | expanded (174 lines) | VCS operations, spawn_blocking, provider abstraction |
+| `tree-sitter.md` | expanded (169 lines) | parsing, chunking, highlighting, grammar versioning |
+| `clap.md` | expanded (158 lines) | CLI contract, subcommand routing, config precedence |
+| `async-trait.md` | expanded (156 lines) | async trait objects, port design, Send+Sync, mocking |
+| `handlebars.md` | expanded (156 lines) | template rendering, helpers, strict mode, XSS safety |
+| `moka.md` | expanded (170 lines) | cache provider, TTL, invalidation, capacity planning |
 
 ## Review cadence
 

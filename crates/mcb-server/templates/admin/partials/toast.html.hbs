@@ -63,17 +63,27 @@
         const toast = params.get('toast');
         if (!toast) return;
 
+        const count = params.get('count') || '0';
+        const success = params.get('success') || '0';
+        const failed = params.get('failed') || '0';
+
         const messages = {
-          created: 'Record created successfully',
-          updated: 'Record updated successfully',
-          deleted: 'Record deleted successfully',
+          created: ['Record created successfully', 'success'],
+          updated: ['Record updated successfully', 'success'],
+          deleted: ['Record deleted successfully', 'success'],
+          bulk_deleted: [`${count} record(s) deleted successfully`, 'success'],
+          bulk_error: [`Failed to delete ${count} record(s)`, 'error'],
+          bulk_partial: [`${success} deleted, ${failed} failed`, 'error'],
         };
 
         if (messages[toast]) {
-          this.addToast(messages[toast], 'success');
+          this.addToast(messages[toast][0], messages[toast][1]);
         }
 
         params.delete('toast');
+        params.delete('count');
+        params.delete('success');
+        params.delete('failed');
         const newUrl = params.toString()
           ? `${window.location.pathname}?${params.toString()}`
           : window.location.pathname;

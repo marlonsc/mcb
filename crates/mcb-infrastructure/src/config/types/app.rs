@@ -53,32 +53,12 @@ pub struct VectorStoreConfigContainer {
     pub configs: HashMap<String, VectorStoreConfig>,
 }
 
-/// Database configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DatabaseConfig {
-    /// Provider name (e.g. "sqlite", "postgres").
-    /// Resolved via the linkme provider registry.
-    #[serde(default = "DatabaseConfig::default_provider")]
-    pub provider: String,
-}
-
-impl DatabaseConfig {
-    fn default_provider() -> String {
-        "sqlite".to_string()
-    }
-}
-
-impl Default for DatabaseConfig {
-    fn default() -> Self {
-        Self {
-            provider: Self::default_provider(),
-        }
-    }
-}
-
 /// Provider configurations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProvidersConfig {
+    /// Database provider name (e.g. "sqlite", "postgres")
+    #[serde(default = "default_database_provider")]
+    pub database: String,
     /// Embedding provider configuration
     #[serde(default)]
     pub embedding: EmbeddingConfigContainer,
@@ -87,9 +67,14 @@ pub struct ProvidersConfig {
     pub vector_store: VectorStoreConfigContainer,
 }
 
+fn default_database_provider() -> String {
+    "sqlite".to_string()
+}
+
 impl Default for ProvidersConfig {
     fn default() -> Self {
         Self {
+            database: default_database_provider(),
             embedding: EmbeddingConfigContainer {
                 provider: Some("fastembed".to_string()),
                 ..Default::default()
@@ -154,9 +139,6 @@ pub struct AppConfig {
     pub mode: ModeConfig,
     /// Server configuration
     pub server: ServerConfig,
-    /// Database configuration
-    #[serde(default)]
-    pub database: DatabaseConfig,
     /// Provider configurations
     pub providers: ProvidersConfig,
     /// Logging configuration

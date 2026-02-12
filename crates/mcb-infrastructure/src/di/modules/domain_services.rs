@@ -11,7 +11,6 @@
 
 use std::sync::Arc;
 
-use mcb_application::services::RepositoryResolver;
 use mcb_application::use_cases::{
     AgentSessionServiceImpl, ContextServiceImpl, IndexingServiceImpl, MemoryServiceImpl,
     SearchServiceImpl,
@@ -72,8 +71,6 @@ pub struct DomainServicesContainer {
     pub issue_entity_repository: Arc<dyn IssueEntityRepository>,
     /// Repository for org entity CRUD (orgs, users, teams, members, api keys)
     pub org_entity_repository: Arc<dyn OrgEntityRepository>,
-    /// DB-first project_id resolver — sole source of truth for project context
-    pub resolver: Arc<RepositoryResolver>,
 }
 
 /// Runtime dependencies required to assemble Phase 6 services (Memory Search + Hybrid Search).
@@ -188,10 +185,6 @@ impl DomainServicesFactory {
         let agent_session_service: Arc<dyn AgentSessionServiceInterface> =
             Arc::new(AgentSessionServiceImpl::new(deps.agent_repository));
 
-        let resolver = Arc::new(RepositoryResolver::new(Arc::clone(
-            &deps.vcs_entity_repository,
-        )));
-
         Ok(DomainServicesContainer {
             context_service,
             search_service,
@@ -206,7 +199,6 @@ impl DomainServicesFactory {
             plan_entity_repository: deps.plan_entity_repository,
             issue_entity_repository: deps.issue_entity_repository,
             org_entity_repository: deps.org_entity_repository,
-            resolver,
         })
     }
 

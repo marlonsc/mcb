@@ -12,13 +12,13 @@ use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use tracing::error;
 
 /// Creates a new agent session.
 #[tracing::instrument(skip_all)]
 pub async fn create_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
-    project_id: &str,
 ) -> Result<CallToolResult, McpError> {
     let data = match SessionHelpers::json_map(&args.data) {
         Some(data) => data,
@@ -32,6 +32,7 @@ pub async fn create_session(
     let agent_type = if let Some(value) = args.agent_type.as_ref() {
         SessionHelpers::parse_agent_type(value)?
     } else {
+        // Fallback: Check "agent_type" in data payload
         match SessionHelpers::get_str(data, "agent_type") {
             Some(value) => SessionHelpers::parse_agent_type(&value)?,
             None => {
@@ -70,8 +71,7 @@ pub async fn create_session(
         token_count: None,
         tool_calls_count: None,
         delegations_count: None,
-        project_id: SessionHelpers::get_str(data, schema::PROJECT_ID)
-            .or_else(|| Some(project_id.to_string())),
+        project_id: SessionHelpers::get_str(data, schema::PROJECT_ID).or(args.project_id.clone()),
         worktree_id: SessionHelpers::get_str(data, schema::WORKTREE_ID)
             .or(args.worktree_id.clone()),
     };
@@ -81,6 +81,9 @@ pub async fn create_session(
             "agent_type": agent_type.as_str(),
             "status": "active",
         })),
-        Err(e) => Ok(to_contextual_tool_error(e)),
+        Err(e) => {
+            error!("Failed to create agent session: {:?}", e);
+            Ok(to_contextual_tool_error(e))
+        }
     }
 }

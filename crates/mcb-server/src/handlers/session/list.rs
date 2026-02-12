@@ -8,13 +8,13 @@ use rmcp::model::CallToolResult;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use tracing::error;
 
 /// Lists agent sessions based on filters.
 #[tracing::instrument(skip_all)]
 pub async fn list_sessions(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
-    project_id: &str,
 ) -> Result<CallToolResult, McpError> {
     let query = AgentSessionQuery {
         session_summary_id: None,
@@ -29,7 +29,7 @@ pub async fn list_sessions(
             .map(|value| value.parse())
             .transpose()
             .map_err(|_| McpError::invalid_params("Invalid status", None))?,
-        project_id: Some(project_id.to_string()),
+        project_id: args.project_id.clone(),
         worktree_id: args.worktree_id.clone(),
         limit: Some(args.limit.unwrap_or(10) as usize),
     };
@@ -52,6 +52,9 @@ pub async fn list_sessions(
                 "count": items.len(),
             }))
         }
-        Err(e) => Ok(to_contextual_tool_error(e)),
+        Err(e) => {
+            error!("Failed to list agent sessions: {:?}", e);
+            Ok(to_contextual_tool_error(e))
+        }
     }
 }

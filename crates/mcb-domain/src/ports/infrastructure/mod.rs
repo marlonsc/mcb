@@ -24,7 +24,6 @@ pub mod auth;
 pub mod database;
 /// Event bus provider port
 pub mod events;
-
 /// System metrics collector port
 pub mod metrics;
 /// Performance metrics collector port (Prometheus histograms/counters)

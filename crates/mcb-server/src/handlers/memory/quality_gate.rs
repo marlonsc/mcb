@@ -19,7 +19,6 @@ use crate::formatter::ResponseFormatter;
 pub async fn store_quality_gate(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
-    project_id: &str,
 ) -> Result<CallToolResult, McpError> {
     let data = match MemoryHelpers::json_map(&args.data) {
         Some(data) => data,
@@ -74,7 +73,11 @@ pub async fn store_quality_gate(
         execution: None,
         quality_gate: Some(quality_gate),
     };
-    let project_id = project_id.to_string();
+    let project_id = args
+        .project_id
+        .clone()
+        .or_else(|| MemoryHelpers::get_str(data, "project_id"))
+        .unwrap_or_else(|| "default".to_string());
 
     match memory_service
         .store_observation(
@@ -99,11 +102,10 @@ pub async fn store_quality_gate(
 pub async fn get_quality_gates(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
-    project_id: &str,
 ) -> Result<CallToolResult, McpError> {
     let filter = MemoryFilter {
         id: None,
-        project_id: Some(project_id.to_string()),
+        project_id: args.project_id.clone(),
         tags: None,
         r#type: Some(ObservationType::QualityGate),
         session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),

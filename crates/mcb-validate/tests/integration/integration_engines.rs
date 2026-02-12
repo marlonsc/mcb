@@ -8,7 +8,6 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use crate::test_constants::*;
 use mcb_validate::engines::{
     ExpressionEngine, HybridRuleEngine, ReteEngine, RoutedEngine, RuleContext, RuleEngine,
     RuleEngineRouter, RuleEngineType,
@@ -556,8 +555,8 @@ pub mod errors;
         );
 
         RuleContext {
-            workspace_root: PathBuf::from(TEST_WORKSPACE_PATH),
-            config: ValidationConfig::new(TEST_WORKSPACE_PATH),
+            workspace_root: PathBuf::from("/test/workspace"),
+            config: ValidationConfig::new("/test/workspace"),
             ast_data: HashMap::new(),
             cargo_data: HashMap::new(),
             file_contents,
@@ -600,8 +599,8 @@ rule "DomainIndependence" salience 10 {
 
         // Use rust-rule-engine compatible GRL syntax
         let rule = json!({
-            "id": RULE_CA001,
-            "engine": ENGINE_RUST_RULE,
+            "id": "CA001",
+            "engine": "rust-rule-engine",
             "rule": r#"
 rule "DomainIndependence" salience 10 {
     when

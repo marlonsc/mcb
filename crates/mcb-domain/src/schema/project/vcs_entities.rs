@@ -59,11 +59,6 @@ pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!("idx_repositories_org", "repositories", ["org_id"]),
         index!("idx_repositories_project", "repositories", ["project_id"]),
-        index!(
-            "idx_repositories_url_org",
-            "repositories",
-            ["org_id", "url"]
-        ),
         index!("idx_branches_repo", "branches", ["repository_id"]),
         index!("idx_worktrees_repo", "worktrees", ["repository_id"]),
         index!("idx_worktrees_branch", "worktrees", ["branch_id"]),

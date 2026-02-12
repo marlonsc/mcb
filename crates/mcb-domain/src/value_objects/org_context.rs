@@ -18,23 +18,6 @@ impl OrgContext {
     pub fn new(org_id: OrgId, org_name: String) -> Self {
         Self { org_id, org_name }
     }
-
-    /// Return the current tenant context.
-    ///
-    /// **Phase 0**: Always returns the bootstrap default organization.
-    /// **Phase 1** (multi-tenant): Will resolve from the authenticated
-    /// request context (JWT claims, API-key lookup, etc.).
-    ///
-    /// All handler code should call this instead of `OrgContext::default()`
-    /// so there is a single migration point when real org resolution lands.
-    pub fn current() -> Self {
-        Self::default()
-    }
-
-    /// Convenience accessor: returns the `org_id` as a `&str`.
-    pub fn id_str(&self) -> &str {
-        self.org_id.as_str()
-    }
 }
 
 impl Default for OrgContext {

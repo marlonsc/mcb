@@ -9,6 +9,7 @@ use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use tracing::error;
 
 /// Updates an existing agent session.
 #[tracing::instrument(skip_all)]
@@ -55,12 +56,18 @@ pub async fn update_session(
                     schema::STATUS: &status_str,
                     "updated": true,
                 })),
-                Err(e) => Ok(to_contextual_tool_error(e)),
+                Err(e) => {
+                    error!("Failed to update agent session: {:?}", e);
+                    Ok(to_contextual_tool_error(e))
+                }
             }
         }
         Ok(None) => Ok(CallToolResult::error(vec![Content::text(
             "Agent session not found",
         )])),
-        Err(e) => Ok(to_contextual_tool_error(e)),
+        Err(e) => {
+            error!("Failed to update agent session (get failed): {:?}", e);
+            Ok(to_contextual_tool_error(e))
+        }
     }
 }

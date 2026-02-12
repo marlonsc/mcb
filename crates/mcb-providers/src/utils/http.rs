@@ -13,6 +13,12 @@ use crate::constants::ERROR_MSG_REQUEST_TIMEOUT;
 /// Default timeout for HTTP requests (30 seconds)
 pub(crate) const DEFAULT_HTTP_TIMEOUT: Duration = Duration::from_secs(30);
 
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum RequestErrorKind {
+    Embedding,
+    VectorDb,
+}
+
 /// Create an HTTP client with the specified timeout
 ///
 /// # Arguments
@@ -56,10 +62,43 @@ pub(crate) fn handle_request_error(
     timeout: Duration,
     endpoint: &str,
 ) -> Error {
-    if error.is_timeout() {
-        Error::embedding(format!("{} {:?}", ERROR_MSG_REQUEST_TIMEOUT, timeout))
-    } else {
-        Error::embedding(format!("HTTP request to {endpoint} failed: {error}"))
+    handle_request_error_with_kind(
+        error,
+        timeout,
+        endpoint,
+        endpoint,
+        RequestErrorKind::Embedding,
+    )
+}
+
+pub(crate) fn handle_request_error_with_kind(
+    error: reqwest::Error,
+    timeout: Duration,
+    provider: &str,
+    operation: &str,
+    kind: RequestErrorKind,
+) -> Error {
+    match kind {
+        RequestErrorKind::Embedding => {
+            if error.is_timeout() {
+                Error::embedding(format!("{} {:?}", ERROR_MSG_REQUEST_TIMEOUT, timeout))
+            } else {
+                Error::embedding(format!("HTTP request to {provider} failed: {error}"))
+            }
+        }
+        RequestErrorKind::VectorDb => {
+            if error.is_timeout() {
+                Error::vector_db(format!(
+                    "{} {} request timed out after {:?}",
+                    provider, operation, timeout
+                ))
+            } else {
+                Error::vector_db(format!(
+                    "{} HTTP request for {} failed: {}",
+                    provider, operation, error
+                ))
+            }
+        }
     }
 }
 

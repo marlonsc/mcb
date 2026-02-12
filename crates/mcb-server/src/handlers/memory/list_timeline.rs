@@ -15,11 +15,10 @@ use crate::formatter::ResponseFormatter;
 pub async fn list_observations(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
-    project_id: &str,
 ) -> Result<CallToolResult, McpError> {
     let filter = MemoryFilter {
         id: None,
-        project_id: Some(project_id.to_string()),
+        project_id: args.project_id.clone(),
         tags: args.tags.clone(),
         r#type: None,
         session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
@@ -70,7 +69,6 @@ pub async fn list_observations(
 pub async fn get_timeline(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
-    project_id: &str,
 ) -> Result<CallToolResult, McpError> {
     let anchor_id = if let Some(anchor_id) = args.anchor_id.clone() {
         anchor_id
@@ -94,7 +92,7 @@ pub async fn get_timeline(
     };
     let filter = MemoryFilter {
         id: None,
-        project_id: Some(project_id.to_string()),
+        project_id: args.project_id.clone(),
         tags: None,
         r#type: None,
         session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
