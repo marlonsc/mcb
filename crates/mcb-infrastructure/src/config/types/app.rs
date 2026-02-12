@@ -1,6 +1,7 @@
 //! Main application configuration
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use serde::{Deserialize, Serialize};
@@ -32,6 +33,8 @@ pub struct EmbeddingConfigContainer {
     pub api_key: Option<String>,
     /// Embedding dimensions
     pub dimensions: Option<usize>,
+    /// Cache directory for local embedding providers
+    pub cache_dir: Option<PathBuf>,
     /// Named configs for TOML format
     #[serde(default)]
     pub configs: HashMap<String, EmbeddingConfig>,

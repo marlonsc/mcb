@@ -12,6 +12,7 @@ use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handler_helpers::resolve_identifier_precedence;
 use tracing::error;
 
 /// Creates a new agent session.
@@ -29,17 +30,18 @@ pub async fn create_session(
         }
     };
 
-    let agent_type = if let Some(value) = args.agent_type.as_ref() {
-        SessionHelpers::parse_agent_type(value)?
-    } else {
-        // Fallback: Check "agent_type" in data payload
-        match SessionHelpers::get_str(data, "agent_type") {
-            Some(value) => SessionHelpers::parse_agent_type(&value)?,
-            None => {
-                return Ok(CallToolResult::error(vec![Content::text(
-                    "Missing agent_type for create (expected in args or data)",
-                )]));
-            }
+    let payload_agent_type = SessionHelpers::get_str(data, "agent_type");
+    let agent_type_value = resolve_identifier_precedence(
+        "agent_type",
+        args.agent_type.as_deref(),
+        payload_agent_type.as_deref(),
+    )?;
+    let agent_type = match agent_type_value {
+        Some(value) => SessionHelpers::parse_agent_type(&value)?,
+        None => {
+            return Ok(CallToolResult::error(vec![Content::text(
+                "Missing agent_type for create (expected in args or data)",
+            )]));
         }
     };
     let now = SystemTime::now()
@@ -68,9 +70,16 @@ pub async fn create_session(
         token_count: None,
         tool_calls_count: None,
         delegations_count: None,
-        project_id: SessionHelpers::get_str(data, schema::PROJECT_ID).or(args.project_id.clone()),
-        worktree_id: SessionHelpers::get_str(data, schema::WORKTREE_ID)
-            .or(args.worktree_id.clone()),
+        project_id: resolve_identifier_precedence(
+            schema::PROJECT_ID,
+            args.project_id.as_deref(),
+            SessionHelpers::get_str(data, schema::PROJECT_ID).as_deref(),
+        )?,
+        worktree_id: resolve_identifier_precedence(
+            schema::WORKTREE_ID,
+            args.worktree_id.as_deref(),
+            SessionHelpers::get_str(data, schema::WORKTREE_ID).as_deref(),
+        )?,
     };
     match agent_service.create_session(session).await {
         Ok(id) => ResponseFormatter::json_success(&serde_json::json!({

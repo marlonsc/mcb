@@ -254,6 +254,11 @@ impl McpServer {
     pub fn hook_processor(&self) -> Arc<HookProcessor> {
         Arc::clone(&self.handlers.hook_processor)
     }
+
+    /// Clone the complete tool handlers set for unified internal execution.
+    pub fn tool_handlers(&self) -> ToolHandlers {
+        self.handlers.clone()
+    }
 }
 
 impl ServerHandler for McpServer {

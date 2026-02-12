@@ -2,6 +2,8 @@
 
 use std::path::PathBuf;
 
+use std::fs;
+
 use mcb_domain::ports::services::ValidationServiceInterface;
 use mcb_infrastructure::validation::InfraValidationService;
 
@@ -68,4 +70,41 @@ async fn test_validate_with_specific_validator() {
     assert!(result.is_ok());
     let report = result.unwrap();
     assert!(report.passed || !report.violations.is_empty());
+}
+
+#[tokio::test]
+async fn test_validate_detects_inline_tests_in_src_via_registry_path() {
+    let tmp = tempfile::tempdir().expect("create tempdir");
+    let workspace = tmp.path();
+
+    fs::create_dir_all(workspace.join("crates/foo/src")).expect("create crate src");
+    fs::write(
+        workspace.join("Cargo.toml"),
+        "[workspace]\nmembers = [\"crates/foo\"]\n",
+    )
+    .expect("write workspace cargo");
+    fs::write(
+        workspace.join("crates/foo/Cargo.toml"),
+        "[package]\nname = \"foo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
+    )
+    .expect("write crate cargo");
+    fs::write(
+        workspace.join("crates/foo/src/lib.rs"),
+        "#[cfg(test)]\nmod tests {\n    #[test]\n    fn smoke() {\n        assert_eq!(1, 1);\n    }\n}\n",
+    )
+    .expect("write src lib");
+
+    let service = InfraValidationService::new();
+    let report = service
+        .validate(workspace, Some(&["tests_org".to_string()]), Some("warning"))
+        .await
+        .expect("validate should succeed");
+
+    assert!(!report.passed);
+    assert!(report.violations.iter().any(|v| {
+        v.id == "TEST001"
+            && v.file
+                .as_deref()
+                .is_some_and(|f| f.ends_with("crates/foo/src/lib.rs"))
+    }));
 }

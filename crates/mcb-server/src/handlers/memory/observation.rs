@@ -12,6 +12,7 @@ use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handler_helpers::resolve_identifier_precedence;
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -40,22 +41,33 @@ pub async fn store_observation(
         Err(error_result) => return Ok(error_result),
     };
     let tags = MemoryHelpers::get_string_list(data, "tags");
-    let project_id = args
-        .project_id
-        .clone()
-        .or_else(|| MemoryHelpers::get_str(data, "project_id"))
-        .ok_or_else(|| {
-            McpError::invalid_params("project_id is required for storing observation", None)
-        })?;
+    let payload_project_id = MemoryHelpers::get_str(data, "project_id");
+    let project_id = resolve_identifier_precedence(
+        "project_id",
+        args.project_id.as_deref(),
+        payload_project_id.as_deref(),
+    )?
+    .ok_or_else(|| {
+        McpError::invalid_params("project_id is required for storing observation", None)
+    })?;
 
     let vcs_context = VcsContext::capture();
+    let payload_session_id = MemoryHelpers::get_str(data, "session_id");
+    let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
+
     let metadata = ObservationMetadata {
         id: Uuid::new_v4().to_string(),
-        session_id: MemoryHelpers::get_str(data, "session_id")
-            .or_else(|| args.session_id.as_ref().map(|id| id.as_str().to_string())),
-        repo_id: MemoryHelpers::get_str(data, "repo_id")
-            .or_else(|| args.repo_id.clone())
-            .or_else(|| vcs_context.repo_id.clone()),
+        session_id: resolve_identifier_precedence(
+            "session_id",
+            args.session_id.as_ref().map(|id| id.as_str()),
+            payload_session_id.as_deref(),
+        )?,
+        repo_id: resolve_identifier_precedence(
+            "repo_id",
+            args.repo_id.as_deref(),
+            payload_repo_id.as_deref(),
+        )?
+        .or_else(|| vcs_context.repo_id.clone()),
         file_path: MemoryHelpers::get_str(data, "file_path"),
         branch: MemoryHelpers::get_str(data, "branch").or_else(|| vcs_context.branch.clone()),
         commit: MemoryHelpers::get_str(data, "commit").or_else(|| vcs_context.commit.clone()),

@@ -408,7 +408,7 @@ impl TestValidator {
         Ok(violations)
     }
 
-    /// Verifies that no `#[cfg(test)] mod tests {}` blocks exist in src/ directory.
+    /// Verifies that no inline test declarations exist in src/ directories.
     pub fn validate_no_inline_tests(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
         let cfg_test_pattern = PATTERNS.get("TEST001.cfg_test");
@@ -426,28 +426,34 @@ impl TestValidator {
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
+                if Self::is_fixture_path(entry.path()) {
+                    continue;
+                }
+
                 let content = std::fs::read_to_string(entry.path())?;
                 let lines: Vec<&str> = content.lines().collect();
+                let mut last_cfg_test_line: Option<usize> = None;
 
                 for (line_num, line) in lines.iter().enumerate() {
-                    // Check for #[cfg(test)] followed by mod tests
                     if cfg_test_pattern.is_some_and(|p| p.is_match(line)) {
-                        // Look ahead for mod tests
-                        let lookahead = lines
-                            .iter()
-                            .skip(line_num)
-                            .take(5)
-                            .copied()
-                            .collect::<Vec<_>>()
-                            .join("\n");
+                        last_cfg_test_line = Some(line_num);
+                        violations.push(TestViolation::InlineTestModule {
+                            file: entry.path().to_path_buf(),
+                            line: line_num + 1,
+                            severity: Severity::Error,
+                        });
+                        continue;
+                    }
 
-                        if mod_tests_pattern.is_some_and(|p| p.is_match(&lookahead)) {
-                            violations.push(TestViolation::InlineTestModule {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                severity: Severity::Error,
-                            });
+                    if mod_tests_pattern.is_some_and(|p| p.is_match(line)) {
+                        if last_cfg_test_line.is_some_and(|cfg_line| line_num <= cfg_line + 5) {
+                            continue;
                         }
+                        violations.push(TestViolation::InlineTestModule {
+                            file: entry.path().to_path_buf(),
+                            line: line_num + 1,
+                            severity: Severity::Error,
+                        });
                     }
                 }
             }
@@ -1044,8 +1050,9 @@ impl TestValidator {
     }
 
     fn is_fixture_path(path: &std::path::Path) -> bool {
-        path.to_string_lossy()
-            .contains("/crates/mcb-validate/tests/fixtures/")
+        let path_str = path.to_string_lossy();
+        path_str.contains("/crates/mcb-validate/tests/fixtures/")
+            || path_str.contains("/tests/fixtures/")
     }
 
     /// Retrieves the source directories to validate.

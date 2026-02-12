@@ -5,20 +5,16 @@
 use std::sync::Arc;
 
 use rmcp::ErrorData as McpError;
-use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolRequestParams, CallToolResult};
 use tracing::warn;
 
-use crate::args::{
-    AgentArgs, EntityArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs,
-    ValidateArgs, VcsArgs,
-};
 use crate::handlers::{
     AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
     PlanEntityHandler, ProjectHandler, SearchHandler, SessionHandler, ValidateHandler,
     VcsEntityHandler, VcsHandler,
 };
 use crate::hooks::{HookProcessor, PostToolUseContext};
+use crate::tools::dispatch_tool_call;
 
 /// Handler references for tool routing
 #[derive(Clone)]
@@ -62,49 +58,7 @@ pub async fn route_tool_call(
     handlers: &ToolHandlers,
 ) -> Result<CallToolResult, McpError> {
     let tool_name = request.name.clone();
-
-    let result = match request.name.as_ref() {
-        "index" => {
-            let args = parse_args::<IndexArgs>(&request)?;
-            handlers.index.handle(Parameters(args)).await
-        }
-        "search" => {
-            let args = parse_args::<SearchArgs>(&request)?;
-            handlers.search.handle(Parameters(args)).await
-        }
-        "validate" => {
-            let args = parse_args::<ValidateArgs>(&request)?;
-            handlers.validate.handle(Parameters(args)).await
-        }
-        "memory" => {
-            let args = parse_args::<MemoryArgs>(&request)?;
-            handlers.memory.handle(Parameters(args)).await
-        }
-        "session" => {
-            let args = parse_args::<SessionArgs>(&request)?;
-            handlers.session.handle(Parameters(args)).await
-        }
-        "agent" => {
-            let args = parse_args::<AgentArgs>(&request)?;
-            handlers.agent.handle(Parameters(args)).await
-        }
-        "project" => {
-            let args = parse_args::<ProjectArgs>(&request)?;
-            handlers.project.handle(Parameters(args)).await
-        }
-        "vcs" => {
-            let args = parse_args::<VcsArgs>(&request)?;
-            handlers.vcs.handle(Parameters(args)).await
-        }
-        "entity" => {
-            let args = parse_args::<EntityArgs>(&request)?;
-            handlers.entity.handle(Parameters(args)).await
-        }
-        _ => Err(McpError::invalid_params(
-            format!("Unknown tool: {}", request.name),
-            None,
-        )),
-    }?;
+    let result = dispatch_tool_call(&request, handlers).await?;
 
     if let Err(e) = trigger_post_tool_use_hook(&tool_name, &result, &handlers.hook_processor).await
     {
@@ -124,13 +78,4 @@ async fn trigger_post_tool_use_hook(
         .process_post_tool_use(context)
         .await
         .map_err(|e| e.to_string())
-}
-
-/// Parse request arguments into the expected type
-fn parse_args<T: serde::de::DeserializeOwned>(
-    request: &CallToolRequestParams,
-) -> Result<T, McpError> {
-    let args_value = serde_json::Value::Object(request.arguments.clone().unwrap_or_default());
-    serde_json::from_value(args_value)
-        .map_err(|e| McpError::invalid_params(format!("Failed to parse arguments: {e}"), None))
 }

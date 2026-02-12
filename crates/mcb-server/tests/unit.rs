@@ -74,3 +74,6 @@ mod vcs_entity_handler_tests;
 
 #[path = "unit/collections_utils_tests.rs"]
 mod collections_utils_tests;
+
+#[path = "unit/context_resolution_tests.rs"]
+mod context_resolution_tests;

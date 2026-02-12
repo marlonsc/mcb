@@ -149,6 +149,7 @@ async fn run_server_mode(
         plan_entity: Some(server.plan_entity_repository()),
         issue_entity: Some(server.issue_entity_repository()),
         org_entity: Some(server.org_entity_repository()),
+        tool_handlers: Some(server.tool_handlers()),
     };
 
     let browse_state = BrowseState {

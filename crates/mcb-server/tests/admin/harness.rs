@@ -146,6 +146,7 @@ impl AdminTestHarness {
             plan_entity: None,
             issue_entity: None,
             org_entity: None,
+            tool_handlers: None,
         }
     }
 

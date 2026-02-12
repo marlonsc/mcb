@@ -40,6 +40,37 @@ pub fn resolve_org_id(explicit: Option<&str>) -> String {
     OrgContext::current().id_str().to_string()
 }
 
+/// Normalizes optional identifier input by trimming whitespace and discarding empty values.
+pub fn normalize_identifier(value: Option<&str>) -> Option<String> {
+    value
+        .map(str::trim)
+        .filter(|v| !v.is_empty())
+        .map(str::to_string)
+}
+
+/// Resolves identifier precedence between explicit args and payload fields.
+///
+/// Returns an error when both values are present but conflict.
+pub fn resolve_identifier_precedence(
+    field: &str,
+    args_value: Option<&str>,
+    payload_value: Option<&str>,
+) -> Result<Option<String>, McpError> {
+    let args_normalized = normalize_identifier(args_value);
+    let payload_normalized = normalize_identifier(payload_value);
+
+    if let (Some(arg), Some(payload)) = (&args_normalized, &payload_normalized)
+        && arg != payload
+    {
+        return Err(McpError::invalid_params(
+            format!("conflicting {field} between args and data"),
+            None,
+        ));
+    }
+
+    Ok(args_normalized.or(payload_normalized))
+}
+
 /// Deserializes required request data into the target type.
 pub fn require_data<T: DeserializeOwned>(
     data: Option<serde_json::Value>,

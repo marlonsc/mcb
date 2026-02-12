@@ -23,14 +23,16 @@ use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use mcb_infrastructure::infrastructure::ServiceManager;
+use rmcp::model::{CallToolRequestParams, Content};
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get, post};
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use tracing::info;
 
 use super::auth::AdminAuth;
-use crate::handler_helpers::resolve_org_id;
+use crate::tools::{ToolHandlers, route_tool_call};
 
 /// Admin handler state containing shared service references
 #[derive(Clone)]
@@ -65,6 +67,61 @@ pub struct AdminState {
     pub issue_entity: Option<Arc<dyn IssueEntityRepository>>,
     /// Organization entity repository used by admin CRUD pages.
     pub org_entity: Option<Arc<dyn OrgEntityRepository>>,
+    /// Unified MCP tool handlers used to execute admin operations via command gateway.
+    pub tool_handlers: Option<ToolHandlers>,
+}
+
+fn extract_text_content(content: &[Content]) -> String {
+    content
+        .iter()
+        .filter_map(|entry| {
+            serde_json::to_value(entry).ok().and_then(|value| {
+                value
+                    .get("text")
+                    .and_then(|text| text.as_str())
+                    .map(str::to_string)
+            })
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+async fn execute_tool_json<T: DeserializeOwned>(
+    state: &AdminState,
+    tool_name: &str,
+    args: serde_json::Value,
+) -> Result<T, String> {
+    let handlers = state
+        .tool_handlers
+        .as_ref()
+        .ok_or_else(|| "Unified execution handlers are not available".to_string())?;
+
+    let arguments = args
+        .as_object()
+        .cloned()
+        .ok_or_else(|| format!("{tool_name} arguments must be a JSON object"))?;
+
+    let request = CallToolRequestParams {
+        name: tool_name.to_string().into(),
+        arguments: Some(arguments),
+        task: None,
+        meta: None,
+    };
+
+    let result = route_tool_call(request, handlers)
+        .await
+        .map_err(|e| e.message.to_string())?;
+
+    let text = extract_text_content(&result.content);
+    if result.is_error.unwrap_or(false) {
+        return Err(if text.is_empty() {
+            format!("{tool_name} execution failed")
+        } else {
+            text
+        });
+    }
+
+    serde_json::from_str(&text).map_err(|e| format!("Failed to parse {tool_name} output JSON: {e}"))
 }
 
 /// Health check response for admin API
@@ -162,40 +219,6 @@ pub struct ProjectsBrowseResponse {
     pub total: usize,
 }
 
-/// List workflow projects for browse entity graph
-#[get("/projects")]
-pub async fn list_browse_projects(
-    _auth: AdminAuth,
-    state: &State<AdminState>,
-) -> Result<Json<ProjectsBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
-    tracing::info!("list_browse_projects called");
-    let Some(project_workflow) = &state.project_workflow else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(CacheErrorResponse {
-                error: "Project workflow service not available".to_string(),
-            }),
-        ));
-    };
-
-    let org_id = resolve_org_id(None);
-    match project_workflow.list(org_id.as_str()).await {
-        Ok(projects) => {
-            let total = projects.len();
-            Ok(Json(ProjectsBrowseResponse { projects, total }))
-        }
-        Err(e) => {
-            tracing::error!(error = %e, "failed to list projects");
-            Err((
-                Status::InternalServerError,
-                Json(CacheErrorResponse {
-                    error: "Failed to list projects".to_string(),
-                }),
-            ))
-        }
-    }
-}
-
 /// Response payload for the repositories browse endpoint.
 #[derive(Serialize)]
 pub struct RepositoriesBrowseResponse {
@@ -232,6 +255,37 @@ pub struct OrganizationsBrowseResponse {
     pub total: usize,
 }
 
+/// List workflow projects for browse entity graph
+#[get("/projects")]
+pub async fn list_browse_projects(
+    _auth: AdminAuth,
+    state: &State<AdminState>,
+) -> Result<Json<ProjectsBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
+    tracing::info!("list_browse_projects called");
+    let args = serde_json::json!({
+        "action": "list",
+        "resource": "project",
+        "project_id": ""
+    });
+
+    let projects: Vec<mcb_domain::entities::project::Project> =
+        match execute_tool_json(state.inner(), "project", args).await {
+            Ok(projects) => projects,
+            Err(e) => {
+                tracing::error!(error = %e, "failed to list projects via unified execution");
+                return Err((
+                    Status::ServiceUnavailable,
+                    Json(CacheErrorResponse {
+                        error: "Project workflow service not available".to_string(),
+                    }),
+                ));
+            }
+        };
+
+    let total = projects.len();
+    Ok(Json(ProjectsBrowseResponse { projects, total }))
+}
+
 /// List repositories for browse entity graph.
 #[get("/repositories?<project_id>")]
 pub async fn list_browse_repositories(
@@ -240,36 +294,31 @@ pub async fn list_browse_repositories(
     project_id: Option<String>,
 ) -> Result<Json<RepositoriesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
     tracing::info!("list_browse_repositories called");
-    let Some(vcs_entity) = &state.vcs_entity else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(CacheErrorResponse {
-                error: "VCS entity service not available".to_string(),
-            }),
-        ));
-    };
+    let args = serde_json::json!({
+        "action": "list",
+        "resource": "repository",
+        "project_id": project_id.unwrap_or_default()
+    });
 
-    let org_id = resolve_org_id(None);
-    let pid = project_id.as_deref().unwrap_or("");
+    let repositories: Vec<mcb_domain::entities::repository::Repository> =
+        match execute_tool_json(state.inner(), "entity", args).await {
+            Ok(repositories) => repositories,
+            Err(e) => {
+                tracing::error!(error = %e, "failed to list repositories via unified execution");
+                return Err((
+                    Status::ServiceUnavailable,
+                    Json(CacheErrorResponse {
+                        error: "VCS entity service not available".to_string(),
+                    }),
+                ));
+            }
+        };
 
-    match vcs_entity.list_repositories(org_id.as_str(), pid).await {
-        Ok(repositories) => {
-            let total = repositories.len();
-            Ok(Json(RepositoriesBrowseResponse {
-                repositories,
-                total,
-            }))
-        }
-        Err(e) => {
-            tracing::error!(error = %e, "failed to list repositories");
-            Err((
-                Status::InternalServerError,
-                Json(CacheErrorResponse {
-                    error: "Failed to list repositories".to_string(),
-                }),
-            ))
-        }
-    }
+    let total = repositories.len();
+    Ok(Json(RepositoriesBrowseResponse {
+        repositories,
+        total,
+    }))
 }
 
 /// List plans for browse entity graph.
@@ -280,33 +329,28 @@ pub async fn list_browse_plans(
     project_id: Option<String>,
 ) -> Result<Json<PlansBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
     tracing::info!("list_browse_plans called");
-    let Some(plan_entity) = &state.plan_entity else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(CacheErrorResponse {
-                error: "Plan entity service not available".to_string(),
-            }),
-        ));
-    };
+    let args = serde_json::json!({
+        "action": "list",
+        "resource": "plan",
+        "project_id": project_id.unwrap_or_default()
+    });
 
-    let org_id = resolve_org_id(None);
-    let pid = project_id.as_deref().unwrap_or("");
+    let plans: Vec<mcb_domain::entities::plan::Plan> =
+        match execute_tool_json(state.inner(), "entity", args).await {
+            Ok(plans) => plans,
+            Err(e) => {
+                tracing::error!(error = %e, "failed to list plans via unified execution");
+                return Err((
+                    Status::ServiceUnavailable,
+                    Json(CacheErrorResponse {
+                        error: "Plan entity service not available".to_string(),
+                    }),
+                ));
+            }
+        };
 
-    match plan_entity.list_plans(org_id.as_str(), pid).await {
-        Ok(plans) => {
-            let total = plans.len();
-            Ok(Json(PlansBrowseResponse { plans, total }))
-        }
-        Err(e) => {
-            tracing::error!(error = %e, "failed to list plans");
-            Err((
-                Status::InternalServerError,
-                Json(CacheErrorResponse {
-                    error: "Failed to list plans".to_string(),
-                }),
-            ))
-        }
-    }
+    let total = plans.len();
+    Ok(Json(PlansBrowseResponse { plans, total }))
 }
 
 /// List issues for browse entity graph.
@@ -317,33 +361,28 @@ pub async fn list_browse_issues(
     project_id: Option<String>,
 ) -> Result<Json<IssuesBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
     tracing::info!("list_browse_issues called");
-    let Some(issue_entity) = &state.issue_entity else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(CacheErrorResponse {
-                error: "Issue entity service not available".to_string(),
-            }),
-        ));
-    };
+    let args = serde_json::json!({
+        "action": "list",
+        "resource": "issue",
+        "project_id": project_id.unwrap_or_default()
+    });
 
-    let org_id = resolve_org_id(None);
-    let pid = project_id.as_deref().unwrap_or("");
+    let issues: Vec<mcb_domain::entities::project::ProjectIssue> =
+        match execute_tool_json(state.inner(), "entity", args).await {
+            Ok(issues) => issues,
+            Err(e) => {
+                tracing::error!(error = %e, "failed to list issues via unified execution");
+                return Err((
+                    Status::ServiceUnavailable,
+                    Json(CacheErrorResponse {
+                        error: "Issue entity service not available".to_string(),
+                    }),
+                ));
+            }
+        };
 
-    match issue_entity.list_issues(org_id.as_str(), pid).await {
-        Ok(issues) => {
-            let total = issues.len();
-            Ok(Json(IssuesBrowseResponse { issues, total }))
-        }
-        Err(e) => {
-            tracing::error!(error = %e, "failed to list issues");
-            Err((
-                Status::InternalServerError,
-                Json(CacheErrorResponse {
-                    error: "Failed to list issues".to_string(),
-                }),
-            ))
-        }
-    }
+    let total = issues.len();
+    Ok(Json(IssuesBrowseResponse { issues, total }))
 }
 
 /// List organizations for browse entity graph.
@@ -352,33 +391,30 @@ pub async fn list_browse_organizations(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> Result<Json<OrganizationsBrowseResponse>, (Status, Json<CacheErrorResponse>)> {
-    let Some(org_entity) = &state.org_entity else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(CacheErrorResponse {
-                error: "Org entity service not available".to_string(),
-            }),
-        ));
-    };
+    let args = serde_json::json!({
+        "action": "list",
+        "resource": "org"
+    });
 
-    match org_entity.list_orgs().await {
-        Ok(organizations) => {
-            let total = organizations.len();
-            Ok(Json(OrganizationsBrowseResponse {
-                organizations,
-                total,
-            }))
-        }
-        Err(e) => {
-            tracing::error!(error = %e, "failed to list organizations");
-            Err((
-                Status::InternalServerError,
-                Json(CacheErrorResponse {
-                    error: "Failed to list organizations".to_string(),
-                }),
-            ))
-        }
-    }
+    let organizations: Vec<mcb_domain::entities::organization::Organization> =
+        match execute_tool_json(state.inner(), "entity", args).await {
+            Ok(organizations) => organizations,
+            Err(e) => {
+                tracing::error!(error = %e, "failed to list organizations via unified execution");
+                return Err((
+                    Status::ServiceUnavailable,
+                    Json(CacheErrorResponse {
+                        error: "Org entity service not available".to_string(),
+                    }),
+                ));
+            }
+        };
+
+    let total = organizations.len();
+    Ok(Json(OrganizationsBrowseResponse {
+        organizations,
+        total,
+    }))
 }
 
 /// Readiness response

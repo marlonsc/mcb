@@ -35,6 +35,46 @@ fn extract_text(content: &[rmcp::model::Content]) -> String {
         .join("\n")
 }
 
+fn parse_count_from_json_text(text: &str) -> usize {
+    serde_json::from_str::<serde_json::Value>(text)
+        .ok()
+        .and_then(|v| v.get("count").and_then(serde_json::Value::as_u64))
+        .map(|v| v as usize)
+        .unwrap_or(0)
+}
+
+async fn list_observation_count(
+    memory_h: &mcb_server::handlers::MemoryHandler,
+    query: &str,
+) -> usize {
+    let list_args = MemoryArgs {
+        action: MemoryAction::List,
+        org_id: None,
+        resource: MemoryResource::Observation,
+        project_id: None,
+        data: None,
+        ids: None,
+        repo_id: None,
+        session_id: None,
+        tags: None,
+        query: Some(query.to_string()),
+        anchor_id: None,
+        depth_before: None,
+        depth_after: None,
+        window_secs: None,
+        observation_types: None,
+        max_tokens: None,
+        limit: Some(100),
+    };
+
+    let list_result = memory_h
+        .handle(Parameters(list_args))
+        .await
+        .expect("list observations");
+    let list_text = extract_text(&list_result.content);
+    parse_count_from_json_text(&list_text)
+}
+
 // =============================================================================
 // Memory Store — Real Persistence
 // =============================================================================
@@ -646,4 +686,158 @@ async fn test_real_session_list_empty_returns_gracefully() {
         !list_resp.is_error.unwrap_or(false),
         "Empty session list should not be an error"
     );
+}
+
+#[tokio::test]
+async fn test_real_memory_store_observation_conflicting_project_rejected_without_side_effect() {
+    let (server, _temp) = create_test_mcp_server().await;
+    let memory_h = server.memory_handler();
+    let query = "conflict-observation-side-effect-token";
+
+    let before_count = list_observation_count(&memory_h, query).await;
+
+    let store_args = MemoryArgs {
+        action: MemoryAction::Store,
+        org_id: None,
+        resource: MemoryResource::Observation,
+        project_id: Some("project-from-args".to_string()),
+        data: Some(json!({
+            "content": query,
+            "observation_type": "context",
+            "project_id": "project-from-data",
+            "tags": ["conflict-test"]
+        })),
+        ids: None,
+        repo_id: None,
+        session_id: None,
+        tags: None,
+        query: None,
+        anchor_id: None,
+        depth_before: None,
+        depth_after: None,
+        window_secs: None,
+        observation_types: None,
+        max_tokens: None,
+        limit: None,
+    };
+
+    let err = memory_h
+        .handle(Parameters(store_args))
+        .await
+        .expect_err("conflicting project_id must fail");
+    assert!(err.message.contains("conflicting project_id"));
+
+    let after_count = list_observation_count(&memory_h, query).await;
+    assert_eq!(after_count, before_count);
+}
+
+#[tokio::test]
+async fn test_real_memory_store_execution_conflicting_repo_rejected_without_side_effect() {
+    let (server, _temp) = create_test_mcp_server().await;
+    let memory_h = server.memory_handler();
+    let query = "conflict-execution-side-effect-token";
+
+    let before_count = list_observation_count(&memory_h, query).await;
+
+    let store_args = MemoryArgs {
+        action: MemoryAction::Store,
+        org_id: None,
+        resource: MemoryResource::Execution,
+        project_id: Some("project-exec".to_string()),
+        data: Some(json!({
+            "command": query,
+            "exit_code": 0,
+            "duration_ms": 1,
+            "success": true,
+            "execution_type": "test",
+            "repo_id": "repo-from-data"
+        })),
+        ids: None,
+        repo_id: Some("repo-from-args".to_string()),
+        session_id: None,
+        tags: None,
+        query: None,
+        anchor_id: None,
+        depth_before: None,
+        depth_after: None,
+        window_secs: None,
+        observation_types: None,
+        max_tokens: None,
+        limit: None,
+    };
+
+    let err = memory_h
+        .handle(Parameters(store_args))
+        .await
+        .expect_err("conflicting repo_id must fail");
+    assert!(err.message.contains("conflicting repo_id"));
+
+    let after_count = list_observation_count(&memory_h, query).await;
+    assert_eq!(after_count, before_count);
+}
+
+#[tokio::test]
+async fn test_real_session_create_conflicting_project_rejected_without_side_effect() {
+    let (server, _temp) = create_test_mcp_server().await;
+    let session_h = server.session_handler();
+
+    let list_before = SessionArgs {
+        action: SessionAction::List,
+        org_id: None,
+        session_id: None,
+        project_id: None,
+        data: None,
+        worktree_id: None,
+        agent_type: None,
+        status: None,
+        limit: Some(200),
+    };
+    let before_resp = session_h
+        .handle(Parameters(list_before))
+        .await
+        .expect("list sessions before");
+    let before_text = extract_text(&before_resp.content);
+    let before_count = parse_count_from_json_text(&before_text);
+
+    let create_args = SessionArgs {
+        action: SessionAction::Create,
+        org_id: None,
+        session_id: None,
+        project_id: Some("project-from-args".to_string()),
+        data: Some(json!({
+            "agent_type": "sisyphus",
+            "model": "claude-opus-4-20250514",
+            "project_id": "project-from-data"
+        })),
+        worktree_id: None,
+        agent_type: None,
+        status: None,
+        limit: None,
+    };
+
+    let err = session_h
+        .handle(Parameters(create_args))
+        .await
+        .expect_err("conflicting project_id must fail for session create");
+    assert!(err.message.contains("conflicting project_id"));
+
+    let list_after = SessionArgs {
+        action: SessionAction::List,
+        org_id: None,
+        session_id: None,
+        project_id: None,
+        data: None,
+        worktree_id: None,
+        agent_type: None,
+        status: None,
+        limit: Some(200),
+    };
+    let after_resp = session_h
+        .handle(Parameters(list_after))
+        .await
+        .expect("list sessions after");
+    let after_text = extract_text(&after_resp.content);
+    let after_count = parse_count_from_json_text(&after_text);
+
+    assert_eq!(after_count, before_count);
 }

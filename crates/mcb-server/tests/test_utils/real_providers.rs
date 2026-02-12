@@ -10,13 +10,26 @@ use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 
+fn unique_test_path(prefix: &str) -> std::path::PathBuf {
+    std::env::temp_dir().join(format!(
+        "{}-{}",
+        prefix,
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock before unix epoch")
+            .as_nanos()
+    ))
+}
+
 /// Create a real EdgeVec vector store provider for testing
 ///
 /// Local HNSW vector store suitable for tests that need actual vector storage and search.
 pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> {
     let mut config = AppConfig::default();
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
+    config.auth.user_db_path = Some(unique_test_path("mcb-server-test-db"));
+    let cache_dir = unique_test_path("mcb-server-fastembed-cache");
+    std::fs::create_dir_all(&cache_dir).expect("create fastembed cache dir");
+    config.providers.embedding.cache_dir = Some(cache_dir);
     let ctx = init_app(config).await?;
     Ok(ctx.vector_store_handle().get())
 }
@@ -31,8 +44,10 @@ pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> 
 /// - `Err` - If model initialization fails (e.g., network issues, disk space)
 pub async fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvider>> {
     let mut config = AppConfig::default();
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
+    config.auth.user_db_path = Some(unique_test_path("mcb-server-test-db"));
+    let cache_dir = unique_test_path("mcb-server-fastembed-cache");
+    std::fs::create_dir_all(&cache_dir).expect("create fastembed cache dir");
+    config.providers.embedding.cache_dir = Some(cache_dir);
     let ctx = init_app(config).await?;
     Ok(ctx.embedding_handle().get())
 }

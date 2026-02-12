@@ -59,6 +59,9 @@ impl EmbeddingProviderResolver {
             if let Some(dimensions) = self.config.providers.embedding.dimensions {
                 registry_config = registry_config.with_dimensions(dimensions);
             }
+            if let Some(ref cache_dir) = self.config.providers.embedding.cache_dir {
+                registry_config = registry_config.with_cache_dir(cache_dir.clone());
+            }
             return resolve_embedding_provider(&registry_config);
         }
 

@@ -3415,6 +3415,7 @@ dependencies = [
  "handlebars",
  "health",
  "insta",
+ "linkme",
  "mcb-application",
  "mcb-domain",
  "mcb-infrastructure",

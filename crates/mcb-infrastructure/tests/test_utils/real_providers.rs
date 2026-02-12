@@ -58,6 +58,15 @@ pub async fn create_test_app_context() -> Result<AppContext> {
             .as_nanos()
     ));
     config.auth.user_db_path = Some(temp_dir);
+    let cache_dir = std::env::temp_dir().join(format!(
+        "mcb-fastembed-cache-{}",
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    std::fs::create_dir_all(&cache_dir).expect("create fastembed cache dir");
+    config.providers.embedding.cache_dir = Some(cache_dir);
     init_app(config).await
 }
 
