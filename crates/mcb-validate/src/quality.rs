@@ -1,636 +1,260 @@
-//! Code Quality Validation
+//! Test Quality Validation
 //!
-//! Validates code quality standards:
-//! - No unwrap/expect in production code (AST-based detection)
-//! - No panic!() in production code
-//! - File size limits (500 lines)
-//! - Pending-comment detection (T.O.D.O./F.I.X.M.E./X.X.X./H.A.C.K.)
-//!
-//! Phase 2 deliverable: QUAL001 (no-unwrap) detects `.unwrap()` calls via AST
+//! Validates test code quality:
+//! - Detects `#[ignore]` attributes without proper justification (attribute without documentation)
+//! - Detects `todo!()` macros in test fixtures outside intentional stubs
+//! - Detects missing test implementations
+//! - Ensures tests have proper documentation
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use walkdir::WalkDir;
 
-use crate::ast::UnwrapDetector;
-use crate::thresholds::thresholds;
+use crate::config::TestQualityRulesConfig;
 use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, Severity, ValidationConfig, ValidationError};
 
-/// Quality violation types representing specific code quality issues.
+/// Test quality violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum QualityViolation {
-    /// Indicates usage of `unwrap()` in production code, which poses a panic risk.
-    UnwrapInProduction {
-        /// The file containing the violation.
+pub enum TestQualityViolation {
+    /// Test with `#[ignore]` attribute missing justification
+    IgnoreWithoutJustification {
+        /// File where the violation occurred.
         file: PathBuf,
-        /// The line number where the `unwrap()` call was detected.
+        /// Line number of the violation.
         line: usize,
-        /// Contextual code snippet showing the usage of `unwrap()`.
-        context: String,
-        /// The severity level of the violation.
+        /// Name of the ignored test function.
+        test_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
-    /// Indicates usage of `expect()` in production code, which poses a panic risk.
-    ExpectInProduction {
-        /// The file containing the violation.
+    /// todo!() macro in test fixture without proper stub marker
+    TodoInTestFixture {
+        /// File where the violation occurred.
         file: PathBuf,
-        /// The line number where the `expect()` call was detected.
+        /// Line number of the violation.
         line: usize,
-        /// Contextual code snippet showing the usage of `expect()`.
-        context: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates usage of `panic!()` macro in production code.
-    PanicInProduction {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the `panic!()` macro occurred.
-        line: usize,
-        /// Contextual code snippet showing the usage of `panic!()`.
-        context: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates a file that exceeds the maximum allowed line count.
-    FileTooLarge {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The current total number of lines in the file.
-        lines: usize,
-        /// The maximum allowed number of lines for this file.
-        max_allowed: usize,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates presence of pending task comments (tracked via `PENDING_LABEL_*` constants).
-    TodoComment {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the pending task comment was found.
-        line: usize,
-        /// The content of the comment, including the label type and message text.
-        content: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates usage of `allow(dead_code)` attribute, which is not permitted.
-    DeadCodeAllowNotPermitted {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the `#[allow(dead_code)]` attribute was found.
-        line: usize,
-        /// The name of the item (struct, function, field) marked as allowed dead code.
-        item_name: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates a struct field that is defined but never used.
-    UnusedStructField {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the field is defined.
-        line: usize,
-        /// The name of the struct containing the unused field.
-        struct_name: String,
-        /// The name of the field that appears to be unused.
-        field_name: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates a function that is marked as dead code and appears uncalled.
-    DeadFunctionUncalled {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the function is defined.
-        line: usize,
-        /// The name of the function that appears to be dead/uncalled.
+        /// Name of the function in the test fixture containing the todo!() macro.
         function_name: String,
-        /// The severity level of the violation.
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Test function with empty body
+    EmptyTestBody {
+        /// File where the violation occurred.
+        file: PathBuf,
+        /// Line number of the violation.
+        line: usize,
+        /// Name of the test function that has an empty body.
+        test_name: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Test missing documentation comment
+    TestMissingDocumentation {
+        /// File where the violation occurred.
+        file: PathBuf,
+        /// Line number of the violation.
+        line: usize,
+        /// Name of the test function that is missing documentation.
+        test_name: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Test with only assert!(true) or similar stub
+    StubTestAssertion {
+        /// File where the violation occurred.
+        file: PathBuf,
+        /// Line number of the violation.
+        line: usize,
+        /// Name of the test function that contains a stub assertion.
+        test_name: String,
+        /// Severity level of the violation.
         severity: Severity,
     },
 }
 
-impl QualityViolation {
-    /// Returns the severity level of the violation.
-    ///
-    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
-    pub fn severity(&self) -> Severity {
-        <Self as Violation>::severity(self)
-    }
-}
-
-#[allow(clippy::too_many_lines)]
-impl std::fmt::Display for QualityViolation {
+impl std::fmt::Display for TestQualityViolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::UnwrapInProduction {
+            Self::IgnoreWithoutJustification {
                 file,
                 line,
-                context,
+                test_name,
                 ..
-            } => {
-                write!(
-                    f,
-                    "unwrap() in production: {}:{} - {}",
-                    file.display(),
-                    line,
-                    context
-                )
-            }
-            Self::ExpectInProduction {
-                file,
+            } => write!(
+                f,
+                "{}:{} - Test '{}' has #[ignore] without justification comment",
+                file.display(),
                 line,
-                context,
-                ..
-            } => {
-                write!(
-                    f,
-                    "expect() in production: {}:{} - {}",
-                    file.display(),
-                    line,
-                    context
-                )
-            }
-            Self::PanicInProduction {
-                file,
-                line,
-                context,
-                ..
-            } => {
-                write!(
-                    f,
-                    "panic!() in production: {}:{} - {}",
-                    file.display(),
-                    line,
-                    context
-                )
-            }
-            Self::FileTooLarge {
-                file,
-                lines,
-                max_allowed,
-                ..
-            } => {
-                write!(
-                    f,
-                    "File too large: {} has {} lines (max: {})",
-                    file.display(),
-                    lines,
-                    max_allowed
-                )
-            }
-            Self::TodoComment {
-                file,
-                line,
-                content,
-                ..
-            } => {
-                write!(f, "Pending: {}:{} - {}", file.display(), line, content)
-            }
-            Self::DeadCodeAllowNotPermitted {
-                file,
-                line,
-                item_name,
-                ..
-            } => {
-                write!(
-                    f,
-                    "{}:{} - {} (allow(dead_code) not permitted)",
-                    file.display(),
-                    line,
-                    item_name
-                )
-            }
-            Self::UnusedStructField {
-                file,
-                line,
-                struct_name,
-                field_name,
-                ..
-            } => {
-                write!(
-                    f,
-                    "Unused struct field: {}:{} - Field '{}' in struct '{}' is unused",
-                    file.display(),
-                    line,
-                    field_name,
-                    struct_name
-                )
-            }
-            Self::DeadFunctionUncalled {
+                test_name
+            ),
+            Self::TodoInTestFixture {
                 file,
                 line,
                 function_name,
                 ..
-            } => {
-                write!(
-                    f,
-                    "Dead function: {}:{} - Function '{}' marked as dead but appears uncalled",
-                    file.display(),
-                    line,
-                    function_name
-                )
-            }
+            } => write!(
+                f,
+                "{}:{} - Function '{}' in test fixture contains todo!() - implement or mark as intentional stub",
+                file.display(),
+                line,
+                function_name
+            ),
+            Self::EmptyTestBody {
+                file,
+                line,
+                test_name,
+                ..
+            } => write!(
+                f,
+                "{}:{} - Test '{}' has empty body - implement or remove",
+                file.display(),
+                line,
+                test_name
+            ),
+            Self::TestMissingDocumentation {
+                file,
+                line,
+                test_name,
+                ..
+            } => write!(
+                f,
+                "{}:{} - Test '{}' missing documentation comment explaining what it tests",
+                file.display(),
+                line,
+                test_name
+            ),
+            Self::StubTestAssertion {
+                file,
+                line,
+                test_name,
+                ..
+            } => write!(
+                f,
+                "{}:{} - Test '{}' contains stub assertion (assert!(true)) - implement real test",
+                file.display(),
+                line,
+                test_name
+            ),
         }
     }
 }
 
-impl Violation for QualityViolation {
+impl Violation for TestQualityViolation {
     fn id(&self) -> &str {
         match self {
-            Self::UnwrapInProduction { .. } => "QUAL001",
-            Self::ExpectInProduction { .. } => "QUAL002",
-            Self::PanicInProduction { .. } => "QUAL003",
-            Self::FileTooLarge { .. } => "QUAL004",
-            Self::TodoComment { .. } => "QUAL005",
-            Self::DeadCodeAllowNotPermitted { .. } => "QUAL020",
-            Self::UnusedStructField { .. } => "QUAL021",
-            Self::DeadFunctionUncalled { .. } => "QUAL022",
+            Self::IgnoreWithoutJustification { .. } => "TST001",
+            Self::TodoInTestFixture { .. } => "TST002",
+            Self::EmptyTestBody { .. } => "TST003",
+            Self::TestMissingDocumentation { .. } => "TST004",
+            Self::StubTestAssertion { .. } => "TST005",
         }
     }
 
     fn category(&self) -> ViolationCategory {
-        ViolationCategory::Quality
+        ViolationCategory::Testing
     }
 
     fn severity(&self) -> Severity {
         match self {
-            Self::UnwrapInProduction { severity, .. }
-            | Self::ExpectInProduction { severity, .. }
-            | Self::PanicInProduction { severity, .. }
-            | Self::FileTooLarge { severity, .. }
-            | Self::TodoComment { severity, .. }
-            | Self::DeadCodeAllowNotPermitted { severity, .. }
-            | Self::UnusedStructField { severity, .. }
-            | Self::DeadFunctionUncalled { severity, .. } => *severity,
+            Self::IgnoreWithoutJustification { severity, .. }
+            | Self::TodoInTestFixture { severity, .. }
+            | Self::EmptyTestBody { severity, .. }
+            | Self::TestMissingDocumentation { severity, .. }
+            | Self::StubTestAssertion { severity, .. } => *severity,
         }
     }
 
-    fn file(&self) -> Option<&std::path::PathBuf> {
+    fn file(&self) -> Option<&PathBuf> {
         match self {
-            Self::UnwrapInProduction { file, .. }
-            | Self::ExpectInProduction { file, .. }
-            | Self::PanicInProduction { file, .. }
-            | Self::FileTooLarge { file, .. }
-            | Self::TodoComment { file, .. }
-            | Self::DeadCodeAllowNotPermitted { file, .. }
-            | Self::UnusedStructField { file, .. }
-            | Self::DeadFunctionUncalled { file, .. } => Some(file),
+            Self::IgnoreWithoutJustification { file, .. }
+            | Self::TodoInTestFixture { file, .. }
+            | Self::EmptyTestBody { file, .. }
+            | Self::TestMissingDocumentation { file, .. }
+            | Self::StubTestAssertion { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::UnwrapInProduction { line, .. }
-            | Self::ExpectInProduction { line, .. }
-            | Self::PanicInProduction { line, .. }
-            | Self::TodoComment { line, .. }
-            | Self::DeadCodeAllowNotPermitted { line, .. }
-            | Self::UnusedStructField { line, .. }
-            | Self::DeadFunctionUncalled { line, .. } => Some(*line),
-            Self::FileTooLarge { .. } => None,
+            Self::IgnoreWithoutJustification { line, .. }
+            | Self::TodoInTestFixture { line, .. }
+            | Self::EmptyTestBody { line, .. }
+            | Self::TestMissingDocumentation { line, .. }
+            | Self::StubTestAssertion { line, .. } => Some(*line),
         }
     }
 
     fn suggestion(&self) -> Option<String> {
         match self {
-            Self::UnwrapInProduction { .. } | Self::ExpectInProduction { .. } => {
-                Some("Use `?` operator or handle the error explicitly".to_string())
-            }
-            Self::PanicInProduction { .. } => {
-                Some("Return an error instead of panicking".to_string())
-            }
-            Self::FileTooLarge { max_allowed, .. } => Some(format!(
-                "Split file into smaller modules (max {max_allowed} lines)"
-            )),
-            Self::TodoComment { .. } => {
-                Some("Address the pending comment or create an issue to track it".to_string())
-            }
-            Self::DeadCodeAllowNotPermitted { .. } => {
-                Some("Remove #[allow(dead_code)] and fix or remove the dead code; justifications are not permitted".to_string())
-            }
-            Self::UnusedStructField { .. } => {
-                Some("Remove the unused field or document why it's kept (e.g., for serialization format versioning)".to_string())
-            }
-            Self::DeadFunctionUncalled { .. } => {
-                Some("Remove the dead function or connect it to the public API if it's intended for future use".to_string())
-            }
+            Self::IgnoreWithoutJustification { .. } => Some(
+                "Add a comment explaining why the test is ignored (e.g., // Requires external tool: ruff)".to_string()
+            ),
+            Self::TodoInTestFixture { .. } => Some(
+                "Implement the test fixture function or add comment: // Intentional stub for X".to_string()
+            ),
+            Self::EmptyTestBody { .. } => Some(
+                "Implement the test logic or remove the test function".to_string()
+            ),
+            Self::TestMissingDocumentation { .. } => Some(
+                "Add documentation comment: /// Tests that [scenario] [expected behavior]".to_string()
+            ),
+            Self::StubTestAssertion { .. } => Some(
+                "Replace assert!(true) with actual test logic and assertions".to_string()
+            ),
         }
     }
 }
 
-/// Validates codebase against quality standards and rules.
-pub struct QualityValidator {
+/// Test quality validator
+pub struct TestQualityValidator {
+    /// Configuration for validation scans
     config: ValidationConfig,
-    max_file_lines: usize,
-    excluded_paths: Vec<String>,
+    rules: TestQualityRulesConfig,
 }
 
-impl QualityValidator {
-    /// Check if a line has an ignore hint for a specific violation type
-    fn has_ignore_hint(&self, line: &str, violation_type: &str) -> bool {
-        line.contains(&format!("mcb-validate-ignore: {violation_type}"))
-    }
-    /// Creates a new instance of the quality validator for the given workspace.
-    pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
+impl TestQualityValidator {
+    /// Create a new test quality validator with the given workspace root
+    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
+        let root: std::path::PathBuf = workspace_root.into();
+        let file_config = crate::config::FileConfig::load(&root);
+        Self::with_config(ValidationConfig::new(root), &file_config.rules.test_quality)
     }
 
-    /// Creates a new validator instance using a provided configuration.
-    pub fn with_config(config: ValidationConfig) -> Self {
-        // Load file configuration to get quality rules
-        let file_config = crate::config::FileConfig::load(&config.workspace_root);
+    /// Create a validator with a custom configuration
+    pub fn with_config(config: ValidationConfig, rules: &TestQualityRulesConfig) -> Self {
         Self {
             config,
-            max_file_lines: thresholds().max_file_lines,
-            excluded_paths: file_config.rules.quality.excluded_paths,
+            rules: rules.clone(),
         }
     }
 
-    /// Configures the maximum allowed lines per file.
-    #[must_use]
-    pub fn with_max_file_lines(mut self, max: usize) -> Self {
-        self.max_file_lines = max;
-        self
-    }
-
-    /// Executes all configured quality checks and returns any violations found.
-    pub fn validate_all(&self) -> Result<Vec<QualityViolation>> {
-        let mut violations = Vec::new();
-        violations.extend(self.validate_no_unwrap_expect()?);
-        violations.extend(self.validate_no_panic()?);
-        violations.extend(self.validate_file_sizes()?);
-        violations.extend(self.find_todo_comments()?);
-        violations.extend(self.validate_dead_code_annotations()?);
-        Ok(violations)
-    }
-
-    /// Scans for and reports usage of `allow(dead_code)` attributes.
-    pub fn validate_dead_code_annotations(&self) -> Result<Vec<QualityViolation>> {
-        let mut violations = Vec::new();
-        let dead_code_pattern = Regex::new(r"#\[allow\([^\)]*dead_code[^\)]*\)\]").unwrap();
-        let struct_pattern = Regex::new(r"pub\s+struct\s+(\w+)").unwrap();
-        let fn_pattern = Regex::new(r"(?:pub\s+)?fn\s+(\w+)").unwrap();
-        let field_pattern = Regex::new(r"(?:pub\s+)?(\w+):\s+").unwrap();
-
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-                .filter(|e| !e.path().to_string_lossy().contains("/tests/"))
-            {
-                // Skip deleted files
-                if !entry.path().exists() {
-                    continue;
-                }
-
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
-
-                for (i, line) in lines.iter().enumerate() {
-                    if dead_code_pattern.is_match(line) {
-                        let item_name = self
-                            .find_dead_code_item(
-                                &lines,
-                                i,
-                                &struct_pattern,
-                                &fn_pattern,
-                                &field_pattern,
-                            )
-                            .unwrap_or_else(|| "allow(dead_code)".to_string());
-                        violations.push(QualityViolation::DeadCodeAllowNotPermitted {
-                            file: entry.path().to_path_buf(),
-                            line: i + 1,
-                            item_name,
-                            severity: Severity::Warning,
-                        });
-                    }
-                }
-            }
+    /// Validate test quality across all test files
+    pub fn validate(&self) -> Result<Vec<TestQualityViolation>> {
+        if !self.rules.enabled {
+            return Ok(Vec::new());
         }
-
-        Ok(violations)
-    }
-
-    fn find_dead_code_item(
-        &self,
-        lines: &[&str],
-        start_idx: usize,
-        struct_pattern: &Regex,
-        fn_pattern: &Regex,
-        field_pattern: &Regex,
-    ) -> Option<String> {
-        let end = std::cmp::min(start_idx + 5, lines.len());
-        for line in lines.iter().take(end).skip(start_idx) {
-            if let Some(captures) = struct_pattern.captures(line)
-                && let Some(name) = captures.get(1)
-            {
-                return Some(format!("struct {}", name.as_str()));
-            }
-
-            if let Some(captures) = fn_pattern.captures(line)
-                && let Some(name) = captures.get(1)
-            {
-                return Some(format!("fn {}", name.as_str()));
-            }
-
-            if let Some(captures) = field_pattern.captures(line)
-                && let Some(name) = captures.get(1)
-            {
-                return Some(format!("field {}", name.as_str()));
-            }
-        }
-
-        None
-    }
-
-    /// Scans production code for usage of `unwrap()` and `expect()` methods.
-    ///
-    /// Uses AST-based detection to accurately identify method calls while ignoring
-    /// test files and allowed patterns.
-    pub fn validate_no_unwrap_expect(&self) -> Result<Vec<QualityViolation>> {
-        let mut violations = Vec::new();
-        let mut detector = UnwrapDetector::new()?;
-
-        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-                .filter(|e| {
-                    // Skip test files
-                    let path_str = e.path().to_string_lossy();
-                    !path_str.contains("/tests/")
-                        && !path_str.contains("/target/")
-                        && !path_str.ends_with("_test.rs")
-                        && !path_str.ends_with("test.rs")
-                })
-            {
-                // Use AST-based detection
-                let detections = detector.detect_in_file(entry.path())?;
-
-                for detection in detections {
-                    // Skip detections in test modules
-                    if detection.in_test {
-                        continue;
-                    }
-
-                    // Skip if context contains SAFETY justification or ignore hints
-                    // (checked via Regex since AST doesn't capture comments easily)
-                    let content = std::fs::read_to_string(entry.path())?;
-                    let lines: Vec<&str> = content.lines().collect();
-                    if detection.line > 0 && detection.line <= lines.len() {
-                        let line_content = lines[detection.line - 1];
-
-                        // Check for safety comments
-                        if line_content.contains("// SAFETY:")
-                            || line_content.contains("// safety:")
-                        {
-                            continue;
-                        }
-
-                        // Check for ignore hints around the detection
-                        let mut has_ignore = false;
-
-                        // Check current line
-                        if self.has_ignore_hint(line_content, "lock_poisoning_recovery")
-                            || self.has_ignore_hint(line_content, "hardcoded_fallback")
-                        {
-                            has_ignore = true;
-                        }
-
-                        // Check previous lines (up to 3 lines before)
-                        if !has_ignore && detection.line > 1 {
-                            for i in 1..=3.min(detection.line - 1) {
-                                let check_line = lines[detection.line - 1 - i];
-                                if self.has_ignore_hint(check_line, "lock_poisoning_recovery")
-                                    || self.has_ignore_hint(check_line, "hardcoded_fallback")
-                                {
-                                    has_ignore = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        // Check next lines (up to 3 lines after)
-                        if !has_ignore && detection.line < lines.len() {
-                            for i in 0..3.min(lines.len() - detection.line) {
-                                let check_line = lines[detection.line + i];
-                                if self.has_ignore_hint(check_line, "lock_poisoning_recovery")
-                                    || self.has_ignore_hint(check_line, "hardcoded_fallback")
-                                {
-                                    has_ignore = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if has_ignore {
-                            continue;
-                        }
-
-                        // Skip cases where we're handling system-level errors appropriately
-                        // (e.g., lock poisoning, which is a legitimate use of expect())
-                        if detection.method == "expect"
-                            && (line_content.contains("lock poisoned")
-                                || line_content.contains("Lock poisoned")
-                                || line_content.contains("poisoned")
-                                || line_content.contains("Mutex poisoned"))
-                        {
-                            continue;
-                        }
-                    }
-
-                    // Create appropriate violation based on method type
-                    match detection.method.as_str() {
-                        "unwrap" => {
-                            violations.push(QualityViolation::UnwrapInProduction {
-                                file: entry.path().to_path_buf(),
-                                line: detection.line,
-                                context: detection.context,
-                                severity: Severity::Error,
-                            });
-                        }
-                        "expect" => {
-                            violations.push(QualityViolation::ExpectInProduction {
-                                file: entry.path().to_path_buf(),
-                                line: detection.line,
-                                context: detection.context,
-                                severity: Severity::Error,
-                            });
-                        }
-                        _ => {}
-                    }
-                }
-            }
-        }
-
-        Ok(violations)
-    }
-
-    /// Scans production code for usage of the `panic!()` macro.
-    pub fn validate_no_panic(&self) -> Result<Vec<QualityViolation>> {
-        let mut violations = Vec::new();
-        let panic_pattern = Regex::new(r"panic!\s*\(").unwrap();
-
-        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_test_module = false;
-
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
-
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
-
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
-
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Check for panic!
-                    if panic_pattern.is_match(line) {
-                        violations.push(QualityViolation::PanicInProduction {
-                            file: entry.path().to_path_buf(),
-                            line: line_num + 1,
-                            context: trimmed.to_string(),
-                            severity: Severity::Error,
-                        });
-                    }
-                }
-            }
-        }
-
-        Ok(violations)
-    }
-
-    /// Checks that source files do not exceed the configured line count limit.
-    pub fn validate_file_sizes(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
 
-        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
+        // Regex patterns
+        let ignore_pattern = Regex::new(r"#\[ignore\]")
+            .map_err(|e| ValidationError::InvalidRegex(format!("ignore_pattern: {e}")))?;
+        let test_pattern = Regex::new(r"#\[test\]|#\[tokio::test\]")
+            .map_err(|e| ValidationError::InvalidRegex(format!("test_pattern: {e}")))?;
+        let fn_pattern = Regex::new(r"fn\s+(\w+)")
+            .map_err(|e| ValidationError::InvalidRegex(format!("fn_pattern: {e}")))?;
+        let todo_pattern = Regex::new(r"todo!\(")
+            .map_err(|e| ValidationError::InvalidRegex(format!("todo_pattern: {e}")))?;
+        let empty_body_pattern = Regex::new(r"\{\s*\}")
+            .map_err(|e| ValidationError::InvalidRegex(format!("empty_body_pattern: {e}")))?;
+        let stub_assert_pattern = Regex::new(r"assert!\(true\)|assert_eq!\(true,\s*true\)")
+            .map_err(|e| ValidationError::InvalidRegex(format!("stub_assert_pattern: {e}")))?;
+        let doc_comment_pattern = Regex::new(r"^\s*///")
+            .map_err(|e| ValidationError::InvalidRegex(format!("doc_comment_pattern: {e}")))?;
+
         for src_dir in self.config.get_scan_dirs()? {
             for entry in WalkDir::new(&src_dir)
                 .follow_links(false)
@@ -638,92 +262,268 @@ impl QualityValidator {
                 .filter_map(std::result::Result::ok)
                 .filter(|e| {
                     e.path().extension().is_some_and(|ext| ext == "rs")
-                        && !self.config.should_exclude(e.path())
-                        && !e.path().to_string_lossy().contains("/tests/")
-                        && !e.path().to_string_lossy().contains("/target/")
-                        && !e.path().to_string_lossy().ends_with("_test.rs")
+                        && (e.path().to_string_lossy().contains("/tests/")
+                            || e.path().to_string_lossy().contains("/test_"))
                 })
             {
-                // Skip deleted files
-                if !entry.path().exists() {
-                    continue;
-                }
-
-                let path_str = entry.path().to_string_lossy();
-
-                // Skip paths excluded in configuration (e.g., large vector store implementations)
-                if self
-                    .excluded_paths
-                    .iter()
-                    .any(|excluded| path_str.contains(excluded.as_str()))
-                {
-                    continue;
-                }
-
                 let content = std::fs::read_to_string(entry.path())?;
-                let line_count = content.lines().count();
+                let lines: Vec<&str> = content.lines().collect();
 
-                if line_count > self.max_file_lines {
-                    violations.push(QualityViolation::FileTooLarge {
-                        file: entry.path().to_path_buf(),
-                        lines: line_count,
-                        max_allowed: self.max_file_lines,
-                        severity: Severity::Warning,
-                    });
-                }
+                self.check_ignored_tests(
+                    entry.path(),
+                    &lines,
+                    &ignore_pattern,
+                    &test_pattern,
+                    &fn_pattern,
+                    &doc_comment_pattern,
+                    &mut violations,
+                );
+                self.check_todo_in_fixtures(
+                    entry.path(),
+                    &lines,
+                    &todo_pattern,
+                    &fn_pattern,
+                    &mut violations,
+                );
+                self.check_empty_test_bodies(
+                    entry.path(),
+                    &lines,
+                    &test_pattern,
+                    &fn_pattern,
+                    &empty_body_pattern,
+                    &mut violations,
+                );
+                self.check_stub_assertions(
+                    entry.path(),
+                    &lines,
+                    &test_pattern,
+                    &stub_assert_pattern,
+                    &fn_pattern,
+                    &mut violations,
+                );
             }
         }
 
         Ok(violations)
     }
 
-    /// Scans for pending task comments matching `PENDING_LABEL_*` constants.
-    pub fn find_todo_comments(&self) -> Result<Vec<QualityViolation>> {
-        use crate::constants::{
-            PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
-        };
-        let todo_pattern = Regex::new(&format!(
-            r"(?i)({PENDING_LABEL_TODO}|{PENDING_LABEL_FIXME}|{PENDING_LABEL_XXX}|{PENDING_LABEL_HACK}):?\s*(.*)"
-        ))
-        .unwrap();
+    #[allow(clippy::too_many_arguments)]
+    fn check_ignored_tests(
+        &self,
+        file: &Path,
+        lines: &[&str],
+        ignore_pattern: &Regex,
+        test_pattern: &Regex,
+        fn_pattern: &Regex,
+        _doc_comment_pattern: &Regex,
+        violations: &mut Vec<TestQualityViolation>,
+    ) {
+        for (i, line) in lines.iter().enumerate() {
+            if ignore_pattern.is_match(line) {
+                // Check if there's a justification comment above
+                let has_justification = i > 0 && {
+                    let prev_line = lines[i - 1];
+                    prev_line.contains("Requires")
+                        || prev_line.contains("requires")
+                        || prev_line.contains(crate::constants::PENDING_LABEL_TODO)
+                        || prev_line.contains("WIP")
+                };
 
-        let mut violations = Vec::new();
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip deleted files - check existence before reading
-                if !entry.path().exists() {
-                    continue;
-                }
-
-                let content = std::fs::read_to_string(entry.path())?;
-
-                for (line_num, line) in content.lines().enumerate() {
-                    if let Some(cap) = todo_pattern.captures(line) {
-                        let todo_type = cap.get(1).map_or("", |m| m.as_str());
-                        let message = cap.get(2).map_or("", |m| m.as_str()).trim();
-
-                        violations.push(QualityViolation::TodoComment {
-                            file: entry.path().to_path_buf(),
-                            line: line_num + 1,
-                            content: format!("{}: {}", todo_type.to_uppercase(), message),
-                            severity: Severity::Info,
+                if !has_justification {
+                    // Find the test function name
+                    if let Some(test_name) = self.find_test_name(lines, i, test_pattern, fn_pattern)
+                    {
+                        violations.push(TestQualityViolation::IgnoreWithoutJustification {
+                            file: file.to_path_buf(),
+                            line: i + 1,
+                            test_name,
+                            severity: Severity::Warning,
                         });
                     }
                 }
             }
         }
+    }
 
-        Ok(violations)
+    fn check_todo_in_fixtures(
+        &self,
+        file: &Path,
+        lines: &[&str],
+        todo_pattern: &Regex,
+        fn_pattern: &Regex,
+        violations: &mut Vec<TestQualityViolation>,
+    ) {
+        if self.should_skip_path(file) {
+            return;
+        }
+
+        for (i, line) in lines.iter().enumerate() {
+            if todo_pattern.is_match(line) {
+                // Check if it's NOT marked as intentional stub
+                let has_stub_marker = i > 0 && {
+                    let prev_line = lines[i - 1];
+                    prev_line.contains("Intentional stub") || prev_line.contains("Test stub")
+                };
+
+                if !has_stub_marker {
+                    // Find the function name
+                    if let Some(function_name) = self.find_function_name(lines, i, fn_pattern) {
+                        violations.push(TestQualityViolation::TodoInTestFixture {
+                            file: file.to_path_buf(),
+                            line: i + 1,
+                            function_name,
+                            severity: Severity::Error,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    fn check_empty_test_bodies(
+        &self,
+        file: &Path,
+        lines: &[&str],
+        test_pattern: &Regex,
+        fn_pattern: &Regex,
+        empty_body_pattern: &Regex,
+        violations: &mut Vec<TestQualityViolation>,
+    ) {
+        for (i, line) in lines.iter().enumerate() {
+            if test_pattern.is_match(line) {
+                // Find the function declaration
+                if let Some(fn_line_idx) =
+                    (i..i + 5).find(|&idx| idx < lines.len() && fn_pattern.is_match(lines[idx]))
+                {
+                    // Check if the function body is empty (just {})
+                    if let Some(body_start) = (fn_line_idx..fn_line_idx + 3)
+                        .find(|&idx| idx < lines.len() && lines[idx].contains('{'))
+                        && (empty_body_pattern.is_match(lines[body_start])
+                            || (body_start + 1 < lines.len()
+                                && lines[body_start + 1].trim() == "}"))
+                        && let Some(test_name) = fn_pattern
+                            .captures(lines[fn_line_idx])
+                            .and_then(|c| c.get(1))
+                    {
+                        violations.push(TestQualityViolation::EmptyTestBody {
+                            file: file.to_path_buf(),
+                            line: fn_line_idx + 1,
+                            test_name: test_name.as_str().to_string(),
+                            severity: Severity::Error,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    fn check_stub_assertions(
+        &self,
+        file: &Path,
+        lines: &[&str],
+        test_pattern: &Regex,
+        stub_assert_pattern: &Regex,
+        fn_pattern: &Regex,
+        violations: &mut Vec<TestQualityViolation>,
+    ) {
+        for (i, line) in lines.iter().enumerate() {
+            if test_pattern.is_match(line) {
+                for offset in 0..20 {
+                    if i + offset >= lines.len() {
+                        break;
+                    }
+                    if stub_assert_pattern.is_match(lines[i + offset]) {
+                        if let Some(test_name) =
+                            self.find_test_name(lines, i, test_pattern, fn_pattern)
+                        {
+                            violations.push(TestQualityViolation::StubTestAssertion {
+                                file: file.to_path_buf(),
+                                line: i + offset + 1,
+                                test_name,
+                                severity: Severity::Warning,
+                            });
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    fn find_test_name(
+        &self,
+        lines: &[&str],
+        start_idx: usize,
+        _test_pattern: &Regex,
+        fn_pattern: &Regex,
+    ) -> Option<String> {
+        let end = std::cmp::min(start_idx + 5, lines.len());
+        for line in lines.iter().take(end).skip(start_idx) {
+            if let Some(captures) = fn_pattern.captures(line)
+                && let Some(name) = captures.get(1)
+            {
+                return Some(name.as_str().to_string());
+            }
+        }
+        None
+    }
+
+    fn find_function_name(
+        &self,
+        lines: &[&str],
+        start_idx: usize,
+        fn_pattern: &Regex,
+    ) -> Option<String> {
+        // Look backwards for function name
+        for i in (0..=start_idx).rev().take(10) {
+            if let Some(captures) = fn_pattern.captures(lines[i])
+                && let Some(name) = captures.get(1)
+            {
+                return Some(name.as_str().to_string());
+            }
+        }
+        None
+    }
+
+    /// Check if a path should be skipped based on configuration
+    fn should_skip_path(&self, path: &Path) -> bool {
+        let path_str = path.to_string_lossy();
+        self.rules
+            .excluded_paths
+            .iter()
+            .any(|excluded| path_str.contains(excluded))
     }
 }
 
-impl_validator!(
-    QualityValidator,
-    "quality",
-    "Validates code quality (no unwrap/expect)"
-);
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ignore_violation_formatting() {
+        let violation = TestQualityViolation::IgnoreWithoutJustification {
+            file: PathBuf::from("test.rs"),
+            line: 10,
+            test_name: "my_test".to_string(),
+            severity: Severity::Warning,
+        };
+
+        assert_eq!(violation.id(), "TST001");
+        assert_eq!(violation.severity(), Severity::Warning);
+        assert!(violation.to_string().contains("my_test"));
+        assert!(violation.suggestion().is_some());
+    }
+
+    #[test]
+    fn test_todo_violation_formatting() {
+        let violation = TestQualityViolation::TodoInTestFixture {
+            file: PathBuf::from("fixture.rs"),
+            line: 20,
+            function_name: "setup_test".to_string(),
+            severity: Severity::Error,
+        };
+
+        assert_eq!(violation.id(), "TST002");
+        assert_eq!(violation.severity(), Severity::Error);
+    }
+}

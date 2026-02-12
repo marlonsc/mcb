@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::memory::{ExecutionMetadata, QualityGateResult};
+use super::memory::{ExecutionMetadata, OriginContext, QualityGateResult};
 
 /// Categorizes the type of observation recorded.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -102,6 +102,9 @@ pub struct ObservationMetadata {
     /// Details about the quality gate result (if applicable).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quality_gate: Option<QualityGateResult>,
+    /// Contextual information about the origin of the observation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin_context: Option<OriginContext>,
 }
 
 impl std::fmt::Debug for ObservationMetadata {
@@ -115,6 +118,7 @@ impl std::fmt::Debug for ObservationMetadata {
             .field("commit", &self.commit)
             .field("execution", &self.execution)
             .field("quality_gate", &self.quality_gate)
+            .field("origin_context", &self.origin_context)
             .finish()
     }
 }
@@ -131,6 +135,7 @@ impl Default for ObservationMetadata {
             commit: None,
             execution: None,
             quality_gate: None,
+            origin_context: None,
         }
     }
 }

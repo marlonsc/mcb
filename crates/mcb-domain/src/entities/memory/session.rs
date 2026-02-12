@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use super::OriginContext;
+
 /// Summary of an agent session.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionSummary {
@@ -17,6 +19,9 @@ pub struct SessionSummary {
     pub next_steps: Vec<String>,
     /// Stores the key files value.
     pub key_files: Vec<String>,
+    /// Contextual information about the origin of the session.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub origin_context: Option<OriginContext>,
     /// Stores the created at value.
     pub created_at: i64,
 }

@@ -34,7 +34,7 @@ pub enum ViolationCategory {
     Async,
     /// Documentation quality
     Documentation,
-    /// Test organization and quality
+    /// Test hygiene and quality
     Testing,
     /// Naming conventions
     Naming,

@@ -8,7 +8,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::entities::memory::{
     ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
-    ObservationMetadata, ObservationType, SessionSummary,
+    ObservationMetadata, ObservationType, OriginContext, SessionSummary,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::EmbeddingProvider;
@@ -338,21 +338,36 @@ impl MemoryServiceImpl {
 
     async fn create_session_summary_impl(
         &self,
+        project_id: String,
         session_id: SessionId,
         topics: Vec<String>,
         decisions: Vec<String>,
         next_steps: Vec<String>,
         key_files: Vec<String>,
+        origin_context: Option<OriginContext>,
     ) -> Result<String> {
+        let session_id = session_id.into_string();
+        let timestamp = Self::current_timestamp();
+        let project_id = if project_id.trim().is_empty() {
+            self.project_id.clone()
+        } else {
+            project_id
+        };
         let summary = SessionSummary {
             id: Uuid::new_v4().to_string(),
-            project_id: self.project_id.clone(),
-            session_id: session_id.into_string(),
+            project_id: project_id.clone(),
+            session_id: session_id.clone(),
             topics,
             decisions,
             next_steps,
             key_files,
-            created_at: Self::current_timestamp(),
+            origin_context: Some(origin_context.unwrap_or(OriginContext {
+                project_id: Some(project_id),
+                session_id: Some(session_id),
+                timestamp: Some(timestamp),
+                ..OriginContext::default()
+            })),
+            created_at: timestamp,
         };
 
         self.repository.store_session_summary(&summary).await?;
@@ -469,14 +484,24 @@ impl MemoryServiceInterface for MemoryServiceImpl {
 
     async fn create_session_summary(
         &self,
+        project_id: String,
         session_id: SessionId,
         topics: Vec<String>,
         decisions: Vec<String>,
         next_steps: Vec<String>,
         key_files: Vec<String>,
+        origin_context: Option<OriginContext>,
     ) -> Result<String> {
-        self.create_session_summary_impl(session_id, topics, decisions, next_steps, key_files)
-            .await
+        self.create_session_summary_impl(
+            project_id,
+            session_id,
+            topics,
+            decisions,
+            next_steps,
+            key_files,
+            origin_context,
+        )
+        .await
     }
 
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {

@@ -43,7 +43,7 @@ docker-compose up
 
 ### 1. Start Infrastructure Services
 
-**Using Docker containers (recommended)**
+#### Using Docker containers (recommended)
 
 ```bash
 
@@ -57,7 +57,7 @@ docker-compose up -d redis nats
 docker-compose -f tests/docker-compose.yml ps
 ```
 
-**Option C: System services**
+#### Option C: System services
 
 ```bash
 
@@ -72,7 +72,8 @@ systemctl start nats-server
 
 ```bash
 
-# Run all tests (recommended; includes integration tests that use Redis/NATS when available)
+# Run all tests (recommended; includes integration tests that use Redis/NATS
+# when available)
 make test
 
 # Or only integration tests
@@ -82,7 +83,9 @@ make test SCOPE=integration
 REDIS_URL=redis://192.168.1.100:6379 NATS_URL=nats://192.168.1.100:4222 make test
 ```
 
-If Redis/NATS-specific test targets (e.g. `redis_cache_integration`, `nats_event_bus_integration`) exist, you can run them with `cargo test <name> -- --nocapture`. Otherwise use `make test` above.
+If Redis/NATS-specific test targets (e.g. `redis_cache_integration`,
+`nats_event_bus_integration`) exist, you can run them with
+`cargo test <name> -- --nocapture`. Otherwise use `make test` above.
 
 #### Method 2: Docker services + local tests
 
@@ -113,7 +116,8 @@ docker-compose down -v        # Cleanup
 
 ### Redis Cache Provider Tests
 
-**See:** `crates/mcb-server/tests/integration/helpers.rs` (e.g. `is_redis_available`), `crates/mcb-providers/src/cache/redis.rs`, and integration tests.
+**See:** `crates/mcb-server/tests/integration/helpers.rs` (e.g. `is_redis_available`),
+`crates/mcb-providers/src/cache/redis.rs`, and integration tests.
 
 Tests include:
 
@@ -128,11 +132,15 @@ Tests include:
 - Connection pooling
 - Large payload handling
 
-Run: `make test` or `make test SCOPE=integration`. If a dedicated `redis_cache_integration` test exists, use `cargo test redis_cache_integration -- --nocapture`.
+Run: `make test` or `make test SCOPE=integration`. If a dedicated
+`redis_cache_integration` test exists, use
+`cargo test redis_cache_integration -- --nocapture`.
 
 ### NATS Event Bus Tests
 
-**See:** `crates/mcb-infrastructure/src/infrastructure/events.rs` and integration tests. NATS availability checks may use similar patterns to `is_redis_available` in `integration/helpers.rs`.
+**See:** `crates/mcb-infrastructure/src/infrastructure/events.rs` and integration tests.
+NATS availability checks may use similar patterns to `is_redis_available` in
+`integration/helpers.rs`.
 
 Tests include:
 
@@ -146,11 +154,14 @@ Tests include:
 - Large payload handling
 - Stream persistence
 
-Run: `make test` or `make test SCOPE=integration`. If a dedicated `nats_event_bus_integration` test exists, use `cargo test nats_event_bus_integration -- --nocapture`.
+Run: `make test` or `make test SCOPE=integration`. If a dedicated
+`nats_event_bus_integration` test exists, use
+`cargo test nats_event_bus_integration -- --nocapture`.
 
 ## Environment Variables
 
-Tests automatically detect services using these environment variables (in order of priority):
+Tests automatically detect services using these environment variables (in order of
+priority):
 
 ### Redis
 
@@ -222,7 +233,9 @@ make docker-down
 
 ## Service Detection
 
-Tests automatically skip if services are unavailable via `skip_if_service_unavailable!` and helpers in `integration/helpers.rs` (e.g. `is_redis_available`, `is_milvus_available`, `is_ollama_available`):
+Tests automatically skip if services are unavailable via `skip_if_service_unavailable!`
+and helpers in `integration/helpers.rs` (e.g. `is_redis_available`,
+`is_milvus_available`, `is_ollama_available`):
 
 ```rust
 skip_if_service_unavailable!("Redis", is_redis_available());
@@ -231,7 +244,7 @@ skip_if_service_unavailable!("Milvus", is_milvus_available());
 
 When a required service is missing, tests skip with a message such as:
 
-```
+```text
 ⊘ SKIPPED: Redis service not available (skipping test)
 ```
 
@@ -240,13 +253,15 @@ When a required service is missing, tests skip with a message such as:
 ```bash
 make test                      # Run all unit + integration tests locally
 make test SCOPE=integration    # Run only integration tests
-make docker-up                 # Start main stack (docker-compose.yml: Ollama, Milvus, etc.)
+make docker-up                 # Start main stack (docker-compose.yml: Ollama,
+                               # Milvus, etc.)
 make docker-down               # Stop main stack
 make docker-logs               # View Docker logs
 docker-compose -f tests/docker-compose.yml ps  # Show Docker service status
 ```
 
-For Redis + NATS only, use `docker-compose up -d redis nats` (and `docker-compose stop redis nats` when done). `make docker-up` starts the full stack.
+For Redis + NATS only, use `docker-compose up -d redis nats` (and
+`docker-compose stop redis nats` when done). `make docker-up` starts the full stack.
 
 ## Troubleshooting
 
@@ -280,7 +295,8 @@ docker-compose up -d nats
 
 ### host.docker.internal not working (Linux)
 
-The docker-compose.yml uses `extra_hosts` with `host-gateway` to automatically resolve `host.docker.internal` on Linux. If it still doesn't work:
+The docker-compose.yml uses `extra_hosts` with `host-gateway` to automatically
+resolve `host.docker.internal` on Linux. If it still doesn't work:
 
 ```bash
 
@@ -321,7 +337,7 @@ telnet host.docker.internal 4222
 
 ### Expected Output
 
-```
+```text
 Running 10 Redis integration tests...
 ✅ Redis cache provider created successfully
 ✅ Redis set/get operations work correctly
@@ -405,9 +421,11 @@ jobs:
 
 When adding new integration tests:
 
-1. Use existing patterns in `crates/mcb-server/tests/integration/helpers.rs` and `crates/mcb-providers/src/cache/redis.rs`
+1. Use existing patterns in `crates/mcb-server/tests/integration/helpers.rs`
+   and `crates/mcb-providers/src/cache/redis.rs`
 2. Include environment variable support for flexible service locations
-3. Use `skip_if_service_unavailable!("Service", is_*_available())` for graceful skipping
+3. Use `skip_if_service_unavailable!("Service", is_*_available())` for
+   graceful skipping
 4. Add cleanup code to prevent test pollution
 5. Include both success and failure paths
 6. Document expected behavior in test comments

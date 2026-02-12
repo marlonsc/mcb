@@ -5,7 +5,8 @@
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue)](https://github.com/marlonsc/mcb/releases)
 
-**Model Context Protocol Server**- Provides semantic code search and analysis capabilities to AI assistants through a standardized MCP interface.
+**Model Context Protocol Server** - Provides semantic code search and
+analysis capabilities to AI assistants through a standardized MCP interface.
 
 ## 🎯 Current Capabilities (v0.2.1)
 
@@ -19,14 +20,16 @@
 
 ### Architecture
 
-- **🏗️ Modular Design**: Clean separation with core, providers, services, and server layers
+- **🏗️ Modular Design**: Clean separation with core, providers, services,
+  and server layers
 - **🔌 Provider Pattern**: Extensible system for embeddings and vector storage
 - **⚡ Async Processing**: Tokio-based asynchronous operations
 - **🛡️ Error Handling**: Comprehensive error types with detailed diagnostics
 
 ## 📋 Documentation
 
-- [**ARCHITECTURE.md**](../architecture/ARCHITECTURE.md) - Technical architecture and design
+- [**ARCHITECTURE.md**](../architecture/ARCHITECTURE.md) - Technical
+  architecture and design
 - [**ROADMAP.md**](../developer/ROADMAP.md) - Development roadmap and milestones
 - [**DEPLOYMENT.md**](../operations/DEPLOYMENT.md) - Deployment guides and configurations
 - [**CONTRIBUTING.md**](../developer/CONTRIBUTING.md) - Contribution guidelines
@@ -83,8 +86,10 @@ GitHub Actions automatically runs:
 
 ## 🤝 Contributing
 
-See [**CONTRIBUTING.md**](../developer/CONTRIBUTING.md) for detailed contribution guidelines.
+See [**CONTRIBUTING.md**](../developer/CONTRIBUTING.md) for detailed
+contribution guidelines.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](../../LICENSE)
+file for details.

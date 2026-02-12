@@ -13,7 +13,7 @@ use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::resolve_identifier_precedence;
+use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
 
 /// Stores a quality gate result as a semantic observation.
 #[tracing::instrument(skip_all)]
@@ -63,35 +63,59 @@ pub async fn store_quality_gate(
     ];
     let payload_session_id = MemoryHelpers::get_str(data, "session_id");
     let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
+    let payload_project_id = MemoryHelpers::get_str(data, "project_id");
+    let payload_branch = MemoryHelpers::get_str(data, "branch");
+    let payload_commit = MemoryHelpers::get_str(data, "commit");
+
+    let mut origin_context = resolve_origin_context(OriginContextInput {
+        org_id: args.org_id.as_deref(),
+        project_id_args: args.project_id.as_deref(),
+        project_id_payload: payload_project_id.as_deref(),
+        session_id_args: args.session_id.as_ref().map(|id| id.as_str()),
+        session_id_payload: payload_session_id.as_deref(),
+        execution_id_args: quality_gate.execution_id.as_deref(),
+        execution_id_payload: quality_gate.execution_id.as_deref(),
+        tool_name_args: Some("memory"),
+        tool_name_payload: None,
+        repo_id_args: args.repo_id.as_deref(),
+        repo_id_payload: payload_repo_id.as_deref(),
+        repo_path_args: None,
+        repo_path_payload: None,
+        worktree_id_args: None,
+        worktree_id_payload: None,
+        file_path_args: None,
+        file_path_payload: None,
+        branch_args: None,
+        branch_payload: payload_branch.as_deref(),
+        commit_args: None,
+        commit_payload: payload_commit.as_deref(),
+        require_project_id: true,
+        timestamp: Some(timestamp),
+    })?;
+    if origin_context.repo_id.is_none() {
+        origin_context.repo_id = vcs_context.repo_id.clone();
+    }
+    if origin_context.branch.is_none() {
+        origin_context.branch = vcs_context.branch.clone();
+    }
+    if origin_context.commit.is_none() {
+        origin_context.commit = vcs_context.commit.clone();
+    }
+    let project_id = origin_context.project_id.clone().ok_or_else(|| {
+        McpError::invalid_params("project_id is required for quality gate store", None)
+    })?;
 
     let obs_metadata = ObservationMetadata {
         id: Uuid::new_v4().to_string(),
-        session_id: resolve_identifier_precedence(
-            "session_id",
-            args.session_id.as_ref().map(|id| id.as_str()),
-            payload_session_id.as_deref(),
-        )?,
-        repo_id: resolve_identifier_precedence(
-            "repo_id",
-            args.repo_id.as_deref(),
-            payload_repo_id.as_deref(),
-        )?
-        .or_else(|| vcs_context.repo_id.clone()),
+        session_id: origin_context.session_id.clone(),
+        repo_id: origin_context.repo_id.clone(),
         file_path: None,
-        branch: MemoryHelpers::get_str(data, "branch").or_else(|| vcs_context.branch.clone()),
-        commit: MemoryHelpers::get_str(data, "commit").or_else(|| vcs_context.commit.clone()),
+        branch: origin_context.branch.clone(),
+        commit: origin_context.commit.clone(),
         execution: None,
         quality_gate: Some(quality_gate),
+        origin_context: Some(origin_context),
     };
-    let payload_project_id = MemoryHelpers::get_str(data, "project_id");
-    let project_id = resolve_identifier_precedence(
-        "project_id",
-        args.project_id.as_deref(),
-        payload_project_id.as_deref(),
-    )?
-    .ok_or_else(|| {
-        McpError::invalid_params("project_id is required for quality gate store", None)
-    })?;
 
     match memory_service
         .store_observation(

@@ -9,7 +9,7 @@
 //! - mcb: All crates (facade that re-exports entire public API)
 
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -51,6 +51,28 @@ pub enum DependencyViolation {
     CircularDependency {
         /// The sequence of crates forming the dependency cycle.
         cycle: Vec<String>,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Admin surface imports repository ports outside approved composition roots.
+    AdminBypassImport {
+        /// Source file that introduced the bypass import.
+        file: PathBuf,
+        /// Line where bypass import appears.
+        line: usize,
+        /// Offending source line.
+        context: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// CLI code bypasses unified execution by calling validate crate directly.
+    CliBypassPath {
+        /// Source file that introduced direct validation execution.
+        file: PathBuf,
+        /// Line where bypass call/import appears.
+        line: usize,
+        /// Offending source line.
+        context: String,
         /// Severity level of the violation.
         severity: Severity,
     },
@@ -103,6 +125,34 @@ impl std::fmt::Display for DependencyViolation {
             Self::CircularDependency { cycle, .. } => {
                 write!(f, "Circular dependency: {}", cycle.join(" -> "))
             }
+            Self::AdminBypassImport {
+                file,
+                line,
+                context,
+                ..
+            } => {
+                write!(
+                    f,
+                    "Admin bypass import: {}:{} - {}",
+                    file.display(),
+                    line,
+                    context
+                )
+            }
+            Self::CliBypassPath {
+                file,
+                line,
+                context,
+                ..
+            } => {
+                write!(
+                    f,
+                    "CLI bypass path: {}:{} - {}",
+                    file.display(),
+                    line,
+                    context
+                )
+            }
         }
     }
 }
@@ -113,6 +163,8 @@ impl Violation for DependencyViolation {
             Self::ForbiddenCargoDepedency { .. } => "DEP001",
             Self::ForbiddenUseStatement { .. } => "DEP002",
             Self::CircularDependency { .. } => "DEP003",
+            Self::AdminBypassImport { .. } => "DEP004",
+            Self::CliBypassPath { .. } => "DEP005",
         }
     }
 
@@ -124,7 +176,9 @@ impl Violation for DependencyViolation {
         match self {
             Self::ForbiddenCargoDepedency { severity, .. }
             | Self::ForbiddenUseStatement { severity, .. }
-            | Self::CircularDependency { severity, .. } => *severity,
+            | Self::CircularDependency { severity, .. }
+            | Self::AdminBypassImport { severity, .. }
+            | Self::CliBypassPath { severity, .. } => *severity,
         }
     }
 
@@ -133,12 +187,15 @@ impl Violation for DependencyViolation {
             Self::ForbiddenCargoDepedency { location, .. } => Some(location),
             Self::ForbiddenUseStatement { file, .. } => Some(file),
             Self::CircularDependency { .. } => None,
+            Self::AdminBypassImport { file, .. } | Self::CliBypassPath { file, .. } => Some(file),
         }
     }
 
     fn line(&self) -> Option<usize> {
         match self {
-            Self::ForbiddenUseStatement { line, .. } => Some(*line),
+            Self::ForbiddenUseStatement { line, .. }
+            | Self::AdminBypassImport { line, .. }
+            | Self::CliBypassPath { line, .. } => Some(*line),
             _ => None,
         }
     }
@@ -158,6 +215,12 @@ impl Violation for DependencyViolation {
             Self::CircularDependency { .. } => {
                 Some("Extract shared types to the domain crate".to_string())
             }
+            Self::AdminBypassImport { .. } => Some(
+                "Route admin operations through ToolHandlers/UnifiedExecution and keep repository imports in approved composition roots only".to_string(),
+            ),
+            Self::CliBypassPath { .. } => Some(
+                "Route CLI business commands through the unified execution path instead of direct mcb_validate calls".to_string(),
+            ),
         }
     }
 }
@@ -213,7 +276,118 @@ impl DependencyValidator {
         violations.extend(self.validate_cargo_dependencies()?);
         violations.extend(self.validate_use_statements()?);
         violations.extend(self.detect_circular_dependencies()?);
+        violations.extend(self.validate_bypass_boundaries()?);
         Ok(violations)
+    }
+
+    /// Validate anti-bypass boundaries for admin and CLI surfaces.
+    pub fn validate_bypass_boundaries(&self) -> Result<Vec<DependencyViolation>> {
+        let mut violations = Vec::new();
+
+        let admin_allowed_import_roots = [
+            "crates/mcb-server/src/admin/crud_adapter.rs",
+            "crates/mcb-server/src/admin/handlers.rs",
+        ];
+        let cli_allowed_direct_validate = ["crates/mcb/src/cli/validate.rs"];
+
+        let admin_root = self
+            .config
+            .workspace_root
+            .join("crates")
+            .join("mcb-server")
+            .join("src")
+            .join("admin");
+        self.scan_bypass_patterns(
+            &admin_root,
+            |rel| {
+                !admin_allowed_import_roots
+                    .iter()
+                    .any(|allowed| rel == Path::new(allowed))
+            },
+            "mcb_domain::ports::repositories",
+            |file, line, context| DependencyViolation::AdminBypassImport {
+                file,
+                line,
+                context,
+                severity: Severity::Error,
+            },
+            &mut violations,
+        )?;
+
+        let cli_root = self
+            .config
+            .workspace_root
+            .join("crates")
+            .join("mcb")
+            .join("src")
+            .join("cli");
+        self.scan_bypass_patterns(
+            &cli_root,
+            |rel| {
+                !cli_allowed_direct_validate
+                    .iter()
+                    .any(|allowed| rel == Path::new(allowed))
+            },
+            "mcb_validate::",
+            |file, line, context| DependencyViolation::CliBypassPath {
+                file,
+                line,
+                context,
+                severity: Severity::Error,
+            },
+            &mut violations,
+        )?;
+
+        Ok(violations)
+    }
+
+    fn scan_bypass_patterns<F, G>(
+        &self,
+        scan_root: &Path,
+        should_check_file: F,
+        pattern: &str,
+        make_violation: G,
+        out: &mut Vec<DependencyViolation>,
+    ) -> Result<()>
+    where
+        F: Fn(&Path) -> bool,
+        G: Fn(PathBuf, usize, String) -> DependencyViolation,
+    {
+        if !scan_root.exists() {
+            return Ok(());
+        }
+
+        for entry in WalkDir::new(scan_root)
+            .follow_links(false)
+            .into_iter()
+            .filter_map(std::result::Result::ok)
+            .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
+        {
+            let rel = entry
+                .path()
+                .strip_prefix(&self.config.workspace_root)
+                .unwrap_or(entry.path());
+            if !should_check_file(rel) {
+                continue;
+            }
+
+            let content = std::fs::read_to_string(entry.path())?;
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+                if trimmed.starts_with("//") {
+                    continue;
+                }
+                if line.contains(pattern) {
+                    out.push(make_violation(
+                        entry.path().to_path_buf(),
+                        line_num + 1,
+                        trimmed.to_string(),
+                    ));
+                }
+            }
+        }
+
+        Ok(())
     }
 
     /// Validate Cargo.toml dependencies match Clean Architecture rules
@@ -419,155 +593,3 @@ impl_validator!(
     "dependency",
     "Validates Clean Architecture layer dependencies"
 );
-
-#[cfg(test)]
-mod tests {
-    use std::fs;
-
-    use tempfile::TempDir;
-
-    use super::*;
-
-    fn create_test_workspace() -> TempDir {
-        let temp = TempDir::new().unwrap();
-
-        // Create workspace Cargo.toml
-        fs::write(
-            temp.path().join("Cargo.toml"),
-            r#"
-[workspace]
-members = ["crates/mcb-domain", "crates/mcb-infrastructure"]
-"#,
-        )
-        .unwrap();
-
-        // Create mcb-domain crate (no deps)
-        let domain_dir = temp.path().join("crates/mcb-domain");
-        fs::create_dir_all(domain_dir.join("src")).unwrap();
-        fs::write(
-            domain_dir.join("Cargo.toml"),
-            r#"
-[package]
-name = "mcb-domain"
-version = "0.1.1"
-
-[dependencies]
-serde = "1.0"
-"#,
-        )
-        .unwrap();
-        fs::write(domain_dir.join("src/lib.rs"), "pub fn domain() {}").unwrap();
-
-        // Create mcb-infrastructure crate (depends on domain)
-        let infra_dir = temp.path().join("crates/mcb-infrastructure");
-        fs::create_dir_all(infra_dir.join("src")).unwrap();
-        fs::write(
-            infra_dir.join("Cargo.toml"),
-            r#"
-[package]
-name = "mcb-infrastructure"
-version = "0.1.1"
-
-[dependencies]
-mcb-domain = { path = "../mcb-domain" }
-"#,
-        )
-        .unwrap();
-        fs::write(
-            infra_dir.join("src/lib.rs"),
-            "use mcb_domain::domain;\npub fn infra() { domain(); }",
-        )
-        .unwrap();
-
-        temp
-    }
-
-    #[test]
-    fn test_valid_dependencies() {
-        let temp = create_test_workspace();
-        let validator = DependencyValidator::new(temp.path());
-
-        let violations = validator.validate_cargo_dependencies().unwrap();
-        assert!(
-            violations.is_empty(),
-            "Expected no violations, got: {violations:?}"
-        );
-    }
-
-    #[test]
-    fn test_forbidden_dependency() {
-        let temp = TempDir::new().unwrap();
-
-        // Create domain crate that incorrectly depends on infrastructure
-        let domain_dir = temp.path().join("crates/mcb-domain");
-        fs::create_dir_all(domain_dir.join("src")).unwrap();
-        fs::write(
-            domain_dir.join("Cargo.toml"),
-            r#"
-[package]
-name = "mcb-domain"
-version = "0.1.1"
-
-[dependencies]
-mcb-infrastructure = { path = "../mcb-infrastructure" }
-"#,
-        )
-        .unwrap();
-        fs::write(domain_dir.join("src/lib.rs"), "").unwrap();
-
-        let validator = DependencyValidator::new(temp.path());
-        let violations = validator.validate_cargo_dependencies().unwrap();
-
-        assert_eq!(violations.len(), 1);
-        match &violations[0] {
-            DependencyViolation::ForbiddenCargoDepedency {
-                crate_name,
-                forbidden_dep,
-                ..
-            } => {
-                assert_eq!(crate_name, "mcb-domain");
-                assert_eq!(forbidden_dep, "mcb-infrastructure");
-            }
-            _ => panic!("Expected ForbiddenCargoDependency"),
-        }
-    }
-
-    #[test]
-    fn test_forbidden_use_statement() {
-        let temp = TempDir::new().unwrap();
-
-        // Create domain crate with forbidden use statement
-        let domain_dir = temp.path().join("crates/mcb-domain");
-        fs::create_dir_all(domain_dir.join("src")).unwrap();
-        fs::write(
-            domain_dir.join("Cargo.toml"),
-            r#"
-[package]
-name = "mcb-domain"
-version = "0.1.1"
-"#,
-        )
-        .unwrap();
-        fs::write(
-            domain_dir.join("src/lib.rs"),
-            "use mcb_infrastructure::something;",
-        )
-        .unwrap();
-
-        let validator = DependencyValidator::new(temp.path());
-        let violations = validator.validate_use_statements().unwrap();
-
-        assert_eq!(violations.len(), 1);
-        match &violations[0] {
-            DependencyViolation::ForbiddenUseStatement {
-                crate_name,
-                forbidden_dep,
-                ..
-            } => {
-                assert_eq!(crate_name, "mcb-domain");
-                assert_eq!(forbidden_dep, "mcb-infrastructure");
-            }
-            _ => panic!("Expected ForbiddenUseStatement"),
-        }
-    }
-}

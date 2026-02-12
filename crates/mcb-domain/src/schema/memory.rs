@@ -256,6 +256,14 @@ pub fn tables() -> Vec<TableDef> {
                     auto_increment: false,
                 },
                 ColumnDef {
+                    name: "origin_context".to_string(),
+                    type_: ColumnType::Text,
+                    primary_key: false,
+                    unique: false,
+                    not_null: false,
+                    auto_increment: false,
+                },
+                ColumnDef {
                     name: "created_at".to_string(),
                     type_: ColumnType::Integer,
                     primary_key: false,

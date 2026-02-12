@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::{MemoryFilter, ObservationType};
+use mcb_domain::entities::memory::{MemoryFilter, ObservationType, OriginContext};
 use mcb_domain::ports::services::MemoryServiceInterface;
 use tracing::debug;
 
@@ -48,11 +48,26 @@ impl HookProcessor {
             context.tool_name, context.status
         );
 
+        let project_id = context
+            .metadata
+            .get("project_id")
+            .cloned()
+            .unwrap_or_else(|| "default".to_string());
+
         let metadata = mcb_domain::entities::memory::ObservationMetadata {
             session_id: context
                 .session_id
                 .as_ref()
                 .map(|id| id.as_str().to_string()),
+            origin_context: Some(OriginContext {
+                project_id: Some(project_id.clone()),
+                session_id: context
+                    .session_id
+                    .as_ref()
+                    .map(|id| id.as_str().to_string()),
+                tool_name: Some(context.tool_name.clone()),
+                ..OriginContext::default()
+            }),
             ..Default::default()
         };
 
@@ -60,12 +75,6 @@ impl HookProcessor {
         if context.tool_output.is_error.unwrap_or(false) {
             tags.push("error".to_string());
         }
-
-        let project_id = context
-            .metadata
-            .get("project_id")
-            .cloned()
-            .unwrap_or_else(|| "default".to_string());
 
         memory_service
             .store_observation(

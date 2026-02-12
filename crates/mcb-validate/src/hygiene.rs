@@ -1,6 +1,6 @@
 //! Test Organization Validation
 //!
-//! Validates test organization:
+//! Validates test hygiene:
 //! - No inline test modules in src/ (should be in tests/)
 //! - Test file naming conventions
 //! - Test function naming conventions
@@ -15,9 +15,9 @@ use crate::pattern_registry::PATTERNS;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
-/// Test organization violation types
+/// Test hygiene violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum TestViolation {
+pub enum HygieneViolation {
     /// Inline test module found in src/
     InlineTestModule {
         /// File containing the inline test module.
@@ -128,7 +128,7 @@ pub enum TestViolation {
     },
 }
 
-impl TestViolation {
+impl HygieneViolation {
     /// Returns the severity level of the violation.
     ///
     /// Delegates to the [`Violation`] trait implementation to avoid duplication.
@@ -137,7 +137,7 @@ impl TestViolation {
     }
 }
 
-impl std::fmt::Display for TestViolation {
+impl std::fmt::Display for HygieneViolation {
     /// Formats the violation as a human-readable string.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -270,7 +270,7 @@ impl std::fmt::Display for TestViolation {
     }
 }
 
-impl Violation for TestViolation {
+impl Violation for HygieneViolation {
     /// Returns the unique violation identifier code.
     fn id(&self) -> &str {
         match self {
@@ -382,11 +382,11 @@ impl Violation for TestViolation {
 /// - Test file naming conventions
 /// - Test function naming conventions
 /// - Test quality (assertions, trivial tests, etc.)
-pub struct TestValidator {
+pub struct HygieneValidator {
     config: ValidationConfig,
 }
 
-impl TestValidator {
+impl HygieneValidator {
     /// Create a new test validator
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         Self::with_config(ValidationConfig::new(workspace_root))
@@ -398,7 +398,7 @@ impl TestValidator {
     }
 
     /// Runs all test organization validations and returns violations found.
-    pub fn validate_all(&self) -> Result<Vec<TestViolation>> {
+    pub fn validate_all(&self) -> Result<Vec<HygieneViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_no_inline_tests()?);
         violations.extend(self.validate_test_directory_structure()?);
@@ -409,10 +409,12 @@ impl TestValidator {
     }
 
     /// Verifies that no inline test declarations exist in src/ directories.
-    pub fn validate_no_inline_tests(&self) -> Result<Vec<TestViolation>> {
+    pub fn validate_no_inline_tests(&self) -> Result<Vec<HygieneViolation>> {
         let mut violations = Vec::new();
         let cfg_test_pattern = PATTERNS.get("TEST001.cfg_test");
         let mod_tests_pattern = PATTERNS.get("TEST001.mod_tests");
+        let test_attr_pattern = PATTERNS.get("TEST001.test_attr");
+        let tokio_test_attr_pattern = PATTERNS.get("TEST001.tokio_test_attr");
 
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
@@ -433,11 +435,13 @@ impl TestValidator {
                 let content = std::fs::read_to_string(entry.path())?;
                 let lines: Vec<&str> = content.lines().collect();
                 let mut last_cfg_test_line: Option<usize> = None;
+                let mut has_inline_module_marker = false;
 
                 for (line_num, line) in lines.iter().enumerate() {
                     if cfg_test_pattern.is_some_and(|p| p.is_match(line)) {
                         last_cfg_test_line = Some(line_num);
-                        violations.push(TestViolation::InlineTestModule {
+                        has_inline_module_marker = true;
+                        violations.push(HygieneViolation::InlineTestModule {
                             file: entry.path().to_path_buf(),
                             line: line_num + 1,
                             severity: Severity::Error,
@@ -449,11 +453,27 @@ impl TestValidator {
                         if last_cfg_test_line.is_some_and(|cfg_line| line_num <= cfg_line + 5) {
                             continue;
                         }
-                        violations.push(TestViolation::InlineTestModule {
+                        has_inline_module_marker = true;
+                        violations.push(HygieneViolation::InlineTestModule {
                             file: entry.path().to_path_buf(),
                             line: line_num + 1,
                             severity: Severity::Error,
                         });
+                    }
+                }
+
+                if !has_inline_module_marker {
+                    for (line_num, line) in lines.iter().enumerate() {
+                        if test_attr_pattern.is_some_and(|p| p.is_match(line))
+                            || tokio_test_attr_pattern.is_some_and(|p| p.is_match(line))
+                        {
+                            violations.push(HygieneViolation::InlineTestModule {
+                                file: entry.path().to_path_buf(),
+                                line: line_num + 1,
+                                severity: Severity::Error,
+                            });
+                            break;
+                        }
                     }
                 }
             }
@@ -463,7 +483,7 @@ impl TestValidator {
     }
 
     /// Validates that tests are properly organized in subdirectories (unit/, integration/, e2e/).
-    pub fn validate_test_directory_structure(&self) -> Result<Vec<TestViolation>> {
+    pub fn validate_test_directory_structure(&self) -> Result<Vec<HygieneViolation>> {
         let mut violations = Vec::new();
 
         for crate_dir in self.get_crate_dirs()? {
@@ -493,7 +513,7 @@ impl TestValidator {
                     .unwrap_or(false);
 
                 if has_test_files {
-                    violations.push(TestViolation::BadTestFileName {
+                    violations.push(HygieneViolation::BadTestFileName {
                         file: tests_dir.clone(),
                         suggestion: "Create tests/unit/ or tests/integration/ directory"
                             .to_string(),
@@ -529,7 +549,7 @@ impl TestValidator {
                 }
 
                 // Any other .rs file directly in tests/ is a violation
-                violations.push(TestViolation::BadTestFileName {
+                violations.push(HygieneViolation::BadTestFileName {
                     file: path,
                     suggestion: "Move to tests/unit/, tests/integration/, or tests/e2e/ directory"
                         .to_string(),
@@ -542,7 +562,7 @@ impl TestValidator {
     }
 
     /// Checks test file naming conventions and directory structure compliance.
-    pub fn validate_test_naming(&self) -> Result<Vec<TestViolation>> {
+    pub fn validate_test_naming(&self) -> Result<Vec<HygieneViolation>> {
         let mut violations = Vec::new();
 
         for crate_dir in self.get_crate_dirs()? {
@@ -589,7 +609,7 @@ impl TestValidator {
                     "unit" => {
                         // Unit tests must follow [module]_tests.rs pattern
                         if !file_name.ends_with("_tests") {
-                            violations.push(TestViolation::BadTestFileName {
+                            violations.push(HygieneViolation::BadTestFileName {
                                 file: path.to_path_buf(),
                                 suggestion: format!(
                                     "{file_name}_tests.rs (unit tests must end with _tests)"
@@ -606,7 +626,7 @@ impl TestValidator {
                             || file_name.ends_with("_workflow");
 
                         if !is_valid_integration {
-                            violations.push(TestViolation::BadTestFileName {
+                            violations.push(HygieneViolation::BadTestFileName {
                                 file: path.to_path_buf(),
                                 suggestion: format!("{file_name}_integration.rs or {file_name}_workflow.rs (integration tests should indicate their purpose)"),
                                 severity: Severity::Info,
@@ -620,7 +640,7 @@ impl TestValidator {
                             || file_name.starts_with("test_");
 
                         if !is_valid_e2e {
-                            violations.push(TestViolation::BadTestFileName {
+                            violations.push(HygieneViolation::BadTestFileName {
                                 file: path.to_path_buf(),
                                 suggestion: format!("{file_name}_e2e.rs or test_{file_name}.rs (e2e tests should indicate they're end-to-end)"),
                                 severity: Severity::Info,
@@ -640,7 +660,7 @@ impl TestValidator {
                                 | "integration.rs"
                                 | "e2e.rs"
                         ) {
-                            violations.push(TestViolation::BadTestFileName {
+                            violations.push(HygieneViolation::BadTestFileName {
                                 file: path.to_path_buf(),
                                 suggestion: "Move to a subdirectory (e.g., tests/unit/)"
                                     .to_string(),
@@ -660,7 +680,7 @@ impl TestValidator {
     }
 
     /// Verifies that test functions follow the `test_*` naming pattern.
-    pub fn validate_test_function_naming(&self) -> Result<Vec<TestViolation>> {
+    pub fn validate_test_function_naming(&self) -> Result<Vec<HygieneViolation>> {
         let mut violations = Vec::new();
         let test_attr_pattern = Regex::new(r"#\[test\]").unwrap();
         let tokio_test_pattern = Regex::new(r"#\[tokio::test\]").unwrap();
@@ -710,7 +730,7 @@ impl TestValidator {
 
                                 // Check naming convention - must start with test_
                                 if !fn_name.starts_with("test_") {
-                                    violations.push(TestViolation::BadTestFunctionName {
+                                    violations.push(HygieneViolation::BadTestFunctionName {
                                         file: entry.path().to_path_buf(),
                                         line: fn_line_idx + 1,
                                         function_name: fn_name.to_string(),
@@ -751,7 +771,7 @@ impl TestValidator {
                                     .any(|pattern| fn_name.ends_with(pattern));
 
                                 if !has_assertion && !is_smoke_test {
-                                    violations.push(TestViolation::TestWithoutAssertion {
+                                    violations.push(HygieneViolation::TestWithoutAssertion {
                                         file: entry.path().to_path_buf(),
                                         line: fn_line_idx + 1,
                                         function_name: fn_name.to_string(),
@@ -774,7 +794,7 @@ impl TestValidator {
 
     /// Validates test quality by checking for trivial assertions, unwrap-only tests, and comment-only tests.
     #[allow(clippy::too_many_lines)]
-    pub fn validate_test_quality(&self) -> Result<Vec<TestViolation>> {
+    pub fn validate_test_quality(&self) -> Result<Vec<HygieneViolation>> {
         let mut violations = Vec::new();
 
         let mock_type_pattern = Regex::new(r"\bMock[A-Za-z0-9_]+\b").ok();
@@ -897,7 +917,7 @@ impl TestValidator {
                                 for (line_idx, body_line) in &body_lines {
                                     for (pattern, desc) in &compiled_trivial {
                                         if pattern.is_match(body_line) {
-                                            violations.push(TestViolation::TrivialAssertion {
+                                            violations.push(HygieneViolation::TrivialAssertion {
                                                 file: entry.path().to_path_buf(),
                                                 line: line_idx + 1,
                                                 function_name: fn_name.to_string(),
@@ -919,7 +939,7 @@ impl TestValidator {
                                 if has_unwrap && !has_real_assert {
                                     // Use Warning severity since this is heuristic-based detection
                                     // Tests may have valid assertions that aren't detected by the pattern
-                                    violations.push(TestViolation::UnwrapOnlyAssertion {
+                                    violations.push(HygieneViolation::UnwrapOnlyAssertion {
                                         file: entry.path().to_path_buf(),
                                         line: fn_start + 1,
                                         function_name: fn_name.to_string(),
@@ -953,7 +973,7 @@ impl TestValidator {
                                 });
 
                                 if all_comments && body_lines.len() > 2 {
-                                    violations.push(TestViolation::CommentOnlyTest {
+                                    violations.push(HygieneViolation::CommentOnlyTest {
                                         file: entry.path().to_path_buf(),
                                         line: fn_start + 1,
                                         function_name: fn_name.to_string(),
@@ -983,14 +1003,14 @@ impl TestValidator {
         skip_message_pattern: Option<&Regex>,
         todo_pattern: Option<&Regex>,
         unimplemented_pattern: Option<&Regex>,
-        violations: &mut Vec<TestViolation>,
+        violations: &mut Vec<HygieneViolation>,
     ) {
         for (idx, line) in lines.iter().enumerate() {
             let line_no = idx + 1;
 
             if let Some(pattern) = mock_type_pattern {
                 for mat in pattern.find_iter(line) {
-                    violations.push(TestViolation::MockTypeUsage {
+                    violations.push(HygieneViolation::MockTypeUsage {
                         file: file.to_path_buf(),
                         line: line_no,
                         token: mat.as_str().to_string(),
@@ -1002,7 +1022,7 @@ impl TestValidator {
             if let Some(pattern) = skip_message_pattern
                 && pattern.is_match(line)
             {
-                violations.push(TestViolation::SkipBranchUsage {
+                violations.push(HygieneViolation::SkipBranchUsage {
                     file: file.to_path_buf(),
                     line: line_no,
                     severity: Severity::Error,
@@ -1012,7 +1032,7 @@ impl TestValidator {
             if let Some(pattern) = todo_pattern
                 && pattern.is_match(line)
             {
-                violations.push(TestViolation::StubMacroUsage {
+                violations.push(HygieneViolation::StubMacroUsage {
                     file: file.to_path_buf(),
                     line: line_no,
                     macro_name: "todo".to_string(),
@@ -1023,7 +1043,7 @@ impl TestValidator {
             if let Some(pattern) = unimplemented_pattern
                 && pattern.is_match(line)
             {
-                violations.push(TestViolation::StubMacroUsage {
+                violations.push(HygieneViolation::StubMacroUsage {
                     file: file.to_path_buf(),
                     line: line_no,
                     macro_name: "unimplemented".to_string(),
@@ -1040,7 +1060,7 @@ impl TestValidator {
                 && next.starts_with("else")
                 && next2.contains("return;")
             {
-                violations.push(TestViolation::SkipBranchUsage {
+                violations.push(HygieneViolation::SkipBranchUsage {
                     file: file.to_path_buf(),
                     line: idx + 1,
                     severity: Severity::Error,
@@ -1062,7 +1082,7 @@ impl TestValidator {
 }
 
 impl_validator!(
-    TestValidator,
-    "tests_org",
-    "Validates test organization and quality"
+    HygieneValidator,
+    "hygiene",
+    "Validates test hygiene and quality"
 );

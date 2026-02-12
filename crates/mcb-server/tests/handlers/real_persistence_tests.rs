@@ -313,7 +313,7 @@ async fn test_real_session_summary_store_and_retrieve() {
         action: MemoryAction::Store,
         org_id: None,
         resource: MemoryResource::Session,
-        project_id: None,
+        project_id: Some("session-roundtrip-project".to_string()),
         data: Some(json!({
             "session_id": "sess-roundtrip",
             "topics": ["architecture", "testing"],
@@ -479,7 +479,7 @@ async fn test_real_agent_session_create_and_retrieve() {
         action: MemoryAction::Store,
         org_id: None,
         resource: MemoryResource::Session,
-        project_id: None,
+        project_id: Some("agent-roundtrip-project".to_string()),
         data: Some(json!({
             "session_id": "sess-agent-roundtrip",
             "topics": ["FK chain validation"],

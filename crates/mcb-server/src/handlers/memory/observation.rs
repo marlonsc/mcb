@@ -12,7 +12,7 @@ use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::resolve_identifier_precedence;
+use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -41,38 +41,62 @@ pub async fn store_observation(
         Err(error_result) => return Ok(error_result),
     };
     let tags = MemoryHelpers::get_string_list(data, "tags");
-    let payload_project_id = MemoryHelpers::get_str(data, "project_id");
-    let project_id = resolve_identifier_precedence(
-        "project_id",
-        args.project_id.as_deref(),
-        payload_project_id.as_deref(),
-    )?
-    .ok_or_else(|| {
-        McpError::invalid_params("project_id is required for storing observation", None)
-    })?;
-
     let vcs_context = VcsContext::capture();
     let payload_session_id = MemoryHelpers::get_str(data, "session_id");
     let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
+    let payload_project_id = MemoryHelpers::get_str(data, "project_id");
+    let payload_file_path = MemoryHelpers::get_str(data, "file_path");
+    let payload_branch = MemoryHelpers::get_str(data, "branch");
+    let payload_commit = MemoryHelpers::get_str(data, "commit");
+
+    let mut origin_context = resolve_origin_context(OriginContextInput {
+        org_id: args.org_id.as_deref(),
+        project_id_args: args.project_id.as_deref(),
+        project_id_payload: payload_project_id.as_deref(),
+        session_id_args: args.session_id.as_ref().map(|id| id.as_str()),
+        session_id_payload: payload_session_id.as_deref(),
+        execution_id_args: None,
+        execution_id_payload: None,
+        tool_name_args: Some("memory"),
+        tool_name_payload: None,
+        repo_id_args: args.repo_id.as_deref(),
+        repo_id_payload: payload_repo_id.as_deref(),
+        repo_path_args: None,
+        repo_path_payload: None,
+        worktree_id_args: None,
+        worktree_id_payload: None,
+        file_path_args: None,
+        file_path_payload: payload_file_path.as_deref(),
+        branch_args: None,
+        branch_payload: payload_branch.as_deref(),
+        commit_args: None,
+        commit_payload: payload_commit.as_deref(),
+        require_project_id: true,
+        timestamp: None,
+    })?;
+    if origin_context.repo_id.is_none() {
+        origin_context.repo_id = vcs_context.repo_id.clone();
+    }
+    if origin_context.branch.is_none() {
+        origin_context.branch = vcs_context.branch.clone();
+    }
+    if origin_context.commit.is_none() {
+        origin_context.commit = vcs_context.commit.clone();
+    }
+    let project_id = origin_context.project_id.clone().ok_or_else(|| {
+        McpError::invalid_params("project_id is required for storing observation", None)
+    })?;
 
     let metadata = ObservationMetadata {
         id: Uuid::new_v4().to_string(),
-        session_id: resolve_identifier_precedence(
-            "session_id",
-            args.session_id.as_ref().map(|id| id.as_str()),
-            payload_session_id.as_deref(),
-        )?,
-        repo_id: resolve_identifier_precedence(
-            "repo_id",
-            args.repo_id.as_deref(),
-            payload_repo_id.as_deref(),
-        )?
-        .or_else(|| vcs_context.repo_id.clone()),
-        file_path: MemoryHelpers::get_str(data, "file_path"),
-        branch: MemoryHelpers::get_str(data, "branch").or_else(|| vcs_context.branch.clone()),
-        commit: MemoryHelpers::get_str(data, "commit").or_else(|| vcs_context.commit.clone()),
+        session_id: origin_context.session_id.clone(),
+        repo_id: origin_context.repo_id.clone(),
+        file_path: origin_context.file_path.clone(),
+        branch: origin_context.branch.clone(),
+        commit: origin_context.commit.clone(),
         execution: None,
         quality_gate: None,
+        origin_context: Some(origin_context),
     };
     match memory_service
         .store_observation(project_id, content, observation_type, tags, metadata)

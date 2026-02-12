@@ -8,9 +8,9 @@
 //! The output is used to set exact assertion counts in the real test files.
 
 use mcb_validate::{
-    AsyncPatternValidator, DocumentationValidator, ErrorBoundaryValidator,
+    AsyncPatternValidator, DocumentationValidator, ErrorBoundaryValidator, HygieneValidator,
     ImplementationQualityValidator, KissValidator, OrganizationValidator, PatternValidator,
-    PerformanceValidator, QualityValidator, RefactoringValidator, SolidValidator, TestValidator,
+    PerformanceValidator, QualityValidator, RefactoringValidator, SolidValidator,
 };
 
 use crate::test_constants::*;
@@ -234,22 +234,25 @@ fn discover_refactoring_violations() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TestValidator (tests_org)
+// HygieneValidator
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_test_org_violations() {
+fn discover_hygiene_violations() {
     let (_temp, root) = full_workspace();
-    let validator = TestValidator::new(&root);
+    let validator = HygieneValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
-    eprintln!("\n=== TestValidator: {} violations ===", violations.len());
+    eprintln!(
+        "\n=== HygieneValidator: {} violations ===",
+        violations.len()
+    );
     for (i, v) in violations.iter().enumerate() {
         eprintln!("  [{i}] {v}");
     }
     assert!(
         !violations.is_empty(),
-        "TestValidator should find inline test modules / naming violations"
+        "HygieneValidator should find inline test modules / naming violations"
     );
 }
 

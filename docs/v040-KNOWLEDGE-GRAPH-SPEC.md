@@ -12,6 +12,7 @@ network of entities, enabling high-fidelity code reasoning and hybrid search.
 
 Nodes represent semantic entities extracted from the source code.
 
+<!-- markdownlint-disable MD013 -->
 | Node Type | Description | Attributes |
 | ----------- | ------------- | ------------ |
 | `Module` | A file or logical grouping of code | `path`, `is_external` |
@@ -20,6 +21,7 @@ Nodes represent semantic entities extracted from the source code.
 | `Interface` / `Trait` | A behavioral contract | `name`, `methods` |
 | `Import` | An external dependency reference | `source`, `alias` |
 | `Variable` | A global or significant local state | `name`, `type_ref` |
+<!-- markdownlint-enable MD013 -->
 
 ### Edge Types
 
@@ -30,7 +32,7 @@ Edges define directed relationships between semantic entities.
 | `CALLS` | `Function` | `Function` | Function execution flow |
 | `IMPORTS` | `Module` | `Module` | Dependency relationship |
 | `EXTENDS` | `Class` | `Class` | Inheritance relationship |
-| `IMPLEMENTS` | `Class` | `Interface`| Contract fulfillment |
+| `IMPLEMENTS` | `Class` | `Interface` | Contract fulfillment |
 | `CONTAINS` | `Module` | `Entity` | Ownership hierarchy |
 | `TYPE_REF` | `Variable` | `Class` | Data type association |
 
@@ -68,9 +70,12 @@ relationship extraction.
 
 ### Extraction Approach
 
-1. **AST Parsing**: Generate a concrete syntax tree using language-specific tree-sitter grammars.
-2. **TSG Rules**: Use TreeSitter Graph (TSG) DSL to map AST patterns to graph nodes and edges.
-3. **Symbol Resolution**: Resolve local references to Fully Qualified Names (FQNs) to link nodes across modules.
+1. **AST Parsing**: Generate a concrete syntax tree using language-specific
+   tree-sitter grammars.
+2. **TSG Rules**: Use TreeSitter Graph (TSG) DSL to map AST patterns to
+   graph nodes and edges.
+3. **Symbol Resolution**: Resolve local references to Fully Qualified Names (FQNs)
+   to link nodes across modules.
 4. **Incremental Updates**: Only re-extract files with changed hashes, patching
    the existing graph.
 

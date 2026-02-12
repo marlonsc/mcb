@@ -4,7 +4,7 @@
 //! - Clean Architecture principles (dependency direction)
 //! - Code quality standards (no unwrap/expect in production)
 //! - Professional patterns (DI, async traits, error types)
-//! - Test organization (no inline tests)
+//! - Test hygiene (no inline tests)
 //! - Documentation completeness
 //! - Naming conventions
 //! - SOLID principles (SRP, OCP, LSP, ISP, DIP)
@@ -80,6 +80,7 @@ pub mod clean_architecture;
 pub mod config_quality;
 pub mod layer_flow;
 pub mod port_adapter;
+#[path = "quality.rs"]
 pub mod test_quality;
 pub mod visibility;
 
@@ -88,6 +89,7 @@ pub mod async_patterns;
 pub mod dependency;
 pub mod documentation;
 pub mod error_boundary;
+pub mod hygiene;
 pub mod implementation;
 pub mod kiss;
 pub mod naming;
@@ -96,10 +98,10 @@ pub mod pattern_validator;
 pub mod performance;
 pub mod pmat;
 pub(crate) mod pmat_native;
+#[path = "code_quality.rs"]
 pub mod quality;
 pub mod refactoring;
 pub mod solid;
-pub mod tests_org;
 
 use std::path::{Path, PathBuf};
 
@@ -157,9 +159,9 @@ pub use rules::yaml_loader::{
 };
 pub use rules::yaml_validator::YamlRuleValidator;
 
+pub use hygiene::{HygieneValidator, HygieneViolation};
 pub use solid::{SolidValidator, SolidViolation};
 pub use test_quality::{TestQualityValidator, TestQualityViolation};
-pub use tests_org::{TestValidator, TestViolation};
 use thiserror::Error;
 // Re-export centralized thresholds
 pub use declarative_validator::DeclarativeValidator;

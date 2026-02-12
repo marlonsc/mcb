@@ -74,6 +74,7 @@ fn create_test_session_summary(id: &str, project_id: &str) -> SessionSummary {
         decisions: vec![],
         next_steps: vec![],
         key_files: vec![],
+        origin_context: None,
         created_at: now,
     }
 }

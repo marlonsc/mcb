@@ -1,12 +1,12 @@
-//! Tests for Test Organization Validation
+//! Tests for Test Hygiene Validation
 //!
-//! Validates `TestValidator` against fixture crates with precise
+//! Validates `HygieneValidator` against fixture crates with precise
 //! file + line + violation-type assertions.
 //!
 //! Note: `BadTestFileName` violations have no line field, so line=0
 //! is used (skips line check).
 
-use mcb_validate::TestValidator;
+use mcb_validate::HygieneValidator;
 
 use crate::test_constants::*;
 use crate::test_utils::*;
@@ -16,10 +16,10 @@ use crate::test_utils::*;
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn test_test_org_full_workspace() {
+fn test_hygiene_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = TestValidator::new(&root);
+    let validator = HygieneValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
     assert_violations_exact(
@@ -38,7 +38,7 @@ fn test_test_org_full_workspace() {
             ("integration_test.rs", 10, "TrivialAssertion"),
             ("integration_test.rs", 16, "TrivialAssertion"),
         ],
-        "TestValidator full workspace",
+        "HygieneValidator full workspace",
     );
 }
 
@@ -47,7 +47,7 @@ fn test_test_org_full_workspace() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn test_clean_test_org_no_violations() {
+fn test_clean_hygiene_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
         r"
@@ -57,7 +57,7 @@ pub fn add(a: i32, b: i32) -> i32 {
 }
 ",
     );
-    let validator = TestValidator::new(&root);
+    let validator = HygieneValidator::new(&root);
     let violations = validator.validate_all().unwrap();
 
     assert_no_violations(

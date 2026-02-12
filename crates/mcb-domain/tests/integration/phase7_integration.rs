@@ -16,6 +16,7 @@ mod phase7_integration_tests {
             commit: Some("abc123def456".to_string()),
             execution: None,
             quality_gate: None,
+            origin_context: None,
         };
 
         assert_eq!(metadata.session_id, Some("sess-123".to_string()));
@@ -51,6 +52,7 @@ mod phase7_integration_tests {
             commit: None,
             execution: None,
             quality_gate: None,
+            origin_context: None,
         };
 
         assert!(metadata.branch.is_none());
@@ -68,6 +70,7 @@ mod phase7_integration_tests {
             commit: Some("commit1".to_string()),
             execution: None,
             quality_gate: None,
+            origin_context: None,
         };
 
         let metadata2 = ObservationMetadata {
@@ -79,6 +82,7 @@ mod phase7_integration_tests {
             commit: Some("commit2".to_string()),
             execution: None,
             quality_gate: None,
+            origin_context: None,
         };
 
         assert_eq!(metadata1.branch, metadata2.branch);
@@ -115,6 +119,7 @@ mod phase7_integration_tests {
             commit: Some("abc123".to_string()),
             execution: None,
             quality_gate: None,
+            origin_context: None,
         };
 
         let json = serde_json::to_value(&metadata).expect("Serialization failed");

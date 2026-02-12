@@ -259,6 +259,8 @@ impl MemoryRepository for SqliteMemoryRepository {
             .map_err(|e| Error::memory_with_source("serialize next_steps", e))?;
         let key_files_json = serde_json::to_string(&summary.key_files)
             .map_err(|e| Error::memory_with_source("serialize key_files", e))?;
+        let origin_context_json = serde_json::to_string(&summary.origin_context)
+            .map_err(|e| Error::memory_with_source("serialize origin_context", e))?;
 
         let params = [
             SqlParam::String(summary.id.clone()),
@@ -268,19 +270,21 @@ impl MemoryRepository for SqliteMemoryRepository {
             SqlParam::String(decisions_json),
             SqlParam::String(next_steps_json),
             SqlParam::String(key_files_json),
+            SqlParam::String(origin_context_json),
             SqlParam::I64(summary.created_at),
         ];
 
         self.executor
             .execute(
                 r"
-                INSERT INTO session_summaries (id, project_id, session_id, topics, decisions, next_steps, key_files, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO session_summaries (id, project_id, session_id, topics, decisions, next_steps, key_files, origin_context, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     topics = excluded.topics,
                     decisions = excluded.decisions,
                     next_steps = excluded.next_steps,
-                    key_files = excluded.key_files
+                    key_files = excluded.key_files,
+                    origin_context = excluded.origin_context
                 ",
                 &params,
             )

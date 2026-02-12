@@ -138,7 +138,7 @@ async fn test_memory_store_session_success() {
         action: MemoryAction::Store,
         org_id: None,
         resource: MemoryResource::Session,
-        project_id: None,
+        project_id: Some("test-project".to_string()),
         data: Some(json!({
             "session_id": "test-session",
             "summary": "Test session summary"
@@ -304,7 +304,7 @@ async fn test_memory_get_session_success() {
         action: MemoryAction::Get,
         org_id: None,
         resource: MemoryResource::Session,
-        project_id: None,
+        project_id: Some("test-project".to_string()),
         data: None,
         ids: None,
         repo_id: None,

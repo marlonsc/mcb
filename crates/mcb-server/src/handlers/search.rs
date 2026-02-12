@@ -113,11 +113,17 @@ impl SearchHandler {
                             .map(|r| {
                                 serde_json::json!({
                                     "observation_id": r.observation.id,
+                                    "project_id": r.observation.project_id,
                                     "content": r.observation.content,
                                     "observation_type": r.observation.r#type.as_str(),
                                     "tags": r.observation.tags,
                                     "similarity_score": r.similarity_score,
                                     "session_id": r.observation.metadata.session_id,
+                                    "repo_id": r.observation.metadata.repo_id,
+                                    "file_path": r.observation.metadata.file_path,
+                                    "branch": r.observation.metadata.branch,
+                                    "commit": r.observation.metadata.commit,
+                                    "origin_context": r.observation.metadata.origin_context,
                                 })
                             })
                             .collect();

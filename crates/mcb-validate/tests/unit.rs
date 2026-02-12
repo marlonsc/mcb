@@ -25,6 +25,9 @@ mod async_patterns;
 #[path = "unit/cargo_dependency_tests.rs"]
 mod cargo_dependency;
 
+#[path = "unit/dependency_tests.rs"]
+mod dependency_tests;
+
 #[path = "unit/documentation_tests.rs"]
 mod documentation;
 
@@ -70,8 +73,8 @@ mod solid;
 #[path = "unit/template_engine_tests.rs"]
 mod template_engine;
 
-#[path = "unit/tests_org_tests.rs"]
-mod tests_org;
+#[path = "unit/hygiene_tests.rs"]
+mod hygiene_tests;
 
 #[path = "unit/unwrap_detector_tests.rs"]
 mod unwrap_detector;

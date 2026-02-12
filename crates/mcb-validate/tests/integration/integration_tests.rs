@@ -98,13 +98,13 @@ fn test_validate_workspace_tests() {
     let workspace_root = get_workspace_root();
     let config = ValidationConfig::new(&workspace_root);
     let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let violations = registry.validate_named(&config, &["tests_org"]).unwrap();
+    let violations = registry.validate_named(&config, &["hygiene"]).unwrap();
 
-    println!("\n=== Test Organization Violations ===");
+    println!("\n=== Test Hygiene Violations ===");
     for v in &violations {
         println!("  [{:?}] {}", v.severity(), v);
     }
-    println!("Total: {} test organization violations\n", violations.len());
+    println!("Total: {} test hygiene violations\n", violations.len());
 
     // Ensure test executed successfully
     // Validation completed successfully

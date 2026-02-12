@@ -310,11 +310,13 @@ impl MemoryServiceInterface for MockMemoryService {
 
     async fn create_session_summary(
         &self,
+        project_id: String,
         session_id: SessionId,
         topics: Vec<String>,
         decisions: Vec<String>,
         next_steps: Vec<String>,
         key_files: Vec<String>,
+        origin_context: Option<mcb_domain::entities::memory::OriginContext>,
     ) -> Result<String> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
@@ -323,12 +325,13 @@ impl MemoryServiceInterface for MockMemoryService {
 
         let summary = SessionSummary {
             id: uuid::Uuid::new_v4().to_string(),
-            project_id: "mock-project".to_string(),
+            project_id,
             session_id: session_id.into_string(),
             topics,
             decisions,
             next_steps,
             key_files,
+            origin_context,
             created_at: chrono::Utc::now().timestamp(),
         };
         let id = summary.id.clone();

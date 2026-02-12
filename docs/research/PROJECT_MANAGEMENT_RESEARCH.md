@@ -694,7 +694,7 @@ mod tests {
 - [ ] Documentation
 - [ ] Code review & cleanup
 
-**Total: 13-18 days (2-3 weeks)**
+### Total: 13-18 days (2-3 weeks)
 
 ---
 

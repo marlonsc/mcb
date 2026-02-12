@@ -96,7 +96,7 @@ async fn test_validate_detects_inline_tests_in_src_via_registry_path() {
 
     let service = InfraValidationService::new();
     let report = service
-        .validate(workspace, Some(&["tests_org".to_string()]), Some("warning"))
+        .validate(workspace, Some(&["hygiene".to_string()]), Some("warning"))
         .await
         .expect("validate should succeed");
 

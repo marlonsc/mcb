@@ -2,7 +2,9 @@
 
 use mcb_domain::constants::keys as schema;
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, CheckpointType};
-use mcb_domain::entities::memory::{Observation, ObservationMetadata, SessionSummary};
+use mcb_domain::entities::memory::{
+    Observation, ObservationMetadata, OriginContext, SessionSummary,
+};
 use mcb_domain::entities::project::Project;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::SqlRow;
@@ -54,6 +56,9 @@ pub fn row_to_session_summary(row: &dyn SqlRow) -> Result<SessionSummary> {
     let decisions_json: Option<String> = row.try_get_string("decisions")?;
     let next_steps_json: Option<String> = row.try_get_string("next_steps")?;
     let key_files_json: Option<String> = row.try_get_string("key_files")?;
+    let origin_context_json: Option<String> = row.try_get_string("origin_context")?;
+    let origin_context: Option<OriginContext> =
+        origin_context_json.and_then(|s| serde_json::from_str(&s).ok());
 
     Ok(SessionSummary {
         id: required_string(row, "id")?,
@@ -71,6 +76,7 @@ pub fn row_to_session_summary(row: &dyn SqlRow) -> Result<SessionSummary> {
         key_files: key_files_json
             .and_then(|s| serde_json::from_str(&s).ok())
             .unwrap_or_default(),
+        origin_context,
         created_at: row
             .try_get_i64("created_at")?
             .ok_or_else(|| Error::memory("Missing created_at"))?,

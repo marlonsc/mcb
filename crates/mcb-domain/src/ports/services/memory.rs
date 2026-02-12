@@ -3,7 +3,7 @@ use async_trait::async_trait;
 
 use crate::entities::memory::{
     ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
-    ObservationMetadata, ObservationType, SessionSummary,
+    ObservationMetadata, ObservationType, OriginContext, SessionSummary,
 };
 use crate::error::Result;
 use crate::value_objects::{Embedding, ObservationId, SessionId};
@@ -56,11 +56,13 @@ pub trait MemoryServiceInterface: Send + Sync {
     /// Summarizes the key topics, decisions, and next steps from a session.
     async fn create_session_summary(
         &self,
+        project_id: String,
         session_id: SessionId,
         topics: Vec<String>,
         decisions: Vec<String>,
         next_steps: Vec<String>,
         key_files: Vec<String>,
+        origin_context: Option<OriginContext>,
     ) -> Result<String>;
 
     /// Get an observation by ID.

@@ -56,7 +56,8 @@ export EMBEDDING_PROVIDER=fastembed
 
 ## 3. Connect to Claude Desktop
 
-Add to `~/.config/Claude/claude_desktop_config.json` (Linux) or `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+Add to `~/.config/Claude/claude_desktop_config.json` (Linux) or
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
 
 ```json
 {
@@ -156,4 +157,5 @@ curl http://localhost:19530/v1/vector/health  # Milvus
 - [Architecture](../architecture/ARCHITECTURE.md) - Understanding the system
 - [ADR Index](../adr/README.md) - Architectural decisions
 - [Version History](../operations/CHANGELOG.md) - Complete version history
-- [Roadmap](../developer/ROADMAP.md) - Upcoming features including v0.2.0 Git-Aware Indexing
+- [Roadmap](../developer/ROADMAP.md) - Upcoming features including v0.2.0
+  Git-Aware Indexing
