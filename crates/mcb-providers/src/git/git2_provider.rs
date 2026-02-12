@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 /// Git implementation of VcsProvider using libgit2.
 ///
-/// Constructed by [`mcb_infrastructure::di::vcs`] module for DI registration.
+/// Constructed by `mcb_infrastructure::di::vcs` module for DI registration.
 pub struct Git2Provider;
 
 impl Git2Provider {

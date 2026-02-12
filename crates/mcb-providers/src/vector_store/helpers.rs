@@ -36,7 +36,7 @@ pub fn handle_vector_request_error(
     )
 }
 
-/// Build a list of [`FileInfo`] from search results by grouping on `file_path`.
+/// Build a list of `FileInfo` from search results by grouping on `file_path`.
 ///
 /// This logic is shared across vector store providers (Pinecone, Qdrant, etc.)
 /// whose `list_file_paths` implementation follows the same pattern:

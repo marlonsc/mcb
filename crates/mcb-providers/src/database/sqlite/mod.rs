@@ -3,8 +3,8 @@
 //! Implements [`MemorySchemaDdlGenerator`](mcb_domain::MemorySchemaDdlGenerator) (memory subset)
 //! and [`SchemaDdlGenerator`](mcb_domain::schema::SchemaDdlGenerator) (full project: collections,
 //! observations, session_summaries, file_hashes) for SQLite.
-//! Provides [`SqliteExecutor`] (port [`DatabaseExecutor`]), [`SqliteMemoryRepository`]
-//! (port [`MemoryRepository`]), and factory functions for DI.
+//! Provides [`SqliteExecutor`] (port `DatabaseExecutor`), [`SqliteMemoryRepository`]
+//! (port `MemoryRepository`), and factory functions for DI.
 
 mod agent_repository;
 mod ddl;

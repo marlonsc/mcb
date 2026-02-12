@@ -22,7 +22,7 @@ pub struct Repository {
     pub project_id: String,
     /// Human-readable display name (e.g. "mcb-data-model-v2").
     pub name: String,
-    /// Remote URL (e.g. "https://github.com/org/repo").
+    /// Remote URL (e.g. `https://github.com/org/repo`).
     pub url: String,
     /// Local filesystem path where the repo is cloned.
     pub local_path: String,

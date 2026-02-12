@@ -314,8 +314,8 @@ impl HybridRuleEngine {
 
     /// Execute linter-based validation for rules with `lint_select`.
     ///
-    /// Delegates to [`YamlRuleExecutor`] for linter detection and execution,
-    /// then converts [`LintViolation`]s to [`RuleViolation`]s.
+    /// Delegates to `YamlRuleExecutor` for linter detection and execution,
+    /// then converts `LintViolation`s to [`RuleViolation`]s.
     pub async fn execute_lint_rule(
         &self,
         rule_id: &str,
