@@ -1,7 +1,7 @@
 {{#if is_foreign_key}}
 {{> admin/partials/lov_select}}
 {{else if is_json_field}}
-<textarea id="{{name}}" name="{{name}}" rows="6" style="font-family: monospace; font-size: 0.8125rem;" {{#if readonly}}readonly{{/if}}>{{lookup ../record name}}</textarea>
+{{> admin/partials/json_editor}}
 {{else if is_textarea}}
 <textarea id="{{name}}" name="{{name}}" rows="4" {{#if readonly}}readonly{{/if}}>{{lookup ../record name}}</textarea>
 {{else if is_checkbox}}

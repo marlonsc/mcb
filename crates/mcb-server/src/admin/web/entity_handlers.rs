@@ -258,7 +258,7 @@ pub async fn entities_create(
 }
 
 /// Update entity — persists via service adapter and redirects to the detail page.
-#[rocket::post("/ui/entities/<slug>/<id>", data = "<form>")]
+#[rocket::post("/ui/entities/<slug>/<id>", data = "<form>", rank = 2)]
 pub async fn entities_update(
     slug: &str,
     id: &str,
@@ -281,6 +281,37 @@ pub async fn entities_update(
     Ok(Redirect::to(format!(
         "/ui/entities/{slug}/{id}?toast=updated"
     )))
+}
+
+/// Bulk delete — deletes multiple records by comma-separated IDs.
+#[rocket::post("/ui/entities/<slug>/bulk-delete", data = "<form>", rank = 1)]
+pub async fn entities_bulk_delete(
+    slug: &str,
+    form: Form<std::collections::HashMap<String, String>>,
+    state: Option<&State<AdminState>>,
+) -> Result<Redirect, status::Custom<String>> {
+    find_or_404(slug)?;
+
+    let ids_raw = form.get("ids").map(|s| s.as_str()).unwrap_or("");
+    let ids: Vec<&str> = ids_raw
+        .split(',')
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+        .collect();
+
+    if let Some(adapter) = state.and_then(|s| resolve_adapter(slug, s.inner())) {
+        let mut errors = Vec::new();
+        for id in &ids {
+            if let Err(e) = adapter.delete_by_id(id).await {
+                errors.push(format!("{id}: {e}"));
+            }
+        }
+        if !errors.is_empty() {
+            return Ok(Redirect::to(format!("/ui/entities/{slug}?toast=deleted")));
+        }
+    }
+
+    Ok(Redirect::to(format!("/ui/entities/{slug}?toast=deleted")))
 }
 
 /// Delete entity — removes via service adapter and redirects to the list page.

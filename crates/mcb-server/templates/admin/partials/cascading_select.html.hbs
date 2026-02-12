@@ -1,0 +1,124 @@
+{{!-- Cascading select partial — dependent FK dropdown chain --}}
+{{!-- Context: name, label, fk_target_slug, readonly, ../record (parent record for edit mode) --}}
+{{!-- The parent field ID is derived from the entity's FK chain:
+      e.g. branch.repository_id → cascading to branch.id
+      On parent change, child resets and re-fetches from LOV with parent_id --}}
+<div x-data="{
+    open: false,
+    search: '',
+    options: [],
+    selected: {{#if (lookup ../record name)}}'{{lookup ../record name}}'{{else}}null{{/if}},
+    selectedLabel: '',
+    loading: false,
+    parentValue: null,
+    _timer: null,
+    fetchOptions() {
+        clearTimeout(this._timer);
+        this.loading = true;
+        this._timer = setTimeout(() => {
+            let url = '/ui/lov/{{fk_target_slug}}?q=' + encodeURIComponent(this.search);
+            if (this.parentValue) {
+                url += '&parent_id=' + encodeURIComponent(this.parentValue);
+            }
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    this.options = data;
+                    this.loading = false;
+                })
+                .catch(() => {
+                    this.options = [];
+                    this.loading = false;
+                });
+        }, 300);
+    },
+    selectOption(id, label) {
+        this.selected = id;
+        this.selectedLabel = label;
+        this.search = label;
+        this.open = false;
+        this.$dispatch('cascading-change', { field: '{{name}}', value: id });
+    },
+    resetChild() {
+        this.selected = null;
+        this.selectedLabel = '';
+        this.search = '';
+        this.options = [];
+    },
+    init() {
+        if (this.selected) {
+            fetch('/ui/lov/{{fk_target_slug}}?q=')
+                .then(r => r.json())
+                .then(data => {
+                    let match = data.find(o => o.id === this.selected);
+                    if (match) {
+                        this.selectedLabel = match.label;
+                        this.search = match.label;
+                    } else {
+                        this.search = this.selected;
+                    }
+                })
+                .catch(() => { this.search = this.selected; });
+        }
+    }
+}"
+style="position: relative; margin-bottom: 1rem;"
+@click.away="open = false"
+@keydown.escape="open = false"
+@cascading-change.window="
+    if ($event.detail.field !== '{{name}}') {
+        let parentFields = {
+            'repository_id': ['branch_id', 'worktree_id'],
+            'plan_id': ['plan_version_id'],
+            'plan_version_id': ['plan_review_id'],
+            'team_id': ['team_member_id'],
+            'issue_id': ['comment_id', 'label_assignment_id']
+        };
+        let triggerField = $event.detail.field;
+        let children = parentFields[triggerField] || [];
+        if (children.includes('{{name}}')) {
+            resetChild();
+            parentValue = $event.detail.value;
+            if (parentValue) { fetchOptions(); }
+        }
+    }
+">
+
+    <input type="hidden" name="{{name}}" :value="selected">
+
+    <input type="text"
+           id="{{name}}"
+           x-model="search"
+           {{#if readonly}}disabled{{/if}}
+           placeholder="Search..."
+           style="margin-bottom: 0;"
+           @focus="if (!$el.disabled) { open = true; fetchOptions(); }"
+           @input="if (!$el.disabled) { open = true; fetchOptions(); }">
+
+    <div x-show="open"
+         x-cloak
+         style="position: absolute; z-index: 50; width: 100%; max-height: 12rem; overflow-y: auto; border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.375rem; background: var(--bg-primary, #ffffff); box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 0.125rem;">
+
+        <template x-if="loading">
+            <div style="padding: 0.5rem 0.75rem; color: var(--text-muted, #9ca3af); font-size: 0.875rem;">Loading...</div>
+        </template>
+
+        <template x-if="!loading && options.length === 0">
+            <div style="padding: 0.5rem 0.75rem; color: var(--text-muted, #9ca3af); font-size: 0.875rem;">No results found</div>
+        </template>
+
+        <template x-if="!loading && options.length > 0">
+            <div>
+                <template x-for="opt in options" :key="opt.id">
+                    <div @click="selectOption(opt.id, opt.label)"
+                         style="padding: 0.5rem 0.75rem; cursor: pointer; font-size: 0.875rem; color: var(--text-primary, #111827);"
+                         @mouseenter="$el.style.background = 'var(--bg-secondary, #f9fafb)'"
+                         @mouseleave="$el.style.background = 'transparent'"
+                         :style="opt.id === selected ? 'background: var(--bg-secondary, #f9fafb); font-weight: 600;' : ''">
+                        <span x-text="opt.label"></span>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</div>

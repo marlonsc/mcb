@@ -134,6 +134,7 @@ pub fn web_rocket() -> Rocket<Build> {
                 entity_handlers::entities_create,
                 entity_handlers::entities_update,
                 entity_handlers::entities_delete,
+                entity_handlers::entities_bulk_delete,
                 lov_handlers::lov_endpoint,
             ],
         )
