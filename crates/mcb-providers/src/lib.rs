@@ -102,7 +102,3 @@ pub mod git;
 /// Implements state machine transitions and session management
 pub mod workflow;
 
-/// Storage provider implementations
-///
-/// Implements repository ports for storage backends (FileHash).
-pub mod storage;
