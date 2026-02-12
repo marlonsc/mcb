@@ -88,3 +88,12 @@ ci-local: ## Local pre-commit validation (lint + validate QUICK, no tests)
 	@echo "✓ Pre-commit validation passed!"
 	@echo ""
 	@echo "Tip: Run 'make ci-full' for complete CI checks including all tests."
+
+install-pre-commit: ## Install git pre-commit hooks
+	@echo "Installing pre-commit hooks..."
+	@pip install pre-commit || brew install pre-commit || sudo apt-get install pre-commit
+	@pre-commit install
+	@echo "✓ Pre-commit hooks installed!"
+
+pre-commit: ## Run pre-commit on all files manually
+	@pre-commit run --all-files
