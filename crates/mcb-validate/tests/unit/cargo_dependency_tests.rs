@@ -49,8 +49,8 @@ fn test_cargo_dependency_detection_with_violation() {
         TEST_SUBJECT_CRATE,
         &[
             ("serde", "1.0"),
-            ("my-infrastructure", "0.1.0"),
-            (DOMAIN_CRATE, "0.1.0"),
+            (INFRASTRUCTURE_CRATE, DEFAULT_VERSION),
+            (DOMAIN_CRATE, DEFAULT_VERSION),
         ],
     );
 

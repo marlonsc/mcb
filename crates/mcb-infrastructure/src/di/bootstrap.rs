@@ -263,10 +263,8 @@ impl AppContext {
         let indexing_ops = self.indexing();
         let event_bus = self.event_bus();
 
-        let project_id = std::env::current_dir()
-            .ok()
-            .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
-            .unwrap_or_else(|| "default".to_string());
+        let project_id =
+            mcb_domain::value_objects::project_context::ProjectContext::resolve().project_id;
 
         let memory_repository = self.memory_repository();
         let agent_repository = self.agent_repository();

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use mcb_application::services::RepositoryResolver;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::ProjectIssue;
 use mcb_domain::ports::repositories::IssueEntityRepository;
@@ -14,12 +15,12 @@ use crate::handler_helpers::{ok_json, ok_text, require_id};
 /// Handler for the consolidated `issue_entity` MCP tool.
 pub struct IssueEntityHandler {
     repo: Arc<dyn IssueEntityRepository>,
+    resolver: Arc<RepositoryResolver>,
 }
 
 impl IssueEntityHandler {
-    /// Create a new issue entity handler backed by a repository implementation.
-    pub fn new(repo: Arc<dyn IssueEntityRepository>) -> Self {
-        Self { repo }
+    pub fn new(repo: Arc<dyn IssueEntityRepository>, resolver: Arc<RepositoryResolver>) -> Self {
+        Self { repo, resolver }
     }
 
     /// Route an incoming `issue_entity` tool call to the appropriate CRUD operation.
@@ -28,9 +29,8 @@ impl IssueEntityHandler {
         &self,
         Parameters(args): Parameters<IssueEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        // TODO(phase-1): extract org_id from auth token / request context
         let org_ctx = OrgContext::default();
-        let org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
+        let org_id = org_ctx.org_id.as_str();
 
         match (args.action, args.resource) {
             (IssueEntityAction::Create, IssueEntityResource::Issue) => {
@@ -56,12 +56,10 @@ impl IssueEntityHandler {
                 ok_json(&issue)
             }
             (IssueEntityAction::List, IssueEntityResource::Issue) => {
-                let project_id = args.project_id.as_deref().ok_or_else(|| {
-                    McpError::invalid_params("project_id required for list", None)
-                })?;
+                let project_id = self.resolver.resolve_project_id(org_id).await;
                 let issues = self
                     .repo
-                    .list_issues(org_id, project_id)
+                    .list_issues(org_id, &project_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&issues)
@@ -151,12 +149,10 @@ impl IssueEntityHandler {
                 ok_json(&label)
             }
             (IssueEntityAction::List, IssueEntityResource::Label) => {
-                let project_id = args.project_id.as_deref().ok_or_else(|| {
-                    McpError::invalid_params("project_id required for list", None)
-                })?;
+                let project_id = self.resolver.resolve_project_id(org_id).await;
                 let labels = self
                     .repo
-                    .list_labels(org_id, project_id)
+                    .list_labels(org_id, &project_id)
                     .await
                     .map_err(to_opaque_mcp_error)?;
                 ok_json(&labels)
@@ -225,7 +221,134 @@ mod tests {
     use async_trait::async_trait;
     use mcb_domain::error::Result;
     use mcb_domain::keys::DEFAULT_ORG_ID;
+    use mcb_domain::ports::repositories::VcsEntityRepository;
+    use mcb_domain::value_objects::project_context::ProjectContext;
     use std::sync::Mutex;
+
+    fn test_resolver() -> Arc<RepositoryResolver> {
+        let mock_vcs: Arc<dyn VcsEntityRepository> = Arc::new(MockVcsEntityService);
+        Arc::new(RepositoryResolver::with_context(
+            mock_vcs,
+            ProjectContext::new("test/project", "project"),
+        ))
+    }
+
+    struct MockVcsEntityService;
+
+    #[async_trait]
+    impl VcsEntityRepository for MockVcsEntityService {
+        async fn create_repository(
+            &self,
+            _repo: &mcb_domain::entities::repository::Repository,
+        ) -> Result<()> {
+            Ok(())
+        }
+        async fn get_repository(
+            &self,
+            _org_id: &str,
+            _id: &str,
+        ) -> Result<mcb_domain::entities::repository::Repository> {
+            Err(mcb_domain::error::Error::not_found("repo"))
+        }
+        async fn find_repository_by_url(
+            &self,
+            _org_id: &str,
+            _url: &str,
+        ) -> Result<Option<mcb_domain::entities::repository::Repository>> {
+            Ok(None)
+        }
+        async fn list_repositories(
+            &self,
+            _org_id: &str,
+            _project_id: &str,
+        ) -> Result<Vec<mcb_domain::entities::repository::Repository>> {
+            Ok(vec![])
+        }
+        async fn update_repository(
+            &self,
+            _repo: &mcb_domain::entities::repository::Repository,
+        ) -> Result<()> {
+            Ok(())
+        }
+        async fn delete_repository(&self, _org_id: &str, _id: &str) -> Result<()> {
+            Ok(())
+        }
+        async fn ensure_org_and_project(&self, _project_id: &str) -> Result<()> {
+            Ok(())
+        }
+        async fn create_branch(
+            &self,
+            _branch: &mcb_domain::entities::repository::Branch,
+        ) -> Result<()> {
+            Ok(())
+        }
+        async fn get_branch(&self, _id: &str) -> Result<mcb_domain::entities::repository::Branch> {
+            Err(mcb_domain::error::Error::not_found("branch"))
+        }
+        async fn list_branches(
+            &self,
+            _repo_id: &str,
+        ) -> Result<Vec<mcb_domain::entities::repository::Branch>> {
+            Ok(vec![])
+        }
+        async fn update_branch(
+            &self,
+            _branch: &mcb_domain::entities::repository::Branch,
+        ) -> Result<()> {
+            Ok(())
+        }
+        async fn delete_branch(&self, _id: &str) -> Result<()> {
+            Ok(())
+        }
+        async fn create_worktree(
+            &self,
+            _wt: &mcb_domain::entities::worktree::Worktree,
+        ) -> Result<()> {
+            Ok(())
+        }
+        async fn get_worktree(
+            &self,
+            _id: &str,
+        ) -> Result<mcb_domain::entities::worktree::Worktree> {
+            Err(mcb_domain::error::Error::not_found("worktree"))
+        }
+        async fn list_worktrees(
+            &self,
+            _repo_id: &str,
+        ) -> Result<Vec<mcb_domain::entities::worktree::Worktree>> {
+            Ok(vec![])
+        }
+        async fn update_worktree(
+            &self,
+            _wt: &mcb_domain::entities::worktree::Worktree,
+        ) -> Result<()> {
+            Ok(())
+        }
+        async fn delete_worktree(&self, _id: &str) -> Result<()> {
+            Ok(())
+        }
+        async fn create_assignment(
+            &self,
+            _asgn: &mcb_domain::entities::worktree::AgentWorktreeAssignment,
+        ) -> Result<()> {
+            Ok(())
+        }
+        async fn get_assignment(
+            &self,
+            _id: &str,
+        ) -> Result<mcb_domain::entities::worktree::AgentWorktreeAssignment> {
+            Err(mcb_domain::error::Error::not_found("assignment"))
+        }
+        async fn list_assignments_by_worktree(
+            &self,
+            _worktree_id: &str,
+        ) -> Result<Vec<mcb_domain::entities::worktree::AgentWorktreeAssignment>> {
+            Ok(vec![])
+        }
+        async fn release_assignment(&self, _id: &str, _released_at: i64) -> Result<()> {
+            Ok(())
+        }
+    }
 
     struct MockIssueEntityService {
         issues: Mutex<Vec<ProjectIssue>>,
@@ -337,13 +460,11 @@ mod tests {
                     closed_reason: String::new(),
                 });
         }
-        let handler = IssueEntityHandler::new(service);
+        let handler = IssueEntityHandler::new(service, test_resolver());
         let args = IssueEntityArgs {
             action: IssueEntityAction::List,
             resource: IssueEntityResource::Issue,
             id: None,
-            org_id: None,
-            project_id: Some("proj-1".into()),
             issue_id: None,
             label_id: None,
             data: None,
@@ -384,13 +505,11 @@ mod tests {
                     closed_reason: String::new(),
                 });
         }
-        let handler = IssueEntityHandler::new(service);
+        let handler = IssueEntityHandler::new(service, test_resolver());
         let args = IssueEntityArgs {
             action: IssueEntityAction::Get,
             resource: IssueEntityResource::Issue,
             id: Some("i1".into()),
-            org_id: None,
-            project_id: None,
             issue_id: None,
             label_id: None,
             data: None,

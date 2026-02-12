@@ -23,14 +23,14 @@ fn test_implementation_full_workspace() {
         &violations,
         &[
             // ── StubMacro ───────────────────────────────────────────────
-            ("my-domain/src/domain/service.rs", 159, "StubMacro"),
-            ("my-domain/src/domain/service.rs", 165, "StubMacro"),
-            ("my-domain/src/domain/service.rs", 180, "StubMacro"),
-            ("my-domain/src/domain/service.rs", 183, "StubMacro"),
-            ("my-test/src/lib.rs", 336, "StubMacro"),
+            (DOMAIN_CRATE_SERVICE, 159, "StubMacro"),
+            (DOMAIN_CRATE_SERVICE, 165, "StubMacro"),
+            (DOMAIN_CRATE_SERVICE, 180, "StubMacro"),
+            (DOMAIN_CRATE_SERVICE, 183, "StubMacro"),
+            (TEST_CRATE_LIB, 336, "StubMacro"),
             // ── EmptyCatchAll ───────────────────────────────────────────
-            ("my-domain/src/domain/service.rs", 130, "EmptyCatchAll"),
-            ("my-test/src/lib.rs", 357, "EmptyCatchAll"),
+            (DOMAIN_CRATE_SERVICE, 130, "EmptyCatchAll"),
+            (TEST_CRATE_LIB, 357, "EmptyCatchAll"),
         ],
         "ImplementationQualityValidator full workspace",
     );

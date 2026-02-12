@@ -146,6 +146,18 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
         .ok_or_else(|| Error::not_found(format!("Repository {id}")))
     }
 
+    async fn find_repository_by_url(&self, org_id: &str, url: &str) -> Result<Option<Repository>> {
+        self.query_one(
+            "SELECT * FROM repositories WHERE org_id = ? AND url = ? LIMIT 1",
+            &[
+                SqlParam::String(org_id.to_string()),
+                SqlParam::String(url.to_string()),
+            ],
+            row_to_repository,
+        )
+        .await
+    }
+
     async fn list_repositories(&self, org_id: &str, project_id: &str) -> Result<Vec<Repository>> {
         self.query_all(
             "SELECT * FROM repositories WHERE org_id = ? AND project_id = ?",
@@ -185,6 +197,11 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                 ],
             )
             .await
+    }
+
+    async fn ensure_org_and_project(&self, project_id: &str) -> Result<()> {
+        let now = chrono::Utc::now().timestamp();
+        super::ensure_parent::ensure_org_and_project(self.executor.as_ref(), project_id, now).await
     }
 
     // -- Branch --

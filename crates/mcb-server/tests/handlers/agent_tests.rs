@@ -14,7 +14,6 @@ async fn test_agent_log_tool_success() {
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
-        org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new("test-session"),
         data: json!({
@@ -38,7 +37,6 @@ async fn test_agent_log_tool_missing_tool_name() {
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
-        org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new("test-session"),
         data: json!({
@@ -63,7 +61,6 @@ async fn test_agent_log_tool_with_error() {
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
-        org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new("test-session"),
         data: json!({
@@ -87,7 +84,6 @@ async fn test_agent_log_tool_invalid_data_format() {
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
-        org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new("test-session"),
         data: json!("not an object"),
@@ -109,7 +105,6 @@ async fn test_agent_log_delegation_success() {
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
-        org_id: None,
         action: AgentAction::LogDelegation,
         session_id: SessionId::new("test-session"),
         data: json!({
@@ -133,7 +128,6 @@ async fn test_agent_log_delegation_missing_child_session_id() {
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
-        org_id: None,
         action: AgentAction::LogDelegation,
         session_id: SessionId::new("test-session"),
         data: json!({
@@ -158,7 +152,6 @@ async fn test_agent_log_delegation_with_result() {
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
-        org_id: None,
         action: AgentAction::LogDelegation,
         session_id: SessionId::new("test-session"),
         data: json!({
@@ -183,7 +176,6 @@ async fn test_agent_log_delegation_invalid_data_format() {
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
-        org_id: None,
         action: AgentAction::LogDelegation,
         session_id: SessionId::new("test-session"),
         data: json!(["not", "an", "object"]),
@@ -205,7 +197,6 @@ async fn test_agent_log_tool_empty_session_id() {
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
-        org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new(""),
         data: json!({
@@ -225,7 +216,6 @@ async fn test_agent_log_tool_with_all_optional_fields() {
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
-        org_id: None,
         action: AgentAction::LogTool,
         session_id: SessionId::new("test-session"),
         data: json!({

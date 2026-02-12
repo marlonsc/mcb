@@ -1,5 +1,6 @@
 //! Unit tests for AST query (`AstQueryBuilder`, `AstQueryPatterns`).
 
+use crate::test_constants::{SEVERITY_ERROR, SEVERITY_WARNING};
 use mcb_validate::ast::query::{AstQueryBuilder, AstQueryPatterns, QueryCondition};
 
 #[test]
@@ -9,13 +10,13 @@ fn test_query_builder() {
             name: "has_no_docstring".to_string(),
         })
         .message("Function needs documentation")
-        .severity("warning")
+        .severity(SEVERITY_WARNING)
         .build();
 
     assert_eq!(query.language, "rust");
     assert_eq!(query.node_type, "function_item");
     assert_eq!(query.message, "Function needs documentation");
-    assert_eq!(query.severity, "warning");
+    assert_eq!(query.severity, SEVERITY_WARNING);
     assert_eq!(query.conditions.len(), 1);
 }
 
@@ -33,5 +34,5 @@ fn test_unwrap_pattern() {
     assert_eq!(query.language, "rust");
     assert_eq!(query.node_type, "call_expression");
     assert_eq!(query.message, "Avoid unwrap() in production code");
-    assert_eq!(query.severity, "error");
+    assert_eq!(query.severity, SEVERITY_ERROR);
 }

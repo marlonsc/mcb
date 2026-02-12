@@ -2,7 +2,6 @@
 //!
 //! Core business logic and domain types for semantic code analysis.
 //! Contains only pure domain entities, value objects, and business rules.
-#![allow(missing_docs)]
 //!
 //! ## Architecture
 //!

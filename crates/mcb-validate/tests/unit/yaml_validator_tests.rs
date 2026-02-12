@@ -2,6 +2,8 @@
 
 use mcb_validate::rules::YamlRuleValidator;
 
+use crate::test_constants::*;
+
 #[test]
 fn test_schema_loading() {
     let validator = YamlRuleValidator::new();
@@ -20,9 +22,9 @@ fn test_valid_rule_validation() {
         "severity": "error",
         "description": "This is a test rule with enough description to pass validation requirements",
         "rationale": "This rule exists for testing purposes and has enough rationale text",
-        "engine": "rust-rule-engine",
+        "engine": ENGINE_NAME_RUST_RULE,
         "config": {
-            "crate_name": "test-crate"
+            "crate_name": TEST_SUBJECT_CRATE
         },
         "rule": {
             "type": "cargo_dependencies"
@@ -56,7 +58,7 @@ fn test_invalid_category() {
         "severity": "error",
         "description": "This is a test rule description",
         "rationale": "This is the rationale for the rule",
-        "engine": "rust-rule-engine",
+        "engine": ENGINE_NAME_RUST_RULE,
         "rule": {}
     });
 
@@ -75,7 +77,7 @@ fn test_invalid_severity() {
         "severity": "invalid_severity",
         "description": "This is a test rule description",
         "rationale": "This is the rationale for the rule",
-        "engine": "rust-rule-engine",
+        "engine": ENGINE_NAME_RUST_RULE,
         "rule": {}
     });
 

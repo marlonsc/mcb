@@ -1,4 +1,3 @@
-#![allow(clippy::ptr_arg)]
 
 // Borrows instead of taking ownership.
 // It is recommended to use `&str` instead of `&String` here. But this is

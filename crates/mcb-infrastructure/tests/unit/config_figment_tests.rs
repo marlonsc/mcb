@@ -1,5 +1,4 @@
 //! Tests verifying Figment configuration pattern compliance (ADR-025)
-#![allow(unsafe_code)]
 //!
 //! These tests ensure the configuration system adheres to ADR-025 principles:
 //! - All configuration flows through Figment

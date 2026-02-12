@@ -26,16 +26,16 @@ fn test_documentation_full_workspace() {
         &violations,
         &[
             // MissingModuleDoc — no line field, use 0 to skip check
-            ("my-server/src/lib.rs", 0, "MissingModuleDoc"),
-            ("my-server/src/handlers/mod.rs", 0, "MissingModuleDoc"),
-            ("my-domain/src/lib.rs", 0, "MissingModuleDoc"),
-            ("my-domain/src/domain/mod.rs", 0, "MissingModuleDoc"),
+            (SERVER_CRATE_LIB, 0, "MissingModuleDoc"),
+            (SERVER_CRATE_HANDLERS_MOD, 0, "MissingModuleDoc"),
+            (DOMAIN_CRATE_LIB, 0, "MissingModuleDoc"),
+            (DOMAIN_CRATE_MOD, 0, "MissingModuleDoc"),
             // MissingExampleCode — has line field
-            ("my-domain/src/domain/service.rs", 137, "MissingExampleCode"),
+            (DOMAIN_CRATE_SERVICE, 137, "MissingExampleCode"),
             // MissingPubItemDoc — has line field
-            ("my-domain/src/domain/model.rs", 16, "MissingPubItemDoc"),
-            ("my-test/src/lib.rs", 136, "MissingPubItemDoc"),
-            ("my-test/src/lib.rs", 141, "MissingPubItemDoc"),
+            (DOMAIN_CRATE_MODEL, 16, "MissingPubItemDoc"),
+            (TEST_CRATE_LIB, 136, "MissingPubItemDoc"),
+            (TEST_CRATE_LIB, 141, "MissingPubItemDoc"),
         ],
         "DocumentationValidator full workspace",
     );

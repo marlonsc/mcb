@@ -49,7 +49,6 @@ async fn test_real_memory_store_observation_persists() {
 
     // 1. Store an observation
     let store_args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Store,
         resource: MemoryResource::Observation,
         data: Some(json!({
@@ -90,7 +89,6 @@ async fn test_real_memory_store_observation_persists() {
 
     // 2. Retrieve it back via list — proves it actually hit the database
     let list_args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::List,
         resource: MemoryResource::Observation,
         data: None,
@@ -133,7 +131,6 @@ async fn test_real_memory_store_multiple_observations_counted() {
     // Store 3 observations
     for i in 0..3 {
         let store_args = MemoryArgs {
-            org_id: None,
             action: MemoryAction::Store,
             resource: MemoryResource::Observation,
             data: Some(json!({
@@ -169,7 +166,6 @@ async fn test_real_memory_store_multiple_observations_counted() {
 
     // List and verify count
     let list_args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::List,
         resource: MemoryResource::Observation,
         data: None,
@@ -216,7 +212,6 @@ async fn test_real_memory_store_missing_data_returns_contextual_error() {
     let memory_h = server.memory_handler();
 
     let bad_args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Store,
         resource: MemoryResource::Observation,
         data: None, // Missing required data
@@ -265,7 +260,6 @@ async fn test_real_session_summary_store_and_retrieve() {
 
     // 1. Store a session summary (NO seed observation needed — auto-create handles FK)
     let store_args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Store,
         resource: MemoryResource::Session,
         data: Some(json!({
@@ -307,7 +301,6 @@ async fn test_real_session_summary_store_and_retrieve() {
 
     // 2. Retrieve via Get to verify persistence
     let get_args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Get,
         resource: MemoryResource::Session,
         data: None,
@@ -348,7 +341,6 @@ async fn test_real_session_create_invalid_agent_type_contextual_error() {
     let session_h = server.session_handler();
 
     let bad_args = SessionArgs {
-        org_id: None,
         action: SessionAction::Create,
         session_id: None,
         data: Some(json!({
@@ -404,7 +396,6 @@ async fn test_real_search_empty_project_returns_empty_not_error() {
     let search_h = server.search_handler();
 
     let search_args = SearchArgs {
-        org_id: None,
         query: "nonexistent pattern that should match nothing".to_string(),
         resource: SearchResource::Memory,
         collection: None,
@@ -451,7 +442,6 @@ async fn test_real_agent_session_create_and_retrieve() {
 
     // 1. Store a session_summary (auto-creates org + project)
     let summary_args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Store,
         resource: MemoryResource::Session,
         data: Some(json!({
@@ -494,7 +484,6 @@ async fn test_real_agent_session_create_and_retrieve() {
 
     // 2. Create an agent_session using the real summary_id
     let create_args = SessionArgs {
-        org_id: None,
         action: SessionAction::Create,
         session_id: None,
         data: Some(json!({
@@ -532,7 +521,6 @@ async fn test_real_agent_session_create_and_retrieve() {
 
     // 3. Get agent_session back — verify data matches
     let get_args = SessionArgs {
-        org_id: None,
         action: SessionAction::Get,
         session_id: Some(agent_session_id.to_string().into()),
         data: None,
@@ -580,7 +568,6 @@ async fn test_real_session_list_empty_returns_gracefully() {
     let session_h = server.session_handler();
 
     let list_args = SessionArgs {
-        org_id: None,
         action: SessionAction::List,
         session_id: None,
         data: None,

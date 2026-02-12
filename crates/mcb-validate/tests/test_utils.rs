@@ -8,11 +8,12 @@
 //! - **DRY helpers**:     `with_fixture_crate`, `with_inline_crate`, `with_fixture_workspace`
 //! - **Assertions**:      `assert_no_violations`, `assert_min_violations`,
 //!   `assert_has_violation_matching`, `assert_no_violation_from_file`
-#![allow(dead_code)]
 
 use std::fs;
 
 use tempfile::TempDir;
+
+use crate::test_constants::*;
 
 // ---------------------------------------------------------------------------
 // Crate creation utilities (for inline / generated code)
@@ -20,7 +21,7 @@ use tempfile::TempDir;
 
 /// Create a minimal crate structure for testing
 pub fn create_test_crate(temp: &TempDir, name: &str, content: &str) {
-    create_test_crate_with_file(temp, name, "lib.rs", content);
+    create_test_crate_with_file(temp, name, LIB_RS, content);
 }
 
 /// Create a crate structure with a specific file name
@@ -38,11 +39,11 @@ members = ["crates/*"]
     }
 
     // Create crate structure
-    let crate_dir = temp.path().join("crates").join(name).join("src");
+    let crate_dir = temp.path().join(CRATES_DIR).join(name).join("src");
     fs::create_dir_all(&crate_dir).unwrap();
     fs::write(crate_dir.join(file_name), content).unwrap();
 
-    let cargo_dir = temp.path().join("crates").join(name);
+    let cargo_dir = temp.path().join(CRATES_DIR).join(name);
     fs::write(
         cargo_dir.join("Cargo.toml"),
         format!(
@@ -55,43 +56,6 @@ version = "0.1.1"
     .unwrap();
 }
 
-/// Create a crate with an additional file (not just lib.rs)
-pub fn create_test_crate_with_extra_file(
-    temp: &TempDir,
-    name: &str,
-    lib_content: &str,
-    extra_file: &str,
-    extra_content: &str,
-) {
-    create_test_crate(temp, name, lib_content);
-
-    let crate_dir = temp.path().join("crates").join(name).join("src");
-    fs::write(crate_dir.join(extra_file), extra_content).unwrap();
-}
-
-/// Create a crate structure with tests directory
-pub fn create_test_crate_with_tests(
-    temp: &TempDir,
-    name: &str,
-    lib_content: &str,
-    test_content: &str,
-) {
-    create_test_crate(temp, name, lib_content);
-
-    let tests_dir = temp.path().join("crates").join(name).join("tests");
-    fs::create_dir_all(&tests_dir).unwrap();
-    fs::write(tests_dir.join("integration_test.rs"), test_content).unwrap();
-}
-
-/// Create a file at a specific path within the temp directory
-pub fn create_file_at_path(temp: &TempDir, relative_path: &str, content: &str) {
-    let full_path = temp.path().join(relative_path);
-    if let Some(parent) = full_path.parent() {
-        fs::create_dir_all(parent).unwrap();
-    }
-    fs::write(full_path, content).unwrap();
-}
-
 /// Get the workspace root for integration tests
 pub fn get_workspace_root() -> std::path::PathBuf {
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -100,69 +64,6 @@ pub fn get_workspace_root() -> std::path::PathBuf {
         .parent()
         .unwrap()
         .to_path_buf()
-}
-
-/// Ensure temp directory has workspace structure
-pub fn ensure_workspace_structure(temp: &TempDir) {
-    let workspace_cargo = temp.path().join("Cargo.toml");
-    if !workspace_cargo.exists() {
-        fs::write(
-            &workspace_cargo,
-            r#"[workspace]
-members = ["crates/*"]
-"#,
-        )
-        .unwrap();
-    }
-
-    let crates_dir = temp.path().join("crates");
-    if !crates_dir.exists() {
-        fs::create_dir_all(&crates_dir).unwrap();
-    }
-}
-
-/// Create a constants.rs file in a test crate (for testing exemptions)
-pub fn create_constants_file(temp: &TempDir, name: &str, content: &str) {
-    let crate_dir = temp.path().join("crates").join(name).join("src");
-    fs::create_dir_all(&crate_dir).unwrap();
-    fs::write(crate_dir.join("constants.rs"), content).unwrap();
-
-    // Ensure Cargo.toml exists
-    let cargo_path = temp.path().join("crates").join(name).join("Cargo.toml");
-    if !cargo_path.exists() {
-        fs::write(
-            cargo_path,
-            format!(
-                r#"[package]
-name = "{name}"
-version = "0.1.1"
-"#
-            ),
-        )
-        .unwrap();
-    }
-}
-
-/// Create a null.rs file in a test crate (for testing null provider exemptions)
-pub fn create_null_provider_file(temp: &TempDir, name: &str, content: &str) {
-    let crate_dir = temp.path().join("crates").join(name).join("src");
-    fs::create_dir_all(&crate_dir).unwrap();
-    fs::write(crate_dir.join("null.rs"), content).unwrap();
-
-    // Ensure Cargo.toml exists
-    let cargo_path = temp.path().join("crates").join(name).join("Cargo.toml");
-    if !cargo_path.exists() {
-        fs::write(
-            cargo_path,
-            format!(
-                r#"[package]
-name = "{name}"
-version = "0.1.1"
-"#
-            ),
-        )
-        .unwrap();
-    }
 }
 
 // ---------------------------------------------------------------------------
@@ -175,39 +76,6 @@ pub fn assert_no_violations<V: std::fmt::Debug>(violations: &[V], context: &str)
         violations.is_empty(),
         "{}: expected no violations, got {} - {:?}",
         context,
-        violations.len(),
-        violations
-    );
-}
-
-/// Assert that violations list has expected count
-pub fn assert_violation_count<V: std::fmt::Debug>(
-    violations: &[V],
-    expected: usize,
-    context: &str,
-) {
-    assert_eq!(
-        violations.len(),
-        expected,
-        "{}: expected {} violations, got {} - {:?}",
-        context,
-        expected,
-        violations.len(),
-        violations
-    );
-}
-
-/// Assert that violations list has at least a minimum count
-pub fn assert_min_violations<V: std::fmt::Debug>(
-    violations: &[V],
-    min_expected: usize,
-    context: &str,
-) {
-    assert!(
-        violations.len() >= min_expected,
-        "{}: expected at least {} violations, got {} - {:?}",
-        context,
-        min_expected,
         violations.len(),
         violations
     );
@@ -418,21 +286,21 @@ pub fn setup_fixture_crate(temp: &TempDir, crate_name: &str, src_path: &str, fix
     }
 
     // Config file
-    let config_dest = temp.path().join("mcb-validate.toml");
+    let config_dest = temp.path().join(CONFIG_FILE_NAME);
     if !config_dest.exists() {
-        let fixture_config = fixtures_dir().join("mcb-validate.toml");
+        let fixture_config = fixtures_dir().join(CONFIG_FILE_NAME);
         if fixture_config.exists() {
             fs::copy(&fixture_config, &config_dest).unwrap();
         }
     }
 
     // Crate Cargo.toml
-    let crate_dir = temp.path().join("crates").join(crate_name);
+    let crate_dir = temp.path().join(CRATES_DIR).join(crate_name);
     fs::create_dir_all(&crate_dir).unwrap();
     let cargo_dest = crate_dir.join("Cargo.toml");
     if !cargo_dest.exists() {
         let fixture_cargo = fixtures_dir()
-            .join("crates")
+            .join(CRATES_DIR)
             .join(crate_name)
             .join("Cargo.toml");
         if fixture_cargo.exists() {
@@ -475,16 +343,16 @@ pub fn copy_fixture_crate(temp: &TempDir, crate_name: &str) {
     }
 
     // Config file
-    let config_dest = temp.path().join("mcb-validate.toml");
+    let config_dest = temp.path().join(CONFIG_FILE_NAME);
     if !config_dest.exists() {
-        let fixture_config = fixtures_dir().join("mcb-validate.toml");
+        let fixture_config = fixtures_dir().join(CONFIG_FILE_NAME);
         if fixture_config.exists() {
             fs::copy(&fixture_config, &config_dest).unwrap();
         }
     }
 
-    let src = fixtures_dir().join("crates").join(crate_name);
-    let dst = temp.path().join("crates").join(crate_name);
+    let src = fixtures_dir().join(CRATES_DIR).join(crate_name);
+    let dst = temp.path().join(CRATES_DIR).join(crate_name);
 
     assert!(
         src.exists(),
@@ -596,11 +464,9 @@ pub fn create_rule_context() -> mcb_validate::engines::RuleContext {
     use std::collections::HashMap;
     use std::path::PathBuf;
 
-    const WORKSPACE_PATH: &str = "/test/workspace";
-
     mcb_validate::engines::RuleContext {
-        workspace_root: PathBuf::from(WORKSPACE_PATH),
-        config: mcb_validate::ValidationConfig::new(WORKSPACE_PATH),
+        workspace_root: PathBuf::from(TEST_WORKSPACE_PATH),
+        config: mcb_validate::ValidationConfig::new(TEST_WORKSPACE_PATH),
         ast_data: HashMap::new(),
         cargo_data: HashMap::new(),
         file_contents: HashMap::new(),
@@ -642,22 +508,6 @@ pub fn create_rule_context_with_files(
 /// let loader = YamlRuleLoader::with_variables(rules_dir, Some(vars)).unwrap();
 /// ```
 pub fn build_yaml_variables() -> serde_yaml::Value {
-    const PROJECT_PREFIX: &str = "my";
-    const CRATE_LAYER_MAPPINGS: &[(&str, &str, &str)] = &[
-        ("domain", "my-domain", "my_domain"),
-        ("application", "my-application", "my_application"),
-        ("providers", "my-providers", "my_providers"),
-        ("infrastructure", "my-infrastructure", "my_infrastructure"),
-        ("server", "my-server", "my_server"),
-        ("validate", "my-validate", "my_validate"),
-        (
-            "language_support",
-            "my-language-support",
-            "my_language_support",
-        ),
-        ("ast_utils", "my-ast-utils", "my_ast_utils"),
-    ];
-
     let mut variables = serde_yaml::Mapping::new();
     variables.insert(
         serde_yaml::Value::String("project_prefix".to_string()),
@@ -746,15 +596,6 @@ pub fn create_facts(entries: &[(&str, rust_rule_engine::Value)]) -> rust_rule_en
 /// ]);
 /// ```
 pub fn cargo_toml_with_deps(crate_name: &str, deps: &[(&str, &str)]) -> String {
-    const CARGO_TOML_TEMPLATE: &str = r#"[package]
-name = "{crate_name}"
-version = "{version}"
-
-[dependencies]
-{deps}
-"#;
-    const DEFAULT_VERSION: &str = "0.1.0";
-
     let deps_str: Vec<String> = deps
         .iter()
         .map(|(name, version)| format!("{name} = \"{version}\""))

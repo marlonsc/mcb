@@ -60,7 +60,6 @@ async fn test_memory_store_execution_success() {
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Store,
         resource: MemoryResource::Execution,
         data: Some(json!({
@@ -98,7 +97,6 @@ async fn test_memory_store_quality_gate_success() {
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Store,
         resource: MemoryResource::QualityGate,
         data: Some(json!({
@@ -134,7 +132,6 @@ async fn test_memory_store_session_success() {
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Store,
         resource: MemoryResource::Session,
         data: Some(json!({
@@ -169,7 +166,6 @@ async fn test_memory_get_observation_success() {
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Get,
         resource: MemoryResource::Observation,
         data: None,
@@ -201,7 +197,6 @@ async fn test_memory_get_observation_missing_ids() {
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Get,
         resource: MemoryResource::Observation,
         data: None,
@@ -236,7 +231,6 @@ async fn test_memory_get_execution_success() {
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Get,
         resource: MemoryResource::Execution,
         data: None,
@@ -268,7 +262,6 @@ async fn test_memory_get_quality_gate_success() {
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Get,
         resource: MemoryResource::QualityGate,
         data: None,
@@ -300,7 +293,6 @@ async fn test_memory_get_session_success() {
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Get,
         resource: MemoryResource::Session,
         data: None,
@@ -331,7 +323,6 @@ async fn test_memory_inject_with_filters() {
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Inject,
         resource: MemoryResource::Observation,
         data: None,

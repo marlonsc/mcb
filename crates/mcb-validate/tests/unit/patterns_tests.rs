@@ -25,9 +25,9 @@ fn test_patterns_full_workspace() {
         &violations,
         &[
             // ── PAT001: ConcreteTypeInDi ────────────────────────────────
-            ("my-test/src/lib.rs", 191, "ConcreteTypeInDi"),
+            (TEST_CRATE_LIB, 191, "ConcreteTypeInDi"),
             // ── PAT004: RawResultType ───────────────────────────────────
-            ("my-test/src/lib.rs", 195, "RawResultType"),
+            (TEST_CRATE_LIB, 195, "RawResultType"),
         ],
         "PatternValidator full workspace",
     );

@@ -106,10 +106,6 @@ pub struct SearchArgs {
     #[schemars(description = "Resource to search: code or memory")]
     pub resource: SearchResource,
 
-    /// Organization ID (uses default if omitted).
-    #[schemars(description = "Organization ID (uses default if omitted)")]
-    pub org_id: Option<String>,
-
     /// Collection name.
     #[schemars(description = "Collection name", with = "String")]
     pub collection: Option<String>,
@@ -255,10 +251,6 @@ pub struct MemoryArgs {
     )]
     pub resource: MemoryResource,
 
-    /// Organization ID (uses default if omitted).
-    #[schemars(description = "Organization ID (uses default if omitted)")]
-    pub org_id: Option<String>,
-
     /// Data payload for store actions (JSON object).
     #[schemars(
         description = "Data payload for store actions (JSON object)",
@@ -269,10 +261,6 @@ pub struct MemoryArgs {
     /// Resource IDs for get action.
     #[schemars(description = "Resource IDs for get action", with = "Vec<String>")]
     pub ids: Option<Vec<String>>,
-
-    /// Filter by project ID.
-    #[schemars(description = "Filter by project ID", with = "String")]
-    pub project_id: Option<String>,
 
     /// Filter by repository ID.
     #[schemars(description = "Filter by repository ID", with = "String")]
@@ -364,10 +352,6 @@ pub struct SessionArgs {
     #[schemars(description = "Action: create, get, update, list, summarize")]
     pub action: SessionAction,
 
-    /// Organization ID (uses default if omitted).
-    #[schemars(description = "Organization ID (uses default if omitted)")]
-    pub org_id: Option<String>,
-
     /// Session ID (required for get, update, summarize).
     #[schemars(
         description = "Session ID (required for get, update, summarize)",
@@ -381,10 +365,6 @@ pub struct SessionArgs {
         with = "serde_json::Value"
     )]
     pub data: Option<serde_json::Value>,
-
-    /// Filter by project ID.
-    #[schemars(description = "Filter by project ID", with = "String")]
-    pub project_id: Option<String>,
 
     /// Filter by worktree ID.
     #[schemars(description = "Filter by worktree ID", with = "String")]
@@ -424,10 +404,6 @@ pub struct AgentArgs {
     #[schemars(description = "Action: log_tool, log_delegation")]
     pub action: AgentAction,
 
-    /// Organization ID (uses default if omitted).
-    #[schemars(description = "Organization ID (uses default if omitted)")]
-    pub org_id: Option<String>,
-
     /// Session ID for the agent.
     #[schemars(description = "Session ID for the agent")]
     pub session_id: SessionId,
@@ -466,10 +442,6 @@ pub struct VcsArgs {
         description = "Action: list_repositories, index_repository, compare_branches, search_branch, analyze_impact"
     )]
     pub action: VcsAction,
-
-    /// Organization ID (uses default if omitted).
-    #[schemars(description = "Organization ID (uses default if omitted)")]
-    pub org_id: Option<String>,
 
     /// Repository identifier.
     #[schemars(description = "Repository identifier", with = "String")]
@@ -568,14 +540,6 @@ pub struct VcsEntityArgs {
     #[schemars(description = "Resource ID (for get/update/delete/release)")]
     pub id: Option<String>,
 
-    /// Organization ID (uses default if omitted).
-    #[schemars(description = "Organization ID (uses default if omitted)")]
-    pub org_id: Option<String>,
-
-    /// Project ID (for repository listing).
-    #[schemars(description = "Project ID (for repository listing)")]
-    pub project_id: Option<String>,
-
     /// Repository ID (for branch/worktree listing).
     #[schemars(description = "Repository ID (for branch/worktree listing)")]
     pub repository_id: Option<String>,
@@ -634,14 +598,6 @@ pub struct PlanEntityArgs {
     /// Resource ID (for get/update/delete).
     #[schemars(description = "Resource ID (for get/update/delete)")]
     pub id: Option<String>,
-
-    /// Organization ID (uses default if omitted).
-    #[schemars(description = "Organization ID (uses default if omitted)")]
-    pub org_id: Option<String>,
-
-    /// Project ID (for plan listing).
-    #[schemars(description = "Project ID (for plan listing)")]
-    pub project_id: Option<String>,
 
     /// Plan ID (for version listing).
     #[schemars(description = "Plan ID (for version listing)")]
@@ -703,9 +659,6 @@ pub struct OrgEntityArgs {
     /// Resource ID for get/update/delete operations.
     #[schemars(description = "Resource ID (for get/update/delete)")]
     pub id: Option<String>,
-    /// Organization ID for list operations.
-    #[schemars(description = "Organization ID (for listing users/teams/api_keys)")]
-    pub org_id: Option<String>,
     /// Team ID used by team-member list/delete.
     #[schemars(description = "Team ID (for listing members)")]
     pub team_id: Option<String>,
@@ -765,14 +718,6 @@ pub struct IssueEntityArgs {
     /// Resource ID (for get/update/delete).
     #[schemars(description = "Resource ID (for get/update/delete)")]
     pub id: Option<String>,
-
-    /// Organization ID (uses default if omitted).
-    #[schemars(description = "Organization ID (uses default if omitted)")]
-    pub org_id: Option<String>,
-
-    /// Project ID (for issue/label listing).
-    #[schemars(description = "Project ID (for issue/label listing)")]
-    pub project_id: Option<String>,
 
     /// Issue ID (for comment listing and label assignments).
     #[schemars(description = "Issue ID (for comment listing and label assignments)")]
@@ -836,10 +781,6 @@ pub struct ProjectArgs {
     /// Resource type: phase, issue, dependency, decision.
     #[schemars(description = "Resource type: phase, issue, dependency, decision")]
     pub resource: ProjectResource,
-
-    /// Project ID.
-    #[schemars(description = "Project ID")]
-    pub project_id: String,
 
     /// Data payload for create/update (JSON object).
     #[schemars(

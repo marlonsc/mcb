@@ -3,7 +3,6 @@
 //! All test crate names, fixture paths, file names, and commonly used
 //! string literals live here. Tests MUST import from this module instead
 //! of hardcoding values.
-#![allow(dead_code)]
 
 // ---------------------------------------------------------------------------
 // Test crate names
@@ -104,6 +103,19 @@ pub const FIXTURE_INFRA_CONSTANTS_PATH: &str = "constants.rs";
 pub const INFRA_CRATE: &str = "my-infra";
 
 // ---------------------------------------------------------------------------
+// Violation assertion paths (crate/src/file used in assert_violations_exact)
+// ---------------------------------------------------------------------------
+
+pub const TEST_CRATE_LIB: &str = "my-test/src/lib.rs";
+pub const DOMAIN_CRATE_SERVICE: &str = "my-domain/src/domain/service.rs";
+pub const DOMAIN_CRATE_LIB: &str = "my-domain/src/lib.rs";
+pub const DOMAIN_CRATE_MODEL: &str = "my-domain/src/domain/model.rs";
+pub const DOMAIN_CRATE_MOD: &str = "my-domain/src/domain/mod.rs";
+pub const SERVER_CRATE_HANDLER: &str = "my-server/src/handlers/user_handler.rs";
+pub const SERVER_CRATE_LIB: &str = "my-server/src/lib.rs";
+pub const SERVER_CRATE_HANDLERS_MOD: &str = "my-server/src/handlers/mod.rs";
+
+// ---------------------------------------------------------------------------
 // Workspace structure
 // ---------------------------------------------------------------------------
 
@@ -149,7 +161,7 @@ pub const TEST_SUBJECT_CRATE: &str = "test-crate";
 /// Used by architecture_rules_tests and integration tests.
 pub const CRATE_LAYER_MAPPINGS: &[(&str, &str, &str)] = &[
     ("domain", "my-domain", "my_domain"),
-    ("application", "my-application", "my_application"),
+    ("application", APPLICATION_CRATE, "my_application"),
     ("providers", "my-providers", "my_providers"),
     ("infrastructure", "my-infrastructure", "my_infrastructure"),
     ("server", "my-server", "my_server"),
@@ -185,11 +197,11 @@ pub const MAX_TRAIT_METHODS_THRESHOLD: usize = 6;
 /// Architecture rule for domain layer boundary.
 pub const RULE_CA001: &str = "CA001";
 
+/// Keyword expected in the CA001 rule name ("Domain Layer Independence").
+pub const RULE_CA001_NAME_KEYWORD: &str = "Domain";
+
 /// Engine used by architecture rules.
 pub const ENGINE_RUST_RULE: &str = "rust-rule-engine";
-
-/// Expected keyword in CA001 rule name.
-pub const RULE_CA001_NAME_KEYWORD: &str = "Domain";
 
 // ---------------------------------------------------------------------------
 // Linter constants

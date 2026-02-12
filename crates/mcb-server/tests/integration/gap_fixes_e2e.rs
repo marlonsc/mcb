@@ -91,7 +91,6 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
 
     let result = vcs_h
         .handle(Parameters(VcsArgs {
-            org_id: None,
             action: VcsAction::ListRepositories,
             repo_id: None,
             repo_path: Some(temp_dir.path().to_string_lossy().to_string()),
@@ -147,7 +146,6 @@ async fn test_gap3_session_list_works_without_agent_type() {
 
     let result = session_h
         .handle(Parameters(SessionArgs {
-            org_id: None,
             action: SessionAction::List,
             session_id: None,
             agent_type: None, // Omitted, should be allowed now

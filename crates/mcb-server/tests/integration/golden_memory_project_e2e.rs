@@ -36,7 +36,6 @@ async fn test_golden_memory_store_with_default_project() {
 
     // Store observation with non-existent project (should auto-create default)
     let store_args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Store,
         resource: MemoryResource::Observation,
         data: Some(json!({
@@ -77,7 +76,6 @@ async fn test_golden_memory_list_empty_graceful() {
 
     // List memories for a project with no data
     let list_args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::List,
         resource: MemoryResource::Observation,
         data: None,
@@ -122,7 +120,6 @@ async fn test_golden_context_search_basic() {
     // 1. Store context observations
     let _ = memory_h
         .handle(Parameters(MemoryArgs {
-            org_id: None,
             action: MemoryAction::Store,
             resource: MemoryResource::Observation,
             data: Some(json!({
@@ -149,7 +146,6 @@ async fn test_golden_context_search_basic() {
 
     // 2. Search using Context resource
     let search_args = SearchArgs {
-        org_id: None,
         query: "reactor temperature".to_string(),
         resource: SearchResource::Context,
         collection: None,

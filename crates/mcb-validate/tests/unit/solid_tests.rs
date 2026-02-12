@@ -23,28 +23,12 @@ fn test_solid_full_workspace() {
         &violations,
         &[
             // ── TraitTooLarge (ISP) ─────────────────────────────────────
-            ("my-domain/src/domain/service.rs", 137, "TraitTooLarge"),
+            (DOMAIN_CRATE_SERVICE, 137, "TraitTooLarge"),
             // ── PartialTraitImplementation (LSP) ────────────────────────
-            (
-                "my-domain/src/domain/service.rs",
-                158,
-                "PartialTraitImplementation",
-            ),
-            (
-                "my-domain/src/domain/service.rs",
-                164,
-                "PartialTraitImplementation",
-            ),
-            (
-                "my-domain/src/domain/service.rs",
-                179,
-                "PartialTraitImplementation",
-            ),
-            (
-                "my-domain/src/domain/service.rs",
-                182,
-                "PartialTraitImplementation",
-            ),
+            (DOMAIN_CRATE_SERVICE, 158, "PartialTraitImplementation"),
+            (DOMAIN_CRATE_SERVICE, 164, "PartialTraitImplementation"),
+            (DOMAIN_CRATE_SERVICE, 179, "PartialTraitImplementation"),
+            (DOMAIN_CRATE_SERVICE, 182, "PartialTraitImplementation"),
         ],
         "SolidValidator full workspace",
     );

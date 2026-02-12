@@ -2,6 +2,7 @@
 
 #[cfg(test)]
 mod template_engine_tests {
+    use crate::test_constants::RULE_CA001;
     use mcb_validate::rules::templates::TemplateEngine;
 
     #[tokio::test]
@@ -98,7 +99,7 @@ rule: |
             .unwrap();
 
         // Verify the template was applied correctly
-        assert_eq!(result["id"], "CA001");
+        assert_eq!(result["id"], RULE_CA001);
         assert_eq!(result["name"], "Domain Layer Independence");
         assert_eq!(result["category"], "architecture");
 

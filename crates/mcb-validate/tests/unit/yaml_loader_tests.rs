@@ -5,6 +5,7 @@ mod yaml_loader_tests {
     use std::collections::BTreeSet;
     use std::path::Path;
 
+    use crate::test_constants::RULE_CA001;
     use mcb_validate::EmbeddedRules;
     use mcb_validate::FileConfig;
     use mcb_validate::rules::yaml_loader::YamlRuleLoader;
@@ -210,7 +211,7 @@ config:
         let rules = loader.load_all_rules().await.unwrap();
 
         assert!(!rules.is_empty());
-        assert!(rules.iter().any(|rule| rule.id == "CA001"));
+        assert!(rules.iter().any(|rule| rule.id == RULE_CA001));
     }
 
     #[tokio::test]

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use mcb_application::services::RepositoryResolver;
 use mcb_domain::entities::repository::{Branch, Repository};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
 use mcb_domain::error::Error;
@@ -14,12 +15,12 @@ use crate::handler_helpers::{ok_json, ok_text, require_id};
 /// Handler for the consolidated `vcs_entity` MCP tool.
 pub struct VcsEntityHandler {
     repo: Arc<dyn VcsEntityRepository>,
+    resolver: Arc<RepositoryResolver>,
 }
 
 impl VcsEntityHandler {
-    /// Create a new VCS entity handler backed by a repository implementation.
-    pub fn new(repo: Arc<dyn VcsEntityRepository>) -> Self {
-        Self { repo }
+    pub fn new(repo: Arc<dyn VcsEntityRepository>, resolver: Arc<RepositoryResolver>) -> Self {
+        Self { repo, resolver }
     }
 
     /// Route an incoming `vcs_entity` tool call to the appropriate CRUD operation.
@@ -31,14 +32,8 @@ impl VcsEntityHandler {
         &self,
         Parameters(args): Parameters<VcsEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
-        // TODO(multi-tenant): Extract org_id from auth context.
-        let org_id = if let Some(org_id) = args.org_id {
-            org_id
-        } else {
-            tracing::warn!("Using default org context - multi-tenant auth not yet implemented");
-            let org_ctx = OrgContext::default();
-            org_ctx.org_id.to_string()
-        };
+        let org_ctx = OrgContext::default();
+        let org_id = org_ctx.org_id.to_string();
         tracing::Span::current().record("org_id", org_id.as_str());
 
         match (args.action, args.resource) {
@@ -63,12 +58,10 @@ impl VcsEntityHandler {
                 ok_json(&repo)
             }
             (VcsEntityAction::List, VcsEntityResource::Repository) => {
-                let project_id = args.project_id.as_deref().ok_or_else(|| {
-                    McpError::invalid_params("project_id required for list", None)
-                })?;
+                let project_id = self.resolver.resolve_project_id(&org_id).await;
                 let repos = self
                     .repo
-                    .list_repositories(&org_id, project_id)
+                    .list_repositories(&org_id, &project_id)
                     .await
                     .map_err(to_mcp)?;
                 ok_json(&repos)
@@ -243,6 +236,15 @@ mod tests {
     use mcb_domain::keys::DEFAULT_ORG_ID;
     use std::sync::Mutex;
 
+    fn test_resolver() -> Arc<RepositoryResolver> {
+        use mcb_domain::value_objects::project_context::ProjectContext;
+        let mock_vcs: Arc<dyn VcsEntityRepository> = Arc::new(MockVcsEntityService::new());
+        Arc::new(RepositoryResolver::with_context(
+            mock_vcs,
+            ProjectContext::new("test/project", "project"),
+        ))
+    }
+
     struct MockVcsEntityService {
         repos: Mutex<Vec<Repository>>,
     }
@@ -270,6 +272,19 @@ mod tests {
                 .cloned()
                 .ok_or_else(|| mcb_domain::error::Error::not_found(format!("Repository {id}")))
         }
+        async fn find_repository_by_url(
+            &self,
+            _org_id: &str,
+            url: &str,
+        ) -> Result<Option<Repository>> {
+            Ok(self
+                .repos
+                .lock()
+                .unwrap()
+                .iter()
+                .find(|r| r.url == url)
+                .cloned())
+        }
         async fn list_repositories(
             &self,
             _org_id: &str,
@@ -288,6 +303,9 @@ mod tests {
             Ok(())
         }
         async fn delete_repository(&self, _org_id: &str, _id: &str) -> Result<()> {
+            Ok(())
+        }
+        async fn ensure_org_and_project(&self, _project_id: &str) -> Result<()> {
             Ok(())
         }
         async fn create_branch(&self, _branch: &Branch) -> Result<()> {
@@ -353,13 +371,11 @@ mod tests {
                 updated_at: 0,
             });
         }
-        let handler = VcsEntityHandler::new(service);
+        let handler = VcsEntityHandler::new(service, test_resolver());
         let args = VcsEntityArgs {
             action: VcsEntityAction::List,
             resource: VcsEntityResource::Repository,
             id: None,
-            org_id: None,
-            project_id: Some("p1".into()),
             repository_id: None,
             worktree_id: None,
             data: None,
@@ -384,13 +400,11 @@ mod tests {
                 updated_at: 0,
             });
         }
-        let handler = VcsEntityHandler::new(service);
+        let handler = VcsEntityHandler::new(service, test_resolver());
         let args = VcsEntityArgs {
             action: VcsEntityAction::Get,
             resource: VcsEntityResource::Repository,
             id: Some("r1".into()),
-            org_id: None,
-            project_id: None,
             repository_id: None,
             worktree_id: None,
             data: None,

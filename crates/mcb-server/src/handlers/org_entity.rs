@@ -28,7 +28,7 @@ impl OrgEntityHandler {
         Parameters(args): Parameters<OrgEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
         let org_ctx = OrgContext::default();
-        let org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
+        let org_id = org_ctx.org_id.as_str();
 
         match (args.action, args.resource) {
             (OrgEntityAction::Create, OrgEntityResource::Org) => {
@@ -388,7 +388,6 @@ mod tests {
             action: OrgEntityAction::List,
             resource: OrgEntityResource::Org,
             id: None,
-            org_id: None,
             team_id: None,
             user_id: None,
             email: None,
@@ -416,7 +415,6 @@ mod tests {
             action: OrgEntityAction::Get,
             resource: OrgEntityResource::Org,
             id: Some("o1".into()),
-            org_id: None,
             team_id: None,
             user_id: None,
             email: None,

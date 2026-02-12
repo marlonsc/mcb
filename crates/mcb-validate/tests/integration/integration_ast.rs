@@ -10,6 +10,10 @@
 
 use std::path::Path;
 
+use crate::test_constants::{
+    AST_ROOT_PROGRAM, AST_ROOT_PYTHON, AST_ROOT_RUST, SEVERITY_ERROR, SEVERITY_INFO,
+    SEVERITY_WARNING,
+};
 use mcb_validate::ast::{
     AstNode, AstQuery, AstQueryBuilder, AstQueryPatterns, Position, QueryCondition, Span,
 };
@@ -98,7 +102,7 @@ fn hello_world() {
     let path = Path::new("test.rs");
 
     let root_kind = action::<RootKindCallback>(&LANG::Rust, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "source_file");
+    assert_eq!(root_kind, AST_ROOT_RUST);
 }
 
 #[test]
@@ -142,7 +146,7 @@ impl MyService {
     let path = Path::new("test.rs");
 
     let root_kind = action::<RootKindCallback>(&LANG::Rust, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "source_file");
+    assert_eq!(root_kind, AST_ROOT_RUST);
 
     let has_struct =
         action::<HasNodeCallback>(&LANG::Rust, code.to_vec(), path, None, "struct_item".into());
@@ -160,7 +164,7 @@ def hello_world():
     let path = Path::new("test.py");
 
     let root_kind = action::<RootKindCallback>(&LANG::Python, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "module");
+    assert_eq!(root_kind, AST_ROOT_PYTHON);
 }
 
 #[test]
@@ -177,7 +181,7 @@ class MyService:
     let path = Path::new("test.py");
 
     let root_kind = action::<RootKindCallback>(&LANG::Python, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "module");
+    assert_eq!(root_kind, AST_ROOT_PYTHON);
 
     let has_class = action::<HasNodeCallback>(
         &LANG::Python,
@@ -201,7 +205,7 @@ function helloWorld() {
     let path = Path::new("test.js");
 
     let root_kind = action::<RootKindCallback>(&LANG::Javascript, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "program");
+    assert_eq!(root_kind, AST_ROOT_PROGRAM);
 }
 
 #[test]
@@ -215,7 +219,7 @@ const multiply = (a, b) => {
     let path = Path::new("test.js");
 
     let root_kind = action::<RootKindCallback>(&LANG::Javascript, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "program");
+    assert_eq!(root_kind, AST_ROOT_PROGRAM);
 
     let has_arrow = action::<HasNodeCallback>(
         &LANG::Javascript,
@@ -244,7 +248,7 @@ interface Person {
     let path = Path::new("test.ts");
 
     let root_kind = action::<RootKindCallback>(&LANG::Typescript, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "program");
+    assert_eq!(root_kind, AST_ROOT_PROGRAM);
 }
 
 // ==================== AST Query Tests ====================
@@ -256,13 +260,13 @@ fn test_ast_query_builder() {
             name: "has_no_docstring".to_string(),
         })
         .message("Function needs documentation")
-        .severity("warning")
+        .severity(SEVERITY_WARNING)
         .build();
 
     assert_eq!(query.language, "rust");
     assert_eq!(query.node_type, "function_item");
     assert_eq!(query.message, "Function needs documentation");
-    assert_eq!(query.severity, "warning");
+    assert_eq!(query.severity, SEVERITY_WARNING);
     assert_eq!(query.conditions.len(), 1);
 }
 
@@ -272,7 +276,7 @@ fn test_ast_query_patterns_undocumented_functions() {
     assert_eq!(query.language, "rust");
     assert_eq!(query.node_type, "function_item");
     assert_eq!(query.message, "Functions must be documented");
-    assert_eq!(query.severity, "warning");
+    assert_eq!(query.severity, SEVERITY_WARNING);
 }
 
 #[test]
@@ -281,7 +285,7 @@ fn test_ast_query_patterns_unwrap_usage() {
     assert_eq!(query.language, "rust");
     assert_eq!(query.node_type, "call_expression");
     assert_eq!(query.message, "Avoid unwrap() in production code");
-    assert_eq!(query.severity, "error");
+    assert_eq!(query.severity, SEVERITY_ERROR);
 }
 
 #[test]
@@ -290,12 +294,12 @@ fn test_ast_query_patterns_async_functions() {
     assert_eq!(query.language, "rust");
     assert_eq!(query.node_type, "function_item");
     assert_eq!(query.message, "Async function detected");
-    assert_eq!(query.severity, "info");
+    assert_eq!(query.severity, SEVERITY_INFO);
 }
 
 #[test]
 fn test_ast_query_node_type_matching() {
-    let query = AstQuery::new("rust", "identifier", "Found identifier", "info");
+    let query = AstQuery::new("rust", "identifier", "Found identifier", SEVERITY_INFO);
 
     let node = AstNode {
         kind: "identifier".to_string(),
@@ -323,7 +327,7 @@ fn test_ast_query_node_type_matching() {
 
 #[test]
 fn test_ast_query_no_match() {
-    let query = AstQuery::new("rust", "function_item", "Found function", "info");
+    let query = AstQuery::new("rust", "function_item", "Found function", SEVERITY_INFO);
 
     let node = AstNode {
         kind: "identifier".to_string(),
@@ -350,7 +354,7 @@ fn test_ast_query_no_match() {
 
 #[test]
 fn test_ast_query_recursive_matching() {
-    let query = AstQuery::new("rust", "identifier", "Found identifier", "info");
+    let query = AstQuery::new("rust", "identifier", "Found identifier", SEVERITY_INFO);
 
     let child_node = AstNode {
         kind: "identifier".to_string(),
@@ -372,7 +376,7 @@ fn test_ast_query_recursive_matching() {
     };
 
     let root_node = AstNode {
-        kind: "source_file".to_string(),
+        kind: AST_ROOT_RUST.to_string(),
         name: None,
         span: Span {
             start: Position {
@@ -403,7 +407,7 @@ fn test_query_condition_has_child() {
             child_type: "block".to_string(),
         })
         .message("Function has block")
-        .severity("info")
+        .severity(SEVERITY_INFO)
         .build();
 
     let block_node = AstNode {
@@ -459,7 +463,7 @@ fn test_query_condition_no_child() {
             child_type: "unsafe_block".to_string(),
         })
         .message("Safe function")
-        .severity("info")
+        .severity(SEVERITY_INFO)
         .build();
 
     let func_node = AstNode {

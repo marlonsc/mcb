@@ -2,6 +2,8 @@
 
 use mcb_validate::engines::ValidatorEngine;
 
+use crate::test_constants::*;
+
 #[test]
 fn test_valid_rule_config() {
     let engine = ValidatorEngine::new();
@@ -13,9 +15,9 @@ fn test_valid_rule_config() {
         "severity": "error",
         "description": "This is a test rule with enough description",
         "rationale": "This rule exists for testing purposes and has enough rationale",
-        "engine": "rust-rule-engine",
+        "engine": ENGINE_NAME_RUST_RULE,
         "config": {
-            "crate_name": "test-crate",
+            "crate_name": TEST_SUBJECT_CRATE,
             "forbidden_prefixes": ["test"]
         }
     });
@@ -34,7 +36,7 @@ fn test_invalid_category() {
         "severity": "error",
         "description": "This is a test rule",
         "rationale": "This rule exists for testing",
-        "engine": "rust-rule-engine"
+        "engine": ENGINE_NAME_RUST_RULE
     });
 
     assert!(engine.validate_rule_definition(&invalid_rule).is_err());

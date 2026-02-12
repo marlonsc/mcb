@@ -2,6 +2,13 @@
 //!
 //! Run with: `cargo test -p mcb-validate --test integration`
 
+// Shared test constants and utilities (same source as unit tests)
+#[path = "test_constants.rs"]
+mod test_constants;
+
+#[path = "test_utils.rs"]
+mod test_utils;
+
 #[path = "integration/ca001_integration_tests.rs"]
 mod ca001;
 

@@ -16,12 +16,10 @@ use mcb_domain::ports::services::{
     ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
 };
 
+use mcb_application::services::RepositoryResolver;
+
 use crate::McpServer;
 
-/// Builder for MCP Server with dependency injection
-///
-/// Ensures all required domain services are provided before server construction.
-/// Follows the builder pattern to make server construction explicit and testable.
 #[derive(Default)]
 pub struct McpServerBuilder {
     indexing_service: Option<Arc<dyn IndexingServiceInterface>>,
@@ -37,6 +35,7 @@ pub struct McpServerBuilder {
     plan_entity_repository: Option<Arc<dyn PlanEntityRepository>>,
     issue_entity_repository: Option<Arc<dyn IssueEntityRepository>>,
     org_entity_repository: Option<Arc<dyn OrgEntityRepository>>,
+    resolver: Option<Arc<RepositoryResolver>>,
 }
 
 impl McpServerBuilder {
@@ -144,6 +143,11 @@ impl McpServerBuilder {
         self
     }
 
+    pub fn with_resolver(mut self, resolver: Arc<RepositoryResolver>) -> Self {
+        self.resolver = Some(resolver);
+        self
+    }
+
     /// Build the MCP server
     ///
     /// # Returns
@@ -191,6 +195,9 @@ impl McpServerBuilder {
         let org_entity_repository = self
             .org_entity_repository
             .ok_or(BuilderError::MissingDependency("org entity repository"))?;
+        let resolver = self
+            .resolver
+            .ok_or(BuilderError::MissingDependency("resolver"))?;
 
         let services = crate::mcp_server::McpServices {
             indexing: indexing_service,
@@ -206,6 +213,7 @@ impl McpServerBuilder {
             plan_entity: plan_entity_repository,
             issue_entity: issue_entity_repository,
             org_entity: org_entity_repository,
+            resolver,
         };
 
         Ok(McpServer::new(services))

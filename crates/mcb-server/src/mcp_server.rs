@@ -4,6 +4,7 @@
 
 use std::sync::Arc;
 
+use mcb_application::services::RepositoryResolver;
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::repositories::{
     IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
@@ -71,6 +72,8 @@ pub struct McpServices {
     pub issue_entity: Arc<dyn IssueEntityRepository>,
     /// Org entity repository (orgs, users, teams, members, api keys)
     pub org_entity: Arc<dyn OrgEntityRepository>,
+    /// DB-first project_id resolver
+    pub resolver: Arc<RepositoryResolver>,
 }
 
 impl McpServer {
@@ -85,17 +88,33 @@ impl McpServer {
                 services.memory.clone(),
             )),
             validate: Arc::new(ValidateHandler::new(services.validation.clone())),
-            memory: Arc::new(MemoryHandler::new(services.memory.clone())),
+            memory: Arc::new(MemoryHandler::new(
+                services.memory.clone(),
+                services.resolver.clone(),
+            )),
             session: Arc::new(SessionHandler::new(
                 services.agent_session.clone(),
                 services.memory.clone(),
+                services.resolver.clone(),
             )),
             agent: Arc::new(AgentHandler::new(services.agent_session.clone())),
-            project: Arc::new(ProjectHandler::new(services.project_workflow.clone())),
+            project: Arc::new(ProjectHandler::new(
+                services.project_workflow.clone(),
+                services.resolver.clone(),
+            )),
             vcs: Arc::new(VcsHandler::new(services.vcs.clone())),
-            vcs_entity: Arc::new(VcsEntityHandler::new(services.vcs_entity.clone())),
-            plan_entity: Arc::new(PlanEntityHandler::new(services.plan_entity.clone())),
-            issue_entity: Arc::new(IssueEntityHandler::new(services.issue_entity.clone())),
+            vcs_entity: Arc::new(VcsEntityHandler::new(
+                services.vcs_entity.clone(),
+                services.resolver.clone(),
+            )),
+            plan_entity: Arc::new(PlanEntityHandler::new(
+                services.plan_entity.clone(),
+                services.resolver.clone(),
+            )),
+            issue_entity: Arc::new(IssueEntityHandler::new(
+                services.issue_entity.clone(),
+                services.resolver.clone(),
+            )),
             org_entity: Arc::new(OrgEntityHandler::new(services.org_entity.clone())),
             hook_processor: Arc::new(hook_processor),
         };

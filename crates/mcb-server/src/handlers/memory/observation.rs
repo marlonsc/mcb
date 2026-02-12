@@ -18,6 +18,7 @@ use crate::formatter::ResponseFormatter;
 pub async fn store_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
+    project_id: &str,
 ) -> Result<CallToolResult, McpError> {
     let data = match MemoryHelpers::json_map(&args.data) {
         Some(data) => data,
@@ -40,13 +41,7 @@ pub async fn store_observation(
         Err(error_result) => return Ok(error_result),
     };
     let tags = MemoryHelpers::get_string_list(data, "tags");
-    let project_id = args
-        .project_id
-        .clone()
-        .or_else(|| MemoryHelpers::get_str(data, "project_id"))
-        .ok_or_else(|| {
-            McpError::invalid_params("project_id is required for storing observation", None)
-        })?;
+    let project_id = project_id.to_string();
 
     let vcs_context = VcsContext::capture();
     let metadata = ObservationMetadata {
