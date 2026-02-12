@@ -5,8 +5,8 @@ use mcb_domain::error::{Error, Result};
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::utils::HttpResponseUtils;
 use crate::utils::http::{RequestErrorKind, handle_request_error_with_kind};
+use crate::utils::http_response::HttpResponseUtils;
 
 pub(crate) struct RetryConfig {
     pub max_attempts: usize,
@@ -50,39 +50,57 @@ where
     unreachable!("retry loop must return success or error")
 }
 
-pub(crate) async fn send_json_request(
-    client: &Client,
-    method: reqwest::Method,
-    url: impl Into<String>,
-    timeout: Duration,
-    provider: &str,
-    operation: &str,
-    kind: RequestErrorKind,
-    headers: &[(&str, String)],
-    body: Option<&Value>,
-) -> Result<Value> {
-    let mut builder = client.request(method, url.into()).timeout(timeout);
+/// Parameters for [`send_json_request`].
+pub(crate) struct JsonRequestParams<'a> {
+    /// HTTP client to use.
+    pub client: &'a Client,
+    /// HTTP method (GET, POST, etc.).
+    pub method: reqwest::Method,
+    /// Target URL.
+    pub url: String,
+    /// Request timeout.
+    pub timeout: Duration,
+    /// Provider name for error messages.
+    pub provider: &'a str,
+    /// Operation name for error messages.
+    pub operation: &'a str,
+    /// Error classification kind.
+    pub kind: RequestErrorKind,
+    /// Additional headers.
+    pub headers: &'a [(&'a str, String)],
+    /// Optional JSON body.
+    pub body: Option<&'a Value>,
+}
 
-    for (key, value) in headers {
+/// Send a JSON request with configurable parameters.
+pub(crate) async fn send_json_request(params: JsonRequestParams<'_>) -> Result<Value> {
+    let mut builder = params
+        .client
+        .request(params.method, params.url)
+        .timeout(params.timeout);
+
+    for (key, value) in params.headers {
         builder = builder.header(*key, value);
     }
 
-    if let Some(payload) = body {
+    if let Some(payload) = params.body {
         builder = builder.json(payload);
     }
 
-    let response = builder
-        .send()
-        .await
-        .map_err(|e| handle_request_error_with_kind(e, timeout, provider, operation, kind))?;
+    let response = builder.send().await.map_err(|e| {
+        handle_request_error_with_kind(
+            e,
+            params.timeout,
+            params.provider,
+            params.operation,
+            params.kind,
+        )
+    })?;
 
-    HttpResponseUtils::check_and_parse(response, provider).await
+    HttpResponseUtils::check_and_parse(response, params.provider).await
 }
 
-pub(crate) fn embedding_data_array<'a>(
-    response_data: &'a Value,
-    expected_len: usize,
-) -> Result<&'a [Value]> {
+pub(crate) fn embedding_data_array(response_data: &Value, expected_len: usize) -> Result<&[Value]> {
     let data = response_data["data"].as_array().ok_or_else(|| {
         Error::embedding("Invalid response format: missing data array".to_string())
     })?;

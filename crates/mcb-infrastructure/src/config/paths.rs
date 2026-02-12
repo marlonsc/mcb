@@ -6,9 +6,13 @@ use std::path::PathBuf;
 
 use mcb_domain::error::{Error, Result};
 
+/// Constant value for `VCS_REGISTRY_FILENAME`.
 pub const VCS_REGISTRY_FILENAME: &str = "vcs_repository_registry.json";
+/// Constant value for `VCS_LOCK_FILENAME`.
 pub const VCS_LOCK_FILENAME: &str = "vcs_repository_registry.lock";
+/// Constant value for `COLLECTION_MAPPING_FILENAME`.
 pub const COLLECTION_MAPPING_FILENAME: &str = "collection_mapping.json";
+/// Constant value for `COLLECTION_MAPPING_LOCK_FILENAME`.
 pub const COLLECTION_MAPPING_LOCK_FILENAME: &str = "collection_mapping.lock";
 
 /// Returns the main configuration directory for mcb (e.g., ~/.config/mcb)

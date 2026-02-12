@@ -23,7 +23,7 @@ impl Context {
     pub fn initialize(root: &Path, callback: &Callback) -> Option<Context> {
         fn is_file_with_ext(entry: &walkdir::DirEntry, ext: &str) -> bool {
             let is_file = entry.file_type().is_file();
-            let has_ext = entry.path().extension().map_or(false, |e| e == ext);
+            let has_ext = entry.path().extension().is_some_and(|e| e == ext);
             is_file && has_ext
         }
 
@@ -234,29 +234,27 @@ mod tests {
 
     #[test]
     fn template_path_index_html() {
+        let filename = "index.html.hbs";
         for root in &["/", "/a/b/c/", "/a/b/c/d/", "/a/"] {
-            for filename in &["index.html.hbs"] {
-                let path = Path::new(root).join(filename);
-                let (name, data_type) = split_path(Path::new(root), &path);
+            let path = Path::new(root).join(filename);
+            let (name, data_type) = split_path(Path::new(root), &path);
 
-                assert_eq!(name, "index");
-                assert_eq!(data_type, Some("html".into()));
-            }
+            assert_eq!(name, "index");
+            assert_eq!(data_type, Some("html".into()));
         }
     }
 
     #[test]
     fn template_path_subdir_index_html() {
+        let filename = "index.html.hbs";
         for root in &["/", "/a/b/c/", "/a/b/c/d/", "/a/"] {
             for sub in &["a/", "a/b/", "a/b/c/", "a/b/c/d/"] {
-                for filename in &["index.html.hbs"] {
-                    let path = Path::new(root).join(sub).join(filename);
-                    let (name, data_type) = split_path(Path::new(root), &path);
+                let path = Path::new(root).join(sub).join(filename);
+                let (name, data_type) = split_path(Path::new(root), &path);
 
-                    let expected_name = format!("{}index", sub);
-                    assert_eq!(name, expected_name.as_str());
-                    assert_eq!(data_type, Some("html".into()));
-                }
+                let expected_name = format!("{}index", sub);
+                assert_eq!(name, expected_name.as_str());
+                assert_eq!(data_type, Some("html".into()));
             }
         }
     }

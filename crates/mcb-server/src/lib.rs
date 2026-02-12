@@ -68,6 +68,7 @@ pub mod error_mapping;
 pub mod formatter;
 /// Shared helper functions for tool handlers.
 pub mod handler_helpers;
+/// Macros shared by CRUD-style tool handlers.
 pub mod handler_macros;
 pub mod handlers;
 pub mod hooks;

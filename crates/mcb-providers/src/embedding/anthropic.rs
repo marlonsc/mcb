@@ -7,7 +7,7 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use mcb_domain::error::{Error, Result};
+use mcb_domain::error::Result;
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
@@ -17,7 +17,7 @@ use crate::constants::{
     EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT, EMBEDDING_DIMENSION_ANTHROPIC_LITE,
 };
 use crate::embedding::helpers::constructor;
-use crate::provider_utils::{embedding_data_array, send_json_request};
+use crate::provider_utils::{JsonRequestParams, embedding_data_array, send_json_request};
 use crate::utils::http::RequestErrorKind;
 use crate::utils::parse_embedding_vector;
 
@@ -116,17 +116,17 @@ impl AnthropicEmbeddingProvider {
             ("Content-Type", CONTENT_TYPE_JSON.to_string()),
         ];
 
-        send_json_request(
-            &self.http_client,
-            reqwest::Method::POST,
-            format!("{}/embeddings", self.base_url()),
-            self.timeout,
-            "Anthropic",
-            "embeddings",
-            RequestErrorKind::Embedding,
-            &headers,
-            Some(&payload),
-        )
+        send_json_request(JsonRequestParams {
+            client: &self.http_client,
+            method: reqwest::Method::POST,
+            url: format!("{}/embeddings", self.base_url()),
+            timeout: self.timeout,
+            provider: "Anthropic",
+            operation: "embeddings",
+            kind: RequestErrorKind::Embedding,
+            headers: &headers,
+            body: Some(&payload),
+        })
         .await
     }
 

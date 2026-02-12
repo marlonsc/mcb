@@ -19,8 +19,9 @@ use reqwest::Client;
 use serde_json::Value;
 
 use crate::constants::CONTENT_TYPE_JSON;
-use crate::utils::{HttpResponseUtils, JsonExt};
-use crate::vector_store::helpers::handle_vector_request_error;
+use crate::provider_utils::{JsonRequestParams, send_json_request};
+use crate::utils::JsonExt;
+use crate::utils::http::RequestErrorKind;
 
 /// Qdrant vector store provider
 ///
@@ -92,26 +93,24 @@ impl QdrantVectorStoreProvider {
         path: &str,
         body: Option<Value>,
     ) -> Result<Value> {
-        let mut builder = self
-            .http_client
-            .request(method, self.api_url(path))
-            .header("Content-Type", CONTENT_TYPE_JSON)
-            .timeout(self.timeout);
+        let mut headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_string())];
 
         if let Some(ref key) = self.api_key {
-            builder = builder.header("api-key", key);
+            headers.push(("api-key", key.clone()));
         }
 
-        if let Some(payload) = body {
-            builder = builder.json(&payload);
-        }
-
-        let response = builder
-            .send()
-            .await
-            .map_err(|e| handle_vector_request_error(e, self.timeout, "Qdrant", path))?;
-
-        HttpResponseUtils::check_and_parse(response, "Qdrant").await
+        send_json_request(JsonRequestParams {
+            client: &self.http_client,
+            method,
+            url: self.api_url(path),
+            timeout: self.timeout,
+            provider: "Qdrant",
+            operation: path,
+            kind: RequestErrorKind::VectorDb,
+            headers: &headers,
+            body: body.as_ref(),
+        })
+        .await
     }
 
     /// Convert Qdrant point result to domain SearchResult

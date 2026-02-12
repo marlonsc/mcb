@@ -98,27 +98,48 @@ impl WorkflowState {
 #[serde(tag = "trigger")]
 pub enum TransitionTrigger {
     /// Event when project context is successfully discovered.
-    ContextDiscovered { context_id: String },
+    ContextDiscovered {
+        /// Identifier of the discovered context.
+        context_id: String,
+    },
     /// Event to begin planning for a phase.
-    StartPlanning { phase_id: String },
+    StartPlanning {
+        /// Identifier of the phase to plan.
+        phase_id: String,
+    },
     /// Event to start executing tasks in a phase.
-    StartExecution { phase_id: String },
+    StartExecution {
+        /// Identifier of the phase to execute.
+        phase_id: String,
+    },
     /// Event when a task is claimed for work.
-    ClaimTask { task_id: String },
+    ClaimTask {
+        /// Identifier of the claimed task.
+        task_id: String,
+    },
     /// Event when a task is completed.
-    CompleteTask { task_id: String },
+    CompleteTask {
+        /// Identifier of the completed task.
+        task_id: String,
+    },
     /// Event to start the verification process.
     StartVerification,
     /// Event when verification succeeds.
     VerificationPassed,
     /// Event when verification fails.
-    VerificationFailed { reason: String },
+    VerificationFailed {
+        /// Reason why verification failed.
+        reason: String,
+    },
     /// Event to mark the entire phase as complete.
     CompletePhase,
     /// Event to end the workflow session.
     EndSession,
     /// Event indicating an error occurred.
-    Error { message: String },
+    Error {
+        /// Error message for the transition.
+        message: String,
+    },
     /// Event to attempt recovery from an error state.
     Recover,
 }

@@ -14,6 +14,7 @@ use mcb_providers::git::detect_all_projects;
 pub struct ProjectService;
 
 impl ProjectService {
+    /// Creates a project detector service instance.
     pub fn new() -> Self {
         Self
     }

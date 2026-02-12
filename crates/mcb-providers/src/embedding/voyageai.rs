@@ -6,7 +6,7 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use mcb_domain::error::{Error, Result};
+use mcb_domain::error::Result;
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
@@ -16,7 +16,7 @@ use crate::constants::{
     VOYAGEAI_MAX_INPUT_TOKENS,
 };
 use crate::embedding::helpers::constructor;
-use crate::provider_utils::{embedding_data_array, send_json_request};
+use crate::provider_utils::{JsonRequestParams, embedding_data_array, send_json_request};
 use crate::utils::http::{RequestErrorKind, create_http_provider_config, parse_embedding_vector};
 
 /// VoyageAI embedding provider
@@ -115,17 +115,17 @@ impl VoyageAIEmbeddingProvider {
             ("Content-Type", CONTENT_TYPE_JSON.to_string()),
         ];
 
-        send_json_request(
-            &self.http_client,
-            reqwest::Method::POST,
-            format!("{}/embeddings", self.effective_base_url()),
-            self.timeout,
-            "VoyageAI",
-            "embeddings",
-            RequestErrorKind::Embedding,
-            &headers,
-            Some(&payload),
-        )
+        send_json_request(JsonRequestParams {
+            client: &self.http_client,
+            method: reqwest::Method::POST,
+            url: format!("{}/embeddings", self.effective_base_url()),
+            timeout: self.timeout,
+            provider: "VoyageAI",
+            operation: "embeddings",
+            kind: RequestErrorKind::Embedding,
+            headers: &headers,
+            body: Some(&payload),
+        })
         .await
     }
 

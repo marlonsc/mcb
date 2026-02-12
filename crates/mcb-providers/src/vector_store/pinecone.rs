@@ -19,8 +19,9 @@ use reqwest::Client;
 use serde_json::Value;
 
 use crate::constants::CONTENT_TYPE_JSON;
-use crate::utils::{HttpResponseUtils, JsonExt};
-use crate::vector_store::helpers::handle_vector_request_error;
+use crate::provider_utils::{JsonRequestParams, send_json_request};
+use crate::utils::JsonExt;
+use crate::utils::http::RequestErrorKind;
 
 /// Pinecone vector store provider
 ///
@@ -86,23 +87,23 @@ impl PineconeVectorStoreProvider {
         path: &str,
         body: Option<Value>,
     ) -> Result<Value> {
-        let mut builder = self
-            .http_client
-            .request(method, self.api_url(path))
-            .header("Api-Key", &self.api_key)
-            .header("Content-Type", CONTENT_TYPE_JSON)
-            .timeout(self.timeout);
+        let headers = vec![
+            ("Api-Key", self.api_key.clone()),
+            ("Content-Type", CONTENT_TYPE_JSON.to_string()),
+        ];
 
-        if let Some(payload) = body {
-            builder = builder.json(&payload);
-        }
-
-        let response = builder
-            .send()
-            .await
-            .map_err(|e| handle_vector_request_error(e, self.timeout, "Pinecone", path))?;
-
-        HttpResponseUtils::check_and_parse(response, "Pinecone").await
+        send_json_request(JsonRequestParams {
+            client: &self.http_client,
+            method,
+            url: self.api_url(path),
+            timeout: self.timeout,
+            provider: "Pinecone",
+            operation: path,
+            kind: RequestErrorKind::VectorDb,
+            headers: &headers,
+            body: body.as_ref(),
+        })
+        .await
     }
 
     /// Convert Pinecone match result to domain SearchResult

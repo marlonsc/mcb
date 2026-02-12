@@ -1,6 +1,8 @@
 use sha2::{Digest, Sha256};
 
+/// Module for project type utility helpers.
 pub mod project_type;
+/// Module for submodule path utility helpers.
 pub mod submodule;
 pub mod vcs_context;
 

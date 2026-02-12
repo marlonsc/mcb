@@ -200,10 +200,12 @@ impl Default for EventBusConfig {
 }
 
 impl EventBusConfig {
+    /// Creates default in-process event bus configuration.
     pub fn tokio() -> Self {
         Self::default()
     }
 
+    /// Creates in-process event bus configuration with custom queue capacity.
     pub fn tokio_with_capacity(capacity: usize) -> Self {
         Self {
             provider: EventBusProvider::Tokio,
@@ -212,6 +214,7 @@ impl EventBusConfig {
         }
     }
 
+    /// Creates NATS-backed event bus configuration for the provided URL.
     pub fn nats(url: impl Into<String>) -> Self {
         Self {
             provider: EventBusProvider::Nats,

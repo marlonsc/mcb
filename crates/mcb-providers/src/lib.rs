@@ -36,12 +36,11 @@
 
 // Re-export mcb-domain types commonly used with providers
 pub use mcb_domain::error::{Error, Result};
+pub use mcb_domain::ports::providers::CryptoProvider;
 pub use mcb_domain::ports::providers::{
     CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider, VcsProvider,
     VectorStoreProvider,
 };
-// Re-export CryptoProvider from domain (for encrypted vector store)
-pub use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
 
 /// Provider-specific constants
 pub mod constants;

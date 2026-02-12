@@ -8,11 +8,13 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::OrgEntityRepository;
 
+/// SQLite-backed repository for organization, user, team, and API key entities.
 pub struct SqliteOrgEntityRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }
 
 impl SqliteOrgEntityRepository {
+    /// Creates a new repository using the provided database executor.
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }

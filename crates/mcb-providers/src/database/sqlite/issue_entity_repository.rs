@@ -7,11 +7,13 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::IssueEntityRepository;
 
+/// SQLite-backed repository for issue, comment, and label entities.
 pub struct SqliteIssueEntityRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }
 
 impl SqliteIssueEntityRepository {
+    /// Creates a new repository using the provided database executor.
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }

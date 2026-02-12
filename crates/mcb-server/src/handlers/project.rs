@@ -9,8 +9,7 @@ use serde_json::Value;
 use tracing::info;
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
-use crate::error_mapping::to_opaque_mcp_error;
-use crate::handler_helpers::{ok_json, resolve_org_id};
+use crate::handler_helpers::{map_opaque_error, ok_json, resolve_org_id};
 
 /// Handler for the consolidated `project` MCP tool.
 pub struct ProjectHandler {
@@ -46,21 +45,11 @@ impl ProjectHandler {
         );
 
         match (args.action, args.resource) {
-            (ProjectAction::Get, ProjectResource::Project) => {
-                let project = self
-                    .repo
-                    .get_by_id(org_id.as_str(), project_id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
-                ok_json(&project)
-            }
+            (ProjectAction::Get, ProjectResource::Project) => ok_json(&map_opaque_error(
+                self.repo.get_by_id(org_id.as_str(), project_id).await,
+            )?),
             (ProjectAction::List, ProjectResource::Project) => {
-                let projects = self
-                    .repo
-                    .list(org_id.as_str())
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
-                ok_json(&projects)
+                ok_json(&map_opaque_error(self.repo.list(org_id.as_str()).await)?)
             }
 
             _ => Err(McpError::invalid_params(

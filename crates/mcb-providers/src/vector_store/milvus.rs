@@ -20,6 +20,7 @@ use crate::constants::{
     MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_IVFFLAT_NLIST,
     MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE,
 };
+use crate::provider_utils::{RetryConfig, retry_with_backoff};
 use crate::utils::JsonExt;
 
 /// Milvus vector store provider implementation
@@ -115,42 +116,24 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
     }
 
     async fn flush(&self, collection: &CollectionId) -> Result<()> {
-        // Retry flush with backoff to handle rate limiting
-        let mut last_error = None;
-        for attempt in 0..3 {
-            match self
-                .client
-                .flush_collections(vec![collection.as_str()])
-                .await
-            {
-                Ok(_) => return Ok(()),
-                Err(e) => {
-                    let err_str = e.to_string();
-                    if err_str.contains("RateLimit") || err_str.contains("rate limit") {
-                        tracing::debug!("Flush attempt {} rate limited, retrying...", attempt + 1);
-                        last_error = Some(e);
-                        tokio::time::sleep(std::time::Duration::from_millis(
-                            1000 * (attempt + 1) as u64,
-                        ))
-                        .await;
-                        continue;
-                    }
-                    return Err(Error::vector_db(format!(
-                        "Failed to flush collection: {}",
-                        e
-                    )));
-                }
+        let result = retry_with_backoff(
+            RetryConfig::new(3, std::time::Duration::from_millis(1000)),
+            |_| self.client.flush_collections(vec![collection.as_str()]),
+            |e| {
+                let err_str = e.to_string();
+                err_str.contains("RateLimit") || err_str.contains("rate limit")
+            },
+        )
+        .await;
+
+        result.map(|_| ()).map_err(|e| {
+            let err_str = e.to_string();
+            if err_str.contains("RateLimit") || err_str.contains("rate limit") {
+                Error::vector_db(format!("Failed to flush collection after retries: {}", e))
+            } else {
+                Error::vector_db(format!("Failed to flush collection: {}", e))
             }
-        }
-
-        if let Some(e) = last_error {
-            return Err(Error::vector_db(format!(
-                "Failed to flush collection after retries: {}",
-                e
-            )));
-        }
-
-        Ok(())
+        })
     }
 
     fn provider_name(&self) -> &str {
@@ -353,50 +336,35 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         // Create index on the vector field for efficient search
         use milvus::index::{IndexParams, IndexType, MetricType};
 
-        // Retry index creation with backoff to handle eventual consistency
-        let mut last_error = None;
-        for attempt in 0..3 {
-            let index_params = IndexParams::new(
-                "vector_index".to_string(),
-                IndexType::IvfFlat,
-                MetricType::L2,
-                HashMap::from([("nlist".to_string(), MILVUS_IVFFLAT_NLIST.to_string())]),
-            );
-            match self
-                .client
-                .create_index(name.as_str(), "vector", index_params)
-                .await
-            {
-                Ok(()) => {
-                    last_error = None;
-                    break;
-                }
-                Err(e) => {
-                    let err_str = e.to_string();
-                    if err_str.contains("CollectionNotExists")
-                        || err_str.contains("collection not found")
-                    {
-                        tracing::debug!(
-                            "Index creation attempt {} failed (collection not ready), retrying...",
-                            attempt + 1
-                        );
-                        last_error = Some(e);
-                        tokio::time::sleep(std::time::Duration::from_millis(
-                            500 * (attempt + 1) as u64,
-                        ))
-                        .await;
-                        continue;
-                    }
-                    return Err(Error::vector_db(format!("Failed to create index: {}", e)));
-                }
-            }
-        }
+        let index_result = retry_with_backoff(
+            RetryConfig::new(3, std::time::Duration::from_millis(500)),
+            |_| async {
+                let index_params = IndexParams::new(
+                    "vector_index".to_string(),
+                    IndexType::IvfFlat,
+                    MetricType::L2,
+                    HashMap::from([("nlist".to_string(), MILVUS_IVFFLAT_NLIST.to_string())]),
+                );
+                self.client
+                    .create_index(name.as_str(), "vector", index_params)
+                    .await
+            },
+            |e| {
+                let err_str = e.to_string();
+                err_str.contains("CollectionNotExists") || err_str.contains("collection not found")
+            },
+        )
+        .await;
 
-        if let Some(e) = last_error {
-            return Err(Error::vector_db(format!(
-                "Failed to create index after retries: {}",
-                e
-            )));
+        if let Err(e) = index_result {
+            let err_str = e.to_string();
+            if err_str.contains("CollectionNotExists") || err_str.contains("collection not found") {
+                return Err(Error::vector_db(format!(
+                    "Failed to create index after retries: {}",
+                    e
+                )));
+            }
+            return Err(Error::vector_db(format!("Failed to create index: {}", e)));
         }
 
         Ok(())

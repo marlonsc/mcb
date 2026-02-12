@@ -7,8 +7,9 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{IssueEntityAction, IssueEntityArgs, IssueEntityResource};
-use crate::error_mapping::to_opaque_mcp_error;
-use crate::handler_helpers::{ok_json, ok_text, require_id, resolve_org_id};
+use crate::handler_helpers::{
+    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
+};
 
 /// Handler for the consolidated `issue_entity` MCP tool.
 pub struct IssueEntityHandler {
@@ -34,151 +35,77 @@ impl IssueEntityHandler {
             resource = args.resource,
             {
             (IssueEntityAction::Create, IssueEntityResource::Issue) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required for create", None))?;
-                let mut issue: ProjectIssue = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                let mut issue: ProjectIssue = require_data(args.data, "data required for create")?;
                 issue.org_id = org_id.to_string();
-                self.repo
-                    .create_issue(&issue)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                map_opaque_error(self.repo.create_issue(&issue).await)?;
                 ok_json(&issue)
             }
             (IssueEntityAction::Get, IssueEntityResource::Issue) => {
                 let id = require_id(&args.id)?;
-                let issue = self
-                    .repo
-                    .get_issue(org_id.as_str(), &id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
-                ok_json(&issue)
+                ok_json(&map_opaque_error(self.repo.get_issue(org_id.as_str(), &id).await)?)
             }
             (IssueEntityAction::List, IssueEntityResource::Issue) => {
                 let project_id = args.project_id.as_deref().ok_or_else(|| {
                     McpError::invalid_params("project_id required for list", None)
                 })?;
-                let issues = self
-                    .repo
-                    .list_issues(org_id.as_str(), project_id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
-                ok_json(&issues)
+                ok_json(&map_opaque_error(self.repo.list_issues(org_id.as_str(), project_id).await)?)
             }
             (IssueEntityAction::Update, IssueEntityResource::Issue) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required for update", None))?;
-                let mut issue: ProjectIssue = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                let mut issue: ProjectIssue = require_data(args.data, "data required for update")?;
                 issue.org_id = org_id.to_string();
-                self.repo
-                    .update_issue(&issue)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                map_opaque_error(self.repo.update_issue(&issue).await)?;
                 ok_text("updated")
             }
             (IssueEntityAction::Delete, IssueEntityResource::Issue) => {
                 let id = require_id(&args.id)?;
-                self.repo
-                    .delete_issue(org_id.as_str(), &id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                map_opaque_error(self.repo.delete_issue(org_id.as_str(), &id).await)?;
                 ok_text("deleted")
             }
             (IssueEntityAction::Create, IssueEntityResource::Comment) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required", None))?;
-                let comment: IssueComment = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.repo
-                    .create_comment(&comment)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                let comment: IssueComment = require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.create_comment(&comment).await)?;
                 ok_json(&comment)
             }
             (IssueEntityAction::Get, IssueEntityResource::Comment) => {
                 let id = require_id(&args.id)?;
-                let comment = self
-                    .repo
-                    .get_comment(&id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
-                ok_json(&comment)
+                ok_json(&map_opaque_error(self.repo.get_comment(&id).await)?)
             }
             (IssueEntityAction::List, IssueEntityResource::Comment) => {
                 let issue_id = args
                     .issue_id
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("issue_id required", None))?;
-                let comments = self
-                    .repo
-                    .list_comments_by_issue(issue_id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
-                ok_json(&comments)
+                ok_json(&map_opaque_error(self.repo.list_comments_by_issue(issue_id).await)?)
             }
             (IssueEntityAction::Delete, IssueEntityResource::Comment) => {
                 let id = require_id(&args.id)?;
-                self.repo
-                    .delete_comment(&id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                map_opaque_error(self.repo.delete_comment(&id).await)?;
                 ok_text("deleted")
             }
             (IssueEntityAction::Create, IssueEntityResource::Label) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required", None))?;
-                let mut label: IssueLabel = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+                let mut label: IssueLabel = require_data(args.data, "data required")?;
                 label.org_id = org_id.to_string();
-                self.repo
-                    .create_label(&label)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                map_opaque_error(self.repo.create_label(&label).await)?;
                 ok_json(&label)
             }
             (IssueEntityAction::Get, IssueEntityResource::Label) => {
                 let id = require_id(&args.id)?;
-                let label = self
-                    .repo
-                    .get_label(&id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
-                ok_json(&label)
+                ok_json(&map_opaque_error(self.repo.get_label(&id).await)?)
             }
             (IssueEntityAction::List, IssueEntityResource::Label) => {
                 let project_id = args.project_id.as_deref().ok_or_else(|| {
                     McpError::invalid_params("project_id required for list", None)
                 })?;
-                let labels = self
-                    .repo
-                    .list_labels(org_id.as_str(), project_id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
-                ok_json(&labels)
+                ok_json(&map_opaque_error(self.repo.list_labels(org_id.as_str(), project_id).await)?)
             }
             (IssueEntityAction::Delete, IssueEntityResource::Label) => {
                 let id = require_id(&args.id)?;
-                self.repo
-                    .delete_label(&id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                map_opaque_error(self.repo.delete_label(&id).await)?;
                 ok_text("deleted")
             }
             (IssueEntityAction::Create, IssueEntityResource::LabelAssignment) => {
-                let data = args
-                    .data
-                    .ok_or_else(|| McpError::invalid_params("data required", None))?;
-                let assignment: IssueLabelAssignment = serde_json::from_value(data)
-                    .map_err(|_| McpError::invalid_params("invalid data", None))?;
-                self.repo
-                    .assign_label(&assignment)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                let assignment: IssueLabelAssignment = require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.assign_label(&assignment).await)?;
                 ok_text("assigned")
             }
             (IssueEntityAction::Delete, IssueEntityResource::LabelAssignment) => {
@@ -190,10 +117,7 @@ impl IssueEntityHandler {
                     .label_id
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("label_id required", None))?;
-                self.repo
-                    .unassign_label(issue_id, label_id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
+                map_opaque_error(self.repo.unassign_label(issue_id, label_id).await)?;
                 ok_text("unassigned")
             }
             (IssueEntityAction::List, IssueEntityResource::LabelAssignment) => {
@@ -201,12 +125,7 @@ impl IssueEntityHandler {
                     .issue_id
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("issue_id required", None))?;
-                let labels = self
-                    .repo
-                    .list_labels_for_issue(issue_id)
-                    .await
-                    .map_err(to_opaque_mcp_error)?;
-                ok_json(&labels)
+                ok_json(&map_opaque_error(self.repo.list_labels_for_issue(issue_id).await)?)
             }
             }
         }

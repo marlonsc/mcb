@@ -45,12 +45,14 @@ fn extract_text(content: &[rmcp::model::Content]) -> String {
 async fn test_real_memory_store_observation_persists() {
     let (server, _temp) = create_test_mcp_server().await;
     let memory_h = server.memory_handler();
-    let _project_id = "real-persist-test";
+    let project_id = "real-persist-test";
 
     // 1. Store an observation
     let store_args = MemoryArgs {
         action: MemoryAction::Store,
+        org_id: None,
         resource: MemoryResource::Observation,
+        project_id: Some(project_id.to_string()),
         data: Some(json!({
             "content": "Authentication middleware uses JWT with RS256",
             "observation_type": "context",
@@ -89,7 +91,9 @@ async fn test_real_memory_store_observation_persists() {
     // 2. Retrieve it back via list — proves it actually hit the database
     let list_args = MemoryArgs {
         action: MemoryAction::List,
+        org_id: None,
         resource: MemoryResource::Observation,
+        project_id: None,
         data: None,
         ids: None,
         repo_id: None,
@@ -124,13 +128,15 @@ async fn test_real_memory_store_observation_persists() {
 async fn test_real_memory_store_multiple_observations_counted() {
     let (server, _temp) = create_test_mcp_server().await;
     let memory_h = server.memory_handler();
-    let _project_id = "real-multi-store";
+    let project_id = "real-multi-store";
 
     // Store 3 observations
     for i in 0..3 {
         let store_args = MemoryArgs {
             action: MemoryAction::Store,
+            org_id: None,
             resource: MemoryResource::Observation,
+            project_id: Some(project_id.to_string()),
             data: Some(json!({
                 "content": format!("Observation number {}", i),
                 "observation_type": "context",
@@ -164,7 +170,9 @@ async fn test_real_memory_store_multiple_observations_counted() {
     // List and verify count
     let list_args = MemoryArgs {
         action: MemoryAction::List,
+        org_id: None,
         resource: MemoryResource::Observation,
+        project_id: None,
         data: None,
         ids: None,
         repo_id: None,
@@ -209,7 +217,9 @@ async fn test_real_memory_store_missing_data_returns_contextual_error() {
 
     let bad_args = MemoryArgs {
         action: MemoryAction::Store,
+        org_id: None,
         resource: MemoryResource::Observation,
+        project_id: None,
         data: None, // Missing required data
         ids: None,
         repo_id: None,
@@ -256,7 +266,9 @@ async fn test_real_session_summary_store_and_retrieve() {
     // 1. Store a session summary (NO seed observation needed — auto-create handles FK)
     let store_args = MemoryArgs {
         action: MemoryAction::Store,
+        org_id: None,
         resource: MemoryResource::Session,
+        project_id: None,
         data: Some(json!({
             "session_id": "sess-roundtrip",
             "topics": ["architecture", "testing"],
@@ -296,7 +308,9 @@ async fn test_real_session_summary_store_and_retrieve() {
     // 2. Retrieve via Get to verify persistence
     let get_args = MemoryArgs {
         action: MemoryAction::Get,
+        org_id: None,
         resource: MemoryResource::Session,
+        project_id: None,
         data: None,
         ids: None,
         repo_id: None,
@@ -335,7 +349,9 @@ async fn test_real_session_create_invalid_agent_type_contextual_error() {
 
     let bad_args = SessionArgs {
         action: SessionAction::Create,
+        org_id: None,
         session_id: None,
+        project_id: None,
         data: Some(json!({
             "session_summary_id": "summary-bad-type",
             "model": "claude-3-sonnet",
@@ -389,6 +405,7 @@ async fn test_real_search_empty_project_returns_empty_not_error() {
 
     let search_args = SearchArgs {
         query: "nonexistent pattern that should match nothing".to_string(),
+        org_id: None,
         resource: SearchResource::Memory,
         collection: None,
         extensions: None,
@@ -435,7 +452,9 @@ async fn test_real_agent_session_create_and_retrieve() {
     // 1. Store a session_summary (auto-creates org + project)
     let summary_args = MemoryArgs {
         action: MemoryAction::Store,
+        org_id: None,
         resource: MemoryResource::Session,
+        project_id: None,
         data: Some(json!({
             "session_id": "sess-agent-roundtrip",
             "topics": ["FK chain validation"],
@@ -476,7 +495,9 @@ async fn test_real_agent_session_create_and_retrieve() {
     // 2. Create an agent_session using the real summary_id
     let create_args = SessionArgs {
         action: SessionAction::Create,
+        org_id: None,
         session_id: None,
+        project_id: None,
         data: Some(json!({
             "session_summary_id": summary_id,
             "model": "claude-opus-4-20250514",
@@ -512,7 +533,9 @@ async fn test_real_agent_session_create_and_retrieve() {
     // 3. Get agent_session back — verify data matches
     let get_args = SessionArgs {
         action: SessionAction::Get,
+        org_id: None,
         session_id: Some(agent_session_id.to_string().into()),
+        project_id: None,
         data: None,
         worktree_id: None,
         agent_type: None,
@@ -558,7 +581,9 @@ async fn test_real_session_list_empty_returns_gracefully() {
 
     let list_args = SessionArgs {
         action: SessionAction::List,
+        org_id: None,
         session_id: None,
+        project_id: None,
         data: None,
         worktree_id: None,
         agent_type: None,

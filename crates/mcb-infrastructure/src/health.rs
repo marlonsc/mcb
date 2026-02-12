@@ -280,6 +280,7 @@ pub mod checkers {
     }
 
     impl<F> DatabaseHealthChecker<F> {
+        /// Creates a database checker from a synchronous probe function.
         pub fn new(check_fn: F) -> Self
         where
             F: Fn() -> Result<()> + Send + Sync,
@@ -311,6 +312,7 @@ pub mod checkers {
     }
 
     impl<F> ServiceHealthChecker<F> {
+        /// Creates a named health checker from a synchronous probe function.
         pub fn new<S: Into<String>>(name: S, check_fn: F) -> Self
         where
             F: Fn() -> Result<()> + Send + Sync,

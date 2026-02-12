@@ -14,21 +14,25 @@ pub fn current_timestamp() -> i64 {
     }
 }
 
+/// Returns the required `id` parameter or an MCP invalid params error.
 pub fn require_id(id: &Option<String>) -> Result<String, McpError> {
     id.clone()
         .ok_or_else(|| McpError::invalid_params("id required", None))
 }
 
+/// Serializes a value into pretty JSON and wraps it in a successful MCP tool result.
 pub fn ok_json<T: Serialize>(val: &T) -> Result<CallToolResult, McpError> {
     let json = serde_json::to_string_pretty(val)
         .map_err(|_| McpError::internal_error("serialization failed", None))?;
     Ok(CallToolResult::success(vec![Content::text(json)]))
 }
 
+/// Wraps plain text in a successful MCP tool result.
 pub fn ok_text(msg: &str) -> Result<CallToolResult, McpError> {
     Ok(CallToolResult::success(vec![Content::text(msg)]))
 }
 
+/// Resolves the organization id, preferring explicit input over the current context default.
 pub fn resolve_org_id(explicit: Option<&str>) -> String {
     if let Some(org_id) = explicit {
         return org_id.to_string();
@@ -36,6 +40,7 @@ pub fn resolve_org_id(explicit: Option<&str>) -> String {
     OrgContext::current().id_str().to_string()
 }
 
+/// Deserializes required request data into the target type.
 pub fn require_data<T: DeserializeOwned>(
     data: Option<serde_json::Value>,
     msg: &'static str,
@@ -44,6 +49,7 @@ pub fn require_data<T: DeserializeOwned>(
     serde_json::from_value(value).map_err(|_| McpError::invalid_params("invalid data", None))
 }
 
+/// Maps domain errors to opaque MCP-safe errors.
 pub fn map_opaque_error<T>(result: Result<T, Error>) -> Result<T, McpError> {
     result.map_err(crate::error_mapping::to_opaque_mcp_error)
 }

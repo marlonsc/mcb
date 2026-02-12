@@ -2,6 +2,7 @@
 //!
 //! Validates that infrastructure constants have reasonable values
 //! and maintain expected relationships.
+#![allow(clippy::assertions_on_constants)]
 
 use mcb_infrastructure::constants::auth::*;
 use mcb_infrastructure::constants::cache::*;

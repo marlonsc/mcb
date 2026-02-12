@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
+/// Locates `config/tests.toml` by walking up from manifest and current directories.
 pub fn find_test_config_path() -> Option<PathBuf> {
     let mut candidates = Vec::new();
 
@@ -18,6 +19,7 @@ pub fn find_test_config_path() -> Option<PathBuf> {
     candidates.into_iter().find(|path| path.is_file())
 }
 
+/// Returns the cached `[test_services]` table from `config/tests.toml`.
 pub fn test_services_table() -> Option<&'static toml::value::Table> {
     static TEST_SERVICES: OnceLock<Option<toml::value::Table>> = OnceLock::new();
 
@@ -42,6 +44,7 @@ pub fn test_services_table() -> Option<&'static toml::value::Table> {
         .as_ref()
 }
 
+/// Returns an optional service URL from `[test_services]`.
 pub fn test_service_url(key: &str) -> Option<String> {
     test_services_table()?
         .get(key)
@@ -49,6 +52,7 @@ pub fn test_service_url(key: &str) -> Option<String> {
         .map(str::to_string)
 }
 
+/// Returns a required service URL from `[test_services]`, panicking if missing.
 pub fn required_test_service_url(key: &str) -> String {
     test_service_url(key)
         .unwrap_or_else(|| panic!("missing test_services.{key} in config/tests.toml"))
