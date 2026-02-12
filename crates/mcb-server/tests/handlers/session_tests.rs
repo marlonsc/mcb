@@ -109,6 +109,17 @@ session_test!(
 );
 
 session_test!(
+    test_session_create_without_session_summary_id_success,
+    SessionAction::Create,
+    data: json!({
+        "model": "claude-3-sonnet",
+        "project_id": "test-project"
+    }),
+    agent_type: Some("explore".to_string()),
+    expect_ok
+);
+
+session_test!(
     test_session_create_missing_data,
     SessionAction::Create,
     data: None,

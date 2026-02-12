@@ -47,11 +47,8 @@ pub async fn create_session(
         .map(|d| d.as_secs() as i64)
         .unwrap_or(0);
     let session_id = format!("agent_{}", Uuid::new_v4());
-    let session_summary_id =
-        match SessionHelpers::get_required_str(data, schema::SESSION_SUMMARY_ID) {
-            Ok(v) => v,
-            Err(error_result) => return Ok(error_result),
-        };
+    let session_summary_id = SessionHelpers::get_str(data, schema::SESSION_SUMMARY_ID)
+        .unwrap_or_else(|| format!("auto_{}", Uuid::new_v4()));
     let model = match SessionHelpers::get_required_str(data, schema::MODEL) {
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),

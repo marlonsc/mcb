@@ -118,12 +118,6 @@ pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     vec![
         ForeignKeyDef {
             from_table: "agent_sessions".to_string(),
-            from_column: "session_summary_id".to_string(),
-            to_table: "session_summaries".to_string(),
-            to_column: "id".to_string(),
-        },
-        ForeignKeyDef {
-            from_table: "agent_sessions".to_string(),
             from_column: "parent_session_id".to_string(),
             to_table: "agent_sessions".to_string(),
             to_column: "id".to_string(),

@@ -32,7 +32,8 @@ implementation_status: Partial
 
 ## Context
 
-v0.1.2 provides basic code browsing with file listing and chunk display. Users need IDE-like capabilities for deep code exploration.
+v0.1.2 provides basic code browsing with file listing and chunk display. Users
+need IDE-like capabilities for deep code exploration.
 
 **Current v0.1.2 capabilities:**
 
@@ -289,9 +290,12 @@ pub fn browse_events(name: &str) -> EventStream![Event + '_]
 
 ## Related ADRs
 
-- [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Base admin UI
-- [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git metadata for diff view
-- [ADR-026: Routing Refactor Rocket](026-routing-refactor-rocket-poem.md) - Rocket web framework
+- [ADR-007: Integrated Web Administration Interface]
+(007-integrated-web-administration-interface.md) - Base admin UI
+- [ADR-008: Git-Aware Semantic Indexing]
+(008-git-aware-semantic-indexing-v0.2.0.md) - Git metadata for diff view
+- [ADR-026: Routing Refactor Rocket]
+(026-routing-refactor-rocket-poem.md) - Rocket web framework
 
 ## References
 

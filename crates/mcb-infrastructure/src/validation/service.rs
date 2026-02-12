@@ -210,22 +210,33 @@ fn find_workspace_root(start: &Path) -> Option<std::path::PathBuf> {
 }
 
 fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {
-    let embedded = mcb_validate::EmbeddedRules::all_yaml();
-    let mut loader = mcb_validate::YamlRuleLoader::from_embedded(&embedded)
-        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-    let validated = loader
-        .load_embedded_rules()
-        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-
-    let all_rules: Vec<RuleInfo> = validated
+    let all_rules: Vec<RuleInfo> = mcb_validate::EmbeddedRules::all_yaml()
         .into_iter()
-        .filter(|r| r.enabled)
-        .map(|r| RuleInfo {
-            id: r.id,
-            category: r.category,
-            severity: r.severity,
-            description: r.description,
-            engine: r.engine,
+        .filter(|(path, _)| path.ends_with(".yml") && !path.contains("/templates/"))
+        .filter_map(|(_, content)| {
+            if extract_yaml_scalar(content, "_base").as_deref() == Some("true") {
+                return None;
+            }
+
+            let enabled = extract_yaml_scalar(content, "enabled")
+                .map(|value| value != "false")
+                .unwrap_or(true);
+            if !enabled {
+                return None;
+            }
+
+            let id = extract_yaml_scalar(content, "id")?;
+            Some(RuleInfo {
+                id,
+                category: extract_yaml_scalar(content, "category")
+                    .unwrap_or_else(|| "quality".to_string()),
+                severity: extract_yaml_scalar(content, "severity")
+                    .unwrap_or_else(|| "warning".to_string()),
+                description: extract_yaml_scalar(content, "description")
+                    .unwrap_or_else(|| "No description provided".to_string()),
+                engine: extract_yaml_scalar(content, "engine")
+                    .unwrap_or_else(|| "rusty-rules".to_string()),
+            })
         })
         .collect();
 
@@ -237,6 +248,21 @@ fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {
     } else {
         Ok(all_rules)
     }
+}
+
+fn extract_yaml_scalar(content: &str, key: &str) -> Option<String> {
+    let prefix = format!("{key}:");
+    content.lines().find_map(|line| {
+        let trimmed = line.trim();
+        if !trimmed.starts_with(&prefix) {
+            return None;
+        }
+        let value = trimmed[prefix.len()..].trim();
+        if value.is_empty() {
+            return None;
+        }
+        Some(value.trim_matches('"').trim_matches('\'').to_string())
+    })
 }
 
 fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<ComplexityReport> {

@@ -37,13 +37,14 @@ Pain points:
 
 ## Decision
 
-**Extend MCB domain to be the SINGLE SOURCE OF TRUTH for workflow management.** No support for legacy file formats (legacy-planning/, .beads/).
+**Extend MCB domain to be the SINGLE SOURCE OF TRUTH for workflow management.**
+No support for legacy file formats (legacy-planning/, .beads/).
 
 ### Key Decisions
 
 #### 1. MCB-Only Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    MCB (Single Source of Truth)              │
 │                                                              │
@@ -75,7 +76,7 @@ Pain points:
 | `memory_` | Executions, errors, context | 5 |
 | `project_` | Project/phase/issue CRUD | 9 |
 
-**Total: 24 MCP tools**
+Total: 24 MCP tools
 
 #### 3. Full CRUD for Project State
 
@@ -137,7 +138,7 @@ project_log_decision    → Log decision
 | 5 | Project State | ~800 | 9 `project_*` |
 | 6 | Context Assembly | ~400 | 1 `memory_*` |
 
-**Total: ~3200 LOC | 14 plans | 24 tools | 9 tables**
+Total: ~3200 LOC | 14 plans | 24 tools | 9 tables
 
 ## Alternatives Considered
 

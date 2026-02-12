@@ -26,6 +26,7 @@ pub async fn list_sessions(
         status: args
             .status
             .as_ref()
+            .filter(|value| !value.is_empty())
             .map(|value| value.parse())
             .transpose()
             .map_err(|_| McpError::invalid_params("Invalid status", None))?,

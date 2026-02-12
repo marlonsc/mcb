@@ -16,11 +16,15 @@ implementation_status: Incomplete
 
 **Implemented** (v0.1.2)
 
-> Evolution of [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md), adding dill Catalog as IoC container while maintaining the handle-based pattern.
+> Evolution of [ADR 024: Simplified Dependency Injection]
+> (024-simplified-dependency-injection.md), adding dill Catalog as IoC
+> container while maintaining the handle-based pattern.
 
 ## Context
 
-The previous architecture (ADR-024) used a handle-based DI pattern with linkme registry for compile-time provider discovery. While effective, this approach had coupling issues:
+The previous architecture (ADR-024) used a handle-based DI pattern with linkme
+registry for compile-time provider discovery. While effective, this approach had
+coupling issues:
 
 1. **Infrastructure imported concrete types from Application**
     - `domain_services.rs` imported `ContextServiceImpl`, `SearchServiceImpl`
@@ -86,7 +90,9 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 // Service retrieval
 pub fn get_embedding_provider(catalog: &Catalog) -> Result<Arc<dyn EmbeddingProvider>> {
     catalog.get_one::<dyn EmbeddingProvider>()
-        .map_err(|e| Error::configuration(format!("Service not found: {e:?}")))
+        .map_err(|e| {
+            Error::configuration(format!("Service not found: {e:?}"))
+        })
 }
 ```
 
@@ -174,6 +180,9 @@ New mcb-validate rules enforce the architecture:
 ## References
 
 - [dill-rs Documentation](https://docs.rs/dill/latest/dill/)
-- [ADR 023: Inventory to linkme Migration](023-inventory-to-linkme-migration.md)
-- [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md)
-- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [ADR 023: Inventory to linkme Migration]
+(023-inventory-to-linkme-migration.md)
+- [ADR 024: Simplified Dependency Injection]
+(024-simplified-dependency-injection.md)
+- [Clean Architecture]
+(<https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html>)

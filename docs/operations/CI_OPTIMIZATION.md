@@ -270,7 +270,7 @@ on:
 - `.github/workflows/ci.yml`: Main CI pipeline
 - `.github/workflows/codeql.yml`: Security analysis workflow
 - `.github/workflows/docs.yml`: Documentation pipeline
-- `make/Makefile.quality.mk`: Coverage target configuration
+- `make/quality.mk`: Coverage target configuration
 - `.tarpaulin.toml`: Tarpaulin configuration
 
 ---

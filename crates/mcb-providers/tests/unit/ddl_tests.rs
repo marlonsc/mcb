@@ -109,7 +109,6 @@ fn test_project_schema_contains_all_fk_references() {
         ("api_keys", "REFERENCES organizations(id)"),
         ("projects", "REFERENCES organizations(id)"),
         // Agent FKs
-        ("agent_sessions", "REFERENCES session_summaries(id)"),
         ("agent_sessions", "REFERENCES agent_sessions(id)"),
         ("agent_sessions", "REFERENCES projects(id)"),
         ("agent_sessions", "REFERENCES worktrees(id)"),
@@ -169,8 +168,8 @@ fn test_project_schema_contains_all_fk_references() {
     let schema_def = ProjectSchema::definition();
     assert_eq!(
         schema_def.foreign_keys.len(),
-        48,
-        "Expected 48 total FK definitions, got {}",
+        47,
+        "Expected 47 total FK definitions, got {}",
         schema_def.foreign_keys.len()
     );
 }

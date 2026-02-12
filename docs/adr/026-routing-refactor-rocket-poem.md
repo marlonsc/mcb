@@ -16,11 +16,14 @@ implementation_status: Incomplete
 
 **Implemented** (v0.1.2)
 
-> Migration from Axum to Rocket completed as part of the infrastructure modernization initiative.
+> Migration from Axum to Rocket completed as part of the infrastructure
+> modernization initiative.
 
 ## Context
 
-The current HTTP routing uses Axum (version 0.8) with manual route construction and Tower middleware. Axum provides a functional approach to web development with a focus on performance and composability.
+The current HTTP routing uses Axum (version 0.8) with manual route construction
+and Tower middleware. Axum provides a functional approach to web development
+with a focus on performance and composability.
 
 ### Current Implementation
 
@@ -64,17 +67,20 @@ let router = Router::new()
 
 #### Rocket Framework (Selected)
 
-Rocket (version 0.5.1) provides a batteries-included web framework with attribute-based routing:
+Rocket (version 0.5.1) provides a batteries-included web framework with
+attribute-based routing:
 
-**Key Features:**
+##### Key Features
 
 - **Attribute-based routing**: `#[get("/path")]` decorators on handler functions
 - **Built-in features**: Forms, templates, state management, validation
-- **Macro-driven**: Generates routing code at compile-time with conflict detection
-- **Stable and mature**: Long-established in Rust ecosystem with extensive documentation
+- **Macro-driven**: Generates routing code at compile-time with conflict
+  detection
+- **Stable and mature**: Long-established in Rust ecosystem with extensive
+  documentation
 - **Full-stack**: Includes everything needed for web applications
 
-**Strengths:**
+##### Strengths
 
 - Intuitive attribute-based API familiar to web developers
 - Compile-time route validation and conflict detection
@@ -86,7 +92,7 @@ Rocket (version 0.5.1) provides a batteries-included web framework with attribut
 
 Poem (modern async web framework) offers a programmatic approach:
 
-**Key Features:**
+##### Poem Key Features
 
 - **Programmatic routing**: Fluent API with method chaining
 - **Modern async**: Built on Tokio and hyper with excellent performance
@@ -94,14 +100,14 @@ Poem (modern async web framework) offers a programmatic approach:
 - **Flexible middleware**: Easy composition and reuse
 - **Type-safe**: Strong typing throughout the framework
 
-**Strengths:**
+##### Poem Strengths
 
 - Excellent performance and low overhead
 - Modern async patterns throughout
 - Highly composable and flexible architecture
 - Strong typing and compile-time guarantees
 
-**Trade-offs:**
+##### Poem Trade-offs
 
 - Less mature ecosystem compared to Rocket
 - Fewer built-in features (requires more external crates)
@@ -109,6 +115,7 @@ Poem (modern async web framework) offers a programmatic approach:
 
 ### Framework Comparison
 
+<!-- markdownlint-disable MD013 -->
 | Aspect | Axum (Current) | Rocket (Chosen) | Poem (Alternative) |
 | -------- | ---------------- | ----------------- | ------------------- |
 | **Routing Style** | Programmatic | Attribute-based | Programmatic |
@@ -119,30 +126,47 @@ Poem (modern async web framework) offers a programmatic approach:
 | **Compile Time** | Fast | Medium | Fast |
 | **Middleware** | Tower ecosystem | Built-in | Flexible |
 | **Error Handling** | Manual | Built-in | Manual |
+<!-- markdownlint-enable MD013 -->
 
 ## Decision
 
-After comprehensive evaluation of framework alternatives, we will migrate from Axum to **Rocket** for HTTP routing. This decision prioritizes developer experience, ecosystem maturity, and built-in features over raw performance.
+After comprehensive evaluation of framework alternatives, we will migrate from
+Axum to **Rocket** for HTTP routing. This decision prioritizes developer
+experience, ecosystem maturity, and built-in features over raw performance.
 
-> **Performance Note**: Benchmarks (May 2025) show Axum is approximately 20% faster than Rocket in raw throughput (147,892 req/s vs 124,567 req/s). However, since the HTTP admin interface is secondary to the MCP stdio protocol, developer experience was prioritized over raw performance.
+> **Performance Note**: Benchmarks (May 2025) show Axum is approximately 20%
+> faster than Rocket in raw throughput (147,892 req/s vs 124,567 req/s).
+> However, since the HTTP admin interface is secondary to the MCP stdio
+> protocol, developer experience was prioritized over raw performance.
 
 ### Selection Criteria and Rationale
 
 #### Primary Selection Factors
 
-1. **Developer Experience**: Rocket's attribute-based routing (`#[get("/path")]`) is more intuitive than Axum's programmatic approach, especially for teams familiar with web frameworks like Express.js, Flask, or Spring Boot.
+1. **Developer Experience**: Rocket's attribute-based routing (`#[get("/path")]`)
+   is more intuitive than Axum's programmatic approach, especially for teams
+   familiar with web frameworks like Express.js, Flask, or Spring Boot.
 
-2. **Ecosystem Maturity**: Rocket has been stable in the Rust ecosystem for years with extensive documentation, community support, and proven production usage.
+2. **Ecosystem Maturity**: Rocket has been stable in the Rust ecosystem for
+   years with extensive documentation, community support, and proven production
+   usage.
 
-3. **Built-in Features**: Rocket includes batteries like form handling, validation, templating, and session management out of the Box, reducing the need for external crates.
+3. **Built-in Features**: Rocket includes batteries like form handling,
+   validation, templating, and session management out of the Box, reducing the
+   need for external crates.
 
-4. **Compile-time Safety**: Rocket performs route conflict detection and validation at compile time, catching routing errors early.
+4. **Compile-time Safety**: Rocket performs route conflict detection and
+   validation at compile time, catching routing errors early.
 
-5. **Framework Consistency**: Rocket provides a cohesive framework experience rather than Axum's minimal approach that requires assembling multiple Tower middleware crates.
+5. **Framework Consistency**: Rocket provides a cohesive framework experience
+   rather than Axum's minimal approach that requires assembling multiple Tower
+   middleware crates.
 
 #### Performance Trade-off Analysis
 
-While Axum + Tower offers slightly better raw performance, the difference is negligible for most applications and doesn't justify the increased complexity and maintenance burden.
+While Axum + Tower offers slightly better raw performance, the difference is
+negligible for most applications and doesn't justify the increased complexity
+and maintenance burden.
 
 ### Technical Migration Strategy
 
@@ -206,7 +230,8 @@ mod config_routes {
     fn get_config() -> Json<AppConfig> { /* ... */ }
 
     #[patch("/<section>")]
-    fn update_config_section(section: &str) -> Json<ConfigResponse> { /* ... */ }
+    fn update_config_section(section: &str)
+        -> Json<ConfigResponse> { /* ... */ }
 
     pub fn routes() -> Vec<rocket::Route> {
         routes![get_config, update_config_section]
@@ -225,10 +250,13 @@ fn rocket() -> _ {
 
 #### Middleware and Cross-cutting Concerns
 
-**CORS, Logging, and Security in Rocket:**
+##### CORS, Logging, and Security in Rocket
 
 ```rust
-use rocket::{fairing::{Fairing, Info, Kind}, http::Header, Request, Response};
+use rocket::{
+    fairing::{Fairing, Info, Kind},
+    http::Header, Request, Response
+};
 
 // Built-in CORS support
 #[launch]
@@ -367,11 +395,15 @@ Server::new(TcpListener::bind("127.0.0.1:3000")).run(app).await;
 
 ## Related ADRs
 
-- [ADR 011: HTTP Transport Request/Response Pattern](011-http-transport-request-response-pattern.md) - HTTP handling patterns
-- [ADR 007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Admin interface architecture
+- [ADR 011: HTTP Transport Request/Response Pattern]
+(011-http-transport-request-response-pattern.md) - HTTP handling patterns
+- [ADR 007: Integrated Web Administration Interface]
+(007-integrated-web-administration-interface.md) - Admin interface architecture
 
 ## References
 
-- [Rust Web Frameworks Performance Benchmark 2025](https://markaicode.com/rust-web-frameworks-performance-benchmark-2025/)
+- [Rust Web Frameworks Performance Benchmark 2025]
+(<https://markaicode.com/rust-web-frameworks-performance-benchmark-2025/>)
 - [Rocket Guide](https://rocket.rs/guide/master/)
-- [Figment Configuration](https://docs.rs/figment/latest/figment/) - Same author as Rocket
+- [Figment Configuration]
+(<https://docs.rs/figment/latest/figment/>) - Same author as Rocket

@@ -1338,8 +1338,7 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 | `crates/mcb-domain/src/mod.rs` | Export memory module |
 | `crates/mcb-application/src/ports/providers/mod.rs` | Export MemoryProvider |
 | `crates/mcb-providers/src/lib.rs` | Export memory providers |
-| `crates/mcb-application/src/use_cases/mod.rs` | Export session,
-  memory_search, context_injection |
+| `crates/mcb-application/src/use_cases/mod.rs` | Export session, memory_search, context_injection |
 | `crates/mcb-server/src/mcp_server.rs` | Register memory tools |
 | `crates/mcb-infrastructure/src/config/mod.rs` | Export memory config |
 | `crates/mcb-infrastructure/src/di/modules/mod.rs` | Wire memory services |

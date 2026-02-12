@@ -568,6 +568,69 @@ async fn test_real_agent_session_create_and_retrieve() {
     );
 }
 
+#[tokio::test]
+async fn test_real_agent_session_create_without_summary_id_succeeds() {
+    let (server, _temp) = create_test_mcp_server().await;
+    let session_h = server.session_handler();
+
+    let create_args = SessionArgs {
+        action: SessionAction::Create,
+        org_id: None,
+        session_id: None,
+        project_id: None,
+        data: Some(json!({
+            "model": "claude-opus-4-20250514",
+            "project_id": "agent-no-summary-project"
+        })),
+        worktree_id: None,
+        agent_type: Some("sisyphus".to_string()),
+        status: None,
+        limit: None,
+    };
+
+    let create_result = session_h.handle(Parameters(create_args)).await;
+    assert!(create_result.is_ok(), "Create should not Err");
+    let create_resp = create_result.unwrap();
+    let create_text = extract_text(&create_resp.content);
+    assert!(
+        !create_resp.is_error.unwrap_or(false),
+        "Agent session create should succeed, got: {}",
+        create_text
+    );
+
+    let create_json: serde_json::Value =
+        serde_json::from_str(&create_text).expect("Create response should be valid JSON");
+    let agent_session_id = create_json["session_id"]
+        .as_str()
+        .expect("Response should contain session_id");
+
+    let get_args = SessionArgs {
+        action: SessionAction::Get,
+        org_id: None,
+        session_id: Some(agent_session_id.to_string().into()),
+        project_id: None,
+        data: None,
+        worktree_id: None,
+        agent_type: None,
+        status: None,
+        limit: None,
+    };
+    let get_result = session_h.handle(Parameters(get_args)).await;
+    assert!(get_result.is_ok(), "Get should not Err");
+    let get_resp = get_result.unwrap();
+    let get_text = extract_text(&get_resp.content);
+    assert!(
+        !get_resp.is_error.unwrap_or(false),
+        "Agent session get should succeed, got: {}",
+        get_text
+    );
+    assert!(
+        get_text.contains("\"session_summary_id\": \"auto_"),
+        "Session summary id should be auto-generated, got: {}",
+        get_text
+    );
+}
+
 // =============================================================================
 // Session List — Empty database returns empty, not error
 // =============================================================================

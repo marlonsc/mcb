@@ -14,9 +14,14 @@ implementation_status: N/A
 
 ## Status
 
-**Superseded** by [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md)
+**Superseded** by
+[ADR-003: Unified Provider Architecture & Routing]
+(003-unified-provider-architecture.md)
 
-> This ADR has been superseded by [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md). All multi-provider routing, failover, and health monitoring strategies are now documented in ADR-003. This document is retained for historical reference only.
+> This ADR has been superseded by [ADR-003: Unified Provider Architecture &
+> Routing](003-unified-provider-architecture.md). All multi-provider routing,
+> failover, and health monitoring strategies are now documented in ADR-003. This
+> document is retained for historical reference only.
 >
 > Full multi-provider routing implemented in `crates/mcb-providers/src/routing/`:
 >
@@ -31,36 +36,51 @@ implementation_status: N/A
 >
 > **Provider Implementations** (`crates/mcb-providers/src/`):
 >
-> - `embedding/` - 6 providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
-> - `vector_store/` - 6 providers (In-Memory, Encrypted, Filesystem, Milvus, EdgeVec, Null)
+> - `embedding/` - 6 providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed,
+>   Null)
+> - `vector_store/` - 6 providers (In-Memory, Encrypted, Filesystem,
+>   Milvus, EdgeVec, Null)
 > - `cache/` - Cache providers (Moka, Null)
-> - `language/` - 12 language processors with `UniversalLanguageChunkingProvider`
+> - `language/` - 12 language processors with
+>   `UniversalLanguageChunkingProvider`
 >
-> All providers implement port traits from `mcb-domain`; DI is dill-based (ADR-029).
+> All providers implement port traits from `mcb-domain`; DI is dill-based
+> (ADR-029).
 
 ## Context
 
-The Memory Context Browser depends on external AI and storage services that have varying reliability, cost structures, and performance characteristics. Single-provider architectures create vendor lock-in, single points of failure, and cost optimization challenges.
+The Memory Context Browser depends on external AI and storage services that have
+varying reliability, cost structures, and performance characteristics.
+Single-provider architectures create vendor lock-in, single points of failure,
+and cost optimization challenges.
 
 External dependencies and risks:
 
-- **AI Providers**: OpenAI (expensive, reliable), Ollama (free, local), Anthropic (premium)
-- **Vector Databases**: Milvus (scalable, complex), Pinecone (managed, expensive), Qdrant (simple, limited scale)
+- **AI Providers**: OpenAI (expensive, reliable), Ollama (free, local),
+  Anthropic (premium)
+- **Vector Databases**: Milvus (scalable, complex), Pinecone (managed,
+  expensive), Qdrant (simple, limited scale)
 - **Service Outages**: Any provider can experience downtime
 - **API Limits**: Rate limits, quotas, and cost controls needed
-- **Performance Variation**: Different providers have different latency characteristics
+- **Performance Variation**: Different providers have different latency
+  characteristics
 - **Cost Optimization**: Need to balance cost vs. quality vs. speed
 
-The system needs to be resilient, cost-effective, and performant while avoiding vendor lock-in.
+The system needs to be resilient, cost-effective, and performant while avoiding
+vendor lock-in.
 
 ## Decision
 
-Implement a multi-provider strategy with automatic failover, load balancing, and provider selection based on context. The system will support multiple providers for each service type with intelligent routing and fallback mechanisms.
+Implement a multi-provider strategy with automatic failover, load balancing, and
+provider selection based on context. The system will support multiple providers
+for each service type with intelligent routing and fallback mechanisms.
 
 Key architectural elements:
 
-- **Provider Health Monitoring**: Continuous monitoring of provider availability and performance
-- **Intelligent Routing**: Context-aware provider selection (cost, speed, quality)
+- **Provider Health Monitoring**: Continuous monitoring of provider availability
+  and performance
+- **Intelligent Routing**: Context-aware provider selection (cost, speed,
+  quality)
 - **Automatic Failover**: Seamless fallback to alternative providers
 - **Load Balancing**: Distribute load across multiple provider instances
 - **Cost Tracking**: Monitor and optimize provider usage costs
@@ -68,7 +88,8 @@ Key architectural elements:
 
 ## Consequences
 
-Multi-provider strategy provides excellent resilience and flexibility but adds significant operational complexity.
+Multi-provider strategy provides excellent resilience and flexibility but adds
+significant operational complexity.
 
 ### Positive Consequences
 
@@ -85,7 +106,8 @@ Multi-provider strategy provides excellent resilience and flexibility but adds s
 - **Development Overhead**: Additional abstraction layers and error handling
 - **Testing Complexity**: Need to test with multiple provider combinations
 - **Cost Management**: Additional complexity in tracking and optimizing costs
-- **Configuration Complexity**: More configuration options and potential misconfigurations
+- **Configuration Complexity**: More configuration options and potential
+  misconfigurations
 - **Performance Overhead**: Routing and monitoring add latency
 
 ## Alternatives Considered
@@ -106,10 +128,12 @@ Multi-provider strategy provides excellent resilience and flexibility but adds s
 
 ### Alternative 3: Provider Mesh with Manual Failover
 
-- **Description**: Support multiple providers but require manual intervention for failover
+- **Description**: Support multiple providers but require manual intervention
+  for failover
 - **Pros**: Simpler than automatic failover, still provides flexibility
 - **Cons**: Slow recovery from outages, requires on-call intervention
-- **Rejection Reason**: Doesn't meet availability requirements for production system
+- **Rejection Reason**: Doesn't meet availability requirements for production
+  system
 
 ## Implementation Notes
 
@@ -165,7 +189,8 @@ impl<P: Provider> ProviderRouter<P> {
 
 ### Provider Factory (mcb-infrastructure)
 
-**Note:** DI has migrated to dill (ADR-029). The following describes the factory pattern; Shaku is no longer used.
+**Note:** DI has migrated to dill (ADR-029). The following describes the factory
+pattern; Shaku is no longer used.
 
 Production providers are created via factories (e.g. resolvers + linkme registry):
 
@@ -179,12 +204,17 @@ impl EmbeddingProviderFactory {
         crypto: Option<Arc<dyn CryptoProvider>>,
     ) -> Result<Arc<dyn EmbeddingProvider>> {
         match config.provider.as_str() {
-            "openai" => Ok(Arc::new(OpenAIEmbeddingProvider::new(&config.openai)?)),
-            "ollama" => Ok(Arc::new(OllamaEmbeddingProvider::new(&config.ollama)?)),
-            "voyage" => Ok(Arc::new(VoyageAIEmbeddingProvider::new(&config.voyage)?)),
-            "gemini" => Ok(Arc::new(GeminiEmbeddingProvider::new(&config.gemini)?)),
+            "openai" => Ok(Arc::new(
+                OpenAIEmbeddingProvider::new(&config.openai)?)),
+            "ollama" => Ok(Arc::new(
+                OllamaEmbeddingProvider::new(&config.ollama)?)),
+            "voyage" => Ok(Arc::new(
+                VoyageAIEmbeddingProvider::new(&config.voyage)?)),
+            "gemini" => Ok(Arc::new(
+                GeminiEmbeddingProvider::new(&config.gemini)?)),
             "null" | "test" => Ok(Arc::new(NullEmbeddingProvider)),
-            _ => Err(Error::config(format!("Unknown embedding provider: {}", config.provider))),
+            _ => Err(Error::config(format!(
+                "Unknown embedding provider: {}", config.provider))),
         }
     }
 }
@@ -193,7 +223,8 @@ impl EmbeddingProviderFactory {
 // crates/mcb-infrastructure/src/di/bootstrap.rs
 pub async fn create_services(config: &Config) -> Result<DomainServices> {
     let embedding = EmbeddingProviderFactory::create(&config.embedding, None)?;
-    let vector_store = VectorStoreProviderFactory::create(&config.vector_store, None)?;
+    let vector_store = VectorStoreProviderFactory::create(
+        &config.vector_store, None)?;
     // ... wire into services
 }
 ```
@@ -280,7 +311,8 @@ impl CostTracker {
         units: u64,
     ) -> Result<f64> {
         let cost_info = self.costs.get(provider_id)
-            .ok_or_else(|| Error::not_found(format!("Cost info for provider: {}", provider_id)))?;
+            .ok_or_else(|| Error::not_found(
+                format!("Cost info for provider: {}", provider_id)))?;
 
         let total_cost = if let Some(free_limit) = cost_info.free_tier_limit {
             if units <= free_limit {
@@ -424,13 +456,15 @@ impl ProviderCircuitBreaker {
 
 **Date**: 2026-01-14
 
-The multi-provider strategy has been generalized to support additional provider types beyond embedding providers:
+The multi-provider strategy has been generalized to support additional provider
+types beyond embedding providers:
 
 ### Extended Provider Types
 
 **Current (v0.1.2)**:
 
-- Embedding Providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) - 6 total
+- Embedding Providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) - 6
+  total
 - Vector Store Providers (In-Memory, Encrypted, Null) - 3 total
 
 **Future (v0.3.0+)**:
@@ -455,13 +489,16 @@ pub trait ServiceProvider: Send + Sync {
 
 // Specialized traits for each domain (v0.3.0+)
 #[async_trait]
-pub trait AnalysisProvider: ServiceProvider<Input = AnalysisRequest, Output = AnalysisReport> {}
+pub trait AnalysisProvider: ServiceProvider<Input = AnalysisRequest,
+                                            Output = AnalysisReport> {}
 
 #[async_trait]
-pub trait QualityProvider: ServiceProvider<Input = QualityCheckRequest, Output = QualityReport> {}
+pub trait QualityProvider: ServiceProvider<Input = QualityCheckRequest,
+                                           Output = QualityReport> {}
 
 #[async_trait]
-pub trait GitProvider: ServiceProvider<Input = GitOperation, Output = RepositoryInfo> {}
+pub trait GitProvider: ServiceProvider<Input = GitOperation,
+                                       Output = RepositoryInfo> {}
 ```
 
 ### Routing Extension
@@ -482,15 +519,21 @@ The existing router pattern extends to new provider types:
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Base provider abstraction
-- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async provider execution
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Provider creation via factories
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Provider crate organization
+- [ADR-001: Modular Crates Architecture]
+(001-modular-crates-architecture.md) - Base provider abstraction
+- [ADR-002: Async-First Architecture]
+(002-async-first-architecture.md) - Async provider execution
+- [ADR-012: Two-Layer DI Strategy]
+(012-di-strategy-two-layer-approach.md) - Provider creation via factories
+- [ADR-013: Clean Architecture Crate Separation]
+(013-clean-architecture-crate-separation.md) - Provider crate organization
 
 ## References
 
+<!-- markdownlint-disable MD013 -->
 - [Circuit Breaker Pattern](https://microservices.io/patterns/reliability/circuit-breaker.html)
 - [Provider Selection Strategies](https://aws.amazon.com/blogs/architecture/)
 - [Multicloud on AWS](https://aws.amazon.com/multicloud/)
 - [ADR-029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) - Current DI
 - [Shaku Documentation](https://docs.rs/shaku) (historical)
+<!-- markdownlint-enable MD013 -->

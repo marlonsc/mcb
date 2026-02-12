@@ -14,24 +14,32 @@ implementation_status: Incomplete
 
 ## Status
 
-**Proposed**
+Proposed
 
-> Inspired by kamu-cli's production Onion/Clean Architecture patterns. Extends [ADR 013](013-clean-architecture-crate-separation.md) (Clean Architecture Crate Separation) and [ADR 024](024-simplified-dependency-injection.md) (Simplified Dependency Injection) without breaking backward compatibility.
+> Inspired by kamu-cli's production Onion/Clean Architecture patterns. Extends
+> [ADR 013](013-clean-architecture-crate-separation.md) (Clean Architecture
+> Crate Separation) and
+> [ADR 024](024-simplified-dependency-injection.md) (Simplified Dependency
+> Injection) without breaking backward compatibility.
 
 ## Context
 
 MCB v0.1.2 established a SOLID Clean Architecture foundation with:
 
-- 8-crate separation (mcb-domain, mcb-application, mcb-providers, mcb-infrastructure, mcb-server, mcb, mcb-validate)
-- 20+ port traits in mcb-application (EmbeddingProvider, VectorStoreProvider, etc.)
+- 8-crate separation (mcb-domain, mcb-application, mcb-providers,
+  mcb-infrastructure, mcb-server, mcb, mcb-validate)
+- 20+ port traits in mcb-application (EmbeddingProvider, VectorStoreProvider,
+  etc.)
 - Linkme-based provider auto-registration (15+ providers)
 - Handle-based DI with runtime provider switching (ADR 024)
 - 790+ tests with architectural validation via mcb-validate
 
 ### Analysis of kamu-cli's Onion/Clean Architecture
 
-Analysis of the [kamu-cli](https://github.com/kamu-data/kamu-cli) production codebase revealed opportunities to evolve MCB without rewriting:
+Analysis of the [kamu-cli](https://github.com/kamu-data/kamu-cli) production
+codebase revealed opportunities to evolve MCB without rewriting:
 
+<!-- markdownlint-disable MD013 -->
 | Aspect | MCB Current | kamu-cli Pattern | Opportunity |
 | -------- | ------------- | ------------------ | ------------- |
 | Module Organization | By layer (entities/, ports/, services/) | By bounded context (workspace/, indexing/, search/) | Feature-centric navigation |
@@ -39,28 +47,34 @@ Analysis of the [kamu-cli](https://github.com/kamu-data/kamu-cli) production cod
 | Indexing | Full re-index | Incremental with checkpoints | 90%+ time reduction |
 | Operability | Binary only | Node mode with Helm | Kubernetes deployment |
 | Quality | Unit tests only | Relevance tests | Search quality gates |
+<!-- markdownlint-enable MD013 -->
 
 ### Problems Addressed
 
-1. **Layer-centric organization**: Finding code by feature requires knowing which layer it belongs to
-2. **Implicit engine contracts**: Providers are loosely coupled without formal engine semantics
+1. **Layer-centric organization**: Finding code by feature requires knowing
+   which layer it belongs to
+2. **Implicit engine contracts**: Providers are loosely coupled without formal
+   engine semantics
 3. **Full re-indexing**: Unchanged files are re-processed unnecessarily
 4. **Limited operability**: No standard deployment patterns for production
 5. **No quality metrics**: Search relevance changes go undetected
 
 ## Decision
 
-Adopt a phased evolution plan (Phases 0-5) to enhance MCB's architecture while maintaining backward compatibility:
+Adopt a phased evolution plan (Phases 0-5) to enhance MCB's architecture while
+maintaining backward compatibility:
 
 ### Phase 0: Baseline & Acceptance Criteria
 
 - Document layer boundaries in ARCHITECTURE_BOUNDARIES.md
-- Define golden acceptance tests (index repo, run queries, validate latency <200ms)
+- Define golden acceptance tests (index repo, run queries, validate
+  latency <200ms)
 - No MCP API changes
 
 ### Phase 1: Bounded Contexts Within Layers
 
-Organize mcb-domain and mcb-application by feature modules instead of pure layer folders:
+Organize mcb-domain and mcb-application by feature modules instead of pure layer
+folders:
 
 **Bounded Contexts:**
 
@@ -72,7 +86,7 @@ Organize mcb-domain and mcb-application by feature modules instead of pure layer
 
 **Module Structure:**
 
-```
+```text
 mcb-application/src/
 ├── workspace/
 │   ├── mod.rs
@@ -108,24 +122,40 @@ Define formal engine traits in the domain layer:
 // mcb-application/src/indexing/ports.rs
 #[async_trait]
 pub trait IndexStateStore: Send + Sync {
-    async fn get_checkpoint(&self, collection: &str) -> Result<Option<IndexCheckpoint>>;
-    async fn save_checkpoint(&self, collection: &str, checkpoint: IndexCheckpoint) -> Result<()>;
-    async fn get_file_fingerprint(&self, path: &Path) -> Result<Option<FileFingerprint>>;
-    async fn save_file_fingerprint(&self, path: &Path, fp: FileFingerprint) -> Result<()>;
+    async fn get_checkpoint(&self,
+                            collection: &str)
+        -> Result<Option<IndexCheckpoint>>;
+
+    async fn save_checkpoint(&self,
+                             collection: &str,
+                             checkpoint: IndexCheckpoint)
+        -> Result<()>;
+
+    async fn get_file_fingerprint(&self, path: &Path)
+        -> Result<Option<FileFingerprint>>;
+
+    async fn save_file_fingerprint(&self, path: &Path, fp: FileFingerprint)
+        -> Result<()>;
 }
 
 // mcb-application/src/search/ports.rs
 #[async_trait]
 pub trait Ranker: Send + Sync {
-    async fn rank(&self, query: &str, candidates: Vec<SearchCandidate>) -> Result<Vec<RankedResult>>;
+    async fn rank(&self,
+                  query: &str,
+                  candidates: Vec<SearchCandidate>)
+        -> Result<Vec<RankedResult>>;
+
     fn ranker_name(&self) -> &str;
 }
 ```
 
 **Engine Implementations:**
 
-- `IndexStateStore`: SQLite (default), In-Memory (testing), RocksDB (feature-gated)
-- `Ranker`: CosineRanker, HybridRanker (BM25 + semantic), MMRRanker, LLMReranker (feature-gated)
+- `IndexStateStore`: SQLite (default), In-Memory (testing), RocksDB
+  (feature-gated)
+- `Ranker`: CosineRanker, HybridRanker (BM25 + semantic), MMRRanker,
+  LLMReranker (feature-gated)
 
 **Unified Config:**
 
@@ -155,13 +185,20 @@ pub struct FileFingerprint {
 }
 
 impl IndexingService {
-    pub async fn index_incremental(&self, collection: &str, root: &Path) -> Result<IndexStats> {
-        let checkpoint = self.state_store.get_checkpoint(collection).await?;
-        let files_to_process = self.compute_changed_files(root, &checkpoint).await?;
+    pub async fn index_incremental(&self,
+                                   collection: &str,
+                                   root: &Path)
+        -> Result<IndexStats>
+    {
+        let checkpoint = self.state_store
+            .get_checkpoint(collection).await?;
+        let files_to_process = self.compute_changed_files(
+            root, &checkpoint).await?;
 
         for batch in files_to_process.chunks(100) {
             self.index_batch(batch).await?;
-            self.state_store.save_checkpoint(collection, current_checkpoint).await?;
+            self.state_store.save_checkpoint(
+                collection, current_checkpoint).await?;
         }
 
         self.garbage_collect_removed(collection, root).await?;
@@ -191,6 +228,7 @@ mcb doctor             # Environment checks
 
 **Health Endpoints:**
 
+<!-- markdownlint-disable MD013 -->
 ```rust
 #[get("/healthz")]
 pub fn health() -> Status { Status::Ok }
@@ -203,6 +241,7 @@ pub async fn ready(ctx: &State<AppContext>) -> Status {
 #[get("/metrics")]
 pub fn metrics() -> String { /* Prometheus format */ }
 ```
+<!-- markdownlint-enable MD013 -->
 
 **Deployment Artifacts:**
 
@@ -215,20 +254,19 @@ pub fn metrics() -> String { /* Prometheus format */ }
 Add search quality gates to CI:
 
 ```yaml
-
 # examples/queries.yaml
 -   query: "how does authentication work"
-  collection: "rust-repo"
-  expected_files:
-    -   "src/auth.rs"
-    -   "src/middleware/auth.rs"
-  min_recall_at_5: 0.8
+    collection: "rust-repo"
+    expected_files:
+      -   "src/auth.rs"
+      -   "src/middleware/auth.rs"
+    min_recall_at_5: 0.8
 
 -   query: "database connection handling"
-  collection: "rust-repo"
-  expected_files:
-    -   "src/db/pool.rs"
-  min_recall_at_5: 0.6
+    collection: "rust-repo"
+    expected_files:
+      -   "src/db/pool.rs"
+    min_recall_at_5: 0.6
 ```
 
 **CI Integration:**
@@ -242,7 +280,8 @@ Add search quality gates to CI:
 
 ### Positive
 
-- **Feature-centric navigation**: Domain experts find code by feature (search/, indexing/) not layer
+- **Feature-centric navigation**: Domain experts find code by feature (search/,
+  indexing/) not layer
 - **Plugin ecosystem**: Engine contracts enable third-party implementations
 - **90%+ faster re-indexing**: Incremental indexing skips unchanged files
 - **Kubernetes-ready**: Node mode with Helm chart for production deployment
@@ -253,7 +292,8 @@ Add search quality gates to CI:
 - **More files**: Bounded context modules add directory structure
 - **Learning curve**: Team must understand bounded context organization
 - **CI time**: Relevance tests add ~2-3 minutes to pipeline
-- **Rust boilerplate**: New engine traits require implementations across providers
+- **Rust boilerplate**: New engine traits require implementations across
+  providers
 
 ### Neutral
 
@@ -277,13 +317,22 @@ See implementation prompt: `thoughts/prompts/PROMPT_V013_IMPLEMENTATION.md`
 
 ## Related ADRs
 
-- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - **Extended** by this ADR (adds bounded contexts within layers)
-- [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md) - **Extended** by this ADR (formalizes engine contracts using handle pattern)
-- [ADR 008: Git-Aware Semantic Indexing v0.2.0](008-git-aware-semantic-indexing-v0.2.0.md) - **Prepared for** by this ADR (incremental indexing foundation)
+- [ADR 013: Clean Architecture Crate Separation]
+(013-clean-architecture-crate-separation.md) - **Extended** by this ADR (adds
+  bounded contexts within layers)
+- [ADR 024: Simplified Dependency Injection]
+(024-simplified-dependency-injection.md) - **Extended** by this ADR (formalizes
+  engine contracts using handle pattern)
+- [ADR 008: Git-Aware Semantic Indexing v0.2.0]
+(008-git-aware-semantic-indexing-v0.2.0.md) - **Prepared for** by this ADR
+  (incremental indexing foundation)
 
 ## References
 
-- [kamu-cli](https://github.com/kamu-data/kamu-cli) - Production Onion/Clean Architecture reference
-- [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-- [Onion Architecture by Jeffrey Palermo](https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/)
+- [kamu-cli](https://github.com/kamu-data/kamu-cli) - Production Onion/Clean
+  Architecture reference
+- [Clean Architecture by Robert C. Martin]
+(<https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html>)
+- [Onion Architecture by Jeffrey Palermo]
+(<https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/>)
 - [Domain-Driven Design by Eric Evans](https://domainlanguage.com/ddd/)

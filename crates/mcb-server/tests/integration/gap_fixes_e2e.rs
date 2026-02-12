@@ -59,6 +59,47 @@ async fn test_gap1_validate_list_rules_returns_populated_list() {
 }
 
 #[tokio::test]
+async fn test_gap1_validate_list_rules_by_category_filter() {
+    let (server, _temp) = create_test_mcp_server().await;
+    let validate_h = server.validate_handler();
+
+    let result = validate_h
+        .handle(Parameters(ValidateArgs {
+            action: ValidateAction::ListRules,
+            path: None,
+            category: Some("quality".to_string()),
+            scope: None,
+            rules: None,
+        }))
+        .await;
+
+    assert!(result.is_ok());
+    let resp = result.unwrap();
+    assert!(!resp.is_error.unwrap_or(false));
+
+    let content_json = serde_json::to_value(&resp.content[0]).unwrap();
+    let text = content_json
+        .get("text")
+        .expect("Content missing text field")
+        .as_str()
+        .expect("Text field not a string");
+
+    let json_val: serde_json::Value = serde_json::from_str(text).unwrap();
+    let rules = json_val
+        .get("rules")
+        .and_then(|v| v.as_array())
+        .expect("Rules array should be present");
+
+    assert!(!rules.is_empty(), "Filtered rules should not be empty");
+    for rule in rules {
+        assert_eq!(
+            rule.get("category").and_then(|v| v.as_str()),
+            Some("quality")
+        );
+    }
+}
+
+#[tokio::test]
 async fn test_gap2_vcs_list_repositories_discovers_repos() {
     let (server, temp_dir) = create_test_mcp_server().await;
     let vcs_h = server.vcs_handler();
@@ -178,4 +219,53 @@ async fn test_gap3_session_list_works_without_agent_type() {
 
     assert!(json_val.get("sessions").is_some());
     assert!(json_val.get("count").is_some());
+}
+
+#[tokio::test]
+async fn test_gap3_session_list_empty_status_treated_as_no_filter() {
+    let (server, _temp) = create_test_mcp_server().await;
+    let session_h = server.session_handler();
+
+    let result = session_h
+        .handle(Parameters(SessionArgs {
+            action: SessionAction::List,
+            org_id: None,
+            session_id: None,
+            project_id: None,
+            agent_type: None,
+            data: None,
+            worktree_id: None,
+            status: Some(String::new()),
+            limit: Some(3),
+        }))
+        .await;
+
+    assert!(result.is_ok(), "Session list should accept empty status");
+    let resp = result.unwrap();
+    assert!(!resp.is_error.unwrap_or(false));
+}
+
+#[tokio::test]
+async fn test_gap3_session_list_invalid_status_returns_invalid_params() {
+    let (server, _temp) = create_test_mcp_server().await;
+    let session_h = server.session_handler();
+
+    let result = session_h
+        .handle(Parameters(SessionArgs {
+            action: SessionAction::List,
+            org_id: None,
+            session_id: None,
+            project_id: None,
+            agent_type: None,
+            data: None,
+            worktree_id: None,
+            status: Some("not_a_real_status".to_string()),
+            limit: Some(3),
+        }))
+        .await;
+
+    assert!(
+        result.is_err(),
+        "Invalid status should return invalid_params"
+    );
 }

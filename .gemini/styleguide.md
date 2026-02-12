@@ -10,7 +10,7 @@ MCB (Memory Context Browser) is a high-performance MCP server written in Rust (e
 
 Dependencies ALWAYS point inward. Violations are CI-blocking.
 
-```
+```ascii
 mcb-server -> mcb-infrastructure -> mcb-application -> mcb-domain
                     |                      ^
               mcb-providers ---------------+
@@ -55,7 +55,7 @@ New providers MUST register via `#[linkme::distributed_slice]` with function poi
 - Max line width: 100 characters
 - Indent: 4 spaces (no tabs)
 - Import order: `std` -> external crates -> workspace crates (`mcb_*`) -> local modules
-- Run `make fmt` before committing (enforced in CI via `make lint CI_MODE=1`)
+- Run `make fmt` before committing (enforced in CI via `make lint MCB_CI=1`)
 
 ## Naming Conventions
 
@@ -102,8 +102,8 @@ New providers MUST register via `#[linkme::distributed_slice]` with function poi
 - **Always use `make` targets** — never raw `cargo` commands in CI or docs.
 - `make build` / `make build-release` — compile
 - `make test` — all tests (unit + integration)
-- `make lint CI_MODE=1` — rustfmt check + clippy strict
-- `make validate STRICT=1` — architecture boundary validation (9 rules, 7 phases)
+- `make lint MCB_CI=1` — rustfmt check + clippy strict
+- `make validate` — architecture boundary validation (9 rules, 7 phases)
 - `make audit` — security audit (cargo-audit + cargo-deny + osv-scanner)
 - `make quality` — fmt + lint + test in one step
 - `make ci-full` — mirrors GitHub Actions exactly
@@ -112,7 +112,7 @@ New providers MUST register via `#[linkme::distributed_slice]` with function poi
 
 Conventional commits with scope:
 
-```
+```ascii
 <type>(<scope>): <short description>
 
 <body: 1-2 sentences explaining why>
@@ -129,7 +129,7 @@ Scope: module or crate name (e.g., `core`, `cli`, `mcb-server`, `docs`)
 Before opening:
 
 - `make test` passes
-- `make lint CI_MODE=1` passes
+- `make lint MCB_CI=1` passes
 - `make validate` passes (zero architecture violations)
 - Documentation updated if public API changed
 
