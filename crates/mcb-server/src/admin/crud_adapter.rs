@@ -138,6 +138,7 @@ fn map_err(e: mcb_domain::error::Error) -> String {
     e.to_string()
 }
 
+/// Generates a CRUD adapter struct wrapping a repository trait object.
 macro_rules! impl_crud_adapter {
     ($name:ident($repo_ty:ty) { $($methods:item)* }) => {
         struct $name(Arc<$repo_ty>);

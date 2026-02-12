@@ -12,7 +12,7 @@ implementation_status: Incomplete
 
 ## ADR-032: Agent & Quality Domain Extension (MCB-Only)
 
-**Status:** Proposed
+**Status:** Superseded by [ADR-034](034-agent-workflow-domain.md)
 **Date:** 2026-02-03
 **Deciders:** Architecture Team
 **Supersedes:** None

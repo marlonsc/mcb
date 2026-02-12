@@ -149,14 +149,6 @@ impl SharedCacheProvider {
     pub async fn size(&self) -> Result<usize> {
         self.provider.size().await
     }
-
-    /// Create a namespaced view of this cache provider
-    pub fn namespaced<S: Into<String>>(&self, namespace: S) -> NamespacedCacheProvider {
-        NamespacedCacheProvider {
-            provider: Arc::clone(&self.provider),
-            namespace: namespace.into(),
-        }
-    }
 }
 
 impl fmt::Debug for SharedCacheProvider {
@@ -164,67 +156,5 @@ impl fmt::Debug for SharedCacheProvider {
         f.debug_struct("SharedCacheProvider")
             .field("namespace", &self.namespace)
             .finish()
-    }
-}
-
-/// Namespaced cache provider view
-///
-/// Provides access to a cache provider within a specific namespace.
-#[derive(Clone)]
-pub struct NamespacedCacheProvider {
-    provider: Arc<dyn CacheProvider>,
-    namespace: String,
-}
-
-impl NamespacedCacheProvider {
-    /// Get a typed value from the cache within this namespace
-    pub async fn get<T>(&self, key: &str) -> Result<Option<T>>
-    where
-        T: serde::de::DeserializeOwned + Send,
-    {
-        let namespaced_key = format!("{}:{}", self.namespace, key);
-        match self.provider.get_json(&namespaced_key).await? {
-            Some(json) => {
-                let value: T = serde_json::from_str(&json).map_err(|e| {
-                    mcb_domain::error::Error::Infrastructure {
-                        message: format!("Failed to deserialize cached value: {}", e),
-                        source: Some(Box::new(e)),
-                    }
-                })?;
-                Ok(Some(value))
-            }
-            None => Ok(None),
-        }
-    }
-
-    /// Set a typed value in the cache within this namespace
-    pub async fn set<T>(&self, key: &str, value: &T, config: CacheEntryConfig) -> Result<()>
-    where
-        T: serde::Serialize + Send + Sync,
-    {
-        let namespaced_key = format!("{}:{}", self.namespace, key);
-        let json =
-            serde_json::to_string(value).map_err(|e| mcb_domain::error::Error::Infrastructure {
-                message: format!("Failed to serialize value for cache: {}", e),
-                source: Some(Box::new(e)),
-            })?;
-        self.provider.set_json(&namespaced_key, &json, config).await
-    }
-
-    /// Delete a value from the cache within this namespace
-    pub async fn delete(&self, key: &str) -> Result<bool> {
-        let namespaced_key = format!("{}:{}", self.namespace, key);
-        self.provider.delete(&namespaced_key).await
-    }
-
-    /// Check if a key exists in the cache within this namespace
-    pub async fn exists(&self, key: &str) -> Result<bool> {
-        let namespaced_key = format!("{}:{}", self.namespace, key);
-        self.provider.exists(&namespaced_key).await
-    }
-
-    /// Get the inner cache provider for DI injection
-    pub fn inner(&self) -> Arc<dyn CacheProvider> {
-        self.provider.clone()
     }
 }

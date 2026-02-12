@@ -234,19 +234,7 @@ impl<P: VectorStoreProvider + VectorStoreBrowser> VectorStoreBrowser
     }
 }
 
-/// Decrypt metadata from an encrypted search result
-///
-/// This function is useful when you need to access the full encrypted metadata
-/// from a search result.
-///
-/// # Arguments
-///
-/// * `crypto` - The crypto provider to use for decryption
-/// * `metadata` - The metadata map containing encrypted_metadata field
-///
-/// # Returns
-///
-/// The decrypted metadata as a HashMap
+/// Decrypts metadata payloads stored under `encrypted_metadata`.
 pub fn decrypt_metadata(
     crypto: &dyn CryptoProvider,
     metadata: &HashMap<String, Value>,

@@ -8,9 +8,12 @@
 
 pub mod agent;
 pub mod error_patterns;
+/// Module for issue entity schema definitions.
 pub mod issue_entities;
 pub mod multi_tenant;
+/// Module for plan entity schema definitions.
 pub mod plan_entities;
+/// Module for VCS entity schema definitions.
 pub mod vcs_entities;
 
 use super::memory::{ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};

@@ -502,8 +502,6 @@ pub async fn init_test_app() -> Result<AppContext> {
     init_app(config).await
 }
 
-pub type DiContainer = AppContext;
-
 /// Create a test DI container with default configuration
 pub async fn create_test_container() -> Result<AppContext> {
     init_test_app().await

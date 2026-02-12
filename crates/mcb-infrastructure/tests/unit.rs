@@ -42,9 +42,6 @@ mod lifecycle_tests;
 #[path = "unit/config_figment_tests.rs"]
 mod config_figment_tests;
 
-#[path = "unit/prometheus_metrics_tests.rs"]
-mod prometheus_metrics_tests;
-
 // Validation service tests
 #[path = "unit/validation_service_tests.rs"]
 mod validation_service_tests;

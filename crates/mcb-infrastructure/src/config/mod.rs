@@ -5,7 +5,7 @@
 //! configuration lifecycle.
 
 pub mod loader;
-pub mod mcp_context_config;
+mod mcp_context_config;
 pub mod paths;
 pub mod types;
 pub mod watcher;

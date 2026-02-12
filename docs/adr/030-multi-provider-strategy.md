@@ -1,22 +1,22 @@
 ---
 adr: 30
 title: Multi-Provider Strategy
-status: IMPLEMENTED
+status: SUPERSEDED
 created:
 updated: 2026-02-05
 related: [1, 2, 12, 13]
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: N/A
 ---
 
 ## ADR 030: Multi-Provider Strategy
 
 ## Status
 
-**into ADR-003** (Unified Provider Architecture & Routing)
+**Superseded** by [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md)
 
-> This ADR has been into [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md). All multi-provider routing, failover, and health monitoring strategies are now documented in ADR-003. This document is retained for historical reference only.
+> This ADR has been superseded by [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md). All multi-provider routing, failover, and health monitoring strategies are now documented in ADR-003. This document is retained for historical reference only.
 >
 > Full multi-provider routing implemented in `crates/mcb-providers/src/routing/`:
 >

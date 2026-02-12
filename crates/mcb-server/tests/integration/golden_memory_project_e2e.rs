@@ -34,10 +34,12 @@ async fn test_golden_memory_store_with_default_project() {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
 
-    // Store observation with non-existent project (should auto-create default)
+    // Store observation with a test project
     let store_args = MemoryArgs {
         action: MemoryAction::Store,
+        org_id: None,
         resource: MemoryResource::Observation,
+        project_id: Some("golden-test-project".to_string()),
         data: Some(json!({
             "content": "This is a test observation",
             "observation_type": "context",
@@ -76,7 +78,9 @@ async fn test_golden_memory_list_empty_graceful() {
     // List memories for a project with no data
     let list_args = MemoryArgs {
         action: MemoryAction::List,
+        org_id: None,
         resource: MemoryResource::Observation,
+        project_id: None,
         data: None,
         ids: None,
         repo_id: None,
@@ -113,13 +117,15 @@ async fn test_golden_context_search_basic() {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
     let search_h = server.search_handler();
-    let _project_id = "search-project";
+    let project_id = "search-project";
 
     // 1. Store context observations
     let _ = memory_h
         .handle(Parameters(MemoryArgs {
             action: MemoryAction::Store,
+            org_id: None,
             resource: MemoryResource::Observation,
+            project_id: Some(project_id.to_string()),
             data: Some(json!({
                 "content": "The reactor core temperature is critical.",
                 "observation_type": "context",
@@ -144,6 +150,7 @@ async fn test_golden_context_search_basic() {
     // 2. Search using Context resource
     let search_args = SearchArgs {
         query: "reactor temperature".to_string(),
+        org_id: None,
         resource: SearchResource::Context,
         collection: None,
         extensions: None,

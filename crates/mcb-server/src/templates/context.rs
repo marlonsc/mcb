@@ -234,8 +234,8 @@ mod tests {
 
     #[test]
     fn template_path_index_html() {
+        let filename = "index.html.hbs";
         for root in &["/", "/a/b/c/", "/a/b/c/d/", "/a/"] {
-            let filename = "index.html.hbs";
             let path = Path::new(root).join(filename);
             let (name, data_type) = split_path(Path::new(root), &path);
 
@@ -246,9 +246,9 @@ mod tests {
 
     #[test]
     fn template_path_subdir_index_html() {
+        let filename = "index.html.hbs";
         for root in &["/", "/a/b/c/", "/a/b/c/d/", "/a/"] {
             for sub in &["a/", "a/b/", "a/b/c/", "a/b/c/d/"] {
-                let filename = "index.html.hbs";
                 let path = Path::new(root).join(sub).join(filename);
                 let (name, data_type) = split_path(Path::new(root), &path);
 

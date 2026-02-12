@@ -7,7 +7,6 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use crate::test_utils::mock_services::{MockAgentSessionService, MockMemoryService};
-use crate::test_utils::test_resolver;
 
 macro_rules! session_test {
     ($test_name:ident, $action:expr, session_id: $session_id:expr, expect_ok) => {
@@ -18,12 +17,13 @@ macro_rules! session_test {
             let handler = SessionHandler::new(
                 Arc::new(agent_service),
                 Arc::new(memory_service),
-                test_resolver(),
             );
 
             let args = SessionArgs {
                 action: $action,
+                org_id: None,
                 session_id: Some($session_id),
+        project_id: None,
                 data: None,
                 worktree_id: None,
                 agent_type: None,
@@ -45,12 +45,13 @@ macro_rules! session_test {
             let handler = SessionHandler::new(
                 Arc::new(agent_service),
                 Arc::new(memory_service),
-                test_resolver(),
             );
 
             let args = SessionArgs {
                 action: $action,
+                org_id: None,
                 session_id: None,
+        project_id: None,
                 data: Some($data),
                 worktree_id: None,
                 agent_type: None $(.or($agent_type))?,
@@ -73,12 +74,13 @@ macro_rules! session_test {
             let handler = SessionHandler::new(
                 Arc::new(agent_service),
                 Arc::new(memory_service),
-                test_resolver(),
             );
 
             let args = SessionArgs {
                 action: $action,
+                org_id: None,
                 session_id: None,
+        project_id: None,
                 data: $data,
                 worktree_id: None,
                 agent_type: None $(.or($agent_type))?,

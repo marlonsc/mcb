@@ -17,7 +17,8 @@ use crate::constants::{
     EMBEDDING_DIMENSION_OLLAMA_NOMIC,
 };
 /// Error message for request timeouts
-use crate::utils::HttpResponseUtils;
+use crate::provider_utils::{JsonRequestParams, parse_float_array_lossy, send_json_request};
+use crate::utils::http::RequestErrorKind;
 
 /// Ollama embedding provider
 ///
@@ -92,42 +93,39 @@ impl OllamaEmbeddingProvider {
             "stream": false
         });
 
-        let response = self
-            .http_client
-            .post(format!(
-                "{}/api/embeddings",
-                self.base_url.trim_end_matches('/')
-            ))
-            .header("Content-Type", CONTENT_TYPE_JSON)
-            .timeout(self.timeout)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| {
-                if e.is_timeout() {
-                    Error::embedding(format!(
-                        "{} {:?}",
-                        crate::constants::ERROR_MSG_REQUEST_TIMEOUT,
-                        self.timeout
-                    ))
-                } else {
-                    Error::embedding(format!("HTTP request failed: {}", e))
-                }
-            })?;
+        let headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_string())];
 
-        HttpResponseUtils::check_and_parse(response, "Ollama").await
+        send_json_request(JsonRequestParams {
+            client: &self.http_client,
+            method: reqwest::Method::POST,
+            url: format!("{}/api/embeddings", self.base_url.trim_end_matches('/')),
+            timeout: self.timeout,
+            provider: "Ollama",
+            operation: "embeddings",
+            kind: RequestErrorKind::Embedding,
+            headers: &headers,
+            body: Some(&payload),
+        })
+        .await
+        .map_err(|e| {
+            if let Error::Embedding { message, .. } = &e
+                && message.contains("HTTP request to Ollama failed")
+            {
+                return Error::embedding(
+                    message.replace("HTTP request to Ollama failed", "HTTP request failed"),
+                );
+            }
+            e
+        })
     }
 
     /// Parse embedding from response data
     fn parse_embedding(&self, response_data: &serde_json::Value) -> Result<Embedding> {
-        let embedding_vec = response_data["embedding"]
-            .as_array()
-            .ok_or_else(|| {
-                Error::embedding("Invalid response format: missing embedding array".to_string())
-            })?
-            .iter()
-            .map(|v| v.as_f64().unwrap_or(0.0) as f32)
-            .collect::<Vec<f32>>();
+        let embedding_vec = parse_float_array_lossy(
+            response_data,
+            "/embedding",
+            "Invalid response format: missing embedding array",
+        )?;
 
         let dimensions = embedding_vec.len();
         Ok(Embedding {

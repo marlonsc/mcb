@@ -1,4 +1,5 @@
 #[macro_export]
+/// Dispatches `(action, resource)` pairs to handler expressions with an optional fallback.
 macro_rules! entity_crud_dispatch {
     (
         action = $action:expr,

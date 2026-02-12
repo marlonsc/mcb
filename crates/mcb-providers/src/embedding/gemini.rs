@@ -5,14 +5,14 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use mcb_domain::error::{Error, Result};
+use mcb_domain::error::Result;
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use crate::constants::{CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_GEMINI};
 use crate::embedding::helpers::constructor;
-use crate::provider_utils::{parse_float_array_lossy, send_json_request};
+use crate::provider_utils::{JsonRequestParams, parse_float_array_lossy, send_json_request};
 use crate::utils::http::RequestErrorKind;
 
 /// Gemini embedding provider
@@ -130,17 +130,17 @@ impl GeminiEmbeddingProvider {
             ("x-goog-api-key", self.api_key.clone()),
         ];
 
-        send_json_request(
-            &self.http_client,
-            reqwest::Method::POST,
+        send_json_request(JsonRequestParams {
+            client: &self.http_client,
+            method: reqwest::Method::POST,
             url,
-            self.timeout,
-            "Gemini",
-            "embedContent",
-            RequestErrorKind::Embedding,
-            &headers,
-            Some(&payload),
-        )
+            timeout: self.timeout,
+            provider: "Gemini",
+            operation: "embedContent",
+            kind: RequestErrorKind::Embedding,
+            headers: &headers,
+            body: Some(&payload),
+        })
         .await
     }
 

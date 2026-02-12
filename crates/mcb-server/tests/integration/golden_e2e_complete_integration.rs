@@ -29,6 +29,7 @@ fn index_args(action: IndexAction, path: Option<String>, collection: Option<Stri
 fn search_args(query: &str, collection: Option<String>, limit: Option<u32>) -> SearchArgs {
     SearchArgs {
         query: query.to_string(),
+        org_id: None,
         resource: SearchResource::Code,
         collection,
         extensions: None,

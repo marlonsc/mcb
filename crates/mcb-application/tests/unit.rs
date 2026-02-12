@@ -14,8 +14,9 @@ mod registry_tests;
 #[path = "unit/instrumented_embedding_tests.rs"]
 mod instrumented_embedding_tests;
 
-#[path = "unit/vcs_indexing_tests.rs"]
-mod vcs_indexing_tests;
+// vcs_indexing module was removed in v0.2.2; tests are stale
+// #[path = "unit/vcs_indexing_tests.rs"]
+// mod vcs_indexing_tests;
 
 #[path = "unit/memory_service_tests.rs"]
 mod memory_service_tests;

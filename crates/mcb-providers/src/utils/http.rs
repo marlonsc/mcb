@@ -45,32 +45,6 @@ pub(crate) fn create_default_client() -> Result<Client, String> {
     create_client(30)
 }
 
-/// Handle HTTP request errors with proper timeout detection
-///
-/// Converts reqwest errors into domain errors with appropriate
-/// messages for timeouts vs other failures.
-///
-/// # Arguments
-/// * `error` - The reqwest error to handle
-/// * `timeout` - The timeout duration for error messages
-/// * `endpoint` - The endpoint name for error context
-///
-/// # Returns
-/// Domain Error with appropriate message
-pub(crate) fn handle_request_error(
-    error: reqwest::Error,
-    timeout: Duration,
-    endpoint: &str,
-) -> Error {
-    handle_request_error_with_kind(
-        error,
-        timeout,
-        endpoint,
-        endpoint,
-        RequestErrorKind::Embedding,
-    )
-}
-
 pub(crate) fn handle_request_error_with_kind(
     error: reqwest::Error,
     timeout: Duration,

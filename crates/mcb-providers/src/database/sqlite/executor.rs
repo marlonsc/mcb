@@ -16,13 +16,13 @@ use sqlx::sqlite::SqliteRow;
 /// Row adapter that copies column values from a SQLite row so it can be returned
 /// as `Arc<dyn SqlRow>` without holding a reference to the connection.
 #[derive(Debug)]
-pub struct MapRow {
+struct SqliteMappedRow {
     strings: HashMap<String, Option<String>>,
     i64s: HashMap<String, Option<i64>>,
     f64s: HashMap<String, Option<f64>>,
 }
 
-impl MapRow {
+impl SqliteMappedRow {
     fn from_sqlite_row(row: &SqliteRow) -> Result<Self> {
         let mut strings = HashMap::new();
         let mut i64s = HashMap::new();
@@ -53,7 +53,7 @@ impl MapRow {
     }
 }
 
-impl SqlRow for MapRow {
+impl SqlRow for SqliteMappedRow {
     fn try_get_string(&self, name: &str) -> Result<Option<String>> {
         Ok(self
             .strings
@@ -127,7 +127,7 @@ impl SqliteExecutor {
             .map_err(|e| Error::memory_with_source("SQL query_one failed", e))?;
         match row {
             Some(r) => {
-                let map_row = MapRow::from_sqlite_row(&r)
+                let map_row = SqliteMappedRow::from_sqlite_row(&r)
                     .map_err(|e| Error::memory_with_source("Failed to map row", e))?;
                 Ok(Some(Arc::new(map_row) as Arc<dyn SqlRow>))
             }
@@ -151,7 +151,7 @@ impl SqliteExecutor {
             .map_err(|e| Error::memory_with_source("SQL query_all failed", e))?;
         let mut out = Vec::with_capacity(rows.len());
         for r in rows {
-            let map_row = MapRow::from_sqlite_row(&r)
+            let map_row = SqliteMappedRow::from_sqlite_row(&r)
                 .map_err(|e| Error::memory_with_source("Failed to map row", e))?;
             out.push(Arc::new(map_row) as Arc<dyn SqlRow>);
         }

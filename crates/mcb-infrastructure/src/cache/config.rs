@@ -69,20 +69,3 @@ impl CacheKey {
             .collect()
     }
 }
-
-/// Cache value serialization utilities
-pub struct CacheValue;
-
-impl CacheValue {
-    /// Estimate the size of a cache value in bytes
-    pub fn estimate_size<T: serde::Serialize>(value: &T) -> usize {
-        // Simple estimation: serialize to JSON and get byte length
-        // In production, you might want more sophisticated size estimation
-        serde_json::to_string(value).map(|s| s.len()).unwrap_or(0)
-    }
-
-    /// Check if a value exceeds the maximum cache entry size
-    pub fn exceeds_max_size<T: serde::Serialize>(value: &T, max_size: usize) -> bool {
-        Self::estimate_size(value) > max_size
-    }
-}

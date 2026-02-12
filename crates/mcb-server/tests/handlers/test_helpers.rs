@@ -10,7 +10,9 @@ pub(crate) fn create_base_memory_args(
 ) -> MemoryArgs {
     MemoryArgs {
         action,
+        org_id: None,
         resource,
+        project_id: None,
         data,
         ids,
         repo_id: None,

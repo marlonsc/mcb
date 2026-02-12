@@ -53,6 +53,7 @@ pub struct HighlightServiceImpl {
 }
 
 impl HighlightServiceImpl {
+    /// Creates a syntax highlight service with an internal tree-sitter highlighter.
     pub fn new() -> Self {
         Self {
             highlighter: Arc::new(tokio::sync::Mutex::new(Highlighter::new())),

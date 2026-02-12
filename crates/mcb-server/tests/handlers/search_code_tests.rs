@@ -16,6 +16,7 @@ async fn test_search_code_success() {
 
     let args = SearchArgs {
         query: "test query".to_string(),
+        org_id: None,
         resource: SearchResource::Code,
         collection: Some("test".to_string()),
         limit: Some(10),
@@ -42,6 +43,7 @@ async fn test_search_code_empty_query() {
 
     let args = SearchArgs {
         query: "".to_string(),
+        org_id: None,
         resource: SearchResource::Code,
         collection: Some("test".to_string()),
         limit: Some(10),
