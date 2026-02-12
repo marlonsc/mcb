@@ -26,9 +26,9 @@ implementation_status: Complete
 
 MCB v0.1.1 has implemented the eight-crate Clean Architecture foundation. Future versions will integrate:
 
--   Code analysis capabilities (complexity, debt, quality)
--   Git integration (repository analysis, commit history)
--   Advanced tools (refactoring, scaffolding, mutation testing)
+- Code analysis capabilities (complexity, debt, quality)
+- Git integration (repository analysis, commit history)
+- Advanced tools (refactoring, scaffolding, mutation testing)
 
 **Challenge**: How to organize multiple domains using the modular crate structure?
 
@@ -75,68 +75,68 @@ mcb/
 
 **v0.1.1** (Current release):
 
--   Eight-crate Clean Architecture implemented
--   Shaku DI with two-layer strategy
--   20+ port traits with shaku::Interface (in mcb-application)
--   mcb-validate enforces layer boundaries
+- Eight-crate Clean Architecture implemented
+- Shaku DI with two-layer strategy
+- 20+ port traits with shaku::Interface (in mcb-application)
+- mcb-validate enforces layer boundaries
 
 **v0.3.0** (Analysis domain):
 
--   Implement analysis domain logic
--   Port PMAT's complexity/TDG/SATD algorithms
--   3 new MCP tools
+- Implement analysis domain logic
+- Port PMAT's complexity/TDG/SATD algorithms
+- 3 new MCP tools
 
 **v0.5.0** (Quality + Git domains):
 
--   Implement quality and git domains
--   7 new MCP tools
+- Implement quality and git domains
+- 7 new MCP tools
 
 ## Consequences
 
 **Positive**:
 
--   Clear separation of concerns
--   Incremental feature addition
--   Testable in isolation
--   Future domains easy to add
+- Clear separation of concerns
+- Incremental feature addition
+- Testable in isolation
+- Future domains easy to add
 
 **Negative**:
 
--   More directories (complexity)
--   Potential code duplication without careful planning
+- More directories (complexity)
+- Potential code duplication without careful planning
 
 **Mitigation**:
 
--   Use workspace libraries for shared code
--   Enforce port traits for cross-domain communication
--   Document domain boundaries clearly
+- Use workspace libraries for shared code
+- Enforce port traits for cross-domain communication
+- Document domain boundaries clearly
 
 ## Implementation Checklist
 
 **v0.1.1 (Completed)**:
 
--   [x] Eight-crate Clean Architecture implemented
--   [x] Shaku DI with two-layer strategy
--   [x] 20+ port traits with shaku::Interface (in mcb-application)
--   [x] mcb-validate enforces layer boundaries
+- [x] Eight-crate Clean Architecture implemented
+- [x] Shaku DI with two-layer strategy
+- [x] 20+ port traits with shaku::Interface (in mcb-application)
+- [x] mcb-validate enforces layer boundaries
 
 **v0.3.0 (Planned)**:
 
--   [ ] Create `crates/mcb-application/src/ports/analysis/` (analysis domain ports)
--   [ ] Create `crates/mcb-providers/src/analyzers/` (PMAT adapters)
--   [ ] Define `AnalysisInterface` trait
--   [ ] Port PMAT complexity/TDG/SATD algorithms
+- [ ] Create `crates/mcb-application/src/ports/analysis/` (analysis domain ports)
+- [ ] Create `crates/mcb-providers/src/analyzers/` (PMAT adapters)
+- [ ] Define `AnalysisInterface` trait
+- [ ] Port PMAT complexity/TDG/SATD algorithms
 
 **v0.5.0 (Planned)**:
 
--   [ ] Define `QualityInterface` trait
--   [ ] Define `GitInterface` trait
--   [ ] Implement quality and git domain services
+- [ ] Define `QualityInterface` trait
+- [ ] Define `GitInterface` trait
+- [ ] Implement quality and git domain services
 
 ## Related ADRs
 
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI patterns
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate structure
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI patterns
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate structure
 
 ---
 

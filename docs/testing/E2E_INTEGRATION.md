@@ -12,9 +12,9 @@ MCB has a **3-layer testing strategy** to ensure admin web UI routes are always 
 
 **v0.2.0 Bug**: Admin UI returned 404 on all routes because web routes were only mounted in `web_rocket()` (test fixture) but NOT in `admin_rocket()` (production server).
 
--   ✅ **Unit tests passed** - They tested `web_rocket()` which had routes
--   ❌ **Integration tests MISSING** - No tests for `admin_rocket()` production config
--   ❌ **E2E tests NOT RUN** - Playwright tests existed but weren't integrated into CI
+- ✅ **Unit tests passed** - They tested `web_rocket()` which had routes
+- ❌ **Integration tests MISSING** - No tests for `admin_rocket()` production config
+- ❌ **E2E tests NOT RUN** - Playwright tests existed but weren't integrated into CI
 
 **Result**: Bug shipped to production.
 
@@ -159,16 +159,16 @@ jobs:
 
 ### When Adding New Routes
 
-1.  **Add to `admin/web/handlers.rs`**
-2.  **Mount in `admin/routes.rs`** (CRITICAL - this is where v0.2.0 bug happened)
-3.  **Add Layer 2 test** in `golden_admin_web_e2e.rs`
-4.  **Add Layer 3 test** in `admin-ui-routes.spec.ts`
+1. **Add to `admin/web/handlers.rs`**
+2. **Mount in `admin/routes.rs`** (CRITICAL - this is where v0.2.0 bug happened)
+3. **Add Layer 2 test** in `golden_admin_web_e2e.rs`
+4. **Add Layer 3 test** in `admin-ui-routes.spec.ts`
 
 ### When Routes Return 404
 
-1.  Check Layer 3 first: `make test-e2e`
-2.  If failing, check Layer 2: `cargo test golden_admin_web_e2e`
-3.  If passing, check `admin/routes.rs` - routes might not be mounted
+1. Check Layer 3 first: `make test-e2e`
+2. If failing, check Layer 2: `cargo test golden_admin_web_e2e`
+3. If passing, check `admin/routes.rs` - routes might not be mounted
 
 ## Troubleshooting
 
@@ -204,6 +204,6 @@ Playwright dependencies not installed.
 
 ## Related Documentation
 
--   [GOLDEN_TESTS_CONTRACT.md](./GOLDEN_TESTS_CONTRACT.md) - Test contract specifications
--   [Testing Strategy](../developer/TESTING.md) - Overall testing approach
--   [CI/CD Pipeline](.github/workflows/ci.yml) - Continuous integration config
+- [GOLDEN_TESTS_CONTRACT.md](./GOLDEN_TESTS_CONTRACT.md) - Test contract specifications
+- [Testing Strategy](../developer/TESTING.md) - Overall testing approach
+- [CI/CD Pipeline](.github/workflows/ci.yml) - Continuous integration config

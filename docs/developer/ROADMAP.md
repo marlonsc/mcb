@@ -24,10 +24,10 @@ Implements complete workflow system with FSM-based task orchestration, context s
 
 **Quality Gates:**
 
--   `make quality` passes (0 errors)
--   `make validate` passes (0 violations)
--   Performance benchmarks established
--   Migration guide from v0.2.0
+- `make quality` passes (0 errors)
+- `make validate` passes (0 violations)
+- Performance benchmarks established
+- Migration guide from v0.2.0
 
 **Unblocks:** v0.4.0 Integrated Context System
 
@@ -80,7 +80,7 @@ Enterprise-grade platform with SLA guarantees, compliance certifications, and hi
 
 ## Cross-References
 
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
--   **Changelog**: [CHANGELOG.md](../operations/CHANGELOG.md)
--   **Contributing**: [CONTRIBUTING.md](./CONTRIBUTING.md)
--   **ADR Index**: [docs/adr/README.md](../adr/README.md)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Changelog**: [CHANGELOG.md](../operations/CHANGELOG.md)
+- **Contributing**: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- **ADR Index**: [docs/adr/README.md](../adr/README.md)

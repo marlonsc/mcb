@@ -20,10 +20,10 @@ Complete schema reference for `.mcp-context.toml` git-aware indexing configurati
 
 `.mcp-context.toml` is an **optional** configuration file for v0.2.0 that enables:
 
--   Multi-branch indexing with configurable depth
--   Smart file filtering with glob patterns
--   Submodule support
--   Branch-specific configuration
+- Multi-branch indexing with configurable depth
+- Smart file filtering with glob patterns
+- Submodule support
+- Branch-specific configuration
 
 If the file doesn't exist, MCB uses sensible defaults for backward compatibility.
 
@@ -198,9 +198,9 @@ ignore_patterns = [
 
 ### Matching Behavior
 
--   **Directories**: `target/` matches any directory named "target" at any level
--   **Extensions**: `*.log` matches any file ending in ".log"
--   **Names**: `Cargo.lock` matches exactly that filename
+- **Directories**: `target/` matches any directory named "target" at any level
+- **Extensions**: `*.log` matches any file ending in ".log"
+- **Names**: `Cargo.lock` matches exactly that filename
 
 ---
 

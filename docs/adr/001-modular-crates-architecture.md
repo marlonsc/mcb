@@ -48,9 +48,9 @@ pub trait EmbeddingProvider: Interface + Send + Sync {
 
 Important: All port traits must:
 
--   Extend `shaku::Interface` (which implies `'static + Send + Sync` with thread_safe feature)
--   Be object-safe (no generic methods, no `Self` returns)
--   Use `async_trait` for async methods
+- Extend `shaku::Interface` (which implies `'static + Send + Sync` with thread_safe feature)
+- Be object-safe (no generic methods, no `Self` returns)
+- Use `async_trait` for async methods
 
 ### Provider Implementation (mcb-providers)
 
@@ -233,7 +233,7 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 
 ## Related ADRs
 
--   [ADR-002: Dependency Injection with Shaku](002-dependency-injection-shaku.md)
--   [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md)
--   [ADR-004: Event Bus (Local and Distributed)](004-event-bus-local-distributed.md)
--   [ADR-005: Context Cache Support (Moka and Redis)](005-context-cache-support.md)
+- [ADR-002: Dependency Injection with Shaku](002-dependency-injection-shaku.md)
+- [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md)
+- [ADR-004: Event Bus (Local and Distributed)](004-event-bus-local-distributed.md)
+- [ADR-005: Context Cache Support (Moka and Redis)](005-context-cache-support.md)

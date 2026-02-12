@@ -117,16 +117,16 @@ docker-compose down -v        # Cleanup
 
 Tests include:
 
--   Provider creation and configuration
--   Set/Get operations
--   Delete operations
--   Namespace clearing
--   Key existence checks
--   TTL expiration
--   Health checks
--   Concurrent access
--   Connection pooling
--   Large payload handling
+- Provider creation and configuration
+- Set/Get operations
+- Delete operations
+- Namespace clearing
+- Key existence checks
+- TTL expiration
+- Health checks
+- Concurrent access
+- Connection pooling
+- Large payload handling
 
 Run: `make test` or `make test SCOPE=integration`. If a dedicated `redis_cache_integration` test exists, use `cargo test redis_cache_integration -- --nocapture`.
 
@@ -136,15 +136,15 @@ Run: `make test` or `make test SCOPE=integration`. If a dedicated `redis_cache_i
 
 Tests include:
 
--   Provider creation and configuration
--   Publish/Subscribe operations
--   Multiple subscribers
--   Different event types
--   Concurrent publishing
--   Health checks
--   Message recovery
--   Large payload handling
--   Stream persistence
+- Provider creation and configuration
+- Publish/Subscribe operations
+- Multiple subscribers
+- Different event types
+- Concurrent publishing
+- Health checks
+- Message recovery
+- Large payload handling
+- Stream persistence
 
 Run: `make test` or `make test SCOPE=integration`. If a dedicated `nats_event_bus_integration` test exists, use `cargo test nats_event_bus_integration -- --nocapture`.
 
@@ -178,15 +178,15 @@ REDIS_URL=redis://custom-host:6379 NATS_URL=nats://custom-host:4222 make test
 
 The main Docker Compose file includes:
 
--   **OpenAI-mock**: OpenAI API mock server (port 1080)
--   **Ollama**: Ollama embedding service (port 11434)
--   **Milvus-***: Milvus vector database (port 19530)
--   **test-runner**: Test execution container (runs `make test` inside the container)
+- **OpenAI-mock**: OpenAI API mock server (port 1080)
+- **Ollama**: Ollama embedding service (port 11434)
+- **Milvus-***: Milvus vector database (port 19530)
+- **test-runner**: Test execution container (runs `make test` inside the container)
 
 The test-runner connects to:
 
--   Docker services via internal network (`mcp-openai-mock:1080`, etc.)
--   Host services via `host.docker.internal:port` (macOS) or `172.17.0.1:port` (Linux)
+- Docker services via internal network (`mcp-openai-mock:1080`, etc.)
+- Host services via `host.docker.internal:port` (macOS) or `172.17.0.1:port` (Linux)
 
 **Usage:**
 
@@ -347,9 +347,9 @@ test result: ok. 18 passed; 0 failed; 0 ignored
 
 Typical execution times:
 
--   Redis tests: ~15-20 seconds (including TTL wait)
--   NATS tests: ~25-30 seconds (including persistence wait)
--   Total: ~45-50 seconds
+- Redis tests: ~15-20 seconds (including TTL wait)
+- NATS tests: ~25-30 seconds (including persistence wait)
+- Total: ~45-50 seconds
 
 ## CI/CD Integration
 
@@ -396,10 +396,10 @@ jobs:
 
 ## Additional Resources
 
--   [Redis Documentation](https://redis.io/documentation)
--   [NATS Documentation](https://docs.nats.io/)
--   [Memory Context Browser Architecture](./architecture/ARCHITECTURE.md)
--   [ADR-005: Context Cache Support (Moka and Redis)](./adr/005-context-cache-support.md)
+- [Redis Documentation](https://redis.io/documentation)
+- [NATS Documentation](https://docs.nats.io/)
+- [Memory Context Browser Architecture](./architecture/ARCHITECTURE.md)
+- [ADR-005: Context Cache Support (Moka and Redis)](./adr/005-context-cache-support.md)
 
 ## Contributing
 

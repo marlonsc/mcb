@@ -131,21 +131,21 @@ struct ProjectArgs {
 
 ### Positive
 
--   Dramatically reduced cognitive load (38 → 8 tools)
--   Consistent action/resource pattern across all tools
--   Easier to add new resources without new tools
--   Better discoverability through unified interfaces
+- Dramatically reduced cognitive load (38 → 8 tools)
+- Consistent action/resource pattern across all tools
+- Easier to add new resources without new tools
+- Better discoverability through unified interfaces
 
 ### Negative
 
--   Migration effort required
--   Slightly more complex individual tool schemas
--   Potential breaking change for existing integrations
+- Migration effort required
+- Slightly more complex individual tool schemas
+- Potential breaking change for existing integrations
 
 ### Neutral
 
--   Same underlying functionality
--   Handler code restructured but logic preserved
+- Same underlying functionality
+- Handler code restructured but logic preserved
 
 ## Implementation
 

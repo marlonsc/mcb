@@ -72,17 +72,17 @@ Output when any service unavailable:
 
 ### YES - Use service skipping if
 
--   Test calls `init_app()` with configuration pointing to external services
--   Test uses actual provider implementations (Milvus, Ollama, Redis, PostgreSQL)
--   Test performs real network connections
--   Test integration is optional (not core to CI validation)
+- Test calls `init_app()` with configuration pointing to external services
+- Test uses actual provider implementations (Milvus, Ollama, Redis, PostgreSQL)
+- Test performs real network connections
+- Test integration is optional (not core to CI validation)
 
 ### NO - Don't use if
 
--   Test uses mock/null providers (default config)
--   Test uses in-memory implementations (InMemoryVectorStore)
--   Test is critical and **must** run (no external dependencies)
--   Test exercises local-only functionality
+- Test uses mock/null providers (default config)
+- Test uses in-memory implementations (InMemoryVectorStore)
+- Test is critical and **must** run (no external dependencies)
+- Test exercises local-only functionality
 
 ## Test Categories
 
@@ -102,9 +102,9 @@ async fn test_init_app_with_default_config_succeeds() {
 
 **Files**:
 
--   `error_recovery_integration.rs` - config validation, error handling
--   `golden_acceptance_integration.rs` - in-memory acceptance tests
--   `browse_api_integration.rs` - mock-based API tests
+- `error_recovery_integration.rs` - config validation, error handling
+- `golden_acceptance_integration.rs` - in-memory acceptance tests
+- `browse_api_integration.rs` - mock-based API tests
 
 ### Category B: Skip if Services Unavailable
 
@@ -160,9 +160,9 @@ async fn test_example_bad() {
 
 Service detection checks are **very fast** (300ms timeout per service):
 
--   Succeeds immediately if service is up (TCP handshake succeeds)
--   Fails quickly if service is down (timeout after 300ms)
--   Total test function overhead: ~300-900ms for all checks
+- Succeeds immediately if service is up (TCP handshake succeeds)
+- Fails quickly if service is down (timeout after 300ms)
+- Total test function overhead: ~300-900ms for all checks
 
 ### Example: Complete Test with Skip
 
@@ -223,9 +223,9 @@ async fn test_milvus_vector_search_end_to_end() {
 
 Tests with skip macros run:
 
--   **Full**: If all required services are up
--   **Skipped**: If any required service is down
--   Never timeout or fail due to service unavailability
+- **Full**: If all required services are up
+- **Skipped**: If any required service is down
+- Never timeout or fail due to service unavailability
 
 ```bash
 
@@ -311,10 +311,10 @@ If tests timeout:
 
 ## Related Files
 
--   `crates/mcb-server/tests/integration/helpers.rs` - Detection functions and macros
--   `crates/mcb-server/tests/integration.rs` - Test module root
--   `make/Makefile.quality.mk` - Coverage target configuration
--   `.github/workflows/ci.yml` - CI pipeline
+- `crates/mcb-server/tests/integration/helpers.rs` - Detection functions and macros
+- `crates/mcb-server/tests/integration.rs` - Test module root
+- `make/Makefile.quality.mk` - Coverage target configuration
+- `.github/workflows/ci.yml` - CI pipeline
 
 ## Future Improvements
 

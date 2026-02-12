@@ -8,21 +8,21 @@ This directory contains comprehensive documentation of the Beads issue tracking 
 
 Complete reference documentation covering:
 
--   Directory structure (.beads/ layout)
--   Issue data model (all 50+ fields)
--   Related tables (labels, dependencies, comments, events, etc.)
--   Database views (ready_issues, blocked_issues)
--   JSONL export format with examples
--   Configuration file structure
--   Git integration and sync workflow
--   CLI commands and data requirements
--   Indexes and performance characteristics
--   Security considerations
--   Daemon architecture
--   Advanced features (compaction, federation, molecules, gates)
--   Migration considerations for relational databases
--   Example queries
--   Troubleshooting guide
+- Directory structure (.beads/ layout)
+- Issue data model (all 50+ fields)
+- Related tables (labels, dependencies, comments, events, etc.)
+- Database views (ready_issues, blocked_issues)
+- JSONL export format with examples
+- Configuration file structure
+- Git integration and sync workflow
+- CLI commands and data requirements
+- Indexes and performance characteristics
+- Security considerations
+- Daemon architecture
+- Advanced features (compaction, federation, molecules, gates)
+- Migration considerations for relational databases
+- Example queries
+- Troubleshooting guide
 
 **Use this for**: Complete understanding of Beads data structures, field definitions, relationships, and constraints.
 
@@ -30,19 +30,19 @@ Complete reference documentation covering:
 
 Quick reference guide with:
 
--   Directory structure overview
--   Core tables summary
--   JSONL format example
--   Key constraints
--   CLI commands summary
--   Configuration options
--   Git integration overview
--   Performance characteristics
--   Migration checklist
--   Important indexes
--   Daemon modes
--   Advanced features overview
--   Troubleshooting commands
+- Directory structure overview
+- Core tables summary
+- JSONL format example
+- Key constraints
+- CLI commands summary
+- Configuration options
+- Git integration overview
+- Performance characteristics
+- Migration checklist
+- Important indexes
+- Daemon modes
+- Advanced features overview
+- Troubleshooting commands
 
 **Use this for**: Quick lookup of specific information, CLI commands, or table structures.
 
@@ -50,12 +50,12 @@ Quick reference guide with:
 
 Complete SQL schema with:
 
--   All table definitions with constraints
--   All indexes (30+ indexes)
--   View definitions (ready_issues, blocked_issues)
--   Useful query examples (commented)
--   Proper foreign key relationships
--   Check constraints and defaults
+- All table definitions with constraints
+- All indexes (30+ indexes)
+- View definitions (ready_issues, blocked_issues)
+- Useful query examples (commented)
+- Proper foreign key relationships
+- Check constraints and defaults
 
 **Use this for**: Creating equivalent tables in a relational database, understanding schema relationships, running queries.
 
@@ -65,21 +65,21 @@ Complete SQL schema with:
 
 **Hybrid Storage**:
 
--   **SQLite** (primary): Fast queries, ACID transactions, daemon-based RPC
--   **JSONL** (export): Git-friendly, human-readable, merge-friendly
+- **SQLite** (primary): Fast queries, ACID transactions, daemon-based RPC
+- **JSONL** (export): Git-friendly, human-readable, merge-friendly
 
 **Core Entity**: Issues
 
--   50+ fields covering content, metadata, status, relationships
--   Supports multiple issue types (task, bug, feature, epic, molecule, gate, etc.)
--   Rich metadata with custom JSON support
+- 50+ fields covering content, metadata, status, relationships
+- Supports multiple issue types (task, bug, feature, epic, molecule, gate, etc.)
+- Rich metadata with custom JSON support
 
 **Relationships**:
 
--   Labels (many-to-many)
--   Dependencies (7 types: blocks, discovered-from, parent-child, relates-to, duplicate-of, superseded-by, waits-for)
--   Comments (discussion threads)
--   Events (audit trail)
+- Labels (many-to-many)
+- Dependencies (7 types: blocks, discovered-from, parent-child, relates-to, duplicate-of, superseded-by, waits-for)
+- Comments (discussion threads)
+- Events (audit trail)
 
 ### Directory Structure
 
@@ -116,11 +116,11 @@ Complete SQL schema with:
 
 ### Database Statistics
 
--   **Tables**: 15 (issues, labels, dependencies, comments, events, config, metadata, dirty_issues, export_hashes, issue_snapshots, compaction_snapshots, repo_mtimes, blocked_issues_cache, child_counters, sqlite_sequence)
--   **Views**: 2 (ready_issues, blocked_issues)
--   **Indexes**: 30+
--   **Typical size**: 1-10 MB per 100-1000 issues
--   **Performance**: List < 10ms, Ready issues < 50ms, Dependency traversal < 100ms
+- **Tables**: 15 (issues, labels, dependencies, comments, events, config, metadata, dirty_issues, export_hashes, issue_snapshots, compaction_snapshots, repo_mtimes, blocked_issues_cache, child_counters, sqlite_sequence)
+- **Views**: 2 (ready_issues, blocked_issues)
+- **Indexes**: 30+
+- **Typical size**: 1-10 MB per 100-1000 issues
+- **Performance**: List < 10ms, Ready issues < 50ms, Dependency traversal < 100ms
 
 ### Migration Path to Relational Database
 
@@ -145,104 +145,104 @@ issues (1) ──→ (many) events
 
 **Data Type Mapping**:
 
--   Timestamps: DATETIME with timezone
--   JSON fields: TEXT (metadata, payload, agent_state, waiters)
--   Enums: TEXT (status, issue_type, priority, mol_type, work_type)
--   Booleans: INTEGER (0/1)
+- Timestamps: DATETIME with timezone
+- JSON fields: TEXT (metadata, payload, agent_state, waiters)
+- Enums: TEXT (status, issue_type, priority, mol_type, work_type)
+- Booleans: INTEGER (0/1)
 
 ## Advanced Features
 
 ### Compaction
 
--   Reduces issue history size with snapshots
--   Multiple compaction levels
--   Preserves original content
+- Reduces issue history size with snapshots
+- Multiple compaction levels
+- Preserves original content
 
 ### Federation
 
--   Multi-repo support (experimental)
--   Peer-to-peer issue sharing
--   Requires CGO for some features
+- Multi-repo support (experimental)
+- Peer-to-peer issue sharing
+- Requires CGO for some features
 
 ### Molecules
 
--   Swarms: Multi-polecat coordination
--   Patrols: Recurring operations
--   Work: Standard work items
+- Swarms: Multi-polecat coordination
+- Patrols: Recurring operations
+- Work: Standard work items
 
 ### Gates
 
--   Async coordination primitives
--   Fanout/join patterns
--   Merge-slot for serialized conflict resolution
+- Async coordination primitives
+- Fanout/join patterns
+- Merge-slot for serialized conflict resolution
 
 ### Templates
 
--   Issue templates for consistency
--   Reusable issue patterns
--   Template molecules
+- Issue templates for consistency
+- Reusable issue patterns
+- Template molecules
 
 ## Configuration
 
 Key settings in `config.yaml`:
 
--   `sync-branch`: Git branch for syncing (default: "beads-sync")
--   `issue-prefix`: Issue ID prefix (auto-detected)
--   `no-db`: Use JSONL only (no SQLite)
--   `no-daemon`: Disable daemon
--   `no-auto-flush`: Disable auto-export
--   `no-auto-import`: Disable auto-import
+- `sync-branch`: Git branch for syncing (default: "beads-sync")
+- `issue-prefix`: Issue ID prefix (auto-detected)
+- `no-db`: Use JSONL only (no SQLite)
+- `no-daemon`: Disable daemon
+- `no-auto-flush`: Disable auto-export
+- `no-auto-import`: Disable auto-import
 
 ## Security Considerations
 
--   `.beads/` directory: 700 permissions
--   `beads.db`: 600 permissions
--   `config.yaml`: 600 permissions
--   `issues.jsonl`: 644 permissions (git-tracked)
--   Daemon socket: 700 permissions
--   No built-in user authentication (relies on git/OS)
--   Audit trail via events table
+- `.beads/` directory: 700 permissions
+- `beads.db`: 600 permissions
+- `config.yaml`: 600 permissions
+- `issues.jsonl`: 644 permissions (git-tracked)
+- Daemon socket: 700 permissions
+- No built-in user authentication (relies on git/OS)
+- Audit trail via events table
 
 ## Performance Characteristics
 
--   List issues by status: < 10ms
--   Find ready issues: < 50ms
--   Dependency traversal (depth 5): < 100ms
--   Full text search: < 200ms
--   Database size: 1-10 MB per 100-1000 issues
--   WAL files: 1-5 MB (temporary)
--   Export to JSONL: < 100ms
--   Git commit: < 500ms
--   Full sync cycle: < 1s
+- List issues by status: < 10ms
+- Find ready issues: < 50ms
+- Dependency traversal (depth 5): < 100ms
+- Full text search: < 200ms
+- Database size: 1-10 MB per 100-1000 issues
+- WAL files: 1-5 MB (temporary)
+- Export to JSONL: < 100ms
+- Git commit: < 500ms
+- Full sync cycle: < 1s
 
 ## Daemon Architecture
 
 **Modes**:
 
--   **Daemon mode** (default): Background RPC server via Unix socket
--   **No-daemon mode**: Direct database access
--   **No-db mode**: Load from JSONL, no SQLite
+- **Daemon mode** (default): Background RPC server via Unix socket
+- **No-daemon mode**: Direct database access
+- **No-db mode**: Load from JSONL, no SQLite
 
 **Files**:
 
--   `daemon.pid`: Process ID
--   `daemon.lock`: Lock file
--   `daemon.log`: Log output
--   `bd.sock`: Unix socket for RPC
+- `daemon.pid`: Process ID
+- `daemon.lock`: Lock file
+- `daemon.log`: Log output
+- `bd.sock`: Unix socket for RPC
 
 **Functions**:
 
--   RPC server for CLI commands
--   Auto-flush debouncing
--   Database connection pooling
--   Concurrent access management
+- RPC server for CLI commands
+- Auto-flush debouncing
+- Database connection pooling
+- Concurrent access management
 
 ## References
 
--   **Official Repository**: [GitHub.com/steveyegge/beads](https://github.com/steveyegge/beads)
--   **Documentation**: [GitHub.com/steveyegge/beads/tree/main/docs](https://github.com/steveyegge/beads/tree/main/docs)
--   **Quick Start**: Run `bd quickstart`
--   **Help**: Run `bd <command> --help`
+- **Official Repository**: [GitHub.com/steveyegge/beads](https://github.com/steveyegge/beads)
+- **Documentation**: [GitHub.com/steveyegge/beads/tree/main/docs](https://github.com/steveyegge/beads/tree/main/docs)
+- **Quick Start**: Run `bd quickstart`
+- **Help**: Run `bd <command> --help`
 
 ## Research Methodology
 

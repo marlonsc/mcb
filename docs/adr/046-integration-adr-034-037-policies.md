@@ -515,60 +515,60 @@ impl ContextToolHandler {
 
 1. **Correction 2 (mcb-z1f)**: WorkflowEventBus → Reuse EventBusProvider
 
--   ✅ Removed duplicate `WorkflowEventBus` type
--   ✅ Defined `WorkflowEvent` as variant publishable through existing `EventBusProvider` port
--   ✅ Subscribers implement `EventHandler` trait (existing pattern)
--   **Impact**: Single event bus infrastructure, no duplication
+- ✅ Removed duplicate `WorkflowEventBus` type
+- ✅ Defined `WorkflowEvent` as variant publishable through existing `EventBusProvider` port
+- ✅ Subscribers implement `EventHandler` trait (existing pattern)
+- **Impact**: Single event bus infrastructure, no duplication
 
 1. **Correction 7 (mcb-d26)**: BeadsTask contract clarification
 
--   ✅ Documented BeadsTask as EXTERNAL DTO from beads issue tracker
--   ✅ Added mapping: external BeadsTask → internal WorkflowTask at infrastructure boundary
--   ✅ Task routing: external DTO → adapter → internal entity → orchestrator
--   **Impact**: Clear contract, proper separation of concerns
+- ✅ Documented BeadsTask as EXTERNAL DTO from beads issue tracker
+- ✅ Added mapping: external BeadsTask → internal WorkflowTask at infrastructure boundary
+- ✅ Task routing: external DTO → adapter → internal entity → orchestrator
+- **Impact**: Clear contract, proper separation of concerns
 
 1. **Correction 8 (mcb-ehk)**: CompensationHandler layer placement
 
--   ✅ Moved from application to infrastructure: `mcb-infrastructure/src/compensation/handler.rs`
--   ✅ Application layer defines `CompensationPolicy` port trait
--   ✅ Infrastructure implements `CompensationPolicy` with rollback, retry, logging
--   **Impact**: Proper layer separation, infrastructure concerns isolated
+- ✅ Moved from application to infrastructure: `mcb-infrastructure/src/compensation/handler.rs`
+- ✅ Application layer defines `CompensationPolicy` port trait
+- ✅ Infrastructure implements `CompensationPolicy` with rollback, retry, logging
+- **Impact**: Proper layer separation, infrastructure concerns isolated
 
 1. **Correction 9 (mcb-tmg)**: MCP tool registration pattern
 
--   ✅ Replaced with ADR-033 ConsolidatedHandler pattern
--   ✅ Handlers in `mcb-server/src/handlers/context_handlers.rs`
--   ✅ Registration via `router.rs` tool_definitions() like existing handlers
--   ✅ Match on action/resource for unified dispatch
--   **Impact**: Consistent with existing MCP handler architecture
+- ✅ Replaced with ADR-033 ConsolidatedHandler pattern
+- ✅ Handlers in `mcb-server/src/handlers/context_handlers.rs`
+- ✅ Registration via `router.rs` tool_definitions() like existing handlers
+- ✅ Match on action/resource for unified dispatch
+- **Impact**: Consistent with existing MCP handler architecture
 
 ## Integration Checklist
 
--   ✅ FSM state determines context freshness requirements
--   ✅ Policies enforce scope boundaries (ScopeLevel)
--   ✅ Compensation uses context snapshots for rollback
--   ✅ Events published for all major state changes (via EventBusProvider)
--   ✅ MCP tools provide unified query interface (ADR-033 pattern)
--   ✅ Beads task context flows through all layers (with proper DTO mapping)
+- ✅ FSM state determines context freshness requirements
+- ✅ Policies enforce scope boundaries (ScopeLevel)
+- ✅ Compensation uses context snapshots for rollback
+- ✅ Events published for all major state changes (via EventBusProvider)
+- ✅ MCP tools provide unified query interface (ADR-033 pattern)
+- ✅ Beads task context flows through all layers (with proper DTO mapping)
 
 ## Testing
 
--   **State transition tests** (8): Freshness checks, policy validation
--   **Compensation tests** (6): Rollback correctness, policy re-evaluation
--   **Event flow tests** (5): Subscribers reactive, event ordering
--   **Integration tests** (10): Full workflow + context + policies
--   **MCP tool tests** (5): Tool handlers, Result accuracy
+- **State transition tests** (8): Freshness checks, policy validation
+- **Compensation tests** (6): Rollback correctness, policy re-evaluation
+- **Event flow tests** (5): Subscribers reactive, event ordering
+- **Integration tests** (10): Full workflow + context + policies
+- **MCP tool tests** (5): Tool handlers, Result accuracy
 
 **Target**: 34+ tests, 80%+ coverage
 
 ## Success Criteria
 
--   ✅ FSM ↔ Context validation working (state gates freshness)
--   ✅ Policies enforced at all transition points
--   ✅ Compensation triggers on policy failure + rolls back correctly
--   ✅ Context snapshots enable time-travel recovery
--   ✅ All workflow events published + logged
--   ✅ MCP tools provide transparent access to all layers
+- ✅ FSM ↔ Context validation working (state gates freshness)
+- ✅ Policies enforced at all transition points
+- ✅ Compensation triggers on policy failure + rolls back correctly
+- ✅ Context snapshots enable time-travel recovery
+- ✅ All workflow events published + logged
+- ✅ MCP tools provide transparent access to all layers
 
 ---
 

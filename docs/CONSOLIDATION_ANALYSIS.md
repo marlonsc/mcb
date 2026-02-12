@@ -5,10 +5,10 @@
 
 ## Key Metrics
 
--   **50+ MCP Endpoints**: Across 8 handlers
--   **15+ Admin HTTP Endpoints**: Health, config, lifecycle, browse
--   **10+ Response Types**: Many single-use (dead weight)
--   **Reuse Opportunities**: 10 high-value refactoring targets identified
+- **50+ MCP Endpoints**: Across 8 handlers
+- **15+ Admin HTTP Endpoints**: Health, config, lifecycle, browse
+- **10+ Response Types**: Many single-use (dead weight)
+- **Reuse Opportunities**: 10 high-value refactoring targets identified
 
 ## Executive Summary
 
@@ -16,30 +16,30 @@
 
 8 handlers offering:
 
--   **Index**: Start, status, clear operations
--   **Search**: Code + memory semantic search
--   **Validate**: Code validation, complexity analysis
--   **Memory**: Observations, executions, quality gates, sessions
--   **Session**: Agent session CRUD + summarization
--   **Agent**: Tool call + delegation logging
--   **VCS**: Repository operations, branch comparison, impact analysis
--   **Project**: (Not yet implemented - opportunity for future work)
+- **Index**: Start, status, clear operations
+- **Search**: Code + memory semantic search
+- **Validate**: Code validation, complexity analysis
+- **Memory**: Observations, executions, quality gates, sessions
+- **Session**: Agent session CRUD + summarization
+- **Agent**: Tool call + delegation logging
+- **VCS**: Repository operations, branch comparison, impact analysis
+- **Project**: (Not yet implemented - opportunity for future work)
 
 ### What Admin UI Needs
 
 HTTP REST endpoints for:
 
--   Health & monitoring (K8s probes)
--   Configuration hot-reload
--   Service lifecycle management
--   Code browsing & navigation
--   (Missing: direct reuse of MCP capabilities)
+- Health & monitoring (K8s probes)
+- Configuration hot-reload
+- Service lifecycle management
+- Code browsing & navigation
+- (Missing: direct reuse of MCP capabilities)
 
 ### The Gap
 
--   **MCP handlers** are async, return `CallToolResult`, use trait-based dependencies
--   **Admin endpoints** are HTTP, return `Json<T>`, use Rocket decorators
--   **No bridge**: Admin UI doesn't consume MCP endpoints; instead duplicates logic
+- **MCP handlers** are async, return `CallToolResult`, use trait-based dependencies
+- **Admin endpoints** are HTTP, return `Json<T>`, use Rocket decorators
+- **No bridge**: Admin UI doesn't consume MCP endpoints; instead duplicates logic
 
 ## Top 10 Reuse Opportunities (ROI-Ranked)
 
@@ -47,57 +47,57 @@ HTTP REST endpoints for:
 
 1. **INDEX STATUS → HTTP WRAPPER** (30 min) - ✅ HIGH ROI
 
--   Wrap MCP `IndexHandler::handle(IndexAction::Status)` as HTTP endpoint
--   Eliminates duplicate status logic
+- Wrap MCP `IndexHandler::handle(IndexAction::Status)` as HTTP endpoint
+- Eliminates duplicate status logic
 
 1. **COLLECTION SEARCH** (2 hours) - ✅ HIGH ROI
 
--   Add `/collections/:name/search?q=...` using MCP SearchHandler
--   Enables semantic search UI in admin
+- Add `/collections/:name/search?q=...` using MCP SearchHandler
+- Enables semantic search UI in admin
 
 1. **VALIDATION ENDPOINTS** (1 hour) - ✅ MEDIUM ROI
 
--   Wrap MCP `ValidateHandler` for HTTP access
--   Admin can trigger validation without MCP client
+- Wrap MCP `ValidateHandler` for HTTP access
+- Admin can trigger validation without MCP client
 
 1. **COMPLEXITY ANALYSIS** (1 hour) - ✅ MEDIUM ROI
 
--   Expose code complexity analysis via HTTP
--   Extends admin UI capabilities
+- Expose code complexity analysis via HTTP
+- Extends admin UI capabilities
 
 ### Tier 2: Medium Effort, High Value (2-4 hours each)
 
 1. **RESPONSE TYPE CONSOLIDATION** (4 hours) - ✅ MEDIUM-HIGH ROI
 
--   Replace 10+ single-use response types with `ApiResponse<T>` wrapper
--   Reduces boilerplate by ~30%, improves consistency
+- Replace 10+ single-use response types with `ApiResponse<T>` wrapper
+- Reduces boilerplate by ~30%, improves consistency
 
 1. **MEMORY BROWSING** (3 hours) - ✅ MEDIUM ROI
 
--   Add HTTP endpoints for observation timeline
--   Enables admin debug UI for memory operations
+- Add HTTP endpoints for observation timeline
+- Enables admin debug UI for memory operations
 
 1. **VCS OPERATIONS** (2-3 hours) - ✅ MEDIUM ROI
 
--   Expose branch comparison, impact analysis via HTTP
--   Enables VCS browsing UI
+- Expose branch comparison, impact analysis via HTTP
+- Enables VCS browsing UI
 
 1. **SESSION BROWSING** (2 hours) - ✅ MEDIUM ROI
 
--   Add HTTP endpoints for session listing/details
--   Read-only admin UI for agent session monitoring
+- Add HTTP endpoints for session listing/details
+- Read-only admin UI for agent session monitoring
 
 ### Tier 3: Long-term Strategic (4+ hours)
 
 1. **PROJECT HANDLER** (8 hours) - ✅ HIGH ROI (long-term)
 
--   Implement service lifecycle in MCP
--   Admin UI delegates to MCP for service control
+- Implement service lifecycle in MCP
+- Admin UI delegates to MCP for service control
 
 1. **UNIFIED SERVICE FACADE** (16+ hours) - ✅ TRANSFORMATIONAL ROI
-    -   Single interface providing both HTTP and MCP access
-    -   Response types unified across protocols
-    -   Role-based filtering everywhere
+    - Single interface providing both HTTP and MCP access
+    - Response types unified across protocols
+    - Role-based filtering everywhere
 
 ## Handler Signature Patterns
 
@@ -126,12 +126,12 @@ pub fn handler(
 
 ### Shared Traits
 
--   ✅ Async-first execution
--   ✅ Consistent error handling patterns
--   ✅ Service dependency injection
--   ✅ JSON response formatting
--   ⚠️ Different transport mechanisms (MCP vs HTTP)
--   ⚠️ Different error types
+- ✅ Async-first execution
+- ✅ Consistent error handling patterns
+- ✅ Service dependency injection
+- ✅ JSON response formatting
+- ⚠️ Different transport mechanisms (MCP vs HTTP)
+- ⚠️ Different error types
 
 ## Response Type Analysis
 
@@ -190,29 +190,29 @@ let Some(resource) = &state.resource else {
 
 ### Phase 1: Quick Wins (4 hours)
 
--   `admin/handlers.rs` - Wrap index status endpoint
--   `admin/routes.rs` - Add new search route
--   Add `admin/search_handlers.rs` - New search HTTP endpoints
--   Add `admin/validate_handlers.rs` - Validation HTTP endpoints
+- `admin/handlers.rs` - Wrap index status endpoint
+- `admin/routes.rs` - Add new search route
+- Add `admin/search_handlers.rs` - New search HTTP endpoints
+- Add `admin/validate_handlers.rs` - Validation HTTP endpoints
 
 ### Phase 2: Consolidation (4 hours)
 
--   `admin/models.rs` - Create `ApiResponse<T>` wrapper
--   Refactor all 10+ admin handler files - Use new wrapper type
--   `admin/handlers.rs`, `admin/lifecycle_handlers.rs`, `admin/browse_handlers.rs`
+- `admin/models.rs` - Create `ApiResponse<T>` wrapper
+- Refactor all 10+ admin handler files - Use new wrapper type
+- `admin/handlers.rs`, `admin/lifecycle_handlers.rs`, `admin/browse_handlers.rs`
 
 ### Phase 3: Extensions (6 hours)
 
--   Add `admin/memory_handlers.rs` - Memory browsing endpoints
--   Add `admin/session_handlers.rs` - Session browsing endpoints
--   Add `admin/vcs_handlers.rs` - VCS browsing endpoints
--   Update `admin/routes.rs` - Mount new routes
+- Add `admin/memory_handlers.rs` - Memory browsing endpoints
+- Add `admin/session_handlers.rs` - Session browsing endpoints
+- Add `admin/vcs_handlers.rs` - VCS browsing endpoints
+- Update `admin/routes.rs` - Mount new routes
 
 ### Phase 4: Strategic (8+ hours)
 
--   Implement `handlers/project.rs` - Full project handler
--   Create unified service facade pattern
--   Add role-based filtering & pagination
+- Implement `handlers/project.rs` - Full project handler
+- Create unified service facade pattern
+- Add role-based filtering & pagination
 
 ## Testing Strategy
 
@@ -225,29 +225,29 @@ let Some(resource) = &state.resource else {
 
 ## Deployment Considerations
 
--   **Breaking Changes**: None in Phase 1-2 (additive only)
--   **Backward Compatibility**: Admin API versions can be incremented
--   **Performance**: HTTP wrappers add ~1ms latency per call
--   **Security**: All new admin endpoints require `AdminAuth` guard
+- **Breaking Changes**: None in Phase 1-2 (additive only)
+- **Backward Compatibility**: Admin API versions can be incremented
+- **Performance**: HTTP wrappers add ~1ms latency per call
+- **Security**: All new admin endpoints require `AdminAuth` guard
 
 ## Roadmap
 
 ### Sprint 1 (Week 1): Foundation
 
--   ✅ Complete Phase 1 (quick wins)
--   ✅ Start Phase 2 (response type consolidation)
+- ✅ Complete Phase 1 (quick wins)
+- ✅ Start Phase 2 (response type consolidation)
 
 ### Sprint 2 (Week 2): Extensions
 
--   ✅ Complete Phase 2
--   ✅ Complete Phase 3 (new endpoints)
--   📊 Performance benchmarking
+- ✅ Complete Phase 2
+- ✅ Complete Phase 3 (new endpoints)
+- 📊 Performance benchmarking
 
 ### Sprint 3-4 (Weeks 3-4): Strategic
 
--   ✅ Implement Project handler
--   ✅ Create unified facade
--   ✅ Full test coverage
+- ✅ Implement Project handler
+- ✅ Create unified facade
+- ✅ Full test coverage
 
 ## Success Metrics
 

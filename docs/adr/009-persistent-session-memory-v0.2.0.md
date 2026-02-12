@@ -37,20 +37,20 @@ Memory Context Browser v0.1.0 provides semantic code search but lacks session-le
 
 **Current problems:**
 
--   No persistence of tool observations across sessions
--   No session summaries or decision tracking
--   No context injection for session continuity
--   No semantic search over past work
--   Token waste re-discovering solved problems
--   No ROI metrics on context discovery
+- No persistence of tool observations across sessions
+- No session summaries or decision tracking
+- No context injection for session continuity
+- No semantic search over past work
+- Token waste re-discovering solved problems
+- No ROI metrics on context discovery
 
 **User demand:**
 
--   Developers need cross-session memory (like Claude-mem provides)
--   Need to recall past decisions and rationale
--   Need semantic search over session history
--   Need progressive disclosure (index → context → details)
--   Need token-efficient context injection
+- Developers need cross-session memory (like Claude-mem provides)
+- Need to recall past decisions and rationale
+- Need semantic search over session history
+- Need progressive disclosure (index → context → details)
+- Need token-efficient context injection
 
 **Reference implementation**: Claude-mem v8.5.2 demonstrates these features work well in practice with TypeScript + SQLite + Chroma architecture.
 
@@ -82,10 +82,10 @@ All memory-related MCP tools use the `memory_` prefix to avoid namespace collisi
 
 **Existing tools retained** (already namespaced):
 
--   `memory (action=store, resource=observation)` → alias for `memory (action=store, resource=observation)`
--   `search (resource=memory)` → alias for `memory (action=list, resource=observation)`
--   `session (action=summarize)` → unchanged (session domain)
--   `session (action=summarize)` → unchanged (session domain)
+- `memory (action=store, resource=observation)` → alias for `memory (action=store, resource=observation)`
+- `search (resource=memory)` → alias for `memory (action=list, resource=observation)`
+- `session (action=summarize)` → unchanged (session domain)
+- `session (action=summarize)` → unchanged (session domain)
 
 **Compatibility policy**:
 
@@ -120,39 +120,39 @@ Claude Code Session
 
 ### Positive
 
--   **Context preservation**: Past decisions, fixes, and discoveries survive sessions
--   **Token efficiency**: 10x savings via 3-layer progressive disclosure
--   **Unified platform**: Single MCP server for code search + session memory
--   **Infrastructure reuse**: Leverages existing vector stores, hybrid search
--   **Git integration**: Memory entries tagged with git context (ADR-008)
--   **Admin UI**: Session dashboard in web interface (ADR-007)
+- **Context preservation**: Past decisions, fixes, and discoveries survive sessions
+- **Token efficiency**: 10x savings via 3-layer progressive disclosure
+- **Unified platform**: Single MCP server for code search + session memory
+- **Infrastructure reuse**: Leverages existing vector stores, hybrid search
+- **Git integration**: Memory entries tagged with git context (ADR-008)
+- **Admin UI**: Session dashboard in web interface (ADR-007)
 
 ### Negative
 
--   **Complexity**: Adds ~15 new files, ~3000 LOC
--   **Storage growth**: Per-session observations increase disk usage
--   **Hook dependency**: Requires external hook setup for full functionality
--   **Compression model**: Needs configured embedding provider
+- **Complexity**: Adds ~15 new files, ~3000 LOC
+- **Storage growth**: Per-session observations increase disk usage
+- **Hook dependency**: Requires external hook setup for full functionality
+- **Compression model**: Needs configured embedding provider
 
 ## Alternatives Considered
 
 ### Alternative 1: Use Claude-mem directly as plugin
 
--   **Pros**: Proven, feature-complete
--   **Cons**: Separate service, no integration with code search
--   **Rejected**: Missed opportunity for unified platform
+- **Pros**: Proven, feature-complete
+- **Cons**: Separate service, no integration with code search
+- **Rejected**: Missed opportunity for unified platform
 
 ### Alternative 2: SQLite-only storage (like Claude-mem)
 
--   **Pros**: Simpler, proven approach
--   **Cons**: Duplicates existing vector infrastructure
--   **Rejected**: Leverage existing providers
+- **Pros**: Simpler, proven approach
+- **Cons**: Duplicates existing vector infrastructure
+- **Rejected**: Leverage existing providers
 
 ### Alternative 3: Defer to v0.3.0
 
--   **Pros**: Focus v0.2.0 on git only
--   **Cons**: Delays high-value feature
--   **Rejected**: Memory complements git context well
+- **Pros**: Focus v0.2.0 on git only
+- **Cons**: Delays high-value feature
+- **Rejected**: Memory complements git context well
 
 ## Implementation Notes
 
@@ -1420,16 +1420,16 @@ fn reciprocal_rank_fusion(
 
 ## Related ADRs
 
--   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - MemoryProvider follows trait-based DI
--   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async storage operations
--   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Memory provider routing
--   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Memory dashboard UI
--   [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git-tagged observations
--   [ADR-010: Hooks Subsystem](010-hooks-subsystem-agent-backed.md) - Hook observation storage
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI for memory services
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - MemoryProvider follows trait-based DI
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async storage operations
+- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Memory provider routing
+- [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Memory dashboard UI
+- [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git-tagged observations
+- [ADR-010: Hooks Subsystem](010-hooks-subsystem-agent-backed.md) - Hook observation storage
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI for memory services
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
 
 ## References
 
--   [Claude-mem v8.5.2](https://github.com/thedotmack/claude-mem) - Reference implementation
--   [Shaku Documentation](https://docs.rs/shaku) - DI framework (historical; see ADR-029)
+- [Claude-mem v8.5.2](https://github.com/thedotmack/claude-mem) - Reference implementation
+- [Shaku Documentation](https://docs.rs/shaku) - DI framework (historical; see ADR-029)

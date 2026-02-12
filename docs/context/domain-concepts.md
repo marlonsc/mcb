@@ -38,6 +38,7 @@ MCB delivers semantic code search by combining vector embeddings, git context, a
 ## Port Interfaces (Domain Boundaries)
 
 ### Provider Ports (External Services)
+
 - **EmbeddingProvider**: embed, embed_batch, dimensions, health_check
 - **VectorStoreProvider**: create_collection, insert, search_similar, delete
 - **HybridSearchProvider**: BM25 lexical + semantic combined search
@@ -48,6 +49,7 @@ MCB delivers semantic code search by combining vector embeddings, git context, a
 - **ProjectDetectionProvider**: Detect project type (Cargo, npm, Python, Go, Maven)
 
 ### Repository Ports (Persistence)
+
 - **ChunkRepository**: Code chunk CRUD
 - **MemoryRepository**: Observation storage + FTS search
 - **AgentRepository**: Agent session persistence + query
@@ -58,6 +60,7 @@ MCB delivers semantic code search by combining vector embeddings, git context, a
 - **OrgEntityRepository**: Multi-tenant org data
 
 ### Service Ports (Business Logic)
+
 - **IndexingServiceInterface**: Codebase indexing orchestration
 - **SearchServiceInterface**: Semantic search with filters
 - **ContextServiceInterface**: Context aggregation

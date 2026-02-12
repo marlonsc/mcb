@@ -64,6 +64,7 @@ All env keys prefixed with `MCP__PROVIDERS__EMBEDDING__CONFIGS__`. Default timeo
 ## Language Support (`mcb-providers/src/language/`)
 
 **13 languages** via tree-sitter v0.26: Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin
+
 - Language-specific processors with fallback to generic chunking
 - File extension → language detection
 

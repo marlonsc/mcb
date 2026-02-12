@@ -75,22 +75,22 @@
 
 ### Handler Implementation (✅ DONE)
 
--   [x] `memory (action=inject, resource=observation)` handler created
--   [x] GitBootstrap struct includes branch + commit
--   [x] Context formatted for prompt injection
--   [x] Token budgeting support
+- [x] `memory (action=inject, resource=observation)` handler created
+- [x] GitBootstrap struct includes branch + commit
+- [x] Context formatted for prompt injection
+- [x] Token budgeting support
 
 ### Storage Layer (✅ DONE)
 
--   [x] ObservationMetadata includes commit field
--   [x] SqliteMemoryRepository supports git filtering
--   [x] MemoryFilter includes branch/commit fields
+- [x] ObservationMetadata includes commit field
+- [x] SqliteMemoryRepository supports git filtering
+- [x] MemoryFilter includes branch/commit fields
 
 ### Context Tagging (✅ DONE)
 
--   [x] memory (action=store, resource=observation) auto-tags with git context
--   [x] GitContext utility captures branch, commit, repo_id
--   [x] Observations can be filtered by git branch/commit
+- [x] memory (action=store, resource=observation) auto-tags with git context
+- [x] GitContext utility captures branch, commit, repo_id
+- [x] Observations can be filtered by git branch/commit
 
 ## Integration Points
 
@@ -98,9 +98,9 @@
 
 The `memory (action=inject, resource=observation)` tool is registered in the MCP server and available via:
 
--   HTTP endpoint (post to `/rpc`)
--   Stdio transport
--   Any MCP client (Claude, other AI models)
+- HTTP endpoint (post to `/rpc`)
+- Stdio transport
+- Any MCP client (Claude, other AI models)
 
 ### 2. AI Model Integration
 
@@ -158,11 +158,11 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 
 ## Success Criteria (Phase 7)
 
--   [x] **MEM-05**: Context injection generates context for SessionStart ✓
--   [x] **MEM-06**: Observations tagged with branch and commit ✓
--   [x] **MEM-11**: MCP tool `inject_context` works end-to-end ✓
--   [ ] **Acceptance Test**: SessionStart hook integration test
--   [ ] **Documentation**: Integration guide for AI models
+- [x] **MEM-05**: Context injection generates context for SessionStart ✓
+- [x] **MEM-06**: Observations tagged with branch and commit ✓
+- [x] **MEM-11**: MCP tool `inject_context` works end-to-end ✓
+- [ ] **Acceptance Test**: SessionStart hook integration test
+- [ ] **Documentation**: Integration guide for AI models
 
 ## Example Usage Scenarios
 
@@ -178,9 +178,9 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 
 **Current SessionStart:**
 
--   AI automatically references this decision
--   Prevents re-discussing the same trade-offs
--   Builds on architectural choices already made
+- AI automatically references this decision
+- Prevents re-discussing the same trade-offs
+- Builds on architectural choices already made
 
 ### Scenario 2: Code Context Awareness
 
@@ -195,9 +195,9 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 
 **Current SessionStart:**
 
--   AI knows about recent code changes
--   Can reference specific implementations
--   Avoids duplicating work
+- AI knows about recent code changes
+- Can reference specific implementations
+- Avoids duplicating work
 
 ### Scenario 3: Learning Continuity
 
@@ -212,9 +212,9 @@ mcb --session-id=$SESSION_ID --inject-memory --limit=15
 
 **Current SessionStart:**
 
--   AI references this learning
--   Makes decisions based on precedent
--   Maintains consistency across sessions
+- AI references this learning
+- Makes decisions based on precedent
+- Maintains consistency across sessions
 
 ## Configuration
 
@@ -236,26 +236,26 @@ See `mcb_domain::ports::MemoryServiceInterface` for service-level configuration.
 
 ### Unit Tests
 
--   ✓ GitContext captures branch/commit correctly
--   ✓ MemoryFilter applies git filters correctly
--   ✓ memory (action=inject, resource=observation) returns proper format
+- ✓ GitContext captures branch/commit correctly
+- ✓ MemoryFilter applies git filters correctly
+- ✓ memory (action=inject, resource=observation) returns proper format
 
 ### Integration Tests (Phase 7 Task 7)
 
--   [ ] SessionStart hook calls memory (action=inject, resource=observation)
--   [ ] Context is properly injected into prompt
--   [ ] Git context is available in response
--   [ ] Token budgeting works correctly
+- [ ] SessionStart hook calls memory (action=inject, resource=observation)
+- [ ] Context is properly injected into prompt
+- [ ] Git context is available in response
+- [ ] Token budgeting works correctly
 
 ## Related Issues
 
--   **MEM-01**: SQLite observation storage (Phase 5) ✓
--   **MEM-02**: Session summaries (Phase 5) ✓
--   **MEM-03**: Hybrid search (Phase 6) ✓
--   **MEM-04**: Progressive disclosure (Phase 6) ✓
--   **MEM-05**: Context injection (Phase 7) ✓
--   **MEM-06**: Git tagging (Phase 7) ✓
--   **MEM-11**: inject_context tool (Phase 7) ✓
+- **MEM-01**: SQLite observation storage (Phase 5) ✓
+- **MEM-02**: Session summaries (Phase 5) ✓
+- **MEM-03**: Hybrid search (Phase 6) ✓
+- **MEM-04**: Progressive disclosure (Phase 6) ✓
+- **MEM-05**: Context injection (Phase 7) ✓
+- **MEM-06**: Git tagging (Phase 7) ✓
+- **MEM-11**: inject_context tool (Phase 7) ✓
 
 ## Next Steps (Phase 8+)
 

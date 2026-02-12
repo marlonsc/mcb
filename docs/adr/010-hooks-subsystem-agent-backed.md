@@ -34,30 +34,30 @@ Claude Code provides a hooks system for extending AI assistant behavior at lifec
 
 **Current limitations:**
 
--   Hooks are shell scripts with hardcoded rules
--   No semantic understanding of context
--   No integration with code search or session memory
--   Each hook operates in isolation
--   Complex decisions require manual rule maintenance
+- Hooks are shell scripts with hardcoded rules
+- No semantic understanding of context
+- No integration with code search or session memory
+- Each hook operates in isolation
+- Complex decisions require manual rule maintenance
 
 **Opportunity for integration:**
 
 Memory Context Browser v0.2.0 already provides (via ADR 008 and ADR 009):
 
--   **Semantic code search**- understand code context
--   **Session memory**- recall past decisions and observations
--   **Hybrid search**- combine BM25 + vector similarity
--   **Event bus**- decoupled component communication
--   **Provider pattern**- pluggable implementations
--   **Actor pattern**- async message-based processing
+- **Semantic code search**- understand code context
+- **Session memory**- recall past decisions and observations
+- **Hybrid search**- combine BM25 + vector similarity
+- **Event bus**- decoupled component communication
+- **Provider pattern**- pluggable implementations
+- **Actor pattern**- async message-based processing
 
 **User demand:**
 
--   Intelligent hook processing with semantic context
--   Agent-backed decisions using Claude models
--   Integration with existing code search and memory
--   Policy-based filtering with semantic fallback
--   Zero-config for basic use, full customization available
+- Intelligent hook processing with semantic context
+- Agent-backed decisions using Claude models
+- Integration with existing code search and memory
+- Policy-based filtering with semantic fallback
+- Zero-config for basic use, full customization available
 
 ## Decision
 
@@ -125,31 +125,31 @@ Claude Code Session
 
 ### Positive
 
--   **Minimal new code**: ~1500 LOC vs ~4000 LOC if built from scratch
--   **Consistent patterns**: Same DI, error handling, event patterns
--   **Unified platform**: Hooks integrate naturally with search + memory
--   **Tested infrastructure**: Reuses battle-tested components
--   **Easy maintenance**: Single codebase, shared improvements
+- **Minimal new code**: ~1500 LOC vs ~4000 LOC if built from scratch
+- **Consistent patterns**: Same DI, error handling, event patterns
+- **Unified platform**: Hooks integrate naturally with search + memory
+- **Tested infrastructure**: Reuses battle-tested components
+- **Easy maintenance**: Single codebase, shared improvements
 
 ### Negative
 
--   **Coupling**: Hooks depend on ADR 009 memory infrastructure
--   **Latency**: Agent calls add 500-2000ms for complex decisions
--   **API cost**: Claude API calls for agent processing
+- **Coupling**: Hooks depend on ADR 009 memory infrastructure
+- **Latency**: Agent calls add 500-2000ms for complex decisions
+- **API cost**: Claude API calls for agent processing
 
 ## Alternatives Considered
 
 ### Alternative 1: Standalone hooks service
 
--   **Pros**: Independent, no dependencies
--   **Cons**: Duplicates 80% of existing infrastructure
--   **Rejected**: Misses integration opportunity
+- **Pros**: Independent, no dependencies
+- **Cons**: Duplicates 80% of existing infrastructure
+- **Rejected**: Misses integration opportunity
 
 ### Alternative 2: Simple MCP tools only (no agent)
 
--   **Pros**: Fast, no API cost
--   **Cons**: Limited to rule-based decisions
--   **Rejected**: Doesn't meet semantic understanding requirement
+- **Pros**: Fast, no API cost
+- **Cons**: Limited to rule-based decisions
+- **Rejected**: Doesn't meet semantic understanding requirement
 
 ## Implementation Notes
 
@@ -1154,16 +1154,16 @@ if let Some(git) = &self.git_provider {
 
 ## Related ADRs
 
--   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - HookProcessor follows trait-based DI
--   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async hook processing
--   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Hook monitoring UI
--   [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git context in hooks
--   [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Hook observation storage
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI for hook services
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - HookProcessor follows trait-based DI
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async hook processing
+- [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Hook monitoring UI
+- [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git context in hooks
+- [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Hook observation storage
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI for hook services
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
 
 ## References
 
--   [Claude Code Hooks Documentation](https://docs.anthropic.com/claude-code/hooks)
--   [Shaku Documentation](https://docs.rs/shaku) - DI framework (historical; see ADR-029)
--   Existing patterns: `crates/mcb-infrastructure/src/events/mod.rs`, `crates/mcb-infrastructure/src/di/registry.rs`, `crates/mcb-application/src/use_cases/context.rs`
+- [Claude Code Hooks Documentation](https://docs.anthropic.com/claude-code/hooks)
+- [Shaku Documentation](https://docs.rs/shaku) - DI framework (historical; see ADR-029)
+- Existing patterns: `crates/mcb-infrastructure/src/events/mod.rs`, `crates/mcb-infrastructure/src/di/registry.rs`, `crates/mcb-application/src/use_cases/context.rs`

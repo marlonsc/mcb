@@ -53,10 +53,10 @@ pub struct ContextSnapshot {
 
 **Rationale**:
 
--   **im::Vector**: Provides copy-on-write semantics. New snapshots don't copy old history.
--   **TTL policy**: Automatic cleanup prevents unbounded growth (keep 24h, archive older)
--   **Immutable**: No mutation, prevents consistency bugs
--   **DashMap**: Lock-free staleness tracking (high throughput)
+- **im::Vector**: Provides copy-on-write semantics. New snapshots don't copy old history.
+- **TTL policy**: Automatic cleanup prevents unbounded growth (keep 24h, archive older)
+- **Immutable**: No mutation, prevents consistency bugs
+- **DashMap**: Lock-free staleness tracking (high throughput)
 
 ### 2. Staleness Computation
 
@@ -206,19 +206,19 @@ println!("Memory changes: {} new observations", timeline.memory_changes.new_obse
 
 **Workflow FSM (ADR-034)**:
 
--   Each FSM state transition tagged with context snapshot
--   On "Execute" state entry: capture snapshot (for rollback if needed)
--   Compensation handler invalidates snapshots if rolled back
+- Each FSM state transition tagged with context snapshot
+- On "Execute" state entry: capture snapshot (for rollback if needed)
+- Compensation handler invalidates snapshots if rolled back
 
 **Context Scout (ADR-035)**:
 
--   Freshness enum embedded in every snapshot
--   Staleness signals trigger context re-discovery
+- Freshness enum embedded in every snapshot
+- Staleness signals trigger context re-discovery
 
 **Policies (ADR-036)**:
 
--   Policy evaluation results tied to snapshot (reproducible)
--   Historical policy compliance queries: "Was code compliant at 14:30?"
+- Policy evaluation results tied to snapshot (reproducible)
+- Historical policy compliance queries: "Was code compliant at 14:30?"
 
 ## ADR-035 Contract Assumptions
 
@@ -244,31 +244,31 @@ pub enum ContextFreshness {
 
 ADR-035 specifies the `CachedContextScout` provider with:
 
--   **Default TTL**: 30 seconds (configurable)
--   **Invalidation strategy**: Time-based (TTL expiry) + signal-based (git hooks, manual edits)
--   **Cache layers**: Separate caches for git status, tracker state, and full context
+- **Default TTL**: 30 seconds (configurable)
+- **Invalidation strategy**: Time-based (TTL expiry) + signal-based (git hooks, manual edits)
+- **Cache layers**: Separate caches for git status, tracker state, and full context
 
 **ADR-045 Extension**:
 
--   Snapshots are stored immutably with timestamps
--   TTL policy determines which snapshots are kept in-memory vs archived to disk
--   Staleness signals (from ADR-035) trigger context re-validation during snapshot creation
+- Snapshots are stored immutably with timestamps
+- TTL policy determines which snapshots are kept in-memory vs archived to disk
+- Staleness signals (from ADR-035) trigger context re-validation during snapshot creation
 
 ### v0.4.0 Freshness Tracking EXTENDS ADR-035
 
 **What ADR-035 provides**:
 
--   Freshness enum (Fresh/Acceptable/Stale/StaleWithRisk)
--   CachedContextScout with TTL-based caching
--   Staleness signals (time, git hooks, manual edits)
+- Freshness enum (Fresh/Acceptable/Stale/StaleWithRisk)
+- CachedContextScout with TTL-based caching
+- Staleness signals (time, git hooks, manual edits)
 
 **What ADR-045 adds**:
 
--   Immutable snapshot versioning (capture context at point-in-time)
--   Time-travel queries (get context as it was at 14:30)
--   Snapshot-level staleness tracking (not just cache invalidation)
--   TTL-based garbage collection (keep 24h, archive older)
--   Historical policy compliance queries
+- Immutable snapshot versioning (capture context at point-in-time)
+- Time-travel queries (get context as it was at 14:30)
+- Snapshot-level staleness tracking (not just cache invalidation)
+- TTL-based garbage collection (keep 24h, archive older)
+- Historical policy compliance queries
 
 **Explicit Dependency**: v0.4.0 ContextVersioning **depends on** ADR-035 ContextFreshness. The freshness enum is embedded in every snapshot and used to gate search Result ranking and policy evaluation.
 
@@ -295,21 +295,21 @@ let snapshot = ContextSnapshot {
 
 ## Testing
 
--   **Unit tests** (8): Snapshot creation, TTL GC, time-travel queries
--   **Immutability tests** (3): No accidental mutations, thread-safe
--   **Staleness tests** (7): Time-based, signal-based, composite
--   **Time-travel tests** (5): Correctness of historical queries
--   **Performance tests** (4): Snapshot creation <10ms, GC <100ms
+- **Unit tests** (8): Snapshot creation, TTL GC, time-travel queries
+- **Immutability tests** (3): No accidental mutations, thread-safe
+- **Staleness tests** (7): Time-based, signal-based, composite
+- **Time-travel tests** (5): Correctness of historical queries
+- **Performance tests** (4): Snapshot creation <10ms, GC <100ms
 
 **Target**: 27+ tests, 85%+ coverage
 
 ## Success Criteria
 
--   ✅ Snapshot creation <10ms
--   ✅ Time-travel query <20ms for 1000+ snapshots
--   ✅ Memory usage < 100MB for 24h history (auto-GC)
--   ✅ Staleness signals working (time + git + manual)
--   ✅ Historical policy compliance queryable
+- ✅ Snapshot creation <10ms
+- ✅ Time-travel query <20ms for 1000+ snapshots
+- ✅ Memory usage < 100MB for 24h history (auto-GC)
+- ✅ Staleness signals working (time + git + manual)
+- ✅ Historical policy compliance queryable
 
 ## Architecture Corrections
 
@@ -319,12 +319,12 @@ let snapshot = ContextSnapshot {
 
 **Resolution**:
 
--   **Added**: "ADR-035 Contract Assumptions" section documenting:
-  -   ContextFreshness entity definition and reuse
-  -   CachedContextScout TTL and invalidation strategy
-  -   How v0.4.0 freshness tracking EXTENDS (not replaces) ADR-035
-  -   Explicit dependency: v0.4.0 ContextVersioning depends on ADR-035 ContextFreshness
-  -   Snapshot lifecycle showing freshness integration
+- **Added**: "ADR-035 Contract Assumptions" section documenting:
+- ContextFreshness entity definition and reuse
+- CachedContextScout TTL and invalidation strategy
+- How v0.4.0 freshness tracking EXTENDS (not replaces) ADR-035
+- Explicit dependency: v0.4.0 ContextVersioning depends on ADR-035 ContextFreshness
+- Snapshot lifecycle showing freshness integration
 
 **Rationale**: Clear documentation of cross-ADR dependencies prevents implementation bugs and ensures ADR-035 (ACCEPTED/locked) is not accidentally modified during Phase 9 implementation.
 

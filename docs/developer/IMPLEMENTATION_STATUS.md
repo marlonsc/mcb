@@ -42,10 +42,10 @@
 
 **Plan Expected**:
 
--   `src/linters/mod.rs`
--   `src/linters/clippy.rs`
--   `src/linters/ruff.rs`
--   `tests/integration_linters.rs`
+- `src/linters/mod.rs`
+- `src/linters/clippy.rs`
+- `src/linters/ruff.rs`
+- `tests/integration_linters.rs`
 
 **Actual Files**:
 
@@ -62,11 +62,11 @@
 
 **Plan Expected**:
 
--   `src/ast/mod.rs`
--   `src/ast/query.rs`
--   `src/ast/decoder.rs`
--   `src/ast/languages.rs`
--   `tests/integration_ast.rs`
+- `src/ast/mod.rs`
+- `src/ast/query.rs`
+- `src/ast/decoder.rs`
+- `src/ast/languages.rs`
+- `tests/integration_ast.rs`
 
 **Actual Files**:
 
@@ -82,10 +82,10 @@
 
 **Plan Expected**:
 
--   `src/engines/expression_engine.rs`
--   `src/engines/rete_engine.rs`
--   `src/engines/router.rs`
--   `tests/integration_engines.rs`
+- `src/engines/expression_engine.rs`
+- `src/engines/rete_engine.rs`
+- `src/engines/router.rs`
+- `tests/integration_engines.rs`
 
 **Actual Files**:
 
@@ -107,10 +107,10 @@
 
 **Plan Expected**:
 
--   `src/metrics/mod.rs`
--   `src/metrics/analyzer.rs`
--   `src/metrics/thresholds.rs`
--   `tests/integration_metrics.rs`
+- `src/metrics/mod.rs`
+- `src/metrics/analyzer.rs`
+- `src/metrics/thresholds.rs`
+- `tests/integration_metrics.rs`
 
 **Actual Files**:
 
@@ -147,10 +147,10 @@
 
 **Plan Expected**:
 
--   `src/duplication/mod.rs`
--   `src/duplication/fingerprint.rs`
--   `src/duplication/detector.rs`
--   `tests/integration_duplication.rs`
+- `src/duplication/mod.rs`
+- `src/duplication/fingerprint.rs`
+- `src/duplication/detector.rs`
+- `tests/integration_duplication.rs`
 
 **Actual Files**:
 
@@ -178,9 +178,9 @@
 
 **Plan Expected**:
 
--   `src/architecture/mod.rs`
--   `src/architecture/layer_validator.rs`
--   `tests/integration_architecture.rs`
+- `src/architecture/mod.rs`
+- `src/architecture/layer_validator.rs`
+- `tests/integration_architecture.rs`
 
 **Actual Files**:
 
@@ -206,9 +206,9 @@
 
 **Plan Expected**:
 
--   CLI improvements
--   Benchmarks
--   `tests/integration_full.rs`
+- CLI improvements
+- Benchmarks
+- `tests/integration_full.rs`
 
 **Actual Files**:
 
@@ -301,13 +301,13 @@ All framework migrations completed.
 
 **Solution**: Provider port traits moved to `mcb-domain/src/ports/providers/`:
 
--   `embedding.rs` - EmbeddingProvider trait
--   `vector_store.rs` - VectorStoreProvider trait
--   `cache.rs` - CacheProvider trait
--   `hybrid_search.rs` - HybridSearchProvider trait
--   `language_chunking.rs` - LanguageChunkingProvider trait
--   `crypto.rs` - CryptoProvider trait
--   `config.rs` - ConfigProvider trait
+- `embedding.rs` - EmbeddingProvider trait
+- `vector_store.rs` - VectorStoreProvider trait
+- `cache.rs` - CacheProvider trait
+- `hybrid_search.rs` - HybridSearchProvider trait
+- `language_chunking.rs` - LanguageChunkingProvider trait
+- `crypto.rs` - CryptoProvider trait
+- `config.rs` - ConfigProvider trait
 
 `mcb-application` re-exports from `mcb-domain` for backward compatibility.
 

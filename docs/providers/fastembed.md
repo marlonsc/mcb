@@ -4,11 +4,11 @@ The FastEmbed Provider offers high-quality local embeddings without external API
 
 ## Overview
 
--   **Type**: Local Embedding Provider
--   **Model**: AllMiniLML6V2 (384 dimensions)
--   **Dependencies**: Zero external APIs
--   **Performance**: Optimized ONNX inference
--   **Download**: Model downloaded automatically on first execution
+- **Type**: Local Embedding Provider
+- **Model**: AllMiniLML6V2 (384 dimensions)
+- **Dependencies**: Zero external APIs
+- **Performance**: Optimized ONNX inference
+- **Download**: Model downloaded automatically on first execution
 
 ## Configuration
 
@@ -82,18 +82,18 @@ let embeddings = provider.embed_batch(&texts).await?;
 
 ### Expected Benchmarks
 
--   **Initialization**: ~2-5 seconds (model download)
--   **Single embedding**: ~10-50ms
--   **Batch of 100**: ~100-500ms
--   **Memory**: ~100-500MB (depending on model)
+- **Initialization**: ~2-5 seconds (model download)
+- **Single embedding**: ~10-50ms
+- **Batch of 100**: ~100-500ms
+- **Memory**: ~100-500MB (depending on model)
 
 ### Optimization
 
 For better performance:
 
--   Use batch embedding when possible
--   Cache embeddings when appropriate
--   Consider smaller models for applications with memory constraints
+- Use batch embedding when possible
+- Cache embeddings when appropriate
+- Consider smaller models for applications with memory constraints
 
 ## Troubleshooting
 
@@ -134,7 +134,7 @@ The FastEmbed Provider:
 
 ## Next Steps
 
--   Support for more FastEmbed models
--   Configuration of execution providers (CPU/GPU)
--   Automatic quantization to reduce memory usage
--   Embedding cache for frequent texts
+- Support for more FastEmbed models
+- Configuration of execution providers (CPU/GPU)
+- Automatic quantization to reduce memory usage
+- Embedding cache for frequent texts

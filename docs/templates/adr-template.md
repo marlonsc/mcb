@@ -22,23 +22,23 @@
 
 {Consider impacts on:
 
--   Development velocity
--   System performance
--   Maintainability
--   Testability
--   Deployment complexity
--   Operational overhead
--   Security implications
--   Cost implications
+- Development velocity
+- System performance
+- Maintainability
+- Testability
+- Deployment complexity
+- Operational overhead
+- Security implications
+- Cost implications
 }
 
 ### Positive Consequences
 
--   {List benefits and advantages}
+- {List benefits and advantages}
 
 ### Negative Consequences
 
--   {List drawbacks and trade-offs}
+- {List drawbacks and trade-offs}
 
 ## Alternatives Considered
 
@@ -46,20 +46,20 @@
 
 {For each alternative:
 
--   Describe the Option
--   Explain why it was not chosen
--   Note any circumstances where it might be reconsidered}
+- Describe the Option
+- Explain why it was not chosen
+- Note any circumstances where it might be reconsidered}
 
 ### Alternative 1: {Name}
 
--   **Description**: {Brief description}
--   **Pros**: {Advantages}
--   **Cons**: {Disadvantages}
--   **Rejection Reason**: {Why this wasn't chosen}
+- **Description**: {Brief description}
+- **Pros**: {Advantages}
+- **Cons**: {Disadvantages}
+- **Rejection Reason**: {Why this wasn't chosen}
 
 ### Alternative 2: {Name}
 
--   {Similar structure as Alternative 1}
+- {Similar structure as Alternative 1}
 
 ## Implementation Notes
 
@@ -67,19 +67,19 @@
 
 {Include:
 
--   Code changes required
--   Migration path
--   Testing strategy
--   Rollback plan
--   Performance considerations
--   Security considerations
+- Code changes required
+- Migration path
+- Testing strategy
+- Rollback plan
+- Performance considerations
+- Security considerations
 }
 
 ## References
 
 {Links to related documents, issues, or discussions}
 
--   [Issue/PR Link](URL)
--   [Related ADR](relative/path/to/adr.md)
--   [External Documentation](URL)
--   [RFC/Discussion](URL)
+- [Issue/PR Link](URL)
+- [Related ADR](relative/path/to/adr.md)
+- [External Documentation](URL)
+- [RFC/Discussion](URL)

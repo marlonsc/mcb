@@ -7,9 +7,9 @@ severity: "warning"
 enabled: true
 
 config:
-  file_patterns: {{file_patterns}}
-  exclude_patterns: {{exclude_patterns}}
-  forbidden_patterns: {{forbidden_patterns}}
+  file_patterns: "{{file_patterns}}"
+  exclude_patterns: "{{exclude_patterns}}"
+  forbidden_patterns: "{{forbidden_patterns}}"
 
 validation:
   fields:

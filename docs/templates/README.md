@@ -6,16 +6,16 @@ This directory contains templates and standards for Memory Context Browser docum
 
 ### ADR Template
 
--   **[ADR template](adr-template.md)** - Architecture Decision Record template
--   **Usage**: `make adr-new` to create new ADR interactively
+- **[ADR template](adr-template.md)** - Architecture Decision Record template
+- **Usage**: `make adr-new` to create new ADR interactively
 
 ### Document Standards
 
 #### File Naming Convention
 
--   Use kebab-case for file names: `my-document.md`
--   Prefix with numbers for ordering: `01-getting-started.md`
--   Use descriptive names: `deployment-guide.md` not `deploy.md`
+- Use kebab-case for file names: `my-document.md`
+- Prefix with numbers for ordering: `01-getting-started.md`
+- Use descriptive names: `deployment-guide.md` not `deploy.md`
 
 #### Header Structure
 
@@ -63,10 +63,10 @@ See [Contributing Guide](developer/CONTRIBUTING.md) for guidelines.
 
 1. **Choose appropriate category**:
 
-    -   `user-guide/` - User-facing documentation
-    -   `developer/` - Development guides
-    -   `architecture/` - Technical architecture
-    -   `operations/` - Deployment & operations
+    - `user-guide/` - User-facing documentation
+    - `developer/` - Development guides
+    - `architecture/` - Technical architecture
+    - `operations/` - Deployment & operations
 
 2. **Copy appropriate template**:
 
@@ -86,26 +86,26 @@ See [Contributing Guide](developer/CONTRIBUTING.md) for guidelines.
 
 ### Content Quality
 
--   [ ] Clear purpose and scope
--   [ ] Appropriate audience identification
--   [ ] Logical structure and flow
--   [ ] Accurate technical information
--   [ ] Up-to-date examples and code
+- [ ] Clear purpose and scope
+- [ ] Appropriate audience identification
+- [ ] Logical structure and flow
+- [ ] Accurate technical information
+- [ ] Up-to-date examples and code
 
 ### Format Quality
 
--   [ ] Consistent header structure
--   [ ] Proper markdown formatting
--   [ ] Syntax-highlighted code blocks
--   [ ] Working cross-references
--   [ ] Valid front matter (if applicable)
+- [ ] Consistent header structure
+- [ ] Proper markdown formatting
+- [ ] Syntax-highlighted code blocks
+- [ ] Working cross-references
+- [ ] Valid front matter (if applicable)
 
 ### Maintenance Quality
 
--   [ ] Automated updates where possible
--   [ ] Version control friendly
--   [ ] CI/CD validated
--   [ ] Regular review schedule
+- [ ] Automated updates where possible
+- [ ] Version control friendly
+- [ ] CI/CD validated
+- [ ] Regular review schedule
 
 ## 🔧 Automation
 

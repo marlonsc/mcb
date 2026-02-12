@@ -18,8 +18,8 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   timeout: 30000,
   use: {
-    baseURL: process.env.MCB_TEST_PORT 
-      ? `http://localhost:${process.env.MCB_TEST_PORT}` 
+    baseURL: process.env.MCB_TEST_PORT
+      ? `http://localhost:${process.env.MCB_TEST_PORT}`
       : 'http://localhost:18080',
     trace: process.env.CI ? 'off' : 'on-first-retry',
     screenshot: 'only-on-failure',
@@ -36,8 +36,8 @@ export default defineConfig({
 
   webServer: {
     command: `rm -f /tmp/mcb-playwright.db && if [ -x target/release/mcb ]; then MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http target/release/mcb serve --server; else MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http cargo run --release --bin mcb -- serve --server; fi`,
-    url: process.env.MCB_TEST_PORT 
-      ? `http://localhost:${process.env.MCB_TEST_PORT}` 
+    url: process.env.MCB_TEST_PORT
+      ? `http://localhost:${process.env.MCB_TEST_PORT}`
       : 'http://localhost:18080',
     reuseExistingServer: !process.env.CI,
     timeout: 600 * 1000,

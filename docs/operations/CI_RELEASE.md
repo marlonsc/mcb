@@ -4,9 +4,9 @@
 
 This document describes the automated CI/CD pipeline and release process for Memory Context Browser. The system uses:
 
--   **Local Validation**: Git pre-commit hooks and `make` targets for fast feedback
--   **GitHub Actions**: Automated CI pipeline matching local validation
--   **Automated Releases**: Tag-based release workflow with binary artifacts
+- **Local Validation**: Git pre-commit hooks and `make` targets for fast feedback
+- **GitHub Actions**: Automated CI pipeline matching local validation
+- **Automated Releases**: Tag-based release workflow with binary artifacts
 
 ## Table of Contents
 
@@ -45,10 +45,10 @@ make validate QUICK=1
 
 **Validation includes:**
 
--   Format check (rustfmt)
--   Clippy lints with Rust 2024 edition compatibility
--   Architecture validation (imports, dependencies, layer boundaries)
--   No test execution (tests run in CI after push)
+- Format check (rustfmt)
+- Clippy lints with Rust 2024 edition compatibility
+- Architecture validation (imports, dependencies, layer boundaries)
+- No test execution (tests run in CI after push)
 
 ### Running Pre-commit Manually
 
@@ -202,24 +202,24 @@ The release workflow is triggered by tags matching `v*` pattern and performs:
 
 1. **Pre-Release Validation**: Runs full CI validation
 
--   Lint (Rust 2024 compliance)
--   Unit tests (4 threads)
--   Integration tests
--   Architecture validation (strict)
--   Security audit
--   Documentation build
+- Lint (Rust 2024 compliance)
+- Unit tests (4 threads)
+- Integration tests
+- Architecture validation (strict)
+- Security audit
+- Documentation build
 
 1. **Build Release Artifacts**: Compiles for all platforms
 
--   Linux: `mcb-x86_64-linux-gnu`
--   macOS: `mcb-x86_64-macos`
--   Windows: `mcb-x86_64-windows.exe`
+- Linux: `mcb-x86_64-linux-gnu`
+- macOS: `mcb-x86_64-macos`
+- Windows: `mcb-x86_64-windows.exe`
 
 1. **Create GitHub Release**: Publishes release with:
 
--   Automatic changelog (git log since previous release)
--   All binary artifacts as downloads
--   Release notes from CHANGELOG.md
+- Automatic changelog (git log since previous release)
+- All binary artifacts as downloads
+- Release notes from CHANGELOG.md
 
 ### Release Process Summary
 
@@ -242,9 +242,9 @@ https://github.com/marlonsc/mcb/releases
 
 Each release includes:
 
--   Pre-compiled binaries for all platforms
--   Automatic changelog
--   Installation instructions
+- Pre-compiled binaries for all platforms
+- Automatic changelog
+- Installation instructions
 
 ---
 
@@ -254,10 +254,10 @@ Each release includes:
 
 Tests can timeout in CI due to:
 
--   High parallelization (many tests running simultaneously)
--   GitHub runner resource constraints
--   Integration tests that take time
--   Network-dependent operations
+- High parallelization (many tests running simultaneously)
+- GitHub runner resource constraints
+- Integration tests that take time
+- Network-dependent operations
 
 ### Timeout Configuration
 
@@ -391,7 +391,7 @@ rustc --version  # Should be stable
    make build RELEASE=1
    ```
 
-1. No uncommitted changes in version
+3. No uncommitted changes in version
 
    ```bash
    git status
@@ -414,9 +414,9 @@ gh run view <run-id> --log
 
 **Common issues:**
 
--   Pre-release validation failed (check test/lint/audit logs)
--   Tag format incorrect (must be `v*` like `v0.1.4`)
--   Artifacts failed to upload
+- Pre-release validation failed (check test/lint/audit logs)
+- Tag format incorrect (must be `v*` like `v0.1.4`)
+- Artifacts failed to upload
 
 ---
 
@@ -485,6 +485,6 @@ make release               # Full release pipeline
 
 ## See Also
 
--   [Deployment Guide](./DEPLOYMENT.md) - Installation and configuration
--   [CHANGELOG](./CHANGELOG.md) - Release history
--   [Architecture](../architecture/ARCHITECTURE.md) - System design
+- [Deployment Guide](./DEPLOYMENT.md) - Installation and configuration
+- [CHANGELOG](./CHANGELOG.md) - Release history
+- [Architecture](../architecture/ARCHITECTURE.md) - System design

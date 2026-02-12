@@ -20,31 +20,31 @@ Different service categories have different requirements:
 
 1. **Infrastructure services** (cache, auth, events, metrics):
 
--   Stateless or simple state
--   Can be instantiated at compile-time with default values
--   Don't require async initialization
--   Have predictable construction parameters
+- Stateless or simple state
+- Can be instantiated at compile-time with default values
+- Don't require async initialization
+- Have predictable construction parameters
 
 1. **Application services** (indexing, search, context):
 
--   Require runtime configuration (API keys, endpoints, model names)
--   Need async initialization (connecting to vector stores, loading models)
--   Have complex dependencies on production providers
--   Construction parameters vary based on configuration
+- Require runtime configuration (API keys, endpoints, model names)
+- Need async initialization (connecting to vector stores, loading models)
+- Have complex dependencies on production providers
+- Construction parameters vary based on configuration
 
 ### Why Not Pure Shaku?
 
 Shaku's `module!` macro and `#[derive(Component)]` work well when:
 
--   All dependencies implement `Default`
--   No async initialization is needed
--   Construction is uniform across environments
+- All dependencies implement `Default`
+- No async initialization is needed
+- Construction is uniform across environments
 
 However, production providers like `OllamaEmbeddingProvider` or `MilvusVectorStoreProvider` require:
 
--   Configuration values (URLs, API keys)
--   Async connection establishment
--   Error handling during creation
+- Configuration values (URLs, API keys)
+- Async connection establishment
+- Error handling during creation
 
 These don't map cleanly to Shaku's compile-time component model.
 
@@ -121,21 +121,21 @@ let services = DomainServicesFactory::create_services(
 
 ### Positive
 
--   **Clear mental model**: Shaku = defaults, Factories = production
--   **Easy testing**: `DiContainerBuilder::new().build()` gives working test container
--   **Configuration-driven**: Provider selection happens at runtime based on config
--   **Async-friendly**: Factories can perform async initialization
+- **Clear mental model**: Shaku = defaults, Factories = production
+- **Easy testing**: `DiContainerBuilder::new().build()` gives working test container
+- **Configuration-driven**: Provider selection happens at runtime based on config
+- **Async-friendly**: Factories can perform async initialization
 
 ### Negative
 
--   **Two patterns to understand**: Developers must know when to use each
--   **Not fully type-checked**: Factory selection happens at runtime
--   **Documentation critical**: Without this ADR, the pattern may seem inconsistent
+- **Two patterns to understand**: Developers must know when to use each
+- **Not fully type-checked**: Factory selection happens at runtime
+- **Documentation critical**: Without this ADR, the pattern may seem inconsistent
 
 ### Neutral
 
--   **Hybrid approach**: Neither pure compile-time nor pure runtime DI
--   **Migration path**: Can gradually move more to Shaku if Shaku adds async support
+- **Hybrid approach**: Neither pure compile-time nor pure runtime DI
+- **Migration path**: Can gradually move more to Shaku if Shaku adds async support
 
 ## Implementation Notes
 
@@ -187,10 +187,10 @@ pub async fn run_server(config_path: Option<&Path>) -> Result<()> {
 
 ### Migration Impact
 
--   **Shaku modules** will be completely removed
--   **Runtime factories** will be replaced with direct constructor injection
--   **Two-layer complexity** will be eliminated in favor of simple service composition
--   **Infrastructure defaults** will be provided through constructor parameters
+- **Shaku modules** will be completely removed
+- **Runtime factories** will be replaced with direct constructor injection
+- **Two-layer complexity** will be eliminated in favor of simple service composition
+- **Infrastructure defaults** will be provided through constructor parameters
 
 ### Backward Compatibility
 
@@ -198,19 +198,19 @@ The public service interfaces will remain stable. Only the internal composition 
 
 ## Related ADRs
 
--   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Trait-based provider DI
--   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - **SUPERSEDED** by [ADR 024](024-simplified-dependency-injection.md)
--   [ADR-003: Unified Provider Architecture & Routing](../003-unified-provider-architecture.md) - Provider factory selection
--   [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - DI pattern enforcement
--   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - AdminService DI
--   [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - GitProvider factory (v0.2.0)
--   [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - MemoryProvider DI (v0.2.0)
--   [ADR-010: Hooks Subsystem](010-hooks-subsystem-agent-backed.md) - HookProcessor DI (v0.2.0)
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization for DI
--   [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md) - **SUPERSEDES THIS ADR**
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Trait-based provider DI
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - **SUPERSEDED** by [ADR 024](024-simplified-dependency-injection.md)
+- [ADR-003: Unified Provider Architecture & Routing](../003-unified-provider-architecture.md) - Provider factory selection
+- [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - DI pattern enforcement
+- [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - AdminService DI
+- [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - GitProvider factory (v0.2.0)
+- [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - MemoryProvider DI (v0.2.0)
+- [ADR-010: Hooks Subsystem](010-hooks-subsystem-agent-backed.md) - HookProcessor DI (v0.2.0)
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization for DI
+- [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md) - **SUPERSEDES THIS ADR**
 
 ## References
 
--   [Shaku Documentation](https://docs.rs/shaku) (historical; see ADR-029)
--   [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
--   Workspace-next refactoring plan (January 2026)
+- [Shaku Documentation](https://docs.rs/shaku) (historical; see ADR-029)
+- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- Workspace-next refactoring plan (January 2026)

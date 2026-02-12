@@ -24,10 +24,10 @@ ADR-043 hybrid search ranks results by BM25 + semantics + graph. But ranking is 
 
 Example:
 
--   Query: "authentication"
--   For a **security review task**: want cryptography libraries + auth policies
--   For a **onboarding task**: want example login code + documentation
--   Same query, different ideal results
+- Query: "authentication"
+- For a **security review task**: want cryptography libraries + auth policies
+- For a **onboarding task**: want example login code + documentation
+- Same query, different ideal results
 
 **Solution**: Route queries based on **task context** without expensive ML training.
 
@@ -275,31 +275,31 @@ if node.is_public == true && node.kind == "Function" {
 
 **ADR-043 (Hybrid Search)**:
 
--   After RRF fusion, apply routing to rerank
+- After RRF fusion, apply routing to rerank
 
 **ADR-045 (Versioning)**:
 
--   Store task-specific context snapshots (include routing rules used)
+- Store task-specific context snapshots (include routing rules used)
 
 **ADR-046 (Policies)**:
 
--   Policies can gate routing (e.g., "Security policy requires high-confidence scoring")
+- Policies can gate routing (e.g., "Security policy requires high-confidence scoring")
 
 ## Testing
 
--   **AST router tests** (8): Feature/bug/security task routing, scoring logic
--   **Rule engine tests** (5): rhai script parsing, execution, error handling
--   **ML router tests** (5, deferred): Model loading, inference, batching
+- **AST router tests** (8): Feature/bug/security task routing, scoring logic
+- **Rule engine tests** (5): rhai script parsing, execution, error handling
+- **ML router tests** (5, deferred): Model loading, inference, batching
 
 **Target**: 18+ tests (AST + rules), 80%+ coverage
 
 ## Success Criteria
 
--   ✅ AST router <5ms latency
--   ✅ Rule router <20ms latency
--   ✅ Routing improves top-1 Result relevance by 20% (A/B test)
--   ✅ Custom rules work without code changes
--   ✅ ML placeholder ready for v0.5.0
+- ✅ AST router <5ms latency
+- ✅ Rule router <20ms latency
+- ✅ Routing improves top-1 Result relevance by 20% (A/B test)
+- ✅ Custom rules work without code changes
+- ✅ ML placeholder ready for v0.5.0
 
 ---
 

@@ -83,23 +83,23 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 ### Positive
 
--   **Reduced complexity**: Eliminates complex macro infrastructure
--   **Better platform support**: Enables WASM and embedded targets
--   **Smaller binary size**: Less generated code from macros
--   **Simpler maintenance**: Fewer dependencies and less boilerplate
--   **Performance**: Linker-based collection is more efficient
+- **Reduced complexity**: Eliminates complex macro infrastructure
+- **Better platform support**: Enables WASM and embedded targets
+- **Smaller binary size**: Less generated code from macros
+- **Simpler maintenance**: Fewer dependencies and less boilerplate
+- **Performance**: Linker-based collection is more efficient
 
 ### Negative
 
--   **Breaking change**: Requires updating all provider registration code
--   **Migration effort**: Need to update ~20+ provider registration sites
--   **Testing required**: Must verify all providers are still discovered correctly
+- **Breaking change**: Requires updating all provider registration code
+- **Migration effort**: Need to update ~20+ provider registration sites
+- **Testing required**: Must verify all providers are still discovered correctly
 
 ### Risks
 
--   **Linker compatibility**: Some build environments may have linker limitations
--   **Debugging difficulty**: Distributed slice issues may be harder to debug
--   **Migration complexity**: Large-scale change affecting multiple crates
+- **Linker compatibility**: Some build environments may have linker limitations
+- **Debugging difficulty**: Distributed slice issues may be harder to debug
+- **Migration complexity**: Large-scale change affecting multiple crates
 
 ## Implementation Plan
 
@@ -111,25 +111,25 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 ## Implementation Status
 
--   [x] All embedding providers (6): Ollama, OpenAI, VoyageAI, Gemini, FastEmbed, null
--   [x] All cache providers (3): Moka, Redis, null
--   [x] All vector store providers (5): Milvus, filesystem, in_memory, EdgeVec, null
--   [x] All language providers (1): universal
--   [x] Pure linkme registries (no inventory fallback)
--   [x] All provider entry structs use `#[linkme::distributed_slice]`
--   [x] Remove stale `inventory` dependency from workspace Cargo.toml (cleanup)
+- [x] All embedding providers (6): Ollama, OpenAI, VoyageAI, Gemini, FastEmbed, null
+- [x] All cache providers (3): Moka, Redis, null
+- [x] All vector store providers (5): Milvus, filesystem, in_memory, EdgeVec, null
+- [x] All language providers (1): universal
+- [x] Pure linkme registries (no inventory fallback)
+- [x] All provider entry structs use `#[linkme::distributed_slice]`
+- [x] Remove stale `inventory` dependency from workspace Cargo.toml (cleanup)
 
 ## Validation Criteria
 
--   [x] All providers are correctly registered and discoverable
--   [x] Build succeeds on all supported platforms (Linux, macOS, Windows)
--   [ ] WASM builds work (future compatibility)
--   [ ] Performance benchmarks show no regression
--   [x] All integration tests pass
--   [ ] Binary size is reduced or maintained
+- [x] All providers are correctly registered and discoverable
+- [x] Build succeeds on all supported platforms (Linux, macOS, Windows)
+- [ ] WASM builds work (future compatibility)
+- [ ] Performance benchmarks show no regression
+- [x] All integration tests pass
+- [ ] Binary size is reduced or maintained
 
 ## Related ADRs
 
--   [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md) - Related DI strategy
--   [ADR 003: Unified Provider Architecture](003-unified-provider-architecture.md) - Provider registration system
--   [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Multi-crate organization
+- [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md) - Related DI strategy
+- [ADR 003: Unified Provider Architecture](003-unified-provider-architecture.md) - Provider registration system
+- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Multi-crate organization

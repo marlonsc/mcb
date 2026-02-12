@@ -6,8 +6,8 @@ Thank you for your interest in contributing! This guide helps you get started wi
 
 ### Prerequisites
 
--   **Rust 1.89+**: Install from [rustup.rs](https://rustup.rs/)
--   **Git**: Version control system
+- **Rust 1.89+**: Install from [rustup.rs](https://rustup.rs/)
+- **Git**: Version control system
 
 ### Setup Development Environment
 
@@ -36,23 +36,23 @@ make quality
    git checkout -b feature/your-feature-name
    ```
 
-1. **Make Changes**: Implement your feature or fix
-2. **Test Changes**: Ensure tests pass
+3. **Make Changes**: Implement your feature or fix
+4. **Test Changes**: Ensure tests pass
 
    ```bash
    make test
    ```
 
-1. **Submit PR**: Create pull request with clear description
+5. **Submit PR**: Create pull request with clear description
 
 ## 📝 Coding Standards
 
 ### Rust Guidelines
 
--   Follow [The Rust Programming Language](https://doc.rust-lang.org/book/) conventions
--   Use `rustfmt` for formatting: `cargo fmt`
--   Follow `clippy` suggestions: `cargo clippy`
--   Write idiomatic Rust code
+- Follow [The Rust Programming Language](https://doc.rust-lang.org/book/) conventions
+- Use `rustfmt` for formatting: `cargo fmt`
+- Follow `clippy` suggestions: `cargo clippy`
+- Write idiomatic Rust code
 
 ### Code Structure (v0.1.2 Clean Architecture)
 
@@ -145,20 +145,20 @@ mod tests {
 
 ### Before Submitting
 
--   [ ] Tests pass: `make test`
--   [ ] Code formats correctly: `make fmt`
--   [ ] No Rust lint errors: `make lint`; no Markdown lint errors: `make docs-lint`
--   [ ] Quality checks pass: `make quality`
--   [ ] Documentation updated if needed
+- [ ] Tests pass: `make test`
+- [ ] Code formats correctly: `make fmt`
+- [ ] No Rust lint errors: `make lint`; no Markdown lint errors: `make docs-lint`
+- [ ] Quality checks pass: `make quality`
+- [ ] Documentation updated if needed
 
 ### PR Description
 
 Include:
 
--   What changes were made
--   Why the changes were needed
--   How to test the changes
--   Any breaking changes
+- What changes were made
+- Why the changes were needed
+- How to test the changes
+- Any breaking changes
 
 ### Review Process
 
@@ -173,19 +173,19 @@ Include:
 
 **Include:**
 
--   Steps to reproduce
--   Expected vs actual behavior
--   Environment details (Rust version, OS)
--   Error messages/logs
+- Steps to reproduce
+- Expected vs actual behavior
+- Environment details (Rust version, OS)
+- Error messages/logs
 
 ### Feature Requests
 
 **Include:**
 
--   Problem description
--   Proposed solution
--   Use cases
--   Alternative approaches considered
+- Problem description
+- Proposed solution
+- Use cases
+- Alternative approaches considered
 
 ## 🔧 Troubleshooting
 
@@ -216,15 +216,15 @@ These do not require `cargo build` or a full toolchain.
 
 Configuration uses **Figment** (ADR-025). DI uses **dill** and **init_app** (ADR-029):
 
--   **Config**: `mcb_infrastructure::config::ConfigLoader`, `AppConfig`. See [CONFIGURATION.md](../CONFIGURATION.md) and [ADR-025](../adr/025-figment-configuration.md).
--   **DI / bootstrap**: `mcb_infrastructure::di::bootstrap::init_app(config)` returns `AppContext`. See [ADR-029](../adr/029-hexagonal-architecture-dill.md).
--   **Run server**: `cargo run --bin mcb` or `make build` then run the binary.
+- **Config**: `mcb_infrastructure::config::ConfigLoader`, `AppConfig`. See [CONFIGURATION.md](../CONFIGURATION.md) and [ADR-025](../adr/025-figment-configuration.md).
+- **DI / bootstrap**: `mcb_infrastructure::di::bootstrap::init_app(config)` returns `AppContext`. See [ADR-029](../adr/029-hexagonal-architecture-dill.md).
+- **Run server**: `cargo run --bin mcb` or `make build` then run the binary.
 
 ## 📞 Getting Help
 
--   **Issues**: Use GitHub Issues for bugs and features
--   **Discussions**: Use GitHub Discussions for questions
--   **Documentation**: Check docs/architecture/ARCHITECTURE.md for technical details
+- **Issues**: Use GitHub Issues for bugs and features
+- **Discussions**: Use GitHub Discussions for questions
+- **Documentation**: Check docs/architecture/ARCHITECTURE.md for technical details
 
 ## Code of Conduct
 
@@ -236,14 +236,14 @@ Be respectful and constructive in all interactions. Focus on improving the proje
 
 ### Architecture (v0.1.4)
 
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) - System overview
--   **ADR-029**: [Hexagonal Architecture with dill](../adr/029-hexagonal-architecture-dill.md) - DI, handles, linkme
--   **ADR-013**: [Clean Architecture Crate Separation](../adr/013-clean-architecture-crate-separation.md) - Eight-crate structure
--   **Implementation Status**: [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) - Current state
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) - System overview
+- **ADR-029**: [Hexagonal Architecture with dill](../adr/029-hexagonal-architecture-dill.md) - DI, handles, linkme
+- **ADR-013**: [Clean Architecture Crate Separation](../adr/013-clean-architecture-crate-separation.md) - Eight-crate structure
+- **Implementation Status**: [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) - Current state
 
 ### Operations
 
--   **Deployment**: [DEPLOYMENT.md](../operations/DEPLOYMENT.md)
--   **CI/CD & Release**: [CI_RELEASE.md](../operations/CI_RELEASE.md) - Pre-commit hooks, GitHub Actions, release process
--   **Changelog**: [CHANGELOG.md](../operations/CHANGELOG.md)
--   **Roadmap**: [ROADMAP.md](./ROADMAP.md)
+- **Deployment**: [DEPLOYMENT.md](../operations/DEPLOYMENT.md)
+- **CI/CD & Release**: [CI_RELEASE.md](../operations/CI_RELEASE.md) - Pre-commit hooks, GitHub Actions, release process
+- **Changelog**: [CHANGELOG.md](../operations/CHANGELOG.md)
+- **Roadmap**: [ROADMAP.md](./ROADMAP.md)

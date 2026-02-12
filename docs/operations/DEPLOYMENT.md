@@ -8,8 +8,8 @@ Memory Context Browser currently supports local deployment for development and t
 
 ### Prerequisites
 
--   **Rust 1.70+**: Install from [rustup.rs](https://rustup.rs/)
--   **Git**: For cloning the repository
+- **Rust 1.70+**: Install from [rustup.rs](https://rustup.rs/)
+- **Git**: For cloning the repository
 
 ### Build from Source
 
@@ -121,18 +121,18 @@ free -h  # Memory
 
 ### Getting Help
 
--   Check existing [GitHub Issues](https://github.com/marlonsc/mcb/issues)
--   Review the [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) for technical details
--   See [CONTRIBUTING.md](../developer/CONTRIBUTING.md) for development setup
+- Check existing [GitHub Issues](https://github.com/marlonsc/mcb/issues)
+- Review the [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) for technical details
+- See [CONTRIBUTING.md](../developer/CONTRIBUTING.md) for development setup
 
 ## 🚀 Future Deployment Options
 
 The following deployment configurations are planned for future releases:
 
--   **Docker containerization**
--   **Kubernetes orchestration**
--   **Multi-user support**
--   **Cloud-native deployments**
+- **Docker containerization**
+- **Kubernetes orchestration**
+- **Multi-user support**
+- **Cloud-native deployments**
 
 These will be documented as they become available.
 
@@ -762,8 +762,8 @@ This deployment guide provides comprehensive instructions for deploying Memory C
 
 ## Cross-References
 
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
--   **Contributing**: [CONTRIBUTING.md](../developer/CONTRIBUTING.md)
--   **Changelog**: [CHANGELOG.md](./CHANGELOG.md)
--   **Roadmap**: [ROADMAP.md](../developer/ROADMAP.md)
--   **Module Documentation**: [docs/modules/](../modules/)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Contributing**: [CONTRIBUTING.md](../developer/CONTRIBUTING.md)
+- **Changelog**: [CHANGELOG.md](./CHANGELOG.md)
+- **Roadmap**: [ROADMAP.md](../developer/ROADMAP.md)
+- **Module Documentation**: [docs/modules/](../modules/)

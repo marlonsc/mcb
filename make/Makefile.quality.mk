@@ -133,4 +133,3 @@ qlty-smells: ## Run qlty smells and analyze results
 	@echo "Analyzing smells..."
 	@python3 scripts/analyze_smells.py
 	@echo "Done. Results saved to qlty.smells.lst"
-

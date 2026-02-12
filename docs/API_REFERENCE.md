@@ -4,10 +4,10 @@ This document provides a comprehensive reference of the Memory Context Browser p
 
 ## Table of Contents
 
--   [Core Types](#core-types)
--   [Providers](#providers)
--   [Services](#services)
--   [Utilities](#utilities)
+- [Core Types](#core-types)
+- [Providers](#providers)
+- [Services](#services)
+- [Utilities](#utilities)
 
 ## Core Types
 

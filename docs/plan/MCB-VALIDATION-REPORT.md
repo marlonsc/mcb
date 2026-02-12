@@ -242,9 +242,9 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 
 **Symptoms**:
 
--   `Missing data payload for X`
--   `Missing agent_type for create`
--   `Data must be a JSON object`
+- `Missing data payload for X`
+- `Missing agent_type for create`
+- `Data must be a JSON object`
 
 **Evidence**: The `data` parameter is defined as `Option<serde_json::Value>` but when passed from MCP client, it's not being deserialized correctly.
 
@@ -260,14 +260,14 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 
 **Symptoms**:
 
--   `SQL query_all failed: Failed to fetch from memory_observations`
+- `SQL query_all failed: Failed to fetch from memory_observations`
 
 **Evidence**: The memory_observations table may not exist or have wrong schema in SQLite.
 
 **Probable Location**:
 
--   Schema: `mcb-domain/src/repositories/`
--   Migrations: `mcb-persistence/`
+- Schema: `mcb-domain/src/repositories/`
+- Migrations: `mcb-persistence/`
 
 **Fix Priority**: P1 - Blocks memory read operations
 
@@ -279,7 +279,7 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 
 **Symptoms**:
 
--   `JSON Parse error: Unexpected identifier "file"`
+- `JSON Parse error: Unexpected identifier "file"`
 
 **Evidence**: The `scope` enum (file/project) is not being serialized/deserialized correctly through MCP.
 
@@ -295,7 +295,7 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 
 **Symptoms**:
 
--   `Repository not found: opencode`
+- `Repository not found: opencode`
 
 **Evidence**: The `repo_id` must be the hash returned by index_repository, not an arbitrary name. Documentation should clarify this.
 
@@ -311,15 +311,15 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 
 **Symptoms**:
 
--   `Project workflow not yet implemented`
--   `ErrorPattern store not implemented yet`
+- `Project workflow not yet implemented`
+- `ErrorPattern store not implemented yet`
 
 **Evidence**: Stub implementations in handlers.
 
 **Probable Location**:
 
--   `mcb-server/src/handlers/project.rs`
--   `mcb-application/src/use_cases/memory_service.rs`
+- `mcb-server/src/handlers/project.rs`
+- `mcb-application/src/use_cases/memory_service.rs`
 
 **Fix Priority**: P3 - Known roadmap items
 
@@ -331,14 +331,14 @@ mcp_mcb_agent(action="log_delegation", session_id="test", data={"target": "explo
 
 1. **Fix JSON data payload parsing** - This is blocking 3 major tools
 
--   Debug why `serde_json::Value` from MCP is not deserializing
--   Add logging to trace the actual received payload
--   Consider using raw JSON String and parsing explicitly
+- Debug why `serde_json::Value` from MCP is not deserializing
+- Add logging to trace the actual received payload
+- Consider using raw JSON String and parsing explicitly
 
 1. **Fix memory SQL errors** - Ensure tables exist and have correct schema
 
--   Add migration check on startup
--   Return clearer error messages
+- Add migration check on startup
+- Return clearer error messages
 
 ### Short-term (v0.3.0)
 

@@ -22,9 +22,9 @@ implementation_status: Incomplete
 
 Future integration of PMAT code requires shared libraries for:
 
--   Tree-sitter AST parsing (used by search + analysis)
--   Code metrics algorithms (complexity, debt scoring)
--   Analysis orchestration (parallel processing, caching)
+- Tree-sitter AST parsing (used by search + analysis)
+- Code metrics algorithms (complexity, debt scoring)
+- Analysis orchestration (parallel processing, caching)
 
 **Question**: Where to place shared code within the eight-crate architecture?
 
@@ -76,9 +76,9 @@ pub trait LanguageProcessor: Send + Sync {
 
 **v0.1.1 Status**:
 
--   Chunking code lives in `crates/mcb-providers/src/language/`
--   12 language processors implemented
--   Will be extracted to this library in v0.3.0
+- Chunking code lives in `crates/mcb-providers/src/language/`
+- 12 language processors implemented
+- Will be extracted to this library in v0.3.0
 
 #### 2. `code-metrics` (v0.3.0)
 
@@ -101,28 +101,28 @@ pub trait MetricsCalculator: Send + Sync {
 
 **Positive**:
 
--   Code reuse between domains
--   Independent versioning possible
--   Easier to extract as separate crates later
--   Clear API boundaries
+- Code reuse between domains
+- Independent versioning possible
+- Easier to extract as separate crates later
+- Clear API boundaries
 
 **Negative**:
 
--   Workspace compilation overhead
--   Dependency management complexity
+- Workspace compilation overhead
+- Dependency management complexity
 
 **Mitigation**:
 
--   Use `workspace = true` for shared deps
--   Keep libraries focused and small
+- Use `workspace = true` for shared deps
+- Keep libraries focused and small
 
 ## Implementation Plan
 
 ### v0.1.1 (Current - Foundation)
 
--   Eight-crate workspace structure implemented
--   Language chunking in `crates/mcb-providers/src/language/`
--   Workspace dependencies defined
+- Eight-crate workspace structure implemented
+- Language chunking in `crates/mcb-providers/src/language/`
+- Workspace dependencies defined
 
 ### v0.3.0 (Future - Full Implementation)
 
@@ -138,8 +138,8 @@ pub trait MetricsCalculator: Send + Sync {
 
 ## Related ADRs
 
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate foundation
--   [ADR-014: Multi-Domain Architecture](014-multi-domain-architecture.md) - Domain organization
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate foundation
+- [ADR-014: Multi-Domain Architecture](014-multi-domain-architecture.md) - Domain organization
 
 ---
 

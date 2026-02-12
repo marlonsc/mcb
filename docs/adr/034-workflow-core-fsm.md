@@ -16,11 +16,11 @@ implementation_status: Complete
 
 **Accepted** — 2026-02-06
 
--   **Deciders:** Project team
--   **Supersedes:** [ADR-032](./032-agent-quality-domain-extension.md) (Agent & Quality Domain Extension)
--   **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
--   **Series:** ADR-034 → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
--   **Resolution note:** Compensation/rollback follows the hybrid strategy defined in "Refinement 2: Compensation and Rollback Logic".
+- **Deciders:** Project team
+- **Supersedes:** [ADR-032](./032-agent-quality-domain-extension.md) (Agent & Quality Domain Extension)
+- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
+- **Series:** ADR-034 → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
+- **Resolution note:** Compensation/rollback follows the hybrid strategy defined in "Refinement 2: Compensation and Rollback Logic".
 
 ## Context
 
@@ -39,11 +39,11 @@ ADR-032 proposed extending MCB's domain with 24 MCP tools and 9 SQLite tables fo
 
 ### Requirements
 
--   Persist workflow state across process restarts
--   Enforce valid transitions at runtime with clear error messages
--   Log every transition with before/after state and trigger
--   Support state reconstruction from transition history ("time travel")
--   Fit within the existing Clean Architecture crate hierarchy (no new crates)
+- Persist workflow state across process restarts
+- Enforce valid transitions at runtime with clear error messages
+- Log every transition with before/after state and trigger
+- Support state reconstruction from transition history ("time travel")
+- Fit within the existing Clean Architecture crate hierarchy (no new crates)
 
 ## Decision
 
@@ -313,8 +313,8 @@ pub static DATABASE_PROVIDERS: [DatabaseProviderEntry] = [..];
 
 **References:**
 
--   [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — Handle-based DI pattern
--   [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Compile-time plugin discovery
+- [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — Handle-based DI pattern
+- [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Compile-time plugin discovery
 
 ---
 
@@ -406,9 +406,9 @@ pub struct WorkflowSession {
 
 **Compensation Semantics:**
 
--   **AutoRevert**: Session uses a feature branch. On error, `git reset --hard` to safe commit. Fast, reversible. Best for exploratory work.
--   **ManualReview**: Session pauses on error. Operator logs in, reviews git diff, decides: amend, revert, or fix manually. Slow but safest.
--   **ApproveAndMerge**: Session attempts to merge PR if CI passes. If CI fails, escalate to ManualReview. Best for auto-commit PRs.
+- **AutoRevert**: Session uses a feature branch. On error, `git reset --hard` to safe commit. Fast, reversible. Best for exploratory work.
+- **ManualReview**: Session pauses on error. Operator logs in, reviews git diff, decides: amend, revert, or fix manually. Slow but safest.
+- **ApproveAndMerge**: Session attempts to merge PR if CI passes. If CI fails, escalate to ManualReview. Best for auto-commit PRs.
 
 **Location:** `mcb-domain/src/entities/workflow.rs` (extended), `mcb-domain/src/entities/compensation.rs` (new module)
 
@@ -422,14 +422,14 @@ The workflow engine uses **two complementary persistence layers**: per-operation
 
 1. **Per-Operation Transactions**: Every `transition()` call wraps read + validate + write in a SQLite transaction (10-20ms per operation).
 
--   Ensures no lost updates if multiple sessions compete for the same resource.
--   Provides rollback on validation failure.
+- Ensures no lost updates if multiple sessions compete for the same resource.
+- Provides rollback on validation failure.
 
 1. **Append-Only Event Log**: After every transition, write immutable event to `workflow_events` table.
 
--   Never updated or deleted — only INSERT.
--   Enables time-travel queries without replaying mutations.
--   Supports compliance audits and post-mortem analysis.
+- Never updated or deleted — only INSERT.
+- Enables time-travel queries without replaying mutations.
+- Supports compliance audits and post-mortem analysis.
 
 **SQL Schema:**
 
@@ -1123,8 +1123,8 @@ async fn sqlite_db_factory(config: &Figment) -> Result<Arc<dyn DatabaseProvider>
 
 **Classification**: MCB workflows operate under human supervision — not autonomous agents. Compensation is **hybrid**:
 
--   **Automatic**: Safe operations (in-memory state, git revert)
--   **Manual**: High-risk operations (external API calls, database mutations) → prompt operator for approval
+- **Automatic**: Safe operations (in-memory state, git revert)
+- **Manual**: High-risk operations (external API calls, database mutations) → prompt operator for approval
 
 **Compensation Entity** (`mcb-domain/src/entities/workflow.rs`):
 
@@ -1248,12 +1248,12 @@ CREATE INDEX idx_effects_by_session ON workflow_effects(session_id);
 
 1. **Per-session mutual exclusion**: Only one thread may call `transition()` per session concurrently.
 
--   Enforced via RwLock in `SqliteWorkflowEngine`
--   **Implementation**: `Arc<RwLock<WorkflowSession>>`
+- Enforced via RwLock in `SqliteWorkflowEngine`
+- **Implementation**: `Arc<RwLock<WorkflowSession>>`
 
 1. **SQLite transaction isolation**: Use SERIALIZABLE isolation for `workflow_sessions` updates.
 
--   **Schema change**: Add `version` column for optimistic concurrency detection.
+- **Schema change**: Add `version` column for optimistic concurrency detection.
 
 ```sql
 ALTER TABLE workflow_sessions ADD COLUMN version INTEGER DEFAULT 0;
@@ -1266,8 +1266,8 @@ UPDATE workflow_sessions
 
 1. **Multi-session parallelism**: Different sessions may transition in parallel (no global lock).
 
--   SQLite WAL mode enables concurrent reads from one writer.
--   Use connection pool to service multiple sessions simultaneously.
+- SQLite WAL mode enables concurrent reads from one writer.
+- Use connection pool to service multiple sessions simultaneously.
 
 **Implementation** (`mcb-providers/src/workflow/sqlite_workflow.rs`):
 
@@ -1335,50 +1335,50 @@ impl SqliteWorkflowEngine {
 
 ### Positive
 
--   **Session continuity**: Workflow state survives process restarts via SQLite.
--   **Full audit trail**: Every transition is recorded with trigger, timestamps, and guard results.
--   **Time travel**: State at any point in time can be reconstructed from the transition log.
--   **Type-safe state**: `WorkflowState` enum prevents invalid state representations at compile time.
--   **Clean Architecture**: Port trait in `mcb-domain`, implementation in `mcb-providers` — zero architectural violations.
--   **Zero new crates**: Distributed across existing crate hierarchy.
--   **Foundation for ADR-035/036/037**: `WorkflowEngine` trait is consumed by context scout (035), policy guard (036), and orchestrator (037).
+- **Session continuity**: Workflow state survives process restarts via SQLite.
+- **Full audit trail**: Every transition is recorded with trigger, timestamps, and guard results.
+- **Time travel**: State at any point in time can be reconstructed from the transition log.
+- **Type-safe state**: `WorkflowState` enum prevents invalid state representations at compile time.
+- **Clean Architecture**: Port trait in `mcb-domain`, implementation in `mcb-providers` — zero architectural violations.
+- **Zero new crates**: Distributed across existing crate hierarchy.
+- **Foundation for ADR-035/036/037**: `WorkflowEngine` trait is consumed by context scout (035), policy guard (036), and orchestrator (037).
 
 ### Negative
 
--   **Boilerplate**: Enum-based FSM requires manual `match` logic (~150 lines for transition matrix). Declarative crates like `smlang-rs` would reduce this.
--   **Runtime-only validation**: Invalid transitions detected at runtime, not compile time. Mitigated by comprehensive test coverage.
--   **SQLite dependency**: `sqlx` async SQLite driver adds ~50KB to binary and requires `libsqlite3`.
--   **Single-writer constraint**: SQLite WAL mode supports one writer at a time. Concurrent sessions on the same database require careful transaction management.
+- **Boilerplate**: Enum-based FSM requires manual `match` logic (~150 lines for transition matrix). Declarative crates like `smlang-rs` would reduce this.
+- **Runtime-only validation**: Invalid transitions detected at runtime, not compile time. Mitigated by comprehensive test coverage.
+- **SQLite dependency**: `sqlx` async SQLite driver adds ~50KB to binary and requires `libsqlite3`.
+- **Single-writer constraint**: SQLite WAL mode supports one writer at a time. Concurrent sessions on the same database require careful transaction management.
 
 ## Alternatives Considered
 
 ### Alternative 1: statig (Hierarchical State Machine Crate)
 
--   **Description:** Proc-macro based FSM with hierarchical states, entry/exit Actions, and async support. 3M+ downloads.
--   **Pros:** Hierarchical states reduce duplication. Compile-time state machine generation. Entry/exit hooks.
--   **Cons:** No built-in serde support — must manually serialize states. Macro-generated code harder for `mcb-validate` to analyze.
--   **Rejection reason:** Lack of native serialization makes SQLite persistence painful. The transparency loss from macros conflicts with architecture validation.
+- **Description:** Proc-macro based FSM with hierarchical states, entry/exit Actions, and async support. 3M+ downloads.
+- **Pros:** Hierarchical states reduce duplication. Compile-time state machine generation. Entry/exit hooks.
+- **Cons:** No built-in serde support — must manually serialize states. Macro-generated code harder for `mcb-validate` to analyze.
+- **Rejection reason:** Lack of native serialization makes SQLite persistence painful. The transparency loss from macros conflicts with architecture validation.
 
 ### Alternative 2: smlang-rs (Declarative DSL)
 
--   **Description:** `statemachine!{}` macro with declarative transition table syntax, built-in serde via `states_attr`, and first-class guard support.
--   **Pros:** Clean declarative syntax. Built-in serde. Explicit guard expressions. Good async support.
--   **Cons:** No hierarchical states. 526K downloads (less ecosystem validation). Macro generates less transparent code.
--   **Rejection reason:** Viable alternative. Rejected for transparency — enum-based approach is fully visible to `mcb-validate` and requires no macro understanding for contributors.
+- **Description:** `statemachine!{}` macro with declarative transition table syntax, built-in serde via `states_attr`, and first-class guard support.
+- **Pros:** Clean declarative syntax. Built-in serde. Explicit guard expressions. Good async support.
+- **Cons:** No hierarchical states. 526K downloads (less ecosystem validation). Macro generates less transparent code.
+- **Rejection reason:** Viable alternative. Rejected for transparency — enum-based approach is fully visible to `mcb-validate` and requires no macro understanding for contributors.
 
 ### Alternative 3: sm (Typestate Pattern)
 
--   **Description:** Compile-time typestate FSM using generic types. Invalid transitions caught at compile time.
--   **Pros:** Strongest compile-time guarantees. Zero runtime overhead.
--   **Cons:** No async support. No serialization. Lower maintenance activity.
--   **Rejection reason:** Incompatible with async-first requirement and SQLite persistence.
+- **Description:** Compile-time typestate FSM using generic types. Invalid transitions caught at compile time.
+- **Pros:** Strongest compile-time guarantees. Zero runtime overhead.
+- **Cons:** No async support. No serialization. Lower maintenance activity.
+- **Rejection reason:** Incompatible with async-first requirement and SQLite persistence.
 
 ### Alternative 4: In-Memory Only (No SQLite)
 
--   **Description:** Keep state in `HashMap<String, WorkflowSession>` with no persistence.
--   **Pros:** Simpler implementation. No SQLite dependency.
--   **Cons:** State lost on restart. No audit trail. No time travel.
--   **Rejection reason:** Session continuity across restarts is a core requirement.
+- **Description:** Keep state in `HashMap<String, WorkflowSession>` with no persistence.
+- **Pros:** Simpler implementation. No SQLite dependency.
+- **Cons:** State lost on restart. No audit trail. No time travel.
+- **Rejection reason:** Session continuity across restarts is a core requirement.
 
 ## Implementation Notes
 
@@ -1394,35 +1394,35 @@ impl SqliteWorkflowEngine {
 
 ### Migration
 
--   New tables only (`workflow_sessions`, `workflow_transitions`). No existing tables modified.
--   Migration SQL embedded in provider initialization with `CREATE TABLE IF NOT EXISTS`.
+- New tables only (`workflow_sessions`, `workflow_transitions`). No existing tables modified.
+- Migration SQL embedded in provider initialization with `CREATE TABLE IF NOT EXISTS`.
 
 ### Testing
 
--   Unit tests: Transition matrix (every valid transition + every invalid transition rejected).
--   Unit tests: Serde round-trip for every `WorkflowState` variant.
--   Integration tests: SQLite persistence (create → transition → reload → verify state).
--   Integration tests: Time travel (create → N transitions → reconstruct at T).
--   Estimated: ~60 tests.
+- Unit tests: Transition matrix (every valid transition + every invalid transition rejected).
+- Unit tests: Serde round-trip for every `WorkflowState` variant.
+- Integration tests: SQLite persistence (create → transition → reload → verify state).
+- Integration tests: Time travel (create → N transitions → reconstruct at T).
+- Estimated: ~60 tests.
 
 ### Performance Targets
 
--   State read: < 5ms (single row lookup by primary key)
--   Transition (read + validate + write + log): < 20ms (single SQLite transaction)
--   Time travel (replay N transitions): < 50ms for N ≤ 100
--   SQLite WAL mode for concurrent reads during writes
+- State read: < 5ms (single row lookup by primary key)
+- Transition (read + validate + write + log): < 20ms (single SQLite transaction)
+- Time travel (replay N transitions): < 50ms for N ≤ 100
+- SQLite WAL mode for concurrent reads during writes
 
 ### Security
 
--   No user-facing credentials in workflow state.
--   `state_data` JSON may contain project paths — ensure no secrets leak into transition logs.
+- No user-facing credentials in workflow state.
+- `state_data` JSON may contain project paths — ensure no secrets leak into transition logs.
 
 ## References
 
--   [statig crate](https://crates.io/crates/statig) — Hierarchical state machine (evaluated, not selected)
--   [smlang-rs](https://crates.io/crates/smlang) — Declarative FSM macro (evaluated, not selected)
--   [sqlx](https://crates.io/crates/sqlx) — Async SQLite driver
--   [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI pattern
--   [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Auto-registration
--   [ADR-032: Agent & Quality Domain Extension](./032-agent-quality-domain-extension.md) — Superseded
--   [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md) — Schema reference
+- [statig crate](https://crates.io/crates/statig) — Hierarchical state machine (evaluated, not selected)
+- [smlang-rs](https://crates.io/crates/smlang) — Declarative FSM macro (evaluated, not selected)
+- [sqlx](https://crates.io/crates/sqlx) — Async SQLite driver
+- [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI pattern
+- [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Auto-registration
+- [ADR-032: Agent & Quality Domain Extension](./032-agent-quality-domain-extension.md) — Superseded
+- [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md) — Schema reference

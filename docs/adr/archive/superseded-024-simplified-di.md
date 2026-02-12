@@ -210,26 +210,26 @@ let embedding = context.embedding_handle().get();  // Now OpenAI
 
 ### Positive
 
--   **Runtime switching**: Providers can be changed without restart
--   **Admin API ready**: Built-in support for provider management endpoints
--   **Type-safe**: All trait bounds enforced at compile time
--   **Testable**: Handles and resolvers can be mocked independently
--   **Simple**: No complex DI macros or catalog resolution
+- **Runtime switching**: Providers can be changed without restart
+- **Admin API ready**: Built-in support for provider management endpoints
+- **Type-safe**: All trait bounds enforced at compile time
+- **Testable**: Handles and resolvers can be mocked independently
+- **Simple**: No complex DI macros or catalog resolution
 
 ### Negative
 
--   **Manual wiring**: Services must be explicitly constructed in bootstrap.rs
--   **Boilerplate**: Each provider type needs Handle, Resolver, AdminService
--   **Lock overhead**: RwLock adds minimal runtime overhead
+- **Manual wiring**: Services must be explicitly constructed in bootstrap.rs
+- **Boilerplate**: Each provider type needs Handle, Resolver, AdminService
+- **Lock overhead**: RwLock adds minimal runtime overhead
 
 ## Validation Criteria
 
--   [x] All provider types have Handle, Resolver, AdminService
--   [x] AppContext provides access to all services
--   [x] Runtime provider switching works via admin services
--   [x] All tests pass
--   [x] No Shaku references remain in production code
--   [x] Domain services use providers via handles
+- [x] All provider types have Handle, Resolver, AdminService
+- [x] AppContext provides access to all services
+- [x] Runtime provider switching works via admin services
+- [x] All tests pass
+- [x] No Shaku references remain in production code
+- [x] Domain services use providers via handles
 
 ## Implementation Summary (2026-01-19)
 
@@ -259,12 +259,12 @@ crates/mcb-infrastructure/src/di/
 
 ## Related ADRs
 
--   [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md) - **SUPERSEDED** by this ADR
--   [ADR 012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - **SUPERSEDED**
--   [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Multi-crate organization
--   **Extended by**: [ADR 027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Formalizes engine contracts using handle pattern
+- [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md) - **SUPERSEDED** by this ADR
+- [ADR 012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - **SUPERSEDED**
+- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Multi-crate organization
+- **Extended by**: [ADR 027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Formalizes engine contracts using handle pattern
 
 ## References
 
--   [linkme crate](https://docs.rs/linkme) - Compile-time distributed slices for provider registration
--   [dill-rs GitHub](https://github.com/sergiimk/dill-rs) - Evaluated but `add_value` pattern insufficient
+- [linkme crate](https://docs.rs/linkme) - Compile-time distributed slices for provider registration
+- [dill-rs GitHub](https://github.com/sergiimk/dill-rs) - Evaluated but `add_value` pattern insufficient

@@ -16,10 +16,10 @@ implementation_status: Complete
 
 **Accepted** — 2026-02-06 (locked for Phase 9 dependency)
 
--   **Deciders:** Project team
--   **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM)
--   **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment)
--   **Series:** [ADR-034](./034-workflow-core-fsm.md) → **ADR-035** → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
+- **Deciders:** Project team
+- **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM)
+- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment)
+- **Series:** [ADR-034](./034-workflow-core-fsm.md) → **ADR-035** → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
 
 ## Context
 
@@ -39,11 +39,11 @@ Today, context discovery is scattered:
 
 ### Requirements
 
--   Discover git state without shelling out (use `git2` library directly)
--   Provide a single `ProjectContext` struct with all relevant state
--   Cache snapshots with configurable TTL to avoid re-scanning on every operation
--   Support incremental discovery (git-only, tracker-only, or full)
--   Expose as a provider trait consumed by ADR-036 (policies) and ADR-037 (orchestrator)
+- Discover git state without shelling out (use `git2` library directly)
+- Provide a single `ProjectContext` struct with all relevant state
+- Cache snapshots with configurable TTL to avoid re-scanning on every operation
+- Support incremental discovery (git-only, tracker-only, or full)
+- Expose as a provider trait consumed by ADR-036 (policies) and ADR-037 (orchestrator)
 
 ## Decision
 
@@ -51,9 +51,9 @@ Today, context discovery is scattered:
 
 All VCS operations **must** go through the `VcsProvider` trait. No direct `git2` calls anywhere in the codebase (except within the trait implementation). This enables:
 
--   **MVP**: `Git2Provider` (using `git2` already in deps, non-async FFI calls wrapped in `spawn_blocking()`)
--   **Phase 2+**: Alternative implementations (GitHub API, GitLab API, Mercurial, etc.) without changing consumer code
--   **Modularity**: Clear separation between VCS abstraction and workflow logic
+- **MVP**: `Git2Provider` (using `git2` already in deps, non-async FFI calls wrapped in `spawn_blocking()`)
+- **Phase 2+**: Alternative implementations (GitHub API, GitLab API, Mercurial, etc.) without changing consumer code
+- **Modularity**: Clear separation between VCS abstraction and workflow logic
 
 #### VcsProvider Trait Definition
 
@@ -824,9 +824,9 @@ pub struct GitContext {
 1. Worktree exists but is orphaned (no active session references it)
 2. On next `WorkflowService.initialize()` or periodic cleanup task:
 
--   Scan `.worktrees/` directory
--   For each worktree without corresponding in-progress session:
-  -   `vcs.remove_worktree()` (prune unused worktrees)
+- Scan `.worktrees/` directory
+- For each worktree without corresponding in-progress session:
+- `vcs.remove_worktree()` (prune unused worktrees)
 
 1. Operator can retry task with new session ID → new worktree created
 
@@ -1525,47 +1525,47 @@ WHERE i.status = 'open'
 
 ### Positive
 
--   **VCS Provider Abstraction**: All VCS operations flow through `VcsProvider` trait (never direct git2). Enables MVP with git2 + Phase 2+ with GitHub/GitLab APIs.
--   **Worktree Isolation**: Each workflow session gets dedicated worktree. Multiple sessions work independently without conflicts.
--   **Worktree Safety**: Entire worktree can be discarded if task fails; main repo unaffected. Enables easy rollback and retry.
--   **Zero shell dependencies**: All discovery via `git2` FFI and direct SQLite — no `git`, `bd`, or `.planning/` commands.
--   **Typed state**: `ProjectContext` with strong types eliminates String parsing errors.
--   **Performant**: Moka cache with 30s TTL. Cold: 5–20ms (git2). Warm: < 1ms.
--   **Composable**: `git_status()` and `tracker_state()` can be called independently for partial discovery.
--   **Reuses existing deps**: `git2`, `moka`, `sqlx` — all already in MCB's `Cargo.toml`.
--   **Foundation for ADR-036**: `PolicyGuardProvider` receives `ProjectContext` to evaluate policies.
+- **VCS Provider Abstraction**: All VCS operations flow through `VcsProvider` trait (never direct git2). Enables MVP with git2 + Phase 2+ with GitHub/GitLab APIs.
+- **Worktree Isolation**: Each workflow session gets dedicated worktree. Multiple sessions work independently without conflicts.
+- **Worktree Safety**: Entire worktree can be discarded if task fails; main repo unaffected. Enables easy rollback and retry.
+- **Zero shell dependencies**: All discovery via `git2` FFI and direct SQLite — no `git`, `bd`, or `.planning/` commands.
+- **Typed state**: `ProjectContext` with strong types eliminates String parsing errors.
+- **Performant**: Moka cache with 30s TTL. Cold: 5–20ms (git2). Warm: < 1ms.
+- **Composable**: `git_status()` and `tracker_state()` can be called independently for partial discovery.
+- **Reuses existing deps**: `git2`, `moka`, `sqlx` — all already in MCB's `Cargo.toml`.
+- **Foundation for ADR-036**: `PolicyGuardProvider` receives `ProjectContext` to evaluate policies.
 
 ### Negative
 
--   **VcsProvider spawn_blocking complexity**: git2 is blocking FFI. All calls wrapped in `spawn_blocking()` adds complexity. Cannot be fully async (git2 limitation, not trait design).
--   **Worktree cleanup**: Must handle orphaned worktrees (crashed sessions). Requires periodic cleanup task or init-time scan.
--   **Worktree per session overhead**: Each session allocates new worktree. For high-volume sessions, disk usage may grow. Cleanup task mitigates this.
--   **Cache staleness**: 30s TTL means state could be up to 30s stale. Mitigated by manual `invalidate_cache()`.
--   **Shared SQLite pool**: Context Scout reads from the same SQLite DB the workflow engine writes. Must handle concurrent access via WAL mode.
--   **No file watcher**: Does not react to filesystem changes in real-time. Polling-based via TTL. File watcher (notify crate) deferred to future enhancement.
+- **VcsProvider spawn_blocking complexity**: git2 is blocking FFI. All calls wrapped in `spawn_blocking()` adds complexity. Cannot be fully async (git2 limitation, not trait design).
+- **Worktree cleanup**: Must handle orphaned worktrees (crashed sessions). Requires periodic cleanup task or init-time scan.
+- **Worktree per session overhead**: Each session allocates new worktree. For high-volume sessions, disk usage may grow. Cleanup task mitigates this.
+- **Cache staleness**: 30s TTL means state could be up to 30s stale. Mitigated by manual `invalidate_cache()`.
+- **Shared SQLite pool**: Context Scout reads from the same SQLite DB the workflow engine writes. Must handle concurrent access via WAL mode.
+- **No file watcher**: Does not react to filesystem changes in real-time. Polling-based via TTL. File watcher (notify crate) deferred to future enhancement.
 
 ## Alternatives Considered
 
 ### Alternative 1: gix (gitoxide)
 
--   **Description:** Pure Rust git implementation. Significantly faster for large repositories.
--   **Pros:** No C FFI. 500–1000x faster on large repos. True async possible.
--   **Cons:** Not in MCB's current deps. More verbose API. Newer, less battle-tested.
--   **Rejection reason:** Adding a second git library increases binary size and maintenance burden for repositories MCB targets (small-to-medium). git2 is already proven in the indexing pipeline.
+- **Description:** Pure Rust git implementation. Significantly faster for large repositories.
+- **Pros:** No C FFI. 500–1000x faster on large repos. True async possible.
+- **Cons:** Not in MCB's current deps. More verbose API. Newer, less battle-tested.
+- **Rejection reason:** Adding a second git library increases binary size and maintenance burden for repositories MCB targets (small-to-medium). git2 is already proven in the indexing pipeline.
 
 ### Alternative 2: Shell-Based Discovery
 
--   **Description:** Shell out to `git status --porcelain`, `git stash list`, etc.
--   **Pros:** Simple. No library dependency.
--   **Cons:** Parsing fragile. Requires `git` in PATH. Cross-platform issues. Slow (process spawn per query).
--   **Rejection reason:** Violates zero-shell-deps principle. MCB must be self-contained.
+- **Description:** Shell out to `git status --porcelain`, `git stash list`, etc.
+- **Pros:** Simple. No library dependency.
+- **Cons:** Parsing fragile. Requires `git` in PATH. Cross-platform issues. Slow (process spawn per query).
+- **Rejection reason:** Violates zero-shell-deps principle. MCB must be self-contained.
 
 ### Alternative 3: No Caching
 
--   **Description:** Discover fresh context on every call.
--   **Pros:** Always up-to-date. Simpler implementation.
--   **Cons:** 5–20ms per call for git2 operations. Multiplied by every policy check and orchestrator call.
--   **Rejection reason:** Performance unacceptable when context is queried multiple times per workflow transition.
+- **Description:** Discover fresh context on every call.
+- **Pros:** Always up-to-date. Simpler implementation.
+- **Cons:** 5–20ms per call for git2 operations. Multiplied by every policy check and orchestrator call.
+- **Rejection reason:** Performance unacceptable when context is queried multiple times per workflow transition.
 
 ## Implementation Notes
 
@@ -1581,16 +1581,16 @@ WHERE i.status = 'open'
 
 ### Migration
 
--   New tables (`phases`, `issues`, `issue_dependencies`, `decisions`). No existing tables modified.
--   `CREATE TABLE IF NOT EXISTS` in provider initialization.
+- New tables (`phases`, `issues`, `issue_dependencies`, `decisions`). No existing tables modified.
+- `CREATE TABLE IF NOT EXISTS` in provider initialization.
 
 ### Testing
 
--   Unit tests: Git discovery with `git2::Repository::init()` (temp dir).
--   Unit tests: Tracker queries with in-memory SQLite.
--   Unit tests: Cache hit/miss/invalidation with moka.
--   Integration tests: Full `ProjectContext` discovery on actual MCB repo.
--   Estimated: ~50 tests.
+- Unit tests: Git discovery with `git2::Repository::init()` (temp dir).
+- Unit tests: Tracker queries with in-memory SQLite.
+- Unit tests: Cache hit/miss/invalidation with moka.
+- Integration tests: Full `ProjectContext` discovery on actual MCB repo.
+- Estimated: ~50 tests.
 
 ### Performance Targets
 
@@ -1603,14 +1603,14 @@ WHERE i.status = 'open'
 
 ### Security
 
--   `git2` may expose file paths and commit messages. No credentials are stored in `ProjectContext`.
--   SQLite pool uses same security model as workflow engine (local file, no network).
+- `git2` may expose file paths and commit messages. No credentials are stored in `ProjectContext`.
+- SQLite pool uses same security model as workflow engine (local file, no network).
 
 ## References
 
--   [git2 crate](https://crates.io/crates/git2) — Rust bindings for libgit2
--   [moka crate](https://crates.io/crates/moka) — Concurrent cache (already in MCB)
--   [gitui source](https://github.com/extrawurst/gitui) — Reference for git2 status patterns
--   [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — FSM and persistence layer (dependency)
--   [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI pattern
--   [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md) — Schema reference
+- [git2 crate](https://crates.io/crates/git2) — Rust bindings for libgit2
+- [moka crate](https://crates.io/crates/moka) — Concurrent cache (already in MCB)
+- [gitui source](https://github.com/extrawurst/gitui) — Reference for git2 status patterns
+- [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — FSM and persistence layer (dependency)
+- [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI pattern
+- [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md) — Schema reference

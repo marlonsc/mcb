@@ -66,7 +66,7 @@ Golden tests validate **real** MCP tool behaviour: indexing, search, status, and
 
 ## Implementation notes
 
--   All tests use `create_test_mcp_server()` (null embedding + in-memory vector store).
--   Indexing may return "Indexing Started" (async) or "Indexing Completed" (sync); assertions accept both.
--   Search Result format: "**Results found:** N", "**1.** 📁 `path` (line L)", "Relevance Score"; use these to assert counts and file paths when strengthening tests.
--   Golden-queries E2E is split into three tests (setup, one query, all handlers succeed) to keep each test short and avoid timeouts.
+- All tests use `create_test_mcp_server()` (null embedding + in-memory vector store).
+- Indexing may return "Indexing Started" (async) or "Indexing Completed" (sync); assertions accept both.
+- Search Result format: "**Results found:** N", "**1.** 📁 `path` (line L)", "Relevance Score"; use these to assert counts and file paths when strengthening tests.
+- Golden-queries E2E is split into three tests (setup, one query, all handlers succeed) to keep each test short and avoid timeouts.

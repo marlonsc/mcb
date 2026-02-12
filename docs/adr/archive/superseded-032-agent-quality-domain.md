@@ -10,10 +10,10 @@
 
 The oh-my-opencode workflow system currently uses:
 
--   **6 shell hook scripts** - Stateless
--   **9 markdown skill files** - Inject ~200 lines each
--   **Beads CLI** - Separate SQLite database
--   **GSD markdown files** - .planning/ directory
+- **6 shell hook scripts** - Stateless
+- **9 markdown skill files** - Inject ~200 lines each
+- **Beads CLI** - Separate SQLite database
+- **GSD markdown files** - .planning/ directory
 
 Pain points:
 
@@ -135,10 +135,10 @@ Maintain .planning/ and .beads/ compatibility.
 
 **Rejected because:**
 
--   Complex sync logic
--   Conflict resolution needed
--   Parser code maintenance
--   Two sources of truth
+- Complex sync logic
+- Conflict resolution needed
+- Parser code maintenance
+- Two sources of truth
 
 ### 2. Import-Only (No Export)
 
@@ -146,9 +146,9 @@ Import legacy data but don't export.
 
 **Rejected because:**
 
--   Still need parser code
--   One-way migration is cleaner
--   Users can manually migrate
+- Still need parser code
+- One-way migration is cleaner
+- Users can manually migrate
 
 ### 3. Extend Beads
 
@@ -156,17 +156,17 @@ Add MCB features to Beads CLI.
 
 **Rejected because:**
 
--   Beads is generic issue tracker
--   Would need embedding pipeline
--   Loses MCB integration
+- Beads is generic issue tracker
+- Would need embedding pipeline
+- Loses MCB integration
 
 ## Validation
 
 ### Architecture Rules
 
--   CA007: Ports in mcb-domain only
--   CA008: Infrastructure uses `Arc<dyn Trait>`
--   Layer dependencies point inward
+- CA007: Ports in mcb-domain only
+- CA008: Infrastructure uses `Arc<dyn Trait>`
+- Layer dependencies point inward
 
 ### Performance
 
@@ -179,7 +179,7 @@ Add MCB features to Beads CLI.
 
 ## References
 
--   [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
--   [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
--   [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md)
--   [Planning Documents](../design/workflow-management/.planning/)
+- [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
+- [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
+- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md)
+- [Planning Documents](../design/workflow-management/.planning/)

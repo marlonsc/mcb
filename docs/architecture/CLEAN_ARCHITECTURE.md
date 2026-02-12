@@ -52,9 +52,9 @@ Memory Context Browser follows **Clean Architecture** principles with strict lay
 
 **Responsibilities**:
 
--   Re-export public types from domain, application, infrastructure
--   Provide single entry point for library users
--   Hide internal crate structure
+- Re-export public types from domain, application, infrastructure
+- Provide single entry point for library users
+- Hide internal crate structure
 
 **Example**:
 
@@ -73,10 +73,10 @@ pub use mcb_infrastructure::AppContext;
 
 **Responsibilities**:
 
--   Define domain entities (CodeChunk, Embedding, SearchResult)
--   Define port traits (EmbeddingProvider, VectorStoreProvider, etc.)
--   Define domain errors with thiserror
--   No external dependencies (except thiserror, serde)
+- Define domain entities (CodeChunk, Embedding, SearchResult)
+- Define port traits (EmbeddingProvider, VectorStoreProvider, etc.)
+- Define domain errors with thiserror
+- No external dependencies (except thiserror, serde)
 
 **Key Types**:
 
@@ -114,10 +114,10 @@ pub enum DomainError {
 
 **Responsibilities**:
 
--   Implement services (ContextService, SearchService, IndexingService)
--   Orchestrate domain entities and ports
--   Define registry system (linkme distributed slices)
--   Define admin ports (IndexingOperationsInterface, PerformanceMetricsInterface)
+- Implement services (ContextService, SearchService, IndexingService)
+- Orchestrate domain entities and ports
+- Define registry system (linkme distributed slices)
+- Define admin ports (IndexingOperationsInterface, PerformanceMetricsInterface)
 
 **Key Types**:
 
@@ -154,11 +154,11 @@ pub trait IndexingOperationsInterface: Send + Sync {
 
 **Responsibilities**:
 
--   Build DI container (dill Catalog)
--   Load configuration (Figment)
--   Provide provider handles (RwLock wrappers for runtime switching)
--   Implement admin services
--   Logging, health checks, caching
+- Build DI container (dill Catalog)
+- Load configuration (Figment)
+- Provide provider handles (RwLock wrappers for runtime switching)
+- Implement admin services
+- Logging, health checks, caching
 
 **Key Types**:
 
@@ -222,11 +222,11 @@ pub struct AppContext {
 
 **Responsibilities**:
 
--   Implement EmbeddingProvider (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
--   Implement VectorStoreProvider (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
--   Implement CacheProvider (Moka, Redis, Null)
--   Implement LanguageChunkingProvider (Tree-sitter based)
--   Auto-register via linkme distributed slices
+- Implement EmbeddingProvider (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
+- Implement VectorStoreProvider (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
+- Implement CacheProvider (Moka, Redis, Null)
+- Implement LanguageChunkingProvider (Tree-sitter based)
+- Auto-register via linkme distributed slices
 
 **Key Types**:
 
@@ -263,10 +263,10 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 **Responsibilities**:
 
--   Implement MCP tool handlers (index, search, memory, session, etc.)
--   Handle stdio and HTTP transport
--   Parse MCP requests and format responses
--   Error handling and logging
+- Implement MCP tool handlers (index, search, memory, session, etc.)
+- Handle stdio and HTTP transport
+- Parse MCP requests and format responses
+- Error handling and logging
 
 **Key Types**:
 
@@ -460,44 +460,44 @@ pub struct MyService {
 
 Each layer can be tested independently:
 
--   Domain: Pure business logic, no I/O
--   Application: Mock providers, test orchestration
--   Infrastructure: Mock DI container
--   Providers: Integration tests with real services
--   Server: Mock context, test handlers
+- Domain: Pure business logic, no I/O
+- Application: Mock providers, test orchestration
+- Infrastructure: Mock DI container
+- Providers: Integration tests with real services
+- Server: Mock context, test handlers
 
 ### 2. Maintainability
 
 Clear separation of concerns:
 
--   Domain: Business rules only
--   Application: Use cases and orchestration
--   Infrastructure: Cross-cutting concerns
--   Providers: External integrations
--   Server: Protocol handling
+- Domain: Business rules only
+- Application: Use cases and orchestration
+- Infrastructure: Cross-cutting concerns
+- Providers: External integrations
+- Server: Protocol handling
 
 ### 3. Extensibility
 
 Add new providers without modifying existing code:
 
--   New embedding provider? Add to mcb-providers + register
--   New service? Add to mcb-application + register in DI
--   New port? Add to mcb-domain + implement in mcb-providers
+- New embedding provider? Add to mcb-providers + register
+- New service? Add to mcb-application + register in DI
+- New port? Add to mcb-domain + implement in mcb-providers
 
 ### 4. Reusability
 
 Layers can be used independently:
 
--   Use mcb-domain for domain models
--   Use mcb-application for business logic
--   Use mcb-infrastructure for DI and config
--   Use mcb-server for MCP protocol
+- Use mcb-domain for domain models
+- Use mcb-application for business logic
+- Use mcb-infrastructure for DI and config
+- Use mcb-server for MCP protocol
 
 ## Related Documentation
 
--   **ADR-001**: Modular Crates Architecture
--   **ADR-013**: Clean Architecture Crate Separation
--   **ADR-023**: Inventory to Linkme Migration
--   **ADR-029**: Hexagonal Architecture with dill
--   [`docs/architecture/ARCHITECTURE.md`](./ARCHITECTURE.md) – Complete architecture overview
--   [`CLAUDE.md`](../../CLAUDE.md) – Development guide
+- **ADR-001**: Modular Crates Architecture
+- **ADR-013**: Clean Architecture Crate Separation
+- **ADR-023**: Inventory to Linkme Migration
+- **ADR-029**: Hexagonal Architecture with dill
+- [`docs/architecture/ARCHITECTURE.md`](./ARCHITECTURE.md) – Complete architecture overview
+- [`CLAUDE.md`](../../CLAUDE.md) – Development guide

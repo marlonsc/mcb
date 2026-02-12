@@ -21,9 +21,9 @@ All environment variables **MUST** follow the pattern:
 MCP__<SECTION>__<SUBSECTION>__<KEY>
 ```
 
--   Double underscore (`__`) as separator
--   Prefix is `MCP__` (not `MCB_`)
--   Keys are lowercased during parsing
+- Double underscore (`__`) as separator
+- Prefix is `MCP__` (not `MCB_`)
+- Keys are lowercased during parsing
 
 ### Examples
 
@@ -70,9 +70,9 @@ When `auth.enabled = true`, the following **MUST** be configured:
 
 The JWT secret is intentionally not auto-generated. This ensures:
 
--   No weak secrets in production
--   Fail-fast behavior if config is missing
--   Explicit security configuration
+- No weak secrets in production
+- Fail-fast behavior if config is missing
+- Explicit security configuration
 
 ### Providers
 
@@ -231,10 +231,10 @@ ignore_patterns = [
 
 If you don't provide `.mcp-context.toml`, these defaults apply:
 
--   **depth**: 1000 commits
--   **branches**: ["main", "HEAD"]
--   **include_submodules**: true
--   **ignore_patterns**: [] (no patterns)
+- **depth**: 1000 commits
+- **branches**: ["main", "HEAD"]
+- **include_submodules**: true
+- **ignore_patterns**: [] (no patterns)
 
 This ensures **backward compatibility** with v0.1.x projects.
 
@@ -331,9 +331,9 @@ This will log which config file was loaded and from where.
 
 ## Related Documentation
 
--   [Architecture Overview](./architecture/ARCHITECTURE.md) - v0.1.2 Eight-Crate Structure
--   [ADR-025: Figment Configuration](./adr/025-figment-configuration.md) - Configuration management
--   [ADR-029: Hexagonal Architecture](./adr/029-hexagonal-architecture-dill.md) - DI and provider patterns
+- [Architecture Overview](./architecture/ARCHITECTURE.md) - v0.1.2 Eight-Crate Structure
+- [ADR-025: Figment Configuration](./adr/025-figment-configuration.md) - Configuration management
+- [ADR-029: Hexagonal Architecture](./adr/029-hexagonal-architecture-dill.md) - DI and provider patterns
 
 ---
 

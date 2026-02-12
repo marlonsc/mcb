@@ -22,11 +22,11 @@ implementation_status: Incomplete
 
 MCB v0.1.2 established a SOLID Clean Architecture foundation with:
 
--   8-crate separation (mcb-domain, mcb-application, mcb-providers, mcb-infrastructure, mcb-server, mcb, mcb-validate)
--   20+ port traits in mcb-application (EmbeddingProvider, VectorStoreProvider, etc.)
--   Linkme-based provider auto-registration (15+ providers)
--   Handle-based DI with runtime provider switching (ADR 024)
--   790+ tests with architectural validation via mcb-validate
+- 8-crate separation (mcb-domain, mcb-application, mcb-providers, mcb-infrastructure, mcb-server, mcb, mcb-validate)
+- 20+ port traits in mcb-application (EmbeddingProvider, VectorStoreProvider, etc.)
+- Linkme-based provider auto-registration (15+ providers)
+- Handle-based DI with runtime provider switching (ADR 024)
+- 790+ tests with architectural validation via mcb-validate
 
 ### Analysis of kamu-cli's Onion/Clean Architecture
 
@@ -54,9 +54,9 @@ Adopt a phased evolution plan (Phases 0-5) to enhance MCB's architecture while m
 
 ### Phase 0: Baseline & Acceptance Criteria
 
--   Document layer boundaries in ARCHITECTURE_BOUNDARIES.md
--   Define golden acceptance tests (index repo, run queries, validate latency <200ms)
--   No MCP API changes
+- Document layer boundaries in ARCHITECTURE_BOUNDARIES.md
+- Define golden acceptance tests (index repo, run queries, validate latency <200ms)
+- No MCP API changes
 
 ### Phase 1: Bounded Contexts Within Layers
 
@@ -64,11 +64,11 @@ Organize mcb-domain and mcb-application by feature modules instead of pure layer
 
 **Bounded Contexts:**
 
--   `workspace/` - Config, roots, ignore rules, multi-root support
--   `indexing/` - Index state, progress, checkpoints
--   `chunking/` - Language strategies, chunk types
--   `search/` - Query parsing, ranking, Result aggregation
--   `telemetry/` - Events, tracing, metrics
+- `workspace/` - Config, roots, ignore rules, multi-root support
+- `indexing/` - Index state, progress, checkpoints
+- `chunking/` - Language strategies, chunk types
+- `search/` - Query parsing, ranking, Result aggregation
+- `telemetry/` - Events, tracing, metrics
 
 **Module Structure:**
 
@@ -124,8 +124,8 @@ pub trait Ranker: Send + Sync {
 
 **Engine Implementations:**
 
--   `IndexStateStore`: SQLite (default), In-Memory (testing), RocksDB (feature-gated)
--   `Ranker`: CosineRanker, HybridRanker (BM25 + semantic), MMRRanker, LLMReranker (feature-gated)
+- `IndexStateStore`: SQLite (default), In-Memory (testing), RocksDB (feature-gated)
+- `Ranker`: CosineRanker, HybridRanker (BM25 + semantic), MMRRanker, LLMReranker (feature-gated)
 
 **Unified Config:**
 
@@ -172,10 +172,10 @@ impl IndexingService {
 
 **Capabilities:**
 
--   Fingerprint-based change detection (mtime + size + partial hash)
--   Checkpoint/resume on crash
--   Garbage collection for removed files
--   Metrics: index time, chunks processed, reuse rate
+- Fingerprint-based change detection (mtime + size + partial hash)
+- Checkpoint/resume on crash
+- Garbage collection for removed files
+- Metrics: index time, chunks processed, reuse rate
 
 ### Phase 4: Node Mode Operability
 
@@ -206,9 +206,9 @@ pub fn metrics() -> String { /* Prometheus format */ }
 
 **Deployment Artifacts:**
 
--   Dockerfile (distroless base)
--   docker-compose.yml for local development
--   Helm chart (helm/mcb-context-browser/)
+- Dockerfile (distroless base)
+- docker-compose.yml for local development
+- Helm chart (helm/mcb-context-browser/)
 
 ### Phase 5: Relevance Testing
 
@@ -233,33 +233,33 @@ Add search quality gates to CI:
 
 **CI Integration:**
 
--   Index example repositories
--   Run relevance test suite
--   Fail if recall@k drops below threshold
--   Report per-query metrics
+- Index example repositories
+- Run relevance test suite
+- Fail if recall@k drops below threshold
+- Report per-query metrics
 
 ## Consequences
 
 ### Positive
 
--   **Feature-centric navigation**: Domain experts find code by feature (search/, indexing/) not layer
--   **Plugin ecosystem**: Engine contracts enable third-party implementations
--   **90%+ faster re-indexing**: Incremental indexing skips unchanged files
--   **Kubernetes-ready**: Node mode with Helm chart for production deployment
--   **Quality gates**: Relevance tests prevent search regression
+- **Feature-centric navigation**: Domain experts find code by feature (search/, indexing/) not layer
+- **Plugin ecosystem**: Engine contracts enable third-party implementations
+- **90%+ faster re-indexing**: Incremental indexing skips unchanged files
+- **Kubernetes-ready**: Node mode with Helm chart for production deployment
+- **Quality gates**: Relevance tests prevent search regression
 
 ### Negative
 
--   **More files**: Bounded context modules add directory structure
--   **Learning curve**: Team must understand bounded context organization
--   **CI time**: Relevance tests add ~2-3 minutes to pipeline
--   **Rust boilerplate**: New engine traits require implementations across providers
+- **More files**: Bounded context modules add directory structure
+- **Learning curve**: Team must understand bounded context organization
+- **CI time**: Relevance tests add ~2-3 minutes to pipeline
+- **Rust boilerplate**: New engine traits require implementations across providers
 
 ### Neutral
 
--   **Backward compatible**: No MCP API changes, old config keys still work
--   **Gradual adoption**: Each phase is independent, can be adopted incrementally
--   **Test suite intact**: All 790+ existing tests continue to pass
+- **Backward compatible**: No MCP API changes, old config keys still work
+- **Gradual adoption**: Each phase is independent, can be adopted incrementally
+- **Test suite intact**: All 790+ existing tests continue to pass
 
 ## Implementation Notes
 
@@ -267,23 +267,23 @@ See implementation prompt: `thoughts/prompts/PROMPT_V013_IMPLEMENTATION.md`
 
 **Estimated Scope:**
 
--   Phase 0: 1 PR (baseline)
--   Phase 1: 3-4 PRs (bounded contexts)
--   Phase 2: 4-5 PRs (engine contracts)
--   Phase 3: 3 PRs (incremental indexing)
--   Phase 4: 3 PRs (node mode)
--   Phase 5: 2 PRs (relevance testing)
--   **Total**: ~16-18 PRs
+- Phase 0: 1 PR (baseline)
+- Phase 1: 3-4 PRs (bounded contexts)
+- Phase 2: 4-5 PRs (engine contracts)
+- Phase 3: 3 PRs (incremental indexing)
+- Phase 4: 3 PRs (node mode)
+- Phase 5: 2 PRs (relevance testing)
+- **Total**: ~16-18 PRs
 
 ## Related ADRs
 
--   [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - **Extended** by this ADR (adds bounded contexts within layers)
--   [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md) - **Extended** by this ADR (formalizes engine contracts using handle pattern)
--   [ADR 008: Git-Aware Semantic Indexing v0.2.0](008-git-aware-semantic-indexing-v0.2.0.md) - **Prepared for** by this ADR (incremental indexing foundation)
+- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - **Extended** by this ADR (adds bounded contexts within layers)
+- [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md) - **Extended** by this ADR (formalizes engine contracts using handle pattern)
+- [ADR 008: Git-Aware Semantic Indexing v0.2.0](008-git-aware-semantic-indexing-v0.2.0.md) - **Prepared for** by this ADR (incremental indexing foundation)
 
 ## References
 
--   [kamu-cli](https://github.com/kamu-data/kamu-cli) - Production Onion/Clean Architecture reference
--   [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
--   [Onion Architecture by Jeffrey Palermo](https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/)
--   [Domain-Driven Design by Eric Evans](https://domainlanguage.com/ddd/)
+- [kamu-cli](https://github.com/kamu-data/kamu-cli) - Production Onion/Clean Architecture reference
+- [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [Onion Architecture by Jeffrey Palermo](https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/)
+- [Domain-Driven Design by Eric Evans](https://domainlanguage.com/ddd/)

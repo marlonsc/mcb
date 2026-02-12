@@ -113,49 +113,49 @@ crates/
 
 ### v0.2.0 (Structure)
 
--   Define test directory structure for libs/
--   Create test utilities for PMAT code
--   Port infrastructure tests
+- Define test directory structure for libs/
+- Create test utilities for PMAT code
+- Port infrastructure tests
 
 ### v0.3.0 (Migration)
 
--   Port 1000+ PMAT tests for complexity, TDG, SATD
--   Update tests to use MCB types
--   Target: 1500+ total tests
+- Port 1000+ PMAT tests for complexity, TDG, SATD
+- Update tests to use MCB types
+- Target: 1500+ total tests
 
 ### v0.4.0 (Extended)
 
--   Port 1500+ additional PMAT tests
--   Target: 3000+ total tests
+- Port 1500+ additional PMAT tests
+- Target: 3000+ total tests
 
 ### v1.0.0 (Complete)
 
--   5390+ total tests
--   Full coverage of all features
+- 5390+ total tests
+- Full coverage of all features
 
 ## Consequences
 
 **Positive**:
 
--   Preserved test coverage
--   Clear test organization
--   Property-based testing for edge cases
+- Preserved test coverage
+- Clear test organization
+- Property-based testing for edge cases
 
 **Negative**:
 
--   CI time increase (~5 min → ~15 min)
+- CI time increase (~5 min → ~15 min)
 
 **Mitigation**:
 
--   Parallel test execution
--   Test categorization (quick/full)
--   CI caching
+- Parallel test execution
+- Test categorization (quick/full)
+- CI caching
 
 ## Related ADRs
 
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Test container setup
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Test location per crate
--   [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Test migration timeline
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Test container setup
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Test location per crate
+- [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Test migration timeline
 
 ---
 

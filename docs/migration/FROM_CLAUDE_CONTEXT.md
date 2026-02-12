@@ -158,12 +158,12 @@ Both tools support the same core languages. mcb v0.1.0 now includes:
 
 **Original (matching Claude-context):**
 
--   Rust, Python, JavaScript, TypeScript
--   Go, Java, C, C++, C#
+- Rust, Python, JavaScript, TypeScript
+- Go, Java, C, C++, C#
 
 **Added in v0.1.0:**
 
--   Ruby, PHP, Swift, Kotlin
+- Ruby, PHP, Swift, Kotlin
 
 ## Differences
 
@@ -216,8 +216,8 @@ Re-index your codebase:
 
 ## Getting Help
 
--   GitHub Issues: [mcb issues](https://github.com/marlonsc/mcb/issues)
--   Documentation: [mcb docs](https://github.com/marlonsc/mcb)
+- GitHub Issues: [mcb issues](https://github.com/marlonsc/mcb/issues)
+- Documentation: [mcb docs](https://github.com/marlonsc/mcb)
 
 ## Rollback
 

@@ -118,6 +118,6 @@ pub struct ContextSnapshot {
 
 ### Snapshotting Policy
 
--   **Automatic**: Triggered on git commits or significant workflow state changes.
--   **Manual**: Triggered via `context_snapshot` MCP tool.
--   **Retention**: Snapshots are persisted in SQLite with a configurable TTL (Time-To-Live) to manage storage.
+- **Automatic**: Triggered on git commits or significant workflow state changes.
+- **Manual**: Triggered via `context_snapshot` MCP tool.
+- **Retention**: Snapshots are persisted in SQLite with a configurable TTL (Time-To-Live) to manage storage.

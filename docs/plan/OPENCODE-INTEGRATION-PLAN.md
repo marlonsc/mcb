@@ -84,14 +84,14 @@ Problems:
 
 ### Benefits
 
--   One call replaces explore + librarian agents
--   Unified context across all searches (code + memory + sessions)
--   Memory persists and links to project (not session)
--   Session context preserved across agent restarts
--   **NEW**: Multi-user collaboration on same project
--   **NEW**: Worktree isolation for parallel development
--   **NEW**: Operator roles for access control
--   **NEW**: Cross-agent session awareness
+- One call replaces explore + librarian agents
+- Unified context across all searches (code + memory + sessions)
+- Memory persists and links to project (not session)
+- Session context preserved across agent restarts
+- **NEW**: Multi-user collaboration on same project
+- **NEW**: Worktree isolation for parallel development
+- **NEW**: Operator roles for access control
+- **NEW**: Cross-agent session awareness
 
 ---
 
@@ -101,10 +101,10 @@ Problems:
 
 **Available Now**:
 
--   `mcp_mcb_search(resource="code")` - Semantic code search
--   `mcp_mcb_index` - Index codebase
--   `mcp_mcb_session` - Basic session lifecycle
--   `mcp_mcb_vcs` - Git repository awareness
+- `mcp_mcb_search(resource="code")` - Semantic code search
+- `mcp_mcb_index` - Index codebase
+- `mcp_mcb_session` - Basic session lifecycle
+- `mcp_mcb_vcs` - Git repository awareness
 
 **Replace**:
 
@@ -253,27 +253,27 @@ mcp_mcb_memory(project_id="opencode", ...)
 
 ### Phase A (Now)
 
--   [ ] `mcp_mcb_search` returns relevant code for natural language
--   [ ] Relevance scores > 0.3 (currently ~0.05)
--   [ ] Index includes all file types (.md, .sh, .JSON, etc.)
+- [ ] `mcp_mcb_search` returns relevant code for natural language
+- [ ] Relevance scores > 0.3 (currently ~0.05)
+- [ ] Index includes all file types (.md, .sh, .JSON, etc.)
 
 ### Phase B (After GAP-2)
 
--   [ ] `mcp_mcb_memory(action="store")` succeeds
--   [ ] `mcp_mcb_memory(action="list")` returns stored observations
--   [ ] Memory search returns semantically similar observations
+- [ ] `mcp_mcb_memory(action="store")` succeeds
+- [ ] `mcp_mcb_memory(action="list")` returns stored observations
+- [ ] Memory search returns semantically similar observations
 
 ### Phase C (After GAP-1)
 
--   [ ] `mcp_mcb_project(action="create")` succeeds
--   [ ] Project links to collection and memory
--   [ ] Phase tracking works via MCB
+- [ ] `mcp_mcb_project(action="create")` succeeds
+- [ ] Project links to collection and memory
+- [ ] Phase tracking works via MCB
 
 ### Phase D (After GAP-4)
 
--   [ ] `mcp_mcb_search(resource="context")` returns unified results
--   [ ] Single query replaces explore + librarian + memory
--   [ ] Agent spawn count reduced by 50%+
+- [ ] `mcp_mcb_search(resource="context")` returns unified results
+- [ ] Single query replaces explore + librarian + memory
+- [ ] Agent spawn count reduced by 50%+
 
 ---
 

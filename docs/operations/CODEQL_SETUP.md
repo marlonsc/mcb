@@ -6,20 +6,20 @@ O repositório usa **Default Setup** do GitHub para análise CodeQL.
 
 O CodeQL é gerenciado automaticamente pelo GitHub através da interface:
 
--   Configurado em **Settings** → **Code security and analysis**
--   Executa automaticamente em pushes e pull requests
--   Não requer configuração manual no workflow
+- Configurado em **Settings** → **Code security and analysis**
+- Executa automaticamente em pushes e pull requests
+- Não requer configuração manual no workflow
 
 ## ⚙️ Como Funciona o Default Setup
 
 O Default Setup do GitHub:
 
--   ✅ É gerenciado automaticamente pelo GitHub
--   ✅ Executa análise CodeQL em cada push e pull request
--   ✅ Detecta automaticamente a linguagem (Rust)
--   ✅ Usa configurações otimizadas para Rust
--   ✅ Não requer configuração manual no workflow
--   ✅ Gera resultados automaticamente na aba "Security"
+- ✅ É gerenciado automaticamente pelo GitHub
+- ✅ Executa análise CodeQL em cada push e pull request
+- ✅ Detecta automaticamente a linguagem (Rust)
+- ✅ Usa configurações otimizadas para Rust
+- ✅ Não requer configuração manual no workflow
+- ✅ Gera resultados automaticamente na aba "Security"
 
 ## 📋 Verificação
 
@@ -38,13 +38,13 @@ Se precisar gerenciar o CodeQL:
 2. Encontre **CodeQL analysis**
 3. Use o menu (•••) para:
 
--   **Edit**: Modificar configurações
--   **Disable CodeQL**: Desabilitar temporariamente
--   **Enable CodeQL**: Reativar se desabilitado
+- **Edit**: Modificar configurações
+- **Disable CodeQL**: Desabilitar temporariamente
+- **Enable CodeQL**: Reativar se desabilitado
 
 ## ✅ Vantagens do Default Setup
 
--   **Simplicidade**: Configuração automática, sem manutenção
--   **Otimizado**: GitHub usa configurações otimizadas para Rust
--   **Confiável**: Mantido e atualizado pelo GitHub
--   **Sem conflitos**: Não há conflito entre Default e Advanced Setup
+- **Simplicidade**: Configuração automática, sem manutenção
+- **Otimizado**: GitHub usa configurações otimizadas para Rust
+- **Confiável**: Mantido e atualizado pelo GitHub
+- **Sem conflitos**: Não há conflito entre Default e Advanced Setup

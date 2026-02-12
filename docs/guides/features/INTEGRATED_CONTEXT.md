@@ -10,9 +10,9 @@ The Integrated Context System in v0.4.0 introduces a knowledge graph-based appro
 
 Code context degrades over time as repositories evolve. The freshness system tracks:
 
--   **Temporal Metadata**: Last modified timestamps, commit history, branch information
--   **Staleness Signals**: Deprecated APIs, outdated patterns, version mismatches
--   **Freshness Policies**: Rules for acceptable staleness by context type (e.g., "API docs must be < 7 days old")
+- **Temporal Metadata**: Last modified timestamps, commit history, branch information
+- **Staleness Signals**: Deprecated APIs, outdated patterns, version mismatches
+- **Freshness Policies**: Rules for acceptable staleness by context type (e.g., "API docs must be < 7 days old")
 
 **Example Workflow**:
 
@@ -32,9 +32,9 @@ See **ADR-035: Freshness Tracking** for design details.
 
 Understand code evolution by querying historical snapshots:
 
--   **Snapshot Versioning**: Capture code state at specific commits/dates
--   **Temporal Queries**: "Show me how this function evolved over 6 months"
--   **Regression Detection**: Identify when patterns were introduced/removed
+- **Snapshot Versioning**: Capture code state at specific commits/dates
+- **Temporal Queries**: "Show me how this function evolved over 6 months"
+- **Regression Detection**: Identify when patterns were introduced/removed
 
 **Example**:
 
@@ -54,9 +54,9 @@ See **ADR-045: Context Versioning** for implementation details.
 
 When context becomes stale or invalid, the system can:
 
--   **Detect Invalidation**: Policy violations, breaking changes, deprecated APIs
--   **Trigger Compensation**: Refresh context, notify users, suggest alternatives
--   **Rollback**: Revert to previous valid context snapshot
+- **Detect Invalidation**: Policy violations, breaking changes, deprecated APIs
+- **Trigger Compensation**: Refresh context, notify users, suggest alternatives
+- **Rollback**: Revert to previous valid context snapshot
 
 **Example Workflow**:
 
@@ -107,22 +107,22 @@ See **ADR-037: Compensation & Orchestration** for orchestration patterns.
 
 **CodeGraph** (petgraph-based):
 
--   Nodes: Code entities (functions, classes, modules)
--   Edges: Relationships (calls, imports, extends, implements)
--   Metadata: Freshness, version, staleness signals
+- Nodes: Code entities (functions, classes, modules)
+- Edges: Relationships (calls, imports, extends, implements)
+- Metadata: Freshness, version, staleness signals
 
 **HybridSearchEngine**:
 
--   Semantic search via embeddings
--   Keyword search via full-text index
--   RRF (Reciprocal Rank Fusion) for Result ranking
--   Freshness filtering and sorting
+- Semantic search via embeddings
+- Keyword search via full-text index
+- RRF (Reciprocal Rank Fusion) for Result ranking
+- Freshness filtering and sorting
 
 **ContextSnapshot**:
 
--   Immutable capture of code state at specific commit/date
--   Includes graph, embeddings, metadata
--   Enables time-travel queries and regression detection
+- Immutable capture of code state at specific commit/date
+- Includes graph, embeddings, metadata
+- Enables time-travel queries and regression detection
 
 ## Workflows
 
@@ -183,9 +183,9 @@ See **ADR-037: Compensation & Orchestration** for orchestration patterns.
 
 The Integrated Context System integrates with the Workflow FSM:
 
--   **FSM Gates**: Context freshness gates workflow transitions
--   **Policy Enforcement**: Policies applied at FSM state boundaries
--   **Compensation Hooks**: FSM triggers compensation on policy violations
+- **FSM Gates**: Context freshness gates workflow transitions
+- **Policy Enforcement**: Policies applied at FSM state boundaries
+- **Compensation Hooks**: FSM triggers compensation on policy violations
 
 See **ADR-034: Workflow FSM** for FSM details.
 
@@ -193,10 +193,10 @@ See **ADR-034: Workflow FSM** for FSM details.
 
 New MCP tools expose context system capabilities:
 
--   `search_code`: Semantic search with freshness filtering
--   `get_context_snapshot`: Retrieve historical context
--   `apply_policy`: Apply freshness/validation policies
--   `trigger_compensation`: Manually trigger compensation
+- `search_code`: Semantic search with freshness filtering
+- `get_context_snapshot`: Retrieve historical context
+- `apply_policy`: Apply freshness/validation policies
+- `trigger_compensation`: Manually trigger compensation
 
 ## Configuration
 
@@ -281,16 +281,16 @@ mcb search --query "API reference" --policy api_docs
 
 ## Related Documentation
 
--   **ADR-034**: Workflow FSM – State machine for context workflows
--   **ADR-035**: Freshness Tracking – Temporal metadata and staleness signals
--   **ADR-036**: Policies & Validation – Policy enforcement framework
--   **ADR-037**: Compensation & Orchestration – Rollback and recovery patterns
--   **ADR-041**: Context Architecture – System design and layers
--   **ADR-042**: Knowledge Graph – Graph structure and relationships
--   **ADR-043**: Hybrid Search – Search engine design
--   **ADR-044**: Model Selection – Embedding and search model choices
--   **ADR-045**: Context Versioning – Snapshot and temporal query design
--   **ADR-046**: Integration Patterns – MCP tool integration
+- **ADR-034**: Workflow FSM – State machine for context workflows
+- **ADR-035**: Freshness Tracking – Temporal metadata and staleness signals
+- **ADR-036**: Policies & Validation – Policy enforcement framework
+- **ADR-037**: Compensation & Orchestration – Rollback and recovery patterns
+- **ADR-041**: Context Architecture – System design and layers
+- **ADR-042**: Knowledge Graph – Graph structure and relationships
+- **ADR-043**: Hybrid Search – Search engine design
+- **ADR-044**: Model Selection – Embedding and search model choices
+- **ADR-045**: Context Versioning – Snapshot and temporal query design
+- **ADR-046**: Integration Patterns – MCP tool integration
 
 ## Next Steps
 

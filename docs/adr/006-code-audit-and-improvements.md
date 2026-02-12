@@ -38,21 +38,21 @@ The Memory Context Browser codebase has grown organically and accumulated severa
 
 Key problems identified:
 
--   **Giant structures**: Files with 1000+ lines violating Single Responsibility Principle
--   **Excessive unwrap/expect usage**: 157 occurrences across 28 files causing potential runtime crashes
--   **Tight coupling**: Direct concrete type dependencies instead of trait-based abstractions
--   **Missing input validation**: Lack of robust validation leading to runtime errors
--   **Inadequate error handling**: Generic error types without proper context
--   **Missing design patterns**: No Builder, Strategy, or Repository patterns implemented
--   **Poor testability**: High coupling making unit testing difficult
+- **Giant structures**: Files with 1000+ lines violating Single Responsibility Principle
+- **Excessive unwrap/expect usage**: 157 occurrences across 28 files causing potential runtime crashes
+- **Tight coupling**: Direct concrete type dependencies instead of trait-based abstractions
+- **Missing input validation**: Lack of robust validation leading to runtime errors
+- **Inadequate error handling**: Generic error types without proper context
+- **Missing design patterns**: No Builder, Strategy, or Repository patterns implemented
+- **Poor testability**: High coupling making unit testing difficult
 
 Current state analysis:
 
--   Total files: 189
--   Total lines: 42,314
--   Files with >1000 lines: 2 (config.rs, server/mod.rs)
--   unwrap/expect count: 157 across 28 files
--   Test coverage: ~60% (estimated)
+- Total files: 189
+- Total lines: 42,314
+- Files with >1000 lines: 2 (config.rs, server/mod.rs)
+- unwrap/expect count: 157 across 28 files
+- Test coverage: ~60% (estimated)
 
 ## Decision
 
@@ -75,46 +75,46 @@ These architectural improvements will significantly enhance code quality but req
 
 ### Positive Consequences
 
--   **Maintainability**: Smaller, focused modules easier to understand and modify
--   **Reliability**: Proper error handling eliminates unexpected crashes
--   **Testability**: Dependency injection enables comprehensive unit testing
--   **Extensibility**: Design patterns allow easy addition of new providers/features
--   **Performance**: Better resource management and optimization opportunities
--   **Security**: Input validation prevents malicious or malformed data
--   **Developer Experience**: Clearer APIs and better error messages
--   **Code Quality**: Adherence to Rust best practices and community standards
+- **Maintainability**: Smaller, focused modules easier to understand and modify
+- **Reliability**: Proper error handling eliminates unexpected crashes
+- **Testability**: Dependency injection enables comprehensive unit testing
+- **Extensibility**: Design patterns allow easy addition of new providers/features
+- **Performance**: Better resource management and optimization opportunities
+- **Security**: Input validation prevents malicious or malformed data
+- **Developer Experience**: Clearer APIs and better error messages
+- **Code Quality**: Adherence to Rust best practices and community standards
 
 ### Negative Consequences
 
--   **Development Time**: Significant refactoring effort required (6-8 weeks)
--   **Learning Curve**: Team needs to adapt to new patterns and abstractions
--   **Temporary Instability**: Refactoring may introduce bugs during transition
--   **Increased Complexity**: Additional abstraction layers add cognitive overhead
--   **Build Time**: More comprehensive testing increases CI/CD duration
--   **Documentation Updates**: All docs need updating for new architecture
+- **Development Time**: Significant refactoring effort required (6-8 weeks)
+- **Learning Curve**: Team needs to adapt to new patterns and abstractions
+- **Temporary Instability**: Refactoring may introduce bugs during transition
+- **Increased Complexity**: Additional abstraction layers add cognitive overhead
+- **Build Time**: More comprehensive testing increases CI/CD duration
+- **Documentation Updates**: All docs need updating for new architecture
 
 ## Alternatives Considered
 
 ### Alternative 1: Incremental Refactoring
 
--   **Description**: Address anti-patterns gradually over multiple releases
--   **Pros**: Less disruptive, allows feature development in parallel
--   **Cons**: Accumulates more technical debt, inconsistent codebase
--   **Rejection Reason**: Current issues are critical and blocking quality improvements
+- **Description**: Address anti-patterns gradually over multiple releases
+- **Pros**: Less disruptive, allows feature development in parallel
+- **Cons**: Accumulates more technical debt, inconsistent codebase
+- **Rejection Reason**: Current issues are critical and blocking quality improvements
 
 ### Alternative 2: Complete Rewrite
 
--   **Description**: Rewrite entire codebase with clean architecture from scratch
--   **Pros**: Clean slate, no legacy constraints, modern patterns throughout
--   **Cons**: Extremely high risk, long development time, potential feature loss
--   **Rejection Reason**: Too risky for production system, better to evolve existing code
+- **Description**: Rewrite entire codebase with clean architecture from scratch
+- **Pros**: Clean slate, no legacy constraints, modern patterns throughout
+- **Cons**: Extremely high risk, long development time, potential feature loss
+- **Rejection Reason**: Too risky for production system, better to evolve existing code
 
 ### Alternative 3: Minimal Fixes Only
 
--   **Description**: Only fix critical unwrap/expect issues, leave architecture as-is
--   **Pros**: Quick implementation, minimal disruption
--   **Cons**: Doesn't address root causes, technical debt continues growing
--   **Rejection Reason**: Doesn't solve systemic architectural problems
+- **Description**: Only fix critical unwrap/expect issues, leave architecture as-is
+- **Pros**: Quick implementation, minimal disruption
+- **Cons**: Doesn't address root causes, technical debt continues growing
+- **Rejection Reason**: Doesn't solve systemic architectural problems
 
 ## Implementation Notes
 
@@ -224,25 +224,25 @@ mod tests {
 
 **Performance Benchmarks:**
 
--   Establish baseline metrics before changes
--   Monitor compilation time, binary size, runtime performance
--   Set up continuous benchmarking in CI/CD
+- Establish baseline metrics before changes
+- Monitor compilation time, binary size, runtime performance
+- Set up continuous benchmarking in CI/CD
 
 ### Phase 4: Validation and Release (Weeks 7-8)
 
 **Rollback Plan:**
 
--   Feature flags for gradual rollout
--   Database migration rollback scripts
--   Configuration rollback procedures
--   Monitoring alerts for performance regressions
+- Feature flags for gradual rollout
+- Database migration rollback scripts
+- Configuration rollback procedures
+- Monitoring alerts for performance regressions
 
 **Security Considerations:**
 
--   Input validation prevents injection attacks
--   Proper error handling avoids information leakage
--   Dependency updates for security patches
--   Code review security checklist
+- Input validation prevents injection attacks
+- Proper error handling avoids information leakage
+- Dependency updates for security patches
+- Code review security checklist
 
 ### Dependencies to Add
 
@@ -338,36 +338,36 @@ crates/mcb-providers/src/
 
 The multi-domain architecture maintains and extends the v0.1.0 quality standards:
 
--   ✅ **Same error handling patterns** across all domains
--   ✅ **Trait-based DI** for all new provider types
--   ✅ **Async-first** for all I/O operations
--   ✅ **File size limits** maintained (<500 lines)
--   ✅ **Test organization** by domain
+- ✅ **Same error handling patterns** across all domains
+- ✅ **Trait-based DI** for all new provider types
+- ✅ **Async-first** for all I/O operations
+- ✅ **File size limits** maintained (<500 lines)
+- ✅ **Test organization** by domain
 
 ### No Functional Changes
 
 v0.2.0 is purely architectural:
 
--   All existing features work unchanged
--   No new features added
--   Zero functional regressions
--   100% backward compatible
+- All existing features work unchanged
+- No new features added
+- Zero functional regressions
+- 100% backward compatible
 
 ## Related ADRs
 
--   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Trait-based DI patterns
--   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async provider execution
--   [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) - Architecture visualization
--   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider routing and failover
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI patterns
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Trait-based DI patterns
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async provider execution
+- [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) - Architecture visualization
+- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider routing and failover
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI patterns
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
 
 ## References
 
--   [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
--   [SOLID Principles in Rust](https://www.fpcomplete.com/blog/solid-principles-rust/)
--   [Error Handling in Rust](https://blog.yoshuawuyts.com/error-handling-survey/)
--   [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
--   [Builder Pattern](https://refactoring.guru/design-patterns/builder)
--   [Strategy Pattern](https://refactoring.guru/design-patterns/strategy)
--   [Shaku Documentation](https://docs.rs/shaku) (historical; DI is now dill, ADR-029)
+- [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/)
+- [SOLID Principles in Rust](https://www.fpcomplete.com/blog/solid-principles-rust/)
+- [Error Handling in Rust](https://blog.yoshuawuyts.com/error-handling-survey/)
+- [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
+- [Builder Pattern](https://refactoring.guru/design-patterns/builder)
+- [Strategy Pattern](https://refactoring.guru/design-patterns/strategy)
+- [Shaku Documentation](https://docs.rs/shaku) (historical; DI is now dill, ADR-029)

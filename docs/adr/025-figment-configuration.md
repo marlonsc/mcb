@@ -65,12 +65,12 @@ Figment (version 0.10, workspace-managed) provides a unified configuration appro
 
 #### Core Features
 
--   **Provider system**: Modular sources (TOML, JSON, YAML, environment, custom)
--   **Fluent composition**: Chainable `merge()` operations with clear precedence
--   **Profile support**: Built-in development/production environment handling
--   **Rich error handling**: Detailed error messages with source attribution
--   **Type safety**: Compile-time guarantees through `extract<T>()` method
--   **Extensible**: Easy to implement custom providers
+- **Provider system**: Modular sources (TOML, JSON, YAML, environment, custom)
+- **Fluent composition**: Chainable `merge()` operations with clear precedence
+- **Profile support**: Built-in development/production environment handling
+- **Rich error handling**: Detailed error messages with source attribution
+- **Type safety**: Compile-time guarantees through `extract<T>()` method
+- **Extensible**: Easy to implement custom providers
 
 #### Key Advantages Over Config Crate
 
@@ -219,25 +219,25 @@ Caused by:
 
 ### Positive
 
--   **Unified API**: Single approach for all configuration sources
--   **Better error messages**: Figment provides more detailed configuration errors
--   **Profile support**: Easy development/production configuration switching
--   **Type safety**: Compile-time validation of configuration structure
--   **Extensibility**: Easy to add new configuration sources
--   **Less boilerplate**: Simpler source composition code
+- **Unified API**: Single approach for all configuration sources
+- **Better error messages**: Figment provides more detailed configuration errors
+- **Profile support**: Easy development/production configuration switching
+- **Type safety**: Compile-time validation of configuration structure
+- **Extensibility**: Easy to add new configuration sources
+- **Less boilerplate**: Simpler source composition code
 
 ### Negative
 
--   **New dependency**: Adds Figment to the dependency tree
--   **API changes**: Different method names and patterns
--   **Migration effort**: Need to update all configuration loading code
--   **Learning curve**: New API to understand
+- **New dependency**: Adds Figment to the dependency tree
+- **API changes**: Different method names and patterns
+- **Migration effort**: Need to update all configuration loading code
+- **Learning curve**: New API to understand
 
 ### Risks
 
--   **Source precedence confusion**: Figment's merge order might differ from config crate
--   **Provider compatibility**: Not all config crate sources have Figment equivalents
--   **Validation differences**: Figment's extraction might behave differently
+- **Source precedence confusion**: Figment's merge order might differ from config crate
+- **Provider compatibility**: Not all config crate sources have Figment equivalents
+- **Validation differences**: Figment's extraction might behave differently
 
 ## Migration Strategy (all phases complete)
 
@@ -263,21 +263,21 @@ Caused by:
 
 ## Validation Criteria
 
--   [x] All configuration sources load correctly (TOML, environment, defaults)
--   [x] Error messages are more helpful than before
--   [ ] Profile-based configuration works — **Deferred**: Figment profiles are available but not used in `ConfigLoader`. Environment differentiation is achieved via override files and `MCP__` env vars instead.
--   [x] All existing configuration values are preserved
--   [x] Performance is maintained or improved
--   [x] Integration tests pass with new configuration system
--   [x] Legacy `MCB_` prefix is rejected (verified by `config_figment_tests.rs`)
+- [x] All configuration sources load correctly (TOML, environment, defaults)
+- [x] Error messages are more helpful than before
+- [ ] Profile-based configuration works — **Deferred**: Figment profiles are available but not used in `ConfigLoader`. Environment differentiation is achieved via override files and `MCP__` env vars instead.
+- [x] All existing configuration values are preserved
+- [x] Performance is maintained or improved
+- [x] Integration tests pass with new configuration system
+- [x] Legacy `MCB_` prefix is rejected (verified by `config_figment_tests.rs`)
 
 ## Related ADRs
 
--   [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Configuration across crates
--   [ADR 021: Dependency Management](021-dependency-management.md) - Workspace dependency strategy
+- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Configuration across crates
+- [ADR 021: Dependency Management](021-dependency-management.md) - Workspace dependency strategy
 
 ## Related Documentation
 
--   [Configuration Guide](../../docs/CONFIGURATION.md) - Operator-facing configuration reference
--   [Figment External Context](../../context/external/figment.md) - Library analysis with Context7/GitHub evidence
--   [Architecture Boundaries](../architecture/ARCHITECTURE_BOUNDARIES.md) - Where Figment fits in the infrastructure layer
+- [Configuration Guide](../../docs/CONFIGURATION.md) - Operator-facing configuration reference
+- [Figment External Context](../../context/external/figment.md) - Library analysis with Context7/GitHub evidence
+- [Architecture Boundaries](../architecture/ARCHITECTURE_BOUNDARIES.md) - Where Figment fits in the infrastructure layer

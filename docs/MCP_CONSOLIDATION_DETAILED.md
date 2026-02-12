@@ -10,9 +10,9 @@
 
 ### Overview
 
--   **Total MCP Handlers**: 8 major handlers (Agent, Index, Memory, Project, Search, Session, Validate, VCS)
--   **Total Endpoints**: 50+ MCP tool methods across handlers
--   **Architecture**: Async-first, MCP protocol-based handlers returning `CallToolResult`
+- **Total MCP Handlers**: 8 major handlers (Agent, Index, Memory, Project, Search, Session, Validate, VCS)
+- **Total Endpoints**: 50+ MCP tool methods across handlers
+- **Architecture**: Async-first, MCP protocol-based handlers returning `CallToolResult`
 
 ### 1.1 INDEX HANDLER
 
@@ -40,8 +40,8 @@ pub async fn handle(
 
 **Response Format**: JSON with `text` content type
 
--   Success: `{"status": "indexed", "collection": "...", "count": 123}`
--   Error: `{"error": "...", "path": "..."}`
+- Success: `{"status": "indexed", "collection": "...", "count": 123}`
+- Error: `{"error": "...", "path": "..."}`
 
 ---
 
@@ -71,8 +71,8 @@ pub async fn handle(
 
 **Response Format**: JSON with code results or memory observations
 
--   Code: `{"query": "...", "count": N, "results": [...]}`
--   Memory: `{"query": "...", "count": N, "results": [{"observation_id": "...", "content": "...", "similarity_score": 0.95}]}`
+- Code: `{"query": "...", "count": N, "results": [...]}`
+- Memory: `{"query": "...", "count": N, "results": [{"observation_id": "...", "content": "...", "similarity_score": 0.95}]}`
 
 ---
 
@@ -102,8 +102,8 @@ pub async fn handle(
 
 **Response Format**: JSON with validation or complexity data
 
--   Validation: `{"path": "...", "issues": [...], "passed": true}`
--   Complexity: `{"cyclomatic": 5, "cognitive": 3, "sloc": 120}`
+- Validation: `{"path": "...", "issues": [...], "passed": true}`
+- Complexity: `{"cyclomatic": 5, "cognitive": 3, "sloc": 120}`
 
 ---
 
@@ -132,8 +132,8 @@ pub async fn handle(
 
 **Response Format**: JSON
 
--   Tool Call: `{"tool_call_id": "tc_...", "session_id": "...", "tool_name": "..."}`
--   Delegation: `{"delegation_id": "del_...", "parent_session_id": "...", "child_session_id": "..."}`
+- Tool Call: `{"tool_call_id": "tc_...", "session_id": "...", "tool_name": "..."}`
+- Delegation: `{"delegation_id": "del_...", "parent_session_id": "...", "child_session_id": "..."}`
 
 ---
 
@@ -166,8 +166,8 @@ pub async fn handle(
 
 **Response Format**: JSON with session data
 
--   Create: `{"session_id": "agent_...", "agent_type": "...", "status": "active"}`
--   Get/Update/List: `{"session": {...}, "status": "...", "created_at": 123456}`
+- Create: `{"session_id": "agent_...", "agent_type": "...", "status": "active"}`
+- Get/Update/List: `{"session": {...}, "status": "...", "created_at": 123456}`
 
 ---
 
@@ -205,8 +205,8 @@ pub async fn handle(
 
 **Response Format**: JSON with memory data
 
--   Store: `{"observation_id": "...", "deduplicated": false}`
--   Get: `{"count": 5, "observations": [{"id": "...", "content": "...", "tags": [...]}]}`
+- Store: `{"observation_id": "...", "deduplicated": false}`
+- Get: `{"count": 5, "observations": [{"id": "...", "content": "...", "tags": [...]}]}`
 
 ---
 
@@ -238,9 +238,9 @@ pub async fn handle(
 
 **Response Format**: JSON with VCS data
 
--   List Repos: `{"repositories": ["repo1", "repo2"], "count": 2}`
--   Compare: `{"base_branch": "main", "head_branch": "feature", "files_changed": 5, "additions": 100, "deletions": 50, "files": [...]}`
--   Impact: `{"impact_score": 0.75, "summary": {...}, "impacted_files": [...]}`
+- List Repos: `{"repositories": ["repo1", "repo2"], "count": 2}`
+- Compare: `{"base_branch": "main", "head_branch": "feature", "files_changed": 5, "additions": 100, "deletions": 50, "files": [...]}`
+- Impact: `{"impact_score": 0.75, "summary": {...}, "impacted_files": [...]}`
 
 ---
 
@@ -402,10 +402,10 @@ impl IndexHandler {
 
 **Usage Pattern**:
 
--   8 handlers follow this exact pattern
--   Error handling: `McpError::invalid_params()` for validation
--   Response: `CallToolResult::success()` or `CallToolResult::error()`
--   Async-first, all handler methods are async
+- 8 handlers follow this exact pattern
+- Error handling: `McpError::invalid_params()` for validation
+- Response: `CallToolResult::success()` or `CallToolResult::error()`
+- Async-first, all handler methods are async
 
 ---
 
@@ -447,10 +447,10 @@ pub fn handler_with_error(
 
 **Patterns**:
 
--   10+ handlers in admin module
--   Rocket `#[get]`, `#[post]`, `#[patch]` decorators
--   Status codes: `Ok`, `ServiceUnavailable`, `NotFound`, `BadRequest`, `InternalServerError`
--   Response: `Json<T>` or `(Status, Json<T>)`
+- 10+ handlers in admin module
+- Rocket `#[get]`, `#[post]`, `#[patch]` decorators
+- Status codes: `Ok`, `ServiceUnavailable`, `NotFound`, `BadRequest`, `InternalServerError`
+- Response: `Json<T>` or `(Status, Json<T>)`
 
 ---
 
@@ -508,11 +508,11 @@ impl SearchHandler {
 
 **Composition Pattern**:
 
--   SearchHandler: 2 services
--   SessionHandler: 2 services
--   MemoryHandler: 1 service
--   IndexHandler: 1 service
--   ValidateHandler: 1 service
+- SearchHandler: 2 services
+- SessionHandler: 2 services
+- MemoryHandler: 1 service
+- IndexHandler: 1 service
+- ValidateHandler: 1 service
 
 ---
 
@@ -601,38 +601,38 @@ pub struct ApiResult<T: Serialize> {
 
 1. **Index Status Data**
 
--   MCP: `IndexHandler::handle(IndexAction::Status)` → JSON
--   Admin: Could call MCP instead of calling indexing service directly
--   **Adaptation**: Wrap MCP Result in HTTP response
--   **ROI**: ✅ HIGH - Eliminates duplicate status queries
+- MCP: `IndexHandler::handle(IndexAction::Status)` → JSON
+- Admin: Could call MCP instead of calling indexing service directly
+- **Adaptation**: Wrap MCP Result in HTTP response
+- **ROI**: ✅ HIGH - Eliminates duplicate status queries
 
 1. **Collection Information**
 
--   MCP: Browse API endpoint data structure
--   Admin: Already has `/collections`, `/collections/:name/files`, `/collections/:name/chunks`
--   **Reuse**: Response types match exactly
--   **ROI**: ✅ HIGH - Could unify data sources
+- MCP: Browse API endpoint data structure
+- Admin: Already has `/collections`, `/collections/:name/files`, `/collections/:name/chunks`
+- **Reuse**: Response types match exactly
+- **ROI**: ✅ HIGH - Could unify data sources
 
 1. **Search Results**
 
--   MCP: `SearchHandler::handle(SearchResource::Code)` → results JSON
--   Admin: Could expose search via HTTP + admin UI
--   **Adaptation**: Add HTTP endpoint wrapper
--   **ROI**: ✅ MEDIUM - New feature, enables search UI
+- MCP: `SearchHandler::handle(SearchResource::Code)` → results JSON
+- Admin: Could expose search via HTTP + admin UI
+- **Adaptation**: Add HTTP endpoint wrapper
+- **ROI**: ✅ MEDIUM - New feature, enables search UI
 
 1. **Memory/Observations**
 
--   MCP: `MemoryHandler` endpoints
--   Admin: Could expose memory timeline via new HTTP endpoints
--   **Adaptation**: Add HTTP wrapper for read-only memory browsing
--   **ROI**: ✅ MEDIUM - Debug feature for admin
+- MCP: `MemoryHandler` endpoints
+- Admin: Could expose memory timeline via new HTTP endpoints
+- **Adaptation**: Add HTTP wrapper for read-only memory browsing
+- **ROI**: ✅ MEDIUM - Debug feature for admin
 
 1. **Validation Reports**
 
--   MCP: `ValidateHandler::handle(ValidateAction::Run)` → report
--   Admin: Could expose analysis UI
--   **Adaptation**: Add HTTP endpoint + UI
--   **ROI**: ✅ LOW - Lower priority feature
+- MCP: `ValidateHandler::handle(ValidateAction::Run)` → report
+- Admin: Could expose analysis UI
+- **Adaptation**: Add HTTP endpoint + UI
+- **ROI**: ✅ LOW - Lower priority feature
 
 ---
 
@@ -640,24 +640,24 @@ pub struct ApiResult<T: Serialize> {
 
 1. **Session Management**
 
--   MCP: `SessionHandler` - agent session lifecycle
--   Admin: Session management is different (HTTP session vs agent session)
--   **Blocker**: Different domain models
--   **Option**: Create adapter layer for HTTP-based session browsing
+- MCP: `SessionHandler` - agent session lifecycle
+- Admin: Session management is different (HTTP session vs agent session)
+- **Blocker**: Different domain models
+- **Option**: Create adapter layer for HTTP-based session browsing
 
 1. **VCS Operations**
 
--   MCP: `VcsHandler` - git operations
--   Admin: Currently browse-only (no VCS operations exposed)
--   **Blocker**: Would require new HTTP endpoints + authorization
--   **Option**: Expose read-only VCS browsing first
+- MCP: `VcsHandler` - git operations
+- Admin: Currently browse-only (no VCS operations exposed)
+- **Blocker**: Would require new HTTP endpoints + authorization
+- **Option**: Expose read-only VCS browsing first
 
 1. **Agent Logging**
 
--   MCP: `AgentHandler::log_tool()` / `log_delegation()`
--   Admin: No agent-specific UI currently
--   **Blocker**: Would need new UI pages
--   **Option**: Create timeline viewer for agent operations
+- MCP: `AgentHandler::log_tool()` / `log_delegation()`
+- Admin: No agent-specific UI currently
+- **Blocker**: Would need new UI pages
+- **Option**: Create timeline viewer for agent operations
 
 ---
 
@@ -692,53 +692,53 @@ pub struct ApiResult<T: Serialize> {
 
 **1. INDEX STATUS → HTTP WRAPPER**
 
--   **Current**: Admin calls `indexing_service.get_status()` directly
--   **Reuse**: Wrap MCP `IndexHandler::handle(IndexAction::Status)` as HTTP endpoint
--   **Effort**: 30 min (create wrapper)
--   **Benefit**: Unified data source, reduces direct service dependency
--   **Files to Change**: `admin/handlers.rs` (modify `get_jobs_status`)
--   **Risk**: Low
--   **ROI**: ✅ HIGH
+- **Current**: Admin calls `indexing_service.get_status()` directly
+- **Reuse**: Wrap MCP `IndexHandler::handle(IndexAction::Status)` as HTTP endpoint
+- **Effort**: 30 min (create wrapper)
+- **Benefit**: Unified data source, reduces direct service dependency
+- **Files to Change**: `admin/handlers.rs` (modify `get_jobs_status`)
+- **Risk**: Low
+- **ROI**: ✅ HIGH
 
 **2. COLLECTION LISTING → EXTEND WITH SEARCH**
 
--   **Current**: Admin has `/collections`, `/collections/:name/files`, `/collections/:name/chunks`
--   **Reuse**: Add `/collections/:name/search?q=...` using MCP SearchHandler
--   **Effort**: 2 hours (new endpoint + response wrapper)
--   **Benefit**: Enables semantic search UI in admin, code reuse
--   **Files to Change**: Add `admin/search_handlers.rs`, update `admin/routes.rs`
--   **Risk**: Medium (new feature)
--   **ROI**: ✅ HIGH
+- **Current**: Admin has `/collections`, `/collections/:name/files`, `/collections/:name/chunks`
+- **Reuse**: Add `/collections/:name/search?q=...` using MCP SearchHandler
+- **Effort**: 2 hours (new endpoint + response wrapper)
+- **Benefit**: Enables semantic search UI in admin, code reuse
+- **Files to Change**: Add `admin/search_handlers.rs`, update `admin/routes.rs`
+- **Risk**: Medium (new feature)
+- **ROI**: ✅ HIGH
 
 **3. HEALTH METRICS → USE MCP PERFORMANCE DATA**
 
--   **Current**: Admin `get_metrics` consumes `PerformanceMetricsData`
--   **Reuse**: MCP metrics data structure already aligned
--   **Effort**: 15 min (refactor for consistency)
--   **Benefit**: Ensures admin UI always shows accurate metrics
--   **Files to Change**: `admin/handlers.rs` (`get_metrics`)
--   **Risk**: Low
--   **ROI**: ✅ HIGH
+- **Current**: Admin `get_metrics` consumes `PerformanceMetricsData`
+- **Reuse**: MCP metrics data structure already aligned
+- **Effort**: 15 min (refactor for consistency)
+- **Benefit**: Ensures admin UI always shows accurate metrics
+- **Files to Change**: `admin/handlers.rs` (`get_metrics`)
+- **Risk**: Low
+- **ROI**: ✅ HIGH
 
 **4. VALIDATION → ADD HTTP ENDPOINT**
 
--   **Current**: Only MCP supports validation
--   **Reuse**: Wrap MCP `ValidateHandler::handle(ValidateAction::Run)`
--   **Effort**: 1 hour (endpoint + UI optional)
--   **Benefit**: Admin can trigger validation, view reports
--   **Files to Change**: Add `admin/validate_handlers.rs`
--   **Risk**: Low
--   **ROI**: ✅ MEDIUM
+- **Current**: Only MCP supports validation
+- **Reuse**: Wrap MCP `ValidateHandler::handle(ValidateAction::Run)`
+- **Effort**: 1 hour (endpoint + UI optional)
+- **Benefit**: Admin can trigger validation, view reports
+- **Files to Change**: Add `admin/validate_handlers.rs`
+- **Risk**: Low
+- **ROI**: ✅ MEDIUM
 
 **5. CODE COMPLEXITY ANALYSIS → ADD HTTP ENDPOINT**
 
--   **Current**: MCP `ValidateHandler::handle(ValidateAction::Analyze)`
--   **Reuse**: Wrap for admin UI
--   **Effort**: 1 hour
--   **Benefit**: Admin can analyze files without MCP
--   **Files to Change**: Same as #4
--   **Risk**: Low
--   **ROI**: ✅ MEDIUM
+- **Current**: MCP `ValidateHandler::handle(ValidateAction::Analyze)`
+- **Reuse**: Wrap for admin UI
+- **Effort**: 1 hour
+- **Benefit**: Admin can analyze files without MCP
+- **Files to Change**: Same as #4
+- **Risk**: Low
+- **ROI**: ✅ MEDIUM
 
 ---
 
@@ -746,53 +746,53 @@ pub struct ApiResult<T: Serialize> {
 
 **6. OBSERVATION TIMELINE → NEW HTTP ENDPOINTS**
 
--   **Current**: MCP `MemoryHandler::handle(MemoryAction::List)` returns observations
--   **Reuse**: Add HTTP `/memory/observations` and `/memory/timeline`
--   **Effort**: 3 hours (endpoint + response wrappers)
--   **Benefit**: Admin debug UI for observations, code reuse
--   **Files to Change**: Add `admin/memory_handlers.rs`
--   **Risk**: Medium (data exposure, auth)
--   **ROI**: ✅ MEDIUM
+- **Current**: MCP `MemoryHandler::handle(MemoryAction::List)` returns observations
+- **Reuse**: Add HTTP `/memory/observations` and `/memory/timeline`
+- **Effort**: 3 hours (endpoint + response wrappers)
+- **Benefit**: Admin debug UI for observations, code reuse
+- **Files to Change**: Add `admin/memory_handlers.rs`
+- **Risk**: Medium (data exposure, auth)
+- **ROI**: ✅ MEDIUM
 
 **7. VCS BRANCH COMPARISON → NEW HTTP ENDPOINT**
 
--   **Current**: MCP `VcsHandler::handle(VcsAction::CompareBranches)`
--   **Reuse**: Wrap for admin UI
--   **Effort**: 2 hours
--   **Benefit**: Admin can compare branches, see impacts
--   **Files to Change**: Add `admin/vcs_handlers.rs`
--   **Risk**: Medium (auth requirements)
--   **ROI**: ✅ MEDIUM
+- **Current**: MCP `VcsHandler::handle(VcsAction::CompareBranches)`
+- **Reuse**: Wrap for admin UI
+- **Effort**: 2 hours
+- **Benefit**: Admin can compare branches, see impacts
+- **Files to Change**: Add `admin/vcs_handlers.rs`
+- **Risk**: Medium (auth requirements)
+- **ROI**: ✅ MEDIUM
 
 **8. SESSION BROWSING → NEW HTTP ENDPOINTS**
 
--   **Current**: MCP `SessionHandler::handle(SessionAction::List/Get)`
--   **Reuse**: Add HTTP `/sessions` and `/sessions/:id`
--   **Effort**: 2 hours
--   **Benefit**: Admin can browse agent sessions
--   **Files to Change**: Add `admin/session_handlers.rs`
--   **Risk**: Low (read-only)
--   **ROI**: ✅ MEDIUM
+- **Current**: MCP `SessionHandler::handle(SessionAction::List/Get)`
+- **Reuse**: Add HTTP `/sessions` and `/sessions/:id`
+- **Effort**: 2 hours
+- **Benefit**: Admin can browse agent sessions
+- **Files to Change**: Add `admin/session_handlers.rs`
+- **Risk**: Low (read-only)
+- **ROI**: ✅ MEDIUM
 
 **9. RESPONSE TYPE CONSOLIDATION → REFACTOR**
 
--   **Current**: 10+ single-use response types in admin
--   **Reuse**: Create `pub struct ApiResponse<T: Serialize>` wrapper
--   **Effort**: 4 hours (refactor all endpoints)
--   **Benefit**: Consistent error handling, simpler client code
--   **Files to Change**: `admin/models.rs`, all handler files
--   **Risk**: Medium (breaking changes to API contract)
--   **ROI**: ✅ MEDIUM-HIGH
+- **Current**: 10+ single-use response types in admin
+- **Reuse**: Create `pub struct ApiResponse<T: Serialize>` wrapper
+- **Effort**: 4 hours (refactor all endpoints)
+- **Benefit**: Consistent error handling, simpler client code
+- **Files to Change**: `admin/models.rs`, all handler files
+- **Risk**: Medium (breaking changes to API contract)
+- **ROI**: ✅ MEDIUM-HIGH
 
 **10. SERVICE LIFECYCLE IN MCP → IMPLEMENT PROJECT HANDLER**
 
--   **Current**: Project handler returns "not implemented"
--   **Reuse**: Admin `/services/*` endpoints already work
--   **Effort**: 8 hours (full project handler implementation)
--   **Benefit**: MCP users can manage services, admin UI delegates to MCP
--   **Files to Change**: `handlers/project.rs`
--   **Risk**: High (new feature, API stability)
--   **ROI**: ✅ HIGH (long-term)
+- **Current**: Project handler returns "not implemented"
+- **Reuse**: Admin `/services/*` endpoints already work
+- **Effort**: 8 hours (full project handler implementation)
+- **Benefit**: MCP users can manage services, admin UI delegates to MCP
+- **Files to Change**: `handlers/project.rs`
+- **Risk**: High (new feature, API stability)
+- **ROI**: ✅ HIGH (long-term)
 
 ---
 
@@ -1230,7 +1230,7 @@ Legend:
 
 ### Long-term Vision
 
--   **Single service facade** that provides both MCP and HTTP access to all tools
--   **Unified response types** across both protocols
--   **Role-based filtering** and pagination everywhere
--   **Admin UI as first-class consumer** of MCP endpoints
+- **Single service facade** that provides both MCP and HTTP access to all tools
+- **Unified response types** across both protocols
+- **Role-based filtering** and pagination everywhere
+- **Admin UI as first-class consumer** of MCP endpoints

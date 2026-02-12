@@ -56,9 +56,9 @@ pub struct ProjectMetadata {
 
 **Why this design?**
 
--   **Sway** (FuelLabs): Uses `PackageDependencyIdentifier { name, version }` + `Source` enum (Git, Path, Registry)
--   **Vibe-Kanban**: Minimal `Project { id, name, created_at, updated_at }` + separate `ProjectRepo` junction table
--   **Shuttle**: `ProjectResponse { id, name, user_id, team_id, created_at, ... }`
+- **Sway** (FuelLabs): Uses `PackageDependencyIdentifier { name, version }` + `Source` enum (Git, Path, Registry)
+- **Vibe-Kanban**: Minimal `Project { id, name, created_at, updated_at }` + separate `ProjectRepo` junction table
+- **Shuttle**: `ProjectResponse { id, name, user_id, team_id, created_at, ... }`
 
 **Key insight**: Keep Project simple, use junction tables for relationships.
 
@@ -114,9 +114,9 @@ CREATE INDEX idx_metadata_cargo_name ON project_metadata(cargo_name);
 
 **Why this structure?**
 
--   **Vibe-Kanban** uses: `projects (id, name, created_at, updated_at)` + `project_repos (id, project_id, repo_id)` junction
--   **Sway** stores: `PackageEntry { name, version, source_cid, dependencies: Vec<PackageDependencyIdentifier> }`
--   **Shuttle** has: `projects (id, name, user_id, team_id, created_at, deployment_state, uris)`
+- **Vibe-Kanban** uses: `projects (id, name, created_at, updated_at)` + `project_repos (id, project_id, repo_id)` junction
+- **Sway** stores: `PackageEntry { name, version, source_cid, dependencies: Vec<PackageDependencyIdentifier> }`
+- **Shuttle** has: `projects (id, name, user_id, team_id, created_at, deployment_state, uris)`
 
 **Optimization**: Denormalize `project_metadata` to avoid repeated Cargo.toml parsing.
 
@@ -660,39 +660,39 @@ mod tests {
 
 ### Phase 1: Domain & Ports (3-4 days)
 
--   [ ] Define `Project`, `ProjectDependency`, `ProjectMetadata` entities
--   [ ] Create `ProjectProvider` and `DependencyProvider` traits
--   [ ] Add error types with `thiserror`
--   [ ] Write unit tests for domain logic
+- [ ] Define `Project`, `ProjectDependency`, `ProjectMetadata` entities
+- [ ] Create `ProjectProvider` and `DependencyProvider` traits
+- [ ] Add error types with `thiserror`
+- [ ] Write unit tests for domain logic
 
 ### Phase 2: Database & Providers (4-5 days)
 
--   [ ] Create SQLite/PostgreSQL migrations
--   [ ] Implement `SqliteProjectProvider`
--   [ ] Implement `SqliteDependencyProvider`
--   [ ] Add circular dependency detection (recursive SQL)
--   [ ] Integration tests with real database
+- [ ] Create SQLite/PostgreSQL migrations
+- [ ] Implement `SqliteProjectProvider`
+- [ ] Implement `SqliteDependencyProvider`
+- [ ] Add circular dependency detection (recursive SQL)
+- [ ] Integration tests with real database
 
 ### Phase 3: Application Services (2-3 days)
 
--   [ ] Implement `ProjectService`
--   [ ] Add dependency analysis logic
--   [ ] Create service-level error handling
--   [ ] Unit tests for services
+- [ ] Implement `ProjectService`
+- [ ] Add dependency analysis logic
+- [ ] Create service-level error handling
+- [ ] Unit tests for services
 
 ### Phase 4: MCP Integration (2-3 days)
 
--   [ ] Create tool handlers
--   [ ] Register tools in MCP server
--   [ ] Add request/response serialization
--   [ ] E2E tests
+- [ ] Create tool handlers
+- [ ] Register tools in MCP server
+- [ ] Add request/response serialization
+- [ ] E2E tests
 
 ### Phase 5: Testing & Polish (2-3 days)
 
--   [ ] Full test coverage (>90%)
--   [ ] Performance testing (large dependency graphs)
--   [ ] Documentation
--   [ ] Code review & cleanup
+- [ ] Full test coverage (>90%)
+- [ ] Performance testing (large dependency graphs)
+- [ ] Documentation
+- [ ] Code review & cleanup
 
 **Total: 13-18 days (2-3 weeks)**
 
@@ -813,8 +813,8 @@ pub struct ProjectResponse {
 
 ## REFERENCES
 
--   **Sway**: <https://github.com/FuelLabs/sway/blob/master/forc-pkg/src/manifest/mod.rs>
--   **Vibe-Kanban**: <https://github.com/BloopAI/vibe-kanban/blob/main/crates/db/src/models/project.rs>
--   **Shuttle**: <https://github.com/shuttle-hq/shuttle/blob/main/common/src/models/project.rs>
--   **Rocket**: <https://github.com/SergioBenitez/Rocket/blob/master/examples/databases/db/sqlx/migrations/>
--   **Ockam**: <https://github.com/build-trust/ockam/blob/develop/implementations/rust/ockam/ockam_api/src/orchestrator/project/>
+- **Sway**: <https://github.com/FuelLabs/sway/blob/master/forc-pkg/src/manifest/mod.rs>
+- **Vibe-Kanban**: <https://github.com/BloopAI/vibe-kanban/blob/main/crates/db/src/models/project.rs>
+- **Shuttle**: <https://github.com/shuttle-hq/shuttle/blob/main/common/src/models/project.rs>
+- **Rocket**: <https://github.com/SergioBenitez/Rocket/blob/master/examples/databases/db/sqlx/migrations/>
+- **Ockam**: <https://github.com/build-trust/ockam/blob/develop/implementations/rust/ockam/ockam_api/src/orchestrator/project/>

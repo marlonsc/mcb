@@ -62,8 +62,8 @@ export MCP__SERVER__NETWORK__PORT=9000
 
 **Current Architecture Note**:
 
--   If `REDIS_URL` is**empty**→ Uses Moka (local in-memory cache)
--   If `REDIS_URL` is**non-empty**→ Uses Redis (distributed cache)
+- If `REDIS_URL` is**empty**→ Uses Moka (local in-memory cache)
+- If `REDIS_URL` is**non-empty**→ Uses Redis (distributed cache)
 
 **Migration Path**(Phase 2):
 This will be replaced with:
@@ -176,8 +176,8 @@ export MCP_NATS_RETENTION_HOURS=24
 
 **Security Model**:
 
--   If**both**`JWT_SECRET` and `ADMIN_PASSWORD` are set → Auth**enabled**
--   If**either**is empty → Auth**disabled**(graceful degradation)
+- If**both**`JWT_SECRET` and `ADMIN_PASSWORD` are set → Auth**enabled**
+- If**either**is empty → Auth**disabled**(graceful degradation)
 
 **Production Setup**:
 
@@ -219,8 +219,8 @@ export JWT_EXPIRATION="3600"  # 1 hour
 
 **Security Model**:
 
--   If `DATABASE_URL` is empty → Database**disabled**(no storage)
--   If `DATABASE_URL` is set → Database**enabled**with connection pooling
+- If `DATABASE_URL` is empty → Database**disabled**(no storage)
+- If `DATABASE_URL` is set → Database**enabled**with connection pooling
 
 **Production Setup**:
 
@@ -548,9 +548,9 @@ pub enum CacheBackendConfig {
 
 This will replace:
 
--   `MCP_CACHE__REDIS_URL` with `MCP_CACHE__BACKEND=local|redis`
--   `MCP_EVENT_BUS_TYPE` will be moved to `EventBusConfig::from_env()`
--   All config enums will support environment variable overrides
+- `MCP_CACHE__REDIS_URL` with `MCP_CACHE__BACKEND=local|redis`
+- `MCP_EVENT_BUS_TYPE` will be moved to `EventBusConfig::from_env()`
+- All config enums will support environment variable overrides
 
 ---
 
@@ -587,6 +587,6 @@ redis-cli ping  # Should respond with PONG
 
 ## See Also
 
--   [Configuration Types](../../src/infrastructure/config/) - Source code
--   [Admin Defaults](../../src/server/admin/service/helpers/admin_defaults.rs) - Operational settings
--   [CONFIGURATION.md](../CONFIGURATION.md) - General configuration guide
+- [Configuration Types](../../src/infrastructure/config/) - Source code
+- [Admin Defaults](../../src/server/admin/service/helpers/admin_defaults.rs) - Operational settings
+- [CONFIGURATION.md](../CONFIGURATION.md) - General configuration guide

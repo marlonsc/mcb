@@ -13,14 +13,14 @@ This document tracks validation of CI optimizations before considering them prod
 
 1. **Test Matrix Logic** (Commit: d211ffe)
 
--   [x] Verified `release-build` dependency updated from `test` to `test-main`
--   [x] Confirmed job dependencies are syntactically correct
--   [x] Validated workflow file passes YAML validation
+- [x] Verified `release-build` dependency updated from `test` to `test-main`
+- [x] Confirmed job dependencies are syntactically correct
+- [x] Validated workflow file passes YAML validation
 
 1. **Tarpaulin Installation** (Locally tested 2026-01-28)
 
--   [x] Cargo-tarpaulin v0.35.1 installed successfully
--   [x] Tarpaulin binary available and executable
+- [x] Cargo-tarpaulin v0.35.1 installed successfully
+- [x] Tarpaulin binary available and executable
 
 ### ✅ RESOLVED: CI/CD Coverage Timeout Issue
 
@@ -28,24 +28,24 @@ This document tracks validation of CI optimizations before considering them prod
 
 **Original Symptoms**:
 
--   Process killed after ~8 minutes (system timeout or OOM)
--   Integration tests still executing (test_full_validation_report, test_clippy_real_execution)
--   No coverage output generated (coverage/ directory not created)
--   Tests attempting to connect to Milvus/Ollama, causing hangs
+- Process killed after ~8 minutes (system timeout or OOM)
+- Integration tests still executing (test_full_validation_report, test_clippy_real_execution)
+- No coverage output generated (coverage/ directory not created)
+- Tests attempting to connect to Milvus/Ollama, causing hangs
 
 **Root Cause**:
 
--   `--exclude-files` parameter only excludes files from coverage REPORT
--   Integration tests still RUN to completion before coverage is measured
--   External service dependencies (Milvus, Ollama) cause test hangs
+- `--exclude-files` parameter only excludes files from coverage REPORT
+- Integration tests still RUN to completion before coverage is measured
+- External service dependencies (Milvus, Ollama) cause test hangs
 
 **Solution Implemented**:
 
 ✅ **Added CI detection to test skip macros** (`crates/mcb-server/tests/integration/helpers.rs`):
 
--   `skip_if_service_unavailable!` macro now checks for `CI` or `GITHUB_ACTIONS` environment variables
--   Tests automatically skip in CI environment to prevent timeouts
--   No need for `#[ignore]` attributes - tests skip gracefully at runtime
+- `skip_if_service_unavailable!` macro now checks for `CI` or `GITHUB_ACTIONS` environment variables
+- Tests automatically skip in CI environment to prevent timeouts
+- No need for `#[ignore]` attributes - tests skip gracefully at runtime
 
 **Status**: ✅ **FIXED** - Integration tests will now skip in CI, preventing coverage timeouts
 
@@ -72,12 +72,12 @@ head -50 coverage/lcov.info
 
 **Success Criteria**:
 
--   [ ] Tarpaulin installation completes successfully
--   [ ] Coverage job completes within 30 minutes
--   [ ] No timeout errors from Milvus/Ollama dependencies
--   [ ] `lcov.info` file is generated (> 1MB)
--   [ ] Integration tests are excluded from report (verify in output)
--   [ ] Coverage percentage is reasonable (> 50%)
+- [ ] Tarpaulin installation completes successfully
+- [ ] Coverage job completes within 30 minutes
+- [ ] No timeout errors from Milvus/Ollama dependencies
+- [ ] `lcov.info` file is generated (> 1MB)
+- [ ] Integration tests are excluded from report (verify in output)
+- [ ] Coverage percentage is reasonable (> 50%)
 
 **Expected Output**:
 
@@ -89,10 +89,10 @@ Cover: X% (Y out of Z lines)
 
 **What to Watch For**:
 
--   ❌ Timeout after 300 seconds
--   ❌ "Thread panicked" in integration tests
--   ❌ "Connection refused" (Milvus/Ollama)
--   ❌ Missing lcov.info file
+- ❌ Timeout after 300 seconds
+- ❌ "Thread panicked" in integration tests
+- ❌ "Connection refused" (Milvus/Ollama)
+- ❌ Missing lcov.info file
 
 ---
 
@@ -117,22 +117,22 @@ git commit -m "docs: test documentation-only PR"
 
 **Files to Modify** (verify CI is SKIPPED):
 
--   [x] `README.md`
--   [x] `docs/**/*.md`
--   [x] Any file NOT in paths filter
+- [x] `README.md`
+- [x] `docs/**/*.md`
+- [x] Any file NOT in paths filter
 
 **Success Criteria**:
 
--   [ ] CI workflow is NOT triggered
--   [ ] CodeQL is NOT triggered
--   [ ] Docs workflow IS triggered
--   [ ] PR shows "No checks running"
+- [ ] CI workflow is NOT triggered
+- [ ] CodeQL is NOT triggered
+- [ ] Docs workflow IS triggered
+- [ ] PR shows "No checks running"
 
 **What to Look For**:
 
--   ❌ Green checkmark for "CI" job
--   ❌ CodeQL analysis running
--   ✅ Only Docs pipeline should be visible
+- ❌ Green checkmark for "CI" job
+- ❌ CodeQL analysis running
+- ✅ Only Docs pipeline should be visible
 
 ---
 
@@ -157,25 +157,25 @@ git commit -m "test: verify CI runs on code changes"
 
 **Files to Modify** (verify CI RUNS):
 
--   [x] `src/**`
--   [x] `crates/**`
--   [x] `tests/**`
+- [x] `src/**`
+- [x] `crates/**`
+- [x] `tests/**`
 
 **Success Criteria**:
 
--   [ ] CI workflow IS triggered
--   [ ] Lint job runs
--   [ ] Test-PR job runs (stable only)
--   [ ] Coverage job does NOT run (PR, not main)
--   [ ] Release-Build does NOT run (PR, not main)
+- [ ] CI workflow IS triggered
+- [ ] Lint job runs
+- [ ] Test-PR job runs (stable only)
+- [ ] Coverage job does NOT run (PR, not main)
+- [ ] Release-Build does NOT run (PR, not main)
 
 **What to Look For**:
 
--   ✅ CI workflow triggered
--   ✅ Test-PR (stable) only
--   ❌ No Test-Main in PR
--   ❌ No Coverage in PR
--   ❌ No Release builds in PR
+- ✅ CI workflow triggered
+- ✅ Test-PR (stable) only
+- ❌ No Test-Main in PR
+- ❌ No Coverage in PR
+- ❌ No Release builds in PR
 
 ---
 
@@ -200,9 +200,9 @@ git commit -m "test: verify CI runs on workflow changes"
 
 **Success Criteria**:
 
--   [ ] CI workflow IS triggered (workflow file is in paths filter)
--   [ ] Lint job runs
--   [ ] Test-PR job runs
+- [ ] CI workflow IS triggered (workflow file is in paths filter)
+- [ ] Lint job runs
+- [ ] Test-PR job runs
 
 ---
 
@@ -212,18 +212,18 @@ git commit -m "test: verify CI runs on workflow changes"
 
 **Evidence**:
 
--   PR to main should show:
-  -   ✅ Lint job
-  -   ✅ Test-PR job with name "Test (PR - Stable)"
-  -   ❌ NO Test-Main job
-  -   ❌ NO Golden-Tests job
-  -   ❌ NO Coverage job
+- PR to main should show:
+- ✅ Lint job
+- ✅ Test-PR job with name "Test (PR - Stable)"
+- ❌ NO Test-Main job
+- ❌ NO Golden-Tests job
+- ❌ NO Coverage job
 
 **What NOT to See**:
 
--   ❌ "Test (Main - stable)"
--   ❌ "Test (Main - beta)"
--   ❌ "Golden Acceptance Tests"
+- ❌ "Test (Main - stable)"
+- ❌ "Test (Main - beta)"
+- ❌ "Golden Acceptance Tests"
 
 ---
 
@@ -238,18 +238,18 @@ git commit -m "test: verify CI runs on workflow changes"
 
 **Evidence**:
 
--   Push to main should show:
-  -   ✅ Lint job
-  -   ✅ Test-Main jobs (stable AND beta - 2 matrix runs)
-  -   ✅ Golden-Tests job
-  -   ✅ Coverage job
-  -   ✅ Release-Build jobs (3 platforms)
+- Push to main should show:
+- ✅ Lint job
+- ✅ Test-Main jobs (stable AND beta - 2 matrix runs)
+- ✅ Golden-Tests job
+- ✅ Coverage job
+- ✅ Release-Build jobs (3 platforms)
 
 **What to Verify**:
 
--   ✅ Two test-main jobs (stable and beta)
--   ✅ Both complete before golden-tests starts
--   ✅ Coverage depends on test-main
+- ✅ Two test-main jobs (stable and beta)
+- ✅ Both complete before golden-tests starts
+- ✅ Coverage depends on test-main
 
 ---
 
@@ -259,17 +259,17 @@ git commit -m "test: verify CI runs on workflow changes"
 
 **Evidence**:
 
--   Coverage job in main push should:
-  -   ✅ Install tarpaulin via setup-ci.sh --install-coverage
-  -   ✅ Run `make coverage LCOV=1 TEST_THREADS=4`
-  -   ✅ Upload to codecov
-  -   ✅ Complete within 30-minute timeout
+- Coverage job in main push should:
+- ✅ Install tarpaulin via setup-ci.sh --install-coverage
+- ✅ Run `make coverage LCOV=1 TEST_THREADS=4`
+- ✅ Upload to codecov
+- ✅ Complete within 30-minute timeout
 
 **Metrics to Check**:
 
--   Coverage % (should be > 50%)
--   Execution time (should be < 25 min)
--   Integration tests excluded from measurement
+- Coverage % (should be > 50%)
+- Execution time (should be < 25 min)
+- Integration tests excluded from measurement
 
 ---
 
@@ -277,51 +277,51 @@ git commit -m "test: verify CI runs on workflow changes"
 
 ### Phase A: Local Testing (Today)
 
--   [ ] Install tarpaulin
--   [ ] Run `make coverage` locally
--   [ ] Verify no timeouts
--   [ ] Check exclusion of integration tests
+- [ ] Install tarpaulin
+- [ ] Run `make coverage` locally
+- [ ] Verify no timeouts
+- [ ] Check exclusion of integration tests
 
 ### Phase B: Dry-Run on release/v0.1.4
 
--   [ ] Create test PR from release/v0.1.4 to main with docs change
--   [ ] Verify CI is skipped
--   [ ] Create test PR with code change
--   [ ] Verify CI runs (test-pr only)
+- [ ] Create test PR from release/v0.1.4 to main with docs change
+- [ ] Verify CI is skipped
+- [ ] Create test PR with code change
+- [ ] Verify CI runs (test-pr only)
 
 ### Phase C: First Real PR/Push
 
--   [ ] Create real PR with code changes
--   [ ] Monitor CI execution
--   [ ] Watch for any failures
--   [ ] Validate timing meets expectations
+- [ ] Create real PR with code changes
+- [ ] Monitor CI execution
+- [ ] Watch for any failures
+- [ ] Validate timing meets expectations
 
 ### Phase D: Monitor Production
 
--   [ ] Track weekly CI job counts
--   [ ] Monitor coverage times
--   [ ] Check for false negatives
--   [ ] Gather metrics on 34% savings claim
+- [ ] Track weekly CI job counts
+- [ ] Monitor coverage times
+- [ ] Check for false negatives
+- [ ] Gather metrics on 34% savings claim
 
 ## Risk Mitigation
 
 **Risk**: Coverage timeouts again
 
--   **Mitigation**: Rollback to previous coverage target
--   **Detection**: Coverage job still running after 25 min
--   **Action**: Disable coverage job immediately, investigate
+- **Mitigation**: Rollback to previous coverage target
+- **Detection**: Coverage job still running after 25 min
+- **Action**: Disable coverage job immediately, investigate
 
 **Risk**: Path filters too restrictive (false negatives)
 
--   **Mitigation**: Monitor for bugs that slip through
--   **Detection**: Bug reported that wasn't caught by CI
--   **Action**: Expand path filters, add failing test
+- **Mitigation**: Monitor for bugs that slip through
+- **Detection**: Bug reported that wasn't caught by CI
+- **Action**: Expand path filters, add failing test
 
 **Risk**: Path filters too permissive (not saving resources)
 
--   **Mitigation**: Still acceptable, filters can be tuned
--   **Detection**: CI still running for docs changes
--   **Action**: Add more specific path patterns
+- **Mitigation**: Still acceptable, filters can be tuned
+- **Detection**: CI still running for docs changes
+- **Action**: Add more specific path patterns
 
 ## Rollback Plan
 
@@ -342,14 +342,14 @@ git reset --hard 4f7b792  # Before path filters
 
 Before considering optimizations "production-ready":
 
--   [ ] Coverage runs locally without timeout
--   [ ] Test-PR runs in PRs, test-main does NOT
--   [ ] Path filters correctly skip docs-only changes
--   [ ] Path filters correctly run for code changes
--   [ ] Main branch runs comprehensive testing (stable+beta)
--   [ ] First real PR validates expectations
--   [ ] No false negatives in first week
--   [ ] Monthly job count shows 34%+ reduction
+- [ ] Coverage runs locally without timeout
+- [ ] Test-PR runs in PRs, test-main does NOT
+- [ ] Path filters correctly skip docs-only changes
+- [ ] Path filters correctly run for code changes
+- [ ] Main branch runs comprehensive testing (stable+beta)
+- [ ] First real PR validates expectations
+- [ ] No false negatives in first week
+- [ ] Monthly job count shows 34%+ reduction
 
 ---
 

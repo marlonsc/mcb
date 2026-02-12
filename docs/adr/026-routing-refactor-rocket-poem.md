@@ -68,19 +68,19 @@ Rocket (version 0.5.1) provides a batteries-included web framework with attribut
 
 **Key Features:**
 
--   **Attribute-based routing**: `#[get("/path")]` decorators on handler functions
--   **Built-in features**: Forms, templates, state management, validation
--   **Macro-driven**: Generates routing code at compile-time with conflict detection
--   **Stable and mature**: Long-established in Rust ecosystem with extensive documentation
--   **Full-stack**: Includes everything needed for web applications
+- **Attribute-based routing**: `#[get("/path")]` decorators on handler functions
+- **Built-in features**: Forms, templates, state management, validation
+- **Macro-driven**: Generates routing code at compile-time with conflict detection
+- **Stable and mature**: Long-established in Rust ecosystem with extensive documentation
+- **Full-stack**: Includes everything needed for web applications
 
 **Strengths:**
 
--   Intuitive attribute-based API familiar to web developers
--   Compile-time route validation and conflict detection
--   Rich ecosystem of built-in features (forms, sessions, templates)
--   Excellent documentation and community support
--   Mature codebase with stable API
+- Intuitive attribute-based API familiar to web developers
+- Compile-time route validation and conflict detection
+- Rich ecosystem of built-in features (forms, sessions, templates)
+- Excellent documentation and community support
+- Mature codebase with stable API
 
 #### Poem Framework (Alternative Considered)
 
@@ -88,24 +88,24 @@ Poem (modern async web framework) offers a programmatic approach:
 
 **Key Features:**
 
--   **Programmatic routing**: Fluent API with method chaining
--   **Modern async**: Built on Tokio and hyper with excellent performance
--   **Lightweight**: Minimal dependencies and fast compilation
--   **Flexible middleware**: Easy composition and reuse
--   **Type-safe**: Strong typing throughout the framework
+- **Programmatic routing**: Fluent API with method chaining
+- **Modern async**: Built on Tokio and hyper with excellent performance
+- **Lightweight**: Minimal dependencies and fast compilation
+- **Flexible middleware**: Easy composition and reuse
+- **Type-safe**: Strong typing throughout the framework
 
 **Strengths:**
 
--   Excellent performance and low overhead
--   Modern async patterns throughout
--   Highly composable and flexible architecture
--   Strong typing and compile-time guarantees
+- Excellent performance and low overhead
+- Modern async patterns throughout
+- Highly composable and flexible architecture
+- Strong typing and compile-time guarantees
 
 **Trade-offs:**
 
--   Less mature ecosystem compared to Rocket
--   Fewer built-in features (requires more external crates)
--   Different programming model (programmatic vs declarative)
+- Less mature ecosystem compared to Rocket
+- Fewer built-in features (requires more external crates)
+- Different programming model (programmatic vs declarative)
 
 ### Framework Comparison
 
@@ -292,24 +292,24 @@ impl Fairing for RequestLogger {
 
 ### Positive
 
--   **Reduced boilerplate**: Attribute macros eliminate manual route registration
--   **Better validation**: Compile-time route validation and conflict detection
--   **Rich features**: Built-in JSON handling, form validation, templates
--   **Developer experience**: Better error messages and debugging tools
--   **Performance**: Compile-time optimization of routing table
+- **Reduced boilerplate**: Attribute macros eliminate manual route registration
+- **Better validation**: Compile-time route validation and conflict detection
+- **Rich features**: Built-in JSON handling, form validation, templates
+- **Developer experience**: Better error messages and debugging tools
+- **Performance**: Compile-time optimization of routing table
 
 ### Negative
 
--   **Framework lock-in**: Tightly coupled to Rocket's patterns
--   **Learning curve**: New framework API to learn
--   **Migration effort**: Significant rewrite of routing code
--   **Dependency change**: Replace Axum + Tower with Rocket
+- **Framework lock-in**: Tightly coupled to Rocket's patterns
+- **Learning curve**: New framework API to learn
+- **Migration effort**: Significant rewrite of routing code
+- **Dependency change**: Replace Axum + Tower with Rocket
 
 ### Risks
 
--   **Breaking API changes**: Route paths and middleware may change
--   **Performance impact**: Rocket's feature set might add overhead
--   **Compatibility issues**: Some Axum middleware may not have Rocket equivalents
+- **Breaking API changes**: Route paths and middleware may change
+- **Performance impact**: Rocket's feature set might add overhead
+- **Compatibility issues**: Some Axum middleware may not have Rocket equivalents
 
 ## Migration Strategy
 
@@ -351,27 +351,27 @@ Server::new(TcpListener::bind("127.0.0.1:3000")).run(app).await;
 
 **Why Rocket over Poem:**
 
--   More mature ecosystem and community support
--   Better developer experience with attribute macros
--   Richer built-in features reduce external dependencies
--   Extensive documentation and learning resources
+- More mature ecosystem and community support
+- Better developer experience with attribute macros
+- Richer built-in features reduce external dependencies
+- Extensive documentation and learning resources
 
 ## Validation Criteria
 
--   [x] All existing endpoints work with new routing framework
--   [x] API contracts remain stable (same paths, methods, responses)
--   [x] Middleware functionality preserved (CORS, auth, logging)
--   [x] Performance meets or exceeds current benchmarks
--   [x] Compile times remain reasonable
--   [x] Error handling provides equivalent or better user experience
+- [x] All existing endpoints work with new routing framework
+- [x] API contracts remain stable (same paths, methods, responses)
+- [x] Middleware functionality preserved (CORS, auth, logging)
+- [x] Performance meets or exceeds current benchmarks
+- [x] Compile times remain reasonable
+- [x] Error handling provides equivalent or better user experience
 
 ## Related ADRs
 
--   [ADR 011: HTTP Transport Request/Response Pattern](011-http-transport-request-response-pattern.md) - HTTP handling patterns
--   [ADR 007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Admin interface architecture
+- [ADR 011: HTTP Transport Request/Response Pattern](011-http-transport-request-response-pattern.md) - HTTP handling patterns
+- [ADR 007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Admin interface architecture
 
 ## References
 
--   [Rust Web Frameworks Performance Benchmark 2025](https://markaicode.com/rust-web-frameworks-performance-benchmark-2025/)
--   [Rocket Guide](https://rocket.rs/guide/master/)
--   [Figment Configuration](https://docs.rs/figment/latest/figment/) - Same author as Rocket
+- [Rust Web Frameworks Performance Benchmark 2025](https://markaicode.com/rust-web-frameworks-performance-benchmark-2025/)
+- [Rocket Guide](https://rocket.rs/guide/master/)
+- [Figment Configuration](https://docs.rs/figment/latest/figment/) - Same author as Rocket

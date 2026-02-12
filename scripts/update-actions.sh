@@ -12,7 +12,7 @@ actions=$(grep -r "uses:" "$WORKFLOW_DIR" | grep -v "\./" | grep -v "docker://" 
 for action in $actions; do
     # Cleanup action name (remove 'uses:' prefix if awk didn't catch it cleanly, though logic above should)
     action="${action#uses:}"
-    
+
     # Skip if empty or starting with quote/comment
     if [[ -z "$action" || "$action" == \#* ]]; then continue; fi
 
@@ -28,9 +28,9 @@ for action in $actions; do
     fi
 
     # Some repos like codeql-action are monorepos and might return different tags or errors
-    # If gh release list fails or returns empty, check for tags manually via api/tags if needed, 
+    # If gh release list fails or returns empty, check for tags manually via api/tags if needed,
     # but for standard actions this works.
-    
+
     commit_sha=""
     comment=""
 
@@ -50,40 +50,40 @@ for action in $actions; do
         # "git/ref/tags/TAG" gives the object. If object.type is commit, use it. If tag, peel it.
         # Simpler: use the generic /commits/REF endpoint
         commit_sha=$(gh api "repos/$action/commits/$latest_tag" --jq '.sha' 2>/dev/null || true)
-        
+
         if [[ -z "$commit_sha" ]]; then
              echo "  -> Could not resolve SHA for tag $latest_tag. Skipping."
              continue
         fi
-        
+
         echo "  -> Found release: $latest_tag ($commit_sha)"
         comment=" # $latest_tag"
     fi
 
     # Escape for sed
     # We want to replace "uses: action@..." with "uses: action@sha # tag"
-    # We need to catch the existing line content to avoid breaking indentation if possible, 
+    # We need to catch the existing line content to avoid breaking indentation if possible,
     # but strictly matching "uses: action@.*" works fine for YAML.
-    
+
     # Pattern: "uses: action@..." -> "uses: action@SHA # tag"
     # We rely on the fact that 'uses:' is usually the start of the value.
     # We limit replacement to lines containing exact match.
-    
+
     # Using find + xargs to handle file list
     for file in "$WORKFLOW_DIR"/*.yml; do
         # Use temp file for sed compliance
         # We want to match: (spaces)uses: action@something(eol or comment)
         # And replace with: (spaces)uses: action@sha # tag
-        
+
         # Determine strict regex for the action
         # - Uses @ as delimiter
         # - We want to replace everything after @ until end of line or before comment?
         # Simpler: just replace the whole reference.
-        
+
         # Note: sed syntax varies. We use | as delimiter.
         # We escape the action name just in case.
         esc_action=$(echo "$action" | sed 's/\//\\\//g')
-        
+
         sed -i "s|uses: $esc_action@.*|uses: $action@$commit_sha$comment|g" "$file"
     done
 done

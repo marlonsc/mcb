@@ -33,8 +33,8 @@ Beads is an AI-native issue tracking system designed to live in Git repositories
 
 ### Git Tracking
 
--   **Tracked**: `issues.jsonl`, `interactions.jsonl`, `config.yaml`, `README.md`, `.gitignore`
--   **Ignored**: `*.db*`, `daemon.*`, `bd.sock`, `export-state/`, `.sync.lock`
+- **Tracked**: `issues.jsonl`, `interactions.jsonl`, `config.yaml`, `README.md`, `.gitignore`
+- **Ignored**: `*.db*`, `daemon.*`, `bd.sock`, `export-state/`, `.sync.lock`
 
 ---
 
@@ -102,36 +102,36 @@ Beads is an AI-native issue tracking system designed to live in Git repositories
 
 ### 2.2 Status Values
 
--   `open` - Issue is open and available
--   `in_progress` - Currently being worked on
--   `blocked` - Blocked by dependencies
--   `deferred` - Deferred until later
--   `closed` - Completed/resolved
--   `tombstone` - Deleted but preserved for history
+- `open` - Issue is open and available
+- `in_progress` - Currently being worked on
+- `blocked` - Blocked by dependencies
+- `deferred` - Deferred until later
+- `closed` - Completed/resolved
+- `tombstone` - Deleted but preserved for history
 
 ### 2.3 Issue Types
 
--   `task` - Standard task
--   `bug` - Bug report
--   `feature` - Feature request
--   `epic` - Epic (large feature)
--   `chore` - Maintenance work
--   `merge-request` / `mr` - Merge request
--   `molecule` - Molecule (swarm/patrol/work)
--   `gate` - Async coordination gate
--   `agent` - Agent state tracking
--   `role` - Role definition
--   `rig` - Rig (partition) definition
--   `convoy` - Convoy (group coordination)
--   `event` - Event tracking
+- `task` - Standard task
+- `bug` - Bug report
+- `feature` - Feature request
+- `epic` - Epic (large feature)
+- `chore` - Maintenance work
+- `merge-request` / `mr` - Merge request
+- `molecule` - Molecule (swarm/patrol/work)
+- `gate` - Async coordination gate
+- `agent` - Agent state tracking
+- `role` - Role definition
+- `rig` - Rig (partition) definition
+- `convoy` - Convoy (group coordination)
+- `event` - Event tracking
 
 ### 2.4 Priority Levels
 
--   `0` / `P0` - Critical (highest)
--   `1` / `P1` - High
--   `2` / `P2` - Medium (default)
--   `3` / `P3` - Low
--   `4` / `P4` - Backlog (lowest)
+- `0` / `P0` - Critical (highest)
+- `1` / `P1` - High
+- `2` / `P2` - Medium (default)
+- `3` / `P3` - Low
+- `4` / `P4` - Backlog (lowest)
 
 ---
 
@@ -171,13 +171,13 @@ CREATE TABLE dependencies (
 
 **Dependency Types**:
 
--   `blocks` - Issue A blocks Issue B (B depends on A)
--   `discovered-from` - Discovered from another issue
--   `parent-child` - Hierarchical parent-child relationship
--   `relates-to` - Bidirectional relationship
--   `duplicate-of` - Duplicate relationship
--   `superseded-by` - Superseded relationship
--   `waits-for` - Gate coordination (fanout)
+- `blocks` - Issue A blocks Issue B (B depends on A)
+- `discovered-from` - Discovered from another issue
+- `parent-child` - Hierarchical parent-child relationship
+- `relates-to` - Bidirectional relationship
+- `duplicate-of` - Duplicate relationship
+- `superseded-by` - Superseded relationship
+- `waits-for` - Gate coordination (fanout)
 
 **Example**:
 
@@ -377,9 +377,9 @@ CREATE VIEW blocked_issues AS
 
 **File**: `.beads/issues.jsonl`
 
--   One JSON object per line (JSONL format)
--   Each line is a complete issue record
--   Synced to git via `bd sync` command
+- One JSON object per line (JSONL format)
+- Each line is a complete issue record
+- Synced to git via `bd sync` command
 
 ### 5.2 JSONL Issue Record Example
 
@@ -411,14 +411,14 @@ CREATE VIEW blocked_issues AS
 
 ### 5.3 JSONL Fields
 
--   All fields from the `issues` table
--   `labels` - Array of label strings
--   `dependencies` - Array of dependency objects with:
-  -   `issue_id` - The issue
-  -   `depends_on_id` - What it depends on
-  -   `type` - Dependency type
-  -   `created_at` - When dependency was created
-  -   `created_by` - Who created it
+- All fields from the `issues` table
+- `labels` - Array of label strings
+- `dependencies` - Array of dependency objects with:
+- `issue_id` - The issue
+- `depends_on_id` - What it depends on
+- `type` - Dependency type
+- `created_at` - When dependency was created
+- `created_by` - Who created it
 
 ---
 
@@ -514,33 +514,33 @@ sync-branch: "beads-sync"
 
 1. **bd sync** command:
 
--   Exports SQLite database to `.beads/issues.jsonl`
--   Commits changes to git
--   Pushes to remote on `sync-branch` (default: `beads-sync`)
+- Exports SQLite database to `.beads/issues.jsonl`
+- Commits changes to git
+- Pushes to remote on `sync-branch` (default: `beads-sync`)
 
 1. **Auto-sync**:
 
--   Daemon monitors database changes
--   Auto-flushes to JSONL on mutations
--   Debounced to prevent excessive writes
+- Daemon monitors database changes
+- Auto-flushes to JSONL on mutations
+- Debounced to prevent excessive writes
 
 1. **Merge Conflict Resolution**:
 
--   Beads provides intelligent JSONL merge driver
--   Handles concurrent edits gracefully
--   Preserves dependency integrity
+- Beads provides intelligent JSONL merge driver
+- Handles concurrent edits gracefully
+- Preserves dependency integrity
 
 ### 8.2 Worktrees
 
--   Beads uses git worktrees for sync operations
--   Location: `.git/beads-worktrees/beads-sync/`
--   Allows parallel sync without blocking main branch
+- Beads uses git worktrees for sync operations
+- Location: `.git/beads-worktrees/beads-sync/`
+- Allows parallel sync without blocking main branch
 
 ### 8.3 Hooks
 
--   Git hooks auto-call `bd prime` for context recovery
--   Hooks auto-sync on commits
--   Can be managed with `bd hooks` command
+- Git hooks auto-call `bd prime` for context recovery
+- Hooks auto-sync on commits
+- Can be managed with `bd hooks` command
 
 ---
 
@@ -554,27 +554,27 @@ bd create "Title" [flags]
 
 **Data Requirements**:
 
--   `title` (required)
--   `--description` / `-d` - Description text
--   `--design` - Design notes
--   `--acceptance` - Acceptance criteria
--   `--notes` - Additional notes
--   `--type` / `-t` - Issue type (default: task)
--   `--priority` / `-p` - Priority 0-4 (default: 2)
--   `--assignee` / `-a` - Assignee
--   `--estimate` / `-e` - Time estimate in minutes
--   `--labels` / `-l` - Labels (comma-separated)
--   `--due` - Due date (formats: +6h, +1d, tomorrow, 2025-01-15)
--   `--defer` - Defer until date
--   `--deps` - Dependencies (format: `type:id` or `id`)
--   `--parent` - Parent issue ID
--   `--external-ref` - External reference (gh-123, jira-ABC)
--   `--rig` - Rig/partition name
--   `--prefix` - Issue prefix override
--   `--id` - Explicit issue ID
--   `--ephemeral` - Create as ephemeral (not exported)
--   `--pinned` - Create as pinned
--   `--mol-type` - Molecule type (swarm, patrol, work)
+- `title` (required)
+- `--description` / `-d` - Description text
+- `--design` - Design notes
+- `--acceptance` - Acceptance criteria
+- `--notes` - Additional notes
+- `--type` / `-t` - Issue type (default: task)
+- `--priority` / `-p` - Priority 0-4 (default: 2)
+- `--assignee` / `-a` - Assignee
+- `--estimate` / `-e` - Time estimate in minutes
+- `--labels` / `-l` - Labels (comma-separated)
+- `--due` - Due date (formats: +6h, +1d, tomorrow, 2025-01-15)
+- `--defer` - Defer until date
+- `--deps` - Dependencies (format: `type:id` or `id`)
+- `--parent` - Parent issue ID
+- `--external-ref` - External reference (gh-123, jira-ABC)
+- `--rig` - Rig/partition name
+- `--prefix` - Issue prefix override
+- `--id` - Explicit issue ID
+- `--ephemeral` - Create as ephemeral (not exported)
+- `--pinned` - Create as pinned
+- `--mol-type` - Molecule type (swarm, patrol, work)
 
 ### 9.2 Update Issue
 
@@ -584,19 +584,19 @@ bd update <id> [flags]
 
 **Data Requirements**:
 
--   `--status` - New status
--   `--priority` - New priority
--   `--assignee` - New assignee
--   `--title` - New title
--   `--description` - New description
--   `--design` - New design notes
--   `--acceptance` - New acceptance criteria
--   `--notes` - New notes
--   `--append-notes` - Append to notes
--   `--due` - New due date
--   `--defer` - New defer date
--   `--estimate` - New time estimate
--   `--labels` - New labels
+- `--status` - New status
+- `--priority` - New priority
+- `--assignee` - New assignee
+- `--title` - New title
+- `--description` - New description
+- `--design` - New design notes
+- `--acceptance` - New acceptance criteria
+- `--notes` - New notes
+- `--append-notes` - Append to notes
+- `--due` - New due date
+- `--defer` - New defer date
+- `--estimate` - New time estimate
+- `--labels` - New labels
 
 ### 9.3 List Issues
 
@@ -606,33 +606,33 @@ bd list [flags]
 
 **Filter Options**:
 
--   `--status` - Filter by status
--   `--priority` / `-p` - Filter by priority
--   `--assignee` / `-a` - Filter by assignee
--   `--label` / `-l` - Filter by labels (AND)
--   `--label-any` - Filter by labels (OR)
--   `--type` / `-t` - Filter by type
--   `--title` - Filter by title substring
--   `--description` - Filter by description
--   `--created-after` / `--created-before` - Date range
--   `--updated-after` / `--updated-before` - Date range
--   `--closed-after` / `--closed-before` - Date range
--   `--due-after` / `--due-before` - Date range
--   `--defer-after` / `--defer-before` - Date range
--   `--ready` - Show only ready issues
--   `--parent` - Filter by parent issue
--   `--pinned` - Show only pinned
--   `--deferred` - Show only deferred
--   `--overdue` - Show only overdue
+- `--status` - Filter by status
+- `--priority` / `-p` - Filter by priority
+- `--assignee` / `-a` - Filter by assignee
+- `--label` / `-l` - Filter by labels (AND)
+- `--label-any` - Filter by labels (OR)
+- `--type` / `-t` - Filter by type
+- `--title` - Filter by title substring
+- `--description` - Filter by description
+- `--created-after` / `--created-before` - Date range
+- `--updated-after` / `--updated-before` - Date range
+- `--closed-after` / `--closed-before` - Date range
+- `--due-after` / `--due-before` - Date range
+- `--defer-after` / `--defer-before` - Date range
+- `--ready` - Show only ready issues
+- `--parent` - Filter by parent issue
+- `--pinned` - Show only pinned
+- `--deferred` - Show only deferred
+- `--overdue` - Show only overdue
 
 **Output Options**:
 
--   `--json` - JSON output
--   `--long` - Detailed output
--   `--pretty` / `--tree` - Tree format
--   `--sort` - Sort by field (priority, created, updated, closed, status, id, title, type, assignee)
--   `--limit` / `-n` - Limit results (default: 50)
--   `--reverse` / `-r` - Reverse sort order
+- `--json` - JSON output
+- `--long` - Detailed output
+- `--pretty` / `--tree` - Tree format
+- `--sort` - Sort by field (priority, created, updated, closed, status, id, title, type, assignee)
+- `--limit` / `-n` - Limit results (default: 50)
+- `--reverse` / `-r` - Reverse sort order
 
 ### 9.4 Show Issue
 
@@ -642,13 +642,13 @@ bd show <id> [flags]
 
 **Options**:
 
--   `--short` - Compact one-line output
--   `--children` - Show only children
--   `--refs` - Show reverse references
--   `--thread` - Show full conversation thread
--   `--as-of` - Show at specific commit (requires Dolt)
--   `--local-time` - Show in local time
--   `--json` - JSON output
+- `--short` - Compact one-line output
+- `--children` - Show only children
+- `--refs` - Show reverse references
+- `--thread` - Show full conversation thread
+- `--as-of` - Show at specific commit (requires Dolt)
+- `--local-time` - Show in local time
+- `--json` - JSON output
 
 ### 9.5 Dependency Management
 
@@ -663,9 +663,9 @@ bd dep <blocker> --blocks <blocked>
 
 **Data Requirements**:
 
--   `issue` - The dependent issue
--   `depends-on` - The issue it depends on
--   `--type` - Dependency type (blocks, discovered-from, parent-child, relates-to, duplicate-of, superseded-by, waits-for)
+- `issue` - The dependent issue
+- `depends-on` - The issue it depends on
+- `--type` - Dependency type (blocks, discovered-from, parent-child, relates-to, duplicate-of, superseded-by, waits-for)
 
 ### 9.6 Close Issue
 
@@ -675,8 +675,8 @@ bd close <id> [flags]
 
 **Data Requirements**:
 
--   `--reason` - Reason for closure
--   `--json` - JSON output
+- `--reason` - Reason for closure
+- `--json` - JSON output
 
 ### 9.7 Sync with Git
 
@@ -686,8 +686,8 @@ bd sync [flags]
 
 **Options**:
 
--   `--status` - Check sync status without syncing
--   `--json` - JSON output
+- `--status` - Check sync status without syncing
+- `--json` - JSON output
 
 ---
 
@@ -722,17 +722,17 @@ CREATE INDEX idx_events_issue ON events(issue_id);
 
 **SQLite (Primary)**:
 
--   Fast queries and filtering
--   ACID transactions
--   Daemon-based RPC access
--   WAL mode for concurrent access
+- Fast queries and filtering
+- ACID transactions
+- Daemon-based RPC access
+- WAL mode for concurrent access
 
 **JSONL (Export)**:
 
--   Git-friendly format
--   Human-readable
--   Merge-friendly
--   Source of truth for sync
+- Git-friendly format
+- Human-readable
+- Merge-friendly
+- Source of truth for sync
 
 ### 11.2 Sync Flow
 
@@ -764,23 +764,23 @@ SQLite Database
 
 ### 12.1 Issue ID Format
 
--   Format: `<prefix>-<alphanumeric>`
--   Example: `mcb-123`, `bd-xyz`, `beads-abc`
--   Prefix configured in `config.yaml` or auto-detected from directory name
+- Format: `<prefix>-<alphanumeric>`
+- Example: `mcb-123`, `bd-xyz`, `beads-abc`
+- Prefix configured in `config.yaml` or auto-detected from directory name
 
 ### 12.2 Status Transitions
 
--   `open` → `in_progress` → `closed`
--   `open` → `blocked` (when dependencies exist)
--   `open` → `deferred` (when defer_until set)
--   `closed` → `open` (reopen)
--   Any → `tombstone` (deletion)
+- `open` → `in_progress` → `closed`
+- `open` → `blocked` (when dependencies exist)
+- `open` → `deferred` (when defer_until set)
+- `closed` → `open` (reopen)
+- Any → `tombstone` (deletion)
 
 ### 12.3 Dependency Constraints
 
--   Circular dependencies detected and prevented
--   Transitive blocking: if A blocks B and B blocks C, then A indirectly blocks C
--   Ready issues: open issues with no blocking dependencies
+- Circular dependencies detected and prevented
+- Transitive blocking: if A blocks B and B blocks C, then A indirectly blocks C
+- Ready issues: open issues with no blocking dependencies
 
 ### 12.4 Closed Issue Constraint
 
@@ -792,8 +792,8 @@ CHECK (
 )
 ```
 
--   Closed issues must have `closed_at` timestamp
--   Tombstone issues may retain `closed_at` from before deletion
+- Closed issues must have `closed_at` timestamp
+- Tombstone issues may retain `closed_at` from before deletion
 
 ---
 
@@ -821,18 +821,18 @@ issues (1) ──→ (many) issue_snapshots
 
 ### 13.3 Data Types
 
--   **Timestamps**: Use DATETIME or TIMESTAMP with timezone support
--   **JSON fields**: Store as TEXT (metadata, payload, agent_state, waiters)
--   **Enums**: Store as TEXT (status, issue_type, priority, mol_type, work_type, event_kind, await_type)
--   **Booleans**: Store as INTEGER (0/1) for SQLite compatibility
+- **Timestamps**: Use DATETIME or TIMESTAMP with timezone support
+- **JSON fields**: Store as TEXT (metadata, payload, agent_state, waiters)
+- **Enums**: Store as TEXT (status, issue_type, priority, mol_type, work_type, event_kind, await_type)
+- **Booleans**: Store as INTEGER (0/1) for SQLite compatibility
 
 ### 13.4 Indexes to Maintain
 
--   Status, priority, assignee for filtering
--   Created/updated/closed dates for time-based queries
--   Dependencies for graph traversal
--   Labels for tag-based filtering
--   External references for integration lookups
+- Status, priority, assignee for filtering
+- Created/updated/closed dates for time-based queries
+- Dependencies for graph traversal
+- Labels for tag-based filtering
+- External references for integration lookups
 
 ---
 
@@ -890,22 +890,22 @@ ORDER BY due_at ASC;
 
 ### 15.1 Typical Query Times
 
--   List issues by status: < 10ms
--   Find ready issues: < 50ms
--   Dependency traversal (depth 5): < 100ms
--   Full text search: < 200ms
+- List issues by status: < 10ms
+- Find ready issues: < 50ms
+- Dependency traversal (depth 5): < 100ms
+- Full text search: < 200ms
 
 ### 15.2 Database Size
 
--   Typical: 1-10 MB for 100-1000 issues
--   With history: 10-100 MB
--   WAL files: 1-5 MB (temporary)
+- Typical: 1-10 MB for 100-1000 issues
+- With history: 10-100 MB
+- WAL files: 1-5 MB (temporary)
 
 ### 15.3 Sync Performance
 
--   Export to JSONL: < 100ms
--   Git commit: < 500ms
--   Full sync cycle: < 1s
+- Export to JSONL: < 100ms
+- Git commit: < 500ms
+- Full sync cycle: < 1s
 
 ---
 
@@ -913,22 +913,22 @@ ORDER BY due_at ASC;
 
 ### 16.1 File Permissions
 
--   `.beads/` directory: 700 (rwx------)
--   `beads.db`: 600 (rw-------)
--   `config.yaml`: 600 (rw-------)
--   `issues.jsonl`: 644 (rw-r--r--) - git tracked
+- `.beads/` directory: 700 (rwx------)
+- `beads.db`: 600 (rw-------)
+- `config.yaml`: 600 (rw-------)
+- `issues.jsonl`: 644 (rw-r--r--) - git tracked
 
 ### 16.2 Sensitive Data
 
--   Passwords/tokens: Store in environment variables, not in issues
--   External refs: Can expose integration URLs
--   Metadata: May contain sensitive information
+- Passwords/tokens: Store in environment variables, not in issues
+- External refs: Can expose integration URLs
+- Metadata: May contain sensitive information
 
 ### 16.3 Access Control
 
--   Daemon socket: Unix socket with 700 permissions
--   No built-in user authentication (relies on git/OS)
--   Audit trail via events table
+- Daemon socket: Unix socket with 700 permissions
+- No built-in user authentication (relies on git/OS)
+- Audit trail via events table
 
 ---
 
@@ -936,23 +936,23 @@ ORDER BY due_at ASC;
 
 ### 17.1 Daemon Files
 
--   `daemon.pid` - Process ID
--   `daemon.lock` - Lock file
--   `daemon.log` - Log output
--   `bd.sock` - Unix socket for RPC
+- `daemon.pid` - Process ID
+- `daemon.lock` - Lock file
+- `daemon.log` - Log output
+- `bd.sock` - Unix socket for RPC
 
 ### 17.2 Daemon Functions
 
--   RPC server for CLI commands
--   Auto-flush debouncing
--   Database connection pooling
--   Concurrent access management
+- RPC server for CLI commands
+- Auto-flush debouncing
+- Database connection pooling
+- Concurrent access management
 
 ### 17.3 Daemon Modes
 
--   **Daemon mode** (default): Background RPC server
--   **No-daemon mode**: Direct database access
--   **No-db mode**: Load from JSONL, no SQLite
+- **Daemon mode** (default): Background RPC server
+- **No-daemon mode**: Direct database access
+- **No-db mode**: Load from JSONL, no SQLite
 
 ---
 
@@ -960,34 +960,34 @@ ORDER BY due_at ASC;
 
 ### 18.1 Compaction
 
--   Reduces issue history size
--   Creates snapshots at different levels
--   Preserves original content
--   Enables long-term storage efficiency
+- Reduces issue history size
+- Creates snapshots at different levels
+- Preserves original content
+- Enables long-term storage efficiency
 
 ### 18.2 Federation
 
--   Multi-repo support (experimental)
--   Peer-to-peer issue sharing
--   Requires CGO for some features
+- Multi-repo support (experimental)
+- Peer-to-peer issue sharing
+- Requires CGO for some features
 
 ### 18.3 Molecules
 
--   Swarms: Multi-polecat coordination
--   Patrols: Recurring operations
--   Work: Standard work items
+- Swarms: Multi-polecat coordination
+- Patrols: Recurring operations
+- Work: Standard work items
 
 ### 18.4 Gates
 
--   Async coordination primitives
--   Fanout/join patterns
--   Merge-slot for serialized conflict resolution
+- Async coordination primitives
+- Fanout/join patterns
+- Merge-slot for serialized conflict resolution
 
 ### 18.5 Templates
 
--   Issue templates for consistency
--   Reusable issue patterns
--   Template molecules
+- Issue templates for consistency
+- Reusable issue patterns
+- Template molecules
 
 ---
 
@@ -997,25 +997,25 @@ ORDER BY due_at ASC;
 
 **Database locked**:
 
--   Check daemon status: `bd info`
--   Restart daemon: `bd daemon restart`
--   Use `--lock-timeout` flag
+- Check daemon status: `bd info`
+- Restart daemon: `bd daemon restart`
+- Use `--lock-timeout` flag
 
 **Sync conflicts**:
 
--   Run `bd resolve-conflicts`
--   Manual merge if needed
--   Check git status
+- Run `bd resolve-conflicts`
+- Manual merge if needed
+- Check git status
 
 **Stale data**:
 
--   Run `bd sync` to export
--   Use `--allow-stale` flag to override
+- Run `bd sync` to export
+- Use `--allow-stale` flag to override
 
 **Corrupted database**:
 
--   Run `bd repair` to clean orphaned references
--   Restore from git: `bd restore <issue-id>`
+- Run `bd repair` to clean orphaned references
+- Restore from git: `bd restore <issue-id>`
 
 ### 19.2 Diagnostic Commands
 
@@ -1030,7 +1030,7 @@ bd preflight          # PR readiness checklist
 
 ## 20. References
 
--   **Official Repository**: [GitHub.com/steveyegge/beads](https://github.com/steveyegge/beads)
--   **Documentation**: [GitHub.com/steveyegge/beads/tree/main/docs](https://github.com/steveyegge/beads/tree/main/docs)
--   **Quick Start**: Run `bd quickstart`
--   **Help**: Run `bd <command> --help`
+- **Official Repository**: [GitHub.com/steveyegge/beads](https://github.com/steveyegge/beads)
+- **Documentation**: [GitHub.com/steveyegge/beads/tree/main/docs](https://github.com/steveyegge/beads/tree/main/docs)
+- **Quick Start**: Run `bd quickstart`
+- **Help**: Run `bd <command> --help`

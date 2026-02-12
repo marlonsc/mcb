@@ -2,11 +2,11 @@
 
 ## 📊 The Numbers
 
--   **50+** MCP endpoints (8 handlers)
--   **15+** Admin HTTP endpoints
--   **9** single-use response types (dead weight)
--   **10** high-ROI reuse opportunities
--   **~30%** boilerplate reduction possible
+- **50+** MCP endpoints (8 handlers)
+- **15+** Admin HTTP endpoints
+- **9** single-use response types (dead weight)
+- **10** high-ROI reuse opportunities
+- **~30%** boilerplate reduction possible
 
 ## 🎯 Top 3 Immediate Wins
 
@@ -81,30 +81,30 @@ Legend: ✅✅ Ready to use | ✅ Minor work | ⚠️ Medium adaptation | ❌ Se
 
 ### Phase 1: Quick Wins (4 hrs)
 
--   [ ] `admin/handlers.rs` - index status wrapper
--   [ ] `admin/search_handlers.rs` - NEW
--   [ ] `admin/validate_handlers.rs` - NEW
--   [ ] `admin/routes.rs` - add routes
+- [ ] `admin/handlers.rs` - index status wrapper
+- [ ] `admin/search_handlers.rs` - NEW
+- [ ] `admin/validate_handlers.rs` - NEW
+- [ ] `admin/routes.rs` - add routes
 
 ### Phase 2: Consolidation (4 hrs)
 
--   [ ] `admin/models.rs` - `ApiResponse<T>` wrapper
--   [ ] `admin/handlers.rs` - refactor (10+ endpoints)
--   [ ] `admin/lifecycle_handlers.rs` - refactor
--   [ ] `admin/browse_handlers.rs` - refactor
+- [ ] `admin/models.rs` - `ApiResponse<T>` wrapper
+- [ ] `admin/handlers.rs` - refactor (10+ endpoints)
+- [ ] `admin/lifecycle_handlers.rs` - refactor
+- [ ] `admin/browse_handlers.rs` - refactor
 
 ### Phase 3: Extensions (6 hrs)
 
--   [ ] `admin/memory_handlers.rs` - NEW (memory browsing)
--   [ ] `admin/session_handlers.rs` - NEW (session browsing)
--   [ ] `admin/vcs_handlers.rs` - NEW (VCS browsing)
--   [ ] `admin/routes.rs` - mount new routes
+- [ ] `admin/memory_handlers.rs` - NEW (memory browsing)
+- [ ] `admin/session_handlers.rs` - NEW (session browsing)
+- [ ] `admin/vcs_handlers.rs` - NEW (VCS browsing)
+- [ ] `admin/routes.rs` - mount new routes
 
 ### Phase 4: Strategic (8+ hrs)
 
--   [ ] `handlers/project.rs` - implement
--   [ ] Create unified service facade
--   [ ] Add pagination + filtering
+- [ ] `handlers/project.rs` - implement
+- [ ] Create unified service facade
+- [ ] Add pagination + filtering
 
 ## 🎭 Response Type Consolidation
 

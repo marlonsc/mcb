@@ -10,10 +10,10 @@
 
 This document maps every OpenCode hook, skill, command, and agent to its MCB replacement across three phases (v0.2.0, v0.3.0, v0.4.0). Each mapping includes:
 
--   Current file location
--   Current implementation
--   MCB replacement
--   Migration action
+- Current file location
+- Current implementation
+- MCB replacement
+- Migration action
 
 ---
 
@@ -84,9 +84,9 @@ mcp_mcb_search(
 
 **When to KEEP explore agent**:
 
--   AST structural patterns (use ast-grep)
--   Exact regex matches (use grep)
--   Multi-file cross-reference (use LSP)
+- AST structural patterns (use ast-grep)
+- Exact regex matches (use grep)
+- Multi-file cross-reference (use LSP)
 
 ---
 
@@ -805,9 +805,9 @@ const diff = await mcp_mcb_vcs(
 
 ## Cross-References
 
--   **MCB Gaps Report**: `/home/marlonsc/mcb/docs/plan/MCB-COMPREHENSIVE-GAPS.md`
--   **MCB Roadmap**: `/home/marlonsc/mcb/docs/developer/ROADMAP.md`
--   **OpenCode AGENTS.md**: `/home/marlonsc/.config/opencode/AGENTS.md`
--   **OpenCode Skills**: `/home/marlonsc/.config/opencode/skills/`
--   **OpenCode Commands**: `/home/marlonsc/.config/opencode/command/`
--   **OpenCode Hooks**: `/home/marlonsc/.config/opencode/hooks/`
+- **MCB Gaps Report**: `/home/marlonsc/mcb/docs/plan/MCB-COMPREHENSIVE-GAPS.md`
+- **MCB Roadmap**: `/home/marlonsc/mcb/docs/developer/ROADMAP.md`
+- **OpenCode AGENTS.md**: `/home/marlonsc/.config/opencode/AGENTS.md`
+- **OpenCode Skills**: `/home/marlonsc/.config/opencode/skills/`
+- **OpenCode Commands**: `/home/marlonsc/.config/opencode/command/`
+- **OpenCode Hooks**: `/home/marlonsc/.config/opencode/hooks/`

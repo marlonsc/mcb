@@ -101,20 +101,20 @@ All use `thiserror` for type-safe error handling.
 
 **Positive**:
 
--   PMAT code unchanged (100% reuse)
--   MCB's typed errors at boundaries
--   Error context preserved
+- PMAT code unchanged (100% reuse)
+- MCB's typed errors at boundaries
+- Error context preserved
 
 **Negative**:
 
--   Two error types to maintain
+- Two error types to maintain
 
 **Acceptable**: Adapter layer is thin (<50 LOC per adapter)
 
 ## Related ADRs
 
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Error location per crate
--   [ADR-016: Integration Points Adapter Pattern](016-integration-points-adapter-pattern.md) - Adapter pattern
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Error location per crate
+- [ADR-016: Integration Points Adapter Pattern](016-integration-points-adapter-pattern.md) - Adapter pattern
 
 ---
 

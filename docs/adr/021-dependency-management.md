@@ -21,11 +21,11 @@ implementation_status: Incomplete
 
 Integrating PMAT adds new dependencies:
 
--   `rayon` - Parallel processing
--   `petgraph` - Graph algorithms (DAG analysis)
--   `statistical` - Statistical metrics
--   `git2` - Git integration
--   `cargo_metadata` - Mutation testing
+- `rayon` - Parallel processing
+- `petgraph` - Graph algorithms (DAG analysis)
+- `statistical` - Statistical metrics
+- `git2` - Git integration
+- `cargo_metadata` - Mutation testing
 
 **Current MCB deps**: ~120
 **PMAT unique deps**: ~20
@@ -77,31 +77,31 @@ cargo_metadata = "0.20"      # v0.6.0: Mutation testing
 
 **v0.2.0** (Next):
 
--   Add `rayon = "1.8"` (parallel processing infrastructure)
--   Add `proptest = "1.0"` (property testing)
--   Total new deps: 2
+- Add `rayon = "1.8"` (parallel processing infrastructure)
+- Add `proptest = "1.0"` (property testing)
+- Total new deps: 2
 
 **v0.3.0** (Analysis core):
 
--   Add `statistical = "1.0"` (metrics)
--   Add 3 PMAT-specific crates
--   Total new deps: 4
+- Add `statistical = "1.0"` (metrics)
+- Add 3 PMAT-specific crates
+- Total new deps: 4
 
 **v0.4.0** (Extended analysis):
 
--   Add `petgraph = "0.6"` (DAG)
--   Total new deps: 1
+- Add `petgraph = "0.6"` (DAG)
+- Total new deps: 1
 
 **v0.5.0** (Git + Quality):
 
--   Add `git2 = "0.19"` (Git)
--   Total new deps: 1
+- Add `git2 = "0.19"` (Git)
+- Total new deps: 1
 
 **v0.6.0** (Advanced):
 
--   Add `cargo_metadata = "0.20"` (mutation testing)
--   Add `ratatui = "0.29"` (TUI, optional)
--   Total new deps: 2
+- Add `cargo_metadata = "0.20"` (mutation testing)
+- Add `ratatui = "0.29"` (TUI, optional)
+- Total new deps: 2
 
 **Total by v1.0.0**: ~140 deps (15% increase from v0.1.0)
 
@@ -158,26 +158,26 @@ shaku_derive = "0.6"
 
 **Positive**:
 
--   Incremental dependency addition
--   Feature flags reduce binary size
--   Workspace deduplication
+- Incremental dependency addition
+- Feature flags reduce binary size
+- Workspace deduplication
 
 **Negative**:
 
--   Larger dependency tree
--   Longer compile times
+- Larger dependency tree
+- Longer compile times
 
 **Mitigation**:
 
--   Feature flags for optional deps
--   Workspace caching
--   CI build matrix
+- Feature flags for optional deps
+- Workspace caching
+- CI build matrix
 
 ## Related ADRs
 
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
--   [ADR-015: Workspace Shared Libraries](015-workspace-shared-libraries.md) - libs/ dependencies
--   [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Feature timeline
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
+- [ADR-015: Workspace Shared Libraries](015-workspace-shared-libraries.md) - libs/ dependencies
+- [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Feature timeline
 
 ---
 

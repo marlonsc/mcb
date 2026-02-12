@@ -86,8 +86,8 @@ impl HybridAnalysisCache {
 
 Current cache implementation in `crates/mcb-providers/src/cache/`:
 
--   `moka.rs` - Moka async cache provider
--   `null.rs` - Null cache for testing
+- `moka.rs` - Moka async cache provider
+- `null.rs` - Null cache for testing
 
 The hybrid cache will extend this foundation in v0.3.0.
 
@@ -95,37 +95,37 @@ The hybrid cache will extend this foundation in v0.3.0.
 
 **v0.2.0** (Define):
 
--   Define `HybridAnalysisCache` interface
--   Update existing MCB cache to support pluggable invalidation
+- Define `HybridAnalysisCache` interface
+- Update existing MCB cache to support pluggable invalidation
 
 **v0.3.0** (Implement):
 
--   Implement SHA256 tracking
--   Integrate with analysis services
--   Benchmark cache hit rates
+- Implement SHA256 tracking
+- Integrate with analysis services
+- Benchmark cache hit rates
 
 ## Consequences
 
 **Positive**:
 
--   Accurate invalidation (SHA256)
--   Fast lookups (Moka)
--   Best of both worlds
+- Accurate invalidation (SHA256)
+- Fast lookups (Moka)
+- Best of both worlds
 
 **Negative**:
 
--   SHA256 computation overhead (~1-5ms per file)
+- SHA256 computation overhead (~1-5ms per file)
 
 **Mitigation**:
 
--   Compute SHA256 in background
--   Cache SHA256 values
--   Only recompute on cache miss
+- Compute SHA256 in background
+- Cache SHA256 values
+- Only recompute on cache miss
 
 ## Related ADRs
 
--   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Cache provider trait
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Cache location in mcb-providers
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Cache provider trait
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Cache location in mcb-providers
 
 ---
 

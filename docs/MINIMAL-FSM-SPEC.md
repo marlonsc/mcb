@@ -51,13 +51,13 @@ Policies are implemented as traits that evaluate the current `ProjectContext` ag
 
 Ensures the agent is operating on up-to-date information.
 
--   **Rule**: `context.last_updated < now - 5 seconds` → REJECT.
+- **Rule**: `context.last_updated < now - 5 seconds` → REJECT.
 
 ### Validation Policy (Minimal)
 
 Ensures project integrity before marking as complete.
 
--   **Rule**: `context.open_issues_count == 0` → ALLOW.
+- **Rule**: `context.open_issues_count == 0` → ALLOW.
 
 ## 5. Rust Code Examples
 

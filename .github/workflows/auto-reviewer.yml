@@ -34,6 +34,7 @@ concurrency:
 jobs:
   auto-merge:
     name: Auto-Merge Dependabot
+    timeout-minutes: 5
     runs-on: ubuntu-latest
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     steps:

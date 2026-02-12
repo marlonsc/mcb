@@ -188,11 +188,11 @@ mcb search_code \
 
 **Sub-operations**:
 
--   `store`: Save observation
--   `search`: Find observations
--   `timeline`: Get temporal sequence
--   `get`: Retrieve specific observations
--   `inject`: Get context for session
+- `store`: Save observation
+- `search`: Find observations
+- `timeline`: Get temporal sequence
+- `get`: Retrieve specific observations
+- `inject`: Get context for session
 
 **Parameters** (vary by operation):
 
@@ -301,10 +301,10 @@ mcb search_code \
 
 **Sub-operations**:
 
--   `index_repository`: Index with git metadata
--   `search_branch`: Search within branch
--   `compare_branches`: Compare branches
--   `analyze_impact`: Analyze commit impact
+- `index_repository`: Index with git metadata
+- `search_branch`: Search within branch
+- `compare_branches`: Compare branches
+- `analyze_impact`: Analyze commit impact
 
 ### 7.1 Index Repository
 
@@ -415,15 +415,15 @@ All tools return errors in consistent format:
 
 **New Tools**:
 
--   MEMORY (observation storage + search)
--   SESSION (session context management)
--   VCS (git-aware indexing)
--   AGENT (agent session tracking)
+- MEMORY (observation storage + search)
+- SESSION (session context management)
+- VCS (git-aware indexing)
+- AGENT (agent session tracking)
 
 **Enhanced Tools**:
 
--   INDEX_CODEBASE: Added `depth` parameter + git support
--   SEARCH_CODE: Added filtering support
+- INDEX_CODEBASE: Added `depth` parameter + git support
+- SEARCH_CODE: Added filtering support
 
 **Deprecated**: None
 

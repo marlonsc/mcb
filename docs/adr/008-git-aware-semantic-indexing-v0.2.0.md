@@ -36,19 +36,19 @@ Memory Context Browser v0.1.0 provides efficient semantic code search but lacks 
 
 **Current problems:**
 
--   Indexes are based on filesystem paths, breaking if directory is moved
--   No distinction between branches - search mixes code from different contexts
--   Change detection based on file mtime, not actual commits
--   No support for monorepos with multiple projects
--   No commit history indexing
--   No change impact analysis
+- Indexes are based on filesystem paths, breaking if directory is moved
+- No distinction between branches - search mixes code from different contexts
+- Change detection based on file mtime, not actual commits
+- No support for monorepos with multiple projects
+- No commit history indexing
+- No change impact analysis
 
 **User demand:**
 
--   Developers work with large monorepos (Uber, Google, Meta patterns)
--   Need to search code in specific branch
--   Need to understand impact of changes before merge
--   Need to index submodules as separate projects
+- Developers work with large monorepos (Uber, Google, Meta patterns)
+- Need to search code in specific branch
+- Need to understand impact of changes before merge
+- Need to index submodules as separate projects
 
 ## Decision
 
@@ -63,46 +63,46 @@ Implement full git integration in mcb v0.2.0 with:
 
 **Library chosen**: git2 (libgit2 bindings)
 
--   Mature, battle-tested, widely used
--   Stable and well-documented API
--   Superior performance to gitoxide (still in development)
+- Mature, battle-tested, widely used
+- Stable and well-documented API
+- Superior performance to gitoxide (still in development)
 
 ## Consequences
 
 ### Positive
 
--   **Portability**: Indexes survive directory moves/renames
--   **Precise context**: Search within specific branch
--   **Monorepo support**: Enterprises can use with large codebases
--   **Impact analysis**: Prevents bugs before merge
--   **History**: Search in previous versions of code
+- **Portability**: Indexes survive directory moves/renames
+- **Precise context**: Search within specific branch
+- **Monorepo support**: Enterprises can use with large codebases
+- **Impact analysis**: Prevents bugs before merge
+- **History**: Search in previous versions of code
 
 ### Negative
 
--   **Complexity**: Adds ~12 new files, ~2500 LOC
--   **Dependency**: git2 adds libgit2 as native dependency
--   **Storage**: Per-branch indexes increase disk usage
--   **Performance**: Git operations add latency
+- **Complexity**: Adds ~12 new files, ~2500 LOC
+- **Dependency**: git2 adds libgit2 as native dependency
+- **Storage**: Per-branch indexes increase disk usage
+- **Performance**: Git operations add latency
 
 ## Alternatives Considered
 
 ### Alternative 1: gitoxide (pure Rust)
 
--   **Pros**: Pure Rust, no native dependency
--   **Cons**: API still unstable, fewer features
--   **Rejected**: Risk of breaking changes
+- **Pros**: Pure Rust, no native dependency
+- **Cons**: API still unstable, fewer features
+- **Rejected**: Risk of breaking changes
 
 ### Alternative 2: Shell commands (git CLI)
 
--   **Pros**: Always available, no dependency
--   **Cons**: Subprocess overhead, output parsing
--   **Rejected**: Poor performance for frequent operations
+- **Pros**: Always available, no dependency
+- **Cons**: Subprocess overhead, output parsing
+- **Rejected**: Poor performance for frequent operations
 
 ### Alternative 3: Keep without git
 
--   **Pros**: Simplicity
--   **Cons**: Does not meet user demand
--   **Rejected**: Essential feature for adoption
+- **Pros**: Simplicity
+- **Cons**: Does not meet user demand
+- **Rejected**: Essential feature for adoption
 
 ## Implementation Notes
 
@@ -636,15 +636,15 @@ git2 = "0.20"
 
 ## Related ADRs
 
--   [ADR-001: Provider Pattern Architecture](001-modular-crates-architecture.md) - Provider patterns for GitProvider
--   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async git operations
--   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider routing
--   [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Git-tagged memory entries
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for git providers
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
+- [ADR-001: Provider Pattern Architecture](001-modular-crates-architecture.md) - Provider patterns for GitProvider
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async git operations
+- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider routing
+- [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Git-tagged memory entries
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for git providers
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
 
 ## References
 
--   [git2 crate](https://docs.rs/git2/)
--   [libgit2](https://libgit2.org/)
--   [Shaku Documentation](https://docs.rs/shaku) (historical; DI is now dill, ADR-029)
+- [git2 crate](https://docs.rs/git2/)
+- [libgit2](https://libgit2.org/)
+- [Shaku Documentation](https://docs.rs/shaku) (historical; DI is now dill, ADR-029)

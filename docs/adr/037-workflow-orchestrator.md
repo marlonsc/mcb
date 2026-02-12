@@ -16,10 +16,10 @@ implementation_status: Complete
 
 **Accepted** — 2026-02-06
 
--   **Deciders:** Project team
--   **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout), [ADR-036](./036-enforcement-policies.md) (Enforcement Policies)
--   **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-033](./033-mcp-handler-consolidation.md) (Handler Consolidation), [ADR-025](./025-figment-configuration.md) (Figment)
--   **Series:** [ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → **ADR-037**
+- **Deciders:** Project team
+- **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout), [ADR-036](./036-enforcement-policies.md) (Enforcement Policies)
+- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-033](./033-mcp-handler-consolidation.md) (Handler Consolidation), [ADR-025](./025-figment-configuration.md) (Figment)
+- **Series:** [ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → **ADR-037**
 
 ## Context
 
@@ -42,16 +42,16 @@ Each provider has a clean port trait, a linkme-registered implementation, and is
 
 ### Requirements
 
--   Single service coordinating FSM + context + policies
--   Session lifecycle: create → discover context → evaluate policies → transition → repeat
--   MCP tool with action-based API (ADR-033 pattern)
--   Event broadcasting for workflow state changes
--   Integration with existing `AppContext` and dill `Catalog` (ADR-029)
--   Session management (concurrent sessions, cleanup, crash recovery)
--   **Multi-tier execution model** (Project → Plan → Task → Session → Agent → Operator)
--   **Event broadcasting** across 3 channels (Message Queue, Database, Webhooks)
--   **Beads integration** (task orientation, no state duplication)
--   **Session/Compensation managers** (lifecycle, crash recovery, compensation)
+- Single service coordinating FSM + context + policies
+- Session lifecycle: create → discover context → evaluate policies → transition → repeat
+- MCP tool with action-based API (ADR-033 pattern)
+- Event broadcasting for workflow state changes
+- Integration with existing `AppContext` and dill `Catalog` (ADR-029)
+- Session management (concurrent sessions, cleanup, crash recovery)
+- **Multi-tier execution model** (Project → Plan → Task → Session → Agent → Operator)
+- **Event broadcasting** across 3 channels (Message Queue, Database, Webhooks)
+- **Beads integration** (task orientation, no state duplication)
+- **Session/Compensation managers** (lifecycle, crash recovery, compensation)
 
 ## Decision
 
@@ -124,22 +124,22 @@ pub struct MultiTierConcurrency {
 3. **Task Selection**: Operator selects a task from Beads (ready, no blockers)
 4. **Session Start**: Create WorkflowSession with:
 
--   `task_id` (reference to Beads task, not copy)
--   `operator_id` (current human operator)
--   `state: Initializing`
+- `task_id` (reference to Beads task, not copy)
+- `operator_id` (current human operator)
+- `state: Initializing`
 
 1. **Context Discovery**: ContextScoutProvider discovers Git, project structure, dependencies
 2. **Policy Evaluation**: PolicyGuardProvider evaluates concurrency, branching, merge policies
 3. **Agent Pool Start**: Spawn agents (bounded, configurable pool size)
 4. **Agents Execute**: Multiple agents run in parallel within session
 
--   Code changes, tests, commits happen in isolated worktrees
--   Each agent heartbeats to session manager
+- Code changes, tests, commits happen in isolated worktrees
+- Each agent heartbeats to session manager
 
 1. **Operator Gate**: On completion, await operator approval:
 
--   Review changes, run tests, approve merge
--   Or: trigger compensation (AutoRevert, ManualReview, ApproveAndMerge)
+- Review changes, run tests, approve merge
+- Or: trigger compensation (AutoRevert, ManualReview, ApproveAndMerge)
 
 1. **State Transition**: Execute FSM transition (Ready → Executing → Completed or Failed)
 2. **Cleanup**: Close session, cleanup worktrees, record final state
@@ -256,10 +256,10 @@ pub enum WorkflowEvent {
 
 **Consumers**:
 
--   External webhooks (Slack, GitHub, PagerDuty notifications)
--   Dashboard real-time updates
--   Analytics/monitoring systems
--   Audit trail subscribers
+- External webhooks (Slack, GitHub, PagerDuty notifications)
+- Dashboard real-time updates
+- Analytics/monitoring systems
+- Audit trail subscribers
 
 ```rust
 pub trait EventQueueProvider: Send + Sync {
@@ -307,10 +307,10 @@ workflow.agents.failed
 
 **Properties**:
 
--   Immutable: events are INSERT-only, never UPDATE/DELETE
--   Indexed: Fast queries by session_id, timestamp, event_type
--   Ordered: Timestamp ordering enables time-travel debugging
--   Complete: Every state change and decision recorded
+- Immutable: events are INSERT-only, never UPDATE/DELETE
+- Indexed: Fast queries by session_id, timestamp, event_type
+- Ordered: Timestamp ordering enables time-travel debugging
+- Complete: Every state change and decision recorded
 
 ```sql
 CREATE TABLE workflow_events (
@@ -572,10 +572,10 @@ pub async fn transition(
 
 Workflow does **NOT** update Beads task status. Beads is the source of truth for task metadata:
 
--   If operator closes session as "completed", Beads task status is updated via:
-  -   Manual operator action in OpenCode UI
-  -   Separate Beads API call (not from Workflow)
-  -   Not automatic from Workflow completion
+- If operator closes session as "completed", Beads task status is updated via:
+- Manual operator action in OpenCode UI
+- Separate Beads API call (not from Workflow)
+- Not automatic from Workflow completion
 
 This preserves the separation: Beads is task-oriented (planning), Workflow is execution-oriented (doing).
 
@@ -1601,43 +1601,43 @@ fn default_channel_capacity() -> usize { 256 }
 
 ### Positive
 
--   **Single coordination point**: `WorkflowService` orchestrates all three providers without any provider knowing about the others.
--   **Guarded transitions**: Every transition passes through policy evaluation — no way to bypass guards.
--   **Event-driven**: `broadcast::Sender` allows any consumer to subscribe to workflow state changes without coupling.
--   **ADR-033 compliant**: Single `workflow` tool with 9 Actions replaces what would be 9 separate MCP tools.
--   **Clean DI**: Handles + dill Catalog follow the exact pattern of existing providers (embedding, vector store, cache).
--   **Session management**: Max sessions, timeout, and cleanup prevent resource leaks.
--   **Zero new crates**: Service in `mcb-application`, handler in `mcb-server`, DI in `mcb-infrastructure`.
+- **Single coordination point**: `WorkflowService` orchestrates all three providers without any provider knowing about the others.
+- **Guarded transitions**: Every transition passes through policy evaluation — no way to bypass guards.
+- **Event-driven**: `broadcast::Sender` allows any consumer to subscribe to workflow state changes without coupling.
+- **ADR-033 compliant**: Single `workflow` tool with 9 Actions replaces what would be 9 separate MCP tools.
+- **Clean DI**: Handles + dill Catalog follow the exact pattern of existing providers (embedding, vector store, cache).
+- **Session management**: Max sessions, timeout, and cleanup prevent resource leaks.
+- **Zero new crates**: Service in `mcb-application`, handler in `mcb-server`, DI in `mcb-infrastructure`.
 
 ### Negative
 
--   **Context re-discovery**: Each guarded transition discovers fresh context (30ms cold, <1ms warm). Trade-off for correctness — stale context could allow invalid transitions.
--   **Broadcast channel overhead**: `broadcast::channel(256)` allocates a ring buffer. Minimal cost (~2KB) but non-zero.
--   **Service complexity**: `WorkflowService` has 8 public methods. This is the maximum — any new features should extend existing methods, not add new ones.
--   **Session manager is in-memory**: Lost on restart. Active sessions survive via SQLite (FSM state), but the in-memory session map is rebuilt on startup.
+- **Context re-discovery**: Each guarded transition discovers fresh context (30ms cold, <1ms warm). Trade-off for correctness — stale context could allow invalid transitions.
+- **Broadcast channel overhead**: `broadcast::channel(256)` allocates a ring buffer. Minimal cost (~2KB) but non-zero.
+- **Service complexity**: `WorkflowService` has 8 public methods. This is the maximum — any new features should extend existing methods, not add new ones.
+- **Session manager is in-memory**: Lost on restart. Active sessions survive via SQLite (FSM state), but the in-memory session map is rebuilt on startup.
 
 ## Alternatives Considered
 
 ### Alternative 1: Tokio Actor Model (actix-style)
 
--   **Description:** Each workflow session as a Tokio task with an `mpsc` mailbox. Messages (triggers) sent to actor, actor manages state internally.
--   **Pros:** Natural concurrency. Each session isolated. Clean shutdown semantics.
--   **Cons:** Significant complexity increase. Actor lifecycle management. Message serialization overhead. Debugging harder.
--   **Rejection reason:** MCB's workload is low-concurrency (1–10 sessions). Actor overhead unjustified. Simple `Arc<WorkflowService>` with `RwLock` handles is sufficient.
+- **Description:** Each workflow session as a Tokio task with an `mpsc` mailbox. Messages (triggers) sent to actor, actor manages state internally.
+- **Pros:** Natural concurrency. Each session isolated. Clean shutdown semantics.
+- **Cons:** Significant complexity increase. Actor lifecycle management. Message serialization overhead. Debugging harder.
+- **Rejection reason:** MCB's workload is low-concurrency (1–10 sessions). Actor overhead unjustified. Simple `Arc<WorkflowService>` with `RwLock` handles is sufficient.
 
 ### Alternative 2: Multiple MCP Tools
 
--   **Description:** Separate tools: `workflow_start`, `workflow_status`, `workflow_transition`, etc.
--   **Pros:** Each tool is simpler. Follows UNIX "do one thing" philosophy.
--   **Cons:** Violates ADR-033 consolidation pattern. 9 tools instead of 1. More handler boilerplate.
--   **Rejection reason:** ADR-033 explicitly moves toward action-based consolidation. Regression to multiple tools is architectural inconsistency.
+- **Description:** Separate tools: `workflow_start`, `workflow_status`, `workflow_transition`, etc.
+- **Pros:** Each tool is simpler. Follows UNIX "do one thing" philosophy.
+- **Cons:** Violates ADR-033 consolidation pattern. 9 tools instead of 1. More handler boilerplate.
+- **Rejection reason:** ADR-033 explicitly moves toward action-based consolidation. Regression to multiple tools is architectural inconsistency.
 
 ### Alternative 3: Direct Provider Access (No Service Layer)
 
--   **Description:** MCP handler calls `WorkflowEngine`, `ContextScoutProvider`, and `PolicyGuardProvider` directly.
--   **Pros:** Simpler. No intermediate service.
--   **Cons:** Handler contains orchestration logic. Duplicated if CLI is added later. No event broadcasting. No session management.
--   **Rejection reason:** Violates Clean Architecture — orchestration belongs in the application layer, not in handlers (infrastructure/adapter layer).
+- **Description:** MCP handler calls `WorkflowEngine`, `ContextScoutProvider`, and `PolicyGuardProvider` directly.
+- **Pros:** Simpler. No intermediate service.
+- **Cons:** Handler contains orchestration logic. Duplicated if CLI is added later. No event broadcasting. No session management.
+- **Rejection reason:** Violates Clean Architecture — orchestration belongs in the application layer, not in handlers (infrastructure/adapter layer).
 
 ## Implementation Notes
 
@@ -1655,19 +1655,19 @@ fn default_channel_capacity() -> usize { 256 }
 
 ### Migration
 
--   No existing code modified (additive only).
--   `register_workflow()` called in `build_catalog()` after existing provider registration.
--   `workflow` tool added to MCP tool registry alongside existing tools.
+- No existing code modified (additive only).
+- `register_workflow()` called in `build_catalog()` after existing provider registration.
+- `workflow` tool added to MCP tool registry alongside existing tools.
 
 ### Testing
 
--   Unit tests: `WorkflowService` lifecycle (start → transition → end) with mock providers.
--   Unit tests: Guarded transition (policy blocks → error returned).
--   Unit tests: Event emission (subscribe, receive events).
--   Unit tests: `SessionManager` (register, touch, timeout, max capacity).
--   Integration tests: Full `handle_workflow()` with all Actions.
--   Integration tests: MCP tool invocation via JSON-RPC.
--   Estimated: ~55 tests.
+- Unit tests: `WorkflowService` lifecycle (start → transition → end) with mock providers.
+- Unit tests: Guarded transition (policy blocks → error returned).
+- Unit tests: Event emission (subscribe, receive events).
+- Unit tests: `SessionManager` (register, touch, timeout, max capacity).
+- Integration tests: Full `handle_workflow()` with all Actions.
+- Integration tests: MCP tool invocation via JSON-RPC.
+- Estimated: ~55 tests.
 
 ### Performance Targets
 
@@ -1682,17 +1682,17 @@ fn default_channel_capacity() -> usize { 256 }
 
 ### Security
 
--   `WorkflowService` enforces policies on every transition. No bypass path.
--   Session IDs are UUIDs — not guessable.
--   `project_root` from MCP args is validated to be an existing directory.
--   No credentials stored in workflow state or events.
+- `WorkflowService` enforces policies on every transition. No bypass path.
+- Session IDs are UUIDs — not guessable.
+- `project_root` from MCP args is validated to be an existing directory.
+- No credentials stored in workflow state or events.
 
 ## References
 
--   [Tokio::sync::broadcast](https://docs.rs/tokio/latest/tokio/sync/broadcast/) — Event channel
--   [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — `WorkflowEngine` trait
--   [ADR-035: Context Scout](./035-context-scout.md) — `ContextScoutProvider` trait
--   [ADR-036: Enforcement Policies](./036-enforcement-policies.md) — `PolicyGuardProvider` trait
--   [ADR-033: MCP Handler Consolidation](./033-mcp-handler-consolidation.md) — Action-based tool pattern
--   [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI pattern
--   [ADR-025: Figment Configuration](./025-figment-configuration.md) — Config pattern
+- [Tokio::sync::broadcast](https://docs.rs/tokio/latest/tokio/sync/broadcast/) — Event channel
+- [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — `WorkflowEngine` trait
+- [ADR-035: Context Scout](./035-context-scout.md) — `ContextScoutProvider` trait
+- [ADR-036: Enforcement Policies](./036-enforcement-policies.md) — `PolicyGuardProvider` trait
+- [ADR-033: MCP Handler Consolidation](./033-mcp-handler-consolidation.md) — Action-based tool pattern
+- [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI pattern
+- [ADR-025: Figment Configuration](./025-figment-configuration.md) — Config pattern

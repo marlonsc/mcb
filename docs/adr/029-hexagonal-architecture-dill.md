@@ -23,15 +23,15 @@ implementation_status: Incomplete
 The previous architecture (ADR-024) used a handle-based DI pattern with linkme registry for compile-time provider discovery. While effective, this approach had coupling issues:
 
 1. **Infrastructure imported concrete types from Application**
-    -   `domain_services.rs` imported `ContextServiceImpl`, `SearchServiceImpl`
+    - `domain_services.rs` imported `ContextServiceImpl`, `SearchServiceImpl`
 
 2. **Application ports were duplicated**
-    -   `mcb-domain/src/ports/providers/` (correct location)
-    -   `mcb-application/src/ports/providers/` (duplication)
+    - `mcb-domain/src/ports/providers/` (correct location)
+    - `mcb-application/src/ports/providers/` (duplication)
 
 3. **No IoC container for service lifecycle management**
-    -   Manual wiring in bootstrap.rs
-    -   No dependency graph validation
+    - Manual wiring in bootstrap.rs
+    - No dependency graph validation
 
 ## Decision
 
@@ -173,7 +173,7 @@ New mcb-validate rules enforce the architecture:
 
 ## References
 
--   [dill-rs Documentation](https://docs.rs/dill/latest/dill/)
--   [ADR 023: Inventory to linkme Migration](023-inventory-to-linkme-migration.md)
--   [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md)
--   [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [dill-rs Documentation](https://docs.rs/dill/latest/dill/)
+- [ADR 023: Inventory to linkme Migration](023-inventory-to-linkme-migration.md)
+- [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md)
+- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)

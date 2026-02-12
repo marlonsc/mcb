@@ -57,10 +57,10 @@ strategy:
 
 **Track performance metrics**:
 
--   Search latency (target: ≤ 100ms)
--   Analysis latency (target: ≤ 500ms/file)
--   Memory usage (target: ≤ 300MB)
--   Binary size (target: ≤ 80MB)
+- Search latency (target: ≤ 100ms)
+- Analysis latency (target: ≤ 500ms/file)
+- Memory usage (target: ≤ 300MB)
+- Binary size (target: ≤ 80MB)
 
 **Alert on regression > 10%**
 
@@ -68,21 +68,21 @@ strategy:
 
 **v0.1.1** (Current):
 
--   308+ tests must pass
--   Eight-crate workspace builds
--   mcb-validate reports 0 violations
+- 308+ tests must pass
+- Eight-crate workspace builds
+- mcb-validate reports 0 violations
 
 **v0.2.0**:
 
--   No new features (architectural only)
--   All existing tests must pass
--   No performance regression
+- No new features (architectural only)
+- All existing tests must pass
+- No performance regression
 
 **v0.3.0+**:
 
--   New feature tests must pass
--   Integration tests required
--   PMAT tests ported for features
+- New feature tests must pass
+- Integration tests required
+- PMAT tests ported for features
 
 ## v0.1.1 CI Status
 
@@ -107,48 +107,48 @@ jobs:
 
 **Key checks**:
 
--   Format (rustfmt)
--   Lint (clippy)
--   Test (308+ tests)
--   Architecture validation (mcb-validate)
+- Format (rustfmt)
+- Lint (clippy)
+- Test (308+ tests)
+- Architecture validation (mcb-validate)
 
 ## Implementation
 
 **v0.2.0** (Next):
 
--   Update CI to add Rayon tests
--   Add workspace build matrix
--   Benchmark infrastructure
+- Update CI to add Rayon tests
+- Add workspace build matrix
+- Benchmark infrastructure
 
 **v0.3.0+**:
 
--   Add analysis-specific benchmarks
--   Extend test matrix with new features
+- Add analysis-specific benchmarks
+- Extend test matrix with new features
 
 ## Consequences
 
 **Positive**:
 
--   Catch regressions early
--   Performance tracking
--   Cross-platform validation
+- Catch regressions early
+- Performance tracking
+- Cross-platform validation
 
 **Negative**:
 
--   CI time (~10 min per build)
--   Matrix explosion with features
+- CI time (~10 min per build)
+- Matrix explosion with features
 
 **Mitigation**:
 
--   Parallel jobs
--   Caching
--   Selective feature testing
+- Parallel jobs
+- Caching
+- Selective feature testing
 
 ## Related ADRs
 
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - What to validate
--   [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Feature timeline
--   [ADR-020: Testing Strategy Integration](020-testing-strategy-integration.md) - Test organization
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - What to validate
+- [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Feature timeline
+- [ADR-020: Testing Strategy Integration](020-testing-strategy-integration.md) - Test organization
 
 ---
 

@@ -8,10 +8,10 @@ CI pipeline optimization to reduce unnecessary job executions while maintaining 
 
 Before optimization:
 
--   **Per Pull Request**: 9 jobs (even for docs-only changes)
--   **Per Push to Main**: 19 jobs (even for docs-only changes)
--   **Monthly estimate**: 465+ jobs
--   **Result**: Wasted resources, slow feedback on PRs, unnecessary Milvus/Ollama timeouts
+- **Per Pull Request**: 9 jobs (even for docs-only changes)
+- **Per Push to Main**: 19 jobs (even for docs-only changes)
+- **Monthly estimate**: 465+ jobs
+- **Result**: Wasted resources, slow feedback on PRs, unnecessary Milvus/Ollama timeouts
 
 ## Solution: Two-Phase Optimization
 
@@ -23,26 +23,26 @@ Before optimization:
 
 1. **CI Workflow Path Filters** (`src/**`, `crates/**`, `tests/**`, `Cargo.toml`, `.github/workflows/ci.yml`)
 
--   Skip CI entirely when only docs change
--   Skip CI when only scripts change
+- Skip CI entirely when only docs change
+- Skip CI when only scripts change
 
 1. **Coverage Job Conditional** (`if: github.event_name == 'push' && github.ref == 'refs/heads/main'`)
 
--   Only run on main branch merges
--   Skip on all PRs and develop branch
--   Expensive tarpaulin job only runs where it matters
+- Only run on main branch merges
+- Skip on all PRs and develop branch
+- Expensive tarpaulin job only runs where it matters
 
 1. **CodeQL Workflow Path Filters** (same code paths as CI)
 
--   Security analysis only when code changes
--   Skip docs-only and configuration-only changes
+- Security analysis only when code changes
+- Skip docs-only and configuration-only changes
 
 1. **Tarpaulin Integration Test Exclusion**
 
--   Created `.tarpaulin.toml` configuration
--   Updated `make coverage` to exclude integration tests and admin tests
--   Prevents timeout from Milvus/Ollama dependencies not available in CI
--   Added timeout (300s) and thread control parameters
+- Created `.tarpaulin.toml` configuration
+- Updated `make coverage` to exclude integration tests and admin tests
+- Prevents timeout from Milvus/Ollama dependencies not available in CI
+- Added timeout (300s) and thread control parameters
 
 **Impact**:
 
@@ -63,19 +63,19 @@ Monthly savings: ~160 jobs (34% reduction)
 
 1. **Split Test Job** into conditional variants:
 
--   `test-pr`: Runs ONLY on `pull_request` events, tests `stable` only
--   `test-main`: Runs ONLY on `push` to `main`, tests `stable` + `beta`
+- `test-pr`: Runs ONLY on `pull_request` events, tests `stable` only
+- `test-main`: Runs ONLY on `push` to `main`, tests `stable` + `beta`
 
 1. **Updated Job Dependencies**:
 
--   `golden-tests`: Depends on `test-main` (not `test`)
--   `coverage`: Depends on `test-main` (not `test`)
--   Both jobs now have explicit `if:` conditionals
+- `golden-tests`: Depends on `test-main` (not `test`)
+- `coverage`: Depends on `test-main` (not `test`)
+- Both jobs now have explicit `if:` conditionals
 
 1. **Clear Job Intent**:
 
--   PR validation: Fast feedback (stable only)
--   Main verification: Comprehensive (stable + beta)
+- PR validation: Fast feedback (stable only)
+- Main verification: Comprehensive (stable + beta)
 
 **Impact**:
 
@@ -114,9 +114,9 @@ ifeq ($(LCOV),1)
 
 **Flags**:
 
--   `--exclude-files`: Skip specific test directories
--   `--timeout 300`: 5-minute timeout per test
--   `--test-threads`: Control parallelism (default 4)
+- `--exclude-files`: Skip specific test directories
+- `--timeout 300`: 5-minute timeout per test
+- `--test-threads`: Control parallelism (default 4)
 
 ### CI Workflow Triggers
 
@@ -228,28 +228,28 @@ on:
 
 ### Key Metrics to Track
 
--   **PR cycle time**: Target < 8 minutes (from 10-12 before optimization)
--   **CI jobs per PR**: Target ≤ 8 jobs (from 9)
--   **CI jobs per main push**: Target ≤ 18 jobs (from 19)
--   **Coverage execution**: Target < 30 minutes (was timing out at 30+ min)
--   **False negatives**: 0 (no bugs missed by path filters)
+- **PR cycle time**: Target < 8 minutes (from 10-12 before optimization)
+- **CI jobs per PR**: Target ≤ 8 jobs (from 9)
+- **CI jobs per main push**: Target ≤ 18 jobs (from 19)
+- **Coverage execution**: Target < 30 minutes (was timing out at 30+ min)
+- **False negatives**: 0 (no bugs missed by path filters)
 
 ## Known Limitations
 
 1. **Beta tests on main only**: PRs don't test beta Rust channel
 
--   Mitigation: Main branch catch issues before release
--   Trade-off acceptable: Dev feedback speed vs comprehensive testing
+- Mitigation: Main branch catch issues before release
+- Trade-off acceptable: Dev feedback speed vs comprehensive testing
 
 1. **Integration tests excluded from coverage**: Milvus/Ollama requirements
 
--   Mitigation: Integration tests still run in full test suite
--   Trade-off acceptable: Coverage on unit/stable code vs external service dependency
+- Mitigation: Integration tests still run in full test suite
+- Trade-off acceptable: Coverage on unit/stable code vs external service dependency
 
 1. **No cross-platform testing on PR**: Only Linux tested
 
--   Mitigation: Release builds catch platform-specific issues
--   Trade-off acceptable: PR feedback speed vs pre-release validation
+- Mitigation: Release builds catch platform-specific issues
+- Trade-off acceptable: PR feedback speed vs pre-release validation
 
 ## Future Optimizations (Out of Scope)
 
@@ -261,17 +261,17 @@ on:
 
 ## Commits
 
--   **Phase 1**: `4c0ba12` - Path filters, coverage conditional, tarpaulin config
--   **Phase 2**: `a29e1d6` - Test matrix split (stable for PR, stable+beta for main)
+- **Phase 1**: `4c0ba12` - Path filters, coverage conditional, tarpaulin config
+- **Phase 2**: `a29e1d6` - Test matrix split (stable for PR, stable+beta for main)
 
 ## References
 
--   ADR 022: Continuous Integration Strategy
--   `.github/workflows/ci.yml`: Main CI pipeline
--   `.github/workflows/codeql.yml`: Security analysis workflow
--   `.github/workflows/docs.yml`: Documentation pipeline
--   `make/Makefile.quality.mk`: Coverage target configuration
--   `.tarpaulin.toml`: Tarpaulin configuration
+- ADR 022: Continuous Integration Strategy
+- `.github/workflows/ci.yml`: Main CI pipeline
+- `.github/workflows/codeql.yml`: Security analysis workflow
+- `.github/workflows/docs.yml`: Documentation pipeline
+- `make/Makefile.quality.mk`: Coverage target configuration
+- `.tarpaulin.toml`: Tarpaulin configuration
 
 ---
 

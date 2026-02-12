@@ -22,10 +22,10 @@ implementation_status: Incomplete
 
 ADR-042 builds a knowledge graph of code relationships. ADR-043 specifies the **search engine** that queries this graph alongside:
 
--   Full-text search (tantivy BM25 on code content)
--   Vector embeddings (semantic similarity via existing MCB vector stores)
--   Graph traversal (related code discovery)
--   Freshness weighting (prefer recent context)
+- Full-text search (tantivy BM25 on code content)
+- Vector embeddings (semantic similarity via existing MCB vector stores)
+- Graph traversal (related code discovery)
+- Freshness weighting (prefer recent context)
 
 into a unified **hybrid search** that returns ranked results with explicit provenance.
 
@@ -301,12 +301,12 @@ impl UnifiedSearchEngine {
 
 **Fix**: Renamed to `ContextSearchService` and clarified as an **application-layer concrete service** (not a trait) that:
 
--   Lives in `mcb-application/src/use_cases/context_search.rs`
--   **COMPOSES** three port traits from `mcb-domain`:
-  -   `FullTextSearchProvider` (BM25 full-text search)
-  -   `VectorStoreProvider` (semantic similarity)
-  -   `ContextGraphTraversal` (graph-based discovery)
--   Implements the RRF fusion algorithm to combine signals
+- Lives in `mcb-application/src/use_cases/context_search.rs`
+- **COMPOSES** three port traits from `mcb-domain`:
+- `FullTextSearchProvider` (BM25 full-text search)
+- `VectorStoreProvider` (semantic similarity)
+- `ContextGraphTraversal` (graph-based discovery)
+- Implements the RRF fusion algorithm to combine signals
 
 **Rationale**: Application services orchestrate port traits; they are not themselves ports. This maintains Clean Architecture's dependency inversion principle.
 
@@ -316,35 +316,35 @@ impl UnifiedSearchEngine {
 
 **Fix**: Added complete port trait definition in section 3.1:
 
--   **Location**: `mcb-domain/src/ports/providers/full_text_search.rs`
--   **Trait Methods**:
-  -   `async fn search(&self, query: &str, options: FtsOptions) -> FtsResult<Vec<FtsResult>>`
-  -   `async fn index(&self, id: &str, content: &str) -> FtsResult<()>`
-  -   `async fn clear(&self) -> FtsResult<()>`
--   **Registration**: Uses `#[linkme::distributed_slice(FULL_TEXT_SEARCH_PROVIDERS)]` for compile-time provider discovery
--   **Default Implementation**: tantivy (BM25) in `mcb-providers`
--   **Error Handling**: Custom `FtsError` enum with `thiserror`
+- **Location**: `mcb-domain/src/ports/providers/full_text_search.rs`
+- **Trait Methods**:
+- `async fn search(&self, query: &str, options: FtsOptions) -> FtsResult<Vec<FtsResult>>`
+- `async fn index(&self, id: &str, content: &str) -> FtsResult<()>`
+- `async fn clear(&self) -> FtsResult<()>`
+- **Registration**: Uses `#[linkme::distributed_slice(FULL_TEXT_SEARCH_PROVIDERS)]` for compile-time provider discovery
+- **Default Implementation**: tantivy (BM25) in `mcb-providers`
+- **Error Handling**: Custom `FtsError` enum with `thiserror`
 
 **Rationale**: Port traits must be explicitly defined in the domain layer. Linkme registration enables zero-runtime-overhead provider discovery.
 
 ## Testing
 
--   **FTS tests** (5): tantivy indexing, query parsing, rank accuracy
--   **Semantic tests** (5): Vector search, similarity computation
--   **Graph traversal tests** (5): BFS/DFS, distance computation
--   **RRF fusion tests** (8): Weight combinations, rank preservation
--   **Freshness tests** (3): Penalty application, floor filtering
--   **E2E search tests** (10): Real queries, Result quality
+- **FTS tests** (5): tantivy indexing, query parsing, rank accuracy
+- **Semantic tests** (5): Vector search, similarity computation
+- **Graph traversal tests** (5): BFS/DFS, distance computation
+- **RRF fusion tests** (8): Weight combinations, rank preservation
+- **Freshness tests** (3): Penalty application, floor filtering
+- **E2E search tests** (10): Real queries, Result quality
 
 **Target**: 36+ tests, 85%+ coverage on search engine
 
 ## Success Criteria
 
--   ✅ Search completes in <500ms for 100k nodes
--   ✅ RRF fusion balanced (no single signal dominates)
--   ✅ Top-3 results highly relevant (manual review)
--   ✅ Freshness penalties working (stale results demoted)
--   ✅ Graph expansion discovering related code (validation query)
+- ✅ Search completes in <500ms for 100k nodes
+- ✅ RRF fusion balanced (no single signal dominates)
+- ✅ Top-3 results highly relevant (manual review)
+- ✅ Freshness penalties working (stale results demoted)
+- ✅ Graph expansion discovering related code (validation query)
 
 ---
 

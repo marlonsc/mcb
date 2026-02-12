@@ -24,7 +24,7 @@ To unblock the queue, we must implement the `context` resource in the search han
 
 **File**: `crates/mcb-server/src/args/consolidated.rs`
 
--   Add `Context` to `SearchResource` enum.
+- Add `Context` to `SearchResource` enum.
 
 ```rust
 pub enum SearchResource {
@@ -38,8 +38,8 @@ pub enum SearchResource {
 
 **File**: `crates/mcb-server/src/handlers/search.rs`
 
--   Inject `ContextServiceInterface`.
--   Implement `Context` case in `handle` method.
+- Inject `ContextServiceInterface`.
+- Implement `Context` case in `handle` method.
 
 ```rust
 pub struct SearchHandler {
@@ -62,7 +62,7 @@ match args.resource {
 
 **File**: `crates/mcb-server/src/handlers/mod.rs` (or equivalent registry)
 
--   Update `SearchHandler::new` calls to pass the context service.
+- Update `SearchHandler::new` calls to pass the context service.
 
 ## 3. Test Optimization Strategy
 
