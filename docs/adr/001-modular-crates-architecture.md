@@ -20,11 +20,26 @@ implementation_status: Complete
 
 ## Context
 
-Initially, the Memory Context Browser had a monolithic architecture. As the project grew, the need for better code organization, separation of concerns, and component reusability emerged. We evaluated adopting a modular architecture by dividing the system into multiple Rust crates, each responsible for a specific domain or functionality (e.g., core server crate, context providers crate, inter-module communication crate, etc.). We also considered how to manage the orderly initialization and shutdown of modules in a resilient manner.
+Initially, the Memory Context Browser had a monolithic architecture. As the
+project grew, the need for better code organization, separation of concerns, and
+component reusability emerged. We evaluated adopting a modular architecture by
+dividing the system into multiple Rust crates, each responsible for a specific
+domain or functionality (e.g., core server crate, context providers crate,
+inter-module communication crate, etc.). We also considered how to manage the
+orderly initialization and shutdown of modules in a resilient manner.
 
 ## Decision
 
-We opted for a modular architecture based on crates, where the project is divided into independent sub-modules compiled separately. Each crate encapsulates specific services and logics (e.g., core server crate, providers crate, EventBus crate, etc.), but all operate in an integrated manner. To coordinate the lifecycle of modules, we introduced a central component called ServiceManager responsible for registering, initializing, and maintaining references to all services (from each crate) running. Similarly, we implemented a graceful shutdown mechanism via ShutdownCoordinator, which orchestrates the termination of each service in the correct order when the application is shut down, ensuring resource release (threads, connections) in a safe manner.
+We opted for a modular architecture based on crates, where the project is
+divided into independent sub-modules compiled separately. Each crate
+encapsulates specific services and logics (e.g., core server crate, providers
+crate, EventBus crate, etc.), but all operate in an integrated manner. To
+coordinate the lifecycle of modules, we introduced a central component called
+ServiceManager responsible for registering, initializing, and maintaining
+references to all services (from each crate) running. Similarly, we implemented
+a graceful shutdown mechanism via ShutdownCoordinator, which orchestrates the
+termination of each service in the correct order when the application is shut
+down, ensuring resource release (threads, connections) in a safe manner.
 
 ## Implementation
 
@@ -212,7 +227,7 @@ This change to multiple crates improved code maintainability and scalability. De
 
 ## Crate Structure
 
-```
+```text
 crates/
 ├── mcb/                 # Facade crate (re-exports public API)
 ├── mcb-domain/          # Layer 1: Entities, ports (traits), errors
@@ -225,7 +240,7 @@ crates/
 
 **Dependency Direction** (inward only):
 
-```
+```text
 mcb-server → mcb-infrastructure → mcb-application → mcb-domain
                     ↓
               mcb-providers

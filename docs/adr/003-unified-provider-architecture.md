@@ -16,13 +16,27 @@ implementation_status: Complete
 
 **Implemented** (v0.1.1, extended v0.1.2)
 
-> Fully implemented with unified provider port traits across multiple categories (Embedding: 6 providers, Vector Store: 3 providers, Cache: 3 providers, Language: 12 processors, Events: 2 providers). Multi-provider routing, failover, and health monitoring implemented in `crates/mcb-providers/src/routing/`.
+> Fully implemented with unified provider port traits across multiple categories
+> (Embedding: 6 providers, Vector Store: 3 providers, Cache: 3 providers,
+> Language: 12 processors, Events: 2 providers). Multi-provider routing,
+> failover, and health monitoring implemented in
+> `crates/mcb-providers/src/routing/`.
 
 ## Context
 
-The Memory Context Browser interacts with multiple context sources (local memory, external providers, etc.), originally handled in different ways. Each "provider" of context had its own configurations and initialization, which increased complexity in adding new providers and maintaining consistency. We identified the opportunity to unify how providers are defined and loaded by the system, standardizing the interface and lifecycle. In addition, integrating providers into the DI container (Shaku, later dill) would bring consistency in dependency resolution.
+The Memory Context Browser interacts with multiple context sources (local
+memory, external providers, etc.), originally handled in different ways. Each
+"provider" of context had its own configurations and initialization, which
+increased complexity in adding new providers and maintaining consistency. We
+identified the opportunity to unify how providers are defined and loaded by the
+system, standardizing the interface and lifecycle. In addition, integrating
+providers into the DI container (Shaku, later dill) would bring consistency in
+dependency resolution.
 
-Additionally, the system depends on external AI and storage services that have varying reliability, cost structures, and performance characteristics. Single-provider architectures create vendor lock-in, single points of failure, and cost optimization challenges. External dependencies include:
+Additionally, the system depends on external AI and storage services that have
+varying reliability, cost structures, and performance characteristics.
+Single-provider architectures create vendor lock-in, single points of failure,
+and cost optimization challenges. External dependencies include:
 
 - **AI Providers**: OpenAI (expensive, reliable), Ollama (free, local), Anthropic (premium)
 - **Vector Databases**: Milvus (scalable, complex), Pinecone (managed, expensive), Qdrant (simple, limited scale)
@@ -33,9 +47,21 @@ Additionally, the system depends on external AI and storage services that have v
 
 ## Decision
 
-We defined a unified interface for context providers, so that all providers implement the same basic trait (for example, ContextProvider) with standard operations (such as init, shutdown, and search/storage methods). We unified the registration of these providers in the system as well: now, all providers are registered via ServiceManager/dill during initialization, instead of ad-hoc initializations scattered around. This means that to add a new provider, simply create an implementation of the trait and register it in the project's DI module - the lifecycle (initialization, use, and termination) will be managed homogeneously. All providers share common mechanisms for logging, configuration, and EventBus usage (see ADR 004) for emitting events from their operations.
+We defined a unified interface for context providers, so that all providers
+implement the same basic trait (for example, ContextProvider) with standard
+operations (such as init, shutdown, and search/storage methods). We unified the
+registration of these providers in the system as well: now, all providers are
+registered via ServiceManager/dill during initialization, instead of ad-hoc
+initializations scattered around. This means that to add a new provider, simply
+create an implementation of the trait and register it in the project's DI
+module - the lifecycle (initialization, use, and termination) will be managed
+homogeneously. All providers share common mechanisms for logging, configuration,
+and EventBus usage (see ADR 004) for emitting events from their operations.
 
-To address reliability and cost optimization, we implement a multi-provider strategy with automatic failover, load balancing, and provider selection based on context. The system supports multiple providers for each service type with intelligent routing and fallback mechanisms.
+To address reliability and cost optimization, we implement a multi-provider
+strategy with automatic failover, load balancing, and provider selection based
+on context. The system supports multiple providers for each service type with
+intelligent routing and fallback mechanisms.
 
 ### Key Architectural Elements
 
@@ -48,7 +74,14 @@ To address reliability and cost optimization, we implement a multi-provider stra
 
 ## Consequences
 
-The unification of providers brought coherence and ease of extension. New providers now follow a clear contract, reducing code duplication for infrastructure. Configuration became centralized: the application configuration file can list which providers to activate and their parameters, and the system loads them uniformly. It also facilitated error handling and monitoring, as providers now report events in a standardized way (e.g., a provider can emit an event in the EventBus when updating context, and any other interested component can listen).
+The unification of providers brought coherence and ease of extension. New
+providers now follow a clear contract, reducing code duplication for
+infrastructure. Configuration became centralized: the application configuration
+file can list which providers to activate and their parameters, and the system
+loads them uniformly. It also facilitated error handling and monitoring, as
+providers now report events in a standardized way (e.g., a provider can emit an
+event in the EventBus when updating context, and any other interested component
+can listen).
 
 Multi-provider strategy provides excellent resilience and flexibility but adds significant operational complexity:
 
@@ -338,12 +371,18 @@ production = "milvus"       # Use Milvus for production
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Base provider abstraction
-- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async provider execution
-- [ADR-004: Event Bus (Local and Distributed)](004-event-bus-local-distributed.md) - Provider event emission
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Provider creation via factories
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Provider crate organization
-- [ADR-029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) - Current DI implementation
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) -
+  Base provider abstraction
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async
+  provider execution
+- [ADR-004: Event Bus (Local and Distributed)](004-event-bus-local-distributed.md) -
+  Provider event emission
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) -
+  Provider creation via factories
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Provider crate organization
+- [ADR-029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) -
+  Current DI implementation
 
 ## References
 

@@ -16,7 +16,8 @@ implementation_status: Complete
 
 Accepted
 
-> Fully implemented with Tokio async runtime across 8 crates in the Clean Architecture workspace.
+> Fully implemented with Tokio async runtime across 8 crates in the Clean
+> Architecture workspace.
 >
 > **Async Distribution by Crate**:
 >
@@ -31,7 +32,11 @@ Accepted
 
 ## Context
 
-The Memory Context Browser handles AI operations (embedding generation, vector searches) and large codebase processing that require high performance and concurrency. The system needs to handle multiple concurrent users, process large codebases efficiently, and integrate with external APIs that may have high latency.
+The Memory Context Browser handles AI operations (embedding generation, vector
+searches) and large codebase processing that require high performance and
+concurrency. The system needs to handle multiple concurrent users, process large
+codebases efficiently, and integrate with external APIs that may have high
+latency.
 
 Key performance requirements:
 
@@ -45,7 +50,9 @@ Traditional synchronous programming would create bottlenecks and poor resource u
 
 ## Decision
 
-Adopt an async-first architecture using Tokio as the async runtime throughout the entire system. All provider interfaces use async traits, and the application is designed for high concurrency from the ground up.
+Adopt an async-first architecture using Tokio as the async runtime throughout
+the entire system. All provider interfaces use async traits, and the application
+is designed for high concurrency from the ground up.
 
 Key architectural decisions:
 
@@ -58,7 +65,8 @@ Key architectural decisions:
 
 ## Consequences
 
-Async-first architecture provides excellent performance and concurrency but requires careful error handling and increases code complexity.
+Async-first architecture provides excellent performance and concurrency but
+requires careful error handling and increases code complexity.
 
 ### Positive Consequences
 
@@ -83,7 +91,8 @@ Async-first architecture provides excellent performance and concurrency but requ
 - **Description**: Traditional blocking I/O with thread pools for concurrency
 - **Pros**: Simpler code, easier debugging, familiar patterns
 - **Cons**: Poor performance for I/O operations, limited concurrency
-- **Rejection Reason**: Cannot meet performance requirements for AI operations and concurrent users
+- **Rejection Reason**: Cannot meet performance requirements for AI operations
+  and concurrent users
 
 ### Alternative 2: Mixed Sync/Async
 
@@ -97,7 +106,8 @@ Async-first architecture provides excellent performance and concurrency but requ
 - **Description**: Use Actix for actor-based concurrency instead of Tokio
 - **Pros**: High-level abstractions, built-in supervision
 - **Cons**: Additional complexity, less ecosystem support
-- **Rejection Reason**: Tokio has better ecosystem support and performance for our use case
+- **Rejection Reason**: Tokio has better ecosystem support and performance for
+  our use case
 
 ## Implementation Notes
 
@@ -241,7 +251,10 @@ MCP handlers use timeout and cancellation patterns:
 
 ```rust
 // crates/mcb-server/src/handlers/index.rs
-pub async fn handle_index_request(&self, request: IndexRequest) -> Result<IndexResponse> {
+pub async fn handle_index_request(
+    &self,
+    request: IndexRequest
+) -> Result<IndexResponse> {
     // Use timeout for external operations
     let result = tokio::time::timeout(
         Duration::from_secs(30),
@@ -253,7 +266,10 @@ pub async fn handle_index_request(&self, request: IndexRequest) -> Result<IndexR
 }
 
 // crates/mcb-server/src/handlers/search.rs
-pub async fn handle_search_request(&self, request: SearchRequest) -> Result<SearchResponse> {
+pub async fn handle_search_request(
+    &self,
+    request: SearchRequest
+) -> Result<SearchResponse> {
     // Handle cancellation gracefully
     let mut search_task = self.search_service.search(request.query);
 
@@ -320,27 +336,37 @@ async fn test_full_async_flow_with_di() {
 
 **Date**: 2026-01-14
 
-As MCB evolves to include CPU-intensive code analysis features (v0.3.0+), the async-first design has been extended to support hybrid parallelization:
+As MCB evolves to include CPU-intensive code analysis features (v0.3.0+), the
+async-first design has been extended to support hybrid parallelization:
 
 ### Updated Strategy
 
-- **Tokio**: I/O-bound operations (file reads, network calls, database queries, vector search)
-- **Rayon**: CPU-bound operations (AST parsing, complexity calculation, graph analysis)
-- **Pattern**: Wrap Rayon in `tokio::task::spawn_blocking` to bridge sync CPU work with async I/O
+- **Tokio**: I/O-bound operations (file reads, network calls, database queries,
+  vector search)
+- **Rayon**: CPU-bound operations (AST parsing, complexity calculation, graph
+  analysis)
+- **Pattern**: Wrap Rayon in `tokio::task::spawn_blocking` to bridge sync CPU
+  work with async I/O
 
 ### Rationale
 
-1. **Tokio for I/O**: Tokio's event-driven architecture is optimal for I/O-bound work
-2. **Rayon for Compute**: Rayon's work-stealing scheduler is proven for CPU-bound parallelism
-3. **PMAT Integration**: Upcoming PMAT analysis code uses Rayon extensively with proven performance
-4. **No Conflicts**: Tokio and Rayon are complementary and don't interfere with each other
+1. **Tokio for I/O**: Tokio's event-driven architecture is optimal for I/O-bound
+   work
+2. **Rayon for Compute**: Rayon's work-stealing scheduler is proven for
+   CPU-bound parallelism
+3. **PMAT Integration**: Upcoming PMAT analysis code uses Rayon extensively
+   with proven performance
+4. **No Conflicts**: Tokio and Rayon are complementary and don't interfere with
+   each other
 
 ### Implementation Pattern
 
 ```rust
 #[async_trait]
 pub trait CodeAnalyzer: Send + Sync {
-    async fn validate (action=analyze)(&self, path: &Path) -> Result<ComplexityReport> {
+    async fn validate (
+        action=analyze
+    )(&self, path: &Path) -> Result<ComplexityReport> {
         // 1. Read file (I/O - Tokio)
         let content = tokio::fs::read_to_string(path).await?;
 
@@ -384,10 +410,14 @@ fn compute_complexity(content: &str) -> Result<ComplexityReport> {
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider interfaces with async traits
-- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Async provider selection and failover
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Async initialization in factories
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) -
+  Provider interfaces with async traits
+- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) -
+  Async provider selection and failover
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) -
+  Async initialization in factories
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Crate organization
 
 ## References
 

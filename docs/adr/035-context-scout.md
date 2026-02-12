@@ -687,7 +687,7 @@ Each `WorkflowSession` gets a dedicated git worktree, providing **process isolat
 
 #### Worktree Structure
 
-```
+```text
 {repo_root}/.worktrees/
 ├── {session_id_1}/
 │   ├── .git
@@ -714,7 +714,7 @@ vcs.create_worktree(&worktree_path, &session.branch)?;
 
 **2. Use** (Operator makes changes)
 
-```
+```text
 All operator changes (writes, modifications, new files) happen WITHIN the worktree.
 Main working directory remains untouched.
 Other sessions' worktrees are unaffected.
@@ -770,7 +770,7 @@ vcs.remove_worktree(&worktree_path)?;
 
 **Multiple Sessions = Multiple Worktrees:**
 
-```
+```text
 Session A: task-auth
   ↓ operator starts task
   ↓ create_worktree(".worktrees/sess-A", "feature/auth")
@@ -819,7 +819,7 @@ pub struct GitContext {
 
 #### Operator Error Handling
 
-**Scenario: Operator crashes or session is cancelled mid-flight**
+#### Scenario: Operator crashes or session is cancelled mid-flight
 
 1. Worktree exists but is orphaned (no active session references it)
 2. On next `WorkflowService.initialize()` or periodic cleanup task:

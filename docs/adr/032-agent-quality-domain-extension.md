@@ -81,7 +81,7 @@ Pain points:
 
 Replace GSD/Beads with complete CRUD operations:
 
-```
+```ascii
 project_create          → Create project
 project (action=create, resource=phase)    → Create phase
 project (action=update, resource=phase)    → Update status/progress
