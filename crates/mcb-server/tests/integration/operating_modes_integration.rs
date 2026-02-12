@@ -581,6 +581,12 @@ async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
     let project_service: std::sync::Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
         std::sync::Arc::new(mcb_infrastructure::project::ProjectService::new());
     let project_repository = std::sync::Arc::new(MockProjectRepository::new());
+    let file_hash_repository: std::sync::Arc<
+        dyn mcb_domain::ports::repositories::FileHashRepository,
+    > = std::sync::Arc::new(mcb_providers::database::SqliteFileHashRepository::new(
+        std::sync::Arc::clone(&shared_executor),
+        mcb_providers::database::SqliteFileHashConfig::default(),
+    ));
 
     let deps = ServiceDependencies {
         project_id: "test-project".to_string(),
@@ -595,6 +601,7 @@ async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
         event_bus,
         memory_repository,
         agent_repository,
+        file_hash_repository,
         vcs_provider,
         project_service,
         project_repository: project_repository.clone(),

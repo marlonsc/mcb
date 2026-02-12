@@ -4,11 +4,12 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use mcb_domain::entities::memory::MemoryFilter;
+use mcb_domain::error::Error;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::ports::services::SearchServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use validator::Validate;
 
 use crate::args::{SearchArgs, SearchResource};
@@ -43,18 +44,18 @@ impl SearchHandler {
         Parameters(args): Parameters<SearchArgs>,
     ) -> Result<CallToolResult, McpError> {
         if let Err(e) = args.validate() {
-            return Ok(CallToolResult::error(vec![Content::text(format!(
-                "Invalid argument: {e}"
-            ))]));
+            return Ok(to_contextual_tool_error(Error::invalid_argument(
+                e.to_string(),
+            )));
         }
 
         let _org_id = resolve_org_id(args.org_id.as_deref());
 
         let query = args.query.trim();
         if query.is_empty() {
-            return Ok(CallToolResult::error(vec![Content::text(
+            return Ok(to_contextual_tool_error(Error::invalid_argument(
                 "Query cannot be empty",
-            )]));
+            )));
         }
 
         match args.resource {
@@ -65,7 +66,7 @@ impl SearchHandler {
                 let collection_id = match normalize_collection_name(collection_name) {
                     Ok(id) => id,
                     Err(reason) => {
-                        return Ok(CallToolResult::error(vec![Content::text(reason)]));
+                        return Ok(to_contextual_tool_error(Error::invalid_argument(reason)));
                     }
                 };
                 let timer = Instant::now();

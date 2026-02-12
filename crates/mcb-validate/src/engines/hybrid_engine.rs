@@ -281,18 +281,18 @@ impl HybridRuleEngine {
                 (rule_id_clone, result)
             });
 
-            handles.push(handle);
+            handles.push((rule_id, handle));
         }
 
         let mut results = Vec::new();
-        for handle in handles {
+        for (rule_id, handle) in handles {
             match handle.await {
-                Ok((rule_id, Ok(result))) => results.push((rule_id, result)),
-                Ok((rule_id, Err(e))) => {
-                    warn!(rule_id = %rule_id, error = %e, "Rule execution error");
+                Ok((returned_rule_id, Ok(result))) => results.push((returned_rule_id, result)),
+                Ok((returned_rule_id, Err(e))) => {
+                    warn!(rule_id = %returned_rule_id, error = %e, "Rule execution error");
                 }
                 Err(e) => {
-                    error!(error = %e, "Task join error");
+                    error!(rule_id = %rule_id, error = %e, "Task join error");
                 }
             }
         }

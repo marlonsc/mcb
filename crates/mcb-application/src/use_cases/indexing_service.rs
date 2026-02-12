@@ -14,6 +14,7 @@ use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::admin::IndexingOperationsInterface;
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::LanguageChunkingProvider;
+use mcb_domain::ports::repositories::FileHashRepository;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingResult, IndexingServiceInterface,
 };
@@ -85,6 +86,7 @@ pub struct IndexingServiceImpl {
     language_chunker: Arc<dyn LanguageChunkingProvider>,
     indexing_ops: Arc<dyn IndexingOperationsInterface>,
     event_bus: Arc<dyn EventBusProvider>,
+    file_hash_repository: Option<Arc<dyn FileHashRepository>>,
 }
 
 impl IndexingServiceImpl {
@@ -100,6 +102,24 @@ impl IndexingServiceImpl {
             language_chunker,
             indexing_ops,
             event_bus,
+            file_hash_repository: None,
+        }
+    }
+
+    /// Create a new indexing service with file hash persistence enabled.
+    pub fn new_with_file_hash_repository(
+        context_service: Arc<dyn ContextServiceInterface>,
+        language_chunker: Arc<dyn LanguageChunkingProvider>,
+        indexing_ops: Arc<dyn IndexingOperationsInterface>,
+        event_bus: Arc<dyn EventBusProvider>,
+        file_hash_repository: Arc<dyn FileHashRepository>,
+    ) -> Self {
+        Self {
+            context_service,
+            language_chunker,
+            indexing_ops,
+            event_bus,
+            file_hash_repository: Some(file_hash_repository),
         }
     }
 
@@ -294,6 +314,39 @@ impl IndexingServiceImpl {
                 }
             };
 
+            let mut computed_hash: Option<String> = None;
+            if let Some(file_hash_repository) = &service.file_hash_repository {
+                match file_hash_repository.compute_hash(file_path.as_path()) {
+                    Ok(hash) => {
+                        match file_hash_repository
+                            .has_changed(collection.as_str(), &file_path.to_string_lossy(), &hash)
+                            .await
+                        {
+                            Ok(false) => {
+                                continue;
+                            }
+                            Ok(true) => {
+                                computed_hash = Some(hash);
+                            }
+                            Err(e) => {
+                                warn!(
+                                    file = %file_path.display(),
+                                    error = %e,
+                                    "Failed to check file hash delta"
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        warn!(
+                            file = %file_path.display(),
+                            error = %e,
+                            "Failed to compute file hash"
+                        );
+                    }
+                }
+            }
+
             let chunks = service
                 .language_chunker
                 .chunk(&content, &file_path.to_string_lossy());
@@ -305,6 +358,19 @@ impl IndexingServiceImpl {
                 error!(file = %file_path.display(), error = %e, "Failed to store chunks — vector store or embedding provider may be unreachable");
                 failed_files.push(file_path.display().to_string());
                 continue;
+            }
+
+            if let (Some(file_hash_repository), Some(hash)) =
+                (&service.file_hash_repository, computed_hash.as_deref())
+                && let Err(e) = file_hash_repository
+                    .upsert_hash(collection.as_str(), &file_path.to_string_lossy(), hash)
+                    .await
+            {
+                warn!(
+                    file = %file_path.display(),
+                    error = %e,
+                    "Failed to persist file hash metadata"
+                );
             }
 
             files_processed += 1;
@@ -319,11 +385,12 @@ impl IndexingServiceImpl {
 
         let duration_ms = start.elapsed().as_millis() as u64;
         let error_count = failed_files.len();
+        let files_skipped = total.saturating_sub(files_processed);
 
         let result = IndexingProgress::with_counts(
             files_processed,
             chunks_created,
-            error_count,
+            files_skipped,
             failed_files.clone(),
         )
         .into_result(Some(operation_id), "completed");

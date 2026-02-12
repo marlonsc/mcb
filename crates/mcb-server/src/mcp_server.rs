@@ -22,7 +22,7 @@ use rmcp::model::{
 };
 
 use crate::handlers::{
-    AgentHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
+    AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
     PlanEntityHandler, ProjectHandler, SearchHandler, SessionHandler, ValidateHandler,
     VcsEntityHandler, VcsHandler,
 };
@@ -77,6 +77,16 @@ impl McpServer {
     /// Create a new MCP server with injected dependencies
     pub fn new(services: McpServices) -> Self {
         let hook_processor = HookProcessor::new(Some(services.memory.clone()));
+        let vcs_entity_handler = Arc::new(VcsEntityHandler::new(services.vcs_entity.clone()));
+        let plan_entity_handler = Arc::new(PlanEntityHandler::new(services.plan_entity.clone()));
+        let issue_entity_handler = Arc::new(IssueEntityHandler::new(services.issue_entity.clone()));
+        let org_entity_handler = Arc::new(OrgEntityHandler::new(services.org_entity.clone()));
+        let entity_handler = Arc::new(EntityHandler::new(
+            Arc::clone(&vcs_entity_handler),
+            Arc::clone(&plan_entity_handler),
+            Arc::clone(&issue_entity_handler),
+            Arc::clone(&org_entity_handler),
+        ));
 
         let handlers = ToolHandlers {
             index: Arc::new(IndexHandler::new(services.indexing.clone())),
@@ -93,10 +103,11 @@ impl McpServer {
             agent: Arc::new(AgentHandler::new(services.agent_session.clone())),
             project: Arc::new(ProjectHandler::new(services.project_workflow.clone())),
             vcs: Arc::new(VcsHandler::new(services.vcs.clone())),
-            vcs_entity: Arc::new(VcsEntityHandler::new(services.vcs_entity.clone())),
-            plan_entity: Arc::new(PlanEntityHandler::new(services.plan_entity.clone())),
-            issue_entity: Arc::new(IssueEntityHandler::new(services.issue_entity.clone())),
-            org_entity: Arc::new(OrgEntityHandler::new(services.org_entity.clone())),
+            vcs_entity: vcs_entity_handler,
+            plan_entity: plan_entity_handler,
+            issue_entity: issue_entity_handler,
+            org_entity: org_entity_handler,
+            entity: entity_handler,
             hook_processor: Arc::new(hook_processor),
         };
 
@@ -209,6 +220,11 @@ impl McpServer {
         Arc::clone(&self.handlers.vcs)
     }
 
+    /// Access to unified entity handler (for HTTP transport)
+    pub fn entity_handler(&self) -> Arc<EntityHandler> {
+        Arc::clone(&self.handlers.entity)
+    }
+
     /// Access to project handler (for HTTP transport)
     pub fn project_handler(&self) -> Arc<ProjectHandler> {
         Arc::clone(&self.handlers.project)
@@ -263,10 +279,7 @@ tools:
 - agent: Agent activity logging
 - project: Project workflow management
 - vcs: Repository operations
-- vcs_entity: VCS entity CRUD (repositories, branches, worktrees, assignments)
-- plan_entity: Plan entity CRUD (plans, versions, reviews)
-- issue_entity: Issue entity CRUD (issues, comments, labels, label assignments)
-- org_entity: Org entity CRUD (organizations, users, teams, team members, api keys)
+- entity: Unified entity CRUD (vcs/plan/issue/org resources)
 "#
                 .to_string(),
             ),

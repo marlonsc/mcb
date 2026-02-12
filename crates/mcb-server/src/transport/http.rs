@@ -394,6 +394,7 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         plan_entity: state.server.plan_entity_handler(),
         issue_entity: state.server.issue_entity_handler(),
         org_entity: state.server.org_entity_handler(),
+        entity: state.server.entity_handler(),
         hook_processor: state.server.hook_processor(),
     };
 

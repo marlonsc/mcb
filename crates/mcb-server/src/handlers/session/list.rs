@@ -8,7 +8,6 @@ use rmcp::model::CallToolResult;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use tracing::error;
 
 /// Lists agent sessions based on filters.
 #[tracing::instrument(skip_all)]
@@ -53,9 +52,6 @@ pub async fn list_sessions(
                 "count": items.len(),
             }))
         }
-        Err(e) => {
-            error!("Failed to list agent sessions: {:?}", e);
-            Ok(to_contextual_tool_error(e))
-        }
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }

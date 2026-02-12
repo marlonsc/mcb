@@ -273,6 +273,7 @@ impl AppContext {
 
         let memory_repository = self.memory_repository();
         let agent_repository = self.agent_repository();
+        let file_hash_repository = self.file_hash_repository();
         let vcs_provider = self.vcs_provider();
         let project_service = self.project_service();
 
@@ -288,6 +289,7 @@ impl AppContext {
             event_bus,
             memory_repository,
             agent_repository,
+            file_hash_repository,
             vcs_provider,
             project_service,
             project_repository: self.project_repository(),

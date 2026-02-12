@@ -162,3 +162,35 @@ async fn test_admin_rocket_lov_endpoint_is_accessible() {
     let body = response.into_string().await.expect("response body");
     assert!(body.starts_with('['), "LOV endpoint must return JSON array");
 }
+
+#[rocket::async_test]
+async fn test_admin_rocket_agent_sessions_page_is_accessible() {
+    let (client, _, _) = AdminTestHarness::new().build_client().await;
+
+    let response = client.get("/ui/entities/agent-sessions").dispatch().await;
+    assert_eq!(response.status(), Status::Ok);
+}
+
+#[rocket::async_test]
+async fn test_admin_rocket_delegations_page_is_accessible() {
+    let (client, _, _) = AdminTestHarness::new().build_client().await;
+
+    let response = client.get("/ui/entities/delegations").dispatch().await;
+    assert_eq!(response.status(), Status::Ok);
+}
+
+#[rocket::async_test]
+async fn test_admin_rocket_tool_calls_page_is_accessible() {
+    let (client, _, _) = AdminTestHarness::new().build_client().await;
+
+    let response = client.get("/ui/entities/tool-calls").dispatch().await;
+    assert_eq!(response.status(), Status::Ok);
+}
+
+#[rocket::async_test]
+async fn test_admin_rocket_checkpoints_page_is_accessible() {
+    let (client, _, _) = AdminTestHarness::new().build_client().await;
+
+    let response = client.get("/ui/entities/checkpoints").dispatch().await;
+    assert_eq!(response.status(), Status::Ok);
+}

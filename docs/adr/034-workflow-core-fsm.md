@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Complete
 ---
 
+<!-- markdownlint-disable MD013 -->
+
 ## ADR-034: Workflow Core — Finite State Machine and Persistence
 
 ## Status
@@ -19,14 +21,23 @@ implementation_status: Complete
 - **Deciders:** Project team
 - **Supersedes:** [ADR-032](./032-agent-quality-domain-extension.md) (Agent & Quality Domain Extension)
 - **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
-- **Series:** ADR-034 → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
-- **Resolution note:** Compensation/rollback follows the hybrid strategy defined in "Refinement 2: Compensation and Rollback Logic".
+- **Series:** ADR-034 → [ADR-035](./035-context-scout.md) →
+  [ADR-036](./036-enforcement-policies.md) →
+  [ADR-037](./037-workflow-orchestrator.md)
+- **Resolution note:** Compensation/rollback follows the hybrid strategy defined
+  in "Refinement 2: Compensation and Rollback Logic".
 
 ## Context
 
-MCB currently provides semantic code search (indexing, embedding, vector store). The `oh-my-opencode` workflow layer depends on external shell scripts, markdown skill files, and disconnected tools (Beads CLI, GSD `legacy-planning/` files) that have no shared state, no type safety, and no persistence across sessions.
+MCB currently provides semantic code search (indexing, embedding, vector store).
+The `oh-my-opencode` workflow layer depends on external shell scripts, markdown
+skill files, and disconnected tools (Beads CLI, GSD `legacy-planning/` files)
+that have no shared state, no type safety, and no persistence across sessions.
 
-ADR-032 proposed extending MCB's domain with 24 MCP tools and 9 SQLite tables for agent/quality/project tracking. This ADR supersedes that proposal with a narrower, layered approach: four sequential ADRs (034–037) that each define one architectural concern and expose traits consumed by the next layer.
+ADR-032 proposed extending MCB's domain with 24 MCP tools and 9 SQLite tables
+for agent/quality/project tracking. This ADR supersedes that proposal with a
+narrower, layered approach: four sequential ADRs (034–037) that each define one
+architectural concern and expose traits consumed by the next layer.
 
 **This ADR** defines the foundational layer: a finite state machine (FSM) for workflow sessions with SQLite-backed persistence and transition history.
 
@@ -304,7 +315,8 @@ use std::sync::Arc;
 pub struct DatabaseProviderEntry {
     pub name: &'static str,
     pub description: &'static str,
-    pub factory: fn(&figment::Figment) -> Result<Arc<dyn DatabaseProvider>, Box<dyn std::error::Error + Send + Sync>>,
+    pub factory: fn(&figment::Figment)
+        -> Result<Arc<dyn DatabaseProvider>, Box<dyn std::error::Error + Send + Sync>>,
 }
 
 #[linkme::distributed_slice]
@@ -561,8 +573,10 @@ impl WorkflowEngine for SqliteWorkflowEngine {
 
 ### 3. Transition Matrix
 
-Valid transitions are enforced at runtime. Invalid transitions return `WorkflowError::InvalidTransition`.
+Valid transitions are enforced at runtime. Invalid transitions return
+`WorkflowError::InvalidTransition`.
 
+<!-- markdownlint-disable MD013 -->
 ```text
 From \ Trigger         │ CtxDisc │ StartPlan │ StartExec │ ClaimTask │ ComplTask │ StartVer │ VerPass │ VerFail │ CompPhase │ EndSess │ Error │ Suspend │ Resume │ TimeoutDet │ Cancel │ MarkAband
 ───────────────────────┼─────────┼───────────┼───────────┼───────────┼───────────┼──────────┼─────────┼─────────┼───────────┼─────────┼───────┼─────────┼────────┼────────────┼────────┼───────────
@@ -580,6 +594,7 @@ Cancelled              │    ✗    │     ✗     │     ✗     │     ✗
 Abandoned              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │   ✗     │   ✗   │    ✗    │ Ready  │    ✗       │   ✗    │    ✗
 Completed              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │   ✗     │   ✗   │    ✗    │   ✗    │    ✗       │   ✗    │    ✗
 ```
+<!-- markdownlint-enable MD013 -->
 
 \* Resumes to the state before suspension.
 
@@ -598,8 +613,12 @@ impl WorkflowSession {
 
         let to_state = match (&self.current_state, &trigger) {
             // Initializing
-            (WorkflowState::Initializing, TransitionTrigger::ContextDiscovered { context_snapshot_id }) => {
-                WorkflowState::Ready { context_snapshot_id: context_snapshot_id.clone() }
+            (WorkflowState::Initializing, TransitionTrigger::ContextDiscovered {
+                context_snapshot_id
+            }) => {
+                WorkflowState::Ready {
+                    context_snapshot_id: context_snapshot_id.clone(),
+                }
             }
 
             // Ready → Planning or Executing
@@ -661,7 +680,14 @@ impl WorkflowSession {
             }
 
             // Any non-terminal state → Suspended
-            (state, TransitionTrigger::Suspend { reason }) if !matches!(state, WorkflowState::Completed | WorkflowState::Failed { .. } | WorkflowState::Cancelled { .. } | WorkflowState::Abandoned { .. } | WorkflowState::Timeout { .. }) => {
+            (state, TransitionTrigger::Suspend { reason }) if !matches!(
+                 state,
+                 WorkflowState::Completed
+                     | WorkflowState::Failed { .. }
+                     | WorkflowState::Cancelled { .. }
+                     | WorkflowState::Abandoned { .. }
+                     | WorkflowState::Timeout { .. }
+             ) => {
                 WorkflowState::Suspended {
                     reason: reason.clone(),
                     suspended_at: Utc::now(),
@@ -669,7 +695,12 @@ impl WorkflowSession {
             }
 
             // Any non-terminal state → Timeout
-            (state, TransitionTrigger::TimeoutDetected { deadline }) if !matches!(state, WorkflowState::Completed | WorkflowState::Failed { .. } | WorkflowState::Cancelled { .. }) => {
+            (state, TransitionTrigger::TimeoutDetected { deadline }) if !matches!(
+                 state,
+                 WorkflowState::Completed
+                     | WorkflowState::Failed { .. }
+                     | WorkflowState::Cancelled { .. }
+             ) => {
                 WorkflowState::Timeout {
                     deadline: *deadline,
                     exceeded_by_ms: 0, // Should be computed
@@ -677,7 +708,10 @@ impl WorkflowSession {
             }
 
             // Any state except terminal/cancelled → Cancelled
-            (state, TransitionTrigger::Cancel { reason, by }) if !matches!(state, WorkflowState::Completed | WorkflowState::Cancelled { .. }) => {
+            (state, TransitionTrigger::Cancel { reason, by }) if !matches!(
+                 state,
+                 WorkflowState::Completed | WorkflowState::Cancelled { .. }
+             ) => {
                 WorkflowState::Cancelled {
                     reason: reason.clone(),
                     cancelled_by: by.clone(),
@@ -685,7 +719,10 @@ impl WorkflowSession {
             }
 
             // Any state except terminal/abandoned → Abandoned
-            (state, TransitionTrigger::MarkAbandoned { days_inactive }) if !matches!(state, WorkflowState::Completed | WorkflowState::Abandoned { .. }) => {
+            (state, TransitionTrigger::MarkAbandoned { days_inactive }) if !matches!(
+                 state,
+                 WorkflowState::Completed | WorkflowState::Abandoned { .. }
+             ) => {
                 WorkflowState::Abandoned {
                     last_activity: Utc::now(),
                     days_inactive: *days_inactive,
@@ -693,8 +730,14 @@ impl WorkflowSession {
             }
 
             // Any state → Failed (on Error trigger)
-            (state, TransitionTrigger::Error { message }) if !matches!(state, WorkflowState::Completed | WorkflowState::Failed { .. }) => {
-                WorkflowState::Failed { error: message.clone(), recoverable: true }
+            (state, TransitionTrigger::Error { message }) if !matches!(
+                 state,
+                 WorkflowState::Completed | WorkflowState::Failed { .. }
+             ) => {
+                WorkflowState::Failed { 
+                    error: message.clone(), 
+                    recoverable: true 
+                }
             }
 
             // Any non-terminal state → Completed (on EndSession)
@@ -1015,7 +1058,8 @@ use std::sync::Arc;
 pub struct WorkflowProviderEntry {
     pub name: &'static str,
     pub description: &'static str,
-    pub factory: fn(&figment::Figment) -> Result<Arc<dyn WorkflowEngine>, Box<dyn std::error::Error + Send + Sync>>,
+    pub factory: fn(&figment::Figment)
+        -> Result<Arc<dyn WorkflowEngine>, Box<dyn std::error::Error + Send + Sync>>,
 }
 
 #[linkme::distributed_slice]
@@ -1240,7 +1284,9 @@ CREATE INDEX idx_effects_by_session ON workflow_effects(session_id);
 
 ### Refinement 3: Transaction Isolation and Concurrency Control
 
-**Problem (from Critical Analysis)**: SQLite concurrent access not properly specified. Two concurrent `transition()` calls on the same session could violate FSM invariants (race condition on state update).
+**Problem (from Critical Analysis)**: SQLite concurrent access not properly
+specified. Two concurrent `transition()` calls on the same session could violate
+FSM invariants (race condition on state update).
 
 **Solution**: Define explicit concurrency model with transaction isolation levels.
 
@@ -1341,7 +1387,8 @@ impl SqliteWorkflowEngine {
 - **Type-safe state**: `WorkflowState` enum prevents invalid state representations at compile time.
 - **Clean Architecture**: Port trait in `mcb-domain`, implementation in `mcb-providers` — zero architectural violations.
 - **Zero new crates**: Distributed across existing crate hierarchy.
-- **Foundation for ADR-035/036/037**: `WorkflowEngine` trait is consumed by context scout (035), policy guard (036), and orchestrator (037).
+- **Foundation for ADR-035/036/037**: `WorkflowEngine` trait is consumed by
+  context scout (035), policy guard (036), and orchestrator (037).
 
 ### Negative
 
@@ -1419,7 +1466,8 @@ impl SqliteWorkflowEngine {
 
 ## References
 
-- [statig crate](https://crates.io/crates/statig) — Hierarchical state machine (evaluated, not selected)
+- [statig crate](https://crates.io/crates/statig) — Hierarchical state machine
+  (evaluated, not selected)
 - [smlang-rs](https://crates.io/crates/smlang) — Declarative FSM macro
   (evaluated, not selected)
 - [sqlx](https://crates.io/crates/sqlx) — Async SQLite driver

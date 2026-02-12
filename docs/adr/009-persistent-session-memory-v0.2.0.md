@@ -85,12 +85,14 @@ All memory-related MCP tools use the `memory_` prefix to avoid namespace collisi
 | `inject_context` | `memory (action=inject, resource=observation)` | Avoids future collisions |
 <!-- markdownlint-enable MD013 -->
 
+<!-- markdownlint-disable MD013 -->
 **Existing tools retained** (already namespaced):
 
 - `memory (action=store, resource=observation)` → alias for `memory (action=store, resource=observation)`
 - `search (resource=memory)` → alias for `memory (action=list, resource=observation)`
 - `session (action=summarize)` → unchanged (session domain)
 - `session (action=summarize)` → unchanged (session domain)
+<!-- markdownlint-enable MD013 -->
 
 **Compatibility policy**:
 

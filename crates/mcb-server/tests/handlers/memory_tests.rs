@@ -63,7 +63,7 @@ async fn test_memory_store_execution_success() {
         action: MemoryAction::Store,
         org_id: None,
         resource: MemoryResource::Execution,
-        project_id: None,
+        project_id: Some("test-project".to_string()),
         data: Some(json!({
             "command": "test command",
             "exit_code": 0,
@@ -101,7 +101,7 @@ async fn test_memory_store_quality_gate_success() {
         action: MemoryAction::Store,
         org_id: None,
         resource: MemoryResource::QualityGate,
-        project_id: None,
+        project_id: Some("test-project".to_string()),
         data: Some(json!({
             "gate_name": "test_gate",
             "status": "passed",

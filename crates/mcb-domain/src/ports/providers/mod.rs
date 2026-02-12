@@ -19,6 +19,8 @@
 //! | CryptoProvider | Encryption/decryption services |
 //! | ProjectDetector | Project type detection (Cargo, npm, Python, Go, Maven) |
 
+/// Native PMAT-style analysis provider ports
+pub mod analysis;
 /// Cache provider port
 pub mod cache;
 /// Config provider port
@@ -47,6 +49,9 @@ pub mod vcs;
 pub mod vector_store;
 
 // Re-export provider ports for convenience
+pub use analysis::{
+    ComplexityAnalyzer, ComplexityFinding, DeadCodeDetector, DeadCodeFinding, TdgFinding, TdgScorer,
+};
 pub use cache::{CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, CacheStats};
 pub use config::ProviderConfigManagerInterface;
 pub use crypto::{CryptoProvider, EncryptedData};

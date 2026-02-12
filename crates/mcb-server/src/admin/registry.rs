@@ -6,13 +6,13 @@
 use std::borrow::Cow;
 
 use mcb_domain::entities::{
-    AgentWorktreeAssignment, ApiKey, Branch, IssueComment, IssueLabel, IssueLabelAssignment,
-    Organization, Plan, PlanReview, PlanVersion, ProjectIssue, Repository, Team, TeamMember, User,
-    Worktree,
+    AgentSession, AgentWorktreeAssignment, ApiKey, Branch, Checkpoint, Delegation, IssueComment,
+    IssueLabel, IssueLabelAssignment, Organization, Plan, PlanReview, PlanVersion, ProjectIssue,
+    Repository, Team, TeamMember, ToolCall, User, Worktree,
 };
 use schemars::{JsonSchema, schema_for};
 use serde::Serialize;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 /// Metadata for a single entity field, derived from JSON Schema properties.
 #[derive(Debug, Clone, Serialize)]
@@ -68,6 +68,48 @@ impl AdminEntityMeta {
 }
 
 const ENTITIES: &[AdminEntityMeta] = &[
+    AdminEntityMeta {
+        slug: "agent-sessions",
+        group: "agent",
+        title: "Agent Sessions",
+        schema: schema_agent_session,
+    },
+    AdminEntityMeta {
+        slug: "delegations",
+        group: "agent",
+        title: "Delegations",
+        schema: schema_delegation,
+    },
+    AdminEntityMeta {
+        slug: "tool-calls",
+        group: "agent",
+        title: "Tool Calls",
+        schema: schema_tool_call,
+    },
+    AdminEntityMeta {
+        slug: "checkpoints",
+        group: "agent",
+        title: "Checkpoints",
+        schema: schema_checkpoint,
+    },
+    AdminEntityMeta {
+        slug: "observations",
+        group: "memory",
+        title: "Observations",
+        schema: schema_observation,
+    },
+    AdminEntityMeta {
+        slug: "session-summaries",
+        group: "memory",
+        title: "Session Summaries",
+        schema: schema_session_summary,
+    },
+    AdminEntityMeta {
+        slug: "projects",
+        group: "project",
+        title: "Projects",
+        schema: schema_project,
+    },
     AdminEntityMeta {
         slug: "organizations",
         group: "org",
@@ -185,6 +227,69 @@ impl AdminRegistry {
 
 fn schema_organization() -> Value {
     schema_json::<Organization>()
+}
+
+fn schema_agent_session() -> Value {
+    schema_json::<AgentSession>()
+}
+
+fn schema_delegation() -> Value {
+    schema_json::<Delegation>()
+}
+
+fn schema_tool_call() -> Value {
+    schema_json::<ToolCall>()
+}
+
+fn schema_checkpoint() -> Value {
+    schema_json::<Checkpoint>()
+}
+
+fn schema_observation() -> Value {
+    json!({
+        "type": "object",
+        "properties": {
+            "id": {"type": "string"},
+            "project_id": {"type": "string"},
+            "content": {"type": "string"},
+            "content_hash": {"type": "string"},
+            "tags": {"type": "array", "items": {"type": "string"}},
+            "type": {"type": "string"},
+            "metadata": {"type": "object"},
+            "created_at": {"type": "integer"},
+            "embedding_id": {"type": "string"}
+        }
+    })
+}
+
+fn schema_session_summary() -> Value {
+    json!({
+        "type": "object",
+        "properties": {
+            "id": {"type": "string"},
+            "project_id": {"type": "string"},
+            "session_id": {"type": "string"},
+            "topics": {"type": "array", "items": {"type": "string"}},
+            "decisions": {"type": "array", "items": {"type": "string"}},
+            "next_steps": {"type": "array", "items": {"type": "string"}},
+            "key_files": {"type": "array", "items": {"type": "string"}},
+            "created_at": {"type": "integer"}
+        }
+    })
+}
+
+fn schema_project() -> Value {
+    json!({
+        "type": "object",
+        "properties": {
+            "id": {"type": "string"},
+            "org_id": {"type": "string"},
+            "name": {"type": "string"},
+            "path": {"type": "string"},
+            "created_at": {"type": "integer"},
+            "updated_at": {"type": "integer"}
+        }
+    })
 }
 
 fn schema_user() -> Value {
@@ -399,8 +504,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_registry_has_16_entities() {
-        assert_eq!(AdminRegistry::all().len(), 16);
+    fn test_registry_has_23_entities() {
+        assert_eq!(AdminRegistry::all().len(), 23);
     }
 
     #[test]
@@ -410,6 +515,21 @@ mod tests {
         let entity = entity.unwrap();
         assert_eq!(entity.title, "Organizations");
         assert_eq!(entity.group, "org");
+    }
+
+    #[test]
+    fn test_registry_includes_agent_entities() {
+        assert!(AdminRegistry::find("agent-sessions").is_some());
+        assert!(AdminRegistry::find("delegations").is_some());
+        assert!(AdminRegistry::find("tool-calls").is_some());
+        assert!(AdminRegistry::find("checkpoints").is_some());
+    }
+
+    #[test]
+    fn test_registry_includes_memory_and_project_entities() {
+        assert!(AdminRegistry::find("observations").is_some());
+        assert!(AdminRegistry::find("session-summaries").is_some());
+        assert!(AdminRegistry::find("projects").is_some());
     }
 
     #[test]

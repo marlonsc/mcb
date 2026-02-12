@@ -22,8 +22,8 @@ use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VcsProvider, VectorStoreProvider,
 };
 use mcb_domain::ports::repositories::{
-    AgentRepository, IssueEntityRepository, MemoryRepository, OrgEntityRepository,
-    PlanEntityRepository, ProjectRepository, VcsEntityRepository,
+    AgentRepository, FileHashRepository, IssueEntityRepository, MemoryRepository,
+    OrgEntityRepository, PlanEntityRepository, ProjectRepository, VcsEntityRepository,
 };
 use mcb_domain::ports::services::{
     AgentSessionServiceInterface, ContextServiceInterface, IndexingServiceInterface,
@@ -117,6 +117,8 @@ pub struct ServiceDependencies {
     pub memory_repository: Arc<dyn MemoryRepository>,
     /// Repository for agent session data
     pub agent_repository: Arc<dyn AgentRepository>,
+    /// Repository for file hash persistence (incremental indexing metadata)
+    pub file_hash_repository: Arc<dyn FileHashRepository>,
     /// Version control system provider
     pub vcs_provider: Arc<dyn VcsProvider>,
     /// Service for project detection and management
@@ -165,11 +167,12 @@ impl DomainServicesFactory {
             Arc::new(SearchServiceImpl::new(Arc::clone(&context_service)));
 
         let indexing_service: Arc<dyn IndexingServiceInterface> =
-            Arc::new(IndexingServiceImpl::new(
+            Arc::new(IndexingServiceImpl::new_with_file_hash_repository(
                 Arc::clone(&context_service),
                 deps.language_chunker,
                 deps.indexing_ops,
                 deps.event_bus,
+                deps.file_hash_repository,
             ));
 
         let validation_service: Arc<dyn ValidationServiceInterface> =
@@ -210,13 +213,17 @@ impl DomainServicesFactory {
         let event_bus = app_context.event_bus();
         let language_chunker = app_context.language_handle().get();
         let context_service = Self::create_context_service(app_context).await?;
+        let file_hash_repository = app_context.file_hash_repository();
 
-        Ok(Arc::new(IndexingServiceImpl::new(
-            context_service,
-            language_chunker,
-            indexing_ops,
-            event_bus,
-        )))
+        Ok(Arc::new(
+            IndexingServiceImpl::new_with_file_hash_repository(
+                context_service,
+                language_chunker,
+                indexing_ops,
+                event_bus,
+                file_hash_repository,
+            ),
+        ))
     }
 
     /// Create context service from app context

@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Enumeration of available agent types in the system.
@@ -11,7 +12,7 @@ use serde::{Deserialize, Serialize};
 /// - `Librarian`: External documentation and OSS examples research
 /// - `Metis`: Pre-planning analysis and feasibility checks
 /// - `SisyphusJunior`: Focused task executor (delegated via category)
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum AgentType {
     /// Sisyphus agent - primary orchestration agent
     Sisyphus,
@@ -60,7 +61,7 @@ impl AgentType {
     }
 }
 
-impl_from_str!(AgentType, "Unknown agent type: {}. Valid types: sisyphus, oracle, explore, prometheus, momus, librarian, metis, sisyphus-junior, hephaestus, atlas, multimodal-looker", {
+impl_from_str!(AgentType, "Unknown agent type: {}. Valid types: sisyphus, oracle, explore, prometheus, momus, librarian, metis, sisyphus-junior (aliases: sisyphus_junior, junior), hephaestus, atlas, multimodal-looker (aliases: multimodal_looker, looker)", {
     "sisyphus" => Self::Sisyphus,
     "oracle" => Self::Oracle,
     "explore" => Self::Explore,
@@ -81,7 +82,7 @@ impl_from_str!(AgentType, "Unknown agent type: {}. Valid types: sisyphus, oracle
 /// Enumeration of possible states for an agent session.
 ///
 /// Represents the lifecycle of an agent session from creation through completion or failure.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum AgentSessionStatus {
     /// Session is currently active and processing
     Active,
@@ -115,7 +116,7 @@ impl_from_str!(AgentSessionStatus, "Unknown agent session status: {}", {
 /// Enumeration of checkpoint types for session state persistence.
 ///
 /// Represents different mechanisms for saving and restoring session state during execution.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub enum CheckpointType {
     /// Git-based checkpoint - state saved in version control
     Git,

@@ -171,6 +171,58 @@ async fn test_entities_list_returns_html() {
 }
 
 #[rocket::async_test]
+async fn test_agent_sessions_list_returns_html() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/entities/agent-sessions").dispatch().await;
+
+    assert_eq!(response.status(), Status::Ok);
+    let html = response.into_string().await.expect("response body");
+    assert!(html.contains("Agent Sessions"));
+}
+
+#[rocket::async_test]
+async fn test_delegations_list_returns_html() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/entities/delegations").dispatch().await;
+
+    assert_eq!(response.status(), Status::Ok);
+    let html = response.into_string().await.expect("response body");
+    assert!(html.contains("Delegations"));
+}
+
+#[rocket::async_test]
+async fn test_tool_calls_list_returns_html() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/entities/tool-calls").dispatch().await;
+
+    assert_eq!(response.status(), Status::Ok);
+    let html = response.into_string().await.expect("response body");
+    assert!(html.contains("Tool Calls"));
+}
+
+#[rocket::async_test]
+async fn test_checkpoints_list_returns_html() {
+    let client = Client::tracked(web_rocket())
+        .await
+        .expect("valid rocket instance");
+
+    let response = client.get("/ui/entities/checkpoints").dispatch().await;
+
+    assert_eq!(response.status(), Status::Ok);
+    let html = response.into_string().await.expect("response body");
+    assert!(html.contains("Checkpoints"));
+}
+
+#[rocket::async_test]
 async fn test_entities_list_unknown_slug_returns_404() {
     let client = Client::tracked(web_rocket())
         .await

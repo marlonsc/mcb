@@ -1,7 +1,9 @@
 use std::io::Write;
 use std::sync::Arc;
+use std::time::Duration;
 
 use mcb_domain::ports::repositories::FileHashRepository;
+use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::types::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 use tempfile::NamedTempFile;
@@ -91,4 +93,51 @@ async fn test_compute_file_hash() {
         hash,
         "dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f"
     );
+}
+
+#[tokio::test]
+async fn test_indexing_persists_file_hash_metadata() {
+    let unique = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let db_path = std::env::temp_dir().join(format!("mcb-indexing-tests-{unique}.db"));
+
+    let mut config = AppConfig::default();
+    config.auth.user_db_path = Some(db_path);
+
+    let ctx = init_app(config).await.unwrap();
+    let services = ctx.build_domain_services().await.unwrap();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    std::fs::write(temp_dir.path().join("a.rs"), "fn a() {}\n").unwrap();
+    std::fs::write(temp_dir.path().join("b.rs"), "fn b() {}\n").unwrap();
+
+    let collection = CollectionId::new("index-persistence-test");
+    let result = services
+        .indexing_service
+        .index_codebase(temp_dir.path(), &collection)
+        .await
+        .unwrap();
+    assert_eq!(result.status, "started");
+
+    for _ in 0..50 {
+        if !services.indexing_service.get_status().is_indexing {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+
+    let indexed_files = ctx
+        .file_hash_repository()
+        .get_indexed_files(collection.as_str())
+        .await
+        .unwrap();
+    assert!(
+        indexed_files.len() >= 2,
+        "expected indexed file metadata to be persisted"
+    );
+
+    let (collections, _chunks) = services.context_service.get_stats().await.unwrap();
+    assert!(collections >= 1, "expected at least one indexed collection");
 }

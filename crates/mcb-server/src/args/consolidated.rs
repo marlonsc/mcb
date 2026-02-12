@@ -13,6 +13,8 @@ use validator::Validate;
 pub enum IndexAction {
     /// Start a new indexing operation.
     Start,
+    /// Start git-aware incremental indexing.
+    GitIndex,
     /// Get the status of current indexing operation.
     Status,
     /// Clear the index for a collection.
@@ -22,10 +24,8 @@ pub enum IndexAction {
 /// Arguments for the index tool.
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct IndexArgs {
-    /// Action to perform: start (index), status (check progress), clear (remove index).
-    #[schemars(
-        description = "Action to perform: start (index), status (check progress), clear (remove index)"
-    )]
+    /// Action to perform: start, git_index, status, clear.
+    #[schemars(description = "Action to perform: start, git_index, status, clear")]
     pub action: IndexAction,
 
     /// Path to codebase directory (required for 'start' action).
@@ -261,7 +261,7 @@ pub struct MemoryArgs {
 
     /// Data payload for store actions (JSON object).
     #[schemars(
-        description = "Data payload for store actions (JSON object)",
+        description = "Data payload for store action. observation: {content, type?, tags?, metadata?}; execution: {command, output?, status?}; quality_gate: {gate_name, status, details?}; error_pattern: {error_type, message, fix?}; session: {session_id, topics?, decisions?, next_steps?, key_files?}",
         with = "serde_json::Value"
     )]
     pub data: Option<serde_json::Value>,
@@ -377,7 +377,7 @@ pub struct SessionArgs {
 
     /// Data payload for create/update (JSON object).
     #[schemars(
-        description = "Data payload for create/update (JSON object)",
+        description = "Data payload for create/update. create requires model and accepts session_summary_id?, agent_type? (or top-level args.agent_type), parent_session_id?, prompt_summary?, project_id?, worktree_id?; update accepts mutable session fields",
         with = "serde_json::Value"
     )]
     pub data: Option<serde_json::Value>,
@@ -433,7 +433,9 @@ pub struct AgentArgs {
     pub session_id: SessionId,
 
     /// Activity data (JSON object with tool/delegation details).
-    #[schemars(description = "Activity data (JSON object with tool/delegation details)")]
+    #[schemars(
+        description = "Activity data payload. log_tool: {tool_name, params_summary?, success, error_message?, duration_ms?}; log_delegation: {child_session_id, prompt, prompt_embedding_id?, result?, success, duration_ms?}"
+    )]
     pub data: serde_json::Value,
 }
 
@@ -517,6 +519,103 @@ pub struct VcsArgs {
     #[schemars(description = "Limit for search or list actions", with = "u32")]
     pub limit: Option<u32>,
 }
+
+// =============================================================================
+// Entity Tool - Consolidates VCS/Plan/Issue/Org entity CRUD (4 → 1)
+// =============================================================================
+
+/// CRUD actions for entity resources.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum EntityAction {
+    /// Create a new entity.
+    Create,
+    /// Get an entity by ID.
+    Get,
+    /// Update an existing entity.
+    Update,
+    /// List entities matching criteria.
+    List,
+    /// Delete an entity by ID.
+    Delete,
+    /// Release an assignment (VCS assignment only).
+    Release,
+}
+
+/// Target resource type for consolidated entity operations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum EntityResource {
+    /// VCS repository resource.
+    Repository,
+    /// VCS branch resource.
+    Branch,
+    /// VCS worktree resource.
+    Worktree,
+    /// VCS assignment resource.
+    Assignment,
+    /// Plan resource.
+    Plan,
+    /// Plan version resource.
+    Version,
+    /// Plan review resource.
+    Review,
+    /// Issue resource.
+    Issue,
+    /// Issue comment resource.
+    Comment,
+    /// Issue label resource.
+    Label,
+    /// Issue label assignment resource.
+    LabelAssignment,
+    /// Organization resource.
+    Org,
+    /// User resource.
+    User,
+    /// Team resource.
+    Team,
+    /// Team member resource.
+    TeamMember,
+    /// API key resource.
+    ApiKey,
+}
+
+/// Arguments for the consolidated `entity` MCP tool.
+#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+pub struct EntityArgs {
+    /// CRUD action to perform.
+    pub action: EntityAction,
+    /// Target resource type.
+    pub resource: EntityResource,
+    /// JSON payload for create/update actions.
+    #[schemars(with = "serde_json::Value")]
+    pub data: Option<serde_json::Value>,
+    /// Resource ID (for get/update/delete/release).
+    pub id: Option<String>,
+    /// Organization ID.
+    pub org_id: Option<String>,
+    /// Project ID (project-scoped list operations).
+    pub project_id: Option<String>,
+    /// Repository ID (branch/worktree list operations).
+    pub repository_id: Option<String>,
+    /// Worktree ID (assignment list operations).
+    pub worktree_id: Option<String>,
+    /// Plan ID (version list operations).
+    pub plan_id: Option<String>,
+    /// Plan version ID (review list operations).
+    pub plan_version_id: Option<String>,
+    /// Issue ID (comment/list/label assignment operations).
+    pub issue_id: Option<String>,
+    /// Label ID (label unassignment operations).
+    pub label_id: Option<String>,
+    /// Team ID (team member list operations).
+    pub team_id: Option<String>,
+    /// User ID (team member delete operations).
+    pub user_id: Option<String>,
+    /// User email (lookup operations).
+    pub email: Option<String>,
+}
+
 // =============================================================================
 // VCS Entity Tool - Repository, Branch, Worktree, Assignment CRUD
 // =============================================================================
@@ -586,7 +685,7 @@ pub struct VcsEntityArgs {
 
     /// Data payload for create/update (JSON object).
     #[schemars(
-        description = "Data payload for create/update (JSON object)",
+        description = "Data payload for create/update. phase: {name, status, order}; issue: {title, description?, status?, priority?}; dependency: {from_issue_id, to_issue_id, kind?}; decision: {title, rationale, impact?, status?}",
         with = "serde_json::Value"
     )]
     pub data: Option<serde_json::Value>,

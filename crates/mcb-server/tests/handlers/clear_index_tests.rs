@@ -49,7 +49,5 @@ async fn test_clear_index_missing_collection() {
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected response");
-    assert!(!response.is_error.unwrap_or(false));
+    assert!(result.is_err());
 }

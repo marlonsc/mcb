@@ -49,18 +49,18 @@ impl ProjectContext {
         let superproject_id = Self::detect_superproject();
         let is_submodule = superproject_id.is_some();
 
-        if let Some(ctx) = Self::from_git_remote() {
+        if let Some((project_id, project_name)) = Self::from_git_remote() {
             return Self {
-                project_id: ctx.project_id,
-                project_name: ctx.project_name,
+                project_id,
+                project_name,
                 is_submodule,
                 superproject_id,
             };
         }
-        if let Some(ctx) = Self::from_git_toplevel() {
+        if let Some((project_id, project_name)) = Self::from_git_toplevel() {
             return Self {
-                project_id: ctx.project_id,
-                project_name: ctx.project_name,
+                project_id,
+                project_name,
                 is_submodule,
                 superproject_id,
             };
@@ -73,7 +73,7 @@ impl ProjectContext {
         }
     }
 
-    fn from_git_remote() -> Option<Self> {
+    fn from_git_remote() -> Option<(String, String)> {
         let output = Command::new("git")
             .args(["config", "--get", "remote.origin.url"])
             .output()
@@ -91,15 +91,10 @@ impl ProjectContext {
             .next()
             .unwrap_or(&owner_repo)
             .to_string();
-        Some(Self {
-            project_id: owner_repo,
-            project_name: name,
-            is_submodule: false,
-            superproject_id: None,
-        })
+        Some((owner_repo, name))
     }
 
-    fn from_git_toplevel() -> Option<Self> {
+    fn from_git_toplevel() -> Option<(String, String)> {
         let output = Command::new("git")
             .args(["rev-parse", "--show-toplevel"])
             .output()
@@ -112,12 +107,7 @@ impl ProjectContext {
             .file_name()?
             .to_string_lossy()
             .to_string();
-        Some(Self {
-            project_id: name.clone(),
-            project_name: name,
-            is_submodule: false,
-            superproject_id: None,
-        })
+        Some((name.clone(), name))
     }
 
     /// Detect if the current repo is a git submodule.

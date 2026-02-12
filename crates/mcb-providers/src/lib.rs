@@ -38,8 +38,8 @@
 pub use mcb_domain::error::{Error, Result};
 pub use mcb_domain::ports::providers::CryptoProvider;
 pub use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider, VcsProvider,
-    VectorStoreProvider,
+    CacheProvider, ComplexityAnalyzer, DeadCodeDetector, EmbeddingProvider, HybridSearchProvider,
+    LanguageChunkingProvider, TdgScorer, VcsProvider, VectorStoreProvider,
 };
 
 /// Provider-specific constants
@@ -64,6 +64,9 @@ pub mod vector_store;
 ///
 /// Implements `CacheProvider` trait for caching backends.
 pub mod cache;
+
+/// Native PMAT-style analysis provider implementations.
+pub mod analysis;
 
 /// Event publisher implementations (simple EventPublisher trait)
 ///
@@ -102,8 +105,3 @@ pub mod git;
 ///
 /// Implements state machine transitions and session management
 pub mod workflow;
-
-/// Storage provider implementations
-///
-/// Implements repository ports for storage backends (FileHash).
-pub mod storage;

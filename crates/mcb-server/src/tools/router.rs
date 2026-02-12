@@ -10,11 +10,11 @@ use rmcp::model::{CallToolRequestParams, CallToolResult};
 use tracing::warn;
 
 use crate::args::{
-    AgentArgs, IndexArgs, IssueEntityArgs, MemoryArgs, OrgEntityArgs, PlanEntityArgs, ProjectArgs,
-    SearchArgs, SessionArgs, ValidateArgs, VcsArgs, VcsEntityArgs,
+    AgentArgs, EntityArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs,
+    ValidateArgs, VcsArgs,
 };
 use crate::handlers::{
-    AgentHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
+    AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
     PlanEntityHandler, ProjectHandler, SearchHandler, SessionHandler, ValidateHandler,
     VcsEntityHandler, VcsHandler,
 };
@@ -47,6 +47,8 @@ pub struct ToolHandlers {
     pub issue_entity: Arc<IssueEntityHandler>,
     /// Handler for org entity CRUD.
     pub org_entity: Arc<OrgEntityHandler>,
+    /// Handler for unified entity CRUD.
+    pub entity: Arc<EntityHandler>,
     /// Processor for tool execution hooks.
     pub hook_processor: Arc<HookProcessor>,
 }
@@ -94,21 +96,9 @@ pub async fn route_tool_call(
             let args = parse_args::<VcsArgs>(&request)?;
             handlers.vcs.handle(Parameters(args)).await
         }
-        "vcs_entity" => {
-            let args = parse_args::<VcsEntityArgs>(&request)?;
-            handlers.vcs_entity.handle(Parameters(args)).await
-        }
-        "plan_entity" => {
-            let args = parse_args::<PlanEntityArgs>(&request)?;
-            handlers.plan_entity.handle(Parameters(args)).await
-        }
-        "issue_entity" => {
-            let args = parse_args::<IssueEntityArgs>(&request)?;
-            handlers.issue_entity.handle(Parameters(args)).await
-        }
-        "org_entity" => {
-            let args = parse_args::<OrgEntityArgs>(&request)?;
-            handlers.org_entity.handle(Parameters(args)).await
+        "entity" => {
+            let args = parse_args::<EntityArgs>(&request)?;
+            handlers.entity.handle(Parameters(args)).await
         }
         _ => Err(McpError::invalid_params(
             format!("Unknown tool: {}", request.name),

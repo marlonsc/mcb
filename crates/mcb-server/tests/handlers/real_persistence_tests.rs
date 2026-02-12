@@ -245,8 +245,13 @@ async fn test_real_memory_store_missing_data_returns_contextual_error() {
     let text = extract_text(&resp.content);
     // Must NOT be the old opaque "internal error"
     assert!(
-        !text.contains("internal error") || text.contains("Missing"),
+        !text.contains("internal error"),
         "Error should be contextual, not opaque. Got: {}",
+        text
+    );
+    assert!(
+        text.contains("Missing"),
+        "Error should mention missing required field. Got: {}",
         text
     );
 }
@@ -364,33 +369,13 @@ async fn test_real_session_create_invalid_agent_type_contextual_error() {
     };
 
     let result = session_h.handle(Parameters(bad_args)).await;
-    // This should be an McpError (invalid_params), so result itself is Err
-    match result {
-        Err(e) => {
-            let err_text = format!("{:?}", e);
-            // Should list valid agent types
-            assert!(
-                err_text.contains("sisyphus")
-                    || err_text.contains("oracle")
-                    || err_text.contains("Valid"),
-                "Error should list valid agent types, got: {}",
-                err_text
-            );
-        }
-        Ok(resp) => {
-            // If it returns Ok with is_error, that's also acceptable
-            assert!(
-                resp.is_error.unwrap_or(false),
-                "Invalid agent type should return error"
-            );
-            let text = extract_text(&resp.content);
-            assert!(
-                text.contains("sisyphus") || text.contains("oracle") || text.contains("Valid"),
-                "Error should list valid agent types, got: {}",
-                text
-            );
-        }
-    }
+    assert!(result.is_err(), "Invalid agent type should return McpError");
+    let err_text = format!("{:?}", result.unwrap_err());
+    assert!(
+        err_text.contains("sisyphus") || err_text.contains("oracle") || err_text.contains("Valid"),
+        "Error should list valid agent types, got: {}",
+        err_text
+    );
 }
 
 // =============================================================================

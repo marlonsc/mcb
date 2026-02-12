@@ -1,10 +1,11 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Represents a delegation of work from a parent agent session to a child session.
 ///
 /// A delegation captures the complete lifecycle of delegating a task to another agent,
 /// including the prompt sent, the result received, and timing information.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Delegation {
     /// Unique identifier for this delegation.
     pub id: String,

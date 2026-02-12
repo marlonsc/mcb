@@ -95,6 +95,7 @@ pub mod organization;
 pub mod pattern_validator;
 pub mod performance;
 pub mod pmat;
+pub(crate) mod pmat_native;
 pub mod quality;
 pub mod refactoring;
 pub mod solid;

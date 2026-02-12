@@ -64,7 +64,7 @@ impl IndexHandler {
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
         match args.action {
-            IndexAction::Start => {
+            IndexAction::Start | IndexAction::GitIndex => {
                 let (path, collection_id) = Self::validate_request(&args)?;
                 let timer = Instant::now();
                 match self

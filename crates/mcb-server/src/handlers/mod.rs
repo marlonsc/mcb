@@ -4,6 +4,8 @@
 //! organized by domain: agent, index, memory, project, search, session, validate, vcs.
 
 pub mod agent;
+/// Unified entity CRUD handler.
+pub mod entity;
 pub mod index;
 /// Issue entity CRUD handler.
 pub mod issue_entity;
@@ -21,6 +23,7 @@ pub mod vcs;
 pub mod vcs_entity;
 
 pub use agent::AgentHandler;
+pub use entity::EntityHandler;
 pub use index::IndexHandler;
 pub use issue_entity::IssueEntityHandler;
 pub use memory::MemoryHandler;

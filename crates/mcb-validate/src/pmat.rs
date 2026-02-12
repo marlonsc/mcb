@@ -1,90 +1,106 @@
-//! PMAT Integration Validator
+//! PMAT Integration Validator (native implementation).
 //!
-//! Integrates with PMAT CLI tool for additional analysis:
-//! - Cyclomatic complexity analysis
-//! - Dead code detection
-//! - Technical Debt Gradient (TDG) scoring
+//! ## What
+//! Validates code against PMAT (Property-Based Maintenance Analysis Tool) standards
+//! natively within the Rust process, without shelling out to external binaries.
+//! Checks include cyclomatic complexity, dead code detection, and technical debt scoring.
 //!
-//! This validator is optional - it only runs if the `pmat` binary is available.
+//! ## Why
+//! - **Performance**: Native implementation avoids process overhead.
+//! - **Integration**: Direct access to AST and analysis structures.
+//! - **Compliance**: Enforces code quality gates as defined in **ADR-036**.
+//!
+//! ## References
+//! - **ADR-036**: Enforcement Layer (Policies and Guards)
+//! - **ADR-033**: Native Handler Consolidation
 
 use std::path::PathBuf;
-use std::process::Command;
 
 use serde::{Deserialize, Serialize};
 
 use crate::constants::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
+use crate::pmat_native::{ComplexityAnalyzer, DeadCodeDetector, NativePmatAnalyzer, TdgScorer};
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
-/// PMAT violation types
+/// PMAT violation types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PmatViolation {
-    /// High cyclomatic complexity
+    /// High cyclomatic complexity.
+    ///
+    /// ## Why
+    /// Complex functions are harder to test, maintain, and reason about.
+    /// Enforces code quality standards defined in **ADR-036 (Enforcement Layer)**.
     HighComplexity {
-        /// File path where violation occurred.
+        /// The source file containing the complex code.
         file: PathBuf,
-        /// Function name with high complexity.
+        /// The specific function or method identifier.
         function: String,
-        /// Measured cyclomatic complexity value.
+        /// The calculated cyclomatic complexity score.
         complexity: u32,
-        /// Configured complexity threshold.
+        /// The maximum allowed complexity before violation.
         threshold: u32,
-        /// Severity level of the violation.
+        /// The enforcement level (Error/Warn) based on violation magnitude.
         severity: Severity,
     },
-    /// Dead code detected
+    /// Dead code detected.
+    ///
+    /// ## Why
+    /// Unused code bloats the codebase, confuses readers, and increases maintenance burden.
+    /// See **ADR-036** for policy on code hygiene.
     DeadCode {
-        /// File path where dead code was found.
+        /// The source file containing the unused code.
         file: PathBuf,
-        /// Line number of the dead code.
+        /// The line number where the definition starts.
         line: usize,
-        /// Type of dead code item (function, variable, etc).
+        /// The type of item (e.g., "function", "struct").
         item_type: String,
-        /// Name of the dead code item.
+        /// The name of the unused item.
         name: String,
-        /// Severity level of the violation.
+        /// The enforcement level.
         severity: Severity,
     },
-    /// Low TDG score (high technical debt)
+    /// Low TDG score (high technical debt).
+    ///
+    /// ## Why
+    /// Technical Debt Gradient (TDG) predicts maintenance effort.
+    /// Compares code complexity against its churn/age to identify "hotspots".
     LowTdgScore {
-        /// File path with low TDG score.
+        /// The source file being analyzed.
         file: PathBuf,
-        /// Technical Debt Gradient score.
+        /// The calculated Technical Debt Gradient score.
         score: u32,
-        /// Configured TDG threshold.
+        /// The minimum acceptable score (lower means higher debt).
         threshold: u32,
-        /// Severity level of the violation.
+        /// The enforcement level.
         severity: Severity,
     },
-    /// PMAT tool not available
+    /// PMAT tooling unavailable (kept for compatibility).
     PmatUnavailable {
-        /// Error message explaining why PMAT is unavailable.
+        /// Description of why the tool is unavailable.
         message: String,
-        /// Severity level of the violation.
+        /// The enforcement level (usually Info/Warn).
         severity: Severity,
     },
-    /// PMAT execution error
+    /// PMAT execution error.
     PmatError {
-        /// Command that failed.
+        /// The command or operation that failed.
         command: String,
-        /// Error message from PMAT execution.
+        /// The error details.
         error: String,
-        /// Severity level of the violation.
+        /// The enforcement level.
         severity: Severity,
     },
 }
 
 impl PmatViolation {
     /// Returns the severity level of this violation.
-    ///
-    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
         <Self as Violation>::severity(self)
     }
 }
 
 impl std::fmt::Display for PmatViolation {
-    /// Formats the violation as a human-readable string
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::HighComplexity {
@@ -133,9 +149,7 @@ impl std::fmt::Display for PmatViolation {
                     threshold
                 )
             }
-            Self::PmatUnavailable { message, .. } => {
-                write!(f, "PMAT unavailable: {message}")
-            }
+            Self::PmatUnavailable { message, .. } => write!(f, "PMAT unavailable: {message}"),
             Self::PmatError { command, error, .. } => {
                 write!(f, "PMAT error running '{command}': {error}")
             }
@@ -144,7 +158,6 @@ impl std::fmt::Display for PmatViolation {
 }
 
 impl Violation for PmatViolation {
-    /// Returns the unique identifier for this violation type
     fn id(&self) -> &str {
         match self {
             Self::HighComplexity { .. } => "PMAT001",
@@ -155,12 +168,10 @@ impl Violation for PmatViolation {
         }
     }
 
-    /// Returns the violation category
     fn category(&self) -> ViolationCategory {
         ViolationCategory::Pmat
     }
 
-    /// Returns the severity level of this violation
     fn severity(&self) -> Severity {
         match self {
             Self::HighComplexity { severity, .. }
@@ -171,7 +182,6 @@ impl Violation for PmatViolation {
         }
     }
 
-    /// Returns the file path where the violation was detected
     fn file(&self) -> Option<&PathBuf> {
         match self {
             Self::HighComplexity { file, .. }
@@ -181,7 +191,6 @@ impl Violation for PmatViolation {
         }
     }
 
-    /// Returns the line number where the violation was detected
     fn line(&self) -> Option<usize> {
         match self {
             Self::DeadCode { line, .. } => Some(*line),
@@ -189,7 +198,6 @@ impl Violation for PmatViolation {
         }
     }
 
-    /// Returns a suggestion for fixing this violation
     fn suggestion(&self) -> Option<String> {
         match self {
             Self::HighComplexity {
@@ -198,8 +206,7 @@ impl Violation for PmatViolation {
                 threshold,
                 ..
             } => Some(format!(
-                "Consider refactoring '{function}' to reduce complexity from {complexity} to below {threshold}. \
-                 Split into smaller functions or simplify control flow."
+                "Consider refactoring '{function}' to reduce complexity from {complexity} to below {threshold}. Split into smaller functions or simplify control flow."
             )),
             Self::DeadCode {
                 item_type, name, ..
@@ -207,334 +214,157 @@ impl Violation for PmatViolation {
             Self::LowTdgScore {
                 score, threshold, ..
             } => Some(format!(
-                "Technical debt score {score} exceeds threshold {threshold}. \
-                 Address code smells, reduce complexity, and improve maintainability."
+                "Technical debt score {score} exceeds threshold {threshold}. Address code smells and reduce complexity."
             )),
-            Self::PmatUnavailable { .. } => {
-                Some("Install PMAT CLI tool to enable additional analysis.".to_string())
+            Self::PmatUnavailable { .. } => None,
+            Self::PmatError { command, .. } => {
+                Some(format!("Check analyzer configuration for '{command}'."))
             }
-            Self::PmatError { command, .. } => Some(format!(
-                "Check PMAT installation and run '{command}' manually to diagnose."
-            )),
         }
     }
 }
 
-/// PMAT complexity result from JSON output
-#[derive(Debug, Deserialize)]
-struct ComplexityResult {
-    /// File path containing the function
-    #[serde(default)]
-    file: Option<String>,
-    /// Function name
-    #[serde(default)]
-    function: Option<String>,
-    /// Cyclomatic complexity value
-    #[serde(default)]
-    complexity: Option<u32>,
-}
-
-/// PMAT dead code result from JSON output
-#[derive(Debug, Deserialize)]
-struct DeadCodeResult {
-    /// File path containing the dead code
-    #[serde(default)]
-    file: Option<String>,
-    /// Line number of the dead code
-    #[serde(default)]
-    line: Option<usize>,
-    /// Type of item (function, struct, etc.)
-    #[serde(default)]
-    item_type: Option<String>,
-    /// Name of the dead code item
-    #[serde(default)]
-    name: Option<String>,
-}
-
-/// PMAT TDG result from JSON output
-#[derive(Debug, Deserialize)]
-struct TdgResult {
-    /// File path being analyzed
-    #[serde(default)]
-    file: Option<String>,
-    /// Technical Debt Gradient score
-    #[serde(default)]
-    score: Option<u32>,
-}
-
-/// PMAT integration validator
+/// PMAT integration validator.
+///
+/// ## Why
+/// Validates code quality metrics (complexity, dead code, technical debt)
+/// directly within the MCB pipeline, as prescribed by **ADR-036**.
+/// Uses native Rust providers instead of shelling out, for better performance and integration.
 pub struct PmatValidator {
+    /// Configuration for the validation context (workspace root, etc.).
     config: ValidationConfig,
+    /// Configured limit for cyclomatic complexity.
     complexity_threshold: u32,
+    /// Configured threshold for technical debt gradient.
     tdg_threshold: u32,
-    pmat_available: bool,
+    /// Provider for complexity analysis logic (Strategy pattern).
+    complexity_analyzer: Box<dyn ComplexityAnalyzer>,
+    /// Provider for dead code detection logic.
+    dead_code_detector: Box<dyn DeadCodeDetector>,
+    /// Provider for TDG scoring logic.
+    tdg_scorer: Box<dyn TdgScorer>,
 }
 
 impl PmatValidator {
-    /// Creates a new PMAT validator with default configuration
+    /// Creates a new PMAT validator with default configuration.
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         Self::with_config(ValidationConfig::new(workspace_root))
     }
 
-    /// Creates a validator with custom configuration
+    /// Creates a validator with custom configuration.
     pub fn with_config(config: ValidationConfig) -> Self {
-        let pmat_available = Self::check_pmat_available();
         Self {
             config,
             complexity_threshold: DEFAULT_COMPLEXITY_THRESHOLD,
             tdg_threshold: DEFAULT_TDG_THRESHOLD,
-            pmat_available,
+            complexity_analyzer: Box::new(NativePmatAnalyzer),
+            dead_code_detector: Box::new(NativePmatAnalyzer),
+            tdg_scorer: Box::new(NativePmatAnalyzer),
         }
     }
 
-    /// Sets the cyclomatic complexity threshold (builder pattern)
+    /// Sets the cyclomatic complexity threshold (builder pattern).
     #[must_use]
     pub fn with_complexity_threshold(mut self, threshold: u32) -> Self {
         self.complexity_threshold = threshold;
         self
     }
 
-    /// Sets the Technical Debt Gradient threshold (builder pattern)
+    /// Sets the Technical Debt Gradient threshold (builder pattern).
     #[must_use]
     pub fn with_tdg_threshold(mut self, threshold: u32) -> Self {
         self.tdg_threshold = threshold;
         self
     }
 
-    /// Checks if the PMAT binary is available in the system PATH
-    fn check_pmat_available() -> bool {
-        Command::new("pmat")
-            .arg("--version")
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false)
-    }
-
-    /// Returns whether PMAT is available for this validator instance
+    /// Native analyzer path is always available.
     pub fn is_available(&self) -> bool {
-        self.pmat_available
+        true
     }
 
-    /// Runs all PMAT validations and returns detected violations
+    /// Runs all PMAT validations and returns detected violations.
     pub fn validate_all(&self) -> Result<Vec<PmatViolation>> {
         let mut violations = Vec::new();
-
-        if !self.pmat_available {
-            violations.push(PmatViolation::PmatUnavailable {
-                message: "pmat binary not found in PATH - skipping PMAT analysis".to_string(),
-                severity: Severity::Info,
-            });
-            return Ok(violations);
-        }
-
         violations.extend(self.validate_complexity()?);
         violations.extend(self.validate_dead_code()?);
         violations.extend(self.validate_tdg()?);
-
         Ok(violations)
     }
 
-    /// Runs cyclomatic complexity analysis using PMAT
+    /// Runs cyclomatic complexity analysis using native analyzer.
     pub fn validate_complexity(&self) -> Result<Vec<PmatViolation>> {
-        let mut violations = Vec::new();
+        let findings = self
+            .complexity_analyzer
+            .analyze_complexity(&self.config.workspace_root, self.complexity_threshold)
+            .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
 
-        if !self.pmat_available {
-            return Ok(violations);
-        }
-
-        let workspace_root = &self.config.workspace_root;
-
-        let output = Command::new("pmat")
-            .args([
-                "analyze",
-                "complexity",
-                "--project-path",
-                workspace_root.to_str().unwrap_or("."),
-            ])
-            .output();
-
-        match output {
-            Ok(output) if output.status.success() => {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-
-                // Try to parse as JSON array of complexity results
-                if let Ok(results) = serde_json::from_str::<Vec<ComplexityResult>>(&stdout) {
-                    for result in results {
-                        if let (Some(file), Some(function), Some(complexity)) =
-                            (result.file, result.function, result.complexity)
-                            && complexity > self.complexity_threshold
-                        {
-                            violations.push(PmatViolation::HighComplexity {
-                                file: PathBuf::from(file),
-                                function,
-                                complexity,
-                                threshold: self.complexity_threshold,
-                                severity: if complexity > self.complexity_threshold * 2 {
-                                    Severity::Warning
-                                } else {
-                                    Severity::Info
-                                },
-                            });
-                        }
-                    }
-                }
-                // If parsing fails, that's OK - PMAT output format may vary
-            }
-            Ok(output) => {
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                violations.push(PmatViolation::PmatError {
-                    command: "pmat analyze complexity".to_string(),
-                    error: stderr.to_string(),
-                    severity: Severity::Info,
-                });
-            }
-            Err(e) => {
-                violations.push(PmatViolation::PmatError {
-                    command: "pmat analyze complexity".to_string(),
-                    error: e.to_string(),
-                    severity: Severity::Info,
-                });
-            }
-        }
-
-        Ok(violations)
+        Ok(findings
+            .into_iter()
+            .map(|f| PmatViolation::HighComplexity {
+                file: f.file,
+                function: f.function,
+                complexity: f.complexity,
+                threshold: self.complexity_threshold,
+                severity: if f.complexity > self.complexity_threshold * 2 {
+                    Severity::Warning
+                } else {
+                    Severity::Info
+                },
+            })
+            .collect())
     }
 
-    /// Runs dead code analysis using PMAT
+    /// Runs dead code analysis using native analyzer.
     pub fn validate_dead_code(&self) -> Result<Vec<PmatViolation>> {
-        let mut violations = Vec::new();
+        let findings = self
+            .dead_code_detector
+            .detect_dead_code(&self.config.workspace_root)
+            .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
 
-        if !self.pmat_available {
-            return Ok(violations);
-        }
-
-        let workspace_root = &self.config.workspace_root;
-
-        let output = Command::new("pmat")
-            .args([
-                "analyze",
-                "dead-code",
-                "--path",
-                workspace_root.to_str().unwrap_or("."),
-            ])
-            .output();
-
-        match output {
-            Ok(output) if output.status.success() => {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-
-                // Try to parse as JSON array of dead code results
-                if let Ok(results) = serde_json::from_str::<Vec<DeadCodeResult>>(&stdout) {
-                    for result in results {
-                        if let (Some(file), Some(line), Some(item_type), Some(name)) =
-                            (result.file, result.line, result.item_type, result.name)
-                        {
-                            violations.push(PmatViolation::DeadCode {
-                                file: PathBuf::from(file),
-                                line,
-                                item_type,
-                                name,
-                                severity: Severity::Info,
-                            });
-                        }
-                    }
-                }
-            }
-            Ok(output) => {
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                if !stderr.is_empty() {
-                    violations.push(PmatViolation::PmatError {
-                        command: "pmat analyze dead-code".to_string(),
-                        error: stderr.to_string(),
-                        severity: Severity::Info,
-                    });
-                }
-            }
-            Err(e) => {
-                violations.push(PmatViolation::PmatError {
-                    command: "pmat analyze dead-code".to_string(),
-                    error: e.to_string(),
-                    severity: Severity::Info,
-                });
-            }
-        }
-
-        Ok(violations)
+        Ok(findings
+            .into_iter()
+            .map(|f| PmatViolation::DeadCode {
+                file: f.file,
+                line: f.line,
+                item_type: f.item_type,
+                name: f.name,
+                severity: Severity::Info,
+            })
+            .collect())
     }
 
-    /// Runs Technical Debt Gradient analysis using PMAT
+    /// Runs Technical Debt Gradient analysis using native analyzer.
     pub fn validate_tdg(&self) -> Result<Vec<PmatViolation>> {
-        let mut violations = Vec::new();
+        let findings = self
+            .tdg_scorer
+            .score_tdg(&self.config.workspace_root, self.tdg_threshold)
+            .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
 
-        if !self.pmat_available {
-            return Ok(violations);
-        }
-
-        let workspace_root = &self.config.workspace_root;
-
-        let output = Command::new("pmat")
-            .args(["tdg", workspace_root.to_str().unwrap_or(".")])
-            .output();
-
-        match output {
-            Ok(output) if output.status.success() => {
-                let stdout = String::from_utf8_lossy(&output.stdout);
-
-                // Try to parse as JSON array of TDG results
-                if let Ok(results) = serde_json::from_str::<Vec<TdgResult>>(&stdout) {
-                    for result in results {
-                        if let (Some(file), Some(score)) = (result.file, result.score)
-                            && score > self.tdg_threshold
-                        {
-                            violations.push(PmatViolation::LowTdgScore {
-                                file: PathBuf::from(file),
-                                score,
-                                threshold: self.tdg_threshold,
-                                severity: if score > self.tdg_threshold + 25 {
-                                    Severity::Warning
-                                } else {
-                                    Severity::Info
-                                },
-                            });
-                        }
-                    }
-                }
-            }
-            Ok(output) => {
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                if !stderr.is_empty() {
-                    violations.push(PmatViolation::PmatError {
-                        command: "pmat tdg".to_string(),
-                        error: stderr.to_string(),
-                        severity: Severity::Info,
-                    });
-                }
-            }
-            Err(e) => {
-                violations.push(PmatViolation::PmatError {
-                    command: "pmat tdg".to_string(),
-                    error: e.to_string(),
-                    severity: Severity::Info,
-                });
-            }
-        }
-
-        Ok(violations)
+        Ok(findings
+            .into_iter()
+            .map(|f| PmatViolation::LowTdgScore {
+                file: f.file,
+                score: f.score,
+                threshold: self.tdg_threshold,
+                severity: if f.score > self.tdg_threshold + 25 {
+                    Severity::Warning
+                } else {
+                    Severity::Info
+                },
+            })
+            .collect())
     }
 }
 
 impl crate::validator_trait::Validator for PmatValidator {
-    /// Returns the validator name
     fn name(&self) -> &'static str {
         "pmat"
     }
 
-    /// Returns the validator description
     fn description(&self) -> &'static str {
-        "PMAT integration for cyclomatic complexity, dead code detection, and TDG scoring"
+        "Native PMAT-style analysis for cyclomatic complexity, dead code detection, and TDG scoring"
     }
 
-    /// Executes validation and returns violations as trait objects
     fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
         let violations = self.validate_all()?;
         Ok(violations
@@ -543,67 +373,58 @@ impl crate::validator_trait::Validator for PmatValidator {
             .collect())
     }
 
-    /// Returns whether this validator is enabled by default (only if PMAT is available)
     fn enabled_by_default(&self) -> bool {
-        // Only enable by default if PMAT is available
-        self.pmat_available
+        true
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
     use tempfile::TempDir;
 
     use super::*;
 
     #[test]
-    fn test_pmat_availability_check() {
-        // This test verifies the availability check works
-        // It doesn't require PMAT to be installed
-        let result = PmatValidator::check_pmat_available();
-        // Result can be true or false depending on environment
-        // Just verify the function completes without panic
-        let _ = result;
-    }
-
-    #[test]
     fn test_validator_creation() {
-        let temp = TempDir::new().unwrap();
+        let temp = TempDir::new().expect("create temp dir");
         let validator = PmatValidator::new(temp.path());
-
-        // Validator should be created successfully regardless of PMAT availability
         assert_eq!(validator.complexity_threshold, DEFAULT_COMPLEXITY_THRESHOLD);
         assert_eq!(validator.tdg_threshold, DEFAULT_TDG_THRESHOLD);
+        assert!(validator.is_available());
     }
 
     #[test]
     fn test_custom_thresholds() {
-        let temp = TempDir::new().unwrap();
+        let temp = TempDir::new().expect("create temp dir");
         let validator = PmatValidator::new(temp.path())
             .with_complexity_threshold(20)
             .with_tdg_threshold(60);
-
         assert_eq!(validator.complexity_threshold, 20);
         assert_eq!(validator.tdg_threshold, 60);
     }
 
     #[test]
-    fn test_unavailable_pmat_returns_info() {
-        let temp = TempDir::new().unwrap();
-        let mut validator = PmatValidator::new(temp.path());
+    fn test_native_complexity_detects_violation() {
+        let temp = TempDir::new().expect("create temp dir");
+        let file = temp.path().join("sample.rs");
+        fs::write(
+            &file,
+            r#"
+fn foo(x: i32) {
+    if x > 0 {}
+    if x > 1 {}
+    if x > 2 {}
+}
+"#,
+        )
+        .expect("write sample");
 
-        // Force PMAT to be unavailable for testing
-        validator.pmat_available = false;
-
-        let violations = validator.validate_all().unwrap();
-
-        // Should return a single PmatUnavailable info message
-        assert_eq!(violations.len(), 1);
-        match &violations[0] {
-            PmatViolation::PmatUnavailable { severity, .. } => {
-                assert_eq!(*severity, Severity::Info);
-            }
-            _ => panic!("Expected PmatUnavailable violation"),
-        }
+        let validator = PmatValidator::new(temp.path()).with_complexity_threshold(2);
+        let violations = validator
+            .validate_complexity()
+            .expect("validate complexity");
+        assert!(!violations.is_empty());
     }
 }

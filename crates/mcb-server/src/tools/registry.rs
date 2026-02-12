@@ -9,8 +9,8 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::Tool;
 
 use crate::args::{
-    AgentArgs, IndexArgs, IssueEntityArgs, MemoryArgs, OrgEntityArgs, PlanEntityArgs, ProjectArgs,
-    SearchArgs, SessionArgs, ValidateArgs, VcsArgs, VcsEntityArgs,
+    AgentArgs, EntityArgs, IndexArgs, MemoryArgs, ProjectArgs, SearchArgs, SessionArgs,
+    ValidateArgs, VcsArgs,
 };
 
 /// Tool definitions for MCP protocol
@@ -89,39 +89,12 @@ impl ToolDefinitions {
         )
     }
 
-    /// Define the `vcs_entity` tool.
-    pub fn vcs_entity() -> Result<Tool, McpError> {
+    /// Define the `entity` tool.
+    pub fn entity() -> Result<Tool, McpError> {
         Self::create_tool(
-            "vcs_entity",
-            "VCS entity CRUD (repositories, branches, worktrees, assignments)",
-            schemars::schema_for!(VcsEntityArgs),
-        )
-    }
-
-    /// Define the `plan_entity` tool.
-    pub fn plan_entity() -> Result<Tool, McpError> {
-        Self::create_tool(
-            "plan_entity",
-            "Plan entity CRUD (plans, versions, reviews)",
-            schemars::schema_for!(PlanEntityArgs),
-        )
-    }
-
-    /// Define the `issue_entity` tool.
-    pub fn issue_entity() -> Result<Tool, McpError> {
-        Self::create_tool(
-            "issue_entity",
-            "Issue entity CRUD (issues, comments, labels, label assignments)",
-            schemars::schema_for!(IssueEntityArgs),
-        )
-    }
-
-    /// Define the `org_entity` tool.
-    pub fn org_entity() -> Result<Tool, McpError> {
-        Self::create_tool(
-            "org_entity",
-            "Org entity CRUD (organizations, users, teams, team members, api keys)",
-            schemars::schema_for!(OrgEntityArgs),
+            "entity",
+            "Unified entity CRUD (vcs/plan/issue/org resources)",
+            schemars::schema_for!(EntityArgs),
         )
     }
 
@@ -167,9 +140,6 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
         ToolDefinitions::agent()?,
         ToolDefinitions::project()?,
         ToolDefinitions::vcs()?,
-        ToolDefinitions::vcs_entity()?,
-        ToolDefinitions::plan_entity()?,
-        ToolDefinitions::issue_entity()?,
-        ToolDefinitions::org_entity()?,
+        ToolDefinitions::entity()?,
     ])
 }
