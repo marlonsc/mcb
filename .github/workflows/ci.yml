@@ -16,15 +16,22 @@ on: # yamllint disable-line rule:truthy
     branches:
       - main
       - develop
+    tags:
+      - "v*"
     paths:
       - "src/**"
       - "crates/**"
       - "tests/**"
+      - "docs/**"
+      - "scripts/docs/**"
+      - "Makefile"
+      - "make/*.mk"
       - "Cargo.toml"
       - "Cargo.lock"
       - ".github/workflows/ci.yml"
       - ".github/setup-ci.sh"
   pull_request:
+    types: [opened, synchronize, reopened, closed]
     branches:
       - main
       - develop
@@ -32,6 +39,10 @@ on: # yamllint disable-line rule:truthy
       - "src/**"
       - "crates/**"
       - "tests/**"
+      - "docs/**"
+      - "scripts/docs/**"
+      - "Makefile"
+      - "make/*.mk"
       - "Cargo.toml"
       - "Cargo.lock"
       - ".github/workflows/ci.yml"
@@ -91,7 +102,7 @@ jobs:
 
   test-main:
     name: Test (Main - ${{ matrix.rust }})
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     needs: [lint]
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -160,8 +171,110 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
       - run: make audit
 
-  docs:
-    name: Documentation
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [rust]
+    env:
+      CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v3.28.13
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql-config.yml
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v3.28.13
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v3.28.13
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  validate-docs:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - run: make docs-check
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y nodejs npm
+          npm install -g markdownlint-cli
+      - run: make docs-validate QUICK=1
+
+  update-docs:
+    name: Auto-Update Documentation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true # zizmor:ignore[artipacked] -- required for git push
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+      - name: Update README and metrics
+        run: |
+          make docs-auto
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          # Stage all docs-auto output (metrics, README, and any lint-fixed files)
+          git add -A README.md docs/generated/ docs/ || true
+          if ! git diff --staged --quiet; then
+            git commit -m "docs: auto-update README and project metrics [skip ci]"
+            # Discard any remaining unstaged changes before rebase
+            git checkout -- . 2>/dev/null || true
+            git pull origin main --rebase
+            git push origin main
+          else
+            echo "No changes to commit"
+          fi
+
+  docs-diagrams:
+    name: Generate Diagrams
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: "17"
+          distribution: "temurin"
+      - name: Install PlantUML
+        run: sudo apt-get update && sudo apt-get install -y plantuml
+      - run: make diagrams
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: architecture-diagrams
+          path: docs/architecture/diagrams/generated/
+          retention-days: 30
+          include-hidden-files: false
+
+  docs-rust:
+    name: Rust API Docs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -169,8 +282,56 @@ jobs:
           persist-credentials: false
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-      - run: make docs
+      - run: make rust-docs
+      - run: make test SCOPE=doc
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: rust-api-docs
+          path: target/doc/
+          retention-days: 30
+          include-hidden-files: false
+
+  docs-book:
+    name: Build mdBook
+    runs-on: ubuntu-latest
+    needs: [validate-docs]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - run: make docs-setup
+      - run: make docs-sync
+      - run: make docs-build
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: mdbook-docs
+          path: book/book/
+          retention-days: 30
+          include-hidden-files: false
+
+  docs-deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: [validate-docs, docs-rust, docs-book]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: rust-api-docs
+          path: docs-site/api/
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: mdbook-docs
+          path: docs-site/
+      - uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs-site
 
   coverage:
     name: Coverage
@@ -192,32 +353,233 @@ jobs:
           fail_ci_if_error: false
 
   release-build:
-    name: Release (${{ matrix.target }})
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test-main, validate]
+    name: Build Release (${{ matrix.target }})
+    needs: [test-main, validate, audit]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+            artifact_name: mcb
+            asset_name: mcb-x86_64-linux-gnu
           - os: macos-latest
             target: x86_64-apple-darwin
+            artifact_name: mcb
+            asset_name: mcb-x86_64-macos
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            artifact_name: mcb.exe
+            asset_name: mcb-x86_64-windows.exe
     steps:
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - run: bash .github/setup-ci.sh
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        run: choco install protoc -y
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
         with:
           targets: ${{ matrix.target }}
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
       - run: make build RELEASE=1
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - name: Create dist directory
+        run: mkdir -p dist
+      - name: Copy artifact (Unix)
+        if: runner.os != 'Windows'
+        env:
+          ARTIFACT: ${{ matrix.artifact_name }}
+          ASSET: ${{ matrix.asset_name }}
+        run: cp "target/release/$ARTIFACT" "dist/$ASSET"
+      - name: Copy artifact (Windows)
+        if: runner.os == 'Windows'
+        run: >-
+          copy target\release\${{ matrix.artifact_name }}
+          dist\${{ matrix.asset_name }}
+        shell: cmd
+      - name: Upload artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
-          name: mcb-${{ matrix.target }}
-          path: >-
-            target/release/mcb${{ matrix.os == 'windows-latest' &&
-            '.exe' || '' }}
+          name: release-artifacts-${{ matrix.target }}
+          path: dist/${{ matrix.asset_name }}
+          retention-days: 1
+          include-hidden-files: false
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: release-build
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0 # Full history for changelog generation
+          persist-credentials: false
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          path: release-artifacts
+
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#v}
+          echo "RELEASE_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog (git log)
+        run: |
+          # Get previous tag
+          PREV_TAG=$(
+            git tag --list 'v*' --sort=-version:refname | head -2 | tail -1
+          )
+
+          if [ -z "$PREV_TAG" ]; then
+            # First release - show all commits
+            git log --oneline --reverse > RELEASE_NOTES.md
+          else
+            # Show commits since previous tag
+            git log "$PREV_TAG..HEAD" --oneline > RELEASE_NOTES.md
+          fi
+
+          # Prepend header
+          sed -i '1s/^/## Changes\n\n/' RELEASE_NOTES.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        with:
+          tag_name: ${{ steps.extract_version.outputs.tag }}
+          name: Release ${{ steps.extract_version.outputs.version }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            release-artifacts/release-artifacts-x86_64-unknown-linux-gnu/mcb-x86_64-linux-gnu
+            release-artifacts/release-artifacts-x86_64-apple-darwin/mcb-x86_64-macos
+            release-artifacts/release-artifacts-x86_64-pc-windows-msvc/mcb-x86_64-windows.exe
+          draft: false
+          prerelease: false
+
+      - name: Release Summary
+        env:
+          RELEASE_TAG: ${{ steps.extract_version.outputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          echo "✓ Release $RELEASE_TAG created successfully"
+          echo "  - Artifacts: 3 binaries (Linux, macOS, Windows)"
+          echo "  - GitHub Release: https://github.com/${REPO}/releases/tag/${RELEASE_TAG}"
+
+  auto-tag:
+    name: Auto-Tag Release
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/v')
+    permissions:
+      contents: write
+    steps:
+      # zizmor:ignore[artipacked] -- credentials needed to push tags
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Extract version from branch name
+        id: version
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          # Extract version: release/v0.1.5 -> v0.1.5
+          VERSION="${BRANCH#release/}"
+          echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Detected version tag: $VERSION"
+
+      - name: Check if tag already exists
+        id: check_tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::warning ::Tag $TAG already exists, skipping creation"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.check_tag.outputs.exists == 'false'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "::notice ::Created and pushed tag $TAG"
+
+      - name: Summary
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          TAG_EXISTS: ${{ steps.check_tag.outputs.exists }}
+          SERVER_URL: ${{ github.server_url }}
+          REPO: ${{ github.repository }}
+        run: |
+          {
+            echo "## Release Tag"
+            echo ""
+            if [ "$TAG_EXISTS" == "true" ]; then
+              echo "Tag \`$TAG\` already existed. No action taken."
+            else
+              echo "Created tag \`$TAG\` on merge commit."
+              echo ""
+              echo "The [CI workflow](${SERVER_URL}/${REPO}/actions/workflows/ci.yml) will now build artifacts."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  auto-merge-dependabot:
+    name: Auto-Merge Dependabot
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.3.0
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Enable auto-merge for patch and minor updates
+        if: >-
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-approve major updates (review only, no merge)
+        if: >-
+          steps.metadata.outputs.update-type == 'version-update:semver-major'
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEP_NAMES: ${{ steps.metadata.outputs.dependency-names }}
+        run: |
+          echo "::notice ::Major update detected: $DEP_NAMES"
+          echo "Major updates require manual review and merge."
+          gh pr comment "$PR_URL" --body \
+            "**Major version update detected.** This PR requires manual review before merging."

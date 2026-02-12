@@ -18,8 +18,6 @@ use mcb_infrastructure::config::loader::ConfigLoader;
 use serial_test::serial;
 
 #[allow(unsafe_code)]
-/// Helper to set env var safely
-#[allow(unsafe_code)]
 fn set_env(key: &str, value: &str) {
     // SAFETY: Tests must run with --test-threads=1
     unsafe {
@@ -27,8 +25,6 @@ fn set_env(key: &str, value: &str) {
     }
 }
 
-#[allow(unsafe_code)]
-/// Helper to remove env var safely
 #[allow(unsafe_code)]
 fn remove_env(key: &str) {
     // SAFETY: Tests must run with --test-threads=1
