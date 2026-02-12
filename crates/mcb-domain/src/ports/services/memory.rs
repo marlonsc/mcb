@@ -8,6 +8,25 @@ use crate::entities::memory::{
 use crate::error::Result;
 use crate::value_objects::{Embedding, ObservationId, SessionId};
 
+/// Input payload for creating or updating a session summary.
+#[derive(Debug, Clone)]
+pub struct CreateSessionSummaryInput {
+    /// Project identifier owning this session summary.
+    pub project_id: String,
+    /// Session identifier being summarized.
+    pub session_id: SessionId,
+    /// Main topics covered in the session.
+    pub topics: Vec<String>,
+    /// Concrete decisions taken during the session.
+    pub decisions: Vec<String>,
+    /// Actionable next steps produced by the session.
+    pub next_steps: Vec<String>,
+    /// Important files touched or discussed.
+    pub key_files: Vec<String>,
+    /// Optional origin context metadata.
+    pub origin_context: Option<OriginContext>,
+}
+
 /// Memory Service Interface
 ///
 /// Provides observation storage and retrieval with semantic search capabilities.
@@ -54,16 +73,7 @@ pub trait MemoryServiceInterface: Send + Sync {
     /// Create or update a session summary.
     ///
     /// Summarizes the key topics, decisions, and next steps from a session.
-    async fn create_session_summary(
-        &self,
-        project_id: String,
-        session_id: SessionId,
-        topics: Vec<String>,
-        decisions: Vec<String>,
-        next_steps: Vec<String>,
-        key_files: Vec<String>,
-        origin_context: Option<OriginContext>,
-    ) -> Result<String>;
+    async fn create_session_summary(&self, input: CreateSessionSummaryInput) -> Result<String>;
 
     /// Get an observation by ID.
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>>;

@@ -11,7 +11,7 @@ use mcb_domain::entities::memory::{
 use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::MemoryRepository;
 use mcb_domain::ports::repositories::memory_repository::FtsSearchResult;
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
 use mcb_domain::value_objects::{Embedding, ObservationId, SessionId};
 
 use crate::test_utils::helpers::{arc_mutex, arc_mutex_vec};
@@ -308,16 +308,7 @@ impl MemoryServiceInterface for MockMemoryService {
         Ok(results)
     }
 
-    async fn create_session_summary(
-        &self,
-        project_id: String,
-        session_id: SessionId,
-        topics: Vec<String>,
-        decisions: Vec<String>,
-        next_steps: Vec<String>,
-        key_files: Vec<String>,
-        origin_context: Option<mcb_domain::entities::memory::OriginContext>,
-    ) -> Result<String> {
+    async fn create_session_summary(&self, input: CreateSessionSummaryInput) -> Result<String> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();
             return Err(mcb_domain::error::Error::internal(msg));
@@ -325,13 +316,13 @@ impl MemoryServiceInterface for MockMemoryService {
 
         let summary = SessionSummary {
             id: uuid::Uuid::new_v4().to_string(),
-            project_id,
-            session_id: session_id.into_string(),
-            topics,
-            decisions,
-            next_steps,
-            key_files,
-            origin_context,
+            project_id: input.project_id,
+            session_id: input.session_id.into_string(),
+            topics: input.topics,
+            decisions: input.decisions,
+            next_steps: input.next_steps,
+            key_files: input.key_files,
+            origin_context: input.origin_context,
             created_at: chrono::Utc::now().timestamp(),
         };
         let id = summary.id.clone();

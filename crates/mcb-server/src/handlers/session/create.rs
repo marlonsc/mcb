@@ -12,7 +12,9 @@ use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::resolve_identifier_precedence;
+use crate::handler_helpers::{
+    OriginContextInput, resolve_identifier_precedence, resolve_origin_context,
+};
 use tracing::error;
 
 /// Creates a new agent session.
@@ -70,16 +72,40 @@ pub async fn create_session(
         token_count: None,
         tool_calls_count: None,
         delegations_count: None,
-        project_id: resolve_identifier_precedence(
-            schema::PROJECT_ID,
-            args.project_id.as_deref(),
-            SessionHelpers::get_str(data, schema::PROJECT_ID).as_deref(),
-        )?,
-        worktree_id: resolve_identifier_precedence(
-            schema::WORKTREE_ID,
-            args.worktree_id.as_deref(),
-            SessionHelpers::get_str(data, schema::WORKTREE_ID).as_deref(),
-        )?,
+        project_id: None,
+        worktree_id: None,
+    };
+    let payload_project_id = SessionHelpers::get_str(data, schema::PROJECT_ID);
+    let payload_worktree_id = SessionHelpers::get_str(data, schema::WORKTREE_ID);
+    let origin_context = resolve_origin_context(OriginContextInput {
+        org_id: args.org_id.as_deref(),
+        project_id_args: args.project_id.as_deref(),
+        project_id_payload: payload_project_id.as_deref(),
+        session_id_args: Some(session_id.as_str()),
+        session_id_payload: None,
+        execution_id_args: None,
+        execution_id_payload: None,
+        tool_name_args: Some("session"),
+        tool_name_payload: None,
+        repo_id_args: None,
+        repo_id_payload: None,
+        repo_path_args: None,
+        repo_path_payload: None,
+        worktree_id_args: args.worktree_id.as_deref(),
+        worktree_id_payload: payload_worktree_id.as_deref(),
+        file_path_args: None,
+        file_path_payload: None,
+        branch_args: None,
+        branch_payload: None,
+        commit_args: None,
+        commit_payload: None,
+        require_project_id: false,
+        timestamp: Some(now),
+    })?;
+    let session = AgentSession {
+        project_id: origin_context.project_id,
+        worktree_id: origin_context.worktree_id,
+        ..session
     };
     match agent_service.create_session(session).await {
         Ok(id) => ResponseFormatter::json_success(&serde_json::json!({

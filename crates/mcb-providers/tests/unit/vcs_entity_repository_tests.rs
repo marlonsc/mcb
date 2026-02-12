@@ -52,6 +52,20 @@ async fn seed_org_and_project(executor: &dyn DatabaseExecutor) {
         )
         .await
         .expect("seed project");
+    executor
+        .execute(
+            "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+            &[
+                SqlParam::String("proj-2".to_string()),
+                SqlParam::String(DEFAULT_ORG_ID.to_string()),
+                SqlParam::String("Test Project 2".to_string()),
+                SqlParam::String("/test-2".to_string()),
+                SqlParam::I64(0),
+                SqlParam::I64(0),
+            ],
+        )
+        .await
+        .expect("seed project 2");
 }
 
 fn create_test_repository(id: &str, project_id: &str) -> Repository {
@@ -344,6 +358,39 @@ async fn test_org_isolation_repositories() {
             .unwrap()
             .is_empty()
     );
+}
+
+#[tokio::test]
+async fn test_project_isolation_same_org_same_local_path() {
+    let (repo, _executor, _temp) = setup_repo().await;
+
+    let mut repo_proj_1 = create_test_repository("repo-proj-1", "proj-1");
+    repo_proj_1.local_path = "/tmp/shared-path".to_string();
+    let mut repo_proj_2 = create_test_repository("repo-proj-2", "proj-2");
+    repo_proj_2.local_path = "/tmp/shared-path".to_string();
+
+    repo.create_repository(&repo_proj_1)
+        .await
+        .expect("create repo proj-1");
+    repo.create_repository(&repo_proj_2)
+        .await
+        .expect("create repo proj-2");
+
+    let list_proj_1 = repo
+        .list_repositories(DEFAULT_ORG_ID, "proj-1")
+        .await
+        .expect("list proj-1");
+    let list_proj_2 = repo
+        .list_repositories(DEFAULT_ORG_ID, "proj-2")
+        .await
+        .expect("list proj-2");
+
+    assert_eq!(list_proj_1.len(), 1);
+    assert_eq!(list_proj_2.len(), 1);
+    assert_eq!(list_proj_1[0].id, "repo-proj-1");
+    assert_eq!(list_proj_2[0].id, "repo-proj-2");
+    assert_eq!(list_proj_1[0].local_path, "/tmp/shared-path");
+    assert_eq!(list_proj_2[0].local_path, "/tmp/shared-path");
 }
 
 #[tokio::test]

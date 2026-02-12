@@ -461,6 +461,93 @@ async fn test_real_search_empty_project_returns_empty_not_error() {
     );
 }
 
+#[tokio::test]
+async fn test_real_search_memory_enriches_origin_context_fields() {
+    let (server, _temp) = create_test_mcp_server().await;
+    let memory_h = server.memory_handler();
+    let search_h = server.search_handler();
+
+    let token = "origin_context_search_token";
+    let project_id = "origin-context-project";
+
+    let store_args = MemoryArgs {
+        action: MemoryAction::Store,
+        org_id: None,
+        resource: MemoryResource::Observation,
+        project_id: Some(project_id.to_string()),
+        data: Some(json!({
+            "content": token,
+            "observation_type": "context",
+            "repo_id": "repo-origin",
+            "file_path": "src/origin.rs",
+            "branch": "feature/origin",
+            "commit": "abc123origin"
+        })),
+        ids: None,
+        repo_id: None,
+        session_id: Some("sess-origin-search".to_string().into()),
+        tags: None,
+        query: None,
+        anchor_id: None,
+        depth_before: None,
+        depth_after: None,
+        window_secs: None,
+        observation_types: None,
+        max_tokens: None,
+        limit: None,
+    };
+
+    let store_result = memory_h.handle(Parameters(store_args)).await;
+    assert!(store_result.is_ok());
+    let store_resp = store_result.unwrap();
+    assert!(!store_resp.is_error.unwrap_or(false));
+
+    let search_args = SearchArgs {
+        query: token.to_string(),
+        org_id: None,
+        resource: SearchResource::Memory,
+        collection: None,
+        extensions: None,
+        filters: None,
+        limit: Some(10),
+        min_score: None,
+        tags: None,
+        session_id: None,
+        token: None,
+    };
+
+    let result = search_h.handle(Parameters(search_args)).await;
+    assert!(result.is_ok(), "Search should not Err");
+    let resp = result.unwrap();
+    assert!(!resp.is_error.unwrap_or(false));
+
+    let text = extract_text(&resp.content);
+    assert!(
+        text.contains("origin_context"),
+        "Expected origin_context in response: {text}"
+    );
+    assert!(
+        text.contains(project_id),
+        "Expected project_id in response: {text}"
+    );
+    assert!(
+        text.contains("repo-origin"),
+        "Expected repo_id in response: {text}"
+    );
+    assert!(
+        text.contains("src/origin.rs"),
+        "Expected file_path in response: {text}"
+    );
+    assert!(
+        text.contains("feature/origin"),
+        "Expected branch in response: {text}"
+    );
+    assert!(
+        text.contains("abc123origin"),
+        "Expected commit in response: {text}"
+    );
+}
+
 // =============================================================================
 // Agent Session — Full FK Chain Round-Trip
 // =============================================================================

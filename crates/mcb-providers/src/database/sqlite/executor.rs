@@ -103,7 +103,7 @@ impl SqliteExecutor {
         }
         q.execute(&self.pool)
             .await
-            .map_err(|e| Error::memory_with_source("SQL execute failed", e))?;
+            .map_err(|e| Error::memory_with_source(format!("SQL execute failed: {sql}"), e))?;
         Ok(())
     }
 
@@ -124,7 +124,7 @@ impl SqliteExecutor {
         let row = q
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| Error::memory_with_source("SQL query_one failed", e))?;
+            .map_err(|e| Error::memory_with_source(format!("SQL query_one failed: {sql}"), e))?;
         match row {
             Some(r) => {
                 let map_row = SqliteMappedRow::from_sqlite_row(&r)
@@ -148,7 +148,7 @@ impl SqliteExecutor {
         let rows = q
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| Error::memory_with_source("SQL query_all failed", e))?;
+            .map_err(|e| Error::memory_with_source(format!("SQL query_all failed: {sql}"), e))?;
         let mut out = Vec::with_capacity(rows.len());
         for r in rows {
             let map_row = SqliteMappedRow::from_sqlite_row(&r)

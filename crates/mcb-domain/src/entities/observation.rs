@@ -103,6 +103,7 @@ pub struct ObservationMetadata {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quality_gate: Option<QualityGateResult>,
     /// Contextual information about the origin of the observation.
+    #[allow(missing_docs)]
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub origin_context: Option<OriginContext>,
 }

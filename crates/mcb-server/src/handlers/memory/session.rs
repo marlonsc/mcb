@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
 use mcb_domain::value_objects::SessionId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
@@ -73,15 +73,15 @@ pub async fn store_session(
     })?;
     let session_id_str = session_id.as_str().to_string();
     match memory_service
-        .create_session_summary(
+        .create_session_summary(CreateSessionSummaryInput {
             project_id,
             session_id,
             topics,
             decisions,
             next_steps,
             key_files,
-            Some(origin_context),
-        )
+            origin_context: Some(origin_context),
+        })
         .await
     {
         Ok(summary_id) => ResponseFormatter::json_success(&serde_json::json!({

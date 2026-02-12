@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
@@ -61,15 +61,15 @@ pub async fn summarize_session(
             McpError::invalid_params("project_id is required for summarize", None)
         })?;
         match memory_service
-            .create_session_summary(
+            .create_session_summary(CreateSessionSummaryInput {
                 project_id,
-                session_id.clone(),
+                session_id: session_id.clone(),
                 topics,
                 decisions,
                 next_steps,
                 key_files,
-                Some(origin_context),
-            )
+                origin_context: Some(origin_context),
+            })
             .await
         {
             Ok(summary_id) => ResponseFormatter::json_success(&serde_json::json!({

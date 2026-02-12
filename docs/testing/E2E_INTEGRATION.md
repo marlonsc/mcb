@@ -2,7 +2,8 @@
 
 ## Overview
 
-MCB has a **3-layer testing strategy** to ensure admin web UI routes are always accessible:
+MCB has a **3-layer testing strategy** to ensure admin web UI routes are always
+accessible:
 
 1. **Unit Tests (Rust)**: Test isolated route handlers
 2. **Integration Tests (Rust)**: Test full Rocket server with `admin_rocket()`
@@ -10,11 +11,15 @@ MCB has a **3-layer testing strategy** to ensure admin web UI routes are always 
 
 ## Why All 3 Layers?
 
-**v0.2.0 Bug**: Admin UI returned 404 on all routes because web routes were only mounted in `web_rocket()` (test fixture) but NOT in `admin_rocket()` (production server).
+**v0.2.0 Bug**: Admin UI returned 404 on all routes because web routes were only
+mounted in `web_rocket()` (test fixture) but NOT in `admin_rocket()` (production
+server).
 
 - ✅ **Unit tests passed** - They tested `web_rocket()` which had routes
-- ❌ **Integration tests MISSING** - No tests for `admin_rocket()` production config
-- ❌ **E2E tests NOT RUN** - Playwright tests existed but weren't integrated into CI
+- ❌ **Integration tests MISSING** - No tests for `admin_rocket()` production
+  config
+- ❌ **E2E tests NOT RUN** - Playwright tests existed but weren't integrated
+  into CI
 
 **Result**: Bug shipped to production.
 
@@ -53,7 +58,8 @@ async fn test_admin_rocket_dashboard_is_accessible() {
     assert_eq!(
         response.status(),
         Status::Ok,
-        "Dashboard (/) must return 200 OK, not 404. This is the PRODUCTION route."
+        "Dashboard (/) must return 200 OK, not 404. This is the PRODUCTION \
+        route."
     );
 }
 ```
@@ -75,7 +81,8 @@ test('Dashboard (/) should return 200 OK with HTML', async ({ page }) => {
 });
 ```
 
-**What they catch**: Everything - HTTP server config, routing, rendering, browser compatibility.
+**What they catch**: Everything - HTTP server config, routing, rendering,
+browser compatibility.
 **What they miss**: Nothing (but slowest to run).
 
 ## Running Tests
@@ -144,6 +151,7 @@ jobs:
 
 ### Routes That MUST Always Return 200
 
+<!-- markdownlint-disable MD013 -->
 | Route | Layer 1 | Layer 2 | Layer 3 |
 | ------- | --------- | --------- | --------- |
 | `/` | ✅ `test_dashboard_returns_html` | ✅ `test_admin_rocket_dashboard_is_accessible` | ✅ `Dashboard should return 200` |
@@ -154,6 +162,7 @@ jobs:
 | `/favicon.ico` | ✅ `test_favicon_returns_svg` | ✅ `test_admin_rocket_favicon_is_accessible` | ✅ `favicon should return SVG` |
 | `/ui/theme.css` | ❌ | ✅ `test_admin_rocket_theme_css_is_accessible` | ✅ `theme CSS should return 200` |
 | `/ui/shared.js` | ❌ | ✅ `test_admin_rocket_shared_js_is_accessible` | ✅ `shared JS should return 200` |
+<!-- markdownlint-enable MD013 -->
 
 ## Maintenance
 
@@ -174,7 +183,8 @@ jobs:
 
 ### Playwright Tests Fail with "Connection Refused"
 
-MCB server not running. Playwright config auto-starts server via `webServer.command`.
+MCB server not running. Playwright config auto-starts server via
+`webServer.command`.
 
 **Fix**:
 
@@ -189,7 +199,8 @@ MCB_BASE_URL=http://localhost:8080 npx playwright test
 
 Routes mounted in `web_rocket()` but not `admin_rocket()`.
 
-**Fix**: Check `crates/mcb-server/src/admin/routes.rs` - add routes to `mount()` call.
+**Fix**: Check `crates/mcb-server/src/admin/routes.rs` - add routes to `mount()`
+call.
 
 ### E2E Tests Skip (CI Only)
 

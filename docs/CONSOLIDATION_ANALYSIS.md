@@ -137,7 +137,7 @@ pub fn handler(
 
 ### Dead Weight (Single-Use Types)
 
-```
+```ascii
 AdminHealthResponse, IndexingStatusResponse, ReadinessResponse,
 LivenessResponse, ShutdownResponse, CacheErrorResponse,
 ServiceListResponse, ServiceActionResponse, ServiceErrorResponse
@@ -147,7 +147,7 @@ ServiceListResponse, ServiceActionResponse, ServiceErrorResponse
 
 ### Multi-Use Types (Reusable)
 
-```
+```ascii
 CollectionInfoResponse, FileInfoResponse, ChunkDetailResponse,
 FileTreeNode, ExtendedHealthResponse, PerformanceMetricsData
 ```
@@ -156,7 +156,7 @@ FileTreeNode, ExtendedHealthResponse, PerformanceMetricsData
 
 ## Alignment Matrix: MCP ↔ Admin UI
 
-```
+```ascii
                     INDEX   SEARCH  MEMORY  SESSION VCS     VALIDATE
 HTTP Endpoint       ✅✅    ✅✅    ⚠️      ⚠️      ⚠️      ✅
 Response Match      ✅      ✅      ✅      ⚠️      ⚠️      ✅
@@ -217,7 +217,7 @@ let Some(resource) = &state.resource else {
 ## Testing Strategy
 
 | Phase | Test Coverage | Effort |
-|-------|---------------|--------|
+| ------- | --------------- | -------- |
 | Quick Wins | 4 unit tests per endpoint | 2 hours |
 | Consolidation | 10 type compatibility tests | 1 hour |
 | Extensions | 6 integration tests | 3 hours |
@@ -252,7 +252,7 @@ let Some(resource) = &state.resource else {
 ## Success Metrics
 
 | Metric | Target | Current | Status |
-|--------|--------|---------|--------|
+| -------- | -------- | --------- | -------- |
 | Admin endpoints reusing MCP | 60% | 0% | 📊 |
 | Single-use response types | 0 | 9 | 📊 |
 | Code duplication (handler logic) | <5% | 15% | 📊 |

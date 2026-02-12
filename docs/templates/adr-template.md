@@ -6,7 +6,8 @@
 
 ## Context
 
-{What is the problem we are trying to solve? What is the current situation that requires a decision?}
+{What is the problem we are trying to solve? What is the current situation that
+requires a decision?}
 
 {Describe the background, constraints, and requirements that led to this decision.}
 
@@ -14,7 +15,8 @@
 
 {What decision was made? What is the change being made?}
 
-{Provide clear, actionable description of the decision. Include any specific technologies, patterns, or approaches chosen.}
+{Provide clear, actionable description of the decision. Include any specific
+technologies, patterns, or approaches chosen.}
 
 ## Consequences
 

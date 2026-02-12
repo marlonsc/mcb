@@ -77,3 +77,6 @@ mod collections_utils_tests;
 
 #[path = "unit/context_resolution_tests.rs"]
 mod context_resolution_tests;
+
+#[path = "unit/unified_execution_gate_tests.rs"]
+mod unified_execution_gate_tests;

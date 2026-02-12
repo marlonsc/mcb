@@ -73,6 +73,7 @@ pub fn resolve_identifier_precedence(
 }
 
 /// Input parameters for resolving an `OriginContext`.
+#[allow(missing_docs)]
 pub struct OriginContextInput<'a> {
     /// The organization ID.
     pub org_id: Option<&'a str>,
@@ -123,6 +124,7 @@ pub struct OriginContextInput<'a> {
 }
 
 /// Resolves an `OriginContext` from the provided input, handling precedence between args and payload.
+#[allow(missing_docs)]
 pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginContext, McpError> {
     let project_id = resolve_identifier_precedence(
         "project_id",

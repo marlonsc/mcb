@@ -18,7 +18,7 @@ pub use indexing::{
     BatchIndexingServiceInterface, IndexingResult, IndexingServiceInterface, IndexingStats,
     IndexingStatus,
 };
-pub use memory::MemoryServiceInterface;
+pub use memory::{CreateSessionSummaryInput, MemoryServiceInterface};
 pub use project::ProjectDetectorService;
 pub use search::{SearchFilters, SearchServiceInterface};
 pub use validation::{

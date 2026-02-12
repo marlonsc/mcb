@@ -1,8 +1,15 @@
 # Integration Tests - Redis and NATS
 
-This document explains how to run integration tests that use Redis (cache) and NATS (event bus) against real local services.
+This document explains how to run integration tests that use Redis (cache) and
+NATS (event bus) against real local services.
 
-**Note:** Current integration tests use `skip_if_service_unavailable!` and check Milvus, Ollama, Redis, Postgres, etc. (see `crates/mcb-server/tests/integration/helpers.rs`). The specific `cargo test redis_cache_integration` / `nats_event_bus_integration` targets may not exist; use `make test` or `make test SCOPE=integration` for the actual suite. The Redis/NATS Docker setup below remains useful when those services are required.
+**Note:** Current integration tests use `skip_if_service_unavailable!` and check
+Milvus, Ollama, Redis, Postgres, etc. (see
+`crates/mcb-server/tests/integration/helpers.rs`). The specific
+`cargo test redis_cache_integration` / `nats_event_bus_integration` targets may
+not exist; use `make test` or `make test SCOPE=integration` for the actual
+suite. The Redis/NATS Docker setup below remains useful when those services are
+required.
 
 ## Quick Start
 
@@ -37,7 +44,8 @@ make test
 docker-compose up
 ```
 
-`make docker-up` now uses a unified `docker-compose.yml` that includes OpenAI mock, Ollama, Milvus, Redis, and NATS.
+`make docker-up` now uses a unified `docker-compose.yml` that includes OpenAI
+mock, Ollama, Milvus, Redis, and NATS.
 
 ## Detailed Setup
 
@@ -80,7 +88,8 @@ make test
 make test SCOPE=integration
 
 # With environment variables if services are on different hosts
-REDIS_URL=redis://192.168.1.100:6379 NATS_URL=nats://192.168.1.100:4222 make test
+REDIS_URL=redis://192.168.1.100:6379 \
+NATS_URL=nats://192.168.1.100:4222 make test
 ```
 
 If Redis/NATS-specific test targets (e.g. `redis_cache_integration`,
@@ -93,7 +102,8 @@ Start services via `docker-compose.yml`, then run tests on the host:
 
 ```bash
 make docker-up
-REDIS_URL=redis://127.0.0.1:6379 NATS_URL=nats://127.0.0.1:4222 make test
+REDIS_URL=redis://127.0.0.1:6379 \
+NATS_URL=nats://127.0.0.1:4222 make test
 make docker-down
 ```
 
@@ -138,7 +148,8 @@ Run: `make test` or `make test SCOPE=integration`. If a dedicated
 
 ### NATS Event Bus Tests
 
-**See:** `crates/mcb-infrastructure/src/infrastructure/events.rs` and integration tests.
+**See:** `crates/mcb-infrastructure/src/infrastructure/events.rs` and
+integration tests.
 NATS availability checks may use similar patterns to `is_redis_available` in
 `integration/helpers.rs`.
 
@@ -160,7 +171,8 @@ Run: `make test` or `make test SCOPE=integration`. If a dedicated
 
 ## Environment Variables
 
-Tests automatically detect services using these environment variables (in order of
+Tests automatically detect services using these environment variables
+(in order of priority):
 priority):
 
 ### Redis
@@ -180,7 +192,8 @@ Example:
 ```bash
 
 # Use custom host services
-REDIS_URL=redis://custom-host:6379 NATS_URL=nats://custom-host:4222 make test
+REDIS_URL=redis://custom-host:6379 \
+NATS_URL=nats://custom-host:4222 make test
 ```
 
 ## Docker Integration
@@ -407,7 +420,9 @@ jobs:
 
 -   name: Run integration tests
         run: |
-          REDIS_URL=redis://127.0.0.1:6379 NATS_URL=nats://127.0.0.1:4222 make test
+          REDIS_URL=redis://127.0.0.1:6379 \
+          NATS_URL=nats://127.0.0.1:4222 \
+          make test
 ```
 
 ## Additional Resources

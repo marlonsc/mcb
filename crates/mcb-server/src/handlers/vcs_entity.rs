@@ -8,7 +8,8 @@ use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
 use crate::handler_helpers::{
-    current_timestamp, map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
+    current_timestamp, map_opaque_error, ok_json, ok_text, require_data, require_id,
+    resolve_identifier_precedence, resolve_org_id,
 };
 
 /// Handler for the consolidated `vcs_entity` MCP tool.
@@ -52,6 +53,14 @@ impl VcsEntityHandler {
             // -- Repository --
             (VcsEntityAction::Create, VcsEntityResource::Repository) => {
                 let mut repo: Repository = require_data(args.data, "data required for create")?;
+                repo.project_id = resolve_identifier_precedence(
+                    "project_id",
+                    args.project_id.as_deref(),
+                    Some(repo.project_id.as_str()),
+                )?
+                .ok_or_else(|| {
+                    McpError::invalid_params("project_id required for repository create", None)
+                })?;
                 repo.org_id = org_id.to_string();
                 map_opaque_error(self.repo.create_repository(&repo).await)?;
                 ok_json(&repo)
@@ -68,6 +77,14 @@ impl VcsEntityHandler {
             }
             (VcsEntityAction::Update, VcsEntityResource::Repository) => {
                 let mut repo: Repository = require_data(args.data, "data required for update")?;
+                repo.project_id = resolve_identifier_precedence(
+                    "project_id",
+                    args.project_id.as_deref(),
+                    Some(repo.project_id.as_str()),
+                )?
+                .ok_or_else(|| {
+                    McpError::invalid_params("project_id required for repository update", None)
+                })?;
                 repo.org_id = org_id.to_string();
                 map_opaque_error(self.repo.update_repository(&repo).await)?;
                 ok_text("updated")

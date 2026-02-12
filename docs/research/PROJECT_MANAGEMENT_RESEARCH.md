@@ -4,7 +4,9 @@
 
 ### EXECUTIVE SUMMARY
 
-Pesquisei 5 projetos Rust em produção (Sway, Shuttle, Vibe-Kanban, Rocket, Ockam) para extrair padrões reais de project management. Resultado: **implementação viável em 2-3 semanas** no MCB com Clean Architecture.
+Pesquisei 5 projetos Rust em produção (Sway, Shuttle, Vibe-Kanban, Rocket, Ockam)
+para extrair padrões reais de project management. Resultado:
+**implementação viável em 2-3 semanas** no MCB com Clean Architecture.
 
 ---
 
@@ -56,8 +58,10 @@ pub struct ProjectMetadata {
 
 **Why this design?**
 
-- **Sway** (FuelLabs): Uses `PackageDependencyIdentifier { name, version }` + `Source` enum (Git, Path, Registry)
-- **Vibe-Kanban**: Minimal `Project { id, name, created_at, updated_at }` + separate `ProjectRepo` junction table
+- **Sway** (FuelLabs): Uses `PackageDependencyIdentifier { name, version }`
+  - `Source` enum (Git, Path, Registry)
+- **Vibe-Kanban**: Minimal `Project { id, name, created_at, updated_at }`
+  - separate `ProjectRepo` junction table
 - **Shuttle**: `ProjectResponse { id, name, user_id, team_id, created_at, ... }`
 
 **Key insight**: Keep Project simple, use junction tables for relationships.
@@ -114,9 +118,12 @@ CREATE INDEX idx_metadata_cargo_name ON project_metadata(cargo_name);
 
 **Why this structure?**
 
-- **Vibe-Kanban** uses: `projects (id, name, created_at, updated_at)` + `project_repos (id, project_id, repo_id)` junction
-- **Sway** stores: `PackageEntry { name, version, source_cid, dependencies: Vec<PackageDependencyIdentifier> }`
-- **Shuttle** has: `projects (id, name, user_id, team_id, created_at, deployment_state, uris)`
+- **Vibe-Kanban** uses: `projects (id, name, created_at, updated_at)`
+  - `project_repos (id, project_id, repo_id)` junction
+- **Sway** stores: `PackageEntry { name, version, source_cid,
+  dependencies: Vec<PackageDependencyIdentifier> }`
+- **Shuttle** has: `projects (id, name, user_id, team_id, created_at,
+  deployment_state, uris)`
 
 **Optimization**: Denormalize `project_metadata` to avoid repeated Cargo.toml parsing.
 
@@ -157,10 +164,12 @@ pub trait ProjectProvider: Send + Sync {
 #[async_trait]
 pub trait DependencyProvider: Send + Sync {
     /// Get all dependencies of a project
-    async fn get_dependencies(&self, project_id: Uuid) -> Result<Vec<ProjectDependency>, ProjectError>;
+    async fn get_dependencies(&self, project_id: Uuid) ->
+        Result<Vec<ProjectDependency>, ProjectError>;
 
     /// Get projects that depend on this one
-    async fn get_dependents(&self, project_id: Uuid) -> Result<Vec<ProjectDependency>, ProjectError>;
+    async fn get_dependents(&self, project_id: Uuid) ->
+        Result<Vec<ProjectDependency>, ProjectError>;
 
     /// Add dependency relationship
     async fn add_dependency(
@@ -175,7 +184,8 @@ pub trait DependencyProvider: Send + Sync {
     async fn remove_dependency(&self, from: Uuid, to: Uuid) -> Result<(), ProjectError>;
 
     /// Check for circular dependencies
-    async fn has_circular_dependency(&self, from: Uuid, to: Uuid) -> Result<bool, ProjectError>;
+    async fn has_circular_dependency(&self, from: Uuid, to: Uuid) ->
+        Result<bool, ProjectError>;
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -224,7 +234,9 @@ impl ProjectService {
     }
 
     /// Get project with all its dependencies
-    pub async fn get_project_with_deps(&self, id: Uuid) -> Result<ProjectWithDeps, ProjectError> {
+    pub async fn get_project_with_deps(&self, id: Uuid) ->
+        Result<ProjectWithDeps, ProjectError>
+    {
         let project = self.project_provider
             .get_project(id)
             .await?
@@ -246,7 +258,9 @@ impl ProjectService {
     }
 
     /// Analyze dependency graph for issues
-    pub async fn analyze_dependencies(&self, project_id: Uuid) -> Result<DependencyAnalysis, ProjectError> {
+    pub async fn analyze_dependencies(&self, project_id: Uuid) ->
+        Result<DependencyAnalysis, ProjectError>
+    {
         let deps = self.dependency_provider.get_dependencies(project_id).await?;
 
         let mut analysis = DependencyAnalysis::default();
@@ -255,8 +269,12 @@ impl ProjectService {
 
         // Check for circular dependencies
         for dep in &deps {
-            if self.dependency_provider.has_circular_dependency(project_id, dep.to_project_id).await? {
-                analysis.circular_dependencies.push((project_id, dep.to_project_id));
+            if self.dependency_provider
+                .has_circular_dependency(project_id, dep.to_project_id).await?
+            {
+                analysis.circular_dependencies.push((
+                    project_id, dep.to_project_id
+                ));
             }
         }
 
@@ -305,7 +323,9 @@ impl ProjectProvider for SqliteProjectProvider {
         .map_err(|e| ProjectError::Database(e.to_string()))
     }
 
-    async fn get_project(&self, id: Uuid) -> Result<Option<Project>, ProjectError> {
+    async fn get_project(&self, id: Uuid) ->
+        Result<Option<Project>, ProjectError>
+    {
         sqlx::query_as::<_, Project>(
             r#"SELECT id, name, version, path, created_at, updated_at
                FROM projects
@@ -317,7 +337,9 @@ impl ProjectProvider for SqliteProjectProvider {
         .map_err(|e| ProjectError::Database(e.to_string()))
     }
 
-    async fn create_project(&self, path: &str) -> Result<Project, ProjectError> {
+    async fn create_project(&self, path: &str) ->
+        Result<Project, ProjectError>
+    {
         // Parse Cargo.toml
         let manifest = parse_cargo_toml(path)?;
         let id = Uuid::new_v4();
@@ -339,9 +361,12 @@ impl ProjectProvider for SqliteProjectProvider {
 
 #[async_trait]
 impl DependencyProvider for SqliteProjectProvider {
-    async fn get_dependencies(&self, project_id: Uuid) -> Result<Vec<ProjectDependency>, ProjectError> {
+    async fn get_dependencies(&self, project_id: Uuid) ->
+        Result<Vec<ProjectDependency>, ProjectError>
+    {
         sqlx::query_as::<_, ProjectDependency>(
-            r#"SELECT id, from_project_id, to_project_id, version_requirement, is_dev, created_at
+            r#"SELECT id, from_project_id, to_project_id,
+                 version_requirement, is_dev, created_at
                FROM project_dependencies
                WHERE from_project_id = $1
                ORDER BY created_at DESC"#
@@ -370,9 +395,11 @@ impl DependencyProvider for SqliteProjectProvider {
         let id = Uuid::new_v4();
         sqlx::query_as::<_, ProjectDependency>(
             r#"INSERT INTO project_dependencies
-               (id, from_project_id, to_project_id, version_requirement, is_dev, created_at)
+               (id, from_project_id, to_project_id, version_requirement,
+                is_dev, created_at)
                VALUES ($1, $2, $3, $4, $5, NOW())
-               RETURNING id, from_project_id, to_project_id, version_requirement, is_dev, created_at"#
+               RETURNING id, from_project_id, to_project_id,
+               version_requirement, is_dev, created_at"#
         )
         .bind(id)
         .bind(from)
@@ -384,11 +411,14 @@ impl DependencyProvider for SqliteProjectProvider {
         .map_err(|e| ProjectError::Database(e.to_string()))
     }
 
-    async fn has_circular_dependency(&self, from: Uuid, to: Uuid) -> Result<bool, ProjectError> {
+    async fn has_circular_dependency(&self, from: Uuid, to: Uuid) ->
+        Result<bool, ProjectError>
+    {
         // Recursive check: if `to` depends on `from`, it's circular
         let count: (i64,) = sqlx::query_as(
             r#"WITH RECURSIVE dep_chain AS (
-                 SELECT from_project_id, to_project_id FROM project_dependencies WHERE from_project_id = $2
+                 SELECT from_project_id, to_project_id FROM project_dependencies
+                   WHERE from_project_id = $2
                  UNION ALL
                  SELECT d.from_project_id, d.to_project_id
                  FROM project_dependencies d
@@ -605,7 +635,8 @@ mod tests {
             Ok(self.projects.clone())
         }
 
-        async fn get_project(&self, id: Uuid) -> Result<Option<Project>, ProjectError> {
+        async fn get_project(&self, id: Uuid) ->
+            Result<Option<Project>, ProjectError> {
             Ok(self.projects.iter().find(|p| p.id == id).cloned())
         }
 
@@ -791,6 +822,7 @@ pub struct ProjectResponse {
 
 ## 9. RISKS & MITIGATIONS
 
+<!-- markdownlint-disable MD013 -->
 | Risk | Mitigation |
 | ------ | ----------- |
 | Circular dependency detection performance | Use recursive CTE with depth limit |
@@ -798,6 +830,7 @@ pub struct ProjectResponse {
 | Cargo.toml parsing errors | Fallback to raw TOML storage |
 | Concurrent updates to dependencies | Use database transactions + unique constraints |
 | Version requirement parsing | Use `semver` crate for validation |
+<!-- markdownlint-enable MD013 -->
 
 ---
 

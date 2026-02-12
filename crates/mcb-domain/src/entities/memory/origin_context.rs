@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Contextual information about the origin of an operation or observation.
+#[allow(missing_docs)]
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct OriginContext {
     /// The ID of the organization.

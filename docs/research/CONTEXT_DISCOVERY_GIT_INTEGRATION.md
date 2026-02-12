@@ -133,7 +133,7 @@ async fn discover(&self, project_root: &Path) -> Result<ProjectContext> {
 
 ### Production Mitigations
 
-**Pattern 1: Snapshot Isolation**
+### Pattern 1: Snapshot Isolation
 
 ```rust
 // Capture git state once, use consistently
@@ -154,7 +154,7 @@ pub async fn discover(&self, project_root: &Path) -> Result<ProjectContext> {
 }
 ```
 
-**Pattern 2: Versioned Context**
+### Pattern 2: Versioned Context
 
 ```rust
 pub struct ProjectContext {
@@ -165,7 +165,7 @@ pub struct ProjectContext {
 }
 ```
 
-**Pattern 3: Change Signals**
+### Pattern 3: Change Signals
 
 ```rust
 // Invalidate cache when git index changes
@@ -243,7 +243,7 @@ impl IssueTrackerProvider for SqliteProvider {
 - **Response headers**: `RateLimit-Limit`, `RateLimit-Remaining`
 - **Strategy**: Points-based backpressure
 
-**Pattern: Adaptive Backoff**
+### Pattern: Adaptive Backoff
 
 ```rust
 pub struct TrackerClient {
@@ -274,7 +274,7 @@ impl TrackerClient {
 }
 ```
 
-**Local Fallback Pattern** (GitLab/GitHub):
+### Local Fallback Pattern (GitLab/GitHub)
 
 ```rust
 pub async fn get_ready_issues(&self) -> Result<Vec<Issue>> {
@@ -320,7 +320,7 @@ let git_cache = Cache::builder()
 
 ### Advanced Patterns from Production Code
 
-**Pattern 1: Differential TTL by Stability**
+### Pattern 1: Differential TTL by Stability
 
 ```rust
 pub enum CacheStrategy {
@@ -349,7 +349,7 @@ impl CachedContextScout {
 }
 ```
 
-**Pattern 2: Event-Driven Invalidation**
+### Pattern 2: Event-Driven Invalidation
 
 ```rust
 pub async fn watch_git_changes(&self, repo_path: &Path) {
@@ -377,7 +377,7 @@ pub async fn watch_git_changes(&self, repo_path: &Path) {
 }
 ```
 
-**Pattern 3: Write-Through Cache**
+### Pattern 3: Write-Through Cache
 
 ```rust
 // When git operation succeeds, update cache immediately
@@ -417,6 +417,7 @@ pub async fn after_commit(&self, repo_path: &Path) -> Result<()> {
 
 ### Critical Gaps ❌
 
+<!-- markdownlint-disable MD013 -->
 | Gap | Impact | Severity |
 | ----- | -------- | ---------- |
 | **No external tracker support** | Can't discover GitHub/GitLab/Jira issues | **HIGH** |
@@ -424,6 +425,7 @@ pub async fn after_commit(&self, repo_path: &Path) -> Result<()> {
 | **No rate limiting abstraction** | Will hit GitHub API limits without backoff | **HIGH** |
 | **No composite snapshot consistency** | Context mixing different timestamps | **MEDIUM** |
 | **No local fallback for tracker outages** | Whole discovery fails if GitHub is down | **MEDIUM** |
+<!-- markdownlint-enable MD013 -->
 
 ### Where ADR-035 Differs from Claude-mem
 
@@ -459,7 +461,8 @@ pub trait IssueTrackerProvider: Send + Sync {
     async fn in_progress_issues(&self, project_id: &str) -> Result<Vec<IssueSummary>>;
 
     /// List blocked issues with blockers
-    async fn blocked_issues(&self, project_id: &str) -> Result<Vec<(IssueSummary, Vec<String>)>>;
+    async fn blocked_issues(&self, project_id: &str) ->
+        Result<Vec<(IssueSummary, Vec<String>)>>;
 
     /// Current phase (if tracked by tracker)
     async fn current_phase(&self, project_id: &str) -> Result<Option<PhaseSummary>>;
@@ -597,7 +600,9 @@ pub enum ConsistencyLevel {
 ```rust
 #[async_trait]
 pub trait TrackerWithFallback: IssueTrackerProvider {
-    async fn get_with_fallback(&self, project_id: &str) -> Result<TrackerContext> {
+    async fn get_with_fallback(&self, project_id: &str) ->
+        Result<TrackerContext>
+    {
         // Try primary tracker
         match self.ready_issues(project_id).await {
             Ok(issues) => {
@@ -633,7 +638,8 @@ pub trait TrackerWithFallback: IssueTrackerProvider {
 | **GitHub API tracker** | N/A | 500-1000ms (first call) |
 | **Both (composite)** | 23ms | 500ms (dominated by API) |
 
-**Mitigation:** Cache GitHub results aggressively (5min TTL), offer reduced discovery mode.
+**Mitigation:** Cache GitHub results aggressively (5min TTL), offer reduced
+discovery mode.
 
 ### Memory Footprint
 
@@ -671,7 +677,9 @@ pub trait TrackerWithFallback: IssueTrackerProvider {
 
 | Tool | Approach | Notes |
 | ------ | ---------- | ------- |
+<!-- markdownlint-disable MD013 -->
 | **GitKraken Desktop** | git2 + local git, no external trackers | Similar to MCB |
+<!-- markdownlint-enable MD013 -->
 | **GitHub CLI (gh)** | REST API + local git | Multiple trackers |
 | **GitLab Runner** | git2 + API integration | Fallback to cache |
 | **Argo CD** | gix (gitoxide) + polling | Large-scale |
@@ -679,7 +687,10 @@ pub trait TrackerWithFallback: IssueTrackerProvider {
 
 ### Key Takeaway
 
-All production tools separate **local repo discovery** (git2 or gix) from **external tracker discovery** (APIs). ADR-035 is correct to start with local-only, but should design for tracker integration from day one via trait abstraction.
+All production tools separate **local repo discovery** (git2 or gix) from
+**external tracker discovery** (APIs). ADR-035 is correct to start with
+local-only, but should design for tracker integration from day one via trait
+abstraction.
 
 ---
 
@@ -716,4 +727,6 @@ All production tools separate **local repo discovery** (git2 or gix) from **exte
 - Circuit breaker pattern
 - Graceful degradation when tracker unavailable
 
-These enhancements would make ADR-035 suitable for **production multi-tracker deployments** while maintaining backward compatibility with the current SQLite-only baseline.
+These enhancements would make ADR-035 suitable for **production multi-tracker
+deployments** while maintaining backward compatibility with the current
+SQLite-only baseline.

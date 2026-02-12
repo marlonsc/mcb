@@ -14,7 +14,7 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::ports::providers::VectorStoreProvider;
 use mcb_domain::ports::repositories::MemoryRepository;
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
 use mcb_domain::utils::compute_content_hash;
 use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
 use uuid::Uuid;
@@ -338,30 +338,24 @@ impl MemoryServiceImpl {
 
     async fn create_session_summary_impl(
         &self,
-        project_id: String,
-        session_id: SessionId,
-        topics: Vec<String>,
-        decisions: Vec<String>,
-        next_steps: Vec<String>,
-        key_files: Vec<String>,
-        origin_context: Option<OriginContext>,
+        input: CreateSessionSummaryInput,
     ) -> Result<String> {
-        let session_id = session_id.into_string();
+        let session_id = input.session_id.into_string();
         let timestamp = Self::current_timestamp();
-        let project_id = if project_id.trim().is_empty() {
+        let project_id = if input.project_id.trim().is_empty() {
             self.project_id.clone()
         } else {
-            project_id
+            input.project_id
         };
         let summary = SessionSummary {
             id: Uuid::new_v4().to_string(),
             project_id: project_id.clone(),
             session_id: session_id.clone(),
-            topics,
-            decisions,
-            next_steps,
-            key_files,
-            origin_context: Some(origin_context.unwrap_or(OriginContext {
+            topics: input.topics,
+            decisions: input.decisions,
+            next_steps: input.next_steps,
+            key_files: input.key_files,
+            origin_context: Some(input.origin_context.unwrap_or(OriginContext {
                 project_id: Some(project_id),
                 session_id: Some(session_id),
                 timestamp: Some(timestamp),
@@ -482,26 +476,8 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         self.repository.get_session_summary(session_id).await
     }
 
-    async fn create_session_summary(
-        &self,
-        project_id: String,
-        session_id: SessionId,
-        topics: Vec<String>,
-        decisions: Vec<String>,
-        next_steps: Vec<String>,
-        key_files: Vec<String>,
-        origin_context: Option<OriginContext>,
-    ) -> Result<String> {
-        self.create_session_summary_impl(
-            project_id,
-            session_id,
-            topics,
-            decisions,
-            next_steps,
-            key_files,
-            origin_context,
-        )
-        .await
+    async fn create_session_summary(&self, input: CreateSessionSummaryInput) -> Result<String> {
+        self.create_session_summary_impl(input).await
     }
 
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
