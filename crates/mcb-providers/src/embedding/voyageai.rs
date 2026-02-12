@@ -16,10 +16,8 @@ use crate::constants::{
     VOYAGEAI_MAX_INPUT_TOKENS,
 };
 use crate::embedding::helpers::constructor;
-use crate::utils::HttpResponseUtils;
-use crate::utils::http::{
-    create_http_provider_config, handle_request_error, parse_embedding_vector,
-};
+use crate::provider_utils::{embedding_data_array, send_json_request};
+use crate::utils::http::{RequestErrorKind, create_http_provider_config, parse_embedding_vector};
 
 /// VoyageAI embedding provider
 ///
@@ -112,18 +110,23 @@ impl VoyageAIEmbeddingProvider {
             "model": self.model
         });
 
-        let response = self
-            .http_client
-            .post(format!("{}/embeddings", self.effective_base_url()))
-            .header("Authorization", format!("Bearer {}", self.api_key))
-            .header("Content-Type", CONTENT_TYPE_JSON)
-            .timeout(self.timeout)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| handle_request_error(e, self.timeout, "VoyageAI"))?;
+        let headers = vec![
+            ("Authorization", format!("Bearer {}", self.api_key)),
+            ("Content-Type", CONTENT_TYPE_JSON.to_string()),
+        ];
 
-        HttpResponseUtils::check_and_parse(response, "VoyageAI").await
+        send_json_request(
+            &self.http_client,
+            reqwest::Method::POST,
+            format!("{}/embeddings", self.effective_base_url()),
+            self.timeout,
+            "VoyageAI",
+            "embeddings",
+            RequestErrorKind::Embedding,
+            &headers,
+            Some(&payload),
+        )
+        .await
     }
 
     /// Parse embedding vector from response data
@@ -147,17 +150,7 @@ impl EmbeddingProvider for VoyageAIEmbeddingProvider {
 
         let response_data = self.fetch_embeddings(texts).await?;
 
-        let data = response_data["data"].as_array().ok_or_else(|| {
-            Error::embedding("Invalid response format: missing data array".to_string())
-        })?;
-
-        if data.len() != texts.len() {
-            return Err(Error::embedding(format!(
-                "Response data count mismatch: expected {}, got {}",
-                texts.len(),
-                data.len()
-            )));
-        }
+        let data = embedding_data_array(&response_data, texts.len())?;
 
         data.iter()
             .enumerate()

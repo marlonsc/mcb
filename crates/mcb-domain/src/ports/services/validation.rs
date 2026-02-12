@@ -1,3 +1,4 @@
+//! Provides validation domain definitions.
 use std::path::Path;
 
 use async_trait::async_trait;
@@ -90,6 +91,7 @@ pub struct FunctionComplexity {
 /// Architecture Validation Service Interface
 #[async_trait]
 pub trait ValidationServiceInterface: Send + Sync {
+    /// Performs the validate operation.
     async fn validate(
         &self,
         workspace_root: &Path,
@@ -97,16 +99,20 @@ pub trait ValidationServiceInterface: Send + Sync {
         severity_filter: Option<&str>,
     ) -> Result<ValidationReport>;
 
+    /// Performs the list validators operation.
     async fn list_validators(&self) -> Result<Vec<String>>;
 
+    /// Performs the validate file operation.
     async fn validate_file(
         &self,
         file_path: &Path,
         validators: Option<&[String]>,
     ) -> Result<ValidationReport>;
 
+    /// Performs the get rules operation.
     async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>>;
 
+    /// Performs the analyze complexity operation.
     async fn analyze_complexity(
         &self,
         file_path: &Path,

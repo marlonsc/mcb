@@ -17,7 +17,9 @@ use crate::constants::{
     EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT, EMBEDDING_DIMENSION_ANTHROPIC_LITE,
 };
 use crate::embedding::helpers::constructor;
-use crate::utils::{HttpResponseUtils, handle_request_error, parse_embedding_vector};
+use crate::provider_utils::{embedding_data_array, send_json_request};
+use crate::utils::http::RequestErrorKind;
+use crate::utils::parse_embedding_vector;
 
 /// Anthropic embedding provider
 ///
@@ -109,18 +111,23 @@ impl AnthropicEmbeddingProvider {
             "encoding_format": "float"
         });
 
-        let response = self
-            .http_client
-            .post(format!("{}/embeddings", self.base_url()))
-            .header("Authorization", format!("Bearer {}", self.api_key))
-            .header("Content-Type", CONTENT_TYPE_JSON)
-            .timeout(self.timeout)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| handle_request_error(e, self.timeout, "Anthropic"))?;
+        let headers = vec![
+            ("Authorization", format!("Bearer {}", self.api_key)),
+            ("Content-Type", CONTENT_TYPE_JSON.to_string()),
+        ];
 
-        HttpResponseUtils::check_and_parse(response, "Anthropic").await
+        send_json_request(
+            &self.http_client,
+            reqwest::Method::POST,
+            format!("{}/embeddings", self.base_url()),
+            self.timeout,
+            "Anthropic",
+            "embeddings",
+            RequestErrorKind::Embedding,
+            &headers,
+            Some(&payload),
+        )
+        .await
     }
 
     /// Parse embedding vector from response data
@@ -144,17 +151,7 @@ impl EmbeddingProvider for AnthropicEmbeddingProvider {
 
         let response_data = self.fetch_embeddings(texts).await?;
 
-        let data = response_data["data"].as_array().ok_or_else(|| {
-            Error::embedding("Invalid response format: missing data array".to_string())
-        })?;
-
-        if data.len() != texts.len() {
-            return Err(Error::embedding(format!(
-                "Response data count mismatch: expected {}, got {}",
-                texts.len(),
-                data.len()
-            )));
-        }
+        let data = embedding_data_array(&response_data, texts.len())?;
 
         data.iter()
             .enumerate()

@@ -18,16 +18,22 @@ use super::memory::{ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
 /// Foreign key: (from_table.from_column) REFERENCES to_table(to_column).
 #[derive(Debug, Clone)]
 pub struct ForeignKeyDef {
+    /// Stores the from table value.
     pub from_table: String,
+    /// Stores the from column value.
     pub from_column: String,
+    /// Stores the to table value.
     pub to_table: String,
+    /// Stores the to column value.
     pub to_column: String,
 }
 
 /// Composite unique constraint (e.g. UNIQUE(collection, file_path)).
 #[derive(Debug, Clone)]
 pub struct UniqueConstraintDef {
+    /// Stores the table value.
     pub table: String,
+    /// Stores the columns value.
     pub columns: Vec<String>,
 }
 
@@ -38,10 +44,15 @@ pub struct UniqueConstraintDef {
 /// to produce dialect-specific DDL from this schema.
 #[derive(Debug, Clone)]
 pub struct ProjectSchema {
+    /// Stores the tables value.
     pub tables: Vec<TableDef>,
+    /// Stores the fts value.
     pub fts: Option<FtsDef>,
+    /// Stores the indexes value.
     pub indexes: Vec<IndexDef>,
+    /// Stores the foreign keys value.
     pub foreign_keys: Vec<ForeignKeyDef>,
+    /// Stores the unique constraints value.
     pub unique_constraints: Vec<UniqueConstraintDef>,
 }
 

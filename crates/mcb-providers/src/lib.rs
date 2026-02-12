@@ -49,6 +49,8 @@ pub mod constants;
 /// Shared utilities for provider implementations
 pub mod utils;
 
+pub(crate) mod provider_utils;
+
 /// Embedding provider implementations
 ///
 /// Implements `EmbeddingProvider` trait for various embedding APIs.

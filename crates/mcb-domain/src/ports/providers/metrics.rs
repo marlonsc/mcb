@@ -43,14 +43,17 @@ pub type MetricsResult<T> = crate::Result<T>;
 pub enum MetricsError {
     /// Metric not found
     #[error("Metric not found: {name}")]
+    /// Stores the field value.
     NotFound { name: String },
 
     /// Invalid metric name or labels
     #[error("Invalid metric: {message}")]
+    /// Stores the field value.
     Invalid { message: String },
 
     /// Backend error
     #[error("Metrics backend error: {message}")]
+    /// Stores the field value.
     Backend { message: String },
 }
 

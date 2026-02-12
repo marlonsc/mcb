@@ -192,7 +192,9 @@ pub struct WorkflowSession {
     pub project_id: String,
     /// Current state of the workflow.
     pub current_state: WorkflowState,
+    /// Stores the created at value.
     pub created_at: i64,
+    /// Stores the updated at value.
     pub updated_at: i64,
     /// Version number for optimistic concurrency control.
     pub version: u32,

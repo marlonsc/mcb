@@ -18,13 +18,17 @@ pub struct FtsSearchResult {
 /// Port for observation storage (CRUD, FTS, timeline).
 #[async_trait]
 pub trait MemoryRepository: Send + Sync {
+    /// Performs the store observation operation.
     async fn store_observation(&self, observation: &Observation) -> Result<()>;
+    /// Performs the get observation operation.
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>>;
+    /// Performs the find by hash operation.
     async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>>;
 
     /// Full-text search returning IDs with BM25 rank scores for hybrid fusion
     async fn search(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>>;
 
+    /// Performs the delete observation operation.
     async fn delete_observation(&self, id: &ObservationId) -> Result<()>;
 
     /// Get multiple observations by IDs (batch fetch for hybrid search)
@@ -39,6 +43,8 @@ pub trait MemoryRepository: Send + Sync {
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>>;
 
+    /// Performs the store session summary operation.
     async fn store_session_summary(&self, summary: &SessionSummary) -> Result<()>;
+    /// Performs the get session summary operation.
     async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>>;
 }

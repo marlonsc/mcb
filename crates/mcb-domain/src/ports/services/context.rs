@@ -1,3 +1,4 @@
+//! Provides context domain definitions.
 use async_trait::async_trait;
 
 use crate::entities::CodeChunk;

@@ -7,7 +7,7 @@ use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use crate::handler_helpers::{
-    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
+    current_timestamp, map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
 };
 
 /// Handler for the consolidated `org_entity` MCP tool.

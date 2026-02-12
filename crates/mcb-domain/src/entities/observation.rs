@@ -1,3 +1,4 @@
+//! Provides observation domain definitions.
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
