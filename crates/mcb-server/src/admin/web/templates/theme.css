@@ -197,5 +197,40 @@ code[class*="language-"], pre[class*="language-"] {
 .token.number { color: var(--hl-number); }
 .token.class-name { color: var(--hl-type); }
 
-
-
+/* Toggle switch component */
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-switch-track {
+  width: 44px;
+  height: 24px;
+  border-radius: 9999px;
+  background: var(--bg-tertiary, #d1d5db);
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+.toggle-switch-track.active {
+  background: var(--accent, #3b82f6);
+}
+.toggle-switch-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle-switch-track.active .toggle-switch-thumb {
+  transform: translateX(20px);
+}
+.toggle-switch[data-readonly] {
+  pointer-events: none;
+  opacity: 0.5;
+}

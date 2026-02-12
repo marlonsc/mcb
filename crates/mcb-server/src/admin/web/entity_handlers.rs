@@ -254,7 +254,7 @@ pub async fn entities_create(
             .map_err(|e| status::Custom(Status::InternalServerError, e))?;
     }
 
-    Ok(Redirect::to(format!("/ui/entities/{slug}")))
+    Ok(Redirect::to(format!("/ui/entities/{slug}?toast=created")))
 }
 
 /// Update entity — persists via service adapter and redirects to the detail page.
@@ -278,7 +278,9 @@ pub async fn entities_update(
             .map_err(|e| status::Custom(Status::InternalServerError, e))?;
     }
 
-    Ok(Redirect::to(format!("/ui/entities/{slug}/{id}")))
+    Ok(Redirect::to(format!(
+        "/ui/entities/{slug}/{id}?toast=updated"
+    )))
 }
 
 /// Delete entity — removes via service adapter and redirects to the list page.
@@ -297,5 +299,5 @@ pub async fn entities_delete(
             .map_err(|e| status::Custom(Status::InternalServerError, e))?;
     }
 
-    Ok(Redirect::to(format!("/ui/entities/{slug}")))
+    Ok(Redirect::to(format!("/ui/entities/{slug}?toast=deleted")))
 }
