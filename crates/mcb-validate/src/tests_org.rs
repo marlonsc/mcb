@@ -95,6 +95,37 @@ pub enum TestViolation {
         /// Severity level of the violation.
         severity: Severity,
     },
+    /// Mock type usage in tests is forbidden
+    MockTypeUsage {
+        /// File containing the mock type usage.
+        file: PathBuf,
+        /// Line number where the usage appears.
+        line: usize,
+        /// Matched token (e.g., MockService).
+        token: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Skip branch that bypasses real implementation setup
+    SkipBranchUsage {
+        /// File containing the skip branch.
+        file: PathBuf,
+        /// Line number where the skip branch starts.
+        line: usize,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Stub macro in tests outside fixture paths
+    StubMacroUsage {
+        /// File containing the stub macro.
+        file: PathBuf,
+        /// Line number where macro appears.
+        line: usize,
+        /// Macro name (`todo`/`unimplemented`).
+        macro_name: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
 }
 
 impl TestViolation {
@@ -202,6 +233,39 @@ impl std::fmt::Display for TestViolation {
                     function_name
                 )
             }
+            Self::MockTypeUsage {
+                file, line, token, ..
+            } => {
+                write!(
+                    f,
+                    "Mock type usage in tests: {}:{} - {}",
+                    file.display(),
+                    line,
+                    token
+                )
+            }
+            Self::SkipBranchUsage { file, line, .. } => {
+                write!(
+                    f,
+                    "Skip branch in tests: {}:{} - remove skip path and execute real implementation",
+                    file.display(),
+                    line
+                )
+            }
+            Self::StubMacroUsage {
+                file,
+                line,
+                macro_name,
+                ..
+            } => {
+                write!(
+                    f,
+                    "Stub macro in tests: {}:{} - {}!()",
+                    file.display(),
+                    line,
+                    macro_name
+                )
+            }
         }
     }
 }
@@ -217,6 +281,9 @@ impl Violation for TestViolation {
             Self::TrivialAssertion { .. } => "TEST005",
             Self::UnwrapOnlyAssertion { .. } => "TEST006",
             Self::CommentOnlyTest { .. } => "TEST007",
+            Self::MockTypeUsage { .. } => "TEST008",
+            Self::SkipBranchUsage { .. } => "TEST009",
+            Self::StubMacroUsage { .. } => "TEST010",
         }
     }
 
@@ -234,7 +301,10 @@ impl Violation for TestViolation {
             | Self::TestWithoutAssertion { severity, .. }
             | Self::TrivialAssertion { severity, .. }
             | Self::UnwrapOnlyAssertion { severity, .. }
-            | Self::CommentOnlyTest { severity, .. } => *severity,
+            | Self::CommentOnlyTest { severity, .. }
+            | Self::MockTypeUsage { severity, .. }
+            | Self::SkipBranchUsage { severity, .. }
+            | Self::StubMacroUsage { severity, .. } => *severity,
         }
     }
 
@@ -247,7 +317,10 @@ impl Violation for TestViolation {
             | Self::TestWithoutAssertion { file, .. }
             | Self::TrivialAssertion { file, .. }
             | Self::UnwrapOnlyAssertion { file, .. }
-            | Self::CommentOnlyTest { file, .. } => Some(file),
+            | Self::CommentOnlyTest { file, .. }
+            | Self::MockTypeUsage { file, .. }
+            | Self::SkipBranchUsage { file, .. }
+            | Self::StubMacroUsage { file, .. } => Some(file),
         }
     }
 
@@ -260,7 +333,10 @@ impl Violation for TestViolation {
             | Self::TestWithoutAssertion { line, .. }
             | Self::TrivialAssertion { line, .. }
             | Self::UnwrapOnlyAssertion { line, .. }
-            | Self::CommentOnlyTest { line, .. } => Some(*line),
+            | Self::CommentOnlyTest { line, .. }
+            | Self::MockTypeUsage { line, .. }
+            | Self::SkipBranchUsage { line, .. }
+            | Self::StubMacroUsage { line, .. } => Some(*line),
         }
     }
 
@@ -285,6 +361,15 @@ impl Violation for TestViolation {
             ),
             Self::CommentOnlyTest { .. } => {
                 Some("Add executable test code or remove the test".to_string())
+            }
+            Self::MockTypeUsage { .. } => {
+                Some("Replace mock type usage with real local implementations".to_string())
+            }
+            Self::SkipBranchUsage { .. } => Some(
+                "Remove skip branches and initialize real provider/service in tests".to_string(),
+            ),
+            Self::StubMacroUsage { .. } => {
+                Some("Replace todo!/unimplemented! with real test implementation".to_string())
             }
         }
     }
@@ -686,6 +771,11 @@ impl TestValidator {
     pub fn validate_test_quality(&self) -> Result<Vec<TestViolation>> {
         let mut violations = Vec::new();
 
+        let mock_type_pattern = Regex::new(r"\bMock[A-Za-z0-9_]+\b").ok();
+        let skip_message_pattern = Regex::new(r"skipping:").ok();
+        let todo_pattern = Regex::new(r"\btodo!\(").ok();
+        let unimplemented_pattern = Regex::new(r"\bunimplemented!\(").ok();
+
         // Trivial assertion patterns
         let trivial_patterns = [
             (r"assert!\s*\(\s*true\s*\)", "assert!(true)"),
@@ -730,8 +820,22 @@ impl TestValidator {
                 .filter_map(std::result::Result::ok)
                 .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
             {
+                if Self::is_fixture_path(entry.path()) {
+                    continue;
+                }
+
                 let content = std::fs::read_to_string(entry.path())?;
                 let lines: Vec<&str> = content.lines().collect();
+
+                self.check_forbidden_patterns(
+                    entry.path(),
+                    &lines,
+                    mock_type_pattern.as_ref(),
+                    skip_message_pattern.as_ref(),
+                    todo_pattern.as_ref(),
+                    unimplemented_pattern.as_ref(),
+                    &mut violations,
+                );
 
                 let mut i = 0;
                 while i < lines.len() {
@@ -862,6 +966,86 @@ impl TestValidator {
         }
 
         Ok(violations)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn check_forbidden_patterns(
+        &self,
+        file: &std::path::Path,
+        lines: &[&str],
+        mock_type_pattern: Option<&Regex>,
+        skip_message_pattern: Option<&Regex>,
+        todo_pattern: Option<&Regex>,
+        unimplemented_pattern: Option<&Regex>,
+        violations: &mut Vec<TestViolation>,
+    ) {
+        for (idx, line) in lines.iter().enumerate() {
+            let line_no = idx + 1;
+
+            if let Some(pattern) = mock_type_pattern {
+                for mat in pattern.find_iter(line) {
+                    violations.push(TestViolation::MockTypeUsage {
+                        file: file.to_path_buf(),
+                        line: line_no,
+                        token: mat.as_str().to_string(),
+                        severity: Severity::Error,
+                    });
+                }
+            }
+
+            if let Some(pattern) = skip_message_pattern
+                && pattern.is_match(line)
+            {
+                violations.push(TestViolation::SkipBranchUsage {
+                    file: file.to_path_buf(),
+                    line: line_no,
+                    severity: Severity::Error,
+                });
+            }
+
+            if let Some(pattern) = todo_pattern
+                && pattern.is_match(line)
+            {
+                violations.push(TestViolation::StubMacroUsage {
+                    file: file.to_path_buf(),
+                    line: line_no,
+                    macro_name: "todo".to_string(),
+                    severity: Severity::Error,
+                });
+            }
+
+            if let Some(pattern) = unimplemented_pattern
+                && pattern.is_match(line)
+            {
+                violations.push(TestViolation::StubMacroUsage {
+                    file: file.to_path_buf(),
+                    line: line_no,
+                    macro_name: "unimplemented".to_string(),
+                    severity: Severity::Error,
+                });
+            }
+        }
+
+        for idx in 0..lines.len().saturating_sub(2) {
+            let current = lines[idx].trim();
+            let next = lines[idx + 1].trim();
+            let next2 = lines[idx + 2].trim();
+            if current.starts_with("let Ok(")
+                && next.starts_with("else")
+                && next2.contains("return;")
+            {
+                violations.push(TestViolation::SkipBranchUsage {
+                    file: file.to_path_buf(),
+                    line: idx + 1,
+                    severity: Severity::Error,
+                });
+            }
+        }
+    }
+
+    fn is_fixture_path(path: &std::path::Path) -> bool {
+        path.to_string_lossy()
+            .contains("/crates/mcb-validate/tests/fixtures/")
     }
 
     /// Retrieves the source directories to validate.

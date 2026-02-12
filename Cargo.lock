@@ -3183,6 +3183,7 @@ dependencies = [
  "insta",
  "linkme",
  "mcb-domain",
+ "mcb-infrastructure",
  "mcb-providers",
  "mockall",
  "rstest",

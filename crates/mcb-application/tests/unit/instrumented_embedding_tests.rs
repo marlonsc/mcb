@@ -3,20 +3,18 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use async_trait::async_trait;
 use mcb_application::decorators::InstrumentedEmbeddingProvider;
-use mcb_domain::error::Result;
 use mcb_domain::ports::admin::{PerformanceMetricsData, PerformanceMetricsInterface};
 use mcb_domain::ports::providers::EmbeddingProvider;
-use mcb_domain::value_objects::Embedding;
+use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::di::bootstrap::init_app;
 
-/// Mock metrics collector for testing
-struct MockMetrics {
+struct InMemoryMetrics {
     query_count: AtomicU64,
     last_response_time: AtomicU64,
 }
 
-impl MockMetrics {
+impl InMemoryMetrics {
     fn new() -> Self {
         Self {
             query_count: AtomicU64::new(0),
@@ -29,7 +27,7 @@ impl MockMetrics {
     }
 }
 
-impl PerformanceMetricsInterface for MockMetrics {
+impl PerformanceMetricsInterface for InMemoryMetrics {
     fn uptime_secs(&self) -> u64 {
         0
     }
@@ -55,43 +53,18 @@ impl PerformanceMetricsInterface for MockMetrics {
     }
 }
 
-/// Mock embedding provider for testing
-struct MockEmbeddingProvider;
-
-#[async_trait]
-impl EmbeddingProvider for MockEmbeddingProvider {
-    async fn embed(&self, _text: &str) -> Result<Embedding> {
-        Ok(Embedding {
-            vector: vec![0.1, 0.2, 0.3],
-            model: "mock".to_string(),
-            dimensions: 3,
-        })
-    }
-
-    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
-        Ok(texts
-            .iter()
-            .map(|_| Embedding {
-                vector: vec![0.1, 0.2, 0.3],
-                model: "mock".to_string(),
-                dimensions: 3,
-            })
-            .collect())
-    }
-
-    fn dimensions(&self) -> usize {
-        3
-    }
-
-    fn provider_name(&self) -> &str {
-        "mock"
-    }
+async fn create_fastembed_provider() -> (Arc<dyn EmbeddingProvider>, tempfile::TempDir) {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let mut config = AppConfig::default();
+    config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
+    let ctx = init_app(config).await.expect("init app context");
+    (ctx.embedding_handle().get(), temp_dir)
 }
 
 #[tokio::test]
 async fn test_instrumented_records_metrics() {
-    let inner = Arc::new(MockEmbeddingProvider);
-    let metrics = Arc::new(MockMetrics::new());
+    let (inner, _temp_dir) = create_fastembed_provider().await;
+    let metrics = Arc::new(InMemoryMetrics::new());
 
     let instrumented = InstrumentedEmbeddingProvider::new(
         inner,
@@ -116,8 +89,8 @@ async fn test_instrumented_records_metrics() {
 
 #[tokio::test]
 async fn test_instrumented_delegates_to_inner() {
-    let inner = Arc::new(MockEmbeddingProvider);
-    let metrics = Arc::new(MockMetrics::new());
+    let (inner, _temp_dir) = create_fastembed_provider().await;
+    let metrics = Arc::new(InMemoryMetrics::new());
 
     let instrumented = InstrumentedEmbeddingProvider::new(
         inner,
@@ -125,7 +98,7 @@ async fn test_instrumented_delegates_to_inner() {
     );
 
     // Check delegation
-    assert_eq!(instrumented.dimensions(), 3);
-    assert_eq!(instrumented.provider_name(), "mock");
-    assert_eq!(instrumented.inner_provider_name(), "mock");
+    assert_eq!(instrumented.dimensions(), 384);
+    assert_eq!(instrumented.provider_name(), "fastembed");
+    assert_eq!(instrumented.inner_provider_name(), "fastembed");
 }

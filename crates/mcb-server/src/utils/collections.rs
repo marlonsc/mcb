@@ -10,6 +10,9 @@ pub fn normalize_collection_name(user_name: &str) -> Result<CollectionId, String
     if user_name.is_empty() {
         return Err("collection name cannot be empty".into());
     }
+    if user_name.len() > 255 {
+        return Err("collection name exceeds maximum length (255)".into());
+    }
     if !user_name
         .chars()
         .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == '.')

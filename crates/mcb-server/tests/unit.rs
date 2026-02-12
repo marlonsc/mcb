@@ -56,3 +56,21 @@ mod json_tests;
 
 #[path = "unit/init_tests.rs"]
 mod init_tests;
+
+#[path = "unit/project_handler_tests.rs"]
+mod project_handler_tests;
+
+#[path = "unit/issue_entity_handler_tests.rs"]
+mod issue_entity_handler_tests;
+
+#[path = "unit/org_entity_handler_tests.rs"]
+mod org_entity_handler_tests;
+
+#[path = "unit/plan_entity_handler_tests.rs"]
+mod plan_entity_handler_tests;
+
+#[path = "unit/vcs_entity_handler_tests.rs"]
+mod vcs_entity_handler_tests;
+
+#[path = "unit/collections_utils_tests.rs"]
+mod collections_utils_tests;

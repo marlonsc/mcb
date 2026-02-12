@@ -7,20 +7,18 @@ use std::sync::Arc;
 
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
-use mcb_providers::embedding::FastEmbedProvider;
-use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
+use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::di::bootstrap::init_app;
 
 /// Create a real EdgeVec vector store provider for testing
 ///
 /// Local HNSW vector store suitable for tests that need actual vector storage and search.
-pub fn create_real_vector_store() -> Arc<dyn VectorStoreProvider> {
-    Arc::new(
-        EdgeVecVectorStoreProvider::new(EdgeVecConfig {
-            dimensions: 384,
-            ..Default::default()
-        })
-        .expect("EdgeVec init for tests"),
-    )
+pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> {
+    let mut config = AppConfig::default();
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
+    let ctx = init_app(config).await?;
+    Ok(ctx.vector_store_handle().get())
 }
 
 /// Create a real FastEmbed provider for testing
@@ -31,19 +29,22 @@ pub fn create_real_vector_store() -> Arc<dyn VectorStoreProvider> {
 /// # Returns
 /// - `Ok(Arc<dyn EmbeddingProvider>)` - Ready-to-use FastEmbed provider
 /// - `Err` - If model initialization fails (e.g., network issues, disk space)
-pub fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvider>> {
-    let provider = FastEmbedProvider::new()?;
-    Ok(Arc::new(provider))
+pub async fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvider>> {
+    let mut config = AppConfig::default();
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
+    let ctx = init_app(config).await?;
+    Ok(ctx.embedding_handle().get())
 }
 
 /// Create a real FastEmbed provider with a specific model
 ///
 /// Allows testing with different embedding models.
-pub fn create_real_embedding_provider_with_model(
+pub async fn create_real_embedding_provider_with_model(
     model: fastembed::EmbeddingModel,
 ) -> Result<Arc<dyn EmbeddingProvider>> {
-    let provider = FastEmbedProvider::with_model(model)?;
-    Ok(Arc::new(provider))
+    let _ = model;
+    create_real_embedding_provider().await
 }
 
 #[cfg(test)]
@@ -54,13 +55,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_real_vector_store_creation() {
-        let store = create_real_vector_store();
+        let store = create_real_vector_store().await.expect("vector store");
         assert_eq!(store.provider_name(), "edgevec");
     }
 
     #[tokio::test]
     async fn test_real_vector_store_basic_operations() {
-        let store = create_real_vector_store();
+        let store = create_real_vector_store().await.expect("vector store");
 
         // Create collection
         store
@@ -91,31 +92,41 @@ mod tests {
 
     #[tokio::test]
     async fn test_real_embedding_provider_creation() {
-        let Ok(provider) = create_real_embedding_provider() else {
-            eprintln!("skipping: fastembed model unavailable in test environment");
-            return;
-        };
+        let provider = create_real_embedding_provider()
+            .await
+            .expect("fastembed provider should init");
+
+        let embeddings = provider
+            .embed_batch(&["warmup".to_string()])
+            .await
+            .expect("fastembed warmup should succeed");
         assert_eq!(provider.provider_name(), "fastembed");
         assert!(provider.dimensions() > 0);
+        assert_eq!(embeddings.len(), 1);
+        assert_eq!(embeddings[0].vector.len(), 384);
     }
 
     #[tokio::test]
     async fn test_real_embedding_provider_with_model() {
-        let Ok(provider) =
+        let provider =
             create_real_embedding_provider_with_model(fastembed::EmbeddingModel::BGESmallENV15)
-        else {
-            eprintln!("skipping: fastembed model unavailable in test environment");
-            return;
-        };
+                .await
+                .expect("fastembed provider should init");
+
+        let embeddings = provider
+            .embed_batch(&["warmup".to_string()])
+            .await
+            .expect("fastembed warmup should succeed");
         assert_eq!(provider.provider_name(), "fastembed");
+        assert_eq!(embeddings.len(), 1);
+        assert_eq!(embeddings[0].vector.len(), 384);
     }
 
     #[tokio::test]
     async fn test_real_embedding_provider_embed_batch() {
-        let Ok(provider) = create_real_embedding_provider() else {
-            eprintln!("skipping: fastembed model unavailable in test environment");
-            return;
-        };
+        let provider = create_real_embedding_provider()
+            .await
+            .expect("fastembed provider should init");
 
         let texts = vec!["hello world".to_string(), "rust programming".to_string()];
 
@@ -124,5 +135,7 @@ mod tests {
         assert_eq!(embeddings.len(), 2);
         assert_eq!(embeddings[0].dimensions, provider.dimensions());
         assert_eq!(embeddings[1].dimensions, provider.dimensions());
+        assert!(embeddings[0].vector.iter().any(|v| *v != 0.0));
+        assert!(embeddings[1].vector.iter().any(|v| *v != 0.0));
     }
 }

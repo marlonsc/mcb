@@ -148,7 +148,7 @@ impl ProjectContext {
 /// Supports SSH shorthand (`git@host:owner/repo.git`),
 /// SSH URL (`ssh://git@host/owner/repo.git`),
 /// and HTTPS (`https://host/owner/repo[.git]`).
-fn parse_owner_repo(url: &str) -> Option<String> {
+pub fn parse_owner_repo(url: &str) -> Option<String> {
     // SSH shorthand: git@host:owner/repo.git
     if let Some((_host, path)) = url.strip_prefix("git@").and_then(|s| s.split_once(':')) {
         let path = path.trim_end_matches(".git");
@@ -165,7 +165,11 @@ fn parse_owner_repo(url: &str) -> Option<String> {
     normalize_owner_repo(path)
 }
 
-fn normalize_owner_repo(path: &str) -> Option<String> {
+/// Normalize a repository path into `owner/repo` or `org/subgroup/repo`.
+///
+/// Returns `None` when the input path does not contain at least one
+/// non-empty segment.
+pub fn normalize_owner_repo(path: &str) -> Option<String> {
     let parts: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
     if parts.len() >= 2 {
         Some(parts.join("/"))
@@ -173,75 +177,5 @@ fn normalize_owner_repo(path: &str) -> Option<String> {
         Some(parts[0].to_string())
     } else {
         None
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn parse_ssh_shorthand() {
-        assert_eq!(
-            parse_owner_repo("git@github.com:marlonsc/mcb.git"),
-            Some("marlonsc/mcb".to_string())
-        );
-    }
-
-    #[test]
-    fn parse_https() {
-        assert_eq!(
-            parse_owner_repo("https://github.com/marlonsc/mcb.git"),
-            Some("marlonsc/mcb".to_string())
-        );
-    }
-
-    #[test]
-    fn parse_https_no_suffix() {
-        assert_eq!(
-            parse_owner_repo("https://github.com/marlonsc/mcb"),
-            Some("marlonsc/mcb".to_string())
-        );
-    }
-
-    #[test]
-    fn parse_ssh_url() {
-        assert_eq!(
-            parse_owner_repo("ssh://git@github.com/marlonsc/mcb.git"),
-            Some("marlonsc/mcb".to_string())
-        );
-    }
-
-    #[test]
-    fn parse_gitlab_subgroup() {
-        assert_eq!(
-            parse_owner_repo("git@gitlab.com:org/subgroup/repo.git"),
-            Some("org/subgroup/repo".to_string())
-        );
-    }
-
-    #[test]
-    fn parse_empty_returns_none() {
-        assert_eq!(parse_owner_repo(""), None);
-    }
-
-    #[test]
-    fn resolve_returns_consistent_value() {
-        let ctx1 = ProjectContext::resolve();
-        let ctx2 = ProjectContext::resolve();
-        assert_eq!(ctx1.project_id, ctx2.project_id);
-    }
-
-    #[test]
-    fn parse_gitlab_subgroup_https() {
-        assert_eq!(
-            parse_owner_repo("https://gitlab.com/org/subgroup/repo.git"),
-            Some("org/subgroup/repo".to_string())
-        );
-    }
-
-    #[test]
-    fn parse_unparseable_returns_none() {
-        assert_eq!(parse_owner_repo("not-a-url"), None);
     }
 }

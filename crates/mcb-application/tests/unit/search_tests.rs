@@ -10,28 +10,30 @@
 //! - Use real provider implementations (Null/InMemory) for deterministic testing
 //! - Validate actual data flow, not mock return values
 
-// Use mock providers for unit tests to ensure stability and avoid external dependencies
-
 use std::sync::Arc;
 
-use mcb_application::use_cases::{ContextServiceImpl, SearchServiceImpl};
+use mcb_application::use_cases::SearchServiceImpl;
 use mcb_domain::Result;
 use mcb_domain::entities::CodeChunk;
-use mcb_domain::ports::providers::*;
 use mcb_domain::ports::services::*;
 use mcb_domain::value_objects::CollectionId;
 use mcb_domain::value_objects::{Embedding, SearchResult};
+use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::di::bootstrap::init_app;
 use serde_json::json;
 
-use crate::test_utils::{MockCacheProvider, MockEmbeddingProvider, MockVectorStoreProvider};
+async fn create_real_context_service() -> (Arc<dyn ContextServiceInterface>, tempfile::TempDir) {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let mut config = AppConfig::default();
+    config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
 
-/// Create a context service with mock providers
-fn create_mock_context_service() -> Arc<dyn ContextServiceInterface> {
-    let cache: Arc<dyn CacheProvider> = Arc::new(MockCacheProvider::new());
-    let embedding: Arc<dyn EmbeddingProvider> = Arc::new(MockEmbeddingProvider::new(384));
-    let vector_store: Arc<dyn VectorStoreProvider> = Arc::new(MockVectorStoreProvider::new());
+    let ctx = init_app(config).await.expect("init app context");
+    let services = ctx
+        .build_domain_services()
+        .await
+        .expect("build domain services");
 
-    Arc::new(ContextServiceImpl::new(cache, embedding, vector_store))
+    (services.context_service, temp_dir)
 }
 
 /// Create test code chunks for search testing
@@ -103,10 +105,9 @@ pub fn verify_jwt(token: &str) -> Result<Claims, AuthError> {
 // Unit Tests with Real Providers
 // ============================================================================
 
-#[test]
-fn test_search_service_creation_with_real_providers() {
-    // Create context service with mock providers
-    let context_service = create_mock_context_service();
+#[tokio::test]
+async fn test_search_service_creation_with_real_providers() {
+    let (context_service, _temp_dir) = create_real_context_service().await;
 
     // Create SearchServiceImpl with real context service
     let search_service = SearchServiceImpl::new(context_service);
@@ -117,8 +118,7 @@ fn test_search_service_creation_with_real_providers() {
 
 #[tokio::test]
 async fn test_search_service_returns_results_after_indexing() {
-    // Create real context service (now mocked)
-    let context_service = create_mock_context_service();
+    let (context_service, _temp_dir) = create_real_context_service().await;
 
     // Initialize collection
     let init_res: Result<()> = context_service
@@ -156,8 +156,7 @@ async fn test_search_service_returns_results_after_indexing() {
 
 #[tokio::test]
 async fn test_search_service_empty_collection_returns_empty() {
-    // Create real context service
-    let context_service = create_mock_context_service();
+    let (context_service, _temp_dir) = create_real_context_service().await;
 
     // Initialize but don't populate
     let init_res: Result<()> = context_service
@@ -183,7 +182,7 @@ async fn test_search_service_empty_collection_returns_empty() {
 
 #[tokio::test]
 async fn test_context_service_embedding_dimensions() {
-    let context_service = create_mock_context_service();
+    let (context_service, _temp_dir) = create_real_context_service().await;
 
     // FastEmbedProvider (AllMiniLML6V2) has 384 dimensions
     let dimensions = context_service.embedding_dimensions();
@@ -195,7 +194,7 @@ async fn test_context_service_embedding_dimensions() {
 
 #[tokio::test]
 async fn test_context_service_embed_text() {
-    let context_service = create_mock_context_service();
+    let (context_service, _temp_dir) = create_real_context_service().await;
 
     // Test real embedding generation
     let result: Result<Embedding> = context_service.embed_text("test query for embedding").await;
@@ -209,7 +208,7 @@ async fn test_context_service_embed_text() {
 
 #[tokio::test]
 async fn test_context_service_stores_and_retrieves_chunks() {
-    let context_service = create_mock_context_service();
+    let (context_service, _temp_dir) = create_real_context_service().await;
 
     // Initialize collection
     let init_res: Result<()> = context_service
@@ -254,7 +253,7 @@ async fn test_context_service_stores_and_retrieves_chunks() {
 
 #[tokio::test]
 async fn test_context_service_clear_collection() {
-    let context_service = create_mock_context_service();
+    let (context_service, _temp_dir) = create_real_context_service().await;
 
     // Initialize and populate
     let init_res: Result<()> = context_service
@@ -301,7 +300,7 @@ async fn test_full_search_flow_validates_architecture() {
     // This test validates the full flow through the architecture:
     // ContextService → EmbeddingProvider → VectorStoreProvider → SearchResults
 
-    let context_service = create_mock_context_service();
+    let (context_service, _temp_dir) = create_real_context_service().await;
     let search_service = SearchServiceImpl::new(context_service.clone());
 
     // Step 1: Initialize

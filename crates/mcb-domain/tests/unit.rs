@@ -75,3 +75,6 @@ mod plan_tests;
 mod repository_tests;
 #[path = "unit/worktree_tests.rs"]
 mod worktree_tests;
+
+#[path = "unit/project_context_tests.rs"]
+mod project_context_tests;
