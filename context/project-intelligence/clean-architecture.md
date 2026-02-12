@@ -1,7 +1,7 @@
 # Clean Architecture in MCB
 
 Last updated: 2026-02-12
-Source: `docs/architecture/CLEAN_ARCHITECTURE.md` (v0.2.2)
+Source: `docs/architecture/CLEAN_ARCHITECTURE.md` (v0.2.1)
 
 ## Overview
 

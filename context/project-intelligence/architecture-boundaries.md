@@ -1,7 +1,7 @@
 # Architecture Boundaries
 
 Last updated: 2026-02-12
-Source: `docs/architecture/ARCHITECTURE_BOUNDARIES.md` (v0.2.2)
+Source: `docs/architecture/ARCHITECTURE_BOUNDARIES.md` (v0.2.1)
 
 ## Dependency Rules
 

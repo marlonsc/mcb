@@ -16,7 +16,7 @@ Last updated: 2026-02-12
 
 ## 2026-02-12T00:50:00-03:00 (Ref Update)
 
-- Harvested Clean Architecture and Boundary rules from `mcb-v0.2.2` reference.
+- Harvested Clean Architecture and Boundary rules from `mcb-v0.2.1` reference.
 - Created `context/project-intelligence/clean-architecture.md`.
 - Created `context/project-intelligence/architecture-boundaries.md`.
 - Updated `context/project-intelligence/project-state.md` with current status.

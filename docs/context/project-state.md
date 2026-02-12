@@ -6,7 +6,7 @@
 ## Current State
 
 - **Version:** v0.2.1-dev (on branch `release/v0.2.1`)
-- **Active branches:** `release/v0.2.1` (current), `release/v0.2.2`, `feat/data-model-v2`
+- **Active branches:** `release/v0.2.1` (current), `release/v0.2.1`, `feat/data-model-v2`
 - **Build:** ⚠️ Check `cargo check` — storage module issue reported in `mcb-providers/src/lib.rs`
 - **Phase:** 8-9 planning — Phase 8 not started, Phase 9 ADRs complete
 
@@ -69,7 +69,7 @@ Heavy admin feature development (412 commits in 6 days):
 ## Roadmap
 
 - **v0.2.1** (current): Admin UI, data model v2, Handlebars migration
-- **v0.2.2** (in progress): Advanced admin features, filtering, bulk operations
+- **v0.2.1** (in progress): Advanced admin features, filtering, bulk operations
 - **v0.3.0** (Phase 8): Workflow FSM, freshness tracking, policies
 - **v0.4.0** (Phase 9): Knowledge graph, hybrid search, versioning, time-travel
 
