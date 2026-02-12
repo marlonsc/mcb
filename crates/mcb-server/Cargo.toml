@@ -94,9 +94,6 @@ schemars = { workspace = true }
 validator = { workspace = true }
 
 # Advanced Multi-Provider Strategy
-prometheus = { workspace = true }
-metrics = { workspace = true }
-metrics-exporter-prometheus = { workspace = true }
 dashmap = { workspace = true }
 health = { workspace = true }
 

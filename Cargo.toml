@@ -161,9 +161,6 @@ rmcp = { version = "0.15", features = [
 ] }
 
 # Advanced Multi-Provider Strategy
-prometheus = "0.14"
-metrics = "0.24"
-metrics-exporter-prometheus = "0.18"
 tokio-util = { version = "0.7", features = ["time", "rt"] }
 dashmap = "6.0"
 health = "0.2"

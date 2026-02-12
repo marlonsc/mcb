@@ -115,9 +115,6 @@ validator = { workspace = true }
 rmcp = { workspace = true }
 
 # Advanced Multi-Provider Strategy
-prometheus = { workspace = true }
-metrics = { workspace = true }
-metrics-exporter-prometheus = { workspace = true }
 tokio-util = { workspace = true }
 dashmap = { workspace = true }
 health = { workspace = true }

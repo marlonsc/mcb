@@ -13,7 +13,6 @@
 //! | [`AuthServiceInterface`] | Authentication and token services |
 //! | [`EventBusProvider`] | Event publish/subscribe services |
 //! | [`SystemMetricsCollectorInterface`] | System metrics collection |
-//! | [`PerformanceMetricsCollector`](crate::ports::infrastructure::performance::PerformanceMetricsCollector) | Provider performance metrics (Prometheus) |
 //! | [`StateStoreProvider`] | Key-value state persistence |
 //! | [`ProviderRouter`] | Provider routing and selection services |
 //! | [`DatabaseExecutor`] | SQL execution (repositories use via DI, no direct driver) |
@@ -26,8 +25,6 @@ pub mod database;
 pub mod events;
 /// System metrics collector port
 pub mod metrics;
-/// Performance metrics collector port (Prometheus histograms/counters)
-pub mod performance;
 /// Provider routing and selection port
 pub mod routing;
 /// Snapshot management infrastructure port
@@ -42,7 +39,6 @@ pub use auth::AuthServiceInterface;
 pub use database::{DatabaseExecutor, DatabaseProvider, SqlParam, SqlRow};
 pub use events::{DomainEventStream, EventBusProvider};
 pub use metrics::{SystemMetrics, SystemMetricsCollectorInterface};
-pub use performance::PerformanceMetricsCollector;
 pub use routing::{ProviderContext, ProviderHealthStatus, ProviderRouter};
 pub use snapshot::{SnapshotProvider, SyncProvider};
 pub use state_store::StateStoreProvider;
