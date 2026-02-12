@@ -1,12 +1,11 @@
-# Tokio in MCB: Runtime, Concurrency, and Operational Discipline
+# tokio
 
-Last updated: 2026-02-12  
-Scope: project-specific Tokio usage in MCB, operational risk, and verification guidance.  
-Cross-reference: `context/external/tracing.md`, `context/external/git2.md`, `context/external/rocket.md`, `context/external/sqlx.md`.
+Last updated: 2026-02-12
 
----
+> Scope: project-specific Tokio usage in MCB, operational risk, and verification guidance.  
+> Cross-reference: `context/external/tracing.md`, `context/external/git2.md`, `context/external/rocket.md`, `context/external/sqlx.md`.
 
-## 1. Why Tokio Is Foundational in This Repository
+## Executive Summary
 
 Tokio is the execution substrate for nearly every asynchronous workflow in MCB:
 
@@ -18,9 +17,11 @@ Tokio is the execution substrate for nearly every asynchronous workflow in MCB:
 
 The architecture depends on Tokio for both throughput and correctness. If Tokio patterns degrade, cross-crate behavior degrades with it.
 
----
+This aligns with architecture boundary documents in `context/project-intelligence/clean-architecture.md` and `context/project-intelligence/architecture-boundaries.md`.
 
-## 2. Where Tokio Is Used (Code-Grounded Coverage)
+## Actual MCB Usage (Current Source of Truth)
+
+### Where Tokio Is Used (Code-Grounded Coverage)
 
 Representative hotspots:
 
@@ -38,27 +39,25 @@ Representative hotspots:
 
 Tests also rely heavily on Tokio (`#[tokio::test]`) across `crates/*/tests` and `tests/golden/*`.
 
----
+### Key Tokio APIs in Real Use
 
-## 3. Key Tokio APIs in Real Use
-
-### 3.1 Runtime bootstrap
+#### Runtime bootstrap
 
 - `#[tokio::main]` in `crates/mcb/src/main.rs:52`
 
 Rationale: single runtime bootstrap at binary boundary, with async orchestration delegated to server/init modules.
 
-### 3.2 Task orchestration
+#### Task orchestration
 
 - `tokio::spawn(...)` for background or parallel flows
   - `crates/mcb-server/src/init.rs`
   - `crates/mcb-application/src/use_cases/indexing_service.rs:214`
   - `crates/mcb-validate/src/engines/hybrid_engine.rs`
 - `tokio::join!(...)` for coordinated parallel await
-  - `crates/mcb-server/src/init.rs`
-  - `crates/mcb-application/src/use_cases/memory_service.rs:228`
+   - `crates/mcb-server/src/init.rs`
+   - `crates/mcb-application/src/use_cases/memory_service.rs:228`
 
-### 3.3 Async synchronization primitives
+#### Async synchronization primitives
 
 - `tokio::sync::RwLock` in shared state components
   - `crates/mcb-infrastructure/src/health.rs`
@@ -67,19 +66,19 @@ Rationale: single runtime bootstrap at binary boundary, with async orchestration
 - `tokio::sync::Mutex` for async-safe lock boundaries
   - `crates/mcb-infrastructure/src/services/highlight_service.rs`
 - `tokio::sync::broadcast` for event fan-out
-  - `crates/mcb-providers/src/events/tokio.rs`
+   - `crates/mcb-providers/src/events/tokio.rs`
 
-### 3.4 Async I/O and time
+#### Async I/O and time
 
 - `tokio::fs::*` for filesystem operations
   - `crates/mcb-infrastructure/src/utils/file.rs`
   - `crates/mcb-language-support/src/parser.rs:221`
   - `crates/mcb-application/src/use_cases/indexing_service.rs:288`
 - `tokio::time::sleep(...)` in controlled retries/watch loops
-  - `crates/mcb-infrastructure/src/config/watcher.rs`
-  - `crates/mcb-providers/src/vector_store/milvus.rs`
+   - `crates/mcb-infrastructure/src/config/watcher.rs`
+   - `crates/mcb-providers/src/vector_store/milvus.rs`
 
-### 3.5 Blocking boundary handling
+#### Blocking boundary handling
 
 - `tokio::task::spawn_blocking(...)`
   - Git traversal in `crates/mcb-providers/src/git/submodule.rs:48`
@@ -88,23 +87,9 @@ Rationale: single runtime bootstrap at binary boundary, with async orchestration
 
 This is a critical clean-boundary behavior; see also `context/external/git2.md` and `context/external/tree-sitter.md`.
 
----
+## Project-Specific Best Practices
 
-## 4. Architecture Fit and Design Intent
-
-Tokio is intentionally treated as an infrastructure/runtime concern, not domain semantics.
-
-- Domain crates define async contracts (`async-trait`) but avoid runtime coupling.
-- Runtime mechanics (spawning, locking, transport concurrency) stay in server/infrastructure/providers.
-- Blocking third-party APIs are isolated with explicit offloading.
-
-This aligns with architecture boundary documents in `context/project-intelligence/clean-architecture.md` and `context/project-intelligence/architecture-boundaries.md`.
-
----
-
-## 5. Project-Specific Best Practices
-
-### 5.1 Keep hot paths non-blocking
+### Keep hot paths non-blocking
 
 Rule:
 
@@ -115,7 +100,7 @@ Evidence:
 
 - `crates/mcb-providers/src/git/submodule.rs:41-48` explicitly documents this.
 
-### 5.2 Prefer explicit concurrency composition
+### Prefer explicit concurrency composition
 
 Rule:
 
@@ -126,7 +111,7 @@ Evidence:
 
 - `crates/mcb-application/src/use_cases/memory_service.rs:228` runs FTS + vector search in parallel with controlled fallback.
 
-### 5.3 Treat task lifecycle as part of API behavior
+### Treat task lifecycle as part of API behavior
 
 Rule:
 
@@ -136,7 +121,7 @@ Evidence:
 
 - Background indexing in `crates/mcb-application/src/use_cases/indexing_service.rs` creates async work decoupled from caller completion.
 
-### 5.4 Use async-safe synchronization
+### Use async-safe synchronization
 
 Rule:
 
@@ -147,7 +132,7 @@ Evidence:
 
 - Production code uses Tokio sync primitives, and validation fixtures intentionally capture anti-pattern cases under `crates/mcb-validate/tests/fixtures`.
 
-### 5.5 Log with context around async boundaries
+### Log with context around async boundaries
 
 Rule:
 
@@ -157,11 +142,9 @@ Evidence:
 
 - Extensive `tracing::*` integration across async flows (see `context/external/tracing.md`).
 
----
+## Common Pitfalls
 
-## 6. Failure Modes and Risk Analysis
-
-### 6.1 Fire-and-forget orphan risk
+### Fire-and-forget orphan risk
 
 Pattern:
 
@@ -179,7 +162,7 @@ Mitigation:
 
 - Ensure task state is externally visible and errors are surfaced via events/logs.
 
-### 6.2 Broadcast lag and dropped messages
+### Broadcast lag and dropped messages
 
 Pattern:
 
@@ -197,7 +180,7 @@ Mitigation:
 
 - Capacity tuning + explicit lag warnings + consumer resilience.
 
-### 6.3 Misplaced blocking work
+### Misplaced blocking work
 
 Pattern:
 
@@ -211,7 +194,7 @@ Mitigation:
 
 - Continue explicit `spawn_blocking` policy; test critical paths under load.
 
-### 6.4 Timeout without cancellation semantics
+### Timeout without cancellation semantics
 
 Pattern:
 
@@ -225,7 +208,7 @@ Mitigation:
 
 - Prefer `tokio::time::timeout` with explicit cancellation strategy where semantics require strict abort behavior.
 
-### 6.5 Runtime mixing or nested runtime pitfalls
+### Runtime mixing or nested runtime pitfalls
 
 Pattern:
 
@@ -243,9 +226,7 @@ Mitigation:
 
 - Keep this pattern constrained; avoid nested runtime creation in request flow.
 
----
-
-## 7. Do/Do-Not Guidance for Contributors
+### Do/Do-Not Guidance for Contributors
 
 Do:
 
@@ -262,9 +243,7 @@ Do not:
 - Use sleep as synchronization substitute when deterministic signaling is available.
 - Mix sync mutexes into async flow code.
 
----
-
-## 8. Verification Checklist (Tokio Changes)
+### Verification Checklist (Tokio Changes)
 
 When changing Tokio-related code in MCB, verify:
 
@@ -284,37 +263,65 @@ rg -n "std::sync::Mutex" crates
 cargo test
 ```
 
----
+## Context7 + External Research
 
-## 9. Cross-Document Map (Avoid Duplication)
+- **Context7 ID**: `/websites/rs_tokio_tokio`
+- **Official Docs**: https://docs.rs/tokio
+- **Upstream Repository**: https://github.com/tokio-rs/tokio
+
+## ADR Alignment (Critical)
+
+This document aligns with the following Architecture Decision Records:
+
+- **ADR-002**: Async runtime selection and Tokio as the standard runtime for MCB
+- **ADR-035**: Concurrency patterns and task lifecycle management
+- **ADR-021**: Blocking boundary handling and `spawn_blocking` policy
+
+Key architectural decisions:
+- Tokio is the sole async runtime for MCB (no runtime mixing).
+- Domain crates define async contracts via `async-trait` without runtime coupling.
+- Blocking third-party APIs are explicitly isolated with `spawn_blocking`.
+- Async synchronization primitives (`tokio::sync::*`) are mandatory in async contexts.
+
+## GitHub Evidence (Upstream + In-Repo)
+
+**Upstream Repository**:
+- https://github.com/tokio-rs/tokio (primary source)
+- https://github.com/tokio-rs/tokio/tree/master/examples (reference implementations)
+
+**In-Repository Anchors** (hotspots and evidence):
+- `crates/mcb/src/main.rs:52` — Binary entrypoint with `#[tokio::main]`
+- `crates/mcb-server/src/init.rs` — Server boot and transport orchestration
+- `crates/mcb-application/src/use_cases/indexing_service.rs:214` — Background task spawn
+- `crates/mcb-application/src/use_cases/memory_service.rs:228` — Hybrid concurrency (FTS + vector search)
+- `crates/mcb-providers/src/git/submodule.rs:48` — Blocking boundary for Git traversal
+- `crates/mcb-providers/src/events/tokio.rs` — Event bus with broadcast channels
+- `crates/mcb-infrastructure/src/config/watcher.rs` — Config watcher and shared state
+- `crates/mcb-infrastructure/src/services/highlight_service.rs:228` — Syntax-heavy blocking work
+- `crates/mcb-providers/src/language/engine.rs:130` — Language chunking with blocking boundary
+
+**Related External Documentation**:
+- For logging and span discipline: `context/external/tracing.md`
+- For blocking Git adapter boundaries: `context/external/git2.md`
+- For transport request lifecycle: `context/external/rocket.md`
+- For persistence in async handlers: `context/external/sqlx.md`
+- For protocol handler orchestration: `context/external/rmcp.md`
+
+## References
+
+**Official Documentation**:
+- https://docs.rs/tokio
+- https://github.com/tokio-rs/tokio
+- https://tokio.rs/tokio/topics/tracing
+
+**Implementation Examples**:
+- https://github.com/tokio-rs/tokio/tree/master/examples
+- https://github.com/hyperium/hyper/tree/master/examples
+
+**Cross-Document Map (Avoid Duplication)**:
 
 - For logging and span discipline: `context/external/tracing.md`
 - For blocking Git adapter boundaries: `context/external/git2.md`
 - For transport request lifecycle and server boundaries: `context/external/rocket.md`
 - For persistence behavior inside async handlers: `context/external/sqlx.md`
 - For protocol handler orchestration: `context/external/rmcp.md`
-
----
-
-## 10. References
-
-Official:
-
-- https://docs.rs/tokio
-- https://github.com/tokio-rs/tokio
-- https://tokio.rs/tokio/topics/tracing
-
-Relevant source anchors in this repository:
-
-- `crates/mcb/src/main.rs:52`
-- `crates/mcb-server/src/init.rs`
-- `crates/mcb-application/src/use_cases/indexing_service.rs:214`
-- `crates/mcb-application/src/use_cases/memory_service.rs:228`
-- `crates/mcb-providers/src/git/submodule.rs:48`
-- `crates/mcb-providers/src/events/tokio.rs`
-- `crates/mcb-infrastructure/src/config/watcher.rs`
-
-External implementation examples:
-
-- https://github.com/tokio-rs/tokio/tree/master/examples
-- https://github.com/hyperium/hyper/tree/master/examples

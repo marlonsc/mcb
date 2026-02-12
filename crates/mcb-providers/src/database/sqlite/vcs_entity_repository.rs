@@ -7,10 +7,12 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::VcsEntityRepository;
 
+/// SQLite-based vcs entity repository using the database executor port.
 pub struct SqliteVcsEntityRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }
 
+// Self-contained query helpers
 impl SqliteVcsEntityRepository {
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }

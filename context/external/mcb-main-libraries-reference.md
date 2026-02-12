@@ -1,8 +1,8 @@
 # MCB Main Libraries Reference
 
-Last updated: 2026-02-11
-Scope: major libraries used directly in core crates.
-Sources: Context7 + GitHub examples + internal code paths.
+Last updated: 2026-02-12
+Scope: master index for core external libraries used in MCB and their documentation anchors.
+Sources: repository code paths, ADRs, official docs, and curated OSS references.
 
 Dedicated guides:
 
@@ -21,16 +21,22 @@ Dedicated guides:
 - `context/external/handlebars.md`
 - `context/external/rmcp.md`
 
+## How to Use This Index
+
+1. Start here to identify the correct library guide for your change.
+2. Read the specific guide before editing related code.
+3. Use this file only as routing/context; keep deep guidance in per-library docs.
+
 ## Core Libraries (What and Why)
 
 | Library | Primary Role in MCB | Internal Hotspots |
 |---|---|---|
-| `tokio` | async runtime, tasks, sync primitives | `crates/mcb-server/src/transport/`, `crates/mcb-providers/src/events/` |
-| `serde` / `serde_json` | serialization for domain, MCP payloads, config | `crates/mcb-domain/src/entities/`, `crates/mcb-server/src/handlers/` |
-| `sqlx` | SQLite access layer and repositories | `crates/mcb-providers/src/database/sqlite/` |
-| `thiserror` | typed error enums | `crates/mcb-domain/src/error/mod.rs` |
+| `tokio` | async runtime, task orchestration, async sync primitives | `crates/mcb-server/src/init.rs`, `crates/mcb-application/src/use_cases/` |
+| `serde` / `serde_json` | serialization for domain, transport, MCP payloads, config | `crates/mcb-domain/src/entities/`, `crates/mcb-server/src/handlers/` |
+| `sqlx` | SQLite access layer, schema/bootstrap, repositories | `crates/mcb-providers/src/database/sqlite/` |
+| `thiserror` | typed error taxonomy and boundary contracts | `crates/mcb-domain/src/error/mod.rs`, `crates/mcb-server/src/error_mapping.rs` |
 | `async-trait` | async trait interfaces (ports/providers) | `crates/mcb-domain/src/ports/` |
-| `tracing` | structured logging and diagnostics | `crates/mcb-infrastructure/src/logging.rs` |
+| `tracing` | structured logs, instrumentation, diagnostics | `crates/mcb-infrastructure/src/logging.rs`, `crates/mcb-server/src/handlers/` |
 | `figment` | layered config loading (TOML + env) | `crates/mcb-infrastructure/src/config/loader.rs` |
 | `linkme` | distributed registration for providers | `crates/mcb-domain/src/registry/`, `crates/mcb-providers/src/*` |
 | `dill` | IoC container and runtime service wiring | `crates/mcb-infrastructure/src/di/catalog.rs` |
@@ -40,17 +46,38 @@ Dedicated guides:
 | `handlebars` | server-side template rendering | `crates/mcb-server/src/templates/engine/handlebars_engine.rs` |
 | `rmcp` | MCP protocol server/tool contracts | `crates/mcb-server/src/mcp_server.rs` |
 
-## Best Practices by Library
+## Guide Status (Depth Snapshot)
 
-- `tokio`: keep async paths non-blocking; move CPU/blocking work to `spawn_blocking`; prefer graceful shutdown strategy with timeouts.
-- `sqlx`: use pooled connections, explicit transaction boundaries, and consistent migration/schema flow; avoid connection churn in hot paths.
-- `rocket`: centralize state via `.manage(...)`, keep request guards narrow, and isolate transport concerns from domain services.
-- `figment`: merge defaults -> override file -> env in deterministic order; validate after extraction.
-- `linkme` + `dill`: register providers statically (`distributed_slice`) and resolve runtime dependencies through catalog only.
-- `thiserror`: expose stable typed errors at boundaries; map external errors to domain errors early.
-- `tracing`: log structured context (`service`, `action`, `result`) and avoid noisy low-value logs in loops.
-- `tree-sitter`: configure language queries once and reuse highlighters/parsers when possible.
-- `rmcp`: keep MCP handlers thin and route business logic to service interfaces.
+| Guide | Current depth | Notes |
+|---|---|---|
+| `tokio.md` | expanded | runtime, concurrency, blocking-boundary guidance |
+| `serde.md` | expanded | contract evolution and compatibility guidance |
+| `sqlx.md` | expanded | repository boundaries and query discipline |
+| `thiserror.md` | expanded | typed taxonomy and boundary mapping |
+| `tracing.md` | expanded | instrumentation and logging safety |
+| `rmcp.md` | expanded | protocol-layer deep analysis |
+| `figment.md` | medium-high | strong ADR/context analysis |
+| `linkme.md` | medium-high | registration and linker behavior |
+| `dill.md` | medium-high | composition-root and IoC decisions |
+
+## Boundary-Critical Rules (Cross-Library)
+
+- `tokio`: no blocking work in async hot paths; isolate with `spawn_blocking` where needed.
+- `sqlx`: keep SQLx in provider/infrastructure persistence boundaries; no domain leakage.
+- `rocket`: maintain transport-layer concerns in server crate; avoid domain contamination.
+- `figment`: keep deterministic merge precedence and post-extract validation strict.
+- `linkme` + `dill`: compile-time provider registration + explicit runtime composition only.
+- `thiserror`: typed contracts in libraries; map external errors early and consistently.
+- `tracing`: preserve structured context, avoid sensitive-field leaks, and control log cardinality.
+- `tree-sitter`: isolate heavy parsing/highlighting and guard performance-sensitive paths.
+- `rmcp`: keep tool handlers thin and deterministic; maintain schema/runtime compatibility.
+
+## Recommended Reading Order by Change Type
+
+- Persistence or repository change: `sqlx.md` -> `thiserror.md` -> `tokio.md`
+- MCP/tooling change: `rmcp.md` -> `tracing.md` -> `thiserror.md`
+- Admin/API transport change: `rocket.md` -> `tracing.md` -> `serde.md`
+- Provider registration/wiring change: `linkme.md` -> `dill.md` -> `figment.md`
 
 ## Official References
 

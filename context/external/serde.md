@@ -1,12 +1,8 @@
-# Serde in MCB: Data Contracts, Compatibility, and Boundary Hygiene
+# serde
 
-Last updated: 2026-02-12  
-Scope: project-specific Serde usage, compatibility strategy, and risk controls.  
-Cross-reference: `context/external/figment.md`, `context/external/rocket.md`, `context/external/rmcp.md`, `context/external/thiserror.md`.
+Last updated: 2026-02-12
 
----
-
-## 1. Why Serde Matters in This Repository
+## Executive Summary
 
 Serde is the primary contract layer between:
 
@@ -17,9 +13,20 @@ Serde is the primary contract layer between:
 
 In MCB, serialization quality directly affects MCP compatibility, admin API behavior, and operational tooling.
 
----
+Scope: project-specific Serde usage, compatibility strategy, and risk controls.  
+Cross-reference: `context/external/figment.md`, `context/external/rocket.md`, `context/external/rmcp.md`, `context/external/thiserror.md`.
 
-## 2. Coverage and Usage Footprint
+## Context7 + External Research
+
+- Context7 ID: `/websites/serde_rs`
+- Official docs: https://serde.rs/
+- API reference: https://docs.rs/serde
+- JSON utilities: https://docs.rs/serde_json
+- Upstream repository: https://github.com/serde-rs/serde
+
+## Actual MCB Usage (Current Source of Truth)
+
+### Coverage and Usage Footprint
 
 From codebase search, Serde is used across nearly all core crates. Representative anchors:
 
@@ -32,11 +39,9 @@ From codebase search, Serde is used across nearly all core crates. Representativ
 
 This is expected: Serde is part of stable boundary infrastructure, not a per-feature utility.
 
----
+### Core Serde Patterns in MCB
 
-## 3. Core Serde Patterns in MCB
-
-### 3.1 Primary derive pattern
+#### Primary derive pattern
 
 Most common shape:
 
@@ -50,7 +55,7 @@ pub struct Entity {
 
 This appears broadly in domain and transport types.
 
-### 3.2 Schema-friendly derive pattern
+#### Schema-friendly derive pattern
 
 Publicly exposed or validated models frequently include schema metadata:
 
@@ -64,7 +69,7 @@ pub struct Plan {
 
 See `crates/mcb-domain/src/entities/plan.rs`.
 
-### 3.3 Compatibility attributes
+#### Compatibility attributes
 
 Observed and expected attributes:
 
@@ -80,17 +85,17 @@ Examples:
 - `crates/mcb-domain/src/entities/observation.rs`
 - `crates/mcb-language-support/src/language.rs:17`
 
-### 3.4 JSON value utilities where needed
+#### JSON value utilities where needed
 
 `serde_json::json!`, `to_value`, `from_value`, `to_string`, and `from_str` appear in provider boundaries and tests.
 
 Guidance in this repository is to keep these operations localized to boundaries and testing concerns.
 
----
+## ADR Alignment (Critical)
 
-## 4. Architecture Boundaries (Critical)
+### Architecture Boundaries
 
-### 4.1 Allowed in domain
+#### Allowed in domain
 
 Allowed:
 
@@ -100,7 +105,7 @@ Not preferred in domain core behavior:
 
 - Serialization-format-specific logic bleeding into business rules.
 
-### 4.2 Boundary handling
+#### Boundary handling
 
 Transport-specific shape decisions should stay near server/provider layers, not deep in domain behavior.
 
@@ -109,9 +114,9 @@ Related docs:
 - `context/project-intelligence/architecture-boundaries.md`
 - `context/project-intelligence/clean-architecture.md`
 
----
+**ADR References**: ADR-021 (Boundary Hygiene), ADR-025 (Serialization Contracts), ADR-013 (Domain Isolation)
 
-## 5. Compatibility and Evolution Strategy
+### Compatibility and Evolution Strategy
 
 When evolving payloads/config:
 
@@ -125,11 +130,9 @@ For enums:
 - Prefer explicit tagging for long-lived protocol surfaces.
 - Avoid implicit representation switches without migration guidance.
 
----
+## Common Pitfalls
 
-## 6. Common Failure Modes
-
-### 6.1 Silent break on field rename
+### Silent break on field rename
 
 Risk:
 
@@ -139,7 +142,7 @@ Mitigation:
 
 - Temporary alias support + test coverage + release notes.
 
-### 6.2 Option/default mismatch
+### Option/default mismatch
 
 Risk:
 
@@ -149,7 +152,7 @@ Mitigation:
 
 - Centralize defaults and test decode behavior from partial payloads.
 
-### 6.3 Numeric precision expectations
+### Numeric precision expectations
 
 Risk:
 
@@ -159,7 +162,7 @@ Mitigation:
 
 - Keep large IDs as strings in external contracts when precision risk exists.
 
-### 6.4 Overuse of untyped JSON blobs
+### Overuse of untyped JSON blobs
 
 Risk:
 
@@ -169,9 +172,7 @@ Mitigation:
 
 - Prefer typed structs; isolate `serde_json::Value` to genuinely dynamic payload sections.
 
----
-
-## 7. Contributor Do/Do-Not Checklist
+### Contributor Do/Do-Not Checklist
 
 Do:
 
@@ -186,9 +187,7 @@ Do not:
 - Introduce inconsistent casing/tagging conventions in adjacent APIs.
 - Replace typed model contracts with arbitrary `Value` in stable interfaces.
 
----
-
-## 8. Verification Checklist
+### Verification Checklist
 
 When changing Serde-relevant code:
 
@@ -206,33 +205,35 @@ rg -n "#\[serde\(" crates
 cargo test
 ```
 
----
+## GitHub Evidence (Upstream + In-Repo)
 
-## 9. Cross-Document Map
+### Upstream Repository
 
-- Config-focused serde usage: `context/external/figment.md`
-- HTTP/API boundary serialization: `context/external/rocket.md`
-- MCP/tool payload contracts: `context/external/rmcp.md`
-- Error payload conversion and typed failures: `context/external/thiserror.md`
+- https://github.com/serde-rs/serde
+- https://github.com/serde-rs/serde/tree/master/serde_derive
 
----
-
-## 10. References
-
-Official:
-
-- https://serde.rs/
-- https://docs.rs/serde
-- https://docs.rs/serde_json
-
-Repository anchors:
+### In-Repository Anchors
 
 - `crates/mcb-domain/src/entities/plan.rs`
 - `crates/mcb-domain/src/entities/workflow.rs`
 - `crates/mcb-domain/src/entities/observation.rs`
 - `crates/mcb-language-support/src/language.rs`
 
-External examples:
+### Cross-Document Map
 
-- https://github.com/serde-rs/serde/tree/master/serde_derive
+- Config-focused serde usage: `context/external/figment.md`
+- HTTP/API boundary serialization: `context/external/rocket.md`
+- MCP/tool payload contracts: `context/external/rmcp.md`
+- Error payload conversion and typed failures: `context/external/thiserror.md`
+
+## References
+
+### Official Documentation
+
+- https://serde.rs/
+- https://docs.rs/serde
+- https://docs.rs/serde_json
+
+### External Examples
+
 - https://github.com/tokio-rs/axum/tree/main/examples
