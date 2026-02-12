@@ -33,7 +33,7 @@ pub mod routing;
 /// Snapshot management infrastructure port
 pub mod snapshot;
 /// Key-value state store port
-pub mod state_store;
+mod state_store;
 /// File synchronization infrastructure port
 pub mod sync;
 

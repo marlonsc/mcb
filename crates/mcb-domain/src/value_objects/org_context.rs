@@ -18,6 +18,14 @@ impl OrgContext {
     pub fn new(org_id: OrgId, org_name: String) -> Self {
         Self { org_id, org_name }
     }
+
+    pub fn current() -> Self {
+        Self::default()
+    }
+
+    pub fn id_str(&self) -> &str {
+        self.org_id.as_str()
+    }
 }
 
 impl Default for OrgContext {

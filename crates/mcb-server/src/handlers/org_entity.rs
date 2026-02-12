@@ -6,7 +6,9 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
-use crate::handler_helpers::{ok_json, ok_text, require_id, resolve_org_id};
+use crate::handler_helpers::{
+    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
+};
 
 /// Handler for the consolidated `org_entity` MCP tool.
 pub struct OrgEntityHandler {
