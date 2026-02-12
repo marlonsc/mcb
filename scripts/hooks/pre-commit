@@ -21,7 +21,7 @@ echo "Running pre-commit checks..."
 # =============================================================================
 
 echo "  → Lint (Rust 2024 compliance)..."
-make lint CI_MODE=1
+make lint MCB_CI=1
 
 echo "  → Security audit..."
 # Check if cargo-audit is installed, skip if not (CI will catch it)
@@ -33,7 +33,7 @@ fi
 
 echo "  → Architecture validation (quick mode)..."
 # Quick validation - skip test discovery for speed
-make validate STRICT=1 QUICK=1 2>/dev/null || make validate STRICT=1
+make validate QUICK=1 2>/dev/null || make validate
 
 echo ""
 echo "✅ Pre-commit checks passed!"

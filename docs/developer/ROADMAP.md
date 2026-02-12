@@ -1,10 +1,58 @@
 # Development Roadmap
 
-## Overview
+**Last updated:** 2026-02-12
 
 Development roadmap for **Memory Context Browser (MCB)** — a high-performance MCP server for semantic code search, persistent memory, and agent-aware context management.
 
---
+---
+
+## Current State
+
+| Field | Value |
+|-------|-------|
+| **Version** | v0.2.1-dev |
+| **Branch** | `release/v0.2.1` (only active release branch) |
+| **Build** | ✅ `cargo check --workspace` passes |
+| **Tests** | 10,028 test functions across all crates |
+| **Crates** | 9 (Clean Architecture workspace) |
+| **ADRs** | 46 (including Phase 8-9) |
+
+### Project Metrics
+
+| Metric | Value |
+|--------|-------|
+| Beads issues | 306 total (76 open, 229 closed, 38 ready, 38 blocked) |
+| Avg lead time | 9.7 hours |
+| TODO/FIXME | 241 code + docs debt markers |
+| Languages | 13 via tree-sitter |
+| Embedding providers | 7 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic, Null) |
+| Vector stores | 5+ (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted) |
+
+### Technical Debt
+
+1. **mcb-validate** coupled to runtime — should be decoupled
+2. **Duplicate tree-sitter** logic across crates — need centralization
+3. **Missing provider health** checks — no centralized validation
+4. **241 TODO/FIXME** markers — accumulated code/docs debt
+5. **225 missing_docs warnings** in mcb-domain struct fields
+
+---
+
+### v0.2.1 — Current Release (Admin UI + Modernization)
+
+**Status:** In progress
+**Branch:** `release/v0.2.1`
+
+Consolidates all pre-v0.3.0 work: admin UI, data model hardening, modernization cleanup. There is no v0.2.2 — everything lands here.
+
+| Area | Status |
+|------|--------|
+| Admin UI (Handlebars CRUD) | ✅ Complete |
+| P0 modernization (org context, lock/cache, dead code) | ✅ Complete |
+| P1/P2 modernization (provider consolidation, docs) | In progress |
+| CI pipeline modernization | ✅ Complete |
+
+---
 
 ### v0.3.0 — Workflow System
 
@@ -24,7 +72,7 @@ Implements complete workflow system with FSM-based task orchestration, context s
 
 **Quality Gates:**
 
-- `make quality` passes (0 errors)
+- `make check` passes (0 errors)
 - `make validate` passes (0 violations)
 - Performance benchmarks established
 - Migration guide from v0.2.0

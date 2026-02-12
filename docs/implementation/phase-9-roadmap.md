@@ -226,7 +226,7 @@ bd create "FSM + context system integration" -t task -p 1
 **Release**
 
 - [ ] Run full test suite (`make test`)
-- [ ] Run quality gates (`make quality`)
+- [ ] Run quality gates (`make check`)
 - [ ] Run architecture validation (`make validate`)
 - [ ] Create release notes
 - [ ] Tag v0.4.0

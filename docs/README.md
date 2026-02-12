@@ -89,7 +89,7 @@ make docs-lint
 make docs-lint FIX=1
 
 # Fix markdown (metrics + markdownlint -f). Run before commit.
-make docs-fix
+make docs-lint FIX=1
 
 # Generate architecture diagrams (PlantUML)
 make diagrams

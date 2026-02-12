@@ -897,7 +897,7 @@ Configurable timeouts:
 
 ### Positive Consequences
 
-- ✅ **Clear entity relationships**: Five entities with defined responsibilities and lifecycle make implementation straightforward
+- ✅ **Clear entity relationships**: Five entities with defined responsibilities and lifecycle, which makes implementation straightforward
 - ✅ **Type-safe states**: Rust enums + FSM ensure invalid transitions caught at compile time
 - ✅ **Audit trail**: Event log (ADR-037) captures all decisions for compliance and debugging
 - ✅ **Parallel execution**: Tasks, agents, and projects run independently; WIP policy prevents resource exhaustion

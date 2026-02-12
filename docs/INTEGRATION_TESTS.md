@@ -54,7 +54,7 @@ make docker-up
 docker-compose up -d redis nats
 
 # Verify services
-make docker
+docker-compose -f tests/docker-compose.yml ps
 ```
 
 **Option C: System services**
@@ -243,7 +243,7 @@ make test SCOPE=integration    # Run only integration tests
 make docker-up                 # Start main stack (docker-compose.yml: Ollama, Milvus, etc.)
 make docker-down               # Stop main stack
 make docker-logs               # View Docker logs
-make docker                    # Show Docker service status
+docker-compose -f tests/docker-compose.yml ps  # Show Docker service status
 ```
 
 For Redis + NATS only, use `docker-compose up -d redis nats` (and `docker-compose stop redis nats` when done). `make docker-up` starts the full stack.
@@ -419,5 +419,5 @@ For issues or questions:
 1. Check the Troubleshooting section above
 2. Review test output with `--nocapture` flag
 3. Check Docker logs: `docker-compose logs`
-4. Check service health: `make docker`
+4. Check service health: `docker-compose -f tests/docker-compose.yml ps`
 5. Open an issue on GitHub with test output

@@ -163,7 +163,7 @@ make validate
 make validate QUICK=1
 
 # Strict validation
-make validate STRICT=1
+make validate
 ```
 
 ### Programmatic API

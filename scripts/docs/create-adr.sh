@@ -94,7 +94,7 @@ create_adr_file() {
     echo
     log_info "Next steps:"
     echo "1. Edit the ADR file to add context, decision, and consequences"
-    echo "2. Run 'make adr-check' to validate the ADR format"
+    echo "2. Run 'make docs-validate' to validate the ADR format"
     echo "3. Add the ADR to the architecture documentation if applicable"
 }
 

@@ -19,7 +19,7 @@ sudo mv mcb /usr/local/bin/
 ```bash
 git clone https://github.com/marlonsc/mcb.git
 cd mcb
-make build-release
+make build RELEASE=1
 
 # Binary at: ./target/release/mcb
 ```

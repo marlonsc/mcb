@@ -27,7 +27,7 @@ BINARY_SOURCE="$PROJECT_ROOT/target/release/mcb"
 if [ ! -f "$BINARY_SOURCE" ]; then
 	echo -e "${YELLOW}Release binary not found. Building with make...${NC}"
 	cd "$PROJECT_ROOT"
-	make build-release
+	make build RELEASE=1
 fi
 
 # Create required directories

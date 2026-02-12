@@ -2,8 +2,8 @@
 set -euo pipefail
 
 if [[ -f "Makefile" ]]; then
-	if grep -q "^ci-local:" Makefile; then
-		make ci-local
+	if grep -q "^ci:" Makefile; then
+		make lint MCB_CI=1 && make validate QUICK=1
 		exit 0
 	fi
 fi

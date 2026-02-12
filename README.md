@@ -34,7 +34,7 @@ git clone https://github.com/marlonsc/mcb.git
 cd mcb
 
 # Build release binary
-make build-release
+make build RELEASE=1
 
 # Install as a systemd user service
 make install
@@ -146,11 +146,11 @@ and [ADR index](./docs/adr/) for all 46 Architecture Decision Records.
 
 ```bash
 make build          # Debug build
-make build-release  # Optimized release build
+make build RELEASE=1  # Optimized release build
 make test           # Run all tests (~2900+)
 make lint           # Clippy + format check
 make validate       # Architecture rule enforcement
-make quality        # Full pipeline: fmt + lint + test + validate
+make check        # Full pipeline: fmt + lint + test + validate
 ```
 
 ### Quality Gates

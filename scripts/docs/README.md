@@ -27,7 +27,7 @@ Commands:
 
 | Script | Function | Called by |
 |--------|--------|-------------|
-| `generate-mdbook.sh` | mdbook interactive platform management | `make docs-book`, `make docs-serve` |
+| `generate-mdbook.sh` | mdbook interactive platform management | `make docs-build`, `make docs-serve` |
 | `generate-diagrams.sh` | PlantUML diagrams generation | `make diagrams` |
 
 ---
@@ -38,17 +38,17 @@ Commands:
 
 ```bash
 make docs          # Generate + validate complete documentation
-make docs-generate # Generate automated documentation
+make docs          # Generate automated documentation
 make docs-validate # Validate quality and structure
-make docs-quality  # Run quality gates
-make docs-check-adr # Validate ADR compliance
+make docs-validate # Run quality gates
+make docs-validate # Validate ADR compliance
 make docs-setup    # Configure tools
 ```
 
 ### 📖 **Interactive Platform**
 
 ```bash
-make docs-book     # Build interactive documentation
+make docs-build    # Build interactive documentation
 make docs-serve    # Development server
 ```
 
@@ -56,9 +56,9 @@ make docs-serve    # Development server
 
 ```bash
 make adr-new       # Create new ADR
-make adr-list      # List ADRs
-make adr-generate  # Generate ADR documentation
-make adr-status    # ADR lifecycle status
+make adr      # List ADRs
+make adr  # Generate ADR documentation
+make adr    # ADR lifecycle status
 ```
 
 ---
@@ -140,15 +140,15 @@ make docs-setup  # Install all tools
 ### 2️⃣ **Development**
 
 ```bash
-make docs-generate  # Generate documentation
+make docs           # Generate documentation
 make docs-serve     # Preview interactively
 ```
 
 ### 3️⃣ **Quality Assurance**
 
 ```bash
-make docs-quality   # Check quality
-make docs-check-adr # Validate architecture
+make docs-validate  # Check quality
+make docs-validate  # Validate architecture
 make docs-validate  # Complete validation
 ```
 

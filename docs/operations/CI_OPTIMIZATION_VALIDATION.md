@@ -63,7 +63,7 @@ This document tracks validation of CI optimizations before considering them prod
 cargo install cargo-tarpaulin --locked
 
 # 2. Run coverage with new configuration
-make coverage LCOV=1 TEST_THREADS=4
+make coverage MCB_CI=1 THREADS=4
 
 # 3. Check results
 ls -lh coverage/lcov.info
@@ -261,7 +261,7 @@ git commit -m "test: verify CI runs on workflow changes"
 
 - Coverage job in main push should:
 - ✅ Install tarpaulin via setup-ci.sh --install-coverage
-- ✅ Run `make coverage LCOV=1 TEST_THREADS=4`
+- ✅ Run `make coverage MCB_CI=1 THREADS=4`
 - ✅ Upload to codecov
 - ✅ Complete within 30-minute timeout
 

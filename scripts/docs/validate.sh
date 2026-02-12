@@ -401,7 +401,7 @@ EXAMPLES:
 
 MAKE TARGETS:
     make docs-check      # Runs this script with 'all'
-    make adr-check       # Runs this script with 'adrs'
+    make docs-validate       # Runs this script with 'adrs'
 
 EOF
 }

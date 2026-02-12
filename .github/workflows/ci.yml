@@ -3,7 +3,6 @@
 # CI Pipeline
 # =============================================================================
 # Uses same Makefile verbs as local development
-# Rust 2024 edition lints enabled via CI_MODE=1
 # =============================================================================
 
 name: CI
@@ -82,7 +81,7 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
-      - run: make lint CI_MODE=1
+      - run: make lint MCB_CI=1
 
   test:
     name: Test (${{ matrix.rust }})
@@ -115,7 +114,7 @@ jobs:
             echo "Skipping beta test on PR"
             exit 0
           fi
-          make test TEST_THREADS=4
+          make test THREADS=4
 
   startup-smoke:
     name: Startup Smoke (DDL/Init)
@@ -134,7 +133,7 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
-      - run: make test-startup
+      - run: make test SCOPE=startup
 
   validate:
     name: Architecture Validation
@@ -152,7 +151,7 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
-      - run: make validate STRICT=1
+      - run: make validate
       - name: Check Provider Traits Location
         run: |
           VIOLATIONS=$(
@@ -182,7 +181,7 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
-      - run: make test SCOPE=golden TEST_THREADS=2
+      - run: make test SCOPE=golden THREADS=2
 
   audit:
     name: Security Audit
@@ -280,7 +279,7 @@ jobs:
           toolchain: stable
       - name: Update README and metrics
         run: |
-          make docs-auto
+          make docs
       - name: Commit and push changes
         run: |
           git config --local user.email "action@github.com"
@@ -406,7 +405,7 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
-      - run: make coverage LCOV=1 TEST_THREADS=4
+      - run: make coverage MCB_CI=1 THREADS=4
       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           files: ./coverage/lcov.info

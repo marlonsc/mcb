@@ -166,7 +166,7 @@ jobs:
 -   name: Link Validation
         run: cargo deadlinks
 -   name: Documentation Generation
-        run: make docs-auto
+        run: make docs
 ```
 
 ### Success Metrics Tracking

@@ -96,8 +96,8 @@ cargo test --package mcb-server --test integration golden_admin_web_e2e
 ```bash
 
 # Run all Rust tests + E2E
-make quality  # Runs fmt + lint + test SCOPE=all
-make test-e2e  # Runs Playwright E2E tests
+make check  # Runs fmt + lint + test SCOPE=all
+make test SCOPE=e2e  # Runs Playwright E2E tests
 ```
 
 ### E2E Only
@@ -105,13 +105,13 @@ make test-e2e  # Runs Playwright E2E tests
 ```bash
 
 # Run all Playwright tests
-make test-e2e
+make test SCOPE=e2e
 
 # Run with UI (interactive)
-make test-e2e-ui
+make test SCOPE=e2e
 
 # Run in debug mode
-make test-e2e-debug
+make test SCOPE=e2e
 
 # Run specific test suite
 npm run test:admin  # Admin routes only
@@ -137,7 +137,7 @@ jobs:
         run: npm ci
 
       -   name: Run E2E tests
-        run: make test-e2e
+        run: make test SCOPE=e2e
 ```
 
 ## Critical Test Coverage
@@ -166,7 +166,7 @@ jobs:
 
 ### When Routes Return 404
 
-1. Check Layer 3 first: `make test-e2e`
+1. Check Layer 3 first: `make test SCOPE=e2e`
 2. If failing, check Layer 2: `cargo test golden_admin_web_e2e`
 3. If passing, check `admin/routes.rs` - routes might not be mounted
 

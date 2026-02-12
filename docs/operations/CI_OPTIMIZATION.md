@@ -102,14 +102,14 @@ exclude_files = [
 ### Makefile Coverage Target
 
 ```bash
-coverage: ## Code coverage (LCOV=1 for CI format)
-ifeq ($(LCOV),1)
+coverage: ## Code coverage (MCB_CI=1 for CI format)
+ifeq ($(MCB_CI),1)
  @echo "Generating LCOV coverage (excluding integration tests)..."
  cargo tarpaulin --out Lcov --output-dir coverage \
   --exclude-files 'crates/*/tests/integration/*' \
   --exclude-files 'crates/*/tests/admin/*' \
   --timeout 300 \
-  --test-threads $(if $(TEST_THREADS),$(TEST_THREADS),4)
+  --test-threads $(if $(THREADS),$(THREADS),4)
 ```
 
 **Flags**:

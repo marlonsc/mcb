@@ -25,7 +25,7 @@ This document describes the automated CI/CD pipeline and release process for Mem
 Install pre-commit hooks that validate code before each commit:
 
 ```bash
-make install-hooks
+cp scripts/hooks/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit
 ```
 
 This installs `.git/hooks/pre-commit` which runs validation checks automatically.
@@ -37,7 +37,7 @@ The pre-commit hook runs the same checks as the CI pipeline but **skips tests** 
 ```bash
 
 # Step 1: Lint checks (Rust 2024 compliance)
-make lint CI_MODE=1
+make lint MCB_CI=1
 
 # Step 2: Architecture validation (QUICK mode, no tests)
 make validate QUICK=1
@@ -57,10 +57,10 @@ To run pre-commit validation without committing:
 ```bash
 
 # Run exactly what pre-commit hook runs
-make ci-local
+make lint MCB_CI=1 && make validate QUICK=1
 
 # Or manually run lint + quick validate
-make lint CI_MODE=1 && make validate QUICK=1
+make lint MCB_CI=1 && make validate QUICK=1
 ```
 
 ### Commit Orchestrator (Local)
@@ -71,13 +71,13 @@ make lint CI_MODE=1 && make validate QUICK=1
 ./scripts/commit_analyze.sh
 
 # Run pre-commit validation (same as hook)
-make commit-validate
+make lint MCB_CI=1 && make validate QUICK=1
 
 # Commit (updates Beads if issue ID in branch/footers)
-make commit
+git commit
 
 # Optional interactive push
-make push-confirm
+git push
 ```
 
 ### Bypassing Pre-commit (Not Recommended)
@@ -138,7 +138,7 @@ To run the **exact same pipeline locally** before pushing:
 ```bash
 
 # Full CI pipeline (matches GitHub exactly)
-make ci-full
+make ci
 
 # This runs:
 
@@ -266,11 +266,11 @@ The CI pipeline uses thread limiting to prevent timeouts:
 ```bash
 
 # In GitHub Actions CI:
-make test TEST_THREADS=4          # 4 parallel test threads (instead of auto)
-make test SCOPE=golden TEST_THREADS=2  # Acceptance tests with 2 threads
+make test THREADS=4          # 4 parallel test threads (instead of auto)
+make test SCOPE=golden THREADS=2  # Acceptance tests with 2 threads
 ```
 
-### Available TEST_THREADS Values
+### Available THREADS Values
 
 | Value | Use Case | Default |
 |-------|----------|---------|
@@ -287,16 +287,16 @@ make test SCOPE=golden TEST_THREADS=2  # Acceptance tests with 2 threads
 ```bash
 
 # Run tests with limited parallelization
-make test TEST_THREADS=4
+make test THREADS=4
 
 # Or use ci-full which already has good defaults
-make ci-full
+make ci
 ```
 
 **For GitHub Actions CI:** Edit `.github/workflows/ci.yml` and adjust:
 
 ```yaml
--   run: make test TEST_THREADS=4  # Increase/decrease as needed
+-   run: make test THREADS=4  # Increase/decrease as needed
 ```
 
 ### Monitoring Test Performance
@@ -324,7 +324,7 @@ gh run view <run-id> -j test --log
 ```bash
 
 # Reinstall hooks
-make install-hooks
+cp scripts/hooks/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit
 
 # Verify installation
 cat .git/hooks/pre-commit
@@ -344,7 +344,7 @@ cat .git/hooks/pre-commit
 ```bash
 
 # Run exact CI validation
-make ci-full
+make ci
 
 # Clear cache and rebuild
 make clean
@@ -369,13 +369,13 @@ rustc --version  # Should be stable
 1. **Reduce parallelization**:
 
    ```yaml
-   -   run: make test TEST_THREADS=2
+   -   run: make test THREADS=2
    ```
 
 1. **Run tests locally** to identify slow tests:
 
    ```bash
-   make test TEST_THREADS=4
+   make test THREADS=4
    ```
 
 ### Release Build Fails
@@ -427,21 +427,21 @@ gh run view <run-id> --log
 ```bash
 
 # Install pre-commit hooks
-make install-hooks
+cp scripts/hooks/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit
 
 # Pre-commit validation (lint + validate QUICK)
-make ci-local
+make lint MCB_CI=1 && make validate QUICK=1
 
 # Full CI pipeline (matches GitHub)
-make ci-full
+make ci
 
 # Individual checks
-make lint CI_MODE=1        # Format & clippy
+make lint MCB_CI=1        # Format & clippy
 make test                  # All tests
-make validate STRICT=1     # Architecture validation
+make validate      # Architecture validation
 make audit                 # Security audit
 make docs                  # Documentation
-make coverage LCOV=1       # Code coverage
+make coverage MCB_CI=1       # Code coverage
 ```
 
 ### GitHub Actions
@@ -460,7 +460,7 @@ gh run view <run-id>
 ```bash
 
 # Test parallelization
-make test TEST_THREADS=4
+make test THREADS=4
 
 # Specific test scopes
 make test SCOPE=unit       # Unit tests only
@@ -469,11 +469,11 @@ make test SCOPE=golden     # Acceptance tests only
 make test SCOPE=integration  # Integration tests only
 
 # Lint modes
-make lint CI_MODE=1        # Rust 2024 compatibility checks
+make lint MCB_CI=1        # Rust 2024 compatibility checks
 make lint FIX=1            # Auto-fix issues
 
 # Validation modes
-make validate STRICT=1     # Strict validation
+make validate      # Strict validation
 make validate QUICK=1      # Skip tests
 
 # Release

@@ -56,7 +56,7 @@ The project has 3,143+ tests with comprehensive coverage:
 make test
 
 # Run quality checks (fmt + lint + test)
-make quality
+make check
 
 # Run architecture validation
 make validate
