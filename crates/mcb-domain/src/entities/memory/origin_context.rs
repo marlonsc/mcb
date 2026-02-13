@@ -13,6 +13,9 @@ pub struct OriginContext {
     /// The ID of the session.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub session_id: Option<String>,
+    /// The ID of the parent session when delegated.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent_session_id: Option<String>,
     /// The ID of the execution.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub execution_id: Option<String>,
@@ -25,6 +28,21 @@ pub struct OriginContext {
     /// The path to the repository.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub repo_path: Option<String>,
+    /// Operator/user identifier.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub operator_id: Option<String>,
+    /// Machine/host fingerprint identifier.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub machine_id: Option<String>,
+    /// Agent program or IDE identifier.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent_program: Option<String>,
+    /// Model identifier used for execution.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model_id: Option<String>,
+    /// Whether this execution was delegated to a subagent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub delegated: Option<bool>,
     /// The ID of the worktree.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub worktree_id: Option<String>,

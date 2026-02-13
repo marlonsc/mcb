@@ -143,6 +143,7 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
             input.session_from_args,
             input.session_from_data,
         )?,
+        parent_session_id: None,
         execution_id: resolve_identifier_precedence(
             "execution_id",
             input.execution_from_args,
@@ -163,6 +164,11 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
             input.repo_path_args,
             input.repo_path_payload,
         )?,
+        operator_id: None,
+        machine_id: None,
+        agent_program: None,
+        model_id: None,
+        delegated: None,
         worktree_id: resolve_identifier_precedence(
             "worktree_id",
             input.worktree_id_args,

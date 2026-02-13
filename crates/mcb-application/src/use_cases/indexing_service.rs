@@ -90,6 +90,18 @@ pub struct IndexingServiceImpl {
 }
 
 impl IndexingServiceImpl {
+    fn workspace_relative_path(file_path: &Path, workspace_root: &Path) -> Result<String> {
+        let relative = file_path.strip_prefix(workspace_root).map_err(|_| {
+            mcb_domain::error::Error::invalid_argument(format!(
+                "file path '{}' is outside workspace root '{}'",
+                file_path.display(),
+                workspace_root.display()
+            ))
+        })?;
+
+        Ok(relative.to_string_lossy().replace('\\', "/"))
+    }
+
     /// Create new indexing service with injected dependencies
     pub fn new(
         context_service: Arc<dyn ContextServiceInterface>,
@@ -228,11 +240,12 @@ impl IndexingServiceInterface for IndexingServiceImpl {
         let service = self.clone();
         let collection_id = collection.clone();
         let op_id = operation_id.clone();
+        let workspace_root = path.to_path_buf();
 
         // Spawn background task - explicitly drop handle since we don't await it
         // (fire-and-forget pattern for async indexing)
         let _handle = tokio::spawn(async move {
-            Self::run_indexing_task(service, files, collection_id, op_id).await;
+            Self::run_indexing_task(service, files, workspace_root, collection_id, op_id).await;
         });
 
         // Return immediately with operation_id
@@ -275,6 +288,7 @@ impl IndexingServiceImpl {
     async fn run_indexing_task(
         service: IndexingServiceImpl,
         files: Vec<PathBuf>,
+        workspace_root: PathBuf,
         collection: CollectionId,
         operation_id: OperationId,
     ) {
@@ -285,11 +299,18 @@ impl IndexingServiceImpl {
         let mut failed_files: Vec<String> = Vec::new();
 
         for (i, file_path) in files.iter().enumerate() {
-            service.indexing_ops.update_progress(
-                &operation_id,
-                Some(file_path.display().to_string()),
-                i,
-            );
+            let relative_path = match Self::workspace_relative_path(file_path, &workspace_root) {
+                Ok(path) => path,
+                Err(e) => {
+                    warn!(file = %file_path.display(), error = %e, "Skipping file outside workspace root");
+                    failed_files.push(file_path.display().to_string());
+                    continue;
+                }
+            };
+
+            service
+                .indexing_ops
+                .update_progress(&operation_id, Some(relative_path.clone()), i);
 
             if i % PROGRESS_UPDATE_INTERVAL == 0
                 && let Err(e) = service
@@ -298,7 +319,7 @@ impl IndexingServiceImpl {
                         collection: collection.to_string(),
                         processed: i,
                         total,
-                        current_file: Some(file_path.display().to_string()),
+                        current_file: Some(relative_path.clone()),
                     })
                     .await
             {
@@ -319,7 +340,7 @@ impl IndexingServiceImpl {
                 match file_hash_repository.compute_hash(file_path.as_path()) {
                     Ok(hash) => {
                         match file_hash_repository
-                            .has_changed(collection.as_str(), &file_path.to_string_lossy(), &hash)
+                            .has_changed(collection.as_str(), &relative_path, &hash)
                             .await
                         {
                             Ok(false) => {
@@ -347,9 +368,7 @@ impl IndexingServiceImpl {
                 }
             }
 
-            let chunks = service
-                .language_chunker
-                .chunk(&content, &file_path.to_string_lossy());
+            let chunks = service.language_chunker.chunk(&content, &relative_path);
             if let Err(e) = service
                 .context_service
                 .store_chunks(&collection, &chunks)
@@ -363,7 +382,7 @@ impl IndexingServiceImpl {
             if let (Some(file_hash_repository), Some(hash)) =
                 (&service.file_hash_repository, computed_hash.as_deref())
                 && let Err(e) = file_hash_repository
-                    .upsert_hash(collection.as_str(), &file_path.to_string_lossy(), hash)
+                    .upsert_hash(collection.as_str(), &relative_path, hash)
                     .await
             {
                 warn!(
@@ -423,5 +442,33 @@ impl IndexingServiceImpl {
                 "Indexing completed successfully"
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::IndexingServiceImpl;
+    use std::path::Path;
+
+    #[test]
+    fn workspace_relative_path_normalizes_within_workspace() {
+        let workspace = Path::new("/repo");
+        let file = Path::new("/repo/src/main.rs");
+
+        let relative =
+            IndexingServiceImpl::workspace_relative_path(file, workspace).expect("relative path");
+
+        assert_eq!(relative, "src/main.rs");
+    }
+
+    #[test]
+    fn workspace_relative_path_rejects_outside_workspace() {
+        let workspace = Path::new("/repo");
+        let file = Path::new("/other/main.rs");
+
+        let err = IndexingServiceImpl::workspace_relative_path(file, workspace)
+            .expect_err("outside path must fail");
+
+        assert!(err.to_string().contains("outside workspace root"));
     }
 }

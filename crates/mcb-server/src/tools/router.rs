@@ -66,6 +66,16 @@ pub struct ToolExecutionContext {
     pub repo_id: Option<String>,
     /// Optional repository/workspace path associated with this execution.
     pub repo_path: Option<String>,
+    /// Optional operator/user identifier for this execution.
+    pub operator_id: Option<String>,
+    /// Optional machine/host fingerprint for this execution.
+    pub machine_id: Option<String>,
+    /// Optional agent program/IDE identifier for this execution.
+    pub agent_program: Option<String>,
+    /// Optional model identifier for this execution.
+    pub model_id: Option<String>,
+    /// Optional delegated flag for this execution.
+    pub delegated: Option<bool>,
 }
 
 impl ToolExecutionContext {
@@ -77,7 +87,27 @@ impl ToolExecutionContext {
         insert_argument_if_missing(request, "worktree_id", self.worktree_id.clone());
         insert_argument_if_missing(request, "repo_id", self.repo_id.clone());
         insert_argument_if_missing(request, "repo_path", self.repo_path.clone());
+        insert_argument_if_missing(request, "operator_id", self.operator_id.clone());
+        insert_argument_if_missing(request, "machine_id", self.machine_id.clone());
+        insert_argument_if_missing(request, "agent_program", self.agent_program.clone());
+        insert_argument_if_missing(request, "model_id", self.model_id.clone());
+        insert_bool_argument_if_missing(request, "delegated", self.delegated);
     }
+}
+
+fn insert_bool_argument_if_missing(
+    request: &mut CallToolRequestParams,
+    key: &'static str,
+    value: Option<bool>,
+) {
+    let Some(value) = value else {
+        return;
+    };
+
+    let arguments = request.arguments.get_or_insert_with(Default::default);
+    arguments
+        .entry(key.to_string())
+        .or_insert_with(|| Value::Bool(value));
 }
 
 fn insert_argument_if_missing(
@@ -104,6 +134,8 @@ pub async fn route_tool_call(
     handlers: &ToolHandlers,
     execution_context: ToolExecutionContext,
 ) -> Result<CallToolResult, McpError> {
+    validate_execution_context(request.name.as_ref(), &execution_context)?;
+
     let tool_name = request.name.clone();
     let result = dispatch_tool_call(&request, handlers).await?;
 
@@ -119,6 +151,42 @@ pub async fn route_tool_call(
     }
 
     Ok(result)
+}
+
+fn validate_execution_context(
+    tool_name: &str,
+    execution_context: &ToolExecutionContext,
+) -> Result<(), McpError> {
+    let requires_provenance = matches!(tool_name, "index" | "search" | "memory");
+    if !requires_provenance {
+        return Ok(());
+    }
+
+    let mut missing = Vec::new();
+    if execution_context.session_id.is_none() {
+        missing.push("session_id");
+    }
+    if execution_context.project_id.is_none() {
+        missing.push("project_id");
+    }
+    if execution_context.repo_id.is_none() {
+        missing.push("repo_id");
+    }
+    if execution_context.repo_path.is_none() {
+        missing.push("repo_path");
+    }
+
+    if missing.is_empty() {
+        Ok(())
+    } else {
+        Err(McpError::invalid_params(
+            format!(
+                "Missing execution provenance for '{tool_name}': {}",
+                missing.join(", ")
+            ),
+            None,
+        ))
+    }
 }
 
 async fn trigger_post_tool_use_hook(
@@ -146,6 +214,21 @@ async fn trigger_post_tool_use_hook(
     }
     if let Some(repo_path) = &execution_context.repo_path {
         context = context.with_metadata("repo_path".to_string(), repo_path.clone());
+    }
+    if let Some(operator_id) = &execution_context.operator_id {
+        context = context.with_metadata("operator_id".to_string(), operator_id.clone());
+    }
+    if let Some(machine_id) = &execution_context.machine_id {
+        context = context.with_metadata("machine_id".to_string(), machine_id.clone());
+    }
+    if let Some(agent_program) = &execution_context.agent_program {
+        context = context.with_metadata("agent_program".to_string(), agent_program.clone());
+    }
+    if let Some(model_id) = &execution_context.model_id {
+        context = context.with_metadata("model_id".to_string(), model_id.clone());
+    }
+    if let Some(delegated) = execution_context.delegated {
+        context = context.with_metadata("delegated".to_string(), delegated.to_string());
     }
 
     hook_processor

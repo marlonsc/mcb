@@ -59,13 +59,33 @@ impl HookProcessor {
         let hashed_session = session_internal
             .as_deref()
             .map(|id| compute_stable_id_hash("session", id));
+        let parent_session_hash = context
+            .metadata
+            .get("parent_session_id")
+            .map(|id| compute_stable_id_hash("parent_session", id));
+        let delegated = context.metadata.get("delegated").and_then(|value| {
+            match value.trim().to_ascii_lowercase().as_str() {
+                "true" | "1" | "yes" => Some(true),
+                "false" | "0" | "no" => Some(false),
+                _ => None,
+            }
+        });
 
         let metadata = mcb_domain::entities::memory::ObservationMetadata {
             session_id: session_internal.clone(),
             origin_context: Some(OriginContext {
                 project_id: Some(project_id.clone()),
                 session_id: hashed_session,
+                parent_session_id: parent_session_hash,
                 tool_name: Some(context.tool_name.clone()),
+                repo_id: context.metadata.get("repo_id").cloned(),
+                repo_path: context.metadata.get("repo_path").cloned(),
+                worktree_id: context.metadata.get("worktree_id").cloned(),
+                operator_id: context.metadata.get("operator_id").cloned(),
+                machine_id: context.metadata.get("machine_id").cloned(),
+                agent_program: context.metadata.get("agent_program").cloned(),
+                model_id: context.metadata.get("model_id").cloned(),
+                delegated,
                 ..OriginContext::default()
             }),
             ..Default::default()

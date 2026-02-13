@@ -56,6 +56,7 @@ use crate::admin::handlers::AdminState;
 use crate::admin::routes::admin_rocket;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
 use crate::tools::{ToolExecutionContext, ToolHandlers, create_tool_list, route_tool_call};
+use mcb_domain::utils::compute_stable_id_hash;
 use mcb_infrastructure::config::ConfigLoader;
 
 /// HTTP transport configuration
@@ -119,6 +120,11 @@ struct BridgeProvenance {
     parent_session_id: Option<String>,
     project_id: Option<String>,
     worktree_id: Option<String>,
+    operator_id: Option<String>,
+    machine_id: Option<String>,
+    agent_program: Option<String>,
+    model_id: Option<String>,
+    delegated: Option<String>,
 }
 
 #[rocket::async_trait]
@@ -154,6 +160,26 @@ impl<'r> FromRequest<'r> for BridgeProvenance {
             .headers()
             .get_one("X-Worktree-Id")
             .map(ToOwned::to_owned);
+        let operator_id = request
+            .headers()
+            .get_one("X-Operator-Id")
+            .map(ToOwned::to_owned);
+        let machine_id = request
+            .headers()
+            .get_one("X-Machine-Id")
+            .map(ToOwned::to_owned);
+        let agent_program = request
+            .headers()
+            .get_one("X-Agent-Program")
+            .map(ToOwned::to_owned);
+        let model_id = request
+            .headers()
+            .get_one("X-Model-Id")
+            .map(ToOwned::to_owned);
+        let delegated = request
+            .headers()
+            .get_one("X-Delegated")
+            .map(ToOwned::to_owned);
 
         Outcome::Success(Self {
             workspace_root,
@@ -163,6 +189,11 @@ impl<'r> FromRequest<'r> for BridgeProvenance {
             parent_session_id,
             project_id,
             worktree_id,
+            operator_id,
+            machine_id,
+            agent_program,
+            model_id,
+            delegated,
         })
     }
 }
@@ -461,17 +492,43 @@ async fn handle_tools_call(
         Err((code, msg)) => return McpResponse::error(request.id.clone(), code, msg),
     };
 
-    let execution_context = ToolExecutionContext {
+    let mut execution_context = ToolExecutionContext {
         session_id: bridge_provenance.session_id.clone(),
         parent_session_id: bridge_provenance.parent_session_id.clone(),
-        project_id: bridge_provenance.project_id.clone(),
+        project_id: bridge_provenance
+            .project_id
+            .clone()
+            .or_else(|| Some("default".to_string())),
         worktree_id: bridge_provenance.worktree_id.clone(),
         repo_id: bridge_provenance.repo_id.clone(),
         repo_path: bridge_provenance
             .repo_path
             .clone()
             .or_else(|| bridge_provenance.workspace_root.clone()),
+        operator_id: bridge_provenance.operator_id.clone(),
+        machine_id: bridge_provenance.machine_id.clone(),
+        agent_program: bridge_provenance.agent_program.clone(),
+        model_id: bridge_provenance.model_id.clone(),
+        delegated: bridge_provenance
+            .delegated
+            .as_deref()
+            .map(str::trim)
+            .and_then(|v| match v.to_ascii_lowercase().as_str() {
+                "true" | "1" | "yes" => Some(true),
+                "false" | "0" | "no" => Some(false),
+                _ => None,
+            }),
     };
+
+    if execution_context.session_id.is_none() {
+        execution_context.session_id = request.id.as_ref().map(|id| format!("http-{}", id));
+    }
+    if execution_context.repo_id.is_none()
+        && let Some(repo_path) = execution_context.repo_path.as_deref()
+    {
+        execution_context.repo_id = Some(compute_stable_id_hash("repo_path", repo_path));
+    }
+
     execution_context.apply_to_request_if_missing(&mut call_request);
 
     let handlers = ToolHandlers {

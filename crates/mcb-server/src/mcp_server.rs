@@ -59,6 +59,35 @@ fn resolve_context_value(
         .or_else(|| meta_value_as_string(context_meta, keys))
 }
 
+fn meta_value_as_bool(meta: &Meta, keys: &[&str]) -> Option<bool> {
+    for key in keys {
+        let value = meta.get(*key)?;
+        let extracted = match value {
+            Value::Bool(v) => Some(*v),
+            Value::String(v) => match v.trim().to_ascii_lowercase().as_str() {
+                "true" | "1" | "yes" => Some(true),
+                "false" | "0" | "no" => Some(false),
+                _ => None,
+            },
+            _ => None,
+        };
+        if extracted.is_some() {
+            return extracted;
+        }
+    }
+    None
+}
+
+fn resolve_context_bool(
+    request_meta: Option<&Meta>,
+    context_meta: &Meta,
+    keys: &[&str],
+) -> Option<bool> {
+    request_meta
+        .and_then(|meta| meta_value_as_bool(meta, keys))
+        .or_else(|| meta_value_as_bool(context_meta, keys))
+}
+
 /// Core MCP server implementation
 ///
 /// This server implements the MCP protocol for semantic code search.
@@ -116,7 +145,8 @@ impl McpServer {
             request_meta,
             context_meta,
             &["session_id", "sessionId", "x-session-id", "x_session_id"],
-        );
+        )
+        .or_else(|| Some(format!("rmcp-{:?}", context.id)));
         let parent_session_id = resolve_context_value(
             request_meta,
             context_meta,
@@ -136,7 +166,8 @@ impl McpServer {
                 "x-project-id",
                 "x_project_id",
             ],
-        );
+        )
+        .or_else(|| Some("default".to_string()));
         let worktree_id = resolve_context_value(
             request_meta,
             context_meta,
@@ -151,13 +182,52 @@ impl McpServer {
         let mut repo_id = resolve_context_value(
             request_meta,
             context_meta,
-            &["repo_id", "repoId", "x-repo-id", "x_repo_id"],
+            &[schema::REPO_ID, "repoId", "x-repo-id", "x_repo_id"],
         );
         let mut repo_path = resolve_context_value(
             request_meta,
             context_meta,
-            &["repo_path", "repoPath", "x-repo-path", "x_repo_path"],
+            &[schema::REPO_PATH, "repoPath", "x-repo-path", "x_repo_path"],
         );
+        let operator_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[
+                "operator_id",
+                "operatorId",
+                "x-operator-id",
+                "x_operator_id",
+            ],
+        )
+        .or_else(|| std::env::var("USER").ok());
+        let machine_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &["machine_id", "machineId", "x-machine-id", "x_machine_id"],
+        )
+        .or_else(|| std::env::var("HOSTNAME").ok());
+        let agent_program = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[
+                "agent_program",
+                "agentProgram",
+                "ide",
+                "x-agent-program",
+                "x_agent_program",
+            ],
+        );
+        let model_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &["model_id", "model", "modelId", "x-model-id", "x_model_id"],
+        );
+        let delegated = resolve_context_bool(
+            request_meta,
+            context_meta,
+            &["delegated", "is_delegated", "isDelegated", "x-delegated"],
+        )
+        .or(Some(parent_session_id.is_some()));
 
         if repo_path.is_none()
             && let Ok(cwd) = std::env::current_dir()
@@ -191,6 +261,11 @@ impl McpServer {
             worktree_id,
             repo_id,
             repo_path,
+            operator_id,
+            machine_id,
+            agent_program,
+            model_id,
+            delegated,
         }
     }
 

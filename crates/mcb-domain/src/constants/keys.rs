@@ -63,6 +63,12 @@ pub const PROJECT_ID: &str = "project_id";
 /// Worktree ID column key.
 pub const WORKTREE_ID: &str = "worktree_id";
 
+/// Repository ID column key.
+pub const REPO_ID: &str = "repo_id";
+
+/// Repository path column key.
+pub const REPO_PATH: &str = "repo_path";
+
 // Metadata keys for code chunks
 /// Metadata key for "start_line"
 pub const METADATA_KEY_START_LINE: &str = "start_line";
