@@ -77,8 +77,14 @@ jobs:
         if: runner.os == 'Windows'
         run: cargo build --release --target ${{ matrix.target }}
 
-      - name: Create dist directory
+      - name: Create dist directory (Unix)
+        if: runner.os != 'Windows'
         run: mkdir -p dist
+
+      - name: Create dist directory (Windows)
+        if: runner.os == 'Windows'
+        run: New-Item -ItemType Directory -Force -Path dist
+        shell: pwsh
 
       - name: Copy artifact (Unix)
         if: runner.os != 'Windows'
@@ -90,7 +96,7 @@ jobs:
       - name: Copy artifact (Windows)
         if: runner.os == 'Windows'
         run: >-
-          Copy-Item "target\release\${{ matrix.artifact_name }}"
+          Copy-Item "target\${{ matrix.target }}\release\${{ matrix.artifact_name }}"
           "dist\${{ matrix.asset_name }}"
         shell: pwsh
 
