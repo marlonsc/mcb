@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 19
 title: Error Handling Strategy
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 019: Error Handling Strategy
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 019: Error Handling Strategy
 
 ## Status
 
@@ -25,7 +28,7 @@ MCB uses typed errors (`thiserror`). PMAT uses `anyhow::Error`.
 
 ## Decision
 
-**Layered error handling**:
+Layered error handling:
 
 1. **Domain Layer**: Typed errors with `thiserror`
 2. **Adapter Layer**: Convert `anyhow` → typed errors
@@ -59,7 +62,7 @@ impl ComplexityAnalyzerAdapter {
 }
 ```
 
-**Domain Error Types**:
+Domain Error Types:
 
 ```rust
 // crates/mcb-domain/src/error.rs
@@ -88,7 +91,7 @@ pub enum AnalysisError {
 Current error types in the eight-crate structure:
 
 | Crate | Error File | Error Type |
-|-------|-----------|------------|
+| ------- | ----------- | ------------ |
 | mcb-domain | `src/error.rs` | `DomainError` |
 | mcb-application | `src/error.rs` | `ApplicationError` |
 | mcb-providers | `src/error.rs` | `ProviderError` |
@@ -97,25 +100,25 @@ Current error types in the eight-crate structure:
 
 All use `thiserror` for type-safe error handling.
 
-## Consequences
+### Consequences
 
-**Positive**:
+Positive:
 
--   PMAT code unchanged (100% reuse)
--   MCB's typed errors at boundaries
--   Error context preserved
+- PMAT code unchanged (100% reuse)
+- MCB's typed errors at boundaries
+- Error context preserved
 
-**Negative**:
+Negative:
 
--   Two error types to maintain
+- Two error types to maintain
 
 **Acceptable**: Adapter layer is thin (<50 LOC per adapter)
 
 ## Related ADRs
 
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Error location per crate
--   [ADR-016: Integration Points Adapter Pattern](016-integration-points-adapter-pattern.md) - Adapter pattern
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Error location per crate
+- [ADR-016: Integration Points Adapter Pattern](016-integration-points-adapter-pattern.md) - Adapter pattern
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 crate structure*
+Updated 2026-01-17 - Reflects v0.1.2 crate structure

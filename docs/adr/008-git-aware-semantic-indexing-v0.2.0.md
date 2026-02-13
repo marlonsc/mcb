@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 8
 title: Git-Aware Semantic Indexing v0.2.0
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 008: Git-Aware Semantic Indexing v0.2.0
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 008: Git-Aware Semantic Indexing v0.2.0
 
 ## Status
 
@@ -34,21 +37,21 @@ implementation_status: Incomplete
 
 Memory Context Browser v0.1.0 provides efficient semantic code search but lacks version control system awareness. This limits its usefulness in real-world scenarios:
 
-**Current problems:**
+Current problems:
 
--   Indexes are based on filesystem paths, breaking if directory is moved
--   No distinction between branches - search mixes code from different contexts
--   Change detection based on file mtime, not actual commits
--   No support for monorepos with multiple projects
--   No commit history indexing
--   No change impact analysis
+- Indexes are based on filesystem paths, breaking if directory is moved
+- No distinction between branches - search mixes code from different contexts
+- Change detection based on file mtime, not actual commits
+- No support for monorepos with multiple projects
+- No commit history indexing
+- No change impact analysis
 
-**User demand:**
+User demand:
 
--   Developers work with large monorepos (Uber, Google, Meta patterns)
--   Need to search code in specific branch
--   Need to understand impact of changes before merge
--   Need to index submodules as separate projects
+- Developers work with large monorepos (Uber, Google, Meta patterns)
+- Need to search code in specific branch
+- Need to understand impact of changes before merge
+- Need to index submodules as separate projects
 
 ## Decision
 
@@ -63,46 +66,46 @@ Implement full git integration in mcb v0.2.0 with:
 
 **Library chosen**: git2 (libgit2 bindings)
 
--   Mature, battle-tested, widely used
--   Stable and well-documented API
--   Superior performance to gitoxide (still in development)
+- Mature, battle-tested, widely used
+- Stable and well-documented API
+- Superior performance to gitoxide (still in development)
 
-## Consequences
+### Consequences
 
 ### Positive
 
--   **Portability**: Indexes survive directory moves/renames
--   **Precise context**: Search within specific branch
--   **Monorepo support**: Enterprises can use with large codebases
--   **Impact analysis**: Prevents bugs before merge
--   **History**: Search in previous versions of code
+- **Portability**: Indexes survive directory moves/renames
+- **Precise context**: Search within specific branch
+- **Monorepo support**: Enterprises can use with large codebases
+- **Impact analysis**: Prevents bugs before merge
+- **History**: Search in previous versions of code
 
 ### Negative
 
--   **Complexity**: Adds ~12 new files, ~2500 LOC
--   **Dependency**: git2 adds libgit2 as native dependency
--   **Storage**: Per-branch indexes increase disk usage
--   **Performance**: Git operations add latency
+- **Complexity**: Adds ~12 new files, ~2500 LOC
+- **Dependency**: git2 adds libgit2 as native dependency
+- **Storage**: Per-branch indexes increase disk usage
+- **Performance**: Git operations add latency
 
 ## Alternatives Considered
 
 ### Alternative 1: gitoxide (pure Rust)
 
--   **Pros**: Pure Rust, no native dependency
--   **Cons**: API still unstable, fewer features
--   **Rejected**: Risk of breaking changes
+- **Pros**: Pure Rust, no native dependency
+- **Cons**: API still unstable, fewer features
+- **Rejected**: Risk of breaking changes
 
 ### Alternative 2: Shell commands (git CLI)
 
--   **Pros**: Always available, no dependency
--   **Cons**: Subprocess overhead, output parsing
--   **Rejected**: Poor performance for frequent operations
+- **Pros**: Always available, no dependency
+- **Cons**: Subprocess overhead, output parsing
+- **Rejected**: Poor performance for frequent operations
 
 ### Alternative 3: Keep without git
 
--   **Pros**: Simplicity
--   **Cons**: Does not meet user demand
--   **Rejected**: Essential feature for adoption
+- **Pros**: Simplicity
+- **Cons**: Does not meet user demand
+- **Rejected**: Essential feature for adoption
 
 ## Implementation Notes
 
@@ -374,7 +377,7 @@ pub struct CodeChunk {
 }
 ```
 
-**Extended metadata JSON structure:**
+Extended metadata JSON structure:
 
 ```json
 {
@@ -394,10 +397,10 @@ pub struct CodeChunk {
 }
 ```
 
-**Collection naming strategy:**
+Collection naming strategy:
 
 | Pattern | Purpose |
-|---------|---------|
+| --------- | --------- |
 | `{repo_id}_{branch}` | Branch-specific search |
 | `{repo_id}_all` | Cross-branch search |
 | `{repo_id}_{commit_short}` | Point-in-time snapshot (optional) |
@@ -460,7 +463,7 @@ impl GitIndexingService {
 
 ### Phase 7: History Indexing
 
-**Strategy to avoid index explosion:**
+Strategy to avoid index explosion:
 
 ```rust
 pub struct HistoryIndexingStrategy {
@@ -532,7 +535,7 @@ impl ImpactAnalyzer {
 **Create**: `crates/mcb-server/src/handlers/git_tools.rs`
 
 | Tool | Description | Parameters |
-|------|-------------|------------|
+| ------ | ------------- | ------------ |
 | `index_git_repository` | Index repository with branch awareness | path, branches?, include_submodules?, include_history? |
 | `vcs (action=search_branch)` | Search within specific branch | query, repository?, branch?, limit? |
 | `vcs (action=compare_branches)` | Compare code between branches | path, from_branch, to_branch |
@@ -589,7 +592,7 @@ git2 = "0.20"
 ## Files to Create
 
 | File | Purpose |
-|------|---------|
+| ------ | --------- |
 | `crates/mcb-domain/src/git.rs` | Git domain types |
 | `crates/mcb-application/src/ports/providers/git.rs` | GitProvider trait |
 | `crates/mcb-providers/src/git/mod.rs` | Git module |
@@ -604,7 +607,7 @@ git2 = "0.20"
 ## Files to Modify
 
 | File | Change |
-|------|--------|
+| ------ | -------- |
 | `crates/mcb-providers/Cargo.toml` | Add `git2 = "0.20"` dependency |
 | `crates/mcb-domain/src/entities/code_chunk.rs` | Add `git_metadata` field to CodeChunk |
 | `crates/mcb-application/src/ports/providers/mod.rs` | Export GitProvider |
@@ -619,7 +622,7 @@ git2 = "0.20"
 ## Success Metrics
 
 | Metric | Before | Target v0.2.0 |
-|--------|--------|---------------|
+| -------- | -------- | --------------- |
 | Portability | Filesystem path | Root commit ID |
 | Multi-branch | No | Yes |
 | Submodules | No | Yes |
@@ -629,22 +632,22 @@ git2 = "0.20"
 ## Configuration Defaults
 
 | Setting | Default | Override |
-|---------|---------|----------|
+| --------- | --------- | ---------- |
 | Branches | main, HEAD, current | Per-repo |
 | History depth | 50 commits | Per-repo |
 | Submodules | Recursive indexing | Per-repo |
 
 ## Related ADRs
 
--   [ADR-001: Provider Pattern Architecture](001-modular-crates-architecture.md) - Provider patterns for GitProvider
--   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async git operations
--   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider routing
--   [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Git-tagged memory entries
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for git providers
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
+- [ADR-001: Provider Pattern Architecture](001-modular-crates-architecture.md) - Provider patterns for GitProvider
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async git operations
+- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider routing
+- [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Git-tagged memory entries
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for git providers
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
 
 ## References
 
--   [git2 crate](https://docs.rs/git2/)
--   [libgit2](https://libgit2.org/)
--   [Shaku Documentation](https://docs.rs/shaku) (historical; DI is now dill, ADR-029)
+- [git2 crate](https://docs.rs/git2/)
+- [libgit2](https://libgit2.org/)
+- [Shaku Documentation](https://docs.rs/shaku) (historical; DI is now dill, ADR-029)

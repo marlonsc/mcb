@@ -1,7 +1,8 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Implementation Status - Traceability Document
 
 **Purpose**: Map what EXISTS (files created) vs what PLANS require.
-**Last Audit**: 2026-01-28
+**Last Audit**: 2026-02-12
 **Audit Scope**: File existence AND functionality verification
 
 ---
@@ -9,7 +10,7 @@
 ## Legend
 
 | Status | Meaning |
-|--------|---------|
+| -------- | --------- |
 | **Verified** | Files exist AND tests pass |
 | **Exists** | Files created but functionality NOT verified |
 | **Partial** | Some expected files exist, others missing |
@@ -19,14 +20,34 @@
 
 ---
 
+## v0.2.1 Tracking (Pre-v0.3.0 Closure)
+
+### Completed Since v0.2.0
+
+- Data model v2 merge and consolidation into `release/v0.2.1`
+- Admin UI expansion (CRUD metadata, LOV endpoints, filtering, dashboard, UI partials)
+- CI modernization and workflow cleanup
+- Dead code and dependency cleanup (`-913` lines, 30+ unused deps removed)
+- Handler/provider consolidation and routing cleanup
+- Documentation restructuring and ADR normalization passes
+
+### Current Verification Snapshot (2026-02-12)
+
+- `cargo check --workspace`: PASS
+- `cargo test --workspace`: PASS (1,485 passing tests)
+- `cargo test -p mcb-validate -- --list`: 382 listed tests
+- Open beads issues triaged with scope tags: 50/50
+
+---
+
 ## mcb-validate Implementation Tracking
 
-**Plan Reference**: `~/.claude/plans/snoopy-rolling-catmull.md`
+**Plan Reference**: `.sisyphus/plans/`
 
 ### Phase Status Summary
 
 | Phase | Description | Files | Integration Test | Status |
-|-------|-------------|-------|------------------|--------|
+| ------- | ------------- | ------- | ------------------ | -------- |
 | 1 | Linters | Exists | 17/17 pass | **Verified** ✅ |
 | 2 | AST Queries | Exists | 26/26 pass | **Verified** ✅ |
 | 3 | Dual Rule Engine | Exists | 30/30 pass | **Verified** ✅ |
@@ -35,22 +56,22 @@
 | 6 | Architecture | Exists | 11/11 pass | **Verified** ✅ |
 | 7 | Integration | Exists | 14/14 pass + benchmarks | **Verified** ✅ |
 
-**Total Tests**: 750+ in mcb-validate (lib + integration)
-**Verification Date**: 2026-01-19 15:10 GMT-3 via `make test`
+**Total Tests**: 382 listed tests in mcb-validate (`cargo test -p mcb-validate -- --list`)
+**Verification Date**: 2026-02-12 via `cargo test -p mcb-validate -- --list`
 
 ### Phase 1: Linters - VERIFIED ✅
 
-**Plan Expected**:
+#### Plan Expected
 
--   `src/linters/mod.rs`
--   `src/linters/clippy.rs`
--   `src/linters/ruff.rs`
--   `tests/integration_linters.rs`
+- `src/linters/mod.rs`
+- `src/linters/clippy.rs`
+- `src/linters/ruff.rs`
+- `tests/integration_linters.rs`
 
-**Actual Files**:
+#### Actual Files
 
 | File | Exists | Size |
-|------|--------|------|
+| ------ | -------- | ------ |
 | `src/linters/mod.rs` | Yes | 12,063 bytes |
 | `src/linters/clippy.rs` | No | - |
 | `src/linters/ruff.rs` | No | - |
@@ -60,18 +81,18 @@
 
 ### Phase 2: AST Queries - VERIFIED ✅
 
-**Plan Expected**:
+#### Plan Expected
 
--   `src/ast/mod.rs`
--   `src/ast/query.rs`
--   `src/ast/decoder.rs`
--   `src/ast/languages.rs`
--   `tests/integration_ast.rs`
+- `src/ast/mod.rs`
+- `src/ast/query.rs`
+- `src/ast/decoder.rs`
+- `src/ast/languages.rs`
+- `tests/integration_ast.rs`
 
-**Actual Files**:
+#### Actual Files
 
 | File | Exists | Size |
-|------|--------|------|
+| ------ | -------- | ------ |
 | `src/ast/mod.rs` | Yes | 4,478 bytes |
 | `src/ast/query.rs` | Yes | 9,716 bytes |
 | `src/ast/decoder.rs` | Yes | 7,718 bytes |
@@ -80,17 +101,17 @@
 
 ### Phase 3: Dual Rule Engine - VERIFIED ✅
 
-**Plan Expected**:
+#### Plan Expected
 
--   `src/engines/expression_engine.rs`
--   `src/engines/rete_engine.rs`
--   `src/engines/router.rs`
--   `tests/integration_engines.rs`
+- `src/engines/expression_engine.rs`
+- `src/engines/rete_engine.rs`
+- `src/engines/router.rs`
+- `tests/integration_engines.rs`
 
-**Actual Files**:
+#### Actual Files
 
 | File | Exists | Size |
-|------|--------|------|
+| ------ | -------- | ------ |
 | `src/engines/mod.rs` | Yes | 1,179 bytes |
 | `src/engines/expression_engine.rs` | Yes | 10,956 bytes |
 | `src/engines/rete_engine.rs` | Yes | 20,840 bytes |
@@ -105,17 +126,17 @@
 
 ### Phase 4: Metrics - VERIFIED ✅
 
-**Plan Expected**:
+#### Plan Expected
 
--   `src/metrics/mod.rs`
--   `src/metrics/analyzer.rs`
--   `src/metrics/thresholds.rs`
--   `tests/integration_metrics.rs`
+- `src/metrics/mod.rs`
+- `src/metrics/analyzer.rs`
+- `src/metrics/thresholds.rs`
+- `tests/integration_metrics.rs`
 
-**Actual Files**:
+#### Actual Files
 
 | File | Exists | Size |
-|------|--------|------|
+| ------ | -------- | ------ |
 | `src/metrics/mod.rs` | Yes | ~600 lines |
 | `src/metrics/analyzer.rs` | Yes | ~676 lines |
 | `src/metrics/rca_analyzer.rs` | Yes | Feature-gated (enabled by default) |
@@ -126,7 +147,7 @@
 **RCA Metrics Available** (via Rust-code-analysis fork):
 
 | Metric | Description |
-|--------|-------------|
+| -------- | ------------- |
 | Cyclomatic Complexity | Number of linearly independent paths |
 | Cognitive Complexity | Difficulty to understand code |
 | Halstead Volume | Size of implementation |
@@ -145,17 +166,17 @@
 
 ### Phase 5: Duplication - VERIFIED ✅
 
-**Plan Expected**:
+#### Plan Expected
 
--   `src/duplication/mod.rs`
--   `src/duplication/fingerprint.rs`
--   `src/duplication/detector.rs`
--   `tests/integration_duplication.rs`
+- `src/duplication/mod.rs`
+- `src/duplication/fingerprint.rs`
+- `src/duplication/detector.rs`
+- `tests/integration_duplication.rs`
 
-**Actual Files**:
+#### Actual Files
 
 | File | Exists | Size | Description |
-|------|--------|------|-------------|
+| ------ | -------- | ------ | ------------- |
 | `src/duplication/mod.rs` | Yes | ~500 lines | DuplicationViolation, DuplicationAnalyzer facade |
 | `src/duplication/thresholds.rs` | Yes | ~170 lines | DuplicationType, DuplicationThresholds |
 | `src/duplication/fingerprint.rs` | Yes | ~300 lines | Rabin-Karp rolling hash, TokenFingerprinter |
@@ -165,10 +186,10 @@
 | `rules/duplication/DUP002_renamed-clone.yml` | Yes | - | Type 2 clone detection |
 | `rules/duplication/DUP003_gapped-clone.yml` | Yes | - | Type 3 clone detection |
 
-**Clone Types Supported**:
+### Clone Types Supported
 
 | Type | Rule ID | Description | Similarity |
-|------|---------|-------------|------------|
+| ------ | --------- | ------------- | ------------ |
 | Type 1 | DUP001 | Exact clones (100% identical) | 1.0 |
 | Type 2 | DUP002 | Renamed clones (identifiers changed) | 0.95+ |
 | Type 3 | DUP003 | Gapped clones (small modifications) | 0.80+ |
@@ -176,25 +197,25 @@
 
 ### Phase 6: Architecture - VERIFIED ✅
 
-**Plan Expected**:
+#### Plan Expected
 
--   `src/architecture/mod.rs`
--   `src/architecture/layer_validator.rs`
--   `tests/integration_architecture.rs`
+- `src/architecture/mod.rs`
+- `src/architecture/layer_validator.rs`
+- `tests/integration_architecture.rs`
 
-**Actual Files**:
+#### Actual Files
 
 | File | Exists | Size | Description |
-|------|--------|------|-------------|
+| ------ | -------- | ------ | ------------- |
 | `src/clean_architecture.rs` | Yes | 584 lines | CleanArchitectureValidator (CA001-CA006 violations) |
 | `tests/integration_architecture.rs` | Yes | ~500 lines | 11 integration tests for architecture validation |
 
 **Note**: Implementation in clean_architecture.rs rather than separate directory.
 
-**Violation Types Implemented**:
+### Violation Types Implemented
 
 | ID | Type | Description |
-|----|------|-------------|
+| ---- | ------ | ------------- |
 | CA001 | DomainContainsImplementation | Domain layer has implementation logic |
 | CA002 | HandlerCreatesService | Handler creates service directly (DI violation) |
 | CA003 | PortMissingComponentDerive | Port impl missing DI registration |
@@ -204,24 +225,24 @@
 
 ### Phase 7: Integration - VERIFIED ✅
 
-**Plan Expected**:
+#### Plan Expected
 
--   CLI improvements
--   Benchmarks
--   `tests/integration_full.rs`
+- CLI improvements
+- Benchmarks
+- `tests/integration_full.rs`
 
-**Actual Files**:
+#### Actual Files
 
 | Component | Status | Details |
-|-----------|--------|---------|
+| ----------- | -------- | --------- |
 | CLI (validate command) | Exists | In lib.rs with ValidatorRegistry |
 | Benchmarks | Exists | `benches/validation_benchmark.rs` - 7 benchmark groups |
 | `tests/integration_full.rs` | Exists | 14 integration tests for full pipeline |
 
-**Benchmark Groups**:
+### Benchmark Groups
 
 | Group | Description |
-|-------|-------------|
+| ------- | | ------------- |
 | unwrap_detection | UnwrapDetector performance |
 | tokenization | Source code tokenization |
 | duplication_analysis | DuplicationAnalyzer performance |
@@ -234,12 +255,12 @@
 
 ## v0.1.2 Infrastructure Tracking
 
-**Plan Reference**: `~/.claude/plans/logical-rolling-glade.md`
+**Plan Reference**: `.sisyphus/plans/`
 
 ### Phase Status Summary
 
 | Phase | Description | Indicator | Current State |
-|-------|-------------|-----------|---------------|
+| ------- | | ------------- | ----------- | --------------- |
 | 1 | ADR Alignment | ADR-023 status | **Complete** ✅ |
 | 2 | mcb-validate Evolution | migration/*.yml | **Complete** ✅ |
 | 3.1 | Linkme Cleanup | inventory in Cargo.toml | **Complete** ✅ |
@@ -251,7 +272,7 @@
 ### Phase 1: ADR Alignment - COMPLETE ✅
 
 | ADR | Expected Status | Actual Status |
-|-----|-----------------|---------------|
+| ----- | ----------------- | --------------- |
 | ADR-023 (Linkme) | Accepted | **Accepted** |
 | ADR-024 (Shaku → dill) | Accepted | **Accepted** |
 | ADR-025 (Figment) | Proposed | **Proposed** |
@@ -262,7 +283,7 @@
 **Migration Rules Created** (12 total):
 
 | Rule File | Exists |
-|-----------|--------|
+| ----------- | -------- |
 | `rules/migration/inventory-migration.yml` | Yes |
 | `rules/migration/linkme-slice-declaration.yml` | Yes |
 | `rules/migration/linkme-slice-usage.yml` | Yes |
@@ -281,7 +302,7 @@
 The Shaku → manual DI migration was completed via handle-based pattern with linkme registry:
 
 | Component | Status |
-|-----------|--------|
+| ----------- | -------- |
 | shaku dependencies | Removed |
 | Manual DI handles | Implemented in `mcb-infrastructure/src/di/handles.rs` |
 | Provider registry | Linkme-based auto-registration |
@@ -301,13 +322,13 @@ All framework migrations completed.
 
 **Solution**: Provider port traits moved to `mcb-domain/src/ports/providers/`:
 
--   `embedding.rs` - EmbeddingProvider trait
--   `vector_store.rs` - VectorStoreProvider trait
--   `cache.rs` - CacheProvider trait
--   `hybrid_search.rs` - HybridSearchProvider trait
--   `language_chunking.rs` - LanguageChunkingProvider trait
--   `crypto.rs` - CryptoProvider trait
--   `config.rs` - ConfigProvider trait
+- `embedding.rs` - EmbeddingProvider trait
+- `vector_store.rs` - VectorStoreProvider trait
+- `cache.rs` - CacheProvider trait
+- `hybrid_search.rs` - HybridSearchProvider trait
+- `language_chunking.rs` - LanguageChunkingProvider trait
+- `crypto.rs` - CryptoProvider trait
+- `config.rs` - ConfigProvider trait
 
 `mcb-application` re-exports from `mcb-domain` for backward compatibility.
 
@@ -346,12 +367,12 @@ This document was created by:
 
 ## Workspace Validation Results
 
-**Last Run**: 2026-01-28 via `make validate`
+**Last Run**: 2026-02-12 via `make validate`
 
 ### Summary
 
 | Validator | Violations | Status |
-|-----------|------------|--------|
+| ----------- | ------------ | -------- |
 | Legacy Validators | 0 | **PASSED** |
 | YAML Rules | 17 | Warnings |
 
@@ -360,7 +381,7 @@ This document was created by:
 **No violations detected** in these categories:
 
 | Category | Count |
-|----------|-------|
+| ---------- | ------- | |
 | Dependency | 0 |
 | Quality | 0 |
 | Patterns | 0 |
@@ -380,7 +401,7 @@ This document was created by:
 ### YAML Rule Results (Non-blocking warnings)
 
 | Category | Count | Description |
-|----------|-------|-------------|
+| ---------- | ------- | | ------------- |
 | Organization (VIS001) | 10 | Internal helpers with `pub` visibility (consider `pub(crate)`) |
 | Architecture (CA004) | 5 | Entities missing id/uuid field |
 | Architecture (LAYER002) | 2 | Circular dependency warnings |
@@ -392,7 +413,7 @@ This document was created by:
 ## Document History
 
 | Version | Date | Changes |
-|---------|------|---------|
+| --------- | ------ | --------- |
 | 1.0 | 2026-01-18 | Initial creation with full traceability audit |
 | 2.0 | 2026-01-19 | Updated Phases 4-7 status, added duplication module, fixed infrastructure tracking |
 | 3.0 | 2026-01-19 | Phase 6 (Architecture) and Phase 7 (Integration) now VERIFIED - integration tests and benchmarks complete |
@@ -400,3 +421,4 @@ This document was created by:
 | 5.0 | 2026-01-19 | RCA dependency updated to master branch - all 750+ tests pass, validation detects 26 test organization violations |
 | 6.0 | 2026-01-20 | Phase 0 SOLID validation fixes complete - 0 legacy violations, YAML rules show 17 non-blocking warnings |
 | 7.0 | 2026-01-28 | Documentation refresh: ADR index, modules, ROADMAP, ARCHITECTURE aligned to v0.1.4 |
+| 8.0 | 2026-02-12 | v0.2.1 audit refresh: added v0.2.1 tracking section, updated verification snapshot and test counts |

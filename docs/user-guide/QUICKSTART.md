@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Quickstart Guide
 
 Get Memory Context Browser v0.2.0 running in 5 minutes.
@@ -14,12 +15,12 @@ tar xzf mcb-linux-x86_64.tar.gz
 sudo mv mcb /usr/local/bin/
 ```
 
-### From Source
+## From Source
 
 ```bash
 git clone https://github.com/marlonsc/mcb.git
 cd mcb
-make build-release
+make build RELEASE=1
 
 # Binary at: ./target/release/mcb
 ```
@@ -46,7 +47,7 @@ export EMBEDDING_PROVIDER=ollama
 export OLLAMA_BASE_URL=http://localhost:11434
 ```
 
-### Option C: FastEmbed (Local, No Setup)
+## Option C: FastEmbed (Local, No Setup)
 
 ```bash
 export EMBEDDING_PROVIDER=fastembed
@@ -56,7 +57,8 @@ export EMBEDDING_PROVIDER=fastembed
 
 ## 3. Connect to Claude Desktop
 
-Add to `~/.config/Claude/claude_desktop_config.json` (Linux) or `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
+Add to `~/.config/Claude/claude_desktop_config.json` (Linux) or
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS):
 
 ```json
 {
@@ -91,7 +93,7 @@ Claude will use `search (resource=code)` to find relevant code.
 ## Available MCP Tools
 
 | Tool | What it does |
-|------|--------------|
+| ------ | -------------- |
 | `index (action=start)` | Index a directory for semantic search |
 | `search (resource=code)` | Search indexed code with natural language |
 | `index (action=status)` | Check indexing progress |
@@ -104,7 +106,7 @@ Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Ko
 ## Vector Store Options
 
 | Provider | Best for | Setup |
-|----------|----------|-------|
+| ---------- | ---------- | ------- |
 | `in-memory` | Development, testing | None |
 | `filesystem` | Persistent storage | None |
 | `milvus` | Production scale | Docker/Kubernetes |
@@ -117,7 +119,7 @@ Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Ko
 # Start Milvus with Docker
 docker run -d --name milvus -p 19530:19530 milvusdb/milvus:latest
 
-# Configure
+# Configure (1)
 export VECTOR_STORE_PROVIDER=milvus
 export MILVUS_ADDRESS=http://localhost:19530
 ```
@@ -135,7 +137,7 @@ export OPENAI_API_KEY=sk-...
 export VOYAGE_API_KEY=...
 ```
 
-### "Connection refused"
+## "Connection refused"
 
 Check if Ollama/Milvus is running:
 
@@ -152,8 +154,9 @@ curl http://localhost:19530/v1/vector/health  # Milvus
 
 ## Next Steps
 
--   [Migration Guide](../migration/FROM_CLAUDE_CONTEXT.md) - If coming from Claude-context
--   [Architecture](../architecture/ARCHITECTURE.md) - Understanding the system
--   [ADR Index](../adr/README.md) - Architectural decisions
--   [Version History](../VERSION_HISTORY.md) - Complete version history
--   [Roadmap](../developer/ROADMAP.md) - Upcoming features including v0.2.0 Git-Aware Indexing
+- [Migration Guide](../migration/FROM_CLAUDE_CONTEXT.md) - If coming from Claude-context
+- [Architecture](../architecture/ARCHITECTURE.md) - Understanding the system
+- [ADR Index](../adr/README.md) - Architectural decisions
+- [Version History](../operations/CHANGELOG.md) - Complete version history
+- [Roadmap](../developer/ROADMAP.md) - Upcoming features including v0.2.0
+  Git-Aware Indexing

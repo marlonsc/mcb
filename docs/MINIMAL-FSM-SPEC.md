@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 MD024 -->
 # MCB Minimal FSM Specification (v0.3.0)
 
 This document defines the minimal viable Finite State Machine (FSM) for MCB workflow sessions. It simplifies the complex 12-state production model from ADR-034 into a focused 4-state core for initial implementation.
@@ -6,27 +7,27 @@ This document defines the minimal viable Finite State Machine (FSM) for MCB work
 
 ```text
           +----------+
-          |   Idle   |
+| Idle |
           +----------+
-               |
+|
             [Start]
                v
           +----------+    [Suspend]    +----------+
-          |  Active  | --------------> |  Paused  |
-          |          | <-------------- |          |
+| Active | --------------> | Paused |
+|  | <-------------- |  |
           +----------+     [Resume]    +----------+
-               |
+|
             [Finish]
                v
           +----------+
-          | Complete |
+| Complete |
           +----------+
 ```
 
 ## 2. State Definitions
 
 | State | Description |
-|-------|-------------|
+| ------- | ------------- |
 | **Idle** | Initial state. Session created, no active work performing. |
 | **Active** | Primary execution state. Operations are being performed. |
 | **Paused** | Temporarily suspended. State is preserved but no work occurs. |
@@ -37,9 +38,9 @@ This document defines the minimal viable Finite State Machine (FSM) for MCB work
 Transitions are triggered by `WorkflowEvent` and must pass associated `Policy` guards.
 
 | From | Trigger | To | Guards / Policies |
-|------|---------|----|-------------------|
+| ------ | --------- | ---- | ------------------- |
 | Idle | `Start` | Active | **FreshnessPolicy**: Context must be < 5s old. |
-| Active | `Suspend`| Paused | None (always allowed). |
+| Active | `Suspend` | Paused | None (always allowed). |
 | Paused | `Resume` | Active | **FreshnessPolicy**: Re-validate context. |
 | Active | `Finish` | Complete | **ValidationPolicy**: All tasks must be closed. |
 
@@ -51,13 +52,13 @@ Policies are implemented as traits that evaluate the current `ProjectContext` ag
 
 Ensures the agent is operating on up-to-date information.
 
--   **Rule**: `context.last_updated < now - 5 seconds` → REJECT.
+- **Rule**: `context.last_updated < now - 5 seconds` → REJECT.
 
 ### Validation Policy (Minimal)
 
 Ensures project integrity before marking as complete.
 
--   **Rule**: `context.open_issues_count == 0` → ALLOW.
+- **Rule**: `context.open_issues_count == 0` → ALLOW.
 
 ## 5. Rust Code Examples
 

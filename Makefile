@@ -1,90 +1,38 @@
 # =============================================================================
-# MCP Context Browser - Makefile v2.0
-# =============================================================================
-# Modular structure with single-action verbs
-# Each verb does ONE thing. Use prerequisites for composition.
-# Run `make help` for command reference
+# MCP Context Browser - Simplified Makefile
 # =============================================================================
 
-# =============================================================================
-# Global Parameters (limitations only, not for multi-function)
-# =============================================================================
 export RELEASE ?= 1
-export SCOPE ?= all
+export SCOPE ?=
 export FIX ?= 0
-export STRICT ?= 0
+export MCB_CI ?= 0
 export QUICK ?= 0
-export LCOV ?= 0
-export CI_MODE ?= 0
+export THREADS ?= 0
 export BUMP ?=
-export TEST_THREADS ?= 0
 
-# Rust 2024 Edition lints
+# Rust 2024 Edition lints (preserved verbatim)
 export RUST_2024_LINTS := -D unsafe_op_in_unsafe_fn -D rust_2024_compatibility -W static_mut_refs
 
-# =============================================================================
-# Include Modules
-# =============================================================================
-include make/Makefile.core.mk
-include make/Makefile.quality.mk
-include make/Makefile.docs.mk
-include make/Makefile.dev.mk
-include make/Makefile.release.mk
-include make/Makefile.git.mk
-include make/Makefile.help.mk
+include make/dev.mk
+include make/quality.mk
+include make/release.mk
+include make/docs.mk
 
-# Default target
 .DEFAULT_GOAL := help
 
-# =============================================================================
-# CI (compound targets using prerequisites)
-# =============================================================================
-.PHONY: ci ci-full ci-local
+##@ Core
 
-ci: ## Complete CI pipeline (lint + test + validate + audit)
-	@echo "Running CI pipeline..."
-	@$(MAKE) lint CI_MODE=1
-	@$(MAKE) test SCOPE=all
-	@$(MAKE) validate QUICK=1
+check: ## Non-mutating gate: fmt --check + lint + test + validate
+	@echo "Running non-mutating checks..."
+	@cargo fmt --all -- --check
+	@$(MAKE) lint
+	@$(MAKE) test
+	@$(MAKE) validate
+
+ci: ## CI gate: check + audit
+	@echo "Running CI gate..."
+	@$(MAKE) check
 	@$(MAKE) audit
-	@echo "CI pipeline passed!"
 
-ci-full: ## Full CI validation matching GitHub Actions (lint + test + startup + validate + audit + docs + coverage)
-	@echo "==================================================================="
-	@echo "Running FULL CI pipeline (matches GitHub Actions exactly)"
-	@echo "==================================================================="
-	@echo ""
-	@echo "Step 1/6: Linting (Rust 2024 compliance)..."
-	@$(MAKE) lint CI_MODE=1
-	@echo ""
-	@echo "Step 2/6: Unit and integration tests (4 threads to prevent timeouts)..."
-	@$(MAKE) test SCOPE=all TEST_THREADS=4
-	@echo ""
-	@echo "Step 3/7: Startup smoke tests (DDL/init failure detection)..."
-	@$(MAKE) test-startup
-	@echo ""
-	@echo "Step 4/7: Architecture validation (strict)..."
-	@$(MAKE) validate STRICT=1
-	@echo ""
-	@echo "Step 5/7: Golden acceptance tests (2 threads for acceptance tests)..."
-	@$(MAKE) test SCOPE=golden TEST_THREADS=2
-	@echo ""
-	@echo "Step 6/7: Security audit..."
-	@$(MAKE) audit
-	@echo ""
-	@echo "Step 7/7: Documentation build..."
-	@$(MAKE) docs
-	@echo ""
-	@echo "==================================================================="
-	@echo "✓ FULL CI pipeline passed!"
-	@echo "==================================================================="
-
-ci-local: ## Local pre-commit validation (lint + validate QUICK, no tests)
-	@echo "Running LOCAL pre-commit validation..."
-	@echo "  → Linting (Rust 2024 compliance)..."
-	@$(MAKE) lint CI_MODE=1
-	@echo "  → Architecture validation (QUICK mode, skipping tests)..."
-	@$(MAKE) validate QUICK=1
-	@echo "✓ Pre-commit validation passed!"
-	@echo ""
-	@echo "Tip: Run 'make ci-full' for complete CI checks including all tests."
+help: ## Show available commands
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[0-9a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) }' $(MAKEFILE_LIST)

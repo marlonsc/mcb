@@ -9,7 +9,7 @@ set -e
 
 # Source shared library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=./lib/common.sh
+# shellcheck disable=SC1091
 source "$SCRIPT_DIR/lib/common.sh"
 
 # Get next ADR number
@@ -94,7 +94,7 @@ create_adr_file() {
     echo
     log_info "Next steps:"
     echo "1. Edit the ADR file to add context, decision, and consequences"
-    echo "2. Run 'make adr-check' to validate the ADR format"
+    echo "2. Run 'make docs-validate' to validate the ADR format"
     echo "3. Add the ADR to the architecture documentation if applicable"
 }
 

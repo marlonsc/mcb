@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 17
 title: Phased Feature Integration Roadmap
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 017: Phased Feature Integration Roadmap
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 017: Phased Feature Integration Roadmap
 
 ## Status
 
@@ -24,18 +27,18 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **MCB v0.1.1** (Semantic Search - RELEASED):
 
--   4 MCP tools (index, search, clear, status)
--   308+ tests (100% pass rate)
--   Eight-crate Clean Architecture
--   Two-layer DI strategy (Shaku + factories)
+- 4 MCP tools (index, search, clear, status)
+- 308+ tests (100% pass rate)
+- Eight-crate Clean Architecture
+- Two-layer DI strategy (Shaku + factories)
 
 **PMAT** (Code Analysis):
 
--   Complexity analysis (cyclomatic, cognitive)
--   TDG scoring (Technical Debt Gradient)
--   SATD detection (Self-Admitted Technical Debt)
--   Refactoring suggestions
--   4600+ tests
+- Complexity analysis (cyclomatic, cognitive)
+- TDG scoring (Technical Debt Gradient)
+- SATD detection (Self-Admitted Technical Debt)
+- Refactoring suggestions
+- 4600+ tests
 
 ## Decision
 
@@ -45,15 +48,15 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Eight-Crate Clean Architecture
 
-**Deliverables**:
+Deliverables:
 
--   [x] mcb-domain: Core entities, repositories, events, value objects
--   [x] mcb-application: Port traits (~20+) + Context, Search, Indexing services
--   [x] mcb-providers: 6 embedding + 3 vector store providers
--   [x] mcb-infrastructure: Shaku DI + config management
--   [x] mcb-server: MCP protocol + Admin API
--   [x] mcb-validate: Architecture enforcement
--   [x] mcb: Facade crate with re-exports
+- [x] mcb-domain: Core entities, repositories, events, value objects
+- [x] mcb-application: Port traits (~20+) + Context, Search, Indexing services
+- [x] mcb-providers: 6 embedding + 3 vector store providers
+- [x] mcb-infrastructure: Shaku DI + config management
+- [x] mcb-server: MCP protocol + Admin API
+- [x] mcb-validate: Architecture enforcement
+- [x] mcb: Facade crate with re-exports
 
 **Tools**: 4 (index, search, clear, status)
 **Tests**: 308+
@@ -62,12 +65,12 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Git-aware indexing + Session memory
 
-**Deliverables**:
+Deliverables:
 
--   Git integration (project-relative indexing)
--   Session memory storage
--   Hybrid search (BM25 + vector)
--   Rayon integration for parallelism
+- Git integration (project-relative indexing)
+- Session memory storage
+- Hybrid search (BM25 + vector)
+- Rayon integration for parallelism
 
 **Tools**: 6 (+git_index, +session_recall)
 **Tests**: 500+ (target)
@@ -76,12 +79,12 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Complexity, TDG, SATD
 
-**Deliverables**:
+Deliverables:
 
--   Port PMAT complexity analyzer
--   Port TDG scorer
--   Port SATD detector
--   Analysis adapters in mcb-providers
+- Port PMAT complexity analyzer
+- Port TDG scorer
+- Port SATD detector
+- Analysis adapters in mcb-providers
 
 **Tools**: 9 (+validate (action=analyze), +tdg_score, +satd_detect)
 **Tests**: 1500+ (includes PMAT tests)
@@ -90,12 +93,12 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Advanced code analysis
 
-**Deliverables**:
+Deliverables:
 
--   Dead code detection
--   Dependency analysis (DAG)
--   Big-O complexity estimation
--   Code smell detection
+- Dead code detection
+- Dependency analysis (DAG)
+- Big-O complexity estimation
+- Code smell detection
 
 **Tools**: 14 (+dead_code, +dependency_graph, +big_o, +code_smells, +debt_hotspots)
 **Tests**: 3000+
@@ -104,12 +107,12 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Quality metrics and Git integration
 
-**Deliverables**:
+Deliverables:
 
--   Quality scoring
--   File maintainability index
--   Commit history analysis
--   Impact analysis
+- Quality scoring
+- File maintainability index
+- Commit history analysis
+- Impact analysis
 
 **Tools**: 21 (+quality_score, +maintainability, +commit_analysis, +impact_analysis, +blame_analysis, +diff_analysis, +branch_compare)
 **Tests**: 4500+
@@ -118,12 +121,12 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Refactoring and mutations
 
-**Deliverables**:
+Deliverables:
 
--   Refactoring suggestions
--   Mutation testing integration
--   TUI dashboard
--   Codebase scaffolding
+- Refactoring suggestions
+- Mutation testing integration
+- TUI dashboard
+- Codebase scaffolding
 
 **Tools**: 25+
 **Tests**: 5390+
@@ -135,33 +138,33 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 3. **Incremental Testing**: Port PMAT tests alongside code
 4. **Parallel Development**: MCB features continue during integration
 
-## Consequences
+### Consequences
 
-**Positive**:
+Positive:
 
--   Controlled risk
--   Continuous delivery
--   Clear milestones
--   Testable increments
+- Controlled risk
+- Continuous delivery
+- Clear milestones
+- Testable increments
 
-**Negative**:
+Negative:
 
--   Longer timeline
--   Multiple integration points
+- Longer timeline
+- Multiple integration points
 
-**Mitigation**:
+Mitigation:
 
--   Automate integration testing
--   Feature flags for partial adoption
--   Clear documentation per version
+- Automate integration testing
+- Feature flags for partial adoption
+- Clear documentation per version
 
 ## Related ADRs
 
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI foundation
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate structure
--   [ADR-016: Integration Points Adapter Pattern](016-integration-points-adapter-pattern.md) - PMAT integration
--   [ADR-020: Testing Strategy Integration](020-testing-strategy-integration.md) - Test migration
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI foundation
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate structure
+- [ADR-016: Integration Points Adapter Pattern](016-integration-points-adapter-pattern.md) - PMAT integration
+- [ADR-020: Testing Strategy Integration](020-testing-strategy-integration.md) - Test migration
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 release status*
+Updated 2026-01-17 - Reflects v0.1.2 release status

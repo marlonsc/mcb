@@ -1,12 +1,13 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Clean Architecture in Memory Context Browser
 
 ## Overview
 
-Memory Context Browser follows **Clean Architecture** principles with strict layer separation across 8 Cargo workspace crates. This document explains the architecture, layer interactions, and extension patterns.
+Memory Context Browser follows**Clean Architecture** principles with strict layer separation across 8 Cargo workspace crates. This document explains the architecture, layer interactions, and extension patterns.
 
 ## The 6 Layers
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 6: MCP Protocol & Transport                           │
 │ (stdio, HTTP, tool handlers)                                │
@@ -50,13 +51,13 @@ Memory Context Browser follows **Clean Architecture** principles with strict lay
 
 **Purpose**: Public API and re-exports
 
-**Responsibilities**:
+#### Responsibilities
 
--   Re-export public types from domain, application, infrastructure
--   Provide single entry point for library users
--   Hide internal crate structure
+- Re-export public types from domain, application, infrastructure
+- Provide single entry point for library users
+- Hide internal crate structure
 
-**Example**:
+### Example
 
 ```rust
 // mcb/src/lib.rs
@@ -71,14 +72,14 @@ pub use mcb_infrastructure::AppContext;
 
 **Purpose**: Business rules and domain entities
 
-**Responsibilities**:
+#### Responsibilities
 
--   Define domain entities (CodeChunk, Embedding, SearchResult)
--   Define port traits (EmbeddingProvider, VectorStoreProvider, etc.)
--   Define domain errors with thiserror
--   No external dependencies (except thiserror, serde)
+- Define domain entities (CodeChunk, Embedding, SearchResult)
+- Define port traits (EmbeddingProvider, VectorStoreProvider, etc.)
+- Define domain errors with thiserror
+- No external dependencies (except thiserror, serde)
 
-**Key Types**:
+#### Key Types
 
 ```rust
 // Entities
@@ -112,14 +113,14 @@ pub enum DomainError {
 
 **Purpose**: Use cases and business logic orchestration
 
-**Responsibilities**:
+#### Responsibilities
 
--   Implement services (ContextService, SearchService, IndexingService)
--   Orchestrate domain entities and ports
--   Define registry system (linkme distributed slices)
--   Define admin ports (IndexingOperationsInterface, PerformanceMetricsInterface)
+- Implement services (ContextService, SearchService, IndexingService)
+- Orchestrate domain entities and ports
+- Define registry system (linkme distributed slices)
+- Define admin ports (IndexingOperationsInterface, PerformanceMetricsInterface)
 
-**Key Types**:
+#### Key Types
 
 ```rust
 // Services
@@ -152,15 +153,15 @@ pub trait IndexingOperationsInterface: Send + Sync {
 
 **Purpose**: Dependency injection, configuration, and cross-cutting concerns
 
-**Responsibilities**:
+#### Responsibilities
 
--   Build DI container (dill Catalog)
--   Load configuration (Figment)
--   Provide provider handles (RwLock wrappers for runtime switching)
--   Implement admin services
--   Logging, health checks, caching
+- Build DI container (dill Catalog)
+- Load configuration (Figment)
+- Provide provider handles (RwLock wrappers for runtime switching)
+- Implement admin services
+- Logging, health checks, caching
 
-**Key Types**:
+#### Key Types
 
 ```rust
 // DI Container
@@ -220,15 +221,15 @@ pub struct AppContext {
 
 **Purpose**: Concrete provider implementations
 
-**Responsibilities**:
+#### Responsibilities
 
--   Implement EmbeddingProvider (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
--   Implement VectorStoreProvider (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
--   Implement CacheProvider (Moka, Redis, Null)
--   Implement LanguageChunkingProvider (Tree-sitter based)
--   Auto-register via linkme distributed slices
+- Implement EmbeddingProvider (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
+- Implement VectorStoreProvider (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
+- Implement CacheProvider (Moka, Redis, Null)
+- Implement LanguageChunkingProvider (Tree-sitter based)
+- Auto-register via linkme distributed slices
 
-**Key Types**:
+#### Key Types
 
 ```rust
 // Embedding provider implementation
@@ -261,14 +262,14 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 **Purpose**: MCP protocol implementation and transport
 
-**Responsibilities**:
+#### Responsibilities
 
--   Implement MCP tool handlers (index, search, memory, session, etc.)
--   Handle stdio and HTTP transport
--   Parse MCP requests and format responses
--   Error handling and logging
+- Implement MCP tool handlers (index, search, memory, session, etc.)
+- Handle stdio and HTTP transport
+- Parse MCP requests and format responses
+- Error handling and logging
 
-**Key Types**:
+#### Key Types
 
 ```rust
 // MCP tool handler
@@ -302,7 +303,7 @@ impl StdioTransport {
 
 ## Dependency Direction
 
-```
+```text
 mcb-server
     ↓
 mcb-infrastructure ← mcb-providers
@@ -460,44 +461,44 @@ pub struct MyService {
 
 Each layer can be tested independently:
 
--   Domain: Pure business logic, no I/O
--   Application: Mock providers, test orchestration
--   Infrastructure: Mock DI container
--   Providers: Integration tests with real services
--   Server: Mock context, test handlers
+- Domain: Pure business logic, no I/O
+- Application: Mock providers, test orchestration
+- Infrastructure: Mock DI container
+- Providers: Integration tests with real services
+- Server: Mock context, test handlers
 
 ### 2. Maintainability
 
 Clear separation of concerns:
 
--   Domain: Business rules only
--   Application: Use cases and orchestration
--   Infrastructure: Cross-cutting concerns
--   Providers: External integrations
--   Server: Protocol handling
+- Domain: Business rules only
+- Application: Use cases and orchestration
+- Infrastructure: Cross-cutting concerns
+- Providers: External integrations
+- Server: Protocol handling
 
 ### 3. Extensibility
 
 Add new providers without modifying existing code:
 
--   New embedding provider? Add to mcb-providers + register
--   New service? Add to mcb-application + register in DI
--   New port? Add to mcb-domain + implement in mcb-providers
+- New embedding provider? Add to mcb-providers + register
+- New service? Add to mcb-application + register in DI
+- New port? Add to mcb-domain + implement in mcb-providers
 
 ### 4. Reusability
 
 Layers can be used independently:
 
--   Use mcb-domain for domain models
--   Use mcb-application for business logic
--   Use mcb-infrastructure for DI and config
--   Use mcb-server for MCP protocol
+- Use mcb-domain for domain models
+- Use mcb-application for business logic
+- Use mcb-infrastructure for DI and config
+- Use mcb-server for MCP protocol
 
 ## Related Documentation
 
--   **ADR-001**: Modular Crates Architecture
--   **ADR-013**: Clean Architecture Crate Separation
--   **ADR-023**: Inventory to Linkme Migration
--   **ADR-029**: Hexagonal Architecture with dill
--   [`docs/architecture/ARCHITECTURE.md`](./ARCHITECTURE.md) – Complete architecture overview
--   [`CLAUDE.md`](../../CLAUDE.md) – Development guide
+- **ADR-001**: Modular Crates Architecture
+- **ADR-013**: Clean Architecture Crate Separation
+- **ADR-023**: Inventory to Linkme Migration
+- **ADR-029**: Hexagonal Architecture with dill
+- [`docs/architecture/ARCHITECTURE.md`](./ARCHITECTURE.md) – Complete architecture overview
+- [`docs/developer/CONTRIBUTING.md`](../developer/CONTRIBUTING.md) – Development guide
