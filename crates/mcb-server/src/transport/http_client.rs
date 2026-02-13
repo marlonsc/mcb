@@ -28,6 +28,9 @@ pub struct McpClientConfig {
     /// Local client instance identifier for log correlation.
     pub client_instance_id: String,
 
+    /// Public non-sensitive session identifier for local introspection/tests.
+    pub public_session_id: String,
+
     /// Request timeout
     pub timeout: Duration,
 }
@@ -39,6 +42,7 @@ pub struct McpClientConfig {
 pub struct HttpClientTransport {
     config: McpClientConfig,
     client: reqwest::Client,
+    session_id: SessionId,
 }
 
 impl HttpClientTransport {
@@ -79,23 +83,27 @@ impl HttpClientTransport {
         session_id_override: Option<String>,
         session_file_override: Option<String>,
     ) -> Result<Self, Box<dyn std::error::Error>> {
+        let public_session_id = Self::generate_session_id(session_prefix.clone()).into_string();
         let session_id =
             Self::resolve_session_id(session_prefix, session_id_override, session_file_override)?;
 
         let config = McpClientConfig {
             server_url,
             client_instance_id: Uuid::new_v4().to_string(),
+            public_session_id,
             timeout,
         };
-
-        drop(session_id);
 
         let client = reqwest::Client::builder()
             .timeout(timeout)
             .build()
             .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
 
-        Ok(Self { config, client })
+        Ok(Self {
+            config,
+            client,
+            session_id,
+        })
     }
 
     fn resolve_session_id(
@@ -230,6 +238,16 @@ impl HttpClientTransport {
     /// Get the server URL
     pub fn server_url(&self) -> &str {
         &self.config.server_url
+    }
+
+    /// Get the local public session identifier.
+    pub fn session_id(&self) -> &str {
+        &self.config.public_session_id
+    }
+
+    /// Get the resolved client session ID.
+    pub fn session_id(&self) -> &str {
+        self.session_id.as_str()
     }
 
     /// Forward a request to the server, handling errors

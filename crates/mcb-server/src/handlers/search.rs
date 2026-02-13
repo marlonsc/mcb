@@ -123,8 +123,18 @@ impl SearchHandler {
                                     "observation_type": r.observation.r#type.as_str(),
                                     "tags": r.observation.tags,
                                     "similarity_score": r.similarity_score,
-                                    "session_id": r.observation.metadata.session_id,
-                                    "repo_id": r.observation.metadata.repo_id,
+                                    "session_id": r
+                                        .observation
+                                        .metadata
+                                        .session_id
+                                        .as_deref()
+                                        .map(|id| compute_stable_id_hash("session", id)),
+                                    "repo_id": r
+                                        .observation
+                                        .metadata
+                                        .repo_id
+                                        .as_deref()
+                                        .map(|id| compute_stable_id_hash("repo", id)),
                                     "file_path": r.observation.metadata.file_path,
                                     "branch": r.observation.metadata.branch,
                                     "commit": r.observation.metadata.commit,

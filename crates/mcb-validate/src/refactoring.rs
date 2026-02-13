@@ -13,9 +13,9 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 use crate::config::RefactoringRulesConfig;
+use crate::scan::{for_each_rs_under_root, for_each_scan_rs_path};
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -363,13 +363,11 @@ impl RefactoringValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let path = entry.path();
+            for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
+                if candidate_src_dir != src_dir {
+                    return Ok(());
+                }
+
                 let path_str = path.to_string_lossy();
 
                 // Skip test files and archived directories
@@ -378,7 +376,7 @@ impl RefactoringValidator {
                     || path_str.contains(".archived")
                     || path_str.contains(".bak")
                 {
-                    continue;
+                    return Ok(());
                 }
 
                 let content = std::fs::read_to_string(path)?;
@@ -396,7 +394,9 @@ impl RefactoringValidator {
                         .or_default()
                         .push(path.to_path_buf());
                 }
-            }
+
+                Ok(())
+            })?;
         }
 
         // Find duplicates (same name in different files)
@@ -539,43 +539,38 @@ impl RefactoringValidator {
                 std::collections::HashSet::new();
             let mut test_dirs: std::collections::HashSet<String> = std::collections::HashSet::new();
 
-            for entry in WalkDir::new(&tests_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-            {
-                let path = entry.path();
-                if path.is_file() && path.extension().is_some_and(|ext| ext == "rs") {
-                    if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                        test_files.insert(stem.to_string());
-                        // Also normalize _test and _tests suffixes
-                        if let Some(base) = stem.strip_suffix("_test") {
-                            test_files.insert(base.to_string());
-                        }
-                        if let Some(base) = stem.strip_suffix("_tests") {
-                            test_files.insert(base.to_string());
-                        }
+            for_each_rs_under_root(&self.config, &tests_dir, |path| {
+                if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                    test_files.insert(stem.to_string());
+                    if let Some(base) = stem.strip_suffix("_test") {
+                        test_files.insert(base.to_string());
                     }
-                } else if path.is_dir()
-                    && let Some(name) = path.file_name().and_then(|s| s.to_str())
-                {
-                    test_dirs.insert(name.to_string());
+                    if let Some(base) = stem.strip_suffix("_tests") {
+                        test_files.insert(base.to_string());
+                    }
                 }
-            }
+
+                let mut parent = path.parent();
+                while let Some(dir) = parent {
+                    if !dir.starts_with(&tests_dir) {
+                        break;
+                    }
+                    if let Some(name) = dir.file_name().and_then(|s| s.to_str()) {
+                        test_dirs.insert(name.to_string());
+                    }
+                    parent = dir.parent();
+                }
+
+                Ok(())
+            })?;
 
             // Check each source file
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let path = entry.path();
+            for_each_rs_under_root(&self.config, &src_dir, |path| {
                 let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
 
                 // Skip common files that don't need dedicated tests
                 if self.skip_files.contains(file_name) {
-                    continue;
+                    return Ok(());
                 }
 
                 // Get relative path for directory checks
@@ -588,14 +583,14 @@ impl RefactoringValidator {
                     .iter()
                     .any(|pattern| path_str.contains(pattern));
                 if in_skip_dir {
-                    continue;
+                    return Ok(());
                 }
 
                 // Check if file has inline tests (#[cfg(test)] module)
                 let content = std::fs::read_to_string(path)?;
                 if content.contains("#[cfg(test)]") {
                     // File has inline tests, skip it
-                    continue;
+                    return Ok(());
                 }
 
                 // Check if this file or its parent module has a test
@@ -625,7 +620,9 @@ impl RefactoringValidator {
                         severity: Severity::Warning, // Warning, not Error - tests are quality, not critical
                     });
                 }
-            }
+
+                Ok(())
+            })?;
         }
 
         Ok(violations)
@@ -641,13 +638,11 @@ impl RefactoringValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let path = entry.path();
+            for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
+                if candidate_src_dir != src_dir {
+                    return Ok(());
+                }
+
                 let parent_dir = path.parent().unwrap_or(Path::new("."));
                 let content = std::fs::read_to_string(path)?;
                 let lines: Vec<&str> = content.lines().collect();
@@ -680,7 +675,9 @@ impl RefactoringValidator {
                         }
                     }
                 }
-            }
+
+                Ok(())
+            })?;
         }
 
         Ok(violations)

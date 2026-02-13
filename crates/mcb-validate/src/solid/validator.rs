@@ -3,10 +3,10 @@
 use std::path::PathBuf;
 
 use regex::Regex;
-use walkdir::WalkDir;
 
 use super::violation::SolidViolation;
 use crate::pattern_registry::PATTERNS;
+use crate::scan::for_each_rs_under_root;
 use crate::thresholds::thresholds;
 use crate::{Result, Severity, ValidationConfig};
 
@@ -64,15 +64,11 @@ impl SolidValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
+            for_each_rs_under_root(&self.config, &src_dir, |path| {
+                let content = std::fs::read_to_string(path)?;
                 let lines: Vec<&str> = content.lines().collect();
-                visitor(entry.path().to_path_buf(), lines)?;
-            }
+                visitor(path.to_path_buf(), lines)
+            })?;
         }
         Ok(())
     }

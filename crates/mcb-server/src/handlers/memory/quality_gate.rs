@@ -62,17 +62,15 @@ pub async fn store_quality_gate(
         "quality_gate".to_string(),
         quality_gate.status.as_str().to_string(),
     ];
-    let payload_session_id = MemoryHelpers::get_str(data, "session_id");
     let arg_session_id = args
         .session_id
         .as_ref()
         .map(|id| compute_stable_id_hash("session", id.as_str()));
-    let payload_parent_session_id = MemoryHelpers::get_str(data, "parent_session_id");
-    let canonical_session_id = arg_session_id.clone().or_else(|| {
-        payload_session_id
-            .as_deref()
-            .map(|id| compute_stable_id_hash("session", id))
-    });
+    let canonical_session_id = arg_session_id.clone();
+    let parent_session_hash = args
+        .parent_session_id
+        .as_deref()
+        .map(|id| compute_stable_id_hash("parent_session", id));
     let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
     let payload_project_id = MemoryHelpers::get_str(data, "project_id");
     let payload_branch = MemoryHelpers::get_str(data, "branch");
@@ -89,10 +87,10 @@ pub async fn store_quality_gate(
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),
         project_id_payload: payload_project_id.as_deref(),
-        session_from_args: arg_session_id.as_deref(),
-        session_from_data: payload_session_id.as_deref(),
+        session_from_args: None,
+        session_from_data: None,
         parent_session_from_args: None,
-        parent_session_from_data: payload_parent_session_id.as_deref(),
+        parent_session_from_data: None,
         execution_from_args: quality_gate.execution_id.as_deref(),
         execution_from_data: quality_gate.execution_id.as_deref(),
         tool_name_args: Some("memory"),
@@ -131,6 +129,10 @@ pub async fn store_quality_gate(
     if origin_context.commit.is_none() {
         origin_context.commit = vcs_context.commit.clone();
     }
+    origin_context.session_id = None;
+    origin_context.session_id_hash = canonical_session_id.clone();
+    origin_context.parent_session_id = None;
+    origin_context.parent_session_id_hash = parent_session_hash;
     let project_id = origin_context.project_id.clone().ok_or_else(|| {
         McpError::invalid_params("project_id is required for quality gate store", None)
     })?;

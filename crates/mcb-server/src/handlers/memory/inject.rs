@@ -67,8 +67,8 @@ pub async fn inject_context(
                 }
             }))
         }
-        Err(e) => {
-            error!(error = %e, "Failed to inject context");
+        Err(_e) => {
+            error!("Failed to inject context");
             Ok(rmcp::model::CallToolResult::error(vec![
                 rmcp::model::Content::text("Failed to inject context"),
             ]))
