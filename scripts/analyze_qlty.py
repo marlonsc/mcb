@@ -24,7 +24,7 @@ class Severity(IntEnum):
     NONE = 0
 
     @classmethod
-    def from_str(cls, s: str):
+    def from_str(cls, s: str) -> "Severity":
         mapping = {
             "error": cls.ERROR,
             "warning": cls.WARNING,
@@ -684,7 +684,7 @@ def _collect_smells_issues(args, all_issues):
         print(f"⚠️  Smells file not found: {args.smells_file}", file=sys.stderr)
 
 
-def _collect_checks_issues(args, all_issues):
+def _collect_checks_issues(args, all_issues) -> None:
     if args.scan:
         outfile = (
             args.checks_file if args.checks_file else Path("qlty.check.current.sarif")
@@ -695,11 +695,6 @@ def _collect_checks_issues(args, all_issues):
         all_issues.extend(checks)
     elif _load_checks_from_file(args, all_issues):
         return
-    elif not args.checks_file and not args.no_run:
-        checks = run_qlty_check()
-        for check in checks:
-            check.category = "check"
-        all_issues.extend(checks)
     else:
         if args.checks_file:
             print(f"⚠️  Checks file not found: {args.checks_file}", file=sys.stderr)

@@ -22,17 +22,19 @@ BACKUP=true
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# Change patterns - ordered by specificity (most specific first)
+# Change patterns - PLACEHOLDER: Update these mappings when renaming the project
+# Format: ["old-value"]="new-value"
+# NOTE: Currently maps to itself as a safety measure - edit before using
 declare -A CHANGE_PATTERNS=(
 	# Repository URLs (most specific)
-	["https://github.com/marlonsc/mcb"]="https://github.com/marlonsc/mcb"
+	["https://github.com/marlonsc/mcb"]="https://github.com/NEW_OWNER/NEW_REPO"
 
 	# Data and config directories
-	["$HOME/.local/share/mcb"]="$HOME/.local/share/mcb"
-	["$HOME/.config/mcb"]="$HOME/.config/mcb"
+	["$HOME/.local/share/mcb"]="$HOME/.local/share/NEW_NAME"
+	["$HOME/.config/mcb"]="$HOME/.config/NEW_NAME"
 
 	# Crate and binary names
-	["mcb"]="mcb"
+	["mcb"]="NEW_NAME"
 )
 
 # Files to exclude from processing (contain references that shouldn't change)
@@ -314,11 +316,14 @@ validate_changes() {
 	fi
 
 	((total_checks++))
-	if [[ ! -f "systemd/mcb.service" ]] && [[ -f "systemd/mcb.service" ]]; then
+	# TODO: Fix conditional - currently checks same file twice (impossible)
+	# Should check: old file gone AND new file exists
+	# Example: [[ ! -f "systemd/mcb.service" ]] && [[ -f "systemd/NEW_NAME.service" ]]
+	if [[ ! -f "systemd/mcb.service" ]] && [[ -f "systemd/NEW_NAME.service" ]]; then
 		log_success "Systemd service file renamed correctly"
 		((checks_passed++))
 	else
-		log_error "Systemd service file not renamed correctly"
+		log_error "Systemd service file not renamed correctly (update NEW_NAME placeholder)"
 	fi
 
 	log_info "Validation: $checks_passed/$total_checks checks passed"
