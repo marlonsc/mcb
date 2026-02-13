@@ -21,6 +21,7 @@ use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSe
 use mcb_domain::utils::mask_id;
 use tracing::debug;
 
+use super::query_helpers;
 use super::row_convert;
 
 /// SQLite-based implementation of the `AgentRepository`.
@@ -127,21 +128,13 @@ impl AgentRepository for SqliteAgentRepository {
     /// Retrieves a session by ID.
     // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 91)
     async fn get_session(&self, id: &str) -> Result<Option<AgentSession>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM agent_sessions WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(
-                row_convert::row_to_agent_session(r.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode agent session row", e))?,
-            )),
-            None => Ok(None),
-        }
+        query_helpers::query_one(
+            &self.executor,
+            "SELECT * FROM agent_sessions WHERE id = ?",
+            &[SqlParam::String(id.to_string())],
+            row_convert::row_to_agent_session,
+        )
+        .await
     }
 
     /// Updates an existing session.
@@ -249,57 +242,40 @@ impl AgentRepository for SqliteAgentRepository {
             params.push(SqlParam::I64(limit as i64));
         }
 
-        let rows = self.executor.query_all(&sql, &params).await?;
-        let mut sessions = Vec::with_capacity(rows.len());
-        for row in rows {
-            sessions.push(
-                row_convert::row_to_agent_session(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode agent session row", e))?,
-            );
-        }
-        Ok(sessions)
+        query_helpers::query_all(
+            &self.executor,
+            &sql,
+            &params,
+            row_convert::row_to_agent_session,
+            "agent session",
+        )
+        .await
     }
 
     /// Lists sessions for a specific project.
     // TODO(qlty): Found 18 lines of similar code in 3 locations (mass = 97)
     async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>> {
-        let rows = self
-            .executor
-            .query_all(
-                "SELECT * FROM agent_sessions WHERE project_id = ? ORDER BY started_at DESC",
-                &[SqlParam::String(project_id.to_string())],
-            )
-            .await?;
-
-        let mut sessions = Vec::with_capacity(rows.len());
-        for row in rows {
-            sessions.push(
-                row_convert::row_to_agent_session(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode agent session row", e))?,
-            );
-        }
-        Ok(sessions)
+        query_helpers::query_all(
+            &self.executor,
+            "SELECT * FROM agent_sessions WHERE project_id = ? ORDER BY started_at DESC",
+            &[SqlParam::String(project_id.to_string())],
+            row_convert::row_to_agent_session,
+            "agent session",
+        )
+        .await
     }
 
     /// Lists sessions for a specific worktree.
     // TODO(qlty): Found 18 lines of similar code in 3 locations (mass = 97)
     async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>> {
-        let rows = self
-            .executor
-            .query_all(
-                "SELECT * FROM agent_sessions WHERE worktree_id = ? ORDER BY started_at DESC",
-                &[SqlParam::String(worktree_id.to_string())],
-            )
-            .await?;
-
-        let mut sessions = Vec::with_capacity(rows.len());
-        for row in rows {
-            sessions.push(
-                row_convert::row_to_agent_session(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode agent session row", e))?,
-            );
-        }
-        Ok(sessions)
+        query_helpers::query_all(
+            &self.executor,
+            "SELECT * FROM agent_sessions WHERE worktree_id = ? ORDER BY started_at DESC",
+            &[SqlParam::String(worktree_id.to_string())],
+            row_convert::row_to_agent_session,
+            "agent session",
+        )
+        .await
     }
 
     /// Stores a delegation record.
@@ -431,21 +407,13 @@ impl AgentRepository for SqliteAgentRepository {
     /// Retrieves a checkpoint by ID.
     // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 91)
     async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM checkpoints WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(
-                row_convert::row_to_checkpoint(r.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode checkpoint row", e))?,
-            )),
-            None => Ok(None),
-        }
+        query_helpers::query_one(
+            &self.executor,
+            "SELECT * FROM checkpoints WHERE id = ?",
+            &[SqlParam::String(id.to_string())],
+            row_convert::row_to_checkpoint,
+        )
+        .await
     }
 
     /// Updates an existing checkpoint.

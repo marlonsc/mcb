@@ -56,7 +56,10 @@ impl SqliteProjectRepository {
 }
 
 #[async_trait]
+/// Persistent project repository using SQLite.
 impl ProjectRepository for SqliteProjectRepository {
+    /// Creates a new project.
+    // TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)
     async fn create(&self, project: &Project) -> Result<()> {
         self.executor
             .execute(
@@ -73,6 +76,7 @@ impl ProjectRepository for SqliteProjectRepository {
             .await
     }
 
+    /// Retrieves a project by ID.
     async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Project> {
         self.query_one_and_convert(
             "SELECT * FROM projects WHERE org_id = ? AND id = ? LIMIT 1",
@@ -87,6 +91,7 @@ impl ProjectRepository for SqliteProjectRepository {
         .ok_or_else(|| Error::not_found(format!("Project {id}")))
     }
 
+    /// Retrieves a project by name.
     async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Project> {
         self.query_one_and_convert(
             "SELECT * FROM projects WHERE org_id = ? AND name = ? LIMIT 1",
@@ -101,6 +106,7 @@ impl ProjectRepository for SqliteProjectRepository {
         .ok_or_else(|| Error::not_found(format!("Project {name}")))
     }
 
+    /// Retrieves a project by path.
     async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Project> {
         self.query_one_and_convert(
             "SELECT * FROM projects WHERE org_id = ? AND path = ? LIMIT 1",
@@ -115,6 +121,8 @@ impl ProjectRepository for SqliteProjectRepository {
         .ok_or_else(|| Error::not_found(format!("Project {path}")))
     }
 
+    /// Lists all projects in an organization.
+    // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 97)
     async fn list(&self, org_id: &str) -> Result<Vec<Project>> {
         let rows = self
             .executor
@@ -133,6 +141,7 @@ impl ProjectRepository for SqliteProjectRepository {
         Ok(projects)
     }
 
+    /// Updates an existing project.
     async fn update(&self, project: &Project) -> Result<()> {
         self.executor
             .execute(
@@ -148,6 +157,7 @@ impl ProjectRepository for SqliteProjectRepository {
             .await
     }
 
+    /// Deletes a project.
     async fn delete(&self, org_id: &str, id: &str) -> Result<()> {
         self.executor
             .execute(

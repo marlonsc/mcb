@@ -29,6 +29,7 @@ use mcb_domain::utils::mask_id;
 use mcb_domain::value_objects::ids::{ObservationId, SessionId};
 use tracing::debug;
 
+use super::query_helpers;
 use super::row_convert;
 
 /// SQLite-based implementation of the `MemoryRepository`.
@@ -100,39 +101,25 @@ impl MemoryRepository for SqliteMemoryRepository {
     /// Retrieves an observation by ID.
     // TODO(qlty): Found 16 lines of similar code in 2 locations (mass = 95)
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM observations WHERE id = ?",
-                &[SqlParam::String(id.as_str().to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(row_convert::row_to_observation(r.as_ref()).map_err(
-                |e| Error::memory_with_source("decode observation row", e),
-            )?)),
-            None => Ok(None),
-        }
+        query_helpers::query_one(
+            &self.executor,
+            "SELECT * FROM observations WHERE id = ?",
+            &[SqlParam::String(id.as_str().to_string())],
+            row_convert::row_to_observation,
+        )
+        .await
     }
 
     /// Retrieves an observation by content hash.
     // TODO(qlty): Found 16 lines of similar code in 3 locations (mass = 91)
     async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM observations WHERE content_hash = ?",
-                &[SqlParam::String(content_hash.to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(row_convert::row_to_observation(r.as_ref()).map_err(
-                |e| Error::memory_with_source("decode observation row", e),
-            )?)),
-            None => Ok(None),
-        }
+        query_helpers::query_one(
+            &self.executor,
+            "SELECT * FROM observations WHERE content_hash = ?",
+            &[SqlParam::String(content_hash.to_string())],
+            row_convert::row_to_observation,
+        )
+        .await
     }
 
     /// Searches observations using FTS.
@@ -182,16 +169,14 @@ impl MemoryRepository for SqliteMemoryRepository {
             .map(|id| SqlParam::String(id.as_str().to_string()))
             .collect();
 
-        let rows = self.executor.query_all(&sql, &params).await?;
-
-        let mut observations = Vec::with_capacity(rows.len());
-        for row in rows {
-            observations.push(
-                row_convert::row_to_observation(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode observation", e))?,
-            );
-        }
-        Ok(observations)
+        query_helpers::query_all(
+            &self.executor,
+            &sql,
+            &params,
+            row_convert::row_to_observation,
+            "observation",
+        )
+        .await
     }
 
     /// Retrieves a timeline of observations centered around an anchor observation.
@@ -346,20 +331,12 @@ impl MemoryRepository for SqliteMemoryRepository {
     /// Retrieves the latest summary for a session.
     // TODO(qlty): Found 17 lines of similar code in 2 locations (mass = 95)
     async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM session_summaries WHERE session_id = ? ORDER BY created_at DESC LIMIT 1",
-                &[SqlParam::String(session_id.as_str().to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(
-                row_convert::row_to_session_summary(r.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode session summary row", e))?,
-            )),
-            None => Ok(None),
-        }
+        query_helpers::query_one(
+            &self.executor,
+            "SELECT * FROM session_summaries WHERE session_id = ? ORDER BY created_at DESC LIMIT 1",
+            &[SqlParam::String(session_id.as_str().to_string())],
+            row_convert::row_to_session_summary,
+        )
+        .await
     }
 }
