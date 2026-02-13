@@ -19,6 +19,7 @@ use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, Sq
 use mcb_domain::ports::repositories::IssueEntityRepository;
 use std::sync::Arc;
 
+use super::query_helpers;
 use super::row_helpers::{opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_str};
 
 /// SQLite-based implementation of `IssueEntityRepository`.

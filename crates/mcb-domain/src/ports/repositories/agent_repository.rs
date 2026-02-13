@@ -40,6 +40,7 @@ pub struct AgentSessionQuery {
 #[async_trait]
 // TODO(architecture): Consider splitting into smaller interfaces (ISP).
 // Current interface combines Session, Delegation, ToolCall, and Checkpoint management.
+// TODO(PORT003): Port AgentRepository has 11 methods (>10) - Consider splitting into smaller interfaces (ISP)
 pub trait AgentRepository: Send + Sync {
     /// Creates a new agent session in the repository.
     ///

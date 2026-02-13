@@ -37,7 +37,10 @@ impl GoDetector {
 }
 
 #[async_trait]
+/// Go project detector implementation.
 impl ProjectDetector for GoDetector {
+    /// Detects a Go project by analyzing `go.mod`.
+    // TODO(qlty): Function with high complexity (count = 19): detect
     async fn detect(&self, path: &Path) -> Result<Option<ProjectType>> {
         let gomod_path = path.join("go.mod");
         if !gomod_path.exists() {
@@ -112,15 +115,18 @@ impl ProjectDetector for GoDetector {
         }))
     }
 
+    /// Returns the list of files that identify a Go project.
     fn marker_files(&self) -> &[&str] {
         &["go.mod"]
     }
 
+    /// Returns the detector name ("go").
     fn detector_name(&self) -> &str {
         "go"
     }
 }
 
+/// Factory function for creating Go detector instances.
 fn go_factory(
     config: &ProjectDetectorConfig,
 ) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {

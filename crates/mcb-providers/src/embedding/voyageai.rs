@@ -59,6 +59,7 @@ impl VoyageAIEmbeddingProvider {
     /// * `model` - Model name (e.g., "voyage-code-3")
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
+    // TODO(qlty): Found 17 lines of similar code in 4 locations (mass = 54)
     pub fn new(
         api_key: String,
         base_url: Option<String>,
@@ -142,7 +143,9 @@ impl VoyageAIEmbeddingProvider {
 }
 
 #[async_trait]
+/// VoyageAI implementation of the EmbeddingProvider trait.
 impl EmbeddingProvider for VoyageAIEmbeddingProvider {
+    /// Generates embeddings for a batch of texts.
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
         if texts.is_empty() {
             return Ok(Vec::new());
@@ -158,6 +161,7 @@ impl EmbeddingProvider for VoyageAIEmbeddingProvider {
             .collect()
     }
 
+    /// Returns the embedding dimensions for the configured model.
     fn dimensions(&self) -> usize {
         match self.model.as_str() {
             "voyage-code-3" => EMBEDDING_DIMENSION_VOYAGEAI_CODE,
@@ -165,6 +169,7 @@ impl EmbeddingProvider for VoyageAIEmbeddingProvider {
         }
     }
 
+    /// Returns the provider name ("voyageai").
     fn provider_name(&self) -> &str {
         "voyageai"
     }

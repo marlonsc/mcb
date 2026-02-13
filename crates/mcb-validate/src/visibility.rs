@@ -4,6 +4,7 @@
 
 use std::collections::HashSet;
 use std::path::PathBuf;
+use std::sync::OnceLock;
 
 use regex::Regex;
 use serde::Serialize;
@@ -150,6 +151,27 @@ pub struct VisibilityValidator {
     enabled: bool,
 }
 
+fn pub_item_re_internal() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"^pub\s+(fn|struct|enum|type|const|static)\s+(\w+)")
+            .expect("Invalid internal visibility regex")
+    })
+}
+
+fn pub_item_re_utility() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| {
+        Regex::new(r"^pub\s+(fn|struct|enum|type)\s+(\w+)")
+            .expect("Invalid utility visibility regex")
+    })
+}
+
+fn pub_crate_re() -> &'static Regex {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    RE.get_or_init(|| Regex::new(r"^pub\(crate\)").expect("Invalid pub(crate) regex"))
+}
+
 impl VisibilityValidator {
     /// Creates a new visibility validator, loading configuration from files.
     pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
@@ -194,9 +216,6 @@ impl VisibilityValidator {
     ) -> Result<Vec<VisibilityViolation>> {
         let mut violations = Vec::new();
 
-        let pub_item_re = Regex::new(r"^pub\s+(fn|struct|enum|type|const|static)\s+(\w+)").unwrap();
-        let pub_crate_re = Regex::new(r"^pub\(crate\)").unwrap();
-
         for dir_path in &self.internal_dirs {
             let full_path = config.workspace_root.join(dir_path);
             if !full_path.exists() {
@@ -207,11 +226,11 @@ impl VisibilityValidator {
                 let content = std::fs::read_to_string(path)?;
                 for (line_num, line) in content.lines().enumerate() {
                     let trimmed = line.trim();
-                    if pub_crate_re.is_match(trimmed) {
+                    if pub_crate_re().is_match(trimmed) {
                         continue;
                     }
 
-                    if let Some(captures) = pub_item_re.captures(trimmed) {
+                    if let Some(captures) = pub_item_re_internal().captures(trimmed) {
                         let item_name = captures.get(2).map_or("unknown", |m| m.as_str());
                         // Skip exempted items:
                         if self.exempted_items.contains(item_name) {
@@ -235,9 +254,6 @@ impl VisibilityValidator {
     fn check_utility_modules(&self, config: &ValidationConfig) -> Result<Vec<VisibilityViolation>> {
         let mut violations = Vec::new();
 
-        let pub_item_re = Regex::new(r"^pub\s+(fn|struct|enum|type)\s+(\w+)").unwrap();
-        let pub_crate_re = Regex::new(r"^pub\(crate\)").unwrap();
-
         for crate_name in &self.scan_crates {
             let crate_src = config
                 .workspace_root
@@ -250,10 +266,7 @@ impl VisibilityValidator {
 
             for_each_rs_under_root(config, &crate_src, |path| {
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                if !self
-                    .utility_module_patterns
-                    .contains(&file_name.to_string())
-                {
+                if !self.utility_module_patterns.iter().any(|p| p == file_name) {
                     return Ok(());
                 }
 
@@ -262,10 +275,10 @@ impl VisibilityValidator {
 
                 for line in content.lines() {
                     let trimmed = line.trim();
-                    if pub_crate_re.is_match(trimmed) {
+                    if pub_crate_re().is_match(trimmed) {
                         continue;
                     }
-                    if pub_item_re.is_match(trimmed) {
+                    if pub_item_re_utility().is_match(trimmed) {
                         pub_count += 1;
                     }
                 }

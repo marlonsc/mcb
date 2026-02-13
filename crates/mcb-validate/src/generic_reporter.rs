@@ -45,8 +45,7 @@ pub struct GenericSummary {
 
 /// Serializable violation entry.
 ///
-/// # Code Smells
-/// TODO(qlty): Found 16 lines of similar code with `crates/mcb-domain/src/ports/services/validation.rs`.
+/// Serializable violation entry.
 #[derive(Debug, Clone, Serialize)]
 pub struct ViolationEntry {
     /// Unique violation ID
@@ -94,18 +93,14 @@ impl GenericReporter {
             .to_string();
 
         // Count by severity
-        let errors = violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        let warnings = violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        let infos = violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Info)
-            .count();
+        let (errors, warnings, infos) =
+            violations
+                .iter()
+                .fold((0, 0, 0), |(e, w, i), v| match v.severity() {
+                    Severity::Error => (e + 1, w, i),
+                    Severity::Warning => (e, w + 1, i),
+                    Severity::Info => (e, w, i + 1),
+                });
 
         // Group by category
         let mut by_category: HashMap<String, Vec<ViolationEntry>> = HashMap::new();
@@ -146,8 +141,7 @@ impl GenericReporter {
 
     /// Generate human-readable report.
     ///
-    /// # Code Smells
-    /// TODO(qlty): Function with high complexity (count = 18).
+    /// Generate human-readable report.
     pub fn to_human_readable(violations: &[Box<dyn Violation>], workspace_root: PathBuf) -> String {
         let report = Self::create_report(violations, workspace_root);
         let mut output = String::new();
@@ -219,61 +213,37 @@ impl GenericReporter {
     }
 
     /// Generate CI summary (GitHub Actions format).
-    ///
-    /// # Code Smells
-    /// TODO(qlty): Found 22 lines of similar code between `Severity::Error` and `Severity::Warning` arms.
     pub fn to_ci_summary(violations: &[Box<dyn Violation>]) -> String {
         let mut output = String::new();
 
         for v in violations {
-            match v.severity() {
-                Severity::Error => {
-                    if let (Some(file), Some(line)) = (v.file(), v.line()) {
-                        let _ = writeln!(
-                            output,
-                            "::error file={},line={}::[{}] {}",
-                            file.display(),
-                            line,
-                            v.id(),
-                            v.message()
-                        );
-                    } else if let Some(file) = v.file() {
-                        let _ = writeln!(
-                            output,
-                            "::error file={}::[{}] {}",
-                            file.display(),
-                            v.id(),
-                            v.message()
-                        );
-                    } else {
-                        let _ = writeln!(output, "::error ::[{}] {}", v.id(), v.message());
-                    }
-                }
-                Severity::Warning => {
-                    if let (Some(file), Some(line)) = (v.file(), v.line()) {
-                        let _ = writeln!(
-                            output,
-                            "::warning file={},line={}::[{}] {}",
-                            file.display(),
-                            line,
-                            v.id(),
-                            v.message()
-                        );
-                    } else if let Some(file) = v.file() {
-                        let _ = writeln!(
-                            output,
-                            "::warning file={}::[{}] {}",
-                            file.display(),
-                            v.id(),
-                            v.message()
-                        );
-                    } else {
-                        let _ = writeln!(output, "::warning ::[{}] {}", v.id(), v.message());
-                    }
-                }
-                Severity::Info => {
-                    // Info messages are not reported in CI
-                }
+            let level = match v.severity() {
+                Severity::Error => "error",
+                Severity::Warning => "warning",
+                Severity::Info => continue, // Info messages are not reported in CI
+            };
+
+            if let (Some(file), Some(line)) = (v.file(), v.line()) {
+                let _ = writeln!(
+                    output,
+                    "::{} file={},line={}::[{}] {}",
+                    level,
+                    file.display(),
+                    line,
+                    v.id(),
+                    v.message()
+                );
+            } else if let Some(file) = v.file() {
+                let _ = writeln!(
+                    output,
+                    "::{} file={}::[{}] {}",
+                    level,
+                    file.display(),
+                    v.id(),
+                    v.message()
+                );
+            } else {
+                let _ = writeln!(output, "::{} ::[{}] {}", level, v.id(), v.message());
             }
         }
 
@@ -282,19 +252,13 @@ impl GenericReporter {
 
     /// Count violations by severity
     pub fn count_by_severity(violations: &[Box<dyn Violation>]) -> (usize, usize, usize) {
-        let errors = violations
+        violations
             .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        let warnings = violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        let infos = violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Info)
-            .count();
-        (errors, warnings, infos)
+            .fold((0, 0, 0), |(e, w, i), v| match v.severity() {
+                Severity::Error => (e + 1, w, i),
+                Severity::Warning => (e, w + 1, i),
+                Severity::Info => (e, w, i + 1),
+            })
     }
 
     /// Filter violations by category

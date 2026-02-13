@@ -39,6 +39,7 @@ pub struct IssueLabel {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 // TODO(architecture): Add id: Uuid or similar identity field to entity.
 // Current implementation relies on composite key (issue_id, label_id).
+// TODO(CA004): Entity IssueLabelAssignment missing id/uuid field - Add id: Uuid or similar identity field to entity
 pub struct IssueLabelAssignment {
     /// Issue identifier.
     pub issue_id: String,

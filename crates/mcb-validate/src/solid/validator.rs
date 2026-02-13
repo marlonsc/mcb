@@ -6,10 +6,6 @@
 //! - Liskov Substitution Principle (LSP)
 //! - Interface Segregation Principle (ISP)
 //! - Dependency Inversion Principle (DIP)
-//!
-//! # Code Smells
-//! TODO(qlty): High total complexity (count = 138).
-//! TODO(qlty): Found 24 lines of similar code between `validate_isp` and `validate_impl_method_count`.
 
 use std::path::PathBuf;
 
@@ -228,9 +224,6 @@ impl SolidValidator {
     }
 
     /// LSP: Check for partial trait implementations (panic!/todo! in trait methods).
-    ///
-    /// # Code Smells
-    /// TODO(qlty): Function with high complexity (count = 38).
     pub fn validate_lsp(&self) -> Result<Vec<SolidViolation>> {
         let mut violations = Vec::new();
         let impl_for_pattern = required_pattern("SOLID002.impl_for_decl")?;
@@ -243,20 +236,13 @@ impl SolidValidator {
                     let trait_name = cap.get(1).map_or("", |m| m.as_str());
                     let impl_name = cap.get(2).map_or("", |m| m.as_str());
 
-                    let mut brace_depth = 0;
-                    let mut in_impl = false;
-                    let mut current_method: Option<(String, usize)> = None;
+                    if let Some((block_lines, _)) =
+                        crate::scan::extract_balanced_block(&lines, line_num)
+                    {
+                        let mut current_method: Option<(String, usize)> = None;
 
-                    for (idx, impl_line) in lines[line_num..].iter().enumerate() {
-                        if impl_line.contains('{') {
-                            in_impl = true;
-                        }
-                        if in_impl {
-                            brace_depth += impl_line.chars().filter(|c| *c == '{').count();
-                            brace_depth -= impl_line.chars().filter(|c| *c == '}').count();
-
+                        for (idx, impl_line) in block_lines.iter().enumerate() {
                             if let Some(fn_cap) = fn_pattern.captures(impl_line) {
-                                // TODO(qlty): Deeply nested control flow (level = 5).
                                 let method_name = fn_cap.get(1).map_or("", |m| m.as_str());
                                 current_method =
                                     Some((method_name.to_string(), line_num + idx + 1));
@@ -265,7 +251,6 @@ impl SolidValidator {
                             if let Some((ref method_name, method_line)) = current_method
                                 && panic_todo_pattern.is_match(impl_line)
                             {
-                                // TODO(qlty): Deeply nested control flow (level = 5).
                                 violations.push(SolidViolation::PartialTraitImplementation {
                                     file: path.clone(),
                                     line: method_line,
@@ -274,10 +259,6 @@ impl SolidValidator {
                                     severity: Severity::Warning,
                                 });
                                 current_method = None;
-                            }
-
-                            if brace_depth == 0 {
-                                break;
                             }
                         }
                     }
@@ -444,20 +425,20 @@ impl SolidValidator {
     }
 
     /// Check if structs seem related (share common prefix/suffix).
-    ///
-    /// # Code Smells
-    /// TODO(qlty): Complex binary expression.
-    #[allow(clippy::too_many_lines)]
     fn structs_seem_related(&self, names: &[String]) -> bool {
         if names.len() < 2 {
             return true;
         }
 
-        Self::has_common_prefix(names)
-            || Self::has_common_suffix(names)
-            || Self::has_purpose_suffix(names)
-            || Self::has_shared_keyword(names)
-            || Self::has_common_words(names)
+        let checks = [
+            Self::has_common_prefix,
+            Self::has_common_suffix,
+            Self::has_purpose_suffix,
+            Self::has_shared_keyword,
+            Self::has_common_words,
+        ];
+
+        checks.iter().any(|check| check(names))
     }
 
     /// Check for common prefix (at least 3 chars)
@@ -570,29 +551,8 @@ impl SolidValidator {
     }
 
     /// Check for partial word overlaps in CamelCase names.
-    ///
-    /// # Code Smells
-    /// TODO(qlty): Function with high complexity (count = 22).
     fn has_common_words(names: &[String]) -> bool {
-        let words: Vec<Vec<&str>> = names
-            .iter()
-            .map(|n| {
-                let mut words = Vec::new();
-                let mut start = 0;
-                for (i, c) in n.char_indices() {
-                    if c.is_uppercase() && i > 0 {
-                        if start < i {
-                            words.push(&n[start..i]);
-                        }
-                        start = i;
-                    }
-                }
-                if start < n.len() {
-                    words.push(&n[start..]);
-                }
-                words
-            })
-            .collect();
+        let words: Vec<Vec<&str>> = names.iter().map(|n| Self::split_camel_case(n)).collect();
 
         if let Some(first_words) = words.first() {
             for word in first_words {
@@ -605,6 +565,24 @@ impl SolidValidator {
             }
         }
         false
+    }
+
+    /// Split a CamelCase string into words.
+    fn split_camel_case(s: &str) -> Vec<&str> {
+        let mut words = Vec::new();
+        let mut start = 0;
+        for (i, c) in s.char_indices() {
+            if c.is_uppercase() && i > 0 {
+                if start < i {
+                    words.push(&s[start..i]);
+                }
+                start = i;
+            }
+        }
+        if start < s.len() {
+            words.push(&s[start..]);
+        }
+        words
     }
 
     fn get_crate_dirs(&self) -> Result<Vec<PathBuf>> {

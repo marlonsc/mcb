@@ -23,6 +23,7 @@ pub struct Team {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 // TODO(architecture): Add id: Uuid or similar identity field to entity.
 // Current implementation relies on composite key (team_id, user_id).
+// TODO(CA004): Entity TeamMember missing id/uuid field - Add id: Uuid or similar identity field to entity
 pub struct TeamMember {
     /// Team the user belongs to.
     pub team_id: String,

@@ -13,6 +13,7 @@ use crate::error::Result;
 /// Defines behavior for VcsEntityRepository.
 // TODO(architecture): Consider splitting into smaller interfaces (ISP).
 // Current interface combines Repository, Branch, Worktree, and Assignment management.
+// TODO(PORT003): Port VcsEntityRepository has 19 methods (>10) - Consider splitting into smaller interfaces (ISP)
 pub trait VcsEntityRepository: Send + Sync {
     // -- Repository CRUD --
     /// Performs the create repository operation.

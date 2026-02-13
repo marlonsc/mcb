@@ -25,6 +25,8 @@ impl MavenDetector {
         Self
     }
 
+    /// Parses a `pom.xml` file to extract project metadata.
+    // TODO(qlty): Function with high complexity (count = 31): parse_pom
     fn parse_pom(content: &str) -> Option<(String, String, String, Vec<String>)> {
         let mut reader = Reader::from_str(content);
         reader.config_mut().trim_text(true);
@@ -88,6 +90,7 @@ impl MavenDetector {
                         && in_dependency
                     {
                         if !dep_artifact_id.is_empty() {
+                            // TODO(qlty): Deeply nested control flow (level = 5)
                             let dep = if dep_group_id.is_empty() {
                                 std::mem::take(&mut dep_artifact_id)
                             } else {
@@ -112,6 +115,7 @@ impl MavenDetector {
         Some((group_id, artifact_id, version, dependencies))
     }
 
+    /// Checks if the current XML path matches the expected path.
     fn path_matches(current: &[String], expected: &[&str]) -> bool {
         if current.len() != expected.len() {
             return false;
@@ -124,7 +128,9 @@ impl MavenDetector {
 }
 
 #[async_trait]
+/// Maven project detector implementation.
 impl ProjectDetector for MavenDetector {
+    /// Detects a Maven project by analyzing `pom.xml`.
     async fn detect(&self, path: &Path) -> Result<Option<ProjectType>> {
         let pom_path = path.join("pom.xml");
         if !pom_path.exists() {
@@ -150,15 +156,18 @@ impl ProjectDetector for MavenDetector {
         }
     }
 
+    /// Returns the list of files that identify a Maven project.
     fn marker_files(&self) -> &[&str] {
         &["pom.xml"]
     }
 
+    /// Returns the detector name ("maven").
     fn detector_name(&self) -> &str {
         "maven"
     }
 }
 
+/// Factory function for creating Maven detector instances.
 fn maven_factory(
     config: &ProjectDetectorConfig,
 ) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {

@@ -13,6 +13,7 @@ use crate::ports::repositories::agent_repository::AgentSessionQuery;
 #[async_trait]
 // TODO(architecture): Consider splitting into smaller interfaces (ISP).
 // Current interface combines Session control, Delegation, and Checkpoint operations.
+// TODO(PORT003): Port AgentSessionServiceInterface has 12 methods (>10) - Consider splitting into smaller interfaces (ISP)
 pub trait AgentSessionServiceInterface: Send + Sync {
     /// Performs the create session operation.
     async fn create_session(&self, session: AgentSession) -> Result<String>;

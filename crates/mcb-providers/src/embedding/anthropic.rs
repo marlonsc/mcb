@@ -65,6 +65,7 @@ impl AnthropicEmbeddingProvider {
     /// * `model` - Model name (e.g., "voyage-3", "voyage-code-3")
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
+    // TODO(qlty): Found 18 lines of similar code in 4 locations (mass = 54)
     pub fn new(
         api_key: String,
         base_url: Option<String>,
@@ -143,7 +144,10 @@ impl AnthropicEmbeddingProvider {
 }
 
 #[async_trait]
+/// Implementation of EmbeddingProvider using Anthropic/Voyage.
 impl EmbeddingProvider for AnthropicEmbeddingProvider {
+    /// Generates embeddings for a batch of texts.
+    // TODO(qlty): Found 29 lines of similar code in 2 locations (mass = 138)
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
         if texts.is_empty() {
             return Ok(Vec::new());
@@ -159,6 +163,7 @@ impl EmbeddingProvider for AnthropicEmbeddingProvider {
             .collect()
     }
 
+    /// Returns the embedding dimensions for the configured model.
     fn dimensions(&self) -> usize {
         match self.model.as_str() {
             "voyage-3" => EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT,
@@ -168,6 +173,7 @@ impl EmbeddingProvider for AnthropicEmbeddingProvider {
         }
     }
 
+    /// Returns the provider name ("anthropic").
     fn provider_name(&self) -> &str {
         "anthropic"
     }

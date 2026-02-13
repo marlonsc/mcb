@@ -12,6 +12,7 @@ use crate::error::Result;
 /// Defines behavior for OrgEntityRepository.
 // TODO(architecture): Consider splitting into smaller interfaces (ISP).
 // Current interface combines Org, User, Team, and ApiKey management.
+// TODO(PORT003): Port OrgEntityRepository has 23 methods (>10) - Consider splitting into smaller interfaces (ISP)
 pub trait OrgEntityRepository: Send + Sync {
     /// Performs the create org operation.
     async fn create_org(&self, org: &Organization) -> Result<()>;

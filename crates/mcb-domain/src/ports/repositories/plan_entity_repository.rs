@@ -12,6 +12,7 @@ use crate::error::Result;
 /// Defines behavior for PlanEntityRepository.
 // TODO(architecture): Consider splitting into smaller interfaces (ISP).
 // Current interface combines Plan, PlanVersion, and PlanReview management.
+// TODO(PORT003): Port PlanEntityRepository has 11 methods (>10) - Consider splitting into smaller interfaces (ISP)
 pub trait PlanEntityRepository: Send + Sync {
     /// Performs the create plan operation.
     async fn create_plan(&self, plan: &Plan) -> Result<()>;

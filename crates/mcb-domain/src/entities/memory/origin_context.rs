@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 // TODO(architecture): Add id: Uuid or similar identity field to entity.
 // Currently relies on specific fields for identification which may not be unique.
+// TODO(CA004): Entity OriginContext missing id/uuid field - Add id: Uuid or similar identity field to entity
 pub struct OriginContext {
     /// The ID of the organization.
     #[serde(default, skip_serializing_if = "Option::is_none")]

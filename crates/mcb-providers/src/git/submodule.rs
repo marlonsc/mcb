@@ -58,6 +58,8 @@ impl SubmoduleProvider {
         .map_err(|e| Error::internal(format!("Submodule collection task panicked: {e}")))?
     }
 
+    /// Synchronously collects submodules using git2 (thread-blocking).
+    // TODO(qlty): Function with high complexity (count = 33): collect_submodules_sync
     fn collect_submodules_sync(
         repo_path: &Path,
         parent_repo_id: &str,
