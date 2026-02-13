@@ -514,6 +514,7 @@ async fn handle_tools_call(
                 "false" | "0" | "no" => Some(false),
                 _ => None,
             }),
+        timestamp: Some(chrono::Utc::now().timestamp()),
     };
 
     execution_context.apply_to_request_if_missing(&mut call_request);

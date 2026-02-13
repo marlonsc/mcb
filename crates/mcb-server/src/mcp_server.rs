@@ -4,6 +4,7 @@
 
 use std::path::Path;
 use std::sync::Arc;
+use std::time::SystemTime;
 
 use mcb_domain::constants::keys as schema;
 use mcb_domain::ports::providers::VcsProvider;
@@ -239,6 +240,11 @@ impl McpServer {
             }
         }
 
+        let timestamp = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .ok()
+            .map(|d| d.as_secs() as i64);
+
         ToolExecutionContext {
             session_id,
             parent_session_id,
@@ -251,6 +257,7 @@ impl McpServer {
             agent_program,
             model_id,
             delegated,
+            timestamp,
         }
     }
 
@@ -553,6 +560,7 @@ mod tests {
 
         ToolExecutionContext {
             session_id: Some("from-meta".to_string()),
+            timestamp: Some(1234567890),
             ..Default::default()
         }
         .apply_to_request_if_missing(&mut request);

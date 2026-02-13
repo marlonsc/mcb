@@ -76,6 +76,7 @@ pub struct ToolExecutionContext {
     pub model_id: Option<String>,
     /// Optional delegated flag for this execution.
     pub delegated: Option<bool>,
+    /// Execution timestamp (Unix timestamp in seconds).
     pub timestamp: Option<i64>,
 }
 
