@@ -257,8 +257,10 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     timeout-minutes: 15
-    needs: [changes]
-    if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
+    needs: [changes, rust-ci]
+    if: |
+      always() &&
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -339,7 +341,7 @@ jobs:
     name: Rust CI (PR consolidated)
     timeout-minutes: 40
     runs-on: ubuntu-latest
-    needs: [changes, classify, lint, test, startup-smoke, validate, audit, analyze, golden-tests, coverage, release-build]
+    needs: [changes, classify, lint, test, startup-smoke, validate, audit, golden-tests, coverage, release-build]
     if: always()
     steps:
       - name: Evaluate Required Checks
@@ -353,7 +355,6 @@ jobs:
           STARTUP_RESULT: ${{ needs.startup-smoke.result }}
           VALIDATE_RESULT: ${{ needs.validate.result }}
           AUDIT_RESULT: ${{ needs.audit.result }}
-          ANALYZE_RESULT: ${{ needs.analyze.result }}
           GOLDEN_RESULT: ${{ needs.golden-tests.result }}
           COVERAGE_RESULT: ${{ needs.coverage.result }}
           RELEASE_BUILD_RESULT: ${{ needs.release-build.result }}
@@ -370,7 +371,6 @@ jobs:
           echo "Startup Smoke: $STARTUP_RESULT"
           echo "Validate: $VALIDATE_RESULT"
           echo "Audit: $AUDIT_RESULT"
-          echo "Analyze: $ANALYZE_RESULT"
           echo "Golden: $GOLDEN_RESULT"
           echo "Coverage: $COVERAGE_RESULT"
           echo "Release Build: $RELEASE_BUILD_RESULT"
@@ -414,7 +414,6 @@ jobs:
               "STARTUP_RESULT"
               "VALIDATE_RESULT"
               "AUDIT_RESULT"
-              "ANALYZE_RESULT"
               "GOLDEN_RESULT"
               "COVERAGE_RESULT"
               "RELEASE_BUILD_RESULT"
