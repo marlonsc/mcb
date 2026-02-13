@@ -136,13 +136,21 @@ jobs:
         with:
           persist-credentials: false
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        continue-on-error: true
         with:
           name: rust-api-docs
           path: docs-site/api/
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        continue-on-error: true
         with:
           name: mdbook-docs
           path: docs-site/
+      - name: Check artifacts exist
+        run: |
+          if [[ ! -d "docs-site/api" ]] || [[ ! -d "docs-site" ]]; then
+            echo "Error: Expected artifacts missing (docs-site/api or docs-site)" >&2
+            exit 1
+          fi
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
         with:

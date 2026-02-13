@@ -29,8 +29,12 @@ release: ## Full release pipeline (lint + test + validate + build)
 	@$(MAKE) build RELEASE=1
 	@echo "Packaging..."
 	@mkdir -p dist
-	@cp target/release/$(BINARY_NAME) dist/ 2>/dev/null || echo "Binary not found"
-	@cd dist && tar -czf $(BINARY_NAME)-$(VERSION).tar.gz $(BINARY_NAME) 2>/dev/null || true
+	@if [ ! -f "target/release/$(BINARY_NAME)" ]; then \
+		echo "Error: Binary target/release/$(BINARY_NAME) not found after build" >&2; \
+		exit 1; \
+	fi
+	@cp target/release/$(BINARY_NAME) dist/
+	@cd dist && tar -czf $(BINARY_NAME)-$(VERSION).tar.gz $(BINARY_NAME)
 	@echo "Release v$(VERSION) ready: dist/$(BINARY_NAME)-$(VERSION).tar.gz"
 
 install: ## Install release binary + systemd service to user directories

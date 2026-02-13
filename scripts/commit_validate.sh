@@ -2,6 +2,7 @@
 set -euo pipefail
 
 if [[ -f "Makefile" ]]; then
+    # Note: Using lighter lint+validate instead of full "make check" for speed in pre-commit context
 	if grep -q "^ci:" Makefile; then
 		make lint MCB_CI=1 && make validate QUICK=1
 		exit 0

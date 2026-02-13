@@ -117,13 +117,11 @@ jobs:
       - run: make lint MCB_CI=1
 
   test:
-    name: Test (${{ matrix.os }}, ${{ matrix.rust }})
-    needs: [changes, classify, lint]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
+    name: Test (${{ matrix.os }}, Rust ${{ matrix.rust }})
+    needs: [changes, classify]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    if: matrix.if_key != 'false'
     strategy:
       fail-fast: false
       matrix:
@@ -159,9 +157,7 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           save-if: false
-      # Skip if matrix exclusion applies
       - name: Run tests
-        if: matrix.if_key != 'false'
         run: make test THREADS=4
 
   startup-smoke:

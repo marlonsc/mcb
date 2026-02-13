@@ -84,8 +84,9 @@ for action in $actions; do
         # We escape the action name just in case.
         esc_action=$(echo "$action" | sed 's/\//\\\//g')
 
-        sed -i "s|uses: $esc_action@.*|uses: $action@$commit_sha$comment|g" "$file"
+        sed -i.bak "s|uses: $esc_action@.*|uses: $action@$commit_sha$comment|g" "$file"
     done
 done
 
 echo "Update complete."
+    rm -f "$file.bak"  # Clean up macOS sed backup
