@@ -34,3 +34,8 @@ updates:
       github-actions-all:
         patterns:
           - "*"
+    ignore:
+      # dtolnay/rust-toolchain uses rolling master SHAs without semver tags,
+      # causing Dependabot resolution failures (unknown_error).
+      # Managed manually via SHA pins with version comments.
+      - dependency-name: "dtolnay/rust-toolchain"
