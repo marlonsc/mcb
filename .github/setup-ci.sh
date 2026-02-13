@@ -7,12 +7,17 @@ set -e
 # Detect OS
 OS=$(uname -s)
 
-# Install protobuf-compiler (always required)
+# Install protobuf tooling (always required)
 case "$OS" in
 Linux)
 	if ! command -v protoc &>/dev/null || [ ! -f /usr/include/google/protobuf/descriptor.proto ]; then
 		sudo apt-get update -qq >/dev/null
-		sudo apt-get install -y -qq --no-install-recommends protobuf-compiler >/dev/null
+		sudo apt-get install -y -qq --no-install-recommends protobuf-compiler libprotobuf-dev >/dev/null
+	fi
+	if command -v protoc &>/dev/null && [ ! -f /usr/include/google/protobuf/descriptor.proto ]; then
+		echo "ERROR: protoc is installed but /usr/include/google/protobuf/descriptor.proto is missing." >&2
+		echo "Install package 'libprotobuf-dev' before running CI checks." >&2
+		exit 1
 	fi
 	export PROTOC_INCLUDE=/usr/include
 	if [[ -n "${GITHUB_ENV:-}" ]]; then

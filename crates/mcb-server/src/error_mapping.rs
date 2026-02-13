@@ -6,8 +6,8 @@ pub fn to_opaque_mcp_error(e: Error) -> McpError {
     match &e {
         Error::NotFound { .. } => McpError::invalid_params(e.to_string(), None),
         Error::InvalidArgument { .. } => McpError::invalid_params(e.to_string(), None),
-        other => {
-            tracing::error!(error = %other, "operation failed");
+        _other => {
+            tracing::error!("operation failed");
             McpError::internal_error("internal server error", None)
         }
     }
@@ -36,27 +36,27 @@ pub fn to_contextual_tool_error(e: impl Into<Error>) -> CallToolResult {
 
         // Provider errors — category + sanitized reason
         Error::Database { message, .. } => {
-            tracing::error!(error = %error, "database operation failed");
+            tracing::error!("database operation failed");
             format!("Database error: {message}")
         }
         Error::VectorDb { message } => {
-            tracing::error!(error = %error, "vector database operation failed");
+            tracing::error!("vector database operation failed");
             format!("Vector database error: {message}")
         }
         Error::Embedding { message } => {
-            tracing::error!(error = %error, "embedding operation failed");
+            tracing::error!("embedding operation failed");
             format!("Embedding error: {message}")
         }
         Error::Network { message, .. } => {
-            tracing::error!(error = %error, "network operation failed");
+            tracing::error!("network operation failed");
             format!("Network error: {message}")
         }
         Error::ObservationStorage { message, .. } => {
-            tracing::error!(error = %error, "observation storage failed");
+            tracing::error!("observation storage failed");
             format!("Memory storage error: {message}")
         }
         Error::Vcs { message, .. } => {
-            tracing::error!(error = %error, "VCS operation failed");
+            tracing::error!("VCS operation failed");
             format!("VCS error: {message}")
         }
 
@@ -71,53 +71,53 @@ pub fn to_contextual_tool_error(e: impl Into<Error>) -> CallToolResult {
 
         // Infrastructure/system errors — log full details, return category
         Error::Cache { message } => {
-            tracing::error!(error = %error, "cache operation failed");
+            tracing::error!("cache operation failed");
             format!("Cache error: {message}")
         }
         Error::Infrastructure { message, .. } => {
-            tracing::error!(error = %error, "infrastructure error");
+            tracing::error!("infrastructure error");
             format!("Infrastructure error: {message}")
         }
         Error::Internal { message } => {
-            tracing::error!(error = %error, "internal error");
+            tracing::error!("internal error");
             format!("Internal error: {message}")
         }
 
         // Serialization/encoding errors — sanitized
         Error::Json { source } => {
-            tracing::error!(error = %error, "JSON processing failed");
+            tracing::error!("JSON processing failed");
             format!("JSON error: {source}")
         }
         Error::Utf8(_) => {
-            tracing::error!(error = %error, "encoding error");
+            tracing::error!("encoding error");
             "Encoding error: invalid UTF-8".to_string()
         }
         Error::Base64(_) => {
-            tracing::error!(error = %error, "encoding error");
+            tracing::error!("encoding error");
             "Encoding error: invalid base64".to_string()
         }
 
         // I/O errors — sanitized (no file paths leaked)
         Error::IoSimple { source } => {
-            tracing::error!(error = %error, "I/O operation failed");
+            tracing::error!("I/O operation failed");
             format!("I/O error: {}", source.kind())
         }
         Error::Io { message, .. } => {
-            tracing::error!(error = %error, "I/O operation failed");
+            tracing::error!("I/O operation failed");
             format!("I/O error: {message}")
         }
 
         // Generic / Browse / Highlight — log and sanitize
         Error::Generic(e) => {
-            tracing::error!(error = %e, "operation failed");
+            tracing::error!("operation failed");
             format!("Operation failed: {e}")
         }
         Error::Browse(e) => {
-            tracing::error!(error = %e, "browse operation failed");
+            tracing::error!("browse operation failed");
             format!("Browse error: {e}")
         }
         Error::Highlight(e) => {
-            tracing::error!(error = %e, "highlight operation failed");
+            tracing::error!("highlight operation failed");
             format!("Highlight error: {e}")
         }
     };

@@ -54,17 +54,13 @@ impl HookProcessor {
             .cloned()
             .unwrap_or_else(|| "default".to_string());
 
+        let session_internal = context.session_id.clone().map(|id| id.into_string());
+
         let metadata = mcb_domain::entities::memory::ObservationMetadata {
-            session_id: context
-                .session_id
-                .as_ref()
-                .map(|id| id.as_str().to_string()),
+            session_id: session_internal.clone(),
             origin_context: Some(OriginContext {
                 project_id: Some(project_id.clone()),
-                session_id: context
-                    .session_id
-                    .as_ref()
-                    .map(|id| id.as_str().to_string()),
+                session_id: session_internal,
                 tool_name: Some(context.tool_name.clone()),
                 ..OriginContext::default()
             }),
