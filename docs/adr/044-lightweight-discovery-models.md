@@ -18,7 +18,7 @@ implementation_status: Incomplete
 **Related**: ADR-041 (Context), ADR-043 (Search)
 **Context**: v0.4.0 MVP scope
 
-## Problem
+## Context
 
 ADR-043 hybrid search ranks results by BM25 + semantics + graph. But ranking is **global**: the same code is ranked the same regardless of **who's asking** or **what they're trying to do**.
 

@@ -18,7 +18,7 @@ implementation_status: Incomplete
 **Related**: ADR-041 (Context System), ADR-035 (Context Scout)
 **Predecessor**: ADR-035 defines ContextFreshness enum
 
-## Problem
+## Context
 
 ADR-035 defines freshness as explicit metadata: Fresh / Acceptable / Stale / StaleWithRisk.
 
