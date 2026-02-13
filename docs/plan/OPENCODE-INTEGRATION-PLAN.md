@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # MCB-OpenCode Integration Plan
 
 **Date**: 2026-02-08

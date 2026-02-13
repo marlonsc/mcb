@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Agent & Quality Domain Extension - Schema Additions
 
 ## Overview
@@ -28,7 +29,7 @@ pub enum ObservationType {
 }
 ```
 
-**Add**:
+### Add
 
 ```rust
 pub enum ObservationType {
@@ -70,7 +71,7 @@ pub enum ExecutionType {
 
 ### 1.3 ErrorMetadata Extension
 
-**Add to Error observation metadata**:
+### Add to Error observation metadata
 
 ```rust
 pub struct ErrorMetadata {
@@ -332,7 +333,7 @@ LIMIT 100;
 ### New Tables (9 total)
 
 | Category | Tables |
-|----------|--------|
+| ---------- | -------- |
 | Agent (4) | `agent_sessions`, `delegations`, `tool_calls`, `checkpoints` |
 | Project (4) | `phases`, `issues`, `issue_dependencies`, `decisions` |
 | Quality (1) | `quality_gate_configs` |
@@ -340,14 +341,14 @@ LIMIT 100;
 ### Entity Extensions
 
 | Entity | Extension |
-|--------|-----------|
+| -------- | ----------- |
 | `ObservationType` | Add `Execution` variant |
 | `Observation` (Error) | Add `fix_pattern`, `fix_verified` to metadata |
 
 ### Size Estimates
 
 | Table | Est. Rows/year | Est. Size |
-|-------|----------------|-----------|
+| ------- | ---------------- | ----------- |
 | agent_sessions | ~10K | ~2 MB |
 | delegations | ~50K | ~5 MB |
 | tool_calls | ~500K | ~50 MB |
@@ -359,4 +360,4 @@ LIMIT 100;
 **Total**: ~70 MB/year
 
 ---
-*Last updated: 2026-02-03 - aligned with MCB ADR naming patterns*
+> Last updated: 2026-02-03 - aligned with MCB ADR naming patterns

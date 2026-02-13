@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 9
 title: Persistent Session Memory v0.2.0
@@ -10,22 +11,27 @@ superseded_by: []
 implementation_status: Partial
 ---
 
-## ADR 009: Persistent Session Memory v0.2.0
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 009: Persistent Session Memory v0.2.0
 
 ## Status
 
 **Proposed** (Planned for v0.2.0)
 
-> **Amendment 2026-02-02**: Tool naming convention updated to use `memory_` prefix
-> for all memory-related MCP tools to avoid namespace collisions with code search
-> tools and ensure stable API surface for v1.0.0.
+> **Amendment 2026-02-02**: Tool naming convention updated to use `memory_`
+> prefix for all memory-related MCP tools to avoid namespace collisions with code
+> search tools and ensure stable API surface for v1.0.0.
 > Not yet implemented. Target crate structure for v0.2.0:
 >
 > - `crates/mcb-domain/src/memory.rs` - Memory domain types
-> - `crates/mcb-application/src/ports/providers/memory.rs` - MemoryProvider port trait
+> - `crates/mcb-application/src/ports/providers/memory.rs` - MemoryProvider port
+>   trait
 > - `crates/mcb-application/src/use_cases/session.rs` - Session manager service
-> - `crates/mcb-application/src/use_cases/memory (action=list, resource=observation).rs` - Memory search service
-> - `crates/mcb-application/src/use_cases/context_injection.rs` - Context injection
+> - `crates/mcb-application/src/use_cases/memory_search.rs` - Memory search
+>   service
+> - `crates/mcb-application/src/use_cases/context_injection.rs` - Context
+>   injection
 > - `crates/mcb-providers/src/memory/` - Memory provider implementations
 > - `crates/mcb-server/src/handlers/memory_tools.rs` - MCP tool handlers
 > - `crates/mcb-infrastructure/src/config/memory.rs` - Memory configuration
@@ -35,22 +41,22 @@ implementation_status: Partial
 
 Memory Context Browser v0.1.0 provides semantic code search but lacks session-level memory persistence. Each Claude Code session starts fresh, losing valuable context:
 
-**Current problems:**
+Current problems:
 
--   No persistence of tool observations across sessions
--   No session summaries or decision tracking
--   No context injection for session continuity
--   No semantic search over past work
--   Token waste re-discovering solved problems
--   No ROI metrics on context discovery
+- No persistence of tool observations across sessions
+- No session summaries or decision tracking
+- No context injection for session continuity
+- No semantic search over past work
+- Token waste re-discovering solved problems
+- No ROI metrics on context discovery
 
-**User demand:**
+User demand:
 
--   Developers need cross-session memory (like Claude-mem provides)
--   Need to recall past decisions and rationale
--   Need semantic search over session history
--   Need progressive disclosure (index → context → details)
--   Need token-efficient context injection
+- Developers need cross-session memory (like Claude-mem provides)
+- Need to recall past decisions and rationale
+- Need semantic search over session history
+- Need progressive disclosure (index → context → details)
+- Need token-efficient context injection
 
 **Reference implementation**: Claude-mem v8.5.2 demonstrates these features work well in practice with TypeScript + SQLite + Chroma architecture.
 
@@ -72,22 +78,24 @@ Implement persistent session memory in mcb v0.2.0 by porting Claude-mem's core a
 
 All memory-related MCP tools use the `memory_` prefix to avoid namespace collisions:
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | ADR Original Name | Canonical Name (v1.0.0) | Rationale |
-|-------------------|-------------------------|-----------|
+| ------------------- | ------------------------- | ----------- |
 | `search` | `memory (action=list, resource=observation)` | Avoids collision with `search (resource=code)` |
 | `timeline` | `memory (action=timeline, resource=observation)` | Explicit memory domain |
 | `get_observations` | `memory (action=get, resource=observation)` | Consistent namespace |
 | `memory (action=store, resource=observation)` | `memory (action=store, resource=observation)` | Matches tool |
 | `inject_context` | `memory (action=inject, resource=observation)` | Avoids future collisions |
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 **Existing tools retained** (already namespaced):
 
--   `memory (action=store, resource=observation)` → alias for `memory (action=store, resource=observation)`
--   `search (resource=memory)` → alias for `memory (action=list, resource=observation)`
--   `session (action=summarize)` → unchanged (session domain)
--   `session (action=summarize)` → unchanged (session domain)
+- `memory (action=store, resource=observation)` → alias for `memory (action=store, resource=observation)`
+- `search (resource=memory)` → alias for `memory (action=list, resource=observation)`
+- `session (action=summarize)` → unchanged (session domain)
+- `session (action=summarize)` → unchanged (session domain)
 
-**Compatibility policy**:
+Compatibility policy:
 
 1. Aliases kept for at least one major version cycle
 2. New tools MUST use `memory_` prefix
@@ -96,7 +104,7 @@ All memory-related MCP tools use the `memory_` prefix to avoid namespace collisi
 
 ### Architecture Overview
 
-```
+```text
 Claude Code Session
         ↓
 [Hook Integration] (PostToolUse → save observation)
@@ -120,39 +128,39 @@ Claude Code Session
 
 ### Positive
 
--   **Context preservation**: Past decisions, fixes, and discoveries survive sessions
--   **Token efficiency**: 10x savings via 3-layer progressive disclosure
--   **Unified platform**: Single MCP server for code search + session memory
--   **Infrastructure reuse**: Leverages existing vector stores, hybrid search
--   **Git integration**: Memory entries tagged with git context (ADR-008)
--   **Admin UI**: Session dashboard in web interface (ADR-007)
+- **Context preservation**: Past decisions, fixes, and discoveries survive sessions
+- **Token efficiency**: 10x savings via 3-layer progressive disclosure
+- **Unified platform**: Single MCP server for code search + session memory
+- **Infrastructure reuse**: Leverages existing vector stores, hybrid search
+- **Git integration**: Memory entries tagged with git context (ADR-008)
+- **Admin UI**: Session dashboard in web interface (ADR-007)
 
 ### Negative
 
--   **Complexity**: Adds ~15 new files, ~3000 LOC
--   **Storage growth**: Per-session observations increase disk usage
--   **Hook dependency**: Requires external hook setup for full functionality
--   **Compression model**: Needs configured embedding provider
+- **Complexity**: Adds ~15 new files, ~3000 LOC
+- **Storage growth**: Per-session observations increase disk usage
+- **Hook dependency**: Requires external hook setup for full functionality
+- **Compression model**: Needs configured embedding provider
 
 ## Alternatives Considered
 
 ### Alternative 1: Use Claude-mem directly as plugin
 
--   **Pros**: Proven, feature-complete
--   **Cons**: Separate service, no integration with code search
--   **Rejected**: Missed opportunity for unified platform
+- **Pros**: Proven, feature-complete
+- **Cons**: Separate service, no integration with code search
+- **Rejected**: Missed opportunity for unified platform
 
 ### Alternative 2: SQLite-only storage (like Claude-mem)
 
--   **Pros**: Simpler, proven approach
--   **Cons**: Duplicates existing vector infrastructure
--   **Rejected**: Leverage existing providers
+- **Pros**: Simpler, proven approach
+- **Cons**: Duplicates existing vector infrastructure
+- **Rejected**: Leverage existing providers
 
 ### Alternative 3: Defer to v0.3.0
 
--   **Pros**: Focus v0.2.0 on git only
--   **Cons**: Delays high-value feature
--   **Rejected**: Memory complements git context well
+- **Pros**: Focus v0.2.0 on git only
+- **Cons**: Delays high-value feature
+- **Rejected**: Memory complements git context well
 
 ## Implementation Notes
 
@@ -338,7 +346,7 @@ pub trait MemoryProvider: Send + Sync {
     // === Observation Operations ===
 
     /// Store a new observation
-    async fn memory (action=store, resource=observation)(&self, obs: &Observation) -> Result<u64>;
+    async fn store_observation(&self, obs: &Observation) -> Result<u64>;
 
     /// Get observation by ID
     async fn get_observation(&self, id: u64) -> Result<Option<Observation>>;
@@ -484,7 +492,7 @@ impl SqliteMemoryProvider {
 
 #[async_trait]
 impl MemoryProvider for SqliteMemoryProvider {
-    async fn memory (action=store, resource=observation)(&self, obs: &Observation) -> Result<u64> {
+    async fn store_observation(&self, obs: &Observation) -> Result<u64> {
         let facts_json = serde_json::to_string(&obs.facts)?;
         let concepts_json = serde_json::to_string(&obs.concepts)?;
         let files_read_json = serde_json::to_string(&obs.files_read)?;
@@ -663,12 +671,12 @@ impl SessionManager {
     }
 
     /// Store a tool observation
-    pub async fn memory (action=store, resource=observation)(
+    pub async fn store_observation(
         &self,
         session_id: &str,
         observation: Observation,
     ) -> Result<u64> {
-        let obs_id = self.memory_provider.memory (action=store, resource=observation)(&observation).await?;
+        let obs_id = self.memory_provider.store_observation(&observation).await?;
 
         let _ = self.event_tx.send(SessionEvent::ObservationStored {
             session_id: session_id.to_string(),
@@ -709,7 +717,7 @@ impl SessionManager {
 
 ### Phase 5: Memory Search Service
 
-**Create**: `crates/mcb-application/src/use_cases/memory (action=list, resource=observation).rs`
+**Create**: `crates/mcb-application/src/use_cases/memory_search.rs`
 
 ```rust
 use std::sync::Arc;
@@ -806,7 +814,7 @@ impl MemorySearchService {
 
 ```rust
 use std::sync::Arc;
-use crate::application::memory (action=list, resource=observation)::MemorySearchService;
+use crate::application::memory_search::MemorySearchService;
 use crate::domain::memory::*;
 use crate::domain::ports::memory::SearchQuery;
 
@@ -889,7 +897,7 @@ impl ContextInjectionService {
         for (date, obs) in grouped {
             output.push_str(&format!("### {}\n\n", date));
             output.push_str("| ID | Time | T | Title | Read | Work |\n");
-            output.push_str("|----|------|---|-------|------|------|\n");
+            output.push_str("| ---- | ------ | --- | ------- | ------ | ------ |\n");
 
             for o in obs {
                 output.push_str(&format!(
@@ -938,7 +946,7 @@ fn type_emoji(t: &ObservationType) -> &'static str {
 ```rust
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use crate::application::memory (action=list, resource=observation)::MemorySearchService;
+use crate::application::memory_search::MemorySearchService;
 use crate::application::session::SessionManager;
 use crate::application::context_injection::ContextInjectionService;
 
@@ -987,7 +995,6 @@ pub struct MemoryStoreObservationInput {
     pub project: String,
 }
 
-/// Tool: memory (action=inject, resource=observation) - SessionStart hook integration
 #[derive(Debug, Deserialize)]
 pub struct MemoryInjectContextInput {
     pub project: String,
@@ -1003,7 +1010,7 @@ pub struct MemoryToolsHandler {
 }
 
 impl MemoryToolsHandler {
-    pub async fn handle_memory (action=list, resource=observation)(&self, input: MemorySearchInput) -> Result<serde_json::Value> {
+    pub async fn list_observations(&self, input: MemorySearchInput) -> Result<serde_json::Value> {
         let query = SearchQuery {
             query: input.query,
             project: input.project,
@@ -1025,7 +1032,7 @@ impl MemoryToolsHandler {
         }))
     }
 
-    pub async fn handle_memory (action=timeline, resource=observation)(&self, input: MemoryTimelineInput) -> Result<serde_json::Value> {
+    pub async fn get_timeline(&self, input: MemoryTimelineInput) -> Result<serde_json::Value> {
         let anchor_id = match (input.anchor, input.query) {
             (Some(id), _) => id,
             (None, Some(q)) => {
@@ -1052,12 +1059,12 @@ impl MemoryToolsHandler {
         Ok(serde_json::to_value(context)?)
     }
 
-    pub async fn handle_memory (action=get, resource=observation)(&self, input: MemoryGetObservationsInput) -> Result<serde_json::Value> {
+    pub async fn get_observations(&self, input: MemoryGetObservationsInput) -> Result<serde_json::Value> {
         let observations = self.search_service.get_observations(&input.ids).await?;
         Ok(serde_json::to_value(observations)?)
     }
 
-    pub async fn handle_memory (action=inject, resource=observation)(&self, input: MemoryInjectContextInput) -> Result<serde_json::Value> {
+    pub async fn inject_context(&self, input: MemoryInjectContextInput) -> Result<serde_json::Value> {
         let config = ContextInjectionConfig {
             observation_limit: input.observation_limit.unwrap_or(20),
             ..Default::default()
@@ -1083,16 +1090,21 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
         ToolInfo {
             name: "__MEMORY_WORKFLOW".to_string(),
             description: "3-LAYER WORKFLOW (ALWAYS FOLLOW):\n\
-                1. memory (action=list, resource=observation)(query) -> Get index with IDs (~50-100 tokens/result)\n\
-                2. memory (action=timeline, resource=observation)(anchor=ID) -> Get context around interesting results\n\
-                3. memory (action=get, resource=observation)([IDs]) -> Fetch full details ONLY for filtered IDs\n\
-                NEVER fetch full details without filtering first. 10x token savings.".to_string(),
+                1. list_observations(query) -> Get index with IDs \
+                   (~50-100 tokens/result)\n\
+                2. get_timeline(anchor=ID) -> Get context around interesting \
+                   results\n\
+                3. get_observations([IDs]) -> Fetch full details ONLY for \
+                   filtered IDs\n\
+                NEVER fetch full details without filtering first. 10x token \
+                savings.".to_string(),
             input_schema: json!({"type": "object", "properties": {}}),
         },
         ToolInfo {
-            name: "memory (action=list, resource=observation)".to_string(),
-            description: "[EXPERIMENTAL] Step 1: Search memory. Returns index with IDs. \
-                Params: query, limit, project, type, obs_type, dateStart, dateEnd, offset, orderBy".to_string(),
+            name: "list_observations".to_string(),
+            description: "[EXPERIMENTAL] Step 1: Search memory. Returns index \
+                with IDs. Params: query, limit, project, type, obs_type, \
+                dateStart, dateEnd, offset, orderBy".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -1105,10 +1117,10 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
             }),
         },
         ToolInfo {
-            name: "memory (action=timeline, resource=observation)".to_string(),
+            name: "get_timeline".to_string(),
             description: "[EXPERIMENTAL] Step 2: Get context around results. \
-                Params: anchor (observation ID) OR query (finds anchor automatically), \
-                depth_before, depth_after, project".to_string(),
+                Params: anchor (observation ID) OR query (finds anchor \
+                automatically), depth_before, depth_after, project".to_string(),
             input_schema: json!({
                 "type": "object",
                 "properties": {
@@ -1121,9 +1133,10 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
             }),
         },
         ToolInfo {
-            name: "memory (action=get, resource=observation)".to_string(),
-            description: "[EXPERIMENTAL] Step 3: Fetch full details for filtered IDs. \
-                Params: ids (array of observation IDs, required), orderBy, limit, project".to_string(),
+            name: "get_observations".to_string(),
+            description: "[EXPERIMENTAL] Step 3: Fetch full details for \
+                filtered IDs. Params: ids (array of observation IDs, \
+                required), orderBy, limit, project".to_string(),
             input_schema: json!({
                 "type": "object",
                 "required": ["ids"],
@@ -1138,8 +1151,9 @@ fn register_memory_tools(&self) -> Vec<ToolInfo> {
             }),
         },
         ToolInfo {
-name: "memory (action=store, resource=observation)".to_string(),
-            description: "[EXPERIMENTAL] Store tool observation (for PostToolUse hook integration)".to_string(),
+            name: "store_observation".to_string(),
+            description: "[EXPERIMENTAL] Store tool observation (for \
+                PostToolUse hook integration)".to_string(),
             input_schema: json!({
                 "type": "object",
                 "required": ["session_id", "tool_name", "project"],
@@ -1153,8 +1167,9 @@ name: "memory (action=store, resource=observation)".to_string(),
             }),
         },
         ToolInfo {
-            name: "memory (action=inject, resource=observation)".to_string(),
-            description: "[EXPERIMENTAL] Generate context for SessionStart hook injection".to_string(),
+            name: "inject_context".to_string(),
+            description: "[EXPERIMENTAL] Generate context for SessionStart \
+                hook injection".to_string(),
             input_schema: json!({
                 "type": "object",
                 "required": ["project"],
@@ -1306,13 +1321,13 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 ## Files to Create
 
 | File | Purpose |
-|------|---------|
+| ------ | --------- |
 | `crates/mcb-domain/src/memory.rs` | Memory domain types |
 | `crates/mcb-application/src/ports/providers/memory.rs` | MemoryProvider trait |
 | `crates/mcb-providers/src/memory/mod.rs` | Memory providers module |
 | `crates/mcb-providers/src/memory/sqlite_memory.rs` | SQLite implementation |
 | `crates/mcb-application/src/use_cases/session.rs` | Session manager service |
-| `crates/mcb-application/src/use_cases/memory (action=list, resource=observation).rs` | Memory search service |
+| `crates/mcb-application/src/use_cases/memory_search.rs` | Memory search service |
 | `crates/mcb-application/src/use_cases/context_injection.rs` | Context generation |
 | `crates/mcb-server/src/handlers/memory_tools.rs` | MCP tool handlers |
 | `crates/mcb-infrastructure/src/config/memory.rs` | Memory configuration |
@@ -1321,12 +1336,12 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 ## Files to Modify
 
 | File | Change |
-|------|--------|
+| ------ | -------- |
 | `crates/mcb-providers/Cargo.toml` | Add `sqlx` dependency |
 | `crates/mcb-domain/src/mod.rs` | Export memory module |
 | `crates/mcb-application/src/ports/providers/mod.rs` | Export MemoryProvider |
 | `crates/mcb-providers/src/lib.rs` | Export memory providers |
-| `crates/mcb-application/src/use_cases/mod.rs` | Export session, memory (action=list, resource=observation), context_injection |
+| `crates/mcb-application/src/use_cases/mod.rs` | Export session, memory_search, context_injection |
 | `crates/mcb-server/src/mcp_server.rs` | Register memory tools |
 | `crates/mcb-infrastructure/src/config/mod.rs` | Export memory config |
 | `crates/mcb-infrastructure/src/di/modules/mod.rs` | Wire memory services |
@@ -1354,7 +1369,7 @@ let git_metadata = if let Some(git_provider) = &self.git_provider {
 ## Success Metrics
 
 | Metric | Before | Target v0.2.0 |
-|--------|--------|---------------|
+| -------- | -------- | --------------- |
 | Cross-session memory | No | Yes |
 | Observation storage | No | Yes |
 | Session summaries | No | Yes |
@@ -1365,7 +1380,7 @@ let git_metadata = if let Some(git_provider) = &self.git_provider {
 ## Configuration Defaults
 
 | Setting | Default | Override |
-|---------|---------|----------|
+| --------- | --------- | ---------- |
 | Database | ~/.mcb/memory.db | Per-instance |
 | Observation types | decision, bugfix, feature | Per-project |
 | Observation limit | 20 | Per-request |
@@ -1378,8 +1393,9 @@ Memory search uses hybrid retrieval (BM25 + vector) with Reciprocal Rank Fusion 
 
 ### Layer Separation (Clean Architecture)
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Layer | Responsibility | Implementation |
-|-------|----------------|----------------|
+| ------- | | ---------------- | ---------------- |
 | Domain | `MemoryRepository` port with `search(query_embedding, filter, limit)` | No engine-specific logic |
 | Application | `MemorySearchService` orchestrates FTS + vector retrieval, performs RRF fusion | Pure business logic |
 | Infrastructure | `SqliteMemoryRepository` implements FTS5 queries + calls VectorStoreProvider | Database-specific |
@@ -1420,16 +1436,24 @@ fn reciprocal_rank_fusion(
 
 ## Related ADRs
 
--   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - MemoryProvider follows trait-based DI
--   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async storage operations
--   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Memory provider routing
--   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Memory dashboard UI
--   [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git-tagged observations
--   [ADR-010: Hooks Subsystem](010-hooks-subsystem-agent-backed.md) - Hook observation storage
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI for memory services
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
+- [ADR-001: Modular Crates Architecture][adr-001] - MemoryProvider follows trait-based DI
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async storage operations
+- [ADR-003: Unified Provider Architecture & Routing][adr-003] - Memory provider routing
+- [ADR-007: Integrated Web Administration Interface][adr-007] - Memory dashboard UI
+- [ADR-008: Git-Aware Semantic Indexing][adr-008] - Git-tagged observations
+- [ADR-010: Hooks Subsystem][adr-010] - Hook observation storage
+- [ADR-012: Two-Layer DI Strategy][adr-012] - Shaku DI for memory services
+- [ADR-013: Clean Architecture Crate Separation][adr-013] - Eight-crate organization
+
+[adr-001]: 001-modular-crates-architecture.md
+[adr-003]: 003-unified-provider-architecture.md
+[adr-007]: 007-integrated-web-administration-interface.md
+[adr-008]: 008-git-aware-semantic-indexing-v0.2.0.md
+[adr-010]: 010-hooks-subsystem-agent-backed.md
+[adr-012]: 012-di-strategy-two-layer-approach.md
+[adr-013]: 013-clean-architecture-crate-separation.md
 
 ## References
 
--   [Claude-mem v8.5.2](https://github.com/thedotmack/claude-mem) - Reference implementation
--   [Shaku Documentation](https://docs.rs/shaku) - DI framework (historical; see ADR-029)
+- [Claude-mem v8.5.2](https://github.com/thedotmack/claude-mem) - Reference implementation
+- [Shaku Documentation](https://docs.rs/shaku) - DI framework (historical; see ADR-029)

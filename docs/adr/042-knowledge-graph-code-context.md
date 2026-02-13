@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 42
 title: Knowledge Graph for Code Context and Relationships
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR-042: Knowledge Graph for Code Context and Relationships
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR-042: Knowledge Graph for Code Context and Relationships
 
 **Status**: Proposed
 **Date**: 2026-02-05
@@ -20,7 +23,7 @@ implementation_status: Incomplete
 
 ## Context
 
-ADR-041 defines a 5-layer context system. Layer 3 is the **Knowledge Graph** that models code structure, relationships, and dependencies. This ADR specifies:
+ADR-041 defines a 5-layer context system. Layer 3 is the**Knowledge Graph** that models code structure, relationships, and dependencies. This ADR specifies:
 
 1. What relationships to represent
 2. How to extract them efficiently (tree-sitter-graph)
@@ -54,12 +57,12 @@ pub enum CodeEdge {
 }
 ```
 
-**Rationale**:
+Rationale:
 
--   **Multiple edge types** enable different reasoning (calls vs data flows vs imports)
--   **Directed Graph** structure for relationship modeling
--   **Explicit Index** for fast node lookup by ID
--   **Simplified Node Types** focused on primary code entities
+- **Multiple edge types** enable different reasoning (calls vs data flows vs imports)
+- **Directed Graph** structure for relationship modeling
+- **Explicit Index** for fast node lookup by ID
+- **Simplified Node Types** focused on primary code entities
 
 ### 2. Extraction Strategy: tree-sitter-graph + Manual Walks
 
@@ -113,16 +116,16 @@ impl SemanticExtractor for TreeSitterGraphExtractor {
 }
 ```
 
-**Rationale**:
+Rationale:
 
--   **tree-sitter-graph** is a DSL for extracting semantic relationships (maintained by GitHub)
--   **Caching** by file hash avoids re-extraction on identical files
--   **Incremental updates** on file change: re-extract changed file + 1-hop neighbors
--   **No expensive ML**: Pure AST analysis at <1ms per file
+- **tree-sitter-graph** is a DSL for extracting semantic relationships (maintained by GitHub)
+- **Caching** by file hash avoids re-extraction on identical files
+- **Incremental updates** on file change: re-extract changed file + 1-hop neighbors
+- **No expensive ML**: Pure AST analysis at <1ms per file
 
 ### 2.5. SemanticExtractorProvider Port Trait
 
-The semantic extraction capability is exposed as a **port trait** for provider abstraction:
+The semantic extraction capability is exposed as a**port trait** for provider abstraction:
 
 ```rust
 // mcb-domain/src/ports/providers/semantic_extractor.rs
@@ -213,12 +216,12 @@ impl SemanticExtractorProvider for TreeSitterSemanticExtractor {
 static TREE_SITTER_EXTRACTOR: &dyn SemanticExtractorProvider = &TreeSitterSemanticExtractor::new();
 ```
 
-**Rationale**:
+Rationale:
 
--   **Port abstraction**: Enables multiple extraction backends (tree-sitter, custom rules, ML-based in v0.5.0)
--   **Linkme registration**: Compile-time provider discovery, zero runtime overhead
--   **Async-first**: Aligns with MCB's async architecture (ADR-002)
--   **Clean Architecture**: Port trait in domain, implementation in providers (ADR-013)
+- **Port abstraction**: Enables multiple extraction backends (tree-sitter, custom rules, ML-based in v0.5.0)
+- **Linkme registration**: Compile-time provider discovery, zero runtime overhead
+- **Async-first**: Aligns with MCB's async architecture (ADR-002)
+- **Clean Architecture**: Port trait in domain, implementation in providers (ADR-013)
 
 ### 3. Storage: petgraph DAG + slotmap Arena
 
@@ -266,12 +269,12 @@ impl GraphPersistence for SqliteGraphStore {
 }
 ```
 
-**Rationale**:
+Rationale:
 
--   **petgraph**: Mature, well-tested graph library with algorithms (DFS, shortest path, etc.)
--   **slotmap**: Generational indices prevent use-after-free bugs
--   **JSON serialization**: Human-readable, easy debugging, Serde integration
--   **SQLite storage**: Persistent, queryable, no external service
+- **petgraph**: Mature, well-tested graph library with algorithms (DFS, shortest path, etc.)
+- **slotmap**: Generational indices prevent use-after-free bugs
+- **JSON serialization**: Human-readable, easy debugging, Serde integration
+- **SQLite storage**: Persistent, queryable, no external service
 
 ### 4. Traversal API: Graph-Aware Context Reasoning
 
@@ -321,31 +324,31 @@ impl ContextGraphTraversal for PetgraphCodeGraph {
 }
 ```
 
-**Rationale**:
+Rationale:
 
--   **Traversal enables reasoning**: Search queries can expand to related code
--   **Impact analysis**: Determine what breaks when a module changes
--   **Contextual expansion**: Find similar code patterns across codebase
--   **Depth limits** prevent explosion (< 100 results for depth 2-3)
+- **Traversal enables reasoning**: Search queries can expand to related code
+- **Impact analysis**: Determine what breaks when a module changes
+- **Contextual expansion**: Find similar code patterns across codebase
+- **Depth limits** prevent explosion (< 100 results for depth 2-3)
 
 ## Integration with ADR-041, ADR-043, & ADR-044
 
-**ADR-041 (Context System)**:
+ADR-041 (Context System):
 
--   ContextSnapshot.graph contains CodeGraph
--   Freshness propagates: stale graph → demote search results from old code
+- ContextSnapshot.graph contains CodeGraph
+- Freshness propagates: stale graph → demote search results from old code
 
-**ADR-043 (Hybrid Search)**:
+ADR-043 (Hybrid Search):
 
--   Graph traversal enables "find related code" queries
--   Graph ranking signal: higher rank if reachable from search Result
--   Example: "Search for auth handler" → find callers + data flows + tests
+- Graph traversal enables "find related code" queries
+- Graph ranking signal: higher rank if reachable from search Result
+- Example: "Search for auth handler" → find callers + data flows + tests
 
-**ADR-044 (Lightweight Discovery Models)**:
+ADR-044 (Lightweight Discovery Models):
 
--   AST-based routing (Stage 1) uses CodeGraph node types and structure
--   Graph metrics (cyclomatic complexity, line count) inform task-specific scoring
--   Example: Bug fix routing prioritizes error handling nodes extracted by SemanticExtractorProvider
+- AST-based routing (Stage 1) uses CodeGraph node types and structure
+- Graph metrics (cyclomatic complexity, line count) inform task-specific scoring
+- Example: Bug fix routing prioritizes error handling nodes extracted by SemanticExtractorProvider
 
 ## Incremental Updates (Optimization)
 
@@ -381,20 +384,20 @@ impl IncrementalGraphBuilder {
 
 ## Testing
 
--   **Unit tests** (8): Node creation, edge addition, DAG cycle detection
--   **Extraction tests** (12): Tree-sitter-graph on 5+ languages, symbol accuracy
--   **Traversal tests** (10): Reachability, impact analysis, depth limits
--   **Incremental tests** (5): Delta computation, correctness vs full rebuild
+- **Unit tests** (8): Node creation, edge addition, DAG cycle detection
+- **Extraction tests** (12): Tree-sitter-graph on 5+ languages, symbol accuracy
+- **Traversal tests** (10): Reachability, impact analysis, depth limits
+- **Incremental tests** (5): Delta computation, correctness vs full rebuild
 
 **Target**: 35+ tests, 90%+ coverage on graph logic
 
-## Success Criteria
+### Success Criteria
 
--   ✅ Extract relationships from code <1ms per file
--   ✅ Support 14 languages (via tree-sitter-graph + manual rules)
--   ✅ Traversal algorithms complete in <100ms for 10k-node graphs
--   ✅ Incremental updates 10x faster than full rebuild
--   ✅ No circular dependencies in DAG (enforced at type level)
+- ✅ Extract relationships from code <1ms per file
+- ✅ Support 14 languages (via tree-sitter-graph + manual rules)
+- ✅ Traversal algorithms complete in <100ms for 10k-node graphs
+- ✅ Incremental updates 10x faster than full rebuild
+- ✅ No circular dependencies in DAG (enforced at type level)
 
 ## Architecture Corrections
 
@@ -402,12 +405,12 @@ impl IncrementalGraphBuilder {
 
 **Issue**: ADR-042 discussed semantic extraction but did not define the port trait interface.
 
-**Resolution**:
+Resolution:
 
--   **Added**: `SemanticExtractorProvider` trait in `mcb-domain/src/ports/providers/semantic_extractor.rs`
--   **Methods**: `extract_symbols()` and `extract_relationships()` for AST-based extraction
--   **Registration**: Linkme distributed slice for compile-time provider discovery
--   **Implementation**: Tree-sitter-based extractor in `mcb-providers/src/context/tree_sitter_semantic_extractor.rs`
+- **Added**: `SemanticExtractorProvider` trait in `mcb-domain/src/ports/providers/semantic_extractor.rs`
+- **Methods**: `extract_symbols()` and `extract_relationships()` for AST-based extraction
+- **Registration**: Linkme distributed slice for compile-time provider discovery
+- **Implementation**: Tree-sitter-based extractor in `mcb-providers/src/context/tree_sitter_semantic_extractor.rs`
 
 **Rationale**: Port traits enable provider abstraction (ADR-013). Multiple extraction backends can be swapped without changing consumer code.
 

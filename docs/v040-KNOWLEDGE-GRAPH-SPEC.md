@@ -1,8 +1,11 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # MCB v0.4.0 Knowledge Graph Specification
 
 ## Overview
 
-The Knowledge Graph is the core semantic layer of the MCB Integrated Context System. It transforms raw source code into a queryable, relationship-aware network of entities, enabling high-fidelity code reasoning and hybrid search.
+The Knowledge Graph is the core semantic layer of the MCB Integrated Context
+System. It transforms raw source code into a queryable, relationship-aware
+network of entities, enabling high-fidelity code reasoning and hybrid search.
 
 ## 1. Knowledge Graph Schema
 
@@ -10,8 +13,9 @@ The Knowledge Graph is the core semantic layer of the MCB Integrated Context Sys
 
 Nodes represent semantic entities extracted from the source code.
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Node Type | Description | Attributes |
-|-----------|-------------|------------|
+| ----------- | ------------- | ------------ |
 | `Module` | A file or logical grouping of code | `path`, `is_external` |
 | `Function` | A callable unit of code | `name`, `signature`, `is_async` |
 | `Class` / `Struct` | A data structure or object definition | `name`, `fields`, `methods` |
@@ -24,11 +28,11 @@ Nodes represent semantic entities extracted from the source code.
 Edges define directed relationships between semantic entities.
 
 | Edge Type | Source | Target | Description |
-|-----------|--------|--------|-------------|
+| ----------- | -------- | -------- | ------------- |
 | `CALLS` | `Function` | `Function` | Function execution flow |
 | `IMPORTS` | `Module` | `Module` | Dependency relationship |
 | `EXTENDS` | `Class` | `Class` | Inheritance relationship |
-| `IMPLEMENTS`| `Class` | `Interface`| Contract fulfillment |
+| `IMPLEMENTS` | `Class` | `Interface` | Contract fulfillment |
 | `CONTAINS` | `Module` | `Entity` | Ownership hierarchy |
 | `TYPE_REF` | `Variable` | `Class` | Data type association |
 
@@ -61,14 +65,19 @@ pub struct CodeGraph {
 
 ## 2. TreeSitter Semantic Extraction
 
-MCB uses `tree-sitter` for high-performance, language-agnostic AST parsing and relationship extraction.
+MCB uses `tree-sitter` for high-performance, language-agnostic AST parsing and
+relationship extraction.
 
 ### Extraction Approach
 
-1. **AST Parsing**: Generate a concrete syntax tree using language-specific tree-sitter grammars.
-2. **TSG Rules**: Use TreeSitter Graph (TSG) DSL to map AST patterns to graph nodes and edges.
-3. **Symbol Resolution**: Resolve local references to Fully Qualified Names (FQNs) to link nodes across modules.
-4. **Incremental Updates**: Only re-extract files with changed hashes, patching the existing graph.
+1. **AST Parsing**: Generate a concrete syntax tree using language-specific
+   tree-sitter grammars.
+2. **TSG Rules**: Use TreeSitter Graph (TSG) DSL to map AST patterns to
+   graph nodes and edges.
+3. **Symbol Resolution**: Resolve local references to Fully Qualified Names (FQNs)
+   to link nodes across modules.
+4. **Incremental Updates**: Only re-extract files with changed hashes, patching
+   the existing graph.
 
 ### Extraction Port
 
@@ -82,7 +91,8 @@ pub trait SemanticExtractorProvider: Send + Sync {
 
 ## 3. RRF Hybrid Search Algorithm
 
-Hybrid search combines multiple retrieval signals to ensure both semantic relevance and structural accuracy.
+Hybrid search combines multiple retrieval signals to ensure both semantic
+relevance and structural accuracy.
 
 ### Reciprocal Rank Fusion (RRF)
 
@@ -90,18 +100,22 @@ RRF merges rankings from Full-Text Search (FTS), Vector Embeddings, and Graph Tr
 
 **Formula**:
 $$score(d) = \sum_{r \in R} \frac{1}{k + rank(d, r)}$$
-*where $k$ is a constant (default 60), and $rank(d, r)$ is the rank of document $d$ in Result set $r$.*
+*where $k$ is a constant (default 60), and $rank(d, r)$ is the rank of document
+$d$ in Result set $r$.*
 
 ### Search Composition
 
 1. **FTS (BM25)**: Lexical matching on code content and documentation.
 2. **Vector (Cosine)**: Semantic similarity using code embeddings.
-3. **Graph (PageRank/Traversal)**: Structural importance and proximity (e.g., "find callers of X").
-4. **Freshness Weighting**: Penalty applied to stale context ($score = score \times penalty$).
+3. **Graph (PageRank/Traversal)**: Structural importance and proximity (e.g.,
+   "find callers of X").
+4. **Freshness Weighting**: Penalty applied to stale context ($score = score
+   \times penalty$).
 
 ## 4. Context Snapshot Design
 
-Context snapshots provide immutable points-in-time of the system state, enabling time-travel queries and consistent reasoning.
+Context snapshots provide immutable points-in-time of the system state, enabling
+time-travel queries and consistent reasoning.
 
 ### Snapshot Structure
 
@@ -118,6 +132,7 @@ pub struct ContextSnapshot {
 
 ### Snapshotting Policy
 
--   **Automatic**: Triggered on git commits or significant workflow state changes.
--   **Manual**: Triggered via `context_snapshot` MCP tool.
--   **Retention**: Snapshots are persisted in SQLite with a configurable TTL (Time-To-Live) to manage storage.
+- **Automatic**: Triggered on git commits or significant workflow state changes.
+- **Manual**: Triggered via `context_snapshot` MCP tool.
+- **Retention**: Snapshots are persisted in SQLite with a configurable TTL
+  (Time-To-Live) to manage storage.

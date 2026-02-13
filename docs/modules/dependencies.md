@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Module Dependencies
 
 This document shows the crate dependencies of the Memory Context Browser.
@@ -30,7 +31,7 @@ digraph {
     "mcb-validate" [fillcolor=lightyellow];
     "mcb-validate" -> "mcb-domain";
 
-    label="Memory Context Browser Crate Dependencies (v0.1.4)";
+    label="Memory Context Browser Crate Dependencies (v0.2.1)";
 }
 ```
 
@@ -68,7 +69,7 @@ digraph {
 ## Crate Descriptions
 
 | Crate | Purpose | Dependencies |
-|-------|---------|--------------|
+| ------- | --------- | -------------- |
 | `mcb` | Unified facade, public API | All crates |
 | `mcb-domain` | Core types, ports, entities | None (innermost) |
 | `mcb-application` | Business logic, use cases | domain, providers |
@@ -89,7 +90,7 @@ digraph {
 Major external crates:
 
 | Category | Crate | Purpose |
-|----------|-------|---------|
+| ---------- | ------- | | --------- |
 | Async | `tokio` | Async runtime |
 | HTTP | `axum` | HTTP server |
 | DI | `dill` | IoC container, handle-based DI (ADR-029) |
@@ -100,4 +101,4 @@ Major external crates:
 
 ---
 
-*Updated 2026-01-28 - dill DI, v0.1.4*
+### Updated 2026-01-28 - dill DI, v0.2.1

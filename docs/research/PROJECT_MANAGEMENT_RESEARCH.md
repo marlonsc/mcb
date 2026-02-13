@@ -1,10 +1,13 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # PROJECT MANAGEMENT IMPLEMENTATION RESEARCH
 
 ## Real-World Patterns from Rust OSS (Feb 2026)
 
 ### EXECUTIVE SUMMARY
 
-Pesquisei 5 projetos Rust em produção (Sway, Shuttle, Vibe-Kanban, Rocket, Ockam) para extrair padrões reais de project management. Resultado: **implementação viável em 2-3 semanas** no MCB com Clean Architecture.
+Pesquisei 5 projetos Rust em produção (Sway, Shuttle, Vibe-Kanban, Rocket, Ockam)
+para extrair padrões reais de project management. Resultado:
+**implementação viável em 2-3 semanas** no MCB com Clean Architecture.
 
 ---
 
@@ -54,11 +57,13 @@ pub struct ProjectMetadata {
 }
 ```
 
-**Why this design?**
+### Why this design
 
--   **Sway** (FuelLabs): Uses `PackageDependencyIdentifier { name, version }` + `Source` enum (Git, Path, Registry)
--   **Vibe-Kanban**: Minimal `Project { id, name, created_at, updated_at }` + separate `ProjectRepo` junction table
--   **Shuttle**: `ProjectResponse { id, name, user_id, team_id, created_at, ... }`
+- **Sway** (FuelLabs): Uses `PackageDependencyIdentifier { name, version }`
+  - `Source` enum (Git, Path, Registry)
+- **Vibe-Kanban**: Minimal `Project { id, name, created_at, updated_at }`
+  - separate `ProjectRepo` junction table
+- **Shuttle**: `ProjectResponse { id, name, user_id, team_id, created_at, ... }`
 
 **Key insight**: Keep Project simple, use junction tables for relationships.
 
@@ -112,11 +117,14 @@ CREATE INDEX idx_deps_to ON project_dependencies(to_project_id);
 CREATE INDEX idx_metadata_cargo_name ON project_metadata(cargo_name);
 ```
 
-**Why this structure?**
+### Why this structure
 
--   **Vibe-Kanban** uses: `projects (id, name, created_at, updated_at)` + `project_repos (id, project_id, repo_id)` junction
--   **Sway** stores: `PackageEntry { name, version, source_cid, dependencies: Vec<PackageDependencyIdentifier> }`
--   **Shuttle** has: `projects (id, name, user_id, team_id, created_at, deployment_state, uris)`
+- **Vibe-Kanban** uses: `projects (id, name, created_at, updated_at)`
+  - `project_repos (id, project_id, repo_id)` junction
+- **Sway** stores: `PackageEntry { name, version, source_cid,
+  dependencies: Vec<PackageDependencyIdentifier> }`
+- **Shuttle** has: `projects (id, name, user_id, team_id, created_at,
+  deployment_state, uris)`
 
 **Optimization**: Denormalize `project_metadata` to avoid repeated Cargo.toml parsing.
 
@@ -157,10 +165,12 @@ pub trait ProjectProvider: Send + Sync {
 #[async_trait]
 pub trait DependencyProvider: Send + Sync {
     /// Get all dependencies of a project
-    async fn get_dependencies(&self, project_id: Uuid) -> Result<Vec<ProjectDependency>, ProjectError>;
+    async fn get_dependencies(&self, project_id: Uuid) ->
+        Result<Vec<ProjectDependency>, ProjectError>;
 
     /// Get projects that depend on this one
-    async fn get_dependents(&self, project_id: Uuid) -> Result<Vec<ProjectDependency>, ProjectError>;
+    async fn get_dependents(&self, project_id: Uuid) ->
+        Result<Vec<ProjectDependency>, ProjectError>;
 
     /// Add dependency relationship
     async fn add_dependency(
@@ -175,7 +185,8 @@ pub trait DependencyProvider: Send + Sync {
     async fn remove_dependency(&self, from: Uuid, to: Uuid) -> Result<(), ProjectError>;
 
     /// Check for circular dependencies
-    async fn has_circular_dependency(&self, from: Uuid, to: Uuid) -> Result<bool, ProjectError>;
+    async fn has_circular_dependency(&self, from: Uuid, to: Uuid) ->
+        Result<bool, ProjectError>;
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -224,7 +235,9 @@ impl ProjectService {
     }
 
     /// Get project with all its dependencies
-    pub async fn get_project_with_deps(&self, id: Uuid) -> Result<ProjectWithDeps, ProjectError> {
+    pub async fn get_project_with_deps(&self, id: Uuid) ->
+        Result<ProjectWithDeps, ProjectError>
+    {
         let project = self.project_provider
             .get_project(id)
             .await?
@@ -246,7 +259,9 @@ impl ProjectService {
     }
 
     /// Analyze dependency graph for issues
-    pub async fn analyze_dependencies(&self, project_id: Uuid) -> Result<DependencyAnalysis, ProjectError> {
+    pub async fn analyze_dependencies(&self, project_id: Uuid) ->
+        Result<DependencyAnalysis, ProjectError>
+    {
         let deps = self.dependency_provider.get_dependencies(project_id).await?;
 
         let mut analysis = DependencyAnalysis::default();
@@ -255,8 +270,12 @@ impl ProjectService {
 
         // Check for circular dependencies
         for dep in &deps {
-            if self.dependency_provider.has_circular_dependency(project_id, dep.to_project_id).await? {
-                analysis.circular_dependencies.push((project_id, dep.to_project_id));
+            if self.dependency_provider
+                .has_circular_dependency(project_id, dep.to_project_id).await?
+            {
+                analysis.circular_dependencies.push((
+                    project_id, dep.to_project_id
+                ));
             }
         }
 
@@ -305,7 +324,9 @@ impl ProjectProvider for SqliteProjectProvider {
         .map_err(|e| ProjectError::Database(e.to_string()))
     }
 
-    async fn get_project(&self, id: Uuid) -> Result<Option<Project>, ProjectError> {
+    async fn get_project(&self, id: Uuid) ->
+        Result<Option<Project>, ProjectError>
+    {
         sqlx::query_as::<_, Project>(
             r#"SELECT id, name, version, path, created_at, updated_at
                FROM projects
@@ -317,7 +338,9 @@ impl ProjectProvider for SqliteProjectProvider {
         .map_err(|e| ProjectError::Database(e.to_string()))
     }
 
-    async fn create_project(&self, path: &str) -> Result<Project, ProjectError> {
+    async fn create_project(&self, path: &str) ->
+        Result<Project, ProjectError>
+    {
         // Parse Cargo.toml
         let manifest = parse_cargo_toml(path)?;
         let id = Uuid::new_v4();
@@ -339,9 +362,12 @@ impl ProjectProvider for SqliteProjectProvider {
 
 #[async_trait]
 impl DependencyProvider for SqliteProjectProvider {
-    async fn get_dependencies(&self, project_id: Uuid) -> Result<Vec<ProjectDependency>, ProjectError> {
+    async fn get_dependencies(&self, project_id: Uuid) ->
+        Result<Vec<ProjectDependency>, ProjectError>
+    {
         sqlx::query_as::<_, ProjectDependency>(
-            r#"SELECT id, from_project_id, to_project_id, version_requirement, is_dev, created_at
+            r#"SELECT id, from_project_id, to_project_id,
+                 version_requirement, is_dev, created_at
                FROM project_dependencies
                WHERE from_project_id = $1
                ORDER BY created_at DESC"#
@@ -370,9 +396,11 @@ impl DependencyProvider for SqliteProjectProvider {
         let id = Uuid::new_v4();
         sqlx::query_as::<_, ProjectDependency>(
             r#"INSERT INTO project_dependencies
-               (id, from_project_id, to_project_id, version_requirement, is_dev, created_at)
+               (id, from_project_id, to_project_id, version_requirement,
+                is_dev, created_at)
                VALUES ($1, $2, $3, $4, $5, NOW())
-               RETURNING id, from_project_id, to_project_id, version_requirement, is_dev, created_at"#
+               RETURNING id, from_project_id, to_project_id,
+               version_requirement, is_dev, created_at"#
         )
         .bind(id)
         .bind(from)
@@ -384,11 +412,14 @@ impl DependencyProvider for SqliteProjectProvider {
         .map_err(|e| ProjectError::Database(e.to_string()))
     }
 
-    async fn has_circular_dependency(&self, from: Uuid, to: Uuid) -> Result<bool, ProjectError> {
+    async fn has_circular_dependency(&self, from: Uuid, to: Uuid) ->
+        Result<bool, ProjectError>
+    {
         // Recursive check: if `to` depends on `from`, it's circular
         let count: (i64,) = sqlx::query_as(
             r#"WITH RECURSIVE dep_chain AS (
-                 SELECT from_project_id, to_project_id FROM project_dependencies WHERE from_project_id = $2
+                 SELECT from_project_id, to_project_id FROM project_dependencies
+                   WHERE from_project_id = $2
                  UNION ALL
                  SELECT d.from_project_id, d.to_project_id
                  FROM project_dependencies d
@@ -605,7 +636,8 @@ mod tests {
             Ok(self.projects.clone())
         }
 
-        async fn get_project(&self, id: Uuid) -> Result<Option<Project>, ProjectError> {
+        async fn get_project(&self, id: Uuid) ->
+            Result<Option<Project>, ProjectError> {
             Ok(self.projects.iter().find(|p| p.id == id).cloned())
         }
 
@@ -660,41 +692,41 @@ mod tests {
 
 ### Phase 1: Domain & Ports (3-4 days)
 
--   [ ] Define `Project`, `ProjectDependency`, `ProjectMetadata` entities
--   [ ] Create `ProjectProvider` and `DependencyProvider` traits
--   [ ] Add error types with `thiserror`
--   [ ] Write unit tests for domain logic
+- [ ] Define `Project`, `ProjectDependency`, `ProjectMetadata` entities
+- [ ] Create `ProjectProvider` and `DependencyProvider` traits
+- [ ] Add error types with `thiserror`
+- [ ] Write unit tests for domain logic
 
 ### Phase 2: Database & Providers (4-5 days)
 
--   [ ] Create SQLite/PostgreSQL migrations
--   [ ] Implement `SqliteProjectProvider`
--   [ ] Implement `SqliteDependencyProvider`
--   [ ] Add circular dependency detection (recursive SQL)
--   [ ] Integration tests with real database
+- [ ] Create SQLite/PostgreSQL migrations
+- [ ] Implement `SqliteProjectProvider`
+- [ ] Implement `SqliteDependencyProvider`
+- [ ] Add circular dependency detection (recursive SQL)
+- [ ] Integration tests with real database
 
 ### Phase 3: Application Services (2-3 days)
 
--   [ ] Implement `ProjectService`
--   [ ] Add dependency analysis logic
--   [ ] Create service-level error handling
--   [ ] Unit tests for services
+- [ ] Implement `ProjectService`
+- [ ] Add dependency analysis logic
+- [ ] Create service-level error handling
+- [ ] Unit tests for services
 
 ### Phase 4: MCP Integration (2-3 days)
 
--   [ ] Create tool handlers
--   [ ] Register tools in MCP server
--   [ ] Add request/response serialization
--   [ ] E2E tests
+- [ ] Create tool handlers
+- [ ] Register tools in MCP server
+- [ ] Add request/response serialization
+- [ ] E2E tests
 
 ### Phase 5: Testing & Polish (2-3 days)
 
--   [ ] Full test coverage (>90%)
--   [ ] Performance testing (large dependency graphs)
--   [ ] Documentation
--   [ ] Code review & cleanup
+- [ ] Full test coverage (>90%)
+- [ ] Performance testing (large dependency graphs)
+- [ ] Documentation
+- [ ] Code review & cleanup
 
-**Total: 13-18 days (2-3 weeks)**
+### Total: 13-18 days (2-3 weeks)
 
 ---
 
@@ -777,7 +809,7 @@ pub struct ProjectResponse {
 ## 8. ESTIMATED EFFORT FOR MCB
 
 | Component | Effort | Notes |
-|-----------|--------|-------|
+| ----------- | -------- | ------- |
 | Domain entities | 1 day | Simple structs + error types |
 | Database schema | 1 day | 3 tables + indices |
 | Providers (SQLite) | 3 days | CRUD + circular dep detection |
@@ -791,8 +823,9 @@ pub struct ProjectResponse {
 
 ## 9. RISKS & MITIGATIONS
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Risk | Mitigation |
-|------|-----------|
+| ------ | ----------- |
 | Circular dependency detection performance | Use recursive CTE with depth limit |
 | Large dependency graphs (1000+ projects) | Add pagination + caching |
 | Cargo.toml parsing errors | Fallback to raw TOML storage |
@@ -813,8 +846,8 @@ pub struct ProjectResponse {
 
 ## REFERENCES
 
--   **Sway**: <https://github.com/FuelLabs/sway/blob/master/forc-pkg/src/manifest/mod.rs>
--   **Vibe-Kanban**: <https://github.com/BloopAI/vibe-kanban/blob/main/crates/db/src/models/project.rs>
--   **Shuttle**: <https://github.com/shuttle-hq/shuttle/blob/main/common/src/models/project.rs>
--   **Rocket**: <https://github.com/SergioBenitez/Rocket/blob/master/examples/databases/db/sqlx/migrations/>
--   **Ockam**: <https://github.com/build-trust/ockam/blob/develop/implementations/rust/ockam/ockam_api/src/orchestrator/project/>
+- **Sway**: <https://github.com/FuelLabs/sway/blob/master/forc-pkg/src/manifest/mod.rs>
+- **Vibe-Kanban**: <https://github.com/BloopAI/vibe-kanban/blob/main/crates/db/src/models/project.rs>
+- **Shuttle**: <https://github.com/shuttle-hq/shuttle/blob/main/common/src/models/project.rs>
+- **Rocket**: <https://github.com/SergioBenitez/Rocket/blob/master/examples/databases/db/sqlx/migrations/>
+- **Ockam**: <https://github.com/build-trust/ockam/blob/develop/implementations/rust/ockam/ockam_api/src/orchestrator/project/>

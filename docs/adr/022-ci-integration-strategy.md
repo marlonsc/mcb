@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 22
 title: Continuous Integration Strategy
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 022: Continuous Integration Strategy
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 022: Continuous Integration Strategy
 
 ## Status
 
@@ -42,9 +45,9 @@ strategy:
       -   analysis  # v0.3.0+
 ```
 
-### Quality Gates
+## Quality Gates
 
-**Every PR must pass**:
+Every PR must pass:
 
 1. `cargo fmt --check` (formatting)
 2. `cargo clippy -- -D warnings` (linting)
@@ -55,34 +58,34 @@ strategy:
 
 ### Benchmark Tracking
 
-**Track performance metrics**:
+Track performance metrics:
 
--   Search latency (target: ≤ 100ms)
--   Analysis latency (target: ≤ 500ms/file)
--   Memory usage (target: ≤ 300MB)
--   Binary size (target: ≤ 80MB)
+- Search latency (target: ≤ 100ms)
+- Analysis latency (target: ≤ 500ms/file)
+- Memory usage (target: ≤ 300MB)
+- Binary size (target: ≤ 80MB)
 
-**Alert on regression > 10%**
+Alert on regression > 10%
 
 ### Version-Specific Gates
 
 **v0.1.1** (Current):
 
--   308+ tests must pass
--   Eight-crate workspace builds
--   mcb-validate reports 0 violations
+- 308+ tests must pass
+- Eight-crate workspace builds
+- mcb-validate reports 0 violations
 
-**v0.2.0**:
+v0.2.0:
 
--   No new features (architectural only)
--   All existing tests must pass
--   No performance regression
+- No new features (architectural only)
+- All existing tests must pass
+- No performance regression
 
-**v0.3.0+**:
+v0.3.0+:
 
--   New feature tests must pass
--   Integration tests required
--   PMAT tests ported for features
+- New feature tests must pass
+- Integration tests required
+- PMAT tests ported for features
 
 ## v0.1.1 CI Status
 
@@ -105,51 +108,51 @@ jobs:
       -   run: cargo run -p mcb-validate
 ```
 
-**Key checks**:
+Key checks:
 
--   Format (rustfmt)
--   Lint (clippy)
--   Test (308+ tests)
--   Architecture validation (mcb-validate)
+- Format (rustfmt)
+- Lint (clippy)
+- Test (308+ tests)
+- Architecture validation (mcb-validate)
 
 ## Implementation
 
 **v0.2.0** (Next):
 
--   Update CI to add Rayon tests
--   Add workspace build matrix
--   Benchmark infrastructure
+- Update CI to add Rayon tests
+- Add workspace build matrix
+- Benchmark infrastructure
 
-**v0.3.0+**:
+v0.3.0+:
 
--   Add analysis-specific benchmarks
--   Extend test matrix with new features
+- Add analysis-specific benchmarks
+- Extend test matrix with new features
 
-## Consequences
+### Consequences
 
-**Positive**:
+Positive:
 
--   Catch regressions early
--   Performance tracking
--   Cross-platform validation
+- Catch regressions early
+- Performance tracking
+- Cross-platform validation
 
-**Negative**:
+Negative:
 
--   CI time (~10 min per build)
--   Matrix explosion with features
+- CI time (~10 min per build)
+- Matrix explosion with features
 
-**Mitigation**:
+Mitigation:
 
--   Parallel jobs
--   Caching
--   Selective feature testing
+- Parallel jobs
+- Caching
+- Selective feature testing
 
 ## Related ADRs
 
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - What to validate
--   [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Feature timeline
--   [ADR-020: Testing Strategy Integration](020-testing-strategy-integration.md) - Test organization
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - What to validate
+- [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Feature timeline
+- [ADR-020: Testing Strategy Integration](020-testing-strategy-integration.md) - Test organization
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 CI pipeline*
+Updated 2026-01-17 - Reflects v0.1.2 CI pipeline

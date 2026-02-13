@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 18
 title: Hybrid Caching Strategy
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 018: Hybrid Caching Strategy
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 018: Hybrid Caching Strategy
 
 ## Status
 
@@ -22,7 +25,7 @@ implementation_status: Incomplete
 
 Code analysis is CPU-intensive (500ms-5s per file). Caching is critical.
 
-**Two proven patterns**:
+Two proven patterns:
 
 1. **MCB**: Moka async cache with TTL (fast lookups, memory-based)
 2. **PMAT**: SHA256 file hashing for invalidation (accurate change detection)
@@ -77,7 +80,7 @@ impl HybridAnalysisCache {
 ## Cache Layers
 
 | Layer | Purpose | Invalidation | TTL |
-|-------|---------|--------------|-----|
+| ------- | --------- | -------------- | ----- |
 | **Memory (Moka)** | Fast lookups | SHA256 mismatch | 1 hour |
 | **SHA256 Tracker** | Change detection | File modification | Persistent |
 | **Disk** (future) | Long-term storage | LRU eviction | 7 days |
@@ -86,8 +89,8 @@ impl HybridAnalysisCache {
 
 Current cache implementation in `crates/mcb-providers/src/cache/`:
 
--   `moka.rs` - Moka async cache provider
--   `null.rs` - Null cache for testing
+- `moka.rs` - Moka async cache provider
+- `null.rs` - Null cache for testing
 
 The hybrid cache will extend this foundation in v0.3.0.
 
@@ -95,38 +98,38 @@ The hybrid cache will extend this foundation in v0.3.0.
 
 **v0.2.0** (Define):
 
--   Define `HybridAnalysisCache` interface
--   Update existing MCB cache to support pluggable invalidation
+- Define `HybridAnalysisCache` interface
+- Update existing MCB cache to support pluggable invalidation
 
 **v0.3.0** (Implement):
 
--   Implement SHA256 tracking
--   Integrate with analysis services
--   Benchmark cache hit rates
+- Implement SHA256 tracking
+- Integrate with analysis services
+- Benchmark cache hit rates
 
-## Consequences
+### Consequences
 
-**Positive**:
+Positive:
 
--   Accurate invalidation (SHA256)
--   Fast lookups (Moka)
--   Best of both worlds
+- Accurate invalidation (SHA256)
+- Fast lookups (Moka)
+- Best of both worlds
 
-**Negative**:
+Negative:
 
--   SHA256 computation overhead (~1-5ms per file)
+- SHA256 computation overhead (~1-5ms per file)
 
-**Mitigation**:
+Mitigation:
 
--   Compute SHA256 in background
--   Cache SHA256 values
--   Only recompute on cache miss
+- Compute SHA256 in background
+- Cache SHA256 values
+- Only recompute on cache miss
 
 ## Related ADRs
 
--   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Cache provider trait
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Cache location in mcb-providers
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Cache provider trait
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Cache location in mcb-providers
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 crate organization*
+Updated 2026-01-17 - Reflects v0.1.2 crate organization

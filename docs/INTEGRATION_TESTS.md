@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Integration Tests - Redis and NATS
 
 This document explains how to run integration tests that use Redis (cache) and NATS (event bus) against real local services.

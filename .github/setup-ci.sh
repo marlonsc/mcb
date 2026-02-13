@@ -2,100 +2,85 @@
 # =============================================================================
 # CI Setup Script - Centralized dependency installation
 # =============================================================================
-# This script installs all required dependencies for CI jobs.
-# Usage: bash .github/setup-ci.sh [--install-audit] [--install-coverage] [--install-diagrams]
-#
-# Dependencies installed by default:
-#   - protobuf-compiler (required for milvus-sdk-rust)
-#
-# Optional dependencies (via flags):
-#   - cargo-audit (for security audits)
-#   - cargo-tarpaulin (for coverage)
-#   - plantuml (for diagram generation)
-# =============================================================================
-
 set -e
 
 # Detect OS
 OS=$(uname -s)
 
-# Color output for visibility
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-echo -e "${BLUE}=== CI Setup: Installing dependencies ===${NC}"
-
-# Install protobuf-compiler (always required)
-echo -e "${BLUE}Installing protobuf-compiler...${NC}"
+# Install protobuf tooling (always required)
 case "$OS" in
-  Linux)
-    # Check if already installed
-    if ! command -v protoc &> /dev/null; then
-      sudo apt-get update -qq
-      sudo apt-get install -y protobuf-compiler
-    fi
-    ;;
-  Darwin)
-    # Check if already installed
-    if ! command -v protoc &> /dev/null; then
-      brew install protobuf
-    fi
-    ;;
-  MINGW*|MSYS*|CYGWIN*)
-    # Check if already installed
-    if ! command -v protoc &> /dev/null; then
-      choco install protoc -y
-    fi
-    ;;
-  *)
-    echo "Unsupported OS: $OS"
-    exit 1
-    ;;
+Linux)
+	if ! command -v protoc &>/dev/null || [ ! -f /usr/include/google/protobuf/descriptor.proto ]; then
+		sudo apt-get update -qq >/dev/null
+		sudo apt-get install -y -qq --no-install-recommends protobuf-compiler libprotobuf-dev >/dev/null
+	fi
+	if command -v protoc &>/dev/null && [ ! -f /usr/include/google/protobuf/descriptor.proto ]; then
+		echo "ERROR: protoc is installed but /usr/include/google/protobuf/descriptor.proto is missing." >&2
+		echo "Install package 'libprotobuf-dev' before running CI checks." >&2
+		exit 1
+	fi
+	export PROTOC_INCLUDE=/usr/include
+	if [[ -n "${GITHUB_ENV:-}" ]]; then
+		echo "PROTOC_INCLUDE=/usr/include" >>"$GITHUB_ENV"
+	fi
+	;;
+Darwin)
+	if ! command -v protoc &>/dev/null; then
+		brew install protobuf -q
+	fi
+	;;
+MINGW* | MSYS* | CYGWIN*)
+	if ! command -v protoc &>/dev/null; then
+		choco install protoc -y --no-progress
+	fi
+	;;
 esac
-echo -e "${GREEN}✓ protobuf-compiler ready${NC}"
+
+if command -v protoc &>/dev/null; then
+	export PROTOC
+	PROTOC=$(command -v protoc)
+	if [[ -n "${GITHUB_ENV:-}" ]]; then
+		echo "PROTOC=$PROTOC" >>"$GITHUB_ENV"
+	fi
+fi
 
 # Parse optional flags
 while [[ $# -gt 0 ]]; do
-  case $1 in
-    --install-audit)
-      echo -e "${BLUE}Installing cargo-audit...${NC}"
-      cargo install cargo-audit --locked
-      echo -e "${GREEN}✓ cargo-audit installed${NC}"
-      shift
-      ;;
-    --install-coverage)
-      echo -e "${BLUE}Installing cargo-tarpaulin...${NC}"
-      cargo install cargo-tarpaulin --locked
-      echo -e "${GREEN}✓ cargo-tarpaulin installed${NC}"
-      shift
-      ;;
-    --install-diagrams)
-      echo -e "${BLUE}Installing plantuml...${NC}"
-      if command -v plantuml &> /dev/null; then
-        echo -e "${GREEN}✓ plantuml already installed${NC}"
-      else
-        case "$OS" in
-          Linux)
-            sudo apt-get install -y plantuml
-            ;;
-          Darwin)
-            brew install plantuml
-            ;;
-          *)
-            echo "PlantUML installation not supported on this OS"
-            exit 1
-            ;;
-        esac
-        echo -e "${GREEN}✓ plantuml installed${NC}"
-      fi
-      shift
-      ;;
-    *)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-  esac
+	case $1 in
+	--install-audit)
+		if ! command -v cargo-audit &>/dev/null; then
+			cargo install cargo-audit --locked --quiet
+		fi
+		shift
+		;;
+	--install-coverage)
+		if ! command -v cargo-tarpaulin &>/dev/null; then
+			cargo install cargo-tarpaulin --locked --quiet
+		fi
+		shift
+		;;
+	--install-diagrams)
+		if ! command -v plantuml &>/dev/null; then
+			case "$OS" in
+			Linux)
+				sudo apt-get install -y -qq --no-install-recommends plantuml >/dev/null
+				;;
+			Darwin)
+				brew install plantuml -q
+				;;
+			MINGW* | MSYS* | CYGWIN*)
+				echo "Warning: PlantUML installation on Windows not automated. Please install manually." >&2
+				;;
+			*)
+				echo "Warning: PlantUML installation not supported on $OS" >&2
+				;;
+			esac
+		fi
+		shift
+		;;
+	*)
+		echo "Error: Unknown option: $1" >&2
+		exit 1
+		;;
+	esac
 done
-
-echo -e "${GREEN}=== CI Setup: Dependencies ready ===${NC}"

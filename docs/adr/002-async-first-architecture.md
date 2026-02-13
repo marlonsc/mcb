@@ -1,4 +1,6 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
+<!-- markdownlint-disable MD025 -->
 adr: 2
 title: Async-First Architecture
 status: IMPLEMENTED
@@ -10,94 +12,110 @@ superseded_by: []
 implementation_status: Complete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 ## ADR 002: Async-First Architecture
 
 ## Status
 
 Accepted
 
-> Fully implemented with Tokio async runtime across 8 crates in the Clean Architecture workspace.
+> Fully implemented with Tokio async runtime across 8 crates in the Clean
+> Architecture workspace.
 >
 > **Async Distribution by Crate**:
 >
 > - `mcb-domain` - Port traits with async methods (`async_trait`)
-> - `mcb-application` - Use case services (ContextService, SearchService, IndexingService)
+> - `mcb-application` - Use case services (ContextService, SearchService,
+>   IndexingService)
 > - `mcb-providers` - Provider implementations (embedding, vector_store, cache)
 > - `mcb-infrastructure` - DI bootstrap, factories, event bus
 > - `mcb-server` - MCP protocol handlers, admin API
 >
-> All provider ports use `async_trait` and extend `shaku::Interface` for DI compatibility.
+> All provider ports use `async_trait` and extend `shaku::Interface` for DI
+> compatibility.
 > Structured concurrency with `tokio::spawn` and async channels.
 
 ## Context
 
-The Memory Context Browser handles AI operations (embedding generation, vector searches) and large codebase processing that require high performance and concurrency. The system needs to handle multiple concurrent users, process large codebases efficiently, and integrate with external APIs that may have high latency.
+The Memory Context Browser handles AI operations (embedding generation, vector
+searches) and large codebase processing that require high performance and
+concurrency. The system needs to handle multiple concurrent users, process large
+codebases efficiently, and integrate with external APIs that may have high
+latency.
 
 Key performance requirements:
 
--   Handle 1000+ concurrent users
--   Process codebases with 1000+ files efficiently
--   Maintain sub-500ms response times for queries
--   Support streaming and background processing
--   Integrate with external APIs (OpenAI, vector databases)
+- Handle 1000+ concurrent users
+- Process codebases with 1000+ files efficiently
+- Maintain sub-500ms response times for queries
+- Support streaming and background processing
+- Integrate with external APIs (OpenAI, vector databases)
 
-Traditional synchronous programming would create bottlenecks and poor resource utilization for these I/O-bound operations.
+Traditional synchronous programming would create bottlenecks and poor resource
+utilization for these I/O-bound operations.
 
 ## Decision
 
-Adopt an async-first architecture using Tokio as the async runtime throughout the entire system. All provider interfaces use async traits, and the application is designed for high concurrency from the ground up.
+Adopt an async-first architecture using Tokio as the async runtime throughout
+the entire system. All provider interfaces use async traits, and the application
+is designed for high concurrency from the ground up.
 
 Key architectural decisions:
 
--   Tokio as the primary async runtime
--   Async traits for all provider interfaces
--   Structured concurrency with Tokio::spawn
--   Async channels for inter-task communication
--   Hyper for HTTP client operations
--   Futures and streams for data processing pipelines
+- Tokio as the primary async runtime
+- Async traits for all provider interfaces
+- Structured concurrency with Tokio::spawn
+- Async channels for inter-task communication
+- Hyper for HTTP client operations
+- Futures and streams for data processing pipelines
 
-## Consequences
+### Consequences
 
-Async-first architecture provides excellent performance and concurrency but requires careful error handling and increases code complexity.
+Async-first architecture provides excellent performance and concurrency but
+requires careful error handling and increases code complexity.
 
 ### Positive Consequences
 
--   **High Performance**: Efficient handling of concurrent operations and I/O
--   **Scalability**: Support for thousands of concurrent users
--   **Resource Efficiency**: Better CPU and memory utilization
--   **Future-Proof**: Aligns with modern async programming patterns
--   **Integration**: Natural fit with async HTTP clients and databases
+- **High Performance**: Efficient handling of concurrent operations and I/O
+- **Scalability**: Support for thousands of concurrent users
+- **Resource Efficiency**: Better CPU and memory utilization
+- **Future-Proof**: Aligns with modern async programming patterns
+- **Integration**: Natural fit with async HTTP clients and databases
 
 ### Negative Consequences
 
--   **Complexity**: Async code is harder to reason about and debug
--   **Error Handling**: Async error propagation is more complex
--   **Testing**: Async tests require special handling
--   **Learning Curve**: Steeper learning curve for team members
--   **Debugging**: Stack traces are less informative in async contexts
+- **Complexity**: Async code is harder to reason about and debug
+- **Error Handling**: Async error propagation is more complex
+- **Testing**: Async tests require special handling
+- **Learning Curve**: Steeper learning curve for team members
+- **Debugging**: Stack traces are less informative in async contexts
 
 ## Alternatives Considered
 
 ### Alternative 1: Synchronous Architecture
 
--   **Description**: Traditional blocking I/O with thread pools for concurrency
--   **Pros**: Simpler code, easier debugging, familiar patterns
--   **Cons**: Poor performance for I/O operations, limited concurrency
--   **Rejection Reason**: Cannot meet performance requirements for AI operations and concurrent users
+- **Description**: Traditional blocking I/O with thread pools for concurrency
+- **Pros**: Simpler code, easier debugging, familiar patterns
+- **Cons**: Poor performance for I/O operations, limited concurrency
+- **Rejection Reason**: Cannot meet performance requirements for AI operations
+  and concurrent users
 
 ### Alternative 2: Mixed Sync/Async
 
--   **Description**: Sync core with async wrappers for external operations
--   **Pros**: Gradual adoption, less complexity
--   **Cons**: Inconsistent patterns, performance bottlenecks at boundaries
--   **Rejection Reason**: Creates architectural inconsistency and performance issues
+- **Description**: Sync core with async wrappers for external operations
+- **Pros**: Gradual adoption, less complexity
+- **Cons**: Inconsistent patterns, performance bottlenecks at boundaries
+- **Rejection Reason**: Creates architectural inconsistency and performance
+  issues
 
 ### Alternative 3: Actor Model (Actix)
 
--   **Description**: Use Actix for actor-based concurrency instead of Tokio
--   **Pros**: High-level abstractions, built-in supervision
--   **Cons**: Additional complexity, less ecosystem support
--   **Rejection Reason**: Tokio has better ecosystem support and performance for our use case
+- **Description**: Use Actix for actor-based concurrency instead of Tokio
+- **Pros**: High-level abstractions, built-in supervision
+- **Cons**: Additional complexity, less ecosystem support
+- **Rejection Reason**: Tokio has better ecosystem support and performance for
+  our use case
 
 ## Implementation Notes
 
@@ -147,9 +165,9 @@ pub trait EmbeddingProvider: Interface + Send + Sync {
 
 Important: Port traits in `mcb-domain` must:
 
--   Extend `shaku::Interface` (implies `'static + Send + Sync`)
--   Use `async_trait` for async methods
--   Be object-safe for `Arc<dyn Trait>` usage
+- Extend `shaku::Interface` (implies `'static + Send + Sync`)
+- Use `async_trait` for async methods
+- Be object-safe for `Arc<dyn Trait>` usage
 
 ### Async Provider Implementations (mcb-providers)
 
@@ -241,7 +259,10 @@ MCP handlers use timeout and cancellation patterns:
 
 ```rust
 // crates/mcb-server/src/handlers/index.rs
-pub async fn handle_index_request(&self, request: IndexRequest) -> Result<IndexResponse> {
+pub async fn handle_index_request(
+    &self,
+    request: IndexRequest
+) -> Result<IndexResponse> {
     // Use timeout for external operations
     let result = tokio::time::timeout(
         Duration::from_secs(30),
@@ -253,7 +274,10 @@ pub async fn handle_index_request(&self, request: IndexRequest) -> Result<IndexR
 }
 
 // crates/mcb-server/src/handlers/search.rs
-pub async fn handle_search_request(&self, request: SearchRequest) -> Result<SearchResponse> {
+pub async fn handle_search_request(
+    &self,
+    request: SearchRequest
+) -> Result<SearchResponse> {
     // Handle cancellation gracefully
     let mut search_task = self.search_service.search(request.query);
 
@@ -320,27 +344,37 @@ async fn test_full_async_flow_with_di() {
 
 **Date**: 2026-01-14
 
-As MCB evolves to include CPU-intensive code analysis features (v0.3.0+), the async-first design has been extended to support hybrid parallelization:
+As MCB evolves to include CPU-intensive code analysis features (v0.3.0+), the
+async-first design has been extended to support hybrid parallelization:
 
 ### Updated Strategy
 
--   **Tokio**: I/O-bound operations (file reads, network calls, database queries, vector search)
--   **Rayon**: CPU-bound operations (AST parsing, complexity calculation, graph analysis)
--   **Pattern**: Wrap Rayon in `tokio::task::spawn_blocking` to bridge sync CPU work with async I/O
+- **Tokio**: I/O-bound operations (file reads, network calls, database queries,
+  vector search)
+- **Rayon**: CPU-bound operations (AST parsing, complexity calculation, graph
+  analysis)
+- **Pattern**: Wrap Rayon in `tokio::task::spawn_blocking` to bridge sync CPU
+  work with async I/O
 
-### Rationale
+#### Rationale
 
-1. **Tokio for I/O**: Tokio's event-driven architecture is optimal for I/O-bound work
-2. **Rayon for Compute**: Rayon's work-stealing scheduler is proven for CPU-bound parallelism
-3. **PMAT Integration**: Upcoming PMAT analysis code uses Rayon extensively with proven performance
-4. **No Conflicts**: Tokio and Rayon are complementary and don't interfere with each other
+1. **Tokio for I/O**: Tokio's event-driven architecture is optimal for I/O-bound
+   work
+2. **Rayon for Compute**: Rayon's work-stealing scheduler is proven for
+   CPU-bound parallelism
+3. **PMAT Integration**: Upcoming PMAT analysis code uses Rayon extensively
+   with proven performance
+4. **No Conflicts**: Tokio and Rayon are complementary and don't interfere with
+   each other
 
 ### Implementation Pattern
 
 ```rust
 #[async_trait]
 pub trait CodeAnalyzer: Send + Sync {
-    async fn validate (action=analyze)(&self, path: &Path) -> Result<ComplexityReport> {
+    async fn validate (
+        action=analyze
+    )(&self, path: &Path) -> Result<ComplexityReport> {
         // 1. Read file (I/O - Tokio)
         let content = tokio::fs::read_to_string(path).await?;
 
@@ -369,31 +403,41 @@ fn compute_complexity(content: &str) -> Result<ComplexityReport> {
 
 ### Benefits
 
--   ✅ Tokio remains the primary runtime for all async coordination
--   ✅ Rayon's work-stealing keeps CPU cores busy during analysis
--   ✅ No context switching between runtimes
--   ✅ Straightforward to test and reason about
--   ✅ Maintains clean async/sync boundaries
+- ✅ Tokio remains the primary runtime for all async coordination
+- ✅ Rayon's work-stealing keeps CPU cores busy during analysis
+- ✅ No context switching between runtimes
+- ✅ Straightforward to test and reason about
+- ✅ Maintains clean async/sync boundaries
 
 ### Performance Implications
 
--   **I/O Operations**: Unchanged (Tokio handles efficiently)
--   **CPU Operations**: Improved parallelism (Rayon fully utilizes CPU cores)
--   **Context Switching**: Minimal (spawn_blocking reuses Tokio's worker threads)
--   **Memory**: Slight increase for Rayon work-stealing queues (negligible)
+- **I/O Operations**: Unchanged (Tokio handles efficiently)
+- **CPU Operations**: Improved parallelism (Rayon fully utilizes CPU cores)
+- **Context Switching**: Minimal (spawn_blocking reuses Tokio's worker threads)
+- **Memory**: Slight increase for Rayon work-stealing queues (negligible)
 
 ## Related ADRs
 
--   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider interfaces with async traits
--   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Async provider selection and failover
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Async initialization in factories
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
+- [ADR-001: Modular Crates Architecture]
+(001-modular-crates-architecture.md) -
+  Provider interfaces with async traits
+- [ADR-003: Unified Provider Architecture & Routing]
+(003-unified-provider-architecture.md) -
+  Async provider selection and failover
+- [ADR-012: Two-Layer DI Strategy]
+(012-di-strategy-two-layer-approach.md) -
+  Async initialization in factories
+- [ADR-013: Clean Architecture Crate Separation]
+(013-clean-architecture-crate-separation.md) -
+  Crate organization
 
 ## References
 
--   [Tokio Documentation](https://tokio.rs/)
--   [Async Programming in Rust](https://rust-lang.github.io/async-book/)
--   [Structured Concurrency](https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/)
--   [Rayon: Data Parallelism](https://docs.rs/rayon/latest/rayon/)
--   [Tokio spawn_blocking](https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html)
--   [Shaku Documentation](https://docs.rs/shaku) (historical; see ADR-029)
+- [Tokio Documentation](https://tokio.rs/)
+- [Async Programming in Rust](https://rust-lang.github.io/async-book/)
+- [Structured Concurrency]
+(<https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/>) <!-- markdownlint-disable-line MD013 -->
+- [Rayon: Data Parallelism](https://docs.rs/rayon/latest/rayon/)
+- [Tokio spawn_blocking]
+(<https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html>) <!-- markdownlint-disable-line MD013 -->
+- [Shaku Documentation](https://docs.rs/shaku) (historical; see ADR-029)

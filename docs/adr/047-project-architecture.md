@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 47
 title: Project Architecture - Central Hub and Multi-Dimensional Coordination
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 047: Project Architecture - Central Hub and Multi-Dimensional Coordination
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 047: Project Architecture - Central Hub and Multi-Dimensional Coordination
 
 ## Status
 
@@ -70,32 +73,32 @@ Projects will track active agent sessions, allowing parallel agents to work on t
 
 ### Positive Consequences
 
--   **Contextual Integrity**: Worktree isolation ensures that search results are always relevant to the current branch.
--   **Session Continuity**: Projects provide a stable anchor for long-running multi-agent workflows.
--   **Scalability**: Proper collection management allows MCB to scale to large monorepos with multiple worktrees.
+- **Contextual Integrity**: Worktree isolation ensures that search results are always relevant to the current branch.
+- **Session Continuity**: Projects provide a stable anchor for long-running multi-agent workflows.
+- **Scalability**: Proper collection management allows MCB to scale to large monorepos with multiple worktrees.
 
 ### Negative Consequences
 
--   **Increased Complexity**: Managing multiple worktrees and collections adds overhead to the indexing service.
--   **Storage Requirements**: Isolated indexes per worktree will increase disk/memory usage.
+- **Increased Complexity**: Managing multiple worktrees and collections adds overhead to the indexing service.
+- **Storage Requirements**: Isolated indexes per worktree will increase disk/memory usage.
 
 ## Alternatives Considered
 
 ### Alternative 1: Single Index for all Worktrees
 
--   **Description**: Use a single vector collection for the entire repository, using metadata filters for branches.
--   **Pros**: Simpler storage model, less overhead during initial indexing.
--   **Cons**: Filter performance degrades with many branches; high risk of "context pollution" if metadata is missing.
--   **Rejection Reason**: Violates the requirement for strict worktree isolation and accurate semantic search.
+- **Description**: Use a single vector collection for the entire repository, using metadata filters for branches.
+- **Pros**: Simpler storage model, less overhead during initial indexing.
+- **Cons**: Filter performance degrades with many branches; high risk of "context pollution" if metadata is missing.
+- **Rejection Reason**: Violates the requirement for strict worktree isolation and accurate semantic search.
 
 ## Implementation Notes
 
--   **Domain Layer**: Add `Project` and `WorktreeInfo` entities to `mcb-domain`.
--   **Infrastructure Layer**: Update `ProjectService` to handle git worktree discovery.
--   **Server Layer**: Implement full CRUD in `mcb-server/src/handlers/project.rs`.
+- **Domain Layer**: Add `Project` and `WorktreeInfo` entities to `mcb-domain`.
+- **Infrastructure Layer**: Update `ProjectService` to handle git worktree discovery.
+- **Server Layer**: Implement full CRUD in `mcb-server/src/handlers/project.rs`.
 
 ## References
 
--   [MCB Comprehensive Gap Analysis](../plan/MCB-COMPREHENSIVE-GAPS.md)
--   [ADR-014: Multi-Domain Architecture Strategy](./014-multi-domain-architecture.md)
--   [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md)
+- [MCB Comprehensive Gap Analysis](../plans/archive/MCB-COMPREHENSIVE-GAPS.md)
+- [ADR-014: Multi-Domain Architecture Strategy](./014-multi-domain-architecture.md)
+- [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md)

@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 46
 title: Integration with ADR-034-037 & Policies
@@ -10,6 +11,10 @@ superseded_by: []
 implementation_status: Complete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR-046: Integration with ADR-034-037 & Policies
+
 **Status**: Proposed
 **Date**: 2026-02-05
 **Deciders**: MCB Architecture Team
@@ -18,7 +23,7 @@ implementation_status: Complete
 
 ## Context
 
-ADR-041-045 define the integrated context system layers. ADR-046 **bridges** this to ADR-034-037 (workflow FSM, policies, compensation) and specifies **how they interact**.
+ADR-041-045 define the integrated context system layers. ADR-046**bridges**this to ADR-034-037 (workflow FSM, policies, compensation) and specifies**how they interact**.
 
 Key integration points:
 
@@ -199,7 +204,7 @@ impl PolicyGuard for SecurityScanPolicy {
 
 ### 3. Compensation ↔ Context: Rollback via Snapshots
 
-**Architecture Correction 8**: `CompensationHandler` is an **infrastructure concern** (rollback, retry, logging), not business logic. It belongs in `mcb-infrastructure/src/compensation/handler.rs`. The **application layer** defines a `CompensationPolicy` port trait; **infrastructure** implements it.
+**Architecture Correction 8**: `CompensationHandler` is an**infrastructure concern**(rollback, retry, logging), not business logic. It belongs in `mcb-infrastructure/src/compensation/handler.rs`. The**application layer**defines a `CompensationPolicy` port trait;**infrastructure** implements it.
 
 ```rust
 // mcb-domain/src/ports/compensation.rs (PORT TRAIT - APPLICATION LAYER)
@@ -352,7 +357,7 @@ impl EventHandler for CompensationSubscriber {
 
 ### 5. MCP Tools: Unified Interface
 
-**Architecture Correction 9**: Context tools registration follows **ADR-033 pattern** . Handlers are in `mcb-server/src/handlers/context_handlers.rs`, registered via `router.rs` tool_definitions() like existing handlers.
+**Architecture Correction 9**: Context tools registration follows**ADR-033 pattern** . Handlers are in `mcb-server/src/handlers/context_handlers.rs`, registered via `router.rs` tool_definitions() like existing handlers.
 
 ```rust
 // mcb-domain/src/ports/mcp_handler.rs (PORT TRAIT - ADR-033)
@@ -511,73 +516,73 @@ impl ContextToolHandler {
 
 ## Architecture Corrections
 
-**Applied Corrections (v0.4.0 Alignment)**:
+Applied Corrections (v0.4.0 Alignment):
 
 1. **Correction 2 (mcb-z1f)**: WorkflowEventBus → Reuse EventBusProvider
 
--   ✅ Removed duplicate `WorkflowEventBus` type
--   ✅ Defined `WorkflowEvent` as variant publishable through existing `EventBusProvider` port
--   ✅ Subscribers implement `EventHandler` trait (existing pattern)
--   **Impact**: Single event bus infrastructure, no duplication
+- ✅ Removed duplicate `WorkflowEventBus` type
+- ✅ Defined `WorkflowEvent` as variant publishable through existing `EventBusProvider` port
+- ✅ Subscribers implement `EventHandler` trait (existing pattern)
+- **Impact**: Single event bus infrastructure, no duplication
 
 1. **Correction 7 (mcb-d26)**: BeadsTask contract clarification
 
--   ✅ Documented BeadsTask as EXTERNAL DTO from beads issue tracker
--   ✅ Added mapping: external BeadsTask → internal WorkflowTask at infrastructure boundary
--   ✅ Task routing: external DTO → adapter → internal entity → orchestrator
--   **Impact**: Clear contract, proper separation of concerns
+- ✅ Documented BeadsTask as EXTERNAL DTO from beads issue tracker
+- ✅ Added mapping: external BeadsTask → internal WorkflowTask at infrastructure boundary
+- ✅ Task routing: external DTO → adapter → internal entity → orchestrator
+- **Impact**: Clear contract, proper separation of concerns
 
 1. **Correction 8 (mcb-ehk)**: CompensationHandler layer placement
 
--   ✅ Moved from application to infrastructure: `mcb-infrastructure/src/compensation/handler.rs`
--   ✅ Application layer defines `CompensationPolicy` port trait
--   ✅ Infrastructure implements `CompensationPolicy` with rollback, retry, logging
--   **Impact**: Proper layer separation, infrastructure concerns isolated
+- ✅ Moved from application to infrastructure: `mcb-infrastructure/src/compensation/handler.rs`
+- ✅ Application layer defines `CompensationPolicy` port trait
+- ✅ Infrastructure implements `CompensationPolicy` with rollback, retry, logging
+- **Impact**: Proper layer separation, infrastructure concerns isolated
 
 1. **Correction 9 (mcb-tmg)**: MCP tool registration pattern
 
--   ✅ Replaced with ADR-033 ConsolidatedHandler pattern
--   ✅ Handlers in `mcb-server/src/handlers/context_handlers.rs`
--   ✅ Registration via `router.rs` tool_definitions() like existing handlers
--   ✅ Match on action/resource for unified dispatch
--   **Impact**: Consistent with existing MCP handler architecture
+- ✅ Replaced with ADR-033 ConsolidatedHandler pattern
+- ✅ Handlers in `mcb-server/src/handlers/context_handlers.rs`
+- ✅ Registration via `router.rs` tool_definitions() like existing handlers
+- ✅ Match on action/resource for unified dispatch
+- **Impact**: Consistent with existing MCP handler architecture
 
 ## Integration Checklist
 
--   ✅ FSM state determines context freshness requirements
--   ✅ Policies enforce scope boundaries (ScopeLevel)
--   ✅ Compensation uses context snapshots for rollback
--   ✅ Events published for all major state changes (via EventBusProvider)
--   ✅ MCP tools provide unified query interface (ADR-033 pattern)
--   ✅ Beads task context flows through all layers (with proper DTO mapping)
+- ✅ FSM state determines context freshness requirements
+- ✅ Policies enforce scope boundaries (ScopeLevel)
+- ✅ Compensation uses context snapshots for rollback
+- ✅ Events published for all major state changes (via EventBusProvider)
+- ✅ MCP tools provide unified query interface (ADR-033 pattern)
+- ✅ Beads task context flows through all layers (with proper DTO mapping)
 
 ## Testing
 
--   **State transition tests** (8): Freshness checks, policy validation
--   **Compensation tests** (6): Rollback correctness, policy re-evaluation
--   **Event flow tests** (5): Subscribers reactive, event ordering
--   **Integration tests** (10): Full workflow + context + policies
--   **MCP tool tests** (5): Tool handlers, Result accuracy
+- **State transition tests** (8): Freshness checks, policy validation
+- **Compensation tests** (6): Rollback correctness, policy re-evaluation
+- **Event flow tests** (5): Subscribers reactive, event ordering
+- **Integration tests** (10): Full workflow + context + policies
+- **MCP tool tests** (5): Tool handlers, Result accuracy
 
 **Target**: 34+ tests, 80%+ coverage
 
-## Success Criteria
+### Success Criteria
 
--   ✅ FSM ↔ Context validation working (state gates freshness)
--   ✅ Policies enforced at all transition points
--   ✅ Compensation triggers on policy failure + rolls back correctly
--   ✅ Context snapshots enable time-travel recovery
--   ✅ All workflow events published + logged
--   ✅ MCP tools provide transparent access to all layers
+- ✅ FSM ↔ Context validation working (state gates freshness)
+- ✅ Policies enforced at all transition points
+- ✅ Compensation triggers on policy failure + rolls back correctly
+- ✅ Context snapshots enable time-travel recovery
+- ✅ All workflow events published + logged
+- ✅ MCP tools provide transparent access to all layers
 
 ---
 
 ## Architecture Completeness
 
-**ADR-041-046 form a complete system:**
+ADR-041-046 form a complete system:
 
 | ADR | Component | Status |
-|-----|-----------|--------|
+| ----- | ----------- | -------- |
 | **041** | 5-layer architecture | ✅ Proposed |
 | **042** | Knowledge graph | ✅ Proposed |
 | **043** | Hybrid search | ✅ Proposed |
@@ -585,7 +590,7 @@ impl ContextToolHandler {
 | **045** | Versioning & freshness | ✅ Proposed |
 | **046** | Policy integration | ✅ Proposed (THIS) |
 
-**All layers connected. Ready for implementation (Phase 9).**
+All layers connected. Ready for implementation (Phase 9).
 
 ---
 

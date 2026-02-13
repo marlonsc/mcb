@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 41
 title: Integrated Context System Architecture v0.4.0
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR-041: Integrated Context System Architecture v0.4.0
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR-041: Integrated Context System Architecture v0.4.0
 
 **Status**: Proposed
 **Date**: 2026-02-05
@@ -20,18 +23,18 @@ implementation_status: Incomplete
 
 ## Context
 
-MCB v0.2.0 implements semantic code search with git awareness and persistent memory. v0.3.0 adds workflow orchestration (ADR-034-037: FSM, context discovery, policies, compensation). v0.4.0 must unify these into an **integrated context system** that combines:
+MCB v0.2.0 implements semantic code search with git awareness and persistent memory. v0.3.0 adds workflow orchestration (ADR-034-037: FSM, context discovery, policies, compensation). v0.4.0 must unify these into an**integrated context system** that combines:
 
--   VCS data (git history, branches, commits)
--   Code indexing (AST chunks, relationships)
--   Session history (workflow state + transitions)
--   Chat memories (observations + tags + session context)
--   Project hierarchy (plans, tasks, scopes from Beads)
--   Policies (context boundaries, access control)
+- VCS data (git history, branches, commits)
+- Code indexing (AST chunks, relationships)
+- Session history (workflow state + transitions)
+- Chat memories (observations + tags + session context)
+- Project hierarchy (plans, tasks, scopes from Beads)
+- Policies (context boundaries, access control)
 
-into a **single queryable knowledge base** with explicit freshness tracking, versioning, and search.
+into a**single queryable knowledge base** with explicit freshness tracking, versioning, and search.
 
-**Problem Statement**:
+Problem Statement:
 
 1. **No unified context**: Code search, git history, memory, and workflow state are separate systems. Queries cannot reason across all information sources.
 2. **No freshness guarantees**: Caches expire, git state changes, but consumers don't know context age or staleness.
@@ -43,7 +46,7 @@ into a **single queryable knowledge base** with explicit freshness tracking, ver
 
 ### 1. Five-Layer Architecture
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │  Layer 5: Policies & FSM Gating        │  (ADR-034-036)
 │  (FSM state gates freshness requirements)
@@ -62,12 +65,12 @@ into a **single queryable knowledge base** with explicit freshness tracking, ver
 └─────────────────────────────────────────┘
 ```
 
-**Rationale**:
+Rationale:
 
--   Clear separation of concerns (data → graph → search → policies)
--   Each layer has well-defined ports/interfaces
--   Can be implemented, tested, deployed independently
--   Follows existing MCB Clean Architecture (ADR-013)
+- Clear separation of concerns (data → graph → search → policies)
+- Each layer has well-defined ports/interfaces
+- Can be implemented, tested, deployed independently
+- Follows existing MCB Clean Architecture (ADR-013)
 
 ### 2. Core Data Model
 
@@ -135,12 +138,12 @@ pub trait ContextGraphTraversal: Send + Sync {
 }
 ```
 
-**Note**: `ContextService` is NOT a port trait. It is a **concrete use case service** defined in `mcb-application/src/use_cases/context_service.rs` that composes all layers (repository, graph, search, policies). Per Clean Architecture, services are application-layer concerns, not domain ports.
+**Note**: `ContextService` is NOT a port trait. It is a**concrete use case service** defined in `mcb-application/src/use_cases/context_service.rs` that composes all layers (repository, graph, search, policies). Per Clean Architecture, services are application-layer concerns, not domain ports.
 
 ### 4. Integration with ADR-034-037
 
 | ADR | Integration Point | Interaction |
-|-----|-------------------|-------------|
+| ----- | ------------------- | ------------- |
 | **ADR-034 (FSM)** | ContextSnapshot.workflow_state | State determines freshness requirements: "Executing" requires Fresh, "Planning" allows Stale |
 | **ADR-035 (Context Scout)** | ContextSnapshot.freshness | Explicit freshness enum embedded in every snapshot; gates search results |
 | **ADR-036 (Policies)** | ContextValidationResult | Policies define scope boundaries and access control for context |
@@ -150,34 +153,34 @@ pub trait ContextGraphTraversal: Send + Sync {
 
 ### Layer Breakdown
 
-**Layer 1: Data Sources**
+Layer 1: Data Sources
 
--   Existing: Memory system, VCS provider, code indexing
--   Changes: Add session_id FK, freshness tracking, last_modified timestamps
+- Existing: Memory system, VCS provider, code indexing
+- Changes: Add session_id FK, freshness tracking, last_modified timestamps
 
-**Layer 2: Versioning (ADR-045)**
+Layer 2: Versioning (ADR-045)
 
--   New: ContextRepository storing immutable snapshots
--   Technology: SQLite (primary) + im::Vector (in-memory cache) + serde for serialization
+- New: ContextRepository storing immutable snapshots
+- Technology: SQLite (primary) + im::Vector (in-memory cache) + serde for serialization
 
-**Layer 3: Knowledge Graph (ADR-042)**
+Layer 3: Knowledge Graph (ADR-042)
 
--   New: CodeGraph built via tree-sitter-graph + petgraph
--   Technology: petgraph DAG + daggy + slotmap
+- New: CodeGraph built via tree-sitter-graph + petgraph
+- Technology: petgraph DAG + daggy + slotmap
 
-**Layer 4: Search (ADR-043)**
+Layer 4: Search (ADR-043)
 
--   New: HybridSearcher composing tantivy + vecstore + graph
--   Technology: tantivy (FTS) + vecstore (HNSW vectors) + RRF fusion
+- New: HybridSearcher composing tantivy + vecstore + graph
+- Technology: tantivy (FTS) + vecstore (HNSW vectors) + RRF fusion
 
-**Layer 5: Policies (ADR-046)**
+Layer 5: Policies (ADR-046)
 
--   Integration: ContextValidationResult checks policies
--   Technology: Policy trait (existing from ADR-036)
+- Integration: ContextValidationResult checks policies
+- Technology: Policy trait (existing from ADR-036)
 
 ### Crate Structure
 
-```
+```text
 mcb-domain/
 ├── ports/
 │   ├── context_repository.rs        [NEW] (ContextRepository trait)
@@ -213,7 +216,7 @@ mcb-server/
 ## Alternatives Considered
 
 | Alternative | Pros | Cons | Decision |
-|-------------|------|------|----------|
+| ------------- | ------ | ------ | ---------- |
 | **External Graph DB (Neo4j)** | Powerful, mature, scalable | Operational overhead, licensing, network latency | ❌ Rejected: Embedded-first (v0.5.0 optional) |
 | **Separate snapshot storage (S3/DuckDB)** | Scalable to 1M+ snapshots | Added complexity, latency | ❌ Rejected: SQLite sufficient for MVP |
 | **ML-based context ranking (Candle)** | High-quality relevance | Training overhead, slow inference | ❌ Rejected for v0.4.0 (v0.5.0) |
@@ -222,31 +225,31 @@ mcb-server/
 
 ## Testing Strategy
 
--   **Unit tests** (30): ContextSnapshot creation, versioning invariants, scope filtering
--   **Integration tests** (15): FSM + context flow, policy gating, compensation
--   **Graph tests** (10): Semantic extraction, traversal, cycle detection
--   **Search tests** (10): RRF fusion, freshness ranking, hybrid queries
--   **Temporal tests** (5): Time-travel queries, TTL invalidation
+- **Unit tests** (30): ContextSnapshot creation, versioning invariants, scope filtering
+- **Integration tests** (15): FSM + context flow, policy gating, compensation
+- **Graph tests** (10): Semantic extraction, traversal, cycle detection
+- **Search tests** (10): RRF fusion, freshness ranking, hybrid queries
+- **Temporal tests** (5): Time-travel queries, TTL invalidation
 
 **Target**: 70+ tests, 85%+ coverage on domain layer
 
 ## Risks & Mitigations
 
 | Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|-----------|
+| ------ | ------------- | -------- | ----------- |
 | ADR-034-037 changes mid-Phase-9 | Low | Critical | Lock ADR-034-037 before Phase 9 Week 1 |
 | Snapshot memory overhead (1000+ snapshots) | Low | Medium | Add TTL-based GC (keep 24h, archive older) |
 | Cross-layer dependency bugs | Medium | High | Comprehensive integration tests; phase-based validation |
 | Freshness staleness detection failure | Medium | High | Multiple staleness signals (time + git hook + tracker) |
 
-## Success Criteria
+### Success Criteria
 
--   ✅ 5-layer architecture fully integrated
--   ✅ 70+ tests with 85%+ coverage
--   ✅ Time-travel queries working (get context at specific timestamp)
--   ✅ Freshness propagating through search results
--   ✅ Policies enforcing scope boundaries
--   ✅ Compensation triggering context re-validation on failure
+- ✅ 5-layer architecture fully integrated
+- ✅ 70+ tests with 85%+ coverage
+- ✅ Time-travel queries working (get context at specific timestamp)
+- ✅ Freshness propagating through search results
+- ✅ Policies enforcing scope boundaries
+- ✅ Compensation triggering context re-validation on failure
 
 ## Architecture Corrections
 
@@ -254,12 +257,12 @@ mcb-server/
 
 **Issue**: ContextService was initially shown as a port trait in `mcb-domain/ports/`, violating Clean Architecture principles. Services are application-layer concerns, not domain ports.
 
-**Resolution**:
+Resolution:
 
--   **Removed**: `ContextService` trait from domain ports
--   **Added**: `ContextGraphTraversal` trait to domain ports (graph navigation is a port concern)
--   **Clarified**: `ContextService` is a concrete use case service in `mcb-application/src/use_cases/context_service.rs`
--   **Kept**: `ContextRepository` and `ContextGraphTraversal` as domain port traits (correct per Clean Architecture)
+- **Removed**: `ContextService` trait from domain ports
+- **Added**: `ContextGraphTraversal` trait to domain ports (graph navigation is a port concern)
+- **Clarified**: `ContextService` is a concrete use case service in `mcb-application/src/use_cases/context_service.rs`
+- **Kept**: `ContextRepository` and `ContextGraphTraversal` as domain port traits (correct per Clean Architecture)
 
 **Rationale**: Per Clean Architecture, domain defines port traits (interfaces to external systems). Application layer contains concrete services that orchestrate use cases. ContextService composes multiple layers (repository, graph, search, policies) and belongs in application, not domain.
 
@@ -267,11 +270,11 @@ mcb-server/
 
 **Issue**: ADR-041 did not explicitly acknowledge its dependency on ADR-035 (Context Scout) for freshness tracking.
 
-**Resolution**:
+Resolution:
 
--   **Clarified**: Layer 2 (Versioned Context) embeds `ContextFreshness` enum from ADR-035
--   **Documented**: ADR-045 (Context Versioning) extends ADR-035's freshness contract
--   **Cross-reference**: See ADR-045 "ADR-035 Contract Assumptions" section for full dependency details
+- **Clarified**: Layer 2 (Versioned Context) embeds `ContextFreshness` enum from ADR-035
+- **Documented**: ADR-045 (Context Versioning) extends ADR-035's freshness contract
+- **Cross-reference**: See ADR-045 "ADR-035 Contract Assumptions" section for full dependency details
 
 **Rationale**: Explicit dependency documentation prevents accidental modification of ADR-035 (ACCEPTED/locked) during Phase 9 implementation. ADR-041-046 build on top of ADR-035's freshness model; they do not replace it.
 

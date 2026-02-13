@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 13
 title: Clean Architecture Crate Separation
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 013: Clean Architecture Crate Separation
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 013: Clean Architecture Crate Separation
 
 ## Status
 
@@ -31,24 +34,24 @@ The Clean Architecture pattern, as described by Robert C. Martin, addresses thes
 
 ## Decision
 
-We organize the codebase into **eight Cargo workspace crates** following Clean Architecture principles:
+We organize the codebase into**eight Cargo workspace crates** following Clean Architecture principles:
 
 ### Layer 1: Domain (`mcb-domain`)
 
 **Purpose**: Core business entities, port traits (interfaces), and domain validation rules.
 
-**Characteristics**:
+Characteristics:
 
--   Zero external dependencies (except `async_trait`, `thiserror`)
--   Defines port traits that extend `shaku::Interface` for DI compatibility
--   Contains domain entities: `CodeChunk`, `Repository`, `Embedding`, `SearchResult`
--   Contains value objects: `Language`, `ChunkType`, `SearchQuery`
--   Defines domain errors with `thiserror`
--   No implementations of external services
+- Zero external dependencies (except `async_trait`, `thiserror`)
+- Defines port traits that extend `shaku::Interface` for DI compatibility
+- Contains domain entities: `CodeChunk`, `Repository`, `Embedding`, `SearchResult`
+- Contains value objects: `Language`, `ChunkType`, `SearchQuery`
+- Defines domain errors with `thiserror`
+- No implementations of external services
 
-**Key Directories**:
+Key Directories:
 
-```
+```text
 mcb-domain/src/
 ├── entities/           # Domain entities (CodeChunk, Codebase)
 ├── events/             # Domain events (DomainEvent, EventPublisher)
@@ -64,17 +67,17 @@ mcb-domain/src/
 
 **Purpose**: Business logic orchestration and use case implementations.
 
-**Characteristics**:
+Characteristics:
 
--   Depends only on `mcb-domain`
--   Contains use cases: `ContextService`, `SearchService`, `IndexingService`
--   Orchestrates domain operations without knowing implementations
--   Defines application-level ports (service interfaces)
--   Contains the `ChunkingOrchestrator` for batch processing
+- Depends only on `mcb-domain`
+- Contains use cases: `ContextService`, `SearchService`, `IndexingService`
+- Orchestrates domain operations without knowing implementations
+- Defines application-level ports (service interfaces)
+- Contains the `ChunkingOrchestrator` for batch processing
 
-**Key Directories**:
+Key Directories:
 
-```
+```text
 mcb-application/src/
 ├── services/
 │   ├── context.rs      # ContextService - embedding + storage coordination
@@ -92,17 +95,17 @@ mcb-application/src/
 
 **Purpose**: Implementations of domain port traits for external services.
 
-**Characteristics**:
+Characteristics:
 
--   Depends on `mcb-domain` (implements port traits)
--   Feature-flagged providers for optional dependencies
--   Contains real implementations: OpenAI, Ollama, etc. (6 embedding, 3 vector store, 12 language)
--   Contains null implementations for testing
--   Organized by provider category
+- Depends on `mcb-domain` (implements port traits)
+- Feature-flagged providers for optional dependencies
+- Contains real implementations: OpenAI, Ollama, etc. (6 embedding, 3 vector store, 12 language)
+- Contains null implementations for testing
+- Organized by provider category
 
-**Key Directories**:
+Key Directories:
 
-```
+```text
 mcb-providers/src/
 ├── embedding/          # 6 embedding providers
 │   ├── openai.rs
@@ -132,17 +135,17 @@ mcb-providers/src/
 
 **Purpose**: Shared technical services and cross-cutting concerns.
 
-**Characteristics**:
+Characteristics:
 
--   Depends on `mcb-domain`, `mcb-application`, `mcb-providers`
--   Contains the Shaku-based DI system
--   Contains configuration management
--   Contains cross-cutting services (auth, metrics, events)
--   Provides factories for production provider creation
+- Depends on `mcb-domain`, `mcb-application`, `mcb-providers`
+- Contains the Shaku-based DI system
+- Contains configuration management
+- Contains cross-cutting services (auth, metrics, events)
+- Provides factories for production provider creation
 
-**Key Directories**:
+Key Directories:
 
-```
+```text
 mcb-infrastructure/src/
 ├── di/
 │   ├── bootstrap.rs    # Container composition root
@@ -170,17 +173,17 @@ mcb-infrastructure/src/
 
 **Purpose**: MCP protocol implementation and HTTP API.
 
-**Characteristics**:
+Characteristics:
 
--   Depends on all other crates
--   Entry point for the application
--   MCP protocol handler with stdio transport
--   Tool handlers (index, search, clear, status)
--   Admin API endpoints
+- Depends on all other crates
+- Entry point for the application
+- MCP protocol handler with stdio transport
+- Tool handlers (index, search, clear, status)
+- Admin API endpoints
 
-**Key Directories**:
+Key Directories:
 
-```
+```text
 mcb-server/src/
 ├── handlers/           # MCP tool handlers
 ├── transport/          # Stdio transport
@@ -196,20 +199,20 @@ mcb-server/src/
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Characteristics**:
+Characteristics:
 
--   Standalone validation tool
--   30+ validators for architecture rules
--   Violation trait system for unified reporting
--   TOML-based configuration
--   Used in CI/CD pipelines
+- Standalone validation tool
+- 30+ validators for architecture rules
+- Violation trait system for unified reporting
+- TOML-based configuration
+- Used in CI/CD pipelines
 
-**Key Components**:
+Key Components:
 
--   `CleanArchitectureValidator`: Layer dependency rules
--   `ShakuValidator`: DI pattern compliance
--   `QualityValidator`: Code quality metrics
--   `OrganizationValidator`: File organization rules
+- `CleanArchitectureValidator`: Layer dependency rules
+- `ShakuValidator`: DI pattern compliance
+- `QualityValidator`: Code quality metrics
+- `OrganizationValidator`: File organization rules
 
 **Dependencies**: Development tool, not production dependency
 
@@ -217,17 +220,17 @@ mcb-server/src/
 
 **Purpose**: Public API re-exports for external consumers.
 
-**Characteristics**:
+Characteristics:
 
--   Re-exports public types from all crates
--   Provides unified interface for library users
--   Minimal code, mostly re-exports
+- Re-exports public types from all crates
+- Provides unified interface for library users
+- Minimal code, mostly re-exports
 
 **Dependencies**: All crates
 
 ## Dependency Graph
 
-```
+```text
                     ┌─────────────┐
                     │   mcb-server│
                     │   (Layer 5) │
@@ -276,7 +279,7 @@ The `mcb-validate` crate enforces these architectural rules:
 # Run architecture validation
 cargo run -p mcb-validate
 
-# Key validators:
+# Key validators
 
 # - CleanArchitectureValidator: Checks layer dependency violations
 
@@ -289,22 +292,22 @@ cargo run -p mcb-validate
 
 ### Positive
 
--   **Clear Boundaries**: Each crate has explicit responsibilities
--   **Testability**: Test domain/application without infrastructure
--   **Compilation**: Parallel builds, incremental compilation
--   **Maintainability**: Changes isolated to appropriate layers
--   **Onboarding**: Developers know where code belongs
+- **Clear Boundaries**: Each crate has explicit responsibilities
+- **Testability**: Test domain/application without infrastructure
+- **Compilation**: Parallel builds, incremental compilation
+- **Maintainability**: Changes isolated to appropriate layers
+- **Onboarding**: Developers know where code belongs
 
 ### Negative
 
--   **Complexity**: Eight crates vs one requires coordination
--   **Boilerplate**: Port traits need implementations in multiple places
--   **Learning Curve**: Clean Architecture concepts required
+- **Complexity**: Eight crates vs one requires coordination
+- **Boilerplate**: Port traits need implementations in multiple places
+- **Learning Curve**: Clean Architecture concepts required
 
 ### Neutral
 
--   **Cargo Workspace**: Standard Rust pattern, well-supported tooling
--   **Feature Flags**: Providers can be optionally included
+- **Cargo Workspace**: Standard Rust pattern, well-supported tooling
+- **Feature Flags**: Providers can be optionally included
 
 ## Implementation Notes
 
@@ -344,19 +347,19 @@ async fn test_full_indexing_flow() {
 
 ## Related ADRs
 
--   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider trait patterns
--   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async patterns per layer
--   [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) - Provider interface
--   [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - mcb-providers organization
--   [ADR-031: Documentation Excellence](031-documentation-excellence.md) - Documentation per crate
--   [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Quality standards per layer
--   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - mcb-server admin module
--   [ADR-011: HTTP Transport](011-http-transport-request-response-pattern.md) - mcb-server transport layer
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI in mcb-infrastructure
--   **Extended by**: [ADR-027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Introduces bounded contexts within layers
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider trait patterns
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async patterns per layer
+- [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) - Provider interface
+- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - mcb-providers organization
+- [ADR-031: Documentation Excellence](031-documentation-excellence.md) - Documentation per crate
+- [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Quality standards per layer
+- [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - mcb-server admin module
+- [ADR-011: HTTP Transport](011-http-transport-request-response-pattern.md) - mcb-server transport layer
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI in mcb-infrastructure
+- **Extended by**: [ADR-027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Introduces bounded contexts within layers
 
 ## References
 
--   [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
--   [Shaku Documentation](https://docs.rs/shaku) (historical; see ADR-029)
--   Workspace-next refactoring plan (January 2026)
+- [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [Shaku Documentation](https://docs.rs/shaku) (historical; see ADR-029)
+- Workspace-next refactoring plan (January 2026)

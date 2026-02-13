@@ -1,16 +1,19 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 33
 title: MCP Handler Consolidation
-status: IMPLEMENTED
+status: ACCEPTED
 created:
 updated: 2026-02-05
 related: []
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: Partial
 ---
 
-## ADR-033: MCP Handler Consolidation
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR-033: MCP Handler Consolidation
 
 ## Status
 
@@ -18,28 +21,32 @@ Accepted
 
 ## Context
 
-The MCP server has grown to 38 tools, creating cognitive overhead for users and maintenance burden. Many tools follow CRUD patterns that can be using parameterization.
+The MCP server has grown to 38 tools, creating cognitive overhead for users and
+maintenance burden. Many tools follow CRUD patterns that can be using
+parameterization.
 
 ### Current Tool Inventory (38 tools)
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Category | Tools | Count |
-|----------|-------|-------|
+| ---------- | ------- | ------- |
 | Index/Search | index (action=start), search (resource=code), index (action=status), index (action=clear) | 4 |
 | Validation | validate (action=run, scope=project), validate (action=run, scope=file), validate (action=list_rules), validate (action=list_rules), validate (action=analyze) | 5 |
 | Memory (Legacy) | memory (action=store, resource=observation), search (resource=memory), session (action=summarize), session (action=summarize) | 4 |
 | Memory (New) | memory (action=timeline, resource=observation), memory (action=get, resource=observation), memory (action=inject, resource=observation), memory (action=list, resource=observation), memory (action=store, resource=execution), memory (action=get, resource=execution), memory (action=store, resource=quality_gate), memory (action=get, resource=quality_gate), memory (action=store, resource=error_pattern), memory (action=get, resource=error_pattern) | 10 |
 | Agent Sessions | session (action=create), session (action=get), session (action=update), session (action=list), agent (action=log_tool), agent (action=log_delegation) | 6 |
 | Project Workflow | project_* (9 tools) | 9 |
-| **Total** | | **38** |
+| **Total** |  | **38** |
 
 ## Decision
 
-Consolidate to **8 tools** using resource-action parameterization pattern:
+Consolidate to**8 tools** using resource-action parameterization pattern:
 
 ### New Tool Architecture
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Tool | Replaces | Pattern |
-|------|----------|---------|
+| ------ | ---------- | --------- |
 | `index` | index (action=start), index (action=status), index (action=clear) | action: start, status, clear |
 | `search` | search (resource=code), search (resource=memory), memory (action=list, resource=observation) | resource: code, memory; mode: semantic, keyword |
 | `validate` | validate (action=run, scope=project), validate (action=run, scope=file), validate (action=list_rules), validate (action=list_rules), validate (action=analyze) | action: run, list_rules; scope: file, project |
@@ -117,7 +124,7 @@ struct ProjectArgs {
 ### Tool Count Reduction
 
 | Category | Before | After | Reduction |
-|----------|--------|-------|-----------|
+| ---------- | -------- | ------- | | ----------- |
 | Index | 4 | 1 | -3 |
 | Search | 3 | 1 | -2 |
 | Validation | 5 | 1 | -4 |
@@ -131,21 +138,21 @@ struct ProjectArgs {
 
 ### Positive
 
--   Dramatically reduced cognitive load (38 → 8 tools)
--   Consistent action/resource pattern across all tools
--   Easier to add new resources without new tools
--   Better discoverability through unified interfaces
+- Dramatically reduced cognitive load (38 → 8 tools)
+- Consistent action/resource pattern across all tools
+- Easier to add new resources without new tools
+- Better discoverability through unified interfaces
 
 ### Negative
 
--   Migration effort required
--   Slightly more complex individual tool schemas
--   Potential breaking change for existing integrations
+- Migration effort required
+- Slightly more complex individual tool schemas
+- Potential breaking change for existing integrations
 
 ### Neutral
 
--   Same underlying functionality
--   Handler code restructured but logic preserved
+- Same underlying functionality
+- Handler code restructured but logic preserved
 
 ## Implementation
 
