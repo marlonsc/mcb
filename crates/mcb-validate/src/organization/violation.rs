@@ -252,7 +252,26 @@ impl OrganizationViolation {
     ///
     /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
-        <Self as Violation>::severity(self)
+        match self {
+            Self::MagicNumber { severity, .. }
+            | Self::DuplicateStringLiteral { severity, .. }
+            | Self::DecentralizedConstant { severity, .. }
+            | Self::TypeInWrongLayer { severity, .. }
+            | Self::FileInWrongLocation { severity, .. }
+            | Self::DeclarationCollision { severity, .. }
+            | Self::TraitOutsidePorts { severity, .. }
+            | Self::AdapterOutsideInfrastructure { severity, .. }
+            | Self::ConstantsFileTooLarge { severity, .. }
+            | Self::CommonMagicNumber { severity, .. }
+            | Self::LargeFileWithoutModules { severity, .. }
+            | Self::DualLayerDefinition { severity, .. }
+            | Self::ServerCreatingServices { severity, .. }
+            | Self::ApplicationImportsServer { severity, .. }
+            | Self::StrictDirectoryViolation { severity, .. }
+            | Self::DomainLayerImplementation { severity, .. }
+            | Self::HandlerOutsideHandlers { severity, .. }
+            | Self::PortOutsidePorts { severity, .. } => *severity,
+        }
     }
 }
 
