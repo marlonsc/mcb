@@ -5,6 +5,8 @@
 //! allocations in loops, and suboptimal synchronization patterns.
 //!
 //! # Code Smells
+//! TODO(qlty): High total complexity (count = 130).
+//! TODO(mcb-validate): File too large (641 lines). Consider extracting pattern definitions.
 //!
 //! Detects performance anti-patterns that PMAT and Clippy might miss:
 //! - Clone abuse (redundant clones, clones in loops)
@@ -334,32 +336,38 @@ impl PerformanceValidator {
             }
 
             let content = std::fs::read_to_string(path)?;
-            let lines: Vec<&str> = content.lines().collect();
-            let mut i = 0;
+            let mut in_loop = false;
+            let mut loop_depth = 0;
 
-            while i < lines.len() {
-                let trimmed = lines[i].trim();
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
 
-                if !trimmed.starts_with("//")
-                    && loop_start_pattern.is_match(trimmed)
-                    && let Some((block_lines, end_idx)) =
-                        crate::scan::extract_balanced_block(&lines, i)
-                {
-                    for (offset, line) in block_lines.iter().enumerate() {
-                        let line_num = i + offset;
-                        for pattern in patterns {
-                            if pattern.is_match(line)
-                                && let Some(violation) =
-                                    make_violation(path.to_path_buf(), line_num + 1, line)
-                            {
-                                violations.push(violation);
-                            }
-                        }
-                    }
-                    i = end_idx + 1;
+                if trimmed.starts_with("//") {
                     continue;
                 }
-                i += 1;
+
+                if loop_start_pattern.is_match(trimmed) {
+                    in_loop = true;
+                    loop_depth = 0;
+                }
+
+                if in_loop {
+                    loop_depth += line.chars().filter(|c| *c == '{').count() as i32;
+                    loop_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+
+                    for pattern in patterns {
+                        if pattern.is_match(line)
+                            && let Some(violation) =
+                                make_violation(path.to_path_buf(), line_num + 1, line)
+                        {
+                            violations.push(violation);
+                        }
+                    }
+
+                    if loop_depth <= 0 {
+                        in_loop = false;
+                    }
+                }
             }
             Ok(())
         })?;
