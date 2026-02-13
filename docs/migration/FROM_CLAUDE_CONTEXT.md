@@ -1,19 +1,20 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Migration Guide: From Claude-context to mcb
 
 This guide helps you migrate from [zilliztech/Claude-context](https://github.com/zilliztech/claude-context) to mcb.
 
-## Why Migrate?
+## Why Migrate
 
 | Feature | Claude-context | mcb |
-|---------|----------------|---------------------|
-|**Runtime**| Node.js 20-23 | Native Rust binary |
-|**MCP Tools**| 4 tools | 4 tools (same interface) |
-|**Hybrid Search**| BM25 + vector | BM25 + vector |
-|**Embedding Providers**| 4 | 6 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) |
-|**Vector Stores**| 2 (Milvus/Zilliz) | 6 (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null) |
-|**Languages**| 13+ | 13 (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin) |
-|**Performance**| Node.js interpreter | Native compiled |
-|**Dependencies**| npm packages | Single binary |
+| --------- | ---------------- | --------------------- |
+| **Runtime** | Node.js 20-23 | Native Rust binary |
+| **MCP Tools** | 4 tools | 4 tools (same interface) |
+| **Hybrid Search** | BM25 + vector | BM25 + vector |
+| **Embedding Providers** | 4 | 6 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) |
+| **Vector Stores** | 2 (Milvus/Zilliz) | 6 (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null) |
+| **Languages** | 13+ | 13 (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin) |
+| **Performance** | Node.js interpreter | Native compiled |
+| **Dependencies** | npm packages | Single binary |
 
 ## Quick Migration
 
@@ -27,12 +28,12 @@ tar xzf mcb-linux-x86_64.tar.gz
 sudo mv mcb /usr/local/bin/
 ```
 
-### Step 2: Keep Your Environment Variables
+## Step 2: Keep Your Environment Variables
 
 mcb is fully compatible with Claude-context environment variables:
 
 | Claude-context | mcb | Status |
-|----------------|---------------------|--------|
+| ---------------- | --------------------- | -------- |
 | `OPENAI_API_KEY` | `OPENAI_API_KEY` | Direct support |
 | `VOYAGE_API_KEY` | `VOYAGE_API_KEY` | Direct support |
 | `OLLAMA_BASE_URL` | `OLLAMA_BASE_URL` | Direct support |
@@ -40,13 +41,13 @@ mcb is fully compatible with Claude-context environment variables:
 | `MILVUS_TOKEN` | `MILVUS_TOKEN` | Direct support |
 | `MILVUS_ADDRESS` | `MILVUS_ADDRESS` | Direct support |
 
-**No changes required to your existing environment variables!**
+### No changes required to your existing environment variables
 
 ### Step 3: Update Claude Desktop Configuration
 
 Replace the Claude-context entry in your `claude_desktop_config.json`:
 
-**Before (Claude-context):**
+### Before (Claude-context)
 
 ```json
 {
@@ -63,7 +64,7 @@ Replace the Claude-context entry in your `claude_desktop_config.json`:
 }
 ```
 
-**After (mcb):**
+### After (mcb)
 
 ```json
 {
@@ -97,7 +98,7 @@ mcb --version
 Both tools provide the same 4 MCP tools with identical interfaces:
 
 | Tool | Description | Compatibility |
-|------|-------------|---------------|
+| ------ | ------------- | --------------- |
 | `index (action=start)` | Index a directory with AST-aware chunking | 100% compatible |
 | `search (resource=code)` | Semantic + BM25 hybrid search | 100% compatible |
 | `index (action=status)` | Check indexing progress | 100% compatible |
@@ -131,7 +132,7 @@ GEMINI_API_KEY=...
 EMBEDDING_PROVIDER=fastembed
 ```
 
-### Vector Store Providers
+## Vector Store Providers
 
 Set `VECTOR_STORE_PROVIDER` environment variable:
 
@@ -156,14 +157,14 @@ VECTOR_STORE_PROVIDER=edgevec
 
 Both tools support the same core languages. mcb v0.1.0 now includes:
 
-**Original (matching Claude-context):**
+### Original (matching Claude-context)
 
--   Rust, Python, JavaScript, TypeScript
--   Go, Java, C, C++, C#
+- Rust, Python, JavaScript, TypeScript
+- Go, Java, C, C++, C#
 
-**Added in v0.1.0:**
+### Added in v0.1.0
 
--   Ruby, PHP, Swift, Kotlin
+- Ruby, PHP, Swift, Kotlin
 
 ## Differences
 
@@ -178,7 +179,7 @@ Both tools support the same core languages. mcb v0.1.0 now includes:
 ### Behavioral Differences
 
 | Aspect | Claude-context | mcb |
-|--------|----------------|---------------------|
+| -------- | ---------------- | --------------------- |
 | Config format | convict.js schema | TOML config |
 | Config location | `~/.context/config.json` | `~/.context/config.toml` |
 | Default model (OpenAI) | text-embedding-3-small | text-embedding-3-small |
@@ -197,7 +198,7 @@ export OPENAI_API_KEY=sk-...
 export VOYAGE_API_KEY=...
 ```
 
-### Connection to Milvus fails
+## Connection to Milvus fails
 
 Check Milvus is running and accessible:
 
@@ -209,17 +210,17 @@ curl http://localhost:19530/v1/vector/health
 
 Re-index your codebase:
 
-```
+```text
 
 # In Claude Desktop, use the index (action=start) tool
 ```
 
 ## Getting Help
 
--   GitHub Issues: [mcb issues](https://github.com/marlonsc/mcb/issues)
--   Documentation: [mcb docs](https://github.com/marlonsc/mcb)
+- GitHub Issues: [mcb issues](https://github.com/marlonsc/mcb/issues)
+- Documentation: [mcb docs](https://github.com/marlonsc/mcb)
 
-## Rollback
+### Rollback
 
 If you need to temporarily rollback:
 

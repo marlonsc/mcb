@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 15
 title: Workspace Structure for Shared Libraries
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 015: Workspace Structure for Shared Libraries
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 015: Workspace Structure for Shared Libraries
 
 ## Status
 
@@ -22,9 +25,9 @@ implementation_status: Incomplete
 
 Future integration of PMAT code requires shared libraries for:
 
--   Tree-sitter AST parsing (used by search + analysis)
--   Code metrics algorithms (complexity, debt scoring)
--   Analysis orchestration (parallel processing, caching)
+- Tree-sitter AST parsing (used by search + analysis)
+- Code metrics algorithms (complexity, debt scoring)
+- Analysis orchestration (parallel processing, caching)
 
 **Question**: Where to place shared code within the eight-crate architecture?
 
@@ -55,13 +58,13 @@ tree-sitter = "0.26"
 # ... shared version definitions
 ```
 
-### Library Purposes
+## Library Purposes
 
-#### 1. `tree-sitter-analysis` (v0.3.0)
+### 1. `tree-sitter-analysis` (v0.3.0)
 
 **Purpose**: Unified AST parsing for chunking + analysis
 
-**API**:
+API:
 
 ```rust
 pub trait LanguageProcessor: Send + Sync {
@@ -74,11 +77,11 @@ pub trait LanguageProcessor: Send + Sync {
 }
 ```
 
-**v0.1.1 Status**:
+v0.1.1 Status:
 
--   Chunking code lives in `crates/mcb-providers/src/language/`
--   12 language processors implemented
--   Will be extracted to this library in v0.3.0
+- Chunking code lives in `crates/mcb-providers/src/language/`
+- 12 language processors implemented
+- Will be extracted to this library in v0.3.0
 
 #### 2. `code-metrics` (v0.3.0)
 
@@ -99,30 +102,30 @@ pub trait MetricsCalculator: Send + Sync {
 
 ## Consequences
 
-**Positive**:
+Positive:
 
--   Code reuse between domains
--   Independent versioning possible
--   Easier to extract as separate crates later
--   Clear API boundaries
+- Code reuse between domains
+- Independent versioning possible
+- Easier to extract as separate crates later
+- Clear API boundaries
 
-**Negative**:
+Negative:
 
--   Workspace compilation overhead
--   Dependency management complexity
+- Workspace compilation overhead
+- Dependency management complexity
 
-**Mitigation**:
+Mitigation:
 
--   Use `workspace = true` for shared deps
--   Keep libraries focused and small
+- Use `workspace = true` for shared deps
+- Keep libraries focused and small
 
 ## Implementation Plan
 
 ### v0.1.1 (Current - Foundation)
 
--   Eight-crate workspace structure implemented
--   Language chunking in `crates/mcb-providers/src/language/`
--   Workspace dependencies defined
+- Eight-crate workspace structure implemented
+- Language chunking in `crates/mcb-providers/src/language/`
+- Workspace dependencies defined
 
 ### v0.3.0 (Future - Full Implementation)
 
@@ -138,9 +141,9 @@ pub trait MetricsCalculator: Send + Sync {
 
 ## Related ADRs
 
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate foundation
--   [ADR-014: Multi-Domain Architecture](014-multi-domain-architecture.md) - Domain organization
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate foundation
+- [ADR-014: Multi-Domain Architecture](014-multi-domain-architecture.md) - Domain organization
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 eight-crate workspace*
+Updated 2026-01-17 - Reflects v0.1.2 eight-crate workspace

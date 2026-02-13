@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 MD024 -->
 # MCP Tools Schema Documentation
 
 **Version**: 0.2.0
@@ -11,7 +12,7 @@ This document provides complete schema documentation for all 8 MCP tools availab
 
 **Purpose**: Index a codebase for semantic search
 
-**Parameters**:
+### Parameters
 
 ```json
 {
@@ -34,7 +35,7 @@ This document provides complete schema documentation for all 8 MCP tools availab
 }
 ```
 
-**Return Type**:
+### Return Type
 
 ```json
 {
@@ -47,7 +48,7 @@ This document provides complete schema documentation for all 8 MCP tools availab
 }
 ```
 
-**Example Usage**:
+### Example Usage
 
 ```bash
 mcb index_codebase \
@@ -62,7 +63,7 @@ mcb index_codebase \
 
 **Purpose**: Search indexed codebase with semantic queries
 
-**Parameters**:
+### Parameters
 
 ```json
 {
@@ -95,7 +96,7 @@ mcb index_codebase \
 }
 ```
 
-**Return Type**:
+### Return Type
 
 ```json
 {
@@ -112,7 +113,7 @@ mcb index_codebase \
 }
 ```
 
-**Example Usage**:
+### Example Usage
 
 ```bash
 mcb search_code \
@@ -127,7 +128,7 @@ mcb search_code \
 
 **Purpose**: Get current indexing status for a collection
 
-**Parameters**:
+### Parameters
 
 ```json
 {
@@ -139,7 +140,7 @@ mcb search_code \
 }
 ```
 
-**Return Type**:
+### Return Type
 
 ```json
 {
@@ -158,7 +159,7 @@ mcb search_code \
 
 **Purpose**: Clear indexed data from a collection
 
-**Parameters**:
+### Parameters
 
 ```json
 {
@@ -170,7 +171,7 @@ mcb search_code \
 }
 ```
 
-**Return Type**:
+### Return Type
 
 ```json
 {
@@ -186,13 +187,13 @@ mcb search_code \
 
 **Purpose**: Store and retrieve session observations
 
-**Sub-operations**:
+### Sub-operations
 
--   `store`: Save observation
--   `search`: Find observations
--   `timeline`: Get temporal sequence
--   `get`: Retrieve specific observations
--   `inject`: Get context for session
+- `store`: Save observation
+- `search`: Find observations
+- `timeline`: Get temporal sequence
+- `get`: Retrieve specific observations
+- `inject`: Get context for session
 
 **Parameters** (vary by operation):
 
@@ -242,7 +243,7 @@ mcb search_code \
 }
 ```
 
-**Return Type**:
+### Return Type
 
 ```json
 {
@@ -265,7 +266,7 @@ mcb search_code \
 
 **Purpose**: Manage session context and memory
 
-**Parameters**:
+### Parameters
 
 ```json
 {
@@ -282,7 +283,7 @@ mcb search_code \
 }
 ```
 
-**Return Type**:
+### Return Type
 
 ```json
 {
@@ -299,12 +300,12 @@ mcb search_code \
 
 **Purpose**: Version control operations (git-aware indexing)
 
-**Sub-operations**:
+### Sub-operations
 
--   `index_repository`: Index with git metadata
--   `search_branch`: Search within branch
--   `compare_branches`: Compare branches
--   `analyze_impact`: Analyze commit impact
+- `index_repository`: Index with git metadata
+- `search_branch`: Search within branch
+- `compare_branches`: Compare branches
+- `analyze_impact`: Analyze commit impact
 
 ### 7.1 Index Repository
 
@@ -330,7 +331,7 @@ mcb search_code \
 }
 ```
 
-**Return Type**:
+### Return Type
 
 ```json
 {
@@ -349,7 +350,7 @@ mcb search_code \
 
 **Purpose**: Manage agent sessions and tracking
 
-**Parameters**:
+### Parameters
 
 ```json
 {
@@ -365,7 +366,7 @@ mcb search_code \
 }
 ```
 
-**Return Type**:
+### Return Type
 
 ```json
 {
@@ -381,7 +382,7 @@ mcb search_code \
 
 **Purpose**: Project-level operations
 
-**Parameters**:
+### Parameters
 
 ```json
 {
@@ -413,17 +414,17 @@ All tools return errors in consistent format:
 
 ## v0.2.0 Changes from v0.2.0
 
-**New Tools**:
+### New Tools
 
--   MEMORY (observation storage + search)
--   SESSION (session context management)
--   VCS (git-aware indexing)
--   AGENT (agent session tracking)
+- MEMORY (observation storage + search)
+- SESSION (session context management)
+- VCS (git-aware indexing)
+- AGENT (agent session tracking)
 
-**Enhanced Tools**:
+### Enhanced Tools
 
--   INDEX_CODEBASE: Added `depth` parameter + git support
--   SEARCH_CODE: Added filtering support
+- INDEX_CODEBASE: Added `depth` parameter + git support
+- SEARCH_CODE: Added filtering support
 
 **Deprecated**: None
 

@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 29
 title: Hexagonal Architecture with dill IoC
@@ -10,28 +11,34 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 029: Hexagonal Architecture with dill IoC
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 029: Hexagonal Architecture with dill IoC
 
 ## Status
 
 **Implemented** (v0.1.2)
 
-> Evolution of [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md), adding dill Catalog as IoC container while maintaining the handle-based pattern.
+> Evolution of [ADR 024: Simplified Dependency Injection]
+> (024-simplified-dependency-injection.md), adding dill Catalog as IoC
+> container while maintaining the handle-based pattern.
 
 ## Context
 
-The previous architecture (ADR-024) used a handle-based DI pattern with linkme registry for compile-time provider discovery. While effective, this approach had coupling issues:
+The previous architecture (ADR-024) used a handle-based DI pattern with linkme
+registry for compile-time provider discovery. While effective, this approach had
+coupling issues:
 
 1. **Infrastructure imported concrete types from Application**
-    -   `domain_services.rs` imported `ContextServiceImpl`, `SearchServiceImpl`
+    - `domain_services.rs` imported `ContextServiceImpl`, `SearchServiceImpl`
 
 2. **Application ports were duplicated**
-    -   `mcb-domain/src/ports/providers/` (correct location)
-    -   `mcb-application/src/ports/providers/` (duplication)
+    - `mcb-domain/src/ports/providers/` (correct location)
+    - `mcb-application/src/ports/providers/` (duplication)
 
 3. **No IoC container for service lifecycle management**
-    -   Manual wiring in bootstrap.rs
-    -   No dependency graph validation
+    - Manual wiring in bootstrap.rs
+    - No dependency graph validation
 
 ## Decision
 
@@ -86,7 +93,9 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 // Service retrieval
 pub fn get_embedding_provider(catalog: &Catalog) -> Result<Arc<dyn EmbeddingProvider>> {
     catalog.get_one::<dyn EmbeddingProvider>()
-        .map_err(|e| Error::configuration(format!("Service not found: {e:?}")))
+        .map_err(|e| {
+            Error::configuration(format!("Service not found: {e:?}"))
+        })
 }
 ```
 
@@ -146,7 +155,7 @@ pub fn get_embedding_provider(catalog: &Catalog) -> Result<Arc<dyn EmbeddingProv
 New mcb-validate rules enforce the architecture:
 
 | Rule ID | Description |
-|---------|-------------|
+| --------- | ------------- |
 | CA007 | Infrastructure cannot import concrete types from Application |
 | CA008 | Application must import ports from mcb-domain |
 
@@ -173,7 +182,10 @@ New mcb-validate rules enforce the architecture:
 
 ## References
 
--   [dill-rs Documentation](https://docs.rs/dill/latest/dill/)
--   [ADR 023: Inventory to linkme Migration](023-inventory-to-linkme-migration.md)
--   [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md)
--   [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [dill-rs Documentation](https://docs.rs/dill/latest/dill/)
+- [ADR 023: Inventory to linkme Migration]
+(023-inventory-to-linkme-migration.md)
+- [ADR 024: Simplified Dependency Injection]
+(024-simplified-dependency-injection.md)
+- [Clean Architecture]
+(<https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html>)

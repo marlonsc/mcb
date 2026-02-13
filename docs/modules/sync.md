@@ -1,17 +1,18 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # sync Module
 
-**Note**: Sync functionality is defined as a port trait in v0.1.1.
+**Note**: Sync functionality is defined as a port trait in v0.2.1.
 
-**Trait**: `crates/mcb-application/src/ports/infrastructure/sync.rs`
+**Trait**: `crates/mcb-domain/src/ports/infrastructure/sync.rs`
 **Null Adapter**: `crates/mcb-infrastructure/src/adapters/infrastructure/sync.rs`
 
 ## Overview
 
 File synchronization coordination for incremental indexing. Manages file change detection and coordinates re-indexing of modified files.
 
-## Components
+### Components
 
-### SyncProvider Trait (`mcb-application`)
+### SyncProvider Trait (`mcb-domain`)
 
 Port definition for sync operations:
 
@@ -24,7 +25,7 @@ pub trait SyncProvider: Send + Sync {
 }
 ```
 
-### LockProvider Trait (`mcb-application`)
+### LockProvider Trait (`mcb-domain`)
 
 Distributed locking for concurrent sync:
 
@@ -38,13 +39,13 @@ pub trait LockProvider: Send + Sync {
 
 ### Null Implementations (`mcb-infrastructure`)
 
--   `NullSyncProvider` - No-op sync provider
--   `NullLockProvider` - No-op lock provider
+- `NullSyncProvider` - No-op sync provider
+- `NullLockProvider` - No-op lock provider
 
 ## File Structure
 
 ```text
-crates/mcb-application/src/ports/infrastructure/
+crates/mcb-domain/src/ports/infrastructure/
 └── sync.rs                  # SyncProvider, LockProvider traits
 
 crates/mcb-infrastructure/src/adapters/infrastructure/
@@ -54,7 +55,7 @@ crates/mcb-infrastructure/src/adapters/infrastructure/
 ## Key Exports
 
 ```rust
-// Traits (from mcb-application)
+// Traits (from mcb-domain)
 pub use ports::infrastructure::sync::{SyncProvider, LockProvider};
 
 // Null implementations (from mcb-infrastructure)
@@ -63,11 +64,11 @@ pub use adapters::infrastructure::sync::{NullSyncProvider, NullLockProvider};
 
 ## Cross-References
 
--   **Domain**: [domain.md](./domain.md) (trait definition)
--   **Infrastructure**: [infrastructure.md](./infrastructure.md) (null adapter)
--   **Snapshot**: [snapshot.md](./snapshot.md) (change detection)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Domain**: [domain.md](./domain.md) (trait definition)
+- **Infrastructure**: [infrastructure.md](./infrastructure.md) (null adapter)
+- **Snapshot**: [snapshot.md](./snapshot.md) (change detection)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

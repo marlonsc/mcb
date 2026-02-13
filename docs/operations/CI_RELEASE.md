@@ -1,20 +1,49 @@
-# CI/CD and Release Process
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+# CI/CD and Release Process - v0.2.1
+<!-- markdownlint-disable MD024 -->
 
 ## Overview
 
-This document describes the automated CI/CD pipeline and release process for Memory Context Browser. The system uses:
+This document describes the **PR-first CI/CD pipeline** and automated release process for Memory Context Browser (v0.2.1+). The system is designed for enterprise-grade quality gates with intelligent conditional execution.
 
--   **Local Validation**: Git pre-commit hooks and `make` targets for fast feedback
--   **GitHub Actions**: Automated CI pipeline matching local validation
--   **Automated Releases**: Tag-based release workflow with binary artifacts
+**Key Principles**:
+
+- **PRs are the single source of truth** - All validation happens on pull requests
+- **Conditional policies** - Draft/Bot/Ready PRs run different job sets
+- **Deploy-only main** - Push-to-main triggers ONLY deployment (no redundant CI)
+- **Tag-triggered releases** - Semantic versioning with automated binary distribution
+
+## Architecture
+
+```ascii
+┌─────────────────┐
+│  Pull Request   │──┬─→ Draft PR: Gate check only (~30s)
+│   (to main)     │  ├─→ Bot PR: Simplified suite (~3-5min)
+└─────────────────┘  └─→ Ready PR: Full suite (~10-15min)
+                          ├─ Cross-platform matrix
+                          ├─ Coverage + Golden tests
+                          ├─ Release binaries
+                          └─ CodeQL (after gate, non-blocking)
+
+┌─────────────────┐
+│ Push to main    │──→ GitHub Pages Deploy ONLY
+│  (after merge)  │    (No CI - validated in PR)
+└─────────────────┘
+
+┌─────────────────┐
+│  Tag push (v*)  │──→ Release Workflow
+│                 │    ├─ Build binaries (Linux/macOS/Windows)
+└─────────────────┘    └─ Create GitHub Release
+```
 
 ## Table of Contents
 
 1. [Local Validation (Pre-commit)](#local-validation-pre-commit)
-2. [CI Pipeline (GitHub Actions)](#ci-pipeline-github-actions)
-3. [Automated Release Deployment](#automated-release-deployment)
-4. [Test Timeout Management](#test-timeout-management)
-5. [Troubleshooting](#troubleshooting)
+2. [PR-First CI Pipeline](#pr-first-ci-pipeline)
+3. [GitHub Pages Deployment](#github-pages-deployment)
+4. [Automated Releases](#automated-releases)
+5. [Workflow Files Reference](#workflow-files-reference)
+6. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -25,59 +54,40 @@ This document describes the automated CI/CD pipeline and release process for Mem
 Install pre-commit hooks that validate code before each commit:
 
 ```bash
-make install-hooks
+cp scripts/hooks/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit
 ```
 
 This installs `.git/hooks/pre-commit` which runs validation checks automatically.
 
 ### What Pre-commit Validates
 
-The pre-commit hook runs the same checks as the CI pipeline but **skips tests** for fast feedback (< 30 seconds typical):
+The pre-commit hook runs the same checks as the CI pipeline but **skips tests** for fast feedback (\u003c 30 seconds typical):
 
 ```bash
-
 # Step 1: Lint checks (Rust 2024 compliance)
-make lint CI_MODE=1
+make lint MCB_CI=1
 
 # Step 2: Architecture validation (QUICK mode, no tests)
 make validate QUICK=1
 ```
 
-**Validation includes:**
+**Validation includes**:
 
--   Format check (rustfmt)
--   Clippy lints with Rust 2024 edition compatibility
--   Architecture validation (imports, dependencies, layer boundaries)
--   No test execution (tests run in CI after push)
+- Format check (rustfmt)
+- Clippy lints with Rust 2024 edition compatibility
+- Architecture validation (imports, dependencies, layer boundaries)
+- No test execution (tests run in CI after push)
 
 ### Running Pre-commit Manually
 
 To run pre-commit validation without committing:
 
 ```bash
-
 # Run exactly what pre-commit hook runs
-make ci-local
+make lint MCB_CI=1 && make validate QUICK=1
 
-# Or manually run lint + quick validate
-make lint CI_MODE=1 && make validate QUICK=1
-```
-
-### Commit Orchestrator (Local)
-
-```bash
-
-# Analyze staged changes
-./scripts/commit_analyze.sh
-
-# Run pre-commit validation (same as hook)
-make commit-validate
-
-# Commit (updates Beads if issue ID in branch/footers)
-make commit
-
-# Optional interactive push
-make push-confirm
+# Or run full CI pipeline locally (matches GitHub exactly)
+make ci
 ```
 
 ### Bypassing Pre-commit (Not Recommended)
@@ -92,259 +102,410 @@ git commit --no-verify
 
 ---
 
-## CI Pipeline (GitHub Actions)
+## PR-First CI Pipeline
 
-### Pipeline Triggers
+### Overview
 
-The CI pipeline runs automatically on:
+**v0.2.1 introduces PR-first gating** - all correctness checks happen on pull requests, not on push-to-main. This eliminates redundant validation and provides intelligent conditional execution based on PR type.
 
-1. **Push to main or develop**: Runs on every push
-2. **Pull requests**: Validates changes before merge
-3. **Tag push**: Triggers release workflow (see below)
+### Workflow File
 
-### CI Jobs and Dependencies
+**`.github/workflows/ci.yml`**
 
-The `.github/workflows/ci.yml` defines the following jobs:
+**Triggers**: `pull_request` events (opened, synchronize, reopened, ready_for_review, converted_to_draft) targeting `main`
 
+**Required Status Check**: `CI / Rust CI (PR consolidated)` - This is the ONLY required check and MUST NOT change (referenced in repository rulesets).
+
+### PR Classification
+
+The `classify` job determines which jobs to run based on PR state:
+
+| Classification | Detection | Behavior |
+|----------------|-----------|----------|
+| **Draft PR** | `github.event.pull_request.draft == true` | Skip all heavy jobs, gate passes immediately |
+| **Bot PR** | `github.event.pull_request.user.type == 'Bot'` | Run simplified suite (Linux+stable only) |
+| **Ready PR** | Non-draft, non-bot | Run full suite (cross-platform, coverage, golden, binaries) |
+
+### Job Execution Matrix
+
+| Job | Draft | Bot | Ready | Purpose |
+|-----|-------|-----|-------|---------|
+| `classify` | ✅ | ✅ | ✅ | Detect PR type |
+| `changes` | ✅ | ✅ | ✅ | Path-based filtering |
+| `lint` | ❌ | ✅ | ✅ | Format + clippy (Rust 2024) |
+| `test` | ❌ | ✅ (Linux+stable) | ✅ (full matrix) | Unit + integration tests |
+| `startup-smoke` | ❌ | ✅ | ✅ | DDL/init validation |
+| `validate` | ❌ | ✅ | ✅ | Architecture checks |
+| `audit` | ❌ | ❌ | ✅ | Security audit |
+| `golden-tests` | ❌ | ❌ | ✅ | Acceptance tests |
+| `coverage` | ❌ | ❌ | ✅ | Code coverage |
+| `release-build` | ❌ | ❌ | ✅ | Binary builds (3 platforms) |
+| `rust-ci` (GATE) | ✅ | ✅ | ✅ | **Required gate check** |
+| `analyze` (CodeQL) | ❌ | ❌ | ✅ (after gate) | Security analysis |
+
+### Gate Check Logic
+
+The `rust-ci` job is the **required gate check** that enforces branch protection. It succeeds based on PR type:
+
+**Draft PRs**:
+
+- All heavy jobs skipped
+- Gate check passes immediately (no dependencies failed)
+- Merge approval granted in ~30 seconds
+- **Purpose**: Enables fast iteration during development
+
+**Bot PRs (Dependabot)**:
+
+- Runs simplified suite: lint + test (Linux+stable only) + startup + validate
+- Gate check waits for these 4 jobs
+- Passes in ~3-5 minutes
+- **Purpose**: Fast feedback for dependency updates without expensive cross-platform testing
+
+**Ready PRs (Human)**:
+
+- Runs full suite: all jobs except `analyze` (CodeQL)
+- Gate check waits for: lint, test (all platforms), startup, validate, audit, golden, coverage, release-build
+- Passes in ~5-10 minutes
+- **Purpose**: Comprehensive validation before merge
+
+**CodeQL (analyze job)**:
+
+- Depends on `rust-ci` gate check
+- Runs AFTER gate passes (non-blocking)
+- Only executes for Ready PRs
+- **Purpose**: Security analysis without delaying merge approval
+
+### Test Matrix
+
+**Ready PRs** run a full cross-platform matrix:
+
+| Dimension | Values |
+|-----------|--------|
+| **OS** | ubuntu-latest, macos-latest, windows-latest |
+| **Rust** | stable, beta |
+
+**Bot/Simplified PRs** run:
+
+- OS: ubuntu-latest only
+- Rust: stable only
+
+### Viewing CI Results
+
+```bash
+# List recent CI runs
+gh run list --workflow=ci.yml --limit=5
+
+# View specific run
+gh run view \u003crun-id\u003e
+
+# Watch a run in real-time
+gh run watch \u003crun-id\u003e
+
+# View PR checks
+gh pr checks \u003cpr-number\u003e
 ```
-lint → test ──┬→ validate → release-build
-              │
-              ├→ golden-tests
-              │
-              ├→ audit
-              │
-              ├→ docs
-              │
-              └→ coverage
-```
 
-**Job Details:**
-
-| Job | Purpose | Timeout | Prerequisites |
-|-----|---------|---------|---------------|
-| `lint` | Format & clippy checks | 15 min | None (runs first) |
-| `test` | Unit & integration tests | 30 min | lint passes |
-| `validate` | Architecture validation | 15 min | lint passes |
-| `golden-tests` | Acceptance tests | 15 min | test passes |
-| `audit` | Security audit (Cargo-audit) | 15 min | None (parallel) |
-| `docs` | Documentation build | 15 min | None (parallel) |
-| `coverage` | Code coverage | 30 min | test passes |
-| `release-build` | Build artifacts (3 platforms) | 20 min | test + validate pass |
-
-### How to Match CI Locally
+### Local CI Matching
 
 To run the **exact same pipeline locally** before pushing:
 
 ```bash
-
-# Full CI pipeline (matches GitHub exactly)
-make ci-full
+# Full CI pipeline (matches Ready PR)
+make ci
 
 # This runs:
-
 # 1. Lint (Rust 2024 compliance)
-
 # 2. Unit and integration tests (4 threads to prevent timeouts)
-
 # 3. Architecture validation (strict mode)
-
 # 4. Golden acceptance tests (2 threads)
-
 # 5. Security audit
-
 # 6. Documentation build
-```
-
-### Viewing CI Results
-
-Check GitHub Actions for detailed results:
-
-```bash
-
-# View latest workflow runs
-gh run list --workflow=ci.yml -L 5
-
-# View specific run details
-gh run view <run-id> --log
-
-# View job logs
-gh run view <run-id> -j <job-name>
 ```
 
 ---
 
-## Automated Release Deployment
+## GitHub Pages Deployment
 
-### Release Triggers
+### Overview
 
-Releases are triggered by pushing a version tag to main:
+GitHub Pages deployment is **decoupled from CI** - it runs ONLY on push-to-main, after PR validation is complete. This eliminates redundant validation.
+
+### Workflow File
+
+**`.github/workflows/pages.yml`**
+
+**Triggers**: `push` to `main` branch
+
+**Jobs**:
+
+1. Build mdBook documentation
+2. Build Rust API docs (rustdoc)
+3. Combine outputs
+4. Deploy to GitHub Pages
+
+**Permissions**: Minimal - `contents: read`, `pages: write`, `id-token: write`
+
+### What Gets Deployed
+
+```ascii
+https://marlonsc.github.io/mcb/
+├── /                   # mdBook (user guide, architecture, ops docs)
+├── /api/               # Rust API documentation (rustdoc)
+└── /diagrams/          # Architecture diagrams (PlantUML)
+```
+
+### Manual Pages Deployment
+
+Normally automatic, but you can trigger manually:
 
 ```bash
+# Push to main triggers pages workflow automatically
+git push origin main
 
-# Bump version (choose one)
-make version BUMP=patch  # 0.1.2 → 0.1.3
-make version BUMP=minor  # 0.1.2 → 0.2.0
-make version BUMP=major  # 0.1.2 → 1.0.0
-
-# Create git tag
-git tag v$(make version | grep "Current version" | cut -d: -f2 | xargs)
-
-# Or manually tag the current version
-git tag v0.1.4
-
-# Push tag (triggers release workflow)
-git push origin v0.1.4
+# Or create workflow_dispatch event (if enabled)
+gh workflow run pages.yml
 ```
 
-### Release Workflow (`.github/workflows/release.yml`)
+### Pages URL
 
-The release workflow is triggered by tags matching `v*` pattern and performs:
+Live documentation is available at:
 
-1. **Pre-Release Validation**: Runs full CI validation
-
--   Lint (Rust 2024 compliance)
--   Unit tests (4 threads)
--   Integration tests
--   Architecture validation (strict)
--   Security audit
--   Documentation build
-
-1. **Build Release Artifacts**: Compiles for all platforms
-
--   Linux: `mcb-x86_64-linux-gnu`
--   macOS: `mcb-x86_64-macos`
--   Windows: `mcb-x86_64-windows.exe`
-
-1. **Create GitHub Release**: Publishes release with:
-
--   Automatic changelog (git log since previous release)
--   All binary artifacts as downloads
--   Release notes from CHANGELOG.md
-
-### Release Process Summary
-
+```ascii
+https://marlonsc.github.io/mcb/
 ```
-Push tag v0.1.4 → GitHub detects tag
-                 → Release workflow starts
-                 → Validates: lint, test, validate, audit, docs ✓
-                 → Builds: Linux, macOS, Windows binaries ✓
-                 → Creates GitHub Release with artifacts ✓
-                 → Release ready for download ✓
+
+---
+
+## Automated Releases
+
+### Overview
+
+Releases are triggered by **tag pushes matching `v*` pattern**. The release workflow builds binaries for all platforms and creates a GitHub Release with downloadable artifacts.
+
+### Workflow File
+
+**`.github/workflows/release.yml`**
+
+**Triggers**: `push` tags matching `v*` (e.g., `v0.2.1`, `v1.0.0`)
+
+**Jobs**:
+
+1. Build release binaries (Linux, macOS, Windows)
+2. Create GitHub Release
+3. Upload binary artifacts
+4. Generate changelog from git log
+
+### Release Process
+
+#### Step 1: Version Bump
+
+```bash
+# Bump version in Cargo.toml (choose one)
+make version BUMP=patch  # 0.2.0 → 0.2.1
+make version BUMP=minor  # 0.2.1 → 0.3.0
+make version BUMP=major  # 0.2.1 → 1.0.0
+
+# Or manually edit Cargo.toml
+vim Cargo.toml  # Update version = "0.2.1"
 ```
+
+#### Step 2: Commit Version Bump
+
+```bash
+# Commit the version change
+git add Cargo.toml Cargo.lock
+git commit -m "chore(release): bump version to v0.2.1"
+git push
+```
+
+#### Step 3: Create and Push Tag
+
+```bash
+# Create annotated tag
+git tag -a v0.2.1 -m "Release v0.2.1"
+
+# Push tag to trigger release workflow
+git push origin v0.2.1
+```
+
+#### Step 4: Monitor Release Workflow
+
+```bash
+# Watch release workflow
+gh run list --workflow=release.yml --limit=1
+gh run watch \u003crun-id\u003e
+```
+
+### Release Artifacts
+
+Each release includes pre-compiled binaries:
+
+| Platform | Binary Name | Target Triple |
+|----------|-------------|---------------|
+| **Linux** | `mcb-x86_64-unknown-linux-gnu` | x86_64-unknown-linux-gnu |
+| **macOS** | `mcb-x86_64-apple-darwin` | x86_64-apple-darwin |
+| **Windows** | `mcb-x86_64-pc-windows-msvc.exe` | x86_64-pc-windows-msvc |
+
+### Release Notes
+
+Automatically generated from:
+
+- Git log since previous tag
+- Conventional commit messages
+- CHANGELOG.md (if updated manually)
 
 ### Downloading Releases
 
 Releases are available at:
 
-```
+```ascii
 https://github.com/marlonsc/mcb/releases
 ```
 
-Each release includes:
+Or via CLI:
 
--   Pre-compiled binaries for all platforms
--   Automatic changelog
--   Installation instructions
+```bash
+# List releases
+gh release list
+
+# Download latest release
+gh release download
+
+# Download specific version
+gh release download v0.2.1
+```
 
 ---
 
-## Test Timeout Management
+## Workflow Files Reference
 
-### Why Timeouts Happen
+### `.github/workflows/ci.yml` (PR Validation)
 
-Tests can timeout in CI due to:
+**Purpose**: Validate pull requests with conditional policies
 
--   High parallelization (many tests running simultaneously)
--   GitHub runner resource constraints
--   Integration tests that take time
--   Network-dependent operations
+**Key Features**:
 
-### Timeout Configuration
+- PR type classification (Draft/Bot/Ready)
+- Path-based filtering (skip CI for docs-only changes)
+- Cross-platform testing (Linux/macOS/Windows)
+- Required gate check (`rust-ci`)
+- CodeQL security analysis (non-blocking)
 
-The CI pipeline uses thread limiting to prevent timeouts:
+**Concurrency**: `group: ci-${{ github.head_ref }}`, `cancel-in-progress: true`
 
-```bash
+**Timeouts**:
 
-# In GitHub Actions CI:
-make test TEST_THREADS=4          # 4 parallel test threads (instead of auto)
-make test SCOPE=golden TEST_THREADS=2  # Acceptance tests with 2 threads
-```
+- Most jobs: 15 minutes
+- Test job: 30 minutes
+- Coverage: 30 minutes
+- Release build: 20 minutes
 
-### Available TEST_THREADS Values
+### `.github/workflows/pages.yml` (Documentation Deployment)
 
-| Value | Use Case | Default |
-|-------|----------|---------|
-| `0` | Auto (all available cores) | ✓ Local only |
-| `1` | Sequential (slowest, fewest timeouts) | For slow CI |
-| `2` | Limited parallelization | Acceptance tests |
-| `4` | Balanced parallelization | Standard CI |
-| `8+` | High parallelization | Local only |
+**Purpose**: Deploy documentation to GitHub Pages
 
-### Adjusting Timeout Limits
+**Key Features**:
 
-**For local development:**
+- Builds mdBook + rustdoc
+- Combines outputs into single site
+- Deploys to `gh-pages` branch
 
-```bash
+**Concurrency**: `group: pages`, `cancel-in-progress: false` (no cancellation - deployments must complete)
 
-# Run tests with limited parallelization
-make test TEST_THREADS=4
+**Timeouts**: 20 minutes per job
 
-# Or use ci-full which already has good defaults
-make ci-full
-```
+### `.github/workflows/release.yml` (Binary Distribution)
 
-**For GitHub Actions CI:** Edit `.github/workflows/ci.yml` and adjust:
+**Purpose**: Create GitHub Releases with binary artifacts
 
-```yaml
--   run: make test TEST_THREADS=4  # Increase/decrease as needed
-```
+**Key Features**:
 
-### Monitoring Test Performance
+- Builds release binaries (optimized, stripped)
+- Cross-platform compilation
+- Automatic changelog generation
+- Artifact upload
 
-Check CI logs for timeout issues:
+**Concurrency**: `group: release-${{ github.ref }}`, `cancel-in-progress: false` (releases must complete)
 
-```bash
+**Timeouts**: 30 minutes per build job
 
-# View test job logs
-gh run view <run-id> -j test --log
+### `.github/workflows/auto-reviewer.yml` (Dependabot Automation)
 
-# Look for timeout messages or slow tests
-```
+**Purpose**: Auto-merge Dependabot PRs (patch/minor updates)
+
+**Triggers**: Dependabot PRs only (`user.login == 'dependabot[bot]'`)
+
+**Actions**:
+
+- Fetch Dependabot metadata
+- Enable auto-merge for patch/minor updates
+- Require manual review for major updates
 
 ---
 
 ## Troubleshooting
 
-### Pre-commit Hook Not Running
+### Draft PR Not Skipping Jobs
 
-**Problem**: Commits don't run pre-commit validation
+**Problem**: Draft PR runs full suite instead of gate check only
 
 **Solution**:
 
 ```bash
+# Verify PR is marked as draft
+gh pr view \u003cpr-number\u003e --json isDraft
 
-# Reinstall hooks
-make install-hooks
+# If not draft, convert it
+gh pr ready \u003cpr-number\u003e --undo
 
-# Verify installation
-cat .git/hooks/pre-commit
+# Check classify job output
+gh run view \u003crun-id\u003e --log | grep "is_draft"
+```
+
+### Bot PR Running Full Suite
+
+**Problem**: Dependabot PR runs coverage/golden tests
+
+**Solution**:
+
+```bash
+# Verify user type detection
+gh api /repos/marlonsc/mcb/pulls/\u003cpr-number\u003e | jq '.user.type'
+
+# Should return "Bot"
+# If not, check classify job logic in .github/workflows/ci.yml
+```
+
+### CodeQL Blocking Merge
+
+**Problem**: CodeQL job prevents PR from merging
+
+**Cause**: CodeQL is NOT a required check. If it's blocking, check repository ruleset configuration.
+
+**Solution**:
+
+```bash
+# Verify required checks
+gh api /repos/marlonsc/mcb/rulesets | jq '.[] | select(.name == "main") | .rules[] | select(.type == "required_status_checks")'
+
+# Should ONLY show: "CI / Rust CI (PR consolidated)"
+# CodeQL should NOT be in required checks list
 ```
 
 ### CI Fails But Pre-commit Passed Locally
 
-**Possible causes:**
+**Possible Causes**:
 
 1. Different environment (macOS vs Linux)
 2. Different Rust versions
 3. Cache issues
 4. Race conditions in tests
 
-**Solutions:**
+**Solutions**:
 
 ```bash
-
-# Run exact CI validation
-make ci-full
+# Run exact CI validation locally
+make ci
 
 # Clear cache and rebuild
 make clean
@@ -358,7 +519,7 @@ rustc --version  # Should be stable
 
 **Problem**: `test` job timeout after 30 minutes
 
-**Solutions:**
+**Solutions**:
 
 1. **Increase timeout** in `.github/workflows/ci.yml`:
 
@@ -366,32 +527,32 @@ rustc --version  # Should be stable
    timeout-minutes: 45
    ```
 
-1. **Reduce parallelization**:
+2. **Reduce parallelization**:
 
    ```yaml
-   -   run: make test TEST_THREADS=2
+   - run: make test THREADS=2
    ```
 
-1. **Run tests locally** to identify slow tests:
+3. **Run tests locally** to identify slow tests:
 
    ```bash
-   make test TEST_THREADS=4
+   make test THREADS=4 VERBOSE=1
    ```
 
 ### Release Build Fails
 
 **Problem**: `release-build` job fails with compilation error
 
-**Check**:
+**Checklist**:
 
-1. All CI checks passed before release job
-2. Built locally successfully
+1. All CI checks passed before release job?
+2. Built locally successfully?
 
    ```bash
    make build RELEASE=1
    ```
 
-1. No uncommitted changes in version
+3. No uncommitted changes?
 
    ```bash
    git status
@@ -401,90 +562,177 @@ rustc --version  # Should be stable
 
 **Problem**: Tag pushed but release workflow didn't complete
 
-**Check**:
+**Solution**:
 
 ```bash
-
 # View release workflow runs
-gh run list --workflow=release.yml -L 5
+gh run list --workflow=release.yml --limit=5
 
-# View specific run
-gh run view <run-id> --log
+# View specific run logs
+gh run view \u003crun-id\u003e --log
+
+# Common issues:
+# - Pre-release validation failed (check test/lint/audit logs)
+# - Tag format incorrect (must be v* like v0.2.1)
+# - Artifacts failed to upload (check permissions)
 ```
 
-**Common issues:**
+### Pages Deployment Stuck
 
--   Pre-release validation failed (check test/lint/audit logs)
--   Tag format incorrect (must be `v*` like `v0.1.4`)
--   Artifacts failed to upload
+**Problem**: Pages workflow running but site not updating
+
+**Solution**:
+
+```bash
+# Check pages workflow status
+gh run list --workflow=pages.yml --limit=3
+
+# View deployment status
+gh api /repos/marlonsc/mcb/pages/builds/latest
+
+# Common issues:
+# - Pages not enabled in repo settings
+# - Permissions insufficient (needs pages: write)
+# - Branch protection preventing gh-pages push
+```
 
 ---
 
-## CI Pipeline Commands Reference
+## CI/CD Best Practices
 
-### Local Commands
+### For Developers
+
+1. **Use Draft PRs during development**
+   - Faster iteration (~30s gate check vs ~10min full suite)
+   - Convert to Ready when seeking review
+
+2. **Run `make ci` before pushing**
+   - Catches issues locally before CI
+   - Saves CI runner time
+
+3. **Keep PRs up-to-date**
+   - Strict mode requires branch to be current with main
+   - Rebase frequently: `git pull --rebase origin main`
+
+4. **Don't bypass pre-commit hooks**
+   - They exist to catch issues early
+   - Bypassing wastes CI time
+
+### For Reviewers
+
+1. **Wait for gate check to pass**
+   - `rust-ci` job is the required check
+   - CodeQL runs after, don't wait for it
+
+2. **Check classification is correct**
+   - Draft: Only gate check should run
+   - Bot: Simplified suite
+   - Ready: Full suite
+
+3. **Review CodeQL findings**
+   - Security analysis runs after gate
+   - Not blocking, but should be addressed
+
+### For Release Managers
+
+1. **Always tag from main**
+   - Ensure PR merged and validated before tagging
+   - Never tag from feature branches
+
+2. **Use semantic versioning**
+   - Patch: Bug fixes (0.2.0 → 0.2.1)
+   - Minor: New features (0.2.1 → 0.3.0)
+   - Major: Breaking changes (0.2.1 → 1.0.0)
+
+3. **Verify release artifacts**
+   - Download binaries after release
+   - Test on each platform
+   - Validate changelog accuracy
+
+---
+
+## Command Reference
+
+### Local Development
 
 ```bash
-
 # Install pre-commit hooks
-make install-hooks
+cp scripts/hooks/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit
 
 # Pre-commit validation (lint + validate QUICK)
-make ci-local
+make lint MCB_CI=1 && make validate QUICK=1
 
-# Full CI pipeline (matches GitHub)
-make ci-full
+# Full CI pipeline (matches Ready PR)
+make ci
 
 # Individual checks
-make lint CI_MODE=1        # Format & clippy
-make test                  # All tests
-make validate STRICT=1     # Architecture validation
-make audit                 # Security audit
-make docs                  # Documentation
-make coverage LCOV=1       # Code coverage
+make lint MCB_CI=1        # Format & clippy
+make test                 # All tests
+make validate             # Architecture validation
+make audit                # Security audit
+make docs                 # Documentation build
+make coverage MCB_CI=1    # Code coverage
 ```
 
-### GitHub Actions
-
-Pipeline is automated. No manual intervention needed.
-
-To view results:
+### PR Management
 
 ```bash
-gh run list --workflow=ci.yml
-gh run view <run-id>
+# Create draft PR
+gh pr create --draft --title "feat: ..." --body "..."
+
+# Convert to ready for review
+gh pr ready \u003cpr-number\u003e
+
+# Convert back to draft
+gh pr ready \u003cpr-number\u003e --undo
+
+# Check PR status
+gh pr view \u003cpr-number\u003e
+gh pr checks \u003cpr-number\u003e
 ```
 
-### Makefile Parameters
+### CI Monitoring
 
 ```bash
+# View workflow runs
+gh run list --workflow=ci.yml --limit=5
 
-# Test parallelization
-make test TEST_THREADS=4
+# Watch a run
+gh run watch \u003crun-id\u003e
 
-# Specific test scopes
-make test SCOPE=unit       # Unit tests only
-make test SCOPE=doc        # Doctests only
-make test SCOPE=golden     # Acceptance tests only
-make test SCOPE=integration  # Integration tests only
+# View job logs
+gh run view \u003crun-id\u003e --log -j \u003cjob-name\u003e
+```
 
-# Lint modes
-make lint CI_MODE=1        # Rust 2024 compatibility checks
-make lint FIX=1            # Auto-fix issues
+### Release Management
 
-# Validation modes
-make validate STRICT=1     # Strict validation
-make validate QUICK=1      # Skip tests
+```bash
+# Bump version
+make version BUMP=patch
 
-# Release
-make version BUMP=patch    # Show next patch version
-make release               # Full release pipeline
+# Create and push tag
+git tag -a v0.2.1 -m "Release v0.2.1"
+git push origin v0.2.1
+
+# List releases
+gh release list
+
+# Download release
+gh release download v0.2.1
 ```
 
 ---
 
 ## See Also
 
--   [Deployment Guide](./DEPLOYMENT.md) - Installation and configuration
--   [CHANGELOG](./CHANGELOG.md) - Release history
--   [Architecture](../architecture/ARCHITECTURE.md) - System design
+- [CI Optimization Strategy](./CI_OPTIMIZATION.md) - v0.2.1 PR-first details
+- [CI PR Policies](./CI_PR_POLICIES.md) - Draft/Bot/Ready deep-dive
+- [Deployment Guide](./DEPLOYMENT.md) - Installation and configuration
+- [CHANGELOG](./CHANGELOG.md) - Release history
+- [Architecture](../architecture/ARCHITECTURE.md) - System design
+
+---
+
+**Last Updated**: 2026-02-13
+**Version**: 0.2.1
+**Status**: Current (In Review - PR #94)

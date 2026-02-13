@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 44
 title: Lightweight Discovery Models for Context Routing
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR-044: Lightweight Discovery Models for Context Routing
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR-044: Lightweight Discovery Models for Context Routing
 
 **Status**: Proposed
 **Date**: 2026-02-05
@@ -20,22 +23,22 @@ implementation_status: Incomplete
 
 ## Context
 
-ADR-043 hybrid search ranks results by BM25 + semantics + graph. But ranking is **global**: the same code is ranked the same regardless of **who's asking** or **what they're trying to do**.
+ADR-043 hybrid search ranks results by BM25 + semantics + graph. But ranking is**global**: the same code is ranked the same regardless of**who's asking**or**what they're trying to do**.
 
 Example:
 
--   Query: "authentication"
--   For a **security review task**: want cryptography libraries + auth policies
--   For a **onboarding task**: want example login code + documentation
--   Same query, different ideal results
+- Query: "authentication"
+- For a**security review task**: want cryptography libraries + auth policies
+- For a**onboarding task**: want example login code + documentation
+- Same query, different ideal results
 
-**Solution**: Route queries based on **task context** without expensive ML training.
+**Solution**: Route queries based on**task context** without expensive ML training.
 
 ## Decision
 
 ### 1. Multi-Tier Routing: AST → Rules → (Optional: ML)
 
-```
+```text
 ┌──────────────────────────────┐
 │ Task Context                 │  (From Beads: scope, priority, type)
 └──────────────┬───────────────┘
@@ -155,7 +158,7 @@ impl AstBasedRouter {
 
 ### 3. Stage 2: Rule-Based Routing (rhai DSL)
 
-For tasks that don't fit standard patterns, use **rhai scripting** for custom rules:
+For tasks that don't fit standard patterns, use**rhai scripting** for custom rules:
 
 ```rust
 pub struct RuleBasedRouter {
@@ -273,33 +276,33 @@ if node.is_public == true && node.kind == "Function" {
 
 ## Integration with ADR-041-046
 
-**ADR-043 (Hybrid Search)**:
+ADR-043 (Hybrid Search):
 
--   After RRF fusion, apply routing to rerank
+- After RRF fusion, apply routing to rerank
 
-**ADR-045 (Versioning)**:
+ADR-045 (Versioning):
 
--   Store task-specific context snapshots (include routing rules used)
+- Store task-specific context snapshots (include routing rules used)
 
-**ADR-046 (Policies)**:
+ADR-046 (Policies):
 
--   Policies can gate routing (e.g., "Security policy requires high-confidence scoring")
+- Policies can gate routing (e.g., "Security policy requires high-confidence scoring")
 
 ## Testing
 
--   **AST router tests** (8): Feature/bug/security task routing, scoring logic
--   **Rule engine tests** (5): rhai script parsing, execution, error handling
--   **ML router tests** (5, deferred): Model loading, inference, batching
+- **AST router tests** (8): Feature/bug/security task routing, scoring logic
+- **Rule engine tests** (5): rhai script parsing, execution, error handling
+- **ML router tests** (5, deferred): Model loading, inference, batching
 
 **Target**: 18+ tests (AST + rules), 80%+ coverage
 
-## Success Criteria
+### Success Criteria
 
--   ✅ AST router <5ms latency
--   ✅ Rule router <20ms latency
--   ✅ Routing improves top-1 Result relevance by 20% (A/B test)
--   ✅ Custom rules work without code changes
--   ✅ ML placeholder ready for v0.5.0
+- ✅ AST router <5ms latency
+- ✅ Rule router <20ms latency
+- ✅ Routing improves top-1 Result relevance by 20% (A/B test)
+- ✅ Custom rules work without code changes
+- ✅ ML placeholder ready for v0.5.0
 
 ---
 

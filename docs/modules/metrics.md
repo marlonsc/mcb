@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Metrics Module
 
 **Source**: `crates/mcb-infrastructure/src/infrastructure/admin.rs` and `crates/mcb-server/src/admin/`
@@ -7,30 +8,30 @@ System monitoring, performance tracking, and HTTP metrics API.
 
 ## Overview
 
-The metrics functionality is distributed across crates in v0.1.2:
+The metrics functionality is distributed across crates in v0.2.1:
 
--   **mcb-infrastructure**: `AtomicPerformanceMetrics`, `DefaultIndexingOperations` - Performance tracking
--   **mcb-server**: Admin endpoints for metrics exposure
+- **mcb-infrastructure**: `AtomicPerformanceMetrics`, `DefaultIndexingOperations` - Performance tracking
+- **mcb-server**: Admin endpoints for metrics exposure
 
-## Components
+### Components
 
 ### AtomicPerformanceMetrics (`mcb-infrastructure`)
 
 Thread-safe performance metrics collection:
 
--   Query latency (P50, P95, P99)
--   Cache hit/miss rates
--   Request throughput
--   Error rates
+- Query latency (P50, P95, P99)
+- Cache hit/miss rates
+- Request throughput
+- Error rates
 
 ### Metrics Endpoints (`mcb-server`)
 
 HTTP API for metrics access via admin router.
 
-**Endpoints**:
+### Endpoints
 
 | Endpoint | Method | Purpose |
-|----------|--------|---------|
+| ---------- | -------- | --------- |
 | `/health` | GET | Health check |
 | `/health/ready` | GET | Readiness probe |
 | `/health/live` | GET | Liveness probe |
@@ -61,16 +62,16 @@ pub use admin::{metrics_handler, MetricsResponse};
 
 Environment variables:
 
--   `MCP__SYSTEM__INFRASTRUCTURE__METRICS__ENABLED=true` - Enable metrics collection
--   `MCP__SERVER__NETWORK__PORT=3000` - Unified HTTP port (Admin + Metrics + MCP)
+- `MCP__SYSTEM__INFRASTRUCTURE__METRICS__ENABLED=true` - Enable metrics collection
+- `MCP__SERVER__NETWORK__PORT=3000` - Unified HTTP port (Admin + Metrics + MCP)
 
 ## Cross-References
 
--   **Admin**: [admin.md](./admin.md) (metrics endpoints)
--   **Server**: [server.md](./server.md) (HTTP server)
--   **Providers**: [providers.md](./providers.md) (metrics implementation)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Admin**: [admin.md](./admin.md) (metrics endpoints)
+- **Server**: [server.md](./server.md) (HTTP server)
+- **Providers**: [providers.md](./providers.md) (metrics implementation)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

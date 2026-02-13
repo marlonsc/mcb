@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # ADR-032: Agent & Quality Domain Extension (MCB-Only)
 
 **Status:** Proposed
@@ -10,10 +11,10 @@
 
 The oh-my-opencode workflow system currently uses:
 
--   **6 shell hook scripts** - Stateless
--   **9 markdown skill files** - Inject ~200 lines each
--   **Beads CLI** - Separate SQLite database
--   **GSD markdown files** - .planning/ directory
+- **6 shell hook scripts** - Stateless
+- **9 markdown skill files** - Inject ~200 lines each
+- **Beads CLI** - Separate SQLite database
+- **GSD markdown files** - .planning/ directory
 
 Pain points:
 
@@ -31,7 +32,7 @@ Pain points:
 
 #### 1. MCB-Only Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    MCB (Single Source of Truth)              │
 │                                                              │
@@ -57,19 +58,19 @@ Pain points:
 #### 2. Tool Naming (per ADR-009)
 
 | Prefix | Domain | Count |
-|--------|--------|-------|
+| -------- | -------- | ------- |
 | `agent_` | Session/delegation tracking | 7 |
 | `quality_` | Quality gate enforcement | 3 |
 | `memory_` | Executions, errors, context | 5 |
 | `project_` | Project/phase/issue CRUD | 9 |
 
-**Total: 24 MCP tools**
+Total: 24 MCP tools
 
 #### 3. Full CRUD for Project State
 
 Replace GSD/Beads with complete CRUD operations:
 
-```
+```text
 project_create          → Create project
 project (action=create, resource=phase)    → Create phase
 project (action=update, resource=phase)    → Update status/progress
@@ -84,7 +85,7 @@ project_log_decision    → Log decision
 #### 4. No Legacy Support
 
 | What | Decision |
-|------|----------|
+| ------ | ---------- |
 | .planning/ import | NOT SUPPORTED |
 | .beads/ import | NOT SUPPORTED |
 | bd CLI compatibility | NOT SUPPORTED |
@@ -117,7 +118,7 @@ project_log_decision    → Log decision
 ## Implementation Plan
 
 | Phase | Goal | LOC | Tools |
-|-------|------|-----|-------|
+| ------- | | ------ | --- | ------- |-- |
 | 1 | Agent Sessions | ~700 | 7 `agent_*` |
 | 2 | Executions | ~400 | 2 `memory_*` |
 | 3 | Quality Gates | ~500 | 3 `quality_*` |
@@ -125,7 +126,7 @@ project_log_decision    → Log decision
 | 5 | Project State | ~800 | 9 `project_*` |
 | 6 | Context Assembly | ~400 | 1 `memory_*` |
 
-**Total: ~3200 LOC | 14 plans | 24 tools | 9 tables**
+Total: ~3200 LOC | 14 plans | 24 tools | 9 tables
 
 ## Alternatives Considered
 
@@ -133,45 +134,45 @@ project_log_decision    → Log decision
 
 Maintain .planning/ and .beads/ compatibility.
 
-**Rejected because:**
+Rejected because:
 
--   Complex sync logic
--   Conflict resolution needed
--   Parser code maintenance
--   Two sources of truth
+- Complex sync logic
+- Conflict resolution needed
+- Parser code maintenance
+- Two sources of truth
 
 ### 2. Import-Only (No Export)
 
 Import legacy data but don't export.
 
-**Rejected because:**
+Rejected because:
 
--   Still need parser code
--   One-way migration is cleaner
--   Users can manually migrate
+- Still need parser code
+- One-way migration is cleaner
+- Users can manually migrate
 
 ### 3. Extend Beads
 
 Add MCB features to Beads CLI.
 
-**Rejected because:**
+Rejected because:
 
--   Beads is generic issue tracker
--   Would need embedding pipeline
--   Loses MCB integration
+- Beads is generic issue tracker
+- Would need embedding pipeline
+- Loses MCB integration
 
 ## Validation
 
 ### Architecture Rules
 
--   CA007: Ports in mcb-domain only
--   CA008: Infrastructure uses `Arc<dyn Trait>`
--   Layer dependencies point inward
+- CA007: Ports in mcb-domain only
+- CA008: Infrastructure uses `Arc<dyn Trait>`
+- Layer dependencies point inward
 
 ### Performance
 
 | Tool | Target |
-|------|--------|
+| ------ | -------- |
 | `agent_start_session` | < 10ms |
 | `quality_check_gate` | < 50ms |
 | `project_get_ready_work` | < 50ms |
@@ -179,7 +180,7 @@ Add MCB features to Beads CLI.
 
 ## References
 
--   [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
--   [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
--   [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md)
--   [Planning Documents](../design/workflow-management/.planning/)
+- [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
+- [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
+- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md)
+- [Planning Documents](../design/workflow-management/.planning/)

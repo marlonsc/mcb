@@ -1,8 +1,9 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Phase 9: Integrated Context System (ADR-041-046)
 
 ## Overview
 
-Phase 9 implements the **Integrated Context System** for v0.4.0, building on Phase 8's workflow FSM and policy framework. This phase introduces knowledge graphs, freshness tracking, time-travel queries, and hybrid search capabilities.
+Phase 9 implements the**Integrated Context System** for v0.4.0, building on Phase 8's workflow FSM and policy framework. This phase introduces knowledge graphs, freshness tracking, time-travel queries, and hybrid search capabilities.
 
 **Timeline**: Feb 17 - Mar 16, 2026 (4 weeks)
 **ADRs**: ADR-041 through ADR-046 (6 decisions)
@@ -26,13 +27,13 @@ Defines the 5-layer context system architecture:
 4. Versioning & Snapshots (temporal queries, snapshot management)
 5. Integration & Policies (policy enforcement, compensation triggers)
 
-**Key Decisions**:
+Key Decisions:
 
--   5-layer architecture with clear separation of concerns
--   Knowledge graph as central component (petgraph-based)
--   Hybrid search combining semantic and keyword approaches
--   Snapshot-based versioning for time-travel queries
--   Policy-driven context discovery
+- 5-layer architecture with clear separation of concerns
+- Knowledge graph as central component (petgraph-based)
+- Hybrid search combining semantic and keyword approaches
+- Snapshot-based versioning for time-travel queries
+- Policy-driven context discovery
 
 **Related**: ADR-042, ADR-043, ADR-044, ADR-045, ADR-046
 
@@ -49,35 +50,35 @@ Defines the 5-layer context system architecture:
 **Summary**:
 Defines the knowledge graph structure for representing code relationships:
 
-**Graph Components**:
+Graph Components:
 
--   **Nodes**: Code entities (functions, classes, modules, types)
--   **Edges**: Relationships (calls, imports, extends, implements, uses)
--   **Metadata**: Freshness (last modified, staleness signals), version, source
+- **Nodes**: Code entities (functions, classes, modules, types)
+- **Edges**: Relationships (calls, imports, extends, implements, uses)
+- **Metadata**: Freshness (last modified, staleness signals), version, source
 
-**Relationship Types**:
+Relationship Types:
 
--   `calls`: Function A calls Function B
--   `imports`: Module A imports Module B
--   `extends`: Class A extends Class B
--   `implements`: Class A implements Interface B
--   `uses`: Code A uses Type B
--   `defines`: Module A defines Function B
+- `calls`: Function A calls Function B
+- `imports`: Module A imports Module B
+- `extends`: Class A extends Class B
+- `implements`: Class A implements Interface B
+- `uses`: Code A uses Type B
+- `defines`: Module A defines Function B
 
-**Freshness Metadata**:
+Freshness Metadata:
 
--   Last modified timestamp
--   Commit hash
--   Branch information
--   Staleness signals (deprecated, outdated, legacy)
+- Last modified timestamp
+- Commit hash
+- Branch information
+- Staleness signals (deprecated, outdated, legacy)
 
-**Graph Operations**:
+Graph Operations:
 
--   Node insertion/retrieval
--   Edge insertion/retrieval
--   Traversal (BFS, DFS, shortest path)
--   Cycle detection
--   Relationship queries
+- Node insertion/retrieval
+- Edge insertion/retrieval
+- Traversal (BFS, DFS, shortest path)
+- Cycle detection
+- Relationship queries
 
 **Related**: ADR-041, ADR-035 (Freshness Tracking)
 
@@ -94,27 +95,27 @@ Defines the knowledge graph structure for representing code relationships:
 **Summary**:
 Defines the hybrid search engine combining semantic and keyword search:
 
-**Search Modes**:
+Search Modes:
 
--   **Semantic**: Embedding-based similarity search
--   **Keyword**: Full-text index (BM25, TF-IDF)
--   **Hybrid**: RRF (Reciprocal Rank Fusion) combining both
+- **Semantic**: Embedding-based similarity search
+- **Keyword**: Full-text index (BM25, TF-IDF)
+- **Hybrid**: RRF (Reciprocal Rank Fusion) combining both
 
-**RRF Algorithm**:
+RRF Algorithm:
 
-```
+```text
 score(d) = Σ 1 / (k + rank(d))
 ```
 
 Where k=60 (constant), rank is position in each ranking
 
-**Freshness Filtering**:
+Freshness Filtering:
 
--   Filter results by max age (days)
--   Apply staleness signals (deprecated, outdated, legacy)
--   Rank by freshness score
+- Filter results by max age (days)
+- Apply staleness signals (deprecated, outdated, legacy)
+- Rank by freshness score
 
-**Result Ranking**:
+Result Ranking:
 
 1. RRF score (semantic + keyword)
 2. Freshness score (recency + staleness)
@@ -135,31 +136,31 @@ Where k=60 (constant), rank is position in each ranking
 **Summary**:
 Evaluates and selects embedding and search models for v0.4.0:
 
-**Embedding Models**:
+Embedding Models:
 
--   **OpenAI** (text-embedding-3-small): High quality, cost-effective
--   **VoyageAI** (voyage-2): Specialized for code, high quality
--   **Ollama** (nomic-embed-text): Local, privacy-preserving
--   **Gemini** (embedding-001): Google's model, good quality
--   **FastEmbed** (BAAI/bge-small-en-v1.5): Fast, local, good quality
+- **OpenAI** (text-embedding-3-small): High quality, cost-effective
+- **VoyageAI** (voyage-2): Specialized for code, high quality
+- **Ollama** (nomic-embed-text): Local, privacy-preserving
+- **Gemini** (embedding-001): Google's model, good quality
+- **FastEmbed** (BAAI/bge-small-en-v1.5): Fast, local, good quality
 
-**Search Algorithms**:
+Search Algorithms:
 
--   **BM25**: Keyword search baseline
--   **TF-IDF**: Term frequency-inverse document frequency
--   **RRF**: Reciprocal Rank Fusion for hybrid search
+- **BM25**: Keyword search baseline
+- **TF-IDF**: Term frequency-inverse document frequency
+- **RRF**: Reciprocal Rank Fusion for hybrid search
 
-**Trade-offs**:
+Trade-offs:
 
--   Quality vs. Cost (OpenAI vs. Ollama)
--   Speed vs. Accuracy (FastEmbed vs. VoyageAI)
--   Privacy vs. Features (Ollama vs. OpenAI)
+- Quality vs. Cost (OpenAI vs. Ollama)
+- Speed vs. Accuracy (FastEmbed vs. VoyageAI)
+- Privacy vs. Features (Ollama vs. OpenAI)
 
-**Recommendations**:
+Recommendations:
 
--   Default: OpenAI (best quality/cost balance)
--   Privacy-first: Ollama (local, no API calls)
--   Code-specialized: VoyageAI (best for code)
+- Default: OpenAI (best quality/cost balance)
+- Privacy-first: Ollama (local, no API calls)
+- Code-specialized: VoyageAI (best for code)
 
 **Related**: ADR-041, ADR-043 (Hybrid Search)
 
@@ -174,30 +175,30 @@ Evaluates and selects embedding and search models for v0.4.0:
 **Summary**:
 Defines snapshot-based versioning for time-travel queries:
 
-**Snapshot Structure**:
+Snapshot Structure:
 
--   Immutable capture of code state at specific commit/date
--   Includes: graph, embeddings, metadata, freshness info
--   Identified by: commit hash, tag, date
+- Immutable capture of code state at specific commit/date
+- Includes: graph, embeddings, metadata, freshness info
+- Identified by: commit hash, tag, date
 
-**Snapshot Operations**:
+Snapshot Operations:
 
--   Create: Capture current state
--   Retrieve: Load snapshot by commit/tag/date
--   Compare: Diff between snapshots
--   Cleanup: Retention policies (N commits, N days)
+- Create: Capture current state
+- Retrieve: Load snapshot by commit/tag/date
+- Compare: Diff between snapshots
+- Cleanup: Retention policies (N commits, N days)
 
-**Temporal Queries**:
+Temporal Queries:
 
--   "Show code as it was at v0.2.0"
--   "How did this function evolve?"
--   "When was this pattern introduced?"
+- "Show code as it was at v0.2.0"
+- "How did this function evolve?"
+- "When was this pattern introduced?"
 
-**Retention Policies**:
+Retention Policies:
 
--   Keep last N commits (e.g., 100)
--   Keep last N days (e.g., 90)
--   Snapshot frequency (e.g., every 10 commits)
+- Keep last N commits (e.g., 100)
+- Keep last N days (e.g., 90)
+- Snapshot frequency (e.g., every 10 commits)
 
 **Related**: ADR-041, ADR-042 (Knowledge Graph)
 
@@ -205,7 +206,7 @@ Defines snapshot-based versioning for time-travel queries:
 
 ---
 
-### ADR-046: Integration Patterns
+### ADR-046: Integration with ADR-034-037 & Policies
 
 **Status**: Proposed
 **Date**: Feb 2026
@@ -214,19 +215,19 @@ Defines snapshot-based versioning for time-travel queries:
 **Summary**:
 Defines integration patterns for context system with MCP tools and workflow FSM:
 
-**MCP Tools**:
+MCP Tools:
 
--   `search`: Semantic search with freshness, snapshots, policies
--   `index`: Indexing operations with snapshot creation
--   `memory`: Context storage and retrieval
--   `session`: Workflow session management
--   `agent`: Agent activity logging
--   `project`: Project workflow operations
--   `vcs`: Repository operations
+- `search`: Semantic search with freshness, snapshots, policies
+- `index`: Indexing operations with snapshot creation
+- `memory`: Context storage and retrieval
+- `session`: Workflow session management
+- `agent`: Agent activity logging
+- `project`: Project workflow operations
+- `vcs`: Repository operations
 
-**Tool Parameters**:
+Tool Parameters:
 
-```
+```text
 search:
   --query: Search query
   --freshness-max-age: Max age in days
@@ -241,24 +242,24 @@ index:
   --snapshot-create: Create snapshot
 ```
 
-**Policy Enforcement**:
+Policy Enforcement:
 
--   Freshness gates: Block if context too old
--   Validation gates: Block if policy violated
--   Compensation hooks: Trigger refresh/rollback
+- Freshness gates: Block if context too old
+- Validation gates: Block if policy violated
+- Compensation hooks: Trigger refresh/rollback
 
-**FSM Integration**:
+FSM Integration:
 
--   Context gates at state transitions
--   Policy enforcement at boundaries
--   Compensation triggers on violations
+- Context gates at state transitions
+- Policy enforcement at boundaries
+- Compensation triggers on violations
 
-**Event System**:
+Event System:
 
--   Context updated event
--   Policy violation event
--   Compensation triggered event
--   Snapshot created event
+- Context updated event
+- Policy violation event
+- Compensation triggered event
+- Snapshot created event
 
 **Related**: ADR-041, ADR-036 (Policies), ADR-037 (Compensation)
 
@@ -270,55 +271,55 @@ index:
 
 Phase 9 builds on Phase 8's workflow system:
 
--   **ADR-034** (Workflow FSM): Provides state machine for context workflows
--   **ADR-035** (Freshness Tracking): Provides temporal metadata foundation
--   **ADR-036** (Policies & Validation): Provides policy framework
--   **ADR-037** (Compensation & Orchestration): Provides rollback patterns
+- **ADR-034** (Workflow FSM): Provides state machine for context workflows
+- **ADR-035** (Freshness Tracking): Provides temporal metadata foundation
+- **ADR-036** (Policies & Validation): Provides policy framework
+- **ADR-037** (Compensation & Orchestration): Provides rollback patterns
 
 ### Related ADRs
 
--   **ADR-001**: Modular Crates Architecture
--   **ADR-002**: Async-First Architecture
--   **ADR-003**: Unified Provider Architecture
--   **ADR-013**: Clean Architecture Crate Separation
--   **ADR-023**: Inventory to Linkme Migration
--   **ADR-029**: Hexagonal Architecture with dill
+- **ADR-001**: Modular Crates Architecture
+- **ADR-002**: Async-First Architecture
+- **ADR-003**: Unified Provider Architecture
+- **ADR-013**: Clean Architecture Crate Separation
+- **ADR-023**: Inventory to Linkme Migration
+- **ADR-029**: Hexagonal Architecture with dill
 
 ## Implementation Roadmap
 
 See [`docs/implementation/phase-9-roadmap.md`](../../implementation/phase-9-roadmap.md) for detailed 4-week execution plan:
 
--   **Week 1** (Feb 17-23): Context Architecture & Graph
--   **Week 2** (Feb 24-Mar 2): Hybrid Search & Versioning
--   **Week 3** (Mar 3-9): Integration & Policies
--   **Week 4** (Mar 10-16): Testing & Documentation
+- **Week 1** (Feb 17-23): Context Architecture & Graph
+- **Week 2** (Feb 24-Mar 2): Hybrid Search & Versioning
+- **Week 3** (Mar 3-9): Integration & Policies
+- **Week 4** (Mar 10-16): Testing & Documentation
 
 ## Feature Guides
 
--   [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md) – Feature overview and workflows
--   [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) – Migration guide from v0.3
--   [`docs/architecture/CLEAN_ARCHITECTURE.md`](../../architecture/CLEAN_ARCHITECTURE.md) – Architecture patterns
+- [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md) – Feature overview and workflows
+- [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) – Migration guide from v0.3
+- [`docs/architecture/CLEAN_ARCHITECTURE.md`](../../architecture/CLEAN_ARCHITECTURE.md) – Architecture patterns
 
 ## Testing
 
 **Target**: 70+ tests across all components
 
--   CodeGraph: 15+ tests
--   HybridSearchEngine: 15+ tests
--   ContextSnapshot: 10+ tests
--   PolicyEngine: 10+ tests
--   MCP Tools: 15+ integration tests
--   End-to-end: 5+ tests
+- CodeGraph: 15+ tests
+- HybridSearchEngine: 15+ tests
+- ContextSnapshot: 10+ tests
+- PolicyEngine: 10+ tests
+- MCP Tools: 15+ integration tests
+- End-to-end: 5+ tests
 
-## Success Criteria
+### Success Criteria
 
--   [ ] All ADR-041-046 complete
--   [ ] 70+ tests passing
--   [ ] Zero architecture violations
--   [ ] Clean lint and docs-lint
--   [ ] Migration guide complete
--   [ ] Feature guides complete
--   [ ] v0.4.0 released
+- [ ] All ADR-041-046 complete
+- [ ] 70+ tests passing
+- [ ] Zero architecture violations
+- [ ] Clean lint and docs-lint
+- [ ] Migration guide complete
+- [ ] Feature guides complete
+- [ ] v0.4.0 released
 
 ## Next Steps
 

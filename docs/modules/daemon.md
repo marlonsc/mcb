@@ -1,16 +1,17 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # daemon Module
 
-**Note**: The daemon module from the legacy codebase has been simplified in v0.1.1.
+**Note**: The daemon module from the legacy codebase has been simplified in v0.2.1.
 
 **Previous Source**: `src/infrastructure/daemon/`
 **Status**: Background service functionality integrated into mcb-server
 
 ## Overview
 
-In v0.1.1, background daemon functionality is handled by:
+In v0.2.1, background daemon functionality is handled by:
 
--   **mcb-server**: Server lifecycle management
--   **Systemd**: External service management (see deployment docs)
+- **mcb-server**: Server lifecycle management
+- **Systemd**: External service management (see deployment docs)
 
 ## Migration Notes
 
@@ -22,10 +23,10 @@ The standalone daemon service has been replaced with:
 
 ## Related Documentation
 
--   **Server**: [server.md](./server.md) (server lifecycle)
--   **Deployment**: [DEPLOYMENT.md](../operations/DEPLOYMENT.md) (systemd setup)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Server**: [server.md](./server.md) (server lifecycle)
+- **Deployment**: [DEPLOYMENT.md](../operations/DEPLOYMENT.md) (systemd setup)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

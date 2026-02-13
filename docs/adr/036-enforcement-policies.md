@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 36
 title: Enforcement Layer — Policies and Guards
@@ -10,25 +11,27 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR-036: Enforcement Layer — Policies and Guards
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR-036: Enforcement Layer — Policies and Guards
 
 ## Status
 
-**Proposed** — 2026-02-05
+**Accepted** — 2026-02-06
 
--   **Deciders:** Project team
--   **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout)
--   **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment)
--   **Series:** [ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → **ADR-036** → [ADR-037](./037-workflow-orchestrator.md)
+- **Deciders:** Project team
+- **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout)
+- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment)
+- **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) →**ADR-036** → [ADR-037](./037-workflow-orchestrator.md)
 
 ## Context
 
-ADR-034 defines the workflow FSM with state transitions. ADR-035 provides typed `ProjectContext` snapshots. Before a transition is executed, the system must validate that project conditions are met — this is the role of **policy guards**.
+ADR-034 defines the workflow FSM with state transitions. ADR-035 provides typed `ProjectContext` snapshots. Before a transition is executed, the system must validate that project conditions are met — this is the role of**policy guards**.
 
 Today, enforcement is either absent or ad-hoc:
 
 | Scenario | Current Behavior | Desired Behavior |
-|----------|-----------------|------------------|
+| ---------- | ----------------- | ------------------ |
 | Commit with dirty worktree | Allowed (no check) | Block or warn depending on transition |
 | Start execution with 5 tasks already in-progress | Allowed | Block: WIP limit exceeded |
 | Branch name doesn't follow convention | No validation | Warn: `feature/...` or `fix/...` expected |
@@ -38,12 +41,12 @@ Today, enforcement is either absent or ad-hoc:
 
 ### Requirements
 
--   Individual policies implement a common trait
--   Policies composable via AND/OR combinators
--   Configurable per-project via `mcb.toml` (enable/disable, thresholds)
--   Two evaluation modes: fail-fast (stop on first error) and collect-all (gather all violations)
--   Severity levels: Error (blocks transition), Warning (logged but allowed), Info (informational)
--   Extensible: new policies can be added without modifying existing code
+- Individual policies implement a common trait
+- Policies composable via AND/OR combinators
+- Configurable per-project via `mcb.toml` (enable/disable, thresholds)
+- Two evaluation modes: fail-fast (stop on first error) and collect-all (gather all violations)
+- Severity levels: Error (blocks transition), Warning (logged but allowed), Info (informational)
+- Extensible: new policies can be added without modifying existing code
 
 ## Decision
 
@@ -344,7 +347,7 @@ impl Policy for AnyPolicy {
 
 ### 5. Policy Lifecycle (All 5 Trigger Points)
 
-Policies execute at **five distinct points** in the workflow lifecycle. Understanding these points is essential for determining when a policy applies and what context is available.
+Policies execute at**five distinct points** in the workflow lifecycle. Understanding these points is essential for determining when a policy applies and what context is available.
 
 #### 5.1 Compile-Time (Static Analysis)
 
@@ -352,25 +355,25 @@ Policies execute at **five distinct points** in the workflow lifecycle. Understa
 
 **Trigger**: Implicit — triggered by `cargo build` or CI pipeline.
 
-**Context Available**:
+Context Available:
 
--   Source code on disk
--   AST (from Rust compiler)
--   Type information (Rust compiler)
+- Source code on disk
+- AST (from Rust compiler)
+- Type information (Rust compiler)
 
-**Policies Applicable**:
+Policies Applicable:
 
--   **Format Validation** — Check Rust code formatting (`rustfmt`)
--   **Syntax Checking** — Ensure code compiles (`cargo check`)
--   **Type Safety** — Rust compiler enforces type checking automatically
+- **Format Validation** — Check Rust code formatting (`rustfmt`)
+- **Syntax Checking** — Ensure code compiles (`cargo check`)
+- **Type Safety** — Rust compiler enforces type checking automatically
 
-**Severity Mapping**:
+Severity Mapping:
 
--   Format violations: WARN (style suggestion)
--   Syntax errors: ERROR (blocks compilation)
--   Type errors: ERROR (compiler enforces)
+- Format violations: WARN (style suggestion)
+- Syntax errors: ERROR (blocks compilation)
+- Type errors: ERROR (compiler enforces)
 
-**Example**:
+Example:
 
 ```rust
 // Compile-time policies run in the build pipeline
@@ -392,29 +395,29 @@ if !code_compiles {
 
 **Trigger**: Git pre-commit hook installed by mcb.
 
-**Context Available**:
+Context Available:
 
--   Staged files (git index)
--   Unstaged changes
--   Untracked files
--   Working tree state
+- Staged files (git index)
+- Unstaged changes
+- Untracked files
+- Working tree state
 
-**Policies Applicable**:
+Policies Applicable:
 
--   **Code Style** — Run `rustfmt` and `cargo clippy` on staged files
--   **Trailing Whitespace** — Detect and block commits with trailing spaces
--   **File Size Limits** — Reject large binary files (e.g., > 10MB)
--   **Commit Message Format** — Validate conventional commit format
--   **Branch Naming** — Ensure branch follows naming convention
+- **Code Style** — Run `rustfmt` and `cargo clippy` on staged files
+- **Trailing Whitespace** — Detect and block commits with trailing spaces
+- **File Size Limits** — Reject large binary files (e.g., > 10MB)
+- **Commit Message Format** — Validate conventional commit format
+- **Branch Naming** — Ensure branch follows naming convention
 
-**Severity Mapping**:
+Severity Mapping:
 
--   Style violations: WARN (can auto-fix with `cargo fmt`)
--   Large files: ERROR (block commit)
--   Bad commit message: ERROR (block commit)
--   Bad branch name: WARN or ERROR (configurable)
+- Style violations: WARN (can auto-fix with `cargo fmt`)
+- Large files: ERROR (block commit)
+- Bad commit message: ERROR (block commit)
+- Bad branch name: WARN or ERROR (configurable)
 
-**Example**:
+Example:
 
 ```bash
 
@@ -427,37 +430,37 @@ validate_commit_message()  # ERROR if not conventional commit
 
 ---
 
-#### 5.3 Pre-Transition (FSM Guard)
+## 5.3 Pre-Transition (FSM Guard)
 
-**When**: After a user invokes a workflow command but **before** the FSM state changes.
+**When**: After a user invokes a workflow command but**before** the FSM state changes.
 
 **Trigger**: WorkflowService invokes `PolicyGuardProvider::evaluate()` before executing transition logic.
 
-**Context Available**:
+Context Available:
 
--   Full `ProjectContext` (from ADR-035) including:
-  -   Git state (branch, worktree status, commits)
-  -   Issue tracker state (open/in-progress/closed counts)
-  -   Task WIP counts
-  -   Environment details (project root, config)
--   `TransitionTrigger` (which command triggered this)
+- Full `ProjectContext` (from ADR-035) including:
+- Git state (branch, worktree status, commits)
+- Issue tracker state (open/in-progress/closed counts)
+- Task WIP counts
+- Environment details (project root, config)
+- `TransitionTrigger` (which command triggered this)
 
-**Policies Applicable**:
+Policies Applicable:
 
--   **WIP Limit** — Prevent starting new tasks if too many in-progress
--   **Clean Worktree** — Block transition if git is dirty
--   **Test Results** — Require tests to pass before starting verification
--   **Branch Protection** — Disallow transitions on protected branches (e.g., main)
--   **Orchestrator Checks** — Verify preconditions before any transition
+- **WIP Limit** — Prevent starting new tasks if too many in-progress
+- **Clean Worktree** — Block transition if git is dirty
+- **Test Results** — Require tests to pass before starting verification
+- **Branch Protection** — Disallow transitions on protected branches (e.g., main)
+- **Orchestrator Checks** — Verify preconditions before any transition
 
-**Severity Mapping**:
+Severity Mapping:
 
--   WIP exceeded: ERROR (blocks transition)
--   Dirty worktree: ERROR (blocks verification)
--   Tests failing: ERROR (blocks verification)
--   Branch mismatch: ERROR (blocks certain transitions)
+- WIP exceeded: ERROR (blocks transition)
+- Dirty worktree: ERROR (blocks verification)
+- Tests failing: ERROR (blocks verification)
+- Branch mismatch: ERROR (blocks certain transitions)
 
-**Example**:
+Example:
 
 ```rust
 // Pre-transition evaluation in WorkflowService
@@ -487,37 +490,37 @@ impl WorkflowService {
 
 ---
 
-#### 5.4 CI-Time (Continuous Integration)
+### 5.4 CI-Time (Continuous Integration)
 
 **When**: During GitHub Actions / CI pipeline execution on a pull request or push.
 
 **Trigger**: `.github/workflows/ci.yml` executes tests and checks.
 
-**Context Available**:
+Context Available:
 
--   Source code in CI environment
--   Test results (pass/fail, coverage %)
--   Security scan results (`cargo audit`, `cargo deny`)
--   Code coverage metrics (`cargo tarpaulin`)
--   Commit metadata (author, message, diff)
+- Source code in CI environment
+- Test results (pass/fail, coverage %)
+- Security scan results (`cargo audit`, `cargo deny`)
+- Code coverage metrics (`cargo tarpaulin`)
+- Commit metadata (author, message, diff)
 
-**Policies Applicable**:
+Policies Applicable:
 
--   **Require Tests** — All tests pass (no failing tests)
--   **Code Coverage** — Changed code covered by ≥70% of tests
--   **Security Scan** — No critical CVEs reported by `cargo audit`
--   **License Compliance** — `cargo deny` passes (approved licenses only)
--   **Dependency Check** — No yanked or banned dependencies
+- **Require Tests** — All tests pass (no failing tests)
+- **Code Coverage** — Changed code covered by ≥70% of tests
+- **Security Scan** — No critical CVEs reported by `cargo audit`
+- **License Compliance** — `cargo deny` passes (approved licenses only)
+- **Dependency Check** — No yanked or banned dependencies
 
-**Severity Mapping**:
+Severity Mapping:
 
--   Test failure: ERROR (blocks merge)
--   Coverage below threshold: ERROR (blocks merge)
--   Critical CVE: ERROR (blocks merge)
--   License violation: ERROR (blocks merge)
--   Deprecation warning: WARN (logged but allowed)
+- Test failure: ERROR (blocks merge)
+- Coverage below threshold: ERROR (blocks merge)
+- Critical CVE: ERROR (blocks merge)
+- License violation: ERROR (blocks merge)
+- Deprecation warning: WARN (logged but allowed)
 
-**Example**:
+Example:
 
 ```yaml
 
@@ -560,34 +563,34 @@ jobs:
 
 ---
 
-#### 5.5 Post-Merge (Verification)
+## 5.5 Post-Merge (Verification)
 
 **When**: After a PR is merged to the main branch.
 
 **Trigger**: GitHub Actions hook on `push` to `main` branch.
 
-**Context Available**:
+Context Available:
 
--   Merged commit on main
--   Release notes or changelog
--   Updated documentation
--   Previous release version
+- Merged commit on main
+- Release notes or changelog
+- Updated documentation
+- Previous release version
 
-**Policies Applicable**:
+Policies Applicable:
 
--   **Smoke Tests on Main** — Run a minimal test suite to ensure main is healthy
--   **Documentation Updated** — Verify CHANGELOG.md or ARCHITECTURE.md were updated if code changed
--   **Version Bumped** — Check that Cargo.toml version was incremented (semantic versioning)
--   **Release Artifacts Generated** — Ensure release binary built successfully
+- **Smoke Tests on Main** — Run a minimal test suite to ensure main is healthy
+- **Documentation Updated** — Verify CHANGELOG.md or ARCHITECTURE.md were updated if code changed
+- **Version Bumped** — Check that Cargo.toml version was incremented (semantic versioning)
+- **Release Artifacts Generated** — Ensure release binary built successfully
 
-**Severity Mapping**:
+Severity Mapping:
 
--   Smoke test failure: ERROR (requires hotfix)
--   Docs not updated: WARN (logged, create follow-up issue)
--   Version not bumped: WARN (logged, fix in next release)
--   Build failure: ERROR (requires immediate fix)
+- Smoke test failure: ERROR (requires hotfix)
+- Docs not updated: WARN (logged, create follow-up issue)
+- Version not bumped: WARN (logged, fix in next release)
+- Build failure: ERROR (requires immediate fix)
 
-**Example**:
+Example:
 
 ```yaml
 
@@ -629,16 +632,16 @@ jobs:
           if [ "$PREV_VERSION" == "$CURR_VERSION" ]; then
             echo "WARN: Version not bumped"
           fi
-        # Violation: WARN (advisory)
+        # Violation: WARN (advisory) (1)
 ```
 
 ---
 
-### 6. Built-In Policies (11 Total)
+## 6. Built-In Policies (11 Total)
 
 Each policy is fully defined with name, trigger point(s), description, severity level, configuration, and remediation guidance.
 
-#### 6.1 WIP Limit
+### 6.1 WIP Limit
 
 **Policy Name**: `wip_limit`
 
@@ -648,7 +651,7 @@ Each policy is fully defined with name, trigger point(s), description, severity 
 
 **Severity**: ERROR (blocks transition)
 
-**Configuration**:
+Configuration:
 
 ```toml
 [policies.wip_limit]
@@ -657,7 +660,7 @@ severity = "error"
 max_in_progress = 3
 ```
 
-**Validation Logic**:
+Validation Logic:
 
 ```rust
 if context.tracker.in_progress.len() >= config.max_in_progress {
@@ -672,11 +675,11 @@ if context.tracker.in_progress.len() >= config.max_in_progress {
 }
 ```
 
-**Remediation**:
+Remediation:
 
 ```bash
 
-# To resolve WIP limit violation:
+# To resolve WIP limit violation
 bd list --status=in_progress  # See what's in-progress
 bd close <id>                  # Close completed tasks
 bd update <id> --status=completed  # Mark as complete
@@ -686,7 +689,7 @@ bd update <id> --status=completed  # Mark as complete
 
 ---
 
-#### 6.2 Clean Worktree
+## 6.2 Clean Worktree
 
 **Policy Name**: `clean_worktree`
 
@@ -696,7 +699,7 @@ bd update <id> --status=completed  # Mark as complete
 
 **Severity**: ERROR (blocks transition)
 
-**Configuration**:
+Configuration:
 
 ```toml
 [policies.clean_worktree]
@@ -705,7 +708,7 @@ severity = "error"
 allow_untracked = true  # Ignore untracked files (only check staged/unstaged)
 ```
 
-**Validation Logic**:
+Validation Logic:
 
 ```rust
 let dirty_count = git.staged_files + git.unstaged_files + git.conflicted_files
@@ -723,24 +726,24 @@ if dirty_count > 0 {
 }
 ```
 
-**Remediation**:
+Remediation:
 
 ```bash
 
-# To resolve dirty worktree:
+# To resolve dirty worktree
 git status                    # See what's dirty
 git add .                     # Stage changes
 git commit -m "work in progress"  # Commit with message
 
-# Or stash if unsure:
+# Or stash if unsure
 git stash
 
-# Then retry the transition
+# Then retry the transition (1)
 ```
 
 ---
 
-#### 6.3 Branch Naming
+## 6.3 Branch Naming
 
 **Policy Name**: `branch_naming`
 
@@ -750,19 +753,19 @@ git stash
 
 **Severity**: ERROR (blocks transition) or WARN (advisory, configurable)
 
-**Configuration**:
+Configuration:
 
 ```toml
 [policies.branch_naming]
 enabled = true
 severity = "error"
 
-# Regex pattern: feature/*, fix/*, release/*, docs/*, etc.
+# Regex pattern: feature/*, fix/*, release/*, docs/*, etc
 pattern = "^(feature|fix|release|docs|chore|test|refactor)/[a-z0-9-]+$"
 expected_format = "feature/foo-bar, fix/bug-123, release/1.2.3"
 ```
 
-**Validation Logic**:
+Validation Logic:
 
 ```rust
 let regex = Regex::new(&config.pattern)?;
@@ -776,11 +779,11 @@ if !regex.is_match(&context.git.branch) {
 }
 ```
 
-**Remediation**:
+Remediation:
 
 ```bash
 
-# To resolve branch naming violation:
+# To resolve branch naming violation
 
 # Option 1: Create new branch with correct name
 git checkout -b feature/correct-name
@@ -791,12 +794,12 @@ git push -u origin feature:correct-name
 git branch -m feature/correct-name
 git push -u origin feature:correct-name
 
-# Then retry the transition
+# Then retry the transition (2)
 ```
 
 ---
 
-#### 6.4 Require Tests
+## 6.4 Require Tests
 
 **Policy Name**: `require_tests`
 
@@ -806,7 +809,7 @@ git push -u origin feature:correct-name
 
 **Severity**: ERROR (blocks merge/verification)
 
-**Configuration**:
+Configuration:
 
 ```toml
 [policies.require_tests]
@@ -816,7 +819,7 @@ test_command = "cargo test --release"
 timeout_seconds = 300
 ```
 
-**Validation Logic**:
+Validation Logic:
 
 ```rust
 let output = Command::new("sh")
@@ -838,11 +841,11 @@ if !output.status.success() {
 }
 ```
 
-**Remediation**:
+Remediation:
 
 ```bash
 
-# To resolve test failure:
+# To resolve test failure
 cargo test --release          # Run tests locally to see failures
 
 # Fix code / tests as needed
@@ -850,12 +853,12 @@ cargo test --release          # Verify tests pass
 git add .
 git commit -m "fix: tests passing"
 
-# Then retry the transition
+# Then retry the transition (3)
 ```
 
 ---
 
-#### 6.5 Changelog Check
+## 6.5 Changelog Check
 
 **Policy Name**: `changelog_check`
 
@@ -865,7 +868,7 @@ git commit -m "fix: tests passing"
 
 **Severity**: WARN (allowed but logged as advisory)
 
-**Configuration**:
+Configuration:
 
 ```toml
 [policies.changelog_check]
@@ -874,7 +877,7 @@ severity = "warning"
 changelog_file = "CHANGELOG.md"
 ```
 
-**Validation Logic**:
+Validation Logic:
 
 ```rust
 // Check if code files changed in commit/PR
@@ -897,16 +900,16 @@ if code_changed && !changelog_changed {
 }
 ```
 
-**Remediation**:
+Remediation:
 
 ```bash
 
-# To resolve changelog warning:
+# To resolve changelog warning
 
 # Edit CHANGELOG.md and add entry at top
 vim CHANGELOG.md
 
-# Follow "Unreleased" section format:
+# Follow "Unreleased" section format
 
 # ## [Unreleased]
 
@@ -926,7 +929,7 @@ git commit --amend  # or new commit if allowed
 
 ---
 
-#### 6.6 Commit Message Format
+## 6.6 Commit Message Format
 
 **Policy Name**: `commit_message_format`
 
@@ -936,7 +939,7 @@ git commit --amend  # or new commit if allowed
 
 **Severity**: ERROR (blocks commit)
 
-**Configuration**:
+Configuration:
 
 ```toml
 [policies.commit_message_format]
@@ -948,7 +951,7 @@ require_scope = false    # If true, enforce type(scope): message
 example = "feat(core): add policy system"
 ```
 
-**Validation Logic**:
+Validation Logic:
 
 ```rust
 // Conventional commit: type(scope)?: message
@@ -966,11 +969,11 @@ if !regex.is_match(&commit_message) {
 }
 ```
 
-**Remediation**:
+Remediation:
 
 ```bash
 
-# To resolve commit message format violation:
+# To resolve commit message format violation
 git commit --amend -m "feat(guards): add WIP limit policy"
 
 # Follow format: type(scope): description
@@ -984,7 +987,7 @@ git commit --amend -m "feat(guards): add WIP limit policy"
 
 ---
 
-#### 6.7 Code Review Gate
+## 6.7 Code Review Gate
 
 **Policy Name**: `code_review_gate`
 
@@ -994,7 +997,7 @@ git commit --amend -m "feat(guards): add WIP limit policy"
 
 **Severity**: ERROR (blocks merge)
 
-**Configuration**:
+Configuration:
 
 ```toml
 [policies.code_review_gate]
@@ -1005,7 +1008,7 @@ require_dismissal = true  # Must dismiss old reviews if code changed
 allowed_reviewers = ["*"] # Can specify list of allowed reviewers or ["*"] for any
 ```
 
-**Validation Logic**:
+Validation Logic:
 
 ```rust
 let approved_by = pr.reviews
@@ -1035,11 +1038,11 @@ if pr.reviews.iter().any(|r| r.state == "changes_requested") {
 }
 ```
 
-**Remediation**:
+Remediation:
 
 ```bash
 
-# To resolve code review gate violation:
+# To resolve code review gate violation
 
 # 1. Ensure PR is created and pushed
 git push -u origin feature/my-feature
@@ -1050,7 +1053,7 @@ git push -u origin feature/my-feature
 
 # 3. Address feedback from review
 
-# Make requested changes:
+# Make requested changes
 git add .
 git commit -m "fix: address review feedback"
 git push
@@ -1062,7 +1065,7 @@ git push
 
 ---
 
-#### 6.8 Code Coverage
+## 6.8 Code Coverage
 
 **Policy Name**: `code_coverage`
 
@@ -1072,7 +1075,7 @@ git push
 
 **Severity**: ERROR (blocks merge)
 
-**Configuration**:
+Configuration:
 
 ```toml
 [policies.code_coverage]
@@ -1083,7 +1086,7 @@ tool = "cargo-tarpaulin" # Options: "cargo-tarpaulin", "cargo-llvm-cov"
 scope = "changed-lines"  # Coverage of changed lines only, not entire codebase
 ```
 
-**Validation Logic**:
+Validation Logic:
 
 ```rust
 // Run coverage tool
@@ -1106,16 +1109,16 @@ if coverage_pct < config.threshold {
 }
 ```
 
-**Remediation**:
+Remediation:
 
 ```bash
 
-# To resolve code coverage violation:
+# To resolve code coverage violation
 cargo tarpaulin --out Html  # Generate coverage report
 
 # Open tarpaulin-report.html to see uncovered lines
 
-# Add tests for uncovered code:
+# Add tests for uncovered code
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1133,7 +1136,7 @@ cargo tarpaulin --out Xml   # Re-run coverage
 
 ---
 
-#### 6.9 Security Scan
+## 6.9 Security Scan
 
 **Policy Name**: `security_scan`
 
@@ -1143,7 +1146,7 @@ cargo tarpaulin --out Xml   # Re-run coverage
 
 **Severity**: ERROR (blocks merge)
 
-**Configuration**:
+Configuration:
 
 ```toml
 [policies.security_scan]
@@ -1154,7 +1157,7 @@ deny_enabled = true       # Run cargo deny
 fail_on = "warnings"      # "warnings" blocks on advisory, "denies" only on hard denies
 ```
 
-**Validation Logic**:
+Validation Logic:
 
 ```rust
 // Run cargo audit
@@ -1189,15 +1192,15 @@ if !deny_output.status.success() {
 }
 ```
 
-**Remediation**:
+Remediation:
 
 ```bash
 
-# To resolve security scan violation:
+# To resolve security scan violation
 cargo audit              # See vulnerabilities
 cargo update             # Update to patched versions
 
-# Or if no patch available:
+# Or if no patch available
 cargo audit --deny warnings --ignore <advisory-id>
 
 cargo deny check          # See license/policy issues
@@ -1213,7 +1216,7 @@ cargo deny check
 
 ---
 
-#### 6.10 Version Bump
+## 6.10 Version Bump
 
 **Policy Name**: `version_bump`
 
@@ -1223,7 +1226,7 @@ cargo deny check
 
 **Severity**: WARN (advisory, logged but doesn't block)
 
-**Configuration**:
+Configuration:
 
 ```toml
 [policies.version_bump]
@@ -1233,7 +1236,7 @@ format = "semantic"  # Options: "semantic" (x.y.z), "calver" (YYYY.MM.DD)
 file = "Cargo.toml"  # Location of version
 ```
 
-**Validation Logic**:
+Validation Logic:
 
 ```rust
 // Extract version from current commit
@@ -1260,13 +1263,13 @@ if !Regex::new(r"^\d+\.\d+\.\d+$")?.is_match(&current_version) {
 }
 ```
 
-**Remediation**:
+Remediation:
 
 ```bash
 
-# To resolve version bump warning:
+# To resolve version bump warning
 
-# In Cargo.toml, update version following semantic versioning:
+# In Cargo.toml, update version following semantic versioning
 
 # - Patch (0.1.1 -> 0.1.2) for bug fixes
 
@@ -1278,7 +1281,7 @@ vim Cargo.toml
 
 # Change: version = "0.1.0"
 
-#    To:  version = "0.2.0"
+# To:  version = "0.2.0"
 
 git add Cargo.toml
 git commit -m "chore: bump version to 0.2.0"
@@ -1290,7 +1293,7 @@ git commit -m "chore: bump version to 0.2.0"
 
 ---
 
-#### 6.11 Documentation Update
+## 6.11 Documentation Update
 
 **Policy Name**: `documentation_update`
 
@@ -1300,7 +1303,7 @@ git commit -m "chore: bump version to 0.2.0"
 
 **Severity**: WARN (advisory, logged but doesn't block)
 
-**Configuration**:
+Configuration:
 
 ```toml
 [policies.documentation_update]
@@ -1310,7 +1313,7 @@ required_docs = ["README.md", "ARCHITECTURE.md"]  # Files that should be updated
 code_patterns = ["src/**/*.rs", "Cargo.toml"]     # Patterns that trigger doc requirement
 ```
 
-**Validation Logic**:
+Validation Logic:
 
 ```rust
 // Check if code files changed
@@ -1341,16 +1344,16 @@ if code_changed && !docs_changed {
 }
 ```
 
-**Remediation**:
+Remediation:
 
 ```bash
 
-# To resolve documentation update warning:
+# To resolve documentation update warning
 
 # 1. Create follow-up PR or issue for documentation
 bd create --title="Docs: Update README for feature X" --type=task --priority=2
 
-# 2. Or immediately update docs:
+# 2. Or immediately update docs
 vim README.md          # Add feature to features list
 vim ARCHITECTURE.md    # Update architecture docs if applicable
 git add README.md ARCHITECTURE.md
@@ -1364,38 +1367,38 @@ git push
 
 ---
 
-### 7. Deny-Wins Semantics & Conflict Resolution
+## 7. Deny-Wins Semantics & Conflict Resolution
 
 This section defines how policy violations are evaluated, combined, and enforced.
 
-#### 7.1 Severity Levels
+### 7.1 Severity Levels
 
-**ERROR (Hard Deny)**
+ERROR (Hard Deny)
 
--   **Definition**: Policy violation blocks the transition.
--   **Behavior**: If ANY ERROR-level violation exists, the entire transition is rejected.
--   **Operator Action**: Must fix violation or explicitly override (with reason).
--   **Transition**: Blocked until resolved.
+- **Definition**: Policy violation blocks the transition.
+- **Behavior**: If ANY ERROR-level violation exists, the entire transition is rejected.
+- **Operator Action**: Must fix violation or explicitly override (with reason).
+- **Transition**: Blocked until resolved.
 
-**WARNING (Soft Advisory)**
+WARNING (Soft Advisory)
 
--   **Definition**: Policy violation is logged but does not block the transition.
--   **Behavior**: Operator is warned; transition proceeds.
--   **Operator Action**: Recommended to fix, but not required.
--   **Transition**: Allowed to proceed.
+- **Definition**: Policy violation is logged but does not block the transition.
+- **Behavior**: Operator is warned; transition proceeds.
+- **Operator Action**: Recommended to fix, but not required.
+- **Transition**: Allowed to proceed.
 
-**INFO (Informational)**
+INFO (Informational)
 
--   **Definition**: Policy observation logged for informational purposes only.
--   **Behavior**: No enforcement; purely advisory.
--   **Operator Action**: Optional reading/acting.
--   **Transition**: Allowed to proceed.
+- **Definition**: Policy observation logged for informational purposes only.
+- **Behavior**: No enforcement; purely advisory.
+- **Operator Action**: Optional reading/acting.
+- **Transition**: Allowed to proceed.
 
 #### 7.2 Deny-Wins Logic (Fail-Closed)
 
 **Core Principle**: "Deny wins" — the system defaults to DENY unless ALL policies permit the transition.
 
-**Evaluation Algorithm**:
+Evaluation Algorithm:
 
 ```rust
 pub fn evaluate_policies(policies: Vec<PolicyResult>) -> PolicyResult {
@@ -1452,7 +1455,7 @@ pub trait PolicyGuardProvider: Send + Sync {
 }
 ```
 
-**Override Usage**:
+Override Usage:
 
 ```rust
 // If policy evaluation fails:
@@ -1482,19 +1485,19 @@ if !result.allowed {
 
 **Audit Trail**: All overrides are logged with:
 
--   Operator ID
--   Timestamp
--   Override reason
--   Policies bypassed
--   Violation details
+- Operator ID
+- Timestamp
+- Override reason
+- Policies bypassed
+- Violation details
 
 #### 7.4 Policy Composition (AND/OR)
 
-**AND Combinator (AllPolicies)**:
+AND Combinator (AllPolicies):
 
--   **Logic**: ALL policies must pass (or be WARN-only).
--   **Short-Circuit**: Stops on first ERROR (fail-fast mode).
--   **Use Case**: Default composition for most transitions.
+- **Logic**: ALL policies must pass (or be WARN-only).
+- **Short-Circuit**: Stops on first ERROR (fail-fast mode).
+- **Use Case**: Default composition for most transitions.
 
 ```rust
 pub struct AllPolicies {
@@ -1521,11 +1524,11 @@ impl AllPolicies {
 }
 ```
 
-**OR Combinator (AnyPolicy)**:
+OR Combinator (AnyPolicy):
 
--   **Logic**: AT LEAST ONE policy must pass.
--   **No Short-Circuit**: Evaluates all policies to collect violations.
--   **Use Case**: Rare; example: "approve via email OR Slack message".
+- **Logic**: AT LEAST ONE policy must pass.
+- **No Short-Circuit**: Evaluates all policies to collect violations.
+- **Use Case**: Rare; example: "approve via email OR Slack message".
 
 ```rust
 pub struct AnyPolicy {
@@ -1558,17 +1561,17 @@ impl AnyPolicy {
 
 #### 7.5 Conflict Resolution
 
-**Scenario 1: Multiple ERROR policies violated**
+Scenario 1: Multiple ERROR policies violated
 
 Policy A (Clean Worktree): ERROR — "Worktree dirty"
 Policy B (Require Tests): ERROR — "Tests failed"
 
-**Resolution**:
+Resolution:
 
--   Both errors reported to operator.
--   Transition blocked.
--   Operator must fix both issues.
--   Or override with reason (audit logged).
+- Both errors reported to operator.
+- Transition blocked.
+- Operator must fix both issues.
+- Or override with reason (audit logged).
 
 ```rust
 let policy_result = guard.evaluate(trigger, context).await?;
@@ -1588,16 +1591,16 @@ if !policy_result.allowed {
 }
 ```
 
-**Scenario 2: ERROR and WARNING mix**
+Scenario 2: ERROR and WARNING mix
 
 Policy A (Clean Worktree): ERROR — "Worktree dirty"
 Policy B (Changelog Check): WARNING — "Changelog not updated"
 
-**Resolution**:
+Resolution:
 
--   ERROR blocks transition.
--   WARNING noted but not considered for blocking.
--   Fix ERROR first, then proceed (WARNING allowed through).
+- ERROR blocks transition.
+- WARNING noted but not considered for blocking.
+- Fix ERROR first, then proceed (WARNING allowed through).
 
 ```rust
 if policy_result.has_errors() {
@@ -1613,16 +1616,16 @@ if policy_result.has_warnings() {
 // Transition allowed
 ```
 
-**Scenario 3: Conflicting policies (policy A vs policy B)**
+Scenario 3: Conflicting policies (policy A vs policy B)
 
 Policy A requires: Branch must start with "feature/"
 Policy B requires: Branch must start with "release/"
 
-**Resolution**:
+Resolution:
 
--   Configuration should prevent such conflicts.
--   During design: only one applies (branch naming conflicts are scope issue).
--   If unavoidable: operator chooses which policy to override.
+- Configuration should prevent such conflicts.
+- During design: only one applies (branch naming conflicts are scope issue).
+- If unavoidable: operator chooses which policy to override.
 
 ```toml
 
@@ -1633,9 +1636,9 @@ pattern = "^(feature|fix|release|docs)/[a-z0-9-]+$"
 # This pattern allows all three prefixes, no conflict
 ```
 
-#### 7.6 Remediation Guidance
+## 7.6 Remediation Guidance
 
-Each policy violation includes a **suggestion** field for remediation:
+Each policy violation includes a**suggestion** field for remediation:
 
 ```rust
 pub struct Violation {
@@ -1646,10 +1649,10 @@ pub struct Violation {
 }
 ```
 
-**Remediation Examples**:
+Remediation Examples:
 
 | Policy | Violation | Suggestion |
-|--------|-----------|-----------|
+| -------- | ----------- | ----------- |
 | clean_worktree | "Worktree not clean" | "Commit or stash changes before this transition" |
 | require_tests | "Test suite failed" | "Run `cargo test` locally; fix failing tests" |
 | wip_limit | "WIP limit exceeded" | "Complete or close existing in-progress issues" |
@@ -1664,7 +1667,7 @@ pub struct Violation {
 
 ### 7.7 Policy Evaluation Context
 
-Policies receive **rich context** for evaluation:
+Policies receive**rich context** for evaluation:
 
 ```rust
 pub struct ProjectContext {
@@ -1700,7 +1703,7 @@ pub enum TransitionTrigger {
 }
 ```
 
-This enables **context-aware policies** that adapt to project state, not just static rules
+This enables**context-aware policies** that adapt to project state, not just static rules
 
 ---
 
@@ -1712,10 +1715,10 @@ This enables **context-aware policies** that adapt to project state, not just st
 
 [policies]
 
-# Global enable/disable for all policy evaluation.
+# Global enable/disable for all policy evaluation
 enabled = true
 
-# fail_fast = true stops on first error. false collects all violations.
+# fail_fast = true stops on first error. false collects all violations
 fail_fast = false
 
 # Pre-Transition Policies (FSM Guard)
@@ -1790,13 +1793,13 @@ required_docs = ["README.md", "ARCHITECTURE.md"]
 code_patterns = ["src/**/*.rs", "Cargo.toml"]
 ```
 
-**Configuration Notes**:
+Configuration Notes:
 
--   **Pre-Transition**: `wip_limit`, `clean_worktree` — applied before FSM transition
--   **Pre-Commit**: `branch_naming`, `commit_message_format` — applied by git pre-commit hook
--   **CI-Time**: `require_tests`, `code_coverage`, `security_scan` — applied during GitHub Actions
--   **Pre-Merge**: `code_review_gate` — applied before merge on GitHub
--   **Post-Merge**: `changelog_check`, `version_bump`, `documentation_update` — applied after merge to main
+- **Pre-Transition**: `wip_limit`, `clean_worktree` — applied before FSM transition
+- **Pre-Commit**: `branch_naming`, `commit_message_format` — applied by git pre-commit hook
+- **CI-Time**: `require_tests`, `code_coverage`, `security_scan` — applied during GitHub Actions
+- **Pre-Merge**: `code_review_gate` — applied before merge on GitHub
+- **Post-Merge**: `changelog_check`, `version_bump`, `documentation_update` — applied after merge to main
 
 ```rust
 // mcb-infrastructure/src/config/policies.rs — Updated for 11 policies
@@ -1901,7 +1904,7 @@ pub struct DocsUpdateSettings {
 }
 ```
 
-### 9. Guard Provider Implementation
+## 9. Guard Provider Implementation
 
 ```rust
 // mcb-providers/src/guard/provider.rs
@@ -2059,7 +2062,7 @@ fn configurable_guard_factory(
 ### 11. Module Locations
 
 | Crate | Path | Content |
-|-------|------|---------|
+| ------- | ------ | --------- |
 | `mcb-domain` | `src/entities/policy.rs` | `Severity`, `Violation`, `PolicyResult`, `PolicyConfig` |
 | `mcb-domain` | `src/ports/providers/policy_guard.rs` | `PolicyGuardProvider` trait |
 | `mcb-domain` | `src/ports/providers/policy.rs` | `Policy` trait (individual policies) |
@@ -2084,42 +2087,42 @@ fn configurable_guard_factory(
 
 ### Positive
 
--   **Composable**: Policies combined via AND/OR without modifying each other.
--   **Configurable**: Per-project settings via `mcb.toml`. Enable/disable and adjust thresholds without code changes.
--   **Severity levels**: Errors block, warnings log. Teams choose enforcement strictness.
--   **Extensible**: New policies implement `Policy` trait and register via linkme. No existing code modified.
--   **Dry-run**: Policies can be tested without blocking transitions.
--   **Context-aware**: Policies receive full `ProjectContext` (ADR-035), enabling rich conditions.
+- **Composable**: Policies combined via AND/OR without modifying each other.
+- **Configurable**: Per-project settings via `mcb.toml`. Enable/disable and adjust thresholds without code changes.
+- **Severity levels**: Errors block, warnings log. Teams choose enforcement strictness.
+- **Extensible**: New policies implement `Policy` trait and register via linkme. No existing code modified.
+- **Dry-run**: Policies can be tested without blocking transitions.
+- **Context-aware**: Policies receive full `ProjectContext` (ADR-035), enabling rich conditions.
 
 ### Negative
 
--   **Runtime evaluation cost**: Each transition evaluates all applicable policies. Mitigated by `applies_to()` filter and fail-fast mode.
--   **Test command execution**: `RequireTestsPolicy` spawns a subprocess (e.g., `cargo test`). This is slow (seconds-to-minutes). Only triggered on `StartVerification`.
--   **Config complexity**: 11 policies with individual settings adds config surface area. Mitigated by sensible defaults and disabled-by-default for non-essential policies (e.g., `version_bump`, `documentation_update`).
--   **No runtime policy addition**: Policies are built at startup from config. Adding a new policy requires restart. Runtime dynamic policies deferred.
+- **Runtime evaluation cost**: Each transition evaluates all applicable policies. Mitigated by `applies_to()` filter and fail-fast mode.
+- **Test command execution**: `RequireTestsPolicy` spawns a subprocess (e.g., `cargo test`). This is slow (seconds-to-minutes). Only triggered on `StartVerification`.
+- **Config complexity**: 11 policies with individual settings adds config surface area. Mitigated by sensible defaults and disabled-by-default for non-essential policies (e.g., `version_bump`, `documentation_update`).
+- **No runtime policy addition**: Policies are built at startup from config. Adding a new policy requires restart. Runtime dynamic policies deferred.
 
 ## Alternatives Considered
 
 ### Alternative 1: Tower-Style Middleware
 
--   **Description:** Model policies as Tower `Layer`/`Service` middleware wrapping the FSM transition.
--   **Pros:** Established pattern. Rich ecosystem (tower-HTTP, tower-retry).
--   **Cons:** Tower is designed for request/response pipelines, not FSM transitions. Adaptation is awkward. Requires tower dependency.
--   **Rejection reason:** Unnecessary complexity. The `Policy` trait with AND/OR composition is simpler and purpose-built.
+- **Description:** Model policies as Tower `Layer`/`Service` middleware wrapping the FSM transition.
+- **Pros:** Established pattern. Rich ecosystem (tower-HTTP, tower-retry).
+- **Cons:** Tower is designed for request/response pipelines, not FSM transitions. Adaptation is awkward. Requires tower dependency.
+- **Rejection reason:** Unnecessary complexity. The `Policy` trait with AND/OR composition is simpler and purpose-built.
 
 ### Alternative 2: Database-Driven Policies
 
--   **Description:** Store policy configurations in SQLite and evaluate dynamically.
--   **Pros:** Runtime reconfiguration without restart. Policy versioning.
--   **Cons:** Adds query overhead per evaluation. Config is already in `mcb.toml` (Figment standard).
--   **Rejection reason:** Over-engineering for 11 built-in policies. File-based config is sufficient and matches ADR-025 convention.
+- **Description:** Store policy configurations in SQLite and evaluate dynamically.
+- **Pros:** Runtime reconfiguration without restart. Policy versioning.
+- **Cons:** Adds query overhead per evaluation. Config is already in `mcb.toml` (Figment standard).
+- **Rejection reason:** Over-engineering for 11 built-in policies. File-based config is sufficient and matches ADR-025 convention.
 
 ### Alternative 3: Hard-Coded Checks (No Policy Framework)
 
--   **Description:** Embed checks directly in the WorkflowService transition logic.
--   **Pros:** Simplest implementation. No trait, no composition.
--   **Cons:** Not extensible. Every new check requires modifying WorkflowService. No per-project configuration.
--   **Rejection reason:** Violates open/closed principle. Policy framework pays for itself after the second policy.
+- **Description:** Embed checks directly in the WorkflowService transition logic.
+- **Pros:** Simplest implementation. No trait, no composition.
+- **Cons:** Not extensible. Every new check requires modifying WorkflowService. No per-project configuration.
+- **Rejection reason:** Violates open/closed principle. Policy framework pays for itself after the second policy.
 
 ## Implementation Notes
 
@@ -2128,24 +2131,24 @@ fn configurable_guard_factory(
 1. Add `policy.rs` entities to `mcb-domain/src/entities/`
 2. Add `policy_guard.rs` and `policy.rs` ports to `mcb-domain/src/ports/providers/`
 3. Add `GUARD_PROVIDERS` slice to `mcb-application/src/registry/`
-4. Add `guard/` module to `mcb-providers/src/` with provider, composition, and **11 built-in policies**
+4. Add `guard/` module to `mcb-providers/src/` with provider, composition, and**11 built-in policies**
 5. Add `PoliciesConfig` and 11 settings structs to `mcb-infrastructure/src/config/`
 6. Add `[policies]` section to `config/default.toml` with configurations for all 11 policies
 
 ### Testing
 
--   Unit tests: Each of the 11 policies with pass/fail cases (minimum 2 tests per policy = 22 tests)
--   Unit tests: `PolicyResult::merge()`, `format_violations()`, severity handling
--   Unit tests: `AllPolicies` (fail-fast and collect-all modes), `AnyPolicy` combinator
--   Unit tests: Deny-wins semantics, ERROR vs WARNING enforcement
--   Integration tests: `ConfigurablePolicyGuard` with real config, all 11 policies enabled/disabled
--   Integration tests: Lifecycle points (compile-time, pre-commit, pre-transition, CI-time, post-merge)
--   Estimated: **~80+ tests** (11 policies × 2 + integration + composition + semantics)
+- Unit tests: Each of the 11 policies with pass/fail cases (minimum 2 tests per policy = 22 tests)
+- Unit tests: `PolicyResult::merge()`, `format_violations()`, severity handling
+- Unit tests: `AllPolicies` (fail-fast and collect-all modes), `AnyPolicy` combinator
+- Unit tests: Deny-wins semantics, ERROR vs WARNING enforcement
+- Integration tests: `ConfigurablePolicyGuard` with real config, all 11 policies enabled/disabled
+- Integration tests: Lifecycle points (compile-time, pre-commit, pre-transition, CI-time, post-merge)
+- Estimated: **~80+ tests** (11 policies × 2 + integration + composition + semantics)
 
 ### Performance Targets
 
 | Operation | Target |
-|-----------|--------|
+| ----------- | -------- |
 | `WipLimitPolicy.check()` | < 1ms (reads from `TrackerContext`, no I/O) |
 | `CleanWorktreePolicy.check()` | < 1ms (reads from `GitContext`, no I/O) |
 | `BranchNamingPolicy.check()` | < 1ms (regex match) |
@@ -2162,12 +2165,12 @@ fn configurable_guard_factory(
 
 ### Security
 
--   `RequireTestsPolicy` executes a shell command from `mcb.toml`. The config file must be trusted (same as any TOML config). No user-supplied input reaches the command.
+- `RequireTestsPolicy` executes a shell command from `mcb.toml`. The config file must be trusted (same as any TOML config). No user-supplied input reaches the command.
 
 ## References
 
--   [gatehouse](https://crates.io/crates/gatehouse) — Policy composition patterns (evaluated)
--   [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — `TransitionTrigger` consumed by guards
--   [ADR-035: Context Scout](./035-context-scout.md) — `ProjectContext` consumed by guards
--   [ADR-025: Figment Configuration](./025-figment-configuration.md) — Config pattern
--   [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) — DI pattern
+- [gatehouse](https://docs.rs/gatehouse/latest/gatehouse/) — Policy composition patterns (evaluated)
+- [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — `TransitionTrigger` consumed by guards
+- [ADR-035: Context Scout](./035-context-scout.md) — `ProjectContext` consumed by guards
+- [ADR-025: Figment Configuration](./025-figment-configuration.md) — Config pattern
+- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) — DI pattern

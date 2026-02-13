@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 16
 title: Integration Points and Adapter Pattern
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 016: Integration Points and Adapter Pattern
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 016: Integration Points and Adapter Pattern
 
 ## Status
 
@@ -26,9 +29,9 @@ Integrating PMAT code (proven algorithms, extensive tests) while maintaining MCB
 
 ## Decision
 
-Use **Adapter Pattern** with thin conversion layer:
+Use**Adapter Pattern** with thin conversion layer:
 
-```
+```text
 PMAT Algorithm (reused 100%)
     ↓
 Adapter (thin wrapper, ~10-50 LOC)
@@ -128,9 +131,9 @@ impl ComplexityAnalysisInterface for ComplexityAnalysisService {
 
 **v0.2.0** (This release):
 
--   Define adapter interfaces
--   Create empty adapter directory structure
--   Document expected PMAT → MCB conversions
+- Define adapter interfaces
+- Create empty adapter directory structure
+- Document expected PMAT → MCB conversions
 
 ```rust
 // crates/mcb-providers/src/analyzers/mod.rs (v0.2.0)
@@ -151,42 +154,42 @@ pub trait AnalysisAdapter: Send + Sync {
 
 **v0.3.0** (Implementation):
 
--   Implement adapters for complexity, TDG, SATD
--   Port PMAT code to `libs/code-metrics/`
+- Implement adapters for complexity, TDG, SATD
+- Port PMAT code to `libs/code-metrics/`
 
 ## Consequences
 
-**Positive**:
+Positive:
 
--   100% PMAT algorithm reuse (no reimplementation risk)
--   Clean architecture preserved
--   Type safety via adapter contracts
--   Easy to add new adapters
+- 100% PMAT algorithm reuse (no reimplementation risk)
+- Clean architecture preserved
+- Type safety via adapter contracts
+- Easy to add new adapters
 
-**Negative**:
+Negative:
 
--   Indirection overhead (~1-2ms per call)
--   Two type systems to maintain
+- Indirection overhead (~1-2ms per call)
+- Two type systems to maintain
 
-**Mitigation**:
+Mitigation:
 
--   Keep adapters thin (target <50 LOC)
--   Use inline conversions where possible
--   Benchmark to ensure <1% overhead
+- Keep adapters thin (target <50 LOC)
+- Use inline conversions where possible
+- Benchmark to ensure <1% overhead
 
 ## Implementation Checklist (v0.2.0)
 
--   [ ] Create `crates/mcb-providers/src/analyzers/` directory
--   [ ] Define `AnalysisAdapter` trait
--   [ ] Document conversion patterns
--   [ ] Create adapter templates for v0.3.0
+- [ ] Create `crates/mcb-providers/src/analyzers/` directory
+- [ ] Define `AnalysisAdapter` trait
+- [ ] Document conversion patterns
+- [ ] Create adapter templates for v0.3.0
 
 ## Related ADRs
 
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
--   [ADR-015: Workspace Shared Libraries](015-workspace-shared-libraries.md) - PMAT code location
--   [ADR-019: Error Handling Strategy](019-error-handling-strategy.md) - Error conversion patterns
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
+- [ADR-015: Workspace Shared Libraries](015-workspace-shared-libraries.md) - PMAT code location
+- [ADR-019: Error Handling Strategy](019-error-handling-strategy.md) - Error conversion patterns
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 crate paths*
+Updated 2026-01-17 - Reflects v0.1.2 crate paths

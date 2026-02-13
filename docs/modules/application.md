@@ -1,82 +1,71 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # application Module
 
 **Source**: `crates/mcb-application/src/`
 **Crate**: `mcb-application`
-**Files**: 10+
+**Files**: 11 files
 **Lines of Code**: ~2,000
 
-**Project links**: `docs/context/technical-patterns.md` (provider patterns), `docs/context/domain-concepts.md`, `docs/context/project-state.md`, `.planning/STATE.md` (Phase 6 progress), and `docs/developer/ROADMAP.md` (v0.2.0 plan) so service work aligns with Hybrid Search, git-aware requirements, and current validated goals.
+**Project links**: See `docs/architecture/ARCHITECTURE.md`, `docs/modules/domain.md`, `docs/developer/ROADMAP.md`.
 
 ## Overview
 
-The application module implements business logic services following Clean Architecture principles. It contains use cases (service implementations) and domain services (chunking orchestration, search logic).
+The application module implements use-case services and decorators following Clean Architecture. The crate uses `use_cases/` and `decorators/` as its service organization.
 
-## Key Components
+### Key Components
 
 ### Use Cases (`use_cases/`)
 
-Service implementations that orchestrate domain logic:
+- `agent_session_service.rs` - Agent session lifecycle use cases
+- `context_service.rs` - Embedding and vector operations
+- `indexing_service.rs` - Codebase indexing and processing
+- `memory_service.rs` - Observation/memory use cases
+- `search_service.rs` - Query processing and ranking
+- `validation_service.rs` - Validation orchestration
 
--   `context_service.rs` - ContextServiceImpl: Embedding and vector operations
--   `indexing_service.rs` - IndexingServiceImpl: Codebase indexing and processing
--   `search_service.rs` - SearchServiceImpl: Query processing and ranking
+### Decorators (`decorators/`)
 
-### Domain Services (`domain_services/`)
+- `instrumented_embedding.rs` - Embedding provider metrics instrumentation
 
-Business logic components:
+### Root Files
 
--   `chunking.rs` - ChunkingOrchestrator: Batch file chunking coordination
--   `search.rs` - Search domain logic and Result ranking
-
-### Ports (`ports/`)
-
-Service interface definitions:
-
--   `infrastructure/sync.rs` - SyncProvider interface
--   `providers/cache.rs` - CacheProvider interface
+- `constants.rs` - Shared application constants
+- `lib.rs` - Crate root and exports
 
 ## File Structure
 
 ```text
 crates/mcb-application/src/
+├── constants.rs
+├── decorators/
+│   ├── instrumented_embedding.rs
+│   └── mod.rs
 ├── use_cases/
-│   ├── context_service.rs    # ContextServiceImpl
-│   ├── indexing_service.rs   # IndexingServiceImpl
-│   ├── search_service.rs     # SearchServiceImpl
+│   ├── agent_session_service.rs
+│   ├── context_service.rs
+│   ├── indexing_service.rs
+│   ├── memory_service.rs
+│   ├── search_service.rs
+│   ├── validation_service.rs
 │   └── mod.rs
-├── domain_services/
-│   ├── chunking.rs           # ChunkingOrchestrator
-│   ├── search.rs             # Search logic
-│   └── mod.rs
-├── ports/
-│   ├── infrastructure/       # Infrastructure port traits
-│   └── providers/            # Provider port traits
-└── lib.rs                    # Crate root
+└── lib.rs
 ```
 
 ## Key Exports
 
 ```rust
-// Service implementations
+pub use use_cases::agent_session_service::AgentSessionServiceImpl;
 pub use use_cases::context_service::ContextServiceImpl;
 pub use use_cases::indexing_service::IndexingServiceImpl;
+pub use use_cases::memory_service::MemoryServiceImpl;
 pub use use_cases::search_service::SearchServiceImpl;
-
-// Domain services
-pub use domain_services::chunking::{ChunkingOrchestrator, ChunkingResult};
+pub use use_cases::validation_service::ValidationServiceImpl;
 ```
 
 ## Testing
 
 Application tests are located in `crates/mcb-application/tests/`.
 
-## Project Alignment
-
--   **Phase context**: Follow `docs/context/project-state.md` and `.planning/STATE.md` while advancing Phase 6 Hybrid Search (06-02 plan) so changes to use cases and chunking services deliver on the roadmap.
--   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the Clean Architecture layering; `docs/context/technical-patterns.md` documents provider patterns used by this module.
--   **Roadmap signals**: `docs/developer/ROADMAP.md` outlines v0.2.0 goals (git-aware indexing, session memory, advanced browser) that require resilient application services.
--   **Operational metrics**: Coordinate behavior with `docs/operations/CHANGELOG.md`/`docs/operations/CI_OPTIMIZATION_VALIDATION.md` for test and validation metrics whenever you touch service tests.
-
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # .MCP-context.toml Schema Documentation
 
 **Version**: 0.2.0
@@ -18,12 +19,12 @@ Complete schema reference for `.mcp-context.toml` git-aware indexing configurati
 
 ## Overview
 
-`.mcp-context.toml` is an **optional** configuration file for v0.2.0 that enables:
+`.mcp-context.toml` is an**optional** configuration file for v0.2.0 that enables:
 
--   Multi-branch indexing with configurable depth
--   Smart file filtering with glob patterns
--   Submodule support
--   Branch-specific configuration
+- Multi-branch indexing with configurable depth
+- Smart file filtering with glob patterns
+- Submodule support
+- Branch-specific configuration
 
 If the file doesn't exist, MCB uses sensible defaults for backward compatibility.
 
@@ -33,7 +34,7 @@ If the file doesn't exist, MCB uses sensible defaults for backward compatibility
 
 Place `.mcp-context.toml` in your repository root:
 
-```
+```text
 /path/to/repo/
 ├── .mcp-context.toml    ← Create this file
 ├── src/
@@ -77,7 +78,7 @@ include_submodules = true
 
 # Ignore Patterns: Files/directories to skip
 
-# Type: array of strings
+# Type: array of strings (1)
 
 # Default: [] (index everything)
 
@@ -198,9 +199,9 @@ ignore_patterns = [
 
 ### Matching Behavior
 
--   **Directories**: `target/` matches any directory named "target" at any level
--   **Extensions**: `*.log` matches any file ending in ".log"
--   **Names**: `Cargo.lock` matches exactly that filename
+- **Directories**: `target/` matches any directory named "target" at any level
+- **Extensions**: `*.log` matches any file ending in ".log"
+- **Names**: `Cargo.lock` matches exactly that filename
 
 ---
 
@@ -250,7 +251,7 @@ include_submodules = "yes"# ❌ Should be boolean
 
 ```toml
 
-# If .mcp-context.toml is absent or section incomplete:
+# If .mcp-context.toml is absent or section incomplete
 [git]
 depth = 1000                    # Default
 branches = ["main", "HEAD"]     # Default
@@ -297,7 +298,7 @@ ignore_patterns = [
   "build/",
   "out/",
 
-  # Dependencies
+  ## Dependencies
   "node_modules/",
   ".venv/",
   "venv/",
@@ -338,7 +339,7 @@ ignore_patterns = [
 In v0.1.x, all indexing used fixed defaults. v0.2.0 allows customization:
 
 | Feature | v0.1.x | v0.2.0 |
-|---------|--------|--------|
+| --------- | -------- | -------- |
 | Depth | Hardcoded | Configurable via `.mcp-context.toml` |
 | Branches | All branches | Select specific branches |
 | Patterns | None | Glob patterns supported |

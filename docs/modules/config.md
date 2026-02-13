@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # config Module
 
 **Source**: `crates/mcb-infrastructure/src/config/`
@@ -9,26 +10,26 @@
 
 Application configuration management with type-safe structures, environment variable overrides, and validation.
 
-## Key Components
+### Key Components
 
 ### Configuration Types (`types.rs`)
 
 Hierarchical configuration structures:
 
--   `AppConfig` - Root configuration
--   `ServerConfig` - Server settings (network, SSL, CORS, timeouts)
--   `AuthConfig` - Authentication (JWT settings)
--   `CacheConfig` - Cache configuration
--   `ProviderConfig` - Provider settings
+- `AppConfig` - Root configuration
+- `ServerConfig` - Server settings (network, SSL, CORS, timeouts)
+- `AuthConfig` - Authentication (JWT settings)
+- `CacheConfig` - Cache configuration
+- `ProviderConfig` - Provider settings
 
 ### Configuration Loader (`loader.rs`)
 
 Multi-source configuration loading:
 
--   File-based configuration (TOML, JSON)
--   Environment variable overrides
--   Validation and defaults
--   Hot-reload support
+- File-based configuration (TOML, JSON)
+- Environment variable overrides
+- Validation and defaults
+- Hot-reload support
 
 ## File Structure
 
@@ -65,7 +66,7 @@ pub struct AuthConfig {
 ## Environment Variables
 
 | Variable | Description | Default |
-|----------|-------------|---------|
+| ---------- | ------------- | --------- |
 | `MCP__SERVER__NETWORK__PORT` | Server port | 3000 |
 | `MCP__SERVER__NETWORK__HOST` | Server host | 0.0.0.0 |
 | `MCP_JWT_SECRET` | JWT signing secret | (required) |
@@ -81,10 +82,10 @@ pub use loader::ConfigLoader;
 
 ## Cross-References
 
--   **Infrastructure**: [infrastructure.md](./infrastructure.md) (parent module)
--   **Server**: [server.md](./server.md) (uses config)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Infrastructure**: [infrastructure.md](./infrastructure.md) (parent module)
+- **Server**: [server.md](./server.md) (uses config)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

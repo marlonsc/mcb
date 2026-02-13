@@ -1,15 +1,18 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Deployment Guide
 
 ## 🚀 Local Development Setup
 
-Memory Context Browser currently supports local deployment for development and testing. The system is designed as an MCP server that communicates via stdio with AI assistants.
+Memory Context Browser currently supports local deployment for development and
+testing. The system is designed as an MCP server that communicates via stdio
+with AI assistants.
 
 ## 📦 Installation
 
 ### Prerequisites
 
--   **Rust 1.70+**: Install from [rustup.rs](https://rustup.rs/)
--   **Git**: For cloning the repository
+- **Rust 1.70+**: Install from [rustup.rs](https://rustup.rs/)
+- **Git**: For cloning the repository
 
 ### Build from Source
 
@@ -26,7 +29,7 @@ cargo build
 cargo build --release
 ```
 
-### Run the Server
+## Run the Server
 
 ```bash
 
@@ -56,10 +59,10 @@ provider = "mock"  # Options: mock, openai, ollama, gemini, voyageai
 provider = "memory"  # Options: memory, milvus, filesystem, encrypted
 ```
 
-### Configuration Options
+## Configuration Options
 
 | Setting | Description | Default | Status |
-|---------|-------------|---------|--------|
+| --------- | ------------- | --------- | -------- |
 | `embedding_provider.provider` | Embedding provider to use | `"mock"` | ✅ Available |
 | `vector_store.provider` | Vector storage backend | `"memory"` | ✅ Available |
 
@@ -76,7 +79,7 @@ ls -la target/debug/mcb
 ./target/debug/mcb --version
 ```
 
-### MCP Protocol Testing
+## MCP Protocol Testing
 
 The server communicates via the MCP protocol over stdin/stdout. To test manually:
 
@@ -88,7 +91,8 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | ./target/deb
 
 ## 🐳 Docker Development (Future)
 
->**Note**: Docker support is planned for future releases. Currently, only local Rust builds are supported.
+>**Note**: Docker support is planned for future releases. Currently, only
+local Rust builds are supported.
 
 ## 🔧 Troubleshooting
 
@@ -107,7 +111,7 @@ rustc --version
 cargo --version
 ```
 
-#### Runtime Issues
+## Runtime Issues
 
 ```bash
 
@@ -119,20 +123,20 @@ df -h  # Disk space
 free -h  # Memory
 ```
 
-### Getting Help
+## Getting Help
 
--   Check existing [GitHub Issues](https://github.com/marlonsc/mcb/issues)
--   Review the [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) for technical details
--   See [CONTRIBUTING.md](../developer/CONTRIBUTING.md) for development setup
+- Check existing [GitHub Issues](https://github.com/marlonsc/mcb/issues)
+- Review the [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) for technical details
+- See [CONTRIBUTING.md](../developer/CONTRIBUTING.md) for development setup
 
 ## 🚀 Future Deployment Options
 
 The following deployment configurations are planned for future releases:
 
--   **Docker containerization**
--   **Kubernetes orchestration**
--   **Multi-user support**
--   **Cloud-native deployments**
+- **Docker containerization**
+- **Kubernetes orchestration**
+- **Multi-user support**
+- **Cloud-native deployments**
 
 These will be documented as they become available.
 
@@ -188,7 +192,7 @@ spec:
             cpu: "2000m"
 ```
 
-### Docker Compose (Development)
+## Docker Compose (Development)
 
 ```yaml
 
@@ -247,7 +251,7 @@ volumes:
   redis_data:
 ```
 
-### Enterprise Configuration
+## Enterprise Configuration
 
 ```toml
 
@@ -296,7 +300,7 @@ gdpr_compliance = true
 data_retention_days = 2555
 ```
 
-### Load Balancing
+## Load Balancing
 
 ```yaml
 
@@ -388,7 +392,7 @@ sync_cache = true
 prefetch_intelligence = true
 ```
 
-### Cloud Service Configuration
+## Cloud Service Configuration
 
 ```toml
 
@@ -416,7 +420,7 @@ cpu_threshold = 70
 memory_threshold = 80
 ```
 
-### Synchronization Configuration
+## Synchronization Configuration
 
 ```toml
 
@@ -480,7 +484,7 @@ data:
       indexSliceSize: 16
 ```
 
-### PostgreSQL (Hybrid Storage)
+## PostgreSQL (Hybrid Storage)
 
 ```sql
 -- Initialize database
@@ -587,7 +591,7 @@ export METRICS_ENDPOINT=/metrics
 export LOG_LEVEL=info
 ```
 
-### Configuration Validation
+## Configuration Validation
 
 ```bash
 
@@ -619,7 +623,7 @@ curl http://localhost:3000/health
 curl http://localhost:3000/ready
 ```
 
-### Logging Configuration
+## Logging Configuration
 
 ```toml
 [logging]
@@ -736,7 +740,7 @@ spec:
         averageValue: "100"
 ```
 
-### Performance Tuning
+## Performance Tuning
 
 ```toml
 [performance]
@@ -762,8 +766,8 @@ This deployment guide provides comprehensive instructions for deploying Memory C
 
 ## Cross-References
 
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
--   **Contributing**: [CONTRIBUTING.md](../developer/CONTRIBUTING.md)
--   **Changelog**: [CHANGELOG.md](./CHANGELOG.md)
--   **Roadmap**: [ROADMAP.md](../developer/ROADMAP.md)
--   **Module Documentation**: [docs/modules/](../modules/)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Contributing**: [CONTRIBUTING.md](../developer/CONTRIBUTING.md)
+- **Changelog**: [CHANGELOG.md](./CHANGELOG.md)
+- **Roadmap**: [ROADMAP.md](../developer/ROADMAP.md)
+- **Module Documentation**: [docs/modules/](../modules/)

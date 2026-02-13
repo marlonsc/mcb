@@ -1,13 +1,14 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # API Reference
 
 This document provides a comprehensive reference of the Memory Context Browser public API.
 
 ## Table of Contents
 
--   [Core Types](#core-types)
--   [Providers](#providers)
--   [Services](#services)
--   [Utilities](#utilities)
+- [Core Types](#core-types)
+- [Providers](#providers)
+- [Services](#services)
+- [Utilities](#utilities)
 
 ## Core Types
 
@@ -197,4 +198,4 @@ Intelligent provider routing with resilience.
 
 ---
 
-*Auto-generated API reference*
+### Auto-generated API reference

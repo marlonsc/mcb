@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 10
 title: Hooks Subsystem with Agent-Backed Processing
@@ -10,7 +11,9 @@ superseded_by: []
 implementation_status: Partial
 ---
 
-## ADR 010: Hooks Subsystem with Agent-Backed Processing
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 010: Hooks Subsystem with Agent-Backed Processing
 
 ## Status
 
@@ -32,32 +35,32 @@ implementation_status: Partial
 
 Claude Code provides a hooks system for extending AI assistant behavior at lifecycle events (SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop). Currently, hooks are shell scripts with limited intelligence.
 
-**Current limitations:**
+Current limitations:
 
--   Hooks are shell scripts with hardcoded rules
--   No semantic understanding of context
--   No integration with code search or session memory
--   Each hook operates in isolation
--   Complex decisions require manual rule maintenance
+- Hooks are shell scripts with hardcoded rules
+- No semantic understanding of context
+- No integration with code search or session memory
+- Each hook operates in isolation
+- Complex decisions require manual rule maintenance
 
-**Opportunity for integration:**
+Opportunity for integration:
 
 Memory Context Browser v0.2.0 already provides (via ADR 008 and ADR 009):
 
--   **Semantic code search**- understand code context
--   **Session memory**- recall past decisions and observations
--   **Hybrid search**- combine BM25 + vector similarity
--   **Event bus**- decoupled component communication
--   **Provider pattern**- pluggable implementations
--   **Actor pattern**- async message-based processing
+- **Semantic code search**- understand code context
+- **Session memory**- recall past decisions and observations
+- **Hybrid search**- combine BM25 + vector similarity
+- **Event bus**- decoupled component communication
+- **Provider pattern**- pluggable implementations
+- **Actor pattern**- async message-based processing
 
-**User demand:**
+User demand:
 
--   Intelligent hook processing with semantic context
--   Agent-backed decisions using Claude models
--   Integration with existing code search and memory
--   Policy-based filtering with semantic fallback
--   Zero-config for basic use, full customization available
+- Intelligent hook processing with semantic context
+- Agent-backed decisions using Claude models
+- Integration with existing code search and memory
+- Policy-based filtering with semantic fallback
+- Zero-config for basic use, full customization available
 
 ## Decision
 
@@ -66,7 +69,7 @@ Implement a Hooks Subsystem that**maximally reuses existing infrastructure**:
 ### Component Reuse Strategy
 
 | Existing Component | Hooks Reuse |
-|-------------------|-------------|
+| ------------------- | ------------- |
 | `SystemEvent` enum | Extend with `HookExecuted`, `HookBlocked` events |
 | `EventBus` | Publish hook events for monitoring/admin UI |
 | `ProviderRegistry` pattern | `HookProviderRegistry` for hook processors |
@@ -80,7 +83,7 @@ Implement a Hooks Subsystem that**maximally reuses existing infrastructure**:
 
 ### Architecture Overview
 
-```
+```text
 Claude Code Session
         │
 [Shell Hook] ─────────────────────┐
@@ -125,31 +128,31 @@ Claude Code Session
 
 ### Positive
 
--   **Minimal new code**: ~1500 LOC vs ~4000 LOC if built from scratch
--   **Consistent patterns**: Same DI, error handling, event patterns
--   **Unified platform**: Hooks integrate naturally with search + memory
--   **Tested infrastructure**: Reuses battle-tested components
--   **Easy maintenance**: Single codebase, shared improvements
+- **Minimal new code**: ~1500 LOC vs ~4000 LOC if built from scratch
+- **Consistent patterns**: Same DI, error handling, event patterns
+- **Unified platform**: Hooks integrate naturally with search + memory
+- **Tested infrastructure**: Reuses battle-tested components
+- **Easy maintenance**: Single codebase, shared improvements
 
 ### Negative
 
--   **Coupling**: Hooks depend on ADR 009 memory infrastructure
--   **Latency**: Agent calls add 500-2000ms for complex decisions
--   **API cost**: Claude API calls for agent processing
+- **Coupling**: Hooks depend on ADR 009 memory infrastructure
+- **Latency**: Agent calls add 500-2000ms for complex decisions
+- **API cost**: Claude API calls for agent processing
 
 ## Alternatives Considered
 
 ### Alternative 1: Standalone hooks service
 
--   **Pros**: Independent, no dependencies
--   **Cons**: Duplicates 80% of existing infrastructure
--   **Rejected**: Misses integration opportunity
+- **Pros**: Independent, no dependencies
+- **Cons**: Duplicates 80% of existing infrastructure
+- **Rejected**: Misses integration opportunity
 
 ### Alternative 2: Simple MCP tools only (no agent)
 
--   **Pros**: Fast, no API cost
--   **Cons**: Limited to rule-based decisions
--   **Rejected**: Doesn't meet semantic understanding requirement
+- **Pros**: Fast, no API cost
+- **Cons**: Limited to rule-based decisions
+- **Rejected**: Doesn't meet semantic understanding requirement
 
 ## Implementation Notes
 
@@ -1108,7 +1111,7 @@ fn default_cache_ttl() -> u64 { 300 }
 ### New Files (minimal)
 
 | File | LOC | Purpose |
-|------|-----|---------|
+| ------ | ----- | --------- |
 | `crates/mcb-domain/src/hooks.rs` | ~120 | Hook domain types |
 | `crates/mcb-application/src/ports/providers/hooks.rs` | ~30 | HookProcessor trait |
 | `crates/mcb-infrastructure/src/di/hooks_registry.rs` | ~50 | Registry (pattern copy) |
@@ -1123,7 +1126,7 @@ fn default_cache_ttl() -> u64 { 300 }
 ### Modified Files
 
 | File | Change |
-|------|--------|
+| ------ | -------- |
 | `crates/mcb-domain/src/error.rs` | Add `Hook` variant |
 | `crates/mcb-infrastructure/src/events/mod.rs` | Add 3 hook events |
 | `crates/mcb-domain/src/mod.rs` | Export hooks module |
@@ -1154,16 +1157,16 @@ if let Some(git) = &self.git_provider {
 
 ## Related ADRs
 
--   [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - HookProcessor follows trait-based DI
--   [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async hook processing
--   [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Hook monitoring UI
--   [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git context in hooks
--   [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Hook observation storage
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI for hook services
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - HookProcessor follows trait-based DI
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async hook processing
+- [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Hook monitoring UI
+- [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git context in hooks
+- [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Hook observation storage
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI for hook services
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
 
 ## References
 
--   [Claude Code Hooks Documentation](https://docs.anthropic.com/claude-code/hooks)
--   [Shaku Documentation](https://docs.rs/shaku) - DI framework (historical; see ADR-029)
--   Existing patterns: `crates/mcb-infrastructure/src/events/mod.rs`, `crates/mcb-infrastructure/src/di/registry.rs`, `crates/mcb-application/src/use_cases/context.rs`
+- [Claude Code Hooks Documentation](https://docs.anthropic.com/claude-code/hooks)
+- [Shaku Documentation](https://docs.rs/shaku) - DI framework (historical; see ADR-029)
+- Existing patterns: `crates/mcb-infrastructure/src/events/mod.rs`, `crates/mcb-infrastructure/src/di/registry.rs`, `crates/mcb-application/src/use_cases/context.rs`
