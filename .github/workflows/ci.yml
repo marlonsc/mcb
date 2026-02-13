@@ -103,7 +103,7 @@ jobs:
       (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - run: bash .github/setup-ci.sh
@@ -141,7 +141,7 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - name: Install dependencies (Unix)
@@ -168,7 +168,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - run: bash .github/setup-ci.sh
@@ -188,7 +188,7 @@ jobs:
       (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - run: bash .github/setup-ci.sh
@@ -220,7 +220,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - run: bash .github/setup-ci.sh
@@ -239,7 +239,7 @@ jobs:
     if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && needs.classify.outputs.run_full == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - run: bash .github/setup-ci.sh --install-audit
@@ -272,11 +272,11 @@ jobs:
       CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v3.28.13
+        uses: github/codeql-action/init@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
         with:
           languages: ${{ matrix.language }}
           config-file: ./.github/codeql-config.yml
@@ -285,9 +285,9 @@ jobs:
         with:
           toolchain: stable
       - name: Autobuild
-        uses: github/codeql-action/autobuild@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v3.28.13
+        uses: github/codeql-action/autobuild@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # v3.28.13
+        uses: github/codeql-action/analyze@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
         with:
           category: "/language:${{ matrix.language }}"
 
@@ -298,7 +298,7 @@ jobs:
     needs: [changes, classify]
     if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true') && needs.classify.outputs.run_full == 'true'
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - run: make docs-check
@@ -319,7 +319,7 @@ jobs:
     needs: [changes, classify]
     if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && needs.classify.outputs.run_full == 'true'
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
@@ -449,7 +449,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - run: bash .github/setup-ci.sh --install-coverage
@@ -495,7 +495,7 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - name: Install dependencies (Unix)
