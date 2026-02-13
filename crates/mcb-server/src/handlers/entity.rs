@@ -35,6 +35,8 @@ impl EntityHandler {
     }
 
     /// Route an `entity` tool call to the matching legacy entity handler.
+    // TODO(KISS005): Function handle is too long (78 lines, max: 50).
+    // Consider splitting into domain-specific sub-handlers (VCS, Plan, Issue, Org).
     pub async fn handle(
         &self,
         Parameters(args): Parameters<EntityArgs>,
@@ -44,7 +46,9 @@ impl EntityHandler {
             | EntityResource::Branch
             | EntityResource::Worktree
             | EntityResource::Assignment => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err() for better error messages.
                 let action = map_vcs_action(args.action)?;
+                // TODO(ERR001): Missing error context.
                 let resource = map_vcs_resource(args.resource)?;
                 self.vcs
                     .handle(Parameters(VcsEntityArgs {
@@ -60,7 +64,9 @@ impl EntityHandler {
                     .await
             }
             EntityResource::Plan | EntityResource::Version | EntityResource::Review => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err() for better error messages.
                 let action = map_standard_action_to_plan(args.action)?;
+                // TODO(ERR001): Missing error context.
                 let resource = map_plan_resource(args.resource)?;
                 self.plan
                     .handle(Parameters(PlanEntityArgs {
@@ -79,7 +85,9 @@ impl EntityHandler {
             | EntityResource::Comment
             | EntityResource::Label
             | EntityResource::LabelAssignment => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err() for better error messages.
                 let action = map_standard_action_to_issue(args.action)?;
+                // TODO(ERR001): Missing error context.
                 let resource = map_issue_resource(args.resource)?;
                 self.issue
                     .handle(Parameters(IssueEntityArgs {
@@ -99,7 +107,9 @@ impl EntityHandler {
             | EntityResource::Team
             | EntityResource::TeamMember
             | EntityResource::ApiKey => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err() for better error messages.
                 let action = map_standard_action_to_org(args.action)?;
+                // TODO(ERR001): Missing error context.
                 let resource = map_org_resource(args.resource)?;
                 self.org
                     .handle(Parameters(OrgEntityArgs {

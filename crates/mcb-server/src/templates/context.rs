@@ -63,6 +63,7 @@ impl Context {
                 let data_type = data_type_str
                     .as_ref()
                     .and_then(|ext| ContentType::from_extension(ext))
+                    // TODO(QUAL001): unwrap() in production. Use unwrap_or() as seen, but flagged as risky.
                     .unwrap_or(ContentType::Text);
 
                 templates.insert(
@@ -89,6 +90,7 @@ impl Context {
                     .extension()
                     .and_then(|osstr| osstr.to_str())
                     .and_then(ContentType::from_extension)
+                    // TODO(QUAL001): unwrap() in production. Use unwrap_or() as seen.
                     .unwrap_or(ContentType::Text);
 
                 let info = TemplateInfo {
@@ -120,6 +122,7 @@ impl Context {
                 .extension()
                 .and_then(|osstr| osstr.to_str())
                 .and_then(ContentType::from_extension)
+                // TODO(QUAL001): unwrap() in production. Use unwrap_or() as seen.
                 .unwrap_or(ContentType::HTML);
 
             templates.insert(
@@ -138,6 +141,7 @@ impl Context {
                     .extension()
                     .and_then(|osstr| osstr.to_str())
                     .and_then(ContentType::from_extension)
+                    // TODO(QUAL001): unwrap() in production. Use unwrap_or() as seen.
                     .unwrap_or(ContentType::Text);
 
                 templates.insert(
@@ -227,6 +231,7 @@ mod manager {
         pub fn context(&self) -> impl Deref<Target = Context> + '_ {
             self.context
                 .read()
+                // TODO(QUAL002): expect() in production. handle poisoning explicitly.
                 .expect("template context RwLock poisoned")
         }
 
@@ -237,6 +242,7 @@ mod manager {
         fn context_mut(&self) -> impl DerefMut<Target = Context> + '_ {
             self.context
                 .write()
+                // TODO(QUAL002): expect() in production. handle poisoning explicitly.
                 .expect("template context RwLock poisoned")
         }
 
@@ -244,6 +250,7 @@ mod manager {
             let templates_changes = self
                 .watcher
                 .as_ref()
+                // TODO(QUAL002): expect() in production. Use ? or handle error.
                 .map(|(_, rx)| rx.lock().expect("fsevents lock").try_iter().count() > 0);
 
             if let Some(true) = templates_changes {
@@ -275,6 +282,7 @@ fn remove_extension(path: &Path) -> PathBuf {
 fn split_path(root: &Path, path: &Path) -> (String, Option<String>) {
     let rel_path = path
         .strip_prefix(root)
+        // TODO(QUAL002): expect() in production. Use ? or handle error.
         .expect("template path must be under root directory")
         .to_path_buf();
     let path_no_ext = remove_extension(&rel_path);

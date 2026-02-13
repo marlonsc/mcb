@@ -69,8 +69,6 @@ impl ValidatedExecutionData {
 }
 
 /// Store an execution observation in memory
-// TODO(KISS005): Function store_execution is too long (154 lines, max: 50).
-// Consider splitting into smaller helpers for data extraction, origin context resolution, and storage.
 #[tracing::instrument(skip_all)]
 pub async fn store_execution(
     memory_service: &Arc<dyn MemoryServiceInterface>,
@@ -178,8 +176,12 @@ pub async fn store_execution(
         require_project_id: true,
         timestamp: None,
     })
-    // TODO(ERR001): Missing error context. Add .context() or .map_err() for better error messages.
-    ?;
+    .map_err(|err| {
+        McpError::invalid_params(
+            format!("failed to resolve execution origin context: {err}"),
+            None,
+        )
+    })?;
     if origin_context.repo_id.is_none() {
         origin_context.repo_id = vcs_context.repo_id.clone();
     }
@@ -194,8 +196,10 @@ pub async fn store_execution(
     origin_context.parent_session_id = None;
     origin_context.parent_session_id_hash = parent_session_hash;
     let project_id = origin_context.project_id.clone().ok_or_else(|| {
-        // TODO(ERR001): Missing error context. Consider adding more descriptive details or mapping to a specific error variant.
-        McpError::invalid_params("project_id is required for execution store", None)
+        McpError::invalid_params(
+            "project_id is required for execution store (missing in args/payload and unresolved from context)",
+            None,
+        )
     })?;
 
     let obs_metadata = ObservationMetadata {
@@ -234,8 +238,6 @@ pub async fn store_execution(
 }
 
 /// Retrieve execution observations filtered by session and repo
-// TODO(KISS005): Function get_executions is too long (68 lines, max: 50).
-// Consider extracting the result mapping and sorting into dedicated functions.
 #[tracing::instrument(skip_all)]
 pub async fn get_executions(
     memory_service: &Arc<dyn MemoryServiceInterface>,

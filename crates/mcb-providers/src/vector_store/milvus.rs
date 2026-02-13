@@ -2,6 +2,11 @@
 //!
 //! High-performance cloud vector database using Milvus.
 //! Supports production-scale vector storage with automatic indexing and distributed search.
+//!
+//! # Architecture Violation (REF003)
+//! Missing corresponding test file in `tests/` directory.
+//!
+// TODO(QUAL005): Pending (REF003): Create test file `crates/mcb-providers/tests/milvus_test.rs`.
 
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -223,7 +228,13 @@ impl MilvusVectorStoreProvider {
             })
     }
 
-    /// Convert Milvus search results to our SearchResult format
+    /// Convert Milvus search results to our SearchResult format.
+    ///
+    /// # Architecture Violation (KISS005)
+    /// This function exceeds the 50-line limit (69 lines). Long functions are harder
+    /// to test, maintain, and reason about.
+    ///
+    // TODO(KISS005): Break 'convert_search_results' into smaller, focused functions.
     fn convert_search_results(
         search_results: &[milvus::collection::SearchResult<'_>],
     ) -> Vec<SearchResult> {
@@ -298,6 +309,12 @@ impl MilvusVectorStoreProvider {
 
 #[async_trait]
 impl VectorStoreProvider for MilvusVectorStoreProvider {
+    /// Create a collection in Milvus.
+    ///
+    /// # Architecture Violation (KISS005)
+    /// Function length (71 lines) exceeds the 50-line limit.
+    ///
+    // TODO(KISS005): Break 'create_collection' into smaller, focused functions.
     async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
         let schema =
             CollectionSchemaBuilder::new(name.as_str(), &format!("Collection for {}", name))
@@ -378,6 +395,12 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         Ok(())
     }
 
+    /// Insert vectors into a collection.
+    ///
+    /// # Architecture Violation (KISS005)
+    /// Function length (110 lines) exceeds the 50-line limit.
+    ///
+    // TODO(KISS005): Break 'insert_vectors' into smaller, focused functions (e.g., data prep, column building).
     async fn insert_vectors(
         &self,
         collection: &CollectionId,
@@ -533,6 +556,12 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         Ok(())
     }
 
+    /// Get vectors by their IDs.
+    ///
+    /// # Architecture Violation (KISS005)
+    /// Function length (102 lines) exceeds the 50-line limit.
+    ///
+    // TODO(KISS005): Break 'get_vectors_by_ids' into smaller, focused functions (e.g., query construction, mapping).
     async fn get_vectors_by_ids(
         &self,
         collection: &CollectionId,
@@ -636,6 +665,12 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         Ok(results)
     }
 
+    /// List vectors from a collection.
+    ///
+    /// # Architecture Violation (KISS005)
+    /// Function length (134 lines) exceeds the 50-line limit.
+    ///
+    // TODO(KISS005): Break 'list_vectors' into smaller, focused functions (pagination loop, batch conversion).
     async fn list_vectors(
         &self,
         collection: &CollectionId,
@@ -804,6 +839,12 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         Ok(collections)
     }
 
+    /// List file paths indexed in a collection.
+    ///
+    /// # Architecture Violation (KISS005)
+    /// Function length (65 lines) exceeds the 50-line limit.
+    ///
+    // TODO(KISS005): Break 'list_file_paths' into smaller, focused functions.
     async fn list_file_paths(
         &self,
         collection: &CollectionId,
@@ -854,6 +895,10 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         for column in &query_results {
             if column.name == "file_path" {
                 for i in 0..column.len() {
+                    // # Architecture Violation (KISS004)
+                    // Deep nesting (4 levels) makes logic hard to follow.
+                    //
+                    // TODO(KISS004): Extract nested logic into separate functions.
                     if let Some(Value::String(path)) = column.get(i) {
                         *file_counts.entry(path.to_string()).or_insert(0) += 1;
                     }
@@ -870,6 +915,10 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         Ok(files)
     }
 
+    /// # Architecture Violation (KISS005)
+    /// Function length (102 lines) exceeds the 50-line limit.
+    ///
+    // TODO(KISS005): Break 'get_chunks_by_file' into smaller, focused functions.
     async fn get_chunks_by_file(
         &self,
         collection: &CollectionId,

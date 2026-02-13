@@ -19,8 +19,6 @@ use serde_json::Value;
 struct TimestampHelper;
 
 impl HelperDef for TimestampHelper {
-    // TODO(KISS002): Function call has too many parameters (6 params, max: 5).
-    // This is part of the Handlebars Trait definition, but flagged by KISS validation.
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &Helper<'rc>,
@@ -58,8 +56,6 @@ impl HelperDef for TimestampHelper {
 struct RelativeTimeHelper;
 
 impl HelperDef for RelativeTimeHelper {
-    // TODO(KISS002): Function call has too many parameters (6 params, max: 5).
-    // This is part of the Handlebars Trait definition, but flagged by KISS validation.
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &Helper<'rc>,
@@ -110,8 +106,6 @@ impl HelperDef for RelativeTimeHelper {
 struct JsonPrettyHelper;
 
 impl HelperDef for JsonPrettyHelper {
-    // TODO(KISS002): Function call has too many parameters (6 params, max: 5).
-    // This is part of the Handlebars Trait definition, but flagged by KISS validation.
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &Helper<'rc>,
@@ -145,8 +139,6 @@ impl HelperDef for JsonPrettyHelper {
 struct TruncateIdHelper;
 
 impl HelperDef for TruncateIdHelper {
-    // TODO(KISS002): Function call has too many parameters (6 params, max: 5).
-    // This is part of the Handlebars Trait definition, but flagged by KISS validation.
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &Helper<'rc>,
@@ -178,8 +170,6 @@ impl HelperDef for TruncateIdHelper {
 struct PluralizeHelper;
 
 impl HelperDef for PluralizeHelper {
-    // TODO(KISS002): Function call has too many parameters (6 params, max: 5).
-    // This is part of the Handlebars Trait definition, but flagged by KISS validation.
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &Helper<'rc>,
@@ -210,8 +200,6 @@ impl HelperDef for PluralizeHelper {
 struct BadgeHelper;
 
 impl HelperDef for BadgeHelper {
-    // TODO(KISS002): Function call has too many parameters (6 params, max: 5).
-    // This is part of the Handlebars Trait definition, but flagged by KISS validation.
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &Helper<'rc>,
@@ -250,8 +238,6 @@ impl HelperDef for BadgeHelper {
 struct StatusBadgeHelper;
 
 impl HelperDef for StatusBadgeHelper {
-    // TODO(KISS002): Function call has too many parameters (6 params, max: 5).
-    // This is part of the Handlebars Trait definition, but flagged by KISS validation.
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &Helper<'rc>,
@@ -293,8 +279,6 @@ impl HelperDef for StatusBadgeHelper {
 struct PriorityBadgeHelper;
 
 impl HelperDef for PriorityBadgeHelper {
-    // TODO(KISS002): Function call has too many parameters (6 params, max: 5).
-    // This is part of the Handlebars Trait definition, but flagged by KISS validation.
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &Helper<'rc>,
@@ -327,8 +311,6 @@ impl HelperDef for PriorityBadgeHelper {
 struct TruncateTextHelper;
 
 impl HelperDef for TruncateTextHelper {
-    // TODO(KISS002): Function call has too many parameters (6 params, max: 5).
-    // This is part of the Handlebars Trait definition, but flagged by KISS validation.
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &Helper<'rc>,
@@ -366,8 +348,6 @@ impl HelperDef for TruncateTextHelper {
 struct EqHelper;
 
 impl HelperDef for EqHelper {
-    // TODO(KISS002): Function call has too many parameters (6 params, max: 5).
-    // This is part of the Handlebars Trait definition, but flagged by KISS validation.
     fn call<'reg: 'rc, 'rc>(
         &self,
         h: &Helper<'rc>,

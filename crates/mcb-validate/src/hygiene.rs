@@ -1,9 +1,17 @@
-//! Test Organization Validation
+//! # Test Organization and Quality Validation
 //!
-//! Validates test hygiene:
-//! - No inline test modules in src/ (should be in tests/)
-//! - Test file naming conventions
-//! - Test function naming conventions
+//! This module provides the infrastructure for validating test hygiene and quality
+//! across the codebase. It ensures that tests are organized according to the
+//! project's standards (e.g., unit tests in `tests/unit/`) and that they maintain
+//! high quality (e.g., meaningful assertions, no raw unwraps).
+//!
+//! ## Architectural Note (QUAL004)
+//! This file has grown significantly (1120 lines) and exceeds the recommended limit of 500 lines.
+//! **Planned Action**: Decompose into smaller sub-modules:
+//! - `violation.rs`: Definition of `HygieneViolation`.
+//! - `naming.rs`: File and function naming validation logic.
+//! - `quality.rs`: Quality-related checks (assertions, unwraps).
+//! - `structure.rs`: Directory structure and inline module checks.
 
 use std::path::{Path, PathBuf};
 
@@ -19,6 +27,8 @@ use crate::{Result, Severity, ValidationConfig};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum HygieneViolation {
     /// Inline test module found in src/
+    // TODO(TEST001): Move pre-existing inline tests (line 25) to tests/ directory.
+    // This is part of the "Clean src/" initiative.
     InlineTestModule {
         /// File containing the inline test module.
         file: PathBuf,

@@ -1,10 +1,23 @@
 use mcb_domain::error::Error;
 // TODO(REF003): Missing test file for crates/mcb-server/src/error_mapping.rs.
-// Expected: crates/mcb-server/tests/error_mapping_test.rs
+// Tracking: REF003
 
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 
-/// Maps domain errors to sanitized MCP errors suitable for external clients.
+/// Maps domain-specific errors to sanitized, opaque MCP errors.
+///
+/// This function ensures that internal details, such as database schema issues
+/// or stack traces, are not leaked to external clients. It provides a clean,
+/// user-friendly error message for common fixable errors and a generic
+/// internal error for all others.
+///
+/// # Arguments
+///
+/// * `e` - The [`Error`] from the domain layer to be mapped.
+///
+/// # Returns
+///
+/// A sanitized [`McpError`] ready for transmission.
 pub fn to_opaque_mcp_error(e: Error) -> McpError {
     match &e {
         Error::NotFound { .. } => McpError::invalid_params(e.to_string(), None),
@@ -16,17 +29,34 @@ pub fn to_opaque_mcp_error(e: Error) -> McpError {
     }
 }
 
-/// Builds a contextual tool-call error response with category and reason.
+/// Builds a contextual tool-call error response with categorization and sanitization.
 ///
-/// Client-fixable errors (NotFound, InvalidArgument) return specific messages.
-/// Provider errors (Database, VectorDb, Embedding) return category + sanitized reason.
-/// Internal paths and stack traces are never leaked.
-// TODO(KISS005): Function to_contextual_tool_error is too long (105 lines, max: 50).
-// Break into smaller, focused functions.
+/// This function maps internal domain errors into a structured [`CallToolResult`]
+/// that can be returned by the MCP server tools. It categorizes errors into
+/// client-fixable (e.g., Not Found) and provider-specific issues (e.g., Database),
+/// while ensuring that no sensitive infrastructure information is exposed.
+///
+/// # Arguments
+///
+/// * `e` - An object that can be converted into a domain [`Error`].
+///
+/// # Returns
+///
+/// A [`CallToolResult`] containing the categorized and sanitized error message.
+///
+/// # Examples
+///
+/// ```rust
+/// let err = Error::NotFound { resource: "repo".to_string() };
+/// let result = to_contextual_tool_error(err);
+/// assert!(result.is_error);
+/// ```
+// TODO(KISS005): Function exceeds recommended line count (107 lines, max 50).
+// Decompose into smaller category-based mapping functions.
 pub fn to_contextual_tool_error(e: impl Into<Error>) -> CallToolResult {
     let error: Error = e.into();
-    // TODO(SOLID002): Excessive match arms (29 arms, recommended max: 15).
-    // Consider using visitor pattern, enum dispatch, or trait objects.
+    // TODO(SOLID002): Match block contains 29 arms (max 15).
+    // Use visitor pattern or delegate mapping to maintain OCP.
     let message = match &error {
         // Client-fixable errors — return the specific message
         Error::NotFound { resource } => format!("Not found: {resource}"),

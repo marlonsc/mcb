@@ -1,6 +1,7 @@
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
 
 #[test]
+// TODO(TEST003): Bad test function name 'worktree_status_as_str'. Use 'test_worktree_status_as_str'.
 fn worktree_status_as_str() {
     assert_eq!(WorktreeStatus::Active.as_str(), "active");
     assert_eq!(WorktreeStatus::InUse.as_str(), "in_use");
@@ -8,6 +9,7 @@ fn worktree_status_as_str() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'worktree_status_from_str'. Use 'test_worktree_status_from_str'.
 fn worktree_status_from_str() {
     assert_eq!(
         "active".parse::<WorktreeStatus>(),
@@ -25,6 +27,7 @@ fn worktree_status_from_str() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'worktree_status_from_str_case_insensitive'. Use 'test_worktree_status_from_str_case_insensitive'.
 fn worktree_status_from_str_case_insensitive() {
     assert_eq!(
         "ACTIVE".parse::<WorktreeStatus>(),
@@ -41,6 +44,7 @@ fn worktree_status_from_str_case_insensitive() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'worktree_construction'. Use 'test_worktree_construction'.
 fn worktree_construction() {
     let wt = Worktree {
         id: "wt-001".to_string(),
@@ -60,6 +64,7 @@ fn worktree_construction() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'worktree_with_assigned_agent'. Use 'test_worktree_with_assigned_agent'.
 fn worktree_with_assigned_agent() {
     let wt = Worktree {
         id: "wt-002".to_string(),
@@ -76,6 +81,7 @@ fn worktree_with_assigned_agent() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'worktree_serialization_roundtrip'. Use 'test_worktree_serialization_roundtrip'.
 fn worktree_serialization_roundtrip() {
     let wt = Worktree {
         id: "wt-003".to_string(),
@@ -95,6 +101,7 @@ fn worktree_serialization_roundtrip() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'assignment_construction_active'. Use 'test_assignment_construction_active'.
 fn assignment_construction_active() {
     let assign = AgentWorktreeAssignment {
         id: "assign-001".to_string(),
@@ -110,6 +117,7 @@ fn assignment_construction_active() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'assignment_construction_released'. Use 'test_assignment_construction_released'.
 fn assignment_construction_released() {
     let assign = AgentWorktreeAssignment {
         id: "assign-002".to_string(),
@@ -122,6 +130,7 @@ fn assignment_construction_released() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'assignment_serialization_roundtrip'. Use 'test_assignment_serialization_roundtrip'.
 fn assignment_serialization_roundtrip() {
     let assign = AgentWorktreeAssignment {
         id: "assign-003".to_string(),
