@@ -72,7 +72,7 @@ Operational documentation for deployment and maintenance.
 - **[Changelog](operations/CHANGELOG.md)** - Version history and release notes
 - **[CI Optimization](operations/CI_OPTIMIZATION.md)** - CI performance and
   workflow tuning
-- **[CodeQL Setup](operations/CODEQL_SETUP.md)** - Static analysis setup
+- **[CI/CD & Release](operations/CI_RELEASE.md)** - CI pipeline, CodeQL, and release process
 
 ### 📋 Templates
 

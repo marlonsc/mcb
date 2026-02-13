@@ -136,12 +136,12 @@ Fixes #<issue-id>
 
 **Beads auto-close:** include `Fixes #<id>` or `Closes #<id>` in the footer.
 
-### Commit Orchestrator (Local)
+### Commit Workflow
 
 ```bash
 ./scripts/commit_analyze.sh             # Analyze staged changes
 make lint MCB_CI=1 && make validate QUICK=1  # Pre-commit validation
-git commit                              # Commit (runs beads update hook)
+git commit                              # Commit (pre-commit hook runs checks)
 git push                                # Push
 ```
 

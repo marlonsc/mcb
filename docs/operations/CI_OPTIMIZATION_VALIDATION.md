@@ -1,6 +1,5 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # CI Optimization - Validation & Testing Guide
-<!-- markdownlint-disable MD024 -->
 
 ## Status
 

@@ -222,3 +222,8 @@ reference/
 .mypy_cache/
 .pytest_cache/
 .venv/
+
+# ---------------------------------------------------------------------------
+# Archived files (moved out of project, kept locally for reference)
+# ---------------------------------------------------------------------------
+archive/

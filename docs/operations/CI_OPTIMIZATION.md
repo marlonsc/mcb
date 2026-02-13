@@ -1,6 +1,5 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # CI Optimization Strategy - v0.2.1
-<!-- markdownlint-disable MD024 -->
 
 ## Overview
 
@@ -9,12 +8,14 @@ CI pipeline optimization evolved from push-to-main workflows to **PR-first with 
 ## Evolution Timeline
 
 ### v0.1.4 (January 2026) - Path Filters & Matrix Optimization
+
 - Path-based filtering to skip irrelevant jobs
 - Test matrix split (PR: stable only, Main: stable+beta)
 - Coverage job conditional on main pushes
 - **Problem**: Still ran heavy jobs on push-to-main, duplicating PR work
 
 ### v0.2.1 (February 2026) - PR-First with Conditional Policies
+
 - **Paradigm shift**: PRs become the single correctness gate
 - Draft/Bot/Ready classification controls job execution
 - Push-to-main runs ONLY deployment (GitHub Pages)
@@ -59,27 +60,32 @@ See `CI_PR_POLICIES.md` for detailed classification logic and job execution matr
 ### v0.1.4 → v0.2.1 Comparison
 
 #### Draft PR (during development)
+
 - **Before**: 8 jobs, ~8-10 minutes
 - **After**: Gate check only, ~30 seconds
 - **Savings**: ~95% time reduction for iterative development
 
 #### Bot PR (Dependabot)
+
 - **Before**: 8-9 jobs, ~8-10 minutes
 - **After**: 4 jobs (simplified), ~3-5 minutes
 - **Savings**: ~50% time + skips expensive jobs (coverage, golden, cross-platform)
 
 #### Ready PR (human review)
+
 - **Before**: 8-9 jobs, ~8-10 minutes (CodeQL blocks gate)
 - **After**: Full suite, ~10-15 minutes (CodeQL after gate, non-blocking)
 - **Gate passes**: ~5-10 minutes (no longer blocked by CodeQL)
 - **Benefit**: Faster merge approval, comprehensive validation
 
 #### Push to Main
+
 - **Before**: 17-19 jobs (DUPLICATES all PR work)
 - **After**: 1 workflow (Pages deploy only)
 - **Savings**: ~95% reduction, eliminates redundant validation
 
 #### Monthly Savings (estimated)
+
 - **Draft iterations**: 50 PRs × 8 min saved = ~400 min saved
 - **Bot PRs**: 20 PRs × 5 min saved = ~100 min saved
 - **Main pushes**: 30 pushes × 17 jobs saved = ~510 jobs eliminated
@@ -106,6 +112,7 @@ This check is referenced in repository rulesets and MUST NOT change to avoid bre
 **Triggers**: `pull_request` events (opened, synchronize, reopened, ready_for_review, converted_to_draft) targeting `main`
 
 **Jobs**:
+
 - `classify` - Detect Draft/Bot/Ready state
 - `changes` - Path-based filtering
 - `lint` - Rust 2024 compliance
@@ -124,6 +131,7 @@ This check is referenced in repository rulesets and MUST NOT change to avoid bre
 **Triggers**: `push` to `main` branch
 
 **Jobs**:
+
 - Build mdBook documentation
 - Build Rust API docs
 - Deploy to GitHub Pages
@@ -135,6 +143,7 @@ This check is referenced in repository rulesets and MUST NOT change to avoid bre
 **Triggers**: `push` tags matching `v*`
 
 **Jobs**:
+
 - Build binaries (Linux, macOS, Windows)
 - Create GitHub Release
 - Upload binary artifacts
@@ -144,6 +153,7 @@ This check is referenced in repository rulesets and MUST NOT change to avoid bre
 **Before v0.2.1**: CodeQL was a separate workflow, blocked PRs for 5-10 minutes
 
 **After v0.2.1**:
+
 - Integrated into `ci.yml` as `analyze` job
 - Depends on `rust-ci` (required gate check)
 - Only runs for Ready PRs (`run_full == 'true'`)
@@ -156,6 +166,7 @@ analyze:
 ```
 
 **Note**: Old standalone `codeql.yml` still exists on `main` branch until PR #94 merges. Bot PRs targeting `main` currently trigger both:
+
 - OLD `codeql.yml` from `main` (will be deleted when PR merges)
 - NEW `analyze` job from PR branch (correctly skips for bots)
 
