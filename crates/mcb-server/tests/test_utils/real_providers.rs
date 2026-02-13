@@ -4,6 +4,7 @@
 //! for use in tests that should verify real behavior instead of mocking.
 
 use std::sync::Arc;
+use std::sync::OnceLock;
 
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
@@ -27,9 +28,7 @@ fn unique_test_path(prefix: &str) -> std::path::PathBuf {
 pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> {
     let mut config = AppConfig::default();
     config.auth.user_db_path = Some(unique_test_path("mcb-server-test-db"));
-    let cache_dir = unique_test_path("mcb-server-fastembed-cache");
-    std::fs::create_dir_all(&cache_dir).expect("create fastembed cache dir");
-    config.providers.embedding.cache_dir = Some(cache_dir);
+    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
     let ctx = init_app(config).await?;
     Ok(ctx.vector_store_handle().get())
 }
@@ -45,11 +44,23 @@ pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> 
 pub async fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvider>> {
     let mut config = AppConfig::default();
     config.auth.user_db_path = Some(unique_test_path("mcb-server-test-db"));
-    let cache_dir = unique_test_path("mcb-server-fastembed-cache");
-    std::fs::create_dir_all(&cache_dir).expect("create fastembed cache dir");
-    config.providers.embedding.cache_dir = Some(cache_dir);
+    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
     let ctx = init_app(config).await?;
     Ok(ctx.embedding_handle().get())
+}
+
+fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
+    static CACHE_DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
+
+    CACHE_DIR
+        .get_or_init(|| {
+            let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR")
+                .map(std::path::PathBuf::from)
+                .unwrap_or_else(|| std::env::temp_dir().join("mcb-fastembed-test-cache"));
+            std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
+            cache_dir
+        })
+        .clone()
 }
 
 /// Create a real FastEmbed provider with a specific model

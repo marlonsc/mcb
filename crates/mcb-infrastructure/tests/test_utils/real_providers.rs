@@ -30,6 +30,7 @@ extern crate mcb_providers;
 
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::sync::OnceLock;
 
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
@@ -58,16 +59,22 @@ pub async fn create_test_app_context() -> Result<AppContext> {
             .as_nanos()
     ));
     config.auth.user_db_path = Some(temp_dir);
-    let cache_dir = std::env::temp_dir().join(format!(
-        "mcb-fastembed-cache-{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    std::fs::create_dir_all(&cache_dir).expect("create fastembed cache dir");
-    config.providers.embedding.cache_dir = Some(cache_dir);
+    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
     init_app(config).await
+}
+
+fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
+    static CACHE_DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
+
+    CACHE_DIR
+        .get_or_init(|| {
+            let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR")
+                .map(std::path::PathBuf::from)
+                .unwrap_or_else(|| std::env::temp_dir().join("mcb-fastembed-test-cache"));
+            std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
+            cache_dir
+        })
+        .clone()
 }
 
 /// Context for full-stack integration tests
