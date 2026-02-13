@@ -10,7 +10,7 @@ Accepted
 
 ## Detailed Plan
 
-[Observability Strategy Plan](../plans/observability-strategy.md)
+[Observability Strategy Plan](../plans/v0.2.2-observability-strategy.md)
 
 ## Context
 

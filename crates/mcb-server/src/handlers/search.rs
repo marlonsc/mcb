@@ -96,7 +96,7 @@ impl SearchHandler {
                     },
                     session_id: args
                         .session_id
-                        .as_ref()
+                        .clone()
                         .map(|id| compute_stable_id_hash("session", id.as_str())),
                     parent_session_id: None,
                     repo_id: None,

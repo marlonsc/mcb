@@ -24,7 +24,7 @@ pub async fn inject_context(
         r#type: None,
         session_id: args
             .session_id
-            .as_ref()
+            .clone()
             .map(|id| compute_stable_id_hash("session", id.as_str())),
         parent_session_id: args.parent_session_id.clone(),
         repo_id: args.repo_id.clone(),

@@ -88,7 +88,7 @@ Documentation templates and standards.
   environment variable matrix
 - **[MCB Context Config](configuration/MCB_CONTEXT.md)** - `.mcp-context.toml`
   reference
-- **[Generated Metrics](generated/METRICS.md)** - Generated repository metrics
+- **Generated Metrics** - Generated automatically by `make docs` (see output in `docs/generated/`)
 - **[Testing Integration](testing/E2E_INTEGRATION.md)** - End-to-end testing strategy
 - **[Context Discovery Research](research/CONTEXT_DISCOVERY_GIT_INTEGRATION.md)**
   - Git-aware context findings

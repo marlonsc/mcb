@@ -12,7 +12,6 @@ use std::path::Path;
 use std::time::Duration;
 
 use mcb_domain::utils::mask_id;
-use mcb_domain::value_objects::ids::SessionId;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
@@ -82,9 +81,8 @@ impl HttpClientTransport {
         session_id_override: Option<String>,
         session_file_override: Option<String>,
     ) -> Result<Self, Box<dyn std::error::Error>> {
-        let public_session_id = Self::generate_session_id(session_prefix.clone()).into_string();
-        let session_id =
-            Self::resolve_session_id(session_prefix, session_id_override, session_file_override)?;
+        let public_session_id = Self::generate_session_id(session_prefix.clone());
+        Self::initialize_session_state(session_prefix, session_id_override, session_file_override)?;
 
         let config = McpClientConfig {
             server_url,
@@ -98,18 +96,19 @@ impl HttpClientTransport {
             .build()
             .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
 
-        drop(session_id);
-
         Ok(Self { config, client })
     }
 
-    fn resolve_session_id(
+    fn initialize_session_state(
         session_prefix: Option<String>,
         session_id_override: Option<String>,
         session_file_override: Option<String>,
-    ) -> Result<SessionId, Box<dyn std::error::Error>> {
-        if let Some(session_id) = session_id_override.and_then(Self::normalize_env_value) {
-            return Ok(SessionId::new(session_id));
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if session_id_override
+            .and_then(Self::normalize_env_value)
+            .is_some()
+        {
+            return Ok(());
         }
 
         if let Some(session_file) = session_file_override.and_then(Self::normalize_env_value) {
@@ -117,28 +116,28 @@ impl HttpClientTransport {
 
             if path.exists() {
                 let existing = std::fs::read_to_string(path)?;
-                if let Some(existing_id) = Self::normalize_env_value(existing) {
-                    return Ok(SessionId::new(existing_id));
+                if Self::normalize_env_value(existing).is_some() {
+                    return Ok(());
                 }
             }
 
-            let generated = Self::generate_session_id(session_prefix).into_string();
+            let generated = Self::generate_session_id(session_prefix);
             if let Some(parent) = path.parent()
                 && !parent.as_os_str().is_empty()
             {
                 std::fs::create_dir_all(parent)?;
             }
             std::fs::write(path, format!("{}\n", generated))?;
-            return Ok(SessionId::new(generated));
+            return Ok(());
         }
 
-        Ok(Self::generate_session_id(session_prefix))
+        Ok(())
     }
 
-    fn generate_session_id(session_prefix: Option<String>) -> SessionId {
+    fn generate_session_id(session_prefix: Option<String>) -> String {
         match session_prefix {
-            Some(prefix) => SessionId::new(format!("{}_{}", prefix, Uuid::new_v4())),
-            None => SessionId::new(Uuid::new_v4().to_string()),
+            Some(prefix) => format!("{}_{}", prefix, Uuid::new_v4()),
+            None => Uuid::new_v4().to_string(),
         }
     }
 

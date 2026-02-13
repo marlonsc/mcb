@@ -432,7 +432,6 @@ templates/
 
 ## References
 
-- [Existing HTTP Server](../../crates/mcb-infrastructure/src/metrics/http_server.rs)
-- [Server Initialization](../../crates/mcb-server/src/init.rs)
-- [Admin Service](../../crates/mcb-server/src/admin/service/)
-- [Shaku Documentation](https://docs.rs/shaku) (historical; DI is now dill, ADR-029)
+- [Admin Module](../../crates/mcb-server/src/admin/) - Admin routes, handlers, and web UI
+- [HTTP Transport](../../crates/mcb-server/src/transport/http.rs) - HTTP server implementation
+- [dill Documentation](https://docs.rs/dill) - Current DI framework (ADR-029)
