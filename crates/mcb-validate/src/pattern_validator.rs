@@ -1,4 +1,6 @@
 //! Pattern Compliance Validation
+// TODO(QUAL004): File too large (612 lines, max: 500).
+// Consider splitting into separate modules for DI, async traits, and result types.
 //!
 //! Validates code patterns:
 //! - DI uses `Arc<dyn Trait>` not `Arc<ConcreteType>`
@@ -283,6 +285,7 @@ impl PatternValidator {
 
         // Pattern to find Arc<SomeConcreteType> where SomeConcreteType doesn't start with "dyn"
         let arc_pattern = Regex::new(&self.rules.arc_pattern).unwrap_or_else(|_| {
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>").expect("Invalid default regex")
         });
 
@@ -389,12 +392,17 @@ impl PatternValidator {
     pub fn validate_async_traits(&self) -> Result<Vec<PatternViolation>> {
         let mut violations = Vec::new();
 
+        // TODO(QUAL001): unwrap() in production. Use ? or match.
         let trait_pattern = Regex::new(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)").unwrap();
+        // TODO(QUAL001): unwrap() in production. Use ? or match.
         let async_fn_pattern = Regex::new(r"async\s+fn\s+").unwrap();
+        // TODO(QUAL001): unwrap() in production. Use ? or match.
         let send_sync_pattern = Regex::new(r":\s*.*Send\s*\+\s*Sync").unwrap();
         // Match both #[async_trait] and #[async_trait::async_trait]
+        // TODO(QUAL001): unwrap() in production. Use ? or match.
         let async_trait_attr = Regex::new(r"#\[(async_trait::)?async_trait\]").unwrap();
         // Rust 1.75+ native async trait support
+        // TODO(QUAL001): unwrap() in production. Use ? or match.
         let allow_async_fn_trait = Regex::new(r"#\[allow\(async_fn_in_trait\)\]").unwrap();
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
@@ -498,11 +506,14 @@ impl PatternValidator {
         let mut violations = Vec::new();
 
         // Pattern to find std::result::Result usage
-        let std_result_pattern = Regex::new(r"std::result::Result<").expect("Invalid regex");
+        let std_result_pattern = Regex::new(r"std::result::Result<")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
+            .expect("Invalid regex");
 
         // Pattern to find Result<T, E> with explicit error type (not crate::Result)
-        let explicit_result_pattern =
-            Regex::new(r"Result<[^,]+,\s*([A-Za-z][A-Za-z0-9_:]+)>").expect("Invalid regex");
+        let explicit_result_pattern = Regex::new(r"Result<[^,]+,\s*([A-Za-z][A-Za-z0-9_:]+)>")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
+            .expect("Invalid regex");
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories

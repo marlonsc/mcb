@@ -1,7 +1,7 @@
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
 
 #[test]
-fn plan_status_as_str() {
+fn test_plan_status_as_str() {
     assert_eq!(PlanStatus::Draft.as_str(), "draft");
     assert_eq!(PlanStatus::Active.as_str(), "active");
     assert_eq!(PlanStatus::Executing.as_str(), "executing");
@@ -10,7 +10,7 @@ fn plan_status_as_str() {
 }
 
 #[test]
-fn plan_status_from_str() {
+fn test_plan_status_from_str() {
     assert_eq!("draft".parse::<PlanStatus>(), Ok(PlanStatus::Draft));
     assert_eq!("active".parse::<PlanStatus>(), Ok(PlanStatus::Active));
     assert_eq!("executing".parse::<PlanStatus>(), Ok(PlanStatus::Executing));
@@ -20,14 +20,14 @@ fn plan_status_from_str() {
 }
 
 #[test]
-fn plan_status_from_str_case_insensitive() {
+fn test_plan_status_from_str_case_insensitive() {
     assert_eq!("DRAFT".parse::<PlanStatus>(), Ok(PlanStatus::Draft));
     assert_eq!("Active".parse::<PlanStatus>(), Ok(PlanStatus::Active));
     assert_eq!("EXECUTING".parse::<PlanStatus>(), Ok(PlanStatus::Executing));
 }
 
 #[test]
-fn plan_construction() {
+fn test_plan_construction() {
     let plan = Plan {
         id: "plan-001".to_string(),
         org_id: "org-001".to_string(),
@@ -47,7 +47,7 @@ fn plan_construction() {
 }
 
 #[test]
-fn plan_serialization_roundtrip() {
+fn test_plan_serialization_roundtrip() {
     let plan = Plan {
         id: "plan-002".to_string(),
         org_id: "org-001".to_string(),
@@ -68,7 +68,7 @@ fn plan_serialization_roundtrip() {
 }
 
 #[test]
-fn plan_version_construction() {
+fn test_plan_version_construction() {
     let version = PlanVersion {
         id: "pv-001".to_string(),
         org_id: "org-001".to_string(),
@@ -86,7 +86,7 @@ fn plan_version_construction() {
 }
 
 #[test]
-fn plan_version_serialization_roundtrip() {
+fn test_plan_version_serialization_roundtrip() {
     let version = PlanVersion {
         id: "pv-002".to_string(),
         org_id: "org-001".to_string(),
@@ -106,14 +106,14 @@ fn plan_version_serialization_roundtrip() {
 }
 
 #[test]
-fn review_verdict_as_str() {
+fn test_review_verdict_as_str() {
     assert_eq!(ReviewVerdict::Approved.as_str(), "approved");
     assert_eq!(ReviewVerdict::Rejected.as_str(), "rejected");
     assert_eq!(ReviewVerdict::NeedsRevision.as_str(), "needs_revision");
 }
 
 #[test]
-fn review_verdict_from_str() {
+fn test_review_verdict_from_str() {
     assert_eq!(
         "approved".parse::<ReviewVerdict>(),
         Ok(ReviewVerdict::Approved)
@@ -130,7 +130,7 @@ fn review_verdict_from_str() {
 }
 
 #[test]
-fn review_verdict_from_str_case_insensitive() {
+fn test_review_verdict_from_str_case_insensitive() {
     assert_eq!(
         "APPROVED".parse::<ReviewVerdict>(),
         Ok(ReviewVerdict::Approved)
@@ -146,7 +146,7 @@ fn review_verdict_from_str_case_insensitive() {
 }
 
 #[test]
-fn plan_review_construction() {
+fn test_plan_review_construction() {
     let review = PlanReview {
         id: "pr-001".to_string(),
         org_id: "org-001".to_string(),
@@ -163,7 +163,7 @@ fn plan_review_construction() {
 }
 
 #[test]
-fn plan_review_serialization_roundtrip() {
+fn test_plan_review_serialization_roundtrip() {
     let review = PlanReview {
         id: "pr-002".to_string(),
         org_id: "org-001".to_string(),

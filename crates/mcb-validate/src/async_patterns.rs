@@ -1,4 +1,6 @@
 //! Async Pattern Validation
+// TODO(QUAL004): File too large (630 lines, max: 500).
+// Consider splitting into separate modules for blocking calls, block_on, mutexes, etc.
 //!
 //! Detects async-specific anti-patterns based on Tokio documentation:
 //! - Blocking in async (`std::thread::sleep`, `std::sync::Mutex` in async)
@@ -237,6 +239,7 @@ impl AsyncPatternValidator {
 
         let async_fn_pattern = PATTERNS
             .get("ASYNC001.async_fn_named")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Pattern ASYNC001.async_fn_named not found");
 
         let blocking_patterns = [
@@ -363,6 +366,7 @@ impl AsyncPatternValidator {
 
         let async_fn_pattern = PATTERNS
             .get("ASYNC001.async_fn")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Pattern ASYNC001.async_fn not found");
         let block_on_patterns = [
             r"block_on\(",
@@ -446,6 +450,7 @@ impl AsyncPatternValidator {
 
         let async_indicator = PATTERNS
             .get("ASYNC001.async_indicator")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Pattern ASYNC001.async_indicator not found");
         let std_mutex_patterns = [
             (
@@ -534,12 +539,15 @@ impl AsyncPatternValidator {
         // Pattern: tokio::spawn without assigning to variable or awaiting
         let spawn_pattern = PATTERNS
             .get("ASYNC001.tokio_spawn")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Pattern ASYNC001.tokio_spawn not found");
         let assigned_spawn_pattern = PATTERNS
             .get("ASYNC001.assigned_spawn")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Pattern ASYNC001.assigned_spawn not found");
         let fn_pattern = PATTERNS
             .get("ASYNC001.fn_decl")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Pattern ASYNC001.fn_decl not found");
 
         // Function name patterns that indicate intentional fire-and-forget spawns

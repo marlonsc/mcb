@@ -21,15 +21,26 @@ fn full_workspace() -> (tempfile::TempDir, std::path::PathBuf) {
     with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE])
 }
 
+fn expect_validation_ok<T, E: std::fmt::Debug>(
+    validator_name: &str,
+    result: Result<Vec<T>, E>,
+) -> Vec<T> {
+    assert!(
+        result.is_ok(),
+        "{validator_name} failed to validate fixture workspace"
+    );
+    result.unwrap_or_default()
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // QualityValidator
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_quality_violations() {
+fn test_discover_quality_violations() {
     let (_temp, root) = full_workspace();
     let validator = QualityValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = expect_validation_ok("QualityValidator", validator.validate_all());
 
     eprintln!(
         "\n=== QualityValidator: {} violations ===",
@@ -49,10 +60,10 @@ fn discover_quality_violations() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_kiss_violations() {
+fn test_discover_kiss_violations() {
     let (_temp, root) = full_workspace();
     let validator = KissValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = expect_validation_ok("KissValidator", validator.validate_all());
 
     eprintln!("\n=== KissValidator: {} violations ===", violations.len());
     for (i, v) in violations.iter().enumerate() {
@@ -69,10 +80,10 @@ fn discover_kiss_violations() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_async_violations() {
+fn test_discover_async_violations() {
     let (_temp, root) = full_workspace();
     let validator = AsyncPatternValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = expect_validation_ok("AsyncPatternValidator", validator.validate_all());
 
     eprintln!(
         "\n=== AsyncPatternValidator: {} violations ===",
@@ -92,10 +103,10 @@ fn discover_async_violations() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_documentation_violations() {
+fn test_discover_documentation_violations() {
     let (_temp, root) = full_workspace();
     let validator = DocumentationValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = expect_validation_ok("DocumentationValidator", validator.validate_all());
 
     eprintln!(
         "\n=== DocumentationValidator: {} violations ===",
@@ -112,10 +123,10 @@ fn discover_documentation_violations() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_performance_violations() {
+fn test_discover_performance_violations() {
     let (_temp, root) = full_workspace();
     let validator = PerformanceValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = expect_validation_ok("PerformanceValidator", validator.validate_all());
 
     eprintln!(
         "\n=== PerformanceValidator: {} violations ===",
@@ -132,10 +143,11 @@ fn discover_performance_violations() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_implementation_violations() {
+fn test_discover_implementation_violations() {
     let (_temp, root) = full_workspace();
     let validator = ImplementationQualityValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations =
+        expect_validation_ok("ImplementationQualityValidator", validator.validate_all());
 
     eprintln!(
         "\n=== ImplementationQualityValidator: {} violations ===",
@@ -155,10 +167,10 @@ fn discover_implementation_violations() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_organization_violations() {
+fn test_discover_organization_violations() {
     let (_temp, root) = full_workspace();
     let validator = OrganizationValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = expect_validation_ok("OrganizationValidator", validator.validate_all());
 
     eprintln!(
         "\n=== OrganizationValidator: {} violations ===",
@@ -178,10 +190,10 @@ fn discover_organization_violations() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_solid_violations() {
+fn test_discover_solid_violations() {
     let (_temp, root) = full_workspace();
     let validator = SolidValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = expect_validation_ok("SolidValidator", validator.validate_all());
 
     eprintln!("\n=== SolidValidator: {} violations ===", violations.len());
     for (i, v) in violations.iter().enumerate() {
@@ -198,10 +210,10 @@ fn discover_solid_violations() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_pattern_violations() {
+fn test_discover_pattern_violations() {
     let (_temp, root) = full_workspace();
     let validator = PatternValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = expect_validation_ok("PatternValidator", validator.validate_all());
 
     eprintln!(
         "\n=== PatternValidator: {} violations ===",
@@ -218,10 +230,10 @@ fn discover_pattern_violations() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_refactoring_violations() {
+fn test_discover_refactoring_violations() {
     let (_temp, root) = full_workspace();
     let validator = RefactoringValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = expect_validation_ok("RefactoringValidator", validator.validate_all());
 
     eprintln!(
         "\n=== RefactoringValidator: {} violations ===",
@@ -238,10 +250,10 @@ fn discover_refactoring_violations() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_hygiene_violations() {
+fn test_discover_hygiene_violations() {
     let (_temp, root) = full_workspace();
     let validator = HygieneValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = expect_validation_ok("HygieneValidator", validator.validate_all());
 
     eprintln!(
         "\n=== HygieneValidator: {} violations ===",
@@ -261,10 +273,10 @@ fn discover_hygiene_violations() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[test]
-fn discover_error_boundary_violations() {
+fn test_discover_error_boundary_violations() {
     let (_temp, root) = full_workspace();
     let validator = ErrorBoundaryValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = expect_validation_ok("ErrorBoundaryValidator", validator.validate_all());
 
     eprintln!(
         "\n=== ErrorBoundaryValidator: {} violations ===",
