@@ -2,8 +2,7 @@
 
 use std::path::Path;
 
-use walkdir::WalkDir;
-
+use crate::run_context::ValidationRunContext;
 use crate::{Result, ValidationConfig};
 
 /// True if a path points to a test file or tests directory.
@@ -16,6 +15,9 @@ pub fn for_each_crate_rs_path<F>(config: &ValidationConfig, mut f: F) -> Result<
 where
     F: FnMut(&Path, &Path, &str) -> Result<()>,
 {
+    let context = ValidationRunContext::active_or_build(config)?;
+    let inventory = context.file_inventory();
+
     for crate_dir in config.get_source_dirs()? {
         let src_dir = crate_dir.join("src");
         if !src_dir.exists() {
@@ -24,13 +26,20 @@ where
 
         let crate_name = crate_dir.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
-        for entry in WalkDir::new(&src_dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-            .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-        {
-            f(entry.path(), &src_dir, crate_name)?;
+        for entry in inventory {
+            if !entry.absolute_path.starts_with(&src_dir) {
+                continue;
+            }
+
+            if !entry
+                .absolute_path
+                .extension()
+                .is_some_and(|ext| ext == "rs")
+            {
+                continue;
+            }
+
+            f(&entry.absolute_path, &src_dir, crate_name)?;
         }
     }
 
@@ -46,6 +55,9 @@ pub fn for_each_scan_rs_path<F>(
 where
     F: FnMut(&Path, &Path) -> Result<()>,
 {
+    let context = ValidationRunContext::active_or_build(config)?;
+    let inventory = context.file_inventory();
+
     // Load file configuration to get skip_crates
     let file_config = crate::config::FileConfig::load(&config.workspace_root);
 
@@ -63,13 +75,20 @@ where
             }
         }
 
-        for entry in WalkDir::new(&src_dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-            .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-        {
-            f(entry.path(), &src_dir)?;
+        for entry in inventory {
+            if !entry.absolute_path.starts_with(&src_dir) {
+                continue;
+            }
+
+            if !entry
+                .absolute_path
+                .extension()
+                .is_some_and(|ext| ext == "rs")
+            {
+                continue;
+            }
+
+            f(&entry.absolute_path, &src_dir)?;
         }
     }
 

@@ -55,10 +55,7 @@ impl HookProcessor {
             .cloned()
             .unwrap_or_else(|| "default".to_string());
 
-        let session_internal = context
-            .session_id
-            .as_ref()
-            .map(|id| id.as_str().to_string());
+        let session_internal = context.session_id.clone().map(|id| id.into_string());
         let hashed_session = session_internal
             .as_deref()
             .map(|id| compute_stable_id_hash("session", id));

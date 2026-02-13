@@ -662,6 +662,18 @@ async fn test_http_server_tools_list() {
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
         .header(rocket::http::Header::new(
+            "X-Session-Id",
+            "test-session-index-status",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Project-Id",
+            "test-project-index-status",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Repo-Id",
+            "test-repo-index-status",
+        ))
+        .header(rocket::http::Header::new(
             "X-Workspace-Root",
             "/tmp/test-workspace",
         ))

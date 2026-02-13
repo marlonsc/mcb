@@ -93,7 +93,7 @@ impl SearchHandler {
                     } else {
                         None
                     },
-                    session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
+                    session_id: args.session_id.clone().map(|id| id.into_string()),
                     parent_session_id: None,
                     repo_id: None,
                     time_range: None,

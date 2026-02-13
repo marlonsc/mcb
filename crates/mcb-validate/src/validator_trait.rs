@@ -4,9 +4,12 @@
 //! for managing and running validators.
 
 use anyhow::Result;
-use tracing::warn;
+use std::sync::Arc;
+
+use tracing::{info, warn};
 
 use crate::ValidationConfig;
+use crate::run_context::ValidationRunContext;
 use crate::violation_trait::Violation;
 
 /// All validators implement this trait
@@ -95,24 +98,48 @@ impl ValidatorRegistry {
 
     /// Run all enabled validators
     pub fn validate_all(&self, config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {
-        let mut all_violations = Vec::new();
+        let context = Arc::new(ValidationRunContext::build(config)?);
+        ValidationRunContext::with_active(context, || {
+            let Some(active) = ValidationRunContext::active() else {
+                return Err(anyhow::anyhow!("validation run context must be active"));
+            };
+            let mut all_violations = Vec::new();
 
-        for validator in &self.validators {
-            if validator.enabled_by_default() {
-                match validator.validate(config) {
-                    Ok(violations) => all_violations.extend(violations),
-                    Err(e) => {
-                        warn!(
-                            validator = %validator.name(),
-                            error = %e,
-                            "Validator failed, skipping"
-                        );
+            info!(
+                trace_id = %active.trace_id(),
+                file_inventory_source = active.file_inventory_source().as_str(),
+                file_inventory_count = active.file_inventory_count(),
+                "Validation run context initialized"
+            );
+
+            for validator in &self.validators {
+                if validator.enabled_by_default() {
+                    info!(
+                        validator = %validator.name(),
+                        trace_id = %active.trace_id(),
+                        file_inventory_source = active.file_inventory_source().as_str(),
+                        file_inventory_count = active.file_inventory_count(),
+                        "Running validator"
+                    );
+
+                    match validator.validate(config) {
+                        Ok(violations) => all_violations.extend(violations),
+                        Err(e) => {
+                            warn!(
+                                validator = %validator.name(),
+                                trace_id = %active.trace_id(),
+                                file_inventory_source = active.file_inventory_source().as_str(),
+                                file_inventory_count = active.file_inventory_count(),
+                                error = %e,
+                                "Validator failed, skipping"
+                            );
+                        }
                     }
                 }
             }
-        }
 
-        Ok(all_violations)
+            Ok(all_violations)
+        })
     }
 
     /// Run specific validators by name
@@ -121,6 +148,7 @@ impl ValidatorRegistry {
         config: &ValidationConfig,
         names: &[&str],
     ) -> Result<Vec<Box<dyn Violation>>> {
+        let context = Arc::new(ValidationRunContext::build(config)?);
         let mut available = std::collections::BTreeSet::new();
         for validator in &self.validators {
             available.insert(validator.name());
@@ -143,24 +171,47 @@ impl ValidatorRegistry {
             ));
         }
 
-        let mut all_violations = Vec::new();
+        ValidationRunContext::with_active(context, || {
+            let Some(active) = ValidationRunContext::active() else {
+                return Err(anyhow::anyhow!("validation run context must be active"));
+            };
+            let mut all_violations = Vec::new();
 
-        for validator in &self.validators {
-            if names.contains(&validator.name()) {
-                match validator.validate(config) {
-                    Ok(violations) => all_violations.extend(violations),
-                    Err(e) => {
-                        warn!(
-                            validator = %validator.name(),
-                            error = %e,
-                            "Validator failed, skipping"
-                        );
+            info!(
+                trace_id = %active.trace_id(),
+                file_inventory_source = active.file_inventory_source().as_str(),
+                file_inventory_count = active.file_inventory_count(),
+                "Named validation run context initialized"
+            );
+
+            for validator in &self.validators {
+                if names.contains(&validator.name()) {
+                    info!(
+                        validator = %validator.name(),
+                        trace_id = %active.trace_id(),
+                        file_inventory_source = active.file_inventory_source().as_str(),
+                        file_inventory_count = active.file_inventory_count(),
+                        "Running named validator"
+                    );
+
+                    match validator.validate(config) {
+                        Ok(violations) => all_violations.extend(violations),
+                        Err(e) => {
+                            warn!(
+                                validator = %validator.name(),
+                                trace_id = %active.trace_id(),
+                                file_inventory_source = active.file_inventory_source().as_str(),
+                                file_inventory_count = active.file_inventory_count(),
+                                error = %e,
+                                "Validator failed, skipping"
+                            );
+                        }
                     }
                 }
             }
-        }
 
-        Ok(all_violations)
+            Ok(all_violations)
+        })
     }
 
     /// Create a registry with standard validators for a specific workspace

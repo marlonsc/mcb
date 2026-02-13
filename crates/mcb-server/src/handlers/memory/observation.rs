@@ -43,12 +43,12 @@ pub async fn store_observation(
     let tags = MemoryHelpers::get_string_list(data, "tags");
     let vcs_context = VcsContext::capture();
     let payload_session_id = MemoryHelpers::get_str(data, "session_id");
-    let arg_session_id = args.session_id.as_ref().map(|id| id.as_str().to_string());
+    let arg_session_id = args.session_id.clone().map(|id| id.into_string());
     let payload_parent_session_id = MemoryHelpers::get_str(data, "parent_session_id");
     let canonical_session_id = args
         .session_id
-        .as_ref()
-        .map(|id| id.as_str().to_string())
+        .clone()
+        .map(|id| id.into_string())
         .or(payload_session_id.clone());
     let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
     let payload_project_id = MemoryHelpers::get_str(data, "project_id");

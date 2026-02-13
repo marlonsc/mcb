@@ -16,7 +16,6 @@ use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
     ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
 };
-use mcb_domain::utils::compute_stable_id_hash;
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
 use rmcp::model::{
@@ -145,8 +144,7 @@ impl McpServer {
             request_meta,
             context_meta,
             &["session_id", "sessionId", "x-session-id", "x_session_id"],
-        )
-        .or_else(|| Some(format!("rmcp-{:?}", context.id)));
+        );
         let parent_session_id = resolve_context_value(
             request_meta,
             context_meta,
@@ -166,8 +164,7 @@ impl McpServer {
                 "x-project-id",
                 "x_project_id",
             ],
-        )
-        .or_else(|| Some("default".to_string()));
+        );
         let worktree_id = resolve_context_value(
             request_meta,
             context_meta,
@@ -229,12 +226,6 @@ impl McpServer {
         )
         .or(Some(parent_session_id.is_some()));
 
-        if repo_path.is_none()
-            && let Ok(cwd) = std::env::current_dir()
-        {
-            repo_path = Some(cwd.to_string_lossy().to_string());
-        }
-
         if let Some(path_str) = repo_path.clone()
             && let Ok(repo) = self
                 .services
@@ -246,12 +237,6 @@ impl McpServer {
             if repo_id.is_none() {
                 repo_id = Some(self.services.vcs.repository_id(&repo).into_string());
             }
-        }
-
-        if repo_id.is_none()
-            && let Some(path) = repo_path.as_deref()
-        {
-            repo_id = Some(compute_stable_id_hash("repo_path", path));
         }
 
         ToolExecutionContext {

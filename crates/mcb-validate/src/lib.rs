@@ -42,6 +42,7 @@ pub mod generic_reporter;
 /// Declarative registration macros used by validator composition.
 pub mod macros;
 pub mod reporter;
+pub mod run_context;
 pub mod validator_trait;
 
 // === Configuration System (Phase 5) ===
@@ -152,6 +153,7 @@ pub use port_adapter::{PortAdapterValidator, PortAdapterViolation};
 pub use quality::{QualityValidator, QualityViolation};
 // Re-export ComponentType for strict directory validation
 pub use refactoring::{RefactoringValidator, RefactoringViolation};
+pub use run_context::{FileInventorySource, InventoryEntry, ValidationRunContext};
 
 pub use rules::templates::TemplateEngine;
 pub use rules::yaml_loader::{

@@ -69,10 +69,21 @@ impl std::fmt::Debug for MemoryFilter {
             .field("id", &self.id)
             .field("tags", &self.tags)
             .field("observation_type", &self.r#type)
-            .field("session_id", &self.session_id.as_ref().map(|_| "REDACTED"))
             .field(
-                "parent_session_id",
-                &self.parent_session_id.as_ref().map(|_| "REDACTED"),
+                "session_id_present",
+                &if self.session_id.is_some() {
+                    "REDACTED"
+                } else {
+                    "NONE"
+                },
+            )
+            .field(
+                "parent_session_id_present",
+                &if self.parent_session_id.is_some() {
+                    "REDACTED"
+                } else {
+                    "NONE"
+                },
             )
             .field("repo_id", &self.repo_id)
             .field("time_range", &self.time_range)

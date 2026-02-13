@@ -44,10 +44,16 @@ pub fn resolve_org_id(explicit: Option<&str>) -> String {
 
 /// Normalizes optional identifier input by trimming whitespace and discarding empty values.
 pub fn normalize_identifier(value: Option<&str>) -> Option<String> {
-    value
-        .map(str::trim)
-        .filter(|v| !v.is_empty())
-        .map(str::to_string)
+    let Some(raw) = value else {
+        return None;
+    };
+
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
+    }
 }
 
 /// Resolves identifier precedence between explicit args and payload fields.

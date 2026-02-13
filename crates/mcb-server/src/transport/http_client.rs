@@ -180,13 +180,13 @@ impl HttpClientTransport {
                 continue;
             }
 
-            debug!(request = %line, "Received request from stdin");
+            debug!(request_len = line.len(), "Received request from stdin");
 
             // Parse the request
             let request: McpRequest = match serde_json::from_str(&line) {
                 Ok(req) => req,
                 Err(e) => {
-                    warn!(error = %e, line = %line, "Failed to parse request");
+                    warn!(error = %e, request_len = line.len(), "Failed to parse request");
                     let error_response = Self::create_parse_error(e);
                     Self::write_response(&mut stdout, &error_response)?;
                     continue;
@@ -213,13 +213,7 @@ impl HttpClientTransport {
             "Sending request to server"
         );
 
-        let response = self
-            .client
-            .post(&url)
-            .header("Content-Type", "application/json")
-            .json(request)
-            .send()
-            .await?;
+        let response = post_mcp_request(&self.client, &url, request).await?;
 
         let status = response.status();
         debug!(status = %status, "Received response from server");
@@ -289,6 +283,19 @@ impl HttpClientTransport {
         stdout.flush()?;
         Ok(())
     }
+}
+
+async fn post_mcp_request(
+    client: &reqwest::Client,
+    url: &str,
+    request: &McpRequest,
+) -> Result<reqwest::Response, reqwest::Error> {
+    client
+        .post(url)
+        .header("Content-Type", "application/json")
+        .json(request)
+        .send()
+        .await
 }
 
 #[cfg(test)]

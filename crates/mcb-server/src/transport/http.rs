@@ -56,7 +56,6 @@ use crate::admin::handlers::AdminState;
 use crate::admin::routes::admin_rocket;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
 use crate::tools::{ToolExecutionContext, ToolHandlers, create_tool_list, route_tool_call};
-use mcb_domain::utils::compute_stable_id_hash;
 use mcb_infrastructure::config::ConfigLoader;
 
 /// HTTP transport configuration
@@ -492,13 +491,10 @@ async fn handle_tools_call(
         Err((code, msg)) => return McpResponse::error(request.id.clone(), code, msg),
     };
 
-    let mut execution_context = ToolExecutionContext {
+    let execution_context = ToolExecutionContext {
         session_id: bridge_provenance.session_id.clone(),
         parent_session_id: bridge_provenance.parent_session_id.clone(),
-        project_id: bridge_provenance
-            .project_id
-            .clone()
-            .or_else(|| Some("default".to_string())),
+        project_id: bridge_provenance.project_id.clone(),
         worktree_id: bridge_provenance.worktree_id.clone(),
         repo_id: bridge_provenance.repo_id.clone(),
         repo_path: bridge_provenance
@@ -519,15 +515,6 @@ async fn handle_tools_call(
                 _ => None,
             }),
     };
-
-    if execution_context.session_id.is_none() {
-        execution_context.session_id = request.id.as_ref().map(|id| format!("http-{}", id));
-    }
-    if execution_context.repo_id.is_none()
-        && let Some(repo_path) = execution_context.repo_path.as_deref()
-    {
-        execution_context.repo_id = Some(compute_stable_id_hash("repo_path", repo_path));
-    }
 
     execution_context.apply_to_request_if_missing(&mut call_request);
 
