@@ -597,7 +597,7 @@ pub enum EntityResource {
 }
 
 /// Arguments for the consolidated `entity` MCP tool.
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Validate)]
 pub struct EntityArgs {
     /// CRUD action to perform.
     pub action: EntityAction,
@@ -605,30 +605,43 @@ pub struct EntityArgs {
     pub resource: EntityResource,
     /// JSON payload for create/update actions.
     #[schemars(with = "serde_json::Value")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<serde_json::Value>,
     /// Resource ID (for get/update/delete/release).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     /// Organization ID.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub org_id: Option<String>,
     /// Project ID (project-scoped list operations).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub project_id: Option<String>,
     /// Repository ID (branch/worktree list operations).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub repository_id: Option<String>,
     /// Worktree ID (assignment list operations).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub worktree_id: Option<String>,
     /// Plan ID (version list operations).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub plan_id: Option<String>,
     /// Plan version ID (review list operations).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub plan_version_id: Option<String>,
     /// Issue ID (comment/list/label assignment operations).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub issue_id: Option<String>,
     /// Label ID (label unassignment operations).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub label_id: Option<String>,
     /// Team ID (team member list operations).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub team_id: Option<String>,
     /// User ID (team member delete operations).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub user_id: Option<String>,
     /// User email (lookup operations).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub email: Option<String>,
 }
 

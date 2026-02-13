@@ -1,22 +1,13 @@
 //! Python language processor for AST-based code chunking.
 
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
-
 use crate::language::common::{
-    BaseProcessor, CHUNK_SIZE_PYTHON, LanguageConfig, LanguageProcessor, NodeExtractionRule,
+    BaseProcessor, CHUNK_SIZE_PYTHON, LanguageConfig, NodeExtractionRule,
     TS_NODE_FUNCTION_DEFINITION,
 };
 
 /// Python language processor with function and class extraction.
 pub struct PythonProcessor {
     processor: BaseProcessor,
-}
-
-impl Default for PythonProcessor {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl PythonProcessor {
@@ -42,19 +33,4 @@ impl PythonProcessor {
     }
 }
 
-impl LanguageProcessor for PythonProcessor {
-    fn config(&self) -> &LanguageConfig {
-        self.processor.config()
-    }
-
-    fn extract_chunks_with_tree_sitter(
-        &self,
-        tree: &tree_sitter::Tree,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-}
+crate::impl_delegating_language_processor!(PythonProcessor, processor);
