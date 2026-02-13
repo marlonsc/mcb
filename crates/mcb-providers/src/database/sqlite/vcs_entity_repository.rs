@@ -8,6 +8,8 @@ use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, Sq
 use mcb_domain::ports::repositories::VcsEntityRepository;
 use serde_json::json;
 
+use super::row_helpers::{req_i64, req_str};
+
 /// SQLite-backed repository for VCS repositories, branches, worktrees, and assignments.
 pub struct SqliteVcsEntityRepository {
     executor: Arc<dyn DatabaseExecutor>,
@@ -101,16 +103,6 @@ fn row_to_assignment(row: &dyn SqlRow) -> Result<AgentWorktreeAssignment> {
         assigned_at: req_i64(row, "assigned_at")?,
         released_at: row.try_get_i64("released_at")?,
     })
-}
-
-fn req_str(row: &dyn SqlRow, col: &str) -> Result<String> {
-    row.try_get_string(col)?
-        .ok_or_else(|| Error::memory(format!("Missing {col}")))
-}
-
-fn req_i64(row: &dyn SqlRow, col: &str) -> Result<i64> {
-    row.try_get_i64(col)?
-        .ok_or_else(|| Error::memory(format!("Missing {col}")))
 }
 
 #[async_trait]

@@ -6,6 +6,8 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::PlanEntityRepository;
 
+use super::row_helpers::{req_i64, req_str};
+
 /// SQLite-backed repository for plan, version, and review entities.
 pub struct SqlitePlanEntityRepository {
     executor: Arc<dyn DatabaseExecutor>,
@@ -13,10 +15,12 @@ pub struct SqlitePlanEntityRepository {
 
 impl SqlitePlanEntityRepository {
     /// Creates a new repository using the provided database executor.
+    // TODO(qlty): Found 31 lines of similar code in 3 locations (mass = 216)
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
 
+    /// Helper to query a single row and convert it.
     async fn query_one<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Option<T>>
     where
         F: FnOnce(&dyn SqlRow) -> Result<T>,
@@ -27,6 +31,7 @@ impl SqlitePlanEntityRepository {
         }
     }
 
+    /// Helper to query multiple rows and convert them.
     async fn query_all<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Vec<T>>
     where
         F: Fn(&dyn SqlRow) -> Result<T>,
@@ -43,6 +48,7 @@ impl SqlitePlanEntityRepository {
     }
 }
 
+/// Converts a SQL row to a Plan.
 fn row_to_plan(row: &dyn SqlRow) -> Result<Plan> {
     let status = req_str(row, "status")?
         .parse::<PlanStatus>()
@@ -61,6 +67,7 @@ fn row_to_plan(row: &dyn SqlRow) -> Result<Plan> {
     })
 }
 
+/// Converts a SQL row to a PlanVersion.
 fn row_to_plan_version(row: &dyn SqlRow) -> Result<PlanVersion> {
     Ok(PlanVersion {
         id: req_str(row, "id")?,
@@ -74,6 +81,7 @@ fn row_to_plan_version(row: &dyn SqlRow) -> Result<PlanVersion> {
     })
 }
 
+/// Converts a SQL row to a PlanReview.
 fn row_to_plan_review(row: &dyn SqlRow) -> Result<PlanReview> {
     let verdict = req_str(row, "verdict")?
         .parse::<ReviewVerdict>()
@@ -90,18 +98,10 @@ fn row_to_plan_review(row: &dyn SqlRow) -> Result<PlanReview> {
     })
 }
 
-fn req_str(row: &dyn SqlRow, col: &str) -> Result<String> {
-    row.try_get_string(col)?
-        .ok_or_else(|| Error::memory(format!("Missing {col}")))
-}
-
-fn req_i64(row: &dyn SqlRow, col: &str) -> Result<i64> {
-    row.try_get_i64(col)?
-        .ok_or_else(|| Error::memory(format!("Missing {col}")))
-}
-
 #[async_trait]
+/// Persistent plan entity repository using SQLite.
 impl PlanEntityRepository for SqlitePlanEntityRepository {
+    /// Creates a new plan.
     async fn create_plan(&self, plan: &Plan) -> Result<()> {
         self.executor
             .execute(
@@ -121,6 +121,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
             .await
     }
 
+    /// Retrieves a plan by org ID and plan ID.
     async fn get_plan(&self, org_id: &str, id: &str) -> Result<Plan> {
         self.query_one(
             "SELECT * FROM plans WHERE org_id = ? AND id = ?",
@@ -134,6 +135,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
         .ok_or_else(|| Error::not_found(format!("Plan {id}")))
     }
 
+    /// Lists plans in an organization for a project.
     async fn list_plans(&self, org_id: &str, project_id: &str) -> Result<Vec<Plan>> {
         self.query_all(
             "SELECT * FROM plans WHERE org_id = ? AND project_id = ?",
@@ -146,6 +148,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
         .await
     }
 
+    /// Updates an existing plan.
     async fn update_plan(&self, plan: &Plan) -> Result<()> {
         self.executor
             .execute(
@@ -162,6 +165,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
             .await
     }
 
+    /// Deletes a plan.
     async fn delete_plan(&self, org_id: &str, id: &str) -> Result<()> {
         self.executor
             .execute(
@@ -174,6 +178,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
             .await
     }
 
+    /// Creates a new plan version.
     async fn create_plan_version(&self, version: &PlanVersion) -> Result<()> {
         self.executor
             .execute(
@@ -192,6 +197,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
             .await
     }
 
+    /// Retrieves a plan version by ID.
     async fn get_plan_version(&self, id: &str) -> Result<PlanVersion> {
         self.query_one(
             "SELECT * FROM plan_versions WHERE id = ?",
@@ -202,6 +208,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
         .ok_or_else(|| Error::not_found(format!("PlanVersion {id}")))
     }
 
+    /// Lists versions of a plan.
     async fn list_plan_versions_by_plan(&self, plan_id: &str) -> Result<Vec<PlanVersion>> {
         self.query_all(
             "SELECT * FROM plan_versions WHERE plan_id = ?",
@@ -211,6 +218,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
         .await
     }
 
+    /// Creates a new plan review.
     async fn create_plan_review(&self, review: &PlanReview) -> Result<()> {
         self.executor
             .execute(
@@ -228,6 +236,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
             .await
     }
 
+    /// Retrieves a plan review by ID.
     async fn get_plan_review(&self, id: &str) -> Result<PlanReview> {
         self.query_one(
             "SELECT * FROM plan_reviews WHERE id = ?",
@@ -238,6 +247,7 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
         .ok_or_else(|| Error::not_found(format!("PlanReview {id}")))
     }
 
+    /// Lists reviews for a plan version.
     async fn list_plan_reviews_by_version(&self, plan_version_id: &str) -> Result<Vec<PlanReview>> {
         self.query_all(
             "SELECT * FROM plan_reviews WHERE plan_version_id = ?",

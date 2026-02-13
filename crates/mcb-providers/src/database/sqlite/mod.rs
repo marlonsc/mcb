@@ -18,6 +18,7 @@ mod plan_entity_repository;
 mod project_repository;
 mod provider;
 mod row_convert;
+pub mod row_helpers;
 mod vcs_entity_repository;
 
 pub use agent_repository::SqliteAgentRepository;

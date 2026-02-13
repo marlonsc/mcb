@@ -8,6 +8,8 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::OrgEntityRepository;
 
+use super::row_helpers::{opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_str};
+
 /// SQLite-backed repository for organization, user, team, and API key entities.
 pub struct SqliteOrgEntityRepository {
     executor: Arc<dyn DatabaseExecutor>,
@@ -113,43 +115,11 @@ fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
     })
 }
 
-/// Helper to get a required string field.
-fn req_str(row: &dyn SqlRow, col: &str) -> Result<String> {
-    row.try_get_string(col)?
-        .ok_or_else(|| Error::memory(format!("Missing {col}")))
-}
-
-/// Helper to get a required i64 field.
-fn req_i64(row: &dyn SqlRow, col: &str) -> Result<i64> {
-    row.try_get_i64(col)?
-        .ok_or_else(|| Error::memory(format!("Missing {col}")))
-}
-
-/// Helper to get an optional string field.
-fn opt_str(row: &dyn SqlRow, col: &str) -> Result<Option<String>> {
-    row.try_get_string(col)
-}
-
-fn opt_i64(row: &dyn SqlRow, col: &str) -> Result<Option<i64>> {
-    row.try_get_i64(col)
-}
-
-fn opt_str_param(value: &Option<String>) -> SqlParam {
-    match value {
-        Some(v) => SqlParam::String(v.clone()),
-        None => SqlParam::Null,
-    }
-}
-
-fn opt_i64_param(value: Option<i64>) -> SqlParam {
-    match value {
-        Some(v) => SqlParam::I64(v),
-        None => SqlParam::Null,
-    }
-}
-
 #[async_trait]
+/// Persistent organization entity repository using SQLite.
 impl OrgEntityRepository for SqliteOrgEntityRepository {
+    /// Creates a new organization.
+    // TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)
     async fn create_org(&self, org: &Organization) -> Result<()> {
         self.executor
             .execute(
@@ -166,6 +136,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Retrieves an organization by ID.
     async fn get_org(&self, id: &str) -> Result<Organization> {
         self.query_one(
             "SELECT * FROM organizations WHERE id = ?",
@@ -176,11 +147,13 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         .ok_or_else(|| Error::not_found(format!("Organization {id}")))
     }
 
+    /// Lists all organizations.
     async fn list_orgs(&self) -> Result<Vec<Organization>> {
         self.query_all("SELECT * FROM organizations", &[], row_to_org)
             .await
     }
 
+    /// Updates an existing organization.
     async fn update_org(&self, org: &Organization) -> Result<()> {
         self.executor
             .execute(
@@ -196,6 +169,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Deletes an organization.
     async fn delete_org(&self, id: &str) -> Result<()> {
         self.executor
             .execute(
@@ -205,6 +179,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Creates a new user.
     async fn create_user(&self, user: &User) -> Result<()> {
         self.executor
             .execute(
@@ -223,6 +198,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Retrieves a user by ID.
     async fn get_user(&self, id: &str) -> Result<User> {
         self.query_one(
             "SELECT * FROM users WHERE id = ?",
@@ -233,6 +209,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         .ok_or_else(|| Error::not_found(format!("User {id}")))
     }
 
+    /// Retrieves a user by email within an organization.
     async fn get_user_by_email(&self, org_id: &str, email: &str) -> Result<User> {
         self.query_one(
             "SELECT * FROM users WHERE org_id = ? AND email = ?",
@@ -246,6 +223,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         .ok_or_else(|| Error::not_found(format!("User {email}")))
     }
 
+    /// Lists users in an organization.
     async fn list_users(&self, org_id: &str) -> Result<Vec<User>> {
         self.query_all(
             "SELECT * FROM users WHERE org_id = ?",
@@ -255,6 +233,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         .await
     }
 
+    /// Updates an existing user.
     async fn update_user(&self, user: &User) -> Result<()> {
         self.executor
             .execute(
@@ -272,6 +251,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Deletes a user.
     async fn delete_user(&self, id: &str) -> Result<()> {
         self.executor
             .execute(
@@ -281,6 +261,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Creates a new team.
     async fn create_team(&self, team: &Team) -> Result<()> {
         self.executor
             .execute(
@@ -295,6 +276,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Retrieves a team by ID.
     async fn get_team(&self, id: &str) -> Result<Team> {
         self.query_one(
             "SELECT * FROM teams WHERE id = ?",
@@ -305,6 +287,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         .ok_or_else(|| Error::not_found(format!("Team {id}")))
     }
 
+    /// Lists teams in an organization.
     async fn list_teams(&self, org_id: &str) -> Result<Vec<Team>> {
         self.query_all(
             "SELECT * FROM teams WHERE org_id = ?",
@@ -314,6 +297,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         .await
     }
 
+    /// Deletes a team.
     async fn delete_team(&self, id: &str) -> Result<()> {
         self.executor
             .execute(
@@ -323,6 +307,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Adds a member to a team.
     async fn add_team_member(&self, member: &TeamMember) -> Result<()> {
         self.executor
             .execute(
@@ -337,6 +322,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Removes a member from a team.
     async fn remove_team_member(&self, team_id: &str, user_id: &str) -> Result<()> {
         self.executor
             .execute(
@@ -349,6 +335,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Lists members of a team.
     async fn list_team_members(&self, team_id: &str) -> Result<Vec<TeamMember>> {
         self.query_all(
             "SELECT * FROM team_members WHERE team_id = ?",
@@ -358,6 +345,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         .await
     }
 
+    /// Creates a new API key.
     async fn create_api_key(&self, key: &ApiKey) -> Result<()> {
         self.executor
             .execute(
@@ -377,6 +365,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Retrieves an API key by ID.
     async fn get_api_key(&self, id: &str) -> Result<ApiKey> {
         self.query_one(
             "SELECT * FROM api_keys WHERE id = ?",
@@ -387,6 +376,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         .ok_or_else(|| Error::not_found(format!("ApiKey {id}")))
     }
 
+    /// Lists API keys for an organization.
     async fn list_api_keys(&self, org_id: &str) -> Result<Vec<ApiKey>> {
         self.query_all(
             "SELECT * FROM api_keys WHERE org_id = ?",
@@ -396,6 +386,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         .await
     }
 
+    /// Revokes an API key.
     async fn revoke_api_key(&self, id: &str, revoked_at: i64) -> Result<()> {
         self.executor
             .execute(
@@ -405,6 +396,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Deletes an API key.
     async fn delete_api_key(&self, id: &str) -> Result<()> {
         self.executor
             .execute(

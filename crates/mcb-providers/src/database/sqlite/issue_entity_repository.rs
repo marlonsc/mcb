@@ -19,6 +19,8 @@ use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, Sq
 use mcb_domain::ports::repositories::IssueEntityRepository;
 use std::sync::Arc;
 
+use super::row_helpers::{opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_str};
+
 /// SQLite-based implementation of `IssueEntityRepository`.
 ///
 /// Handles storage for `project_issues`, `issue_comments`, `issue_labels`, and
@@ -116,38 +118,6 @@ fn row_to_label(row: &dyn SqlRow) -> Result<IssueLabel> {
         color: req_str(row, "color")?,
         created_at: req_i64(row, "created_at")?,
     })
-}
-
-fn req_str(row: &dyn SqlRow, col: &str) -> Result<String> {
-    row.try_get_string(col)?
-        .ok_or_else(|| Error::memory(format!("Missing {col}")))
-}
-
-fn req_i64(row: &dyn SqlRow, col: &str) -> Result<i64> {
-    row.try_get_i64(col)?
-        .ok_or_else(|| Error::memory(format!("Missing {col}")))
-}
-
-fn opt_str(row: &dyn SqlRow, col: &str) -> Result<Option<String>> {
-    row.try_get_string(col)
-}
-
-fn opt_i64(row: &dyn SqlRow, col: &str) -> Result<Option<i64>> {
-    row.try_get_i64(col)
-}
-
-fn opt_str_param(value: &Option<String>) -> SqlParam {
-    match value {
-        Some(v) => SqlParam::String(v.clone()),
-        None => SqlParam::Null,
-    }
-}
-
-fn opt_i64_param(value: Option<i64>) -> SqlParam {
-    match value {
-        Some(v) => SqlParam::I64(v),
-        None => SqlParam::Null,
-    }
 }
 
 #[async_trait]
