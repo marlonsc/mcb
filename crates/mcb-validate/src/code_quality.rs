@@ -12,9 +12,9 @@ use std::path::PathBuf;
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 use crate::ast::UnwrapDetector;
+use crate::scan::for_each_scan_rs_path;
 use crate::thresholds::thresholds;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
@@ -377,43 +377,39 @@ impl QualityValidator {
         let fn_pattern = Regex::new(r"(?:pub\s+)?fn\s+(\w+)").unwrap();
         let field_pattern = Regex::new(r"(?:pub\s+)?(\w+):\s+").unwrap();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-                .filter(|e| !e.path().to_string_lossy().contains("/tests/"))
+        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
+            if path.extension().is_none_or(|ext| ext != "rs")
+                || path.to_string_lossy().contains("/tests/")
+                || !path.exists()
             {
-                // Skip deleted files
-                if !entry.path().exists() {
-                    continue;
-                }
+                return Ok(());
+            }
 
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
+            let content = std::fs::read_to_string(path)?;
+            let lines: Vec<&str> = content.lines().collect();
 
-                for (i, line) in lines.iter().enumerate() {
-                    if dead_code_pattern.is_match(line) {
-                        let item_name = self
-                            .find_dead_code_item(
-                                &lines,
-                                i,
-                                &struct_pattern,
-                                &fn_pattern,
-                                &field_pattern,
-                            )
-                            .unwrap_or_else(|| "allow(dead_code)".to_string());
-                        violations.push(QualityViolation::DeadCodeAllowNotPermitted {
-                            file: entry.path().to_path_buf(),
-                            line: i + 1,
-                            item_name,
-                            severity: Severity::Warning,
-                        });
-                    }
+            for (i, line) in lines.iter().enumerate() {
+                if dead_code_pattern.is_match(line) {
+                    let item_name = self
+                        .find_dead_code_item(
+                            &lines,
+                            i,
+                            &struct_pattern,
+                            &fn_pattern,
+                            &field_pattern,
+                        )
+                        .unwrap_or_else(|| "allow(dead_code)".to_string());
+                    violations.push(QualityViolation::DeadCodeAllowNotPermitted {
+                        file: path.to_path_buf(),
+                        line: i + 1,
+                        item_name,
+                        severity: Severity::Warning,
+                    });
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -458,120 +454,117 @@ impl QualityValidator {
         let mut violations = Vec::new();
         let mut detector = UnwrapDetector::new()?;
 
-        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-                .filter(|e| {
-                    // Skip test files
-                    let path_str = e.path().to_string_lossy();
-                    !path_str.contains("/tests/")
-                        && !path_str.contains("/target/")
-                        && !path_str.ends_with("_test.rs")
-                        && !path_str.ends_with("test.rs")
-                })
-            {
-                // Use AST-based detection
-                let detections = detector.detect_in_file(entry.path())?;
+        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
+            if path.extension().is_none_or(|ext| ext != "rs") {
+                return Ok(());
+            }
 
-                for detection in detections {
-                    // Skip detections in test modules
-                    if detection.in_test {
+            let path_str = path.to_string_lossy();
+            if path_str.contains("/tests/")
+                || path_str.contains("/target/")
+                || path_str.ends_with("_test.rs")
+                || path_str.ends_with("test.rs")
+            {
+                return Ok(());
+            }
+
+            // Use AST-based detection
+            let detections = detector.detect_in_file(path)?;
+
+            for detection in detections {
+                // Skip detections in test modules
+                if detection.in_test {
+                    continue;
+                }
+
+                // Skip if context contains SAFETY justification or ignore hints
+                // (checked via Regex since AST doesn't capture comments easily)
+                let content = std::fs::read_to_string(path)?;
+                let lines: Vec<&str> = content.lines().collect();
+                if detection.line > 0 && detection.line <= lines.len() {
+                    let line_content = lines[detection.line - 1];
+
+                    // Check for safety comments
+                    if line_content.contains("// SAFETY:") || line_content.contains("// safety:") {
                         continue;
                     }
 
-                    // Skip if context contains SAFETY justification or ignore hints
-                    // (checked via Regex since AST doesn't capture comments easily)
-                    let content = std::fs::read_to_string(entry.path())?;
-                    let lines: Vec<&str> = content.lines().collect();
-                    if detection.line > 0 && detection.line <= lines.len() {
-                        let line_content = lines[detection.line - 1];
+                    // Check for ignore hints around the detection
+                    let mut has_ignore = false;
 
-                        // Check for safety comments
-                        if line_content.contains("// SAFETY:")
-                            || line_content.contains("// safety:")
-                        {
-                            continue;
-                        }
+                    // Check current line
+                    if self.has_ignore_hint(line_content, "lock_poisoning_recovery")
+                        || self.has_ignore_hint(line_content, "hardcoded_fallback")
+                    {
+                        has_ignore = true;
+                    }
 
-                        // Check for ignore hints around the detection
-                        let mut has_ignore = false;
-
-                        // Check current line
-                        if self.has_ignore_hint(line_content, "lock_poisoning_recovery")
-                            || self.has_ignore_hint(line_content, "hardcoded_fallback")
-                        {
-                            has_ignore = true;
-                        }
-
-                        // Check previous lines (up to 3 lines before)
-                        if !has_ignore && detection.line > 1 {
-                            for i in 1..=3.min(detection.line - 1) {
-                                let check_line = lines[detection.line - 1 - i];
-                                if self.has_ignore_hint(check_line, "lock_poisoning_recovery")
-                                    || self.has_ignore_hint(check_line, "hardcoded_fallback")
-                                {
-                                    has_ignore = true;
-                                    break;
-                                }
+                    // Check previous lines (up to 3 lines before)
+                    if !has_ignore && detection.line > 1 {
+                        for i in 1..=3.min(detection.line - 1) {
+                            let check_line = lines[detection.line - 1 - i];
+                            if self.has_ignore_hint(check_line, "lock_poisoning_recovery")
+                                || self.has_ignore_hint(check_line, "hardcoded_fallback")
+                            {
+                                has_ignore = true;
+                                break;
                             }
-                        }
-
-                        // Check next lines (up to 3 lines after)
-                        if !has_ignore && detection.line < lines.len() {
-                            for i in 0..3.min(lines.len() - detection.line) {
-                                let check_line = lines[detection.line + i];
-                                if self.has_ignore_hint(check_line, "lock_poisoning_recovery")
-                                    || self.has_ignore_hint(check_line, "hardcoded_fallback")
-                                {
-                                    has_ignore = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if has_ignore {
-                            continue;
-                        }
-
-                        // Skip cases where we're handling system-level errors appropriately
-                        // (e.g., lock poisoning, which is a legitimate use of expect())
-                        if detection.method == "expect"
-                            && (line_content.contains("lock poisoned")
-                                || line_content.contains("Lock poisoned")
-                                || line_content.contains("poisoned")
-                                || line_content.contains("Mutex poisoned"))
-                        {
-                            continue;
                         }
                     }
 
-                    // Create appropriate violation based on method type
-                    match detection.method.as_str() {
-                        "unwrap" => {
-                            violations.push(QualityViolation::UnwrapInProduction {
-                                file: entry.path().to_path_buf(),
-                                line: detection.line,
-                                context: detection.context,
-                                severity: Severity::Error,
-                            });
+                    // Check next lines (up to 3 lines after)
+                    if !has_ignore && detection.line < lines.len() {
+                        for i in 0..3.min(lines.len() - detection.line) {
+                            let check_line = lines[detection.line + i];
+                            if self.has_ignore_hint(check_line, "lock_poisoning_recovery")
+                                || self.has_ignore_hint(check_line, "hardcoded_fallback")
+                            {
+                                has_ignore = true;
+                                break;
+                            }
                         }
-                        "expect" => {
-                            violations.push(QualityViolation::ExpectInProduction {
-                                file: entry.path().to_path_buf(),
-                                line: detection.line,
-                                context: detection.context,
-                                severity: Severity::Error,
-                            });
-                        }
-                        _ => {}
+                    }
+
+                    if has_ignore {
+                        continue;
+                    }
+
+                    // Skip cases where we're handling system-level errors appropriately
+                    // (e.g., lock poisoning, which is a legitimate use of expect())
+                    if detection.method == "expect"
+                        && (line_content.contains("lock poisoned")
+                            || line_content.contains("Lock poisoned")
+                            || line_content.contains("poisoned")
+                            || line_content.contains("Mutex poisoned"))
+                    {
+                        continue;
                     }
                 }
+
+                // Create appropriate violation based on method type
+                match detection.method.as_str() {
+                    "unwrap" => {
+                        violations.push(QualityViolation::UnwrapInProduction {
+                            file: path.to_path_buf(),
+                            line: detection.line,
+                            context: detection.context,
+                            severity: Severity::Error,
+                        });
+                    }
+                    "expect" => {
+                        violations.push(QualityViolation::ExpectInProduction {
+                            file: path.to_path_buf(),
+                            line: detection.line,
+                            context: detection.context,
+                            severity: Severity::Error,
+                        });
+                    }
+                    _ => {}
+                }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -581,47 +574,45 @@ impl QualityValidator {
         let mut violations = Vec::new();
         let panic_pattern = Regex::new(r"panic!\s*\(").unwrap();
 
-        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_test_module = false;
+        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
+            if path.extension().is_none_or(|ext| ext != "rs") {
+                return Ok(());
+            }
 
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
+            let content = std::fs::read_to_string(path)?;
+            let mut in_test_module = false;
 
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
 
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
+                // Skip comments
+                if trimmed.starts_with("//") {
+                    continue;
+                }
 
-                    if in_test_module {
-                        continue;
-                    }
+                // Track test modules
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
+                    continue;
+                }
 
-                    // Check for panic!
-                    if panic_pattern.is_match(line) {
-                        violations.push(QualityViolation::PanicInProduction {
-                            file: entry.path().to_path_buf(),
-                            line: line_num + 1,
-                            context: trimmed.to_string(),
-                            severity: Severity::Error,
-                        });
-                    }
+                if in_test_module {
+                    continue;
+                }
+
+                // Check for panic!
+                if panic_pattern.is_match(line) {
+                    violations.push(QualityViolation::PanicInProduction {
+                        file: path.to_path_buf(),
+                        line: line_num + 1,
+                        context: trimmed.to_string(),
+                        severity: Severity::Error,
+                    });
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -630,49 +621,42 @@ impl QualityValidator {
     pub fn validate_file_sizes(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
 
-        // Use get_scan_dirs() for proper handling of both crate-style and flat directories
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| {
-                    e.path().extension().is_some_and(|ext| ext == "rs")
-                        && !self.config.should_exclude(e.path())
-                        && !e.path().to_string_lossy().contains("/tests/")
-                        && !e.path().to_string_lossy().contains("/target/")
-                        && !e.path().to_string_lossy().ends_with("_test.rs")
-                })
+        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
+            if path.extension().is_none_or(|ext| ext != "rs")
+                || self.config.should_exclude(path)
+                || path.to_string_lossy().contains("/tests/")
+                || path.to_string_lossy().contains("/target/")
+                || path.to_string_lossy().ends_with("_test.rs")
+                || !path.exists()
             {
-                // Skip deleted files
-                if !entry.path().exists() {
-                    continue;
-                }
-
-                let path_str = entry.path().to_string_lossy();
-
-                // Skip paths excluded in configuration (e.g., large vector store implementations)
-                if self
-                    .excluded_paths
-                    .iter()
-                    .any(|excluded| path_str.contains(excluded.as_str()))
-                {
-                    continue;
-                }
-
-                let content = std::fs::read_to_string(entry.path())?;
-                let line_count = content.lines().count();
-
-                if line_count > self.max_file_lines {
-                    violations.push(QualityViolation::FileTooLarge {
-                        file: entry.path().to_path_buf(),
-                        lines: line_count,
-                        max_allowed: self.max_file_lines,
-                        severity: Severity::Warning,
-                    });
-                }
+                return Ok(());
             }
-        }
+
+            let path_str = path.to_string_lossy();
+
+            // Skip paths excluded in configuration (e.g., large vector store implementations)
+            if self
+                .excluded_paths
+                .iter()
+                .any(|excluded| path_str.contains(excluded.as_str()))
+            {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+            let line_count = content.lines().count();
+
+            if line_count > self.max_file_lines {
+                violations.push(QualityViolation::FileTooLarge {
+                    file: path.to_path_buf(),
+                    lines: line_count,
+                    max_allowed: self.max_file_lines,
+                    severity: Severity::Warning,
+                });
+            }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -688,35 +672,29 @@ impl QualityValidator {
         .unwrap();
 
         let mut violations = Vec::new();
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip deleted files - check existence before reading
-                if !entry.path().exists() {
-                    continue;
-                }
+        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
+            if path.extension().is_none_or(|ext| ext != "rs") || !path.exists() {
+                return Ok(());
+            }
 
-                let content = std::fs::read_to_string(entry.path())?;
+            let content = std::fs::read_to_string(path)?;
 
-                for (line_num, line) in content.lines().enumerate() {
-                    if let Some(cap) = todo_pattern.captures(line) {
-                        let todo_type = cap.get(1).map_or("", |m| m.as_str());
-                        let message = cap.get(2).map_or("", |m| m.as_str()).trim();
+            for (line_num, line) in content.lines().enumerate() {
+                if let Some(cap) = todo_pattern.captures(line) {
+                    let todo_type = cap.get(1).map_or("", |m| m.as_str());
+                    let message = cap.get(2).map_or("", |m| m.as_str()).trim();
 
-                        violations.push(QualityViolation::TodoComment {
-                            file: entry.path().to_path_buf(),
-                            line: line_num + 1,
-                            content: format!("{}: {}", todo_type.to_uppercase(), message),
-                            severity: Severity::Info,
-                        });
-                    }
+                    violations.push(QualityViolation::TodoComment {
+                        file: path.to_path_buf(),
+                        line: line_num + 1,
+                        content: format!("{}: {}", todo_type.to_uppercase(), message),
+                        severity: Severity::Info,
+                    });
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }

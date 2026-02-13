@@ -10,9 +10,9 @@ use std::path::PathBuf;
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 use crate::config::PerformanceRulesConfig;
+use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -289,101 +289,91 @@ impl PerformanceValidator {
         let loop_start_pattern = Regex::new(r"^\s*(for|while|loop)\s+").unwrap();
         let clone_pattern = Regex::new(r"\.clone\(\)").unwrap();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            if self.should_skip_crate(&src_dir) {
-                continue;
+        for_each_scan_rs_path(&self.config, false, |path, src_dir| {
+            if self.should_skip_crate(src_dir) || path.to_string_lossy().contains("/tests/") {
+                return Ok(());
             }
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip test files
-                if entry.path().to_string_lossy().contains("/tests/") {
+
+            let path_str = path.to_string_lossy();
+            if path_str.ends_with("/router.rs") || path_str.contains("/routing/") {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+            let mut in_loop = false;
+            let mut loop_depth = 0;
+            let mut in_test_module = false;
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+
+                // Skip comments
+                if trimmed.starts_with("//") {
                     continue;
                 }
 
-                // Skip routing files - clone is necessary to return owned values from borrowed refs
-                let path_str = entry.path().to_string_lossy();
-                if path_str.ends_with("/router.rs") || path_str.contains("/routing/") {
+                // Track test modules
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
                     continue;
                 }
 
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_loop = false;
-                let mut loop_depth = 0;
-                let mut in_test_module = false;
+                if in_test_module {
+                    continue;
+                }
 
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
+                // Track loop entry
+                if loop_start_pattern.is_match(trimmed) {
+                    in_loop = true;
+                    loop_depth = 0;
+                }
 
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
+                if in_loop {
+                    let o = line.chars().filter(|c| *c == '{').count();
+                    let c = line.chars().filter(|c| *c == '}').count();
+                    loop_depth += i32::try_from(o).unwrap_or(i32::MAX);
+                    loop_depth -= i32::try_from(c).unwrap_or(i32::MAX);
 
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
-
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Track loop entry
-                    if loop_start_pattern.is_match(trimmed) {
-                        in_loop = true;
-                        loop_depth = 0;
-                    }
-
-                    if in_loop {
-                        let o = line.chars().filter(|c| *c == '{').count();
-                        let c = line.chars().filter(|c| *c == '}').count();
-                        loop_depth += i32::try_from(o).unwrap_or(i32::MAX);
-                        loop_depth -= i32::try_from(c).unwrap_or(i32::MAX);
-
-                        if clone_pattern.is_match(line) {
-                            // Skip if it's a method definition
-                            if trimmed.starts_with("fn ") || trimmed.starts_with("pub fn ") {
-                                continue;
-                            }
-                            // Skip struct field initialization patterns (field: value.clone())
-                            // These are typically required for ownership transfer
-                            if trimmed.contains(": ") && trimmed.ends_with(".clone(),") {
-                                continue;
-                            }
-                            // Skip let bindings that clone for the loop (setup pattern)
-                            if trimmed.starts_with("let ") && trimmed.contains("= ") {
-                                continue;
-                            }
-                            // Skip insert patterns (common in HashMap operations)
-                            if trimmed.contains(".insert(") {
-                                continue;
-                            }
-                            // Skip push patterns (common in Vec operations)
-                            if trimmed.contains(".push(") {
-                                continue;
-                            }
-                            violations.push(PerformanceViolation::CloneInLoop {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                context: trimmed.chars().take(80).collect(),
-                                suggestion: "Consider borrowing or moving instead of cloning"
-                                    .to_string(),
-                                severity: Severity::Warning,
-                            });
+                    if clone_pattern.is_match(line) {
+                        // Skip if it's a method definition
+                        if trimmed.starts_with("fn ") || trimmed.starts_with("pub fn ") {
+                            continue;
                         }
-
-                        if loop_depth <= 0 {
-                            in_loop = false;
+                        // Skip struct field initialization patterns (field: value.clone())
+                        // These are typically required for ownership transfer
+                        if trimmed.contains(": ") && trimmed.ends_with(".clone(),") {
+                            continue;
                         }
+                        // Skip let bindings that clone for the loop (setup pattern)
+                        if trimmed.starts_with("let ") && trimmed.contains("= ") {
+                            continue;
+                        }
+                        // Skip insert patterns (common in HashMap operations)
+                        if trimmed.contains(".insert(") {
+                            continue;
+                        }
+                        // Skip push patterns (common in Vec operations)
+                        if trimmed.contains(".push(") {
+                            continue;
+                        }
+                        violations.push(PerformanceViolation::CloneInLoop {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            context: trimmed.chars().take(80).collect(),
+                            suggestion: "Consider borrowing or moving instead of cloning"
+                                .to_string(),
+                            severity: Severity::Warning,
+                        });
+                    }
+
+                    if loop_depth <= 0 {
+                        in_loop = false;
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -407,77 +397,68 @@ impl PerformanceValidator {
             .filter_map(|(p, desc)| Regex::new(p).ok().map(|r| (r, *desc)))
             .collect();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            if self.should_skip_crate(&src_dir) {
-                continue;
+        for_each_scan_rs_path(&self.config, false, |path, src_dir| {
+            if self.should_skip_crate(src_dir) || path.to_string_lossy().contains("/tests/") {
+                return Ok(());
             }
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip test files
-                if entry.path().to_string_lossy().contains("/tests/") {
+
+            let content = std::fs::read_to_string(path)?;
+            let mut in_loop = false;
+            let mut loop_depth = 0;
+            let mut in_test_module = false;
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+
+                // Skip comments
+                if trimmed.starts_with("//") {
                     continue;
                 }
 
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_loop = false;
-                let mut loop_depth = 0;
-                let mut in_test_module = false;
+                // Track test modules
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
+                    continue;
+                }
 
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
+                if in_test_module {
+                    continue;
+                }
 
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
+                // Track loop entry
+                if loop_start_pattern.is_match(trimmed) {
+                    in_loop = true;
+                    loop_depth = 0;
+                }
 
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
+                if in_loop {
+                    let o = line.chars().filter(|c| *c == '{').count();
+                    let c = line.chars().filter(|c| *c == '}').count();
+                    loop_depth += i32::try_from(o).unwrap_or(i32::MAX);
+                    loop_depth -= i32::try_from(c).unwrap_or(i32::MAX);
 
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Track loop entry
-                    if loop_start_pattern.is_match(trimmed) {
-                        in_loop = true;
-                        loop_depth = 0;
-                    }
-
-                    if in_loop {
-                        let o = line.chars().filter(|c| *c == '{').count();
-                        let c = line.chars().filter(|c| *c == '}').count();
-                        loop_depth += i32::try_from(o).unwrap_or(i32::MAX);
-                        loop_depth -= i32::try_from(c).unwrap_or(i32::MAX);
-
-                        // Check for allocations in loop
-                        for (pattern, alloc_type) in &compiled_patterns {
-                            if pattern.is_match(line) {
-                                violations.push(PerformanceViolation::AllocationInLoop {
-                                    file: entry.path().to_path_buf(),
-                                    line: line_num + 1,
-                                    allocation_type: alloc_type.to_string(),
-                                    suggestion: "Move allocation outside loop or reuse buffer"
-                                        .to_string(),
-                                    severity: Severity::Warning,
-                                });
-                            }
+                    // Check for allocations in loop
+                    for (pattern, alloc_type) in &compiled_patterns {
+                        if pattern.is_match(line) {
+                            violations.push(PerformanceViolation::AllocationInLoop {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                allocation_type: alloc_type.to_string(),
+                                suggestion: "Move allocation outside loop or reuse buffer"
+                                    .to_string(),
+                                severity: Severity::Warning,
+                            });
                         }
+                    }
 
-                        if loop_depth <= 0 {
-                            in_loop = false;
-                        }
+                    if loop_depth <= 0 {
+                        in_loop = false;
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -493,56 +474,47 @@ impl PerformanceValidator {
     {
         let mut violations = Vec::new();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            if self.should_skip_crate(&src_dir) {
-                continue;
+        for_each_scan_rs_path(&self.config, false, |path, src_dir| {
+            if self.should_skip_crate(src_dir) || path.to_string_lossy().contains("/tests/") {
+                return Ok(());
             }
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip test files
-                if entry.path().to_string_lossy().contains("/tests/") {
+
+            let content = std::fs::read_to_string(path)?;
+            let mut in_test_module = false;
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+
+                // Skip comments
+                if trimmed.starts_with("//") {
                     continue;
                 }
 
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_test_module = false;
+                // Track test modules
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
+                    continue;
+                }
 
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
+                if in_test_module {
+                    continue;
+                }
 
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
-
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
-
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Check for patterns
-                    for (pattern, desc, sugg) in compiled_patterns {
-                        if pattern.is_match(line) {
-                            violations.push(make_violation(
-                                entry.path().to_path_buf(),
-                                line_num + 1,
-                                desc,
-                                sugg,
-                            ));
-                        }
+                // Check for patterns
+                for (pattern, desc, sugg) in compiled_patterns {
+                    if pattern.is_match(line) {
+                        violations.push(make_violation(
+                            path.to_path_buf(),
+                            line_num + 1,
+                            desc,
+                            sugg,
+                        ));
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }

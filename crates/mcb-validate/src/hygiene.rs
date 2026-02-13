@@ -5,13 +5,13 @@
 //! - Test file naming conventions
 //! - Test function naming conventions
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 use crate::pattern_registry::PATTERNS;
+use crate::run_context::ValidationRunContext;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -422,17 +422,12 @@ impl HygieneValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                if Self::is_fixture_path(entry.path()) {
-                    continue;
+            self.for_each_src_rs_path_in_crate(&crate_dir, |path| {
+                if Self::is_fixture_path(path) {
+                    return Ok(());
                 }
 
-                let content = std::fs::read_to_string(entry.path())?;
+                let content = std::fs::read_to_string(path)?;
                 let lines: Vec<&str> = content.lines().collect();
                 let mut last_cfg_test_line: Option<usize> = None;
                 let mut has_inline_module_marker = false;
@@ -442,7 +437,7 @@ impl HygieneValidator {
                         last_cfg_test_line = Some(line_num);
                         has_inline_module_marker = true;
                         violations.push(HygieneViolation::InlineTestModule {
-                            file: entry.path().to_path_buf(),
+                            file: path.to_path_buf(),
                             line: line_num + 1,
                             severity: Severity::Error,
                         });
@@ -455,7 +450,7 @@ impl HygieneValidator {
                         }
                         has_inline_module_marker = true;
                         violations.push(HygieneViolation::InlineTestModule {
-                            file: entry.path().to_path_buf(),
+                            file: path.to_path_buf(),
                             line: line_num + 1,
                             severity: Severity::Error,
                         });
@@ -468,7 +463,7 @@ impl HygieneValidator {
                             || tokio_test_attr_pattern.is_some_and(|p| p.is_match(line))
                         {
                             violations.push(HygieneViolation::InlineTestModule {
-                                file: entry.path().to_path_buf(),
+                                file: path.to_path_buf(),
                                 line: line_num + 1,
                                 severity: Severity::Error,
                             });
@@ -476,7 +471,8 @@ impl HygieneValidator {
                         }
                     }
                 }
-            }
+                Ok(())
+            })?;
         }
 
         Ok(violations)
@@ -574,18 +570,12 @@ impl HygieneValidator {
             // We don't require specific directories - tests can be organized
             // in any subdirectory structure as long as they have entry points
 
-            for entry in WalkDir::new(&tests_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let path = entry.path();
+            self.for_each_test_rs_path_in_crate(&crate_dir, |path| {
                 let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
 
                 // Skip lib.rs and mod.rs
                 if file_name == "lib" || file_name == "mod" {
-                    continue;
+                    return Ok(());
                 }
 
                 // Skip test utility files (mocks, fixtures, helpers)
@@ -595,7 +585,7 @@ impl HygieneValidator {
                     || file_name.contains("fixture")
                     || file_name.contains("helper")
                 {
-                    continue;
+                    return Ok(());
                 }
 
                 // Check directory-based naming conventions
@@ -673,7 +663,8 @@ impl HygieneValidator {
                         // No violation
                     }
                 }
-            }
+                Ok(())
+            })?;
         }
 
         Ok(violations)
@@ -706,13 +697,8 @@ impl HygieneValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&tests_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
+            self.for_each_test_rs_path_in_crate(&crate_dir, |path| {
+                let content = std::fs::read_to_string(path)?;
                 let lines: Vec<&str> = content.lines().collect();
 
                 let mut i = 0;
@@ -731,7 +717,7 @@ impl HygieneValidator {
                                 // Check naming convention - must start with test_
                                 if !fn_name.starts_with("test_") {
                                     violations.push(HygieneViolation::BadTestFunctionName {
-                                        file: entry.path().to_path_buf(),
+                                        file: path.to_path_buf(),
                                         line: fn_line_idx + 1,
                                         function_name: fn_name.to_string(),
                                         suggestion: format!("test_{fn_name}"),
@@ -772,7 +758,7 @@ impl HygieneValidator {
 
                                 if !has_assertion && !is_smoke_test {
                                     violations.push(HygieneViolation::TestWithoutAssertion {
-                                        file: entry.path().to_path_buf(),
+                                        file: path.to_path_buf(),
                                         line: fn_line_idx + 1,
                                         function_name: fn_name.to_string(),
                                         severity: Severity::Warning,
@@ -786,7 +772,8 @@ impl HygieneValidator {
                     }
                     i += 1;
                 }
-            }
+                Ok(())
+            })?;
         }
 
         Ok(violations)
@@ -840,21 +827,16 @@ impl HygieneValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&tests_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                if Self::is_fixture_path(entry.path()) {
-                    continue;
+            self.for_each_test_rs_path_in_crate(&crate_dir, |path| {
+                if Self::is_fixture_path(path) {
+                    return Ok(());
                 }
 
-                let content = std::fs::read_to_string(entry.path())?;
+                let content = std::fs::read_to_string(path)?;
                 let lines: Vec<&str> = content.lines().collect();
 
                 self.check_forbidden_patterns(
-                    entry.path(),
+                    path,
                     &lines,
                     mock_type_pattern.as_ref(),
                     skip_message_pattern.as_ref(),
@@ -918,7 +900,7 @@ impl HygieneValidator {
                                     for (pattern, desc) in &compiled_trivial {
                                         if pattern.is_match(body_line) {
                                             violations.push(HygieneViolation::TrivialAssertion {
-                                                file: entry.path().to_path_buf(),
+                                                file: path.to_path_buf(),
                                                 line: line_idx + 1,
                                                 function_name: fn_name.to_string(),
                                                 assertion: desc.to_string(),
@@ -940,7 +922,7 @@ impl HygieneValidator {
                                     // Use Warning severity since this is heuristic-based detection
                                     // Tests may have valid assertions that aren't detected by the pattern
                                     violations.push(HygieneViolation::UnwrapOnlyAssertion {
-                                        file: entry.path().to_path_buf(),
+                                        file: path.to_path_buf(),
                                         line: fn_start + 1,
                                         function_name: fn_name.to_string(),
                                         severity: Severity::Warning,
@@ -974,7 +956,7 @@ impl HygieneValidator {
 
                                 if all_comments && body_lines.len() > 2 {
                                     violations.push(HygieneViolation::CommentOnlyTest {
-                                        file: entry.path().to_path_buf(),
+                                        file: path.to_path_buf(),
                                         line: fn_start + 1,
                                         function_name: fn_name.to_string(),
                                         severity: Severity::Error,
@@ -988,7 +970,8 @@ impl HygieneValidator {
                     }
                     i += 1;
                 }
-            }
+                Ok(())
+            })?;
         }
 
         Ok(violations)
@@ -1078,6 +1061,54 @@ impl HygieneValidator {
     /// Retrieves the source directories to validate.
     fn get_crate_dirs(&self) -> Result<Vec<PathBuf>> {
         self.config.get_source_dirs()
+    }
+
+    fn for_each_src_rs_path_in_crate<F>(&self, crate_dir: &Path, mut f: F) -> Result<()>
+    where
+        F: FnMut(&Path) -> Result<()>,
+    {
+        let src_dir = crate_dir.join("src");
+        if !src_dir.exists() {
+            return Ok(());
+        }
+
+        let context = ValidationRunContext::active_or_build(&self.config)?;
+        for entry in context.file_inventory() {
+            if entry.absolute_path.starts_with(&src_dir)
+                && entry
+                    .absolute_path
+                    .extension()
+                    .is_some_and(|ext| ext == "rs")
+            {
+                f(&entry.absolute_path)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn for_each_test_rs_path_in_crate<F>(&self, crate_dir: &Path, mut f: F) -> Result<()>
+    where
+        F: FnMut(&Path) -> Result<()>,
+    {
+        let tests_dir = crate_dir.join("tests");
+        if !tests_dir.exists() {
+            return Ok(());
+        }
+
+        let context = ValidationRunContext::active_or_build(&self.config)?;
+        for entry in context.file_inventory() {
+            if entry.absolute_path.starts_with(&tests_dir)
+                && entry
+                    .absolute_path
+                    .extension()
+                    .is_some_and(|ext| ext == "rs")
+            {
+                f(&entry.absolute_path)?;
+            }
+        }
+
+        Ok(())
     }
 }
 

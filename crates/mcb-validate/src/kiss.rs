@@ -11,9 +11,9 @@ use std::path::PathBuf;
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 use crate::config::KISSRulesConfig;
+use crate::scan::for_each_scan_rs_path;
 use crate::thresholds::thresholds;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
@@ -375,81 +375,75 @@ impl KissValidator {
         let struct_pattern =
             Regex::new(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{").expect("Invalid regex");
 
-        for src_dir in self.config.get_scan_dirs()? {
-            if self.should_skip_crate(&src_dir) {
-                continue;
+        for_each_scan_rs_path(&self.config, false, |path, src_dir| {
+            if self.should_skip_crate(src_dir) {
+                return Ok(());
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
+            let content = std::fs::read_to_string(path)?;
+            let lines: Vec<&str> = content.lines().collect();
 
-                // Track test modules to skip
-                let mut in_test_module = false;
-                let mut test_brace_depth: i32 = 0;
-                let mut brace_depth: i32 = 0;
+            // Track test modules to skip
+            let mut in_test_module = false;
+            let mut test_brace_depth: i32 = 0;
+            let mut brace_depth: i32 = 0;
 
-                for (line_num, line) in lines.iter().enumerate() {
-                    let trimmed = line.trim();
+            for (line_num, line) in lines.iter().enumerate() {
+                let trimmed = line.trim();
 
-                    // Track test module boundaries
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        test_brace_depth = brace_depth;
-                    }
+                // Track test module boundaries
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
+                    test_brace_depth = brace_depth;
+                }
 
-                    let open_c = line.chars().filter(|c| *c == '{').count();
-                    let close_c = line.chars().filter(|c| *c == '}').count();
-                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
-                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
+                let open_c = line.chars().filter(|c| *c == '{').count();
+                let close_c = line.chars().filter(|c| *c == '}').count();
+                brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
+                brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
 
-                    if in_test_module && brace_depth < test_brace_depth {
-                        in_test_module = false;
-                    }
-                    if in_test_module {
-                        continue;
-                    }
+                if in_test_module && brace_depth < test_brace_depth {
+                    in_test_module = false;
+                }
+                if in_test_module {
+                    continue;
+                }
 
-                    if let Some(cap) = struct_pattern.captures(line) {
-                        let struct_name = cap.get(1).map_or("", |m| m.as_str());
+                if let Some(cap) = struct_pattern.captures(line) {
+                    let struct_name = cap.get(1).map_or("", |m| m.as_str());
 
-                        // DI containers and config structs (ADR-029) have a higher limit
-                        // They legitimately aggregate many dependencies, but should still have limits
-                        let is_di_container = struct_name.ends_with("Context")
-                            || struct_name.ends_with("Container")
-                            || struct_name.ends_with("Components")
-                            || struct_name.contains("Config")
-                            || struct_name.contains("Settings")
-                            || struct_name.ends_with("State");
+                    // DI containers and config structs (ADR-029) have a higher limit
+                    // They legitimately aggregate many dependencies, but should still have limits
+                    let is_di_container = struct_name.ends_with("Context")
+                        || struct_name.ends_with("Container")
+                        || struct_name.ends_with("Components")
+                        || struct_name.contains("Config")
+                        || struct_name.contains("Settings")
+                        || struct_name.ends_with("State");
 
-                        let max_fields = if is_di_container {
-                            thresholds().max_di_container_fields
-                        } else {
-                            self.max_struct_fields
-                        };
+                    let max_fields = if is_di_container {
+                        thresholds().max_di_container_fields
+                    } else {
+                        self.max_struct_fields
+                    };
 
-                        // Count fields in struct
-                        let field_count = self.count_struct_fields(&lines, line_num);
+                    // Count fields in struct
+                    let field_count = self.count_struct_fields(&lines, line_num);
 
-                        if field_count > max_fields {
-                            violations.push(KissViolation::StructTooManyFields {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                struct_name: struct_name.to_string(),
-                                field_count,
-                                max_allowed: max_fields,
-                                severity: Severity::Warning,
-                            });
-                        }
+                    if field_count > max_fields {
+                        violations.push(KissViolation::StructTooManyFields {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            struct_name: struct_name.to_string(),
+                            field_count,
+                            max_allowed: max_fields,
+                            severity: Severity::Warning,
+                        });
                     }
                 }
             }
-        }
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -462,87 +456,81 @@ impl KissValidator {
         )
         .expect("Invalid regex");
 
-        for src_dir in self.config.get_scan_dirs()? {
-            if self.should_skip_crate(&src_dir) {
-                continue;
+        for_each_scan_rs_path(&self.config, false, |path, src_dir| {
+            if self.should_skip_crate(src_dir) {
+                return Ok(());
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let path_str = entry.path().to_string_lossy();
+            let path_str = path.to_string_lossy();
 
-                // Skip admin API files - builder-like constructors aggregate dependencies
-                if path_str.ends_with("/admin/api.rs") {
+            // Skip admin API files - builder-like constructors aggregate dependencies
+            if path_str.ends_with("/admin/api.rs") {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+            let lines: Vec<&str> = content.lines().collect();
+
+            // Track test modules to skip
+            let mut in_test_module = false;
+            let mut test_brace_depth: i32 = 0;
+            let mut brace_depth: i32 = 0;
+
+            for (line_num, line) in lines.iter().enumerate() {
+                let trimmed = line.trim();
+
+                // Track test module boundaries
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
+                    test_brace_depth = brace_depth;
+                }
+
+                let open_c = line.chars().filter(|c| *c == '{').count();
+                let close_c = line.chars().filter(|c| *c == '}').count();
+                brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
+                brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
+
+                if in_test_module && brace_depth < test_brace_depth {
+                    in_test_module = false;
+                }
+                if in_test_module {
                     continue;
                 }
 
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
+                // Only check lines that contain function definitions
+                if !line.contains("fn ") {
+                    continue;
+                }
 
-                // Track test modules to skip
-                let mut in_test_module = false;
-                let mut test_brace_depth: i32 = 0;
-                let mut brace_depth: i32 = 0;
+                // Build full function signature (may span multiple lines)
+                let mut full_line = line.to_string();
+                let mut idx = line_num + 1;
+                while !full_line.contains(')') && idx < lines.len() {
+                    full_line.push_str(lines[idx]);
+                    idx += 1;
+                }
 
-                for (line_num, line) in lines.iter().enumerate() {
-                    let trimmed = line.trim();
+                if let Some(cap) = fn_pattern.captures(&full_line) {
+                    let fn_name = cap.get(1).map_or("", |m| m.as_str());
+                    let params = cap.get(2).map_or("", |m| m.as_str());
 
-                    // Track test module boundaries
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        test_brace_depth = brace_depth;
-                    }
+                    // Count parameters (comma-separated, excluding &self/self)
+                    let param_count = self.count_function_params(params);
 
-                    let open_c = line.chars().filter(|c| *c == '{').count();
-                    let close_c = line.chars().filter(|c| *c == '}').count();
-                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
-                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
-
-                    if in_test_module && brace_depth < test_brace_depth {
-                        in_test_module = false;
-                    }
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Only check lines that contain function definitions
-                    if !line.contains("fn ") {
-                        continue;
-                    }
-
-                    // Build full function signature (may span multiple lines)
-                    let mut full_line = line.to_string();
-                    let mut idx = line_num + 1;
-                    while !full_line.contains(')') && idx < lines.len() {
-                        full_line.push_str(lines[idx]);
-                        idx += 1;
-                    }
-
-                    if let Some(cap) = fn_pattern.captures(&full_line) {
-                        let fn_name = cap.get(1).map_or("", |m| m.as_str());
-                        let params = cap.get(2).map_or("", |m| m.as_str());
-
-                        // Count parameters (comma-separated, excluding &self/self)
-                        let param_count = self.count_function_params(params);
-
-                        if param_count > self.max_function_params {
-                            violations.push(KissViolation::FunctionTooManyParams {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                function_name: fn_name.to_string(),
-                                param_count,
-                                max_allowed: self.max_function_params,
-                                severity: Severity::Warning,
-                            });
-                        }
+                    if param_count > self.max_function_params {
+                        violations.push(KissViolation::FunctionTooManyParams {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            function_name: fn_name.to_string(),
+                            param_count,
+                            max_allowed: self.max_function_params,
+                            severity: Severity::Warning,
+                        });
                     }
                 }
             }
-        }
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -554,42 +542,36 @@ impl KissValidator {
             .expect("Invalid regex");
         let option_pattern = Regex::new(r"Option<").expect("Invalid regex");
 
-        for src_dir in self.config.get_scan_dirs()? {
-            if self.should_skip_crate(&src_dir) {
-                continue;
+        for_each_scan_rs_path(&self.config, false, |path, src_dir| {
+            if self.should_skip_crate(src_dir) {
+                return Ok(());
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
+            let content = std::fs::read_to_string(path)?;
+            let lines: Vec<&str> = content.lines().collect();
 
-                for (line_num, line) in lines.iter().enumerate() {
-                    if let Some(cap) = builder_pattern.captures(line) {
-                        let builder_name = cap.get(1).map_or("", |m| m.as_str());
+            for (line_num, line) in lines.iter().enumerate() {
+                if let Some(cap) = builder_pattern.captures(line) {
+                    let builder_name = cap.get(1).map_or("", |m| m.as_str());
 
-                        // Count Option<> fields in builder struct
-                        let optional_count =
-                            self.count_optional_fields(&lines, line_num, &option_pattern);
+                    // Count Option<> fields in builder struct
+                    let optional_count =
+                        self.count_optional_fields(&lines, line_num, &option_pattern);
 
-                        if optional_count > self.max_builder_fields {
-                            violations.push(KissViolation::BuilderTooComplex {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                builder_name: builder_name.to_string(),
-                                optional_field_count: optional_count,
-                                max_allowed: self.max_builder_fields,
-                                severity: Severity::Warning,
-                            });
-                        }
+                    if optional_count > self.max_builder_fields {
+                        violations.push(KissViolation::BuilderTooComplex {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            builder_name: builder_name.to_string(),
+                            optional_field_count: optional_count,
+                            max_allowed: self.max_builder_fields,
+                            severity: Severity::Warning,
+                        });
                     }
                 }
             }
-        }
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -600,84 +582,78 @@ impl KissValidator {
         let control_flow_pattern =
             Regex::new(r"\b(if|match|for|while|loop)\b").expect("Invalid regex");
 
-        for src_dir in self.config.get_scan_dirs()? {
-            if self.should_skip_crate(&src_dir) {
-                continue;
+        for_each_scan_rs_path(&self.config, false, |path, src_dir| {
+            if self.should_skip_crate(src_dir) {
+                return Ok(());
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
+            let content = std::fs::read_to_string(path)?;
+            let lines: Vec<&str> = content.lines().collect();
 
-                // Track test modules to skip
-                let mut in_test_module = false;
-                let mut test_brace_depth: i32 = 0;
+            // Track test modules to skip
+            let mut in_test_module = false;
+            let mut test_brace_depth: i32 = 0;
 
-                // Track nesting depth
-                let mut nesting_depth: usize = 0;
-                let mut brace_depth: i32 = 0;
-                let mut reported_lines: std::collections::HashSet<usize> =
-                    std::collections::HashSet::new();
+            // Track nesting depth
+            let mut nesting_depth: usize = 0;
+            let mut brace_depth: i32 = 0;
+            let mut reported_lines: std::collections::HashSet<usize> =
+                std::collections::HashSet::new();
 
-                for (line_num, line) in lines.iter().enumerate() {
-                    let trimmed = line.trim();
+            for (line_num, line) in lines.iter().enumerate() {
+                let trimmed = line.trim();
 
-                    // Track test module boundaries
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        test_brace_depth = brace_depth;
-                    }
+                // Track test module boundaries
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
+                    test_brace_depth = brace_depth;
+                }
 
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
+                // Skip comments
+                if trimmed.starts_with("//") {
+                    continue;
+                }
 
-                    // Track control flow nesting
-                    if control_flow_pattern.is_match(line) && line.contains('{') {
-                        nesting_depth += 1;
+                // Track control flow nesting
+                if control_flow_pattern.is_match(line) && line.contains('{') {
+                    nesting_depth += 1;
 
-                        // Check if too deep and not already reported nearby
-                        if nesting_depth > self.max_nesting_depth {
-                            let nearby_reported =
-                                reported_lines.iter().any(|&l| l.abs_diff(line_num) < 5);
+                    // Check if too deep and not already reported nearby
+                    if nesting_depth > self.max_nesting_depth {
+                        let nearby_reported =
+                            reported_lines.iter().any(|&l| l.abs_diff(line_num) < 5);
 
-                            if !nearby_reported {
-                                violations.push(KissViolation::DeepNesting {
-                                    file: entry.path().to_path_buf(),
-                                    line: line_num + 1,
-                                    nesting_level: nesting_depth,
-                                    max_allowed: self.max_nesting_depth,
-                                    context: trimmed.chars().take(60).collect(),
-                                    severity: Severity::Warning,
-                                });
-                                reported_lines.insert(line_num);
-                            }
+                        if !nearby_reported {
+                            violations.push(KissViolation::DeepNesting {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                nesting_level: nesting_depth,
+                                max_allowed: self.max_nesting_depth,
+                                context: trimmed.chars().take(60).collect(),
+                                severity: Severity::Warning,
+                            });
+                            reported_lines.insert(line_num);
                         }
                     }
+                }
 
-                    let open_braces = line.chars().filter(|c| *c == '{').count();
-                    let close_braces = line.chars().filter(|c| *c == '}').count();
-                    brace_depth += i32::try_from(open_braces).unwrap_or(i32::MAX);
-                    brace_depth -= i32::try_from(close_braces).unwrap_or(i32::MAX);
+                let open_braces = line.chars().filter(|c| *c == '{').count();
+                let close_braces = line.chars().filter(|c| *c == '}').count();
+                brace_depth += i32::try_from(open_braces).unwrap_or(i32::MAX);
+                brace_depth -= i32::try_from(close_braces).unwrap_or(i32::MAX);
 
-                    // Decrease nesting on closing braces
-                    if close_braces > 0 && nesting_depth > 0 {
-                        nesting_depth = nesting_depth.saturating_sub(close_braces);
-                    }
+                // Decrease nesting on closing braces
+                if close_braces > 0 && nesting_depth > 0 {
+                    nesting_depth = nesting_depth.saturating_sub(close_braces);
+                }
 
-                    // Exit test module when braces close
-                    if in_test_module && brace_depth < test_brace_depth {
-                        in_test_module = false;
-                    }
+                // Exit test module when braces close
+                if in_test_module && brace_depth < test_brace_depth {
+                    in_test_module = false;
                 }
             }
-        }
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -688,92 +664,86 @@ impl KissValidator {
         let fn_pattern =
             Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)").expect("Invalid regex");
 
-        for src_dir in self.config.get_scan_dirs()? {
-            if self.should_skip_crate(&src_dir) {
-                continue;
+        for_each_scan_rs_path(&self.config, false, |path, src_dir| {
+            if self.should_skip_crate(src_dir) {
+                return Ok(());
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
+            let path_str = path.to_string_lossy();
+
+            // Skip DI composition root files (ADR-029)
+            // These are legitimately long as they wire up all dependencies
+            if path_str.ends_with("/di/bootstrap.rs")
+                || path_str.ends_with("/di/catalog.rs")
+                || path_str.ends_with("/di/resolver.rs")
             {
-                let path_str = entry.path().to_string_lossy();
+                return Ok(());
+            }
 
-                // Skip DI composition root files (ADR-029)
-                // These are legitimately long as they wire up all dependencies
-                if path_str.ends_with("/di/bootstrap.rs")
-                    || path_str.ends_with("/di/catalog.rs")
-                    || path_str.ends_with("/di/resolver.rs")
-                {
+            // Skip health.rs - system health checks need to collect multiple metrics
+            if path_str.ends_with("/health.rs") {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+            let lines: Vec<&str> = content.lines().collect();
+
+            // Track test modules to skip
+            let mut in_test_module = false;
+            let mut test_brace_depth: i32 = 0;
+            let mut brace_depth: i32 = 0;
+
+            for (line_num, line) in lines.iter().enumerate() {
+                let trimmed = line.trim();
+
+                // Track test module boundaries
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
+                    test_brace_depth = brace_depth;
+                }
+
+                let open_c = line.chars().filter(|c| *c == '{').count();
+                let close_c = line.chars().filter(|c| *c == '}').count();
+                brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
+                brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
+
+                if in_test_module && brace_depth < test_brace_depth {
+                    in_test_module = false;
+                }
+                if in_test_module {
                     continue;
                 }
 
-                // Skip health.rs - system health checks need to collect multiple metrics
-                if path_str.ends_with("/health.rs") {
-                    continue;
-                }
+                if let Some(cap) = fn_pattern.captures(line) {
+                    let fn_name = cap.get(1).map_or("", |m| m.as_str());
 
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
-
-                // Track test modules to skip
-                let mut in_test_module = false;
-                let mut test_brace_depth: i32 = 0;
-                let mut brace_depth: i32 = 0;
-
-                for (line_num, line) in lines.iter().enumerate() {
-                    let trimmed = line.trim();
-
-                    // Track test module boundaries
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        test_brace_depth = brace_depth;
-                    }
-
-                    let open_c = line.chars().filter(|c| *c == '{').count();
-                    let close_c = line.chars().filter(|c| *c == '}').count();
-                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
-                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
-
-                    if in_test_module && brace_depth < test_brace_depth {
-                        in_test_module = false;
-                    }
-                    if in_test_module {
+                    // Skip test functions
+                    if fn_name.starts_with("test_") {
                         continue;
                     }
 
-                    if let Some(cap) = fn_pattern.captures(line) {
-                        let fn_name = cap.get(1).map_or("", |m| m.as_str());
+                    // Skip trait function declarations (no body, ends with ;)
+                    if self.is_trait_fn_declaration(&lines, line_num) {
+                        continue;
+                    }
 
-                        // Skip test functions
-                        if fn_name.starts_with("test_") {
-                            continue;
-                        }
+                    // Count lines in function
+                    let line_count = self.count_function_lines(&lines, line_num);
 
-                        // Skip trait function declarations (no body, ends with ;)
-                        if self.is_trait_fn_declaration(&lines, line_num) {
-                            continue;
-                        }
-
-                        // Count lines in function
-                        let line_count = self.count_function_lines(&lines, line_num);
-
-                        if line_count > self.max_function_lines {
-                            violations.push(KissViolation::FunctionTooLong {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                function_name: fn_name.to_string(),
-                                line_count,
-                                max_allowed: self.max_function_lines,
-                                severity: Severity::Warning,
-                            });
-                        }
+                    if line_count > self.max_function_lines {
+                        violations.push(KissViolation::FunctionTooLong {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            function_name: fn_name.to_string(),
+                            line_count,
+                            max_allowed: self.max_function_lines,
+                            severity: Severity::Warning,
+                        });
                     }
                 }
             }
-        }
+            Ok(())
+        })?;
 
         Ok(violations)
     }

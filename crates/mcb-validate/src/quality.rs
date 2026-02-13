@@ -10,9 +10,9 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 use crate::config::TestQualityRulesConfig;
+use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig, ValidationError};
 
@@ -255,54 +255,44 @@ impl TestQualityValidator {
         let doc_comment_pattern = Regex::new(r"^\s*///")
             .map_err(|e| ValidationError::InvalidRegex(format!("doc_comment_pattern: {e}")))?;
 
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| {
-                    e.path().extension().is_some_and(|ext| ext == "rs")
-                        && (e.path().to_string_lossy().contains("/tests/")
-                            || e.path().to_string_lossy().contains("/test_"))
-                })
+        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
+            if !(path.to_string_lossy().contains("/tests/")
+                || path.to_string_lossy().contains("/test_"))
             {
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
-
-                self.check_ignored_tests(
-                    entry.path(),
-                    &lines,
-                    &ignore_pattern,
-                    &test_pattern,
-                    &fn_pattern,
-                    &doc_comment_pattern,
-                    &mut violations,
-                );
-                self.check_todo_in_fixtures(
-                    entry.path(),
-                    &lines,
-                    &todo_pattern,
-                    &fn_pattern,
-                    &mut violations,
-                );
-                self.check_empty_test_bodies(
-                    entry.path(),
-                    &lines,
-                    &test_pattern,
-                    &fn_pattern,
-                    &empty_body_pattern,
-                    &mut violations,
-                );
-                self.check_stub_assertions(
-                    entry.path(),
-                    &lines,
-                    &test_pattern,
-                    &stub_assert_pattern,
-                    &fn_pattern,
-                    &mut violations,
-                );
+                return Ok(());
             }
-        }
+
+            let content = std::fs::read_to_string(path)?;
+            let lines: Vec<&str> = content.lines().collect();
+
+            self.check_ignored_tests(
+                path,
+                &lines,
+                &ignore_pattern,
+                &test_pattern,
+                &fn_pattern,
+                &doc_comment_pattern,
+                &mut violations,
+            );
+            self.check_todo_in_fixtures(path, &lines, &todo_pattern, &fn_pattern, &mut violations);
+            self.check_empty_test_bodies(
+                path,
+                &lines,
+                &test_pattern,
+                &fn_pattern,
+                &empty_body_pattern,
+                &mut violations,
+            );
+            self.check_stub_assertions(
+                path,
+                &lines,
+                &test_pattern,
+                &stub_assert_pattern,
+                &fn_pattern,
+                &mut violations,
+            );
+            Ok(())
+        })?;
 
         Ok(violations)
     }

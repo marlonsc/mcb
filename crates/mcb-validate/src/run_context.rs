@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -249,6 +251,8 @@ fn normalize_path(path: &Path) -> PathBuf {
 
 #[cfg(test)]
 mod tests {
+    use std::process::Command;
+
     use tempfile::TempDir;
 
     use super::*;
@@ -275,13 +279,49 @@ mod tests {
             context
                 .file_inventory()
                 .iter()
-                .any(|entry| entry.relative_path == PathBuf::from("src/lib.rs"))
+                .any(|entry| entry.relative_path == std::path::Path::new("src/lib.rs"))
         );
         assert!(
             context
                 .file_inventory()
                 .iter()
                 .all(|entry| !entry.relative_path.to_string_lossy().contains("target/"))
+        );
+    }
+
+    #[test]
+    fn git_inventory_uses_git_source_when_repository_exists() {
+        let temp = TempDir::new().expect("tempdir");
+        let root = temp.path();
+
+        let init = Command::new("git")
+            .arg("init")
+            .arg(root)
+            .status()
+            .expect("run git init");
+        assert!(init.success());
+
+        std::fs::create_dir_all(root.join("src")).expect("create src");
+        std::fs::write(root.join("src/lib.rs"), "pub fn ok() {}\n").expect("write src");
+
+        let add = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .arg("add")
+            .arg("src/lib.rs")
+            .status()
+            .expect("run git add");
+        assert!(add.success());
+
+        let config = ValidationConfig::new(root);
+        let context = ValidationRunContext::build(&config).expect("context");
+
+        assert_eq!(context.file_inventory_source(), FileInventorySource::Git);
+        assert!(
+            context
+                .file_inventory()
+                .iter()
+                .any(|entry| entry.relative_path == std::path::Path::new("src/lib.rs"))
         );
     }
 }

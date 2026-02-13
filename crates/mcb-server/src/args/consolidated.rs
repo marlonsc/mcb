@@ -282,6 +282,10 @@ pub struct MemoryArgs {
     #[schemars(description = "Filter by session ID", with = "SessionId")]
     pub session_id: Option<SessionId>,
 
+    /// Filter by parent session ID.
+    #[schemars(description = "Filter by parent session ID", with = "String")]
+    pub parent_session_id: Option<String>,
+
     /// Filter by tags.
     #[schemars(description = "Filter by tags", with = "Vec<String>")]
     pub tags: Option<Vec<String>>,

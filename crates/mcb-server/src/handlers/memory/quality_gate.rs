@@ -173,7 +173,7 @@ pub async fn get_quality_gates(
         tags: None,
         r#type: Some(ObservationType::QualityGate),
         session_id: args.session_id.clone().map(|id| id.into_string()),
-        parent_session_id: None,
+        parent_session_id: args.parent_session_id.clone(),
         repo_id: args.repo_id.clone(),
         time_range: None,
         branch: None,

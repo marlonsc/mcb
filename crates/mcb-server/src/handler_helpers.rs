@@ -44,9 +44,7 @@ pub fn resolve_org_id(explicit: Option<&str>) -> String {
 
 /// Normalizes optional identifier input by trimming whitespace and discarding empty values.
 pub fn normalize_identifier(value: Option<&str>) -> Option<String> {
-    let Some(raw) = value else {
-        return None;
-    };
+    let raw = value?;
 
     let trimmed = raw.trim();
     if trimmed.is_empty() {

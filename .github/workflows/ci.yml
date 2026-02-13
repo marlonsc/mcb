@@ -11,17 +11,10 @@ permissions:
   contents: "read"
 
 on: # yamllint disable-line rule:truthy
-  push:
-    branches:
-      - main
-      - develop
-    tags:
-      - "v*"
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     branches:
       - main
-      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -63,11 +56,49 @@ jobs:
               - 'Makefile'
               - 'make/*.mk'
 
+  classify:
+    name: Classify PR
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    outputs:
+      is_draft: ${{ steps.classify.outputs.is_draft }}
+      is_bot: ${{ steps.classify.outputs.is_bot }}
+      is_fork: ${{ steps.classify.outputs.is_fork }}
+      run_full: ${{ steps.classify.outputs.run_full }}
+      run_simplified: ${{ steps.classify.outputs.run_simplified }}
+    steps:
+      - name: Classify PR Type
+        id: classify
+        env:
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+          IS_BOT: ${{ github.event.pull_request.user.type == 'Bot' }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          echo "is_draft=${IS_DRAFT}" >> "$GITHUB_OUTPUT"
+          echo "is_bot=${IS_BOT}" >> "$GITHUB_OUTPUT"
+          echo "is_fork=${IS_FORK}" >> "$GITHUB_OUTPUT"
+
+          # Full suite: non-draft human PRs targeting main
+          if [[ "${IS_DRAFT}" == "false" && "${IS_BOT}" == "false" ]]; then
+            echo "run_full=true" >> "$GITHUB_OUTPUT"
+            echo "run_simplified=false" >> "$GITHUB_OUTPUT"
+          elif [[ "${IS_BOT}" == "true" ]]; then
+            # Simplified bot policy: Linux + stable only
+            echo "run_full=false" >> "$GITHUB_OUTPUT"
+            echo "run_simplified=true" >> "$GITHUB_OUTPUT"
+          else
+            # Draft or other: skip heavy jobs
+            echo "run_full=false" >> "$GITHUB_OUTPUT"
+            echo "run_simplified=false" >> "$GITHUB_OUTPUT"
+          fi
+
   lint:
     name: Lint (Rust 2024)
     timeout-minutes: 10
-    needs: [changes]
-    if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && github.event_name != 'pull_request'
+    needs: [changes, classify]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -80,46 +111,63 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
+          save-if: false
       - run: make lint MCB_CI=1
 
   test:
-    name: Test (${{ matrix.rust }})
-    needs: [changes, lint]
-    if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
+    name: Test (${{ matrix.os }}, ${{ matrix.rust }})
+    needs: [changes, classify, lint]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
+        os: [ubuntu-latest]
         rust: [stable]
+        # Full matrix: add macOS, Windows, and beta for non-draft human PRs
         include:
-          # Only test beta on main branch pushes to save resources on PRs
-          - rust: beta
-            if_key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          - os: ubuntu-latest
+            rust: beta
+            if_key: ${{ needs.classify.outputs.run_full == 'true' }}
+          - os: macos-latest
+            rust: stable
+            if_key: ${{ needs.classify.outputs.run_full == 'true' }}
+          - os: windows-latest
+            rust: stable
+            if_key: ${{ needs.classify.outputs.run_full == 'true' }}
     steps:
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
-      - run: bash .github/setup-ci.sh
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        run: choco install protoc -y
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ matrix.rust }}
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
-
-      # Skip if matrix exclusion applies (hacky workaround for matrix conditional)
-      - run: |
-          if [[ "${{ matrix.rust }}" == "beta" && "${{ github.event_name }}" != "push" ]]; then
-            echo "Skipping beta test on PR"
-            exit 0
-          fi
-          make test THREADS=4
+          save-if: false
+      # Skip if matrix exclusion applies
+      - name: Run tests
+        if: matrix.if_key != 'false'
+        run: make test THREADS=4
 
   startup-smoke:
     name: Startup Smoke (DDL/Init)
-    needs: [changes, lint]
-    if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && github.event_name != 'pull_request'
+    needs: [changes, classify, lint]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -132,13 +180,15 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
+          save-if: false
       - run: make test SCOPE=startup
 
   validate:
     name: Architecture Validation
-    needs: [changes, lint, startup-smoke]
-    if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && github.event_name != 'pull_request'
+    needs: [changes, classify, lint, startup-smoke]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -150,7 +200,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
+          save-if: false
       - run: make validate
       - name: Check Provider Traits Location
         run: |
@@ -166,8 +216,10 @@ jobs:
 
   golden-tests:
     name: Golden Acceptance Tests
-    needs: [changes, test]
-    if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [changes, classify, test]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      needs.classify.outputs.run_full == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -180,7 +232,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
+          save-if: false
       - run: make test SCOPE=golden THREADS=2
 
   audit:
@@ -243,7 +295,7 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     needs: [changes]
-    if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true') && (github.event_name != 'push' || !startsWith(github.ref, 'refs/tags/'))
+    if: needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -258,43 +310,6 @@ jobs:
           sudo apt-get install -y nodejs npm
           npm install -g markdownlint-cli
       - run: make docs-validate QUICK=1
-
-  update-docs:
-    name: Auto-Update Documentation
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    needs: [changes]
-    if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          ref: main
-          token: ${{ secrets.GITHUB_TOKEN }}
-          persist-credentials: true # zizmor:ignore[artipacked] -- required for git push
-      - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: stable
-      - name: Update README and metrics
-        run: |
-          make docs
-      - name: Commit and push changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          # Stage all docs-auto output (metrics, README, and any lint-fixed files)
-          git add -A README.md docs/generated/ docs/ || true
-          if ! git diff --staged --quiet; then
-            git commit -m "docs: auto-update README and project metrics [skip ci]"
-            # Discard any remaining unstaged changes before rebase
-            git checkout -- . 2>/dev/null || true
-            git pull origin main --rebase
-            git push origin main
-          else
-            echo "No changes to commit"
-          fi
 
   docs-diagrams:
     name: Generate Diagrams
@@ -320,102 +335,119 @@ jobs:
           retention-days: 30
           include-hidden-files: false
 
-  docs-rust:
-    name: Rust API Docs
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
-    needs: [changes]
-    if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && github.event_name != 'pull_request'
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          persist-credentials: false
-      - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: stable
-      - run: make rust-docs
-      - run: make test SCOPE=doc
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: rust-api-docs
-          path: target/doc/
-          retention-days: 30
-          include-hidden-files: false
-
   rust-ci:
     name: Rust CI (PR consolidated)
     timeout-minutes: 40
-    needs: [changes]
-    if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    needs: [changes, classify, lint, test, startup-smoke, validate, audit, analyze, golden-tests, coverage, release-build]
+    if: always()
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          persist-credentials: false
-      - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-        with:
-          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
-      - run: make lint MCB_CI=1
-      - run: make test THREADS=4
-      - run: make rust-docs
-      - run: make test SCOPE=doc
-      - run: make validate
-
-  docs-book:
-    name: Build mdBook
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    needs: [changes, validate-docs]
-    if: needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true'
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          persist-credentials: false
-      - run: make docs-setup
-      - run: make docs-sync
-      - run: make docs-build
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: mdbook-docs
-          path: book/book/
-          retention-days: 30
-          include-hidden-files: false
-
-  docs-deploy:
-    name: Deploy to GitHub Pages
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    needs: [validate-docs, docs-rust, docs-book]
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          persist-credentials: false
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        with:
-          name: rust-api-docs
-          path: docs-site/api/
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        with:
-          name: mdbook-docs
-          path: docs-site/
-      - uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs-site
+      - name: Evaluate Required Checks
+        env:
+          IS_DRAFT: ${{ needs.classify.outputs.is_draft }}
+          IS_BOT: ${{ needs.classify.outputs.is_bot }}
+          RUN_FULL: ${{ needs.classify.outputs.run_full }}
+          RUN_SIMPLIFIED: ${{ needs.classify.outputs.run_simplified }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          STARTUP_RESULT: ${{ needs.startup-smoke.result }}
+          VALIDATE_RESULT: ${{ needs.validate.result }}
+          AUDIT_RESULT: ${{ needs.audit.result }}
+          ANALYZE_RESULT: ${{ needs.analyze.result }}
+          GOLDEN_RESULT: ${{ needs.golden-tests.result }}
+          COVERAGE_RESULT: ${{ needs.coverage.result }}
+          RELEASE_BUILD_RESULT: ${{ needs.release-build.result }}
+        run: |
+          echo "=== PR Classification ==="
+          echo "Is Draft: $IS_DRAFT"
+          echo "Is Bot: $IS_BOT"
+          echo "Run Full Suite: $RUN_FULL"
+          echo "Run Simplified Suite: $RUN_SIMPLIFIED"
+          echo ""
+          echo "=== Job Results ==="
+          echo "Lint: $LINT_RESULT"
+          echo "Test: $TEST_RESULT"
+          echo "Startup Smoke: $STARTUP_RESULT"
+          echo "Validate: $VALIDATE_RESULT"
+          echo "Audit: $AUDIT_RESULT"
+          echo "Analyze: $ANALYZE_RESULT"
+          echo "Golden: $GOLDEN_RESULT"
+          echo "Coverage: $COVERAGE_RESULT"
+          echo "Release Build: $RELEASE_BUILD_RESULT"
+          echo ""
+          
+          # Draft PRs: all heavy jobs should be skipped, gate succeeds
+          if [[ "$IS_DRAFT" == "true" ]]; then
+            echo "✓ Draft PR - gate check passed (no heavy jobs required)"
+            exit 0
+          fi
+          
+          # Simplified bot policy: require lint + test + startup + validate
+          if [[ "$RUN_SIMPLIFIED" == "true" ]]; then
+            echo "=== Bot PR Policy (Simplified) ==="
+            if [[ "$LINT_RESULT" != "success" ]]; then
+              echo "✗ Lint failed"
+              exit 1
+            fi
+            if [[ "$TEST_RESULT" != "success" ]]; then
+              echo "✗ Test failed"
+              exit 1
+            fi
+            if [[ "$STARTUP_RESULT" != "success" ]]; then
+              echo "✗ Startup smoke failed"
+              exit 1
+            fi
+            if [[ "$VALIDATE_RESULT" != "success" ]]; then
+              echo "✗ Validate failed"
+              exit 1
+            fi
+            echo "✓ Bot PR - simplified checks passed"
+            exit 0
+          fi
+          
+          # Full suite for human ready PRs
+          if [[ "$RUN_FULL" == "true" ]]; then
+            echo "=== Full Suite Policy (Human Ready PR) ==="
+            REQUIRED_JOBS=(
+              "LINT_RESULT"
+              "TEST_RESULT"
+              "STARTUP_RESULT"
+              "VALIDATE_RESULT"
+              "AUDIT_RESULT"
+              "ANALYZE_RESULT"
+              "GOLDEN_RESULT"
+              "COVERAGE_RESULT"
+              "RELEASE_BUILD_RESULT"
+            )
+            
+            FAILED=0
+            for job in "${REQUIRED_JOBS[@]}"; do
+              result="${!job}"
+              if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+                echo "✗ $job failed or was cancelled: $result"
+                FAILED=1
+              fi
+            done
+            
+            if [[ $FAILED -eq 1 ]]; then
+              echo "✗ Full suite check failed"
+              exit 1
+            fi
+            
+            echo "✓ Full suite - all required checks passed"
+            exit 0
+          fi
+          
+          echo "✗ Unexpected classification state"
+          exit 1
 
   coverage:
     name: Coverage
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [changes, test]
+    needs: [changes, classify, test]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      needs.classify.outputs.run_full == 'true' &&
+      needs.classify.outputs.is_fork == 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -428,7 +460,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
+          save-if: false
       - run: make coverage MCB_CI=1 THREADS=4
       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
@@ -436,14 +468,17 @@ jobs:
           fail_ci_if_error: false
 
   release-build:
-    name: Build Release (${{ matrix.target }})
+    name: Build Release Binaries (${{ matrix.target }})
     timeout-minutes: 30
-    needs: [test, validate, audit]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    needs: [changes, classify, test, validate, audit]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      needs.classify.outputs.run_full == 'true'
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -493,145 +528,8 @@ jobs:
         with:
           name: release-artifacts-${{ matrix.target }}
           path: dist/${{ matrix.asset_name }}
-          retention-days: 1
+          retention-days: 7
           include-hidden-files: false
-
-  create-release:
-    name: Create GitHub Release
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    needs: release-build
-    if: startsWith(github.ref, 'refs/tags/v')
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0 # Full history for changelog generation
-          persist-credentials: false
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        with:
-          path: release-artifacts
-
-      - name: Extract version from tag
-        id: extract_version
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          VERSION=${TAG#v}
-          echo "RELEASE_VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Generate changelog (git log)
-        run: |
-          # Get previous tag
-          PREV_TAG=$(
-            git tag --list 'v*' --sort=-version:refname | head -2 | tail -1
-          )
-
-          if [ -z "$PREV_TAG" ]; then
-            # First release - show all commits
-            git log --oneline --reverse > RELEASE_NOTES.md
-          else
-            # Show commits since previous tag
-            git log "$PREV_TAG..HEAD" --oneline > RELEASE_NOTES.md
-          fi
-
-          # Prepend header
-          sed -i '1s/^/## Changes\n\n/' RELEASE_NOTES.md
-
-      - name: Create Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
-        with:
-          tag_name: ${{ steps.extract_version.outputs.tag }}
-          name: Release ${{ steps.extract_version.outputs.version }}
-          body_path: RELEASE_NOTES.md
-          files: |
-            release-artifacts/release-artifacts-x86_64-unknown-linux-gnu/mcb-x86_64-linux-gnu
-            release-artifacts/release-artifacts-x86_64-apple-darwin/mcb-x86_64-macos
-            release-artifacts/release-artifacts-x86_64-pc-windows-msvc/mcb-x86_64-windows.exe
-          draft: false
-          prerelease: false
-
-      - name: Release Summary
-        env:
-          RELEASE_TAG: ${{ steps.extract_version.outputs.tag }}
-          REPO: ${{ github.repository }}
-        run: |
-          echo "✓ Release $RELEASE_TAG created successfully"
-          echo "  - Artifacts: 3 binaries (Linux, macOS, Windows)"
-          echo "  - GitHub Release: https://github.com/${REPO}/releases/tag/${RELEASE_TAG}"
-
-  auto-tag:
-    name: Auto-Tag Release
-    timeout-minutes: 5
-    runs-on: ubuntu-latest
-    if: >-
-      github.event.pull_request.merged == true &&
-      startsWith(github.event.pull_request.head.ref, 'release/v')
-    permissions:
-      contents: write
-    steps:
-      # zizmor:ignore[artipacked] -- credentials needed to push tags
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Extract version from branch name
-        id: version
-        env:
-          BRANCH: ${{ github.event.pull_request.head.ref }}
-        run: |
-          # Extract version: release/v0.1.5 -> v0.1.5
-          VERSION="${BRANCH#release/}"
-          echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Detected version tag: $VERSION"
-
-      - name: Check if tag already exists
-        id: check_tag
-        env:
-          TAG: ${{ steps.version.outputs.tag }}
-        run: |
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "::warning ::Tag $TAG already exists, skipping creation"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create and push tag
-        if: steps.check_tag.outputs.exists == 'false'
-        env:
-          TAG: ${{ steps.version.outputs.tag }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
-          echo "::notice ::Created and pushed tag $TAG"
-
-      - name: Summary
-        env:
-          TAG: ${{ steps.version.outputs.tag }}
-          TAG_EXISTS: ${{ steps.check_tag.outputs.exists }}
-          SERVER_URL: ${{ github.server_url }}
-          REPO: ${{ github.repository }}
-        run: |
-          {
-            echo "## Release Tag"
-            echo ""
-            if [ "$TAG_EXISTS" == "true" ]; then
-              echo "Tag \`$TAG\` already existed. No action taken."
-            else
-              echo "Created tag \`$TAG\` on merge commit."
-              echo ""
-              echo "The [CI workflow](${SERVER_URL}/${REPO}/actions/workflows/ci.yml) will now build artifacts."
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
 
   auto-merge-dependabot:
     name: Auto-Merge Dependabot

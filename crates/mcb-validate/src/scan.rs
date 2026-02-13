@@ -31,10 +31,10 @@ where
                 continue;
             }
 
-            if !entry
+            if entry
                 .absolute_path
                 .extension()
-                .is_some_and(|ext| ext == "rs")
+                .is_none_or(|ext| ext != "rs")
             {
                 continue;
             }
@@ -80,10 +80,10 @@ where
                 continue;
             }
 
-            if !entry
+            if entry
                 .absolute_path
                 .extension()
-                .is_some_and(|ext| ext == "rs")
+                .is_none_or(|ext| ext != "rs")
             {
                 continue;
             }
