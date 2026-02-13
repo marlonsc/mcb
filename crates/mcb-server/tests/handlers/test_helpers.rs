@@ -17,6 +17,7 @@ pub(crate) fn create_base_memory_args(
         ids,
         repo_id: None,
         session_id: session_id.map(Into::into),
+        parent_session_id: None,
         tags: None,
         query: None,
         anchor_id: None,

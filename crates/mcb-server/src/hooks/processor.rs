@@ -55,10 +55,10 @@ impl HookProcessor {
             .cloned()
             .unwrap_or_else(|| "default".to_string());
 
-        let session_internal = context.session_id.clone().map(|id| id.into_string());
-        let hashed_session = session_internal
-            .as_deref()
-            .map(|id| compute_stable_id_hash("session", id));
+        let hashed_session = context
+            .session_id
+            .as_ref()
+            .map(|id| compute_stable_id_hash("session", id.as_str()));
         let parent_session_hash = context
             .metadata
             .get("parent_session_id")
@@ -72,10 +72,10 @@ impl HookProcessor {
         });
 
         let metadata = mcb_domain::entities::memory::ObservationMetadata {
-            session_id: session_internal.clone(),
+            session_id: hashed_session.clone(),
             origin_context: Some(OriginContext {
                 project_id: Some(project_id.clone()),
-                session_id: session_internal,
+                session_id: None,
                 session_id_hash: hashed_session,
                 parent_session_id: context.metadata.get("parent_session_id").cloned(),
                 parent_session_id_hash: parent_session_hash,
@@ -132,7 +132,10 @@ impl HookProcessor {
             project_id: None,
             tags: None,
             r#type: None,
-            session_id: Some(context.session_id.as_str().to_string()),
+            session_id: Some(compute_stable_id_hash(
+                "session",
+                context.session_id.as_str(),
+            )),
             parent_session_id: None,
             repo_id: None,
             time_range: None,

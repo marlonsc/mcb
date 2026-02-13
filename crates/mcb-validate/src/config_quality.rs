@@ -10,8 +10,8 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
+use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -244,48 +244,25 @@ impl ConfigQualityValidator {
         let _struct_pattern = Regex::new(r"pub\s+struct\s+(\w+)").unwrap();
         let _field_pattern = Regex::new(r"pub\s+(\w+):\s+").unwrap();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| {
-                    e.path().extension().is_some_and(|ext| ext == "rs")
-                        && (e.path().to_string_lossy().contains("/config/")
-                            || e.path()
-                                .file_name()
-                                .is_some_and(|name| name.to_string_lossy().contains("config")))
-                })
-            {
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
-
-                self.check_hardcoded_namespaces(
-                    entry.path(),
-                    &lines,
-                    &namespace_pattern,
-                    &mut violations,
-                );
-                self.check_hardcoded_client_names(
-                    entry.path(),
-                    &lines,
-                    &client_name_pattern,
-                    &mut violations,
-                );
-                self.check_hardcoded_headers(
-                    entry.path(),
-                    &lines,
-                    &header_pattern,
-                    &mut violations,
-                );
-                self.check_undocumented_defaults(
-                    entry.path(),
-                    &lines,
-                    &default_impl_pattern,
-                    &mut violations,
-                );
+        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
+            let is_config_file = path.to_string_lossy().contains("/config/")
+                || path
+                    .file_name()
+                    .is_some_and(|name| name.to_string_lossy().contains("config"));
+            if !is_config_file {
+                return Ok(());
             }
-        }
+
+            let content = std::fs::read_to_string(path)?;
+            let lines: Vec<&str> = content.lines().collect();
+
+            self.check_hardcoded_namespaces(path, &lines, &namespace_pattern, &mut violations);
+            self.check_hardcoded_client_names(path, &lines, &client_name_pattern, &mut violations);
+            self.check_hardcoded_headers(path, &lines, &header_pattern, &mut violations);
+            self.check_undocumented_defaults(path, &lines, &default_impl_pattern, &mut violations);
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }

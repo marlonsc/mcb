@@ -1,0 +1,173 @@
+---
+# =============================================================================
+# Release Workflow
+# =============================================================================
+# Triggered only on version tags (v*)
+# Builds release binaries for Linux, macOS, Windows
+# Creates GitHub Release with artifacts and changelog
+# =============================================================================
+
+name: Release
+
+permissions:
+  contents: read
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release-build:
+    name: Build Release (${{ matrix.target }})
+    timeout-minutes: 30
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: mcb
+            asset_name: mcb-x86_64-linux-gnu
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: mcb
+            asset_name: mcb-x86_64-macos
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: mcb.exe
+            asset_name: mcb-x86_64-windows.exe
+    steps:
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        run: choco install protoc -y
+
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+
+      - run: make build RELEASE=1
+
+      - name: Create dist directory
+        run: mkdir -p dist
+
+      - name: Copy artifact (Unix)
+        if: runner.os != 'Windows'
+        env:
+          ARTIFACT: ${{ matrix.artifact_name }}
+          ASSET: ${{ matrix.asset_name }}
+        run: cp "target/release/$ARTIFACT" "dist/$ASSET"
+
+      - name: Copy artifact (Windows)
+        if: runner.os == 'Windows'
+        run: >-
+          Copy-Item "target\release\${{ matrix.artifact_name }}"
+          "dist\${{ matrix.asset_name }}"
+        shell: pwsh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: release-artifacts-${{ matrix.target }}
+          path: dist/${{ matrix.asset_name }}
+          retention-days: 7
+          include-hidden-files: false
+
+  create-release:
+    name: Create GitHub Release
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    needs: release-build
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          path: release-artifacts
+
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#v}
+          echo "RELEASE_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Generate changelog
+        run: |
+          PREV_TAG=$(
+            git tag --list 'v*' --sort=-version:refname |
+            head -2 | tail -1
+          )
+
+          if [ -z "$PREV_TAG" ]; then
+            git log --oneline --reverse > RELEASE_NOTES.md
+          else
+            git log "$PREV_TAG..HEAD" --oneline > RELEASE_NOTES.md
+          fi
+
+          sed -i '1s/^/## Changes\n\n/' RELEASE_NOTES.md
+
+      - name: Create Release
+        uses: >-
+          softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
+        with:
+          tag_name: ${{ steps.extract_version.outputs.tag }}
+          name: Release ${{ steps.extract_version.outputs.version }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            release-artifacts/release-artifacts-x86_64-unknown-linux-gnu/mcb-x86_64-linux-gnu
+            release-artifacts/release-artifacts-x86_64-apple-darwin/mcb-x86_64-macos
+            release-artifacts/release-artifacts-x86_64-pc-windows-msvc/mcb-x86_64-windows.exe
+          draft: false
+          prerelease: false
+
+      - name: Release Summary
+        env:
+          RELEASE_TAG: ${{ steps.extract_version.outputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          {
+            echo "## Release Created"
+            echo ""
+            echo "✓ Release $RELEASE_TAG created successfully"
+            echo ""
+            echo "**Artifacts:**"
+            echo "- Linux (x86_64-unknown-linux-gnu)"
+            echo "- macOS (x86_64-apple-darwin)"
+            echo "- Windows (x86_64-pc-windows-msvc)"
+            echo ""
+            echo "**URL:**"
+            echo "https://github.com/${REPO}/releases/tag/${RELEASE_TAG}"
+          } >> "$GITHUB_STEP_SUMMARY"

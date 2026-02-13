@@ -10,9 +10,9 @@ use std::path::PathBuf;
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 use crate::pattern_registry::PATTERNS;
+use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -292,73 +292,67 @@ impl AsyncPatternValidator {
             .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
             .collect();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip test files
-                if entry.path().to_string_lossy().contains("/tests/") {
+        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
+            if path.to_string_lossy().contains("/tests/") {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+            let mut in_async_fn = false;
+            let mut async_fn_depth = 0;
+            let mut in_test_module = false;
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+
+                // Skip comments
+                if trimmed.starts_with("//") {
                     continue;
                 }
 
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_async_fn = false;
-                let mut async_fn_depth = 0;
-                let mut in_test_module = false;
+                // Track test modules
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
+                    continue;
+                }
 
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
+                if in_test_module {
+                    continue;
+                }
 
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
+                // Track async function entry
+                if async_fn_pattern.is_match(trimmed) {
+                    in_async_fn = true;
+                    async_fn_depth = 0;
+                }
 
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
+                if in_async_fn {
+                    let open = line.chars().filter(|c| *c == '{').count();
+                    let close = line.chars().filter(|c| *c == '}').count();
+                    async_fn_depth += i32::try_from(open).unwrap_or(i32::MAX);
+                    async_fn_depth -= i32::try_from(close).unwrap_or(i32::MAX);
 
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Track async function entry
-                    if async_fn_pattern.is_match(trimmed) {
-                        in_async_fn = true;
-                        async_fn_depth = 0;
-                    }
-
-                    if in_async_fn {
-                        let open = line.chars().filter(|c| *c == '{').count();
-                        let close = line.chars().filter(|c| *c == '}').count();
-                        async_fn_depth += i32::try_from(open).unwrap_or(i32::MAX);
-                        async_fn_depth -= i32::try_from(close).unwrap_or(i32::MAX);
-
-                        // Check for blocking calls
-                        for (pattern, desc, sugg) in &compiled_blocking {
-                            if pattern.is_match(line) {
-                                violations.push(AsyncViolation::BlockingInAsync {
-                                    file: entry.path().to_path_buf(),
-                                    line: line_num + 1,
-                                    blocking_call: desc.to_string(),
-                                    suggestion: sugg.to_string(),
-                                    severity: Severity::Warning,
-                                });
-                            }
+                    // Check for blocking calls
+                    for (pattern, desc, sugg) in &compiled_blocking {
+                        if pattern.is_match(line) {
+                            violations.push(AsyncViolation::BlockingInAsync {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                blocking_call: desc.to_string(),
+                                suggestion: sugg.to_string(),
+                                severity: Severity::Warning,
+                            });
                         }
+                    }
 
-                        if async_fn_depth <= 0 {
-                            in_async_fn = false;
-                        }
+                    if async_fn_depth <= 0 {
+                        in_async_fn = false;
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -382,72 +376,66 @@ impl AsyncPatternValidator {
             .filter_map(|p| Regex::new(p).ok())
             .collect();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip test files
-                if entry.path().to_string_lossy().contains("/tests/") {
+        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
+            if path.to_string_lossy().contains("/tests/") {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+            let mut in_async_fn = false;
+            let mut async_fn_depth = 0;
+            let mut in_test_module = false;
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+
+                // Skip comments
+                if trimmed.starts_with("//") {
                     continue;
                 }
 
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_async_fn = false;
-                let mut async_fn_depth = 0;
-                let mut in_test_module = false;
+                // Track test modules
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
+                    continue;
+                }
 
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
+                if in_test_module {
+                    continue;
+                }
 
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
+                // Track async function entry
+                if async_fn_pattern.is_match(trimmed) {
+                    in_async_fn = true;
+                    async_fn_depth = 0;
+                }
 
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
+                if in_async_fn {
+                    let open = line.chars().filter(|c| *c == '{').count();
+                    let close = line.chars().filter(|c| *c == '}').count();
+                    async_fn_depth += i32::try_from(open).unwrap_or(i32::MAX);
+                    async_fn_depth -= i32::try_from(close).unwrap_or(i32::MAX);
 
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Track async function entry
-                    if async_fn_pattern.is_match(trimmed) {
-                        in_async_fn = true;
-                        async_fn_depth = 0;
-                    }
-
-                    if in_async_fn {
-                        let open = line.chars().filter(|c| *c == '{').count();
-                        let close = line.chars().filter(|c| *c == '}').count();
-                        async_fn_depth += i32::try_from(open).unwrap_or(i32::MAX);
-                        async_fn_depth -= i32::try_from(close).unwrap_or(i32::MAX);
-
-                        // Check for block_on calls
-                        for pattern in &compiled_block_on {
-                            if pattern.is_match(line) {
-                                violations.push(AsyncViolation::BlockOnInAsync {
-                                    file: entry.path().to_path_buf(),
-                                    line: line_num + 1,
-                                    context: trimmed.chars().take(80).collect(),
-                                    severity: Severity::Error,
-                                });
-                            }
+                    // Check for block_on calls
+                    for pattern in &compiled_block_on {
+                        if pattern.is_match(line) {
+                            violations.push(AsyncViolation::BlockOnInAsync {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                context: trimmed.chars().take(80).collect(),
+                                severity: Severity::Error,
+                            });
                         }
+                    }
 
-                        if async_fn_depth <= 0 {
-                            in_async_fn = false;
-                        }
+                    if async_fn_depth <= 0 {
+                        in_async_fn = false;
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -487,60 +475,54 @@ impl AsyncPatternValidator {
             .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
             .collect();
 
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip test files
-                if entry.path().to_string_lossy().contains("/tests/") {
+        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
+            if path.to_string_lossy().contains("/tests/") {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+
+            // Only check files that have async code
+            if !async_indicator.is_match(&content) {
+                return Ok(());
+            }
+
+            let mut in_test_module = false;
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+
+                // Skip comments
+                if trimmed.starts_with("//") {
                     continue;
                 }
 
-                let content = std::fs::read_to_string(entry.path())?;
-
-                // Only check files that have async code
-                if !async_indicator.is_match(&content) {
+                // Track test modules
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
                     continue;
                 }
 
-                let mut in_test_module = false;
+                if in_test_module {
+                    continue;
+                }
 
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
-
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
-
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
-
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Check for std mutex patterns
-                    for (pattern, desc, sugg) in &compiled_mutex {
-                        if pattern.is_match(line) {
-                            violations.push(AsyncViolation::WrongMutexType {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                mutex_type: desc.to_string(),
-                                suggestion: sugg.to_string(),
-                                severity: Severity::Warning,
-                            });
-                        }
+                // Check for std mutex patterns
+                for (pattern, desc, sugg) in &compiled_mutex {
+                    if pattern.is_match(line) {
+                        violations.push(AsyncViolation::WrongMutexType {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            mutex_type: desc.to_string(),
+                            suggestion: sugg.to_string(),
+                            severity: Severity::Warning,
+                        });
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -581,67 +563,61 @@ impl AsyncPatternValidator {
             "build", // Constructor patterns
         ];
 
-        for src_dir in self.config.get_scan_dirs()? {
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                // Skip test files
-                if entry.path().to_string_lossy().contains("/tests/") {
+        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
+            if path.to_string_lossy().contains("/tests/") {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+            let mut in_test_module = false;
+            let mut current_fn_name = String::new();
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+
+                // Skip comments
+                if trimmed.starts_with("//") {
                     continue;
                 }
 
-                let content = std::fs::read_to_string(entry.path())?;
-                let mut in_test_module = false;
-                let mut current_fn_name = String::new();
+                // Track test modules
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
+                    continue;
+                }
 
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
+                if in_test_module {
+                    continue;
+                }
 
-                    // Skip comments
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
+                // Track current function name
+                if let Some(cap) = fn_pattern.captures(line) {
+                    current_fn_name = cap.get(1).map_or("", |m| m.as_str()).to_lowercase();
+                }
 
-                    // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        continue;
-                    }
-
-                    if in_test_module {
-                        continue;
-                    }
-
-                    // Track current function name
-                    if let Some(cap) = fn_pattern.captures(line) {
-                        current_fn_name = cap.get(1).map_or("", |m| m.as_str()).to_lowercase();
-                    }
-
-                    // Check for unassigned spawn
-                    if spawn_pattern.is_match(line) && !assigned_spawn_pattern.is_match(line) {
-                        // Check if it's being used in a chain (e.g., .await)
-                        if !line.contains(".await") && !line.contains("let _") {
-                            // Skip if function name suggests fire-and-forget is intentional
-                            let is_background_fn = background_fn_patterns
-                                .iter()
-                                .any(|p| current_fn_name.contains(p));
-                            if is_background_fn {
-                                continue;
-                            }
-                            violations.push(AsyncViolation::UnawaitedSpawn {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                context: trimmed.chars().take(80).collect(),
-                                severity: Severity::Info,
-                            });
+                // Check for unassigned spawn
+                if spawn_pattern.is_match(line) && !assigned_spawn_pattern.is_match(line) {
+                    // Check if it's being used in a chain (e.g., .await)
+                    if !line.contains(".await") && !line.contains("let _") {
+                        // Skip if function name suggests fire-and-forget is intentional
+                        let is_background_fn = background_fn_patterns
+                            .iter()
+                            .any(|p| current_fn_name.contains(p));
+                        if is_background_fn {
+                            continue;
                         }
+                        violations.push(AsyncViolation::UnawaitedSpawn {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            context: trimmed.chars().take(80).collect(),
+                            severity: Severity::Info,
+                        });
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }

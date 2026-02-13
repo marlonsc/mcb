@@ -758,6 +758,16 @@ impl NamingValidator {
         String::new()
     }
 
+    fn should_skip_crate(&self, src_dir: &Path) -> bool {
+        let path_str = src_dir.to_string_lossy();
+        let file_config = crate::config::FileConfig::load(&self.config.workspace_root);
+        file_config
+            .general
+            .skip_crates
+            .iter()
+            .any(|skip| path_str.contains(skip))
+    }
+
     fn for_each_crate_src_rs_path<F>(&self, mut f: F) -> Result<()>
     where
         F: FnMut(&Path) -> Result<()>,
@@ -765,7 +775,7 @@ impl NamingValidator {
         let context = ValidationRunContext::active_or_build(&self.config)?;
         for crate_dir in self.get_crate_dirs()? {
             let src_dir = crate_dir.join("src");
-            if !src_dir.exists() {
+            if !src_dir.exists() || self.should_skip_crate(&src_dir) {
                 continue;
             }
 

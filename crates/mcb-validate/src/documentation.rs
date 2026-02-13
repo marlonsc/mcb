@@ -9,8 +9,8 @@ use std::path::PathBuf;
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
+use crate::scan::for_each_crate_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig, ValidationError};
 
@@ -187,45 +187,31 @@ impl DocumentationValidator {
         let module_doc_pattern = Regex::new(r"^//!")
             .map_err(|e| ValidationError::InvalidRegex(format!("module doc pattern: {e}")))?;
 
-        for crate_dir in self.get_crate_dirs()? {
-            let src_dir = crate_dir.join("src");
-            if !src_dir.exists() {
-                continue;
+        for_each_crate_rs_path(&self.config, |path, _src_dir, _crate_name| {
+            let content = std::fs::read_to_string(path)?;
+            let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+
+            // Only check lib.rs, mod.rs, and main module files
+            if file_name != "lib.rs" && file_name != "mod.rs" {
+                return Ok(());
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
-                let file_name = entry
-                    .path()
-                    .file_name()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("");
+            // Check if first non-empty line is module doc
+            let has_module_doc = content
+                .lines()
+                .filter(|line| !line.trim().is_empty())
+                .take(1)
+                .any(|line| module_doc_pattern.is_match(line));
 
-                // Only check lib.rs, mod.rs, and main module files
-                if file_name != "lib.rs" && file_name != "mod.rs" {
-                    continue;
-                }
-
-                // Check if first non-empty line is module doc
-                let has_module_doc = content
-                    .lines()
-                    .filter(|line| !line.trim().is_empty())
-                    .take(1)
-                    .any(|line| module_doc_pattern.is_match(line));
-
-                if !has_module_doc {
-                    violations.push(DocumentationViolation::MissingModuleDoc {
-                        file: entry.path().to_path_buf(),
-                        severity: Severity::Warning,
-                    });
-                }
+            if !has_module_doc {
+                violations.push(DocumentationViolation::MissingModuleDoc {
+                    file: path.to_path_buf(),
+                    severity: Severity::Warning,
+                });
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -247,106 +233,96 @@ impl DocumentationValidator {
             .map_err(|e| ValidationError::InvalidRegex(format!("doc comment pattern: {e}")))?;
         let example_pattern = Regex::new(r"#\s*Example").unwrap();
 
-        for crate_dir in self.get_crate_dirs()? {
-            let src_dir = crate_dir.join("src");
-            if !src_dir.exists() {
-                continue;
-            }
+        for_each_crate_rs_path(&self.config, |path, _src_dir, _crate_name| {
+            let content = std::fs::read_to_string(path)?;
+            let lines: Vec<&str> = content.lines().collect();
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
-                let lines: Vec<&str> = content.lines().collect();
-
-                for (line_num, line) in lines.iter().enumerate() {
-                    // Check for public structs
-                    if let Some(cap) = pub_struct_pattern.captures(line) {
-                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                        if !self.has_doc_comment(&lines, line_num) {
-                            violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                item_name: name.to_string(),
-                                item_kind: "struct".to_string(),
-                                severity: Severity::Warning,
-                            });
-                        }
+            for (line_num, line) in lines.iter().enumerate() {
+                // Check for public structs
+                if let Some(cap) = pub_struct_pattern.captures(line) {
+                    let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
+                    if !self.has_doc_comment(&lines, line_num) {
+                        violations.push(DocumentationViolation::MissingPubItemDoc {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            item_name: name.to_string(),
+                            item_kind: "struct".to_string(),
+                            severity: Severity::Warning,
+                        });
                     }
+                }
 
-                    // Check for public enums
-                    if let Some(cap) = pub_enum_pattern.captures(line) {
-                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                        if !self.has_doc_comment(&lines, line_num) {
-                            violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                item_name: name.to_string(),
-                                item_kind: "enum".to_string(),
-                                severity: Severity::Warning,
-                            });
-                        }
+                // Check for public enums
+                if let Some(cap) = pub_enum_pattern.captures(line) {
+                    let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
+                    if !self.has_doc_comment(&lines, line_num) {
+                        violations.push(DocumentationViolation::MissingPubItemDoc {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            item_name: name.to_string(),
+                            item_kind: "enum".to_string(),
+                            severity: Severity::Warning,
+                        });
                     }
+                }
 
-                    // Check for public traits
-                    if let Some(cap) = pub_trait_pattern.captures(line) {
-                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                        let path_str = entry.path().to_string_lossy();
+                // Check for public traits
+                if let Some(cap) = pub_trait_pattern.captures(line) {
+                    let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
+                    let path_str = path.to_string_lossy();
 
-                        if self.has_doc_comment(&lines, line_num) {
-                            // Check for example code in trait documentation
-                            // Skip DI module traits and port traits - they are interface definitions
-                            // that don't need examples (they define contracts for DI injection)
-                            let is_di_or_port_trait =
-                                path_str.contains("/di/modules/") || path_str.contains("/ports/");
+                    if self.has_doc_comment(&lines, line_num) {
+                        // Check for example code in trait documentation
+                        // Skip DI module traits and port traits - they are interface definitions
+                        // that don't need examples (they define contracts for DI injection)
+                        let is_di_or_port_trait =
+                            path_str.contains("/di/modules/") || path_str.contains("/ports/");
 
-                            if !is_di_or_port_trait {
-                                let doc_section = self.get_doc_comment_section(&lines, line_num);
-                                if !example_pattern.is_match(&doc_section) {
-                                    violations.push(DocumentationViolation::MissingExampleCode {
-                                        file: entry.path().to_path_buf(),
-                                        line: line_num + 1,
-                                        item_name: name.to_string(),
-                                        severity: Severity::Info,
-                                    });
-                                }
+                        if !is_di_or_port_trait {
+                            let doc_section = self.get_doc_comment_section(&lines, line_num);
+                            if !example_pattern.is_match(&doc_section) {
+                                violations.push(DocumentationViolation::MissingExampleCode {
+                                    file: path.to_path_buf(),
+                                    line: line_num + 1,
+                                    item_name: name.to_string(),
+                                    severity: Severity::Info,
+                                });
                             }
-                        } else {
-                            violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                item_name: name.to_string(),
-                                item_kind: "trait".to_string(),
-                                severity: Severity::Error,
-                            });
                         }
+                    } else {
+                        violations.push(DocumentationViolation::MissingPubItemDoc {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            item_name: name.to_string(),
+                            item_kind: "trait".to_string(),
+                            severity: Severity::Error,
+                        });
+                    }
+                }
+
+                // Check for public functions (only top-level, not in impl blocks)
+                if let Some(cap) = pub_fn_pattern.captures(line) {
+                    let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
+
+                    // Skip methods in impl blocks (approximation: indentation > 0)
+                    if line.starts_with("    ") || line.starts_with('\t') {
+                        continue;
                     }
 
-                    // Check for public functions (only top-level, not in impl blocks)
-                    if let Some(cap) = pub_fn_pattern.captures(line) {
-                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-
-                        // Skip methods in impl blocks (approximation: indentation > 0)
-                        if line.starts_with("    ") || line.starts_with('\t') {
-                            continue;
-                        }
-
-                        if !self.has_doc_comment(&lines, line_num) {
-                            violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: entry.path().to_path_buf(),
-                                line: line_num + 1,
-                                item_name: name.to_string(),
-                                item_kind: "function".to_string(),
-                                severity: Severity::Info,
-                            });
-                        }
+                    if !self.has_doc_comment(&lines, line_num) {
+                        violations.push(DocumentationViolation::MissingPubItemDoc {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            item_name: name.to_string(),
+                            item_kind: "function".to_string(),
+                            severity: Severity::Info,
+                        });
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -434,11 +410,6 @@ impl DocumentationValidator {
 
         doc_lines.reverse();
         doc_lines.join("\n")
-    }
-
-    /// Retrieves the source directories for all crates in the workspace.
-    fn get_crate_dirs(&self) -> Result<Vec<PathBuf>> {
-        self.config.get_source_dirs()
     }
 }
 

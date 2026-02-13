@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::ObservationMetadata;
 use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::utils::compute_stable_id_hash;
 use mcb_domain::utils::vcs_context::VcsContext;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
@@ -43,13 +44,15 @@ pub async fn store_observation(
     let tags = MemoryHelpers::get_string_list(data, "tags");
     let vcs_context = VcsContext::capture();
     let payload_session_id = MemoryHelpers::get_str(data, "session_id");
-    let arg_session_id = args.session_id.clone().map(|id| id.into_string());
-    let payload_parent_session_id = MemoryHelpers::get_str(data, "parent_session_id");
-    let canonical_session_id = args
+    let arg_session_id = args
         .session_id
-        .clone()
-        .map(|id| id.into_string())
-        .or(payload_session_id.clone());
+        .as_ref()
+        .map(|id| compute_stable_id_hash("session", id.as_str()));
+    let hashed_payload_session_id = payload_session_id
+        .as_deref()
+        .map(|id| compute_stable_id_hash("session", id));
+    let payload_parent_session_id = MemoryHelpers::get_str(data, "parent_session_id");
+    let canonical_session_id = arg_session_id.clone().or(hashed_payload_session_id.clone());
     let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
     let payload_project_id = MemoryHelpers::get_str(data, "project_id");
     let payload_file_path = MemoryHelpers::get_str(data, "file_path");
@@ -68,7 +71,7 @@ pub async fn store_observation(
         project_id_args: args.project_id.as_deref(),
         project_id_payload: payload_project_id.as_deref(),
         session_from_args: arg_session_id.as_deref(),
-        session_from_data: payload_session_id.as_deref(),
+        session_from_data: hashed_payload_session_id.as_deref(),
         parent_session_from_args: None,
         parent_session_from_data: payload_parent_session_id.as_deref(),
         execution_from_args: None,

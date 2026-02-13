@@ -7,6 +7,7 @@ use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::error::Error;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::ports::services::SearchServiceInterface;
+use mcb_domain::utils::compute_stable_id_hash;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
@@ -93,7 +94,10 @@ impl SearchHandler {
                     } else {
                         None
                     },
-                    session_id: args.session_id.clone().map(|id| id.into_string()),
+                    session_id: args
+                        .session_id
+                        .as_ref()
+                        .map(|id| compute_stable_id_hash("session", id.as_str())),
                     parent_session_id: None,
                     repo_id: None,
                     time_range: None,

@@ -115,6 +115,7 @@ async fn test_validation_memory_observation_enum_error() {
             ids: None,
             repo_id: None,
             session_id: None,
+            parent_session_id: None,
             tags: None,
             query: None,
             anchor_id: None,
