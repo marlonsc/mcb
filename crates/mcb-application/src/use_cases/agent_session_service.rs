@@ -1,4 +1,19 @@
 //! Agent Session Service Use Case
+//!
+//! # Overview
+//! The `AgentSessionService` handles the lifecycle and persistence of autonomous agent sessions.
+//! It serves as the system of record for agent interactions, state transitions, and execution history.
+//!
+//! # Responsibilities
+//! - **Session Lifecycle**: Creating, updating, and terminating sessions with proper status tracking.
+//! - **Artifact Management**: Storing delegations (sub-tasks), tool calls, and checkpoints.
+//! - **State Persistence**: Ensuring session data is reliably saved to the underlying repository.
+//! - **Querying**: Providing flexible access to session history by project, worktree, or status.
+//!
+//! # Architecture
+//! Implements `AgentSessionServiceInterface` and delegates data access to `AgentRepository`.
+//! It acts as a facade for session-related operations, abstracting the storage details
+//! from the application layer.
 
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -13,10 +28,10 @@ use mcb_domain::ports::services::AgentSessionServiceInterface;
 
 /// Application service for managing agent session lifecycle and persistence.
 ///
-/// Implements the `AgentSessionServiceInterface` to provide session creation, retrieval,
-/// updates, and termination. Delegates all persistence operations to the injected
-/// `AgentRepository`, enabling clean separation between business logic and data access.
-/// Also manages session-related artifacts like delegations, tool calls, and checkpoints.
+/// Implements the `AgentSessionServiceInterface` to provide robust session management,
+/// including creation, state transitions, and historical querying. It acts as the
+/// authoritative source for agent execution data, coordinating with the `AgentRepository`
+/// for durable storage of sessions, tool calls, and checkpoints.
 pub struct AgentSessionServiceImpl {
     repository: Arc<dyn AgentRepository>,
 }

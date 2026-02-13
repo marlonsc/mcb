@@ -1,9 +1,15 @@
-//! Highlight Service - Agnóstico code highlighting using tree-sitter
+//! Highlight Service Use Case
 //!
-//! Provides trait-based interface for syntax highlighting across multiple languages.
-//! Uses tree-sitter for accurate, efficient parsing and highlighting.
+//! # Overview
+//! The `HighlightService` provides backend-agnostic syntax highlighting capabilities using
+//! Tree-sitter. It parses source code into an abstract syntax tree (AST) to identify
+//! tokens and apply semantic highlighting rules, independent of the final output format.
 //!
-//! Designed for multiple renderers: Web (Phase 8a), TUI (Phase 9), etc.
+//! # Responsibilities
+//! - **Multi-Language Support**: Parsing and highlighting code for supported languages (Rust, Python, JS, etc.).
+//! - **Tree-Sitter Integration**: Leveraging widely-used grammars for accurate syntax analysis.
+//! - **Abstract Representation**: Producing a generic `HighlightedCode` structure (spans + categories)
+//!   that can be rendered to HTML, ANSI, or other formats.
 
 use std::sync::Arc;
 
@@ -47,7 +53,10 @@ pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
     }
 }
 
-/// Concrete highlight service implementation using tree-sitter
+/// Concrete highlight service implementation using tree-sitter.
+///
+/// Manages a thread-safe `Highlighter` instance and specific language configurations
+/// to perform efficient, on-demand syntax highlighting.
 pub struct HighlightServiceImpl {
     highlighter: Arc<tokio::sync::Mutex<Highlighter>>,
 }
@@ -238,6 +247,9 @@ impl HighlightServiceInterface for HighlightServiceImpl {
 }
 
 /// Convert HighlightedCode to HTML with CSS classes
+// TODO(architecture): Move HTML rendering logic to a separate presentation/renderer module.
+// The HighlightService should remain presentation-agnostic, returning only structured data.
+// Mixing HTML generation here violates the Single Responsibility Principle.
 pub fn convert_highlighted_code_to_html(highlighted: &HighlightedCode) -> String {
     if highlighted.original.is_empty() {
         return String::new();

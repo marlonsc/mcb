@@ -1,6 +1,24 @@
 //! Memory Service Use Case
 //!
-//! Application service for observation storage and semantic memory search.
+//! # Overview
+//! The `MemoryService` implements a comprehensive system for storing, retrieving, and analyzing
+//! observations and long-term memory. It acts as the "brain" of the system, allowing agents
+//! to recall past context, decisions, and error patterns.
+//!
+//! # Responsibilities
+//! - **Hybrid Storage**: Persisting observations in both a relational DB (SQLite) for metadata/FTS
+//!   and a Vector Store for semantic similarity.
+//! - **Hybrid Search**: Combining keyword-based (FTS) and semantic (Vector) search results using
+//!   Reciprocal Rank Fusion (RRF) for high-quality recall.
+//! - **Timeline Management**: Retrieving observations in chronological order to reconstruct context.
+//! - **Pattern Recognition**: Storing and retrieving error patterns to avoid repeating mistakes.
+//! - **Session Summarization**: Compiling and storing high-level summaries of agent sessions.
+//!
+//! # Architecture
+//! Implements `MemoryServiceInterface` and coordinates:
+//! - `MemoryRepository`: For precise storage and FTS.
+//! - `VectorStoreProvider`: For fuzzy semantic search.
+//! - `EmbeddingProvider`: For generating vector representations of memory content.
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -23,7 +41,11 @@ use crate::constants::{
     HYBRID_SEARCH_MULTIPLIER, MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH, RRF_K,
 };
 
-/// Hybrid memory service: SQLite for metadata/FTS + VectorStore for RAG embeddings.
+/// Hybrid memory service combining relational metadata with semantic vector search.
+///
+/// Implements a sophisticated RAG (Retrieval-Augmented Generation) pipeline using
+/// Reciprocal Rank Fusion (RRF) to merge lexically precise matches (SQLite FTS)
+/// with semantically relevant results (Vector Store).
 pub struct MemoryServiceImpl {
     project_id: String,
     repository: Arc<dyn MemoryRepository>,
@@ -74,6 +96,9 @@ impl MemoryServiceImpl {
     }
 
     fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
+        // TODO(architecture): Move filtering logic to domain entity (MemoryFilter::matches).
+        // This logic currently resides in the service layer but operates entirely on domain data,
+        // suggesting it belongs in the domain model itself.
         if !Self::check_project(obs, filter) {
             return false;
         }

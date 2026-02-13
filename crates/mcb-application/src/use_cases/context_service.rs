@@ -1,9 +1,26 @@
 //! Context Service Use Case
 //!
-//! Application service for code intelligence and semantic operations.
-//! Orchestrates embeddings, vector storage, and caching for semantic code understanding.
+//! # Overview
+//! The `ContextService` acts as the central orchestrator for all semantic code intelligence operations
+//! within the Memory Context Browser (MCB). It bridges the gap between raw code assets and
+//! high-dimensional vector representations, enabling the system to "understand" code context.
+//!
+//! # Responsibilities
+//! - **Embedding Generation**: Transforms text/code into vector embeddings using configured providers.
+//! - **Vector Storage Management**: Manages lifecycle of vector collections (create, delete, inspect).
+//! - **Semantic Indexing**: Coordinating the storage of code chunks with rich metadata.
+//! - **Similarity Search**: Executing efficient k-NN queries to find relevant code based on semantic meaning.
+//! - **Caching**: Optimizing frequent operations to reduce latency and provider costs.
+//!
+//! # Architecture
+//! Following Clean Architecture principles, this service implements the `ContextServiceInterface` port
+//! and orchestrates interactions between:
+//! - `EmbeddingProvider`: For generating vector representations.
+//! - `VectorStoreProvider`: For persistent storage and retrieval of vectors.
+//! - `CacheProvider`: For performance optimizations.
 
 use std::collections::HashMap;
+use std::path::{Component, Path};
 use std::sync::Arc;
 
 use mcb_domain::constants::keys::{
@@ -46,6 +63,43 @@ fn extract_vector_count(stats: &HashMap<String, serde_json::Value>) -> i64 {
         .iter()
         .find_map(|key| stats.get(*key).and_then(serde_json::Value::as_i64))
         .unwrap_or(0)
+}
+
+fn normalize_relative_file_path(raw: &str) -> Result<String> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Err(mcb_domain::error::Error::invalid_argument(
+            "chunk file_path cannot be empty".to_string(),
+        ));
+    }
+
+    let path = Path::new(trimmed);
+    if path.is_absolute() {
+        return Err(mcb_domain::error::Error::invalid_argument(format!(
+            "chunk file_path must be workspace-relative: '{trimmed}'"
+        )));
+    }
+
+    let mut parts: Vec<String> = Vec::new();
+    for component in path.components() {
+        match component {
+            Component::CurDir => {}
+            Component::Normal(part) => parts.push(part.to_string_lossy().to_string()),
+            Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
+                return Err(mcb_domain::error::Error::invalid_argument(format!(
+                    "chunk file_path must be normalized workspace-relative: '{trimmed}'"
+                )));
+            }
+        }
+    }
+
+    if parts.is_empty() {
+        return Err(mcb_domain::error::Error::invalid_argument(
+            "chunk file_path cannot resolve to current directory".to_string(),
+        ));
+    }
+
+    Ok(parts.join("/"))
 }
 
 /// Context service implementation - manages embeddings and vector storage
@@ -103,12 +157,22 @@ impl ContextServiceInterface for ContextServiceImpl {
 
     async fn store_chunks(&self, collection: &CollectionId, chunks: &[CodeChunk]) -> Result<()> {
         let name = collection.as_str();
+        let mut normalized_chunks = Vec::with_capacity(chunks.len());
+        for chunk in chunks {
+            let mut normalized = chunk.clone();
+            normalized.file_path = normalize_relative_file_path(&chunk.file_path)?;
+            normalized_chunks.push(normalized);
+        }
+
         // Generate embeddings for each chunk
-        let texts: Vec<String> = chunks.iter().map(|c| c.content.clone()).collect();
+        let texts: Vec<String> = normalized_chunks
+            .iter()
+            .map(|c| c.content.clone())
+            .collect();
         let embeddings = self.embedding_provider.embed_batch(&texts).await?;
 
         // Build metadata for each chunk
-        let metadata: Vec<_> = chunks.iter().map(build_chunk_metadata).collect();
+        let metadata: Vec<_> = normalized_chunks.iter().map(build_chunk_metadata).collect();
 
         // Insert into vector store
         self.vector_store_provider
@@ -118,7 +182,7 @@ impl ContextServiceInterface for ContextServiceImpl {
         // Update collection metadata in cache
         self.cache_set(
             &cache_keys::collection_meta(name),
-            &chunks.len().to_string(),
+            &normalized_chunks.len().to_string(),
         )
         .await
     }

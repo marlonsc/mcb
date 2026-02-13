@@ -1,7 +1,15 @@
 //! Validation Service Implementation
 //!
-//! Implements `ValidationServiceInterface` using mcb-validate for
-//! architecture validation.
+//! # Overview
+//! The `InfraValidationService` adapts the `mcb-validate` toolkit into the domain's
+//! `ValidationServiceInterface` port. It serves as the bridge between the core domain's
+//! need for quality assurance and the infrastructure-level tools that perform analysis.
+//!
+//! # Responsibilities
+//! - **Workspace Validation**: Running suite of validators against the entire project.
+//! - **File Analysis**: Targeted validation and complexity analysis for individual files.
+//! - **Rule Discovery**: Exposing available validation rules and their metadata.
+//! - **Complexity Metrics**: Calculating cyclomatic and cognitive complexity scores.
 
 use std::path::Path;
 
@@ -12,7 +20,10 @@ use mcb_domain::ports::services::{
     ViolationEntry,
 };
 
-/// Infrastructure validation service using mcb-validate
+/// Infrastructure validation service using mcb-validate.
+///
+/// A stateless adapter that orchestrates the `mcb-validate` library to perform
+/// architectural compliance checks, code quality analysis, and rule enforcement.
 pub struct InfraValidationService;
 
 impl InfraValidationService {
@@ -188,6 +199,8 @@ fn run_file_validation(
     })
 }
 
+// TODO(architecture): Use shared workspace detection utility from domain/providers.
+// Reimplementing this logic here duplicates code and risks inconsistency.
 fn find_workspace_root(start: &Path) -> Option<std::path::PathBuf> {
     let mut current = if start.is_file() {
         start.parent()?.to_path_buf()

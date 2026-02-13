@@ -1,8 +1,23 @@
 //! Indexing Service Use Case
 //!
-//! Application service for code indexing and ingestion operations.
-//! Orchestrates file discovery, chunking, and storage of code embeddings.
-//! Supports async background indexing with event publishing.
+//! # Overview
+//! The `IndexingService` manages the ingestion and processing of code assets into the semantic
+//! context system. It handles the full lifecycle from file discovery to vector storage, ensuring
+//! that the system's understanding of the codebase remains up-to-date.
+//!
+//! # Responsibilities
+//! - **File Discovery**: Recursively scanning workspace directories while respecting ignore patterns.
+//! - **Language-Aware Chunking**: Splitting code files into semantic chunks using AST-based strategies.
+//! - **Incremental Indexing**: Optimizing ingestion by only processing changed files (via hash tracking).
+//! - **Async Processing**: Executing long-running indexing tasks in the background to maintain responsiveness.
+//! - **Event Publishing**: Notifying the system of indexing progress and completion.
+//!
+//! # Architecture
+//! Implements `IndexingServiceInterface` and acts as a coordinator between:
+//! - `LanguageChunkingProvider`: For parsing and splitting code.
+//! - `ContextService`: For embedding and storing chunks.
+//! - `FileHashRepository`: For change detection.
+//! - `EventBusProvider`: For system-wide notifications.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -23,11 +38,10 @@ use tracing::{error, info, warn};
 
 use crate::constants::{PROGRESS_UPDATE_INTERVAL, SKIP_DIRS, SUPPORTED_EXTENSIONS};
 
-/// Accumulator for indexing progress and errors
+/// Accumulator for indexing progress and operational metrics.
 ///
-/// Note: Fields are used via `into_result()` method. The struct is WIP
-/// for async background indexing support.
-// Fields used during file discovery error recording, not dead code
+/// Tracks the state of an active indexing operation, including success counts,
+/// skipped files, and encountered errors for final reporting.
 struct IndexingProgress {
     files_processed: usize,
     chunks_created: usize,
@@ -77,9 +91,10 @@ impl IndexingProgress {
     }
 }
 
-/// Indexing service implementation - orchestrates file discovery and chunking
+/// Indexing service implementation - orchestrates file discovery and chunking.
 ///
-/// Supports async background indexing with progress tracking and event publishing.
+/// Supports async background indexing with granular progress tracking, event publishing,
+/// and incremental updates via file hash verification.
 #[derive(Clone)]
 pub struct IndexingServiceImpl {
     context_service: Arc<dyn ContextServiceInterface>,

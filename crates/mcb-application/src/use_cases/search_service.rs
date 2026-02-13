@@ -1,7 +1,19 @@
 //! Search Service Use Case
 //!
-//! Application service for semantic search operations.
-//! Orchestrates search functionality using context service for semantic understanding.
+//! # Overview
+//! The `SearchService` orchestrates semantic search operations, providing a high-level interface
+//! for finding code and context. It delegates core embedding and retrieval tasks to the `ContextService`
+//! while adding business logic for result filtering, ranking, and post-processing.
+//!
+//! # Responsibilities
+//! - **Query Orchestration**: Managing search requests against the context system.
+//! - **Result Filtering**: Applying business rules (language, file extension, score thresholds) to raw results.
+//! - **Search Optimization**: Strategies for efficient retrieval (e.g., over-fetching for post-filtering).
+//!
+//! # Architecture
+//! Implements the `SearchServiceInterface` port and acts as a consumer of the `ContextService`.
+//! This separation allows the search logic to evolve (e.g., hybrid search, re-ranking) without
+//! complicating the core context management.
 
 use std::sync::Arc;
 
