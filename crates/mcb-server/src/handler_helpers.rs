@@ -82,13 +82,13 @@ pub struct OriginContextInput<'a> {
     /// Project ID from payload.
     pub project_id_payload: Option<&'a str>,
     /// Session ID from arguments.
-    pub session_id_args: Option<&'a str>,
+    pub session_from_args: Option<&'a str>,
     /// Session ID from payload.
-    pub session_id_payload: Option<&'a str>,
+    pub session_from_data: Option<&'a str>,
     /// Execution ID from arguments.
-    pub execution_id_args: Option<&'a str>,
+    pub execution_from_args: Option<&'a str>,
     /// Execution ID from payload.
-    pub execution_id_payload: Option<&'a str>,
+    pub execution_from_data: Option<&'a str>,
     /// Tool name from arguments.
     pub tool_name_args: Option<&'a str>,
     /// Tool name from payload.
@@ -140,13 +140,13 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
         project_id,
         session_id: resolve_identifier_precedence(
             "session_id",
-            input.session_id_args,
-            input.session_id_payload,
+            input.session_from_args,
+            input.session_from_data,
         )?,
         execution_id: resolve_identifier_precedence(
             "execution_id",
-            input.execution_id_args,
-            input.execution_id_payload,
+            input.execution_from_args,
+            input.execution_from_data,
         )?,
         tool_name: resolve_identifier_precedence(
             "tool_name",

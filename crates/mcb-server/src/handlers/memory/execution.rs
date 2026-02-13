@@ -117,6 +117,7 @@ pub async fn store_execution(
         .to_string(),
     ];
     let payload_session_id = MemoryHelpers::get_str(data, "session_id");
+    let arg_session_id = args.session_id.clone().map(|id| id.into_string());
     let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
     let payload_project_id = MemoryHelpers::get_str(data, "project_id");
     let payload_branch = MemoryHelpers::get_str(data, "branch");
@@ -128,10 +129,10 @@ pub async fn store_execution(
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),
         project_id_payload: payload_project_id.as_deref(),
-        session_id_args: args.session_id.as_ref().map(|id| id.as_str()),
-        session_id_payload: payload_session_id.as_deref(),
-        execution_id_args: Some(generated_execution_id.as_str()),
-        execution_id_payload: payload_execution_id.as_deref(),
+        session_from_args: arg_session_id.as_deref(),
+        session_from_data: payload_session_id.as_deref(),
+        execution_from_args: Some(generated_execution_id.as_str()),
+        execution_from_data: payload_execution_id.as_deref(),
         tool_name_args: Some("memory"),
         tool_name_payload: None,
         repo_id_args: args.repo_id.as_deref(),
