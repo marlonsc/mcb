@@ -257,10 +257,11 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     timeout-minutes: 15
-    needs: [changes, rust-ci]
+    needs: [changes, classify, rust-ci]
     if: |
       always() &&
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true')
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      needs.classify.outputs.run_full == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
