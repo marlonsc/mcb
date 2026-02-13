@@ -112,7 +112,14 @@ impl std::fmt::Debug for ObservationMetadata {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ObservationMetadata")
             .field("id", &self.id)
-            .field("session_id", &self.session_id.as_ref().map(|_| "REDACTED"))
+            .field(
+                "session_id",
+                &if self.session_id.is_some() {
+                    "REDACTED"
+                } else {
+                    "NONE"
+                },
+            )
             .field("repo_id", &self.repo_id)
             .field("file_path", &self.file_path)
             .field("branch", &self.branch)
