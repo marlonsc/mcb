@@ -383,6 +383,13 @@ run_structure_validation() {
 	print_summary "Structure Validation"
 }
 
+validate_outdated_content() {
+	log_info "Scanning for outdated content patterns..."
+	if check_executable python3; then
+		python3 "$SCRIPT_DIR/py/check_outdated.py" --root "$PROJECT_ROOT" || true
+	fi
+}
+
 run_link_validation() {
 	log_header "Link Validation"
 	log_info "MCP Context Browser - Documentation Link Validation"
@@ -390,6 +397,7 @@ run_link_validation() {
 
 	validate_doc_links
 	validate_cross_references
+	validate_outdated_content
 
 	if [[ -n "${QUICK:-}" ]] && [[ "${QUICK}" != "0" ]]; then
 		log_info "QUICK=1: skipping external link validation"
