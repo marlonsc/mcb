@@ -121,7 +121,6 @@ jobs:
     needs: [changes, classify]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
-    if: matrix.if_key != 'false'
     strategy:
       fail-fast: false
       matrix:
