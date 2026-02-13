@@ -2,11 +2,10 @@
 
 use std::path::PathBuf;
 
-use walkdir::WalkDir;
-
 use super::violation::CleanArchitectureViolation;
 use crate::config::CleanArchitectureRulesConfig;
 use crate::pattern_registry::PATTERNS;
+use crate::scan::for_each_rs_under_root;
 use crate::violation_trait::Violation;
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
@@ -100,29 +99,24 @@ impl CleanArchitectureValidator {
         let provider_import_re = Regex::new(&pattern).map_err(|e| {
             crate::ValidationError::InvalidRegex(format!("CA001.provider_import: {e}"))
         })?;
+        let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
-        for entry in WalkDir::new(server_crate.join("src"))
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            let path = entry.path();
-            if path.extension().is_some_and(|e| e == "rs") {
-                let content = std::fs::read_to_string(path)?;
+        for_each_rs_under_root(&scan_config, &server_crate.join("src"), |path| {
+            let content = std::fs::read_to_string(path)?;
 
-                for (line_num, line) in content.lines().enumerate() {
-                    if provider_import_re.is_match(line) {
-                        violations.push(
-                            CleanArchitectureViolation::ServerImportsProviderDirectly {
-                                file: path.to_path_buf(),
-                                line: line_num + 1,
-                                import_path: line.trim().to_string(),
-                                severity: Severity::Error,
-                            },
-                        );
-                    }
+            for (line_num, line) in content.lines().enumerate() {
+                if provider_import_re.is_match(line) {
+                    violations.push(CleanArchitectureViolation::ServerImportsProviderDirectly {
+                        file: path.to_path_buf(),
+                        line: line_num + 1,
+                        import_path: line.trim().to_string(),
+                        severity: Severity::Error,
+                    });
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -140,46 +134,42 @@ impl CleanArchitectureValidator {
         let constructor_pattern = r"(\w+)(?:Service|Provider|Repository)(?:Impl)?::new\s*\(";
         let creation_re = Regex::new(constructor_pattern)
             .map_err(|e| crate::ValidationError::InvalidRegex(format!("Service Creation: {e}")))?;
+        let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
         let handlers_dir = self.workspace_root.join(&self.rules.handlers_path);
         if !handlers_dir.exists() {
             return Ok(violations);
         }
 
-        for entry in WalkDir::new(handlers_dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            let path = entry.path();
-            if path.extension().is_some_and(|e| e == "rs") {
-                let content = std::fs::read_to_string(path)?;
+        for_each_rs_under_root(&scan_config, &handlers_dir, |path| {
+            let content = std::fs::read_to_string(path)?;
 
-                let mut in_test_section = false;
-                for (line_num, line) in content.lines().enumerate() {
-                    // Skip inline/unit-test code sections (typically below #[cfg(test)]).
-                    // This avoids false positives from mock/test-only constructors in handlers.
-                    if line.contains("#[cfg(test)]") {
-                        in_test_section = true;
-                        continue;
-                    }
-                    if in_test_section || line.contains("#[test]") {
-                        continue;
-                    }
+            let mut in_test_section = false;
+            for (line_num, line) in content.lines().enumerate() {
+                // Skip inline/unit-test code sections (typically below #[cfg(test)]).
+                // This avoids false positives from mock/test-only constructors in handlers.
+                if line.contains("#[cfg(test)]") {
+                    in_test_section = true;
+                    continue;
+                }
+                if in_test_section || line.contains("#[test]") {
+                    continue;
+                }
 
-                    if let Some(captures) = creation_re.captures(line) {
-                        let service_name = captures.get(1).map_or("unknown", |m| m.as_str());
-                        violations.push(CleanArchitectureViolation::HandlerCreatesService {
-                            file: path.to_path_buf(),
-                            line: line_num + 1,
-                            service_name: service_name.to_string(),
-                            context: "Direct creation instead of DI".to_string(),
-                            severity: Severity::Warning,
-                        });
-                    }
+                if let Some(captures) = creation_re.captures(line) {
+                    let service_name = captures.get(1).map_or("unknown", |m| m.as_str());
+                    violations.push(CleanArchitectureViolation::HandlerCreatesService {
+                        file: path.to_path_buf(),
+                        line: line_num + 1,
+                        service_name: service_name.to_string(),
+                        context: "Direct creation instead of DI".to_string(),
+                        severity: Severity::Warning,
+                    });
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -205,73 +195,69 @@ impl CleanArchitectureValidator {
         let id_field_re = PATTERNS
             .get("CA001.id_field")
             .expect("Pattern CA001.id_field not found");
+        let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
-        for entry in WalkDir::new(entities_dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            let path = entry.path();
-            if path.extension().is_some_and(|e| e == "rs") {
-                // Skip mod.rs files
-                if path.file_name().is_some_and(|n| n == "mod.rs") {
-                    continue;
-                }
+        for_each_rs_under_root(&scan_config, &entities_dir, |path| {
+            // Skip mod.rs files
+            if path.file_name().is_some_and(|n| n == "mod.rs") {
+                return Ok(());
+            }
 
-                let content = std::fs::read_to_string(path)?;
-                let lines: Vec<&str> = content.lines().collect();
+            let content = std::fs::read_to_string(path)?;
+            let lines: Vec<&str> = content.lines().collect();
 
-                for (line_num, line) in lines.iter().enumerate() {
-                    if let Some(captures) = struct_re.captures(line) {
-                        let struct_name = captures.get(1).map_or("unknown", |m| m.as_str());
+            for (line_num, line) in lines.iter().enumerate() {
+                if let Some(captures) = struct_re.captures(line) {
+                    let struct_name = captures.get(1).map_or("unknown", |m| m.as_str());
 
-                        // Skip if not an entity (e.g., helper structs, value objects)
-                        // Value Objects like *Changes don't need identity
-                        if self
-                            .rules
-                            .identity_skip_suffixes
-                            .iter()
-                            .any(|s| struct_name.ends_with(s))
-                        {
-                            continue;
+                    // Skip if not an entity (e.g., helper structs, value objects)
+                    // Value Objects like *Changes don't need identity
+                    if self
+                        .rules
+                        .identity_skip_suffixes
+                        .iter()
+                        .any(|s| struct_name.ends_with(s))
+                    {
+                        continue;
+                    }
+
+                    // Look ahead for id field in struct definition
+                    let mut has_id = false;
+                    let mut brace_count = 0;
+                    let mut started = false;
+
+                    for check_line in lines.iter().skip(line_num) {
+                        if check_line.contains('{') {
+                            brace_count += check_line.matches('{').count();
+                            started = true;
+                        }
+                        if check_line.contains('}') {
+                            brace_count -= check_line.matches('}').count();
                         }
 
-                        // Look ahead for id field in struct definition
-                        let mut has_id = false;
-                        let mut brace_count = 0;
-                        let mut started = false;
-
-                        for check_line in lines.iter().skip(line_num) {
-                            if check_line.contains('{') {
-                                brace_count += check_line.matches('{').count();
-                                started = true;
-                            }
-                            if check_line.contains('}') {
-                                brace_count -= check_line.matches('}').count();
-                            }
-
-                            if id_field_re.is_match(check_line) {
-                                has_id = true;
-                                break;
-                            }
-
-                            if started && brace_count == 0 {
-                                break;
-                            }
+                        if id_field_re.is_match(check_line) {
+                            has_id = true;
+                            break;
                         }
 
-                        if !has_id {
-                            violations.push(CleanArchitectureViolation::EntityMissingIdentity {
-                                file: path.to_path_buf(),
-                                line: line_num + 1,
-                                entity_name: struct_name.to_string(),
-                                severity: Severity::Warning,
-                            });
+                        if started && brace_count == 0 {
+                            break;
                         }
+                    }
+
+                    if !has_id {
+                        violations.push(CleanArchitectureViolation::EntityMissingIdentity {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            entity_name: struct_name.to_string(),
+                            severity: Severity::Warning,
+                        });
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -297,67 +283,62 @@ impl CleanArchitectureValidator {
         let mut_method_re = PATTERNS
             .get("CA001.mut_self_method")
             .expect("Pattern CA001.mut_self_method not found");
+        let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
-        for entry in WalkDir::new(vo_dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            let path = entry.path();
-            if path.extension().is_some_and(|e| e == "rs") {
-                // Skip mod.rs files
-                if path.file_name().is_some_and(|n| n == "mod.rs") {
-                    continue;
+        for_each_rs_under_root(&scan_config, &vo_dir, |path| {
+            // Skip mod.rs files
+            if path.file_name().is_some_and(|n| n == "mod.rs") {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+            let lines: Vec<&str> = content.lines().collect();
+
+            let mut current_impl: Option<String> = None;
+            let mut brace_depth = 0;
+
+            for (line_num, line) in lines.iter().enumerate() {
+                // Track impl blocks
+                if let Some(captures) = impl_re.captures(line) {
+                    current_impl = Some(captures.get(1).map(|m| m.as_str().to_string()).unwrap());
                 }
 
-                let content = std::fs::read_to_string(path)?;
-                let lines: Vec<&str> = content.lines().collect();
+                // Track brace depth for impl scope
+                brace_depth += line.matches('{').count();
+                brace_depth -= line.matches('}').count();
 
-                let mut current_impl: Option<String> = None;
-                let mut brace_depth = 0;
+                if brace_depth == 0 {
+                    current_impl = None;
+                }
 
-                for (line_num, line) in lines.iter().enumerate() {
-                    // Track impl blocks
-                    if let Some(captures) = impl_re.captures(line) {
-                        current_impl =
-                            Some(captures.get(1).map(|m| m.as_str().to_string()).unwrap());
-                    }
+                // Check for mutable methods
+                if let Some(ref vo_name) = current_impl
+                    && let Some(captures) = mut_method_re.captures(line)
+                {
+                    let method_name = captures.get(1).map_or("?", |m| m.as_str());
 
-                    // Track brace depth for impl scope
-                    brace_depth += line.matches('{').count();
-                    brace_depth -= line.matches('}').count();
-
-                    if brace_depth == 0 {
-                        current_impl = None;
-                    }
-
-                    // Check for mutable methods
-                    if let Some(ref vo_name) = current_impl
-                        && let Some(captures) = mut_method_re.captures(line)
+                    // Allow some standard mutable methods
+                    if !self
+                        .rules
+                        .allowed_mutable_prefixes
+                        .iter()
+                        .any(|p| method_name.starts_with(p))
                     {
-                        let method_name = captures.get(1).map_or("?", |m| m.as_str());
-
-                        // Allow some standard mutable methods
-                        if !self
-                            .rules
-                            .allowed_mutable_prefixes
-                            .iter()
-                            .any(|p| method_name.starts_with(p))
-                        {
-                            continue;
-                        }
-
-                        violations.push(CleanArchitectureViolation::ValueObjectMutable {
-                            file: path.to_path_buf(),
-                            line: line_num + 1,
-                            vo_name: vo_name.clone(),
-                            method_name: method_name.to_string(),
-                            severity: Severity::Warning,
-                        });
+                        continue;
                     }
+
+                    violations.push(CleanArchitectureViolation::ValueObjectMutable {
+                        file: path.to_path_buf(),
+                        line: line_num + 1,
+                        vo_name: vo_name.clone(),
+                        method_name: method_name.to_string(),
+                        severity: Severity::Warning,
+                    });
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -391,62 +372,59 @@ impl CleanArchitectureValidator {
         let concrete_service_re = Regex::new(&concrete_service_pattern).map_err(|e| {
             crate::ValidationError::InvalidRegex(format!("CA002.app_service_import: {e}"))
         })?;
+        let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
-        for entry in WalkDir::new(infra_crate.join("src"))
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            let path = entry.path();
-            if path.extension().is_some_and(|e| e == "rs") {
-                let content = std::fs::read_to_string(path)?;
+        for_each_rs_under_root(&scan_config, &infra_crate.join("src"), |path| {
+            let content = std::fs::read_to_string(path)?;
 
-                for (line_num, line) in content.lines().enumerate() {
-                    // Skip comments and test code
-                    let trimmed = line.trim();
-                    if trimmed.starts_with("//")
-                        || trimmed.starts_with("#[test]")
-                        || trimmed.starts_with("#[cfg(test)]")
-                    {
-                        continue;
-                    }
+            for (line_num, line) in content.lines().enumerate() {
+                // Skip comments and test code
+                let trimmed = line.trim();
+                if trimmed.starts_with("//")
+                    || trimmed.starts_with("#[test]")
+                    || trimmed.starts_with("#[cfg(test)]")
+                {
+                    continue;
+                }
 
-                    // Check for Impl types
-                    if let Some(captures) = concrete_type_re.captures(line) {
-                        let module = captures.get(1).map_or("?", |m| m.as_str());
-                        let concrete_type = captures.get(2).map_or("?", |m| m.as_str());
+                // Check for Impl types
+                if let Some(captures) = concrete_type_re.captures(line) {
+                    let module = captures.get(1).map_or("?", |m| m.as_str());
+                    let concrete_type = captures.get(2).map_or("?", |m| m.as_str());
+                    violations.push(
+                        CleanArchitectureViolation::InfrastructureImportsConcreteService {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            import_path: format!(
+                                "{}::{module}::{concrete_type}",
+                                self.naming.application_crate
+                            ),
+                            concrete_type: concrete_type.to_string(),
+                            severity: Severity::Error,
+                        },
+                    );
+                }
+
+                // Check for direct service imports (non-trait)
+                if let Some(captures) = concrete_service_re.captures(line) {
+                    let service_name = captures.get(1).map_or("?", |m| m.as_str());
+                    // Allow trait imports (ports)
+                    if !line.contains("ports::") && !line.contains("dyn ") {
                         violations.push(
                             CleanArchitectureViolation::InfrastructureImportsConcreteService {
                                 file: path.to_path_buf(),
                                 line: line_num + 1,
-                                import_path: format!(
-                                    "{}::{module}::{concrete_type}",
-                                    self.naming.application_crate
-                                ),
-                                concrete_type: concrete_type.to_string(),
-                                severity: Severity::Error,
+                                import_path: line.trim().to_string(),
+                                concrete_type: service_name.to_string(),
+                                severity: Severity::Warning,
                             },
                         );
                     }
-
-                    // Check for direct service imports (non-trait)
-                    if let Some(captures) = concrete_service_re.captures(line) {
-                        let service_name = captures.get(1).map_or("?", |m| m.as_str());
-                        // Allow trait imports (ports)
-                        if !line.contains("ports::") && !line.contains("dyn ") {
-                            violations.push(
-                                CleanArchitectureViolation::InfrastructureImportsConcreteService {
-                                    file: path.to_path_buf(),
-                                    line: line_num + 1,
-                                    import_path: line.trim().to_string(),
-                                    concrete_type: service_name.to_string(),
-                                    severity: Severity::Warning,
-                                },
-                            );
-                        }
-                    }
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -478,45 +456,39 @@ impl CleanArchitectureValidator {
         let reexport_re = Regex::new(&reexport_pattern).map_err(|e| {
             crate::ValidationError::InvalidRegex(format!("CA002.domain_reexport: {e}"))
         })?;
+        let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
-        for entry in WalkDir::new(&app_crate)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            let path = entry.path();
-            if path.extension().is_some_and(|e| e == "rs") {
-                let content = std::fs::read_to_string(path)?;
-                let has_reexport = reexport_re.is_match(&content);
+        for_each_rs_under_root(&scan_config, &app_crate, |path| {
+            let content = std::fs::read_to_string(path)?;
+            let has_reexport = reexport_re.is_match(&content);
 
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+                if trimmed.starts_with("//") {
+                    continue;
+                }
 
-                    if let Some(captures) = local_trait_re.captures(line) {
-                        let trait_name = captures.get(1).map_or("?", |m| m.as_str());
+                if let Some(captures) = local_trait_re.captures(line) {
+                    let trait_name = captures.get(1).map_or("?", |m| m.as_str());
 
-                        if !has_reexport {
-                            let relative = path.strip_prefix(&self.workspace_root).unwrap_or(path);
-                            violations.push(
-                                CleanArchitectureViolation::ApplicationWrongPortImport {
-                                    file: path.to_path_buf(),
-                                    line: line_num + 1,
-                                    import_path: format!("{}::{trait_name}", relative.display()),
-                                    should_be: format!(
-                                        "{}::ports::providers::{trait_name}",
-                                        self.naming.domain_crate
-                                    ),
-                                    severity: Severity::Error,
-                                },
-                            );
-                        }
+                    if !has_reexport {
+                        let relative = path.strip_prefix(&self.workspace_root).unwrap_or(path);
+                        violations.push(CleanArchitectureViolation::ApplicationWrongPortImport {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            import_path: format!("{}::{trait_name}", relative.display()),
+                            should_be: format!(
+                                "{}::ports::providers::{trait_name}",
+                                self.naming.domain_crate
+                            ),
+                            severity: Severity::Error,
+                        });
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }
@@ -552,13 +524,9 @@ impl CleanArchitectureValidator {
         let import_path_re = Regex::new(&import_path_pattern).map_err(|e| {
             crate::ValidationError::InvalidRegex(format!("CA009.app_import_path: {e}"))
         })?;
+        let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
-        for entry in WalkDir::new(infra_crate.join("src"))
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            let path = entry.path();
-
+        for_each_rs_under_root(&scan_config, &infra_crate.join("src"), |path| {
             // Skip composition root (di/ directory) - allowed to import application layer
             // for wiring up dependencies. This is the standard Clean Architecture exception
             // where the composition root needs to know about all layers to assemble them.
@@ -568,70 +536,68 @@ impl CleanArchitectureValidator {
                 .iter()
                 .any(|p| path.to_string_lossy().contains(p))
             {
-                continue;
+                return Ok(());
             }
 
-            if path.extension().is_some_and(|e| e == "rs") {
-                let content = std::fs::read_to_string(path)?;
+            let content = std::fs::read_to_string(path)?;
 
-                for (line_num, line) in content.lines().enumerate() {
-                    // Skip comments
-                    let trimmed = line.trim();
-                    if trimmed.starts_with("//") {
-                        continue;
-                    }
+            for (line_num, line) in content.lines().enumerate() {
+                // Skip comments
+                let trimmed = line.trim();
+                if trimmed.starts_with("//") {
+                    continue;
+                }
 
-                    // Check for mcb_application imports
-                    if app_import_re.is_match(line) {
-                        let import_path = import_path_re
-                            .captures(line)
-                            .and_then(|c| c.get(1))
-                            .map_or_else(
-                                || self.naming.application_crate.clone(),
-                                |m| m.as_str().to_string(),
-                            );
-
-                        // Determine suggestion based on what's being imported
-                        let suggestion = if import_path.contains("::ports::providers::") {
-                            format!(
-                                "Import from {} instead: {}",
-                                self.naming.domain_crate,
-                                import_path.replace(
-                                    &self.naming.application_crate,
-                                    &self.naming.domain_crate
-                                )
-                            )
-                        } else if import_path.contains("::services::") {
-                            "Services should be injected via DI, not imported. Use Arc<dyn ServiceTrait> in function signatures.".to_string()
-                        } else if import_path.contains("::registry::") {
-                            format!(
-                                "Registry should be accessed from {} via {}, not {}.",
-                                self.naming.application_crate,
-                                self.naming.providers_crate,
-                                self.naming.infrastructure_crate
-                            )
-                        } else {
-                            format!(
-                                "{} should NOT depend on {}. Move required traits to {} or refactor to use DI.",
-                                self.naming.infrastructure_crate,
-                                self.naming.application_crate,
-                                self.naming.domain_crate
-                            )
-                        };
-
-                        violations.push(
-                            CleanArchitectureViolation::InfrastructureImportsApplication {
-                                file: path.to_path_buf(),
-                                line: line_num + 1,
-                                import_path: import_path.clone(),
-                                suggestion,
-                                severity: Severity::Error,
-                            },
+                // Check for mcb_application imports
+                if app_import_re.is_match(line) {
+                    let import_path = import_path_re
+                        .captures(line)
+                        .and_then(|c| c.get(1))
+                        .map_or_else(
+                            || self.naming.application_crate.clone(),
+                            |m| m.as_str().to_string(),
                         );
-                    }
+
+                    // Determine suggestion based on what's being imported
+                    let suggestion = if import_path.contains("::ports::providers::") {
+                        format!(
+                            "Import from {} instead: {}",
+                            self.naming.domain_crate,
+                            import_path
+                                .replace(&self.naming.application_crate, &self.naming.domain_crate)
+                        )
+                    } else if import_path.contains("::services::") {
+                        "Services should be injected via DI, not imported. Use Arc<dyn ServiceTrait> in function signatures.".to_string()
+                    } else if import_path.contains("::registry::") {
+                        format!(
+                            "Registry should be accessed from {} via {}, not {}.",
+                            self.naming.application_crate,
+                            self.naming.providers_crate,
+                            self.naming.infrastructure_crate
+                        )
+                    } else {
+                        format!(
+                            "{} should NOT depend on {}. Move required traits to {} or refactor to use DI.",
+                            self.naming.infrastructure_crate,
+                            self.naming.application_crate,
+                            self.naming.domain_crate
+                        )
+                    };
+
+                    violations.push(
+                        CleanArchitectureViolation::InfrastructureImportsApplication {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            import_path: import_path.clone(),
+                            suggestion,
+                            severity: Severity::Error,
+                        },
+                    );
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(violations)
     }

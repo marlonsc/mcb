@@ -25,8 +25,8 @@ pub struct McpClientConfig {
     /// Server URL (e.g., "http://127.0.0.1:8080")
     pub server_url: String,
 
-    /// Session ID for this client connection
-    pub session_id: SessionId,
+    /// Local client instance identifier for log correlation.
+    pub client_instance_id: String,
 
     /// Request timeout
     pub timeout: Duration,
@@ -84,9 +84,11 @@ impl HttpClientTransport {
 
         let config = McpClientConfig {
             server_url,
-            session_id,
+            client_instance_id: Uuid::new_v4().to_string(),
             timeout,
         };
+
+        drop(session_id);
 
         let client = reqwest::Client::builder()
             .timeout(timeout)
@@ -155,7 +157,7 @@ impl HttpClientTransport {
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         info!(
             server_url = %self.config.server_url,
-            session_id = %mask_id(self.config.session_id.as_str()),
+            client_instance_id = %mask_id(&self.config.client_instance_id),
             "MCB client transport started"
         );
 
@@ -209,7 +211,7 @@ impl HttpClientTransport {
         debug!(
             url = %url,
             method = %request.method,
-            session_id = %mask_id(self.config.session_id.as_str()),
+            client_instance_id = %mask_id(&self.config.client_instance_id),
             "Sending request to server"
         );
 
@@ -223,11 +225,6 @@ impl HttpClientTransport {
         }
 
         response.json::<McpResponse>().await
-    }
-
-    /// Get the session ID for this client
-    pub fn session_id(&self) -> &str {
-        self.config.session_id.as_str()
     }
 
     /// Get the server URL
@@ -301,20 +298,25 @@ async fn post_mcp_request(
 #[cfg(test)]
 mod tests {
     use super::HttpClientTransport;
+    use std::fs;
     use std::time::Duration;
 
     #[test]
     fn session_id_override_takes_precedence_over_file() {
+        let temp_dir = tempfile::tempdir().expect("create temp dir");
+        let session_file = temp_dir.path().join("session.id");
+
         let client = HttpClientTransport::new_with_session_source(
             "http://127.0.0.1:18080".to_string(),
             Some("prefix".to_string()),
             Duration::from_secs(10),
             Some("explicit-session-id".to_string()),
-            Some("/tmp/ignored-session-file".to_string()),
+            Some(session_file.to_string_lossy().to_string()),
         )
         .expect("create client");
 
-        assert_eq!(client.session_id(), "explicit-session-id");
+        drop(client);
+        assert!(!session_file.exists());
     }
 
     #[test]
@@ -331,6 +333,9 @@ mod tests {
             Some(session_file_str.clone()),
         )
         .expect("create first client");
+        drop(first);
+
+        let first_session = fs::read_to_string(&session_file).expect("read first session file");
 
         let second = HttpClientTransport::new_with_session_source(
             "http://127.0.0.1:18080".to_string(),
@@ -340,7 +345,11 @@ mod tests {
             Some(session_file_str),
         )
         .expect("create second client");
+        drop(second);
 
-        assert_eq!(first.session_id(), second.session_id());
+        let second_session = fs::read_to_string(&session_file).expect("read second session file");
+
+        assert!(!first_session.trim().is_empty());
+        assert_eq!(first_session, second_session);
     }
 }

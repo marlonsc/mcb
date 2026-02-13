@@ -94,3 +94,38 @@ where
 
     Ok(())
 }
+
+pub(crate) fn for_each_rs_under_root<F>(
+    config: &ValidationConfig,
+    root: &Path,
+    mut f: F,
+) -> Result<()>
+where
+    F: FnMut(&Path) -> Result<()>,
+{
+    if !root.exists() {
+        return Ok(());
+    }
+
+    let context = ValidationRunContext::active_or_build(config)?;
+    let inventory = context.file_inventory();
+    let normalized_root = std::fs::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
+
+    for entry in inventory {
+        if !entry.absolute_path.starts_with(&normalized_root) {
+            continue;
+        }
+
+        if entry
+            .absolute_path
+            .extension()
+            .is_none_or(|ext| ext != "rs")
+        {
+            continue;
+        }
+
+        f(&entry.absolute_path)?;
+    }
+
+    Ok(())
+}

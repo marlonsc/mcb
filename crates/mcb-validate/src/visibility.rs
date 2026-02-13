@@ -7,9 +7,9 @@ use std::path::PathBuf;
 
 use regex::Regex;
 use serde::Serialize;
-use walkdir::WalkDir;
 
 use crate::config::VisibilityRulesConfig;
+use crate::scan::for_each_rs_under_root;
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 
@@ -203,16 +203,7 @@ impl VisibilityValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&full_path)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-            {
-                let path = entry.path();
-                if path.extension().is_none_or(|e| e != "rs") {
-                    continue;
-                }
-
+            for_each_rs_under_root(config, &full_path, |path| {
                 let content = std::fs::read_to_string(path)?;
                 for (line_num, line) in content.lines().enumerate() {
                     let trimmed = line.trim();
@@ -234,7 +225,9 @@ impl VisibilityValidator {
                         });
                     }
                 }
-            }
+
+                Ok(())
+            })?;
         }
         Ok(violations)
     }
@@ -255,22 +248,13 @@ impl VisibilityValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&crate_src)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-            {
-                let path = entry.path();
-                if path.extension().is_none_or(|e| e != "rs") {
-                    continue;
-                }
-
+            for_each_rs_under_root(config, &crate_src, |path| {
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                 if !self
                     .utility_module_patterns
                     .contains(&file_name.to_string())
                 {
-                    continue;
+                    return Ok(());
                 }
 
                 let content = std::fs::read_to_string(path)?;
@@ -293,7 +277,9 @@ impl VisibilityValidator {
                         line: 1,
                     });
                 }
-            }
+
+                Ok(())
+            })?;
         }
         Ok(violations)
     }

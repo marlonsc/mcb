@@ -10,9 +10,9 @@ use std::path::PathBuf;
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 use crate::config::PatternRulesConfig;
+use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -304,13 +304,12 @@ impl PatternValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
+            for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
+                if candidate_src_dir != src_dir {
+                    return Ok(());
+                }
+
+                let content = std::fs::read_to_string(path)?;
 
                 for (line_num, line) in content.lines().enumerate() {
                     let trimmed = line.trim();
@@ -369,7 +368,7 @@ impl PatternValidator {
                             };
 
                             violations.push(PatternViolation::ConcreteTypeInDi {
-                                file: entry.path().to_path_buf(),
+                                file: path.to_path_buf(),
                                 line: line_num + 1,
                                 concrete_type: format!("Arc<{type_name}>"),
                                 suggestion: format!("Arc<dyn {trait_name}>"),
@@ -378,7 +377,9 @@ impl PatternValidator {
                         }
                     }
                 }
-            }
+
+                Ok(())
+            })?;
         }
 
         Ok(violations)
@@ -402,13 +403,12 @@ impl PatternValidator {
             if self.should_skip_crate(&src_dir) {
                 continue;
             }
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
+            for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
+                if candidate_src_dir != src_dir {
+                    return Ok(());
+                }
+
+                let content = std::fs::read_to_string(path)?;
                 let lines: Vec<&str> = content.lines().collect();
 
                 for (line_num, line) in lines.iter().enumerate() {
@@ -465,7 +465,7 @@ impl PatternValidator {
 
                             if !has_async_trait_attr {
                                 violations.push(PatternViolation::MissingAsyncTrait {
-                                    file: entry.path().to_path_buf(),
+                                    file: path.to_path_buf(),
                                     line: line_num + 1,
                                     trait_name: trait_name.to_string(),
                                     severity: Severity::Error,
@@ -475,7 +475,7 @@ impl PatternValidator {
                             // Check for Send + Sync bounds (skip for native async traits)
                             if !send_sync_pattern.is_match(line) && !uses_native_async {
                                 violations.push(PatternViolation::MissingSendSync {
-                                    file: entry.path().to_path_buf(),
+                                    file: path.to_path_buf(),
                                     line: line_num + 1,
                                     trait_name: trait_name.to_string(),
                                     missing_bound: "Send + Sync".to_string(),
@@ -485,7 +485,9 @@ impl PatternValidator {
                         }
                     }
                 }
-            }
+
+                Ok(())
+            })?;
         }
 
         Ok(violations)
@@ -514,18 +516,16 @@ impl PatternValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
+            for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
+                if candidate_src_dir != src_dir {
+                    return Ok(());
+                }
+
+                let content = std::fs::read_to_string(path)?;
 
                 // Skip error-related files (they define/extend error types)
-                let file_name = entry.path().file_name().and_then(|n| n.to_str());
-                let parent_name = entry
-                    .path()
+                let file_name = path.file_name().and_then(|n| n.to_str());
+                let parent_name = path
                     .parent()
                     .and_then(|p| p.file_name())
                     .and_then(|n| n.to_str());
@@ -533,7 +533,7 @@ impl PatternValidator {
                     n == "error.rs" || n == "error_ext.rs" || n.starts_with("error")
                 }) || parent_name.is_some_and(|p| p == "error")
                 {
-                    continue;
+                    return Ok(());
                 }
 
                 for (line_num, line) in content.lines().enumerate() {
@@ -547,7 +547,7 @@ impl PatternValidator {
                     // Check for std::result::Result
                     if std_result_pattern.is_match(line) {
                         violations.push(PatternViolation::RawResultType {
-                            file: entry.path().to_path_buf(),
+                            file: path.to_path_buf(),
                             line: line_num + 1,
                             context: trimmed.to_string(),
                             suggestion: "crate::Result<T>".to_string(),
@@ -578,7 +578,9 @@ impl PatternValidator {
                         }
                     }
                 }
-            }
+
+                Ok(())
+            })?;
         }
 
         Ok(violations)

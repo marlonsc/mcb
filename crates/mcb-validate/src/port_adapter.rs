@@ -6,9 +6,9 @@ use std::path::PathBuf;
 
 use regex::Regex;
 use serde::Serialize;
-use walkdir::WalkDir;
 
 use crate::config::PortAdapterRulesConfig;
+use crate::scan::for_each_rs_under_root;
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 
@@ -219,16 +219,7 @@ impl PortAdapterValidator {
         let trait_start_re = Regex::new(r"pub\s+trait\s+(\w+)").unwrap();
         let fn_re = Regex::new(r"^\s*(?:async\s+)?fn\s+\w+").unwrap();
 
-        for entry in WalkDir::new(&ports_dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            let path = entry.path();
-            if path.extension().is_none_or(|e| e != "rs") {
-                continue;
-            }
-
+        for_each_rs_under_root(config, &ports_dir, |path| {
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
 
@@ -275,7 +266,9 @@ impl PortAdapterValidator {
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
         Ok(violations)
     }
 
@@ -294,19 +287,10 @@ impl PortAdapterValidator {
         )
         .unwrap();
 
-        for entry in WalkDir::new(&providers_dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            let path = entry.path();
-            if path.extension().is_none_or(|e| e != "rs") {
-                continue;
-            }
-
+        for_each_rs_under_root(config, &providers_dir, |path| {
             let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
             if file_name == "mod.rs" || file_name == "lib.rs" {
-                continue;
+                return Ok(());
             }
             // Skip test files: adapter tests legitimately use the concrete type
             if file_name == "tests.rs"
@@ -315,7 +299,7 @@ impl PortAdapterValidator {
                     .and_then(|p| p.file_name())
                     .is_some_and(|n| n == "tests")
             {
-                continue;
+                return Ok(());
             }
 
             let content = std::fs::read_to_string(path)?;
@@ -346,7 +330,9 @@ impl PortAdapterValidator {
                     }
                 }
             }
-        }
+
+            Ok(())
+        })?;
         Ok(violations)
     }
 }

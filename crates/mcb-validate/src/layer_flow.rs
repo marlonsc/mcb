@@ -8,9 +8,9 @@ use std::path::PathBuf;
 
 use regex::Regex;
 use serde::Serialize;
-use walkdir::WalkDir;
 
 use crate::config::LayerFlowRulesConfig;
+use crate::scan::for_each_rs_under_root;
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 
@@ -214,16 +214,7 @@ impl LayerFlowValidator {
             let forbidden_deps = &self.forbidden_dependencies[crate_name];
             let crate_name_underscored = crate_name.replace('-', "_");
 
-            for entry in WalkDir::new(&crate_src_dir)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-            {
-                let path = entry.path();
-                if path.extension().is_none_or(|e| e != "rs") {
-                    continue;
-                }
-
+            for_each_rs_under_root(config, &crate_src_dir, |path| {
                 let content = std::fs::read_to_string(path)?;
                 for (line_num, line) in content.lines().enumerate() {
                     let trimmed = line.trim();
@@ -248,7 +239,9 @@ impl LayerFlowValidator {
                         }
                     }
                 }
-            }
+
+                Ok(())
+            })?;
         }
         Ok(violations)
     }

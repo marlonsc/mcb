@@ -13,8 +13,8 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
+use crate::scan::for_each_rs_under_root;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -357,21 +357,15 @@ impl DependencyValidator {
             return Ok(());
         }
 
-        for entry in WalkDir::new(scan_root)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-            .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-        {
-            let rel = entry
-                .path()
+        for_each_rs_under_root(&self.config, scan_root, |path| {
+            let rel = path
                 .strip_prefix(&self.config.workspace_root)
-                .unwrap_or(entry.path());
+                .unwrap_or(path);
             if !should_check_file(rel) {
-                continue;
+                return Ok(());
             }
 
-            let content = std::fs::read_to_string(entry.path())?;
+            let content = std::fs::read_to_string(path)?;
             for (line_num, line) in content.lines().enumerate() {
                 let trimmed = line.trim();
                 if trimmed.starts_with("//") {
@@ -379,13 +373,15 @@ impl DependencyValidator {
                 }
                 if line.contains(pattern) {
                     out.push(make_violation(
-                        entry.path().to_path_buf(),
+                        path.to_path_buf(),
                         line_num + 1,
                         trimmed.to_string(),
                     ));
                 }
             }
-        }
+
+            Ok(())
+        })?;
 
         Ok(())
     }
@@ -450,13 +446,8 @@ impl DependencyValidator {
                 continue;
             }
 
-            for entry in WalkDir::new(&crate_src)
-                .follow_links(false)
-                .into_iter()
-                .filter_map(std::result::Result::ok)
-                .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-            {
-                let content = std::fs::read_to_string(entry.path())?;
+            for_each_rs_under_root(&self.config, &crate_src, |path| {
+                let content = std::fs::read_to_string(path)?;
 
                 for (line_num, line) in content.lines().enumerate() {
                     // Skip comments
@@ -484,7 +475,7 @@ impl DependencyValidator {
                             violations.push(DependencyViolation::ForbiddenUseStatement {
                                 crate_name: crate_name.clone(),
                                 forbidden_dep: used_crate_kebab,
-                                file: entry.path().to_path_buf(),
+                                file: path.to_path_buf(),
                                 line: line_num + 1,
                                 context: line.trim().to_string(),
                                 severity: Severity::Error,
@@ -492,7 +483,9 @@ impl DependencyValidator {
                         }
                     }
                 }
-            }
+
+                Ok(())
+            })?;
         }
 
         Ok(violations)
