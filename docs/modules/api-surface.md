@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # API Surface Analysis
 
 This document provides an overview of the public API surface of the Memory Context Browser.

@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # application Module
 
 **Source**: `crates/mcb-application/src/`

@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # Module Dependencies
 
 This document shows the crate dependencies of the Memory Context Browser.

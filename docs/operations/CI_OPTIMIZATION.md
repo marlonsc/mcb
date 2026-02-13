@@ -1,8 +1,12 @@
+<!-- markdownlint-disable MD013 -->
 # CI Optimization Strategy - v0.1.4
+<!-- markdownlint-disable MD024 -->
 
 ## Overview
 
-CI pipeline optimization to reduce unnecessary job executions while maintaining code quality. Implemented two phases of optimization in January 2026 to prevent thousands of redundant workflows.
+CI pipeline optimization to reduce unnecessary job executions while
+maintaining code quality. Implemented two phases of optimization in January
+2026 to prevent thousands of redundant workflows.
 
 ## Problem Statement
 
@@ -97,7 +101,9 @@ exclude_files = [
 ]
 ```
 
-**Rationale**: Integration tests that require external services (Milvus, Ollama) are not available in GitHub Actions. Excluding them from coverage measurement prevents timeouts and allows coverage to complete successfully.
+**Rationale**: Integration tests that require external services (Milvus,
+Ollama) are not available in GitHub Actions. Excluding them from coverage
+measurement prevents timeouts and allows coverage to complete successfully.
 
 ### Makefile Coverage Target
 

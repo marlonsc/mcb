@@ -1,4 +1,6 @@
+<!-- markdownlint-disable MD013 -->
 # Changelog
+<!-- markdownlint-disable MD024 -->
 
 All notable changes to**Memory Context Browser** will be documented in this file.
 
@@ -17,7 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Summary
 
-Pre-v0.3.0 consolidation release focused on v0.2.1 branch hardening: data-model-v2 merge, admin UI expansion, CI modernization, dead-code cleanup, MCP handler/provider consolidation, and documentation reconciliation.
+Pre-v0.3.0 consolidation release focused on v0.2.1 branch hardening:
+data-model-v2 merge, admin UI expansion, CI modernization,
+dead-code cleanup, MCP handler/provider consolidation, and documentation
+reconciliation.
 
 ### Fixed
 
@@ -54,18 +59,29 @@ Pre-v0.3.0 consolidation release focused on v0.2.1 branch hardening: data-model-
 
 ### Summary
 
-Major stabilization release delivering critical bug fixes for Agent, Session, and Memory subsystems, strict MCP protocol compliance, SQLite DDL startup resilience, comprehensive test isolation, repository cleanup, filesystem reorganization, and a full documentation overhaul with rebranding to**Memory Context Browser**.
+Major stabilization release delivering critical bug fixes for Agent,
+Session, and Memory subsystems, strict MCP protocol compliance, SQLite
+DDL startup resilience, comprehensive test isolation, repository cleanup,
+filesystem reorganization, and a full documentation overhaul with rebranding
+to **Memory Context Browser**.
 
 ### Fixed
 
-- **SQLite DDL Startup**: Replaced fragile FTS/trigger creation with `rebuild_fts_sqlite()` — drops and recreates FTS tables, triggers, and repopulates data. Eliminates `SQLITE_BUSY` failures on concurrent schema evolution.
+- **SQLite DDL Startup**: Replaced fragile FTS/trigger creation with
+  `rebuild_fts_sqlite()` — drops and recreates FTS tables, triggers, and
+  repopulates data. Eliminates `SQLITE_BUSY` failures on concurrent schema
+  evolution.
 - **SQLite Recovery**: Added backup-and-recreate recovery path when DDL operations fail on corrupted databases.
 - **Agent SQL Storage**: Fixed "Failed to store tool call" error — correct repository dependency chain (Project -> Session -> Agent).
 - **Session Schema**: Fallback logic for `agent_type` and `model` fields in session creation payloads.
 - **Memory Enums**: Improved validation and error messages for `observation_type`.
 - **Strict `tools/call` Validation**: Non-object `arguments` now return JSON-RPC `-32602` (Invalid Params) instead of being silently dropped.
-- **Test Isolation**: All integration tests use `unique_test_config()` with unique temp DB paths per test, eliminating SQLite I/O contention during parallel execution.
-- **Playwright E2E**: Fixed `test.describe()` not found error in CI by removing per-file spec iteration — Playwright now discovers all specs from `testDir`.
+- **Test Isolation**: All integration tests use `unique_test_config()` with
+  unique temp DB paths per test, eliminating SQLite I/O contention during
+  parallel execution.
+- **Playwright E2E**: Fixed `test.describe()` not found error in CI by
+  removing per-file spec iteration — Playwright now discovers all specs from
+  `testDir`.
 - **ADR Broken Links**: Fixed 3 cross-reference patterns across 4 ADRs (034/036/037/038).
 - **Doctest Compilation**: Fixed registry module doctest return type.
 
@@ -82,11 +98,19 @@ Major stabilization release delivering critical bug fixes for Agent, Session, an
 ### Changed
 
 - **Rebranding**: "MCP Context Browser" renamed to "Memory Context Browser" across all 98+ occurrences (docs, templates, configs, README).
-- **Filesystem Reorganization**: `docker-compose.yml`, `package.json`, `package-lock.json` moved to `tests/`. All Makefile, CI, and script references updated.
-- **README Rewrite**: Complete professional rewrite (179 lines) with badges, feature overview, Quick Start, MCP Tools table, and ASCII architecture diagram.
-- **Documentation Updates**: All docs updated to v0.2.0 (QUICKSTART, ARCHITECTURE, ENVIRONMENT_VARIABLES, docs/README).
-- **ADR Status Standardization**: All ADRs use 5-value status set (IMPLEMENTED, ACCEPTED, PROPOSED, SUPERSEDED, ARCHIVED).
-- **Legacy Removal**: Removed `/indexing` admin route (migrated to `/jobs`), deleted `ADMIN_SERVICE_DEFAULT_PORT` constant, removed tracked log artifacts.
+- **Filesystem Reorganization**: `docker-compose.yml`, `package.json`,
+  `package-lock.json` moved to `tests/`. All Makefile, CI, and script
+  references updated.
+- **README Rewrite**: Complete professional rewrite (179 lines) with badges,
+  feature overview, Quick Start, MCP Tools table, and ASCII architecture
+  diagram.
+- **Documentation Updates**: All docs updated to v0.2.0 (QUICKSTART,
+  ARCHITECTURE, ENVIRONMENT_VARIABLES, docs/README).
+- **ADR Status Standardization**: All ADRs use 5-value status set
+  (IMPLEMENTED, ACCEPTED, PROPOSED, SUPERSEDED, ARCHIVED).
+- **Legacy Removal**: Removed `/indexing` admin route (migrated to `/jobs`),
+  deleted `ADMIN_SERVICE_DEFAULT_PORT` constant, removed tracked log
+  artifacts.
 - **Repository Cleanup**: 32 cruft files removed (reports, temp scripts, test logs, unused configs, screenshots).
 
 ### Metrics
@@ -184,7 +208,9 @@ Provider registration modernization (inventory -> linkme compile-time) and archi
 
 ### Summary
 
-First stable release — complete drop-in replacement for Claude-context with 14 languages processors, 6 embedding providers, 5 vector stores, systemd integration, and comprehensive documentation.
+First stable release — complete drop-in replacement for Claude-context with
+14 languages processors, 6 embedding providers, 5 vector stores, systemd
+integration, and comprehensive documentation.
 
 ### Added
 
@@ -200,7 +226,8 @@ First stable release — complete drop-in replacement for Claude-context with 14
 
 ### Summary
 
-Production foundation — circuit breaker, health checks, intelligent routing, Gemini/VoyageAI providers, encrypted vector storage.
+Production foundation — circuit breaker, health checks, intelligent routing,
+Gemini/VoyageAI providers, encrypted vector storage.
 
 ---
 

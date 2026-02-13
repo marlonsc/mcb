@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # sync Module
 
 **Note**: Sync functionality is defined as a port trait in v0.2.1.

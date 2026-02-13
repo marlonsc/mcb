@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # repository Module
 
 **Source**: `crates/mcb-infrastructure/src/adapters/repository/`

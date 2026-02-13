@@ -1,4 +1,5 @@
 ---
+<!-- markdownlint-disable MD025 -->
 adr: 2
 title: Async-First Architecture
 status: IMPLEMENTED
@@ -10,7 +11,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 002: Async-First Architecture
+## ADR 002: Async-First Architecture
 
 ## Status
 
@@ -432,8 +433,8 @@ fn compute_complexity(content: &str) -> Result<ComplexityReport> {
 - [Tokio Documentation](https://tokio.rs/)
 - [Async Programming in Rust](https://rust-lang.github.io/async-book/)
 - [Structured Concurrency]
-(<https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/>)
+(<https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/>) <!-- markdownlint-disable-line MD013 -->
 - [Rayon: Data Parallelism](https://docs.rs/rayon/latest/rayon/)
 - [Tokio spawn_blocking]
-(<https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html>)
+(<https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html>) <!-- markdownlint-disable-line MD013 -->
 - [Shaku Documentation](https://docs.rs/shaku) (historical; see ADR-029)

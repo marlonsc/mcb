@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # infrastructure Module
 
 **Source**: `crates/mcb-infrastructure/src/`

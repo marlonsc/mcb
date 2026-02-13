@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # Module Documentation Index
 
 This index links all module-level documentation pages.

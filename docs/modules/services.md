@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # Services Module
 
 **Source**: `crates/mcb-application/src/use_cases/`

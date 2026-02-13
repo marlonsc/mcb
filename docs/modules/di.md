@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # di Module
 
 **Source**: `crates/mcb-infrastructure/src/di/`

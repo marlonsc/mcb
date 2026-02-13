@@ -7,13 +7,18 @@
 
 ## Executive Summary
 
-Analysis of ADR-035 (Context Scout) against production-grade context management patterns reveals**three critical gaps**:
+Analysis of ADR-035 (Context Scout) against production-grade context management
+patterns reveals**three critical gaps**:
 
-1. **External Tracker Integration**: ADR-035 assumes all state in SQLite; doesn't address GitHub/GitLab/Jira APIs
-2. **Race Condition Prevention**: No handling of concurrent read-only queries on git2 + SQLite simultaneously
-3. **Cache Invalidation Signals**: TTL-only caching misses event-driven invalidation opportunities
+1. **External Tracker Integration**: ADR-035 assumes all state in SQLite;
+   doesn't address GitHub/GitLab/Jira APIs
+2. **Race Condition Prevention**: No handling of concurrent read-only queries
+   on git2 + SQLite simultaneously
+3. **Cache Invalidation Signals**: TTL-only caching misses event-driven
+   invalidation opportunities
 
-**Recommendation**: Extend ADR-035 with tracker integration layer + event invalidation hook.
+**Recommendation**: Extend ADR-035 with tracker integration layer + event
+invalidation hook.
 
 ---
 
@@ -68,7 +73,8 @@ Analysis of ADR-035 (Context Scout) against production-grade context management 
 - **Verdict:** Correct choice for MCB's scale
 
 **Production Consideration:**
-For**large monorepos** (100K+ files), gix could reduce cold start from 500ms → 5ms. ADR-035 acknowledges this but defers.
+For**large monorepos** (100K+ files), gix could reduce cold start from 500ms →
+5ms. ADR-035 acknowledges this but defers.
 
 ### Common git2 Patterns in Production Code
 
@@ -87,7 +93,8 @@ tokio::task::spawn_blocking(move || {
 .await?
 ```
 
-**Key Finding:**git2 `Repository` is thread-safe for**read-only operations**. Write operations (commits, branch creation) require serialization.
+**Key Finding:**git2 `Repository` is thread-safe for**read-only operations**.
+Write operations (commits, branch creation) require serialization.
 
 ---
 
@@ -104,7 +111,7 @@ ADR-035 reads from two sources simultaneously:
 // This can cause stale composite context
 async fn discover(&self, project_root: &Path) -> Result<ProjectContext> {
     let git = self.git_status(project_root).await?;      // Reads at T1
-    let tracker = self.tracker_state(&self.config.project_id).await?;  // Reads at T2
+    let tracker = self.tracker_state(&self.config.project_id).await?; // Reads T2
 
     // Between T1 and T2, git state might have changed!
     // Example: User commits between git read and tracker read

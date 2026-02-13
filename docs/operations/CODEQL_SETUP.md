@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # CodeQL Setup Instructions
 
 ## ✅ Configuração Atual

@@ -9,26 +9,30 @@
 
 ## 📚 Documentation Structure
 
-This documentation is organized into focused sections for different audiences and purposes:
+This documentation is organized into focused sections for different audiences and
+purposes:
 
 ### 📖 User Guide
 
 User-facing documentation for installation, usage, and features.
 
-- **[README](user-guide/README.md)** - Project overview, quick start, and basic usage
+- **[README](user-guide/README.md)** - Project overview, quick start, and
+  basic usage
 - **[Features](user-guide/README.md)** - Current capabilities and features
 
 ### 🛠️ Developer Guide
 
 Documentation for developers contributing to the project.
 
-- **[Contributing](developer/CONTRIBUTING.md)** - Development setup and contribution guidelines
+- **[Contributing](developer/CONTRIBUTING.md)** - Development setup and
+  contribution guidelines
 - **[Roadmap](developer/ROADMAP.md)** - Development roadmap and milestones
 
 ### 🏗️ Architecture
 
 Technical architecture documentation following C4 model principles.
 
+<!-- markdownlint-disable MD013 -->
 - **[Architecture Overview](architecture/ARCHITECTURE.md)** - Comprehensive system architecture
 - **[Architecture Diagrams](diagrams/)** - Visual architecture documentation
 - [System Context](diagrams/generated/index.html) - System boundaries and external systems
@@ -45,6 +49,7 @@ Technical architecture documentation following C4 model principles.
 - [ADR 031: Documentation Excellence](adr/031-documentation-excellence.md)
 - [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.3-v0.4.0)
 - [Full ADR Index](adr/README.md) - 47 ADRs total
+<!-- markdownlint-enable MD013 -->
 
 ### 📦 Modules (v0.2.0 Crate Structure)
 
@@ -62,28 +67,36 @@ Module documentation organized by the eight-crate Clean Architecture:
 
 Operational documentation for deployment and maintenance.
 
-- **[Deployment Guide](operations/DEPLOYMENT.md)** - Deployment configurations and environments
+- **[Deployment Guide](operations/DEPLOYMENT.md)** - Deployment configurations
+  and environments
 - **[Changelog](operations/CHANGELOG.md)** - Version history and release notes
-- **[CI Optimization](operations/CI_OPTIMIZATION.md)** - CI performance and workflow tuning
+- **[CI Optimization](operations/CI_OPTIMIZATION.md)** - CI performance and
+  workflow tuning
 - **[CodeQL Setup](operations/CODEQL_SETUP.md)** - Static analysis setup
 
 ### 📋 Templates
 
 Documentation templates and standards.
 
-- **[ADR Template](templates/adr-template.md)** - Template for new Architecture Decision Records
+- **[ADR Template](templates/adr-template.md)** - Template for new
+  Architecture Decision Records
 
 ### 📚 Additional References
 
 - **[API Reference](API_REFERENCE.md)** - API and tool reference index
-- **[Environment Variables](configuration/ENVIRONMENT_VARIABLES.md)** - Full environment variable matrix
-- **[MCB Context Config](configuration/MCB_CONTEXT.md)** - `.mcp-context.toml` reference
+- **[Environment Variables](configuration/ENVIRONMENT_VARIABLES.md)** - Full
+  environment variable matrix
+- **[MCB Context Config](configuration/MCB_CONTEXT.md)** - `.mcp-context.toml`
+  reference
 - **[Generated Metrics](generated/METRICS.md)** - Generated repository metrics
 - **[Testing Integration](testing/E2E_INTEGRATION.md)** - End-to-end testing strategy
-- **[Context Discovery Research](research/CONTEXT_DISCOVERY_GIT_INTEGRATION.md)** - Git-aware context findings
-- **[Project Management Research](research/PROJECT_MANAGEMENT_RESEARCH.md)** - Planning and workflow research
+- **[Context Discovery Research](research/CONTEXT_DISCOVERY_GIT_INTEGRATION.md)**
+  - Git-aware context findings
+- **[Project Management Research](research/PROJECT_MANAGEMENT_RESEARCH.md)** -
+  Planning and workflow research
 - **[FastEmbed Provider](providers/fastembed.md)** - Provider-specific documentation
-- **[v0.4.0 Knowledge Graph Spec](v040-KNOWLEDGE-GRAPH-SPEC.md)** - Advanced context system specification
+- **[v0.4.0 Knowledge Graph Spec](v040-KNOWLEDGE-GRAPH-SPEC.md)** - Advanced
+  context system specification
 
 ## 🔧 Documentation Automation
 
@@ -113,7 +126,8 @@ make adr
 make adr-new
 ```
 
-`make docs-lint` and `make docs-validate` do not require a Rust build (useful when `target/` is broken or for docs-only CI).
+`make docs-lint` and `make docs-validate` do not require a Rust build (useful
+when `target/` is broken or for docs-only CI).
 
 ## 📊 Documentation Quality
 

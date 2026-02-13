@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # admin Module
 
 **Source**: `crates/mcb-server/src/admin/`

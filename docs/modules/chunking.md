@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # chunking Module
 
 **Source**: `crates/mcb-providers/src/language/`

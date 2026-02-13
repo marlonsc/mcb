@@ -1,4 +1,6 @@
+<!-- markdownlint-disable MD013 -->
 # CI Optimization - Validation & Testing Guide
+<!-- markdownlint-disable MD024 -->
 
 ## Status
 
@@ -47,13 +49,15 @@ This document tracks validation of CI optimizations before considering them prod
 - Tests automatically skip in CI environment to prevent timeouts
 - No need for `#[ignore]` attributes - tests skip gracefully at runtime
 
-**Status**: ✅ **FIXED** - Integration tests will now skip in CI, preventing coverage timeouts
+**Status**: ✅ **FIXED** - Integration tests will now skip in CI, preventing
+coverage timeouts
 
 ### ⏳ Pending Validations (Blocked by Issue Above)
 
 #### 1. Coverage Execution (Tarpaulin Installation & Test)
 
-**Objective**: Verify that coverage job completes without timeout when integration tests are excluded
+**Objective**: Verify that coverage job completes without timeout when
+integration tests are excluded
 
 ### Steps
 

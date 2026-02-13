@@ -79,14 +79,36 @@ mod tests {
 
     use super::*;
 
+    fn should_run_integration_tests() -> bool {
+        // Check for CI environment
+        if std::env::var("CI").is_ok() || std::env::var("GITHUB_ACTIONS").is_ok() {
+            // In CI, only run if explicitly enabled
+            return std::env::var("MCB_RUN_DOCKER_INTEGRATION_TESTS")
+                .map(|v| v == "1" || v == "true")
+                .unwrap_or(false);
+        }
+        // Local: run unless disabled
+        std::env::var("MCB_RUN_DOCKER_INTEGRATION_TESTS")
+            .map(|v| v != "0" && v != "false")
+            .unwrap_or(true)
+    }
+
     #[tokio::test]
     async fn test_real_vector_store_creation() {
+        if !should_run_integration_tests() {
+            println!("Skipping integration test");
+            return;
+        }
         let store = create_real_vector_store().await.expect("vector store");
         assert_eq!(store.provider_name(), "edgevec");
     }
 
     #[tokio::test]
     async fn test_real_vector_store_basic_operations() {
+        if !should_run_integration_tests() {
+            println!("Skipping integration test");
+            return;
+        }
         let store = create_real_vector_store().await.expect("vector store");
 
         // Create collection
@@ -118,6 +140,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_real_embedding_provider_creation() {
+        if !should_run_integration_tests() {
+            println!("Skipping integration test");
+            return;
+        }
         let provider = create_real_embedding_provider()
             .await
             .expect("fastembed provider should init");
@@ -134,6 +160,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_real_embedding_provider_with_model() {
+        if !should_run_integration_tests() {
+            println!("Skipping integration test");
+            return;
+        }
         let provider =
             create_real_embedding_provider_with_model(fastembed::EmbeddingModel::BGESmallENV15)
                 .await
@@ -150,6 +180,10 @@ mod tests {
 
     #[tokio::test]
     async fn test_real_embedding_provider_embed_batch() {
+        if !should_run_integration_tests() {
+            println!("Skipping integration test");
+            return;
+        }
         let provider = create_real_embedding_provider()
             .await
             .expect("fastembed provider should init");

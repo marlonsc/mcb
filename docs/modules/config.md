@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # config Module
 
 **Source**: `crates/mcb-infrastructure/src/config/`

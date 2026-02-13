@@ -1,8 +1,11 @@
+<!-- markdownlint-disable MD013 -->
 # Deployment Guide
 
 ## 🚀 Local Development Setup
 
-Memory Context Browser currently supports local deployment for development and testing. The system is designed as an MCP server that communicates via stdio with AI assistants.
+Memory Context Browser currently supports local deployment for development and
+testing. The system is designed as an MCP server that communicates via stdio
+with AI assistants.
 
 ## 📦 Installation
 
@@ -88,7 +91,8 @@ echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' | ./target/deb
 
 ## 🐳 Docker Development (Future)
 
->**Note**: Docker support is planned for future releases. Currently, only local Rust builds are supported.
+>**Note**: Docker support is planned for future releases. Currently, only
+local Rust builds are supported.
 
 ## 🔧 Troubleshooting
 

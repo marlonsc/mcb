@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # Module Structure
 
 This document shows the current module hierarchy for the Memory Context Browser workspace.

@@ -1,8 +1,11 @@
+<!-- markdownlint-disable MD013 -->
 # CI/CD and Release Process
+<!-- markdownlint-disable MD024 -->
 
 ## Overview
 
-This document describes the automated CI/CD pipeline and release process for Memory Context Browser. The system uses:
+This document describes the automated CI/CD pipeline and release process for
+Memory Context Browser. The system uses:
 
 - **Local Validation**: Git pre-commit hooks and `make` targets for fast feedback
 - **GitHub Actions**: Automated CI pipeline matching local validation
@@ -32,7 +35,8 @@ This installs `.git/hooks/pre-commit` which runs validation checks automatically
 
 ### What Pre-commit Validates
 
-The pre-commit hook runs the same checks as the CI pipeline but**skips tests** for fast feedback (< 30 seconds typical):
+The pre-commit hook runs the same checks as the CI pipeline but**skips tests**
+for fast feedback (< 30 seconds typical):
 
 ```bash
 
@@ -88,7 +92,8 @@ If you need to bypass pre-commit checks temporarily:
 git commit --no-verify
 ```
 
-⚠️ **Warning**: The commit will still fail in GitHub CI if it doesn't pass validation.
+⚠️ **Warning**: The commit will still fail in GitHub CI if it doesn't pass
+validation.
 
 ---
 
@@ -187,7 +192,7 @@ make version BUMP=minor  # 0.1.2 → 0.2.0
 make version BUMP=major  # 0.1.2 → 1.0.0
 
 # Create git tag
-git tag v$(make version | grep "Current version" | cut -d: -f2 | xargs)
+git tag v$(make version | grep "Current version" | cut -d: -f2 | xargs) <!-- markdownlint-disable-line MD013 -->
 
 # Or manually tag the current version
 git tag v0.1.4

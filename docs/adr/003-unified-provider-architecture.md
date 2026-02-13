@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 003: Unified Provider Architecture & Routing
+## ADR 003: Unified Provider Architecture & Routing
 
 ## Status
 
@@ -390,6 +390,6 @@ production = "milvus"       # Use Milvus for production
 
 ## References
 
-- [Circuit Breaker Pattern](https://microservices.io/patterns/reliability/circuit-breaker.html)
+- [Circuit Breaker Pattern](https://microservices.io/patterns/reliability/circuit-breaker.html) <!-- markdownlint-disable-line MD013 -->
 - [Provider Selection Strategies](https://aws.amazon.com/blogs/architecture/)
 - [Multicloud on AWS](https://aws.amazon.com/multicloud/)

@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # Providers Module
 
 **Source**: `crates/mcb-providers/src/`

@@ -1,4 +1,5 @@
 ---
+<!-- markdownlint-disable MD025 -->
 adr: 1
 title: Modular Crates Architecture
 status: IMPLEMENTED
@@ -10,7 +11,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-# ADR 001: Modular Crates Architecture
+## ADR 001: Modular Crates Architecture
 
 ## Status
 
@@ -168,7 +169,11 @@ impl ContextService {
         Self { embedding_provider, vector_store_provider }
     }
 
-    pub async fn embed_and_store(&self, collection: &str, texts: &[String]) -> Result<()> {
+    pub async fn embed_and_store(
+        &self,
+        collection: &str,
+        texts: &[String],
+    ) -> Result<()> {
         let embeddings = self.embedding_provider.embed_batch(texts).await?;
         self.vector_store_provider.store(collection, &embeddings).await?;
         Ok(())
@@ -244,7 +249,7 @@ crates/
 ├── mcb-domain/          # Layer 1: Entities, ports (traits), errors
 ├── mcb-application/     # Layer 2: Use cases, services orchestration
 ├── mcb-providers/       # Layer 3: Provider implementations (embedding, vector stores)
-├── mcb-infrastructure/  # Layer 4: DI, config, cache, crypto, health, logging
+├── mcb-infrastructure/  # Layer 4: DI, config, cache, crypto, health, logging <!-- markdownlint-disable-line MD013 -->
 ├── mcb-server/          # Layer 5: MCP protocol, handlers, transport
 └── mcb-validate/        # Dev tooling: architecture validation rules
 ```

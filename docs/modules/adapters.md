@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 # adapters Module
 
 **Note**: In v0.2.1, adapters have been reorganized into dedicated crates.

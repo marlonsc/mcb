@@ -1,6 +1,7 @@
 # FastEmbed Provider
 
-The FastEmbed Provider offers high-quality local embeddings without external API dependencies.
+The FastEmbed Provider offers high-quality local embeddings without external API
+dependencies.
 
 ## Overview
 
@@ -44,7 +45,8 @@ embedding:
 
 ### Limitations
 
-⚠️**Initial Download**: Requires internet to download the model on first execution (~23MB)
+⚠️**Initial Download**: Requires internet to download the model on first
+execution (~23MB)
 ⚠️**Memory**: Model loaded in RAM
 ⚠️**CPU**: Inference on CPU (not GPU)
 
@@ -66,7 +68,7 @@ use mcp_context_browser::providers::embedding::FastEmbedProvider;
 let provider = FastEmbedProvider::new()?;
 
 // Or specify model
-let provider = FastEmbedProvider::with_model(fastembed::EmbeddingModel::AllMiniLML12V2)?;
+let provider = FastEmbedProvider::with_model(fastembed::EmbeddingModel::AllMiniLML12V2)?; <!-- markdownlint-disable-line MD013 -->
 
 // Generate embedding
 let embedding = provider.embed("Your text here").await?;
