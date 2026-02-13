@@ -14,45 +14,130 @@ use crate::scan::for_each_rs_under_root;
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 
-define_violations! {
-    ViolationCategory::Organization,
-    pub enum VisibilityViolation {
-        /// Internal helper is public but should be restricted.
-        violation(
-            id = "VIS001",
-            severity = Info,
-            message = "Internal helper {item_name} is pub at {file}:{line} - consider pub(crate)",
-            suggestion = "Use pub(crate) for internal helpers"
-        )
-        InternalHelperTooPublic {
-            item_name: String,
-            file: PathBuf,
-            line: usize,
-        },
-        /// Domain type visibility is too restricted (should be public).
-        violation(
-            id = "VIS002",
-            severity = Warning,
-            message = "Domain type {type_name} is pub(crate) at {file}:{line} - should be pub",
-            suggestion = "Domain types should use pub for external use"
-        )
-        DomainTypeTooRestricted {
-            type_name: String,
-            file: PathBuf,
-            line: usize,
-        },
-        /// Utility module exposes too many public items.
-        violation(
-            id = "VIS003",
-            severity = Info,
-            message = "Utility module {module_name} has pub items at {file}:{line}",
-            suggestion = "Consider pub(crate) for utility modules"
-        )
-        UtilityModuleTooPublic {
-            module_name: String,
-            file: PathBuf,
-            line: usize,
-        },
+/// Visibility Violations
+#[derive(Debug, Clone, Serialize)]
+pub enum VisibilityViolation {
+    /// Internal helper is public but should be restricted.
+    InternalHelperTooPublic {
+        /// Name of the helper item.
+        item_name: String,
+        /// File where the violation occurred.
+        file: PathBuf,
+        /// Line number of the violation.
+        line: usize,
+    },
+    /// Domain type visibility is too restricted (should be public).
+    DomainTypeTooRestricted {
+        /// Name of the domain type.
+        type_name: String,
+        /// File where the violation occurred.
+        file: PathBuf,
+        /// Line number of the violation.
+        line: usize,
+    },
+    /// Utility module exposes too many public items.
+    UtilityModuleTooPublic {
+        /// Name of the utility module.
+        module_name: String,
+        /// File where the violation occurred.
+        file: PathBuf,
+        /// Line number of the violation.
+        line: usize,
+    },
+}
+
+/// Display implementation for visibility violations.
+impl std::fmt::Display for VisibilityViolation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::InternalHelperTooPublic {
+                item_name,
+                file,
+                line,
+            } => write!(
+                f,
+                "Internal helper {} is pub at {}:{} - consider pub(crate)",
+                item_name,
+                file.display(),
+                line
+            ),
+            Self::DomainTypeTooRestricted {
+                type_name,
+                file,
+                line,
+            } => write!(
+                f,
+                "Domain type {} is pub(crate) at {}:{} - should be pub",
+                type_name,
+                file.display(),
+                line
+            ),
+            Self::UtilityModuleTooPublic {
+                module_name,
+                file,
+                line,
+            } => write!(
+                f,
+                "Utility module {} has pub items at {}:{}",
+                module_name,
+                file.display(),
+                line
+            ),
+        }
+    }
+}
+
+/// Violation trait implementation for visibility violations.
+impl Violation for VisibilityViolation {
+    fn id(&self) -> &str {
+        match self {
+            Self::InternalHelperTooPublic { .. } => "VIS001",
+            Self::DomainTypeTooRestricted { .. } => "VIS002",
+            Self::UtilityModuleTooPublic { .. } => "VIS003",
+        }
+    }
+
+    fn category(&self) -> ViolationCategory {
+        ViolationCategory::Organization
+    }
+
+    fn severity(&self) -> Severity {
+        match self {
+            Self::InternalHelperTooPublic { .. } | Self::UtilityModuleTooPublic { .. } => {
+                Severity::Info
+            }
+            Self::DomainTypeTooRestricted { .. } => Severity::Warning,
+        }
+    }
+
+    fn file(&self) -> Option<&PathBuf> {
+        match self {
+            Self::InternalHelperTooPublic { file, .. }
+            | Self::DomainTypeTooRestricted { file, .. }
+            | Self::UtilityModuleTooPublic { file, .. } => Some(file),
+        }
+    }
+
+    fn line(&self) -> Option<usize> {
+        match self {
+            Self::InternalHelperTooPublic { line, .. }
+            | Self::DomainTypeTooRestricted { line, .. }
+            | Self::UtilityModuleTooPublic { line, .. } => Some(*line),
+        }
+    }
+
+    fn suggestion(&self) -> Option<String> {
+        match self {
+            Self::InternalHelperTooPublic { .. } => {
+                Some("Use pub(crate) for internal helpers".to_string())
+            }
+            Self::DomainTypeTooRestricted { .. } => {
+                Some("Domain types should use pub for external use".to_string())
+            }
+            Self::UtilityModuleTooPublic { .. } => {
+                Some("Consider pub(crate) for utility modules".to_string())
+            }
+        }
     }
 }
 

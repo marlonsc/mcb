@@ -156,10 +156,93 @@ impl UnifiedEntityCrudAdapter {
     }
 
     fn build_entity_arguments(args: EntityArgs) -> serde_json::Map<String, serde_json::Value> {
-        match serde_json::to_value(args) {
-            Ok(Value::Object(map)) => map,
-            _ => serde_json::Map::new(),
+        let mut map = serde_json::Map::new();
+        map.insert(
+            "action".to_string(),
+            serde_json::Value::String(
+                match args.action {
+                    EntityAction::Create => "create",
+                    EntityAction::Get => "get",
+                    EntityAction::Update => "update",
+                    EntityAction::List => "list",
+                    EntityAction::Delete => "delete",
+                    EntityAction::Release => "release",
+                }
+                .to_string(),
+            ),
+        );
+        map.insert(
+            "resource".to_string(),
+            serde_json::Value::String(
+                match args.resource {
+                    EntityResource::Repository => "repository",
+                    EntityResource::Branch => "branch",
+                    EntityResource::Worktree => "worktree",
+                    EntityResource::Assignment => "assignment",
+                    EntityResource::Plan => "plan",
+                    EntityResource::Version => "version",
+                    EntityResource::Review => "review",
+                    EntityResource::Issue => "issue",
+                    EntityResource::Comment => "comment",
+                    EntityResource::Label => "label",
+                    EntityResource::LabelAssignment => "label_assignment",
+                    EntityResource::Org => "org",
+                    EntityResource::User => "user",
+                    EntityResource::Team => "team",
+                    EntityResource::TeamMember => "team_member",
+                    EntityResource::ApiKey => "api_key",
+                }
+                .to_string(),
+            ),
+        );
+
+        if let Some(value) = args.data {
+            map.insert("data".to_string(), value);
         }
+        if let Some(value) = args.id {
+            map.insert("id".to_string(), serde_json::Value::String(value));
+        }
+        if let Some(value) = args.org_id {
+            map.insert("org_id".to_string(), serde_json::Value::String(value));
+        }
+        if let Some(value) = args.project_id {
+            map.insert("project_id".to_string(), serde_json::Value::String(value));
+        }
+        if let Some(value) = args.repository_id {
+            map.insert(
+                "repository_id".to_string(),
+                serde_json::Value::String(value),
+            );
+        }
+        if let Some(value) = args.worktree_id {
+            map.insert("worktree_id".to_string(), serde_json::Value::String(value));
+        }
+        if let Some(value) = args.plan_id {
+            map.insert("plan_id".to_string(), serde_json::Value::String(value));
+        }
+        if let Some(value) = args.plan_version_id {
+            map.insert(
+                "plan_version_id".to_string(),
+                serde_json::Value::String(value),
+            );
+        }
+        if let Some(value) = args.issue_id {
+            map.insert("issue_id".to_string(), serde_json::Value::String(value));
+        }
+        if let Some(value) = args.label_id {
+            map.insert("label_id".to_string(), serde_json::Value::String(value));
+        }
+        if let Some(value) = args.team_id {
+            map.insert("team_id".to_string(), serde_json::Value::String(value));
+        }
+        if let Some(value) = args.user_id {
+            map.insert("user_id".to_string(), serde_json::Value::String(value));
+        }
+        if let Some(value) = args.email {
+            map.insert("email".to_string(), serde_json::Value::String(value));
+        }
+
+        map
     }
 
     async fn execute(&self, args: EntityArgs) -> Result<Value, String> {

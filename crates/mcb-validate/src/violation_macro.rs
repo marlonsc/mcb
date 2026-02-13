@@ -177,23 +177,13 @@ macro_rules! define_violations {
 
             fn severity(&self) -> $crate::violation_trait::Severity {
                 match self {
-                    $(
-                        #[allow(unused_variables)]
-                        Self::$variant { $( $field ),* } => {
-                            #[allow(unused_variables)]
-                            let result = {
-                                define_violations!(@find_severity $severity, $( $field : $field_ty ),*)
-                            };
-                            result
-                        }
-                    ),*
+                    $( Self::$variant { .. } => $crate::violation_trait::Severity::$severity ),*
                 }
             }
 
             fn file(&self) -> Option<&std::path::PathBuf> {
                 match self {
                     $(
-                        #[allow(unused_variables)]
                         Self::$variant { $( $field ),* } => {
                             #[allow(unused_variables)]
                             let result = {
@@ -208,7 +198,6 @@ macro_rules! define_violations {
             fn line(&self) -> Option<usize> {
                 match self {
                     $(
-                        #[allow(unused_variables)]
                         Self::$variant { $( $field ),* } => {
                             #[allow(unused_variables)]
                             let result = {
@@ -223,9 +212,10 @@ macro_rules! define_violations {
             fn suggestion(&self) -> Option<String> {
                 match self {
                     $(
-                        #[allow(unused_variables)]
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@suggestion $($suggestion,)? $( $field ),*)
+                        Self::$variant { .. } => {
+                            $( return Some($suggestion.to_string()); )?
+                            #[allow(unreachable_code)]
+                            None
                         }
                     ),*
                 }
@@ -281,32 +271,6 @@ macro_rules! define_violations {
         $val.as_ref().map(|p| p.display().to_string()).unwrap_or_default()
     };
     (@fmt_val $val:ident : $ty:ty) => { $val };
-
-    // Suggestion helper - with suggestion template
-    (@suggestion $suggestion:literal, $( $field:ident ),*) => {
-        Some(format!($suggestion, $( $field = $field ),*))
-    };
-
-    // Suggestion helper - no suggestion
-    (@suggestion $( $field:ident ),*) => {
-        None
-    };
-
-    // Helper to find severity field or use default
-    (@find_severity $default:ident, $( $field:ident : $field_ty:ty ),*) => {{
-        $(
-            if let Some(s) = define_violations!(@check_severity $field : $field_ty) {
-                return *s;
-            }
-        )*
-        $crate::violation_trait::Severity::$default
-    }};
-
-    (@check_severity severity : $ty:ty) => {
-         #[allow(clippy::clone_on_copy)]
-         Some((*severity).clone())
-    };
-    (@check_severity $field:ident : $ty:ty) => { None };
 }
 
 /// Macro to implement the `Validator` trait for types that have a `validate_all()` method.

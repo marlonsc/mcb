@@ -18,90 +18,72 @@ use crate::scan::for_each_rs_under_root;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
-define_violations! {
-    no_display,
-    ViolationCategory::Architecture,
-    pub enum DependencyViolation {
-        /// Forbidden dependency in Cargo.toml
-        violation(
-            id = "DEP001",
-            severity = Error,
-            suggestion = "Remove {forbidden_dep} from {crate_name}/Cargo.toml"
-        )
-        ForbiddenCargoDepedency {
-            /// Name of the crate that contains the forbidden dependency.
-            crate_name: String,
-            /// Name of the crate that is forbidden as a dependency.
-            forbidden_dep: String,
-            /// Path to the Cargo.toml file containing the violation.
-            location: PathBuf,
-            /// Severity level of the violation.
-            severity: Severity,
-        },
-        /// Forbidden use statement in source code
-        violation(
-            id = "DEP002",
-            severity = Error,
-            suggestion = "Access {forbidden_dep} through allowed layer"
-        )
-        ForbiddenUseStatement {
-            /// Name of the crate where the violation was found.
-            crate_name: String,
-            /// Name of the crate whose items are being incorrectly imported.
-            forbidden_dep: String,
-            /// Path to the source file containing the violation.
-            file: PathBuf,
-            /// Line number where the forbidden `use` statement occurs.
-            line: usize,
-            /// The content of the line containing the violation.
-            context: String,
-            /// Severity level of the violation.
-            severity: Severity,
-        },
-        /// Circular dependency detected
-        violation(
-            id = "DEP003",
-            severity = Error,
-            suggestion = "Extract shared types to the domain crate"
-        )
-        CircularDependency {
-            /// The sequence of crates forming the dependency cycle.
-            cycle: Vec<String>,
-            /// Severity level of the violation.
-            severity: Severity,
-        },
-        /// Admin surface imports repository ports outside approved composition roots.
-        violation(
-            id = "DEP004",
-            severity = Error,
-            suggestion = "Route admin operations through ToolHandlers/UnifiedExecution and keep repository imports in approved composition roots only"
-        )
-        AdminBypassImport {
-            /// Source file that introduced the bypass import.
-            file: PathBuf,
-            /// Line where bypass import appears.
-            line: usize,
-            /// Offending source line.
-            context: String,
-            /// Severity level of the violation.
-            severity: Severity,
-        },
-        /// CLI code bypasses unified execution by calling validate crate directly.
-        violation(
-            id = "DEP005",
-            severity = Error,
-            suggestion = "Route CLI business commands through the unified execution path instead of direct mcb_validate calls"
-        )
-        CliBypassPath {
-            /// Source file that introduced direct validation execution.
-            file: PathBuf,
-            /// Line where bypass call/import appears.
-            line: usize,
-            /// Offending source line.
-            context: String,
-            /// Severity level of the violation.
-            severity: Severity,
-        },
+/// Dependency violation types
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DependencyViolation {
+    /// Forbidden dependency in Cargo.toml
+    ForbiddenCargoDepedency {
+        /// Name of the crate that contains the forbidden dependency.
+        crate_name: String,
+        /// Name of the crate that is forbidden as a dependency.
+        forbidden_dep: String,
+        /// Path to the Cargo.toml file containing the violation.
+        location: PathBuf,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Forbidden use statement in source code
+    ForbiddenUseStatement {
+        /// Name of the crate where the violation was found.
+        crate_name: String,
+        /// Name of the crate whose items are being incorrectly imported.
+        forbidden_dep: String,
+        /// Path to the source file containing the violation.
+        file: PathBuf,
+        /// Line number where the forbidden `use` statement occurs.
+        line: usize,
+        /// The content of the line containing the violation.
+        context: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Circular dependency detected
+    CircularDependency {
+        /// The sequence of crates forming the dependency cycle.
+        cycle: Vec<String>,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Admin surface imports repository ports outside approved composition roots.
+    AdminBypassImport {
+        /// Source file that introduced the bypass import.
+        file: PathBuf,
+        /// Line where bypass import appears.
+        line: usize,
+        /// Offending source line.
+        context: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// CLI code bypasses unified execution by calling validate crate directly.
+    CliBypassPath {
+        /// Source file that introduced direct validation execution.
+        file: PathBuf,
+        /// Line where bypass call/import appears.
+        line: usize,
+        /// Offending source line.
+        context: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+}
+
+impl DependencyViolation {
+    /// Returns the severity level of this violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
+    pub fn severity(&self) -> Severity {
+        <Self as Violation>::severity(self)
     }
 }
 
@@ -171,6 +153,74 @@ impl std::fmt::Display for DependencyViolation {
                     context
                 )
             }
+        }
+    }
+}
+
+impl Violation for DependencyViolation {
+    fn id(&self) -> &str {
+        match self {
+            Self::ForbiddenCargoDepedency { .. } => "DEP001",
+            Self::ForbiddenUseStatement { .. } => "DEP002",
+            Self::CircularDependency { .. } => "DEP003",
+            Self::AdminBypassImport { .. } => "DEP004",
+            Self::CliBypassPath { .. } => "DEP005",
+        }
+    }
+
+    fn category(&self) -> ViolationCategory {
+        ViolationCategory::Architecture
+    }
+
+    fn severity(&self) -> Severity {
+        match self {
+            Self::ForbiddenCargoDepedency { severity, .. }
+            | Self::ForbiddenUseStatement { severity, .. }
+            | Self::CircularDependency { severity, .. }
+            | Self::AdminBypassImport { severity, .. }
+            | Self::CliBypassPath { severity, .. } => *severity,
+        }
+    }
+
+    fn file(&self) -> Option<&std::path::PathBuf> {
+        match self {
+            Self::ForbiddenCargoDepedency { location, .. } => Some(location),
+            Self::ForbiddenUseStatement { file, .. } => Some(file),
+            Self::CircularDependency { .. } => None,
+            Self::AdminBypassImport { file, .. } | Self::CliBypassPath { file, .. } => Some(file),
+        }
+    }
+
+    fn line(&self) -> Option<usize> {
+        match self {
+            Self::ForbiddenUseStatement { line, .. }
+            | Self::AdminBypassImport { line, .. }
+            | Self::CliBypassPath { line, .. } => Some(*line),
+            _ => None,
+        }
+    }
+
+    fn suggestion(&self) -> Option<String> {
+        match self {
+            Self::ForbiddenCargoDepedency {
+                crate_name,
+                forbidden_dep,
+                ..
+            } => Some(format!(
+                "Remove {forbidden_dep} from {crate_name}/Cargo.toml"
+            )),
+            Self::ForbiddenUseStatement { forbidden_dep, .. } => {
+                Some(format!("Access {forbidden_dep} through allowed layer"))
+            }
+            Self::CircularDependency { .. } => {
+                Some("Extract shared types to the domain crate".to_string())
+            }
+            Self::AdminBypassImport { .. } => Some(
+                "Route admin operations through ToolHandlers/UnifiedExecution and keep repository imports in approved composition roots only".to_string(),
+            ),
+            Self::CliBypassPath { .. } => Some(
+                "Route CLI business commands through the unified execution path instead of direct mcb_validate calls".to_string(),
+            ),
         }
     }
 }

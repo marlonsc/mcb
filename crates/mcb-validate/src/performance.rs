@@ -23,76 +23,233 @@ use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
-define_violations! {
-    ViolationCategory::Performance,
-    pub enum PerformanceViolation {
-        /// .clone() called inside a loop
-        violation(
-            id = "PERF001",
-            severity = Warning,
-            message = "Clone in loop: {file}:{line} - {context} ({suggestion})",
-            suggestion = "Consider borrowing or moving instead of cloning"
-        )
-        CloneInLoop {
-            file: PathBuf,
-            line: usize,
-            context: String,
-            suggestion: String,
-            severity: Severity,
-        },
-        /// Vec/String allocation inside a loop
-        violation(
-            id = "PERF002",
-            severity = Warning,
-            message = "Allocation in loop: {file}:{line} - {allocation_type} ({suggestion})",
-            suggestion = "Move allocation outside loop or reuse buffer"
-        )
-        AllocationInLoop {
-            file: PathBuf,
-            line: usize,
-            allocation_type: String,
-            suggestion: String,
-            severity: Severity,
-        },
-        /// Arc<Mutex<T>> where simpler patterns would work
-        violation(
-            id = "PERF003",
-            severity = Info,
-            message = "Arc/Mutex overuse: {file}:{line} - {pattern} ({suggestion})"
-        )
-        ArcMutexOveruse {
-            file: PathBuf,
-            line: usize,
-            pattern: String,
-            suggestion: String,
-            severity: Severity,
-        },
-        /// Inefficient iterator pattern
-        violation(
-            id = "PERF004",
-            severity = Info,
-            message = "Inefficient iterator: {file}:{line} - {pattern} ({suggestion})"
-        )
-        InefficientIterator {
-            file: PathBuf,
-            line: usize,
-            pattern: String,
-            suggestion: String,
-            severity: Severity,
-        },
-        /// Inefficient string handling
-        violation(
-            id = "PERF005",
-            severity = Info,
-            message = "Inefficient string: {file}:{line} - {pattern} ({suggestion})"
-        )
-        InefficientString {
-            file: PathBuf,
-            line: usize,
-            pattern: String,
-            suggestion: String,
-            severity: Severity,
-        },
+/// Performance violation types
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum PerformanceViolation {
+    /// .`clone()` called inside a loop
+    CloneInLoop {
+        /// File where the violation occurred.
+        file: PathBuf,
+        /// Line number of the violation.
+        line: usize,
+        /// Code context showing the clone call.
+        context: String,
+        /// Suggested improvement.
+        suggestion: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Vec/String allocation inside a loop
+    AllocationInLoop {
+        /// File where the violation occurred.
+        file: PathBuf,
+        /// Line number of the violation.
+        line: usize,
+        /// Type of allocation detected (e.g., "Vec::new()").
+        allocation_type: String,
+        /// Suggested improvement.
+        suggestion: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// `Arc<Mutex<T>>` where simpler patterns would work
+    ArcMutexOveruse {
+        /// File where the violation occurred.
+        file: PathBuf,
+        /// Line number of the violation.
+        line: usize,
+        /// The overuse pattern detected.
+        pattern: String,
+        /// Suggested alternative.
+        suggestion: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Inefficient iterator pattern
+    InefficientIterator {
+        /// File where the violation occurred.
+        file: PathBuf,
+        /// Line number of the violation.
+        line: usize,
+        /// The inefficient pattern detected.
+        pattern: String,
+        /// Suggested optimized pattern.
+        suggestion: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+    /// Inefficient string handling
+    InefficientString {
+        /// File where the violation occurred.
+        file: PathBuf,
+        /// Line number of the violation.
+        line: usize,
+        /// The inefficient string pattern detected.
+        pattern: String,
+        /// Suggested optimization.
+        suggestion: String,
+        /// Severity level of the violation.
+        severity: Severity,
+    },
+}
+
+impl PerformanceViolation {
+    /// Returns the severity level of the violation.
+    ///
+    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
+    pub fn severity(&self) -> Severity {
+        <Self as Violation>::severity(self)
+    }
+}
+
+/// Display implementation for performance violations.
+///
+/// Formats violations as human-readable messages with file location, line number,
+/// and context about the performance issue detected.
+impl std::fmt::Display for PerformanceViolation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::CloneInLoop {
+                file,
+                line,
+                context,
+                suggestion,
+                ..
+            } => {
+                write!(
+                    f,
+                    "Clone in loop: {}:{} - {} ({})",
+                    file.display(),
+                    line,
+                    context,
+                    suggestion
+                )
+            }
+            Self::AllocationInLoop {
+                file,
+                line,
+                allocation_type,
+                suggestion,
+                ..
+            } => {
+                write!(
+                    f,
+                    "Allocation in loop: {}:{} - {} ({})",
+                    file.display(),
+                    line,
+                    allocation_type,
+                    suggestion
+                )
+            }
+            Self::ArcMutexOveruse {
+                file,
+                line,
+                pattern,
+                suggestion,
+                ..
+            } => {
+                write!(
+                    f,
+                    "Arc/Mutex overuse: {}:{} - {} ({})",
+                    file.display(),
+                    line,
+                    pattern,
+                    suggestion
+                )
+            }
+            Self::InefficientIterator {
+                file,
+                line,
+                pattern,
+                suggestion,
+                ..
+            } => {
+                write!(
+                    f,
+                    "Inefficient iterator: {}:{} - {} ({})",
+                    file.display(),
+                    line,
+                    pattern,
+                    suggestion
+                )
+            }
+            Self::InefficientString {
+                file,
+                line,
+                pattern,
+                suggestion,
+                ..
+            } => {
+                write!(
+                    f,
+                    "Inefficient string: {}:{} - {} ({})",
+                    file.display(),
+                    line,
+                    pattern,
+                    suggestion
+                )
+            }
+        }
+    }
+}
+
+/// Violation trait implementation for performance violations.
+///
+/// Provides violation metadata including ID, category, severity, file location,
+/// line number, and remediation suggestions for performance anti-patterns.
+impl Violation for PerformanceViolation {
+    fn id(&self) -> &str {
+        match self {
+            Self::CloneInLoop { .. } => "PERF001",
+            Self::AllocationInLoop { .. } => "PERF002",
+            Self::ArcMutexOveruse { .. } => "PERF003",
+            Self::InefficientIterator { .. } => "PERF004",
+            Self::InefficientString { .. } => "PERF005",
+        }
+    }
+
+    fn category(&self) -> ViolationCategory {
+        ViolationCategory::Performance
+    }
+
+    fn severity(&self) -> Severity {
+        match self {
+            Self::CloneInLoop { severity, .. }
+            | Self::AllocationInLoop { severity, .. }
+            | Self::ArcMutexOveruse { severity, .. }
+            | Self::InefficientIterator { severity, .. }
+            | Self::InefficientString { severity, .. } => *severity,
+        }
+    }
+
+    fn file(&self) -> Option<&PathBuf> {
+        match self {
+            Self::CloneInLoop { file, .. }
+            | Self::AllocationInLoop { file, .. }
+            | Self::ArcMutexOveruse { file, .. }
+            | Self::InefficientIterator { file, .. }
+            | Self::InefficientString { file, .. } => Some(file),
+        }
+    }
+
+    fn line(&self) -> Option<usize> {
+        match self {
+            Self::CloneInLoop { line, .. }
+            | Self::AllocationInLoop { line, .. }
+            | Self::ArcMutexOveruse { line, .. }
+            | Self::InefficientIterator { line, .. }
+            | Self::InefficientString { line, .. } => Some(*line),
+        }
+    }
+
+    fn suggestion(&self) -> Option<String> {
+        match self {
+            Self::CloneInLoop { suggestion, .. }
+            | Self::AllocationInLoop { suggestion, .. }
+            | Self::ArcMutexOveruse { suggestion, .. }
+            | Self::InefficientIterator { suggestion, .. }
+            | Self::InefficientString { suggestion, .. } => Some(suggestion.clone()),
+        }
     }
 }
 

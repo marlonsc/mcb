@@ -1,13 +1,22 @@
 //! Swift language processor for AST-based code chunking.
 
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::value_objects::Language;
+
 use crate::language::common::{
-    BaseProcessor, CHUNK_SIZE_SWIFT, LanguageConfig, NodeExtractionRule, TS_NODE_CLASS_DECLARATION,
-    TS_NODE_FUNCTION_DECLARATION,
+    BaseProcessor, CHUNK_SIZE_SWIFT, LanguageConfig, LanguageProcessor, NodeExtractionRule,
+    TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION,
 };
 
 /// Swift language processor.
 pub struct SwiftProcessor {
     processor: BaseProcessor,
+}
+
+impl Default for SwiftProcessor {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SwiftProcessor {
@@ -35,4 +44,19 @@ impl SwiftProcessor {
     }
 }
 
-crate::impl_delegating_language_processor!(SwiftProcessor, processor);
+impl LanguageProcessor for SwiftProcessor {
+    fn config(&self) -> &LanguageConfig {
+        self.processor.config()
+    }
+
+    fn extract_chunks_with_tree_sitter(
+        &self,
+        tree: &tree_sitter::Tree,
+        content: &str,
+        file_name: &str,
+        language: &Language,
+    ) -> Vec<CodeChunk> {
+        self.processor
+            .extract_chunks_with_tree_sitter(tree, content, file_name, language)
+    }
+}
