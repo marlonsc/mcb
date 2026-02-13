@@ -1,286 +1,245 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
-# CI Optimization Strategy - v0.1.4
+# CI Optimization Strategy - v0.2.1
 <!-- markdownlint-disable MD024 -->
 
 ## Overview
 
-CI pipeline optimization to reduce unnecessary job executions while
-maintaining code quality. Implemented two phases of optimization in January
-2026 to prevent thousands of redundant workflows.
+CI pipeline optimization evolved from push-to-main workflows to **PR-first with conditional policies**. This document describes the v0.2.1 refactor (February 2026) that transformed CI/CD from redundant push-triggered jobs to intelligent PR-based gating with Draft/Bot/Ready classification.
 
-## Problem Statement
+## Evolution Timeline
 
-Before optimization:
+### v0.1.4 (January 2026) - Path Filters & Matrix Optimization
+- Path-based filtering to skip irrelevant jobs
+- Test matrix split (PR: stable only, Main: stable+beta)
+- Coverage job conditional on main pushes
+- **Problem**: Still ran heavy jobs on push-to-main, duplicating PR work
 
-- **Per Pull Request**: 9 jobs (even for docs-only changes)
-- **Per Push to Main**: 19 jobs (even for docs-only changes)
-- **Monthly estimate**: 465+ jobs
-- **Result**: Wasted resources, slow feedback on PRs, unnecessary Milvus/Ollama timeouts
+### v0.2.1 (February 2026) - PR-First with Conditional Policies
+- **Paradigm shift**: PRs become the single correctness gate
+- Draft/Bot/Ready classification controls job execution
+- Push-to-main runs ONLY deployment (GitHub Pages)
+- CodeQL moved after required gate check (non-blocking)
+- Workflow split: `ci.yml` (PRs), `pages.yml` (deploy), `release.yml` (tags)
 
-## Solution: Two-Phase Optimization
+## Problem Statement (v0.2.1)
 
-### Phase 1: Path Filters & Conditionals
+Before PR-first refactor:
 
-**Goal**: Only run jobs when their specific code changes
+- **Per Pull Request**: 8-9 jobs + separate CodeQL workflow
+- **Per Push to Main**: 17-19 jobs (DUPLICATES all PR work)
+- **CodeQL**: Blocks required gate check (~5-10 min delay)
+- **Bot PRs**: Run full suite (wasteful for dependency updates)
+- **Draft PRs**: Run full suite (wasteful during development)
+- **Monthly waste**: ~200+ redundant jobs
 
-### Changes
+## Solution: PR-First with Conditional Policies
 
-1. **CI Workflow Path Filters** (`src/**`, `crates/**`, `tests/**`, `Cargo.toml`, `.github/workflows/ci.yml`)
+### Core Principles
 
-- Skip CI entirely when only docs change
-- Skip CI when only scripts change
+1. **PRs are the gate** - All correctness checks happen on PR (not push-to-main)
+2. **Conditional policies** - Draft/Bot/Ready PRs run different job subsets
+3. **Deploy-only main** - Push-to-main only deploys docs (no CI)
+4. **Non-blocking security** - CodeQL runs AFTER gate check passes
+5. **Single required check** - `CI / Rust CI (PR consolidated)` remains stable
 
-1. **Coverage Job Conditional** (`if: github.event_name == 'push' && github.ref == 'refs/heads/main'`)
+### Policy Matrix
 
-- Only run on main branch merges
-- Skip on all PRs and develop branch
-- Expensive tarpaulin job only runs where it matters
+| PR Type | Heavy Jobs | CodeQL | Cross-Platform | Coverage | Golden Tests | Gate Check | Time to Gate |
+|---------|------------|--------|----------------|----------|--------------|------------|--------------|
+| **Draft** | ❌ SKIP | ❌ SKIP | ❌ SKIP | ❌ SKIP | ❌ SKIP | ✅ PASS | ~30 seconds |
+| **Bot** | ❌ SKIP* | ❌ SKIP | ❌ SKIP | ❌ SKIP | ❌ SKIP | ✅ Simplified | ~3-5 minutes |
+| **Ready** | ✅ RUN | ✅ RUN (after gate) | ✅ RUN | ✅ RUN | ✅ RUN | ✅ Full | ~5-10 minutes |
 
-1. **CodeQL Workflow Path Filters** (same code paths as CI)
+\* Bot: Runs lint + test + startup + validate (Linux+stable only)
 
-- Security analysis only when code changes
-- Skip docs-only and configuration-only changes
+See `CI_PR_POLICIES.md` for detailed classification logic and job execution matrices.
 
-1. **Tarpaulin Integration Test Exclusion**
+## Impact Analysis
 
-- Created `.tarpaulin.toml` configuration
-- Updated `make coverage` to exclude integration tests and admin tests
-- Prevents timeout from Milvus/Ollama dependencies not available in CI
-- Added timeout (300s) and thread control parameters
+### v0.1.4 → v0.2.1 Comparison
 
-#### Impact
+#### Draft PR (during development)
+- **Before**: 8 jobs, ~8-10 minutes
+- **After**: Gate check only, ~30 seconds
+- **Savings**: ~95% time reduction for iterative development
 
-```text
-Docs-only PR:    0 jobs (was 9)    → 100% reduction
-Docs-only push:  6 jobs (was 19)   → 68% reduction
-Code PR:         8 jobs (was 9)    → 11% reduction
-Code push:       17 jobs (was 19)  → 11% reduction
+#### Bot PR (Dependabot)
+- **Before**: 8-9 jobs, ~8-10 minutes
+- **After**: 4 jobs (simplified), ~3-5 minutes
+- **Savings**: ~50% time + skips expensive jobs (coverage, golden, cross-platform)
 
-Monthly savings: ~160 jobs (34% reduction)
-```
+#### Ready PR (human review)
+- **Before**: 8-9 jobs, ~8-10 minutes (CodeQL blocks gate)
+- **After**: Full suite, ~10-15 minutes (CodeQL after gate, non-blocking)
+- **Gate passes**: ~5-10 minutes (no longer blocked by CodeQL)
+- **Benefit**: Faster merge approval, comprehensive validation
 
-### Phase 2: Test Matrix Optimization
+#### Push to Main
+- **Before**: 17-19 jobs (DUPLICATES all PR work)
+- **After**: 1 workflow (Pages deploy only)
+- **Savings**: ~95% reduction, eliminates redundant validation
 
-**Goal**: Reduce test matrix expansion in PRs while maintaining stability
-
-### Changes (1)
-
-1. **Split Test Job** into conditional variants:
-
-- `test-pr`: Runs ONLY on `pull_request` events, tests `stable` only
-- `test-main`: Runs ONLY on `push` to `main`, tests `stable` + `beta`
-
-1. **Updated Job Dependencies**:
-
-- `golden-tests`: Depends on `test-main` (not `test`)
-- `coverage`: Depends on `test-main` (not `test`)
-- Both jobs now have explicit `if:` conditionals
-
-1. **Clear Job Intent**:
-
-- PR validation: Fast feedback (stable only)
-- Main verification: Comprehensive (stable + beta)
-
-#### Impact
-
-```text
-PR Test Execution:      ~3-4 min (was ~6-8 min)    → 50% faster
-Main Test Execution:    ~8-10 min (unchanged)      → Comprehensive validation
-PR Cycle Time:          5-8 min faster             → Better developer experience
-```
+#### Monthly Savings (estimated)
+- **Draft iterations**: 50 PRs × 8 min saved = ~400 min saved
+- **Bot PRs**: 20 PRs × 5 min saved = ~100 min saved
+- **Main pushes**: 30 pushes × 17 jobs saved = ~510 jobs eliminated
+- **Total**: ~600+ jobs/month eliminated, ~500+ minutes saved
 
 ## Configuration Details
 
-### `.tarpaulin.toml`
+### Required Status Check
 
-```toml
-[coverage]
-exclude_files = [
-    "crates/*/tests/integration/*",
-    "crates/*/tests/admin/*"
-]
+**CRITICAL**: The required check name MUST remain stable:
+
+```text
+Name: "CI / Rust CI (PR consolidated)"
+Status: REQUIRED
+Strict Mode: Enabled (branches must be up-to-date)
 ```
 
-**Rationale**: Integration tests that require external services (Milvus,
-Ollama) are not available in GitHub Actions. Excluding them from coverage
-measurement prevents timeouts and allows coverage to complete successfully.
+This check is referenced in repository rulesets and MUST NOT change to avoid breaking branch protection.
 
-### Makefile Coverage Target
+### Workflow Files
 
-```bash
-coverage: ## Code coverage (MCB_CI=1 for CI format)
-ifeq ($(MCB_CI),1)
- @echo "Generating lcov coverage (excluding integration tests)..."
- cargo tarpaulin --out Lcov --output-dir coverage \
-  --exclude-files 'crates/*/tests/integration/*' \
-  --exclude-files 'crates/*/tests/admin/*' \
-  --timeout 300 \
-  --test-threads $(if $(THREADS),$(THREADS),4)
-```
+#### `.github/workflows/ci.yml` (PRs only)
 
-### Flags
+**Triggers**: `pull_request` events (opened, synchronize, reopened, ready_for_review, converted_to_draft) targeting `main`
 
-- `--exclude-files`: Skip specific test directories
-- `--timeout 300`: 5-minute timeout per test
-- `--test-threads`: Control parallelism (default 4)
+**Jobs**:
+- `classify` - Detect Draft/Bot/Ready state
+- `changes` - Path-based filtering
+- `lint` - Rust 2024 compliance
+- `test` - Matrix (Linux+stable for all, +macOS/Windows/beta for Ready)
+- `startup-smoke` - DDL/init validation
+- `validate` - Architecture checks
+- `audit` - Security audit
+- `golden-tests` - Acceptance tests (Ready only)
+- `coverage` - Code coverage (Ready only)
+- `release-build` - Binary builds (Ready only)
+- `rust-ci` - **REQUIRED GATE CHECK** (depends on all except CodeQL)
+- `analyze` - CodeQL security (Ready only, runs AFTER `rust-ci`)
 
-### CI Workflow Triggers
+#### `.github/workflows/pages.yml` (Main pushes only)
 
-### CI Workflow
+**Triggers**: `push` to `main` branch
+
+**Jobs**:
+- Build mdBook documentation
+- Build Rust API docs
+- Deploy to GitHub Pages
+
+**Note**: NO CI validation here - all correctness checks happened in PR
+
+#### `.github/workflows/release.yml` (Tag pushes only)
+
+**Triggers**: `push` tags matching `v*`
+
+**Jobs**:
+- Build binaries (Linux, macOS, Windows)
+- Create GitHub Release
+- Upload binary artifacts
+
+### CodeQL Optimization
+
+**Before v0.2.1**: CodeQL was a separate workflow, blocked PRs for 5-10 minutes
+
+**After v0.2.1**:
+- Integrated into `ci.yml` as `analyze` job
+- Depends on `rust-ci` (required gate check)
+- Only runs for Ready PRs (`run_full == 'true'`)
+- Does NOT block merge approval (runs after gate passes)
 
 ```yaml
-on:
-  push:
-    branches: [main, develop]
-    paths:
-      -   'src/**'
-      -   'crates/**'
-      -   'tests/**'
-      -   'Cargo.toml'
-      -   'Cargo.lock'
-      -   '.github/workflows/ci.yml'
-      -   '.github/setup-ci.sh'
-  pull_request:
-    branches: [main, develop]
-    paths: [same as push]
+analyze:
+  needs: [changes, classify, rust-ci]
+  if: needs.classify.outputs.run_full == 'true'
 ```
 
-### CodeQL Workflow
-
-```yaml
-on:
-  push:
-    branches: [main]
-    tags: ['v*']
-    paths:
-      -   'src/**'
-      -   'crates/**'
-      -   'Cargo.toml'
-      -   'Cargo.lock'
-      -   '.github/workflows/codeql.yml'
-```
-
-## Workflow Execution Scenarios
-
-### Scenario 1: Documentation-Only Change to Main
-
-**Before**: 19 jobs (CI, Docs, CodeQL, Release jobs all run)
-**After**: 6 jobs (Only Docs jobs)
-**Savings**: 13 jobs
-
-```text
-❌ CI Pipeline:     SKIP (no code changes)
-❌ CodeQL:          SKIP (no code changes)
-❌ Coverage:        SKIP (not on code change)
-❌ Release Build:   SKIP (no code changes)
-✅ Docs Validate:   RUN
-✅ Docs Update:     RUN
-✅ Diagrams:        RUN
-✅ Rust Docs:       RUN
-✅ mdBook Build:    RUN
-✅ Deploy:          RUN
-```
-
-### Scenario 2: Code PR to Main
-
-**Before**: 9 jobs (all tests run)
-**After**: 8 jobs (stable test only, no coverage)
-**Savings**: 1 job + faster execution
-
-```text
-✅ Lint:            RUN
-✅ Test PR:         RUN (stable only, ~3-4 min)
-❌ Test Main:       SKIP (not main push)
-✅ Validate:        RUN
-❌ Golden Tests:    SKIP (depends on test-main)
-❌ Coverage:        SKIP (not main push)
-✅ Audit:           RUN
-✅ Docs:            RUN
-```
-
-### Scenario 3: Code Push to Main
-
-**Before**: 12 CI jobs + 6 Docs jobs = 18 total
-**After**: 10 CI jobs + 6 Docs jobs = 16 total
-**Savings**: 2 jobs
-
-```text
-✅ Lint:            RUN
-✅ Test Main:       RUN (stable + beta, ~8-10 min)
-✅ Validate:        RUN
-✅ Golden Tests:    RUN (depends on test-main)
-✅ Coverage:        RUN (depends on test-main)
-✅ Audit:           RUN
-✅ Docs:            RUN
-✅ Release Build:   RUN (3 platforms)
-```
+**Note**: Old standalone `codeql.yml` still exists on `main` branch until PR #94 merges. Bot PRs targeting `main` currently trigger both:
+- OLD `codeql.yml` from `main` (will be deleted when PR merges)
+- NEW `analyze` job from PR branch (correctly skips for bots)
 
 ## Monitoring & Validation
 
 ### Success Criteria
 
-✅ **No false negatives**: All bugs still caught by CI
-✅ **Fast PR feedback**: < 5 min for typical code PR
-✅ **Reduced waste**: 34% fewer jobs monthly
-✅ **Main validation comprehensive**: Still tests stable + beta
-
-### Validation Tests
-
-1. **PR with code change**: Verify test-pr runs, coverage skipped
-2. **PR with docs change**: Verify entire CI skipped
-3. **Push to main with code**: Verify test-main (stable+beta) runs, coverage runs
-4. **Push to main with docs**: Verify only docs jobs run
-5. **Coverage execution**: Verify tarpaulin completes without timeout
+✅ **Draft PRs**: Gate passes in \u003c 1 min (no heavy jobs)
+✅ **Bot PRs**: Gate passes in \u003c 5 min (simplified suite)
+✅ **Ready PRs**: Gate passes in \u003c 10 min (CodeQL not blocking)
+✅ **Main pushes**: No CI jobs (Pages deploy only)
+✅ **Required check stable**: `CI / Rust CI (PR consolidated)` never changes
+✅ **No false negatives**: All correctness checks still enforced
 
 ### Key Metrics to Track
 
-- **PR cycle time**: Target < 8 minutes (from 10-12 before optimization)
-- **CI jobs per PR**: Target ≤ 8 jobs (from 9)
-- **CI jobs per main push**: Target ≤ 18 jobs (from 19)
-- **Coverage execution**: Target < 30 minutes (was timing out at 30+ min)
-- **False negatives**: 0 (no bugs missed by path filters)
+- **Draft PR cycle**: Target \u003c 1 min (from 8-10 min in v0.1.4)
+- **Bot PR cycle**: Target \u003c 5 min (from 8-10 min)
+- **Ready PR gate check**: Target \u003c 10 min (was blocked by CodeQL)
+- **Main push CI jobs**: Target 0 (from 17-19 jobs)
+- **Monthly CI jobs**: Target ~40% reduction from v0.1.4
+- **False negatives**: 0 (no bugs missed by conditional policies)
 
-## Known Limitations
+## Known Limitations & Trade-offs
 
-1. **Beta tests on main only**: PRs don't test beta Rust channel
+### 1. Draft PRs Skip All Validation
 
-- Mitigation: Main branch catch issues before release
-- Trade-off acceptable: Dev feedback speed vs comprehensive testing
+**Limitation**: Draft PRs pass gate check without running any jobs
 
-1. **Integration tests excluded from coverage**: Milvus/Ollama requirements
+**Mitigation**: Converting to Ready triggers full suite before merge
+**Trade-off**: Development speed vs continuous validation
+**Status**: Acceptable - drafts are work-in-progress
 
-- Mitigation: Integration tests still run in full test suite
-- Trade-off acceptable: Coverage on unit/stable code vs external service dependency
+### 2. Bot PRs Run Simplified Suite
 
-1. **No cross-platform testing on PR**: Only Linux tested
+**Limitation**: Dependabot PRs skip cross-platform, coverage, golden tests
 
-- Mitigation: Release builds catch platform-specific issues
-- Trade-off acceptable: PR feedback speed vs pre-release validation
+**Mitigation**: Main branch and Ready PRs still run full suite
+**Trade-off**: Bot PR speed vs comprehensive validation
+**Status**: Acceptable - dependency updates rarely break platforms
 
-## Future Optimizations (Out of Scope)
+### 3. CodeQL Runs After Gate Check
 
-1. **Distributed coverage**: Run coverage on multiple platforms
-2. **Dynamic matrix**: Skip matrix based on code analysis
-3. **Composite action caching**: Cache setup steps
-4. **Service containers**: Conditionally spin up Milvus/Ollama for selective tests
-5. **Workflow reusability**: DRY up workflow definitions
+**Limitation**: Security issues found AFTER PR is mergeable
 
-## Commits
+**Mitigation**: CodeQL still blocks merge if issues found (not silently ignored)
+**Trade-off**: Merge approval speed vs security-first gating
+**Status**: Acceptable - security issues are rare, gate speed prioritized
 
-- **Phase 1**: `4c0ba12` - Path filters, coverage conditional, tarpaulin config
-- **Phase 2**: `a29e1d6` - Test matrix split (stable for PR, stable+beta for main)
+### 4. Main Push Skips All CI
+
+**Limitation**: No validation on main push (trust PR validation)
+
+**Mitigation**: PRs enforce strict mode (branch must be up-to-date)
+**Trade-off**: Main push speed vs redundant validation
+**Status**: Acceptable - PR is single source of truth
+
+### 5. Standalone CodeQL Workflow (Temporary)
+
+**Limitation**: Old `codeql.yml` on `main` still runs for all PRs targeting main
+
+**Mitigation**: Will be deleted when PR #94 merges
+**Trade-off**: None (temporary state during migration)
+**Status**: Known issue - resolves automatically on merge
+
+## Future Optimizations (v0.3.0+)
+
+1. **Smart classification**: Detect "docs-only" PRs and skip even simplified suite
+2. **Incremental validation**: Only run affected tests based on code changes
+3. **Parallel bot handling**: Auto-approve trusted bot PRs after simplified suite passes
+4. **Dynamic matrix**: Adjust platform matrix based on changed files
+5. **Workflow caching**: Cache dependencies across PR lifecycle (draft → ready)
 
 ## References
 
-- ADR 022: Continuous Integration Strategy
-- `.github/workflows/ci.yml`: Main CI pipeline
-- `.github/workflows/codeql.yml`: Security analysis workflow
-- `.github/workflows/docs.yml`: Documentation pipeline
-- `make/quality.mk`: Coverage target configuration
-- `.tarpaulin.toml`: Tarpaulin configuration
+- `.github/workflows/ci.yml` - Main PR validation pipeline
+- `.github/workflows/pages.yml` - GitHub Pages deployment
+- `.github/workflows/release.yml` - Release creation
+- `.sisyphus/plans/ci-cd-refactor-pr-main.md` - Original refactor plan
+- `docs/operations/CI_PR_POLICIES.md` - PR policy deep-dive
+- Repository Ruleset ID: 12225448 (required check configuration)
 
 ---
 
-**Last Updated**: 2026-01-28
-**Version**: 0.1.4
-**Status**: Complete & Validated
+**Last Updated**: 2026-02-13
+**Version**: 0.2.1
+**Status**: In Review (PR #94)
