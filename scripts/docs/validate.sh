@@ -101,13 +101,15 @@ check_adr_numbering() {
 	log_info "Checking ADR numbering consistency..."
 
 	local adr_files
-	adr_files=$(find "$ADR_DIR" -maxdepth 1 -name '[0-9][0-9][0-9]-*.md' 2>/dev/null | sort -V)
-	local expected_num=1
+	adr_files=$(find "$ADR_DIR" -maxdepth 1 -name '[0-9][0-9][0-9]-*.md' | sort 2>/dev/null)
 
+	local expected_num=1
 	for adr_file in $adr_files; do
+		local filename
+		filename=$(basename "$adr_file")
 		local actual_num
-		actual_num=$(basename "$adr_file" | grep -oE '^[0-9]+' | sed 's/^0*//')
-		[[ -z "$actual_num" ]] && actual_num=0
+		actual_num=$(echo "$filename" | grep -oE '^[0-9]+' | sed 's/^0*//')
+
 		if [[ "$actual_num" -ne "$expected_num" ]]; then
 			log_warning "ADR numbering gap: expected $expected_num, found $actual_num"
 			inc_warnings
@@ -115,7 +117,43 @@ check_adr_numbering() {
 		((expected_num++))
 	done
 
-	log_success "ADR numbering is consistent"
+	if [[ $warnings -eq 0 ]]; then
+		log_success "ADR numbering is consistent"
+	else
+		log_warning "ADR numbering validation completed with warnings"
+	fi
+}
+
+check_adr_references() {
+	log_info "Checking ADR references in documentation..."
+
+	local adr_files
+	adr_files=$(find "$ADR_DIR" -maxdepth 1 -name '[0-9][0-9][0-9]-*.md' 2>/dev/null)
+	local arch_doc="$PROJECT_ROOT/docs/architecture/ARCHITECTURE.md"
+
+	if [[ -f "$arch_doc" ]]; then
+		for adr_file in $adr_files; do
+			local adr_num
+			adr_num=$(basename "$adr_file" | grep -oE '^[0-9]+' | sed 's/^0*//')
+			# CodeRabbit fix: Tightened regex to avoid matching ADR 10 as ADR 1
+			if [[ -n "$adr_num" ]] && ! grep -qE "ADR[- ]0*${adr_num}[^0-9]" "$arch_doc"; then
+				log_warning "ADR $adr_num not referenced in architecture documentation"
+				inc_warnings
+			fi
+		done
+	fi
+
+	log_success "ADR reference check completed"
+}
+
+# =============================================================================
+# Link Validation Functions
+# =============================================================================
+
+extract_links() {
+	local file="$1"
+	# CodeRabbit fix: Non-greedy regex to handle multiple links per line
+	grep -oE '\[.*?\]\(([^)]+)\)' "$file" 2>/dev/null | sed -E 's/.*?\(([^)]+)\)/\1/' | grep '^docs/' || true
 }
 
 check_adr_references() {
