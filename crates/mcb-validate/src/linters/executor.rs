@@ -71,19 +71,7 @@ impl YamlRuleExecutor {
         // Collect files based on linter type
         let linters = Self::detect_linters_from_codes(&rule.lint_select);
         let mut files: Vec<PathBuf> = Vec::new();
-
-        for entry in walkdir::WalkDir::new(dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-            .filter(|e| e.file_type().is_file())
-        {
-            let path = entry.path();
-            let ext = path.extension().and_then(std::ffi::OsStr::to_str);
-            if linters.iter().any(|lt| lt.matches_extension(ext)) {
-                files.push(path.to_path_buf());
-            }
-        }
+        collect_matching_files(dir, &linters, &mut files)?;
 
         let file_refs: Vec<&Path> = files.iter().map(|p: &PathBuf| p.as_path()).collect();
         Self::execute_rule(rule, &file_refs).await
@@ -108,4 +96,32 @@ impl YamlRuleExecutor {
 
         linters
     }
+}
+
+fn collect_matching_files(
+    dir: &Path,
+    linters: &[LinterType],
+    files: &mut Vec<PathBuf>,
+) -> Result<()> {
+    if !dir.exists() {
+        return Ok(());
+    }
+
+    for entry in std::fs::read_dir(dir).map_err(crate::ValidationError::Io)? {
+        let entry = entry.map_err(crate::ValidationError::Io)?;
+        let path = entry.path();
+        if path.is_dir() {
+            collect_matching_files(&path, linters, files)?;
+            continue;
+        }
+
+        if path.is_file() {
+            let ext = path.extension().and_then(std::ffi::OsStr::to_str);
+            if linters.iter().any(|lt| lt.matches_extension(ext)) {
+                files.push(path);
+            }
+        }
+    }
+
+    Ok(())
 }

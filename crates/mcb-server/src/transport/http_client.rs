@@ -42,7 +42,6 @@ pub struct McpClientConfig {
 pub struct HttpClientTransport {
     config: McpClientConfig,
     client: reqwest::Client,
-    session_id: SessionId,
 }
 
 impl HttpClientTransport {
@@ -99,11 +98,9 @@ impl HttpClientTransport {
             .build()
             .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
 
-        Ok(Self {
-            config,
-            client,
-            session_id,
-        })
+        drop(session_id);
+
+        Ok(Self { config, client })
     }
 
     fn resolve_session_id(
@@ -243,11 +240,6 @@ impl HttpClientTransport {
     /// Get the local public session identifier.
     pub fn session_id(&self) -> &str {
         &self.config.public_session_id
-    }
-
-    /// Get the resolved client session ID.
-    pub fn session_id(&self) -> &str {
-        self.session_id.as_str()
     }
 
     /// Forward a request to the server, handling errors
