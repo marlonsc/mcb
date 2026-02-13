@@ -180,7 +180,7 @@ Rejected because:
 
 ## References
 
-- [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
-- [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md)
-- [Planning Documents](../design/workflow-management/.planning/)
+- [ADR-009: Persistent Session Memory](../009-persistent-session-memory-v0.2.0.md)
+- [ADR-013: Clean Architecture](../013-clean-architecture-crate-separation.md)
+- [ADR-029: Hexagonal Architecture](../029-hexagonal-architecture-dill.md)
+- [Planning Documents](../../design/workflow-management/SCHEMA.md)

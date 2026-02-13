@@ -76,6 +76,7 @@ pub struct ToolExecutionContext {
     pub model_id: Option<String>,
     /// Optional delegated flag for this execution.
     pub delegated: Option<bool>,
+    pub timestamp: Option<i64>,
 }
 
 impl ToolExecutionContext {
@@ -92,7 +93,23 @@ impl ToolExecutionContext {
         insert_argument_if_missing(request, "agent_program", self.agent_program.clone());
         insert_argument_if_missing(request, "model_id", self.model_id.clone());
         insert_bool_argument_if_missing(request, "delegated", self.delegated);
+        insert_i64_argument_if_missing(request, "timestamp", self.timestamp);
     }
+}
+
+fn insert_i64_argument_if_missing(
+    request: &mut CallToolRequestParams,
+    key: &'static str,
+    value: Option<i64>,
+) {
+    let Some(value) = value else {
+        return;
+    };
+
+    let arguments = request.arguments.get_or_insert_with(Default::default);
+    arguments
+        .entry(key.to_string())
+        .or_insert_with(|| Value::Number(serde_json::Number::from(value)));
 }
 
 fn insert_bool_argument_if_missing(
@@ -175,6 +192,30 @@ fn validate_execution_context(
     if execution_context.repo_path.is_none() {
         missing.push("repo_path");
     }
+    if execution_context.worktree_id.is_none() {
+        missing.push("worktree_id");
+    }
+    if execution_context.operator_id.is_none() {
+        missing.push("operator_id");
+    }
+    if execution_context.machine_id.is_none() {
+        missing.push("machine_id");
+    }
+    if execution_context.agent_program.is_none() {
+        missing.push("agent_program");
+    }
+    if execution_context.model_id.is_none() {
+        missing.push("model_id");
+    }
+    if execution_context.delegated.is_none() {
+        missing.push("delegated");
+    }
+    if execution_context.timestamp.is_none() {
+        missing.push("timestamp");
+    }
+    if execution_context.delegated == Some(true) && execution_context.parent_session_id.is_none() {
+        missing.push("parent_session_id");
+    }
 
     if missing.is_empty() {
         Ok(())
@@ -229,6 +270,9 @@ async fn trigger_post_tool_use_hook(
     }
     if let Some(delegated) = execution_context.delegated {
         context = context.with_metadata("delegated".to_string(), delegated.to_string());
+    }
+    if let Some(timestamp) = execution_context.timestamp {
+        context = context.with_metadata("timestamp".to_string(), timestamp.to_string());
     }
 
     hook_processor

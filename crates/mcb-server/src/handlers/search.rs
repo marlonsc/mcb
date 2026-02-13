@@ -7,6 +7,7 @@ use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::error::Error;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::ports::services::SearchServiceInterface;
+use mcb_domain::utils::compute_stable_id_hash;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
@@ -15,7 +16,7 @@ use validator::Validate;
 use crate::args::{SearchArgs, SearchResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::{hash_session_id, resolve_org_id};
+use crate::handler_helpers::resolve_org_id;
 use crate::utils::collections::normalize_collection_name;
 
 /// Handler for code and memory search MCP tool operations.
@@ -93,7 +94,11 @@ impl SearchHandler {
                     } else {
                         None
                     },
-                    session_id: hash_session_id(args.session_id.clone()),
+                    session_id: if let Some(id) = args.session_id.clone() {
+                        Some(compute_stable_id_hash("session", id.as_str()))
+                    } else {
+                        None
+                    },
                     parent_session_id: None,
                     repo_id: None,
                     time_range: None,

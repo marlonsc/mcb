@@ -10,7 +10,6 @@ use mcb_domain::utils::{compute_stable_id_hash, mask_id};
 use tracing::debug;
 
 use super::types::{HookError, HookResult, PostToolUseContext, SessionStartContext};
-use crate::handler_helpers::hash_parent_session_id;
 
 /// Processor for tool execution hooks.
 ///
@@ -56,8 +55,11 @@ impl HookProcessor {
             .cloned()
             .unwrap_or_else(|| "default".to_string());
 
-        let parent_session_hash =
-            hash_parent_session_id(context.metadata.get("parent_session_id").cloned());
+        let parent_session_hash = if let Some(parent) = context.metadata.get("parent_session_id") {
+            Some(compute_stable_id_hash("parent_session", parent.as_str()))
+        } else {
+            None
+        };
         let delegated = context.metadata.get("delegated").and_then(|value| {
             match value.trim().to_ascii_lowercase().as_str() {
                 "true" | "1" | "yes" => Some(true),
