@@ -55,11 +55,10 @@ impl HookProcessor {
             .cloned()
             .unwrap_or_else(|| "default".to_string());
 
-        let parent_session_hash = if let Some(parent) = context.metadata.get("parent_session_id") {
-            Some(compute_stable_id_hash("parent_session", parent.as_str()))
-        } else {
-            None
-        };
+        let parent_session_hash = context
+            .metadata
+            .get("parent_session_id")
+            .map(|parent| compute_stable_id_hash("parent_session", parent.as_str()));
         let delegated = context.metadata.get("delegated").and_then(|value| {
             match value.trim().to_ascii_lowercase().as_str() {
                 "true" | "1" | "yes" => Some(true),

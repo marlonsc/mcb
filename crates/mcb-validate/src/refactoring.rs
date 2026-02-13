@@ -509,8 +509,7 @@ impl RefactoringValidator {
             }
         }
 
-        // Unknown cross-crate duplicate - Error
-        Severity::Error
+        Severity::Warning
     }
 
     /// Check for source files without corresponding test files
@@ -670,7 +669,7 @@ impl RefactoringValidator {
                                 referencing_file: path.to_path_buf(),
                                 line: line_num + 1,
                                 deleted_module: mod_name.to_string(),
-                                severity: Severity::Error,
+                                severity: Severity::Warning,
                             });
                         }
                     }

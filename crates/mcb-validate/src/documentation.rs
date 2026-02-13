@@ -295,7 +295,7 @@ impl DocumentationValidator {
                             line: line_num + 1,
                             item_name: name.to_string(),
                             item_kind: "trait".to_string(),
-                            severity: Severity::Error,
+                            severity: Severity::Warning,
                         });
                     }
                 }

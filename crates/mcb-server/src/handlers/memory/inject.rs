@@ -22,11 +22,10 @@ pub async fn inject_context(
         project_id: args.project_id.clone(),
         tags: None,
         r#type: None,
-        session_id: if let Some(id) = args.session_id.clone() {
-            Some(compute_stable_id_hash("session", id.as_str()))
-        } else {
-            None
-        },
+        session_id: args
+            .session_id
+            .clone()
+            .map(|id| compute_stable_id_hash("session", id.as_str())),
         parent_session_id: args.parent_session_id.clone(),
         repo_id: args.repo_id.clone(),
         time_range: None,

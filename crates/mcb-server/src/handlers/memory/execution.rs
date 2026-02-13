@@ -116,17 +116,15 @@ pub async fn store_execution(
         }
         .to_string(),
     ];
-    let arg_session_id = if let Some(id) = args.session_id.clone() {
-        Some(compute_stable_id_hash("session", id.as_str()))
-    } else {
-        None
-    };
+    let arg_session_id = args
+        .session_id
+        .clone()
+        .map(|id| compute_stable_id_hash("session", id.as_str()));
     let canonical_session_id = arg_session_id.clone();
-    let parent_session_hash = if let Some(id) = args.parent_session_id.clone() {
-        Some(compute_stable_id_hash("parent_session", id.as_str()))
-    } else {
-        None
-    };
+    let parent_session_hash = args
+        .parent_session_id
+        .clone()
+        .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
     let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
     let payload_project_id = MemoryHelpers::get_str(data, "project_id");
     let payload_branch = MemoryHelpers::get_str(data, "branch");
@@ -241,11 +239,10 @@ pub async fn get_executions(
         project_id: args.project_id.clone(),
         tags: None,
         r#type: Some(ObservationType::Execution),
-        session_id: if let Some(id) = args.session_id.clone() {
-            Some(compute_stable_id_hash("session", id.as_str()))
-        } else {
-            None
-        },
+        session_id: args
+            .session_id
+            .clone()
+            .map(|id| compute_stable_id_hash("session", id.as_str())),
         parent_session_id: args.parent_session_id.clone(),
         repo_id: args.repo_id.clone(),
         time_range: None,

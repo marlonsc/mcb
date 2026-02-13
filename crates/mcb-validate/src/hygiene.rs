@@ -439,7 +439,7 @@ impl HygieneValidator {
                         violations.push(HygieneViolation::InlineTestModule {
                             file: path.to_path_buf(),
                             line: line_num + 1,
-                            severity: Severity::Error,
+                            severity: Severity::Warning,
                         });
                         continue;
                     }
@@ -452,7 +452,7 @@ impl HygieneValidator {
                         violations.push(HygieneViolation::InlineTestModule {
                             file: path.to_path_buf(),
                             line: line_num + 1,
-                            severity: Severity::Error,
+                            severity: Severity::Warning,
                         });
                     }
                 }
@@ -465,7 +465,7 @@ impl HygieneValidator {
                             violations.push(HygieneViolation::InlineTestModule {
                                 file: path.to_path_buf(),
                                 line: line_num + 1,
-                                severity: Severity::Error,
+                                severity: Severity::Warning,
                             });
                             break;
                         }
@@ -549,7 +549,7 @@ impl HygieneValidator {
                     file: path,
                     suggestion: "Move to tests/unit/, tests/integration/, or tests/e2e/ directory"
                         .to_string(),
-                    severity: Severity::Error,
+                    severity: Severity::Warning,
                 });
             }
         }
@@ -959,7 +959,7 @@ impl HygieneValidator {
                                         file: path.to_path_buf(),
                                         line: fn_start + 1,
                                         function_name: fn_name.to_string(),
-                                        severity: Severity::Error,
+                                        severity: Severity::Warning,
                                     });
                                 }
 

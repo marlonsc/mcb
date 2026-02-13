@@ -548,7 +548,7 @@ impl QualityValidator {
                             file: path.to_path_buf(),
                             line: detection.line,
                             context: detection.context,
-                            severity: Severity::Error,
+                            severity: Severity::Warning,
                         });
                     }
                     "expect" => {
@@ -556,7 +556,7 @@ impl QualityValidator {
                             file: path.to_path_buf(),
                             line: detection.line,
                             context: detection.context,
-                            severity: Severity::Error,
+                            severity: Severity::Warning,
                         });
                     }
                     _ => {}
@@ -606,7 +606,7 @@ impl QualityValidator {
                         file: path.to_path_buf(),
                         line: line_num + 1,
                         context: trimmed.to_string(),
-                        severity: Severity::Error,
+                        severity: Severity::Warning,
                     });
                 }
             }

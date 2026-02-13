@@ -164,30 +164,27 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
         return Err(McpError::invalid_params("project_id is required", None));
     }
 
-    let session_id = resolve_identifier_precedence(
+    let session_id_hash = resolve_identifier_precedence(
         "session_id",
         input.session_from_args,
         input.session_from_data,
-    )?;
-    let parent_session_id = resolve_identifier_precedence(
+    )?
+    .as_deref()
+    .map(|value| compute_stable_id_hash("session", value));
+    let parent_session_id_hash = resolve_identifier_precedence(
         "parent_session_id",
         input.parent_session_from_args,
         input.parent_session_from_data,
-    )?;
-
-    let session_id_hash = session_id
-        .as_deref()
-        .map(|value| compute_stable_id_hash("session", value));
-    let parent_session_id_hash = parent_session_id
-        .as_deref()
-        .map(|value| compute_stable_id_hash("parent_session", value));
+    )?
+    .as_deref()
+    .map(|value| compute_stable_id_hash("parent_session", value));
 
     Ok(OriginContext {
         org_id: Some(resolve_org_id(input.org_id)),
         project_id,
-        session_id,
+        session_id: None,
         session_id_hash,
-        parent_session_id,
+        parent_session_id: None,
         parent_session_id_hash,
         execution_id: resolve_identifier_precedence(
             "execution_id",

@@ -94,11 +94,10 @@ impl SearchHandler {
                     } else {
                         None
                     },
-                    session_id: if let Some(id) = args.session_id.clone() {
-                        Some(compute_stable_id_hash("session", id.as_str()))
-                    } else {
-                        None
-                    },
+                    session_id: args
+                        .session_id
+                        .clone()
+                        .map(|id| compute_stable_id_hash("session", id.as_str())),
                     parent_session_id: None,
                     repo_id: None,
                     time_range: None,

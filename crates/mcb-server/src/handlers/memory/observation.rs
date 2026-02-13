@@ -42,17 +42,15 @@ pub async fn store_observation(
     };
     let tags = MemoryHelpers::get_string_list(data, "tags");
     let vcs_context = VcsContext::capture();
-    let arg_session_id = if let Some(id) = args.session_id.clone() {
-        Some(compute_stable_id_hash("session", id.as_str()))
-    } else {
-        None
-    };
+    let arg_session_id = args
+        .session_id
+        .clone()
+        .map(|id| compute_stable_id_hash("session", id.as_str()));
     let canonical_session_id = arg_session_id.clone();
-    let parent_session_hash = if let Some(id) = args.parent_session_id.clone() {
-        Some(compute_stable_id_hash("parent_session", id.as_str()))
-    } else {
-        None
-    };
+    let parent_session_hash = args
+        .parent_session_id
+        .clone()
+        .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
     let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
     let payload_project_id = MemoryHelpers::get_str(data, "project_id");
     let payload_file_path = MemoryHelpers::get_str(data, "file_path");
