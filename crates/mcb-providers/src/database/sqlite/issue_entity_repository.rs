@@ -1,4 +1,15 @@
-use std::sync::Arc;
+//! SQLite Issue Entity Repository
+//!
+//! # Overview
+//! The `SqliteIssueEntityRepository` provides persistence for the Issue Tracking domain.
+//! It manages the comprehensive lifecycle of issues, including commenting, labeling,
+//! and metadata tracking (assignments, estimations, status).
+//!
+//! # Responsibilities
+//! - **Issue Management**: CRUD for `ProjectIssue`, including complex fields like `labels` (JSON).
+//! - **Discussion Thread**: Managing `IssueComment` records linked to issues.
+//! - **Taxonomy**: Creation and assignment of `IssueLabel` entities.
+//! - **Relations**: Managing many-to-many relationships (e.g., issue-label assignments).
 
 use async_trait::async_trait;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
@@ -6,8 +17,12 @@ use mcb_domain::entities::project::ProjectIssue;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::IssueEntityRepository;
+use std::sync::Arc;
 
-/// SQLite-backed repository for issue, comment, and label entities.
+/// SQLite-based implementation of `IssueEntityRepository`.
+///
+/// Handles storage for `project_issues`, `issue_comments`, `issue_labels`, and
+/// `issue_label_assignments` tables.
 pub struct SqliteIssueEntityRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }
@@ -18,6 +33,8 @@ impl SqliteIssueEntityRepository {
         Self { executor }
     }
 
+    // TODO(architecture): Deduplicate query helpers (see ProjectRepository).
+    // Generic query wrappers should be centralized to reduce boilerplate.
     async fn query_one<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Option<T>>
     where
         F: FnOnce(&dyn SqlRow) -> Result<T>,
@@ -44,6 +61,8 @@ impl SqliteIssueEntityRepository {
     }
 }
 
+// TODO(architecture): Move row conversion logic to shared row_convert module.
+// This file implements its own conversion helpers instead of using the shared infrastructure.
 fn row_to_issue(row: &dyn SqlRow) -> Result<ProjectIssue> {
     let labels_json = req_str(row, "labels")?;
     let labels = serde_json::from_str::<Vec<String>>(&labels_json)

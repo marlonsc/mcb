@@ -1,4 +1,7 @@
 use mcb_domain::error::Error;
+// TODO(REF003): Missing test file for crates/mcb-server/src/error_mapping.rs.
+// Expected: crates/mcb-server/tests/error_mapping_test.rs
+
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 
 /// Maps domain errors to sanitized MCP errors suitable for external clients.
@@ -18,8 +21,12 @@ pub fn to_opaque_mcp_error(e: Error) -> McpError {
 /// Client-fixable errors (NotFound, InvalidArgument) return specific messages.
 /// Provider errors (Database, VectorDb, Embedding) return category + sanitized reason.
 /// Internal paths and stack traces are never leaked.
+// TODO(KISS005): Function to_contextual_tool_error is too long (105 lines, max: 50).
+// Break into smaller, focused functions.
 pub fn to_contextual_tool_error(e: impl Into<Error>) -> CallToolResult {
     let error: Error = e.into();
+    // TODO(SOLID002): Excessive match arms (29 arms, recommended max: 15).
+    // Consider using visitor pattern, enum dispatch, or trait objects.
     let message = match &error {
         // Client-fixable errors — return the specific message
         Error::NotFound { resource } => format!("Not found: {resource}"),

@@ -1,12 +1,18 @@
-//! Provides agent domain definitions.
+//! Agent Service Port
+//!
+//! # Overview
+//! Defines the interface for managing agent session lifecycle, delegation tracking,
+//! and state checkpoints.
 use async_trait::async_trait;
 
 use crate::entities::agent::{AgentSession, AgentSessionStatus, Checkpoint, Delegation, ToolCall};
 use crate::error::Result;
 use crate::ports::repositories::agent_repository::AgentSessionQuery;
 
-/// Port for agent session lifecycle and delegation tracking (create, list, end sessions).
+/// Port for agent session lifecycle and delegation tracking.
 #[async_trait]
+// TODO(architecture): Consider splitting into smaller interfaces (ISP).
+// Current interface combines Session control, Delegation, and Checkpoint operations.
 pub trait AgentSessionServiceInterface: Send + Sync {
     /// Performs the create session operation.
     async fn create_session(&self, session: AgentSession) -> Result<String>;

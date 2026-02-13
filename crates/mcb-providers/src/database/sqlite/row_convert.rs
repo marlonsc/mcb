@@ -19,9 +19,11 @@ fn required_string(row: &dyn SqlRow, field_name: &str) -> Result<String> {
 /// Build an `Observation` from a port row.
 pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
     let tags_json: Option<String> = row.try_get_string("tags")?;
-    let tags: Vec<String> = tags_json
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default();
+    let tags: Vec<String> = match tags_json {
+        Some(json) => serde_json::from_str(&json)
+            .map_err(|e| Error::memory_with_source("invalid observation tags JSON", e))?,
+        None => Vec::new(),
+    };
 
     let obs_type_str: String = row
         .try_get_string(COL_OBSERVATION_TYPE)?
@@ -31,9 +33,11 @@ pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
         .map_err(|e| Error::memory(format!("Invalid observation_type: {e}")))?;
 
     let metadata_json: Option<String> = row.try_get_string("metadata")?;
-    let metadata: ObservationMetadata = metadata_json
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_default();
+    let metadata: ObservationMetadata = match metadata_json {
+        Some(json) => serde_json::from_str(&json)
+            .map_err(|e| Error::memory_with_source("invalid observation metadata JSON", e))?,
+        None => return Err(Error::memory("Missing metadata")),
+    };
 
     Ok(Observation {
         id: required_string(row, schema::ID)?,
@@ -57,25 +61,40 @@ pub fn row_to_session_summary(row: &dyn SqlRow) -> Result<SessionSummary> {
     let next_steps_json: Option<String> = row.try_get_string("next_steps")?;
     let key_files_json: Option<String> = row.try_get_string("key_files")?;
     let origin_context_json: Option<String> = row.try_get_string("origin_context")?;
-    let origin_context: Option<OriginContext> =
-        origin_context_json.and_then(|s| serde_json::from_str(&s).ok());
+    let origin_context: Option<OriginContext> = match origin_context_json {
+        Some(json) => serde_json::from_str::<Option<OriginContext>>(&json).map_err(|e| {
+            Error::memory_with_source("invalid session summary origin_context JSON", e)
+        })?,
+        None => None,
+    };
 
     Ok(SessionSummary {
         id: required_string(row, "id")?,
         project_id: required_string(row, "project_id")?,
         session_id: required_string(row, "session_id")?,
-        topics: topics_json
-            .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_default(),
-        decisions: decisions_json
-            .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_default(),
-        next_steps: next_steps_json
-            .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_default(),
-        key_files: key_files_json
-            .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_default(),
+        topics: match topics_json {
+            Some(json) => serde_json::from_str(&json)
+                .map_err(|e| Error::memory_with_source("invalid session summary topics JSON", e))?,
+            None => Vec::new(),
+        },
+        decisions: match decisions_json {
+            Some(json) => serde_json::from_str(&json).map_err(|e| {
+                Error::memory_with_source("invalid session summary decisions JSON", e)
+            })?,
+            None => Vec::new(),
+        },
+        next_steps: match next_steps_json {
+            Some(json) => serde_json::from_str(&json).map_err(|e| {
+                Error::memory_with_source("invalid session summary next_steps JSON", e)
+            })?,
+            None => Vec::new(),
+        },
+        key_files: match key_files_json {
+            Some(json) => serde_json::from_str(&json).map_err(|e| {
+                Error::memory_with_source("invalid session summary key_files JSON", e)
+            })?,
+            None => Vec::new(),
+        },
         origin_context,
         created_at: row
             .try_get_i64("created_at")?
@@ -167,6 +186,7 @@ pub fn row_to_checkpoint(row: &dyn SqlRow) -> Result<Checkpoint> {
     })
 }
 
+/// Build a `Project` from a port row.
 pub fn row_to_project(row: &dyn SqlRow) -> Result<Project> {
     Ok(Project {
         id: required_string(row, "id")?,

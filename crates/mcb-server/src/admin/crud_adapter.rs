@@ -18,6 +18,21 @@ use super::web::filter::{
 };
 
 /// Async CRUD operations that map entity slugs to domain service calls.
+///
+/// # Example
+///
+/// ```ignore
+/// struct UserAdapter { ... }
+///
+/// #[async_trait]
+/// impl EntityCrudAdapter for UserAdapter {
+///     async fn list_all(&self) -> Result<Vec<Value>, String> {
+///         // Implementation calling UserService
+///         Ok(vec![json!({"id": "1", "name": "Admin"})])
+///     }
+///     // ... other methods ...
+/// }
+/// ```
 #[async_trait]
 pub trait EntityCrudAdapter: Send + Sync {
     /// List all records for this entity.

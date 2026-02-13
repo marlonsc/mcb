@@ -21,6 +21,8 @@ pub struct Team {
 /// A membership link between a user and a team, with a role describing
 /// the user's authority within that team.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+// TODO(architecture): Add id: Uuid or similar identity field to entity.
+// Current implementation relies on composite key (team_id, user_id).
 pub struct TeamMember {
     /// Team the user belongs to.
     pub team_id: String,

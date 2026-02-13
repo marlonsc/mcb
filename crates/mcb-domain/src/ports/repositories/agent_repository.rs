@@ -1,4 +1,8 @@
-//! Agent session repository port.
+//! Agent Repository Port
+//!
+//! # Overview
+//! Defines the interface for persisting agent execution state, including sessions,
+//! delegations, tool calls, and checkpoints.
 
 use async_trait::async_trait;
 
@@ -34,6 +38,8 @@ pub struct AgentSessionQuery {
 /// Defines the interface for storing and retrieving agent sessions, delegations, tool calls,
 /// and checkpoints. Implementations handle all persistence concerns for the agent domain.
 #[async_trait]
+// TODO(architecture): Consider splitting into smaller interfaces (ISP).
+// Current interface combines Session, Delegation, ToolCall, and Checkpoint management.
 pub trait AgentRepository: Send + Sync {
     /// Creates a new agent session in the repository.
     ///

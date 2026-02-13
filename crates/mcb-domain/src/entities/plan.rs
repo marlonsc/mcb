@@ -1,4 +1,13 @@
-//! Plan, plan version, and plan review entities.
+//! Plan Domain Entities
+//!
+//! # Overview
+//! This module defines the entities used for high-level planning and architectural decision making.
+//! It supports versioning and review workflows.
+//!
+//! # Core Entities
+//! - [`Plan`]: The high-level container for a strategic initiative.
+//! - [`PlanVersion`]: An immutable snapshot of the plan content.
+//! - [`PlanReview`]: A formal approval/rejection record for a specific version.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

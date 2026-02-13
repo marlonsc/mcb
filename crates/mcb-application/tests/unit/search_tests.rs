@@ -291,6 +291,77 @@ async fn test_context_service_clear_collection() {
     // Err case: Collection doesn't exist - also valid behavior
 }
 
+#[tokio::test]
+async fn test_context_service_rejects_absolute_chunk_file_path() {
+    let (context_service, _temp_dir) = create_real_context_service().await;
+
+    let init_res: Result<()> = context_service
+        .initialize(&CollectionId::new("relative_path_enforcement"))
+        .await;
+    init_res.expect("init");
+
+    let absolute_chunk = CodeChunk {
+        id: "abs_path_chunk".to_string(),
+        file_path: "/tmp/absolute.rs".to_string(),
+        content: "fn absolute_path() {}".to_string(),
+        start_line: 1,
+        end_line: 1,
+        language: "rust".to_string(),
+        metadata: json!({}),
+    };
+
+    let store_res: Result<()> = context_service
+        .store_chunks(
+            &CollectionId::new("relative_path_enforcement"),
+            &[absolute_chunk],
+        )
+        .await;
+
+    assert!(
+        store_res.is_err(),
+        "absolute file_path must be rejected at ingestion"
+    );
+}
+
+#[tokio::test]
+async fn test_context_service_normalizes_dot_relative_chunk_file_path() {
+    let (context_service, _temp_dir) = create_real_context_service().await;
+
+    let init_res: Result<()> = context_service
+        .initialize(&CollectionId::new("relative_path_normalization"))
+        .await;
+    init_res.expect("init");
+
+    let chunk = CodeChunk {
+        id: "dot_relative_chunk".to_string(),
+        file_path: "./src/normalized.rs".to_string(),
+        content: "fn normalized_marker() {}".to_string(),
+        start_line: 1,
+        end_line: 1,
+        language: "rust".to_string(),
+        metadata: json!({}),
+    };
+
+    let store_res: Result<()> = context_service
+        .store_chunks(&CollectionId::new("relative_path_normalization"), &[chunk])
+        .await;
+    store_res.expect("store");
+
+    let search_res: Result<Vec<SearchResult>> = context_service
+        .search_similar(
+            &CollectionId::new("relative_path_normalization"),
+            "normalized_marker",
+            5,
+        )
+        .await;
+    let results = search_res.expect("search");
+
+    assert!(
+        results.iter().any(|r| r.file_path == "src/normalized.rs"),
+        "dot-relative file_path must be normalized to workspace-relative format"
+    );
+}
+
 // ============================================================================
 // Integration Tests - Full Data Flow
 // ============================================================================

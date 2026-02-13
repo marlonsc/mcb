@@ -299,6 +299,7 @@ async fn post_mcp_request(
     client
         .post(url)
         .header("Content-Type", "application/json")
+        .header("X-Execution-Flow", "client-hybrid")
         .json(request)
         .send()
         .await

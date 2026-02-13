@@ -22,7 +22,13 @@ impl OrgContext {
         Self { org_id, org_name }
     }
 
-    /// Performs the current operation.
+    /// Returns the current organization context.
+    ///
+    /// # Architecture Violation (ORG016)
+    /// Accessing global or ambient context (even via Default) directly in the Domain layer
+    /// implementation couples the entity to the execution environment's state management.
+    ///
+    /// TODO(ORG016): Move current context resolution to the Application layer (e.g. via Request Interceptor).
     pub fn current() -> Self {
         Self::default()
     }

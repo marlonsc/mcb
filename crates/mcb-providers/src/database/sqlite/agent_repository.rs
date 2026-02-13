@@ -1,6 +1,15 @@
-//! SQLite agent repository using the domain port [`DatabaseExecutor`].
+//! SQLite Agent Repository
 //!
-//! Implements [`AgentRepository`] via [`DatabaseExecutor`]; no direct sqlx in this module.
+//! # Overview
+//! The `SqliteAgentRepository` manages the persistence of agent sessions and their related artifacts
+//! (tool calls, delegations, checkpoints). It enables long-running, stateful agent interactions
+//! by reliably storing execution history in a relational database.
+//!
+//! # Responsibilities
+//! - **Session Management**: CRUD operations for `AgentSession` entities.
+//! - **Audit Trail**: Recording all tool calls and delegations for debugging and analysis.
+//! - **State Recovery**: Managing `Checkpoint` storage to allow sessions to resume or rollback.
+//! - **Querying**: Filtering sessions by project, status, or hierarchy.
 
 use std::sync::Arc;
 
@@ -14,7 +23,11 @@ use tracing::debug;
 
 use super::row_convert;
 
-/// SQLite-based agent repository using the database executor port.
+/// SQLite-based implementation of the `AgentRepository`.
+///
+/// Implements data access patterns for agent sessions, delegations, tool calls, and checkpoints.
+/// Ensures referential integrity for project/organization links and handles JSON serialization
+/// for complex session state artifacts.
 pub struct SqliteAgentRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }

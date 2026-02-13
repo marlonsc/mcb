@@ -158,6 +158,8 @@ impl IndexingServiceImpl {
     ) -> Vec<std::path::PathBuf> {
         use tokio::fs;
 
+        // TODO(architecture): Implement proper .gitignore support (use 'ignore' crate or similar).
+        // Current implementation only respects hardcoded SKIP_DIRS and ignores gitignore files.
         let mut files = Vec::new();
         let mut dirs_to_visit = vec![path.to_path_buf()];
 
@@ -193,6 +195,8 @@ impl IndexingServiceImpl {
     }
 
     /// Check if file has a supported extension
+    // TODO(architecture): Externalize supported extensions configuration.
+    // Hardcoding extensions limits flexibility and plugin support.
     fn is_supported_file(path: &Path) -> bool {
         path.extension()
             .and_then(|ext| ext.to_str())
@@ -259,6 +263,8 @@ impl IndexingServiceInterface for IndexingServiceImpl {
 
         // Spawn background task - explicitly drop handle since we don't await it
         // (fire-and-forget pattern for async indexing)
+        // TODO(architecture): Consider Strategy pattern for Async vs Sync execution.
+        // Hardcoding fire-and-forget complicates testing and flow control.
         let _handle = tokio::spawn(async move {
             Self::run_indexing_task(service, files, workspace_root, collection_id, op_id).await;
         });

@@ -1,4 +1,14 @@
-//! SQLite project repository implementation.
+//! SQLite Project Repository
+//!
+//! # Overview
+//! The `SqliteProjectRepository` handles the persistence of project entities, which represent
+//! distinct codebases or modules within an organization. It supports hierarchical organization
+//! via `org_id` and tracks project metadata like paths and update timestamps.
+//!
+//! # Responsibilities
+//! - **Project Registry**: Storing the definition of all projects in the system.
+//! - **Lookup Logic**: Finding projects by ID, name, or file path.
+//! - **CRUD Operations**: Creating, updating, and deleting project records.
 
 use std::sync::Arc;
 
@@ -10,7 +20,10 @@ use mcb_domain::ports::repositories::ProjectRepository;
 
 use super::row_convert;
 
-/// SQLite-based project repository using the database executor port.
+/// SQLite-based implementation of the `ProjectRepository`.
+///
+/// Implements standard CRUD for the `projects` table.
+/// Provides efficient lookups by `path` and `name` to support project detection and resolution logic.
 pub struct SqliteProjectRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }
@@ -22,6 +35,8 @@ impl SqliteProjectRepository {
     }
 
     /// Helper: Query single row and convert to optional entity
+    // TODO(architecture): Abstract this helper into a shared Trait or utility for all repositories.
+    // Repeating this pattern across repositories leads to code duplication.
     async fn query_one_and_convert<T, F>(
         &self,
         sql: &str,

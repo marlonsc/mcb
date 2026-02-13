@@ -1,6 +1,22 @@
-//! SQLite memory repository using the domain port [`DatabaseExecutor`].
+//! SQLite Memory Repository
+// TODO(REF003): Missing test file for crates/mcb-providers/src/database/sqlite/memory_repository.rs.
+// Expected: crates/mcb-providers/tests/memory_repository_test.rs
 //!
-//! Implements [`MemoryRepository`] via [`DatabaseExecutor`]; no direct sqlx in this module.
+//! # Overview
+//! The `SqliteMemoryRepository` provides persistent storage for observations and session summaries
+//! using a SQLite database. It serves as the primary source of truth for structured
+//! memory data and enables full-text search (FTS) capabilities.
+//!
+//! # Responsibilities
+//! - **Observation Persistence**: Storing and retrieving immutable observation records.
+//! - **FTS Implementation**: Leveraging SQLite's FTS5 extension to perform efficient text searches.
+//! - **Session Summaries**: Managing the persistence of high-level session insights.
+//! - **Timeline Construction**: Querying observations efficiently by creation time.
+//!
+//! # Architecture
+//! This repository implements `MemoryRepository` and sits in the Providers layer.
+//! It depends on `DatabaseExecutor` (Port) to execute SQL, ensuring it remains
+//! decoupled from the specific SQL client library (e.g., sqlx, rusqlite).
 
 use std::sync::Arc;
 
@@ -15,7 +31,11 @@ use tracing::debug;
 
 use super::row_convert;
 
-/// SQLite-based memory repository using the database executor port.
+/// SQLite-based implementation of the `MemoryRepository`.
+///
+/// Uses standard SQL queries to manage `observations` and `session_summaries` tables.
+/// Handles JSON serialization of complex fields (metadata, tags) and enforces
+/// referential integrity via `ensure_parent` checks.
 pub struct SqliteMemoryRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }
@@ -165,6 +185,12 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(observations)
     }
 
+    /// Retrieves a timeline of observations centered around an anchor observation.
+    ///
+    /// The timeline includes a specified number of observations before and after the anchor,
+    /// optionally filtered by session, repository, or observation type.
+    // TODO(KISS005): Function get_timeline is too long (76 lines, max: 50).
+    // Break into smaller, focused functions for query building and result processing.
     async fn get_timeline(
         &self,
         anchor_id: &ObservationId,
@@ -248,6 +274,11 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(timeline)
     }
 
+    /// Persists a session summary to the database, updating it if it already exists.
+    ///
+    /// Handles serialization of topics, decisions, and other complex fields into JSON.
+    // TODO(KISS005): Function store_session_summary is too long (54 lines, max: 50).
+    // Break into smaller, focused functions for serialization and DB execution.
     async fn store_session_summary(&self, summary: &SessionSummary) -> Result<()> {
         // Ensure default org and project exist
         super::ensure_parent::ensure_org_and_project(

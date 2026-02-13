@@ -1,17 +1,9 @@
 //! Search Service Use Case
 //!
 //! # Overview
-//! The `SearchService` orchestrates semantic search operations, providing a high-level interface
-//! for finding code and context. It delegates core embedding and retrieval tasks to the `ContextService`
-//! while adding business logic for result filtering, ranking, and post-processing.
-//!
-//! # Responsibilities
-//! - **Query Orchestration**: Managing search requests against the context system.
-//! - **Result Filtering**: Applying business rules (language, file extension, score thresholds) to raw results.
-//! - **Search Optimization**: Strategies for efficient retrieval (e.g., over-fetching for post-filtering).
-//!
-//! # Architecture
-//! Implements the `SearchServiceInterface` port and acts as a consumer of the `ContextService`.
+//! The `SearchService` executes semantic search queries against indexed codebases.
+//! It applies business logic like result ranking and post-filtering (e.g., by file type or language)
+//! to refine the raw results from the `ContextService`.
 //! This separation allows the search logic to evolve (e.g., hybrid search, re-ranking) without
 //! complicating the core context management.
 
@@ -21,7 +13,10 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::services::{ContextServiceInterface, SearchFilters, SearchServiceInterface};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
 
-/// Search service implementation - delegates to context service
+/// Implementation of the `SearchServiceInterface`.
+///
+/// Orchestrates vector similarity search via `ContextService` and applies application-level
+/// filtering logic.
 pub struct SearchServiceImpl {
     context_service: Arc<dyn ContextServiceInterface>,
 }
@@ -33,6 +28,8 @@ impl SearchServiceImpl {
     }
 
     /// Apply filters to search results
+    // TODO(architecture): Push filters down to repository/vector store level for efficiency.
+    // In-memory filtering after over-fetching (limit * 2) is simpler but scales poorly.
     fn apply_filters(
         results: Vec<SearchResult>,
         filters: Option<&SearchFilters>,

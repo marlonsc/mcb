@@ -1,3 +1,7 @@
+// =============================================================================
+// TODO(REF004): File too large (965 lines). Split into smaller modules (max 500 lines).
+// =============================================================================
+
 use mcb_domain::value_objects::ids::SessionId;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -180,6 +184,8 @@ pub enum ValidateScope {
 }
 
 /// Arguments for the validate tool.
+// TODO(REF002): Duplicate definition 'ValidateArgs' also found in 'crates/mcb/src/cli/validate.rs'.
+// Consider consolidating to a common crate or shared module.
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct ValidateArgs {
     /// Action: run (validate), list_rules, analyze (complexity).
@@ -243,6 +249,8 @@ pub enum MemoryResource {
 }
 
 /// Arguments for the memory tool.
+// TODO(KISS001): Struct MemoryArgs has too many fields (18 fields, max: 16).
+// Split into smaller structs or use composition.
 #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct MemoryArgs {
     /// Action: store, get, list, timeline, inject.

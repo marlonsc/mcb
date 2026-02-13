@@ -677,6 +677,10 @@ async fn test_http_server_tools_list() {
             "X-Workspace-Root",
             "/tmp/test-workspace",
         ))
+        .header(rocket::http::Header::new(
+            "X-Repo-Path",
+            "/tmp/test-workspace",
+        ))
         .body(serde_json::to_string(&request).unwrap())
         .dispatch()
         .await;
@@ -741,6 +745,24 @@ async fn test_http_server_ping() {
             "X-Workspace-Root",
             "/tmp/test-workspace",
         ))
+        .header(rocket::http::Header::new(
+            "X-Worktree-Id",
+            "test-worktree-index-status",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Operator-Id",
+            "test-operator-index-status",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Machine-Id",
+            "test-machine-index-status",
+        ))
+        .header(rocket::http::Header::new("X-Agent-Program", "opencode"))
+        .header(rocket::http::Header::new(
+            "X-Model-Id",
+            "openai/gpt-5.3-codex",
+        ))
+        .header(rocket::http::Header::new("X-Delegated", "false"))
         .body(serde_json::to_string(&request).unwrap())
         .dispatch()
         .await;
@@ -786,6 +808,25 @@ async fn test_http_server_initialize() {
             "X-Workspace-Root",
             "/tmp/test-workspace",
         ))
+        .header(rocket::http::Header::new(
+            "X-Repo-Path",
+            "/tmp/test-workspace",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Worktree-Id",
+            "wt-index-status",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Operator-Id",
+            "operator-index-status",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Machine-Id",
+            "machine-index-status",
+        ))
+        .header(rocket::http::Header::new("X-Agent-Program", "opencode"))
+        .header(rocket::http::Header::new("X-Model-Id", "gpt-5.3-codex"))
+        .header(rocket::http::Header::new("X-Delegated", "false"))
         .body(serde_json::to_string(&request).unwrap())
         .dispatch()
         .await;
@@ -833,6 +874,25 @@ async fn test_http_server_unknown_method() {
             "X-Workspace-Root",
             "/tmp/test-workspace",
         ))
+        .header(rocket::http::Header::new(
+            "X-Repo-Path",
+            "/tmp/test-workspace",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Worktree-Id",
+            "wt-index-status",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Operator-Id",
+            "operator-index-status",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Machine-Id",
+            "machine-index-status",
+        ))
+        .header(rocket::http::Header::new("X-Agent-Program", "opencode"))
+        .header(rocket::http::Header::new("X-Model-Id", "gpt-5.3-codex"))
+        .header(rocket::http::Header::new("X-Delegated", "false"))
         .body(serde_json::to_string(&request).unwrap())
         .dispatch()
         .await;
@@ -937,6 +997,24 @@ async fn test_http_server_tools_call_index_status() {
             "X-Workspace-Root",
             "/tmp/test-workspace",
         ))
+        .header(rocket::http::Header::new(
+            "X-Worktree-Id",
+            "test-worktree-index-status",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Operator-Id",
+            "test-operator-index-status",
+        ))
+        .header(rocket::http::Header::new(
+            "X-Machine-Id",
+            "test-machine-index-status",
+        ))
+        .header(rocket::http::Header::new("X-Agent-Program", "opencode"))
+        .header(rocket::http::Header::new(
+            "X-Model-Id",
+            "openai/gpt-5.3-codex",
+        ))
+        .header(rocket::http::Header::new("X-Delegated", "false"))
         .body(serde_json::to_string(&request).unwrap())
         .dispatch()
         .await;

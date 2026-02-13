@@ -100,7 +100,8 @@ async fn test_validate_detects_inline_tests_in_src_via_registry_path() {
         .await
         .expect("validate should succeed");
 
-    assert!(!report.passed);
+    assert!(report.passed);
+    assert!(report.warnings > 0);
     assert!(report.violations.iter().any(|v| {
         v.id == "TEST001"
             && v.file

@@ -6,28 +6,42 @@ use regex::Regex;
 
 use crate::{Result, ValidationError};
 
+/// Result of a cyclomatic complexity analysis.
 #[derive(Debug, Clone)]
 pub struct ComplexityFinding {
+    /// Path to the file containing the function.
     pub file: PathBuf,
+    /// Name of the function.
     pub function: String,
+    /// Computed complexity score.
     pub complexity: u32,
 }
 
+/// Result of a dead code analysis.
 #[derive(Debug, Clone)]
 pub struct DeadCodeFinding {
+    /// Path to the file containing the item.
     pub file: PathBuf,
+    /// Line number where the item is defined.
     pub line: usize,
+    /// Type of the item (e.g., "function").
     pub item_type: String,
+    /// Name of the item.
     pub name: String,
 }
 
+/// Result of a Technical Debt Graph (TDG) analysis.
 #[derive(Debug, Clone)]
 pub struct TdgFinding {
+    /// Path to the file.
     pub file: PathBuf,
+    /// Computed TDG score.
     pub score: u32,
 }
 
+/// Trait for analyzing code complexity.
 pub trait ComplexityAnalyzer: Send + Sync {
+    /// Analyzes complexity of all functions in the workspace.
     fn analyze_complexity(
         &self,
         workspace_root: &Path,
@@ -35,11 +49,15 @@ pub trait ComplexityAnalyzer: Send + Sync {
     ) -> Result<Vec<ComplexityFinding>>;
 }
 
+/// Trait for detecting potentially dead (unused) code.
 pub trait DeadCodeDetector: Send + Sync {
+    /// Detects functions that appear to be unused across the workspace.
     fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<DeadCodeFinding>>;
 }
 
+/// Trait for scoring technical debt.
 pub trait TdgScorer: Send + Sync {
+    /// Computes a technical debt score for files in the workspace.
     fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<TdgFinding>>;
 }
 
@@ -230,6 +248,8 @@ fn extract_function_body(content: &str, start_pos: usize) -> Option<String> {
                     return Some(content[body_start..=i].to_string());
                 }
             }
+            // TODO: [IMPL006] Handle or document the catch-all case.
+            // Currently ignoring all non-brace characters in body extraction.
             _ => {}
         }
         i += 1;

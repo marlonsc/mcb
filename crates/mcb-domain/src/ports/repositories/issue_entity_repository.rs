@@ -1,4 +1,8 @@
-//! Provides issue entity repository domain definitions.
+//! Issue Entity Repository Port
+//!
+//! # Overview
+//! Defines the interface for persisting issue-related entities including issues,
+//! comments, labels, and assignments.
 use async_trait::async_trait;
 
 use crate::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
@@ -7,6 +11,8 @@ use crate::error::Result;
 
 #[async_trait]
 /// Defines behavior for IssueEntityRepository.
+// TODO(architecture): Consider splitting into smaller interfaces (ISP).
+// Current interface combines Issue, Comment, and Label management.
 pub trait IssueEntityRepository: Send + Sync {
     /// Performs the create issue operation.
     async fn create_issue(&self, issue: &ProjectIssue) -> Result<()>;

@@ -414,7 +414,25 @@ impl Clone for HybridRuleEngine {
     }
 }
 
-/// Trait for rule engines
+/// Trait for rule engines.
+///
+/// # Example
+///
+/// ```ignore
+/// struct MyRuleEngine;
+///
+/// #[async_trait]
+/// impl RuleEngine for MyRuleEngine {
+///     async fn execute(
+///         &self,
+///         rule_definition: &serde_json::Value,
+///         context: &RuleContext,
+///     ) -> Result<Vec<RuleViolation>> {
+///         // Implementation logic
+///         Ok(vec![])
+///     }
+/// }
+/// ```
 #[async_trait]
 pub trait RuleEngine: Send + Sync {
     /// Execute the rule against the provided context

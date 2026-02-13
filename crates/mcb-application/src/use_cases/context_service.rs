@@ -1,16 +1,13 @@
 //! Context Service Use Case
 //!
 //! # Overview
-//! The `ContextService` acts as the central orchestrator for all semantic code intelligence operations
-//! within the Memory Context Browser (MCB). It bridges the gap between raw code assets and
-//! high-dimensional vector representations, enabling the system to "understand" code context.
+//! The `ContextService` acts as the central orchestrator for all semantic code intelligence operations.
+//! It bridges the gap between raw code assets and high-dimensional vector representations.
 //!
-//! # Responsibilities
-//! - **Embedding Generation**: Transforms text/code into vector embeddings using configured providers.
-//! - **Vector Storage Management**: Manages lifecycle of vector collections (create, delete, inspect).
-//! - **Semantic Indexing**: Coordinating the storage of code chunks with rich metadata.
-//! - **Similarity Search**: Executing efficient k-NN queries to find relevant code based on semantic meaning.
-//! - **Caching**: Optimizing frequent operations to reduce latency and provider costs.
+//! # Key Features
+//! - **Embedding Pipeline**: Tokenization and vector generation for code chunks.
+//! - **Vector Lifecycle**: Managing collections in the underlying vector store (Qdrant, Chroma, etc.).
+//! - **Semantic Search**: KNN retrieval with optional metadata filtering.
 //!
 //! # Architecture
 //! Following Clean Architecture principles, this service implements the `ContextServiceInterface` port
@@ -102,7 +99,10 @@ fn normalize_relative_file_path(raw: &str) -> Result<String> {
     Ok(parts.join("/"))
 }
 
-/// Context service implementation - manages embeddings and vector storage
+/// Implementation of the `ContextServiceInterface`.
+///
+/// Orchestrates `EmbeddingProvider`, `VectorStoreProvider`, and `CacheProvider` to deliver
+/// low-latency semantic search capabilities.
 pub struct ContextServiceImpl {
     cache: Arc<dyn mcb_domain::ports::providers::cache::CacheProvider>,
     embedding_provider: Arc<dyn EmbeddingProvider>,
@@ -193,6 +193,8 @@ impl ContextServiceInterface for ContextServiceImpl {
         query: &str,
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
+        // TODO(architecture): Extend interface to support filters (push-down optimization).
+        // Currently filters are applied in-memory by the caller (SearchService), which is inefficient.
         let query_embedding = self.embedding_provider.embed(query).await?;
         self.vector_store_provider
             .search_similar(collection, &query_embedding.vector, limit, None)

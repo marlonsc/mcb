@@ -1,3 +1,10 @@
+//! Templating system integration for MCB Server.
+//!
+//! This module provides a `Rocket` fairing and supporting structures to integrate
+//! various templating engines (Handlebars, etc.) into the Rocket application.
+//! It handles context management, engine selection, and automatic reloading
+//! in debug mode.
+
 mod context;
 pub(crate) mod embedded;
 pub(crate) mod engine;

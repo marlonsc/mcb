@@ -124,6 +124,7 @@ struct BridgeProvenance {
     agent_program: Option<String>,
     model_id: Option<String>,
     delegated: Option<String>,
+    execution_flow: Option<String>,
 }
 
 #[rocket::async_trait]
@@ -179,6 +180,10 @@ impl<'r> FromRequest<'r> for BridgeProvenance {
             .headers()
             .get_one("X-Delegated")
             .map(ToOwned::to_owned);
+        let execution_flow = request
+            .headers()
+            .get_one("X-Execution-Flow")
+            .map(ToOwned::to_owned);
 
         Outcome::Success(Self {
             workspace_root,
@@ -193,6 +198,7 @@ impl<'r> FromRequest<'r> for BridgeProvenance {
             agent_program,
             model_id,
             delegated,
+            execution_flow,
         })
     }
 }
@@ -515,6 +521,10 @@ async fn handle_tools_call(
                 _ => None,
             }),
         timestamp: Some(chrono::Utc::now().timestamp()),
+        execution_flow: bridge_provenance
+            .execution_flow
+            .clone()
+            .or_else(|| Some("server-hybrid".to_string())),
     };
 
     execution_context.apply_to_request_if_missing(&mut call_request);

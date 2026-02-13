@@ -52,3 +52,6 @@ mod issue_entity_repository_tests;
 
 #[path = "unit/native_analysis_tests.rs"]
 mod native_analysis_tests;
+
+#[path = "unit/schema_upgrade_rejection_tests.rs"]
+mod schema_upgrade_rejection_tests;

@@ -1,4 +1,15 @@
-//! SQLite implementation of FileHashRepository.
+//! SQLite File Hash Repository
+//!
+//! # Overview
+//! The `SqliteFileHashRepository` tracks file content hashes to optimize the indexing process.
+//! It allows the system to skip re-indexing files that haven't changed, significantly improving
+//! performance for large codebases.
+//!
+//! # Responsibilities
+//! - **Change Detection**: Comparing current file hashes against stored values.
+//! - **Tombstone Management**: Handling soft-deletion of files with a configurable TTL.
+//! - **Project Isolation**: Scoping all hash tracking to specific project IDs.
+//! - **Integrity Checks**: Computing SHA-256 hashes of file contents on disk.
 
 use async_trait::async_trait;
 use std::io::{BufReader, Read};
@@ -28,7 +39,10 @@ impl Default for SqliteFileHashConfig {
     }
 }
 
-/// SQLite implementation of file hash tracking
+/// SQLite-based implementation of `FileHashRepository`.
+///
+/// Manages the `file_hashes` and `collections` tables. It provides mechanism
+/// to upsert hashes, query changes, and perform garbage collection on deleted file records (tombstones).
 pub struct SqliteFileHashRepository {
     executor: Arc<dyn DatabaseExecutor>,
     config: SqliteFileHashConfig,
@@ -38,6 +52,8 @@ pub struct SqliteFileHashRepository {
 impl SqliteFileHashRepository {
     /// Create a new SqliteFileHashRepository
     pub fn new(executor: Arc<dyn DatabaseExecutor>, config: SqliteFileHashConfig) -> Self {
+        // TODO(architecture): Inject project_id explicitly instead of inferring from env/CWD.
+        // Repositories should not depend on ambient environment variables for core identity.
         let project_id = std::env::var("MCB_PROJECT_ID")
             .ok()
             .filter(|v| !v.trim().is_empty())
@@ -303,6 +319,8 @@ impl FileHashRepository for SqliteFileHashRepository {
         Ok(count)
     }
 
+    // TODO(architecture): Extract hash computation to a separate service or utility port.
+    // Mixing file I/O with database logic violates the Single Responsibility Principle and complicates testing.
     fn compute_hash(&self, path: &Path) -> Result<String> {
         let file = std::fs::File::open(path)
             .map_err(|e| Error::io(format!("Failed to open file {path:?}: {e}")))?;

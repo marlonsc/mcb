@@ -1,3 +1,6 @@
+//! Rocket fairing for managing template contexts and lifecycles.
+// TODO: [REF003] Missing test file: crates/mcb-server/tests/fairing_test.rs
+
 use rocket::fairing::{self, Fairing, Info, Kind};
 use rocket::{Build, Orbit, Rocket};
 
@@ -5,6 +8,13 @@ use super::context::{Callback, Context, ContextManager};
 use super::engine::Engines;
 use super::template::DEFAULT_TEMPLATE_DIR;
 
+/// A Rocket fairing that initializes and manages the template context.
+///
+/// This fairing is responsible for:
+/// - Initializing the template `Context` during the ignition phase.
+/// - Managing the `ContextManager` in the Rocket state.
+/// - Printing initialization details during liftoff.
+/// - Reloading templates on each request when debug assertions are enabled.
 pub struct TemplateFairing {
     pub callback: Callback,
 }
@@ -52,6 +62,7 @@ impl Fairing for TemplateFairing {
 
         let cm = rocket
             .state::<ContextManager>()
+            // TODO: [QUAL002] Avoid expect() in production. Use ? or handle explicitly.
             .expect("Template ContextManager registered in on_ignite");
 
         info!("{}{}:", "📐 ".emoji(), "Templating".magenta());
@@ -64,6 +75,7 @@ impl Fairing for TemplateFairing {
         let cm = req
             .rocket()
             .state::<ContextManager>()
+            // TODO: [QUAL002] Avoid expect() in production. Use ? or handle explicitly.
             .expect("Template ContextManager registered in on_ignite");
 
         cm.reload_if_needed(&self.callback);

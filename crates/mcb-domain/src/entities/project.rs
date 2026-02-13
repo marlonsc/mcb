@@ -1,4 +1,15 @@
-//! Project entities for repository management and detection.
+//! Project Domain Entities
+//!
+//! # Overview
+//! This module defines the core entities covering Project Management and Issue Tracking.
+//! It includes the `Project` root entity, as well as `ProjectIssue`, `ProjectPhase`,
+//! and related enums (`IssueType`, `IssueStatus`).
+//!
+//! # Key Concepts
+//! - **Project**: A distinct codebase or module (e.g., a Rust crate, an NPM package).
+//! - **Issue**: A unit of work (Task, Bug, Feature) tracked within a project.
+//! - **Phase**: A milestone or stage in the project roadmap.
+//! - **Dependency**: Directed relationships between issues (Blocks, RelatesTo).
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -340,6 +351,8 @@ pub struct ProjectIssue {
     #[serde(default)]
     pub assignee: Option<String>,
     /// Set of tags or categories associated with the issue.
+    // TODO(architecture): Clarify relationship between ProjectIssue.labels (JSON) and IssueLabel entity (relational).
+    // The existence of both suggests potential data duplication or split source of truth.
     pub labels: Vec<String>,
     /// Estimated effort in minutes.
     #[serde(default)]

@@ -1,4 +1,8 @@
-//! Provides vcs entity repository domain definitions.
+//! VCS Entity Repository Port
+//!
+//! # Overview
+//! Defines the interface for persisting VCS-related entities including repositories,
+//! branches, worktrees, and agent assignments.
 use async_trait::async_trait;
 
 use crate::entities::repository::{Branch, Repository};
@@ -7,6 +11,8 @@ use crate::error::Result;
 
 #[async_trait]
 /// Defines behavior for VcsEntityRepository.
+// TODO(architecture): Consider splitting into smaller interfaces (ISP).
+// Current interface combines Repository, Branch, Worktree, and Assignment management.
 pub trait VcsEntityRepository: Send + Sync {
     // -- Repository CRUD --
     /// Performs the create repository operation.

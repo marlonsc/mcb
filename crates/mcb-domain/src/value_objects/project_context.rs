@@ -40,11 +40,27 @@ impl ProjectContext {
     /// 3. `"default"`
     ///
     /// Result is cached for the process lifetime.
+    ///
+    /// # Architecture Violation (ORG016)
+    /// This method implements infrastructure-specific detection logic (Git) within the Domain layer.
+    /// According to Clean Architecture principles, the Domain layer should be implementation-agnostic
+    /// and contain only business rules and entities. The detection logic should reside in the
+    /// Infrastructure or Application layer, with this file defining only the project identity structure.
+    ///
+    /// TODO(ORG016): Move implementation to application or infrastructure layer.
+    /// The Domain layer should remain trait-only for behavioral logic.
     #[must_use]
     pub fn resolve() -> Self {
         PROJECT_CONTEXT.get_or_init(Self::detect).clone()
     }
 
+    /// Detect the current project context using git commands.
+    ///
+    /// # Architecture Violation (ORG016)
+    /// Direct filesystem and external command (git) execution within the Domain layer violates
+    /// the boundary between business logic and system infrastructure.
+    ///
+    /// TODO(ORG016): Extract detection strategy to an Infrastructure service.
     fn detect() -> Self {
         let superproject_id = Self::detect_superproject();
         let is_submodule = superproject_id.is_some();
@@ -112,6 +128,11 @@ impl ProjectContext {
 
     /// Detect if the current repo is a git submodule.
     /// Returns the superproject's owner/repo if it is.
+    ///
+    /// # Architecture Violation (ORG016)
+    /// Direct git command execution and cross-repository inspection logic within the Domain layer.
+    ///
+    /// TODO(ORG016): Move cross-repo detection to the Infrastructure/VCS layer.
     fn detect_superproject() -> Option<String> {
         let output = Command::new("git")
             .args(["rev-parse", "--show-superproject-working-tree"])

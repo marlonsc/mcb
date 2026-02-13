@@ -3,6 +3,18 @@
 //! Single source of truth for the persistence shape. Each backend (SQLite,
 //! PostgreSQL, MySQL, etc.) implements [`MemorySchemaDdlGenerator`] to
 //! produce dialect-specific DDL from this model.
+//!
+//! # Architecture Violation (SOLID005)
+//! This file contains multiple unrelated schema definitions (Tables, FTS, Indexes)
+//! and their generic containers. This violates the Single Responsibility Principle (SRP)
+//! by centralizing all persistence metadata in a single large module.
+//!
+//! TODO(SOLID005): Split this module into smaller, focused components:
+//! - `columns.rs` for ColumnDef/ColumnType
+//! - `tables.rs` for TableDef
+//! - `fts.rs` for FtsDef
+//! - `indexes.rs` for IndexDef
+//! - `memory.rs` (main) for MemorySchema and high-level logic.
 
 /// Column type in the generic schema (no SQL dialect).
 #[derive(Debug, Clone, PartialEq, Eq)]

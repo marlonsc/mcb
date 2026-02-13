@@ -78,6 +78,8 @@ pub struct ToolExecutionContext {
     pub delegated: Option<bool>,
     /// Execution timestamp (Unix timestamp in seconds).
     pub timestamp: Option<i64>,
+    #[allow(missing_docs)]
+    pub execution_flow: Option<String>,
 }
 
 impl ToolExecutionContext {
@@ -95,6 +97,7 @@ impl ToolExecutionContext {
         insert_argument_if_missing(request, "model_id", self.model_id.clone());
         insert_bool_argument_if_missing(request, "delegated", self.delegated);
         insert_i64_argument_if_missing(request, "timestamp", self.timestamp);
+        insert_argument_if_missing(request, "execution_flow", self.execution_flow.clone());
     }
 }
 
@@ -175,37 +178,39 @@ fn validate_execution_context(
     tool_name: &str,
     execution_context: &ToolExecutionContext,
 ) -> Result<(), McpError> {
+    validate_operation_mode_matrix(tool_name, execution_context)?;
+
     let requires_provenance = matches!(tool_name, "index" | "search" | "memory");
     if !requires_provenance {
         return Ok(());
     }
 
     let mut missing = Vec::new();
-    if execution_context.session_id.is_none() {
+    if is_missing_text(&execution_context.session_id) {
         missing.push("session_id");
     }
-    if execution_context.project_id.is_none() {
+    if is_missing_text(&execution_context.project_id) {
         missing.push("project_id");
     }
-    if execution_context.repo_id.is_none() {
+    if is_missing_text(&execution_context.repo_id) {
         missing.push("repo_id");
     }
-    if execution_context.repo_path.is_none() {
+    if is_missing_text(&execution_context.repo_path) {
         missing.push("repo_path");
     }
-    if execution_context.worktree_id.is_none() {
+    if is_missing_text(&execution_context.worktree_id) {
         missing.push("worktree_id");
     }
-    if execution_context.operator_id.is_none() {
+    if is_missing_text(&execution_context.operator_id) {
         missing.push("operator_id");
     }
-    if execution_context.machine_id.is_none() {
+    if is_missing_text(&execution_context.machine_id) {
         missing.push("machine_id");
     }
-    if execution_context.agent_program.is_none() {
+    if is_missing_text(&execution_context.agent_program) {
         missing.push("agent_program");
     }
-    if execution_context.model_id.is_none() {
+    if is_missing_text(&execution_context.model_id) {
         missing.push("model_id");
     }
     if execution_context.delegated.is_none() {
@@ -214,7 +219,9 @@ fn validate_execution_context(
     if execution_context.timestamp.is_none() {
         missing.push("timestamp");
     }
-    if execution_context.delegated == Some(true) && execution_context.parent_session_id.is_none() {
+    if execution_context.delegated == Some(true)
+        && is_missing_text(&execution_context.parent_session_id)
+    {
         missing.push("parent_session_id");
     }
 
@@ -228,6 +235,65 @@ fn validate_execution_context(
             ),
             None,
         ))
+    }
+}
+
+fn is_missing_text(value: &Option<String>) -> bool {
+    value.as_deref().is_none_or(|s| s.trim().is_empty())
+}
+
+fn validate_operation_mode_matrix(
+    tool_name: &str,
+    execution_context: &ToolExecutionContext,
+) -> Result<(), McpError> {
+    let flow = normalize_execution_flow(execution_context.execution_flow.as_deref())?;
+
+    let allowed = if matches!(
+        tool_name,
+        "search"
+            | "memory"
+            | "session"
+            | "agent"
+            | "project"
+            | "vcs"
+            | "vcs_entity"
+            | "plan_entity"
+            | "issue_entity"
+            | "org_entity"
+            | "entity"
+    ) {
+        &["stdio-only", "server-hybrid"][..]
+    } else if matches!(tool_name, "validate") {
+        &["stdio-only", "client-hybrid"][..]
+    } else {
+        &["stdio-only", "client-hybrid", "server-hybrid"][..]
+    };
+
+    if allowed.contains(&flow) {
+        Ok(())
+    } else {
+        Err(McpError::invalid_params(
+            format!(
+                "Operation mode matrix violation for '{tool_name}': flow '{flow}' is not allowed. Allowed flows: {}",
+                allowed.join(", ")
+            ),
+            None,
+        ))
+    }
+}
+
+fn normalize_execution_flow(flow: Option<&str>) -> Result<&'static str, McpError> {
+    let normalized = flow.unwrap_or("stdio-only").trim().to_ascii_lowercase();
+    match normalized.as_str() {
+        "stdio-only" => Ok("stdio-only"),
+        "client-hybrid" => Ok("client-hybrid"),
+        "server-hybrid" => Ok("server-hybrid"),
+        _ => Err(McpError::invalid_params(
+            format!(
+                "Invalid execution_flow '{normalized}'. Expected one of: stdio-only, client-hybrid, server-hybrid"
+            ),
+            None,
+        )),
     }
 }
 
@@ -280,4 +346,99 @@ async fn trigger_post_tool_use_hook(
         .process_post_tool_use(context)
         .await
         .map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ToolExecutionContext, validate_execution_context};
+
+    fn valid_context() -> ToolExecutionContext {
+        ToolExecutionContext {
+            session_id: Some("session-1".to_string()),
+            parent_session_id: Some("parent-1".to_string()),
+            project_id: Some("project-1".to_string()),
+            worktree_id: Some("wt-1".to_string()),
+            repo_id: Some("repo-1".to_string()),
+            repo_path: Some("/tmp/repo".to_string()),
+            operator_id: Some("operator-1".to_string()),
+            machine_id: Some("machine-1".to_string()),
+            agent_program: Some("opencode".to_string()),
+            model_id: Some("gpt-5.3-codex".to_string()),
+            delegated: Some(false),
+            timestamp: Some(1),
+            execution_flow: Some("stdio-only".to_string()),
+        }
+    }
+
+    #[test]
+    fn rejects_blank_provenance_scope_for_search() {
+        let mut context = valid_context();
+        context.project_id = Some("   ".to_string());
+
+        let error = validate_execution_context("search", &context)
+            .expect_err("blank project_id must be rejected");
+        assert!(error.message.contains("project_id"));
+    }
+
+    #[test]
+    fn rejects_delegated_without_parent_session_id() {
+        let mut context = valid_context();
+        context.delegated = Some(true);
+        context.parent_session_id = Some(" ".to_string());
+
+        let error = validate_execution_context("memory", &context)
+            .expect_err("delegated context must include parent_session_id");
+        assert!(error.message.contains("parent_session_id"));
+    }
+
+    #[test]
+    fn non_provenance_tool_bypasses_scope_gate() {
+        let context = ToolExecutionContext {
+            session_id: None,
+            parent_session_id: None,
+            project_id: None,
+            worktree_id: None,
+            repo_id: None,
+            repo_path: None,
+            operator_id: None,
+            machine_id: None,
+            agent_program: None,
+            model_id: None,
+            delegated: None,
+            timestamp: None,
+            execution_flow: Some("stdio-only".to_string()),
+        };
+
+        validate_execution_context("validate", &context)
+            .expect("non-index/search/memory tools should not require provenance scope");
+    }
+
+    #[test]
+    fn rejects_validate_in_server_hybrid_flow() {
+        let mut context = valid_context();
+        context.execution_flow = Some("server-hybrid".to_string());
+
+        let err = validate_execution_context("validate", &context)
+            .expect_err("validate must be rejected in server-hybrid flow");
+        assert!(err.message.contains("Operation mode matrix violation"));
+    }
+
+    #[test]
+    fn rejects_search_in_client_hybrid_flow() {
+        let mut context = valid_context();
+        context.execution_flow = Some("client-hybrid".to_string());
+
+        let err = validate_execution_context("search", &context)
+            .expect_err("search must be rejected in client-hybrid flow");
+        assert!(err.message.contains("Operation mode matrix violation"));
+    }
+
+    #[test]
+    fn allows_search_in_server_hybrid_flow() {
+        let mut context = valid_context();
+        context.execution_flow = Some("server-hybrid".to_string());
+
+        validate_execution_context("search", &context)
+            .expect("search must be allowed in server-hybrid flow");
+    }
 }

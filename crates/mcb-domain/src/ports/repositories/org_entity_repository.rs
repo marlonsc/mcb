@@ -1,4 +1,8 @@
-//! Provides org entity repository domain definitions.
+//! Organization Entity Repository Port
+//!
+//! # Overview
+//! Defines the interface for persisting organization-related entities including
+//! organizations, users, teams, and API keys.
 use async_trait::async_trait;
 
 use crate::entities::{ApiKey, Organization, Team, TeamMember, User};
@@ -6,6 +10,8 @@ use crate::error::Result;
 
 #[async_trait]
 /// Defines behavior for OrgEntityRepository.
+// TODO(architecture): Consider splitting into smaller interfaces (ISP).
+// Current interface combines Org, User, Team, and ApiKey management.
 pub trait OrgEntityRepository: Send + Sync {
     /// Performs the create org operation.
     async fn create_org(&self, org: &Organization) -> Result<()>;

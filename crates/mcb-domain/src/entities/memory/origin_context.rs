@@ -1,8 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 /// Contextual information about the origin of an operation or observation.
-#[allow(missing_docs)]
+///
+/// Tracks the "who, what, where, and when" of an action within the system.
+/// Used for audit trails, debugging, and correlating events across sessions.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+// TODO(architecture): Add id: Uuid or similar identity field to entity.
+// Currently relies on specific fields for identification which may not be unique.
 pub struct OriginContext {
     /// The ID of the organization.
     #[serde(default, skip_serializing_if = "Option::is_none")]

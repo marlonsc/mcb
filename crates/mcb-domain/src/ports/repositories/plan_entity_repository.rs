@@ -1,4 +1,8 @@
-//! Provides plan entity repository domain definitions.
+//! Plan Entity Repository Port
+//!
+//! # Overview
+//! Defines the interface for persisting plan-related entities including plans,
+//! versions, and reviews.
 use async_trait::async_trait;
 
 use crate::entities::plan::{Plan, PlanReview, PlanVersion};
@@ -6,6 +10,8 @@ use crate::error::Result;
 
 #[async_trait]
 /// Defines behavior for PlanEntityRepository.
+// TODO(architecture): Consider splitting into smaller interfaces (ISP).
+// Current interface combines Plan, PlanVersion, and PlanReview management.
 pub trait PlanEntityRepository: Send + Sync {
     /// Performs the create plan operation.
     async fn create_plan(&self, plan: &Plan) -> Result<()>;

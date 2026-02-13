@@ -1,10 +1,14 @@
 //! Validate command - runs architecture validation
+// TODO(REF003): Missing test file for crates/mcb/src/cli/validate.rs.
+// Expected: crates/mcb/tests/validate_test.rs
 
 use std::path::PathBuf;
 
 use clap::Args;
 
 /// Arguments for the validate command
+// TODO(REF002): Duplicate definition 'ValidateArgs' also found in 'crates/mcb-server/src/args/consolidated.rs'.
+// Consider consolidating to a common crate or shared module.
 #[derive(Args, Debug, Clone)]
 pub struct ValidateArgs {
     /// Path to workspace root (default: current directory)

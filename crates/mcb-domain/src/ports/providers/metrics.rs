@@ -102,7 +102,10 @@ pub enum MetricsError {
 /// # Ok(())
 /// # }
 /// ```
+/// ```
 #[async_trait]
+// TODO(architecture): Consider splitting into smaller interfaces (ISP).
+// Current interface mixes core primitives with domain-specific convenience methods.
 pub trait MetricsProvider: Send + Sync {
     /// Provider name for identification
     fn name(&self) -> &str;

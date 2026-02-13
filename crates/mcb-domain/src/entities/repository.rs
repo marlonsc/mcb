@@ -1,8 +1,12 @@
-//! Persisted VCS repository and branch entities for multi-tenant CRUD.
+//! Repository Domain Entities
 //!
-//! These are the *persisted* counterparts of the read-only [`VcsRepository`]
-//! and [`VcsBranch`] models used by the VCS provider.  They carry `org_id`
-//! and timestamps for row-level tenant isolation.
+//! # Overview
+//! This module defines entities for tracking Version Control System (VCS) repositories.
+//! It supports multi-tenant environments by linking repositories to Organizations and Projects.
+//!
+//! # Core Entities
+//! - [`Repository`]: A persisted record of a remote or local VCS repository (Git, Hg, SVN).
+//! - [`Branch`]: A specific line of development within a repository.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

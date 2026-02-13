@@ -1,5 +1,17 @@
-//! SQLite provider: DatabaseProvider impl and factory functions.
+//! SQLite Database Provider
+//!
+//! # Overview
+//! The `SqliteDatabaseProvider` acts as the factory and lifecycle manager for SQLite connections.
+//! It is responsible for initializing the database file, applying the schema (DDL), and
+//! creating repository instances backed by a shared `DatabaseExecutor`.
+//!
+//! # Responsibilities
+//! - **Connection Management**: Pooling and configuring SQLite connections (WAL mode, etc.).
+//! - **Schema Migration**: Applying DDL at startup and verifying schema integrity.
+//! - **Factory Methods**: Creating `MemoryRepository`, `AgentRepository`, etc. from a path or executor.
+//! - **Recovery**: Automatically backing up and recreating Corrupt/Incompatible databases.
 
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -17,7 +29,9 @@ use mcb_domain::registry::database::{
     DATABASE_PROVIDERS, DatabaseProviderConfig, DatabaseProviderEntry,
 };
 
-/// SQLite database provider implementation
+/// SQLite database provider implementation.
+///
+/// Implements `DatabaseProvider` port to serve as the entry point for infrastructure composition.
 pub struct SqliteDatabaseProvider;
 
 /// Provider factory function
@@ -113,6 +127,9 @@ async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
                     "DDL failed on existing database, backing up and recreating"
                 );
                 pool.close().await;
+                // TODO(architecture): Decouple destructive recovery policy.
+                // The provider should likely report a SchemaMismatch error, and a higher-level
+                // bootstrap service should decide whether to backup and recreate.
                 backup_and_remove(&path)?;
 
                 let fresh_pool = sqlx::SqlitePool::connect(&db_url)
@@ -188,5 +205,93 @@ async fn apply_schema(pool: &sqlx::SqlitePool) -> Result<()> {
             )
         })?;
     }
+
+    verify_project_schema(pool).await?;
+    Ok(())
+}
+
+async fn verify_project_schema(pool: &sqlx::SqlitePool) -> Result<()> {
+    // TODO(architecture): Derive schema verification from domain definition to avoid drift.
+    // Manual column listing here is error-prone and duplicates the schema source of truth.
+    verify_table_columns(pool, "projects", &["id", "org_id", "name", "path"]).await?;
+    verify_table_columns(
+        pool,
+        "collections",
+        &["id", "project_id", "name", "vector_name"],
+    )
+    .await?;
+    verify_table_columns(
+        pool,
+        "session_summaries",
+        &["id", "project_id", "session_id", "origin_context"],
+    )
+    .await?;
+    verify_table_columns(
+        pool,
+        "observations",
+        &["id", "project_id", "metadata", "observation_type"],
+    )
+    .await?;
+    verify_table_columns(
+        pool,
+        "agent_sessions",
+        &[
+            "id",
+            "session_summary_id",
+            "parent_session_id",
+            "project_id",
+            "worktree_id",
+            "model",
+        ],
+    )
+    .await?;
+    verify_table_columns(
+        pool,
+        "worktrees",
+        &["id", "repository_id", "path", "assigned_agent_id"],
+    )
+    .await?;
+
+    Ok(())
+}
+
+async fn verify_table_columns(
+    pool: &sqlx::SqlitePool,
+    table: &str,
+    required: &[&str],
+) -> Result<()> {
+    use mcb_domain::error::Error;
+    use sqlx::Row;
+
+    let pragma = format!("PRAGMA table_info({table})");
+    let rows = sqlx::query(&pragma)
+        .fetch_all(pool)
+        .await
+        .map_err(|e| Error::memory_with_source(format!("read schema for table {table}"), e))?;
+
+    if rows.is_empty() {
+        return Err(Error::memory(format!(
+            "legacy/incompatible schema detected: missing table '{table}'"
+        )));
+    }
+
+    let present: HashSet<String> = rows
+        .iter()
+        .filter_map(|row| row.try_get::<String, _>("name").ok())
+        .collect();
+
+    let missing: Vec<&str> = required
+        .iter()
+        .copied()
+        .filter(|column| !present.contains(*column))
+        .collect();
+
+    if !missing.is_empty() {
+        return Err(Error::memory(format!(
+            "legacy/incompatible schema detected: table '{table}' missing required columns [{}]",
+            missing.join(", ")
+        )));
+    }
+
     Ok(())
 }
