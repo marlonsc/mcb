@@ -28,9 +28,11 @@ mod phase7_integration_tests {
     fn test_mem06_memory_filter_supports_vcs_context() {
         let filter = MemoryFilter {
             id: None,
+            project_id: None,
             tags: None,
             r#type: Some(ObservationType::Decision),
             session_id: Some("sess-123".to_string()),
+            parent_session_id: None,
             repo_id: None,
             time_range: None,
             branch: Some("main".to_string()),
@@ -93,9 +95,11 @@ mod phase7_integration_tests {
     fn test_memory_filter_creates_vcs_aware_queries() {
         let filter = MemoryFilter {
             id: None,
+            project_id: None,
             tags: None,
             r#type: None,
             session_id: Some("sess-123".to_string()),
+            parent_session_id: None,
             repo_id: Some("repo-abc".to_string()),
             time_range: None,
             branch: Some("feature/x".to_string()),

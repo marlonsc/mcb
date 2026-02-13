@@ -3,11 +3,11 @@
 
 [general]
 workspace_root = "."
-exclude_patterns = ["target/", "tests/fixtures/"]
 rules_path = "crates/mcb-validate/rules"
 project_prefix = "mcb"
-skip_crates = ["mcb", "mcb-validate"]
 internal_dep_prefix = "mcb-"
+skip_dir_patterns = ["/fixtures/"]
+exclude_patterns = []
 
 [rules.architecture]
 enabled = true
@@ -68,7 +68,7 @@ utility_types = [
     "Mutex",
 ]
 skip_files = ["mod.rs", "lib.rs", "main.rs", "errors.rs", "error.rs"]
-skip_dir_patterns = ["/tests/", "/benches/", "/examples/"]
+skip_dir_patterns = ["/fixtures/"]
 known_migration_pairs = [["mcb-core", "mcb-domain"], ["mcb-std", "mcb-common"]]
 
 [rules.performance]

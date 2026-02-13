@@ -35,7 +35,7 @@ pub struct McpClientConfig {
 /// HTTP client transport
 ///
 /// Bridges stdio (for Claude Code) to HTTP (for MCB server).
-/// Each request is forwarded to the server with a session ID header.
+/// Each request is forwarded to the server over JSON-RPC.
 pub struct HttpClientTransport {
     config: McpClientConfig,
     client: reqwest::Client,
@@ -217,7 +217,6 @@ impl HttpClientTransport {
             .client
             .post(&url)
             .header("Content-Type", "application/json")
-            .header("X-Session-Id", self.config.session_id.as_str())
             .json(request)
             .send()
             .await?;

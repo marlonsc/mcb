@@ -46,6 +46,7 @@ fn test_memory_filter_construction() {
         tags: None,
         r#type: None,
         session_id: Some("s1".to_string()),
+        parent_session_id: None,
         repo_id: None,
         time_range: None,
         branch: None,

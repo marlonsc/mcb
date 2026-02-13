@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
-use mcb_domain::utils::compute_stable_id_hash;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
@@ -33,16 +32,21 @@ pub async fn summarize_session(
         let payload_project_id = SessionHelpers::get_str(data, "project_id");
         let payload_session_id = SessionHelpers::get_str(data, "session_id");
         let payload_worktree_id = SessionHelpers::get_str(data, "worktree_id");
-        let hashed_session_from_args = compute_stable_id_hash("session", session_id.as_str());
-        let hashed_session_from_data = payload_session_id
-            .as_deref()
-            .map(|id| compute_stable_id_hash("session", id));
+        let payload_parent_session_id = SessionHelpers::get_str(data, "parent_session_id");
+        let payload_repo_path = SessionHelpers::get_str(data, "repo_path");
+        let payload_operator_id = SessionHelpers::get_str(data, "operator_id");
+        let payload_machine_id = SessionHelpers::get_str(data, "machine_id");
+        let payload_agent_program = SessionHelpers::get_str(data, "agent_program");
+        let payload_model_id = SessionHelpers::get_str(data, "model_id");
+        let payload_delegated = SessionHelpers::get_bool(data, "delegated");
         let origin_context = resolve_origin_context(OriginContextInput {
             org_id: args.org_id.as_deref(),
             project_id_args: args.project_id.as_deref(),
             project_id_payload: payload_project_id.as_deref(),
-            session_from_args: Some(hashed_session_from_args.as_str()),
-            session_from_data: hashed_session_from_data.as_deref(),
+            session_from_args: Some(session_id.as_str()),
+            session_from_data: payload_session_id.as_deref(),
+            parent_session_from_args: args.parent_session_id.as_deref(),
+            parent_session_from_data: payload_parent_session_id.as_deref(),
             execution_from_args: None,
             execution_from_data: None,
             tool_name_args: Some("session"),
@@ -50,7 +54,7 @@ pub async fn summarize_session(
             repo_id_args: None,
             repo_id_payload: None,
             repo_path_args: None,
-            repo_path_payload: None,
+            repo_path_payload: payload_repo_path.as_deref(),
             worktree_id_args: args.worktree_id.as_deref(),
             worktree_id_payload: payload_worktree_id.as_deref(),
             file_path_args: None,
@@ -59,6 +63,16 @@ pub async fn summarize_session(
             branch_payload: None,
             commit_args: None,
             commit_payload: None,
+            operator_id_args: None,
+            operator_id_payload: payload_operator_id.as_deref(),
+            machine_id_args: None,
+            machine_id_payload: payload_machine_id.as_deref(),
+            agent_program_args: None,
+            agent_program_payload: payload_agent_program.as_deref(),
+            model_id_args: None,
+            model_id_payload: payload_model_id.as_deref(),
+            delegated_args: None,
+            delegated_payload: payload_delegated,
             require_project_id: true,
             timestamp: None,
         })?;

@@ -94,8 +94,6 @@ mode = "comment"
 name = "ruff"
 drivers = ["lint"]
 
-[[plugin]]
-name = "rustfmt"
 
 [[plugin]]
 name = "shellcheck"

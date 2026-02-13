@@ -180,11 +180,13 @@ __pycache__/
 # ---------------------------------------------------------------------------
 book/
 docs/generated/
+docs/reports/
 docs/plans/
 !docs/adr/archive/*
 docs/**/*backup*
 docs/**/*bak*
 docs/**/*old*
+reports/
 
 # ---------------------------------------------------------------------------
 # Coverage / profiling

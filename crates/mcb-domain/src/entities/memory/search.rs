@@ -51,6 +51,8 @@ pub struct MemoryFilter {
     pub r#type: Option<ObservationType>,
     /// Filter by session identifier.
     pub session_id: Option<String>,
+    /// Filter by parent session identifier.
+    pub parent_session_id: Option<String>,
     /// Filter by repository identifier.
     pub repo_id: Option<String>,
     /// Filter by time range (start_ms, end_ms).
@@ -68,6 +70,10 @@ impl std::fmt::Debug for MemoryFilter {
             .field("tags", &self.tags)
             .field("observation_type", &self.r#type)
             .field("session_id", &self.session_id.as_ref().map(|_| "REDACTED"))
+            .field(
+                "parent_session_id",
+                &self.parent_session_id.as_ref().map(|_| "REDACTED"),
+            )
             .field("repo_id", &self.repo_id)
             .field("time_range", &self.time_range)
             .field("branch", &self.branch)

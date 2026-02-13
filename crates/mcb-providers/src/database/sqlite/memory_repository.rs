@@ -186,6 +186,12 @@ impl MemoryRepository for SqliteMemoryRepository {
                 base_sql.push_str(" AND json_extract(metadata, '$.session_id') = ?");
                 base_params.push(SqlParam::String(session_id.clone()));
             }
+            if let Some(parent_session_id) = &f.parent_session_id {
+                base_sql.push_str(
+                    " AND json_extract(metadata, '$.origin_context.parent_session_id') = ?",
+                );
+                base_params.push(SqlParam::String(parent_session_id.clone()));
+            }
             if let Some(repo_id) = &f.repo_id {
                 base_sql.push_str(" AND json_extract(metadata, '$.repo_id') = ?");
                 base_params.push(SqlParam::String(repo_id.clone()));

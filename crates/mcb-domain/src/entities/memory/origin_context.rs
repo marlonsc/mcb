@@ -13,9 +13,15 @@ pub struct OriginContext {
     /// The ID of the session.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub session_id: Option<String>,
+    /// Stable hash of session ID for safe correlation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session_id_hash: Option<String>,
     /// The ID of the parent session when delegated.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parent_session_id: Option<String>,
+    /// Stable hash of parent session ID for safe correlation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent_session_id_hash: Option<String>,
     /// The ID of the execution.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub execution_id: Option<String>,

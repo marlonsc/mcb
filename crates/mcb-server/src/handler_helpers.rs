@@ -2,6 +2,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::entities::memory::OriginContext;
 use mcb_domain::error::Error;
+use mcb_domain::utils::compute_stable_id_hash;
 use mcb_domain::value_objects::OrgContext;
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 use serde::Serialize;
@@ -85,6 +86,10 @@ pub struct OriginContextInput<'a> {
     pub session_from_args: Option<&'a str>,
     /// Session ID from payload.
     pub session_from_data: Option<&'a str>,
+    /// Parent session ID from arguments.
+    pub parent_session_from_args: Option<&'a str>,
+    /// Parent session ID from payload.
+    pub parent_session_from_data: Option<&'a str>,
     /// Execution ID from arguments.
     pub execution_from_args: Option<&'a str>,
     /// Execution ID from payload.
@@ -117,6 +122,26 @@ pub struct OriginContextInput<'a> {
     pub commit_args: Option<&'a str>,
     /// Commit hash from payload.
     pub commit_payload: Option<&'a str>,
+    /// Operator ID from arguments.
+    pub operator_id_args: Option<&'a str>,
+    /// Operator ID from payload.
+    pub operator_id_payload: Option<&'a str>,
+    /// Machine ID from arguments.
+    pub machine_id_args: Option<&'a str>,
+    /// Machine ID from payload.
+    pub machine_id_payload: Option<&'a str>,
+    /// Agent program from arguments.
+    pub agent_program_args: Option<&'a str>,
+    /// Agent program from payload.
+    pub agent_program_payload: Option<&'a str>,
+    /// Model ID from arguments.
+    pub model_id_args: Option<&'a str>,
+    /// Model ID from payload.
+    pub model_id_payload: Option<&'a str>,
+    /// Delegated flag from arguments.
+    pub delegated_args: Option<bool>,
+    /// Delegated flag from payload.
+    pub delegated_payload: Option<bool>,
     /// Whether project ID is required.
     pub require_project_id: bool,
     /// Optional timestamp override.
@@ -135,15 +160,31 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
         return Err(McpError::invalid_params("project_id is required", None));
     }
 
+    let session_id = resolve_identifier_precedence(
+        "session_id",
+        input.session_from_args,
+        input.session_from_data,
+    )?;
+    let parent_session_id = resolve_identifier_precedence(
+        "parent_session_id",
+        input.parent_session_from_args,
+        input.parent_session_from_data,
+    )?;
+
+    let session_id_hash = session_id
+        .as_deref()
+        .map(|value| compute_stable_id_hash("session", value));
+    let parent_session_id_hash = parent_session_id
+        .as_deref()
+        .map(|value| compute_stable_id_hash("parent_session", value));
+
     Ok(OriginContext {
         org_id: Some(resolve_org_id(input.org_id)),
         project_id,
-        session_id: resolve_identifier_precedence(
-            "session_id",
-            input.session_from_args,
-            input.session_from_data,
-        )?,
-        parent_session_id: None,
+        session_id,
+        session_id_hash,
+        parent_session_id,
+        parent_session_id_hash,
         execution_id: resolve_identifier_precedence(
             "execution_id",
             input.execution_from_args,
@@ -164,11 +205,27 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
             input.repo_path_args,
             input.repo_path_payload,
         )?,
-        operator_id: None,
-        machine_id: None,
-        agent_program: None,
-        model_id: None,
-        delegated: None,
+        operator_id: resolve_identifier_precedence(
+            "operator_id",
+            input.operator_id_args,
+            input.operator_id_payload,
+        )?,
+        machine_id: resolve_identifier_precedence(
+            "machine_id",
+            input.machine_id_args,
+            input.machine_id_payload,
+        )?,
+        agent_program: resolve_identifier_precedence(
+            "agent_program",
+            input.agent_program_args,
+            input.agent_program_payload,
+        )?,
+        model_id: resolve_identifier_precedence(
+            "model_id",
+            input.model_id_args,
+            input.model_id_payload,
+        )?,
+        delegated: input.delegated_args.or(input.delegated_payload),
         worktree_id: resolve_identifier_precedence(
             "worktree_id",
             input.worktree_id_args,

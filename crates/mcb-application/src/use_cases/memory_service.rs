@@ -80,6 +80,9 @@ impl MemoryServiceImpl {
         if !Self::check_session(obs, filter) {
             return false;
         }
+        if !Self::check_parent_session(obs, filter) {
+            return false;
+        }
         if !Self::check_repo(obs, filter) {
             return false;
         }
@@ -114,6 +117,16 @@ impl MemoryServiceImpl {
             .repo_id
             .as_ref()
             .is_none_or(|id| obs.metadata.repo_id.as_ref() == Some(id))
+    }
+
+    fn check_parent_session(obs: &Observation, filter: &MemoryFilter) -> bool {
+        filter.parent_session_id.as_ref().is_none_or(|id| {
+            obs.metadata
+                .origin_context
+                .as_ref()
+                .and_then(|ctx| ctx.parent_session_id.as_ref())
+                == Some(id)
+        })
     }
 
     fn check_type(obs: &Observation, filter: &MemoryFilter) -> bool {

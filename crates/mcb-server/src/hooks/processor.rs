@@ -55,7 +55,10 @@ impl HookProcessor {
             .cloned()
             .unwrap_or_else(|| "default".to_string());
 
-        let session_internal = context.session_id.clone().map(|id| id.into_string());
+        let session_internal = context
+            .session_id
+            .as_ref()
+            .map(|id| id.as_str().to_string());
         let hashed_session = session_internal
             .as_deref()
             .map(|id| compute_stable_id_hash("session", id));
@@ -75,8 +78,10 @@ impl HookProcessor {
             session_id: session_internal.clone(),
             origin_context: Some(OriginContext {
                 project_id: Some(project_id.clone()),
-                session_id: hashed_session,
-                parent_session_id: parent_session_hash,
+                session_id: session_internal,
+                session_id_hash: hashed_session,
+                parent_session_id: context.metadata.get("parent_session_id").cloned(),
+                parent_session_id_hash: parent_session_hash,
                 tool_name: Some(context.tool_name.clone()),
                 repo_id: context.metadata.get("repo_id").cloned(),
                 repo_path: context.metadata.get("repo_path").cloned(),
@@ -131,6 +136,7 @@ impl HookProcessor {
             tags: None,
             r#type: None,
             session_id: Some(context.session_id.as_str().to_string()),
+            parent_session_id: None,
             repo_id: None,
             time_range: None,
             branch: None,

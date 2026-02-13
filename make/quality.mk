@@ -31,12 +31,15 @@ endif
 
 validate: ## Architecture validation (QUICK=1 for fast mode)
 ifeq ($(QUICK),1)
-	@echo "Quick architecture validation..."
-	@cargo test --package mcb-validate test_full_validation_report -- --nocapture 2>&1 | \
-		grep -E "(Total Violations:|Status:|\[Error\])" | head -20
+	@echo "Quick architecture validation (internal mcb config)..."
+	@mkdir -p reports
+	@cargo run --package mcb -- validate . --quick --format json > reports/mcb-validate-internal-report.json
+	@echo "Report generated: reports/mcb-validate-internal-report.json"
 else
-	@echo "Architecture validation..."
-	cargo test --package mcb-validate test_full_validation_report -- --nocapture
+	@echo "Architecture validation (internal mcb config)..."
+	@mkdir -p reports
+	@cargo run --package mcb -- validate . --format json > reports/mcb-validate-internal-report.json
+	@echo "Report generated: reports/mcb-validate-internal-report.json"
 endif
 
 audit: ## Security audit (cargo-audit)
@@ -63,3 +66,9 @@ else
 		--exclude-files 'crates/*/tests/admin/*' \
 		--timeout 300 2>/dev/null || echo "Note: cargo-tarpaulin not installed"
 endif
+
+qlty: ## Run qlty checks and smells analysis
+	@echo "Running qlty checks and smells analysis..."
+	@mkdir -p docs/reports
+	@./scripts/analyze_qlty.py --scan --check --summary --markdown docs/reports/qlty-check-REPORTS.md
+	@./scripts/analyze_qlty.py --scan --smells --summary --markdown docs/reports/qlty-smells-REPORTS.md

@@ -22,6 +22,11 @@ impl SessionHelpers {
         crate::utils::json::get_i64(data, key)
     }
 
+    /// Extract a boolean value from a map.
+    pub fn get_bool(data: &Map<String, Value>, key: &str) -> Option<bool> {
+        crate::utils::json::get_bool(data, key)
+    }
+
     /// Extract a list of strings from a map.
     pub fn get_string_list(data: &Map<String, Value>, key: &str) -> Vec<String> {
         crate::utils::json::get_string_list(data, key)

@@ -94,6 +94,7 @@ impl SearchHandler {
                         None
                     },
                     session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
+                    parent_session_id: None,
                     repo_id: None,
                     time_range: None,
                     branch: None,
