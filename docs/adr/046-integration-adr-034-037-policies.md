@@ -13,7 +13,7 @@ implementation_status: Complete
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
-## ADR-046: Integration with ADR-034-037 & Policies
+# ADR-046: Integration with ADR-034-037 & Policies
 
 **Status**: Proposed
 **Date**: 2026-02-05
