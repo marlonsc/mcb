@@ -13,6 +13,7 @@ use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
+use crate::utils::json::{self, JsonMapExt};
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -20,7 +21,7 @@ pub async fn store_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match MemoryHelpers::json_map(&args.data) {
+    let data = match json::json_map(&args.data) {
         Some(data) => data,
         None => {
             return Ok(CallToolResult::error(vec![Content::text(
@@ -28,13 +29,13 @@ pub async fn store_observation(
             )]));
         }
     };
-    let content = match MemoryHelpers::get_required_str(data, "content") {
+    let content = match data.required_string("content") {
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
     // TODO(ORG002): Duplicate string literal "observation_type".
     // Consider using mcb_domain::schema::memory::COL_OBSERVATION_TYPE instead.
-    let observation_type_str = match MemoryHelpers::get_required_str(data, "observation_type") {
+    let observation_type_str = match data.required_string("observation_type") {
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
@@ -42,7 +43,7 @@ pub async fn store_observation(
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
-    let tags = MemoryHelpers::get_string_list(data, "tags");
+    let tags = data.string_list("tags");
     let vcs_context = VcsContext::capture();
     let arg_session_id = args
         .session_id
@@ -53,18 +54,18 @@ pub async fn store_observation(
         .parent_session_id
         .clone()
         .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
-    let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
-    let payload_project_id = MemoryHelpers::get_str(data, "project_id");
-    let payload_file_path = MemoryHelpers::get_str(data, "file_path");
-    let payload_branch = MemoryHelpers::get_str(data, "branch");
-    let payload_commit = MemoryHelpers::get_str(data, "commit");
-    let payload_repo_path = MemoryHelpers::get_str(data, "repo_path");
-    let payload_worktree_id = MemoryHelpers::get_str(data, "worktree_id");
-    let payload_operator_id = MemoryHelpers::get_str(data, "operator_id");
-    let payload_machine_id = MemoryHelpers::get_str(data, "machine_id");
-    let payload_agent_program = MemoryHelpers::get_str(data, "agent_program");
-    let payload_model_id = MemoryHelpers::get_str(data, "model_id");
-    let payload_delegated = MemoryHelpers::get_bool(data, "delegated");
+    let payload_repo_id = data.string("repo_id");
+    let payload_project_id = data.string("project_id");
+    let payload_file_path = data.string("file_path");
+    let payload_branch = data.string("branch");
+    let payload_commit = data.string("commit");
+    let payload_repo_path = data.string("repo_path");
+    let payload_worktree_id = data.string("worktree_id");
+    let payload_operator_id = data.string("operator_id");
+    let payload_machine_id = data.string("machine_id");
+    let payload_agent_program = data.string("agent_program");
+    let payload_model_id = data.string("model_id");
+    let payload_delegated = data.boolean("delegated");
 
     let mut origin_context = resolve_origin_context(OriginContextInput {
         org_id: args.org_id.as_deref(),

@@ -10,6 +10,7 @@ use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::resolve_identifier_precedence;
+use crate::utils::json::{self, JsonMapExt};
 use tracing::error;
 
 /// Updates an existing agent session.
@@ -26,20 +27,18 @@ pub async fn update_session(
             )]));
         }
     };
-    let data = SessionHelpers::json_map(&args.data);
+    let data = json::json_map(&args.data);
     let status = match args.status.as_ref() {
         Some(status) => Some(SessionHelpers::parse_status(status)?),
         None => data
-            .and_then(|d| SessionHelpers::get_str(d, schema::STATUS))
+            .and_then(|d| d.string(schema::STATUS))
             .map(|status| SessionHelpers::parse_status(&status))
             .transpose()?,
     };
     match agent_service.get_session(session_id).await {
         Ok(Some(mut session)) => {
-            let payload_project_id =
-                data.and_then(|d| SessionHelpers::get_str(d, schema::PROJECT_ID));
-            let payload_worktree_id =
-                data.and_then(|d| SessionHelpers::get_str(d, schema::WORKTREE_ID));
+            let payload_project_id = data.and_then(|d| d.string(schema::PROJECT_ID));
+            let payload_worktree_id = data.and_then(|d| d.string(schema::WORKTREE_ID));
 
             let resolved_project_id = resolve_identifier_precedence(
                 schema::PROJECT_ID,
@@ -83,15 +82,16 @@ pub async fn update_session(
                 session.status = status;
             }
             if let Some(data) = data {
-                session.result_summary = SessionHelpers::get_str(data, schema::RESULT_SUMMARY)
+                session.result_summary = data
+                    .string(schema::RESULT_SUMMARY)
                     .or(session.result_summary);
-                session.token_count =
-                    SessionHelpers::get_i64(data, schema::TOKEN_COUNT).or(session.token_count);
-                session.tool_calls_count = SessionHelpers::get_i64(data, schema::TOOL_CALLS_COUNT)
+                session.token_count = data.int64(schema::TOKEN_COUNT).or(session.token_count);
+                session.tool_calls_count = data
+                    .int64(schema::TOOL_CALLS_COUNT)
                     .or(session.tool_calls_count);
-                session.delegations_count =
-                    SessionHelpers::get_i64(data, schema::DELEGATIONS_COUNT)
-                        .or(session.delegations_count);
+                session.delegations_count = data
+                    .int64(schema::DELEGATIONS_COUNT)
+                    .or(session.delegations_count);
             }
             let status_str = session.status.as_str().to_string();
             match agent_service.update_session(session).await {

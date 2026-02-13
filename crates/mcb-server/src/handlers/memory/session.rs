@@ -5,11 +5,11 @@ use mcb_domain::value_objects::SessionId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
-use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
+use crate::utils::json::{self, JsonMapExt};
 
 /// Stores a session summary in the memory service.
 #[tracing::instrument(skip_all)]
@@ -17,7 +17,7 @@ pub async fn store_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match MemoryHelpers::json_map(&args.data) {
+    let data = match json::json_map(&args.data) {
         Some(data) => data,
         None => {
             return Ok(CallToolResult::error(vec![Content::text(
@@ -28,7 +28,7 @@ pub async fn store_session(
     let session_id = args
         .session_id
         .clone()
-        .or_else(|| MemoryHelpers::get_str(data, "session_id").map(SessionId::new));
+        .or_else(|| data.string("session_id").map(SessionId::new));
     let session_id = match session_id {
         Some(value) => value,
         None => {
@@ -37,19 +37,19 @@ pub async fn store_session(
             )]));
         }
     };
-    let topics = MemoryHelpers::get_string_list(data, "topics");
-    let decisions = MemoryHelpers::get_string_list(data, "decisions");
-    let next_steps = MemoryHelpers::get_string_list(data, "next_steps");
-    let key_files = MemoryHelpers::get_string_list(data, "key_files");
-    let payload_project_id = MemoryHelpers::get_str(data, "project_id");
-    let payload_parent_session_id = MemoryHelpers::get_str(data, "parent_session_id");
-    let payload_repo_path = MemoryHelpers::get_str(data, "repo_path");
-    let payload_worktree_id = MemoryHelpers::get_str(data, "worktree_id");
-    let payload_operator_id = MemoryHelpers::get_str(data, "operator_id");
-    let payload_machine_id = MemoryHelpers::get_str(data, "machine_id");
-    let payload_agent_program = MemoryHelpers::get_str(data, "agent_program");
-    let payload_model_id = MemoryHelpers::get_str(data, "model_id");
-    let payload_delegated = MemoryHelpers::get_bool(data, "delegated");
+    let topics = data.string_list("topics");
+    let decisions = data.string_list("decisions");
+    let next_steps = data.string_list("next_steps");
+    let key_files = data.string_list("key_files");
+    let payload_project_id = data.string("project_id");
+    let payload_parent_session_id = data.string("parent_session_id");
+    let payload_repo_path = data.string("repo_path");
+    let payload_worktree_id = data.string("worktree_id");
+    let payload_operator_id = data.string("operator_id");
+    let payload_machine_id = data.string("machine_id");
+    let payload_agent_program = data.string("agent_program");
+    let payload_model_id = data.string("model_id");
+    let payload_delegated = data.boolean("delegated");
     let raw_session_id = session_id.as_str().to_string();
 
     let origin_context = resolve_origin_context(OriginContextInput {

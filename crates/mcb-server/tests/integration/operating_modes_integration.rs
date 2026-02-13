@@ -13,19 +13,10 @@ use std::net::TcpListener;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::test_utils::mock_services::{
-    TestIssueEntityRepository, TestOrgEntityRepository, TestPlanEntityRepository,
-    TestProjectRepository, TestVcsEntityRepository, TestVcsProvider,
-};
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::types::{AppConfig, ModeConfig, OperatingMode};
-use mcb_infrastructure::crypto::CryptoService;
 use mcb_infrastructure::di::bootstrap::init_app;
-use mcb_infrastructure::di::modules::domain_services::{
-    DomainServicesFactory, ServiceDependencies,
-};
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::session::SessionManager;
@@ -546,72 +537,13 @@ async fn test_session_isolation_with_vector_store() {
 
 /// Helper to create an MCP server with null providers for testing
 async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
-    let (config, _temp_dir) = create_test_config();
-    let ctx = init_app(config.clone()).await.expect("Failed to init app");
-
-    // Get providers from context
-    let embedding_provider = ctx.embedding_handle().get();
-    let vector_store_provider = ctx.vector_store_handle().get();
-    let language_chunker = ctx.language_handle().get();
-    let cache_provider = ctx.cache_handle().get();
-    let indexing_ops = ctx.indexing();
-    let event_bus = ctx.event_bus();
-
-    // Create shared cache provider for domain services factory
-    let shared_cache = SharedCacheProvider::from_arc(cache_provider);
-
-    // Create crypto service with random key for tests
-    let master_key = CryptoService::generate_master_key();
-    let crypto = CryptoService::new(master_key).expect("Failed to create crypto service");
-
-    // Use a temporary file for the memory database
     let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let db_path = temp_dir.path().join("test.db");
+    let mut config = AppConfig::default();
+    config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
 
-    let (memory_repository, shared_executor) =
-        mcb_providers::database::create_memory_repository_with_executor(db_path)
-            .await
-            .expect("Failed to create memory database");
-    let agent_repository = mcb_providers::database::create_agent_repository_from_executor(
-        std::sync::Arc::clone(&shared_executor),
-    );
-    let vcs_provider: std::sync::Arc<dyn mcb_domain::ports::providers::VcsProvider> =
-        std::sync::Arc::new(TestVcsProvider::new());
-
-    let project_service: std::sync::Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
-        std::sync::Arc::new(mcb_infrastructure::project::ProjectService::new());
-    let project_repository = std::sync::Arc::new(TestProjectRepository::new());
-    let file_hash_repository: std::sync::Arc<
-        dyn mcb_domain::ports::repositories::FileHashRepository,
-    > = std::sync::Arc::new(mcb_providers::database::SqliteFileHashRepository::new(
-        std::sync::Arc::clone(&shared_executor),
-        mcb_providers::database::SqliteFileHashConfig::default(),
-    ));
-
-    let deps = ServiceDependencies {
-        project_id: "test-project".to_string(),
-        cache: shared_cache,
-        crypto: std::sync::Arc::new(crypto)
-            as std::sync::Arc<dyn mcb_domain::ports::providers::CryptoProvider>,
-        config,
-        embedding_provider,
-        vector_store_provider,
-        language_chunker,
-        indexing_ops,
-        event_bus,
-        memory_repository,
-        agent_repository,
-        file_hash_repository,
-        vcs_provider,
-        project_service,
-        project_repository: project_repository.clone(),
-        vcs_entity_repository: std::sync::Arc::new(TestVcsEntityRepository::new()),
-        plan_entity_repository: std::sync::Arc::new(TestPlanEntityRepository::new()),
-        issue_entity_repository: std::sync::Arc::new(TestIssueEntityRepository::new()),
-        org_entity_repository: std::sync::Arc::new(TestOrgEntityRepository::new()),
-    };
-
-    let services = DomainServicesFactory::create_services(deps)
+    let ctx = init_app(config).await.expect("Failed to init app");
+    let services = ctx
+        .build_domain_services()
         .await
         .expect("Failed to create services");
 

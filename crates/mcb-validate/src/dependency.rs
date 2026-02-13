@@ -15,213 +15,88 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use crate::scan::for_each_rs_under_root;
-use crate::violation_trait::{Violation, ViolationCategory};
+use crate::violation_trait::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
 
-/// Dependency violation types
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum DependencyViolation {
-    /// Forbidden dependency in Cargo.toml
-    ForbiddenCargoDepedency {
-        /// Name of the crate that contains the forbidden dependency.
-        crate_name: String,
-        /// Name of the crate that is forbidden as a dependency.
-        forbidden_dep: String,
-        /// Path to the Cargo.toml file containing the violation.
-        location: PathBuf,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Forbidden use statement in source code
-    ForbiddenUseStatement {
-        /// Name of the crate where the violation was found.
-        crate_name: String,
-        /// Name of the crate whose items are being incorrectly imported.
-        forbidden_dep: String,
-        /// Path to the source file containing the violation.
-        file: PathBuf,
-        /// Line number where the forbidden `use` statement occurs.
-        line: usize,
-        /// The content of the line containing the violation.
-        context: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Circular dependency detected
-    CircularDependency {
-        /// The sequence of crates forming the dependency cycle.
-        cycle: Vec<String>,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Admin surface imports repository ports outside approved composition roots.
-    AdminBypassImport {
-        /// Source file that introduced the bypass import.
-        file: PathBuf,
-        /// Line where bypass import appears.
-        line: usize,
-        /// Offending source line.
-        context: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// CLI code bypasses unified execution by calling validate crate directly.
-    CliBypassPath {
-        /// Source file that introduced direct validation execution.
-        file: PathBuf,
-        /// Line where bypass call/import appears.
-        line: usize,
-        /// Offending source line.
-        context: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-}
+/// Wrapper for dependency cycle to provide custom formatting.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct DependencyCycle(pub Vec<String>);
 
-impl DependencyViolation {
-    /// Returns the severity level of this violation.
-    ///
-    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
-    pub fn severity(&self) -> Severity {
-        <Self as Violation>::severity(self)
-    }
-}
-
-impl std::fmt::Display for DependencyViolation {
+impl std::fmt::Debug for DependencyCycle {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::ForbiddenCargoDepedency {
-                crate_name,
-                forbidden_dep,
-                location,
-                ..
-            } => {
-                write!(
-                    f,
-                    "Forbidden dependency: {} depends on {} (in {})",
-                    crate_name,
-                    forbidden_dep,
-                    location.display()
-                )
-            }
-            Self::ForbiddenUseStatement {
-                crate_name,
-                forbidden_dep,
-                file,
-                line,
-                context,
-                ..
-            } => {
-                write!(
-                    f,
-                    "Forbidden use: {} uses {} at {}:{} - {}",
-                    crate_name,
-                    forbidden_dep,
-                    file.display(),
-                    line,
-                    context
-                )
-            }
-            Self::CircularDependency { cycle, .. } => {
-                write!(f, "Circular dependency: {}", cycle.join(" -> "))
-            }
-            Self::AdminBypassImport {
-                file,
-                line,
-                context,
-                ..
-            } => {
-                write!(
-                    f,
-                    "Admin bypass import: {}:{} - {}",
-                    file.display(),
-                    line,
-                    context
-                )
-            }
-            Self::CliBypassPath {
-                file,
-                line,
-                context,
-                ..
-            } => {
-                write!(
-                    f,
-                    "CLI bypass path: {}:{} - {}",
-                    file.display(),
-                    line,
-                    context
-                )
-            }
-        }
+        write!(f, "{}", self.0.join(" -> "))
     }
 }
 
-impl Violation for DependencyViolation {
-    fn id(&self) -> &str {
-        match self {
-            Self::ForbiddenCargoDepedency { .. } => "DEP001",
-            Self::ForbiddenUseStatement { .. } => "DEP002",
-            Self::CircularDependency { .. } => "DEP003",
-            Self::AdminBypassImport { .. } => "DEP004",
-            Self::CliBypassPath { .. } => "DEP005",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Architecture
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::ForbiddenCargoDepedency { severity, .. }
-            | Self::ForbiddenUseStatement { severity, .. }
-            | Self::CircularDependency { severity, .. }
-            | Self::AdminBypassImport { severity, .. }
-            | Self::CliBypassPath { severity, .. } => *severity,
-        }
-    }
-
-    fn file(&self) -> Option<&std::path::PathBuf> {
-        match self {
-            Self::ForbiddenCargoDepedency { location, .. } => Some(location),
-            Self::ForbiddenUseStatement { file, .. } => Some(file),
-            Self::CircularDependency { .. } => None,
-            Self::AdminBypassImport { file, .. } | Self::CliBypassPath { file, .. } => Some(file),
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::ForbiddenUseStatement { line, .. }
-            | Self::AdminBypassImport { line, .. }
-            | Self::CliBypassPath { line, .. } => Some(*line),
-            _ => None,
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::ForbiddenCargoDepedency {
-                crate_name,
-                forbidden_dep,
-                ..
-            } => Some(format!(
-                "Remove {forbidden_dep} from {crate_name}/Cargo.toml"
-            )),
-            Self::ForbiddenUseStatement { forbidden_dep, .. } => {
-                Some(format!("Access {forbidden_dep} through allowed layer"))
-            }
-            Self::CircularDependency { .. } => {
-                Some("Extract shared types to the domain crate".to_string())
-            }
-            Self::AdminBypassImport { .. } => Some(
-                "Route admin operations through ToolHandlers/UnifiedExecution and keep repository imports in approved composition roots only".to_string(),
-            ),
-            Self::CliBypassPath { .. } => Some(
-                "Route CLI business commands through the unified execution path instead of direct mcb_validate calls".to_string(),
-            ),
-        }
+define_violations! {
+    dynamic_severity,
+    ViolationCategory::Architecture,
+    pub enum DependencyViolation {
+        /// Forbidden dependency in Cargo.toml
+        #[violation(
+            id = "DEP001",
+            severity = Error,
+            message = "Forbidden dependency: {crate_name} depends on {forbidden_dep} (in {location})",
+            suggestion = "Remove {forbidden_dep} from {crate_name}/Cargo.toml"
+        )]
+        ForbiddenCargoDepedency {
+            crate_name: String,
+            forbidden_dep: String,
+            location: PathBuf,
+            severity: Severity,
+        },
+        /// Forbidden use statement in source code
+        #[violation(
+            id = "DEP002",
+            severity = Error,
+            message = "Forbidden use: {crate_name} uses {forbidden_dep} at {file}:{line} - {context}",
+            suggestion = "Access {forbidden_dep} through allowed layer"
+        )]
+        ForbiddenUseStatement {
+            crate_name: String,
+            forbidden_dep: String,
+            file: PathBuf,
+            line: usize,
+            context: String,
+            severity: Severity,
+        },
+        /// Circular dependency detected
+        #[violation(
+            id = "DEP003",
+            severity = Error,
+            message = "Circular dependency: {cycle}",
+            suggestion = "Extract shared types to the domain crate"
+        )]
+        CircularDependency {
+            cycle: DependencyCycle,
+            severity: Severity,
+        },
+        /// Admin surface imports repository ports outside approved composition roots.
+        #[violation(
+            id = "DEP004",
+            severity = Error,
+            message = "Admin bypass import: {file}:{line} - {context}",
+            suggestion = "Route admin operations through ToolHandlers/UnifiedExecution and keep repository imports in approved composition roots only"
+        )]
+        AdminBypassImport {
+            file: PathBuf,
+            line: usize,
+            context: String,
+            severity: Severity,
+        },
+        /// CLI code bypasses unified execution by calling validate crate directly.
+        #[violation(
+            id = "DEP005",
+            severity = Error,
+            message = "CLI bypass path: {file}:{line} - {context}",
+            suggestion = "Route CLI business commands through the unified execution path instead of direct mcb_validate calls"
+        )]
+        CliBypassPath {
+            file: PathBuf,
+            line: usize,
+            context: String,
+            severity: Severity,
+        },
     }
 }
 
@@ -529,7 +404,7 @@ impl DependencyValidator {
             let mut path = Vec::new();
             if let Some(cycle) = find_cycle_impl(&graph, start, &mut visited, &mut path) {
                 violations.push(DependencyViolation::CircularDependency {
-                    cycle,
+                    cycle: DependencyCycle(cycle),
                     severity: Severity::Error,
                 });
             }

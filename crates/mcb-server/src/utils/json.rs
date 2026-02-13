@@ -5,6 +5,60 @@
 use rmcp::model::{CallToolResult, Content};
 use serde_json::{Map, Value};
 
+/// Extension methods for typed extraction from JSON object maps.
+pub trait JsonMapExt {
+    /// Returns the string value for `key`, if present and of string type.
+    fn string(&self, key: &str) -> Option<String>;
+
+    /// Returns the required string value for `key`, or an MCP-compatible error result.
+    fn required_string(&self, key: &str) -> Result<String, CallToolResult>;
+
+    /// Returns the i64 value for `key`, if present and numeric.
+    fn int64(&self, key: &str) -> Option<i64>;
+
+    /// Returns the i32 value for `key`, if present and convertible from i64.
+    fn int32(&self, key: &str) -> Option<i32>;
+
+    /// Returns the f32 value for `key`, if present and numeric.
+    fn float32(&self, key: &str) -> Option<f32>;
+
+    /// Returns the bool value for `key`, if present and boolean.
+    fn boolean(&self, key: &str) -> Option<bool>;
+
+    /// Returns a string vector from array field `key`, filtering non-string items.
+    fn string_list(&self, key: &str) -> Vec<String>;
+}
+
+impl JsonMapExt for Map<String, Value> {
+    fn string(&self, key: &str) -> Option<String> {
+        get_str(self, key)
+    }
+
+    fn required_string(&self, key: &str) -> Result<String, CallToolResult> {
+        get_required_str(self, key)
+    }
+
+    fn int64(&self, key: &str) -> Option<i64> {
+        get_i64(self, key)
+    }
+
+    fn int32(&self, key: &str) -> Option<i32> {
+        get_i32(self, key)
+    }
+
+    fn float32(&self, key: &str) -> Option<f32> {
+        get_f32(self, key)
+    }
+
+    fn boolean(&self, key: &str) -> Option<bool> {
+        get_bool(self, key)
+    }
+
+    fn string_list(&self, key: &str) -> Vec<String> {
+        get_string_list(self, key)
+    }
+}
+
 /// Extracts a JSON object map from an optional JSON value.
 ///
 /// Returns a reference to the underlying map if the value is an object, or `None` otherwise.

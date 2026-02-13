@@ -81,7 +81,6 @@ pub mod clean_architecture;
 pub mod config_quality;
 pub mod layer_flow;
 pub mod port_adapter;
-#[path = "quality.rs"]
 pub mod test_quality;
 pub mod visibility;
 

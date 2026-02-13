@@ -109,3 +109,71 @@ impl LanguageProcessor for BaseProcessor {
         chunks
     }
 }
+
+#[allow(missing_docs)]
+#[macro_export]
+macro_rules! impl_delegating_language_processor {
+    ($processor_ty:ty, $inner_field:ident) => {
+        impl Default for $processor_ty {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
+
+        impl $crate::language::common::LanguageProcessor for $processor_ty {
+            fn config(&self) -> &$crate::language::common::LanguageConfig {
+                self.$inner_field.config()
+            }
+
+            fn extract_chunks_with_tree_sitter(
+                &self,
+                tree: &tree_sitter::Tree,
+                content: &str,
+                file_name: &str,
+                language: &mcb_domain::value_objects::Language,
+            ) -> Vec<mcb_domain::entities::CodeChunk> {
+                self.$inner_field
+                    .extract_chunks_with_tree_sitter(tree, content, file_name, language)
+            }
+        }
+    };
+}
+
+#[allow(missing_docs)]
+#[macro_export]
+macro_rules! impl_simple_language_processor {
+    (
+        $processor_ty:ident,
+        language = $language:expr,
+        chunk_size = $chunk_size:expr,
+        max_depth = $max_depth:expr,
+        nodes = [$($node_type:expr),+ $(,)?]
+    ) => {
+        #[allow(missing_docs)]
+        pub struct $processor_ty {
+            processor: $crate::language::common::BaseProcessor,
+        }
+
+        #[allow(missing_docs)]
+        impl $processor_ty {
+            pub fn new() -> Self {
+                let config = $crate::language::common::LanguageConfig::new($language)
+                    .with_rules(vec![$crate::language::common::NodeExtractionRule {
+                        node_types: vec![$($node_type.to_string()),+],
+                        min_length: 30,
+                        min_lines: 2,
+                        max_depth: $max_depth,
+                        priority: 5,
+                        include_context: true,
+                    }])
+                    .with_chunk_size($chunk_size);
+
+                Self {
+                    processor: $crate::language::common::BaseProcessor::new(config),
+                }
+            }
+        }
+
+        $crate::impl_delegating_language_processor!($processor_ty, processor);
+    };
+}

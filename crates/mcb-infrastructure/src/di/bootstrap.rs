@@ -105,6 +105,15 @@ pub struct AppContext {
     crypto_service: Arc<dyn CryptoProvider>,
 }
 
+macro_rules! app_context_entity_repo_getter {
+    ($name:ident, $ty:ty, $field:ident, $doc:literal) => {
+        #[doc = $doc]
+        pub fn $name(&self) -> Arc<$ty> {
+            self.$field.clone()
+        }
+    };
+}
+
 impl AppContext {
     /// Get embedding provider handle
     pub fn embedding_handle(&self) -> Arc<EmbeddingProviderHandle> {
@@ -211,25 +220,33 @@ impl AppContext {
         self.project_service.clone()
     }
 
-    /// Get VCS entity repository
-    pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
-        self.vcs_entity_repository.clone()
-    }
+    app_context_entity_repo_getter!(
+        vcs_entity_repository,
+        dyn VcsEntityRepository,
+        vcs_entity_repository,
+        "Get VCS entity repository"
+    );
 
-    /// Get plan entity repository
-    pub fn plan_entity_repository(&self) -> Arc<dyn PlanEntityRepository> {
-        self.plan_entity_repository.clone()
-    }
+    app_context_entity_repo_getter!(
+        plan_entity_repository,
+        dyn PlanEntityRepository,
+        plan_entity_repository,
+        "Get plan entity repository"
+    );
 
-    /// Get issue entity repository
-    pub fn issue_entity_repository(&self) -> Arc<dyn IssueEntityRepository> {
-        self.issue_entity_repository.clone()
-    }
+    app_context_entity_repo_getter!(
+        issue_entity_repository,
+        dyn IssueEntityRepository,
+        issue_entity_repository,
+        "Get issue entity repository"
+    );
 
-    /// Get org entity repository
-    pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
-        self.org_entity_repository.clone()
-    }
+    app_context_entity_repo_getter!(
+        org_entity_repository,
+        dyn OrgEntityRepository,
+        org_entity_repository,
+        "Get org entity repository"
+    );
 
     /// Get file hash repository
     pub fn file_hash_repository(&self) -> Arc<dyn FileHashRepository> {

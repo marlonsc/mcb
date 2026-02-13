@@ -3,30 +3,23 @@
 pub mod agent;
 pub mod context;
 pub mod indexing;
-pub mod issue_entity;
 pub mod memory;
-pub mod org_entity;
-pub mod plan_entity;
 pub mod project;
 pub mod search;
 pub mod validation;
 pub mod vcs;
-pub mod vcs_entity;
 
 pub use agent::TestAgentRepository;
 pub use agent::TestAgentSessionService;
 pub use context::TestContextService;
 pub use indexing::TestIndexingService;
-pub use issue_entity::TestIssueEntityRepository;
 pub use memory::TestMemoryRepository;
 pub use memory::TestMemoryService;
-pub use org_entity::TestOrgEntityRepository;
-pub use plan_entity::TestPlanEntityRepository;
+#[allow(unused_imports)]
 pub use project::{TestProjectDetectorService, TestProjectRepository};
 pub use search::TestSearchService;
 pub use validation::TestValidationService;
 pub use vcs::TestVcsProvider;
-pub use vcs_entity::TestVcsEntityRepository;
 
 #[cfg(test)]
 mod constructibility {

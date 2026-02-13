@@ -3,73 +3,35 @@ use std::sync::Arc;
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::repository::{Branch, Repository, VcsType};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
-use mcb_domain::error::Error;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::VcsEntityRepository;
-use mcb_providers::database::{SqliteVcsEntityRepository, create_memory_repository_with_executor};
+use mcb_providers::database::SqliteVcsEntityRepository;
+
+use super::entity_test_utils::{
+    TEST_NOW, assert_not_found, seed_default_scope, seed_isolated_org_scope, seed_project,
+    setup_executor,
+};
 
 async fn setup_repo() -> (
     SqliteVcsEntityRepository,
     Arc<dyn DatabaseExecutor>,
     tempfile::TempDir,
 ) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let db_path = temp_dir.path().join("test.db");
-    let (_mem_repo, executor) = create_memory_repository_with_executor(db_path)
-        .await
-        .expect("create executor");
-    seed_org_and_project(executor.as_ref()).await;
+    let (executor, temp_dir) = setup_executor().await;
+    seed_default_scope(executor.as_ref()).await;
+    seed_project(
+        executor.as_ref(),
+        "proj-2",
+        DEFAULT_ORG_ID,
+        "Test Project 2",
+        "/test-2",
+    )
+    .await;
     let repo = SqliteVcsEntityRepository::new(Arc::clone(&executor));
     (repo, executor, temp_dir)
 }
 
-async fn seed_org_and_project(executor: &dyn DatabaseExecutor) {
-    executor
-        .execute(
-            "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-            &[
-                SqlParam::String(DEFAULT_ORG_ID.to_string()),
-                SqlParam::String("default".to_string()),
-                SqlParam::String("default".to_string()),
-                SqlParam::String("{}".to_string()),
-                SqlParam::I64(0),
-                SqlParam::I64(0),
-            ],
-        )
-        .await
-        .expect("seed org");
-    executor
-        .execute(
-            "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-            &[
-                SqlParam::String("proj-1".to_string()),
-                SqlParam::String(DEFAULT_ORG_ID.to_string()),
-                SqlParam::String("Test Project".to_string()),
-                SqlParam::String("/test".to_string()),
-                SqlParam::I64(0),
-                SqlParam::I64(0),
-            ],
-        )
-        .await
-        .expect("seed project");
-    executor
-        .execute(
-            "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-            &[
-                SqlParam::String("proj-2".to_string()),
-                SqlParam::String(DEFAULT_ORG_ID.to_string()),
-                SqlParam::String("Test Project 2".to_string()),
-                SqlParam::String("/test-2".to_string()),
-                SqlParam::I64(0),
-                SqlParam::I64(0),
-            ],
-        )
-        .await
-        .expect("seed project 2");
-}
-
 fn create_test_repository(id: &str, project_id: &str) -> Repository {
-    let now = 1_000_000_i64;
     Repository {
         id: id.to_string(),
         org_id: DEFAULT_ORG_ID.to_string(),
@@ -78,13 +40,12 @@ fn create_test_repository(id: &str, project_id: &str) -> Repository {
         url: format!("https://example.com/{id}.git"),
         local_path: format!("/tmp/{id}"),
         vcs_type: VcsType::Git,
-        created_at: now,
-        updated_at: now,
+        created_at: TEST_NOW,
+        updated_at: TEST_NOW,
     }
 }
 
 fn create_test_branch(id: &str, repository_id: &str, name: &str) -> Branch {
-    let now = 1_000_000_i64;
     Branch {
         id: id.to_string(),
         repository_id: repository_id.to_string(),
@@ -92,12 +53,11 @@ fn create_test_branch(id: &str, repository_id: &str, name: &str) -> Branch {
         is_default: name == "main",
         head_commit: "abc123".to_string(),
         upstream: None,
-        created_at: now,
+        created_at: TEST_NOW,
     }
 }
 
 fn create_test_worktree(id: &str, repository_id: &str, branch_id: &str) -> Worktree {
-    let now = 1_000_000_i64;
     Worktree {
         id: id.to_string(),
         repository_id: repository_id.to_string(),
@@ -105,8 +65,8 @@ fn create_test_worktree(id: &str, repository_id: &str, branch_id: &str) -> Workt
         path: format!("/tmp/worktree-{id}"),
         status: WorktreeStatus::Active,
         assigned_agent_id: None,
-        created_at: now,
-        updated_at: now,
+        created_at: TEST_NOW,
+        updated_at: TEST_NOW,
     }
 }
 
@@ -151,10 +111,6 @@ async fn seed_agent_session(executor: &dyn DatabaseExecutor) {
         )
         .await
         .expect("seed agent session");
-}
-
-fn assert_not_found<T>(result: mcb_domain::error::Result<T>) {
-    assert!(matches!(result, Err(Error::NotFound { .. })));
 }
 
 #[tokio::test]
@@ -299,41 +255,10 @@ async fn test_assignment_lifecycle() {
 
 #[tokio::test]
 async fn test_org_isolation_repositories() {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let db_path = temp_dir.path().join("test.db");
-    let (_mem_repo, executor) = create_memory_repository_with_executor(db_path)
-        .await
-        .expect("create executor");
+    let (executor, _temp_dir) = setup_executor().await;
 
     for org_id in &["org-A", "org-B"] {
-        executor
-            .execute(
-                "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                &[
-                    SqlParam::String(org_id.to_string()),
-                    SqlParam::String(org_id.to_string()),
-                    SqlParam::String(org_id.to_string()),
-                    SqlParam::String("{}".to_string()),
-                    SqlParam::I64(0),
-                    SqlParam::I64(0),
-                ],
-            )
-            .await
-            .expect("seed org");
-        executor
-            .execute(
-                "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                &[
-                    SqlParam::String(format!("proj-{org_id}")),
-                    SqlParam::String(org_id.to_string()),
-                    SqlParam::String(format!("Project {org_id}")),
-                    SqlParam::String(format!("/{org_id}")),
-                    SqlParam::I64(0),
-                    SqlParam::I64(0),
-                ],
-            )
-            .await
-            .expect("seed project");
+        seed_isolated_org_scope(executor.as_ref(), org_id).await;
     }
 
     let repo = SqliteVcsEntityRepository::new(executor);
@@ -345,8 +270,8 @@ async fn test_org_isolation_repositories() {
         url: "https://example.com/a.git".to_string(),
         local_path: "/tmp/a".to_string(),
         vcs_type: VcsType::Git,
-        created_at: 1_000_000,
-        updated_at: 1_000_000,
+        created_at: TEST_NOW,
+        updated_at: TEST_NOW,
     };
     repo.create_repository(&vcs_repo).await.expect("create");
 

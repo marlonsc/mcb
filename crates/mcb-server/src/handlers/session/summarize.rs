@@ -4,11 +4,11 @@ use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterf
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
-use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
+use crate::utils::json::{self, JsonMapExt};
 
 /// Creates or retrieves a session summary.
 #[tracing::instrument(skip_all)]
@@ -24,21 +24,21 @@ pub async fn summarize_session(
             )]));
         }
     };
-    if let Some(data) = SessionHelpers::json_map(&args.data) {
-        let topics = SessionHelpers::get_string_list(data, "topics");
-        let decisions = SessionHelpers::get_string_list(data, "decisions");
-        let next_steps = SessionHelpers::get_string_list(data, "next_steps");
-        let key_files = SessionHelpers::get_string_list(data, "key_files");
-        let payload_project_id = SessionHelpers::get_str(data, "project_id");
-        let payload_session_id = SessionHelpers::get_str(data, "session_id");
-        let payload_worktree_id = SessionHelpers::get_str(data, "worktree_id");
-        let payload_parent_session_id = SessionHelpers::get_str(data, "parent_session_id");
-        let payload_repo_path = SessionHelpers::get_str(data, "repo_path");
-        let payload_operator_id = SessionHelpers::get_str(data, "operator_id");
-        let payload_machine_id = SessionHelpers::get_str(data, "machine_id");
-        let payload_agent_program = SessionHelpers::get_str(data, "agent_program");
-        let payload_model_id = SessionHelpers::get_str(data, "model_id");
-        let payload_delegated = SessionHelpers::get_bool(data, "delegated");
+    if let Some(data) = json::json_map(&args.data) {
+        let topics = data.string_list("topics");
+        let decisions = data.string_list("decisions");
+        let next_steps = data.string_list("next_steps");
+        let key_files = data.string_list("key_files");
+        let payload_project_id = data.string("project_id");
+        let payload_session_id = data.string("session_id");
+        let payload_worktree_id = data.string("worktree_id");
+        let payload_parent_session_id = data.string("parent_session_id");
+        let payload_repo_path = data.string("repo_path");
+        let payload_operator_id = data.string("operator_id");
+        let payload_machine_id = data.string("machine_id");
+        let payload_agent_program = data.string("agent_program");
+        let payload_model_id = data.string("model_id");
+        let payload_delegated = data.boolean("delegated");
         let origin_context = resolve_origin_context(OriginContextInput {
             org_id: args.org_id.as_deref(),
             project_id_args: args.project_id.as_deref(),

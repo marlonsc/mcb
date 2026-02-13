@@ -20,8 +20,10 @@ impl ProjectDetectorService for TestProjectDetectorService {
     }
 }
 
+#[allow(dead_code)]
 pub struct TestProjectRepository;
 
+#[allow(dead_code)]
 impl TestProjectRepository {
     pub fn new() -> Self {
         Self

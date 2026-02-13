@@ -216,6 +216,27 @@ pub struct TestQualityValidator {
     rules: TestQualityRulesConfig,
 }
 
+impl crate::validator_trait::Validator for TestQualityValidator {
+    fn name(&self) -> &'static str {
+        "test-quality"
+    }
+
+    fn description(&self) -> &'static str {
+        "Validates test quality rules (ignore usage, stubs, and test documentation)"
+    }
+
+    fn validate(
+        &self,
+        _config: &crate::ValidationConfig,
+    ) -> anyhow::Result<Vec<Box<dyn crate::violation_trait::Violation>>> {
+        let violations = self.validate()?;
+        Ok(violations
+            .into_iter()
+            .map(|v| Box::new(v) as Box<dyn crate::violation_trait::Violation>)
+            .collect())
+    }
+}
+
 impl TestQualityValidator {
     /// Create a new test quality validator with the given workspace root
     pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {

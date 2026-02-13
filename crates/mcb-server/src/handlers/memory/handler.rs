@@ -9,13 +9,13 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
 use validator::Validate;
 
-use super::helpers::MemoryHelpers;
 use super::{execution, inject, list_timeline, observation, quality_gate, session};
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::resolve_identifier_precedence;
 use crate::handler_helpers::resolve_org_id;
+use crate::utils::json;
 
 /// Handler for memory-related MCP tool operations.
 ///
@@ -90,7 +90,7 @@ impl MemoryHandler {
         &self,
         args: &MemoryArgs,
     ) -> Result<CallToolResult, McpError> {
-        let data = match MemoryHelpers::json_map(&args.data) {
+        let data = match json::json_map(&args.data) {
             Some(data) => data,
             None => {
                 return Ok(CallToolResult::error(vec![Content::text(

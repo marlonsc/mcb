@@ -15,6 +15,7 @@ use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{
     OriginContextInput, resolve_identifier_precedence, resolve_origin_context,
 };
+use crate::utils::json::{self, JsonMapExt};
 use tracing::error;
 
 /// Creates a new agent session.
@@ -23,7 +24,7 @@ pub async fn create_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match SessionHelpers::json_map(&args.data) {
+    let data = match json::json_map(&args.data) {
         Some(data) => data,
         None => {
             return Ok(CallToolResult::error(vec![Content::text(
@@ -32,7 +33,7 @@ pub async fn create_session(
         }
     };
 
-    let payload_agent_type = SessionHelpers::get_str(data, "agent_type");
+    let payload_agent_type = data.string("agent_type");
     let agent_type_value = resolve_identifier_precedence(
         "agent_type",
         args.agent_type.as_deref(),
@@ -51,9 +52,10 @@ pub async fn create_session(
         .map(|d| d.as_secs() as i64)
         .unwrap_or(0);
     let session_id = format!("agent_{}", Uuid::new_v4());
-    let session_summary_id = SessionHelpers::get_str(data, schema::SESSION_SUMMARY_ID)
+    let session_summary_id = data
+        .string(schema::SESSION_SUMMARY_ID)
         .unwrap_or_else(|| format!("auto_{}", Uuid::new_v4()));
-    let model = match SessionHelpers::get_required_str(data, schema::MODEL) {
+    let model = match data.required_string(schema::MODEL) {
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
@@ -62,12 +64,12 @@ pub async fn create_session(
         session_summary_id,
         agent_type: agent_type.clone(),
         model,
-        parent_session_id: SessionHelpers::get_str(data, schema::PARENT_SESSION_ID),
+        parent_session_id: data.string(schema::PARENT_SESSION_ID),
         started_at: now,
         ended_at: None,
         duration_ms: None,
         status: AgentSessionStatus::Active,
-        prompt_summary: SessionHelpers::get_str(data, schema::PROMPT_SUMMARY),
+        prompt_summary: data.string(schema::PROMPT_SUMMARY),
         result_summary: None,
         token_count: None,
         tool_calls_count: None,
@@ -75,14 +77,14 @@ pub async fn create_session(
         project_id: None,
         worktree_id: None,
     };
-    let payload_project_id = SessionHelpers::get_str(data, schema::PROJECT_ID);
-    let payload_worktree_id = SessionHelpers::get_str(data, schema::WORKTREE_ID);
-    let payload_parent_session_id = SessionHelpers::get_str(data, schema::PARENT_SESSION_ID);
-    let payload_repo_path = SessionHelpers::get_str(data, schema::REPO_PATH);
-    let payload_operator_id = SessionHelpers::get_str(data, "operator_id");
-    let payload_machine_id = SessionHelpers::get_str(data, "machine_id");
-    let payload_agent_program = SessionHelpers::get_str(data, "agent_program");
-    let payload_model_id = SessionHelpers::get_str(data, "model_id");
+    let payload_project_id = data.string(schema::PROJECT_ID);
+    let payload_worktree_id = data.string(schema::WORKTREE_ID);
+    let payload_parent_session_id = data.string(schema::PARENT_SESSION_ID);
+    let payload_repo_path = data.string(schema::REPO_PATH);
+    let payload_operator_id = data.string("operator_id");
+    let payload_machine_id = data.string("machine_id");
+    let payload_agent_program = data.string("agent_program");
+    let payload_model_id = data.string("model_id");
     let origin_context = resolve_origin_context(OriginContextInput {
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),

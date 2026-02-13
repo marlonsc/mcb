@@ -9,92 +9,101 @@
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 
 use crate::config::NamingRulesConfig;
 use crate::run_context::ValidationRunContext;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
-/// Naming violation types
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum NamingViolation {
-    /// Bad struct/enum/trait name (should be CamelCase)
-    BadTypeName {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the type.
-        name: String,
-        /// Expected case format (e.g., "CamelCase").
-        expected_case: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Bad function/method name (should be `snake_case`)
-    BadFunctionName {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the function.
-        name: String,
-        /// Expected case format (e.g., "snake_case").
-        expected_case: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Bad constant name (should be `SCREAMING_SNAKE_CASE`)
-    BadConstantName {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the constant.
-        name: String,
-        /// Expected case format (e.g., "SCREAMING_SNAKE_CASE").
-        expected_case: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Bad module/file name (should be `snake_case`)
-    BadModuleName {
-        /// Path to the module or file.
-        path: PathBuf,
-        /// Expected case format.
-        expected_case: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+define_violations! {
+    dynamic_severity,
+    ViolationCategory::Naming,
+    pub enum NamingViolation {
+        /// Bad struct/enum/trait name (should be CamelCase)
+        #[violation(
+            id = "NAME001",
+            severity = Warning,
+            message = "Bad type name: {file}:{line} - {name} (expected {expected_case})",
+            suggestion = "Rename '{name}' to {expected_case} format"
+        )]
+        BadTypeName {
+            file: PathBuf,
+            line: usize,
+            name: String,
+            expected_case: String,
+            severity: Severity,
+        },
+        /// Bad function/method name (should be `snake_case`)
+        #[violation(
+            id = "NAME002",
+            severity = Warning,
+            message = "Bad function name: {file}:{line} - {name} (expected {expected_case})",
+            suggestion = "Rename '{name}' to {expected_case} format"
+        )]
+        BadFunctionName {
+            file: PathBuf,
+            line: usize,
+            name: String,
+            expected_case: String,
+            severity: Severity,
+        },
+        /// Bad constant name (should be `SCREAMING_SNAKE_CASE`)
+        #[violation(
+            id = "NAME003",
+            severity = Warning,
+            message = "Bad constant name: {file}:{line} - {name} (expected {expected_case})",
+            suggestion = "Rename '{name}' to {expected_case} format"
+        )]
+        BadConstantName {
+            file: PathBuf,
+            line: usize,
+            name: String,
+            expected_case: String,
+            severity: Severity,
+        },
+        /// Bad module/file name (should be `snake_case`)
+        #[violation(
+            id = "NAME004",
+            severity = Warning,
+            message = "Bad module name: {path} (expected {expected_case})",
+            suggestion = "Rename module/file to {expected_case} format"
+        )]
+        BadModuleName {
+            path: PathBuf,
+            expected_case: String,
+            severity: Severity,
+        },
 
-    /// File suffix doesn't match component type
-    BadFileSuffix {
-        /// Path to the file.
-        path: PathBuf,
-        /// Component type detected.
-        component_type: String,
-        /// Current file suffix.
-        current_suffix: String,
-        /// Expected file suffix.
-        expected_suffix: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// File suffix doesn't match component type
+        #[violation(
+            id = "NAME005",
+            severity = Warning,
+            message = "Bad file suffix: {path} ({component_type}) has suffix '{current_suffix}' but expected '{expected_suffix}'",
+            suggestion = "Add '{expected_suffix}' suffix to file name"
+        )]
+        BadFileSuffix {
+            path: PathBuf,
+            component_type: String,
+            current_suffix: String,
+            expected_suffix: String,
+            severity: Severity,
+        },
 
-    /// File name doesn't follow CA naming convention
-    BadCaNaming {
-        /// Path to the file.
-        path: PathBuf,
-        /// Detected Clean Architecture component type.
-        detected_type: String,
-        /// Description of the issue.
-        issue: String,
-        /// Suggested fix.
-        suggestion: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// File name doesn't follow CA naming convention
+        #[violation(
+            id = "NAME006",
+            severity = Warning,
+            message = "CA naming: {path} ({detected_type}): {issue} - {suggestion}",
+            suggestion = "{suggestion}"
+        )]
+        BadCaNaming {
+            path: PathBuf,
+            detected_type: String,
+            issue: String,
+            suggestion: String,
+            severity: Severity,
+        },
+    }
 }
 
 impl NamingViolation {
@@ -103,187 +112,6 @@ impl NamingViolation {
     /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
         <Self as Violation>::severity(self)
-    }
-}
-
-impl std::fmt::Display for NamingViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::BadTypeName {
-                file,
-                line,
-                name,
-                expected_case,
-                ..
-            } => {
-                write!(
-                    f,
-                    "Bad type name: {}:{} - {} (expected {})",
-                    file.display(),
-                    line,
-                    name,
-                    expected_case
-                )
-            }
-            Self::BadFunctionName {
-                file,
-                line,
-                name,
-                expected_case,
-                ..
-            } => {
-                write!(
-                    f,
-                    "Bad function name: {}:{} - {} (expected {})",
-                    file.display(),
-                    line,
-                    name,
-                    expected_case
-                )
-            }
-            Self::BadConstantName {
-                file,
-                line,
-                name,
-                expected_case,
-                ..
-            } => {
-                write!(
-                    f,
-                    "Bad constant name: {}:{} - {} (expected {})",
-                    file.display(),
-                    line,
-                    name,
-                    expected_case
-                )
-            }
-            Self::BadModuleName {
-                path,
-                expected_case,
-                ..
-            } => {
-                write!(
-                    f,
-                    "Bad module name: {} (expected {})",
-                    path.display(),
-                    expected_case
-                )
-            }
-            Self::BadFileSuffix {
-                path,
-                component_type,
-                current_suffix,
-                expected_suffix,
-                ..
-            } => {
-                write!(
-                    f,
-                    "Bad file suffix: {} ({}) has suffix '{}' but expected '{}'",
-                    path.display(),
-                    component_type,
-                    current_suffix,
-                    expected_suffix
-                )
-            }
-            Self::BadCaNaming {
-                path,
-                detected_type,
-                issue,
-                suggestion,
-                ..
-            } => {
-                write!(
-                    f,
-                    "CA naming: {} ({}): {} - {}",
-                    path.display(),
-                    detected_type,
-                    issue,
-                    suggestion
-                )
-            }
-        }
-    }
-}
-
-impl Violation for NamingViolation {
-    fn id(&self) -> &str {
-        match self {
-            Self::BadTypeName { .. } => "NAME001",
-            Self::BadFunctionName { .. } => "NAME002",
-            Self::BadConstantName { .. } => "NAME003",
-            Self::BadModuleName { .. } => "NAME004",
-            Self::BadFileSuffix { .. } => "NAME005",
-            Self::BadCaNaming { .. } => "NAME006",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Naming
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::BadTypeName { severity, .. }
-            | Self::BadFunctionName { severity, .. }
-            | Self::BadConstantName { severity, .. }
-            | Self::BadModuleName { severity, .. }
-            | Self::BadFileSuffix { severity, .. }
-            | Self::BadCaNaming { severity, .. } => *severity,
-        }
-    }
-
-    fn file(&self) -> Option<&PathBuf> {
-        match self {
-            Self::BadTypeName { file, .. }
-            | Self::BadFunctionName { file, .. }
-            | Self::BadConstantName { file, .. } => Some(file),
-            Self::BadModuleName { path, .. }
-            | Self::BadFileSuffix { path, .. }
-            | Self::BadCaNaming { path, .. } => Some(path),
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::BadTypeName { line, .. }
-            | Self::BadFunctionName { line, .. }
-            | Self::BadConstantName { line, .. } => Some(*line),
-            Self::BadModuleName { .. } | Self::BadFileSuffix { .. } | Self::BadCaNaming { .. } => {
-                None
-            }
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::BadTypeName {
-                name,
-                expected_case,
-                ..
-            }
-            | Self::BadFunctionName {
-                name,
-                expected_case,
-                ..
-            }
-            | Self::BadConstantName {
-                name,
-                expected_case,
-                ..
-            } => Some(format!("Rename '{name}' to {expected_case} format")),
-            Self::BadModuleName {
-                path,
-                expected_case,
-                ..
-            } => {
-                let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-                Some(format!("Rename '{file_name}' to {expected_case} format"))
-            }
-            Self::BadFileSuffix {
-                expected_suffix, ..
-            } => Some(format!("Add '{expected_suffix}' suffix to file name")),
-            Self::BadCaNaming { suggestion, .. } => Some(suggestion.clone()),
-        }
     }
 }
 

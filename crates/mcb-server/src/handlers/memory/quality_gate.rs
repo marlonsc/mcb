@@ -14,6 +14,7 @@ use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
+use crate::utils::json::{self, JsonMapExt};
 
 /// Stores a quality gate result as a semantic observation.
 #[tracing::instrument(skip_all)]
@@ -21,7 +22,7 @@ pub async fn store_quality_gate(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match MemoryHelpers::json_map(&args.data) {
+    let data = match json::json_map(&args.data) {
         Some(data) => data,
         None => {
             return Ok(CallToolResult::error(vec![Content::text(
@@ -29,11 +30,11 @@ pub async fn store_quality_gate(
             )]));
         }
     };
-    let gate_name = match MemoryHelpers::get_required_str(data, "gate_name") {
+    let gate_name = match data.required_string("gate_name") {
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
-    let status_str = match MemoryHelpers::get_required_str(data, "status") {
+    let status_str = match data.required_string("status") {
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
@@ -41,15 +42,16 @@ pub async fn store_quality_gate(
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
-    let timestamp =
-        MemoryHelpers::get_i64(data, "timestamp").unwrap_or_else(|| chrono::Utc::now().timestamp());
+    let timestamp = data
+        .int64("timestamp")
+        .unwrap_or_else(|| chrono::Utc::now().timestamp());
     let quality_gate = QualityGateResult {
         id: Uuid::new_v4().to_string(),
         gate_name: gate_name.clone(),
         status,
-        message: MemoryHelpers::get_str(data, "message"),
+        message: data.string("message"),
         timestamp,
-        execution_id: MemoryHelpers::get_str(data, "execution_id"),
+        execution_id: data.string("execution_id"),
     };
     let vcs_context = VcsContext::capture();
     let content = format!(
@@ -70,17 +72,17 @@ pub async fn store_quality_gate(
         .parent_session_id
         .clone()
         .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
-    let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
-    let payload_project_id = MemoryHelpers::get_str(data, "project_id");
-    let payload_branch = MemoryHelpers::get_str(data, "branch");
-    let payload_commit = MemoryHelpers::get_str(data, "commit");
-    let payload_repo_path = MemoryHelpers::get_str(data, "repo_path");
-    let payload_worktree_id = MemoryHelpers::get_str(data, "worktree_id");
-    let payload_operator_id = MemoryHelpers::get_str(data, "operator_id");
-    let payload_machine_id = MemoryHelpers::get_str(data, "machine_id");
-    let payload_agent_program = MemoryHelpers::get_str(data, "agent_program");
-    let payload_model_id = MemoryHelpers::get_str(data, "model_id");
-    let payload_delegated = MemoryHelpers::get_bool(data, "delegated");
+    let payload_repo_id = data.string("repo_id");
+    let payload_project_id = data.string("project_id");
+    let payload_branch = data.string("branch");
+    let payload_commit = data.string("commit");
+    let payload_repo_path = data.string("repo_path");
+    let payload_worktree_id = data.string("worktree_id");
+    let payload_operator_id = data.string("operator_id");
+    let payload_machine_id = data.string("machine_id");
+    let payload_agent_program = data.string("agent_program");
+    let payload_model_id = data.string("model_id");
+    let payload_delegated = data.boolean("delegated");
 
     let mut origin_context = resolve_origin_context(OriginContextInput {
         org_id: args.org_id.as_deref(),

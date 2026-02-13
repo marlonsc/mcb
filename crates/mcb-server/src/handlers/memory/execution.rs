@@ -14,6 +14,7 @@ use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
+use crate::utils::json::{self, JsonMapExt};
 
 /// Validated execution data extracted from JSON payload
 struct ValidatedExecutionData {
@@ -27,28 +28,27 @@ struct ValidatedExecutionData {
 impl ValidatedExecutionData {
     /// Validate and extract all required fields from JSON data
     fn validate(data: &serde_json::Map<String, serde_json::Value>) -> Result<Self, CallToolResult> {
-        let command = MemoryHelpers::get_required_str(data, "command").map_err(|_| {
+        let command = data.required_string("command").map_err(|_| {
             CallToolResult::error(vec![Content::text("Missing required field: command")])
         })?;
 
-        let exit_code = MemoryHelpers::get_i32(data, "exit_code").ok_or_else(|| {
+        let exit_code = data.int32("exit_code").ok_or_else(|| {
             CallToolResult::error(vec![Content::text("Missing required field: exit_code")])
         })?;
 
-        let duration_ms = MemoryHelpers::get_i64(data, "duration_ms").ok_or_else(|| {
+        let duration_ms = data.int64("duration_ms").ok_or_else(|| {
             CallToolResult::error(vec![Content::text("Missing required field: duration_ms")])
         })?;
 
-        let success = MemoryHelpers::get_bool(data, "success").ok_or_else(|| {
+        let success = data.boolean("success").ok_or_else(|| {
             CallToolResult::error(vec![Content::text("Missing required field: success")])
         })?;
 
-        let execution_type_str =
-            MemoryHelpers::get_required_str(data, "execution_type").map_err(|_| {
-                CallToolResult::error(vec![Content::text(
-                    "Missing required field: execution_type",
-                )])
-            })?;
+        let execution_type_str = data.required_string("execution_type").map_err(|_| {
+            CallToolResult::error(vec![Content::text(
+                "Missing required field: execution_type",
+            )])
+        })?;
 
         let execution_type =
             MemoryHelpers::parse_execution_type(&execution_type_str).map_err(|_| {
@@ -74,7 +74,7 @@ pub async fn store_execution(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match MemoryHelpers::json_map(&args.data) {
+    let data = match json::json_map(&args.data) {
         Some(data) => data,
         None => {
             return Ok(CallToolResult::error(vec![Content::text(
@@ -95,11 +95,11 @@ pub async fn store_execution(
         duration_ms: Some(validated.duration_ms),
         success: validated.success,
         execution_type: validated.execution_type,
-        coverage: MemoryHelpers::get_f32(data, "coverage"),
-        files_affected: MemoryHelpers::get_string_list(data, "files_affected"),
-        output_summary: MemoryHelpers::get_str(data, "output_summary"),
-        warnings_count: MemoryHelpers::get_i32(data, "warnings_count"),
-        errors_count: MemoryHelpers::get_i32(data, "errors_count"),
+        coverage: data.float32("coverage"),
+        files_affected: data.string_list("files_affected"),
+        output_summary: data.string("output_summary"),
+        warnings_count: data.int32("warnings_count"),
+        errors_count: data.int32("errors_count"),
     };
     let vcs_context = VcsContext::capture();
     let content = format!(
@@ -125,18 +125,18 @@ pub async fn store_execution(
         .parent_session_id
         .clone()
         .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
-    let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
-    let payload_project_id = MemoryHelpers::get_str(data, "project_id");
-    let payload_branch = MemoryHelpers::get_str(data, "branch");
-    let payload_commit = MemoryHelpers::get_str(data, "commit");
-    let payload_repo_path = MemoryHelpers::get_str(data, "repo_path");
-    let payload_worktree_id = MemoryHelpers::get_str(data, "worktree_id");
-    let payload_operator_id = MemoryHelpers::get_str(data, "operator_id");
-    let payload_machine_id = MemoryHelpers::get_str(data, "machine_id");
-    let payload_agent_program = MemoryHelpers::get_str(data, "agent_program");
-    let payload_model_id = MemoryHelpers::get_str(data, "model_id");
-    let payload_delegated = MemoryHelpers::get_bool(data, "delegated");
-    let payload_execution_id = MemoryHelpers::get_str(data, "execution_id");
+    let payload_repo_id = data.string("repo_id");
+    let payload_project_id = data.string("project_id");
+    let payload_branch = data.string("branch");
+    let payload_commit = data.string("commit");
+    let payload_repo_path = data.string("repo_path");
+    let payload_worktree_id = data.string("worktree_id");
+    let payload_operator_id = data.string("operator_id");
+    let payload_machine_id = data.string("machine_id");
+    let payload_agent_program = data.string("agent_program");
+    let payload_model_id = data.string("model_id");
+    let payload_delegated = data.boolean("delegated");
+    let payload_execution_id = data.string("execution_id");
     let generated_execution_id = metadata.id.clone();
 
     let mut origin_context = resolve_origin_context(OriginContextInput {

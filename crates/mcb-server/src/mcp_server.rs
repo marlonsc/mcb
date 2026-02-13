@@ -144,6 +144,15 @@ pub struct McpServices {
     pub org_entity: Arc<dyn OrgEntityRepository>,
 }
 
+macro_rules! mcp_server_entity_repo_getter {
+    ($name:ident, $ty:ty, $field:ident, $doc:literal) => {
+        #[doc = $doc]
+        pub fn $name(&self) -> Arc<$ty> {
+            Arc::clone(&self.services.$field)
+        }
+    };
+}
+
 impl McpServer {
     /// Builds the execution context for a tool call.
     ///
@@ -370,25 +379,33 @@ impl McpServer {
         Arc::clone(&self.services.project_workflow)
     }
 
-    /// Access to VCS entity repository.
-    pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
-        Arc::clone(&self.services.vcs_entity)
-    }
+    mcp_server_entity_repo_getter!(
+        vcs_entity_repository,
+        dyn VcsEntityRepository,
+        vcs_entity,
+        "Access to VCS entity repository."
+    );
 
-    /// Access to plan entity repository.
-    pub fn plan_entity_repository(&self) -> Arc<dyn PlanEntityRepository> {
-        Arc::clone(&self.services.plan_entity)
-    }
+    mcp_server_entity_repo_getter!(
+        plan_entity_repository,
+        dyn PlanEntityRepository,
+        plan_entity,
+        "Access to plan entity repository."
+    );
 
-    /// Access to issue entity repository.
-    pub fn issue_entity_repository(&self) -> Arc<dyn IssueEntityRepository> {
-        Arc::clone(&self.services.issue_entity)
-    }
+    mcp_server_entity_repo_getter!(
+        issue_entity_repository,
+        dyn IssueEntityRepository,
+        issue_entity,
+        "Access to issue entity repository."
+    );
 
-    /// Access to organization entity repository.
-    pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
-        Arc::clone(&self.services.org_entity)
-    }
+    mcp_server_entity_repo_getter!(
+        org_entity_repository,
+        dyn OrgEntityRepository,
+        org_entity,
+        "Access to organization entity repository."
+    );
 
     /// Access to index handler (for HTTP transport)
     pub fn index_handler(&self) -> Arc<IndexHandler> {
