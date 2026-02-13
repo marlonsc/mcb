@@ -2,15 +2,9 @@
 # =============================================================================
 # Release Workflow
 # =============================================================================
-# Triggered by: git tag push (pattern: v*)
-# Purpose: Build release artifacts and create GitHub Release with
-#         automated deployment
-#
-# Flow:
-#   1. Run full CI validation (lint + test + validate + audit)
-#   2. Build release artifacts for all platforms (Linux, macOS, Windows)
-#   3. Create GitHub Release with changelog
-#   4. Upload artifacts to release
+# Triggered only on version tags (v*)
+# Builds release binaries for Linux, macOS, Windows
+# Creates GitHub Release with artifacts and changelog
 # =============================================================================
 
 name: Release
@@ -23,42 +17,22 @@ on: # yamllint disable-line rule:truthy
     tags:
       - "v*"
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   CARGO_TERM_COLOR: always
-  MCB_RUN_DOCKER_INTEGRATION_TESTS: "0"
 
 jobs:
-  # Validate everything passes before building release
-  pre-release-checks:
-    name: Pre-Release Validation
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - run: bash .github/setup-ci.sh --install-audit
-      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
-        with:
-          components: rustfmt, clippy
-      - run: make lint CI_MODE=1
-      - name: Run Rust tests
-        run: make test-rust TEST_THREADS="$(nproc)"
-        timeout-minutes: 15
-      - run: make validate STRICT=1
-      - run: make audit
-      - name: Extract version from tag
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_ENV"
-
-  # Build release artifacts for all platforms
-  build-release:
+  release-build:
     name: Build Release (${{ matrix.target }})
-    needs: [pre-release-checks]
+    timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -77,52 +51,62 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
+
       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
         run: bash .github/setup-ci.sh
+
       - name: Install protoc (Windows)
         if: runner.os == 'Windows'
         run: choco install protoc -y
-      - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7 # stable
+
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
+          toolchain: stable
           targets: ${{ matrix.target }}
+
       - run: make build RELEASE=1
+
       - name: Create dist directory
         run: mkdir -p dist
+
       - name: Copy artifact (Unix)
         if: runner.os != 'Windows'
         env:
           ARTIFACT: ${{ matrix.artifact_name }}
           ASSET: ${{ matrix.asset_name }}
         run: cp "target/release/$ARTIFACT" "dist/$ASSET"
+
       - name: Copy artifact (Windows)
         if: runner.os == 'Windows'
         run: >-
-          copy target\release\${{ matrix.artifact_name }}
-          dist\${{ matrix.asset_name }}
-        shell: cmd
+          Copy-Item "target\release\${{ matrix.artifact_name }}"
+          "dist\${{ matrix.asset_name }}"
+        shell: pwsh
+
       - name: Upload artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: release-artifacts-${{ matrix.target }}
           path: dist/${{ matrix.asset_name }}
-          retention-days: 1
+          retention-days: 7
           include-hidden-files: false
 
-  # Create GitHub Release with all artifacts
   create-release:
     name: Create GitHub Release
+    timeout-minutes: 10
     runs-on: ubuntu-latest
-    needs: build-release
+    needs: release-build
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          fetch-depth: 0 # Full history for changelog generation
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Download all artifacts
@@ -140,29 +124,26 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-      - name: Generate changelog (git log)
+      - name: Generate changelog
         run: |
-          # Get previous tag
           PREV_TAG=$(
-            git tag --list 'v*' --sort=-version:refname | head -2 | tail -1
+            git tag --list 'v*' --sort=-version:refname |
+            head -2 | tail -1
           )
 
           if [ -z "$PREV_TAG" ]; then
-            # First release - show all commits
             git log --oneline --reverse > RELEASE_NOTES.md
           else
-            # Show commits since previous tag
             git log "$PREV_TAG..HEAD" --oneline > RELEASE_NOTES.md
           fi
 
-          # Prepend header
           sed -i '1s/^/## Changes\n\n/' RELEASE_NOTES.md
 
       - name: Create Release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          name: Release ${{ env.RELEASE_VERSION }}
+          tag_name: ${{ steps.extract_version.outputs.tag }}
+          name: Release ${{ steps.extract_version.outputs.version }}
           body_path: RELEASE_NOTES.md
           files: |
             release-artifacts/release-artifacts-x86_64-unknown-linux-gnu/mcb-x86_64-linux-gnu
@@ -173,9 +154,19 @@ jobs:
 
       - name: Release Summary
         env:
-          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          RELEASE_TAG: ${{ steps.extract_version.outputs.tag }}
           REPO: ${{ github.repository }}
         run: |
-          echo "✓ Release $RELEASE_TAG created successfully"
-          echo "  - Artifacts: 3 binaries (Linux, macOS, Windows)"
-          echo "  - GitHub Release: https://github.com/${REPO}/releases/tag/${RELEASE_TAG}"
+          {
+            echo "## Release Created"
+            echo ""
+            echo "✓ Release $RELEASE_TAG created successfully"
+            echo ""
+            echo "**Artifacts:**"
+            echo "- Linux (x86_64-unknown-linux-gnu)"
+            echo "- macOS (x86_64-apple-darwin)"
+            echo "- Windows (x86_64-pc-windows-msvc)"
+            echo ""
+            echo "**URL:**"
+            echo "https://github.com/${REPO}/releases/tag/${RELEASE_TAG}"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -143,7 +143,7 @@ cargo run --release
 ## MCP Tools
 
 | Tool | Description |
-|------|-------------|
+| ------ | ------------- |
 | `index_codebase` | Index a directory for semantic search |
 | `search_code` | Search indexed code by meaning |
 | `get_indexing_status` | Check indexing progress |

@@ -4,6 +4,7 @@ SARIF Quality Analysis Tool - Parses qlty check SARIF output and provides statis
 """
 
 import argparse
+import abc
 import json
 import subprocess  # nosec B404
 import sys
@@ -19,7 +20,7 @@ class Severity(IntEnum):
 
     ERROR = 3
     WARNING = 2
-    NOTE = 1
+    INFO = 1
     NONE = 0
 
     @classmethod
@@ -27,7 +28,7 @@ class Severity(IntEnum):
         mapping = {
             "error": cls.ERROR,
             "warning": cls.WARNING,
-            "note": cls.NOTE,
+            "note": cls.INFO,
         }
         return mapping.get(s.lower(), cls.NONE)
 
@@ -35,7 +36,7 @@ class Severity(IntEnum):
         return {
             self.ERROR: "🔴",
             self.WARNING: "🟠",
-            self.NOTE: "🔵",
+            self.INFO: "🔵",
             self.NONE: "⚪",
         }[self]
 
@@ -53,6 +54,7 @@ class SarifIssue:
     category: str = ""  # check, smell, security, format, etc.
     help_uri: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
+    fingerprints: dict[str, str] = field(default_factory=dict)
 
     @property
     def location_str(self) -> str:
@@ -69,8 +71,265 @@ class SarifIssue:
 
 
 # ────────────────────────────────────────────────
-# SARIF Parsers
+# Fix Strategies (Ported from fix_smells.py)
 # ────────────────────────────────────────────────
+
+
+class FixStrategy(abc.ABC):
+    """Base for smell-fix strategies."""
+
+    @property
+    @abc.abstractmethod
+    def rule(self) -> str:
+        """Short rule name."""
+
+    @property
+    @abc.abstractmethod
+    def title(self) -> str:
+        """Human-readable title."""
+
+    @property
+    @abc.abstractmethod
+    def instructions(self) -> str:
+        """English fix instructions."""
+
+
+class IdenticalCodeStrategy(FixStrategy):
+    rule = "identical-code"
+    title = "Eliminate identical code blocks"
+    instructions = "\n".join(
+        [
+            "Refactor duplicated logic into shared abstractions:",
+            "- **Domain Logic**: Move shared business rules to `mcb-domain` entities or services.",
+            "- **Infrastructure**: Extract common technical implementations to `mcb-infrastructure::utils`.",
+            "- **Tests**: Use `mcb_domain::test_services_config` or shared test fixtures.",
+        ]
+    )
+
+
+class SimilarCodeStrategy(FixStrategy):
+    rule = "similar-code"
+    title = "Refactor similar code blocks"
+    instructions = "\n".join(
+        [
+            "Unify similar patterns using Rust's powerful type system:",
+            "- **Traits**: Define a trait in `mcb-domain::ports` and implement variations in `mcb-providers`.",
+            "- **Generics**: Use generic parameters for slight variations in types.",
+            "- **Macros**: Use `macro_rules!` (sparingly) for structural repetition that generics can't handle.",
+        ]
+    )
+
+
+class FunctionComplexityStrategy(FixStrategy):
+    rule = "function-complexity"
+    title = "Reduce function complexity"
+    instructions = "\n".join(
+        [
+            "Simplify complex functions by extracting logic:",
+            "- **Abstraction**: Move distinct steps into private helper methods or `impl` blocks.",
+            "- **Guard Clauses**: Use `if ... { return ... }` to reduce nesting depth.",
+            "- **Pattern Matching**: Use `match` expressions instead of complex `if/else` chains.",
+            "- **Error Handling**: Use the `?` operator for clean error propagation.",
+        ]
+    )
+
+
+class MethodComplexityStrategy(FixStrategy):
+    rule = "method-complexity"
+    title = "Reduce method complexity"
+    instructions = FunctionComplexityStrategy.instructions
+
+
+class CognitiveComplexityStrategy(FixStrategy):
+    rule = "cognitive-complexity"
+    title = "Lower cognitive complexity"
+    instructions = "\n".join(
+        [
+            "Make the code easier to reason about:",
+            "- **Encapsulation**: Hide complex details behind descriptive function names.",
+            "- **Boolean Logic**: Extract complex conditions into `is_valid()` styling methods.",
+            "- **Control Flow**: Prefer iterators (`map`, `filter`, `fold`) over manual loops with state.",
+        ]
+    )
+
+
+class NestedControlFlowStrategy(FixStrategy):
+    rule = "nested-control-flow"
+    title = "Flatten deeply nested control flow"
+    instructions = "\n".join(
+        [
+            "Reduce nesting depth (target ≤ 4 levels):",
+            "- **Guard Clauses**: Check preconditions early and return.",
+            "- **Iterators**: Use functional combinators to transform collections flatly.",
+            "- **Lets**: Use `let ... = match ...` to assign results instead of nesting logic.",
+        ]
+    )
+
+
+class DeepNestingStrategy(FixStrategy):
+    rule = "deep-nesting"
+    title = "Flatten deep nesting"
+    instructions = NestedControlFlowStrategy.instructions
+
+
+class FileComplexityStrategy(FixStrategy):
+    rule = "file-complexity"
+    title = "Split complex file into modules"
+    instructions = "\n".join(
+        [
+            "Break down large files into focused modules:",
+            "- **Modularity**: Create a directory with `mod.rs` and split concerns into separate files.",
+            "- **Clean Architecture**: Ensure the file strictly belongs to one layer (Domain, Infra, App).",
+            "- **Helpers**: Move utility functions to `utils.rs` or specialized submodules.",
+        ]
+    )
+
+
+class LongMethodStrategy(FixStrategy):
+    rule = "long-method"
+    title = "Shorten long method"
+    instructions = "\n".join(
+        [
+            "Break methods into single-responsibility steps:",
+            "- **Steps**: Identify logical sections (setup, process, output) and extract them.",
+            "- **Size**: Aim for methods that fit on a single screen (≤ 25 lines).",
+            "- **Context**: If passing many variables, consider a context struct.",
+        ]
+    )
+
+
+class LargeClassStrategy(FixStrategy):
+    rule = "large-class"
+    title = "Decompose large struct/class"
+    instructions = "\n".join(
+        [
+            "Redistribute responsibilities from this large struct:",
+            "- **Composition**: Extract groups of fields into smaller Value Objects (in `mcb-domain::value_objects`).",
+            "- **Behavior**: Move complex logic to Domain Services if it involves multiple entities.",
+            "- **Traits**: Implement standard traits (`From`, `TryFrom`, `Display`) to offload conversion logic.",
+        ]
+    )
+
+
+class GodClassStrategy(FixStrategy):
+    rule = "god-class"
+    title = "Decompose God Class"
+    instructions = "\n".join(
+        [
+            "This struct violates Single Responsibility Principle:",
+            "- **Domain Services**: Split orchestration logic into specific Application Services.",
+            "- **Rich Entities**: Move business rules to the Entities that hold the data.",
+            "- **Providers**: Delegate external interaction to `mcb-providers` via Ports.",
+        ]
+    )
+
+
+class FeatureEnvyStrategy(FixStrategy):
+    rule = "feature-envy"
+    title = "Resolve Feature Envy"
+    instructions = "\n".join(
+        [
+            "Move logic closer to the data it operates on:",
+            "- **Move Method**: If a method primarily uses another struct's data, move it there.",
+            "- **Encapsulation**: Keep data and behavior together in `mcb-domain` entities.",
+            "- **Getters**: If you are accessing many getters, it's a sign that logic belongs in that object.",
+        ]
+    )
+
+
+class DataClumpStrategy(FixStrategy):
+    rule = "data-clump"
+    title = "Encapsulate Data Clumps"
+    instructions = "\n".join(
+        [
+            "Group frequently appearing parameters or fields:",
+            "- **Value Object**: Create a new struct in `mcb-domain::value_objects`.",
+            "- **Validation**: Enforce invariants in the new type's constructor (`new()`).",
+            "- **Type Safety**: Replace loose parameters with this strongly-typed value.",
+        ]
+    )
+
+
+class BooleanLogicStrategy(FixStrategy):
+    rule = "boolean-logic"
+    title = "Simplify boolean expressions"
+    instructions = "\n".join(
+        [
+            "Improve readability of boolean logic:",
+            "- **Predicates**: Extract conditions into named methods returning `bool`.",
+            "- **De Morgan**: Simplify negated groups.",
+            "- **Matches**: Consider if a `match` expression is clearer than complex boolean operators.",
+        ]
+    )
+
+
+class ComplexConditionStrategy(FixStrategy):
+    rule = "complex-condition"
+    title = "Simplify complex conditional"
+    instructions = BooleanLogicStrategy.instructions
+
+
+class FunctionParametersStrategy(FixStrategy):
+    rule = "function-parameters"
+    title = "Reduce function parameter count"
+    instructions = "\n".join(
+        [
+            "Too many arguments indicate missing abstractions:",
+            "- **Config Struct**: Group related parameters into a configuration struct.",
+            "- **Builder**: Use the Builder pattern for complex instance construction.",
+            "- **Context**: Use a `Context` struct for passing cross-cutting data.",
+        ]
+    )
+
+
+class TooManyArgumentsStrategy(FixStrategy):
+    rule = "too-many-arguments"
+    title = "Reduce argument count"
+    instructions = FunctionParametersStrategy.instructions
+
+
+class ReturnStatementsStrategy(FixStrategy):
+    rule = "return-statements"
+    title = "Consolidate return points"
+    instructions = "\n".join(
+        [
+            "Simplify control flow exits:",
+            "- **Expression-Oriented**: In Rust, the last expression is the return value. Use it.",
+            "- **Guard Clauses**: Return early for error checks, then have a single success path.",
+            "- **Result**: Propagate errors with `?` rather than manual early returns.",
+        ]
+    )
+
+
+STRATEGIES = {
+    s.rule: s()
+    for s in (
+        IdenticalCodeStrategy,
+        SimilarCodeStrategy,
+        FunctionComplexityStrategy,
+        MethodComplexityStrategy,
+        CognitiveComplexityStrategy,
+        NestedControlFlowStrategy,
+        DeepNestingStrategy,
+        FileComplexityStrategy,
+        LongMethodStrategy,
+        LargeClassStrategy,
+        GodClassStrategy,
+        FeatureEnvyStrategy,
+        DataClumpStrategy,
+        BooleanLogicStrategy,
+        ComplexConditionStrategy,
+        FunctionParametersStrategy,
+        TooManyArgumentsStrategy,
+        ReturnStatementsStrategy,
+    )
+}
+
+
+def get_strategy(rule_id: str) -> FixStrategy | None:
+    # Rule ID might be "qlty:similar-code" or just "similar-code"
+    short = rule_id.split(":")[-1]
+    return STRATEGIES.get(short)
 
 
 def parse_sarif_file(path: Path) -> list[SarifIssue]:
@@ -100,10 +359,14 @@ def parse_sarif_file(path: Path) -> list[SarifIssue]:
             start_line = region.get("startLine", 0)
             end_line = region.get("endLine", start_line)
 
-            # Extract metadata
+            # Extract metadata and fingerprints
             metadata = {}
             if "properties" in result:
                 metadata = result["properties"]
+
+            fingerprints = result.get("partialFingerprints", {})
+            if not fingerprints:
+                fingerprints = result.get("fingerprints", {})
 
             issues.append(
                 SarifIssue(
@@ -114,6 +377,7 @@ def parse_sarif_file(path: Path) -> list[SarifIssue]:
                     start_line=start_line,
                     end_line=end_line,
                     metadata=metadata,
+                    fingerprints=fingerprints,
                 )
             )
 
@@ -153,6 +417,44 @@ def run_qlty_check(
         return []
 
 
+def run_qlty_smells(
+    output_file: Path = Path("qlty.smells.sarif"),
+) -> list[SarifIssue]:
+    """Run qlty smells --all --sarif, save to file, and parse SARIF output."""
+    print("🔄 Running qlty smells --all --sarif...")
+
+    try:
+        result = subprocess.run(  # nosec B603 B607
+            ["qlty", "smells", "--all", "--sarif"],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+
+        if not result.stdout.strip():
+            print("   ✅ No smells found (clean)")
+            return []
+
+        output_file.write_text(result.stdout)
+        print(f"   💾 Saved SARIF to {output_file}")
+
+        issues = parse_sarif_file(output_file)
+        # Mark issues as 'smell' category if not present
+        for issue in issues:
+            if not issue.category:
+                issue.category = "smell"
+
+        print(f"   📊 Found {len(issues)} smells")
+        return issues
+
+    except subprocess.TimeoutExpired:
+        print("   ❌ qlty smells timed out after 300s", file=sys.stderr)
+        return []
+    except Exception as e:
+        print(f"   ❌ Error running qlty smells: {e}", file=sys.stderr)
+        return []
+
+
 @dataclass
 class AnalysisReport:
     """Statistical analysis of SARIF issues."""
@@ -177,7 +479,7 @@ class AnalysisReport:
         # Severity breakdown
         lines.append("## By Severity")
         lines.append("")
-        for sev in [Severity.ERROR, Severity.WARNING, Severity.NOTE]:
+        for sev in [Severity.ERROR, Severity.WARNING, Severity.INFO]:
             count = self.by_severity.get(sev, 0)
             pct = (count / self.total_issues * 100) if self.total_issues > 0 else 0
             lines.append(f"{sev.to_emoji()} {sev.name:8s} {count:4d} ({pct:5.1f}%)")
@@ -213,8 +515,8 @@ class AnalysisReport:
         lines.append("## Severity Distribution")
         lines.append("")
         lines.append("| Severity | Count | Percentage |")
-        lines.append("|----------|-------|------------|")
-        for sev in [Severity.ERROR, Severity.WARNING, Severity.NOTE]:
+        lines.append("| ---------- | ------- | ------------ |")
+        for sev in [Severity.ERROR, Severity.WARNING, Severity.INFO]:
             count = self.by_severity.get(sev, 0)
             pct = (count / self.total_issues * 100) if self.total_issues > 0 else 0
             lines.append(f"| {sev.to_emoji()} {sev.name} | {count} | {pct:.1f}% |")
@@ -224,7 +526,7 @@ class AnalysisReport:
         lines.append("## Category Breakdown")
         lines.append("")
         lines.append("| Category | Count | Percentage |")
-        lines.append("|----------|-------|------------|")
+        lines.append("| ---------- | ------- | ------------ |")
         for cat, count in self.by_category.most_common():
             pct = (count / self.total_issues * 100) if self.total_issues > 0 else 0
             lines.append(f"| {cat} | {count} | {pct:.1f}% |")
@@ -234,7 +536,7 @@ class AnalysisReport:
         lines.append("## Top Rules")
         lines.append("")
         lines.append("| Rule | Count | Percentage |")
-        lines.append("|------|-------|------------|")
+        lines.append("| ------ | ------- | ------------ |")
         for rule, count in self.top_rules[:20]:
             pct = (count / self.total_issues * 100) if self.total_issues > 0 else 0
             lines.append(f"| `{rule}` | {count} | {pct:.1f}% |")
@@ -244,31 +546,43 @@ class AnalysisReport:
         lines.append("## Most Affected Files")
         lines.append("")
         lines.append("| File | Issues |")
-        lines.append("|------|--------|")
+        lines.append("| ------ | -------- |")
         for file_path, count in self.top_files[:20]:
             lines.append(f"| `{file_path}` | {count} |")
         lines.append("")
-
-    def _format_issue_message(self, issue):
-        if not issue.message:
-            return None
-        if len(issue.message) > 100:
-            return issue.message[:100] + "..."
-        return issue.message
 
     def _generate_rule_section(self, lines, rule, rule_issues):
         lines.append(f"### {rule} ({len(rule_issues)} issues)")
         lines.append("")
 
-        for issue in rule_issues[:10]:
-            lines.append(f"- `{issue.location_str}`")
-            msg = self._format_issue_message(issue)
-            if msg:
-                lines.append(f"  > {msg}")
+        strategy = get_strategy(rule)
+        if strategy:
+            lines.append(f"**Strategy:** {strategy.title}")
+            lines.append("")
+            # Ensure blank line before list for MD032 compliance
+            lines.append(strategy.instructions.replace(":\n-", ":\n\n-"))
+            lines.append("")
 
-        if len(rule_issues) > 10:
-            lines.append(f"  ... and {len(rule_issues) - 10} more")
-        lines.append("")
+        # Show up to 50 issues per rule to avoid massive files
+        limit = 50
+        count = len(rule_issues)
+
+        for issue in rule_issues[:limit]:
+            lines.append(f"#### `{issue.location_str}`")
+            lines.append("")
+
+            func = issue.fingerprints.get("function.name")
+            if func:
+                lines.append(f"- **Function:** `{func}`")
+
+            msg = issue.message
+            if msg:
+                lines.append(f"- **Message:** {msg}")
+            lines.append("")
+
+        if count > limit:
+            lines.append(f"*...and {count - limit} more issues.*")
+            lines.append("")
 
     def _generate_severity_section(self, lines, sev):
         sev_issues = [i for i in self.issues if i.level == sev]
@@ -300,7 +614,7 @@ class AnalysisReport:
         self._generate_rules_table(lines)
         self._generate_files_table(lines)
 
-        for sev in [Severity.ERROR, Severity.WARNING, Severity.NOTE]:
+        for sev in [Severity.ERROR, Severity.WARNING, Severity.INFO]:
             self._generate_severity_section(lines, sev)
 
         return "\n".join(lines)
@@ -355,42 +669,75 @@ def _load_checks_from_file(args, all_issues):
     return False
 
 
-def _run_qlty_checks(all_issues):
-    checks = run_qlty_check()
-    for check in checks:
-        check.category = "check"
-    all_issues.extend(checks)
-
-
-def _load_smells_from_file(args, all_issues):
-    if args.smells_file.exists():
+def _collect_smells_issues(args, all_issues):
+    if args.smells_file.exists() and not args.scan:
         print(f"📖 Reading smells from {args.smells_file}")
         smells = parse_sarif_file(args.smells_file)
         for smell in smells:
             smell.category = "smell"
         all_issues.extend(smells)
         print(f"   Found {len(smells)} code smells")
+    elif args.scan:
+        smells = run_qlty_smells(args.smells_file)
+        all_issues.extend(smells)
     else:
         print(f"⚠️  Smells file not found: {args.smells_file}", file=sys.stderr)
 
 
 def _collect_checks_issues(args, all_issues):
-    if _load_checks_from_file(args, all_issues):
+    if args.scan:
+        outfile = (
+            args.checks_file if args.checks_file else Path("qlty.check.current.sarif")
+        )
+        checks = run_qlty_check(output_file=outfile)
+        for check in checks:
+            check.category = "check"
+        all_issues.extend(checks)
+    elif _load_checks_from_file(args, all_issues):
         return
-    if not args.no_run:
-        _run_qlty_checks(all_issues)
+    elif not args.checks_file and not args.no_run:
+        checks = run_qlty_check()
+        for check in checks:
+            check.category = "check"
+        all_issues.extend(checks)
     else:
-        print("⚠️  No checks file and --no-run specified", file=sys.stderr)
+        if args.checks_file:
+            print(f"⚠️  Checks file not found: {args.checks_file}", file=sys.stderr)
 
 
 def _collect_all_issues(args):
     all_issues = []
 
-    if args.type in ("checks", "both"):
+    # Determine types based on flags or default
+    do_checks = args.type in ("checks", "both")
+    do_smells = args.type in ("smells", "both")
+
+    if args.check:
+        do_checks = True
+        if not args.smells and not args.type:
+            do_smells = False  # Exclusive if only check specified without type
+
+    if args.smells:
+        do_smells = True
+        if not args.check and not args.type:
+            do_checks = False  # Exclusive if only smells specified without type
+
+    # If explicit flags are used, they override default type behavior if contradictory?
+    # Actually, simpler logic:
+    # If --check or --smells provided, use them.
+    # If neither provided, fall back to args.type.
+
+    if args.check or args.smells:
+        do_checks = args.check
+        do_smells = args.smells
+        # If user provided --check but not --smells, do_smells=False (default from args)
+        # But wait, args.check is boolean.
+
+    if do_checks:
         _collect_checks_issues(args, all_issues)
 
-    if args.type in ("smells", "both"):
-        _load_smells_from_file(args, all_issues)
+    if do_smells:
+        _collect_smells_issues(args, all_issues)
 
     return all_issues
 
@@ -426,13 +773,61 @@ def _apply_file_filter(args, filtered):
     return filtered
 
 
+def _apply_exclude_rule_filter(args, filtered):
+    if args.exclude_rule:
+        for rule in args.exclude_rule:
+            filtered = [i for i in filtered if rule not in i.rule_id]
+            print(f"🔍 Excluded issues matching rule '{rule}'")
+    return filtered
+
+
+def _apply_exclude_category_filter(args, filtered):
+    if args.exclude_category:
+        for cat in args.exclude_category:
+            filtered = [i for i in filtered if cat not in i.rule_category]
+            print(f"🔍 Excluded issues in category '{cat}'")
+    return filtered
+
+
+def _apply_exclude_file_filter(args, filtered):
+    if args.exclude_file:
+        import fnmatch
+
+        for pattern in args.exclude_file:
+            filtered = [
+                i for i in filtered if not fnmatch.fnmatch(i.file_path, pattern)
+            ]
+            print(f"🔍 Excluded issues in files matching '{pattern}'")
+    return filtered
+
+
 def _apply_all_filters(args, all_issues):
     filtered = all_issues
     filtered = _apply_severity_filter(args, filtered)
     filtered = _apply_rule_filter(args, filtered)
     filtered = _apply_category_filter(args, filtered)
     filtered = _apply_file_filter(args, filtered)
+    filtered = _apply_exclude_rule_filter(args, filtered)
+    filtered = _apply_exclude_category_filter(args, filtered)
+    filtered = _apply_exclude_file_filter(args, filtered)
     return filtered
+
+
+def _validate_markdown_output_path(markdown_path: Path) -> Path:
+    workspace_root = Path.cwd().resolve()
+    resolved = markdown_path.resolve()
+
+    if (
+        resolved.suffix.lower() == ".md"
+        and resolved.parent == workspace_root
+        and resolved.name != "README.md"
+    ):
+        raise ValueError(
+            "Writing markdown reports to workspace root is disabled; "
+            "use README.md or a subdirectory (for example docs/reports/...)."
+        )
+
+    return resolved
 
 
 def _generate_outputs(args, report, filtered):
@@ -443,8 +838,13 @@ def _generate_outputs(args, report, filtered):
     if args.markdown:
         title = f"Quality Report: {args.type.title()}"
         content = report.generate_markdown(title)
-        args.markdown.write_text(content, encoding="utf-8")
-        print(f"✅ Markdown report written to {args.markdown}")
+        try:
+            markdown_path = _validate_markdown_output_path(args.markdown)
+        except ValueError as e:
+            print(f"❌ {e}", file=sys.stderr)
+            raise SystemExit(2) from e
+        markdown_path.write_text(content, encoding="utf-8")
+        print(f"✅ Markdown report written to {markdown_path}")
 
     if args.json:
         output = {
@@ -496,9 +896,24 @@ def main() -> int:
         help="Path to smells SARIF file (default: qlty.smells.lst)",
     )
     parser.add_argument(
+        "--scan",
+        action="store_true",
+        help="Run qlty scan (check or smell) instead of just reading files",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Analyze checks",
+    )
+    parser.add_argument(
+        "--smells",
+        action="store_true",
+        help="Analyze smells",
+    )
+    parser.add_argument(
         "--no-run",
         action="store_true",
-        help="Don't run qlty, only use existing files",
+        help="Deprecated: Use --scan to enable running. By default only reads files.",
     )
     parser.add_argument(
         "--severity",
@@ -516,6 +931,21 @@ def main() -> int:
     parser.add_argument(
         "--file",
         help="Filter by file path (glob pattern supported)",
+    )
+    parser.add_argument(
+        "--exclude-rule",
+        action="append",
+        help="Exclude issues matching rule ID (can be used multiple times)",
+    )
+    parser.add_argument(
+        "--exclude-category",
+        action="append",
+        help="Exclude issues matching category (can be used multiple times)",
+    )
+    parser.add_argument(
+        "--exclude-file",
+        action="append",
+        help="Exclude issues in files matching glob pattern (can be used multiple times)",
     )
     parser.add_argument(
         "--summary",

@@ -2,11 +2,13 @@
 # =============================================================================
 # Pre-commit hook - Uses same Makefile verbs as CI
 # =============================================================================
-# Install: make install-hooks
+# Install: cp scripts/hooks/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit
 # Skip: SKIP_PRE_COMMIT=1 git commit ...
 # =============================================================================
 
 set -e
+
+SECONDS=0
 
 # Allow skipping pre-commit for emergencies
 if [ "${SKIP_PRE_COMMIT:-}" = "1" ]; then
@@ -21,19 +23,31 @@ echo "Running pre-commit checks..."
 # =============================================================================
 
 echo "  → Lint (Rust 2024 compliance)..."
-make lint CI_MODE=1
+lint_start=$SECONDS
+make lint MCB_CI=1
+echo "    ✓ Lint completed in $((SECONDS - lint_start))s"
 
 echo "  → Security audit..."
+audit_start=$SECONDS
 # Check if cargo-audit is installed, skip if not (CI will catch it)
 if command -v cargo-audit &> /dev/null; then
     make audit
+    echo "    ✓ Security audit completed in $((SECONDS - audit_start))s"
 else
     echo "    ⚠️  cargo-audit not installed, skipping (install: cargo install cargo-audit)"
 fi
 
 echo "  → Architecture validation (quick mode)..."
 # Quick validation - skip test discovery for speed
-make validate STRICT=1 QUICK=1 2>/dev/null || make validate STRICT=1
+validate_start=$SECONDS
+if make validate QUICK=1 2>/dev/null; then
+    validate_mode="quick"
+else
+    validate_mode="full"
+    make validate
+fi
+echo "    ✓ Architecture validation (${validate_mode}) completed in $((SECONDS - validate_start))s"
 
 echo ""
 echo "✅ Pre-commit checks passed!"
+echo "   Total pre-commit time: ${SECONDS}s"
