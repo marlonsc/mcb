@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::compute_stable_id_hash;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
@@ -10,6 +9,7 @@ use rmcp::model::{CallToolResult, Content};
 use crate::args::MemoryArgs;
 use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
+use crate::handler_helpers::hash_session_id;
 
 /// Lists semantic memories based on the provided search query and filters.
 #[tracing::instrument(skip_all)]
@@ -22,10 +22,7 @@ pub async fn list_observations(
         project_id: args.project_id.clone(),
         tags: args.tags.clone(),
         r#type: None,
-        session_id: args
-            .session_id
-            .clone()
-            .map(|id| compute_stable_id_hash("session", id.as_str())),
+        session_id: hash_session_id(args.session_id.clone()),
         parent_session_id: args.parent_session_id.clone(),
         repo_id: args.repo_id.clone(),
         time_range: None,
@@ -100,10 +97,7 @@ pub async fn get_timeline(
         project_id: args.project_id.clone(),
         tags: None,
         r#type: None,
-        session_id: args
-            .session_id
-            .clone()
-            .map(|id| compute_stable_id_hash("session", id.as_str())),
+        session_id: hash_session_id(args.session_id.clone()),
         parent_session_id: args.parent_session_id.clone(),
         repo_id: args.repo_id.clone(),
         time_range: None,

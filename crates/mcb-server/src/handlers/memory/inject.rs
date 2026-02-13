@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::compute_stable_id_hash;
 use mcb_domain::utils::vcs_context::VcsContext;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
@@ -10,6 +9,7 @@ use tracing::error;
 
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
+use crate::handler_helpers::hash_session_id;
 
 /// Injects semantic memory context into the MCP tool result based on the provided filter.
 #[tracing::instrument(skip_all)]
@@ -22,10 +22,7 @@ pub async fn inject_context(
         project_id: args.project_id.clone(),
         tags: None,
         r#type: None,
-        session_id: args
-            .session_id
-            .clone()
-            .map(|id| compute_stable_id_hash("session", id.as_str())),
+        session_id: hash_session_id(args.session_id.clone()),
         parent_session_id: args.parent_session_id.clone(),
         repo_id: args.repo_id.clone(),
         time_range: None,

@@ -9,6 +9,7 @@ This document provides a comprehensive reference for the **PR classification sys
 **Target Audience**: Developers, reviewers, CI maintainers
 
 **Related Docs**:
+
 - [CI Optimization Strategy](./CI_OPTIMIZATION.md) - High-level strategy and impact analysis
 - [CI/CD and Release Process](./CI_RELEASE.md) - Complete workflow reference
 
@@ -45,7 +46,7 @@ classify:
 
 ### Classification Algorithm
 
-```
+```text
 1. IS_DRAFT = github.event.pull_request.draft
 2. IS_BOT = github.event.pull_request.user.type == 'Bot'
 3. IS_FORK = github.event.pull_request.head.repo.fork
@@ -115,16 +116,19 @@ classify:
 **Purpose**: Enable fast iteration during development
 
 **Jobs Executed**:
+
 - `classify` - Detect Draft state
 - `changes` - Path filtering
 - `rust-ci` - **Gate check (PASSES immediately)**
 
 **Jobs Skipped**:
+
 - ALL validation jobs (lint, test, validate, etc.)
 - ALL heavy jobs (coverage, golden, binaries)
 - CodeQL security analysis
 
 **Gate Check Logic**:
+
 ```yaml
 rust-ci:
   needs: [changes, classify, lint, test, startup-smoke, validate, audit, golden-tests, coverage, release-build]
@@ -136,6 +140,7 @@ rust-ci:
 **Time to Gate**: ~30 seconds
 
 **Use Cases**:
+
 - Work-in-progress PRs
 - Experimental branches
 - Iterative development
@@ -146,6 +151,7 @@ rust-ci:
 **Purpose**: Fast feedback for automated dependency updates
 
 **Jobs Executed**:
+
 - `classify` - Detect Bot user type
 - `changes` - Path filtering
 - `lint` - Rust 2024 compliance (Linux+stable)
@@ -155,6 +161,7 @@ rust-ci:
 - `rust-ci` - **Gate check (waits for above 4 jobs)**
 
 **Jobs Skipped**:
+
 - Cross-platform testing (macOS, Windows)
 - Rust beta testing
 - Coverage analysis
@@ -164,12 +171,14 @@ rust-ci:
 - CodeQL
 
 **Test Matrix** (Simplified):
+
 - OS: ubuntu-latest only
 - Rust: stable only
 
 **Time to Gate**: ~3-5 minutes
 
 **Use Cases**:
+
 - Dependabot PRs (patch/minor version bumps)
 - Renovate PRs
 - GitHub Actions version updates
@@ -177,9 +186,11 @@ rust-ci:
 
 **Bot Detection**:
 Currently detects:
+
 - `github.event.pull_request.user.type == 'Bot'`
 
 This catches:
+
 - `dependabot[bot]`
 - `renovate[bot]`
 - `github-actions[bot]`
@@ -190,6 +201,7 @@ This catches:
 **Purpose**: Comprehensive validation before merge
 
 **Jobs Executed**:
+
 - `classify` - Detect Ready state
 - `changes` - Path filtering
 - `lint` - Rust 2024 compliance
@@ -204,12 +216,14 @@ This catches:
 - `analyze` - **CodeQL (runs AFTER gate check)**
 
 **Test Matrix** (Full):
+
 - OS: ubuntu-latest, macos-latest, windows-latest
 - Rust: stable, beta
 
 **Time to Gate**: ~5-10 minutes (CodeQL adds ~5-10min after)
 
 **Use Cases**:
+
 - Human PRs ready for review
 - Non-draft PRs from team members
 - PRs awaiting merge approval
@@ -222,7 +236,7 @@ This catches:
 
 **Scenario**: Developer creates draft PR, iterates, then marks ready
 
-```
+```text
 1. Create draft PR:
    gh pr create --draft --title "feat: add feature X"
    
@@ -247,6 +261,7 @@ This catches:
 ```
 
 **Commands**:
+
 ```bash
 # Create draft
 gh pr create --draft
@@ -265,7 +280,7 @@ gh pr ready 123 --undo
 
 **Scenario**: Dependabot opens PR for minor version bump
 
-```
+```text
 1. Dependabot creates PR:
    PR opened by dependabot[bot]
    
@@ -288,6 +303,7 @@ gh pr ready 123 --undo
 ```
 
 **Commands**:
+
 ```bash
 # View Dependabot PRs
 gh pr list --author app/dependabot
@@ -303,7 +319,7 @@ gh pr merge \u003cpr-number\u003e --squash
 
 **Scenario**: Human opens PR, full suite runs including CodeQL
 
-```
+```text
 1. Create PR:
    gh pr create --title "fix: resolve bug Y"
    
@@ -329,7 +345,8 @@ gh pr merge \u003cpr-number\u003e --squash
 ```
 
 **Timeline**:
-```
+
+```text
 t=0:     PR opened, jobs start
 t=3-5m:  Lint, startup, validate complete
 t=5-8m:  Test matrix completes
@@ -340,6 +357,7 @@ t=15m:   CodeQL completes (optional)
 ```
 
 **Commands**:
+
 ```bash
 # Watch CI progress
 gh run watch \u003crun-id\u003e
@@ -360,6 +378,7 @@ gh pr merge 123 --squash
 **Problem**: Draft PR executes lint, test, and other heavy jobs
 
 **Diagnosis**:
+
 ```bash
 # Check if PR is actually draft
 gh pr view \u003cpr-number\u003e --json isDraft
@@ -375,11 +394,13 @@ gh run view \u003crun-id\u003e --log | grep "run_full"
 ```
 
 **Common Causes**:
+
 1. PR not marked as draft in GitHub UI
 2. Classify job failed to execute
 3. Workflow file syntax error
 
 **Solutions**:
+
 ```bash
 # Convert to draft
 gh pr ready \u003cpr-number\u003e --undo
@@ -396,6 +417,7 @@ gh run rerun \u003crun-id\u003e
 **Problem**: Dependabot PR executes cross-platform tests, coverage, CodeQL
 
 **Diagnosis**:
+
 ```bash
 # Check user type
 gh api /repos/marlonsc/mcb/pulls/\u003cpr-number\u003e | jq '.user.type'
@@ -411,11 +433,13 @@ gh run view \u003crun-id\u003e --log | grep "run_simplified"
 ```
 
 **Common Causes**:
+
 1. User type not detected as 'Bot'
 2. Workflow condition logic error
 3. Job `if` conditions incorrect
 
 **Solutions**:
+
 ```bash
 # Verify Dependabot user type
 gh api /repos/marlonsc/mcb/pulls/\u003cpr-number\u003e | jq '.user.login, .user.type'
@@ -431,6 +455,7 @@ gh api /repos/marlonsc/mcb/pulls/\u003cpr-number\u003e | jq '.user.login, .user.
 **Problem**: PR cannot merge because CodeQL is running or failed
 
 **Diagnosis**:
+
 ```bash
 # Check required status checks
 gh api /repos/marlonsc/mcb/branch-protection/main | jq '.required_status_checks.contexts'
@@ -441,6 +466,7 @@ gh api /repos/marlonsc/mcb/rulesets | jq '.[] | select(.name == "main")'
 ```
 
 **Expected Behavior**:
+
 - CodeQL (`analyze` job) is NOT a required check
 - Only `CI / Rust CI (PR consolidated)` is required
 - PRs can merge while CodeQL is running
@@ -449,6 +475,7 @@ gh api /repos/marlonsc/mcb/rulesets | jq '.[] | select(.name == "main")'
 This indicates a configuration error in repository rulesets.
 
 **Solution**:
+
 ```bash
 # Repository settings → Rules → Rulesets
 # Edit "main" ruleset
@@ -464,6 +491,7 @@ This indicates a configuration error in repository rulesets.
 **Expected Behavior**: Gate check should PASS on draft PRs (all dependencies skipped)
 
 **Diagnosis**:
+
 ```bash
 # Check gate check logic
 gh run view \u003crun-id\u003e --log -j "Rust CI (PR consolidated)"
@@ -473,12 +501,14 @@ gh run view \u003crun-id\u003e --log -j "Rust CI (PR consolidated)"
 ```
 
 **Common Causes**:
+
 1. A job ran that should have been skipped
 2. A job failed before being skipped
 3. `if: always()` condition missing on rust-ci job
 
 **Solution**:
 Check `.github/workflows/ci.yml`:
+
 ```yaml
 rust-ci:
   needs: [changes, classify, lint, test, ...]
@@ -491,6 +521,7 @@ rust-ci:
 **Problem**: Jobs like `lint`, `test` execute on draft PR when they should skip
 
 **Diagnosis**:
+
 ```bash
 # Check job conditions
 gh run view \u003crun-id\u003e --json jobs | jq '.jobs[] | {name, conclusion}'
@@ -505,11 +536,13 @@ gh run view \u003crun-id\u003e --json jobs | jq '.jobs[] | {name, conclusion}'
 ```
 
 **Common Causes**:
+
 1. Job `if` condition incorrect or missing
 2. `run_full` or `run_simplified` outputs not set correctly
 
 **Solution**:
 Check job conditions in `.github/workflows/ci.yml`:
+
 ```yaml
 test:
   needs: [changes, classify]
@@ -524,6 +557,7 @@ test:
 **Problem**: Ready PR (non-draft) skips coverage, golden tests, or cross-platform
 
 **Diagnosis**:
+
 ```bash
 # Verify PR is not draft
 gh pr view \u003cpr-number\u003e --json isDraft
@@ -535,11 +569,13 @@ gh run view \u003crun-id\u003e --log | grep -E "(run_full|is_draft)"
 ```
 
 **Common Causes**:
+
 1. PR converted to draft accidentally
 2. Classify job outputs incorrect
 3. Path filtering excluding all changes
 
 **Solution**:
+
 ```bash
 # If PR is draft, convert to ready
 gh pr ready \u003cpr-number\u003e
@@ -567,10 +603,12 @@ test:
 ```
 
 **Behavior**:
+
 - If code changes (`src=true`): classification policy applies
 - If no code changes (`src=false`): job skips regardless of classification
 
 **Example**: Draft PR with docs-only changes
+
 - `is_draft=true` → run_full=false
 - `src=false` → even if run_full were true, jobs would skip
 
@@ -585,11 +623,13 @@ classify:
 ```
 
 **Fork PR Restrictions**:
+
 - No access to repository secrets
 - Limited permissions for security
 - Cannot trigger certain workflows
 
 **Jobs affected**:
+
 ```yaml
 coverage:
   if: |
@@ -610,12 +650,14 @@ analyze:
 ```
 
 **Why AFTER rust-ci**:
+
 1. **Non-blocking merge**: Gate passes before CodeQL starts
 2. **Saves time**: No need to wait for CodeQL to merge
 3. **Still enforced**: CodeQL failures still reported, just not blocking
 
 **Timeline**:
-```
+
+```text
 0-5min:  Lint, test, validate (parallel)
 5-10min: Coverage, golden, binaries
 10min:   rust-ci GATE PASSES → PR mergeable
@@ -634,12 +676,14 @@ concurrency:
 ```
 
 **Behavior**:
+
 - New push cancels previous run for same PR
 - Saves runner time
 - Prevents queue buildup
 
 **Example**:
-```
+
+```text
 1. Push commit A → CI run starts
 2. Push commit B → Run A cancelled, Run B starts
 3. Only Run B completes
@@ -650,6 +694,7 @@ concurrency:
 Dependabot PRs integrate with auto-merge workflow:
 
 **`.github/workflows/auto-reviewer.yml`**:
+
 ```yaml
 auto-merge-dependabot:
   if: github.event.pull_request.user.login == 'dependabot[bot]'
@@ -662,6 +707,7 @@ auto-merge-dependabot:
 ```
 
 **Flow**:
+
 1. Dependabot opens PR
 2. CI runs (bot policy: simplified suite)
 3. Gate check passes (~3-5min)
@@ -669,6 +715,7 @@ auto-merge-dependabot:
 5. PR merges automatically when approved
 
 **Major updates**:
+
 - Require manual review (no auto-merge)
 - Comment added explaining manual review needed
 
@@ -717,6 +764,7 @@ Based on GitHub Actions runner minutes:
 | **TOTAL** | - | 555 min/month | 6660 min/year |
 
 **v0.1.4 Comparison** (all PRs ran full suite):
+
 - 100 PRs/month × 10 min = 1000 min/month
 - **Savings**: 445 min/month (44% reduction)
 

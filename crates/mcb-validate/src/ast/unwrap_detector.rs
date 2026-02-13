@@ -50,41 +50,44 @@ impl Callback for UnwrapCallback {
     }
 }
 
-/// Recursively detect unwrap/expect calls in AST
 fn detect_recursive(
     node: &Node,
     code: &[u8],
     cfg: &UnwrapConfig,
     results: &mut Vec<UnwrapDetection>,
 ) {
-    // Check if this is a call_expression with unwrap/expect
-    if node.kind() == "call_expression"
-        && let Some(text) = node.utf8_text(code)
-    {
-        let method = extract_method(text);
-        if matches!(method.as_str(), "unwrap" | "expect") {
-            let byte_pos = node.start_byte();
-            let in_test = cfg
-                .test_ranges
-                .iter()
-                .any(|(start, end)| byte_pos >= *start && byte_pos < *end);
+    let mut stack = vec![node.0];
 
-            results.push(UnwrapDetection {
-                file: cfg.filename.clone(),
-                line: node.start_row() + 1,
-                column: node.start_position().1 + 1,
-                method,
-                in_test,
-                context: text.lines().next().unwrap_or("").trim().to_string(),
-            });
+    while let Some(ts_node) = stack.pop() {
+        let current = Node(ts_node);
+
+        if current.kind() == "call_expression"
+            && let Some(text) = current.utf8_text(code)
+        {
+            let method = extract_method(text);
+            if matches!(method.as_str(), "unwrap" | "expect") {
+                let byte_pos = current.start_byte();
+                let in_test = cfg
+                    .test_ranges
+                    .iter()
+                    .any(|(start, end)| byte_pos >= *start && byte_pos < *end);
+
+                results.push(UnwrapDetection {
+                    file: cfg.filename.clone(),
+                    line: current.start_row() + 1,
+                    column: current.start_position().1 + 1,
+                    method,
+                    in_test,
+                    context: text.lines().next().unwrap_or("").trim().to_string(),
+                });
+            }
         }
-    }
 
-    // Recurse through children via inner tree-sitter node (public in our fork)
-    let mut cursor = node.0.walk();
-    for child in node.0.children(&mut cursor) {
-        let child_node = Node(child);
-        detect_recursive(&child_node, code, cfg, results);
+        let mut cursor = ts_node.walk();
+        let children: Vec<_> = ts_node.children(&mut cursor).collect();
+        for child in children.into_iter().rev() {
+            stack.push(child);
+        }
     }
 }
 
@@ -107,41 +110,41 @@ fn find_test_ranges(root: &Node, code: &[u8]) -> Vec<(usize, usize)> {
 }
 
 fn find_test_modules_recursive(node: &Node, code: &[u8], ranges: &mut Vec<(usize, usize)>) {
-    if node.kind() == "mod_item" {
-        // Check for #[cfg(test)] attribute before this node
-        let start = node.start_byte();
-        // Look back up to 50 bytes (or start of file) for the attribute
-        let search_start = start.saturating_sub(50);
-        let before = std::str::from_utf8(&code[search_start..start]).unwrap_or("");
-        if before.contains("#[cfg(test)]") {
-            ranges.push((node.start_byte(), node.end_byte()));
-            return; // Don't recurse into test modules
-        }
+    let mut stack = vec![node.0];
 
-        // Also check if the module name is "tests" (common pattern)
-        if let Some(name_text) = node.utf8_text(code)
-            && (name_text.contains("mod tests") || name_text.contains("mod test"))
-        {
-            // Double check there's a #[cfg(test)] somewhere before it in the file
-            let all_before = std::str::from_utf8(&code[..start]).unwrap_or("");
-            // Find the last occurrence of #[cfg(test)] before this position
-            if let Some(attr_pos) = all_before.rfind("#[cfg(test)]") {
-                // Make sure there's no other mod_item between the attribute and this module
-                let between = &all_before[attr_pos..];
-                if !between.contains("mod ")
-                    || between.rfind("mod ").unwrap_or(0) == between.len() - name_text.len()
-                {
-                    ranges.push((node.start_byte(), node.end_byte()));
-                    return;
+    while let Some(ts_node) = stack.pop() {
+        let current = Node(ts_node);
+
+        if current.kind() == "mod_item" {
+            let start = current.start_byte();
+            let search_start = start.saturating_sub(50);
+            let before = std::str::from_utf8(&code[search_start..start]).unwrap_or("");
+            if before.contains("#[cfg(test)]") {
+                ranges.push((current.start_byte(), current.end_byte()));
+                continue;
+            }
+
+            if let Some(name_text) = current.utf8_text(code)
+                && (name_text.contains("mod tests") || name_text.contains("mod test"))
+            {
+                let all_before = std::str::from_utf8(&code[..start]).unwrap_or("");
+                if let Some(attr_pos) = all_before.rfind("#[cfg(test)]") {
+                    let between = &all_before[attr_pos..];
+                    if !between.contains("mod ")
+                        || between.rfind("mod ").unwrap_or(0) == between.len() - name_text.len()
+                    {
+                        ranges.push((current.start_byte(), current.end_byte()));
+                        continue;
+                    }
                 }
             }
         }
-    }
 
-    // Recurse through children
-    let mut cursor = node.0.walk();
-    for child in node.0.children(&mut cursor) {
-        find_test_modules_recursive(&Node(child), code, ranges);
+        let mut cursor = ts_node.walk();
+        let children: Vec<_> = ts_node.children(&mut cursor).collect();
+        for child in children.into_iter().rev() {
+            stack.push(child);
+        }
     }
 }
 

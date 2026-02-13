@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::ObservationMetadata;
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::compute_stable_id_hash;
 use mcb_domain::utils::vcs_context::VcsContext;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
@@ -13,7 +12,9 @@ use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
+use crate::handler_helpers::{
+    OriginContextInput, hash_parent_session_id, hash_session_id, resolve_origin_context,
+};
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -43,15 +44,9 @@ pub async fn store_observation(
     };
     let tags = MemoryHelpers::get_string_list(data, "tags");
     let vcs_context = VcsContext::capture();
-    let arg_session_id = args
-        .session_id
-        .clone()
-        .map(|id| compute_stable_id_hash("session", id.as_str()));
+    let arg_session_id = hash_session_id(args.session_id.clone());
     let canonical_session_id = arg_session_id.clone();
-    let parent_session_hash = args
-        .parent_session_id
-        .clone()
-        .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
+    let parent_session_hash = hash_parent_session_id(args.parent_session_id.clone());
     let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
     let payload_project_id = MemoryHelpers::get_str(data, "project_id");
     let payload_file_path = MemoryHelpers::get_str(data, "file_path");

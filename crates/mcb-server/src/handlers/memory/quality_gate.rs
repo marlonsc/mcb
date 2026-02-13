@@ -4,7 +4,6 @@ use mcb_domain::entities::memory::{
     MemoryFilter, ObservationMetadata, ObservationType, QualityGateResult,
 };
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::compute_stable_id_hash;
 use mcb_domain::utils::vcs_context::VcsContext;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
@@ -14,7 +13,9 @@ use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
+use crate::handler_helpers::{
+    OriginContextInput, hash_parent_session_id, hash_session_id, resolve_origin_context,
+};
 
 /// Stores a quality gate result as a semantic observation.
 #[tracing::instrument(skip_all)]
@@ -62,15 +63,9 @@ pub async fn store_quality_gate(
         "quality_gate".to_string(),
         quality_gate.status.as_str().to_string(),
     ];
-    let arg_session_id = args
-        .session_id
-        .clone()
-        .map(|id| compute_stable_id_hash("session", id.as_str()));
+    let arg_session_id = hash_session_id(args.session_id.clone());
     let canonical_session_id = arg_session_id.clone();
-    let parent_session_hash = args
-        .parent_session_id
-        .clone()
-        .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
+    let parent_session_hash = hash_parent_session_id(args.parent_session_id.clone());
     let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
     let payload_project_id = MemoryHelpers::get_str(data, "project_id");
     let payload_branch = MemoryHelpers::get_str(data, "branch");
@@ -178,10 +173,7 @@ pub async fn get_quality_gates(
         project_id: args.project_id.clone(),
         tags: None,
         r#type: Some(ObservationType::QualityGate),
-        session_id: args
-            .session_id
-            .clone()
-            .map(|id| compute_stable_id_hash("session", id.as_str())),
+        session_id: hash_session_id(args.session_id.clone()),
         parent_session_id: args.parent_session_id.clone(),
         repo_id: args.repo_id.clone(),
         time_range: None,

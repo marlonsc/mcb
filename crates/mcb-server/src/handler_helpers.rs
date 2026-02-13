@@ -3,7 +3,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use mcb_domain::entities::memory::OriginContext;
 use mcb_domain::error::Error;
 use mcb_domain::utils::compute_stable_id_hash;
-use mcb_domain::value_objects::OrgContext;
+use mcb_domain::value_objects::{OrgContext, SessionId};
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -40,6 +40,19 @@ pub fn resolve_org_id(explicit: Option<&str>) -> String {
         return org_id.to_string();
     }
     OrgContext::current().id_str().to_string()
+}
+
+/// Converts an optional session identifier into a stable hash.
+pub fn hash_session_id(session_id: Option<SessionId>) -> Option<String> {
+    session_id.map(|id| {
+        let value = id.into_string();
+        compute_stable_id_hash("session", &value)
+    })
+}
+
+/// Converts an optional parent session identifier into a stable hash.
+pub fn hash_parent_session_id(parent_session_id: Option<String>) -> Option<String> {
+    parent_session_id.map(|id| compute_stable_id_hash("parent_session", &id))
 }
 
 /// Normalizes optional identifier input by trimming whitespace and discarding empty values.

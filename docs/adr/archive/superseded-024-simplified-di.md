@@ -3,11 +3,11 @@
 
 ## Status
 
-**Superseded by [ADR 029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md)** (v0.1.2)
+**Superseded by [ADR 029: Hexagonal Architecture with dill](../029-hexagonal-architecture-dill.md)** (v0.1.2)
 
-> Original replacement for [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md) using a handle-based DI pattern with linkme registry.
+> Original replacement for ADR 012: Two-Layer DI Strategy (Shaku) using a handle-based DI pattern with linkme registry.
 >
-> **Update (2026-01-20)**: dill Catalog is now implemented as IoC container with `add_value()` pattern. See [ADR 029](029-hexagonal-architecture-dill.md) for current architecture.
+> **Update (2026-01-20)**: dill Catalog is now implemented as IoC container with `add_value()` pattern. See [ADR 029](../029-hexagonal-architecture-dill.md) for current architecture.
 >
 > **Implementation Note (2026-01-19)**: The dill `#[component]` macro is incompatible with our domain error types and manual constructors. We use a handle-based pattern instead: Provider Handles (RwLock wrappers), Resolvers (linkme registry), and Admin Services (runtime switching via API).
 
@@ -260,10 +260,9 @@ crates/mcb-infrastructure/src/di/
 
 ## Related ADRs
 
-- [ADR 002: Dependency Injection with Shaku](002-dependency-injection-shaku.md) - **SUPERSEDED** by this ADR
-- [ADR 012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - **SUPERSEDED**
-- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Multi-crate organization
-- **Extended by**: [ADR 027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Formalizes engine contracts using handle pattern
+- [ADR 012: Two-Layer DI Strategy](../012-di-strategy-two-layer-approach.md) - **SUPERSEDED**
+- [ADR 013: Clean Architecture Crate Separation](../013-clean-architecture-crate-separation.md) - Multi-crate organization
+- **Extended by**: [ADR 027: Architecture Evolution v0.1.3](../027-architecture-evolution-v013.md) - Formalizes engine contracts using handle pattern
 
 ## References
 
