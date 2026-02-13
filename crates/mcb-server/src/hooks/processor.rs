@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType, OriginContext};
 use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::utils::{compute_stable_id_hash, mask_id};
 use tracing::debug;
 
 use super::types::{HookError, HookResult, PostToolUseContext, SessionStartContext};
@@ -55,12 +56,15 @@ impl HookProcessor {
             .unwrap_or_else(|| "default".to_string());
 
         let session_internal = context.session_id.clone().map(|id| id.into_string());
+        let hashed_session = session_internal
+            .as_deref()
+            .map(|id| compute_stable_id_hash("session", id));
 
         let metadata = mcb_domain::entities::memory::ObservationMetadata {
             session_id: session_internal.clone(),
             origin_context: Some(OriginContext {
                 project_id: Some(project_id.clone()),
-                session_id: session_internal,
+                session_id: hashed_session,
                 tool_name: Some(context.tool_name.clone()),
                 ..OriginContext::default()
             }),
@@ -97,7 +101,7 @@ impl HookProcessor {
             .ok_or(HookError::MemoryServiceUnavailable)?;
 
         debug!(
-            session_id = %context.session_id,
+            session_id = %mask_id(context.session_id.as_str()),
             "Processing SessionStart hook"
         );
 

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
+use mcb_domain::utils::compute_stable_id_hash;
 use mcb_domain::value_objects::SessionId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
@@ -42,13 +43,15 @@ pub async fn store_session(
     let next_steps = MemoryHelpers::get_string_list(data, "next_steps");
     let key_files = MemoryHelpers::get_string_list(data, "key_files");
     let payload_project_id = MemoryHelpers::get_str(data, "project_id");
+    let raw_session_id = session_id.as_str().to_string();
+    let hashed_session_id = compute_stable_id_hash("session", &raw_session_id);
 
     let origin_context = resolve_origin_context(OriginContextInput {
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),
         project_id_payload: payload_project_id.as_deref(),
-        session_from_args: args.session_id.as_ref().map(|id| id.as_str()),
-        session_from_data: Some(session_id.as_str()),
+        session_from_args: None,
+        session_from_data: Some(hashed_session_id.as_str()),
         execution_from_args: None,
         execution_from_data: None,
         tool_name_args: Some("memory"),

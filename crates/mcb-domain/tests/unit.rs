@@ -87,3 +87,6 @@ mod jobs_port_tests;
 
 #[path = "unit/org_context_tests.rs"]
 mod org_context_tests;
+
+#[path = "unit/utils_tests.rs"]
+mod utils_tests;

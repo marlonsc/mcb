@@ -4,6 +4,7 @@ use mcb_domain::entities::memory::{
     MemoryFilter, ObservationMetadata, ObservationType, QualityGateResult,
 };
 use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::utils::compute_stable_id_hash;
 use mcb_domain::utils::vcs_context::VcsContext;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
@@ -62,6 +63,14 @@ pub async fn store_quality_gate(
         quality_gate.status.as_str().to_string(),
     ];
     let payload_session_id = MemoryHelpers::get_str(data, "session_id");
+    let arg_session_id = args.session_id.clone().map(|id| id.into_string());
+    let hashed_payload_session_id = payload_session_id
+        .as_deref()
+        .map(|id| compute_stable_id_hash("session", id));
+    let hashed_arg_session_id = arg_session_id
+        .as_deref()
+        .map(|id| compute_stable_id_hash("session", id));
+    let canonical_session_id = arg_session_id.clone().or(payload_session_id.clone());
     let payload_repo_id = MemoryHelpers::get_str(data, "repo_id");
     let payload_project_id = MemoryHelpers::get_str(data, "project_id");
     let payload_branch = MemoryHelpers::get_str(data, "branch");
@@ -71,8 +80,8 @@ pub async fn store_quality_gate(
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),
         project_id_payload: payload_project_id.as_deref(),
-        session_from_args: args.session_id.as_ref().map(|id| id.as_str()),
-        session_from_data: payload_session_id.as_deref(),
+        session_from_args: hashed_arg_session_id.as_deref(),
+        session_from_data: hashed_payload_session_id.as_deref(),
         execution_from_args: quality_gate.execution_id.as_deref(),
         execution_from_data: quality_gate.execution_id.as_deref(),
         tool_name_args: Some("memory"),
@@ -107,7 +116,7 @@ pub async fn store_quality_gate(
 
     let obs_metadata = ObservationMetadata {
         id: Uuid::new_v4().to_string(),
-        session_id: origin_context.session_id.clone(),
+        session_id: canonical_session_id,
         repo_id: origin_context.repo_id.clone(),
         file_path: None,
         branch: origin_context.branch.clone(),

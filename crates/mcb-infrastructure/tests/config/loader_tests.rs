@@ -2,6 +2,7 @@
 
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::ConfigLoader;
+use mcb_infrastructure::config::TransportMode;
 use tempfile::TempDir;
 
 /// Create test config with auth disabled (avoids JWT secret validation per ADR-025)
@@ -69,4 +70,25 @@ fn test_config_save_load() {
         loaded_config.server.network.port,
         loaded.server.network.port.saturating_add(9)
     );
+}
+
+#[test]
+fn test_config_loader_rejects_http_transport_mode() {
+    let temp_dir = TempDir::new().unwrap();
+    let config_path = temp_dir.path().join("invalid_http_transport.toml");
+
+    let mut config = test_config();
+    config.server.transport_mode = TransportMode::Http;
+
+    ConfigLoader::new()
+        .save_to_file(&config, &config_path)
+        .expect("save invalid config");
+
+    let err = ConfigLoader::new()
+        .with_config_path(&config_path)
+        .load()
+        .expect_err("http transport mode must be rejected");
+
+    let msg = err.to_string();
+    assert!(msg.contains("transport_mode=http is not supported"));
 }

@@ -4,6 +4,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use mcb_domain::constants::keys as schema;
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::utils::compute_stable_id_hash;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use uuid::Uuid;
@@ -77,11 +78,12 @@ pub async fn create_session(
     };
     let payload_project_id = SessionHelpers::get_str(data, schema::PROJECT_ID);
     let payload_worktree_id = SessionHelpers::get_str(data, schema::WORKTREE_ID);
+    let hashed_session_id = compute_stable_id_hash("session", &session_id);
     let origin_context = resolve_origin_context(OriginContextInput {
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),
         project_id_payload: payload_project_id.as_deref(),
-        session_from_args: Some(session_id.as_str()),
+        session_from_args: Some(hashed_session_id.as_str()),
         session_from_data: None,
         execution_from_args: None,
         execution_from_data: None,

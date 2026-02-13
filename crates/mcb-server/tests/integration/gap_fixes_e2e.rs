@@ -195,6 +195,7 @@ async fn test_gap3_session_list_works_without_agent_type() {
             agent_type: None, // Omitted, should be allowed now
             data: None,
             worktree_id: None,
+            parent_session_id: None,
             status: None,
             limit: Some(3),
         }))
@@ -235,6 +236,7 @@ async fn test_gap3_session_list_empty_status_treated_as_no_filter() {
             agent_type: None,
             data: None,
             worktree_id: None,
+            parent_session_id: None,
             status: Some(String::new()),
             limit: Some(3),
         }))
@@ -259,6 +261,7 @@ async fn test_gap3_session_list_invalid_status_returns_invalid_params() {
             agent_type: None,
             data: None,
             worktree_id: None,
+            parent_session_id: None,
             status: Some("not_a_real_status".to_string()),
             limit: Some(3),
         }))

@@ -2,8 +2,10 @@
 //! Core MCP protocol server that orchestrates semantic code search operations.
 //! Follows Clean Architecture principles with dependency injection.
 
+use std::path::Path;
 use std::sync::Arc;
 
+use mcb_domain::constants::keys as schema;
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::repositories::{
     IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
@@ -14,12 +16,14 @@ use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
     ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
 };
+use mcb_domain::utils::compute_stable_id_hash;
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
 use rmcp::model::{
-    CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
-    ServerCapabilities, ServerInfo,
+    CallToolRequestParams, CallToolResult, Implementation, ListToolsResult, Meta,
+    PaginatedRequestParams, ProtocolVersion, ServerCapabilities, ServerInfo,
 };
+use serde_json::Value;
 
 use crate::handlers::{
     AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
@@ -27,7 +31,33 @@ use crate::handlers::{
     VcsEntityHandler, VcsHandler,
 };
 use crate::hooks::HookProcessor;
-use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
+use crate::tools::{ToolExecutionContext, ToolHandlers, create_tool_list, route_tool_call};
+
+fn meta_value_as_string(meta: &Meta, keys: &[&str]) -> Option<String> {
+    for key in keys {
+        let value = meta.get(*key)?;
+        let extracted = match value {
+            Value::String(v) => Some(v.clone()),
+            Value::Number(v) => Some(v.to_string()),
+            Value::Bool(v) => Some(v.to_string()),
+            _ => None,
+        };
+        if extracted.is_some() {
+            return extracted;
+        }
+    }
+    None
+}
+
+fn resolve_context_value(
+    request_meta: Option<&Meta>,
+    context_meta: &Meta,
+    keys: &[&str],
+) -> Option<String> {
+    request_meta
+        .and_then(|meta| meta_value_as_string(meta, keys))
+        .or_else(|| meta_value_as_string(context_meta, keys))
+}
 
 /// Core MCP server implementation
 ///
@@ -74,6 +104,96 @@ pub struct McpServices {
 }
 
 impl McpServer {
+    async fn build_execution_context(
+        &self,
+        request: &CallToolRequestParams,
+        context: &rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> ToolExecutionContext {
+        let request_meta = request.meta.as_ref();
+        let context_meta = &context.meta;
+
+        let session_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &["session_id", "sessionId", "x-session-id", "x_session_id"],
+        );
+        let parent_session_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[
+                schema::PARENT_SESSION_ID,
+                "parentSessionId",
+                "x-parent-session-id",
+                "x_parent_session_id",
+            ],
+        );
+        let project_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[
+                schema::PROJECT_ID,
+                "projectId",
+                "x-project-id",
+                "x_project_id",
+            ],
+        );
+        let worktree_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[
+                schema::WORKTREE_ID,
+                "worktreeId",
+                "x-worktree-id",
+                "x_worktree_id",
+            ],
+        );
+
+        let mut repo_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &["repo_id", "repoId", "x-repo-id", "x_repo_id"],
+        );
+        let mut repo_path = resolve_context_value(
+            request_meta,
+            context_meta,
+            &["repo_path", "repoPath", "x-repo-path", "x_repo_path"],
+        );
+
+        if repo_path.is_none()
+            && let Ok(cwd) = std::env::current_dir()
+        {
+            repo_path = Some(cwd.to_string_lossy().to_string());
+        }
+
+        if let Some(path_str) = repo_path.clone()
+            && let Ok(repo) = self
+                .services
+                .vcs
+                .open_repository(Path::new(&path_str))
+                .await
+        {
+            repo_path = Some(repo.path().to_string_lossy().to_string());
+            if repo_id.is_none() {
+                repo_id = Some(self.services.vcs.repository_id(&repo).into_string());
+            }
+        }
+
+        if repo_id.is_none()
+            && let Some(path) = repo_path.as_deref()
+        {
+            repo_id = Some(compute_stable_id_hash("repo_path", path));
+        }
+
+        ToolExecutionContext {
+            session_id,
+            parent_session_id,
+            project_id,
+            worktree_id,
+            repo_id,
+            repo_path,
+        }
+    }
+
     /// Create a new MCP server with injected dependencies
     pub fn new(services: McpServices) -> Self {
         let hook_processor = HookProcessor::new(Some(services.memory.clone()));
@@ -308,9 +428,79 @@ tools:
     /// Call a tool
     async fn call_tool(
         &self,
-        request: rmcp::model::CallToolRequestParams,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+        mut request: rmcp::model::CallToolRequestParams,
+        context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        route_tool_call(request, &self.handlers).await
+        let execution_context = self.build_execution_context(&request, &context).await;
+        execution_context.apply_to_request_if_missing(&mut request);
+
+        route_tool_call(request, &self.handlers, execution_context).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::resolve_context_value;
+    use crate::tools::ToolExecutionContext;
+    use rmcp::model::{CallToolRequestParams, Meta};
+    use serde_json::Value;
+
+    #[test]
+    fn resolve_context_value_prefers_request_meta() {
+        let mut request_meta = Meta::new();
+        request_meta.insert(
+            "session_id".to_string(),
+            Value::String("req-session".to_string()),
+        );
+
+        let mut context_meta = Meta::new();
+        context_meta.insert(
+            "session_id".to_string(),
+            Value::String("ctx-session".to_string()),
+        );
+
+        let resolved = resolve_context_value(Some(&request_meta), &context_meta, &["session_id"]);
+        assert_eq!(resolved.as_deref(), Some("req-session"));
+    }
+
+    #[test]
+    fn resolve_context_value_uses_context_meta_when_request_missing() {
+        let request_meta = Meta::new();
+
+        let mut context_meta = Meta::new();
+        context_meta.insert(
+            "sessionId".to_string(),
+            Value::String("ctx-session".to_string()),
+        );
+
+        let resolved = resolve_context_value(Some(&request_meta), &context_meta, &["sessionId"]);
+        assert_eq!(resolved.as_deref(), Some("ctx-session"));
+    }
+
+    #[test]
+    fn execution_context_injection_does_not_override_existing_value() {
+        let mut request = CallToolRequestParams {
+            meta: None,
+            name: "memory".into(),
+            arguments: Some(Default::default()),
+            task: None,
+        };
+
+        request.arguments.as_mut().expect("arguments").insert(
+            "session_id".to_string(),
+            Value::String("existing".to_string()),
+        );
+
+        ToolExecutionContext {
+            session_id: Some("from-meta".to_string()),
+            ..Default::default()
+        }
+        .apply_to_request_if_missing(&mut request);
+
+        let value = request
+            .arguments
+            .and_then(|args| args.get("session_id").cloned())
+            .expect("session_id argument");
+        assert_eq!(value, Value::String("existing".to_string()));
     }
 }

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
+use mcb_domain::utils::compute_stable_id_hash;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
@@ -32,12 +33,16 @@ pub async fn summarize_session(
         let payload_project_id = SessionHelpers::get_str(data, "project_id");
         let payload_session_id = SessionHelpers::get_str(data, "session_id");
         let payload_worktree_id = SessionHelpers::get_str(data, "worktree_id");
+        let hashed_session_from_args = compute_stable_id_hash("session", session_id.as_str());
+        let hashed_session_from_data = payload_session_id
+            .as_deref()
+            .map(|id| compute_stable_id_hash("session", id));
         let origin_context = resolve_origin_context(OriginContextInput {
             org_id: args.org_id.as_deref(),
             project_id_args: args.project_id.as_deref(),
             project_id_payload: payload_project_id.as_deref(),
-            session_from_args: Some(session_id.as_str()),
-            session_from_data: payload_session_id.as_deref(),
+            session_from_args: Some(hashed_session_from_args.as_str()),
+            session_from_data: hashed_session_from_data.as_deref(),
             execution_from_args: None,
             execution_from_data: None,
             tool_name_args: Some("session"),

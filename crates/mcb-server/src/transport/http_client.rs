@@ -8,8 +8,10 @@
 //! stdio-to-HTTP bridge for Claude Code integration.
 
 use std::io::{self, BufRead, Write};
+use std::path::Path;
 use std::time::Duration;
 
+use mcb_domain::utils::mask_id;
 use mcb_domain::value_objects::ids::SessionId;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
@@ -56,10 +58,29 @@ impl HttpClientTransport {
         session_prefix: Option<String>,
         timeout: Duration,
     ) -> Result<Self, Box<dyn std::error::Error>> {
-        let session_id = match session_prefix {
-            Some(prefix) => SessionId::new(format!("{}_{}", prefix, Uuid::new_v4())),
-            None => SessionId::new(Uuid::new_v4().to_string()),
-        };
+        let env_session_id = std::env::var("MCB_SESSION_ID").ok();
+        let env_session_file = std::env::var("MCB_SESSION_FILE").ok();
+        Self::new_with_session_source(
+            server_url,
+            session_prefix,
+            timeout,
+            env_session_id,
+            env_session_file,
+        )
+    }
+
+    /// Create a new HTTP client transport with explicit session source values.
+    ///
+    /// Used by tests to validate session source precedence without mutating process env.
+    pub fn new_with_session_source(
+        server_url: String,
+        session_prefix: Option<String>,
+        timeout: Duration,
+        session_id_override: Option<String>,
+        session_file_override: Option<String>,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let session_id =
+            Self::resolve_session_id(session_prefix, session_id_override, session_file_override)?;
 
         let config = McpClientConfig {
             server_url,
@@ -75,6 +96,54 @@ impl HttpClientTransport {
         Ok(Self { config, client })
     }
 
+    fn resolve_session_id(
+        session_prefix: Option<String>,
+        session_id_override: Option<String>,
+        session_file_override: Option<String>,
+    ) -> Result<SessionId, Box<dyn std::error::Error>> {
+        if let Some(session_id) = session_id_override.and_then(Self::normalize_env_value) {
+            return Ok(SessionId::new(session_id));
+        }
+
+        if let Some(session_file) = session_file_override.and_then(Self::normalize_env_value) {
+            let path = Path::new(&session_file);
+
+            if path.exists() {
+                let existing = std::fs::read_to_string(path)?;
+                if let Some(existing_id) = Self::normalize_env_value(existing) {
+                    return Ok(SessionId::new(existing_id));
+                }
+            }
+
+            let generated = Self::generate_session_id(session_prefix).into_string();
+            if let Some(parent) = path.parent()
+                && !parent.as_os_str().is_empty()
+            {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(path, format!("{}\n", generated))?;
+            return Ok(SessionId::new(generated));
+        }
+
+        Ok(Self::generate_session_id(session_prefix))
+    }
+
+    fn generate_session_id(session_prefix: Option<String>) -> SessionId {
+        match session_prefix {
+            Some(prefix) => SessionId::new(format!("{}_{}", prefix, Uuid::new_v4())),
+            None => SessionId::new(Uuid::new_v4().to_string()),
+        }
+    }
+
+    fn normalize_env_value(value: impl AsRef<str>) -> Option<String> {
+        let normalized = value.as_ref().trim();
+        if normalized.is_empty() {
+            None
+        } else {
+            Some(normalized.to_string())
+        }
+    }
+
     /// Run the client transport
     ///
     /// Main loop that:
@@ -86,7 +155,7 @@ impl HttpClientTransport {
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         info!(
             server_url = %self.config.server_url,
-            session_id = %self.config.session_id,
+            session_id = %mask_id(self.config.session_id.as_str()),
             "MCB client transport started"
         );
 
@@ -140,7 +209,7 @@ impl HttpClientTransport {
         debug!(
             url = %url,
             method = %request.method,
-            session_id = %self.config.session_id,
+            session_id = %mask_id(self.config.session_id.as_str()),
             "Sending request to server"
         );
 
@@ -220,5 +289,52 @@ impl HttpClientTransport {
         writeln!(stdout, "{}", response_json)?;
         stdout.flush()?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::HttpClientTransport;
+    use std::time::Duration;
+
+    #[test]
+    fn session_id_override_takes_precedence_over_file() {
+        let client = HttpClientTransport::new_with_session_source(
+            "http://127.0.0.1:18080".to_string(),
+            Some("prefix".to_string()),
+            Duration::from_secs(10),
+            Some("explicit-session-id".to_string()),
+            Some("/tmp/ignored-session-file".to_string()),
+        )
+        .expect("create client");
+
+        assert_eq!(client.session_id(), "explicit-session-id");
+    }
+
+    #[test]
+    fn session_id_persists_via_session_file() {
+        let temp_dir = tempfile::tempdir().expect("create temp dir");
+        let session_file = temp_dir.path().join("session.id");
+        let session_file_str = session_file.to_string_lossy().to_string();
+
+        let first = HttpClientTransport::new_with_session_source(
+            "http://127.0.0.1:18080".to_string(),
+            Some("persist".to_string()),
+            Duration::from_secs(10),
+            None,
+            Some(session_file_str.clone()),
+        )
+        .expect("create first client");
+
+        let second = HttpClientTransport::new_with_session_source(
+            "http://127.0.0.1:18080".to_string(),
+            Some("persist".to_string()),
+            Duration::from_secs(10),
+            None,
+            Some(session_file_str),
+        )
+        .expect("create second client");
+
+        assert_eq!(first.session_id(), second.session_id());
     }
 }

@@ -32,7 +32,7 @@ use serde::de::DeserializeOwned;
 use tracing::info;
 
 use super::auth::AdminAuth;
-use crate::tools::{ToolHandlers, route_tool_call};
+use crate::tools::{ToolExecutionContext, ToolHandlers, route_tool_call};
 
 /// Admin handler state containing shared service references
 #[derive(Clone)]
@@ -108,7 +108,7 @@ async fn execute_tool_json<T: DeserializeOwned>(
         meta: None,
     };
 
-    let result = route_tool_call(request, handlers)
+    let result = route_tool_call(request, handlers, ToolExecutionContext::default())
         .await
         .map_err(|e| e.message.to_string())?;
 

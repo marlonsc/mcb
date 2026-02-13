@@ -43,6 +43,7 @@ use rmcp::ServerHandler;
 use rmcp::model::CallToolRequestParams;
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Header;
+use rocket::request::{FromRequest, Outcome};
 use rocket::serde::json::Json;
 use rocket::{Build, Request, Response, Rocket, State, get, post, routes};
 use tracing::{error, info};
@@ -54,7 +55,7 @@ use crate::admin::browse_handlers::BrowseState;
 use crate::admin::handlers::AdminState;
 use crate::admin::routes::admin_rocket;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
-use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
+use crate::tools::{ToolExecutionContext, ToolHandlers, create_tool_list, route_tool_call};
 use mcb_infrastructure::config::ConfigLoader;
 
 /// HTTP transport configuration
@@ -107,6 +108,63 @@ impl HttpTransportConfig {
 pub struct HttpTransportState {
     /// Shared reference to the MCP server instance
     pub server: Arc<McpServer>,
+}
+
+#[derive(Debug, Clone)]
+struct BridgeProvenance {
+    workspace_root: Option<String>,
+    repo_path: Option<String>,
+    repo_id: Option<String>,
+    session_id: Option<String>,
+    parent_session_id: Option<String>,
+    project_id: Option<String>,
+    worktree_id: Option<String>,
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for BridgeProvenance {
+    type Error = ();
+
+    async fn from_request(request: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        let workspace_root = request
+            .headers()
+            .get_one("X-Workspace-Root")
+            .map(ToOwned::to_owned);
+        let repo_path = request
+            .headers()
+            .get_one("X-Repo-Path")
+            .map(ToOwned::to_owned);
+        let repo_id = request
+            .headers()
+            .get_one("X-Repo-Id")
+            .map(ToOwned::to_owned);
+        let session_id = request
+            .headers()
+            .get_one("X-Session-Id")
+            .map(ToOwned::to_owned);
+        let parent_session_id = request
+            .headers()
+            .get_one("X-Parent-Session-Id")
+            .map(ToOwned::to_owned);
+        let project_id = request
+            .headers()
+            .get_one("X-Project-Id")
+            .map(ToOwned::to_owned);
+        let worktree_id = request
+            .headers()
+            .get_one("X-Worktree-Id")
+            .map(ToOwned::to_owned);
+
+        Outcome::Success(Self {
+            workspace_root,
+            repo_path,
+            repo_id,
+            session_id,
+            parent_session_id,
+            project_id,
+            worktree_id,
+        })
+    }
 }
 
 /// HTTP transport server with optional admin API integration
@@ -237,13 +295,14 @@ impl Fairing for Cors {
 #[post("/mcp", format = "json", data = "<request>")]
 async fn handle_mcp_request(
     state: &State<HttpTransportState>,
+    bridge_provenance: BridgeProvenance,
     request: Json<McpRequest>,
 ) -> Json<McpResponse> {
     let request = request.into_inner();
     let response = match request.method.as_str() {
         "initialize" => handle_initialize(state, &request).await,
         "tools/list" => handle_tools_list(state, &request).await,
-        "tools/call" => handle_tools_call(state, &request).await,
+        "tools/call" => handle_tools_call(state, &bridge_provenance, &request).await,
         "ping" => McpResponse::success(request.id.clone(), serde_json::json!({})),
         _ => McpResponse::error(
             request.id.clone(),
@@ -364,7 +423,28 @@ fn tool_result_to_json(result: rmcp::model::CallToolResult) -> serde_json::Value
 /// Handle the `tools/call` method
 ///
 /// Executes the specified tool with the provided arguments.
-async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> McpResponse {
+async fn handle_tools_call(
+    state: &HttpTransportState,
+    bridge_provenance: &BridgeProvenance,
+    request: &McpRequest,
+) -> McpResponse {
+    let has_workspace_provenance = bridge_provenance
+        .workspace_root
+        .as_deref()
+        .is_some_and(|value| !value.trim().is_empty())
+        || bridge_provenance
+            .repo_path
+            .as_deref()
+            .is_some_and(|value| !value.trim().is_empty());
+
+    if !has_workspace_provenance {
+        return McpResponse::error(
+            request.id.clone(),
+            JSONRPC_INVALID_PARAMS,
+            "Direct HTTP tools/call is not supported. Use stdio or stdio bridge and provide workspace provenance headers.",
+        );
+    }
+
     let params = match &request.params {
         Some(params) => params,
         None => {
@@ -376,10 +456,23 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         }
     };
 
-    let call_request = match parse_tool_call_params(params) {
+    let mut call_request = match parse_tool_call_params(params) {
         Ok(req) => req,
         Err((code, msg)) => return McpResponse::error(request.id.clone(), code, msg),
     };
+
+    let execution_context = ToolExecutionContext {
+        session_id: bridge_provenance.session_id.clone(),
+        parent_session_id: bridge_provenance.parent_session_id.clone(),
+        project_id: bridge_provenance.project_id.clone(),
+        worktree_id: bridge_provenance.worktree_id.clone(),
+        repo_id: bridge_provenance.repo_id.clone(),
+        repo_path: bridge_provenance
+            .repo_path
+            .clone()
+            .or_else(|| bridge_provenance.workspace_root.clone()),
+    };
+    execution_context.apply_to_request_if_missing(&mut call_request);
 
     let handlers = ToolHandlers {
         index: state.server.index_handler(),
@@ -398,7 +491,7 @@ async fn handle_tools_call(state: &HttpTransportState, request: &McpRequest) -> 
         hook_processor: state.server.hook_processor(),
     };
 
-    match route_tool_call(call_request, &handlers).await {
+    match route_tool_call(call_request, &handlers, execution_context).await {
         Ok(result) => McpResponse::success(request.id.clone(), tool_result_to_json(result)),
         Err(e) => {
             error!(error = ?e, "Tool call failed");

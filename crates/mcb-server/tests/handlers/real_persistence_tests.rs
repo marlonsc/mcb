@@ -403,6 +403,7 @@ async fn test_real_session_create_invalid_agent_type_contextual_error() {
             "project_id": "bad-type-project"
         })),
         worktree_id: None,
+        parent_session_id: None,
         agent_type: Some("nonexistent_agent_xyz".to_string()),
         status: None,
         limit: None,
@@ -616,6 +617,7 @@ async fn test_real_agent_session_create_and_retrieve() {
             "project_id": "agent-roundtrip-project"
         })),
         worktree_id: None,
+        parent_session_id: None,
         agent_type: Some("sisyphus".to_string()),
         status: None,
         limit: None,
@@ -650,6 +652,7 @@ async fn test_real_agent_session_create_and_retrieve() {
         project_id: None,
         data: None,
         worktree_id: None,
+        parent_session_id: None,
         agent_type: None,
         status: None,
         limit: None,
@@ -695,6 +698,7 @@ async fn test_real_agent_session_create_without_summary_id_succeeds() {
             "project_id": "agent-no-summary-project"
         })),
         worktree_id: None,
+        parent_session_id: None,
         agent_type: Some("sisyphus".to_string()),
         status: None,
         limit: None,
@@ -723,6 +727,7 @@ async fn test_real_agent_session_create_without_summary_id_succeeds() {
         project_id: None,
         data: None,
         worktree_id: None,
+        parent_session_id: None,
         agent_type: None,
         status: None,
         limit: None,
@@ -761,6 +766,7 @@ async fn test_real_session_list_empty_returns_gracefully() {
         project_id: None,
         data: None,
         worktree_id: None,
+        parent_session_id: None,
         agent_type: None,
         status: None,
         limit: Some(50),
@@ -773,6 +779,95 @@ async fn test_real_session_list_empty_returns_gracefully() {
         !list_resp.is_error.unwrap_or(false),
         "Empty session list should not be an error"
     );
+}
+
+#[tokio::test]
+async fn test_real_session_list_filters_by_parent_session_id() {
+    let (server, _temp) = create_test_mcp_server().await;
+    let session_h = server.session_handler();
+
+    let parent_create = SessionArgs {
+        action: SessionAction::Create,
+        org_id: None,
+        session_id: None,
+        project_id: Some("parent-child-project".to_string()),
+        data: Some(json!({
+            "agent_type": "sisyphus",
+            "model": "claude-opus-4-20250514",
+            "project_id": "parent-child-project"
+        })),
+        worktree_id: None,
+        parent_session_id: None,
+        agent_type: None,
+        status: None,
+        limit: None,
+    };
+    let parent_resp = session_h
+        .handle(Parameters(parent_create))
+        .await
+        .expect("create parent session");
+    assert!(!parent_resp.is_error.unwrap_or(false));
+    let parent_text = extract_text(&parent_resp.content);
+    let parent_json: serde_json::Value =
+        serde_json::from_str(&parent_text).expect("parent response json");
+    let parent_id = parent_json
+        .get("session_id")
+        .and_then(|v| v.as_str())
+        .expect("parent session id")
+        .to_string();
+
+    let child_create = SessionArgs {
+        action: SessionAction::Create,
+        org_id: None,
+        session_id: None,
+        project_id: Some("parent-child-project".to_string()),
+        data: Some(json!({
+            "agent_type": "explore",
+            "model": "claude-opus-4-20250514",
+            "project_id": "parent-child-project",
+            "parent_session_id": parent_id
+        })),
+        worktree_id: None,
+        parent_session_id: None,
+        agent_type: None,
+        status: None,
+        limit: None,
+    };
+    let child_resp = session_h
+        .handle(Parameters(child_create))
+        .await
+        .expect("create child session");
+    assert!(!child_resp.is_error.unwrap_or(false));
+    let child_text = extract_text(&child_resp.content);
+    let child_json: serde_json::Value =
+        serde_json::from_str(&child_text).expect("child response json");
+    let child_id = child_json
+        .get("session_id")
+        .and_then(|v| v.as_str())
+        .expect("child session id")
+        .to_string();
+
+    let list_args = SessionArgs {
+        action: SessionAction::List,
+        org_id: None,
+        session_id: None,
+        project_id: Some("parent-child-project".to_string()),
+        data: None,
+        worktree_id: None,
+        parent_session_id: Some(parent_id.clone()),
+        agent_type: None,
+        status: None,
+        limit: Some(50),
+    };
+
+    let list_resp = session_h
+        .handle(Parameters(list_args))
+        .await
+        .expect("list sessions by parent");
+    assert!(!list_resp.is_error.unwrap_or(false));
+    let list_text = extract_text(&list_resp.content);
+    assert!(list_text.contains(&child_id));
+    assert!(list_text.contains(&parent_id));
 }
 
 #[tokio::test]
@@ -875,6 +970,7 @@ async fn test_real_session_create_conflicting_project_rejected_without_side_effe
         project_id: None,
         data: None,
         worktree_id: None,
+        parent_session_id: None,
         agent_type: None,
         status: None,
         limit: Some(200),
@@ -897,6 +993,7 @@ async fn test_real_session_create_conflicting_project_rejected_without_side_effe
             "project_id": "project-from-data"
         })),
         worktree_id: None,
+        parent_session_id: None,
         agent_type: None,
         status: None,
         limit: None,
@@ -915,6 +1012,7 @@ async fn test_real_session_create_conflicting_project_rejected_without_side_effe
         project_id: None,
         data: None,
         worktree_id: None,
+        parent_session_id: None,
         agent_type: None,
         status: None,
         limit: Some(200),

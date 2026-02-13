@@ -36,6 +36,7 @@ unicode-segmentation = { workspace = true }
 
 # Hashing utilities
 sha2 = { workspace = true }
+hmac = { workspace = true }
 
 # UUID generation
 uuid = { workspace = true }

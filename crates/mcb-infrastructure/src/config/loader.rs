@@ -11,6 +11,7 @@ use figment::providers::{Env, Format, Toml};
 use mcb_domain::error::{Error, Result};
 
 use crate::config::AppConfig;
+use crate::config::TransportMode;
 use crate::constants::auth::*;
 use crate::constants::config::*;
 use crate::error_ext::ErrorContext;
@@ -173,6 +174,12 @@ fn validate_server_config(config: &AppConfig) -> Result<()> {
         return Err(Error::ConfigInvalid {
             key: "server.network.port".to_string(),
             message: "Server port cannot be 0".to_string(),
+        });
+    }
+    if matches!(config.server.transport_mode, TransportMode::Http) {
+        return Err(Error::ConfigInvalid {
+            key: "server.transport_mode".to_string(),
+            message: "transport_mode=http is not supported. Use stdio or hybrid (stdio bridge to local daemon).".to_string(),
         });
     }
     if config.server.ssl.https

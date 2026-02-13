@@ -17,7 +17,7 @@ pub async fn list_sessions(
 ) -> Result<CallToolResult, McpError> {
     let query = AgentSessionQuery {
         session_summary_id: None,
-        parent_session_id: None,
+        parent_session_id: args.parent_session_id.clone(),
         agent_type: args
             .agent_type
             .as_ref()
@@ -40,6 +40,7 @@ pub async fn list_sessions(
                 .map(|session| {
                     serde_json::json!({
                         "id": session.id,
+                        "parent_session_id": session.parent_session_id,
                         "agent_type": session.agent_type.as_str(),
                         "status": session.status.as_str(),
                         "started_at": session.started_at,

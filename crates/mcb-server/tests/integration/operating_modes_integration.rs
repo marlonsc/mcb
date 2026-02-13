@@ -661,6 +661,10 @@ async fn test_http_server_tools_list() {
     let response = client
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
+        .header(rocket::http::Header::new(
+            "X-Workspace-Root",
+            "/tmp/test-workspace",
+        ))
         .body(serde_json::to_string(&request).unwrap())
         .dispatch()
         .await;
@@ -721,6 +725,10 @@ async fn test_http_server_ping() {
     let response = client
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
+        .header(rocket::http::Header::new(
+            "X-Workspace-Root",
+            "/tmp/test-workspace",
+        ))
         .body(serde_json::to_string(&request).unwrap())
         .dispatch()
         .await;
@@ -762,6 +770,10 @@ async fn test_http_server_initialize() {
     let response = client
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
+        .header(rocket::http::Header::new(
+            "X-Workspace-Root",
+            "/tmp/test-workspace",
+        ))
         .body(serde_json::to_string(&request).unwrap())
         .dispatch()
         .await;
@@ -805,6 +817,10 @@ async fn test_http_server_unknown_method() {
     let response = client
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
+        .header(rocket::http::Header::new(
+            "X-Workspace-Root",
+            "/tmp/test-workspace",
+        ))
         .body(serde_json::to_string(&request).unwrap())
         .dispatch()
         .await;
@@ -893,6 +909,10 @@ async fn test_http_server_tools_call_index_status() {
     let response = client
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
+        .header(rocket::http::Header::new(
+            "X-Workspace-Root",
+            "/tmp/test-workspace",
+        ))
         .body(serde_json::to_string(&request).unwrap())
         .dispatch()
         .await;

@@ -10,7 +10,7 @@ use rmcp::model::{CallToolRequestParams, Content};
 use serde_json::Value;
 
 use crate::args::{EntityAction, EntityArgs, EntityResource};
-use crate::tools::{ToolHandlers, route_tool_call};
+use crate::tools::{ToolExecutionContext, ToolHandlers, route_tool_call};
 
 use super::handlers::AdminState;
 use super::web::filter::{
@@ -240,7 +240,7 @@ impl UnifiedEntityCrudAdapter {
             meta: None,
         };
 
-        let result = route_tool_call(request, &self.handlers)
+        let result = route_tool_call(request, &self.handlers, ToolExecutionContext::default())
             .await
             .map_err(|e| format!("entity dispatch failed: {}", e.message))?;
 

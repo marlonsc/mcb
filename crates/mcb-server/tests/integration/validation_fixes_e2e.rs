@@ -77,6 +77,7 @@ async fn test_validation_session_create_schema_fallback() {
                 "project_id": "test-project"
             })),
             worktree_id: None,
+            parent_session_id: None,
             session_id: None,
             project_id: Some("test-project".to_string()),
             limit: None,
