@@ -42,7 +42,7 @@ make docs-validate # Validate quality, structure, ADR compliance, and quality ga
 make docs-setup    # Configure documentation tools
 ```
 
-### 📖 **Interactive Platform**
+### 📖 **Docs commands**
 
 ```bash
 make docs-build    # Build interactive documentation
