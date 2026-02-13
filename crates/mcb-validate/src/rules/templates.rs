@@ -3,10 +3,9 @@
 //! Provides template inheritance and variable substitution for DRY rule definitions.
 
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde_yaml;
-use walkdir::WalkDir;
 
 use crate::Result;
 
@@ -37,9 +36,8 @@ impl TemplateEngine {
             return Ok(()); // No templates directory, that's fine
         }
 
-        for entry in WalkDir::new(&templates_dir).follow_links(false) {
-            let entry = entry.map_err(|e| crate::ValidationError::Io(e.into()))?;
-            let path = entry.path();
+        for path in collect_yaml_files(&templates_dir)? {
+            let path = path.as_path();
 
             if path.extension().and_then(|ext| ext.to_str()) == Some("yml") {
                 let template_name =
@@ -248,4 +246,28 @@ impl TemplateEngine {
     pub fn has_template(&self, name: &str) -> bool {
         self.templates.contains_key(name)
     }
+}
+
+fn collect_yaml_files(root: &Path) -> Result<Vec<PathBuf>> {
+    let mut files = Vec::new();
+    let mut stack = vec![root.to_path_buf()];
+
+    while let Some(dir) = stack.pop() {
+        for entry in std::fs::read_dir(&dir).map_err(crate::ValidationError::Io)? {
+            let entry = entry.map_err(crate::ValidationError::Io)?;
+            let path = entry.path();
+            let file_type = entry.file_type().map_err(crate::ValidationError::Io)?;
+
+            if file_type.is_dir() {
+                stack.push(path);
+                continue;
+            }
+
+            if file_type.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some("yml") {
+                files.push(path);
+            }
+        }
+    }
+
+    Ok(files)
 }

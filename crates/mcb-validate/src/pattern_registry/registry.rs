@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use tracing::{error, warn};
-use walkdir::WalkDir;
 
 use crate::Result;
 use crate::rules::templates::TemplateEngine;
@@ -35,20 +34,10 @@ impl PatternRegistry {
     ) -> Result<Self> {
         let mut registry = Self::new();
 
-        for entry in WalkDir::new(rules_dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-            .filter(|e| {
-                e.path()
-                    .extension()
-                    .is_some_and(|ext| ext == "yml" || ext == "yaml")
-            })
-            .filter(|e| !is_template_path(e.path()))
-        {
-            if let Err(e) = registry.load_rule_file(entry.path(), naming_config, project_prefix) {
+        for path in collect_rule_files(rules_dir) {
+            if let Err(e) = registry.load_rule_file(&path, naming_config, project_prefix) {
                 warn!(
-                    path = %entry.path().display(),
+                    path = %path.display(),
                     error = %e,
                     "Failed to load patterns/config"
                 );
@@ -229,6 +218,40 @@ impl Default for PatternRegistry {
     fn default() -> Self {
         Self::new()
     }
+}
+
+fn collect_rule_files(rules_dir: &Path) -> Vec<PathBuf> {
+    let mut files = Vec::new();
+    let mut stack = vec![rules_dir.to_path_buf()];
+
+    while let Some(dir) = stack.pop() {
+        let Ok(entries) = std::fs::read_dir(&dir) else {
+            continue;
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let Ok(file_type) = entry.file_type() else {
+                continue;
+            };
+
+            if file_type.is_dir() {
+                stack.push(path);
+                continue;
+            }
+
+            if file_type.is_file()
+                && path
+                    .extension()
+                    .is_some_and(|ext| ext == "yml" || ext == "yaml")
+                && !is_template_path(&path)
+            {
+                files.push(path);
+            }
+        }
+    }
+
+    files
 }
 
 /// Get the default rules directory

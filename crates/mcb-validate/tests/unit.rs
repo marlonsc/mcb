@@ -105,3 +105,6 @@ mod rule_filters_tests;
 
 #[path = "unit/discovery_tests.rs"]
 mod discovery;
+
+#[path = "unit/walkdir_guardrail_tests.rs"]
+mod walkdir_guardrail_tests;

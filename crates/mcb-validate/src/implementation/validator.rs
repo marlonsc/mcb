@@ -3,11 +3,11 @@
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
-use walkdir::{DirEntry, WalkDir};
 
 use super::violation::ImplementationViolation;
 use crate::config::ImplementationRulesConfig;
 use crate::pattern_registry::PATTERNS;
+use crate::scan::for_each_scan_rs_path;
 use crate::{Result, Severity, ValidationConfig};
 
 /// Implementation quality validator
@@ -49,39 +49,35 @@ impl ImplementationQualityValidator {
 
     // ── Shared helpers ────────────────────────────────────────────────
 
-    /// Iterate over all non-test `.rs` source files in the configured
-    /// scan dirs, yielding `(DirEntry, file-content)` pairs.
+    /// Iterate over all non-test `.rs` source files in the configured scan dirs.
     fn for_each_source_file<F>(&self, mut visitor: F) -> Result<Vec<ImplementationViolation>>
     where
-        F: FnMut(&DirEntry, &str) -> Vec<ImplementationViolation>,
+        F: FnMut(&Path, &str) -> Vec<ImplementationViolation>,
     {
         let mut violations = Vec::new();
-        for src_dir in self.config.get_scan_dirs()? {
-            if self.should_skip_crate(&src_dir) {
-                continue;
+        for_each_scan_rs_path(&self.config, false, |path, src_dir| {
+            if self.should_skip_crate(src_dir) || is_test_path(path) {
+                return Ok(());
             }
-            for entry in walk_rs_files(&src_dir) {
-                if is_test_path(&entry) {
-                    continue;
-                }
-                let content = std::fs::read_to_string(entry.path())?;
-                violations.extend(visitor(&entry, &content));
-            }
-        }
+
+            let content = std::fs::read_to_string(path)?;
+            violations.extend(visitor(path, &content));
+            Ok(())
+        })?;
         Ok(violations)
     }
 
     /// Like [`for_each_source_file`] but also skips null/fake provider files.
     fn for_each_prod_source_file<F>(&self, mut visitor: F) -> Result<Vec<ImplementationViolation>>
     where
-        F: FnMut(&DirEntry, &str) -> Vec<ImplementationViolation>,
+        F: FnMut(&Path, &str) -> Vec<ImplementationViolation>,
     {
-        self.for_each_source_file(|entry, content| {
-            let fname = file_name_str(entry);
+        self.for_each_source_file(|path, content| {
+            let fname = file_name_str(path);
             if fname.contains("null") || fname.contains("fake") {
                 return Vec::new();
             }
-            visitor(entry, content)
+            visitor(path, content)
         })
     }
 
@@ -112,7 +108,7 @@ impl ImplementationQualityValidator {
                 for (pattern, desc) in &compiled {
                     if pattern.is_match(trimmed) {
                         violations.push(ImplementationViolation::EmptyMethodBody {
-                            file: entry.path().to_path_buf(),
+                            file: entry.to_path_buf(),
                             line: line_num,
                             method_name: current_fn_name.clone(),
                             pattern: desc.to_string(),
@@ -160,7 +156,7 @@ impl ImplementationQualityValidator {
                     for (pattern, desc) in &compiled {
                         if pattern.is_match(line) {
                             violations.push(ImplementationViolation::HardcodedReturnValue {
-                                file: entry.path().to_path_buf(),
+                                file: entry.to_path_buf(),
                                 line: func.start_line,
                                 method_name: func.name.clone(),
                                 return_value: desc.to_string(),
@@ -195,7 +191,7 @@ impl ImplementationQualityValidator {
                 for (pattern, macro_type) in &compiled {
                     if pattern.is_match(trimmed) {
                         violations.push(ImplementationViolation::StubMacro {
-                            file: entry.path().to_path_buf(),
+                            file: entry.to_path_buf(),
                             line: line_num,
                             method_name: current_fn_name.clone(),
                             macro_type: macro_type.to_string(),
@@ -229,7 +225,7 @@ impl ImplementationQualityValidator {
                 for pattern in &compiled {
                     if pattern.is_match(trimmed) {
                         violations.push(ImplementationViolation::EmptyCatchAll {
-                            file: entry.path().to_path_buf(),
+                            file: entry.to_path_buf(),
                             line: line_num,
                             context: trimmed.to_string(),
                             severity: Severity::Warning,
@@ -275,7 +271,7 @@ impl ImplementationQualityValidator {
                     let method = cap.get(2).map_or("", |m| m.as_str());
                     if method == func.name || method.starts_with(&func.name) {
                         violations.push(ImplementationViolation::PassThroughWrapper {
-                            file: entry.path().to_path_buf(),
+                            file: entry.to_path_buf(),
                             line: func.start_line,
                             struct_name: current_struct_name.clone(),
                             method_name: func.name.clone(),
@@ -320,7 +316,7 @@ impl ImplementationQualityValidator {
                     .all(|line| compiled_log.iter().any(|p| p.is_match(line)));
                 if all_logging {
                     violations.push(ImplementationViolation::LogOnlyMethod {
-                        file: entry.path().to_path_buf(),
+                        file: entry.to_path_buf(),
                         line: func.start_line,
                         method_name: func.name.clone(),
                         severity: Severity::Warning,
@@ -349,27 +345,13 @@ impl_validator!(
 
 // ── Free helper functions ─────────────────────────────────────────────
 
-/// Walk a directory for `.rs` files, skipping walk errors.
-fn walk_rs_files(dir: &Path) -> impl Iterator<Item = DirEntry> + '_ {
-    WalkDir::new(dir)
-        .into_iter()
-        .filter_map(std::result::Result::ok)
-        .filter(|e| e.path().extension().is_some_and(|ext| ext == "rs"))
-}
-
-/// Check if a `DirEntry` is under a test path.
-fn is_test_path(entry: &DirEntry) -> bool {
-    let path = entry.path().to_string_lossy();
+fn is_test_path(path: &Path) -> bool {
+    let path = path.to_string_lossy();
     path.contains("/tests/")
 }
 
-/// Get the file name of a `DirEntry` as `&str`.
-fn file_name_str(entry: &DirEntry) -> &str {
-    entry
-        .path()
-        .file_name()
-        .and_then(|n| n.to_str())
-        .unwrap_or("")
+fn file_name_str(path: &Path) -> &str {
+    path.file_name().and_then(|n| n.to_str()).unwrap_or("")
 }
 
 /// Iterate source lines, skipping comments and `#[cfg(test)]` modules.

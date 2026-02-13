@@ -6,7 +6,6 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use serde_yaml;
-use walkdir::WalkDir;
 
 use super::templates::TemplateEngine;
 use super::yaml_validator::YamlRuleValidator;
@@ -185,12 +184,9 @@ impl YamlRuleLoader {
         self.template_engine.load_templates(&self.rules_dir).await?;
 
         // Load rule files
-        for entry in WalkDir::new(&self.rules_dir).follow_links(false) {
-            let entry = entry.map_err(|e| crate::ValidationError::Io(std::io::Error::other(e)))?;
-            let path = entry.path();
-
-            if self.is_rule_file(path) {
-                let loaded_rules = self.load_rule_file(path).await?;
+        for path in collect_yaml_files(&self.rules_dir)? {
+            if self.is_rule_file(&path) {
+                let loaded_rules = self.load_rule_file(&path).await?;
                 rules.extend(loaded_rules);
             }
         }
@@ -452,10 +448,9 @@ impl YamlRuleLoader {
     pub fn get_rule_path(&self, rule_id: &str) -> Option<PathBuf> {
         // This would need a more sophisticated mapping
         // For now, just search in the rules directory
-        for entry in WalkDir::new(&self.rules_dir).into_iter().flatten() {
-            let path = entry.path();
-            if self.is_rule_file(path)
-                && let Ok(content) = std::fs::read_to_string(path)
+        for path in collect_yaml_files(&self.rules_dir).ok()? {
+            if self.is_rule_file(&path)
+                && let Ok(content) = std::fs::read_to_string(&path)
                 && content.contains(&format!("id: {rule_id}"))
             {
                 return Some(path.to_path_buf());
@@ -463,4 +458,32 @@ impl YamlRuleLoader {
         }
         None
     }
+}
+
+fn collect_yaml_files(root: &Path) -> Result<Vec<PathBuf>> {
+    if !root.exists() {
+        return Ok(Vec::new());
+    }
+
+    let mut files = Vec::new();
+    let mut stack = vec![root.to_path_buf()];
+
+    while let Some(dir) = stack.pop() {
+        for entry in std::fs::read_dir(&dir).map_err(crate::ValidationError::Io)? {
+            let entry = entry.map_err(crate::ValidationError::Io)?;
+            let path = entry.path();
+            let file_type = entry.file_type().map_err(crate::ValidationError::Io)?;
+
+            if file_type.is_dir() {
+                stack.push(path);
+                continue;
+            }
+
+            if file_type.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some("yml") {
+                files.push(path);
+            }
+        }
+    }
+
+    Ok(files)
 }
