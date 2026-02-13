@@ -6,11 +6,11 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use crate::handlers::test_helpers::create_base_memory_args;
-use crate::test_utils::mock_services::MockMemoryService;
+use crate::test_utils::mock_services::TestMemoryService;
 
 #[tokio::test]
 async fn test_memory_store_observation_success() {
-    let mock_service = MockMemoryService::new();
+    let mock_service = TestMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = create_base_memory_args(
@@ -33,7 +33,7 @@ async fn test_memory_store_observation_success() {
 
 #[tokio::test]
 async fn test_memory_store_observation_missing_data() {
-    let mock_service = MockMemoryService::new();
+    let mock_service = TestMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = create_base_memory_args(
@@ -56,7 +56,7 @@ async fn test_memory_store_observation_missing_data() {
 
 #[tokio::test]
 async fn test_memory_store_execution_success() {
-    let mock_service = MockMemoryService::new();
+    let mock_service = TestMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
@@ -94,7 +94,7 @@ async fn test_memory_store_execution_success() {
 
 #[tokio::test]
 async fn test_memory_store_quality_gate_success() {
-    let mock_service = MockMemoryService::new();
+    let mock_service = TestMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
@@ -131,7 +131,7 @@ async fn test_memory_store_quality_gate_success() {
 
 #[tokio::test]
 async fn test_memory_store_session_success() {
-    let mock_service = MockMemoryService::new();
+    let mock_service = TestMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
@@ -166,7 +166,7 @@ async fn test_memory_store_session_success() {
 
 #[tokio::test]
 async fn test_memory_get_observation_success() {
-    let mock_service = MockMemoryService::new();
+    let mock_service = TestMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
@@ -198,7 +198,7 @@ async fn test_memory_get_observation_success() {
 
 #[tokio::test]
 async fn test_memory_get_observation_missing_ids() {
-    let mock_service = MockMemoryService::new();
+    let mock_service = TestMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
@@ -233,7 +233,7 @@ async fn test_memory_get_observation_missing_ids() {
 
 #[tokio::test]
 async fn test_memory_get_execution_success() {
-    let mock_service = MockMemoryService::new();
+    let mock_service = TestMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
@@ -265,7 +265,7 @@ async fn test_memory_get_execution_success() {
 
 #[tokio::test]
 async fn test_memory_get_quality_gate_success() {
-    let mock_service = MockMemoryService::new();
+    let mock_service = TestMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
@@ -297,7 +297,7 @@ async fn test_memory_get_quality_gate_success() {
 
 #[tokio::test]
 async fn test_memory_get_session_success() {
-    let mock_service = MockMemoryService::new();
+    let mock_service = TestMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {
@@ -328,7 +328,7 @@ async fn test_memory_get_session_success() {
 
 #[tokio::test]
 async fn test_memory_inject_with_filters() {
-    let mock_service = MockMemoryService::new();
+    let mock_service = TestMemoryService::new();
     let handler = MemoryHandler::new(Arc::new(mock_service));
 
     let args = MemoryArgs {

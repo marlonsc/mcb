@@ -1,6 +1,6 @@
 # Golden Tests Contract
 
-Golden tests validate **real** MCP tool behaviour: indexing, search, status, and
+Golden tests validate**real** MCP tool behaviour: indexing, search, status, and
 clear. They run with the real DI stack (NullEmbedding + InMemoryVectorStore) and
 assert on handler responses and content.
 

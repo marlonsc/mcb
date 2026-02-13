@@ -371,14 +371,3 @@ impl crate::validator_trait::Validator for PortAdapterValidator {
             .collect())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_trait_pattern() {
-        let re = Regex::new(r"pub\s+trait\s+(\w+)").unwrap();
-        assert!(re.is_match("pub trait EmbeddingProvider {"));
-    }
-}

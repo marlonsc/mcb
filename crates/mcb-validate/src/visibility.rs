@@ -320,16 +320,3 @@ impl crate::validator_trait::Validator for VisibilityValidator {
             .collect())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_pub_item_pattern() {
-        let re = Regex::new(r"^pub\s+(fn|struct|enum|type|const|static)\s+(\w+)").unwrap();
-        assert!(re.is_match("pub fn helper() {}"));
-        assert!(re.is_match("pub struct Config {}"));
-        assert!(!re.is_match("pub(crate) fn internal() {}"));
-    }
-}

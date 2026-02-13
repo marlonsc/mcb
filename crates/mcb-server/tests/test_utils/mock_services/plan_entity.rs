@@ -3,22 +3,22 @@ use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::repositories::PlanEntityRepository;
 
-pub struct MockPlanEntityRepository;
+pub struct TestPlanEntityRepository;
 
-impl MockPlanEntityRepository {
+impl TestPlanEntityRepository {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for MockPlanEntityRepository {
+impl Default for TestPlanEntityRepository {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl PlanEntityRepository for MockPlanEntityRepository {
+impl PlanEntityRepository for TestPlanEntityRepository {
     async fn create_plan(&self, _plan: &Plan) -> Result<()> {
         Ok(())
     }

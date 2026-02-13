@@ -6,20 +6,20 @@ This document defines the minimal viable Finite State Machine (FSM) for MCB work
 
 ```text
           +----------+
-          |   Idle   |
+| Idle |
           +----------+
-               |
+|
             [Start]
                v
           +----------+    [Suspend]    +----------+
-          |  Active  | --------------> |  Paused  |
-          |          | <-------------- |          |
+| Active | --------------> | Paused |
+|  | <-------------- |  |
           +----------+     [Resume]    +----------+
-               |
+|
             [Finish]
                v
           +----------+
-          | Complete |
+| Complete |
           +----------+
 ```
 

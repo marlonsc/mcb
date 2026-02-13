@@ -11,7 +11,7 @@
 
 The application module implements use-case services and decorators following Clean Architecture. The crate uses `use_cases/` and `decorators/` as its service organization.
 
-## Key Components
+### Key Components
 
 ### Use Cases (`use_cases/`)
 
@@ -67,4 +67,4 @@ Application tests are located in `crates/mcb-application/tests/`.
 
 ---
 
-*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

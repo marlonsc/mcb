@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Partial
 ---
 
-## ADR-033: MCP Handler Consolidation
+# ADR-033: MCP Handler Consolidation
 
 ## Status
 
@@ -33,12 +33,12 @@ parameterization.
 | Memory (New) | memory (action=timeline, resource=observation), memory (action=get, resource=observation), memory (action=inject, resource=observation), memory (action=list, resource=observation), memory (action=store, resource=execution), memory (action=get, resource=execution), memory (action=store, resource=quality_gate), memory (action=get, resource=quality_gate), memory (action=store, resource=error_pattern), memory (action=get, resource=error_pattern) | 10 |
 | Agent Sessions | session (action=create), session (action=get), session (action=update), session (action=list), agent (action=log_tool), agent (action=log_delegation) | 6 |
 | Project Workflow | project_* (9 tools) | 9 |
-| **Total** | | **38** |
+| **Total** |  | **38** |
 <!-- markdownlint-enable MD013 -->
 
 ## Decision
 
-Consolidate to **8 tools** using resource-action parameterization pattern:
+Consolidate to**8 tools** using resource-action parameterization pattern:
 
 ### New Tool Architecture
 

@@ -13,20 +13,20 @@ pub mod validation;
 pub mod vcs;
 pub mod vcs_entity;
 
-pub use agent::MockAgentRepository;
-pub use agent::MockAgentSessionService;
-pub use context::MockContextService;
-pub use indexing::MockIndexingService;
-pub use issue_entity::MockIssueEntityRepository;
-pub use memory::MockMemoryRepository;
-pub use memory::MockMemoryService;
-pub use org_entity::MockOrgEntityRepository;
-pub use plan_entity::MockPlanEntityRepository;
-pub use project::{MockProjectDetectorService, MockProjectRepository};
-pub use search::MockSearchService;
-pub use validation::MockValidationService;
-pub use vcs::MockVcsProvider;
-pub use vcs_entity::MockVcsEntityRepository;
+pub use agent::TestAgentRepository;
+pub use agent::TestAgentSessionService;
+pub use context::TestContextService;
+pub use indexing::TestIndexingService;
+pub use issue_entity::TestIssueEntityRepository;
+pub use memory::TestMemoryRepository;
+pub use memory::TestMemoryService;
+pub use org_entity::TestOrgEntityRepository;
+pub use plan_entity::TestPlanEntityRepository;
+pub use project::{TestProjectDetectorService, TestProjectRepository};
+pub use search::TestSearchService;
+pub use validation::TestValidationService;
+pub use vcs::TestVcsProvider;
+pub use vcs_entity::TestVcsEntityRepository;
 
 #[cfg(test)]
 mod constructibility {
@@ -40,12 +40,12 @@ mod constructibility {
 
     #[test]
     fn test_all_mocks_constructible() {
-        let search = MockSearchService::new()
+        let search = TestSearchService::new()
             .with_results(vec![])
             .with_failure("ok");
         assert!(search.results.lock().unwrap().is_empty());
 
-        let indexing = MockIndexingService::new()
+        let indexing = TestIndexingService::new()
             .with_result(IndexingResult {
                 files_processed: 0,
                 chunks_created: 0,
@@ -70,13 +70,13 @@ mod constructibility {
                 .is_some_and(|r| !r.status.is_empty())
         );
 
-        let context = MockContextService::new()
+        let context = TestContextService::new()
             .with_search_results(vec![])
             .with_dimensions(128)
             .with_failure("ok");
         assert_eq!(context.dimensions, 128);
 
-        let validation = MockValidationService::new()
+        let validation = TestValidationService::new()
             .with_report(ValidationReport {
                 total_violations: 0,
                 errors: 0,
@@ -89,18 +89,18 @@ mod constructibility {
             .with_failure("ok");
         assert!(validation.report.lock().unwrap().passed);
 
-        let validation_alt = MockValidationService::with_violations(vec![]);
+        let validation_alt = TestValidationService::with_violations(vec![]);
         assert!(validation_alt.report.lock().unwrap().violations.is_empty());
 
-        let memory = MockMemoryService::new();
+        let memory = TestMemoryService::new();
         assert!(memory.observations.lock().unwrap().is_empty());
 
-        let _agent_repo = MockAgentRepository::new();
-        let _memory_repo = MockMemoryRepository::new();
+        let _agent_repo = TestAgentRepository::new();
+        let _memory_repo = TestMemoryRepository::new();
 
-        let vcs = MockVcsProvider::new().with_failure();
+        let vcs = TestVcsProvider::new().with_failure();
         assert!(vcs.should_fail.load(Ordering::SeqCst));
 
-        let _project = MockProjectDetectorService::new();
+        let _project = TestProjectDetectorService::new();
     }
 }

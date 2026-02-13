@@ -10,7 +10,7 @@ superseded_by: [29]
 implementation_status: Complete
 ---
 
-## ADR 024: Shaku to dill DI Migration
+# ADR 024: Shaku to dill DI Migration
 
 ## Status
 
@@ -87,7 +87,7 @@ AppConfig → Resolvers → Handles (RwLock) → Domain Services
 
 ### Implementation Pattern
 
-**Provider Handle (RwLock wrapper for runtime switching):**
+Provider Handle (RwLock wrapper for runtime switching):
 
 ```rust
 // crates/mcb-infrastructure/src/di/handles.rs
@@ -111,7 +111,7 @@ impl EmbeddingProviderHandle {
 }
 ```
 
-**Provider Resolver (linkme registry access):**
+Provider Resolver (linkme registry access):
 
 ```rust
 // crates/mcb-infrastructure/src/di/provider_resolvers.rs
@@ -145,7 +145,7 @@ impl EmbeddingProviderResolver {
 }
 ```
 
-**Admin Service (runtime provider switching via API):**
+Admin Service (runtime provider switching via API):
 
 ```rust
 // crates/mcb-infrastructure/src/di/admin.rs
@@ -180,7 +180,7 @@ impl EmbeddingAdminService {
 }
 ```
 
-**AppContext (Composition Root):**
+AppContext (Composition Root):
 
 ```rust
 // crates/mcb-infrastructure/src/di/bootstrap.rs

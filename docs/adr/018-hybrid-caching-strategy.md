@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 018: Hybrid Caching Strategy
+# ADR 018: Hybrid Caching Strategy
 
 ## Status
 
@@ -22,7 +22,7 @@ implementation_status: Incomplete
 
 Code analysis is CPU-intensive (500ms-5s per file). Caching is critical.
 
-**Two proven patterns**:
+Two proven patterns:
 
 1. **MCB**: Moka async cache with TTL (fast lookups, memory-based)
 2. **PMAT**: SHA256 file hashing for invalidation (accurate change detection)
@@ -104,19 +104,19 @@ The hybrid cache will extend this foundation in v0.3.0.
 - Integrate with analysis services
 - Benchmark cache hit rates
 
-## Consequences
+### Consequences
 
-**Positive**:
+Positive:
 
 - Accurate invalidation (SHA256)
 - Fast lookups (Moka)
 - Best of both worlds
 
-**Negative**:
+Negative:
 
 - SHA256 computation overhead (~1-5ms per file)
 
-**Mitigation**:
+Mitigation:
 
 - Compute SHA256 in background
 - Cache SHA256 values
@@ -129,4 +129,4 @@ The hybrid cache will extend this foundation in v0.3.0.
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 crate organization*
+Updated 2026-01-17 - Reflects v0.1.2 crate organization

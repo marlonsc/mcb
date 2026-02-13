@@ -73,11 +73,12 @@ async fn test_validation_session_create_schema_fallback() {
             data: Some(json!({
                 "session_summary_id": "summ-1",
                 "model": "test-model",
-                "agent_type": "sisyphus" // FALLBACK
+                "agent_type": "sisyphus", // FALLBACK
+                "project_id": "test-project"
             })),
             worktree_id: None,
             session_id: None,
-            project_id: None,
+            project_id: Some("test-project".to_string()),
             limit: None,
             status: None,
         }))

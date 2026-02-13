@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR 007: Integrated Web Administration Interface
+# ADR 007: Integrated Web Administration Interface
 
 ## Status
 
@@ -72,7 +72,7 @@ The interface will be implemented using:
 - **Real-time**: WebSocket support for live metrics updates
 - **API**: RESTful JSON API for all administrative operations
 
-## Consequences
+### Consequences
 
 ### Positive Consequences
 
@@ -152,9 +152,9 @@ New REST endpoints under `/admin/` prefix:
 
 ### Frontend Structure
 
-Templates are **embedded at compile time** using `include_str!` macro, making the binary self-contained:
+Templates are**embedded at compile time** using `include_str!` macro, making the binary self-contained:
 
-```
+```text
 crates/mcb-server/src/admin/web/templates/
 ├── base.html              # Master layout (Tailwind + Alpine.js + HTMX)
 ├── dashboard.html         # Main dashboard
@@ -228,7 +228,7 @@ export MCP__SERVER__NETWORK__PORT=3000  # Default unified port for Admin + Metri
 
 ### URL Structure
 
-```
+```text
 Port 3000 (Unified: Admin + Metrics + MCP HTTP)
 ├── /                - Admin dashboard (root redirects to dashboard)
 ├── /dashboard       - Admin dashboard
@@ -350,7 +350,7 @@ pub struct SubsystemInfo {
 
 ### Event Flow Example
 
-```
+```text
 
 1. User clicks "Restart" on embedding subsystem
 2. POST /admin/subsystems/embedding:ollama/signal {"signal":"restart"}
@@ -373,7 +373,7 @@ Implements explicit save pattern for configuration changes.
 
 ### API Flow
 
-```
+```text
 
 1. GET /admin/configuration         # View current config
 2. PUT /admin/configuration         # Update runtime only
@@ -400,7 +400,7 @@ pub async fn get_config_diff(&self) -> Result<ConfigDiff, AdminError>;
 
 Templates located in `crates/mcb-server/src/admin/web/templates/`:
 
-```
+```text
 templates/
 ├── base.html           # Master layout (Alpine.js + Tailwind + HTMX)
 ├── dashboard.html      # Real-time metrics dashboard

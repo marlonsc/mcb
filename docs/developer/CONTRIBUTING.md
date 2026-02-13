@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing! This guide covers everything you need for MCB development.
 
-**Last updated:** 2026-02-12 | **Version:** v0.2.1
+**Last updated:**2026-02-12 |**Version:** v0.2.1
 
 ## 🚀 Getting Started
 
@@ -119,9 +119,9 @@ See [ADR-019](../adr/019-error-handling-strategy.md) for the full error handling
 
 ## 📝 Commit Messages
 
-Use **conventional commits**:
+Use**conventional commits**:
 
-```
+```text
 <type>(<scope>): <short description>
 
 <body: 1-2 sentences explaining why>

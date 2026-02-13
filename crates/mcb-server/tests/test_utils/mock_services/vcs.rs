@@ -11,11 +11,11 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::providers::VcsProvider;
 
 /// Mock VCS provider for testing
-pub struct MockVcsProvider {
+pub struct TestVcsProvider {
     pub should_fail: AtomicBool,
 }
 
-impl MockVcsProvider {
+impl TestVcsProvider {
     pub fn new() -> Self {
         Self {
             should_fail: AtomicBool::new(false),
@@ -28,14 +28,14 @@ impl MockVcsProvider {
     }
 }
 
-impl Default for MockVcsProvider {
+impl Default for TestVcsProvider {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl VcsProvider for MockVcsProvider {
+impl VcsProvider for TestVcsProvider {
     async fn open_repository(&self, path: &Path) -> Result<VcsRepository> {
         if self.should_fail.load(Ordering::SeqCst) {
             return Err(mcb_domain::error::Error::vcs("Mock failure"));

@@ -26,7 +26,7 @@ cargo build
 cargo build --release
 ```
 
-### Run the Server
+## Run the Server
 
 ```bash
 
@@ -56,7 +56,7 @@ provider = "mock"  # Options: mock, openai, ollama, gemini, voyageai
 provider = "memory"  # Options: memory, milvus, filesystem, encrypted
 ```
 
-### Configuration Options
+## Configuration Options
 
 | Setting | Description | Default | Status |
 | --------- | ------------- | --------- | -------- |
@@ -76,7 +76,7 @@ ls -la target/debug/mcb
 ./target/debug/mcb --version
 ```
 
-### MCP Protocol Testing
+## MCP Protocol Testing
 
 The server communicates via the MCP protocol over stdin/stdout. To test manually:
 
@@ -107,7 +107,7 @@ rustc --version
 cargo --version
 ```
 
-#### Runtime Issues
+## Runtime Issues
 
 ```bash
 
@@ -119,7 +119,7 @@ df -h  # Disk space
 free -h  # Memory
 ```
 
-### Getting Help
+## Getting Help
 
 - Check existing [GitHub Issues](https://github.com/marlonsc/mcb/issues)
 - Review the [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) for technical details
@@ -188,7 +188,7 @@ spec:
             cpu: "2000m"
 ```
 
-### Docker Compose (Development)
+## Docker Compose (Development)
 
 ```yaml
 
@@ -247,7 +247,7 @@ volumes:
   redis_data:
 ```
 
-### Enterprise Configuration
+## Enterprise Configuration
 
 ```toml
 
@@ -296,7 +296,7 @@ gdpr_compliance = true
 data_retention_days = 2555
 ```
 
-### Load Balancing
+## Load Balancing
 
 ```yaml
 
@@ -388,7 +388,7 @@ sync_cache = true
 prefetch_intelligence = true
 ```
 
-### Cloud Service Configuration
+## Cloud Service Configuration
 
 ```toml
 
@@ -416,7 +416,7 @@ cpu_threshold = 70
 memory_threshold = 80
 ```
 
-### Synchronization Configuration
+## Synchronization Configuration
 
 ```toml
 
@@ -480,7 +480,7 @@ data:
       indexSliceSize: 16
 ```
 
-### PostgreSQL (Hybrid Storage)
+## PostgreSQL (Hybrid Storage)
 
 ```sql
 -- Initialize database
@@ -587,7 +587,7 @@ export METRICS_ENDPOINT=/metrics
 export LOG_LEVEL=info
 ```
 
-### Configuration Validation
+## Configuration Validation
 
 ```bash
 
@@ -619,7 +619,7 @@ curl http://localhost:3000/health
 curl http://localhost:3000/ready
 ```
 
-### Logging Configuration
+## Logging Configuration
 
 ```toml
 [logging]
@@ -736,7 +736,7 @@ spec:
         averageValue: "100"
 ```
 
-### Performance Tuning
+## Performance Tuning
 
 ```toml
 [performance]

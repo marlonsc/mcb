@@ -32,7 +32,7 @@ Different service categories have different requirements:
 - Have complex dependencies on production providers
 - Construction parameters vary based on configuration
 
-### Why Not Pure Shaku?
+### Why Not Pure Shaku
 
 Shaku's `module!` macro and `#[derive(Component)]` work well when:
 
@@ -50,11 +50,11 @@ These don't map cleanly to Shaku's compile-time component model.
 
 ## Decision
 
-We adopt a **two-layer DI strategy**:
+We adopt a**two-layer DI strategy**:
 
 ### Layer 1: Shaku Modules (Infrastructure Defaults)
 
-Shaku modules provide **null implementations** as testing defaults:
+Shaku modules provide**null implementations** as testing defaults:
 
 ```rust
 // Infrastructure module provides null adapters

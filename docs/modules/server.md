@@ -59,4 +59,4 @@ Server tests are in `crates/mcb-server/tests/`.
 
 ---
 
-*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

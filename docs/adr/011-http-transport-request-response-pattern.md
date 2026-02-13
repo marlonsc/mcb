@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR 011: HTTP Transport - Request-Response Pattern Over SSE Streaming
+# ADR 011: HTTP Transport - Request-Response Pattern Over SSE Streaming
 
 ## Status
 
@@ -34,7 +34,7 @@ The current v0.1.0 implementation needed to decide whether to implement both pat
 
 ## Decision
 
-**Implement request-response pattern only in v0.1.0**
+Implement request-response pattern only in v0.1.0
 
 1.**POST /MCP**: Fully functional request-response endpoint
 
@@ -48,7 +48,7 @@ The current v0.1.0 implementation needed to decide whether to implement both pat
 - Better than 200 OK with empty response (which would be misleading)
 - Infrastructure for SSE already in place (session handling, event IDs, message buffering)
 
-## Rationale
+### Rationale
 
 ### Why Request-Response is Sufficient for v0.1.0
 
@@ -154,13 +154,13 @@ The current v0.1.0 implementation needed to decide whether to implement both pat
 
 **Approach**: Implement Server-Sent Events streaming for GET /MCP endpoint
 
-**Pros**:
+Pros:
 
 - Full MCP spec compliance
 - More efficient server-to-client updates
 - Real-time streaming support
 
-**Cons**:
+Cons:
 
 - Significantly more complex implementation
 - Connection state management challenges
@@ -174,11 +174,11 @@ The current v0.1.0 implementation needed to decide whether to implement both pat
 
 **Approach**: Respond to GET /MCP with 200 OK and empty SSE stream
 
-**Pros**:
+Pros:
 
 - Spec-compliant response code
 
-**Cons**:
+Cons:
 
 - Misleading to clients (implies working connection)
 - Clients won't know why they're getting no data
@@ -191,13 +191,13 @@ The current v0.1.0 implementation needed to decide whether to implement both pat
 
 **Approach**: Use WebSocket instead of HTTP/SSE for bidirectional streaming
 
-**Pros**:
+Pros:
 
 - Better for real-time bidirectional communication
 - Better performance for frequent updates
 - Simpler client libraries
 
-**Cons**:
+Cons:
 
 - Not part of MCP spec (which uses HTTP)
 - Requires different client implementation

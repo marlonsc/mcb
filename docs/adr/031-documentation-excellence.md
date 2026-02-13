@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 031: Documentation Excellence
+# ADR 031: Documentation Excellence
 
 ## Status
 
@@ -71,7 +71,7 @@ Key architectural decisions:
   documentation drift using `cargo-spellcheck` and `cargo-deadlinks`
 - **CI/CD Integration**: Quality gates blocking merges with documentation issues
 
-## Consequences
+### Consequences
 
 Documentation excellence creates a self-sustaining, high-quality project but
 requires significant upfront investment in automation tooling.
@@ -209,7 +209,7 @@ jobs:
         run: make docs
 ```
 
-### Success Metrics Tracking
+## Success Metrics Tracking
 
 ```rust
 #[derive(Debug, Serialize)]

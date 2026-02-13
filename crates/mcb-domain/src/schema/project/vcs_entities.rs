@@ -14,6 +14,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("url", Text),
                 crate::col!("local_path", Text),
                 crate::col!("vcs_type", Text),
+                crate::col!("origin_context", Text, nullable),
                 crate::col!("created_at", Integer),
                 crate::col!("updated_at", Integer),
             ]
@@ -27,6 +28,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("is_default", Integer),
                 crate::col!("head_commit", Text),
                 crate::col!("upstream", Text, nullable),
+                crate::col!("origin_context", Text, nullable),
                 crate::col!("created_at", Integer),
             ]
         ),
@@ -39,6 +41,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("path", Text),
                 crate::col!("status", Text),
                 crate::col!("assigned_agent_id", Text, nullable),
+                crate::col!("origin_context", Text, nullable),
                 crate::col!("created_at", Integer),
                 crate::col!("updated_at", Integer),
             ]
@@ -51,6 +54,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("worktree_id", Text),
                 crate::col!("assigned_at", Integer),
                 crate::col!("released_at", Integer, nullable),
+                crate::col!("origin_context", Text, nullable),
             ]
         ),
     ]

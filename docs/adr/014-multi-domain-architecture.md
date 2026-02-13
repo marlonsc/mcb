@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR 014: Multi-Domain Architecture Strategy
+# ADR 014: Multi-Domain Architecture Strategy
 
 ## Status
 
@@ -34,9 +34,9 @@ MCB v0.1.1 has implemented the eight-crate Clean Architecture foundation. Future
 
 ## Decision
 
-Adopt **modular domain architecture** within the eight-crate structure:
+Adopt**modular domain architecture** within the eight-crate structure:
 
-```
+```text
 mcb/
 ├── libs/                           # Shared workspace libraries
 │   ├── tree-sitter-analysis/       # AST parsing (shared by all domains)
@@ -93,19 +93,19 @@ mcb/
 
 ## Consequences
 
-**Positive**:
+Positive:
 
 - Clear separation of concerns
 - Incremental feature addition
 - Testable in isolation
 - Future domains easy to add
 
-**Negative**:
+Negative:
 
 - More directories (complexity)
 - Potential code duplication without careful planning
 
-**Mitigation**:
+Mitigation:
 
 - Use workspace libraries for shared code
 - Enforce port traits for cross-domain communication
@@ -113,21 +113,21 @@ mcb/
 
 ## Implementation Checklist
 
-**v0.1.1 (Completed)**:
+v0.1.1 (Completed):
 
 - [x] Eight-crate Clean Architecture implemented
 - [x] Shaku DI with two-layer strategy
 - [x] 20+ port traits with shaku::Interface (in mcb-application)
 - [x] mcb-validate enforces layer boundaries
 
-**v0.3.0 (Planned)**:
+v0.3.0 (Planned):
 
 - [ ] Create `crates/mcb-application/src/ports/analysis/` (analysis domain ports)
 - [ ] Create `crates/mcb-providers/src/analyzers/` (PMAT adapters)
 - [ ] Define `AnalysisInterface` trait
 - [ ] Port PMAT complexity/TDG/SATD algorithms
 
-**v0.5.0 (Planned)**:
+v0.5.0 (Planned):
 
 - [ ] Define `QualityInterface` trait
 - [ ] Define `GitInterface` trait
@@ -140,4 +140,4 @@ mcb/
 
 ---
 
-*Updated 2026-01-17 - Reflects modular crate architecture (v0.1.2)*
+Updated 2026-01-17 - Reflects modular crate architecture (v0.1.2)

@@ -100,4 +100,4 @@ Major external crates:
 
 ---
 
-*Updated 2026-01-28 - dill DI, v0.2.1*
+### Updated 2026-01-28 - dill DI, v0.2.1

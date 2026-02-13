@@ -12,7 +12,7 @@ use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
 use crate::test_utils::helpers::{arc_mutex, arc_mutex_vec};
 
 /// Mock implementation of ContextServiceInterface for testing
-pub struct MockContextService {
+pub struct TestContextService {
     /// Pre-configured search results
     pub search_results: Arc<Mutex<Vec<SearchResult>>>,
     /// Embedding dimensions
@@ -23,7 +23,7 @@ pub struct MockContextService {
     pub error_message: Arc<Mutex<String>>,
 }
 
-impl MockContextService {
+impl TestContextService {
     /// Create a new mock context service
     pub fn new() -> Self {
         Self {
@@ -54,14 +54,14 @@ impl MockContextService {
     }
 }
 
-impl Default for MockContextService {
+impl Default for TestContextService {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl ContextServiceInterface for MockContextService {
+impl ContextServiceInterface for TestContextService {
     async fn initialize(&self, _collection: &CollectionId) -> Result<()> {
         if self.should_fail.load(Ordering::SeqCst) {
             let msg = self.error_message.lock().expect("Lock poisoned").clone();

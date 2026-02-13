@@ -56,7 +56,7 @@ pub struct ProjectMetadata {
 }
 ```
 
-**Why this design?**
+### Why this design
 
 - **Sway** (FuelLabs): Uses `PackageDependencyIdentifier { name, version }`
   - `Source` enum (Git, Path, Registry)
@@ -116,7 +116,7 @@ CREATE INDEX idx_deps_to ON project_dependencies(to_project_id);
 CREATE INDEX idx_metadata_cargo_name ON project_metadata(cargo_name);
 ```
 
-**Why this structure?**
+### Why this structure
 
 - **Vibe-Kanban** uses: `projects (id, name, created_at, updated_at)`
   - `project_repos (id, project_id, repo_id)` junction

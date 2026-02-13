@@ -19,7 +19,7 @@ Before optimization:
 
 **Goal**: Only run jobs when their specific code changes
 
-**Changes**:
+### Changes
 
 1. **CI Workflow Path Filters** (`src/**`, `crates/**`, `tests/**`, `Cargo.toml`, `.github/workflows/ci.yml`)
 
@@ -44,9 +44,9 @@ Before optimization:
 - Prevents timeout from Milvus/Ollama dependencies not available in CI
 - Added timeout (300s) and thread control parameters
 
-**Impact**:
+#### Impact
 
-```
+```text
 Docs-only PR:    0 jobs (was 9)    → 100% reduction
 Docs-only push:  6 jobs (was 19)   → 68% reduction
 Code PR:         8 jobs (was 9)    → 11% reduction
@@ -59,7 +59,7 @@ Monthly savings: ~160 jobs (34% reduction)
 
 **Goal**: Reduce test matrix expansion in PRs while maintaining stability
 
-**Changes**:
+### Changes (1)
 
 1. **Split Test Job** into conditional variants:
 
@@ -77,9 +77,9 @@ Monthly savings: ~160 jobs (34% reduction)
 - PR validation: Fast feedback (stable only)
 - Main verification: Comprehensive (stable + beta)
 
-**Impact**:
+#### Impact
 
-```
+```text
 PR Test Execution:      ~3-4 min (was ~6-8 min)    → 50% faster
 Main Test Execution:    ~8-10 min (unchanged)      → Comprehensive validation
 PR Cycle Time:          5-8 min faster             → Better developer experience
@@ -112,7 +112,7 @@ ifeq ($(MCB_CI),1)
   --test-threads $(if $(THREADS),$(THREADS),4)
 ```
 
-**Flags**:
+### Flags
 
 - `--exclude-files`: Skip specific test directories
 - `--timeout 300`: 5-minute timeout per test
@@ -120,7 +120,7 @@ ifeq ($(MCB_CI),1)
 
 ### CI Workflow Triggers
 
-**CI Workflow**:
+### CI Workflow
 
 ```yaml
 on:
@@ -139,7 +139,7 @@ on:
     paths: [same as push]
 ```
 
-**CodeQL Workflow**:
+### CodeQL Workflow
 
 ```yaml
 on:
@@ -162,7 +162,7 @@ on:
 **After**: 6 jobs (Only Docs jobs)
 **Savings**: 13 jobs
 
-```
+```text
 ❌ CI Pipeline:     SKIP (no code changes)
 ❌ CodeQL:          SKIP (no code changes)
 ❌ Coverage:        SKIP (not on code change)
@@ -181,7 +181,7 @@ on:
 **After**: 8 jobs (stable test only, no coverage)
 **Savings**: 1 job + faster execution
 
-```
+```text
 ✅ Lint:            RUN
 ✅ Test PR:         RUN (stable only, ~3-4 min)
 ❌ Test Main:       SKIP (not main push)
@@ -198,7 +198,7 @@ on:
 **After**: 10 CI jobs + 6 Docs jobs = 16 total
 **Savings**: 2 jobs
 
-```
+```text
 ✅ Lint:            RUN
 ✅ Test Main:       RUN (stable + beta, ~8-10 min)
 ✅ Validate:        RUN

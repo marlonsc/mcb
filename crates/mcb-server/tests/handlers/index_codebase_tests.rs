@@ -4,7 +4,7 @@ use mcb_server::args::{IndexAction, IndexArgs};
 use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-use crate::test_utils::mock_services::MockIndexingService;
+use crate::test_utils::mock_services::TestIndexingService;
 use crate::test_utils::test_fixtures::{create_temp_codebase, create_test_indexing_result};
 
 #[tokio::test]
@@ -12,7 +12,7 @@ async fn test_index_codebase_valid_path() {
     let (_temp_dir, codebase_path) = create_temp_codebase();
     let indexing_result = create_test_indexing_result(10, 50, 2);
 
-    let mock_service = MockIndexingService::new().with_result(indexing_result);
+    let mock_service = TestIndexingService::new().with_result(indexing_result);
     let handler = IndexHandler::new(Arc::new(mock_service));
 
     let args = IndexArgs {
@@ -36,7 +36,7 @@ async fn test_index_codebase_valid_path() {
 
 #[tokio::test]
 async fn test_index_codebase_nonexistent_path() {
-    let mock_service = MockIndexingService::new();
+    let mock_service = TestIndexingService::new();
     let handler = IndexHandler::new(Arc::new(mock_service));
 
     let args = IndexArgs {
@@ -58,7 +58,7 @@ async fn test_index_codebase_nonexistent_path() {
 
 #[tokio::test]
 async fn test_index_codebase_empty_path() {
-    let mock_service = MockIndexingService::new();
+    let mock_service = TestIndexingService::new();
     let handler = IndexHandler::new(Arc::new(mock_service));
 
     let args = IndexArgs {
@@ -83,7 +83,7 @@ async fn test_index_codebase_default_collection() {
     let (_temp_dir, codebase_path) = create_temp_codebase();
     let indexing_result = create_test_indexing_result(5, 20, 0);
 
-    let mock_service = MockIndexingService::new().with_result(indexing_result);
+    let mock_service = TestIndexingService::new().with_result(indexing_result);
     let handler = IndexHandler::new(Arc::new(mock_service));
 
     let args = IndexArgs {
@@ -107,7 +107,7 @@ async fn test_index_codebase_default_collection() {
 async fn test_index_codebase_service_error() {
     let (_temp_dir, codebase_path) = create_temp_codebase();
 
-    let mock_service = MockIndexingService::new().with_failure("Test error");
+    let mock_service = TestIndexingService::new().with_failure("Test error");
     let handler = IndexHandler::new(Arc::new(mock_service));
 
     let args = IndexArgs {
@@ -134,7 +134,7 @@ async fn test_index_codebase_with_errors() {
     let (_temp_dir, codebase_path) = create_temp_codebase();
     let indexing_result = create_test_indexing_result(2, 8, 1);
 
-    let mock_service = MockIndexingService::new().with_result(indexing_result);
+    let mock_service = TestIndexingService::new().with_result(indexing_result);
     let handler = IndexHandler::new(Arc::new(mock_service));
 
     let args = IndexArgs {

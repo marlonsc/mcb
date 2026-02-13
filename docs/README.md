@@ -5,7 +5,7 @@
 [![Architecture](https://img.shields.io/badge/architecture-C4--model-blue)](docs/architecture/ARCHITECTURE.md)
 [![ADRs](https://img.shields.io/badge/ADRs-47-blue)](adr/README.md)
 
-**Comprehensive documentation for the Memory Context Browser project**
+## Comprehensive documentation for the Memory Context Browser project
 
 ## 📚 Documentation Structure
 
@@ -94,15 +94,15 @@ This documentation is fully automated and validated. Use these commands:
 # Generate all documentation (metrics, Rust API docs, mdbook)
 make docs
 
-# Validate documentation (ADRs, structure, links). QUICK=1 skips external link checks.
+# Validate documentation (ADRs, structure, links). QUICK=1 skips external link checks
 make docs-validate
 make docs-validate QUICK=1
 
-# Lint markdown. FIX=1 runs markdownlint -f to auto-fix.
+# Lint markdown. FIX=1 runs markdownlint -f to auto-fix
 make docs-lint
 make docs-lint FIX=1
 
-# Fix markdown (metrics + markdownlint -f). Run before commit.
+# Fix markdown (metrics + markdownlint -f). Run before commit
 make docs-lint FIX=1
 
 # Generate architecture diagrams (PlantUML)

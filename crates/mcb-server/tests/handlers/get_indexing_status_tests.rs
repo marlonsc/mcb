@@ -4,11 +4,11 @@ use mcb_server::args::{IndexAction, IndexArgs};
 use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-use crate::test_utils::mock_services::MockIndexingService;
+use crate::test_utils::mock_services::TestIndexingService;
 
 #[tokio::test]
 async fn test_get_indexing_status_success() {
-    let mock_service = MockIndexingService::new();
+    let mock_service = TestIndexingService::new();
     let handler = IndexHandler::new(Arc::new(mock_service));
 
     let args = IndexArgs {

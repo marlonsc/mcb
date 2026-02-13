@@ -65,7 +65,7 @@ make check
 make validate
 ```
 
-### Test Structure
+## Test Structure
 
 - **Core Types**: Data structure validation and serialization
 - **Services**: Business logic testing (Context, Indexing, Search)

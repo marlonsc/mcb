@@ -25,7 +25,7 @@
 | `index/status` | MCP Tool | `IndexHandler::handle` | `CallToolResult` with status JSON | N/A | Get indexing status |
 | `index/clear` | MCP Tool | `IndexHandler::handle` | `CallToolResult` with success/error | N/A | Clear indexed collection |
 
-**Handler Signature**:
+#### Handler Signature
 
 ```rust
 pub struct IndexHandler {
@@ -55,7 +55,7 @@ pub async fn handle(
 | `search/code` | MCP Tool | `SearchHandler::handle` | `CallToolResult` with results | N/A | Semantic code search |
 | `search/memory` | MCP Tool | `SearchHandler::handle` | `CallToolResult` with memory results | N/A | Search memory/observations |
 
-**Handler Signature**:
+#### Handler Signature
 
 ```rust
 pub struct SearchHandler {
@@ -87,7 +87,7 @@ pub async fn handle(
 | `validate/list-rules` | MCP Tool | `ValidateHandler::handle` | `CallToolResult` with rules | N/A | List validation rules |
 | `validate/analyze` | MCP Tool | `ValidateHandler::handle` | `CallToolResult` with complexity metrics | N/A | Analyze code complexity |
 
-**Handler Signature**:
+#### Handler Signature
 
 ```rust
 pub struct ValidateHandler {
@@ -117,7 +117,7 @@ pub async fn handle(
 | `agent/log-tool` | MCP Tool | `AgentHandler::handle` | `CallToolResult` with tool call ID | N/A | Log tool invocation |
 | `agent/log-delegation` | MCP Tool | `AgentHandler::handle` | `CallToolResult` with delegation ID | N/A | Log agent delegation |
 
-**Handler Signature**:
+#### Handler Signature
 
 ```rust
 pub struct AgentHandler {
@@ -150,7 +150,7 @@ pub async fn handle(
 | `session/list` | MCP Tool | `list::list_sessions` | `CallToolResult` with sessions | N/A | List all sessions |
 | `session/summarize` | MCP Tool | `summarize::summarize_session` | `CallToolResult` with summary | N/A | Get session summary |
 
-**Handler Signature**:
+#### Handler Signature
 
 ```rust
 pub struct SessionHandler {
@@ -190,7 +190,7 @@ pub async fn handle(
 | `memory/get/timeline` | MCP Tool | `list_timeline::get_timeline` | `CallToolResult` with timeline | N/A | Get timeline slice |
 | `memory/inject/context` | MCP Tool | `inject::inject_context` | `CallToolResult` with injected context | N/A | Inject memory into context |
 
-**Handler Signature**:
+#### Handler Signature
 
 ```rust
 pub struct MemoryHandler {
@@ -223,7 +223,7 @@ pub async fn handle(
 | `vcs/search-branch` | MCP Tool | `search_branch::search_branch` | `CallToolResult` with matches | N/A | Search in git branch |
 | `vcs/analyze-impact` | MCP Tool | `analyze_impact::analyze_impact` | `CallToolResult` with impact analysis | N/A | Analyze change impact |
 
-**Handler Signature**:
+#### Handler Signature
 
 ```rust
 pub struct VcsHandler {
@@ -400,7 +400,7 @@ impl IndexHandler {
 }
 ```
 
-**Usage Pattern**:
+### Usage Pattern
 
 - 8 handlers follow this exact pattern
 - Error handling: `McpError::invalid_params()` for validation
@@ -425,7 +425,7 @@ pub fn handler_name(
 }
 ```
 
-**Error Pattern**:
+### Error Pattern
 
 ```rust
 pub fn handler_with_error(
@@ -445,7 +445,7 @@ pub fn handler_with_error(
 }
 ```
 
-**Patterns**:
+### Patterns
 
 - 10+ handlers in admin module
 - Rocket `#[get]`, `#[post]`, `#[patch]` decorators
@@ -506,7 +506,7 @@ impl SearchHandler {
 }
 ```
 
-**Composition Pattern**:
+### Composition Pattern
 
 - SearchHandler: 2 services
 - SessionHandler: 2 services
@@ -522,7 +522,7 @@ impl SearchHandler {
 
 These response types are only used in one place and cannot be easily reused:
 
-```
+```text
 ❌ AdminHealthResponse          (admin/handlers.rs:65-74)
 ❌ IndexingStatusResponse        (admin/handlers.rs:113-141)
 ❌ ReadinessResponse            (admin/handlers.rs:157-169)
@@ -542,7 +542,7 @@ These response types are only used in one place and cannot be easily reused:
 
 These response types are used by multiple handlers or could easily be:
 
-```
+```text
 ✅ CollectionInfoResponse       (browse_handlers.rs:82-94) - Used in CollectionListResponse
 ✅ FileInfoResponse             (browse_handlers.rs:108-118) - Used in FileListResponse
 ✅ ChunkDetailResponse          (browse_handlers.rs:134-150) - Used in ChunkListResponse
@@ -690,7 +690,7 @@ pub struct ApiResult<T: Serialize> {
 
 ### 🏆 Tier 1: Quick Wins (No Breaking Changes)
 
-**1. INDEX STATUS → HTTP WRAPPER**
+### 1. INDEX STATUS → HTTP WRAPPER
 
 - **Current**: Admin calls `indexing_service.get_status()` directly
 - **Reuse**: Wrap MCP `IndexHandler::handle(IndexAction::Status)` as HTTP endpoint
@@ -700,7 +700,7 @@ pub struct ApiResult<T: Serialize> {
 - **Risk**: Low
 - **ROI**: ✅ HIGH
 
-**2. COLLECTION LISTING → EXTEND WITH SEARCH**
+### 2. COLLECTION LISTING → EXTEND WITH SEARCH
 
 - **Current**: Admin has `/collections`, `/collections/:name/files`, `/collections/:name/chunks`
 - **Reuse**: Add `/collections/:name/search?q=...` using MCP SearchHandler
@@ -710,7 +710,7 @@ pub struct ApiResult<T: Serialize> {
 - **Risk**: Medium (new feature)
 - **ROI**: ✅ HIGH
 
-**3. HEALTH METRICS → USE MCP PERFORMANCE DATA**
+### 3. HEALTH METRICS → USE MCP PERFORMANCE DATA
 
 - **Current**: Admin `get_metrics` consumes `PerformanceMetricsData`
 - **Reuse**: MCP metrics data structure already aligned
@@ -720,7 +720,7 @@ pub struct ApiResult<T: Serialize> {
 - **Risk**: Low
 - **ROI**: ✅ HIGH
 
-**4. VALIDATION → ADD HTTP ENDPOINT**
+### 4. VALIDATION → ADD HTTP ENDPOINT
 
 - **Current**: Only MCP supports validation
 - **Reuse**: Wrap MCP `ValidateHandler::handle(ValidateAction::Run)`
@@ -730,7 +730,7 @@ pub struct ApiResult<T: Serialize> {
 - **Risk**: Low
 - **ROI**: ✅ MEDIUM
 
-**5. CODE COMPLEXITY ANALYSIS → ADD HTTP ENDPOINT**
+### 5. CODE COMPLEXITY ANALYSIS → ADD HTTP ENDPOINT
 
 - **Current**: MCP `ValidateHandler::handle(ValidateAction::Analyze)`
 - **Reuse**: Wrap for admin UI
@@ -744,7 +744,7 @@ pub struct ApiResult<T: Serialize> {
 
 ### 🥈 Tier 2: Medium Effort, High Value
 
-**6. OBSERVATION TIMELINE → NEW HTTP ENDPOINTS**
+### 6. OBSERVATION TIMELINE → NEW HTTP ENDPOINTS
 
 - **Current**: MCP `MemoryHandler::handle(MemoryAction::List)` returns observations
 - **Reuse**: Add HTTP `/memory/observations` and `/memory/timeline`
@@ -754,7 +754,7 @@ pub struct ApiResult<T: Serialize> {
 - **Risk**: Medium (data exposure, auth)
 - **ROI**: ✅ MEDIUM
 
-**7. VCS BRANCH COMPARISON → NEW HTTP ENDPOINT**
+### 7. VCS BRANCH COMPARISON → NEW HTTP ENDPOINT
 
 - **Current**: MCP `VcsHandler::handle(VcsAction::CompareBranches)`
 - **Reuse**: Wrap for admin UI
@@ -764,7 +764,7 @@ pub struct ApiResult<T: Serialize> {
 - **Risk**: Medium (auth requirements)
 - **ROI**: ✅ MEDIUM
 
-**8. SESSION BROWSING → NEW HTTP ENDPOINTS**
+### 8. SESSION BROWSING → NEW HTTP ENDPOINTS
 
 - **Current**: MCP `SessionHandler::handle(SessionAction::List/Get)`
 - **Reuse**: Add HTTP `/sessions` and `/sessions/:id`
@@ -774,7 +774,7 @@ pub struct ApiResult<T: Serialize> {
 - **Risk**: Low (read-only)
 - **ROI**: ✅ MEDIUM
 
-**9. RESPONSE TYPE CONSOLIDATION → REFACTOR**
+### 9. RESPONSE TYPE CONSOLIDATION → REFACTOR
 
 - **Current**: 10+ single-use response types in admin
 - **Reuse**: Create `pub struct ApiResponse<T: Serialize>` wrapper
@@ -784,7 +784,7 @@ pub struct ApiResult<T: Serialize> {
 - **Risk**: Medium (breaking changes to API contract)
 - **ROI**: ✅ MEDIUM-HIGH
 
-**10. SERVICE LIFECYCLE IN MCP → IMPLEMENT PROJECT HANDLER**
+### 10. SERVICE LIFECYCLE IN MCP → IMPLEMENT PROJECT HANDLER
 
 - **Current**: Project handler returns "not implemented"
 - **Reuse**: Admin `/services/*` endpoints already work

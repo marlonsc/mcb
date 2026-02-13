@@ -10,7 +10,7 @@ superseded_by: [34]
 implementation_status: Incomplete
 ---
 
-## ADR-032: Agent & Quality Domain Extension (MCB-Only)
+# ADR-032: Agent & Quality Domain Extension (MCB-Only)
 
 **Status:** Superseded by [ADR-034](034-workflow-core-fsm.md)
 **Date:** 2026-02-03
@@ -146,7 +146,7 @@ Total: ~3200 LOC | 14 plans | 24 tools | 9 tables
 
 Maintain legacy-planning/ and .beads/ compatibility.
 
-**Rejected because:**
+Rejected because:
 
 - Complex sync logic
 - Conflict resolution needed
@@ -157,7 +157,7 @@ Maintain legacy-planning/ and .beads/ compatibility.
 
 Import legacy data but don't export.
 
-**Rejected because:**
+Rejected because:
 
 - Still need parser code
 - One-way migration is cleaner
@@ -167,7 +167,7 @@ Import legacy data but don't export.
 
 Add MCB features to Beads CLI.
 
-**Rejected because:**
+Rejected because:
 
 - Beads is generic issue tracker
 - Would need embedding pipeline

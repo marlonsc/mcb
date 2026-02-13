@@ -13,11 +13,11 @@ use mcb_domain::ports::services::AgentSessionServiceInterface;
 
 use crate::test_utils::helpers::{arc_mutex_hashmap, arc_mutex_vec};
 
-pub struct MockAgentSessionService {
+pub struct TestAgentSessionService {
     sessions: Arc<Mutex<HashMap<String, AgentSession>>>,
 }
 
-impl MockAgentSessionService {
+impl TestAgentSessionService {
     pub fn new() -> Self {
         Self {
             sessions: arc_mutex_hashmap(),
@@ -26,7 +26,7 @@ impl MockAgentSessionService {
 }
 
 #[async_trait]
-impl AgentSessionServiceInterface for MockAgentSessionService {
+impl AgentSessionServiceInterface for TestAgentSessionService {
     async fn create_session(&self, session: AgentSession) -> Result<String> {
         self.sessions
             .lock()
@@ -91,14 +91,14 @@ impl AgentSessionServiceInterface for MockAgentSessionService {
     }
 }
 
-pub struct MockAgentRepository {
+pub struct TestAgentRepository {
     sessions: Arc<Mutex<HashMap<String, AgentSession>>>,
     delegations: Arc<Mutex<Vec<Delegation>>>,
     tool_calls: Arc<Mutex<Vec<ToolCall>>>,
     checkpoints: Arc<Mutex<HashMap<String, Checkpoint>>>,
 }
 
-impl MockAgentRepository {
+impl TestAgentRepository {
     pub fn new() -> Self {
         Self {
             sessions: arc_mutex_hashmap(),
@@ -150,7 +150,7 @@ impl MockAgentRepository {
 }
 
 #[async_trait]
-impl AgentRepository for MockAgentRepository {
+impl AgentRepository for TestAgentRepository {
     async fn create_session(&self, session: &AgentSession) -> Result<()> {
         self.sessions
             .lock()

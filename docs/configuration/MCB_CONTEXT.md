@@ -18,7 +18,7 @@ Complete schema reference for `.mcp-context.toml` git-aware indexing configurati
 
 ## Overview
 
-`.mcp-context.toml` is an **optional** configuration file for v0.2.0 that enables:
+`.mcp-context.toml` is an**optional** configuration file for v0.2.0 that enables:
 
 - Multi-branch indexing with configurable depth
 - Smart file filtering with glob patterns
@@ -33,7 +33,7 @@ If the file doesn't exist, MCB uses sensible defaults for backward compatibility
 
 Place `.mcp-context.toml` in your repository root:
 
-```
+```text
 /path/to/repo/
 ├── .mcp-context.toml    ← Create this file
 ├── src/
@@ -77,7 +77,7 @@ include_submodules = true
 
 # Ignore Patterns: Files/directories to skip
 
-# Type: array of strings
+# Type: array of strings (1)
 
 # Default: [] (index everything)
 
@@ -250,7 +250,7 @@ include_submodules = "yes"# ❌ Should be boolean
 
 ```toml
 
-# If .mcp-context.toml is absent or section incomplete:
+# If .mcp-context.toml is absent or section incomplete
 [git]
 depth = 1000                    # Default
 branches = ["main", "HEAD"]     # Default
@@ -297,7 +297,7 @@ ignore_patterns = [
   "build/",
   "out/",
 
-  # Dependencies
+  ## Dependencies
   "node_modules/",
   ".venv/",
   "venv/",

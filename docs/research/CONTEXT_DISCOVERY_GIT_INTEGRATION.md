@@ -7,7 +7,7 @@
 
 ## Executive Summary
 
-Analysis of ADR-035 (Context Scout) against production-grade context management patterns reveals **three critical gaps**:
+Analysis of ADR-035 (Context Scout) against production-grade context management patterns reveals**three critical gaps**:
 
 1. **External Tracker Integration**: ADR-035 assumes all state in SQLite; doesn't address GitHub/GitLab/Jira APIs
 2. **Race Condition Prevention**: No handling of concurrent read-only queries on git2 + SQLite simultaneously
@@ -29,14 +29,14 @@ Analysis of ADR-035 (Context Scout) against production-grade context management 
 | Caching | moka TTL (30s default) | Time-based expiration |
 | Concurrency | `spawn_blocking()` wrapper | Isolate from Tokio runtime |
 
-**Strengths:**
+### Strengths
 
 - ✅ Zero shell dependencies (reproducible, secure)
 - ✅ Typed entities (`ProjectContext`, `GitContext`)
 - ✅ Efficient warm cache (< 1ms)
 - ✅ Reuses existing deps (git2, moka, sqlx)
 
-**Gaps:**
+### Gaps
 
 - ❌ No external tracker support (GitHub, GitLab, Jira)
 - ❌ No event-driven cache invalidation
@@ -47,9 +47,9 @@ Analysis of ADR-035 (Context Scout) against production-grade context management 
 
 ## 2. Production Git2 Usage Patterns
 
-### Why git2 vs. gix (gitoxide)?
+### Why git2 vs. gix (gitoxide)
 
-**From research:**
+### From research
 
 | Aspect | git2 | gix |
 | -------- | ------ | ----- |
@@ -60,7 +60,7 @@ Analysis of ADR-035 (Context Scout) against production-grade context management 
 | **Maturity** | 10+ years, battle-tested | 3-4 years, growing |
 | **In MCB deps** | ✅ Yes | ❌ No |
 
-**Decision Rationale (ADR-035):**
+### Decision Rationale (ADR-035)
 
 - git2 already in dependency tree → lower binary size
 - MCB targets small-to-medium repos where 5-20ms is acceptable
@@ -68,7 +68,7 @@ Analysis of ADR-035 (Context Scout) against production-grade context management 
 - **Verdict:** Correct choice for MCB's scale
 
 **Production Consideration:**
-For **large monorepos** (100K+ files), gix could reduce cold start from 500ms → 5ms. ADR-035 acknowledges this but defers.
+For**large monorepos** (100K+ files), gix could reduce cold start from 500ms → 5ms. ADR-035 acknowledges this but defers.
 
 ### Common git2 Patterns in Production Code
 
@@ -87,7 +87,7 @@ tokio::task::spawn_blocking(move || {
 .await?
 ```
 
-**Key Finding:** git2 `Repository` is thread-safe for **read-only operations**. Write operations (commits, branch creation) require serialization.
+**Key Finding:**git2 `Repository` is thread-safe for**read-only operations**. Write operations (commits, branch creation) require serialization.
 
 ---
 
@@ -196,7 +196,7 @@ pub async fn tracker_state(&self, project_id: &str) -> Result<TrackerContext> {
 
 ### Production Pattern: Tracker Abstraction
 
-Most tools implement a **tracker provider** layer:
+Most tools implement a**tracker provider** layer:
 
 ```rust
 // From GitLab/Jira integration patterns
@@ -231,13 +231,13 @@ impl IssueTrackerProvider for SqliteProvider {
 
 ### Rate Limiting & Error Handling
 
-**GitHub API:**
+### GitHub API
 
 - **Rate limit**: 60 req/hr unauthenticated, 5,000/hr authenticated
 - **Response headers**: `X-RateLimit-Remaining`, `X-RateLimit-Reset`
 - **Strategy**: Read headers, back off when approaching limit
 
-**Jira Cloud:**
+### Jira Cloud
 
 - **Rate limit**: Points-based (new as of 2026-03), ~1000 points/hour
 - **Response headers**: `RateLimit-Limit`, `RateLimit-Remaining`
@@ -308,7 +308,7 @@ let git_cache = Cache::builder()
     .build();
 ```
 
-**Evaluation:**
+### Evaluation
 
 | Aspect | ADR-035 | Production Grade |
 | -------- | --------- | ------------------ |
@@ -429,14 +429,14 @@ pub async fn after_commit(&self, repo_path: &Path) -> Result<()> {
 
 ### Where ADR-035 Differs from Claude-mem
 
-**Claude-mem (TypeScript + Node):**
+### Claude-mem (TypeScript + Node)
 
 - ✅ Local SQLite for everything
 - ✅ Chroma for semantic search (separate service)
 - ✅ Session isolation per workspace
 - ❌ No external API integration (intentional design)
 
-**MCB (Rust + Tokio):**
+### MCB (Rust + Tokio)
 
 - ✅ Can integrate with external APIs
 - ✅ Vector stores already abstracted (moka, encrypted, etc.)
@@ -469,7 +469,7 @@ pub trait IssueTrackerProvider: Send + Sync {
 }
 ```
 
-**Implementations:**
+### Implementations
 
 - `GitHubIssueProvider` — GitHub Issues API v3
 - `GitLabIssueProvider` — GitLab Issues API
@@ -494,7 +494,7 @@ pub trait CacheInvalidationSignal: Send + Sync {
 }
 ```
 
-**Integration in `CachedContextScout`:**
+### Integration in `CachedContextScout`
 
 ```rust
 impl CachedContextScout {
@@ -563,7 +563,7 @@ impl AdaptiveRateLimiter {
 
 ### Enhancement 4: Composite Snapshot Consistency
 
-**Extend `ProjectContext`:**
+### Extend `ProjectContext`
 
 ```rust
 pub struct ProjectContext {
@@ -687,7 +687,7 @@ discovery mode.
 
 ### Key Takeaway
 
-All production tools separate **local repo discovery** (git2 or gix) from
+All production tools separate**local repo discovery** (git2 or gix) from
 **external tracker discovery** (APIs). ADR-035 is correct to start with
 local-only, but should design for tracker integration from day one via trait
 abstraction.
@@ -698,7 +698,7 @@ abstraction.
 
 ### ADR-035 Assessment: **SOUND FOUNDATION, INCOMPLETE SCOPE**
 
-**Verdict:**
+### Verdict
 
 - ✅ Git discovery implementation is production-grade
 - ✅ Caching strategy appropriate for stated use case
@@ -727,6 +727,6 @@ abstraction.
 - Circuit breaker pattern
 - Graceful degradation when tracker unavailable
 
-These enhancements would make ADR-035 suitable for **production multi-tracker
+These enhancements would make ADR-035 suitable for**production multi-tracker
 deployments** while maintaining backward compatibility with the current
 SQLite-only baseline.

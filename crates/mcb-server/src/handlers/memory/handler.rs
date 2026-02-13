@@ -14,6 +14,7 @@ use super::{execution, inject, list_timeline, observation, quality_gate, session
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handler_helpers::resolve_identifier_precedence;
 use crate::handler_helpers::resolve_org_id;
 
 /// Handler for memory-related MCP tool operations.
@@ -108,6 +109,18 @@ impl MemoryHandler {
                     return Ok(to_contextual_tool_error(e));
                 }
             };
+        let resolved_project_id = resolve_identifier_precedence(
+            "project_id",
+            args.project_id.as_deref(),
+            Some(pattern.project_id.as_str()),
+        )?
+        .ok_or_else(|| {
+            McpError::invalid_params("project_id is required for error pattern store", None)
+        })?;
+        let pattern = ErrorPattern {
+            project_id: resolved_project_id,
+            ..pattern
+        };
 
         match self.memory_service.store_error_pattern(pattern).await {
             Ok(id) => ResponseFormatter::json_success(&serde_json::json!({

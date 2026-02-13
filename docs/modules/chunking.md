@@ -5,7 +5,7 @@
 
 ## Overview
 
-Chunking uses tree-sitter processors for **13 languages** via **12 parser implementations**. JavaScript processor handles both JavaScript and TypeScript using mode-specific behavior.
+Chunking uses tree-sitter processors for**13 languages**via**12 parser implementations**. JavaScript processor handles both JavaScript and TypeScript using mode-specific behavior.
 
 ## Language Processors
 
@@ -54,4 +54,4 @@ crates/mcb-providers/src/language/
 
 ---
 
-*Updated 2026-02-12 - Reflects current language processing architecture (v0.2.1)*
+### Updated 2026-02-12 - Reflects current language processing architecture (v0.2.1)

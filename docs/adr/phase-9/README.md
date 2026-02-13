@@ -2,7 +2,7 @@
 
 ## Overview
 
-Phase 9 implements the **Integrated Context System** for v0.4.0, building on Phase 8's workflow FSM and policy framework. This phase introduces knowledge graphs, freshness tracking, time-travel queries, and hybrid search capabilities.
+Phase 9 implements the**Integrated Context System** for v0.4.0, building on Phase 8's workflow FSM and policy framework. This phase introduces knowledge graphs, freshness tracking, time-travel queries, and hybrid search capabilities.
 
 **Timeline**: Feb 17 - Mar 16, 2026 (4 weeks)
 **ADRs**: ADR-041 through ADR-046 (6 decisions)
@@ -26,7 +26,7 @@ Defines the 5-layer context system architecture:
 4. Versioning & Snapshots (temporal queries, snapshot management)
 5. Integration & Policies (policy enforcement, compensation triggers)
 
-**Key Decisions**:
+Key Decisions:
 
 - 5-layer architecture with clear separation of concerns
 - Knowledge graph as central component (petgraph-based)
@@ -49,13 +49,13 @@ Defines the 5-layer context system architecture:
 **Summary**:
 Defines the knowledge graph structure for representing code relationships:
 
-**Graph Components**:
+Graph Components:
 
 - **Nodes**: Code entities (functions, classes, modules, types)
 - **Edges**: Relationships (calls, imports, extends, implements, uses)
 - **Metadata**: Freshness (last modified, staleness signals), version, source
 
-**Relationship Types**:
+Relationship Types:
 
 - `calls`: Function A calls Function B
 - `imports`: Module A imports Module B
@@ -64,14 +64,14 @@ Defines the knowledge graph structure for representing code relationships:
 - `uses`: Code A uses Type B
 - `defines`: Module A defines Function B
 
-**Freshness Metadata**:
+Freshness Metadata:
 
 - Last modified timestamp
 - Commit hash
 - Branch information
 - Staleness signals (deprecated, outdated, legacy)
 
-**Graph Operations**:
+Graph Operations:
 
 - Node insertion/retrieval
 - Edge insertion/retrieval
@@ -94,27 +94,27 @@ Defines the knowledge graph structure for representing code relationships:
 **Summary**:
 Defines the hybrid search engine combining semantic and keyword search:
 
-**Search Modes**:
+Search Modes:
 
 - **Semantic**: Embedding-based similarity search
 - **Keyword**: Full-text index (BM25, TF-IDF)
 - **Hybrid**: RRF (Reciprocal Rank Fusion) combining both
 
-**RRF Algorithm**:
+RRF Algorithm:
 
-```
+```text
 score(d) = Σ 1 / (k + rank(d))
 ```
 
 Where k=60 (constant), rank is position in each ranking
 
-**Freshness Filtering**:
+Freshness Filtering:
 
 - Filter results by max age (days)
 - Apply staleness signals (deprecated, outdated, legacy)
 - Rank by freshness score
 
-**Result Ranking**:
+Result Ranking:
 
 1. RRF score (semantic + keyword)
 2. Freshness score (recency + staleness)
@@ -135,7 +135,7 @@ Where k=60 (constant), rank is position in each ranking
 **Summary**:
 Evaluates and selects embedding and search models for v0.4.0:
 
-**Embedding Models**:
+Embedding Models:
 
 - **OpenAI** (text-embedding-3-small): High quality, cost-effective
 - **VoyageAI** (voyage-2): Specialized for code, high quality
@@ -143,19 +143,19 @@ Evaluates and selects embedding and search models for v0.4.0:
 - **Gemini** (embedding-001): Google's model, good quality
 - **FastEmbed** (BAAI/bge-small-en-v1.5): Fast, local, good quality
 
-**Search Algorithms**:
+Search Algorithms:
 
 - **BM25**: Keyword search baseline
 - **TF-IDF**: Term frequency-inverse document frequency
 - **RRF**: Reciprocal Rank Fusion for hybrid search
 
-**Trade-offs**:
+Trade-offs:
 
 - Quality vs. Cost (OpenAI vs. Ollama)
 - Speed vs. Accuracy (FastEmbed vs. VoyageAI)
 - Privacy vs. Features (Ollama vs. OpenAI)
 
-**Recommendations**:
+Recommendations:
 
 - Default: OpenAI (best quality/cost balance)
 - Privacy-first: Ollama (local, no API calls)
@@ -174,26 +174,26 @@ Evaluates and selects embedding and search models for v0.4.0:
 **Summary**:
 Defines snapshot-based versioning for time-travel queries:
 
-**Snapshot Structure**:
+Snapshot Structure:
 
 - Immutable capture of code state at specific commit/date
 - Includes: graph, embeddings, metadata, freshness info
 - Identified by: commit hash, tag, date
 
-**Snapshot Operations**:
+Snapshot Operations:
 
 - Create: Capture current state
 - Retrieve: Load snapshot by commit/tag/date
 - Compare: Diff between snapshots
 - Cleanup: Retention policies (N commits, N days)
 
-**Temporal Queries**:
+Temporal Queries:
 
 - "Show code as it was at v0.2.0"
 - "How did this function evolve?"
 - "When was this pattern introduced?"
 
-**Retention Policies**:
+Retention Policies:
 
 - Keep last N commits (e.g., 100)
 - Keep last N days (e.g., 90)
@@ -214,7 +214,7 @@ Defines snapshot-based versioning for time-travel queries:
 **Summary**:
 Defines integration patterns for context system with MCP tools and workflow FSM:
 
-**MCP Tools**:
+MCP Tools:
 
 - `search`: Semantic search with freshness, snapshots, policies
 - `index`: Indexing operations with snapshot creation
@@ -224,9 +224,9 @@ Defines integration patterns for context system with MCP tools and workflow FSM:
 - `project`: Project workflow operations
 - `vcs`: Repository operations
 
-**Tool Parameters**:
+Tool Parameters:
 
-```
+```text
 search:
   --query: Search query
   --freshness-max-age: Max age in days
@@ -241,19 +241,19 @@ index:
   --snapshot-create: Create snapshot
 ```
 
-**Policy Enforcement**:
+Policy Enforcement:
 
 - Freshness gates: Block if context too old
 - Validation gates: Block if policy violated
 - Compensation hooks: Trigger refresh/rollback
 
-**FSM Integration**:
+FSM Integration:
 
 - Context gates at state transitions
 - Policy enforcement at boundaries
 - Compensation triggers on violations
 
-**Event System**:
+Event System:
 
 - Context updated event
 - Policy violation event
@@ -310,7 +310,7 @@ See [`docs/implementation/phase-9-roadmap.md`](../../implementation/phase-9-road
 - MCP Tools: 15+ integration tests
 - End-to-end: 5+ tests
 
-## Success Criteria
+### Success Criteria
 
 - [ ] All ADR-041-046 complete
 - [ ] 70+ tests passing

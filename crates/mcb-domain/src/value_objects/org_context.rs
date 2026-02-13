@@ -41,22 +41,3 @@ impl Default for OrgContext {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn default_org_context_uses_bootstrap_id() {
-        let ctx = OrgContext::default();
-        assert_eq!(ctx.org_id.as_str(), DEFAULT_ORG_ID);
-        assert_eq!(ctx.org_name, "default");
-    }
-
-    #[test]
-    fn custom_org_context() {
-        let ctx = OrgContext::new(OrgId::new("org-123"), "acme".to_string());
-        assert_eq!(ctx.org_id.as_str(), "org-123");
-        assert_eq!(ctx.org_name, "acme");
-    }
-}

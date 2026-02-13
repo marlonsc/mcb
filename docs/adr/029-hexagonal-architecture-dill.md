@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 029: Hexagonal Architecture with dill IoC
+# ADR 029: Hexagonal Architecture with dill IoC
 
 ## Status
 

@@ -19,13 +19,13 @@ Memory Context Browser uses a hierarchical configuration system:
 
 All environment variables use the pattern:
 
-```
+```text
 MCP__<SECTION>__<NESTED_SECTION>__<PARAMETER>
 ```
 
 For nested settings, use double underscores:
 
-```
+```text
 MCP_CACHE__NAMESPACES__EMBEDDINGS__TTL_SECONDS=7200
 ```
 
@@ -40,7 +40,7 @@ MCP_CACHE__NAMESPACES__EMBEDDINGS__TTL_SECONDS=7200
 | `MCP__SERVER__NETWORK__HOST` | `0.0.0.0` | String | Unified server bind address |
 | `MCP__SERVER__NETWORK__PORT` | `3000` | Integer | Unified HTTP port (MCP + Admin + Metrics) |
 
-**Usage**:
+### Usage
 
 ```bash
 export MCP__SERVER__NETWORK__HOST=0.0.0.0
@@ -60,7 +60,7 @@ export MCP__SERVER__NETWORK__PORT=9000
 | `MCP_CACHE__DEFAULT_TTL_SECONDS` | `3600` | Integer | Default TTL in seconds (1 hour) |
 | `MCP_CACHE__MAX_SIZE` | `10000` | Integer | Max cache entries (for local Moka mode) |
 
-**Current Architecture Note**:
+### Current Architecture Note
 
 - If `REDIS_URL` is**empty**→ Uses Moka (local in-memory cache)
 - If `REDIS_URL` is**non-empty**→ Uses Redis (distributed cache)
@@ -68,7 +68,7 @@ export MCP__SERVER__NETWORK__PORT=9000
 **Migration Path**(Phase 2):
 This will be replaced with:
 
-```
+```text
 MCP_CACHE__BACKEND=local|redis
 MCP_CACHE__TTL_SECONDS=<seconds>
 MCP_REDIS_URL=<url>  (when backend=redis)
@@ -80,7 +80,7 @@ Each namespace has its own TTL and size settings:
 
 #### Embeddings Cache
 
-```
+```text
 MCP_CACHE__NAMESPACES__EMBEDDINGS__TTL_SECONDS=7200      # 2 hours
 MCP_CACHE__NAMESPACES__EMBEDDINGS__MAX_ENTRIES=5000
 MCP_CACHE__NAMESPACES__EMBEDDINGS__COMPRESSION=true
@@ -88,7 +88,7 @@ MCP_CACHE__NAMESPACES__EMBEDDINGS__COMPRESSION=true
 
 #### Search Results Cache
 
-```
+```text
 MCP_CACHE__NAMESPACES__SEARCH_RESULTS__TTL_SECONDS=1800   # 30 minutes
 MCP_CACHE__NAMESPACES__SEARCH_RESULTS__MAX_ENTRIES=2000
 MCP_CACHE__NAMESPACES__SEARCH_RESULTS__COMPRESSION=false
@@ -96,7 +96,7 @@ MCP_CACHE__NAMESPACES__SEARCH_RESULTS__COMPRESSION=false
 
 #### Metadata Cache
 
-```
+```text
 MCP_CACHE__NAMESPACES__METADATA__TTL_SECONDS=3600         # 1 hour
 MCP_CACHE__NAMESPACES__METADATA__MAX_ENTRIES=1000
 MCP_CACHE__NAMESPACES__METADATA__COMPRESSION=false
@@ -104,7 +104,7 @@ MCP_CACHE__NAMESPACES__METADATA__COMPRESSION=false
 
 #### Provider Responses Cache
 
-```
+```text
 MCP_CACHE__NAMESPACES__PROVIDER_RESPONSES__TTL_SECONDS=300  # 5 minutes
 MCP_CACHE__NAMESPACES__PROVIDER_RESPONSES__MAX_ENTRIES=3000
 MCP_CACHE__NAMESPACES__PROVIDER_RESPONSES__COMPRESSION=true
@@ -112,13 +112,13 @@ MCP_CACHE__NAMESPACES__PROVIDER_RESPONSES__COMPRESSION=true
 
 #### Sync Batches Cache
 
-```
+```text
 MCP_CACHE__NAMESPACES__SYNC_BATCHES__TTL_SECONDS=86400    # 24 hours
 MCP_CACHE__NAMESPACES__SYNC_BATCHES__MAX_ENTRIES=1000
 MCP_CACHE__NAMESPACES__SYNC_BATCHES__COMPRESSION=false
 ```
 
-**Usage Example**:
+### Usage Example
 
 ```bash
 
@@ -148,7 +148,7 @@ export MCP_CACHE__NAMESPACES__EMBEDDINGS__TTL_SECONDS=14400
 | `MCP_NATS_RETENTION_HOURS` | `1` | Integer | Event retention in hours |
 | `MCP_NATS_MAX_MSGS` | `10000` | Integer | Max messages per subject |
 
-**Usage**:
+### Usage
 
 ```bash
 
@@ -174,12 +174,12 @@ export MCP_NATS_RETENTION_HOURS=24
 | `JWT_EXPIRATION` | `86400` | Integer | JWT expiration in seconds (24 hours) |
 | `ADMIN_PASSWORD` | `` (empty) | String | Admin account password (min 8 chars) |
 
-**Security Model**:
+### Security Model
 
 - If**both**`JWT_SECRET` and `ADMIN_PASSWORD` are set → Auth**enabled**
 - If**either**is empty → Auth**disabled**(graceful degradation)
 
-**Production Setup**:
+### Production Setup
 
 ```bash
 export JWT_SECRET="your-32-character-secret-key-here-minimum"
@@ -217,12 +217,12 @@ export JWT_EXPIRATION="3600"  # 1 hour
 | `DATABASE_IDLE_TIMEOUT_SECS` | `600` | Integer | Idle timeout (10 min) |
 | `DATABASE_CONNECTION_TIMEOUT_SECS` | `30` | Integer | Connection establishment timeout |
 
-**Security Model**:
+### Security Model
 
 - If `DATABASE_URL` is empty → Database**disabled**(no storage)
 - If `DATABASE_URL` is set → Database**enabled**with connection pooling
 
-**Production Setup**:
+### Production Setup
 
 ```bash
 export DATABASE_URL="postgresql://user:password@localhost:5432/mcp_context_browser"
@@ -263,14 +263,14 @@ See**Rate Limiting**section below.
 
 ### Memory Backend (Single-Node)
 
-```
+```text
 MCP_RATE_LIMIT__BACKEND__TYPE=memory
 MCP_RATE_LIMIT__BACKEND__MAX_ENTRIES=10000
 ```
 
 ### Redis Backend (Clustered)
 
-```
+```text
 MCP_RATE_LIMIT__BACKEND__TYPE=redis
 MCP_RATE_LIMIT__BACKEND__URL=redis://localhost:6379
 ```
@@ -445,7 +445,7 @@ export ADMIN_PASSWORD=dev-password
 export JWT_SECRET=dev-secret-key-32-chars-minimum
 ```
 
-### Single-Node Production
+## Single-Node Production
 
 ```bash
 
@@ -457,7 +457,7 @@ export ADMIN_PASSWORD=<secure-password>
 export JWT_SECRET=<secure-32-char-key>
 ```
 
-### Clustered Production
+## Clustered Production
 
 ```bash
 
@@ -470,7 +470,7 @@ export MCP_RATE_LIMIT__BACKEND__TYPE=redis
 export MCP_RATE_LIMIT__BACKEND__URL=redis://redis-cluster:6379
 ```
 
-### Minimal Setup (No Optional Systems)
+## Minimal Setup (No Optional Systems)
 
 ```bash
 
@@ -495,7 +495,7 @@ unset MCP_METRICS_ENABLED
 
 All configuration is validated at startup:
 
-```
+```text
 ✅ Configuration validated successfully
 ℹ️  Server: http://127.0.0.1:3000
 ℹ️  Cache: Local (Moka) mode
@@ -505,23 +505,23 @@ All configuration is validated at startup:
 
 ### Common Validation Errors
 
-**Database Disabled**
+### Database Disabled
 
-```
+```text
 ⚠️  Warning: Database disabled (DATABASE_URL not set)
    System will operate without persistent storage
 ```
 
-**Auth Disabled**
+### Auth Disabled
 
-```
+```text
 ⚠️  Warning: Authentication disabled
    Set JWT_SECRET and ADMIN_PASSWORD to enable auth
 ```
 
-**Weak JWT Secret**
+### Weak JWT Secret
 
-```
+```text
 ❌ Error: JWT_SECRET too short (must be ≥ 32 characters)
 ```
 
@@ -571,7 +571,7 @@ This will replace:
 export MCP__SERVER__NETWORK__PORT=9000
 ```
 
-### Cache Not Working
+## Cache Not Working
 
 ```bash
 

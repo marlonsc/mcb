@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR 025: Figment Configuration Migration
+# ADR 025: Figment Configuration Migration
 
 ## Status
 
@@ -143,7 +143,7 @@ Figment provides dedicated providers for common configuration sources:
 
 ### Migration Pattern
 
-**Before (config crate — removed in v0.1.2):**
+Before (config crate — removed in v0.1.2):
 
 ```rust
 use config::{Config, Environment, File};
@@ -169,7 +169,7 @@ let app_config: AppConfig = config.try_deserialize()
     .context("Failed to deserialize configuration")?;
 ```
 
-**After (Figment — current production pattern):**
+After (Figment — current production pattern):
 
 <!-- markdownlint-disable MD013 -->
 ```rust
@@ -196,7 +196,7 @@ validate_app_config(&app_config)?;
 ### Profile Support (available but not currently used)
 
 Figment enables environment-specific configuration through profile-based
-composition. This capability is available but **not currently used** in MCB's
+composition. This capability is available but**not currently used** in MCB's
 `ConfigLoader` pipeline. MCB achieves environment differentiation via the
 optional override file and `MCP__` environment variables instead.
 
@@ -227,7 +227,7 @@ let prod_config: AppConfig = Figment::new()
 
 Figment provides significantly better error messages:
 
-**Config crate error:**
+Config crate error:
 
 <!-- markdownlint-disable MD013 -->
 ```text
@@ -235,7 +235,7 @@ Error: TOML parse error: invalid type: integer `123`, expected a string for key 
 ```
 <!-- markdownlint-enable MD013 -->
 
-**Figment error:**
+Figment error:
 
 <!-- markdownlint-disable MD013 -->
 ```text

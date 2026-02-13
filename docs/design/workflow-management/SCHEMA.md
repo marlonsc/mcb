@@ -28,7 +28,7 @@ pub enum ObservationType {
 }
 ```
 
-**Add**:
+### Add
 
 ```rust
 pub enum ObservationType {
@@ -70,7 +70,7 @@ pub enum ExecutionType {
 
 ### 1.3 ErrorMetadata Extension
 
-**Add to Error observation metadata**:
+### Add to Error observation metadata
 
 ```rust
 pub struct ErrorMetadata {
@@ -359,4 +359,4 @@ LIMIT 100;
 **Total**: ~70 MB/year
 
 ---
-*Last updated: 2026-02-03 - aligned with MCB ADR naming patterns*
+> Last updated: 2026-02-03 - aligned with MCB ADR naming patterns

@@ -13,4 +13,4 @@ Canonical configuration docs now live under `docs/configuration/`.
 - This file is kept as a stable entry point for existing links.
 - Detailed, long-form configuration guidance is maintained in the two files above.
 
-*Updated 2026-02-12 - consolidated from duplicate configuration docs*
+### Updated 2026-02-12 - consolidated from duplicate configuration docs

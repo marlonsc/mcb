@@ -9,7 +9,7 @@
 
 Snapshot management for incremental codebase tracking. Tracks file changes using SHA256 hashing for efficient incremental sync. Avoids reprocessing unchanged files during codebase indexing.
 
-## Components
+### Components
 
 ### SnapshotProvider Trait (`mcb-domain`)
 
@@ -66,4 +66,4 @@ pub use adapters::infrastructure::snapshot::{NullSnapshotProvider, NullStateStor
 
 ---
 
-*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

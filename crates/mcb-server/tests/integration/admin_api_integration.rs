@@ -22,10 +22,10 @@ use serde_json::json;
 
 /// Mock implementation of PerformanceMetricsInterface for testing
 #[derive(Clone)]
-struct MockMetrics;
+struct TestMetrics;
 
 #[async_trait::async_trait]
-impl PerformanceMetricsInterface for MockMetrics {
+impl PerformanceMetricsInterface for TestMetrics {
     fn uptime_secs(&self) -> u64 {
         3600
     }
@@ -49,10 +49,10 @@ impl PerformanceMetricsInterface for MockMetrics {
 
 /// Mock implementation of IndexingOperationsInterface for testing
 #[derive(Clone)]
-struct MockIndexing;
+struct TestIndexing;
 
 #[async_trait::async_trait]
-impl IndexingOperationsInterface for MockIndexing {
+impl IndexingOperationsInterface for TestIndexing {
     fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
         HashMap::new()
     }
@@ -74,10 +74,10 @@ impl IndexingOperationsInterface for MockIndexing {
 
 /// Mock implementation of EventBusProvider for testing
 #[derive(Clone)]
-struct MockEventBus;
+struct TestEventBus;
 
 #[async_trait::async_trait]
-impl EventBusProvider for MockEventBus {
+impl EventBusProvider for TestEventBus {
     async fn publish_event(&self, _event: DomainEvent) -> mcb_domain::Result<()> {
         Ok(())
     }
@@ -104,9 +104,9 @@ impl EventBusProvider for MockEventBus {
 
 /// Test helper to create AdminApi instance with mocks
 fn create_test_admin_api() -> AdminApi {
-    let metrics = Arc::new(MockMetrics) as Arc<dyn PerformanceMetricsInterface>;
-    let indexing = Arc::new(MockIndexing) as Arc<dyn IndexingOperationsInterface>;
-    let event_bus = Arc::new(MockEventBus) as Arc<dyn EventBusProvider>;
+    let metrics = Arc::new(TestMetrics) as Arc<dyn PerformanceMetricsInterface>;
+    let indexing = Arc::new(TestIndexing) as Arc<dyn IndexingOperationsInterface>;
+    let event_bus = Arc::new(TestEventBus) as Arc<dyn EventBusProvider>;
 
     let config = AdminApiConfig {
         port: 9091,

@@ -10,7 +10,7 @@
 
 Repository pattern implementation for data access abstraction. Provides repository interfaces and null implementations following the Repository pattern to separate data access logic from business logic.
 
-## Components
+### Components
 
 ### Repository Traits (`mcb-domain`)
 
@@ -80,4 +80,4 @@ pub use adapters::repository::{NullChunkRepository, NullSearchRepository};
 
 ---
 
-*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

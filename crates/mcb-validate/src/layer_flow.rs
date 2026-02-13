@@ -345,17 +345,3 @@ impl crate::validator_trait::Validator for LayerFlowValidator {
             .collect())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use tempfile::TempDir;
-
-    use super::LayerFlowValidator;
-
-    #[test]
-    fn test_layer_flow_init() {
-        // Just verify it doesn't panic if initialized correctly
-        let temp = TempDir::new().unwrap();
-        let _ = LayerFlowValidator::new(temp.path());
-    }
-}

@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 021: Dependency Management Strategy
+# ADR 021: Dependency Management Strategy
 
 ## Status
 
@@ -33,7 +33,7 @@ Integrating PMAT adds new dependencies:
 
 ## Decision
 
-**Workspace-level dependency management**:
+Workspace-level dependency management:
 
 ```toml
 
@@ -48,10 +48,10 @@ members = [
     "crates/mcb-infrastructure",
     "crates/mcb-server",
     "crates/mcb-validate",
-    # Future:
-    # "libs/tree-sitter-analysis",
-    # "libs/code-metrics",
-    # "libs/analysis-core",
+    # Future
+    # "libs/tree-sitter-analysis"
+    # "libs/code-metrics"
+    # "libs/analysis-core"
 ]
 
 [workspace.dependencies]
@@ -156,18 +156,18 @@ shaku_derive = "0.6"
 
 ## Consequences
 
-**Positive**:
+Positive:
 
 - Incremental dependency addition
 - Feature flags reduce binary size
 - Workspace deduplication
 
-**Negative**:
+Negative:
 
 - Larger dependency tree
 - Longer compile times
 
-**Mitigation**:
+Mitigation:
 
 - Feature flags for optional deps
 - Workspace caching
@@ -181,4 +181,4 @@ shaku_derive = "0.6"
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 workspace structure*
+Updated 2026-01-17 - Reflects v0.1.2 workspace structure

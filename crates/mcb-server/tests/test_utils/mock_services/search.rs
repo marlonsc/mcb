@@ -11,7 +11,7 @@ use mcb_domain::value_objects::{CollectionId, SearchResult};
 use crate::test_utils::helpers::{arc_mutex, arc_mutex_vec};
 
 /// Mock implementation of SearchServiceInterface for testing
-pub struct MockSearchService {
+pub struct TestSearchService {
     /// Pre-configured results to return
     pub results: Arc<Mutex<Vec<SearchResult>>>,
     /// Whether the next call should fail
@@ -20,7 +20,7 @@ pub struct MockSearchService {
     pub error_message: Arc<Mutex<String>>,
 }
 
-impl MockSearchService {
+impl TestSearchService {
     /// Create a new mock search service
     pub fn new() -> Self {
         Self {
@@ -44,14 +44,14 @@ impl MockSearchService {
     }
 }
 
-impl Default for MockSearchService {
+impl Default for TestSearchService {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl SearchServiceInterface for MockSearchService {
+impl SearchServiceInterface for TestSearchService {
     async fn search(
         &self,
         _collection: &CollectionId,

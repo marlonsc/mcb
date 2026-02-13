@@ -52,10 +52,13 @@ impl VcsEntityHandler {
             {
             // -- Repository --
             (VcsEntityAction::Create, VcsEntityResource::Repository) => {
+                let project_id = args.project_id.as_deref().ok_or_else(|| {
+                    McpError::invalid_params("project_id required for repository create", None)
+                })?;
                 let mut repo: Repository = require_data(args.data, "data required for create")?;
                 repo.project_id = resolve_identifier_precedence(
                     "project_id",
-                    args.project_id.as_deref(),
+                    Some(project_id),
                     Some(repo.project_id.as_str()),
                 )?
                 .ok_or_else(|| {
@@ -67,7 +70,19 @@ impl VcsEntityHandler {
             }
             (VcsEntityAction::Get, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_repository(&org_id, &id).await)?)
+                let repository = map_opaque_error(self.repo.get_repository(&org_id, &id).await)?;
+                if let Some(project_id) = args.project_id.as_deref()
+                    && repository.project_id != project_id
+                {
+                    return Err(McpError::invalid_params(
+                        format!(
+                            "conflicting project_id: args='{project_id}', repository='{}'",
+                            repository.project_id
+                        ),
+                        None,
+                    ));
+                }
+                ok_json(&repository)
             }
             (VcsEntityAction::List, VcsEntityResource::Repository) => {
                 let project_id = args.project_id.as_deref().ok_or_else(|| {
@@ -76,21 +91,47 @@ impl VcsEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_repositories(&org_id, project_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Repository) => {
+                let project_id = args.project_id.as_deref().ok_or_else(|| {
+                    McpError::invalid_params("project_id required for repository update", None)
+                })?;
                 let mut repo: Repository = require_data(args.data, "data required for update")?;
                 repo.project_id = resolve_identifier_precedence(
                     "project_id",
-                    args.project_id.as_deref(),
+                    Some(project_id),
                     Some(repo.project_id.as_str()),
                 )?
                 .ok_or_else(|| {
                     McpError::invalid_params("project_id required for repository update", None)
                 })?;
+                let existing = map_opaque_error(self.repo.get_repository(&org_id, &repo.id).await)?;
+                if existing.project_id != repo.project_id {
+                    return Err(McpError::invalid_params(
+                        format!(
+                            "conflicting project_id: payload='{}', repository='{}'",
+                            repo.project_id, existing.project_id
+                        ),
+                        None,
+                    ));
+                }
                 repo.org_id = org_id.to_string();
                 map_opaque_error(self.repo.update_repository(&repo).await)?;
                 ok_text("updated")
             }
             (VcsEntityAction::Delete, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
+                let project_id = args.project_id.as_deref().ok_or_else(|| {
+                    McpError::invalid_params("project_id required for repository delete", None)
+                })?;
+                let existing = map_opaque_error(self.repo.get_repository(&org_id, &id).await)?;
+                if existing.project_id != project_id {
+                    return Err(McpError::invalid_params(
+                        format!(
+                            "conflicting project_id: args='{project_id}', repository='{}'",
+                            existing.project_id
+                        ),
+                        None,
+                    ));
+                }
                 map_opaque_error(self.repo.delete_repository(&org_id, &id).await)?;
                 ok_text("deleted")
             }

@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR-035: Context Scout — Project State Discovery
+# ADR-035: Context Scout — Project State Discovery
 
 ## Status
 
@@ -19,11 +19,11 @@ implementation_status: Complete
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM)
 - **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment)
-- **Series:** [ADR-034](./034-workflow-core-fsm.md) → **ADR-035** → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
+- **Series:**[ADR-034](./034-workflow-core-fsm.md) →**ADR-035** → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
 
 ## Context
 
-ADR-034 defines the workflow FSM and its persistence layer. The FSM transitions between states (Initializing → Ready → Planning → Executing → ...), but the transition from `Initializing` to `Ready` requires a **context snapshot** — a typed view of the current project state.
+ADR-034 defines the workflow FSM and its persistence layer. The FSM transitions between states (Initializing → Ready → Planning → Executing → ...), but the transition from `Initializing` to `Ready` requires a**context snapshot** — a typed view of the current project state.
 
 Today, context discovery is scattered:
 
@@ -49,7 +49,7 @@ Today, context discovery is scattered:
 
 ### 1. VCS Provider Abstraction (Trait-Based Design)
 
-All VCS operations **must** go through the `VcsProvider` trait. No direct `git2` calls anywhere in the codebase (except within the trait implementation). This enables:
+All VCS operations**must** go through the `VcsProvider` trait. No direct `git2` calls anywhere in the codebase (except within the trait implementation). This enables:
 
 - **MVP**: `Git2Provider` (using `git2` already in deps, non-async FFI calls wrapped in `spawn_blocking()`)
 - **Phase 2+**: Alternative implementations (GitHub API, GitLab API, Mercurial, etc.) without changing consumer code
@@ -672,7 +672,7 @@ impl VcsProvider for Git2Provider {
 }
 ```
 
-**Key Implementation Patterns:**
+Key Implementation Patterns:
 
 1. **spawn_blocking() for git2 FFI**: All git2 calls run on Tokio's blocking thread pool
 2. **No direct git2 exposure**: Other crates never import `git2`
@@ -683,7 +683,7 @@ impl VcsProvider for Git2Provider {
 
 ### 2. Worktree Lifecycle
 
-Each `WorkflowSession` gets a dedicated git worktree, providing **process isolation**, **safety**, and **easy rollback** for operator work.
+Each `WorkflowSession` gets a dedicated git worktree, providing**process isolation**, **safety**, and**easy rollback** for operator work.
 
 #### Worktree Structure
 
@@ -700,7 +700,7 @@ Each `WorkflowSession` gets a dedicated git worktree, providing **process isolat
 └── ...
 ```
 
-Each worktree is a **lightweight, linked checkout** of a specific branch, not a full clone. The `.git` directory is a reference to the main repo's `.git/` via `git worktree` mechanism.
+Each worktree is a**lightweight, linked checkout** of a specific branch, not a full clone. The `.git` directory is a reference to the main repo's `.git/` via `git worktree` mechanism.
 
 #### Lifecycle: 7-Step Workflow
 
@@ -768,7 +768,7 @@ vcs.remove_worktree(&worktree_path)?;
 
 #### Concurrency & Isolation
 
-**Multiple Sessions = Multiple Worktrees:**
+Multiple Sessions = Multiple Worktrees:
 
 ```text
 Session A: task-auth
@@ -1370,15 +1370,15 @@ impl ContextScoutProvider for CachedContextScout {
 
 [context]
 
-# Cache TTL in seconds (default 30s).
+# Cache TTL in seconds (default 30s)
 
-# Lower for active development, higher for CI.
+# Lower for active development, higher for CI
 cache_ttl_seconds = 30
 
-# Maximum recent commits to include in GitContext.
+# Maximum recent commits to include in GitContext
 max_recent_commits = 10
 
-# Project identifier for tracker queries.
+# Project identifier for tracker queries
 project_id = "mcb"
 ```
 
@@ -1400,7 +1400,7 @@ fn default_cache_ttl() -> u64 { 30 }
 fn default_max_commits() -> usize { 10 }
 ```
 
-### 9. Provider Registration (linkme)
+## 9. Provider Registration (linkme)
 
 ```rust
 // mcb-application/src/registry/context.rs
@@ -1609,8 +1609,8 @@ WHERE i.status = 'open'
 
 ## References
 
-- [git2 crate](https://crates.io/crates/git2) — Rust bindings for libgit2
-- [moka crate](https://crates.io/crates/moka) — Concurrent cache (already in MCB)
+- [git2 crate](https://docs.rs/git2/latest/git2/) — Rust bindings for libgit2
+- [moka crate](https://docs.rs/moka/latest/moka/) — Concurrent cache (already in MCB)
 - [gitui source](https://github.com/extrawurst/gitui) — Reference for git2
   status patterns
 - [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — FSM and

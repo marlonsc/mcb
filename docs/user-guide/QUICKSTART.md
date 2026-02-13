@@ -14,7 +14,7 @@ tar xzf mcb-linux-x86_64.tar.gz
 sudo mv mcb /usr/local/bin/
 ```
 
-### From Source
+## From Source
 
 ```bash
 git clone https://github.com/marlonsc/mcb.git
@@ -46,7 +46,7 @@ export EMBEDDING_PROVIDER=ollama
 export OLLAMA_BASE_URL=http://localhost:11434
 ```
 
-### Option C: FastEmbed (Local, No Setup)
+## Option C: FastEmbed (Local, No Setup)
 
 ```bash
 export EMBEDDING_PROVIDER=fastembed
@@ -118,7 +118,7 @@ Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Ko
 # Start Milvus with Docker
 docker run -d --name milvus -p 19530:19530 milvusdb/milvus:latest
 
-# Configure
+# Configure (1)
 export VECTOR_STORE_PROVIDER=milvus
 export MILVUS_ADDRESS=http://localhost:19530
 ```
@@ -136,7 +136,7 @@ export OPENAI_API_KEY=sk-...
 export VOYAGE_API_KEY=...
 ```
 
-### "Connection refused"
+## "Connection refused"
 
 Check if Ollama/Milvus is running:
 

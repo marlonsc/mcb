@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR-043: Hybrid Search & Discovery for Context
+# ADR-043: Hybrid Search & Discovery for Context
 
 **Status**: Proposed
 **Date**: 2026-02-05
@@ -20,20 +20,20 @@ implementation_status: Incomplete
 
 ## Context
 
-ADR-042 builds a knowledge graph of code relationships. ADR-043 specifies the **search engine** that queries this graph alongside:
+ADR-042 builds a knowledge graph of code relationships. ADR-043 specifies the**search engine** that queries this graph alongside:
 
 - Full-text search (tantivy BM25 on code content)
 - Vector embeddings (semantic similarity via existing MCB vector stores)
 - Graph traversal (related code discovery)
 - Freshness weighting (prefer recent context)
 
-into a unified **hybrid search** that returns ranked results with explicit provenance.
+into a unified**hybrid search** that returns ranked results with explicit provenance.
 
 ## Decision
 
 ### 1. Hybrid Search Architecture: Compose Multiple Signals
 
-```
+```text
 User Query
     ↓
 ┌─────────────────┬──────────────────┬───────────────────┐
@@ -299,7 +299,7 @@ impl UnifiedSearchEngine {
 
 **Issue**: HybridSearchEngine was incorrectly shown as a provider trait.
 
-**Fix**: Renamed to `ContextSearchService` and clarified as an **application-layer concrete service** (not a trait) that:
+**Fix**: Renamed to `ContextSearchService` and clarified as an**application-layer concrete service** (not a trait) that:
 
 - Lives in `mcb-application/src/use_cases/context_search.rs`
 - **COMPOSES** three port traits from `mcb-domain`:
@@ -338,7 +338,7 @@ impl UnifiedSearchEngine {
 
 **Target**: 36+ tests, 85%+ coverage on search engine
 
-## Success Criteria
+### Success Criteria
 
 - ✅ Search completes in <500ms for 100k nodes
 - ✅ RRF fusion balanced (no single signal dominates)

@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Partial
 ---
 
-## ADR 028: Advanced Code Browser UI v0.2.0
+# ADR 028: Advanced Code Browser UI v0.2.0
 
 ## Status
 
@@ -35,14 +35,14 @@ implementation_status: Partial
 v0.1.2 provides basic code browsing with file listing and chunk display. Users
 need IDE-like capabilities for deep code exploration.
 
-**Current v0.1.2 capabilities:**
+Current v0.1.2 capabilities:
 
 - List indexed collections with stats (vector count, file count, provider)
 - List files in a collection with language badges
 - View code chunks with Prism.js syntax highlighting
 - Navigate via breadcrumbs and nav links
 
-**User demand for v0.2.0:**
+User demand for v0.2.0:
 
 - Tree view navigation for large codebases
 - Full syntax highlighting with line numbers
@@ -60,7 +60,7 @@ Implement advanced code browser in v0.2.0 with IDE-like capabilities:
 - **Tree view** with collapsible directories
 - **Breadcrumb navigation** for file paths
 - **Quick file search** (fuzzy match on indexed files)
-- **Recent files** and **favorites**
+- **Recent files**and**favorites**
 - **Keyboard shortcuts** (vim-like optional)
 
 ### 2. Code Display
@@ -151,7 +151,7 @@ pub struct FileTreeNode {
 }
 ```
 
-**New REST endpoint:**
+New REST endpoint:
 
 ```rust
 #[get("/collections/<name>/tree")]
@@ -181,7 +181,7 @@ pub struct ChunkHighlight {
 }
 ```
 
-**Features:**
+Features:
 
 - Full syntax highlighting with tree-sitter
 - Chunk boundary markers (CSS borders/backgrounds)
@@ -201,7 +201,7 @@ pub async fn search_in_collection(
 ) -> Result<Json<SearchResultsResponse>, (Status, Json<BrowseErrorResponse>)>
 ```
 
-**Features:**
+Features:
 
 - Inline Result highlighting
 - Related chunks sidebar
@@ -223,7 +223,7 @@ pub async fn search_in_collection(
 pub fn browse_events(name: &str) -> EventStream![Event + '_]
 ```
 
-**Events:**
+Events:
 
 - `IndexingProgress` - Show progress during indexing
 - `ChunkAdded` - Update file view when new chunks indexed
@@ -260,15 +260,15 @@ pub fn browse_events(name: &str) -> EventStream![Event + '_]
 | Keyboard nav | None | Full vim-like |
 | Real-time updates | None | SSE events |
 
-## Dependencies
+### Dependencies
 
-**JavaScript Libraries (CDN):**
+JavaScript Libraries (CDN):
 
 - Alpine.js (client state, tree view)
 - Prism.js (syntax highlighting - already in v0.1.2)
 - Optional: Monaco Editor (v0.3.0)
 
-**Rust Crates (existing):**
+Rust Crates (existing):
 
 - rocket (web framework)
 - serde (JSON serialization)
@@ -279,7 +279,7 @@ pub fn browse_events(name: &str) -> EventStream![Event + '_]
 
 - **HTMX** for server-driven updates (keep consistency with v0.1.2)
 - **Alpine.js** for complex client state (tree view, keyboard nav)
-- **Prism.js** or **highlight.js** for syntax highlighting
+- **Prism.js**or**highlight.js** for syntax highlighting
 - **CSS Variables** for theming (dark mode)
 
 ### Backend

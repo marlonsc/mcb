@@ -23,7 +23,7 @@ This document defines the strict architectural boundaries for the MCB (Memory Co
 
 MCB follows a layered architecture across 8 Cargo workspace crates:
 
-```
+```text
 crates/
 ├── mcb/                 # Facade (re-exports public API)
 ├── mcb-domain/          # Layer 1: Entities, ports (traits), errors
@@ -37,7 +37,7 @@ crates/
 
 ### Dependency Direction (Inward Only)
 
-```
+```text
 mcb-server → mcb-infrastructure → mcb-application → mcb-domain
                     ↓                    ↑
               mcb-providers ─────────────┘
@@ -53,28 +53,28 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 
 **Purpose**: Domain entities, value objects, port traits, domain errors
 
-**Allowed Dependencies**:
+#### Allowed Dependencies
 
 - Standard library only
 - `thiserror` for error types
 - `serde` for serialization (optional feature)
 
-**Prohibited Dependencies**:
+#### Prohibited Dependencies
 
 - NO dependencies on other MCB crates
 - NO infrastructure concerns (HTTP, database, filesystem)
 - NO concrete implementations (only trait definitions)
 
-**Exports**:
+#### Exports
 
 - Entities: `CodeChunk`, `Embedding`, `SearchResult`, `ChunkMetadata`
 - Value objects: `Vector`, `Distance`, `Score`
 - Port traits: `EmbeddingProvider`, `VectorStoreProvider`, `CacheProvider`, `LanguageChunkingProvider`
 - Domain errors: `DomainError`, `ValidationError`
 
-**Module Structure**:
+#### Module Structure
 
-```
+```text
 mcb-domain/src/
 ├── entities/           # Domain entities
 ├── value_objects/      # Value objects
@@ -89,29 +89,29 @@ mcb-domain/src/
 
 **Purpose**: Application services, use cases, business logic orchestration
 
-**Allowed Dependencies**:
+#### Allowed Dependencies
 
 - `mcb-domain` (ports, entities, errors)
 - `async-trait` for async traits
 - `tokio` for async runtime
 - `linkme` for provider registration
 
-**Prohibited Dependencies**:
+#### Prohibited Dependencies
 
 - NO direct dependency on `mcb-providers` (use ports from mcb-domain)
 - NO direct dependency on `mcb-infrastructure` (use DI)
 - NO HTTP/transport concerns
 
-**Exports**:
+#### Exports
 
 - Services: `ContextService`, `SearchService`, `IndexingService`
 - Registry: `EMBEDDING_PROVIDERS`, `VECTOR_STORE_PROVIDERS` (linkme slices)
 - Admin ports: `IndexingOperationsInterface`, `PerformanceMetricsInterface`
 - Infrastructure ports: `EventBusProvider`, `AuthServiceInterface`
 
-**Module Structure**:
+#### Module Structure
 
-```
+```text
 mcb-application/src/
 ├── use_cases/          # Application services
 │   ├── context_service.rs
@@ -144,28 +144,28 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 **Purpose**: Concrete implementations of port traits
 
-**Allowed Dependencies**:
+#### Allowed Dependencies
 
 - `mcb-domain` (implement port traits)
 - `mcb-application` (register in linkme slices)
 - External provider SDKs (OpenAI, Ollama, Milvus, etc.)
 - `linkme` for auto-registration
 
-**Prohibited Dependencies**:
+#### Prohibited Dependencies
 
 - NO dependency on `mcb-infrastructure` (providers are pure adapters)
 - NO dependency on `mcb-server` (transport-agnostic)
 
-**Exports**:
+#### Exports
 
 - Embedding providers: `OllamaProvider`, `OpenAIProvider`, `VoyageAIProvider`, etc.
 - Vector store providers: `MilvusProvider`, `InMemoryProvider`, `EncryptedProvider`, etc.
 - Cache providers: `MokaProvider`, `RedisProvider`, `NullProvider`
 - Language parsers: `RustChunker`, `PythonChunker`, etc.
 
-**Module Structure**:
+#### Module Structure
 
-```
+```text
 mcb-providers/src/
 ├── embedding/          # Embedding provider implementations
 │   ├── ollama.rs
@@ -179,7 +179,7 @@ mcb-providers/src/
 └── language/           # Language-specific chunkers
 ```
 
-**Registration Pattern**:
+### Registration Pattern
 
 - Each provider MUST register via `#[linkme::distributed_slice]`
 - Factory functions MUST be function pointers, NOT closures
@@ -191,7 +191,7 @@ mcb-providers/src/
 
 **Purpose**: Cross-cutting concerns (DI, config, health, logging, metrics)
 
-**Allowed Dependencies**:
+#### Allowed Dependencies
 
 - `mcb-domain` (port traits for DI)
 - `mcb-application` (services for DI composition)
@@ -200,11 +200,11 @@ mcb-providers/src/
 - `figment` for configuration (ADR-025)
 - Infrastructure libraries (tracing, metrics, etc.)
 
-**Prohibited Dependencies**:
+#### Prohibited Dependencies
 
 - NO dependency on `mcb-server` (infrastructure is transport-agnostic)
 
-**Exports**:
+#### Exports
 
 - DI: `Catalog`, `build_catalog()`, `get_service<T>()`
 - Config: `AppConfig`, `load_config()`
@@ -214,9 +214,9 @@ mcb-providers/src/
 - Metrics: `MetricsCollector`
 - Lifecycle: `ServiceManager`, `ShutdownCoordinator`
 
-**Module Structure**:
+#### Module Structure
 
-```
+```text
 mcb-infrastructure/src/
 ├── di/                 # Dependency injection (dill)
 │   ├── catalog.rs      # IoC container
@@ -256,7 +256,7 @@ pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>>
 
 **Purpose**: MCP protocol implementation, HTTP/stdio transport, tool handlers
 
-**Allowed Dependencies**:
+#### Allowed Dependencies
 
 - `mcb-domain` (entities, errors)
 - `mcb-application` (services via DI)
@@ -264,19 +264,19 @@ pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>>
 - MCP libraries
 - HTTP libraries (Rocket)
 
-**Prohibited Dependencies**:
+#### Prohibited Dependencies
 
 - NO direct use of `mcb-providers` (access via DI and port traits)
 
-**Exports**:
+#### Exports
 
 - MCP server: `MCPServer`
 - Transport: `HttpTransport`, `StdioTransport`
 - Handlers: `index (action=start)`, `search (resource=code)`, `index (action=status)`, `index (action=clear)`
 
-**Module Structure**:
+#### Module Structure
 
-```
+```text
 mcb-server/src/
 ├── mcp_server.rs       # MCP server core
 ├── transport/          # Transport implementations
@@ -296,11 +296,11 @@ mcb-server/src/
 
 **Purpose**: Re-export public API for library users
 
-**Allowed Dependencies**:
+#### Allowed Dependencies
 
 - All MCB crates (selectively re-exports)
 
-**Exports**:
+#### Exports
 
 - Public entities from `mcb-domain`
 - Public services from `mcb-application`
@@ -313,13 +313,13 @@ mcb-server/src/
 
 **Purpose**: Architecture validation, lint rules, quality checks
 
-**Allowed Dependencies**:
+#### Allowed Dependencies
 
 - All MCB crates (for analysis)
 - `tree-sitter` for AST parsing
 - Validation libraries
 
-**Prohibited in Production**:
+### Prohibited in Production
 
 - Only used in development/CI
 - NOT a runtime dependency
@@ -449,7 +449,7 @@ make validate
 Architecture validation: 0 violations
 ```
 
-### Phase-Based Validation
+## Phase-Based Validation
 
 **Phase 1**: Dependency Graph Analysis
 
@@ -506,7 +506,7 @@ Architecture validation: 0 violations
 # Fails if any violations detected
 ```
 
-### Pre-Commit Hook
+## Pre-Commit Hook
 
 ```bash
 
@@ -514,7 +514,7 @@ Architecture validation: 0 violations
 make validate QUICK=1  # Fast validation
 ```
 
-### Quality Gate
+## Quality Gate
 
 **Zero tolerance**: All violations MUST be fixed before merge.
 

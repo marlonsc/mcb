@@ -197,4 +197,4 @@ Intelligent provider routing with resilience.
 
 ---
 
-*Auto-generated API reference*
+### Auto-generated API reference

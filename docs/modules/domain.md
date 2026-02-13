@@ -183,4 +183,4 @@ crates/mcb-domain/src/
 
 ---
 
-*Updated 2026-02-12 — Enriched with full entity catalog, port interfaces, state machines, and domain invariants (v0.2.1)*
+### Updated 2026-02-12 — Enriched with full entity catalog, port interfaces, state machines, and domain invariants (v0.2.1)

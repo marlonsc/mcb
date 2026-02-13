@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR 020: Testing Strategy for Integrated Code
+# ADR 020: Testing Strategy for Integrated Code
 
 ## Status
 
@@ -23,13 +23,13 @@ PMAT has 4600+ tests. MCB has 308+ tests. Integration must preserve both.
 
 ## Decision
 
-**Three-tier testing strategy**:
+Three-tier testing strategy:
 
 ### Tier 1: Unit Tests
 
 **Location**: `crates/<crate>/tests/` or `libs/<lib>/tests/`
 
-**Pattern**:
+Pattern:
 
 ```rust
 // crates/mcb-application/tests/search_service_test.rs — HISTORICAL; DI is now dill (ADR-029)
@@ -53,7 +53,7 @@ async fn test_search_returns_relevant_results() {
 
 **Location**: `crates/mcb-server/tests/integration/`
 
-**Pattern**:
+Pattern:
 
 ```rust
 // crates/mcb-server/tests/integration/full_flow_test.rs
@@ -75,7 +75,7 @@ async fn test_index_and_search_flow() {
 
 **Location**: `libs/code-metrics/tests/` (ported from PMAT)
 
-**Pattern**:
+Pattern:
 
 ```rust
 // libs/code-metrics/tests/complexity_properties.rs
@@ -94,7 +94,7 @@ proptest! {
 
 Current test structure in eight-crate workspace:
 
-```
+```text
 crates/
 ├── mcb-domain/tests/           # Domain logic tests
 ├── mcb-application/tests/      # Service tests
@@ -135,17 +135,17 @@ crates/
 
 ## Consequences
 
-**Positive**:
+Positive:
 
 - Preserved test coverage
 - Clear test organization
 - Property-based testing for edge cases
 
-**Negative**:
+Negative:
 
 - CI time increase (~5 min → ~15 min)
 
-**Mitigation**:
+Mitigation:
 
 - Parallel test execution
 - Test categorization (quick/full)
@@ -159,4 +159,4 @@ crates/
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 test structure*
+Updated 2026-01-17 - Reflects v0.1.2 test structure

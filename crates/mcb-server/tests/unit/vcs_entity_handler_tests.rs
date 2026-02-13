@@ -131,3 +131,28 @@ async fn update_repository_conflicting_project_id_rejected_without_side_effect()
     let after_count = list_repo_count(&handler, "project-a").await;
     assert_eq!(after_count, before_count);
 }
+
+#[tokio::test]
+async fn delete_repository_requires_project_id() {
+    let (handler, _temp_dir) = create_handler().await;
+
+    let delete_args = VcsEntityArgs {
+        action: VcsEntityAction::Delete,
+        resource: VcsEntityResource::Repository,
+        id: Some("repo-any".to_string()),
+        org_id: None,
+        project_id: None,
+        repository_id: None,
+        worktree_id: None,
+        data: None,
+    };
+
+    let err = handler
+        .handle(Parameters(delete_args))
+        .await
+        .expect_err("missing project_id must fail");
+    assert!(
+        err.message
+            .contains("project_id required for repository delete")
+    );
+}

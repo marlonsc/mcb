@@ -22,17 +22,17 @@ mod rrf_tests {
     use mcb_domain::utils::compute_content_hash;
     use mcb_domain::value_objects::{ObservationId, SearchResult, SessionId};
 
-    use crate::test_utils::{MockEmbeddingProvider, MockVectorStoreProvider};
+    use crate::test_utils::{TestEmbeddingProvider, TestVectorStoreProvider};
 
     // ---- Mock MemoryRepository ----
 
-    struct MockMemoryRepo {
+    struct TestMemoryRepo {
         observations: Vec<Observation>,
         fts_results: Vec<FtsSearchResult>,
     }
 
     #[async_trait]
-    impl MemoryRepository for MockMemoryRepo {
+    impl MemoryRepository for TestMemoryRepo {
         async fn store_observation(&self, _observation: &Observation) -> Result<()> {
             Ok(())
         }
@@ -130,9 +130,9 @@ mod rrf_tests {
     }
 
     fn create_test_service(
-        repo: Arc<MockMemoryRepo>,
-        vector_store: Arc<MockVectorStoreProvider>,
-        embedding_provider: Arc<MockEmbeddingProvider>,
+        repo: Arc<TestMemoryRepo>,
+        vector_store: Arc<TestVectorStoreProvider>,
+        embedding_provider: Arc<TestEmbeddingProvider>,
     ) -> MemoryServiceImpl {
         MemoryServiceImpl::new(
             "test-project".to_string(),
@@ -170,14 +170,14 @@ mod rrf_tests {
             language: "rust".to_string(),
         }];
 
-        let repo = Arc::new(MockMemoryRepo {
+        let repo = Arc::new(TestMemoryRepo {
             observations: vec![obs_a.clone(), obs_b.clone()],
             fts_results,
         });
 
-        let vector_store = Arc::new(MockVectorStoreProvider::with_results(vector_results));
+        let vector_store = Arc::new(TestVectorStoreProvider::with_results(vector_results));
 
-        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
+        let embedding_provider = Arc::new(TestEmbeddingProvider::new(3));
 
         let service = create_test_service(repo, vector_store, embedding_provider);
 
@@ -208,13 +208,13 @@ mod rrf_tests {
             },
         ];
 
-        let repo = Arc::new(MockMemoryRepo {
+        let repo = Arc::new(TestMemoryRepo {
             observations: vec![obs_a, obs_b],
             fts_results,
         });
 
-        let vector_store = Arc::new(MockVectorStoreProvider::new());
-        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
+        let vector_store = Arc::new(TestVectorStoreProvider::new());
+        let embedding_provider = Arc::new(TestEmbeddingProvider::new(3));
 
         let service = create_test_service(repo, vector_store, embedding_provider);
 
@@ -256,13 +256,13 @@ mod rrf_tests {
             },
         ];
 
-        let repo = Arc::new(MockMemoryRepo {
+        let repo = Arc::new(TestMemoryRepo {
             observations: vec![obs_a, obs_b],
             fts_results,
         });
 
-        let vector_store = Arc::new(MockVectorStoreProvider::new());
-        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
+        let vector_store = Arc::new(TestVectorStoreProvider::new());
+        let embedding_provider = Arc::new(TestEmbeddingProvider::new(3));
 
         let service = create_test_service(repo, vector_store, embedding_provider);
 
@@ -303,13 +303,13 @@ mod rrf_tests {
             },
         ];
 
-        let repo = Arc::new(MockMemoryRepo {
+        let repo = Arc::new(TestMemoryRepo {
             observations: vec![obs_a, obs_b],
             fts_results,
         });
 
-        let vector_store = Arc::new(MockVectorStoreProvider::new());
-        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
+        let vector_store = Arc::new(TestVectorStoreProvider::new());
+        let embedding_provider = Arc::new(TestEmbeddingProvider::new(3));
 
         let service = create_test_service(repo, vector_store, embedding_provider);
 
@@ -355,13 +355,13 @@ mod rrf_tests {
             },
         ];
 
-        let repo = Arc::new(MockMemoryRepo {
+        let repo = Arc::new(TestMemoryRepo {
             observations: vec![obs_a, obs_b],
             fts_results,
         });
 
-        let vector_store = Arc::new(MockVectorStoreProvider::new());
-        let embedding_provider = Arc::new(MockEmbeddingProvider::new(3));
+        let vector_store = Arc::new(TestVectorStoreProvider::new());
+        let embedding_provider = Arc::new(TestEmbeddingProvider::new(3));
 
         let service = create_test_service(repo, vector_store, embedding_provider);
 

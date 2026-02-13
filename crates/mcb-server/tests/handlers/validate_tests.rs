@@ -7,7 +7,7 @@ use mcb_server::handlers::ValidateHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use tempfile::TempDir;
 
-use crate::test_utils::mock_services::MockValidationService;
+use crate::test_utils::mock_services::TestValidationService;
 
 fn create_temp_file() -> (TempDir, PathBuf) {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
@@ -33,7 +33,7 @@ macro_rules! validate_test {
     ($test_name:ident, $action:expr, expect_mcp_error) => {
         #[tokio::test]
         async fn $test_name() {
-            let mock_service = MockValidationService::new();
+            let mock_service = TestValidationService::new();
             let handler = ValidateHandler::new(Arc::new(mock_service));
 
             let args = ValidateArgs {
@@ -53,7 +53,7 @@ macro_rules! validate_test {
         #[tokio::test]
         async fn $test_name() {
             let (_temp_dir, path) = $path_expr;
-            let mock_service = MockValidationService::new();
+            let mock_service = TestValidationService::new();
             let handler = ValidateHandler::new(Arc::new(mock_service));
 
             let args = ValidateArgs {
@@ -74,7 +74,7 @@ macro_rules! validate_test {
     ($test_name:ident, $action:expr, path: $path:expr, $(scope: $scope:expr,)? expect_error) => {
         #[tokio::test]
         async fn $test_name() {
-            let mock_service = MockValidationService::new();
+            let mock_service = TestValidationService::new();
             let handler = ValidateHandler::new(Arc::new(mock_service));
 
             let args = ValidateArgs {
@@ -96,7 +96,7 @@ macro_rules! validate_test {
         #[tokio::test]
         async fn $test_name() {
             let (_temp_dir, path) = $path_expr;
-            let mock_service = MockValidationService::new();
+            let mock_service = TestValidationService::new();
             let handler = ValidateHandler::new(Arc::new(mock_service));
 
             let args = ValidateArgs {
@@ -170,7 +170,7 @@ validate_test!(
 
 #[tokio::test]
 async fn test_validate_list_rules_all() {
-    let mock_service = MockValidationService::new();
+    let mock_service = TestValidationService::new();
     let handler = ValidateHandler::new(Arc::new(mock_service));
 
     let args = ValidateArgs {
@@ -190,7 +190,7 @@ async fn test_validate_list_rules_all() {
 
 #[tokio::test]
 async fn test_validate_list_rules_by_category() {
-    let mock_service = MockValidationService::new();
+    let mock_service = TestValidationService::new();
     let handler = ValidateHandler::new(Arc::new(mock_service));
 
     let args = ValidateArgs {

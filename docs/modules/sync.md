@@ -9,7 +9,7 @@
 
 File synchronization coordination for incremental indexing. Manages file change detection and coordinates re-indexing of modified files.
 
-## Components
+### Components
 
 ### SyncProvider Trait (`mcb-domain`)
 
@@ -70,4 +70,4 @@ pub use adapters::infrastructure::sync::{NullSyncProvider, NullLockProvider};
 
 ---
 
-*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

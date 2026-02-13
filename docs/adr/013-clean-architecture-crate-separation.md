@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 013: Clean Architecture Crate Separation
+# ADR 013: Clean Architecture Crate Separation
 
 ## Status
 
@@ -31,13 +31,13 @@ The Clean Architecture pattern, as described by Robert C. Martin, addresses thes
 
 ## Decision
 
-We organize the codebase into **eight Cargo workspace crates** following Clean Architecture principles:
+We organize the codebase into**eight Cargo workspace crates** following Clean Architecture principles:
 
 ### Layer 1: Domain (`mcb-domain`)
 
 **Purpose**: Core business entities, port traits (interfaces), and domain validation rules.
 
-**Characteristics**:
+Characteristics:
 
 - Zero external dependencies (except `async_trait`, `thiserror`)
 - Defines port traits that extend `shaku::Interface` for DI compatibility
@@ -46,9 +46,9 @@ We organize the codebase into **eight Cargo workspace crates** following Clean A
 - Defines domain errors with `thiserror`
 - No implementations of external services
 
-**Key Directories**:
+Key Directories:
 
-```
+```text
 mcb-domain/src/
 ├── entities/           # Domain entities (CodeChunk, Codebase)
 ├── events/             # Domain events (DomainEvent, EventPublisher)
@@ -64,7 +64,7 @@ mcb-domain/src/
 
 **Purpose**: Business logic orchestration and use case implementations.
 
-**Characteristics**:
+Characteristics:
 
 - Depends only on `mcb-domain`
 - Contains use cases: `ContextService`, `SearchService`, `IndexingService`
@@ -72,9 +72,9 @@ mcb-domain/src/
 - Defines application-level ports (service interfaces)
 - Contains the `ChunkingOrchestrator` for batch processing
 
-**Key Directories**:
+Key Directories:
 
-```
+```text
 mcb-application/src/
 ├── services/
 │   ├── context.rs      # ContextService - embedding + storage coordination
@@ -92,7 +92,7 @@ mcb-application/src/
 
 **Purpose**: Implementations of domain port traits for external services.
 
-**Characteristics**:
+Characteristics:
 
 - Depends on `mcb-domain` (implements port traits)
 - Feature-flagged providers for optional dependencies
@@ -100,9 +100,9 @@ mcb-application/src/
 - Contains null implementations for testing
 - Organized by provider category
 
-**Key Directories**:
+Key Directories:
 
-```
+```text
 mcb-providers/src/
 ├── embedding/          # 6 embedding providers
 │   ├── openai.rs
@@ -132,7 +132,7 @@ mcb-providers/src/
 
 **Purpose**: Shared technical services and cross-cutting concerns.
 
-**Characteristics**:
+Characteristics:
 
 - Depends on `mcb-domain`, `mcb-application`, `mcb-providers`
 - Contains the Shaku-based DI system
@@ -140,9 +140,9 @@ mcb-providers/src/
 - Contains cross-cutting services (auth, metrics, events)
 - Provides factories for production provider creation
 
-**Key Directories**:
+Key Directories:
 
-```
+```text
 mcb-infrastructure/src/
 ├── di/
 │   ├── bootstrap.rs    # Container composition root
@@ -170,7 +170,7 @@ mcb-infrastructure/src/
 
 **Purpose**: MCP protocol implementation and HTTP API.
 
-**Characteristics**:
+Characteristics:
 
 - Depends on all other crates
 - Entry point for the application
@@ -178,9 +178,9 @@ mcb-infrastructure/src/
 - Tool handlers (index, search, clear, status)
 - Admin API endpoints
 
-**Key Directories**:
+Key Directories:
 
-```
+```text
 mcb-server/src/
 ├── handlers/           # MCP tool handlers
 ├── transport/          # Stdio transport
@@ -196,7 +196,7 @@ mcb-server/src/
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Characteristics**:
+Characteristics:
 
 - Standalone validation tool
 - 30+ validators for architecture rules
@@ -204,7 +204,7 @@ mcb-server/src/
 - TOML-based configuration
 - Used in CI/CD pipelines
 
-**Key Components**:
+Key Components:
 
 - `CleanArchitectureValidator`: Layer dependency rules
 - `ShakuValidator`: DI pattern compliance
@@ -217,7 +217,7 @@ mcb-server/src/
 
 **Purpose**: Public API re-exports for external consumers.
 
-**Characteristics**:
+Characteristics:
 
 - Re-exports public types from all crates
 - Provides unified interface for library users
@@ -227,7 +227,7 @@ mcb-server/src/
 
 ## Dependency Graph
 
-```
+```text
                     ┌─────────────┐
                     │   mcb-server│
                     │   (Layer 5) │
@@ -276,7 +276,7 @@ The `mcb-validate` crate enforces these architectural rules:
 # Run architecture validation
 cargo run -p mcb-validate
 
-# Key validators:
+# Key validators
 
 # - CleanArchitectureValidator: Checks layer dependency violations
 

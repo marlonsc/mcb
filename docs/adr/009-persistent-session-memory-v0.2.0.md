@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Partial
 ---
 
-## ADR 009: Persistent Session Memory v0.2.0
+# ADR 009: Persistent Session Memory v0.2.0
 
 ## Status
 
@@ -38,7 +38,7 @@ implementation_status: Partial
 
 Memory Context Browser v0.1.0 provides semantic code search but lacks session-level memory persistence. Each Claude Code session starts fresh, losing valuable context:
 
-**Current problems:**
+Current problems:
 
 - No persistence of tool observations across sessions
 - No session summaries or decision tracking
@@ -47,7 +47,7 @@ Memory Context Browser v0.1.0 provides semantic code search but lacks session-le
 - Token waste re-discovering solved problems
 - No ROI metrics on context discovery
 
-**User demand:**
+User demand:
 
 - Developers need cross-session memory (like Claude-mem provides)
 - Need to recall past decisions and rationale
@@ -94,7 +94,7 @@ All memory-related MCP tools use the `memory_` prefix to avoid namespace collisi
 - `session (action=summarize)` → unchanged (session domain)
 <!-- markdownlint-enable MD013 -->
 
-**Compatibility policy**:
+Compatibility policy:
 
 1. Aliases kept for at least one major version cycle
 2. New tools MUST use `memory_` prefix

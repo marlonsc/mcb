@@ -32,7 +32,7 @@ This installs `.git/hooks/pre-commit` which runs validation checks automatically
 
 ### What Pre-commit Validates
 
-The pre-commit hook runs the same checks as the CI pipeline but **skips tests** for fast feedback (< 30 seconds typical):
+The pre-commit hook runs the same checks as the CI pipeline but**skips tests** for fast feedback (< 30 seconds typical):
 
 ```bash
 
@@ -43,7 +43,7 @@ make lint MCB_CI=1
 make validate QUICK=1
 ```
 
-**Validation includes:**
+## Validation includes
 
 - Format check (rustfmt)
 - Clippy lints with Rust 2024 edition compatibility
@@ -63,7 +63,7 @@ make lint MCB_CI=1 && make validate QUICK=1
 make lint MCB_CI=1 && make validate QUICK=1
 ```
 
-### Commit Orchestrator (Local)
+## Commit Orchestrator (Local)
 
 ```bash
 
@@ -80,7 +80,7 @@ git commit
 git push
 ```
 
-### Bypassing Pre-commit (Not Recommended)
+## Bypassing Pre-commit (Not Recommended)
 
 If you need to bypass pre-commit checks temporarily:
 
@@ -106,7 +106,7 @@ The CI pipeline runs automatically on:
 
 The `.github/workflows/ci.yml` defines the following jobs:
 
-```
+```text
 lint → test ──┬→ validate → release-build
               │
               ├→ golden-tests
@@ -118,7 +118,7 @@ lint → test ──┬→ validate → release-build
               └→ coverage
 ```
 
-**Job Details:**
+### Job Details
 
 | Job | Purpose | Timeout | Prerequisites |
 | ----- | --------- | --------- | --------------- |
@@ -133,14 +133,14 @@ lint → test ──┬→ validate → release-build
 
 ### How to Match CI Locally
 
-To run the **exact same pipeline locally** before pushing:
+To run the**exact same pipeline locally** before pushing:
 
 ```bash
 
 # Full CI pipeline (matches GitHub exactly)
 make ci
 
-# This runs:
+# This runs
 
 # 1. Lint (Rust 2024 compliance)
 
@@ -155,7 +155,7 @@ make ci
 # 6. Documentation build
 ```
 
-### Viewing CI Results
+## Viewing CI Results
 
 Check GitHub Actions for detailed results:
 
@@ -196,7 +196,7 @@ git tag v0.1.4
 git push origin v0.1.4
 ```
 
-### Release Workflow (`.github/workflows/release.yml`)
+## Release Workflow (`.github/workflows/release.yml`)
 
 The release workflow is triggered by tags matching `v*` pattern and performs:
 
@@ -223,7 +223,7 @@ The release workflow is triggered by tags matching `v*` pattern and performs:
 
 ### Release Process Summary
 
-```
+```text
 Push tag v0.1.4 → GitHub detects tag
                  → Release workflow starts
                  → Validates: lint, test, validate, audit, docs ✓
@@ -236,7 +236,7 @@ Push tag v0.1.4 → GitHub detects tag
 
 Releases are available at:
 
-```
+```text
 https://github.com/marlonsc/mcb/releases
 ```
 
@@ -265,12 +265,12 @@ The CI pipeline uses thread limiting to prevent timeouts:
 
 ```bash
 
-# In GitHub Actions CI:
+# In GitHub Actions CI
 make test THREADS=4          # 4 parallel test threads (instead of auto)
 make test SCOPE=golden THREADS=2  # Acceptance tests with 2 threads
 ```
 
-### Available THREADS Values
+## Available THREADS Values
 
 | Value | Use Case | Default |
 | ------- | ---------- | --------- |
@@ -282,7 +282,7 @@ make test SCOPE=golden THREADS=2  # Acceptance tests with 2 threads
 
 ### Adjusting Timeout Limits
 
-**For local development:**
+### For local development
 
 ```bash
 
@@ -299,7 +299,7 @@ make ci
 -   run: make test THREADS=4  # Increase/decrease as needed
 ```
 
-### Monitoring Test Performance
+## Monitoring Test Performance
 
 Check CI logs for timeout issues:
 
@@ -319,7 +319,7 @@ gh run view <run-id> -j test --log
 
 **Problem**: Commits don't run pre-commit validation
 
-**Solution**:
+### Solution
 
 ```bash
 
@@ -330,16 +330,16 @@ cp scripts/hooks/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit
 cat .git/hooks/pre-commit
 ```
 
-### CI Fails But Pre-commit Passed Locally
+## CI Fails But Pre-commit Passed Locally
 
-**Possible causes:**
+### Possible causes
 
 1. Different environment (macOS vs Linux)
 2. Different Rust versions
 3. Cache issues
 4. Race conditions in tests
 
-**Solutions:**
+#### Solutions
 
 ```bash
 
@@ -354,11 +354,11 @@ cargo build
 rustc --version  # Should be stable
 ```
 
-### Tests Timeout in CI
+## Tests Timeout in CI
 
 **Problem**: `test` job timeout after 30 minutes
 
-**Solutions:**
+### Solutions
 
 1. **Increase timeout** in `.github/workflows/ci.yml`:
 
@@ -382,7 +382,7 @@ rustc --version  # Should be stable
 
 **Problem**: `release-build` job fails with compilation error
 
-**Check**:
+#### Check
 
 1. All CI checks passed before release job
 2. Built locally successfully
@@ -401,7 +401,7 @@ rustc --version  # Should be stable
 
 **Problem**: Tag pushed but release workflow didn't complete
 
-**Check**:
+#### Check
 
 ```bash
 
@@ -412,7 +412,7 @@ gh run list --workflow=release.yml -L 5
 gh run view <run-id> --log
 ```
 
-**Common issues:**
+## Common issues
 
 - Pre-release validation failed (check test/lint/audit logs)
 - Tag format incorrect (must be `v*` like `v0.1.4`)
@@ -444,7 +444,7 @@ make docs                  # Documentation
 make coverage MCB_CI=1       # Code coverage
 ```
 
-### GitHub Actions
+## GitHub Actions
 
 Pipeline is automated. No manual intervention needed.
 

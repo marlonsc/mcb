@@ -2,7 +2,7 @@
 
 ## Directory Structure
 
-```
+```text
 .beads/
 ├── beads.db              # SQLite (primary storage)
 ├── issues.jsonl          # JSONL export (git-tracked)
@@ -154,7 +154,7 @@ sync-branch: "beads-sync"        # Git branch for syncing
 
 ### Key Relationships
 
-```
+```text
 issues (1) ──→ (many) labels
 issues (1) ──→ (many) dependencies
 issues (1) ──→ (many) comments

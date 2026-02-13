@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 015: Workspace Structure for Shared Libraries
+# ADR 015: Workspace Structure for Shared Libraries
 
 ## Status
 
@@ -55,13 +55,13 @@ tree-sitter = "0.26"
 # ... shared version definitions
 ```
 
-### Library Purposes
+## Library Purposes
 
-#### 1. `tree-sitter-analysis` (v0.3.0)
+### 1. `tree-sitter-analysis` (v0.3.0)
 
 **Purpose**: Unified AST parsing for chunking + analysis
 
-**API**:
+API:
 
 ```rust
 pub trait LanguageProcessor: Send + Sync {
@@ -74,7 +74,7 @@ pub trait LanguageProcessor: Send + Sync {
 }
 ```
 
-**v0.1.1 Status**:
+v0.1.1 Status:
 
 - Chunking code lives in `crates/mcb-providers/src/language/`
 - 12 language processors implemented
@@ -99,19 +99,19 @@ pub trait MetricsCalculator: Send + Sync {
 
 ## Consequences
 
-**Positive**:
+Positive:
 
 - Code reuse between domains
 - Independent versioning possible
 - Easier to extract as separate crates later
 - Clear API boundaries
 
-**Negative**:
+Negative:
 
 - Workspace compilation overhead
 - Dependency management complexity
 
-**Mitigation**:
+Mitigation:
 
 - Use `workspace = true` for shared deps
 - Keep libraries focused and small
@@ -143,4 +143,4 @@ pub trait MetricsCalculator: Send + Sync {
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 eight-crate workspace*
+Updated 2026-01-17 - Reflects v0.1.2 eight-crate workspace

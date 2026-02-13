@@ -6,12 +6,12 @@ use async_trait::async_trait;
 use mcb_domain::events::{DomainEvent, EventPublisher};
 
 // Mock event publisher for testing
-struct MockEventPublisher {
+struct TestEventPublisher {
     published_events: Mutex<Vec<DomainEvent>>,
     subscriber_count: usize,
 }
 
-impl MockEventPublisher {
+impl TestEventPublisher {
     fn new() -> Self {
         Self {
             published_events: Mutex::new(Vec::new()),
@@ -32,7 +32,7 @@ impl MockEventPublisher {
 }
 
 #[async_trait]
-impl EventPublisher for MockEventPublisher {
+impl EventPublisher for TestEventPublisher {
     async fn publish(&self, event: DomainEvent) -> mcb_domain::Result<()> {
         self.published_events.lock().unwrap().push(event);
         Ok(())
@@ -114,23 +114,23 @@ fn test_domain_event_clone() {
 
 #[test]
 fn test_event_publisher_creation() {
-    let publisher = MockEventPublisher::new();
+    let publisher = TestEventPublisher::new();
     let events = publisher.get_published_events();
     assert!(events.is_empty());
 }
 
 #[test]
 fn test_has_subscribers() {
-    let publisher_with_subs = MockEventPublisher::new();
+    let publisher_with_subs = TestEventPublisher::new();
     assert!(publisher_with_subs.has_subscribers());
 
-    let publisher_no_subs = MockEventPublisher::with_no_subscribers();
+    let publisher_no_subs = TestEventPublisher::with_no_subscribers();
     assert!(!publisher_no_subs.has_subscribers());
 }
 
 #[tokio::test]
 async fn test_publish_single_event() {
-    let publisher = MockEventPublisher::new();
+    let publisher = TestEventPublisher::new();
 
     let event = DomainEvent::IndexRebuild {
         collection: Some("test".to_string()),
@@ -150,7 +150,7 @@ async fn test_publish_single_event() {
 
 #[tokio::test]
 async fn test_publish_multiple_events() {
-    let publisher = MockEventPublisher::new();
+    let publisher = TestEventPublisher::new();
 
     let events = vec![
         DomainEvent::IndexRebuild {
@@ -174,7 +174,7 @@ async fn test_publish_multiple_events() {
 #[test]
 fn test_event_publisher_trait_object() {
     // Test that we can use EventPublisher as a trait object
-    let publisher: Box<dyn EventPublisher> = Box::new(MockEventPublisher::new());
+    let publisher: Box<dyn EventPublisher> = Box::new(TestEventPublisher::new());
     assert!(publisher.has_subscribers());
 }
 

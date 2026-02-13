@@ -9,7 +9,7 @@
 
 The providers module implements a trait-based abstraction layer for AI and storage services. All integrations follow port/adapter — the domain defines traits, providers implement. This enables flexible deployment with multiple providers, intelligent routing, and automatic failover.
 
-All port traits are resolved via **dill Catalog** (ADR-029) for dependency injection.
+All port traits are resolved via**dill Catalog** (ADR-029) for dependency injection.
 
 ## Embedding Providers (`embedding/`)
 
@@ -110,7 +110,7 @@ Combines BM25 lexical search (via FTS5) with semantic vector search for improved
 
 ## Language Processors (`language/`)
 
-AST-based code chunking via **tree-sitter v0.26** for **13 languages (12 parsers; JavaScript handles both JS and TS)**. Language-specific processors with fallback to generic chunking. File extension → language detection.
+AST-based code chunking via**tree-sitter v0.26**for**13 languages (12 parsers; JavaScript handles both JS and TS)**. Language-specific processors with fallback to generic chunking. File extension → language detection.
 
 | Language | Parser | Status |
 | ---------- | -------- | -------- |
@@ -238,4 +238,4 @@ Provider tests are located in `crates/mcb-providers/tests/`.
 
 ---
 
-*Updated 2026-02-12 — Enriched with Anthropic embedding, external vector stores (Milvus/Qdrant/Pinecone), SQLite/FTS5, hybrid search, git, events, config, and 13-language support via 12 parser implementations (v0.2.1)*
+### Updated 2026-02-12 — Enriched with Anthropic embedding, external vector stores (Milvus/Qdrant/Pinecone), SQLite/FTS5, hybrid search, git, events, config, and 13-language support via 12 parser implementations (v0.2.1)

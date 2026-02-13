@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Partial
 ---
 
-## ADR 010: Hooks Subsystem with Agent-Backed Processing
+# ADR 010: Hooks Subsystem with Agent-Backed Processing
 
 ## Status
 
@@ -32,7 +32,7 @@ implementation_status: Partial
 
 Claude Code provides a hooks system for extending AI assistant behavior at lifecycle events (SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, Stop). Currently, hooks are shell scripts with limited intelligence.
 
-**Current limitations:**
+Current limitations:
 
 - Hooks are shell scripts with hardcoded rules
 - No semantic understanding of context
@@ -40,7 +40,7 @@ Claude Code provides a hooks system for extending AI assistant behavior at lifec
 - Each hook operates in isolation
 - Complex decisions require manual rule maintenance
 
-**Opportunity for integration:**
+Opportunity for integration:
 
 Memory Context Browser v0.2.0 already provides (via ADR 008 and ADR 009):
 
@@ -51,7 +51,7 @@ Memory Context Browser v0.2.0 already provides (via ADR 008 and ADR 009):
 - **Provider pattern**- pluggable implementations
 - **Actor pattern**- async message-based processing
 
-**User demand:**
+User demand:
 
 - Intelligent hook processing with semantic context
 - Agent-backed decisions using Claude models
@@ -80,7 +80,7 @@ Implement a Hooks Subsystem that**maximally reuses existing infrastructure**:
 
 ### Architecture Overview
 
-```
+```text
 Claude Code Session
         │
 [Shell Hook] ─────────────────────┐

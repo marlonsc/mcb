@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR 023: Inventory to Linkme Migration
+# ADR 023: Inventory to Linkme Migration
 
 ## Status
 
@@ -47,7 +47,7 @@ We will migrate from `inventory` to `linkme` for all plugin registration across 
 
 ### Migration Pattern
 
-**Before (inventory):**
+Before (inventory):
 
 ```rust
 // Declaration
@@ -63,7 +63,7 @@ inventory::submit! {
 }
 ```
 
-**After (linkme):**
+After (linkme):
 
 ```rust
 // Declaration

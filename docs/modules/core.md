@@ -12,7 +12,7 @@ The core module functionality is split across Clean Architecture layers:
 - **Port traits** (`crates/mcb-domain/src/ports/`): provider, repository, service, infrastructure, and top-level interfaces used across layers
 - **Infrastructure utilities** (`crates/mcb-infrastructure/src/`): auth, cache, crypto, health, logging
 
-## Submodules
+### Submodules
 
 ### Types (`types.rs`)
 
@@ -107,4 +107,4 @@ Infrastructure tests are in `crates/mcb-infrastructure/tests/`.
 
 ---
 
-*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

@@ -30,7 +30,7 @@ curl -s http://localhost:8222/healthz
 # Expected: OK
 ```
 
-### Run All Integration Tests
+## Run All Integration Tests
 
 ```bash
 
@@ -65,7 +65,7 @@ docker-compose up -d redis nats
 docker-compose -f tests/docker-compose.yml ps
 ```
 
-#### Option C: System services
+## Option C: System services
 
 ```bash
 
@@ -74,9 +74,9 @@ systemctl start redis
 systemctl start nats-server
 ```
 
-### 2. Run Integration Tests
+## 2. Run Integration Tests
 
-#### Method 1: Local Tests (Direct Connection)
+### Method 1: Local Tests (Direct Connection)
 
 ```bash
 
@@ -96,7 +96,7 @@ If Redis/NATS-specific test targets (e.g. `redis_cache_integration`,
 `nats_event_bus_integration`) exist, you can run them with
 `cargo test <name> -- --nocapture`. Otherwise use `make test` above.
 
-#### Method 2: Docker services + local tests
+## Method 2: Docker services + local tests
 
 Start services via `docker-compose.yml`, then run tests on the host:
 
@@ -107,7 +107,7 @@ NATS_URL=nats://127.0.0.1:4222 make test
 make docker-down
 ```
 
-#### Method 3: Full Docker Compose (Container Test Runner)
+### Method 3: Full Docker Compose (Container Test Runner)
 
 Test runner executes inside Docker container and connects to host services:
 
@@ -116,7 +116,7 @@ Test runner executes inside Docker container and connects to host services:
 # Full test cycle with test-runner container
 docker-compose up
 
-# Or manually:
+# Or manually
 docker-compose up -d          # Start all services including test-runner
 docker-compose logs -f        # Monitor test execution
 docker-compose down -v        # Cleanup
@@ -212,7 +212,7 @@ The test-runner connects to:
 - Docker services via internal network (`mcp-openai-mock:1080`, etc.)
 - Host services via `host.docker.internal:port` (macOS) or `172.17.0.1:port` (Linux)
 
-**Usage:**
+### Usage
 
 ```bash
 
@@ -226,15 +226,15 @@ docker-compose down -v
 docker-compose logs -f test-runner
 ```
 
-### Unified docker-compose.yml
+## Unified docker-compose.yml
 
 The project uses a unified `docker-compose.yml` for all infrastructure needs.
 
-**Usage:**
+### Usage
 
 ```bash
 
-# Start all services
+# Start all services (1)
 make docker-up
 
 # Run tests
@@ -292,7 +292,7 @@ redis-server --port 6379 --appendonly yes
 docker-compose up -d redis
 ```
 
-### NATS Connection Refused
+## NATS Connection Refused
 
 ```bash
 
@@ -302,11 +302,11 @@ telnet localhost 4222
 # Start NATS (with JetStream)
 nats-server --jetstream
 
-# Or with Docker
+# Or with Docker (1)
 docker-compose up -d nats
 ```
 
-### host.docker.internal not working (Linux)
+## host.docker.internal not working (Linux)
 
 The docker-compose.yml uses `extra_hosts` with `host-gateway` to automatically
 resolve `host.docker.internal` on Linux. If it still doesn't work:
@@ -322,7 +322,7 @@ export REDIS_URL=redis://172.17.0.1:6379  # Replace with actual host IP
 make test
 ```
 
-### Tests Timeout
+## Tests Timeout
 
 Increase timeout and add debugging:
 
@@ -332,7 +332,7 @@ RUST_LOG=debug make test
 # Or, for a single test: cargo test <test_name> -- --nocapture --test-threads=1
 ```
 
-### Container Cannot Reach Host Services
+## Container Cannot Reach Host Services
 
 Verify connectivity from container:
 

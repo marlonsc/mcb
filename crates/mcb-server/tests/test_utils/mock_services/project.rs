@@ -5,31 +5,31 @@ use mcb_domain::ports::services::ProjectDetectorService;
 use std::path::Path;
 
 #[allow(dead_code)]
-pub struct MockProjectDetectorService;
+pub struct TestProjectDetectorService;
 
-impl MockProjectDetectorService {
+impl TestProjectDetectorService {
     pub fn new() -> Self {
         Self
     }
 }
 
 #[async_trait]
-impl ProjectDetectorService for MockProjectDetectorService {
+impl ProjectDetectorService for TestProjectDetectorService {
     async fn detect_all(&self, _path: &Path) -> Vec<ProjectType> {
         vec![]
     }
 }
 
-pub struct MockProjectRepository;
+pub struct TestProjectRepository;
 
-impl MockProjectRepository {
+impl TestProjectRepository {
     pub fn new() -> Self {
         Self
     }
 }
 
 #[async_trait]
-impl ProjectRepository for MockProjectRepository {
+impl ProjectRepository for TestProjectRepository {
     async fn create(
         &self,
         _project: &mcb_domain::entities::project::Project,

@@ -17,4 +17,4 @@ Consolidated from `context/project-intelligence/modernization-audit.md`.
 
 Use this file for deep planning. Keep context docs concise and operational.
 
-*Updated 2026-02-12*
+### Updated 2026-02-12

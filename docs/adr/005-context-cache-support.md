@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR 005: Context Cache Support (Moka and Redis)
+# ADR 005: Context Cache Support (Moka and Redis)
 
 ## Status
 
@@ -26,6 +26,6 @@ To optimize performance of frequent read/write context operations, we decided to
 
 We implemented a configurable caching system, with Moka as the default provider and optional Redis support. The architecture defines a cache abstraction (for example, a trait CacheStore with operations get, set, invalidate, etc.), having MokaCache and RedisCache as implementations. By default, the application instantiates MokaCache, which offers high-performance local in-memory cache without external dependencies. If the configuration indicates Redis use (providing URL and connection parameters), the ServiceManager instead initializes a RedisCache and the modules pass through the same interface. The integration with the DI container (Shaku) allows injecting the chosen cache where needed, without the system components needing to know which implementation is in use.
 
-## Consequences
+### Consequences
 
 The cache addition significantly improved performance in repetitive operations, reducing Memory Context Browser response latency, especially when consulted frequently by agents. With Moka, we obtained low latency and configuration simplicity (just adjusting size/TTL limits in configuration). When opting for Redis in distributed environments, we achieved cache consistency between instances and optional data persistence of cached context, at the cost of depending on more services (there may be increased operational complexity and external failure points). This flexibility attends various use cases: developers can start simple with Moka and scale to Redis as needed, maintaining unchanged application code. Default policies (TTL, max size) are defined in code/config. Note: Per-entry cache configuration is not supported by the Moka provider; the API contract documents this limitation (see `mcb-ah3e` closure). Cache expiration and invalidation policies should be revisited as data volume grows or new requirements emerge (e.g., LRU vs LFU, write-through behavior).

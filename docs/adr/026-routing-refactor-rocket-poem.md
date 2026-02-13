@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 026: API Routing Refactor (Rocket vs Poem)
+# ADR 026: API Routing Refactor (Rocket vs Poem)
 
 ## Status
 
@@ -131,7 +131,7 @@ Poem (modern async web framework) offers a programmatic approach:
 ## Decision
 
 After comprehensive evaluation of framework alternatives, we will migrate from
-Axum to **Rocket** for HTTP routing. This decision prioritizes developer
+Axum to**Rocket** for HTTP routing. This decision prioritizes developer
 experience, ecosystem maturity, and built-in features over raw performance.
 
 > **Performance Note**: Benchmarks (May 2025) show Axum is approximately 20%
@@ -172,7 +172,7 @@ and maintenance burden.
 
 #### Route Migration Pattern
 
-**Before (Axum - scattered and verbose):**
+Before (Axum - scattered and verbose):
 
 ```rust
 use axum::{Router, routing::{get, post, patch}, extract::Path};
@@ -198,7 +198,7 @@ let router = Router::new()
     .with_state(app_state);
 ```
 
-**After (Rocket - co-located and declarative):**
+After (Rocket - co-located and declarative):
 
 ```rust
 use rocket::{get, post, patch, routes, serde::json::Json, State};
@@ -377,7 +377,7 @@ let app = Route::new()
 Server::new(TcpListener::bind("127.0.0.1:3000")).run(app).await;
 ```
 
-**Why Rocket over Poem:**
+Why Rocket over Poem:
 
 - More mature ecosystem and community support
 - Better developer experience with attribute macros

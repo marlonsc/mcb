@@ -51,4 +51,4 @@ Infrastructure tests are in `crates/mcb-infrastructure/tests/`.
 
 ---
 
-*Updated 2026-02-12 - Reflects dill IoC and current crate structure (v0.2.1)*
+### Updated 2026-02-12 - Reflects dill IoC and current crate structure (v0.2.1)

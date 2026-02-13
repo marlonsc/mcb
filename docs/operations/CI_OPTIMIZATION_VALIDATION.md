@@ -26,20 +26,20 @@ This document tracks validation of CI optimizations before considering them prod
 
 **Problem**: Tarpaulin `--exclude-files` does NOT skip test execution
 
-**Original Symptoms**:
+### Original Symptoms
 
 - Process killed after ~8 minutes (system timeout or OOM)
 - Integration tests still executing (test_full_validation_report, test_clippy_real_execution)
 - No coverage output generated (coverage/ directory not created)
 - Tests attempting to connect to Milvus/Ollama, causing hangs
 
-**Root Cause**:
+### Root Cause
 
 - `--exclude-files` parameter only excludes files from coverage REPORT
 - Integration tests still RUN to completion before coverage is measured
 - External service dependencies (Milvus, Ollama) cause test hangs
 
-**Solution Implemented**:
+### Solution Implemented
 
 ✅ **Added CI detection to test skip macros** (`crates/mcb-server/tests/integration/helpers.rs`):
 
@@ -55,7 +55,7 @@ This document tracks validation of CI optimizations before considering them prod
 
 **Objective**: Verify that coverage job completes without timeout when integration tests are excluded
 
-**Steps**:
+### Steps
 
 ```bash
 
@@ -70,7 +70,7 @@ ls -lh coverage/lcov.info
 head -50 coverage/lcov.info
 ```
 
-**Success Criteria**:
+## Success Criteria
 
 - [ ] Tarpaulin installation completes successfully
 - [ ] Coverage job completes within 30 minutes
@@ -79,15 +79,15 @@ head -50 coverage/lcov.info
 - [ ] Integration tests are excluded from report (verify in output)
 - [ ] Coverage percentage is reasonable (> 50%)
 
-**Expected Output**:
+### Expected Output
 
-```
+```text
 Generating lcov coverage (excluding integration tests)...
 ...
 Cover: X% (Y out of Z lines)
 ```
 
-**What to Watch For**:
+### What to Watch For
 
 - ❌ Timeout after 300 seconds
 - ❌ "Thread panicked" in integration tests
@@ -100,13 +100,13 @@ Cover: X% (Y out of Z lines)
 
 **Objective**: Verify that CI workflow is SKIPPED for docs-only changes
 
-**Setup**:
+### Setup
 
 1. Create branch from current commit
 2. Modify only documentation files
 3. Create PR to main
 
-**Test Scenario**:
+### Test Scenario
 
 ```bash
 git checkout -b test/docs-only
@@ -121,14 +121,14 @@ git commit -m "docs: test documentation-only PR"
 - [x] `docs/**/*.md`
 - [x] Any file NOT in paths filter
 
-**Success Criteria**:
+#### Success Criteria
 
 - [ ] CI workflow is NOT triggered
 - [ ] CodeQL is NOT triggered
 - [ ] Docs workflow IS triggered
 - [ ] PR shows "No checks running"
 
-**What to Look For**:
+### What to Look For
 
 - ❌ Green checkmark for "CI" job
 - ❌ CodeQL analysis running
@@ -140,13 +140,13 @@ git commit -m "docs: test documentation-only PR"
 
 **Objective**: Verify that CI workflow RUNS for code changes
 
-**Setup**:
+### Setup (1)
 
 1. Create branch from current commit
 2. Modify a source file
 3. Create PR to main
 
-**Test Scenario**:
+### Test Scenario (1)
 
 ```bash
 git checkout -b test/code-change
@@ -161,7 +161,7 @@ git commit -m "test: verify CI runs on code changes"
 - [x] `crates/**`
 - [x] `tests/**`
 
-**Success Criteria**:
+#### Success Criteria
 
 - [ ] CI workflow IS triggered
 - [ ] Lint job runs
@@ -169,7 +169,7 @@ git commit -m "test: verify CI runs on code changes"
 - [ ] Coverage job does NOT run (PR, not main)
 - [ ] Release-Build does NOT run (PR, not main)
 
-**What to Look For**:
+### What to Look For (1)
 
 - ✅ CI workflow triggered
 - ✅ Test-PR (stable) only
@@ -183,13 +183,13 @@ git commit -m "test: verify CI runs on code changes"
 
 **Objective**: Verify that CI workflow RUNS for workflow config changes
 
-**Setup**:
+### Setup (2)
 
 1. Create branch from current commit
 2. Modify `.github/workflows/ci.yml`
 3. Create PR to main
 
-**Test Scenario**:
+### Test Scenario (2)
 
 ```bash
 git checkout -b test/workflow-change
@@ -198,7 +198,7 @@ git add .github/workflows/ci.yml
 git commit -m "test: verify CI runs on workflow changes"
 ```
 
-**Success Criteria**:
+#### Success Criteria
 
 - [ ] CI workflow IS triggered (workflow file is in paths filter)
 - [ ] Lint job runs
@@ -210,7 +210,7 @@ git commit -m "test: verify CI runs on workflow changes"
 
 **Objective**: Verify test-pr runs in PR, test-main does NOT run
 
-**Evidence**:
+### Evidence
 
 - PR to main should show:
 - ✅ Lint job
@@ -219,7 +219,7 @@ git commit -m "test: verify CI runs on workflow changes"
 - ❌ NO Golden-Tests job
 - ❌ NO Coverage job
 
-**What NOT to See**:
+### What NOT to See
 
 - ❌ "Test (Main - stable)"
 - ❌ "Test (Main - beta)"
@@ -231,12 +231,12 @@ git commit -m "test: verify CI runs on workflow changes"
 
 **Objective**: Verify test-main runs on main, both stable and beta
 
-**Setup**:
+### Setup (3)
 
 1. Create branch from release/v0.1.4
 2. Push to main
 
-**Evidence**:
+### Evidence (1)
 
 - Push to main should show:
 - ✅ Lint job
@@ -245,7 +245,7 @@ git commit -m "test: verify CI runs on workflow changes"
 - ✅ Coverage job
 - ✅ Release-Build jobs (3 platforms)
 
-**What to Verify**:
+### What to Verify
 
 - ✅ Two test-main jobs (stable and beta)
 - ✅ Both complete before golden-tests starts
@@ -257,7 +257,7 @@ git commit -m "test: verify CI runs on workflow changes"
 
 **Objective**: Verify coverage job completes on main without timeout
 
-**Evidence**:
+### Evidence (2)
 
 - Coverage job in main push should:
 - ✅ Install tarpaulin via setup-ci.sh --install-coverage
@@ -265,7 +265,7 @@ git commit -m "test: verify CI runs on workflow changes"
 - ✅ Upload to codecov
 - ✅ Complete within 30-minute timeout
 
-**Metrics to Check**:
+### Metrics to Check
 
 - Coverage % (should be > 50%)
 - Execution time (should be < 25 min)

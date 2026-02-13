@@ -69,9 +69,6 @@ pub mod utils;
 /// Immutable value objects
 pub mod value_objects;
 
-#[cfg(test)]
-mod config_tests;
-
 // Re-export commonly used types for convenience
 pub use constants::*;
 pub use entities::*;

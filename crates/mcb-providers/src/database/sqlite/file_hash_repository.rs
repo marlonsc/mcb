@@ -10,6 +10,7 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::ports::infrastructure::database::SqlParam;
 use mcb_domain::ports::repositories::FileHashRepository;
+use serde_json::json;
 use sha2::{Digest, Sha256};
 
 /// Configuration for SqliteFileHashRepository
@@ -162,12 +163,13 @@ impl FileHashRepository for SqliteFileHashRepository {
         self.executor
             .execute(
                 r#"
-            INSERT INTO file_hashes (project_id, collection, file_path, content_hash, indexed_at, deleted_at)
-            VALUES (?, ?, ?, ?, ?, NULL)
+            INSERT INTO file_hashes (project_id, collection, file_path, content_hash, indexed_at, deleted_at, origin_context)
+            VALUES (?, ?, ?, ?, ?, NULL, ?)
             ON CONFLICT(project_id, collection, file_path) DO UPDATE SET
                 content_hash = excluded.content_hash,
                 indexed_at = excluded.indexed_at,
-                deleted_at = NULL
+                deleted_at = NULL,
+                origin_context = excluded.origin_context
             "#,
                 &[
                     SqlParam::String(self.project_id.clone()),
@@ -175,6 +177,15 @@ impl FileHashRepository for SqliteFileHashRepository {
                     SqlParam::String(file_path.to_string()),
                     SqlParam::String(hash.to_string()),
                     SqlParam::I64(now),
+                    SqlParam::String(
+                        json!({
+                            "project_id": self.project_id.clone(),
+                            "collection": collection,
+                            "file_path": file_path,
+                            "timestamp": now,
+                        })
+                        .to_string(),
+                    ),
                 ],
             )
             .await

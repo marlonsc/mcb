@@ -49,3 +49,6 @@ mod plan_entity_repository_tests;
 
 #[path = "unit/issue_entity_repository_tests.rs"]
 mod issue_entity_repository_tests;
+
+#[path = "unit/native_analysis_tests.rs"]
+mod native_analysis_tests;

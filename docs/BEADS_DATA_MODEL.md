@@ -10,7 +10,7 @@ Beads is an AI-native issue tracking system designed to live in Git repositories
 
 ## 1. Directory Structure (.beads/)
 
-```
+```text
 .beads/
 ├── beads.db              # SQLite database (primary storage)
 ├── beads.db-shm         # SQLite shared memory file (WAL mode)
@@ -45,7 +45,7 @@ Beads is an AI-native issue tracking system designed to live in Git repositories
 | Field | Type | Constraints | Description |
 | ------- | ------ | ------------- | ------------- |
 | `id` | TEXT | PRIMARY KEY | Issue ID (e.g., `mcb-123`, `bd-xyz`) |
-| `content_hash` | TEXT | | Hash of issue content for change detection |
+| `content_hash` | TEXT |  | Hash of issue content for change detection |
 | `title` | TEXT | NOT NULL, ≤500 chars | Issue title |
 | `description` | TEXT | DEFAULT '' | Full description |
 | `design` | TEXT | DEFAULT '' | Design notes/specification |
@@ -54,21 +54,21 @@ Beads is an AI-native issue tracking system designed to live in Git repositories
 | `status` | TEXT | DEFAULT 'open' | Status (see 2.2) |
 | `priority` | INTEGER | 0-4, DEFAULT 2 | Priority level (0=critical, 4=backlog) |
 | `issue_type` | TEXT | DEFAULT 'task' | Type (see 2.3) |
-| `assignee` | TEXT | | Assigned person |
-| `estimated_minutes` | INTEGER | | Time estimate |
+| `assignee` | TEXT |  | Assigned person |
+| `estimated_minutes` | INTEGER |  | Time estimate |
 | `created_at` | DATETIME | NOT NULL | Creation timestamp |
 | `created_by` | TEXT | DEFAULT '' | Creator name |
 | `owner` | TEXT | DEFAULT '' | Owner email/identifier |
 | `updated_at` | DATETIME | NOT NULL | Last update timestamp |
-| `closed_at` | DATETIME | | Closure timestamp (NULL if open) |
+| `closed_at` | DATETIME |  | Closure timestamp (NULL if open) |
 | `closed_by_session` | TEXT | DEFAULT '' | Session ID that closed it |
 | `close_reason` | TEXT | DEFAULT '' | Reason for closure |
 | `external_ref` | TEXT | UNIQUE | External reference (e.g., `gh-123`, `jira-ABC`) |
 | `compaction_level` | INTEGER | DEFAULT 0 | Compaction level for history |
-| `compacted_at` | DATETIME | | Compaction timestamp |
-| `compacted_at_commit` | TEXT | | Git commit of compaction |
-| `original_size` | INTEGER | | Original size before compaction |
-| `deleted_at` | DATETIME | | Deletion timestamp |
+| `compacted_at` | DATETIME |  | Compaction timestamp |
+| `compacted_at_commit` | TEXT |  | Git commit of compaction |
+| `original_size` | INTEGER |  | Original size before compaction |
+| `deleted_at` | DATETIME |  | Deletion timestamp |
 | `deleted_by` | TEXT | DEFAULT '' | Who deleted it |
 | `delete_reason` | TEXT | DEFAULT '' | Reason for deletion |
 | `original_type` | TEXT | DEFAULT '' | Original type before change |
@@ -86,18 +86,18 @@ Beads is an AI-native issue tracking system designed to live in Git repositories
 | `target` | TEXT | DEFAULT '' | Target URI (for events) |
 | `payload` | TEXT | DEFAULT '' | Event payload (JSON) |
 | `source_repo` | TEXT | DEFAULT '.' | Source repository |
-| `await_type` | TEXT | | Await type (gate coordination) |
-| `await_id` | TEXT | | Await ID (gate coordination) |
-| `timeout_ns` | INTEGER | | Timeout in nanoseconds |
-| `waiters` | TEXT | | Waiters list (JSON) |
+| `await_type` | TEXT |  | Await type (gate coordination) |
+| `await_id` | TEXT |  | Await ID (gate coordination) |
+| `timeout_ns` | INTEGER |  | Timeout in nanoseconds |
+| `waiters` | TEXT |  | Waiters list (JSON) |
 | `hook_bead` | TEXT | DEFAULT '' | Hook bead ID |
 | `role_bead` | TEXT | DEFAULT '' | Role bead ID |
 | `agent_state` | TEXT | DEFAULT '' | Agent state (JSON) |
-| `last_activity` | DATETIME | | Last activity timestamp |
+| `last_activity` | DATETIME |  | Last activity timestamp |
 | `role_type` | TEXT | DEFAULT '' | Role type |
 | `rig` | TEXT | DEFAULT '' | Rig name (partition) |
-| `due_at` | DATETIME | | Due date/time |
-| `defer_until` | DATETIME | | Defer until date/time |
+| `due_at` | DATETIME |  | Due date/time |
+| `defer_until` | DATETIME |  | Defer until date/time |
 | `metadata` | TEXT | DEFAULT '{}' | Custom metadata (JSON) |
 
 ### 2.2 Status Values
@@ -169,7 +169,7 @@ CREATE TABLE dependencies (
 
 **Purpose**: Tracks dependencies between issues
 
-**Dependency Types**:
+### Dependency Types
 
 - `blocks` - Issue A blocks Issue B (B depends on A)
 - `discovered-from` - Discovered from another issue
@@ -179,9 +179,9 @@ CREATE TABLE dependencies (
 - `superseded-by` - Superseded relationship
 - `waits-for` - Gate coordination (fanout)
 
-**Example**:
+### Example
 
-```
+```text
 mcb-7xi blocks mcb-6zi    (mcb-6zi depends on mcb-7xi)
 mcb-hv1 blocks mcb-7xi    (mcb-7xi blocks mcb-hv1)
 ```
@@ -471,15 +471,15 @@ sync-branch: "beads-sync"
 
 # Multi-repo configuration (experimental)
 
-# repos:
+# repos
 
-#   primary: "."
+# primary: "."
 
-#   additional:
+# additional
 
-#     - ~/beads-planning
+# - ~/beads-planning
 
-#     - ~/work-planning
+# - ~/work-planning
 ```
 
 ---
@@ -552,7 +552,7 @@ sync-branch: "beads-sync"
 bd create "Title" [flags]
 ```
 
-**Data Requirements**:
+### Data Requirements
 
 - `title` (required)
 - `--description` / `-d` - Description text
@@ -582,7 +582,7 @@ bd create "Title" [flags]
 bd update <id> [flags]
 ```
 
-**Data Requirements**:
+### Data Requirements (1)
 
 - `--status` - New status
 - `--priority` - New priority
@@ -604,7 +604,7 @@ bd update <id> [flags]
 bd list [flags]
 ```
 
-**Filter Options**:
+### Filter Options
 
 - `--status` - Filter by status
 - `--priority` / `-p` - Filter by priority
@@ -625,7 +625,7 @@ bd list [flags]
 - `--deferred` - Show only deferred
 - `--overdue` - Show only overdue
 
-**Output Options**:
+### Output Options
 
 - `--json` - JSON output
 - `--long` - Detailed output
@@ -640,7 +640,7 @@ bd list [flags]
 bd show <id> [flags]
 ```
 
-**Options**:
+### Options
 
 - `--short` - Compact one-line output
 - `--children` - Show only children
@@ -661,7 +661,7 @@ bd dep cycles
 bd dep <blocker> --blocks <blocked>
 ```
 
-**Data Requirements**:
+### Data Requirements (2)
 
 - `issue` - The dependent issue
 - `depends-on` - The issue it depends on
@@ -673,7 +673,7 @@ bd dep <blocker> --blocks <blocked>
 bd close <id> [flags]
 ```
 
-**Data Requirements**:
+### Data Requirements (3)
 
 - `--reason` - Reason for closure
 - `--json` - JSON output
@@ -684,7 +684,7 @@ bd close <id> [flags]
 bd sync [flags]
 ```
 
-**Options**:
+### Options (1)
 
 - `--status` - Check sync status without syncing
 - `--json` - JSON output
@@ -720,14 +720,14 @@ CREATE INDEX idx_events_issue ON events(issue_id);
 
 ### 11.1 Hybrid Storage Model
 
-**SQLite (Primary)**:
+### SQLite (Primary)
 
 - Fast queries and filtering
 - ACID transactions
 - Daemon-based RPC access
 - WAL mode for concurrent access
 
-**JSONL (Export)**:
+### JSONL (Export)
 
 - Git-friendly format
 - Human-readable
@@ -736,7 +736,7 @@ CREATE INDEX idx_events_issue ON events(issue_id);
 
 ### 11.2 Sync Flow
 
-```
+```text
 SQLite Database
     ↓ (bd sync)
 JSONL Export
@@ -748,7 +748,7 @@ Remote Repository
 
 ### 11.3 Import Flow
 
-```
+```text
 Remote Repository
     ↓ (git pull)
 Git Repository
@@ -811,7 +811,7 @@ CHECK (
 
 ### 13.2 Relationships
 
-```
+```text
 issues (1) ──→ (many) labels
 issues (1) ──→ (many) dependencies
 issues (1) ──→ (many) comments
@@ -995,24 +995,24 @@ ORDER BY due_at ASC;
 
 ### 19.1 Common Issues
 
-**Database locked**:
+### Database locked
 
 - Check daemon status: `bd info`
 - Restart daemon: `bd daemon restart`
 - Use `--lock-timeout` flag
 
-**Sync conflicts**:
+### Sync conflicts
 
 - Run `bd resolve-conflicts`
 - Manual merge if needed
 - Check git status
 
-**Stale data**:
+### Stale data
 
 - Run `bd sync` to export
 - Use `--allow-stale` flag to override
 
-**Corrupted database**:
+### Corrupted database
 
 - Run `bd repair` to clean orphaned references
 - Restore from git: `bd restore <issue-id>`

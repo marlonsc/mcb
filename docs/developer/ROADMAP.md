@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-02-12
 
-Development roadmap for **Memory Context Browser (MCB)** — a high-performance MCP server for semantic code search, persistent memory, and agent-aware context management.
+Development roadmap for**Memory Context Browser (MCB)** — a high-performance MCP server for semantic code search, persistent memory, and agent-aware context management.
 
 ---
 
@@ -70,7 +70,7 @@ Implements complete workflow system with FSM-based task orchestration, context s
 | **TaskOrchestrator** | Multi-layer coordination with event broadcasting |
 | **ExecutionTiers** | Hierarchical execution (immediate, scheduled, deferred) |
 
-**Quality Gates:**
+### Quality Gates
 
 - `make check` passes (0 errors)
 - `make validate` passes (0 violations)

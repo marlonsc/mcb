@@ -2,14 +2,14 @@
 
 ## Overview
 
-MCB has a **3-layer testing strategy** to ensure admin web UI routes are always
+MCB has a**3-layer testing strategy** to ensure admin web UI routes are always
 accessible:
 
 1. **Unit Tests (Rust)**: Test isolated route handlers
 2. **Integration Tests (Rust)**: Test full Rocket server with `admin_rocket()`
 3. **E2E Tests (Playwright)**: Test actual HTTP server end-to-end
 
-## Why All 3 Layers?
+## Why All 3 Layers
 
 **v0.2.0 Bug**: Admin UI returned 404 on all routes because web routes were only
 mounted in `web_rocket()` (test fixture) but NOT in `admin_rocket()` (production
@@ -47,7 +47,7 @@ async fn test_dashboard_returns_html() {
 
 **Location**: `crates/mcb-server/tests/integration/golden_admin_web_e2e.rs`
 
-Tests the **REAL production server** using `admin_rocket()`:
+Tests the**REAL production server** using `admin_rocket()`:
 
 ```rust
 #[rocket::async_test]
@@ -98,7 +98,7 @@ make test SCOPE=integration
 cargo test --package mcb-server --test integration golden_admin_web_e2e
 ```
 
-### Full (Pre-commit)
+## Full (Pre-commit)
 
 ```bash
 
@@ -107,7 +107,7 @@ make check  # Runs fmt + lint + test SCOPE=all
 make test SCOPE=e2e  # Runs Playwright E2E tests
 ```
 
-### E2E Only
+## E2E Only
 
 ```bash
 
@@ -186,7 +186,7 @@ jobs:
 MCB server not running. Playwright config auto-starts server via
 `webServer.command`.
 
-**Fix**:
+### Fix
 
 ```bash
 
@@ -195,7 +195,7 @@ MCB server not running. Playwright config auto-starts server via
 MCB_BASE_URL=http://localhost:8080 npx playwright test
 ```
 
-### Integration Tests Pass But E2E Fails
+## Integration Tests Pass But E2E Fails
 
 Routes mounted in `web_rocket()` but not `admin_rocket()`.
 

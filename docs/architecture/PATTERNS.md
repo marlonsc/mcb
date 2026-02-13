@@ -12,7 +12,7 @@ This document captures the recurring implementation patterns used throughout MCB
 **Dependency direction:** `mcb-server → mcb-infrastructure → mcb-application → mcb-domain`
 Providers (`mcb-providers`) implement domain ports — never depend upstream.
 
-```
+```text
 mcb-domain         → Entities, ports (traits), errors, value objects, macros, registry
 mcb-application    → Use cases, decorators, services (orchestration)
 mcb-infrastructure → DI (dill+Handle), config, crypto, logging, health, routing
@@ -48,7 +48,7 @@ static OPENAI: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 Registries: `embedding`, `vector_store`, `cache`, `database`, `language` in `mcb-domain/src/registry/`
 
-**Adding a new provider:**
+### Adding a new provider
 
 1. Implement the trait (e.g., `EmbeddingProvider`)
 2. Create a factory function that takes config and returns `Arc<dyn Trait>`
@@ -112,7 +112,7 @@ Configuration follows a hierarchical override pattern using figment (see [ADR-02
 - **Hot-reload**: `ConfigWatcher` monitors changes (`config/watcher.rs`)
 - **Validation**: Config is validated at startup before providers are initialized
 
-```
+```text
 MCP__PROVIDERS__EMBEDDING__PROVIDER=openai
 MCP__PROVIDERS__VECTOR_STORE__PROVIDER=edgevec
 MCP__SERVER__NETWORK__PORT=8080
@@ -154,4 +154,4 @@ MCB uses a layered testing approach:
 
 ---
 
-*Updated 2026-02-12 — Reflects v0.2.1 crate architecture*
+### Updated 2026-02-12 — Reflects v0.2.1 crate architecture

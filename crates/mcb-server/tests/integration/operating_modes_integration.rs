@@ -14,8 +14,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::test_utils::mock_services::{
-    MockIssueEntityRepository, MockOrgEntityRepository, MockPlanEntityRepository,
-    MockProjectRepository, MockVcsEntityRepository, MockVcsProvider,
+    TestIssueEntityRepository, TestOrgEntityRepository, TestPlanEntityRepository,
+    TestProjectRepository, TestVcsEntityRepository, TestVcsProvider,
 };
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
@@ -576,11 +576,11 @@ async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
         std::sync::Arc::clone(&shared_executor),
     );
     let vcs_provider: std::sync::Arc<dyn mcb_domain::ports::providers::VcsProvider> =
-        std::sync::Arc::new(MockVcsProvider::new());
+        std::sync::Arc::new(TestVcsProvider::new());
 
     let project_service: std::sync::Arc<dyn mcb_domain::ports::services::ProjectDetectorService> =
         std::sync::Arc::new(mcb_infrastructure::project::ProjectService::new());
-    let project_repository = std::sync::Arc::new(MockProjectRepository::new());
+    let project_repository = std::sync::Arc::new(TestProjectRepository::new());
     let file_hash_repository: std::sync::Arc<
         dyn mcb_domain::ports::repositories::FileHashRepository,
     > = std::sync::Arc::new(mcb_providers::database::SqliteFileHashRepository::new(
@@ -605,10 +605,10 @@ async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
         vcs_provider,
         project_service,
         project_repository: project_repository.clone(),
-        vcs_entity_repository: std::sync::Arc::new(MockVcsEntityRepository::new()),
-        plan_entity_repository: std::sync::Arc::new(MockPlanEntityRepository::new()),
-        issue_entity_repository: std::sync::Arc::new(MockIssueEntityRepository::new()),
-        org_entity_repository: std::sync::Arc::new(MockOrgEntityRepository::new()),
+        vcs_entity_repository: std::sync::Arc::new(TestVcsEntityRepository::new()),
+        plan_entity_repository: std::sync::Arc::new(TestPlanEntityRepository::new()),
+        issue_entity_repository: std::sync::Arc::new(TestIssueEntityRepository::new()),
+        org_entity_repository: std::sync::Arc::new(TestOrgEntityRepository::new()),
     };
 
     let services = DomainServicesFactory::create_services(deps)

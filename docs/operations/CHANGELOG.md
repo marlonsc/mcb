@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to **Memory Context Browser** will be documented in this file.
+All notable changes to**Memory Context Browser** will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-*No unreleased changes.*
+### No unreleased changes
 
 ---
 
@@ -54,7 +54,7 @@ Pre-v0.3.0 consolidation release focused on v0.2.1 branch hardening: data-model-
 
 ### Summary
 
-Major stabilization release delivering critical bug fixes for Agent, Session, and Memory subsystems, strict MCP protocol compliance, SQLite DDL startup resilience, comprehensive test isolation, repository cleanup, filesystem reorganization, and a full documentation overhaul with rebranding to **Memory Context Browser**.
+Major stabilization release delivering critical bug fixes for Agent, Session, and Memory subsystems, strict MCP protocol compliance, SQLite DDL startup resilience, comprehensive test isolation, repository cleanup, filesystem reorganization, and a full documentation overhaul with rebranding to**Memory Context Browser**.
 
 ### Fixed
 

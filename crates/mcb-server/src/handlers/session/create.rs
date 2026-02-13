@@ -99,7 +99,7 @@ pub async fn create_session(
         branch_payload: None,
         commit_args: None,
         commit_payload: None,
-        require_project_id: false,
+        require_project_id: true,
         timestamp: Some(now),
     })?;
     let session = AgentSession {

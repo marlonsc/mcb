@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 008: Git-Aware Semantic Indexing v0.2.0
+# ADR 008: Git-Aware Semantic Indexing v0.2.0
 
 ## Status
 
@@ -34,7 +34,7 @@ implementation_status: Incomplete
 
 Memory Context Browser v0.1.0 provides efficient semantic code search but lacks version control system awareness. This limits its usefulness in real-world scenarios:
 
-**Current problems:**
+Current problems:
 
 - Indexes are based on filesystem paths, breaking if directory is moved
 - No distinction between branches - search mixes code from different contexts
@@ -43,7 +43,7 @@ Memory Context Browser v0.1.0 provides efficient semantic code search but lacks 
 - No commit history indexing
 - No change impact analysis
 
-**User demand:**
+User demand:
 
 - Developers work with large monorepos (Uber, Google, Meta patterns)
 - Need to search code in specific branch
@@ -67,7 +67,7 @@ Implement full git integration in mcb v0.2.0 with:
 - Stable and well-documented API
 - Superior performance to gitoxide (still in development)
 
-## Consequences
+### Consequences
 
 ### Positive
 
@@ -374,7 +374,7 @@ pub struct CodeChunk {
 }
 ```
 
-**Extended metadata JSON structure:**
+Extended metadata JSON structure:
 
 ```json
 {
@@ -394,7 +394,7 @@ pub struct CodeChunk {
 }
 ```
 
-**Collection naming strategy:**
+Collection naming strategy:
 
 | Pattern | Purpose |
 | --------- | --------- |
@@ -460,7 +460,7 @@ impl GitIndexingService {
 
 ### Phase 7: History Indexing
 
-**Strategy to avoid index explosion:**
+Strategy to avoid index explosion:
 
 ```rust
 pub struct HistoryIndexingStrategy {

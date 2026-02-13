@@ -4,11 +4,11 @@ use mcb_server::args::{VcsAction, VcsArgs};
 use mcb_server::handlers::VcsHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-use crate::test_utils::mock_services::MockVcsProvider;
+use crate::test_utils::mock_services::TestVcsProvider;
 
 #[tokio::test]
 async fn test_vcs_list_repositories_success() {
-    let mock_provider = MockVcsProvider::new();
+    let mock_provider = TestVcsProvider::new();
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
@@ -34,7 +34,7 @@ async fn test_vcs_list_repositories_success() {
 
 #[tokio::test]
 async fn test_vcs_list_repositories_with_limit() {
-    let mock_provider = MockVcsProvider::new();
+    let mock_provider = TestVcsProvider::new();
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
@@ -60,7 +60,7 @@ async fn test_vcs_list_repositories_with_limit() {
 
 #[tokio::test]
 async fn test_vcs_list_repositories_no_limit() {
-    let mock_provider = MockVcsProvider::new();
+    let mock_provider = TestVcsProvider::new();
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
@@ -86,7 +86,7 @@ async fn test_vcs_list_repositories_no_limit() {
 
 #[tokio::test]
 async fn test_vcs_index_repository_success() {
-    let mock_provider = MockVcsProvider::new();
+    let mock_provider = TestVcsProvider::new();
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
@@ -112,7 +112,7 @@ async fn test_vcs_index_repository_success() {
 
 #[tokio::test]
 async fn test_vcs_index_repository_with_repo_path() {
-    let mock_provider = MockVcsProvider::new();
+    let mock_provider = TestVcsProvider::new();
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
@@ -137,7 +137,7 @@ async fn test_vcs_index_repository_with_repo_path() {
 
 #[tokio::test]
 async fn test_vcs_analyze_impact_with_defaults() {
-    let mock_provider = MockVcsProvider::new();
+    let mock_provider = TestVcsProvider::new();
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {
@@ -162,7 +162,7 @@ async fn test_vcs_analyze_impact_with_defaults() {
 
 #[tokio::test]
 async fn test_vcs_analyze_impact_missing_repo_path() {
-    let mock_provider = MockVcsProvider::new();
+    let mock_provider = TestVcsProvider::new();
     let handler = VcsHandler::new(Arc::new(mock_provider));
 
     let args = VcsArgs {

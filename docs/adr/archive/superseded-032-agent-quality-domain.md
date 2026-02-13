@@ -31,7 +31,7 @@ Pain points:
 
 #### 1. MCB-Only Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    MCB (Single Source of Truth)              │
 │                                                              │
@@ -63,13 +63,13 @@ Pain points:
 | `memory_` | Executions, errors, context | 5 |
 | `project_` | Project/phase/issue CRUD | 9 |
 
-**Total: 24 MCP tools**
+Total: 24 MCP tools
 
 #### 3. Full CRUD for Project State
 
 Replace GSD/Beads with complete CRUD operations:
 
-```
+```text
 project_create          → Create project
 project (action=create, resource=phase)    → Create phase
 project (action=update, resource=phase)    → Update status/progress
@@ -125,7 +125,7 @@ project_log_decision    → Log decision
 | 5 | Project State | ~800 | 9 `project_*` |
 | 6 | Context Assembly | ~400 | 1 `memory_*` |
 
-**Total: ~3200 LOC | 14 plans | 24 tools | 9 tables**
+Total: ~3200 LOC | 14 plans | 24 tools | 9 tables
 
 ## Alternatives Considered
 
@@ -133,7 +133,7 @@ project_log_decision    → Log decision
 
 Maintain .planning/ and .beads/ compatibility.
 
-**Rejected because:**
+Rejected because:
 
 - Complex sync logic
 - Conflict resolution needed
@@ -144,7 +144,7 @@ Maintain .planning/ and .beads/ compatibility.
 
 Import legacy data but don't export.
 
-**Rejected because:**
+Rejected because:
 
 - Still need parser code
 - One-way migration is cleaner
@@ -154,7 +154,7 @@ Import legacy data but don't export.
 
 Add MCB features to Beads CLI.
 
-**Rejected because:**
+Rejected because:
 
 - Beads is generic issue tracker
 - Would need embedding pipeline

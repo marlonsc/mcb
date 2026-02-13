@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Complete
 ---
 
+## ADR-046: Integration with ADR-034-037 & Policies
+
 **Status**: Proposed
 **Date**: 2026-02-05
 **Deciders**: MCB Architecture Team
@@ -18,7 +20,7 @@ implementation_status: Complete
 
 ## Context
 
-ADR-041-045 define the integrated context system layers. ADR-046 **bridges** this to ADR-034-037 (workflow FSM, policies, compensation) and specifies **how they interact**.
+ADR-041-045 define the integrated context system layers. ADR-046**bridges**this to ADR-034-037 (workflow FSM, policies, compensation) and specifies**how they interact**.
 
 Key integration points:
 
@@ -199,7 +201,7 @@ impl PolicyGuard for SecurityScanPolicy {
 
 ### 3. Compensation ↔ Context: Rollback via Snapshots
 
-**Architecture Correction 8**: `CompensationHandler` is an **infrastructure concern** (rollback, retry, logging), not business logic. It belongs in `mcb-infrastructure/src/compensation/handler.rs`. The **application layer** defines a `CompensationPolicy` port trait; **infrastructure** implements it.
+**Architecture Correction 8**: `CompensationHandler` is an**infrastructure concern**(rollback, retry, logging), not business logic. It belongs in `mcb-infrastructure/src/compensation/handler.rs`. The**application layer**defines a `CompensationPolicy` port trait;**infrastructure** implements it.
 
 ```rust
 // mcb-domain/src/ports/compensation.rs (PORT TRAIT - APPLICATION LAYER)
@@ -352,7 +354,7 @@ impl EventHandler for CompensationSubscriber {
 
 ### 5. MCP Tools: Unified Interface
 
-**Architecture Correction 9**: Context tools registration follows **ADR-033 pattern** . Handlers are in `mcb-server/src/handlers/context_handlers.rs`, registered via `router.rs` tool_definitions() like existing handlers.
+**Architecture Correction 9**: Context tools registration follows**ADR-033 pattern** . Handlers are in `mcb-server/src/handlers/context_handlers.rs`, registered via `router.rs` tool_definitions() like existing handlers.
 
 ```rust
 // mcb-domain/src/ports/mcp_handler.rs (PORT TRAIT - ADR-033)
@@ -511,7 +513,7 @@ impl ContextToolHandler {
 
 ## Architecture Corrections
 
-**Applied Corrections (v0.4.0 Alignment)**:
+Applied Corrections (v0.4.0 Alignment):
 
 1. **Correction 2 (mcb-z1f)**: WorkflowEventBus → Reuse EventBusProvider
 
@@ -561,7 +563,7 @@ impl ContextToolHandler {
 
 **Target**: 34+ tests, 80%+ coverage
 
-## Success Criteria
+### Success Criteria
 
 - ✅ FSM ↔ Context validation working (state gates freshness)
 - ✅ Policies enforced at all transition points
@@ -574,7 +576,7 @@ impl ContextToolHandler {
 
 ## Architecture Completeness
 
-**ADR-041-046 form a complete system:**
+ADR-041-046 form a complete system:
 
 | ADR | Component | Status |
 | ----- | ----------- | -------- |
@@ -585,7 +587,7 @@ impl ContextToolHandler {
 | **045** | Versioning & freshness | ✅ Proposed |
 | **046** | Policy integration | ✅ Proposed (THIS) |
 
-**All layers connected. Ready for implementation (Phase 9).**
+All layers connected. Ready for implementation (Phase 9).
 
 ---
 

@@ -24,9 +24,9 @@
 - Create CodeGraph with relationships
 - 15+ tests
 
-### Tasks
+#### Tasks
 
-**ADR-041: Context Architecture**
+### ADR-041: Context Architecture
 
 - [ ] Define 5-layer context system
 - [ ] Document layer responsibilities
@@ -34,7 +34,7 @@
 - [ ] Create architecture diagrams
 - [ ] Beads issue: ADR-041 implementation
 
-**ADR-042: Knowledge Graph**
+### ADR-042: Knowledge Graph
 
 - [ ] Design graph structure (nodes, edges, metadata)
 - [ ] Define relationship types (calls, imports, extends, implements)
@@ -51,7 +51,7 @@
 - [ ] Add freshness metadata tracking
 - [ ] 15+ unit tests
 
-**Deliverables**:
+#### Deliverables
 
 - ADR-041 document
 - ADR-042 document
@@ -76,9 +76,9 @@ bd create "Graph traversal algorithms" -t task -p 2
 - Create temporal query support
 - 20+ tests
 
-### Tasks
+#### Tasks
 
-**ADR-043: Hybrid Search**
+### ADR-043: Hybrid Search
 
 - [ ] Design RRF (Reciprocal Rank Fusion) algorithm
 - [ ] Define search modes (semantic, keyword, hybrid)
@@ -86,7 +86,7 @@ bd create "Graph traversal algorithms" -t task -p 2
 - [ ] Create search Result ranking
 - [ ] Beads issue: ADR-043 implementation
 
-**ADR-044: Model Selection**
+### ADR-044: Model Selection
 
 - [ ] Evaluate embedding models (OpenAI, VoyageAI, Ollama)
 - [ ] Evaluate search algorithms (BM25, TF-IDF, RRF)
@@ -112,7 +112,7 @@ bd create "Graph traversal algorithms" -t task -p 2
 - [ ] Implement temporal queries
 - [ ] 10+ unit tests
 
-**Deliverables**:
+#### Deliverables
 
 - ADR-043 document
 - ADR-044 document
@@ -139,9 +139,9 @@ bd create "RRF fusion algorithm" -t task -p 2
 - Create MCP tools for context operations
 - 20+ tests
 
-### Tasks
+#### Tasks
 
-**ADR-045: Context Versioning**
+### ADR-045: Context Versioning
 
 - [ ] Design snapshot versioning scheme
 - [ ] Design temporal query language
@@ -149,7 +149,7 @@ bd create "RRF fusion algorithm" -t task -p 2
 - [ ] Create version comparison algorithms
 - [ ] Beads issue: ADR-045 implementation
 
-**ADR-046: Integration Patterns**
+### ADR-046: Integration Patterns
 
 - [ ] Design MCP tool integration
 - [ ] Design policy enforcement hooks
@@ -174,7 +174,7 @@ bd create "RRF fusion algorithm" -t task -p 2
 - [ ] Integrate with workflow FSM
 - [ ] 10+ unit tests
 
-**Deliverables**:
+#### Deliverables
 
 - ADR-045 document
 - ADR-046 document
@@ -201,9 +201,9 @@ bd create "FSM + context system integration" -t task -p 1
 - Release v0.4.0
 - 15+ tests
 
-### Tasks
+#### Tasks
 
-**Testing**
+### Testing
 
 - [ ] Unit tests for CodeGraph (15+)
 - [ ] Unit tests for HybridSearchEngine (15+)
@@ -213,7 +213,7 @@ bd create "FSM + context system integration" -t task -p 1
 - [ ] End-to-end tests (5+)
 - [ ] Total: 70+ tests
 
-**Documentation**
+### Documentation
 
 - [ ] Complete ADR-041-046 documents
 - [ ] Create migration guide (v0.3 → v0.4.0)
@@ -223,7 +223,7 @@ bd create "FSM + context system integration" -t task -p 1
 - [ ] Update CHANGELOG.md
 - [ ] Update README.md
 
-**Release**
+### Release
 
 - [ ] Run full test suite (`make test`)
 - [ ] Run quality gates (`make check`)
@@ -232,7 +232,7 @@ bd create "FSM + context system integration" -t task -p 1
 - [ ] Tag v0.4.0
 - [ ] Push to remote
 
-**Deliverables**:
+#### Deliverables
 
 - 70+ tests passing
 - Complete documentation
@@ -288,7 +288,7 @@ bd create "Release v0.4.0" -t task -p 1
 
 ### Integration Tests (15+)
 
-**MCP Tools**:
+### MCP Tools
 
 - `search` with freshness filtering
 - `search` with snapshots
@@ -297,7 +297,7 @@ bd create "Release v0.4.0" -t task -p 1
 - `memory` context storage
 - `session` workflow integration
 
-**FSM Integration**:
+### FSM Integration
 
 - Context gates in workflow transitions
 - Policy enforcement at state boundaries
@@ -305,7 +305,7 @@ bd create "Release v0.4.0" -t task -p 1
 
 ### End-to-End Tests (5+)
 
-**Workflows**:
+### Workflows
 
 - Freshness-aware search workflow
 - Time-travel query workflow

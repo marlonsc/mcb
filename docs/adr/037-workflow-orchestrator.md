@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR-037: Workflow Orchestrator — Coordination and MCP Integration
+# ADR-037: Workflow Orchestrator — Coordination and MCP Integration
 
 ## Status
 
@@ -19,7 +19,7 @@ implementation_status: Complete
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout), [ADR-036](./036-enforcement-policies.md) (Enforcement Policies)
 - **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-033](./033-mcp-handler-consolidation.md) (Handler Consolidation), [ADR-025](./025-figment-configuration.md) (Figment)
-- **Series:** [ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → **ADR-037**
+- **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) →**ADR-037**
 
 ## Context
 
@@ -31,7 +31,7 @@ ADRs 034–036 define three independent providers:
 | `ContextScoutProvider` | 035 | Git/tracker/config state discovery |
 | `PolicyGuardProvider` | 036 | Policy evaluation before transitions |
 
-Each provider has a clean port trait, a linkme-registered implementation, and is injected via `Arc<dyn Trait>`. However, no component **coordinates** them into a unified workflow lifecycle.
+Each provider has a clean port trait, a linkme-registered implementation, and is injected via `Arc<dyn Trait>`. However, no component**coordinates** them into a unified workflow lifecycle.
 
 **This ADR** defines:
 
@@ -59,7 +59,7 @@ Each provider has a clean port trait, a linkme-registered implementation, and is
 
 The workflow system uses a hierarchical, multi-tier execution model that aligns work from strategic planning down to individual agent execution:
 
-```
+```text
 Project (scope boundary)
   └─ Plan (multi-phase roadmap from Beads)
       └─ Task (atomic work unit from Beads)
@@ -148,7 +148,7 @@ pub struct MultiTierConcurrency {
 
 ### 2. Event Broadcasting (3 Channels)
 
-Events occur at every state transition, agent action, and operator decision. The system broadcasts these events across **three independent channels** for different consumers:
+Events occur at every state transition, agent action, and operator decision. The system broadcasts these events across**three independent channels** for different consumers:
 
 #### WorkflowEvent Enum (Complete)
 
@@ -254,7 +254,7 @@ pub enum WorkflowEvent {
 
 **Technology**: Redis, RabbitMQ, or NATS (pluggable via provider trait)
 
-**Consumers**:
+Consumers:
 
 - External webhooks (Slack, GitHub, PagerDuty notifications)
 - Dashboard real-time updates
@@ -281,9 +281,9 @@ impl EventQueueProvider for RedisEventQueue {
 }
 ```
 
-**Topic Structure**:
+Topic Structure:
 
-```
+```text
 workflow.sessions.created
 workflow.sessions.started
 workflow.sessions.completed
@@ -305,7 +305,7 @@ workflow.agents.failed
 
 **Storage**: `workflow_events` table (SQLite, PostgreSQL, or configurable SQL dialect)
 
-**Properties**:
+Properties:
 
 - Immutable: events are INSERT-only, never UPDATE/DELETE
 - Indexed: Fast queries by session_id, timestamp, event_type
@@ -329,7 +329,7 @@ CREATE TABLE workflow_events (
 );
 ```
 
-**Query Examples**:
+Query Examples:
 
 ```sql
 -- Timeline of a session
@@ -445,7 +445,7 @@ impl WorkflowService {
 
 ### 3. Beads Integration
 
-Beads is the **task orientation system** — it describes what work exists, dependencies, and status. Workflow is the **execution system** — it instantiates and runs tasks from Beads. The two systems must coordinate without duplicating state.
+Beads is the**task orientation system**— it describes what work exists, dependencies, and status. Workflow is the**execution system** — it instantiates and runs tasks from Beads. The two systems must coordinate without duplicating state.
 
 #### Design Principle: Single Source of Truth
 
@@ -570,7 +570,7 @@ pub async fn transition(
 
 ##### 4. No Sync Back to Beads
 
-Workflow does **NOT** update Beads task status. Beads is the source of truth for task metadata:
+Workflow does**NOT** update Beads task status. Beads is the source of truth for task metadata:
 
 - If operator closes session as "completed", Beads task status is updated via:
 - Manual operator action in OpenCode UI
@@ -1557,13 +1557,13 @@ impl SessionManager {
 
 [orchestrator]
 
-# Maximum concurrent workflow sessions.
+# Maximum concurrent workflow sessions
 max_sessions = 10
 
-# Session timeout in seconds (auto-cleanup after inactivity).
+# Session timeout in seconds (auto-cleanup after inactivity)
 session_timeout_seconds = 3600
 
-# Event channel capacity.
+# Event channel capacity
 event_channel_capacity = 256
 ```
 
@@ -1587,7 +1587,7 @@ fn default_timeout() -> u64 { 3600 }
 fn default_channel_capacity() -> usize { 256 }
 ```
 
-### 12. Module Locations
+## 12. Module Locations
 
 | Crate | Path | Content |
 | ------- | ------ | --------- |

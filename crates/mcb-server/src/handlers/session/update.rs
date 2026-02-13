@@ -9,6 +9,7 @@ use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handler_helpers::resolve_identifier_precedence;
 use tracing::error;
 
 /// Updates an existing agent session.
@@ -35,6 +36,49 @@ pub async fn update_session(
     };
     match agent_service.get_session(session_id).await {
         Ok(Some(mut session)) => {
+            let payload_project_id =
+                data.and_then(|d| SessionHelpers::get_str(d, schema::PROJECT_ID));
+            let payload_worktree_id =
+                data.and_then(|d| SessionHelpers::get_str(d, schema::WORKTREE_ID));
+
+            let resolved_project_id = resolve_identifier_precedence(
+                schema::PROJECT_ID,
+                args.project_id.as_deref(),
+                payload_project_id.as_deref(),
+            )?;
+            if let Some(project_id) = resolved_project_id {
+                if let Some(existing) = session.project_id.as_deref()
+                    && existing != project_id
+                {
+                    return Err(McpError::invalid_params(
+                        format!(
+                            "conflicting project_id: args/data='{project_id}', session='{existing}'"
+                        ),
+                        None,
+                    ));
+                }
+                session.project_id = Some(project_id);
+            }
+
+            let resolved_worktree_id = resolve_identifier_precedence(
+                schema::WORKTREE_ID,
+                args.worktree_id.as_deref(),
+                payload_worktree_id.as_deref(),
+            )?;
+            if let Some(worktree_id) = resolved_worktree_id {
+                if let Some(existing) = session.worktree_id.as_deref()
+                    && existing != worktree_id
+                {
+                    return Err(McpError::invalid_params(
+                        format!(
+                            "conflicting worktree_id: args/data='{worktree_id}', session='{existing}'"
+                        ),
+                        None,
+                    ));
+                }
+                session.worktree_id = Some(worktree_id);
+            }
+
             if let Some(status) = status {
                 session.status = status;
             }

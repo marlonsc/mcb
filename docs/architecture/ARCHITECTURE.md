@@ -4,7 +4,7 @@
 [![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
 
-**Model Context Protocol Server for Semantic Code Analysis using Vector Embeddings**
+## Model Context Protocol Server for Semantic Code Analysis using Vector Embeddings
 
 ---
 
@@ -357,14 +357,14 @@ impl ContextService {
 }
 ```
 
-**Responsibilities**:
+### Responsibilities
 
 - Coordinate embedding generation
 - Manage vector storage operations
 - Handle batch processing
 - Collect performance metrics
 
-##### SearchService
+#### SearchService
 
 **Purpose**: Execute semantic similarity searches across indexed codebases
 
@@ -401,14 +401,14 @@ impl SearchService {
 }
 ```
 
-**Responsibilities**:
+### Responsibilities (1)
 
 - Query processing and embedding generation
 - Vector similarity search execution
 - Result ranking and filtering
 - Response caching and optimization
 
-##### IndexingService
+#### IndexingService
 
 **Purpose**: Process codebases and create searchable vector indexes
 
@@ -452,7 +452,7 @@ impl IndexingService {
 }
 ```
 
-**Responsibilities**:
+### Responsibilities (2)
 
 - Repository scanning and file discovery
 - Language detection and AST parsing
@@ -463,7 +463,7 @@ impl IndexingService {
 
 ##### Embedding Providers
 
-**Interface Definition**:
+### Interface Definition
 
 ```rust
 #[async_trait]
@@ -476,7 +476,7 @@ pub trait EmbeddingProvider: Send + Sync {
 }
 ```
 
-**Supported Providers**:
+#### Supported Providers
 
 | Provider | Technology | Dimensions | Cost Model | Status |
 | ---------- | ------------ | ------------ | ------------ | -------- |
@@ -489,7 +489,7 @@ pub trait EmbeddingProvider: Send + Sync {
 
 ##### Vector Store Providers
 
-**Interface Definition**:
+### Interface Definition (1)
 
 ```rust
 #[async_trait]
@@ -502,7 +502,7 @@ pub trait VectorStoreProvider: Send + Sync {
 }
 ```
 
-**Supported Providers**:
+#### Supported Providers
 
 | Provider | Technology | Index Type | Scalability | Status |
 | ---------- | ------------ | ------------ | ------------- | -------- |
@@ -545,7 +545,7 @@ Memory Context Browser implements Robert C. Martin's Clean Architecture with str
 3. **Entity Rule**: Domain entities have no external dependencies
 4. **Use Case Rule**: Application layer orchestrates without implementing infrastructure
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                      Server Layer                        │
 │                    (mcb-server)                         │
@@ -634,7 +634,7 @@ pub trait NewServiceProvider: Send + Sync {
 }
 ```
 
-**Guidelines:**
+### Guidelines
 
 - Use domain types only (no external dependencies)
 - Return `Result<T, Error>` from domain layer
@@ -676,7 +676,7 @@ impl NewServiceProvider for ConcreteNewService {
 }
 ```
 
-**Guidelines:**
+### Guidelines (1)
 
 - Import trait from `mcb_domain::ports::providers`
 - Use `Arc<dyn Trait>` for shared ownership
@@ -704,7 +704,7 @@ pub static CONCRETE_NEW_SERVICE: ProviderRegistration = ProviderRegistration {
 };
 ```
 
-**Guidelines:**
+### Guidelines (2)
 
 - Define registry slice in `mcb-application/src/ports/registry/`
 - Register all implementations in provider module
@@ -715,7 +715,7 @@ This pattern enables compile-time provider discovery with zero runtime overhead 
 
 ### DI Strategy (ADR-024 → ADR-029)
 
-The dependency injection system uses a **handle-based pattern with dill IoC Container** documented in [ADR-029: Hexagonal Architecture with dill](../adr/029-hexagonal-architecture-dill.md):
+The dependency injection system uses a**handle-based pattern with dill IoC Container** documented in [ADR-029: Hexagonal Architecture with dill](../adr/029-hexagonal-architecture-dill.md):
 
 #### dill Catalog (IoC Container)
 
@@ -768,7 +768,7 @@ impl EmbeddingProviderHandle {
 }
 ```
 
-**Why This Pattern?**
+### Why This Pattern
 
 | Aspect | dill Catalog | Provider Handles |
 | -------- | -------------- | ------------------ |
@@ -804,7 +804,7 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 }
 ```
 
-**Port Categories**:
+### Port Categories
 
 | Category | Location | Examples |
 | ---------- | ---------- | ---------- |
@@ -849,7 +849,7 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 
 **Purpose**: Core business entities, value objects, events, ports, and repository interfaces.
 
-**Key Components**:
+### Key Components
 
 - `entities/`: Domain entities (CodeChunk, Codebase)
 - `events/`: Domain events (DomainEvent, EventPublisher trait)
@@ -865,7 +865,7 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 
 **Purpose**: Business logic orchestration and use case implementations.
 
-**Services**:
+### Services
 
 - `use_cases/context_service.rs`: ContextService - embedding generation and vector storage coordination
 - `use_cases/indexing_service.rs`: IndexingService - codebase indexing workflow
@@ -878,7 +878,7 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 
 **Purpose**: External service integrations implementing domain ports.
 
-**Submodules**:
+### Submodules
 
 - `embedding/`: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null (6 providers)
 - `vector_store/`: InMemory, Encrypted, Null (3 providers)
@@ -891,7 +891,7 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 
 **Purpose**: Shared technical services and cross-cutting concerns.
 
-**Key Components**:
+### Key Components (1)
 
 - `di/`: dill IoC Container with handle-based pattern (ADR-029)
 - `di/catalog.rs`: dill Catalog configuration
@@ -908,7 +908,7 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 
 **Purpose**: MCP protocol implementation and HTTP API.
 
-**Components**:
+### Components
 
 - `handlers/`: MCP tool handlers (index, search, clear, status)
 - `transport/`: Stdio transport implementation
@@ -922,7 +922,7 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 
 **Status**: Phases 1–7 all VERIFIED (v0.2.0) - 750+ tests pass
 
-**Components**:
+### Components (1)
 
 - `linters/`: ✅ mod.rs (12KB) - 17/17 tests pass
 - `ast/`: ✅ query.rs, decoder.rs, languages.rs, mod.rs - 26/26 tests pass
@@ -934,9 +934,9 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 - `clean_architecture.rs`: ✅ CleanArchitectureValidator (CA001–CA009) - 11/11 tests pass
 - `tests/`: integration_linters.rs, integration_ast.rs, integration_engines.rs, integration_rca_metrics.rs, integration_duplication.rs, integration_architecture.rs - all passing
 
-**Architecture**:
+### Architecture
 
-```
+```text
 Validation Pipeline (Pure Rust):
 ┌─────────────────────────────────────────────┐
 │ YAML Rules → Rule Loader → Rule Engine     │
@@ -955,13 +955,13 @@ Validation Pipeline (Pure Rust):
 
 **Verification Date**: 2026-01-28 via `make test`. See `docs/developer/IMPLEMENTATION_STATUS.md`.
 
-**Usage**:
+### Usage
 
 ```bash
 make validate  # Run all architecture validation rules
 ```
 
-**Features**:
+### Features
 
 - **Compile-time Safety**: Detects migration patterns (inventory → linkme)
 - **Quality Gates**: Pre-commit validation prevents architecture violations
@@ -981,44 +981,44 @@ make validate  # Run all architecture validation rules
 
 **Purpose**: Intelligent provider management with resilience and optimization.
 
-**Submodules**:
+### Submodules (1)
 
-**Health Monitoring (`health/`)**:
+### Health Monitoring (`health/`)
 
 - `HealthMonitor`: Continuous provider health checking
 - `ProviderHealthChecker`: Automated health assessment
 - `HealthCheckResult`: Structured health status reporting
 
-**Circuit Breaker (`circuit_breaker/`)**:
+### Circuit Breaker (`circuit_breaker/`)
 
 - `CircuitBreaker`: Failure detection and recovery
 - `CircuitBreakerConfig`: Configurable failure thresholds
 - `CircuitBreakerState`: State management for resilience
 
-**Metrics Collection (`metrics/`)**:
+### Metrics Collection (`metrics/`)
 
 - `ProviderMetricsCollector`: Usage and performance tracking
 - `MetricsSummary`: Aggregated metrics reporting
 
-**Cost Tracking (`cost_tracker/`)**:
+### Cost Tracking (`cost_tracker/`)
 
 - `CostTracker`: API usage and cost monitoring
 - `UsageMetrics`: Detailed usage statistics
 - `CostTrackerConfig`: Cost optimization settings
 
-**Failover Management (`failover/`)**:
+### Failover Management (`failover/`)
 
 - `FailoverManager`: Automatic provider switching
 - `FailoverStrategy`: Priority-based and round-robin strategies
 - `PriorityBasedStrategy`: Cost and performance-aware selection
 
-**Router Core (`router/`)**:
+### Router Core (`router/`)
 
 - `ProviderRouter`: Main routing orchestration
 - `ProviderContext`: Contextual routing decisions
 - `ProviderSelectionStrategy`: Pluggable selection algorithms
 
-**Key Features**:
+### Key Features
 
 - **Health-Aware Routing**: Automatic failover from unhealthy providers
 - **Cost Optimization**: Intelligent selection based on cost efficiency
@@ -1032,14 +1032,14 @@ make validate  # Run all architecture validation rules
 
 **Algorithm**: BM25 (lexical) + Semantic Embeddings (contextual)
 
-**Components**:
+### Components (2)
 
 - `BM25Scorer`: Term frequency-based ranking
 - `BM25Params`: Configurable BM25 parameters (k1=1.2, b=0.75)
 - `HybridSearchEngine`: Combined search orchestration
 - `SearchResult`: Unified Result format
 
-**Benefits**:
+### Benefits
 
 - Better relevance through dual ranking
 - Handles both keyword and semantic queries
@@ -1231,7 +1231,7 @@ impl VectorRecord {
 }
 ```
 
-**Storage Options**:
+### Storage Options
 
 | Database | Use Case | Performance | Scalability |
 | ---------- | ---------- | ------------- | ------------- |
@@ -1270,7 +1270,7 @@ CREATE INDEX idx_chunks_metadata ON code_chunks USING GIN(metadata);
 
 #### Caching Strategy
 
-**Multi-Level Caching**:
+### Multi-Level Caching
 
 1. **Application Cache**: Redis for search results and embeddings
 2. **Provider Cache**: In-memory LRU cache for frequently accessed data
@@ -1390,7 +1390,7 @@ impl AuthService {
 
 #### Authorization Model
 
-**Role-Based Access Control (RBAC)**:
+### Role-Based Access Control (RBAC)
 
 ```rust
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -1723,9 +1723,9 @@ spec:
             cpu: "500m"
 ```
 
-### Monitoring & Observability
+## Monitoring & Observability
 
-#### Metrics Collection
+### Metrics Collection
 
 ```rust
 #[derive(Clone)]
@@ -1853,7 +1853,7 @@ integration_tests_required = true
 performance_tests_required = true
 ```
 
-#### Automated Quality Checks
+## Automated Quality Checks
 
 ```rust
 pub struct QualityGateChecker {
@@ -1903,7 +1903,7 @@ impl QualityGateChecker {
 ## Decision
 {What decision was made?}
 
-## Consequences
+### Consequences
 {What are the positive and negative consequences of this decision?}
 
 ## Alternatives Considered
@@ -1926,7 +1926,7 @@ impl QualityGateChecker {
 
 **Decision**: Implement provider pattern with trait-based abstractions for embedding and vector storage providers.
 
-**Consequences**:
+### Consequences
 
 - ✅ High extensibility for adding new providers
 - ✅ Clean separation of concerns
@@ -1941,7 +1941,7 @@ impl QualityGateChecker {
 
 **Decision**: Use Tokio async runtime throughout the system with async traits for all provider interfaces.
 
-**Consequences**:
+### Consequences (1)
 
 - ✅ Excellent performance for concurrent operations
 - ✅ Scalability for high-throughput scenarios
@@ -1956,7 +1956,7 @@ impl QualityGateChecker {
 
 **Decision**: Adopt C4 model (Context, Containers, Components, Code) with PlantUML diagrams and structured documentation.
 
-**Consequences**:
+### Consequences (2)
 
 - ✅ Clear, hierarchical documentation structure
 - ✅ Multiple levels of detail for different audiences
@@ -1971,7 +1971,7 @@ impl QualityGateChecker {
 
 **Decision**: Support multiple embedding and vector storage providers with automatic failover and load balancing.
 
-**Consequences**:
+### Consequences (3)
 
 - ✅ High availability and fault tolerance
 - ✅ Cost optimization through provider selection
@@ -1986,7 +1986,7 @@ impl QualityGateChecker {
 
 **Decision**: Use dill Catalog as IoC Container with handle-based pattern for runtime provider switching. Ports defined in mcb-domain.
 
-**Consequences**:
+### Consequences (4)
 
 - ✅ Clear layer separation (hexagonal architecture)
 - ✅ dill Catalog manages service lifecycle
@@ -2003,7 +2003,7 @@ See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
 
 **Decision**: Organize into eight Cargo workspace crates (including facade) following Clean Architecture principles with strict layer separation.
 
-**Consequences**:
+### Consequences (5)
 
 - ✅ Clear boundaries and responsibilities per crate
 - ✅ Testability without infrastructure dependencies
@@ -2037,6 +2037,11 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 - [ADR-028](../adr/028-advanced-code-browser-v020.md) Code Browser
 - [ADR-030](../adr/030-multi-provider-strategy.md) Multi-Provider
 - [ADR-031](../adr/031-documentation-excellence.md) Documentation Excellence
+- [ADR-032](../adr/032-agent-quality-domain-extension.md) Agent Quality Domain
+- [ADR-033](../adr/033-mcp-handler-consolidation.md) MCP Handler Consolidation
+- [ADR-038](../adr/038-multi-tier-execution-model.md) Multi-Tier Execution Model
+- [ADR-039](../adr/039-context-persistence-boundary.md) Context Persistence Boundary
+- [ADR-040](../adr/040-unified-tool-execution-gate.md) Unified Tool Execution Gate
 
 See [ADR index](../adr/README.md) for the full list.
 
@@ -2082,7 +2087,7 @@ services:
 -   "6379:6379"
 ```
 
-#### Production Deployment
+## Production Deployment
 
 ```yaml
 
@@ -2127,9 +2132,9 @@ spec:
           value: "minio:9000"
 ```
 
-### Configuration Management
+## Configuration Management
 
-#### Configuration Hierarchy
+### Configuration Hierarchy
 
 1. **Default Configuration**: Compiled-in defaults
 2. **Environment Variables**: Runtime overrides
@@ -2236,9 +2241,9 @@ groups:
           summary: "Provider {{ $labels.provider }} is down"
 ```
 
-### Backup & Recovery
+## Backup & Recovery
 
-#### Data Backup Strategy
+### Data Backup Strategy
 
 ```rust
 pub struct BackupManager {
@@ -2289,7 +2294,7 @@ impl BackupManager {
 
 ### Phase 1: Core Foundation (Completed ✅)
 
-**Delivered**:
+#### Delivered
 
 - Clean Rust architecture with SOLID principles
 - Provider pattern with mock implementations
@@ -2299,7 +2304,7 @@ impl BackupManager {
 
 ### Phase 2: Provider Ecosystem (Completed ✅)
 
-**Delivered**:
+#### Delivered
 
 - ✅ Real embedding provider integrations (OpenAI, Ollama, Gemini, VoyageAI)
 - ✅ Production vector database integration (Milvus, In-Memory, Filesystem)
@@ -2307,7 +2312,7 @@ impl BackupManager {
 - ✅ Performance optimization and caching
 - ✅ Complete DI system with provider registry and routing
 
-**Upcoming Milestones**:
+### Upcoming Milestones
 
 - ✅**v0.1.0**: First stable release - drop-in replacement for Claude-context
 - 🚧**v0.2.0**: Git-aware indexing + persistent session memory ([ADR-008](../adr/008-git-aware-semantic-indexing-v0.2.0.md), [ADR-009](../adr/009-persistent-session-memory-v0.2.0.md))
@@ -2333,9 +2338,9 @@ impl BackupManager {
 
 **Overview**: v0.4.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
 
-**5-Layer Architecture**:
+### 5-Layer Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │ Layer 5: Integration & Policies                     │
 │ (Policy enforcement, compensation triggers)         │
@@ -2362,14 +2367,14 @@ impl BackupManager {
 └─────────────────────────────────────────────────────┘
 ```
 
-**Key Components**:
+#### Key Components
 
 - **CodeGraph** (petgraph): Nodes (code entities), Edges (relationships), Metadata (freshness)
 - **HybridSearchEngine**: Semantic (embeddings) + Keyword (BM25) with RRF ranking
 - **ContextSnapshot**: Immutable captures at commits/tags for temporal queries
 - **PolicyEngine**: Freshness gates, validation policies, compensation triggers
 
-**New Capabilities**:
+### New Capabilities
 
 | Capability | Example | Benefit |
 | ------------ | --------- | --------- |
@@ -2379,7 +2384,7 @@ impl BackupManager {
 | Hybrid Search | RRF fusion of semantic + keyword | Better relevance |
 | Policy-Driven Discovery | Apply freshness/validation policies | Enforce context quality |
 
-**Related ADRs**:
+### Related ADRs
 
 - [ADR-041: Context Architecture](../adr/phase-9/README.md#adr-041-context-architecture)
 - [ADR-042: Knowledge Graph](../adr/phase-9/README.md#adr-042-knowledge-graph)
@@ -2389,7 +2394,7 @@ impl BackupManager {
 - [ADR-046: Integration Patterns](../adr/phase-9/README.md#adr-046-integration-patterns)
 - [ADR-047: Project Architecture](../adr/047-project-architecture.md)
 
-**See Also**:
+### See Also
 
 - [`docs/guides/features/INTEGRATED_CONTEXT.md`](../guides/features/INTEGRATED_CONTEXT.md) – Feature overview
 - [`docs/migration/v0.3-to-v0.4.md`](../migration/v0.3-to-v0.4.md) – Migration guide
@@ -2397,7 +2402,7 @@ impl BackupManager {
 
 ### Phase 3: Enterprise Features (Planned 📋)
 
-**Target Features**:
+### Target Features
 
 - Multi-user support with authentication
 - REST API alongside MCP protocol
@@ -2405,7 +2410,7 @@ impl BackupManager {
 - Automated scaling and high availability
 - Enterprise security and compliance
 
-**Long-term Vision**:
+### Long-term Vision
 
 - Distributed deployment across multiple regions
 - Edge computing support for low-latency access

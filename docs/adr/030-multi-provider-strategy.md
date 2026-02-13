@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: N/A
 ---
 
-## ADR 030: Multi-Provider Strategy
+# ADR 030: Multi-Provider Strategy
 
 ## Status
 
@@ -86,7 +86,7 @@ Key architectural elements:
 - **Cost Tracking**: Monitor and optimize provider usage costs
 - **Configuration Flexibility**: Runtime provider switching and reconfiguration
 
-## Consequences
+### Consequences
 
 Multi-provider strategy provides excellent resilience and flexibility but adds
 significant operational complexity.
@@ -386,7 +386,7 @@ development = "memory"      # Use in-memory for development
 production = "milvus"       # Use Milvus for production
 ```
 
-### Circuit Breaker Pattern
+## Circuit Breaker Pattern
 
 ```rust
 pub struct ProviderCircuitBreaker {
@@ -461,13 +461,13 @@ types beyond embedding providers:
 
 ### Extended Provider Types
 
-**Current (v0.1.2)**:
+Current (v0.1.2):
 
 - Embedding Providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) - 6
   total
 - Vector Store Providers (In-Memory, Encrypted, Null) - 3 total
 
-**Future (v0.3.0+)**:
+Future (v0.3.0+):
 
 - **Analysis Providers**: Complexity analyzers, debt detectors, SATD finders
 - **Quality Providers**: Quality gate checkers, metrics aggregators

@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 016: Integration Points and Adapter Pattern
+# ADR 016: Integration Points and Adapter Pattern
 
 ## Status
 
@@ -26,9 +26,9 @@ Integrating PMAT code (proven algorithms, extensive tests) while maintaining MCB
 
 ## Decision
 
-Use **Adapter Pattern** with thin conversion layer:
+Use**Adapter Pattern** with thin conversion layer:
 
-```
+```text
 PMAT Algorithm (reused 100%)
     ↓
 Adapter (thin wrapper, ~10-50 LOC)
@@ -156,19 +156,19 @@ pub trait AnalysisAdapter: Send + Sync {
 
 ## Consequences
 
-**Positive**:
+Positive:
 
 - 100% PMAT algorithm reuse (no reimplementation risk)
 - Clean architecture preserved
 - Type safety via adapter contracts
 - Easy to add new adapters
 
-**Negative**:
+Negative:
 
 - Indirection overhead (~1-2ms per call)
 - Two type systems to maintain
 
-**Mitigation**:
+Mitigation:
 
 - Keep adapters thin (target <50 LOC)
 - Use inline conversions where possible
@@ -189,4 +189,4 @@ pub trait AnalysisAdapter: Send + Sync {
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 crate paths*
+Updated 2026-01-17 - Reflects v0.1.2 crate paths

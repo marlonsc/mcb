@@ -2,7 +2,7 @@
 
 This guide helps you migrate from [zilliztech/Claude-context](https://github.com/zilliztech/claude-context) to mcb.
 
-## Why Migrate?
+## Why Migrate
 
 | Feature | Claude-context | mcb |
 | --------- | ---------------- | --------------------- |
@@ -27,7 +27,7 @@ tar xzf mcb-linux-x86_64.tar.gz
 sudo mv mcb /usr/local/bin/
 ```
 
-### Step 2: Keep Your Environment Variables
+## Step 2: Keep Your Environment Variables
 
 mcb is fully compatible with Claude-context environment variables:
 
@@ -40,13 +40,13 @@ mcb is fully compatible with Claude-context environment variables:
 | `MILVUS_TOKEN` | `MILVUS_TOKEN` | Direct support |
 | `MILVUS_ADDRESS` | `MILVUS_ADDRESS` | Direct support |
 
-**No changes required to your existing environment variables!**
+### No changes required to your existing environment variables
 
 ### Step 3: Update Claude Desktop Configuration
 
 Replace the Claude-context entry in your `claude_desktop_config.json`:
 
-**Before (Claude-context):**
+### Before (Claude-context)
 
 ```json
 {
@@ -63,7 +63,7 @@ Replace the Claude-context entry in your `claude_desktop_config.json`:
 }
 ```
 
-**After (mcb):**
+### After (mcb)
 
 ```json
 {
@@ -131,7 +131,7 @@ GEMINI_API_KEY=...
 EMBEDDING_PROVIDER=fastembed
 ```
 
-### Vector Store Providers
+## Vector Store Providers
 
 Set `VECTOR_STORE_PROVIDER` environment variable:
 
@@ -156,12 +156,12 @@ VECTOR_STORE_PROVIDER=edgevec
 
 Both tools support the same core languages. mcb v0.1.0 now includes:
 
-**Original (matching Claude-context):**
+### Original (matching Claude-context)
 
 - Rust, Python, JavaScript, TypeScript
 - Go, Java, C, C++, C#
 
-**Added in v0.1.0:**
+### Added in v0.1.0
 
 - Ruby, PHP, Swift, Kotlin
 
@@ -197,7 +197,7 @@ export OPENAI_API_KEY=sk-...
 export VOYAGE_API_KEY=...
 ```
 
-### Connection to Milvus fails
+## Connection to Milvus fails
 
 Check Milvus is running and accessible:
 
@@ -209,7 +209,7 @@ curl http://localhost:19530/v1/vector/health
 
 Re-index your codebase:
 
-```
+```text
 
 # In Claude Desktop, use the index (action=start) tool
 ```
@@ -219,7 +219,7 @@ Re-index your codebase:
 - GitHub Issues: [mcb issues](https://github.com/marlonsc/mcb/issues)
 - Documentation: [mcb docs](https://github.com/marlonsc/mcb)
 
-## Rollback
+### Rollback
 
 If you need to temporarily rollback:
 

@@ -234,20 +234,3 @@ impl AstDecoder {
         false
     }
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_decode_span() {
-        // Test span decoding (would need actual Tree-sitter node)
-        // This is a placeholder for actual tests
-        // Actual testing requires mocking tree-sitter nodes
-    }
-
-    #[test]
-    fn test_extract_name() {
-        // Test name extraction (would need actual Tree-sitter node)
-        // This is a placeholder for actual tests
-        // Actual testing requires mocking tree-sitter nodes
-    }
-}

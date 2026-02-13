@@ -63,7 +63,7 @@ Complete SQL schema with:
 
 ### Data Model Overview
 
-**Hybrid Storage**:
+### Hybrid Storage
 
 - **SQLite** (primary): Fast queries, ACID transactions, daemon-based RPC
 - **JSONL** (export): Git-friendly, human-readable, merge-friendly
@@ -74,7 +74,7 @@ Complete SQL schema with:
 - Supports multiple issue types (task, bug, feature, epic, molecule, gate, etc.)
 - Rich metadata with custom JSON support
 
-**Relationships**:
+### Relationships
 
 - Labels (many-to-many)
 - Dependencies (7 types: blocks, discovered-from, parent-child, relates-to, duplicate-of, superseded-by, waits-for)
@@ -83,7 +83,7 @@ Complete SQL schema with:
 
 ### Directory Structure
 
-```
+```text
 .beads/
 ├── beads.db              # SQLite (primary)
 ├── issues.jsonl          # JSONL export (git-tracked)
@@ -124,7 +124,7 @@ Complete SQL schema with:
 
 ### Migration Path to Relational Database
 
-**Tables to Create**:
+### Tables to Create
 
 1. issues (with all 50+ fields)
 2. labels (many-to-many)
@@ -134,16 +134,16 @@ Complete SQL schema with:
 6. config (settings)
 7. metadata (database metadata)
 
-**Key Relationships**:
+### Key Relationships
 
-```
+```text
 issues (1) ──→ (many) labels
 issues (1) ──→ (many) dependencies
 issues (1) ──→ (many) comments
 issues (1) ──→ (many) events
 ```
 
-**Data Type Mapping**:
+### Data Type Mapping
 
 - Timestamps: DATETIME with timezone
 - JSON fields: TEXT (metadata, payload, agent_state, waiters)
@@ -217,20 +217,20 @@ Key settings in `config.yaml`:
 
 ## Daemon Architecture
 
-**Modes**:
+### Modes
 
 - **Daemon mode** (default): Background RPC server via Unix socket
 - **No-daemon mode**: Direct database access
 - **No-db mode**: Load from JSONL, no SQLite
 
-**Files**:
+#### Files
 
 - `daemon.pid`: Process ID
 - `daemon.lock`: Lock file
 - `daemon.log`: Log output
 - `bd.sock`: Unix socket for RPC
 
-**Functions**:
+### Functions
 
 - RPC server for CLI commands
 - Auto-flush debouncing

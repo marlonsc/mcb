@@ -599,11 +599,11 @@ mod handler_error_tests {
     use rmcp::handler::server::wrapper::Parameters;
 
     use super::*;
-    use crate::test_utils::mock_services::MockIndexingService;
+    use crate::test_utils::mock_services::TestIndexingService;
 
     #[tokio::test]
     async fn test_handler_service_error_has_is_error_true() {
-        let mock_service = MockIndexingService::new().with_failure("Storage quota exceeded");
+        let mock_service = TestIndexingService::new().with_failure("Storage quota exceeded");
         let handler = IndexHandler::new(Arc::new(mock_service));
 
         // Create a temp directory for valid path
@@ -640,7 +640,7 @@ mod handler_error_tests {
     #[tokio::test]
     async fn test_handler_service_error_contains_error_message() {
         let error_msg = "Database connection failed";
-        let mock_service = MockIndexingService::new().with_failure(error_msg);
+        let mock_service = TestIndexingService::new().with_failure(error_msg);
         let handler = IndexHandler::new(Arc::new(mock_service));
 
         let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");

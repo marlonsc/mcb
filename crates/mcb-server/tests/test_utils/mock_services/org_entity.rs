@@ -3,22 +3,22 @@ use mcb_domain::entities::{ApiKey, Organization, Team, TeamMember, User};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::repositories::OrgEntityRepository;
 
-pub struct MockOrgEntityRepository;
+pub struct TestOrgEntityRepository;
 
-impl MockOrgEntityRepository {
+impl TestOrgEntityRepository {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for MockOrgEntityRepository {
+impl Default for TestOrgEntityRepository {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl OrgEntityRepository for MockOrgEntityRepository {
+impl OrgEntityRepository for TestOrgEntityRepository {
     async fn create_org(&self, _org: &Organization) -> Result<()> {
         Ok(())
     }

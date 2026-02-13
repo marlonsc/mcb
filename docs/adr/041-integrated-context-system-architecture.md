@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR-041: Integrated Context System Architecture v0.4.0
+# ADR-041: Integrated Context System Architecture v0.4.0
 
 **Status**: Proposed
 **Date**: 2026-02-05
@@ -20,7 +20,7 @@ implementation_status: Incomplete
 
 ## Context
 
-MCB v0.2.0 implements semantic code search with git awareness and persistent memory. v0.3.0 adds workflow orchestration (ADR-034-037: FSM, context discovery, policies, compensation). v0.4.0 must unify these into an **integrated context system** that combines:
+MCB v0.2.0 implements semantic code search with git awareness and persistent memory. v0.3.0 adds workflow orchestration (ADR-034-037: FSM, context discovery, policies, compensation). v0.4.0 must unify these into an**integrated context system** that combines:
 
 - VCS data (git history, branches, commits)
 - Code indexing (AST chunks, relationships)
@@ -29,9 +29,9 @@ MCB v0.2.0 implements semantic code search with git awareness and persistent mem
 - Project hierarchy (plans, tasks, scopes from Beads)
 - Policies (context boundaries, access control)
 
-into a **single queryable knowledge base** with explicit freshness tracking, versioning, and search.
+into a**single queryable knowledge base** with explicit freshness tracking, versioning, and search.
 
-**Problem Statement**:
+Problem Statement:
 
 1. **No unified context**: Code search, git history, memory, and workflow state are separate systems. Queries cannot reason across all information sources.
 2. **No freshness guarantees**: Caches expire, git state changes, but consumers don't know context age or staleness.
@@ -43,7 +43,7 @@ into a **single queryable knowledge base** with explicit freshness tracking, ver
 
 ### 1. Five-Layer Architecture
 
-```
+```text
 ┌─────────────────────────────────────────┐
 │  Layer 5: Policies & FSM Gating        │  (ADR-034-036)
 │  (FSM state gates freshness requirements)
@@ -62,7 +62,7 @@ into a **single queryable knowledge base** with explicit freshness tracking, ver
 └─────────────────────────────────────────┘
 ```
 
-**Rationale**:
+Rationale:
 
 - Clear separation of concerns (data → graph → search → policies)
 - Each layer has well-defined ports/interfaces
@@ -135,7 +135,7 @@ pub trait ContextGraphTraversal: Send + Sync {
 }
 ```
 
-**Note**: `ContextService` is NOT a port trait. It is a **concrete use case service** defined in `mcb-application/src/use_cases/context_service.rs` that composes all layers (repository, graph, search, policies). Per Clean Architecture, services are application-layer concerns, not domain ports.
+**Note**: `ContextService` is NOT a port trait. It is a**concrete use case service** defined in `mcb-application/src/use_cases/context_service.rs` that composes all layers (repository, graph, search, policies). Per Clean Architecture, services are application-layer concerns, not domain ports.
 
 ### 4. Integration with ADR-034-037
 
@@ -150,34 +150,34 @@ pub trait ContextGraphTraversal: Send + Sync {
 
 ### Layer Breakdown
 
-**Layer 1: Data Sources**
+Layer 1: Data Sources
 
 - Existing: Memory system, VCS provider, code indexing
 - Changes: Add session_id FK, freshness tracking, last_modified timestamps
 
-**Layer 2: Versioning (ADR-045)**
+Layer 2: Versioning (ADR-045)
 
 - New: ContextRepository storing immutable snapshots
 - Technology: SQLite (primary) + im::Vector (in-memory cache) + serde for serialization
 
-**Layer 3: Knowledge Graph (ADR-042)**
+Layer 3: Knowledge Graph (ADR-042)
 
 - New: CodeGraph built via tree-sitter-graph + petgraph
 - Technology: petgraph DAG + daggy + slotmap
 
-**Layer 4: Search (ADR-043)**
+Layer 4: Search (ADR-043)
 
 - New: HybridSearcher composing tantivy + vecstore + graph
 - Technology: tantivy (FTS) + vecstore (HNSW vectors) + RRF fusion
 
-**Layer 5: Policies (ADR-046)**
+Layer 5: Policies (ADR-046)
 
 - Integration: ContextValidationResult checks policies
 - Technology: Policy trait (existing from ADR-036)
 
 ### Crate Structure
 
-```
+```text
 mcb-domain/
 ├── ports/
 │   ├── context_repository.rs        [NEW] (ContextRepository trait)
@@ -239,7 +239,7 @@ mcb-server/
 | Cross-layer dependency bugs | Medium | High | Comprehensive integration tests; phase-based validation |
 | Freshness staleness detection failure | Medium | High | Multiple staleness signals (time + git hook + tracker) |
 
-## Success Criteria
+### Success Criteria
 
 - ✅ 5-layer architecture fully integrated
 - ✅ 70+ tests with 85%+ coverage
@@ -254,7 +254,7 @@ mcb-server/
 
 **Issue**: ContextService was initially shown as a port trait in `mcb-domain/ports/`, violating Clean Architecture principles. Services are application-layer concerns, not domain ports.
 
-**Resolution**:
+Resolution:
 
 - **Removed**: `ContextService` trait from domain ports
 - **Added**: `ContextGraphTraversal` trait to domain ports (graph navigation is a port concern)
@@ -267,7 +267,7 @@ mcb-server/
 
 **Issue**: ADR-041 did not explicitly acknowledge its dependency on ADR-035 (Context Scout) for freshness tracking.
 
-**Resolution**:
+Resolution:
 
 - **Clarified**: Layer 2 (Versioned Context) embeds `ContextFreshness` enum from ADR-035
 - **Documented**: ADR-045 (Context Versioning) extends ADR-035's freshness contract

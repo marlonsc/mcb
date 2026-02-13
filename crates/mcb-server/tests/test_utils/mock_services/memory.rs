@@ -16,12 +16,12 @@ use mcb_domain::value_objects::{Embedding, ObservationId, SessionId};
 
 use crate::test_utils::helpers::{arc_mutex, arc_mutex_vec};
 
-pub struct MockMemoryRepository {
+pub struct TestMemoryRepository {
     pub observations: Arc<Mutex<Vec<Observation>>>,
     pub summaries: Arc<Mutex<Vec<SessionSummary>>>,
 }
 
-impl MockMemoryRepository {
+impl TestMemoryRepository {
     pub fn new() -> Self {
         Self {
             observations: arc_mutex_vec(),
@@ -30,14 +30,14 @@ impl MockMemoryRepository {
     }
 }
 
-impl Default for MockMemoryRepository {
+impl Default for TestMemoryRepository {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl MemoryRepository for MockMemoryRepository {
+impl MemoryRepository for TestMemoryRepository {
     async fn store_observation(&self, observation: &Observation) -> Result<()> {
         self.observations
             .lock()
@@ -136,14 +136,14 @@ impl MemoryRepository for MockMemoryRepository {
     }
 }
 
-pub struct MockMemoryService {
+pub struct TestMemoryService {
     pub should_fail: Arc<AtomicBool>,
     pub error_message: Arc<Mutex<String>>,
     pub observations: Arc<Mutex<Vec<Observation>>>,
     pub summaries: Arc<Mutex<Vec<SessionSummary>>>,
 }
 
-impl MockMemoryService {
+impl TestMemoryService {
     pub fn new() -> Self {
         Self {
             should_fail: Arc::new(AtomicBool::new(false)),
@@ -154,14 +154,14 @@ impl MockMemoryService {
     }
 }
 
-impl Default for MockMemoryService {
+impl Default for TestMemoryService {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl MemoryServiceInterface for MockMemoryService {
+impl MemoryServiceInterface for TestMemoryService {
     async fn store_observation(
         &self,
         project_id: String,

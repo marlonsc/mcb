@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR-044: Lightweight Discovery Models for Context Routing
+# ADR-044: Lightweight Discovery Models for Context Routing
 
 **Status**: Proposed
 **Date**: 2026-02-05
@@ -18,24 +18,24 @@ implementation_status: Incomplete
 **Related**: ADR-041 (Context), ADR-043 (Search)
 **Context**: v0.4.0 MVP scope
 
-## Problem
+## Context
 
-ADR-043 hybrid search ranks results by BM25 + semantics + graph. But ranking is **global**: the same code is ranked the same regardless of **who's asking** or **what they're trying to do**.
+ADR-043 hybrid search ranks results by BM25 + semantics + graph. But ranking is**global**: the same code is ranked the same regardless of**who's asking**or**what they're trying to do**.
 
 Example:
 
 - Query: "authentication"
-- For a **security review task**: want cryptography libraries + auth policies
-- For a **onboarding task**: want example login code + documentation
+- For a**security review task**: want cryptography libraries + auth policies
+- For a**onboarding task**: want example login code + documentation
 - Same query, different ideal results
 
-**Solution**: Route queries based on **task context** without expensive ML training.
+**Solution**: Route queries based on**task context** without expensive ML training.
 
 ## Decision
 
 ### 1. Multi-Tier Routing: AST → Rules → (Optional: ML)
 
-```
+```text
 ┌──────────────────────────────┐
 │ Task Context                 │  (From Beads: scope, priority, type)
 └──────────────┬───────────────┘
@@ -155,7 +155,7 @@ impl AstBasedRouter {
 
 ### 3. Stage 2: Rule-Based Routing (rhai DSL)
 
-For tasks that don't fit standard patterns, use **rhai scripting** for custom rules:
+For tasks that don't fit standard patterns, use**rhai scripting** for custom rules:
 
 ```rust
 pub struct RuleBasedRouter {
@@ -273,15 +273,15 @@ if node.is_public == true && node.kind == "Function" {
 
 ## Integration with ADR-041-046
 
-**ADR-043 (Hybrid Search)**:
+ADR-043 (Hybrid Search):
 
 - After RRF fusion, apply routing to rerank
 
-**ADR-045 (Versioning)**:
+ADR-045 (Versioning):
 
 - Store task-specific context snapshots (include routing rules used)
 
-**ADR-046 (Policies)**:
+ADR-046 (Policies):
 
 - Policies can gate routing (e.g., "Security policy requires high-confidence scoring")
 
@@ -293,7 +293,7 @@ if node.is_public == true && node.kind == "Function" {
 
 **Target**: 18+ tests (AST + rules), 80%+ coverage
 
-## Success Criteria
+### Success Criteria
 
 - ✅ AST router <5ms latency
 - ✅ Rule router <20ms latency

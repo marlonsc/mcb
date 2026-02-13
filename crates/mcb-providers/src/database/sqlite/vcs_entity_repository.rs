@@ -6,6 +6,7 @@ use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, Worktree
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::VcsEntityRepository;
+use serde_json::json;
 
 /// SQLite-backed repository for VCS repositories, branches, worktrees, and assignments.
 pub struct SqliteVcsEntityRepository {
@@ -119,7 +120,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
     async fn create_repository(&self, repo: &Repository) -> Result<()> {
         self.executor
             .execute(
-                "INSERT INTO repositories (id, org_id, project_id, name, url, local_path, vcs_type, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO repositories (id, org_id, project_id, name, url, local_path, vcs_type, origin_context, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 &[
                     SqlParam::String(repo.id.clone()),
                     SqlParam::String(repo.org_id.clone()),
@@ -128,6 +129,16 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                     SqlParam::String(repo.url.clone()),
                     SqlParam::String(repo.local_path.clone()),
                     SqlParam::String(repo.vcs_type.to_string()),
+                    SqlParam::String(
+                        json!({
+                            "org_id": repo.org_id.clone(),
+                            "project_id": repo.project_id.clone(),
+                            "repo_id": repo.id.clone(),
+                            "repo_path": repo.local_path.clone(),
+                            "timestamp": repo.created_at,
+                        })
+                        .to_string(),
+                    ),
                     SqlParam::I64(repo.created_at),
                     SqlParam::I64(repo.updated_at),
                 ],
@@ -163,12 +174,22 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
     async fn update_repository(&self, repo: &Repository) -> Result<()> {
         self.executor
             .execute(
-                "UPDATE repositories SET name = ?, url = ?, local_path = ?, vcs_type = ?, updated_at = ? WHERE org_id = ? AND id = ?",
+                "UPDATE repositories SET name = ?, url = ?, local_path = ?, vcs_type = ?, origin_context = ?, updated_at = ? WHERE org_id = ? AND id = ?",
                 &[
                     SqlParam::String(repo.name.clone()),
                     SqlParam::String(repo.url.clone()),
                     SqlParam::String(repo.local_path.clone()),
                     SqlParam::String(repo.vcs_type.to_string()),
+                    SqlParam::String(
+                        json!({
+                            "org_id": repo.org_id.clone(),
+                            "project_id": repo.project_id.clone(),
+                            "repo_id": repo.id.clone(),
+                            "repo_path": repo.local_path.clone(),
+                            "timestamp": repo.updated_at,
+                        })
+                        .to_string(),
+                    ),
                     SqlParam::I64(repo.updated_at),
                     SqlParam::String(repo.org_id.clone()),
                     SqlParam::String(repo.id.clone()),
@@ -194,7 +215,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
     async fn create_branch(&self, branch: &Branch) -> Result<()> {
         self.executor
             .execute(
-                "INSERT INTO branches (id, repository_id, name, is_default, head_commit, upstream, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO branches (id, repository_id, name, is_default, head_commit, upstream, origin_context, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 &[
                     SqlParam::String(branch.id.clone()),
                     SqlParam::String(branch.repository_id.clone()),
@@ -205,6 +226,15 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                         Some(u) => SqlParam::String(u.clone()),
                         None => SqlParam::Null,
                     },
+                    SqlParam::String(
+                        json!({
+                            "repository_id": branch.repository_id.clone(),
+                            "branch": branch.name.clone(),
+                            "commit": branch.head_commit.clone(),
+                            "timestamp": branch.created_at,
+                        })
+                        .to_string(),
+                    ),
                     SqlParam::I64(branch.created_at),
                 ],
             )
@@ -233,7 +263,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
     async fn update_branch(&self, branch: &Branch) -> Result<()> {
         self.executor
             .execute(
-                "UPDATE branches SET name = ?, is_default = ?, head_commit = ?, upstream = ? WHERE id = ?",
+                "UPDATE branches SET name = ?, is_default = ?, head_commit = ?, upstream = ?, origin_context = ? WHERE id = ?",
                 &[
                     SqlParam::String(branch.name.clone()),
                     SqlParam::I64(if branch.is_default { 1 } else { 0 }),
@@ -242,6 +272,15 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                         Some(u) => SqlParam::String(u.clone()),
                         None => SqlParam::Null,
                     },
+                    SqlParam::String(
+                        json!({
+                            "repository_id": branch.repository_id.clone(),
+                            "branch": branch.name.clone(),
+                            "commit": branch.head_commit.clone(),
+                            "timestamp": branch.created_at,
+                        })
+                        .to_string(),
+                    ),
                     SqlParam::String(branch.id.clone()),
                 ],
             )
@@ -262,7 +301,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
     async fn create_worktree(&self, wt: &Worktree) -> Result<()> {
         self.executor
             .execute(
-                "INSERT INTO worktrees (id, repository_id, branch_id, path, status, assigned_agent_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO worktrees (id, repository_id, branch_id, path, status, assigned_agent_id, origin_context, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 &[
                     SqlParam::String(wt.id.clone()),
                     SqlParam::String(wt.repository_id.clone()),
@@ -273,6 +312,15 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                         Some(a) => SqlParam::String(a.clone()),
                         None => SqlParam::Null,
                     },
+                    SqlParam::String(
+                        json!({
+                            "repository_id": wt.repository_id.clone(),
+                            "worktree_id": wt.id.clone(),
+                            "file_path": wt.path.clone(),
+                            "timestamp": wt.created_at,
+                        })
+                        .to_string(),
+                    ),
                     SqlParam::I64(wt.created_at),
                     SqlParam::I64(wt.updated_at),
                 ],
@@ -302,7 +350,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
     async fn update_worktree(&self, wt: &Worktree) -> Result<()> {
         self.executor
             .execute(
-                "UPDATE worktrees SET branch_id = ?, path = ?, status = ?, assigned_agent_id = ?, updated_at = ? WHERE id = ?",
+                "UPDATE worktrees SET branch_id = ?, path = ?, status = ?, assigned_agent_id = ?, origin_context = ?, updated_at = ? WHERE id = ?",
                 &[
                     SqlParam::String(wt.branch_id.clone()),
                     SqlParam::String(wt.path.clone()),
@@ -311,6 +359,15 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                         Some(a) => SqlParam::String(a.clone()),
                         None => SqlParam::Null,
                     },
+                    SqlParam::String(
+                        json!({
+                            "repository_id": wt.repository_id.clone(),
+                            "worktree_id": wt.id.clone(),
+                            "file_path": wt.path.clone(),
+                            "timestamp": wt.updated_at,
+                        })
+                        .to_string(),
+                    ),
                     SqlParam::I64(wt.updated_at),
                     SqlParam::String(wt.id.clone()),
                 ],
@@ -332,7 +389,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
     async fn create_assignment(&self, asgn: &AgentWorktreeAssignment) -> Result<()> {
         self.executor
             .execute(
-                "INSERT INTO agent_worktree_assignments (id, agent_session_id, worktree_id, assigned_at, released_at) VALUES (?, ?, ?, ?, ?)",
+                "INSERT INTO agent_worktree_assignments (id, agent_session_id, worktree_id, assigned_at, released_at, origin_context) VALUES (?, ?, ?, ?, ?, ?)",
                 &[
                     SqlParam::String(asgn.id.clone()),
                     SqlParam::String(asgn.agent_session_id.clone()),
@@ -342,6 +399,14 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                         Some(r) => SqlParam::I64(r),
                         None => SqlParam::Null,
                     },
+                    SqlParam::String(
+                        json!({
+                            "session_id": asgn.agent_session_id.clone(),
+                            "worktree_id": asgn.worktree_id.clone(),
+                            "timestamp": asgn.assigned_at,
+                        })
+                        .to_string(),
+                    ),
                 ],
             )
             .await
@@ -372,8 +437,18 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
     async fn release_assignment(&self, id: &str, released_at: i64) -> Result<()> {
         self.executor
             .execute(
-                "UPDATE agent_worktree_assignments SET released_at = ? WHERE id = ?",
-                &[SqlParam::I64(released_at), SqlParam::String(id.to_string())],
+                "UPDATE agent_worktree_assignments SET released_at = ?, origin_context = ? WHERE id = ?",
+                &[
+                    SqlParam::I64(released_at),
+                    SqlParam::String(
+                        json!({
+                            "assignment_id": id,
+                            "timestamp": released_at,
+                        })
+                        .to_string(),
+                    ),
+                    SqlParam::String(id.to_string()),
+                ],
             )
             .await
     }

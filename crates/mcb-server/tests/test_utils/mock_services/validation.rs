@@ -11,7 +11,7 @@ use mcb_domain::ports::services::{ValidationReport, ValidationServiceInterface, 
 use crate::test_utils::helpers::arc_mutex;
 
 /// Mock implementation of ValidationServiceInterface for testing
-pub struct MockValidationService {
+pub struct TestValidationService {
     /// Pre-configured validation report
     pub report: Arc<Mutex<ValidationReport>>,
     /// List of available validators
@@ -22,7 +22,7 @@ pub struct MockValidationService {
     pub error_message: Arc<Mutex<String>>,
 }
 
-impl MockValidationService {
+impl TestValidationService {
     /// Create a new mock validation service
     pub fn new() -> Self {
         Self {
@@ -83,14 +83,14 @@ impl MockValidationService {
     }
 }
 
-impl Default for MockValidationService {
+impl Default for TestValidationService {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl ValidationServiceInterface for MockValidationService {
+impl ValidationServiceInterface for TestValidationService {
     async fn validate(
         &self,
         _workspace_root: &Path,

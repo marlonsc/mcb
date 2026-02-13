@@ -414,36 +414,3 @@ impl ConfigQualityValidator {
         current_line.contains("const") || current_line.contains("DEFAULT_")
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_hardcoded_namespace_violation() {
-        let violation = ConfigQualityViolation::HardcodedNamespace {
-            file: PathBuf::from("config.rs"),
-            line: 10,
-            namespace: "mcb".to_string(),
-            severity: Severity::Warning,
-        };
-
-        assert_eq!(violation.id(), "CFG005");
-        assert_eq!(violation.severity(), Severity::Warning);
-        assert!(violation.to_string().contains("mcb"));
-        assert!(violation.suggestion().is_some());
-    }
-
-    #[test]
-    fn test_undocumented_default_violation() {
-        let violation = ConfigQualityViolation::UndocumentedDefault {
-            file: PathBuf::from("types.rs"),
-            line: 50,
-            struct_name: "MyConfig".to_string(),
-            severity: Severity::Info,
-        };
-
-        assert_eq!(violation.id(), "CFG003");
-        assert_eq!(violation.category(), ViolationCategory::Configuration);
-    }
-}

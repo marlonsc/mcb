@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR 006: Code Audit and Architecture Improvements
+# ADR 006: Code Audit and Architecture Improvements
 
 ## Status
 
@@ -82,7 +82,7 @@ Key architectural decisions:
 7. **Add comprehensive input validation**using the validator crate
 8. **Implement TDD approach**with mockall for comprehensive testing
 
-## Consequences
+### Consequences
 
 These architectural improvements will significantly enhance code quality but
 require substantial refactoring effort.
@@ -138,7 +138,7 @@ require substantial refactoring effort.
 
 ### Phase 1: Foundation (Weeks 1-2)
 
-**Code Changes Required:**
+Code Changes Required:
 
 ```rust
 // Break down config.rs into specialized modules
@@ -165,7 +165,7 @@ pub trait EmbeddingProvider: Send + Sync {
 }
 ```
 
-**Migration Path:**
+Migration Path:
 
 1. Create new module structure alongside existing code
 2. Implement new types with backward compatibility
@@ -174,7 +174,7 @@ pub trait EmbeddingProvider: Send + Sync {
 
 ### Phase 2: Design Patterns (Weeks 3-4)
 
-**Builder Pattern Implementation:**
+Builder Pattern Implementation:
 
 ```rust
 #[derive(Debug, Builder)]
@@ -196,7 +196,7 @@ impl ConfigBuilder {
 }
 ```
 
-**Repository Pattern:**
+Repository Pattern:
 
 ```rust
 #[async_trait]
@@ -212,7 +212,7 @@ pub trait ChunkRepository {
 
 ### Phase 3: Quality Assurance (Weeks 5-6)
 
-**Testing Strategy:**
+Testing Strategy:
 
 ```rust
 #[cfg(test)]
@@ -244,7 +244,7 @@ mod tests {
 }
 ```
 
-**Performance Benchmarks:**
+Performance Benchmarks:
 
 - Establish baseline metrics before changes
 - Monitor compilation time, binary size, runtime performance
@@ -252,14 +252,14 @@ mod tests {
 
 ### Phase 4: Validation and Release (Weeks 7-8)
 
-**Rollback Plan:**
+Rollback Plan:
 
 - Feature flags for gradual rollout
 - Database migration rollback scripts
 - Configuration rollback procedures
 - Monitoring alerts for performance regressions
 
-**Security Considerations:**
+Security Considerations:
 
 - Input validation prevents injection attacks
 - Proper error handling avoids information leakage
@@ -316,7 +316,7 @@ architecture supporting future analysis capabilities:
 
 ### New Domains (to be implemented)
 
-**v0.3.0+**:
+v0.3.0+:
 
 1. **Analysis Domain**: Complexity analysis, technical debt detection, qualitymetrics
 2. **Quality Domain**: Quality gates, metric aggregation, baseline comparisons

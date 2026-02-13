@@ -6,11 +6,11 @@ use mcb_server::handlers::AgentHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::test_utils::mock_services::MockAgentSessionService;
+use crate::test_utils::mock_services::TestAgentSessionService;
 
 #[tokio::test]
 async fn test_agent_log_tool_success() {
-    let mock_service = MockAgentSessionService::new();
+    let mock_service = TestAgentSessionService::new();
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
@@ -34,7 +34,7 @@ async fn test_agent_log_tool_success() {
 
 #[tokio::test]
 async fn test_agent_log_tool_missing_tool_name() {
-    let mock_service = MockAgentSessionService::new();
+    let mock_service = TestAgentSessionService::new();
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
@@ -59,7 +59,7 @@ async fn test_agent_log_tool_missing_tool_name() {
 
 #[tokio::test]
 async fn test_agent_log_tool_with_error() {
-    let mock_service = MockAgentSessionService::new();
+    let mock_service = TestAgentSessionService::new();
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
@@ -83,7 +83,7 @@ async fn test_agent_log_tool_with_error() {
 
 #[tokio::test]
 async fn test_agent_log_tool_invalid_data_format() {
-    let mock_service = MockAgentSessionService::new();
+    let mock_service = TestAgentSessionService::new();
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
@@ -105,7 +105,7 @@ async fn test_agent_log_tool_invalid_data_format() {
 
 #[tokio::test]
 async fn test_agent_log_delegation_success() {
-    let mock_service = MockAgentSessionService::new();
+    let mock_service = TestAgentSessionService::new();
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
@@ -129,7 +129,7 @@ async fn test_agent_log_delegation_success() {
 
 #[tokio::test]
 async fn test_agent_log_delegation_missing_child_session_id() {
-    let mock_service = MockAgentSessionService::new();
+    let mock_service = TestAgentSessionService::new();
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
@@ -154,7 +154,7 @@ async fn test_agent_log_delegation_missing_child_session_id() {
 
 #[tokio::test]
 async fn test_agent_log_delegation_with_result() {
-    let mock_service = MockAgentSessionService::new();
+    let mock_service = TestAgentSessionService::new();
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
@@ -179,7 +179,7 @@ async fn test_agent_log_delegation_with_result() {
 
 #[tokio::test]
 async fn test_agent_log_delegation_invalid_data_format() {
-    let mock_service = MockAgentSessionService::new();
+    let mock_service = TestAgentSessionService::new();
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
@@ -201,7 +201,7 @@ async fn test_agent_log_delegation_invalid_data_format() {
 
 #[tokio::test]
 async fn test_agent_log_tool_empty_session_id() {
-    let mock_service = MockAgentSessionService::new();
+    let mock_service = TestAgentSessionService::new();
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {
@@ -221,7 +221,7 @@ async fn test_agent_log_tool_empty_session_id() {
 
 #[tokio::test]
 async fn test_agent_log_tool_with_all_optional_fields() {
-    let mock_service = MockAgentSessionService::new();
+    let mock_service = TestAgentSessionService::new();
     let handler = AgentHandler::new(Arc::new(mock_service));
 
     let args = AgentArgs {

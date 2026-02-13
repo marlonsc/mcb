@@ -78,3 +78,12 @@ mod worktree_tests;
 
 #[path = "unit/project_context_tests.rs"]
 mod project_context_tests;
+
+#[path = "unit/config_tests.rs"]
+mod config_tests;
+
+#[path = "unit/jobs_port_tests.rs"]
+mod jobs_port_tests;
+
+#[path = "unit/org_context_tests.rs"]
+mod org_context_tests;

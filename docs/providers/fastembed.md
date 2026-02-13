@@ -107,7 +107,7 @@ For better performance:
 
 ### Problem: "Model download failed"
 
-**Solution**:
+### Solution
 
 1. Check internet connection
 2. Check write permissions in cache directory

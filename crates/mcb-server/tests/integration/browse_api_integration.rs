@@ -26,13 +26,13 @@ use rocket::http::{Header, Status};
 use rocket::local::asynchronous::Client;
 
 /// Mock VectorStoreBrowser for testing
-pub struct MockVectorStoreBrowser {
+pub struct TestVectorStoreBrowser {
     collections: Vec<CollectionInfo>,
     files: Vec<FileInfo>,
     chunks: Vec<SearchResult>,
 }
 
-impl MockVectorStoreBrowser {
+impl TestVectorStoreBrowser {
     pub fn new() -> Self {
         Self {
             collections: Vec::new(),
@@ -58,7 +58,7 @@ impl MockVectorStoreBrowser {
 }
 
 #[async_trait]
-impl VectorStoreBrowser for MockVectorStoreBrowser {
+impl VectorStoreBrowser for TestVectorStoreBrowser {
     async fn list_collections(&self) -> DomainResult<Vec<CollectionInfo>> {
         Ok(self.collections.clone())
     }
@@ -81,10 +81,10 @@ impl VectorStoreBrowser for MockVectorStoreBrowser {
 }
 
 /// Mock HighlightService for testing
-pub struct MockHighlightService;
+pub struct TestHighlightService;
 
 #[async_trait]
-impl HighlightServiceInterface for MockHighlightService {
+impl HighlightServiceInterface for TestHighlightService {
     async fn highlight(
         &self,
         code: &str,
@@ -103,9 +103,9 @@ impl HighlightServiceInterface for MockHighlightService {
 // ============================================================================
 
 /// Mock performance metrics
-struct MockMetrics;
+struct TestMetrics;
 
-impl PerformanceMetricsInterface for MockMetrics {
+impl PerformanceMetricsInterface for TestMetrics {
     fn uptime_secs(&self) -> u64 {
         0
     }
@@ -128,9 +128,9 @@ impl PerformanceMetricsInterface for MockMetrics {
 }
 
 /// Mock indexing operations
-struct MockIndexing;
+struct TestIndexing;
 
-impl IndexingOperationsInterface for MockIndexing {
+impl IndexingOperationsInterface for TestIndexing {
     fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
         HashMap::new()
     }
@@ -154,10 +154,10 @@ impl IndexingOperationsInterface for MockIndexing {
 }
 
 /// Mock event bus
-struct MockEventBus;
+struct TestEventBus;
 
 #[async_trait]
-impl EventBusProvider for MockEventBus {
+impl EventBusProvider for TestEventBus {
     async fn publish_event(&self, _event: DomainEvent) -> DomainResult<()> {
         Ok(())
     }
@@ -183,14 +183,14 @@ impl EventBusProvider for MockEventBus {
 /// Create test admin state with minimal dependencies
 fn create_test_admin_state() -> AdminState {
     AdminState {
-        metrics: Arc::new(MockMetrics),
-        indexing: Arc::new(MockIndexing),
+        metrics: Arc::new(TestMetrics),
+        indexing: Arc::new(TestIndexing),
         config_watcher: None,
         current_config: mcb_infrastructure::config::types::AppConfig::default(),
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: 30,
-        event_bus: Arc::new(MockEventBus),
+        event_bus: Arc::new(TestEventBus),
         service_manager: None,
         cache: None,
         project_workflow: None,
@@ -219,10 +219,10 @@ async fn create_test_client(browse_state: BrowseState) -> Client {
 
 #[tokio::test]
 async fn test_list_collections_empty() {
-    let browser = MockVectorStoreBrowser::new();
+    let browser = TestVectorStoreBrowser::new();
     let browse_state = BrowseState {
         browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -246,10 +246,10 @@ async fn test_list_collections_with_data() {
         CollectionInfo::new("another_collection".to_string(), 50, 5, None, "memory"),
     ];
 
-    let browser = MockVectorStoreBrowser::new().with_collections(collections);
+    let browser = TestVectorStoreBrowser::new().with_collections(collections);
     let browse_state = BrowseState {
         browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -274,10 +274,10 @@ async fn test_list_files_in_collection() {
         FileInfo::new("src/lib.rs".to_string(), 3, "rust", None),
     ];
 
-    let browser = MockVectorStoreBrowser::new().with_files(files);
+    let browser = TestVectorStoreBrowser::new().with_files(files);
     let browse_state = BrowseState {
         browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -316,10 +316,10 @@ async fn test_get_file_chunks() {
         },
     ];
 
-    let browser = MockVectorStoreBrowser::new().with_chunks(chunks);
+    let browser = TestVectorStoreBrowser::new().with_chunks(chunks);
     let browse_state = BrowseState {
         browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -339,10 +339,10 @@ async fn test_get_file_chunks() {
 
 #[tokio::test]
 async fn test_browse_requires_auth() {
-    let browser = MockVectorStoreBrowser::new();
+    let browser = TestVectorStoreBrowser::new();
     let browse_state = BrowseState {
         browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -360,10 +360,10 @@ async fn test_browse_requires_auth() {
 
 #[tokio::test]
 async fn test_browse_invalid_auth() {
-    let browser = MockVectorStoreBrowser::new();
+    let browser = TestVectorStoreBrowser::new();
     let browse_state = BrowseState {
         browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -517,7 +517,7 @@ async fn test_e2e_real_store_list_collections() {
     // Create browse state with real store
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -559,7 +559,7 @@ async fn test_e2e_real_store_list_files() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -618,7 +618,7 @@ async fn test_e2e_real_store_get_file_chunks() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -693,7 +693,7 @@ async fn test_e2e_real_store_navigate_full_flow() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -780,7 +780,7 @@ async fn test_e2e_real_store_collection_not_found() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;
@@ -810,7 +810,7 @@ async fn test_e2e_real_store_multiple_collections() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: Arc::new(TestHighlightService),
     };
 
     let client = create_test_client(browse_state).await;

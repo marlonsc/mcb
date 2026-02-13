@@ -12,7 +12,7 @@ implementation_status: Complete
 
 <!-- markdownlint-disable MD013 -->
 
-## ADR-034: Workflow Core — Finite State Machine and Persistence
+# ADR-034: Workflow Core — Finite State Machine and Persistence
 
 ## Status
 
@@ -206,7 +206,7 @@ Rather than coupling directly to SQLite, the workflow engine depends on an abstr
 
 **Rationale:** Database independence allows migration between backends without refactoring the workflow domain. Using a provider trait aligns with ADR-029 (dill dependency injection) and ADR-023 (linkme provider registration), enabling compile-time discovery of database implementations.
 
-**Port Trait Definition:**
+Port Trait Definition:
 
 ```rust
 // mcb-domain/src/ports/database_provider.rs
@@ -304,7 +304,7 @@ pub enum WorkflowEvent {
 
 **Location:** `mcb-domain/src/ports/database_provider.rs`
 
-**Provider Registration (linkme):**
+Provider Registration (linkme):
 
 ```rust
 // mcb-application/src/registry/database.rs
@@ -323,7 +323,7 @@ pub struct DatabaseProviderEntry {
 pub static DATABASE_PROVIDERS: [DatabaseProviderEntry] = [..];
 ```
 
-**References:**
+References:
 
 - [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — Handle-based DI pattern
 - [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Compile-time plugin discovery
@@ -334,7 +334,7 @@ pub static DATABASE_PROVIDERS: [DatabaseProviderEntry] = [..];
 
 MCB workflows are not autonomous agents — they operate under human supervision. Each workflow session is owned by an operator (human or bot), associated with a Beads task, and embedded within a project context. The compensation model is hybrid: automatic rollback for safe operations, manual review for high-risk changes.
 
-**Extended WorkflowSession Entity:**
+Extended WorkflowSession Entity:
 
 ```rust
 // mcb-domain/src/entities/workflow.rs (extended)
@@ -416,7 +416,7 @@ pub struct WorkflowSession {
 }
 ```
 
-**Compensation Semantics:**
+Compensation Semantics:
 
 - **AutoRevert**: Session uses a feature branch. On error, `git reset --hard` to safe commit. Fast, reversible. Best for exploratory work.
 - **ManualReview**: Session pauses on error. Operator logs in, reviews git diff, decides: amend, revert, or fix manually. Slow but safest.
@@ -428,9 +428,9 @@ pub struct WorkflowSession {
 
 ### 2.3 Hybrid Transaction Model
 
-The workflow engine uses **two complementary persistence layers**: per-operation ACID transactions (SQLite) + append-only event log (immutable audit trail). This hybrid approach provides both ACID compliance and unbounded temporal history.
+The workflow engine uses**two complementary persistence layers**: per-operation ACID transactions (SQLite) + append-only event log (immutable audit trail). This hybrid approach provides both ACID compliance and unbounded temporal history.
 
-**Hybrid Transaction Pattern:**
+Hybrid Transaction Pattern:
 
 1. **Per-Operation Transactions**: Every `transition()` call wraps read + validate + write in a SQLite transaction (10-20ms per operation).
 
@@ -443,7 +443,7 @@ The workflow engine uses **two complementary persistence layers**: per-operation
 - Enables time-travel queries without replaying mutations.
 - Supports compliance audits and post-mortem analysis.
 
-**SQL Schema:**
+SQL Schema:
 
 ```sql
 -- State table: mutable, current state only
@@ -500,7 +500,7 @@ CREATE INDEX idx_workflow_compensations_session
     ON workflow_compensations(session_id);
 ```
 
-**Rationale for Hybrid Model:**
+Rationale for Hybrid Model:
 
 | Concern | Per-Operation TX | Append-Only Log | Coverage |
 | --------- | ------------------ | ----------------- | ---------- |
@@ -511,7 +511,7 @@ CREATE INDEX idx_workflow_compensations_session
 | **Time-Travel** | ❌ Lost on update | ✅ Replay events | Complete |
 | **Compliance** | ✅ Current state | ✅ Immutable trail | Complete |
 
-**Time-Travel Implementation:**
+Time-Travel Implementation:
 
 ```rust
 // mcb-providers/src/workflow/sqlite_workflow.rs
@@ -1165,7 +1165,7 @@ async fn sqlite_db_factory(config: &Figment) -> Result<Arc<dyn DatabaseProvider>
 
 **Problem**: When a workflow transitions fail during execution (e.g., task fails verification → rollback to Executing), there must be a clear strategy for compensating side effects.
 
-**Classification**: MCB workflows operate under human supervision — not autonomous agents. Compensation is **hybrid**:
+### Classification**: MCB workflows operate under human supervision — not autonomous agents. Compensation is**hybrid
 
 - **Automatic**: Safe operations (in-memory state, git revert)
 - **Manual**: High-risk operations (external API calls, database mutations) → prompt operator for approval
@@ -1290,7 +1290,7 @@ FSM invariants (race condition on state update).
 
 **Solution**: Define explicit concurrency model with transaction isolation levels.
 
-**Concurrency Model**:
+Concurrency Model:
 
 1. **Per-session mutual exclusion**: Only one thread may call `transition()` per session concurrently.
 
@@ -1466,11 +1466,11 @@ impl SqliteWorkflowEngine {
 
 ## References
 
-- [statig crate](https://crates.io/crates/statig) — Hierarchical state machine
+- [statig crate](https://docs.rs/statig/latest/statig/) — Hierarchical state machine
   (evaluated, not selected)
-- [smlang-rs](https://crates.io/crates/smlang) — Declarative FSM macro
+- [smlang-rs](https://docs.rs/smlang/latest/smlang/) — Declarative FSM macro
   (evaluated, not selected)
-- [sqlx](https://crates.io/crates/sqlx) — Async SQLite driver
+- [sqlx](https://docs.rs/sqlx/latest/sqlx/) — Async SQLite driver
 - [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md)
   — DI pattern
 - [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md)

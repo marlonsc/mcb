@@ -4,14 +4,14 @@ use mcb_server::args::{SearchArgs, SearchResource};
 use mcb_server::handlers::SearchHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-use crate::test_utils::mock_services::{MockMemoryService, MockSearchService};
+use crate::test_utils::mock_services::{TestMemoryService, TestSearchService};
 use crate::test_utils::test_fixtures::create_test_search_results;
 
 #[tokio::test]
 async fn test_search_code_success() {
     let search_results = create_test_search_results(5);
-    let search_service = MockSearchService::new().with_results(search_results);
-    let memory_service = MockMemoryService::new();
+    let search_service = TestSearchService::new().with_results(search_results);
+    let memory_service = TestMemoryService::new();
     let handler = SearchHandler::new(Arc::new(search_service), Arc::new(memory_service));
 
     let args = SearchArgs {
@@ -37,8 +37,8 @@ async fn test_search_code_success() {
 
 #[tokio::test]
 async fn test_search_code_empty_query() {
-    let search_service = MockSearchService::new();
-    let memory_service = MockMemoryService::new();
+    let search_service = TestSearchService::new();
+    let memory_service = TestMemoryService::new();
     let handler = SearchHandler::new(Arc::new(search_service), Arc::new(memory_service));
 
     let args = SearchArgs {

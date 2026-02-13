@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 017: Phased Feature Integration Roadmap
+# ADR 017: Phased Feature Integration Roadmap
 
 ## Status
 
@@ -45,7 +45,7 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Eight-Crate Clean Architecture
 
-**Deliverables**:
+Deliverables:
 
 - [x] mcb-domain: Core entities, repositories, events, value objects
 - [x] mcb-application: Port traits (~20+) + Context, Search, Indexing services
@@ -62,7 +62,7 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Git-aware indexing + Session memory
 
-**Deliverables**:
+Deliverables:
 
 - Git integration (project-relative indexing)
 - Session memory storage
@@ -76,7 +76,7 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Complexity, TDG, SATD
 
-**Deliverables**:
+Deliverables:
 
 - Port PMAT complexity analyzer
 - Port TDG scorer
@@ -90,7 +90,7 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Advanced code analysis
 
-**Deliverables**:
+Deliverables:
 
 - Dead code detection
 - Dependency analysis (DAG)
@@ -104,7 +104,7 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Quality metrics and Git integration
 
-**Deliverables**:
+Deliverables:
 
 - Quality scoring
 - File maintainability index
@@ -118,7 +118,7 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 **Focus**: Refactoring and mutations
 
-**Deliverables**:
+Deliverables:
 
 - Refactoring suggestions
 - Mutation testing integration
@@ -135,21 +135,21 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 3. **Incremental Testing**: Port PMAT tests alongside code
 4. **Parallel Development**: MCB features continue during integration
 
-## Consequences
+### Consequences
 
-**Positive**:
+Positive:
 
 - Controlled risk
 - Continuous delivery
 - Clear milestones
 - Testable increments
 
-**Negative**:
+Negative:
 
 - Longer timeline
 - Multiple integration points
 
-**Mitigation**:
+Mitigation:
 
 - Automate integration testing
 - Feature flags for partial adoption
@@ -164,4 +164,4 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 release status*
+Updated 2026-01-17 - Reflects v0.1.2 release status

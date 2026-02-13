@@ -12,7 +12,7 @@ use mcb_domain::value_objects::CollectionId;
 use crate::test_utils::helpers::arc_mutex;
 
 /// Mock implementation of IndexingServiceInterface for testing
-pub struct MockIndexingService {
+pub struct TestIndexingService {
     /// Pre-configured indexing result
     pub indexing_result: Arc<Mutex<Option<IndexingResult>>>,
     /// Current status to return
@@ -23,7 +23,7 @@ pub struct MockIndexingService {
     pub error_message: Arc<Mutex<String>>,
 }
 
-impl MockIndexingService {
+impl TestIndexingService {
     /// Create a new mock indexing service
     pub fn new() -> Self {
         Self {
@@ -61,14 +61,14 @@ impl MockIndexingService {
     }
 }
 
-impl Default for MockIndexingService {
+impl Default for TestIndexingService {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl IndexingServiceInterface for MockIndexingService {
+impl IndexingServiceInterface for TestIndexingService {
     async fn index_codebase(
         &self,
         _path: &Path,

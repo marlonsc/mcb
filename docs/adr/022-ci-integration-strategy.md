@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 022: Continuous Integration Strategy
+# ADR 022: Continuous Integration Strategy
 
 ## Status
 
@@ -42,9 +42,9 @@ strategy:
       -   analysis  # v0.3.0+
 ```
 
-### Quality Gates
+## Quality Gates
 
-**Every PR must pass**:
+Every PR must pass:
 
 1. `cargo fmt --check` (formatting)
 2. `cargo clippy -- -D warnings` (linting)
@@ -55,14 +55,14 @@ strategy:
 
 ### Benchmark Tracking
 
-**Track performance metrics**:
+Track performance metrics:
 
 - Search latency (target: ≤ 100ms)
 - Analysis latency (target: ≤ 500ms/file)
 - Memory usage (target: ≤ 300MB)
 - Binary size (target: ≤ 80MB)
 
-**Alert on regression > 10%**
+Alert on regression > 10%
 
 ### Version-Specific Gates
 
@@ -72,13 +72,13 @@ strategy:
 - Eight-crate workspace builds
 - mcb-validate reports 0 violations
 
-**v0.2.0**:
+v0.2.0:
 
 - No new features (architectural only)
 - All existing tests must pass
 - No performance regression
 
-**v0.3.0+**:
+v0.3.0+:
 
 - New feature tests must pass
 - Integration tests required
@@ -105,7 +105,7 @@ jobs:
       -   run: cargo run -p mcb-validate
 ```
 
-**Key checks**:
+Key checks:
 
 - Format (rustfmt)
 - Lint (clippy)
@@ -120,25 +120,25 @@ jobs:
 - Add workspace build matrix
 - Benchmark infrastructure
 
-**v0.3.0+**:
+v0.3.0+:
 
 - Add analysis-specific benchmarks
 - Extend test matrix with new features
 
-## Consequences
+### Consequences
 
-**Positive**:
+Positive:
 
 - Catch regressions early
 - Performance tracking
 - Cross-platform validation
 
-**Negative**:
+Negative:
 
 - CI time (~10 min per build)
 - Matrix explosion with features
 
-**Mitigation**:
+Mitigation:
 
 - Parallel jobs
 - Caching
@@ -152,4 +152,4 @@ jobs:
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 CI pipeline*
+Updated 2026-01-17 - Reflects v0.1.2 CI pipeline

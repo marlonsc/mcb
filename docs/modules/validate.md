@@ -13,7 +13,7 @@ The validation module provides comprehensive architecture enforcement and code q
 
 The validation system follows a layered approach with seven verified phases:
 
-```
+```text
 Validation Pipeline (Pure Rust):
 ┌─────────────────────────────────────────────┐
 │ YAML Rules → Rule Loader → Rule Engine     │
@@ -30,7 +30,7 @@ Validation Pipeline (Pure Rust):
 └─────────────────────────────────────────────┘
 ```
 
-## Key Components
+### Key Components
 
 ### Linters (`linters/`)
 
@@ -166,7 +166,7 @@ make validate QUICK=1
 make validate
 ```
 
-### Programmatic API
+## Programmatic API
 
 ```rust
 use mcb_validate::{ValidatorRegistry, ValidationConfig};

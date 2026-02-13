@@ -13,15 +13,15 @@ use tokio::sync::Mutex;
 
 /// Mock Cache Provider for testing
 #[derive(Debug)]
-pub struct MockCacheProvider;
+pub struct TestCacheProvider;
 
-impl Default for MockCacheProvider {
+impl Default for TestCacheProvider {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl MockCacheProvider {
+impl TestCacheProvider {
     /// Create a new mock cache provider
     pub fn new() -> Self {
         Self
@@ -29,7 +29,7 @@ impl MockCacheProvider {
 }
 
 #[async_trait]
-impl CacheProvider for MockCacheProvider {
+impl CacheProvider for TestCacheProvider {
     async fn get_json(&self, _key: &str) -> Result<Option<String>> {
         Ok(None)
     }
@@ -58,12 +58,12 @@ impl CacheProvider for MockCacheProvider {
 
 /// Mock Embedding Provider for testing
 #[derive(Debug)]
-pub struct MockEmbeddingProvider {
+pub struct TestEmbeddingProvider {
     /// Dimensions for the embeddings
     pub dimensions: usize,
 }
 
-impl MockEmbeddingProvider {
+impl TestEmbeddingProvider {
     /// Create a new mock embedding provider with given dimensions
     pub fn new(dimensions: usize) -> Self {
         Self { dimensions }
@@ -71,7 +71,7 @@ impl MockEmbeddingProvider {
 }
 
 #[async_trait]
-impl EmbeddingProvider for MockEmbeddingProvider {
+impl EmbeddingProvider for TestEmbeddingProvider {
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
         let embeddings = texts
             .iter()
@@ -98,14 +98,14 @@ type StorageMap = HashMap<String, Vec<VectorData>>;
 
 /// Mock Vector Store Provider that can store data in memory or return fixed results
 #[derive(Debug, Default)]
-pub struct MockVectorStoreProvider {
+pub struct TestVectorStoreProvider {
     /// In-memory storage for simple retrieval validation
     pub storage: Arc<Mutex<StorageMap>>,
     /// Fixed results to return if provided
     pub override_results: Arc<Mutex<Option<Vec<SearchResult>>>>,
 }
 
-impl MockVectorStoreProvider {
+impl TestVectorStoreProvider {
     /// Create a new mock vector store provider
     pub fn new() -> Self {
         Self::default()
@@ -121,7 +121,7 @@ impl MockVectorStoreProvider {
 }
 
 #[async_trait]
-impl VectorStoreAdmin for MockVectorStoreProvider {
+impl VectorStoreAdmin for TestVectorStoreProvider {
     async fn collection_exists(&self, _name: &CollectionId) -> Result<bool> {
         Ok(true)
     }
@@ -137,7 +137,7 @@ impl VectorStoreAdmin for MockVectorStoreProvider {
 }
 
 #[async_trait]
-impl VectorStoreBrowser for MockVectorStoreProvider {
+impl VectorStoreBrowser for TestVectorStoreProvider {
     async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
         Ok(vec![])
     }
@@ -158,7 +158,7 @@ impl VectorStoreBrowser for MockVectorStoreProvider {
 }
 
 #[async_trait]
-impl VectorStoreProvider for MockVectorStoreProvider {
+impl VectorStoreProvider for TestVectorStoreProvider {
     async fn create_collection(&self, _name: &CollectionId, _dimensions: usize) -> Result<()> {
         Ok(())
     }

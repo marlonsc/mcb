@@ -494,36 +494,3 @@ impl TestQualityValidator {
             .any(|excluded| path_str.contains(excluded))
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_ignore_violation_formatting() {
-        let violation = TestQualityViolation::IgnoreWithoutJustification {
-            file: PathBuf::from("test.rs"),
-            line: 10,
-            test_name: "my_test".to_string(),
-            severity: Severity::Warning,
-        };
-
-        assert_eq!(violation.id(), "TST001");
-        assert_eq!(violation.severity(), Severity::Warning);
-        assert!(violation.to_string().contains("my_test"));
-        assert!(violation.suggestion().is_some());
-    }
-
-    #[test]
-    fn test_todo_violation_formatting() {
-        let violation = TestQualityViolation::TodoInTestFixture {
-            file: PathBuf::from("fixture.rs"),
-            line: 20,
-            function_name: "setup_test".to_string(),
-            severity: Severity::Error,
-        };
-
-        assert_eq!(violation.id(), "TST002");
-        assert_eq!(violation.severity(), Severity::Error);
-    }
-}

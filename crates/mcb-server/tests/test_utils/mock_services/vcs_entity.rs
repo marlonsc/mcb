@@ -4,22 +4,22 @@ use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::repositories::VcsEntityRepository;
 
-pub struct MockVcsEntityRepository;
+pub struct TestVcsEntityRepository;
 
-impl MockVcsEntityRepository {
+impl TestVcsEntityRepository {
     pub fn new() -> Self {
         Self
     }
 }
 
-impl Default for MockVcsEntityRepository {
+impl Default for TestVcsEntityRepository {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl VcsEntityRepository for MockVcsEntityRepository {
+impl VcsEntityRepository for TestVcsEntityRepository {
     async fn create_repository(&self, _repo: &Repository) -> Result<()> {
         Ok(())
     }

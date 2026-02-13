@@ -32,4 +32,4 @@ The adapters layer has been split into two crates in v0.2.1:
 
 ---
 
-*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

@@ -132,6 +132,14 @@ fn apply_parent_scope(args: &mut EntityArgs, parent_field: Option<&str>, parent_
 }
 
 impl UnifiedEntityCrudAdapter {
+    fn extract_project_id(data: &Value) -> Option<String> {
+        data.get("project_id")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .map(ToString::to_string)
+    }
+
     fn build_entity_arguments(args: EntityArgs) -> serde_json::Map<String, serde_json::Value> {
         let mut map = serde_json::Map::new();
         map.insert(
@@ -315,12 +323,24 @@ impl EntityCrudAdapter for UnifiedEntityCrudAdapter {
 
     async fn create_from_json(&self, data: Value) -> Result<Value, String> {
         let mut args = base_entity_args(self.resource, EntityAction::Create);
+        if matches!(self.resource, EntityResource::Repository) {
+            args.project_id = Self::extract_project_id(&data);
+            if args.project_id.is_none() {
+                return Err("project_id is required for repository create".to_string());
+            }
+        }
         args.data = Some(data);
         self.execute(args).await
     }
 
     async fn update_from_json(&self, data: Value) -> Result<(), String> {
         let mut args = base_entity_args(self.resource, EntityAction::Update);
+        if matches!(self.resource, EntityResource::Repository) {
+            args.project_id = Self::extract_project_id(&data);
+            if args.project_id.is_none() {
+                return Err("project_id is required for repository update".to_string());
+            }
+        }
         args.data = Some(data);
         let _ = self.execute(args).await?;
         Ok(())
@@ -335,6 +355,9 @@ impl EntityCrudAdapter for UnifiedEntityCrudAdapter {
         }
 
         let mut args = base_entity_args(self.resource, EntityAction::Delete);
+        if matches!(self.resource, EntityResource::Repository) {
+            return Err("project_id is required for repository delete".to_string());
+        }
         args.id = Some(id.to_string());
         let _ = self.execute(args).await?;
         Ok(())

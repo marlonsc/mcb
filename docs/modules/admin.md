@@ -9,7 +9,7 @@
 
 The admin module provides configuration, lifecycle, browse, and web admin surfaces for server operations.
 
-## Key Components
+### Key Components
 
 ### API and Lifecycle
 
@@ -77,4 +77,4 @@ crates/mcb-server/src/admin/
 
 ---
 
-*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

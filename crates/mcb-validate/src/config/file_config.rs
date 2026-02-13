@@ -527,37 +527,3 @@ pub struct ValidatorsConfig {
     /// Enable clean architecture validation
     pub clean_architecture: bool,
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_load_config() {
-        // Load from workspace root — this verifies embedded defaults work
-        let config = FileConfig::load(env!("CARGO_MANIFEST_DIR").to_string() + "/../..");
-        assert!(config.validators.quality);
-        assert!(config.validators.architecture);
-        assert_eq!(config.rules.quality.max_file_lines, 800);
-    }
-
-    #[test]
-    fn test_is_validator_enabled() {
-        let config = FileConfig::load(env!("CARGO_MANIFEST_DIR").to_string() + "/../..");
-        assert!(config.is_validator_enabled("quality"));
-        assert!(config.is_validator_enabled("architecture"));
-        assert!(config.is_validator_enabled("unknown_validator"));
-    }
-
-    #[test]
-    fn test_figment_partial_override() {
-        // Verify that embedded defaults provide all required fields
-        let figment = Figment::new().merge(Toml::string(EMBEDDED_VALIDATE_DEFAULTS));
-
-        let config: FileConfig = figment
-            .extract()
-            .expect("Embedded defaults must be complete");
-        assert!(config.validators.quality);
-        assert!(config.rules.architecture.enabled);
-    }
-}

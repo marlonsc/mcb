@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR 002: Async-First Architecture
+# ADR 002: Async-First Architecture
 
 ## Status
 
@@ -66,7 +66,7 @@ Key architectural decisions:
 - Hyper for HTTP client operations
 - Futures and streams for data processing pipelines
 
-## Consequences
+### Consequences
 
 Async-first architecture provides excellent performance and concurrency but
 requires careful error handling and increases code complexity.
@@ -352,7 +352,7 @@ async-first design has been extended to support hybrid parallelization:
 - **Pattern**: Wrap Rayon in `tokio::task::spawn_blocking` to bridge sync CPU
   work with async I/O
 
-### Rationale
+#### Rationale
 
 1. **Tokio for I/O**: Tokio's event-driven architecture is optimal for I/O-bound
    work

@@ -2,11 +2,11 @@
 
 ## Overview
 
-Memory Context Browser follows **Clean Architecture** principles with strict layer separation across 8 Cargo workspace crates. This document explains the architecture, layer interactions, and extension patterns.
+Memory Context Browser follows**Clean Architecture** principles with strict layer separation across 8 Cargo workspace crates. This document explains the architecture, layer interactions, and extension patterns.
 
 ## The 6 Layers
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 6: MCP Protocol & Transport                           │
 │ (stdio, HTTP, tool handlers)                                │
@@ -50,13 +50,13 @@ Memory Context Browser follows **Clean Architecture** principles with strict lay
 
 **Purpose**: Public API and re-exports
 
-**Responsibilities**:
+#### Responsibilities
 
 - Re-export public types from domain, application, infrastructure
 - Provide single entry point for library users
 - Hide internal crate structure
 
-**Example**:
+### Example
 
 ```rust
 // mcb/src/lib.rs
@@ -71,14 +71,14 @@ pub use mcb_infrastructure::AppContext;
 
 **Purpose**: Business rules and domain entities
 
-**Responsibilities**:
+#### Responsibilities
 
 - Define domain entities (CodeChunk, Embedding, SearchResult)
 - Define port traits (EmbeddingProvider, VectorStoreProvider, etc.)
 - Define domain errors with thiserror
 - No external dependencies (except thiserror, serde)
 
-**Key Types**:
+#### Key Types
 
 ```rust
 // Entities
@@ -112,14 +112,14 @@ pub enum DomainError {
 
 **Purpose**: Use cases and business logic orchestration
 
-**Responsibilities**:
+#### Responsibilities
 
 - Implement services (ContextService, SearchService, IndexingService)
 - Orchestrate domain entities and ports
 - Define registry system (linkme distributed slices)
 - Define admin ports (IndexingOperationsInterface, PerformanceMetricsInterface)
 
-**Key Types**:
+#### Key Types
 
 ```rust
 // Services
@@ -152,7 +152,7 @@ pub trait IndexingOperationsInterface: Send + Sync {
 
 **Purpose**: Dependency injection, configuration, and cross-cutting concerns
 
-**Responsibilities**:
+#### Responsibilities
 
 - Build DI container (dill Catalog)
 - Load configuration (Figment)
@@ -160,7 +160,7 @@ pub trait IndexingOperationsInterface: Send + Sync {
 - Implement admin services
 - Logging, health checks, caching
 
-**Key Types**:
+#### Key Types
 
 ```rust
 // DI Container
@@ -220,7 +220,7 @@ pub struct AppContext {
 
 **Purpose**: Concrete provider implementations
 
-**Responsibilities**:
+#### Responsibilities
 
 - Implement EmbeddingProvider (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
 - Implement VectorStoreProvider (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
@@ -228,7 +228,7 @@ pub struct AppContext {
 - Implement LanguageChunkingProvider (Tree-sitter based)
 - Auto-register via linkme distributed slices
 
-**Key Types**:
+#### Key Types
 
 ```rust
 // Embedding provider implementation
@@ -261,14 +261,14 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 **Purpose**: MCP protocol implementation and transport
 
-**Responsibilities**:
+#### Responsibilities
 
 - Implement MCP tool handlers (index, search, memory, session, etc.)
 - Handle stdio and HTTP transport
 - Parse MCP requests and format responses
 - Error handling and logging
 
-**Key Types**:
+#### Key Types
 
 ```rust
 // MCP tool handler
@@ -302,7 +302,7 @@ impl StdioTransport {
 
 ## Dependency Direction
 
-```
+```text
 mcb-server
     ↓
 mcb-infrastructure ← mcb-providers

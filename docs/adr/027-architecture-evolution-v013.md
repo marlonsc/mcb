@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 027: Architecture Evolution v0.1.3 - Onion/Clean Enhancement
+# ADR 027: Architecture Evolution v0.1.3 - Onion/Clean Enhancement
 
 ## Status
 
@@ -76,7 +76,7 @@ maintaining backward compatibility:
 Organize mcb-domain and mcb-application by feature modules instead of pure layer
 folders:
 
-**Bounded Contexts:**
+Bounded Contexts:
 
 - `workspace/` - Config, roots, ignore rules, multi-root support
 - `indexing/` - Index state, progress, checkpoints
@@ -84,7 +84,7 @@ folders:
 - `search/` - Query parsing, ranking, Result aggregation
 - `telemetry/` - Events, tracing, metrics
 
-**Module Structure:**
+Module Structure:
 
 ```text
 mcb-application/src/
@@ -150,14 +150,14 @@ pub trait Ranker: Send + Sync {
 }
 ```
 
-**Engine Implementations:**
+Engine Implementations:
 
 - `IndexStateStore`: SQLite (default), In-Memory (testing), RocksDB
   (feature-gated)
 - `Ranker`: CosineRanker, HybridRanker (BM25 + semantic), MMRRanker,
   LLMReranker (feature-gated)
 
-**Unified Config:**
+Unified Config:
 
 ```toml
 [engines.embedding]
@@ -207,7 +207,7 @@ impl IndexingService {
 }
 ```
 
-**Capabilities:**
+Capabilities:
 
 - Fingerprint-based change detection (mtime + size + partial hash)
 - Checkpoint/resume on crash
@@ -218,7 +218,7 @@ impl IndexingService {
 
 Enable production deployment patterns:
 
-**CLI Subcommands:**
+CLI Subcommands:
 
 ```bash
 mcb serve              # MCP server (existing behavior)
@@ -226,7 +226,7 @@ mcb index --watch      # Watch filesystem and update index
 mcb doctor             # Environment checks
 ```
 
-**Health Endpoints:**
+Health Endpoints:
 
 <!-- markdownlint-disable MD013 -->
 ```rust
@@ -243,7 +243,7 @@ pub fn metrics() -> String { /* Prometheus format */ }
 ```
 <!-- markdownlint-enable MD013 -->
 
-**Deployment Artifacts:**
+Deployment Artifacts:
 
 - Dockerfile (distroless base)
 - docker-compose.yml for local development
@@ -269,7 +269,7 @@ Add search quality gates to CI:
     min_recall_at_5: 0.6
 ```
 
-**CI Integration:**
+CI Integration:
 
 - Index example repositories
 - Run relevance test suite
@@ -305,7 +305,7 @@ Add search quality gates to CI:
 
 See implementation prompt: `thoughts/prompts/PROMPT_V013_IMPLEMENTATION.md`
 
-**Estimated Scope:**
+Estimated Scope:
 
 - Phase 0: 1 PR (baseline)
 - Phase 1: 3-4 PRs (bounded contexts)

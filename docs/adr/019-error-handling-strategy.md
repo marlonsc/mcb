@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 019: Error Handling Strategy
+# ADR 019: Error Handling Strategy
 
 ## Status
 
@@ -25,7 +25,7 @@ MCB uses typed errors (`thiserror`). PMAT uses `anyhow::Error`.
 
 ## Decision
 
-**Layered error handling**:
+Layered error handling:
 
 1. **Domain Layer**: Typed errors with `thiserror`
 2. **Adapter Layer**: Convert `anyhow` → typed errors
@@ -59,7 +59,7 @@ impl ComplexityAnalyzerAdapter {
 }
 ```
 
-**Domain Error Types**:
+Domain Error Types:
 
 ```rust
 // crates/mcb-domain/src/error.rs
@@ -97,15 +97,15 @@ Current error types in the eight-crate structure:
 
 All use `thiserror` for type-safe error handling.
 
-## Consequences
+### Consequences
 
-**Positive**:
+Positive:
 
 - PMAT code unchanged (100% reuse)
 - MCB's typed errors at boundaries
 - Error context preserved
 
-**Negative**:
+Negative:
 
 - Two error types to maintain
 
@@ -118,4 +118,4 @@ All use `thiserror` for type-safe error handling.
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 crate structure*
+Updated 2026-01-17 - Reflects v0.1.2 crate structure

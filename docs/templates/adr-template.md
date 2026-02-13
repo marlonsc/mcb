@@ -18,7 +18,7 @@ requires a decision?}
 {Provide clear, actionable description of the decision. Include any specific
 technologies, patterns, or approaches chosen.}
 
-## Consequences
+### Consequences
 
 {What are the positive and negative consequences of this decision?}
 

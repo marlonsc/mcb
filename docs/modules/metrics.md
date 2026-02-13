@@ -12,7 +12,7 @@ The metrics functionality is distributed across crates in v0.2.1:
 - **mcb-infrastructure**: `AtomicPerformanceMetrics`, `DefaultIndexingOperations` - Performance tracking
 - **mcb-server**: Admin endpoints for metrics exposure
 
-## Components
+### Components
 
 ### AtomicPerformanceMetrics (`mcb-infrastructure`)
 
@@ -27,7 +27,7 @@ Thread-safe performance metrics collection:
 
 HTTP API for metrics access via admin router.
 
-**Endpoints**:
+### Endpoints
 
 | Endpoint | Method | Purpose |
 | ---------- | -------- | --------- |
@@ -73,4 +73,4 @@ Environment variables:
 
 ---
 
-*Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

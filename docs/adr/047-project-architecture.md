@@ -10,7 +10,7 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
-## ADR 047: Project Architecture - Central Hub and Multi-Dimensional Coordination
+# ADR 047: Project Architecture - Central Hub and Multi-Dimensional Coordination
 
 ## Status
 

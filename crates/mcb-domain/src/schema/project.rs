@@ -180,20 +180,6 @@ impl ProjectSchema {
 
         // Add memory tables (observations, session_summaries)
         let memory_tables = super::memory::tables().into_iter().map(|mut t| {
-            // Add project_id column if not present (memory schema might be generic)
-            // In memory.rs refactor, we saw memory.rs has specific columns.
-            // Let's assume memory.rs definition is correct but might lack project_id if it was designed to be generic?
-            // Wait, in previous read of project.rs, 'observations' HAD project_id.
-            // In memory.rs, it DID NOT have project_id in my last read.
-            // So project.rs extends memory tables with project_id?
-            // Or I should add project_id to memory.rs if it's supposed to be there.
-            // If I blindly use memory::tables(), I might miss project_id.
-
-            // Let's check memory.rs content again in tool 219 output.
-            // It does NOT have project_id.
-            // So I need to inject project_id into the tables from memory.rs.
-
-            // Only inject if not present
             if !t.columns.iter().any(|c| c.name == "project_id") {
                 t.columns.insert(
                     1,
@@ -269,6 +255,14 @@ impl ProjectSchema {
                     ColumnDef {
                         name: "deleted_at".to_string(),
                         type_: ColumnType::Integer,
+                        primary_key: false,
+                        unique: false,
+                        not_null: false,
+                        auto_increment: false,
+                    },
+                    ColumnDef {
+                        name: "origin_context".to_string(),
+                        type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
                         not_null: false,
