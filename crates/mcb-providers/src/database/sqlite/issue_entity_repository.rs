@@ -34,33 +34,6 @@ impl SqliteIssueEntityRepository {
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
-
-    // TODO(architecture): Deduplicate query helpers (see ProjectRepository).
-    // Generic query wrappers should be centralized to reduce boilerplate.
-    async fn query_one<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Option<T>>
-    where
-        F: FnOnce(&dyn SqlRow) -> Result<T>,
-    {
-        match self.executor.query_one(sql, params).await? {
-            Some(r) => Ok(Some(convert(r.as_ref())?)),
-            None => Ok(None),
-        }
-    }
-
-    async fn query_all<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Vec<T>>
-    where
-        F: Fn(&dyn SqlRow) -> Result<T>,
-    {
-        let rows = self.executor.query_all(sql, params).await?;
-        let mut result = Vec::with_capacity(rows.len());
-        for row in rows {
-            result.push(
-                convert(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode issue entity", e))?,
-            );
-        }
-        Ok(result)
-    }
 }
 
 // TODO(architecture): Move row conversion logic to shared row_convert module.
@@ -156,7 +129,8 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
     }
 
     async fn get_issue(&self, org_id: &str, id: &str) -> Result<ProjectIssue> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM project_issues WHERE org_id = ? AND id = ?",
             &[
                 SqlParam::String(org_id.to_string()),
@@ -169,13 +143,15 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
     }
 
     async fn list_issues(&self, org_id: &str, project_id: &str) -> Result<Vec<ProjectIssue>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM project_issues WHERE org_id = ? AND project_id = ?",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(project_id.to_string()),
             ],
             row_to_issue,
+            "issue entity",
         )
         .await
     }
@@ -240,7 +216,8 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
     }
 
     async fn get_comment(&self, id: &str) -> Result<IssueComment> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM issue_comments WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_comment,
@@ -250,10 +227,12 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
     }
 
     async fn list_comments_by_issue(&self, issue_id: &str) -> Result<Vec<IssueComment>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM issue_comments WHERE issue_id = ?",
             &[SqlParam::String(issue_id.to_string())],
             row_to_comment,
+            "issue entity",
         )
         .await
     }
@@ -284,7 +263,8 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
     }
 
     async fn get_label(&self, id: &str) -> Result<IssueLabel> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM issue_labels WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_label,
@@ -294,13 +274,15 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
     }
 
     async fn list_labels(&self, org_id: &str, project_id: &str) -> Result<Vec<IssueLabel>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM issue_labels WHERE org_id = ? AND project_id = ?",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(project_id.to_string()),
             ],
             row_to_label,
+            "issue entity",
         )
         .await
     }
@@ -340,10 +322,12 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
     }
 
     async fn list_labels_for_issue(&self, issue_id: &str) -> Result<Vec<IssueLabel>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT l.* FROM issue_labels l INNER JOIN issue_label_assignments a ON a.label_id = l.id WHERE a.issue_id = ?",
             &[SqlParam::String(issue_id.to_string())],
             row_to_label,
+            "issue entity",
         )
         .await
     }

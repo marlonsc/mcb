@@ -6,6 +6,7 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::PlanEntityRepository;
 
+use super::query_helpers;
 use super::row_helpers::{req_i64, req_str};
 
 /// SQLite-backed repository for plan, version, and review entities.
@@ -18,33 +19,6 @@ impl SqlitePlanEntityRepository {
     // TODO(qlty): Found 31 lines of similar code in 3 locations (mass = 216)
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
-    }
-
-    /// Helper to query a single row and convert it.
-    async fn query_one<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Option<T>>
-    where
-        F: FnOnce(&dyn SqlRow) -> Result<T>,
-    {
-        match self.executor.query_one(sql, params).await? {
-            Some(r) => Ok(Some(convert(r.as_ref())?)),
-            None => Ok(None),
-        }
-    }
-
-    /// Helper to query multiple rows and convert them.
-    async fn query_all<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Vec<T>>
-    where
-        F: Fn(&dyn SqlRow) -> Result<T>,
-    {
-        let rows = self.executor.query_all(sql, params).await?;
-        let mut result = Vec::with_capacity(rows.len());
-        for row in rows {
-            result.push(
-                convert(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode plan entity", e))?,
-            );
-        }
-        Ok(result)
     }
 }
 
@@ -123,7 +97,8 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
 
     /// Retrieves a plan by org ID and plan ID.
     async fn get_plan(&self, org_id: &str, id: &str) -> Result<Plan> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM plans WHERE org_id = ? AND id = ?",
             &[
                 SqlParam::String(org_id.to_string()),
@@ -137,13 +112,15 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
 
     /// Lists plans in an organization for a project.
     async fn list_plans(&self, org_id: &str, project_id: &str) -> Result<Vec<Plan>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM plans WHERE org_id = ? AND project_id = ?",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(project_id.to_string()),
             ],
             row_to_plan,
+            "plan entity",
         )
         .await
     }
@@ -199,7 +176,8 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
 
     /// Retrieves a plan version by ID.
     async fn get_plan_version(&self, id: &str) -> Result<PlanVersion> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM plan_versions WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_plan_version,
@@ -210,10 +188,12 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
 
     /// Lists versions of a plan.
     async fn list_plan_versions_by_plan(&self, plan_id: &str) -> Result<Vec<PlanVersion>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM plan_versions WHERE plan_id = ?",
             &[SqlParam::String(plan_id.to_string())],
             row_to_plan_version,
+            "plan entity",
         )
         .await
     }
@@ -238,7 +218,8 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
 
     /// Retrieves a plan review by ID.
     async fn get_plan_review(&self, id: &str) -> Result<PlanReview> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM plan_reviews WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_plan_review,
@@ -249,10 +230,12 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
 
     /// Lists reviews for a plan version.
     async fn list_plan_reviews_by_version(&self, plan_version_id: &str) -> Result<Vec<PlanReview>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM plan_reviews WHERE plan_version_id = ?",
             &[SqlParam::String(plan_version_id.to_string())],
             row_to_plan_review,
+            "plan entity",
         )
         .await
     }

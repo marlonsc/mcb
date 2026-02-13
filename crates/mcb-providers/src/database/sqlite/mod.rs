@@ -18,6 +18,7 @@ mod plan_entity_repository;
 mod project_repository;
 mod provider;
 mod row_convert;
+/// Shared SQLite row mapping and extraction helper functions.
 pub mod row_helpers;
 mod vcs_entity_repository;
 

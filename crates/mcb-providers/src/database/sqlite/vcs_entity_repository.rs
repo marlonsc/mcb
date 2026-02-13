@@ -1,3 +1,5 @@
+//! SQLite VCS entity repository.
+
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -17,10 +19,12 @@ pub struct SqliteVcsEntityRepository {
 
 impl SqliteVcsEntityRepository {
     /// Creates a new repository using the provided database executor.
+    // TODO(qlty): Found 31 lines of similar code in 3 locations (mass = 216)
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
 
+    /// Helper to query a single row and convert it.
     async fn query_one<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Option<T>>
     where
         F: FnOnce(&dyn SqlRow) -> Result<T>,
@@ -31,6 +35,7 @@ impl SqliteVcsEntityRepository {
         }
     }
 
+    /// Helper to query multiple rows and convert them.
     async fn query_all<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Vec<T>>
     where
         F: Fn(&dyn SqlRow) -> Result<T>,
@@ -47,6 +52,7 @@ impl SqliteVcsEntityRepository {
     }
 }
 
+/// Converts a SQL row to a Repository.
 fn row_to_repository(row: &dyn SqlRow) -> Result<Repository> {
     let vcs_type = req_str(row, "vcs_type")?
         .parse::<VcsType>()
@@ -65,6 +71,7 @@ fn row_to_repository(row: &dyn SqlRow) -> Result<Repository> {
     })
 }
 
+/// Converts a SQL row to a Branch.
 fn row_to_branch(row: &dyn SqlRow) -> Result<Branch> {
     let is_default_i = req_i64(row, "is_default")?;
     Ok(Branch {
@@ -78,6 +85,7 @@ fn row_to_branch(row: &dyn SqlRow) -> Result<Branch> {
     })
 }
 
+/// Converts a SQL row to a Worktree.
 fn row_to_worktree(row: &dyn SqlRow) -> Result<Worktree> {
     let status = req_str(row, "status")?
         .parse::<WorktreeStatus>()
@@ -95,6 +103,7 @@ fn row_to_worktree(row: &dyn SqlRow) -> Result<Worktree> {
     })
 }
 
+/// Converts a SQL row to an AgentWorktreeAssignment.
 fn row_to_assignment(row: &dyn SqlRow) -> Result<AgentWorktreeAssignment> {
     Ok(AgentWorktreeAssignment {
         id: req_str(row, "id")?,
@@ -106,9 +115,11 @@ fn row_to_assignment(row: &dyn SqlRow) -> Result<AgentWorktreeAssignment> {
 }
 
 #[async_trait]
+/// Persistent VCS entity repository using SQLite.
 impl VcsEntityRepository for SqliteVcsEntityRepository {
     // -- Repository --
 
+    /// Creates a new repository.
     async fn create_repository(&self, repo: &Repository) -> Result<()> {
         self.executor
             .execute(
@@ -138,6 +149,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             .await
     }
 
+    /// Retrieves a repository by ID.
     async fn get_repository(&self, org_id: &str, id: &str) -> Result<Repository> {
         self.query_one(
             "SELECT * FROM repositories WHERE org_id = ? AND id = ?",
@@ -151,6 +163,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
         .ok_or_else(|| Error::not_found(format!("Repository {id}")))
     }
 
+    /// Lists repositories in an organization for a project.
     async fn list_repositories(&self, org_id: &str, project_id: &str) -> Result<Vec<Repository>> {
         self.query_all(
             "SELECT * FROM repositories WHERE org_id = ? AND project_id = ?",
@@ -163,6 +176,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
         .await
     }
 
+    /// Updates an existing repository.
     async fn update_repository(&self, repo: &Repository) -> Result<()> {
         self.executor
             .execute(
@@ -190,6 +204,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             .await
     }
 
+    /// Deletes a repository.
     async fn delete_repository(&self, org_id: &str, id: &str) -> Result<()> {
         self.executor
             .execute(
@@ -204,6 +219,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     // -- Branch --
 
+    /// Creates a new branch.
     async fn create_branch(&self, branch: &Branch) -> Result<()> {
         self.executor
             .execute(
@@ -233,6 +249,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             .await
     }
 
+    /// Retrieves a branch by ID.
     async fn get_branch(&self, id: &str) -> Result<Branch> {
         self.query_one(
             "SELECT * FROM branches WHERE id = ?",
@@ -243,6 +260,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
         .ok_or_else(|| Error::not_found(format!("Branch {id}")))
     }
 
+    /// Lists branches in a repository.
     async fn list_branches(&self, repository_id: &str) -> Result<Vec<Branch>> {
         self.query_all(
             "SELECT * FROM branches WHERE repository_id = ?",
@@ -252,6 +270,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
         .await
     }
 
+    /// Updates an existing branch.
     async fn update_branch(&self, branch: &Branch) -> Result<()> {
         self.executor
             .execute(
@@ -279,6 +298,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             .await
     }
 
+    /// Deletes a branch.
     async fn delete_branch(&self, id: &str) -> Result<()> {
         self.executor
             .execute(
@@ -290,6 +310,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     // -- Worktree --
 
+    /// Creates a new worktree.
     async fn create_worktree(&self, wt: &Worktree) -> Result<()> {
         self.executor
             .execute(
@@ -320,6 +341,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             .await
     }
 
+    /// Retrieves a worktree by ID.
     async fn get_worktree(&self, id: &str) -> Result<Worktree> {
         self.query_one(
             "SELECT * FROM worktrees WHERE id = ?",
@@ -330,6 +352,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
         .ok_or_else(|| Error::not_found(format!("Worktree {id}")))
     }
 
+    /// Lists worktrees in a repository.
     async fn list_worktrees(&self, repository_id: &str) -> Result<Vec<Worktree>> {
         self.query_all(
             "SELECT * FROM worktrees WHERE repository_id = ?",
@@ -339,6 +362,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
         .await
     }
 
+    /// Updates an existing worktree.
     async fn update_worktree(&self, wt: &Worktree) -> Result<()> {
         self.executor
             .execute(
@@ -367,6 +391,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             .await
     }
 
+    /// Deletes a worktree.
     async fn delete_worktree(&self, id: &str) -> Result<()> {
         self.executor
             .execute(
@@ -378,6 +403,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     // -- Assignment --
 
+    /// Creates a new assignment.
     async fn create_assignment(&self, asgn: &AgentWorktreeAssignment) -> Result<()> {
         self.executor
             .execute(
@@ -404,6 +430,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             .await
     }
 
+    /// Retrieves an assignment by ID.
     async fn get_assignment(&self, id: &str) -> Result<AgentWorktreeAssignment> {
         self.query_one(
             "SELECT * FROM agent_worktree_assignments WHERE id = ?",
@@ -414,6 +441,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
         .ok_or_else(|| Error::not_found(format!("Assignment {id}")))
     }
 
+    /// Lists assignments for a worktree.
     async fn list_assignments_by_worktree(
         &self,
         worktree_id: &str,
@@ -426,6 +454,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
         .await
     }
 
+    /// Releases an assignment (sets released_at).
     async fn release_assignment(&self, id: &str, released_at: i64) -> Result<()> {
         self.executor
             .execute(

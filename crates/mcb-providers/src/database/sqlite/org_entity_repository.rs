@@ -21,33 +21,6 @@ impl SqliteOrgEntityRepository {
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
-
-    /// Helper to query a single row and convert it.
-    async fn query_one<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Option<T>>
-    where
-        F: FnOnce(&dyn SqlRow) -> Result<T>,
-    {
-        match self.executor.query_one(sql, params).await? {
-            Some(r) => Ok(Some(convert(r.as_ref())?)),
-            None => Ok(None),
-        }
-    }
-
-    /// Helper to query multiple rows and convert them.
-    async fn query_all<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Vec<T>>
-    where
-        F: Fn(&dyn SqlRow) -> Result<T>,
-    {
-        let rows = self.executor.query_all(sql, params).await?;
-        let mut result = Vec::with_capacity(rows.len());
-        for row in rows {
-            result.push(
-                convert(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode org entity", e))?,
-            );
-        }
-        Ok(result)
-    }
 }
 
 /// Converts a SQL row to an Organization.
@@ -138,7 +111,8 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
 
     /// Retrieves an organization by ID.
     async fn get_org(&self, id: &str) -> Result<Organization> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM organizations WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_org,
@@ -149,8 +123,14 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
 
     /// Lists all organizations.
     async fn list_orgs(&self) -> Result<Vec<Organization>> {
-        self.query_all("SELECT * FROM organizations", &[], row_to_org)
-            .await
+        query_helpers::query_all(
+            &self.executor,
+            "SELECT * FROM organizations",
+            &[],
+            row_to_org,
+            "org entity",
+        )
+        .await
     }
 
     /// Updates an existing organization.
@@ -200,7 +180,8 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
 
     /// Retrieves a user by ID.
     async fn get_user(&self, id: &str) -> Result<User> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM users WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_user,
@@ -211,7 +192,8 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
 
     /// Retrieves a user by email within an organization.
     async fn get_user_by_email(&self, org_id: &str, email: &str) -> Result<User> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM users WHERE org_id = ? AND email = ?",
             &[
                 SqlParam::String(org_id.to_string()),
@@ -225,10 +207,12 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
 
     /// Lists users in an organization.
     async fn list_users(&self, org_id: &str) -> Result<Vec<User>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM users WHERE org_id = ?",
             &[SqlParam::String(org_id.to_string())],
             row_to_user,
+            "org entity",
         )
         .await
     }
@@ -278,7 +262,8 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
 
     /// Retrieves a team by ID.
     async fn get_team(&self, id: &str) -> Result<Team> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM teams WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_team,
@@ -289,10 +274,12 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
 
     /// Lists teams in an organization.
     async fn list_teams(&self, org_id: &str) -> Result<Vec<Team>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM teams WHERE org_id = ?",
             &[SqlParam::String(org_id.to_string())],
             row_to_team,
+            "org entity",
         )
         .await
     }
@@ -337,10 +324,12 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
 
     /// Lists members of a team.
     async fn list_team_members(&self, team_id: &str) -> Result<Vec<TeamMember>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM team_members WHERE team_id = ?",
             &[SqlParam::String(team_id.to_string())],
             row_to_team_member,
+            "org entity",
         )
         .await
     }
@@ -367,7 +356,8 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
 
     /// Retrieves an API key by ID.
     async fn get_api_key(&self, id: &str) -> Result<ApiKey> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM api_keys WHERE id = ?",
             &[SqlParam::String(id.to_string())],
             row_to_api_key,
@@ -378,10 +368,12 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
 
     /// Lists API keys for an organization.
     async fn list_api_keys(&self, org_id: &str) -> Result<Vec<ApiKey>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM api_keys WHERE org_id = ?",
             &[SqlParam::String(org_id.to_string())],
             row_to_api_key,
+            "org entity",
         )
         .await
     }
