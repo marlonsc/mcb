@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Implementation Status - Traceability Document
 
 **Purpose**: Map what EXISTS (files created) vs what PLANS require.

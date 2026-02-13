@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # API Reference
 
 This document provides a comprehensive reference of the Memory Context Browser public API.

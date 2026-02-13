@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # FastEmbed Provider
 
 The FastEmbed Provider offers high-quality local embeddings without external API

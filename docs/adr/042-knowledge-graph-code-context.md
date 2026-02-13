@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR-042: Knowledge Graph for Code Context and Relationships
 
 **Status**: Proposed

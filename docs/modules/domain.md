@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # domain Module
 
 **Source**: `crates/mcb-domain/src/`

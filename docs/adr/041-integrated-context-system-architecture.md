@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR-041: Integrated Context System Architecture v0.4.0
 
 **Status**: Proposed

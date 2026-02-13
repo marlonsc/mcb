@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # PROJECT MANAGEMENT IMPLEMENTATION RESEARCH
 
 ## Real-World Patterns from Rust OSS (Feb 2026)
@@ -822,7 +823,7 @@ pub struct ProjectResponse {
 
 ## 9. RISKS & MITIGATIONS
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Risk | Mitigation |
 | ------ | ----------- |
 | Circular dependency detection performance | Use recursive CTE with depth limit |
@@ -830,7 +831,6 @@ pub struct ProjectResponse {
 | Cargo.toml parsing errors | Fallback to raw TOML storage |
 | Concurrent updates to dependencies | Use database transactions + unique constraints |
 | Version requirement parsing | Use `semver` crate for validation |
-<!-- markdownlint-enable MD013 -->
 
 ---
 

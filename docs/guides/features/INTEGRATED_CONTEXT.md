@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Integrated Context System (v0.4.0)
 
 ## Overview

@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Complete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR 025: Figment Configuration Migration
 
 ## Status
@@ -82,7 +84,7 @@ approach with powerful composition and validation features:
 
 #### Key Advantages Over Config Crate
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Feature | Config Crate | Figment |
 | --------- | -------------- | --------- |
 | **API Style** | Builder pattern with manual source addition | Fluent composition with `merge()` |
@@ -91,7 +93,6 @@ approach with powerful composition and validation features:
 | **Provider Ecosystem** | Limited built-in providers | Extensive provider library |
 | **Validation** | Basic deserialization | Rich validation with custom extractors |
 | **Extensibility** | Custom sources via traits | Provider trait system |
-<!-- markdownlint-enable MD013 -->
 
 ## Decision
 
@@ -171,7 +172,7 @@ let app_config: AppConfig = config.try_deserialize()
 
 After (Figment — current production pattern):
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 ```rust
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
@@ -191,7 +192,6 @@ let app_config: AppConfig = figment.extract()
     .context("Failed to extract configuration")?;
 validate_app_config(&app_config)?;
 ```
-<!-- markdownlint-enable MD013 -->
 
 ### Profile Support (available but not currently used)
 
@@ -203,7 +203,7 @@ optional override file and `MCP__` environment variables instead.
 The pattern below illustrates what is possible if profile-based switching is
 needed in the future:
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 ```rust
 use figment::Profile;
 
@@ -221,7 +221,6 @@ let prod_config: AppConfig = Figment::new()
     .merge(Env::prefixed("MCP__").split("__").lowercase(true).profile(Profile::new("prod")))
     .extract()?;
 ```
-<!-- markdownlint-enable MD013 -->
 
 ### Error Handling Improvements
 
@@ -229,15 +228,14 @@ Figment provides significantly better error messages:
 
 Config crate error:
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 ```text
 Error: TOML parse error: invalid type: integer `123`, expected a string for key `app.port` at line 10 column 15
 ```
-<!-- markdownlint-enable MD013 -->
 
 Figment error:
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 ```text
 Error: `app.port` is not a string (integer `123`) in config/default.toml:10:15, but expected a string
 
@@ -248,7 +246,6 @@ Caused by:
     9 | name = "myapp"
     10| port = 123  # <-- integer, expected string
 ```
-<!-- markdownlint-enable MD013 -->
 
 ## Consequences
 

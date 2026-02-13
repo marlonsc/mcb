@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Complete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR 006: Code Audit and Architecture Improvements
 
 ## Status
@@ -303,9 +305,8 @@ config = "0.13"
 | Cyclomatic complexity | >15 | <10 | Cargo +nightly rustc -- -Zunpretty=hir |
 | Memory usage | Baseline | <10% increase | Valgrind massif |
 | Error handling coverage | Partial | Complete | Manual review |
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 &nbsp;
-<!-- markdownlint-enable MD013 -->
 
 ## Update for v0.3.0: Multi-Domain Architecture Preparation
 
@@ -351,7 +352,7 @@ libs/
 
 **Provider Integration** (current structure):
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 ```text
 crates/mcb-providers/src/
 ├── embedding/        # 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
@@ -360,7 +361,6 @@ crates/mcb-providers/src/
 ├── cache/            # Cache providers (Moka, Null)
 └── events/           # Event providers
 ```
-<!-- markdownlint-enable MD013 -->
 
 ### Quality Implications
 

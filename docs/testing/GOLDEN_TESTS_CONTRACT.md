@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Golden Tests Contract
 
 Golden tests validate**real** MCP tool behaviour: indexing, search, status, and
@@ -18,7 +19,7 @@ assert on handler responses and content.
 
 ## 1. E2E workflow
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Test | Contract (what must hold) |
 | ------ | --------------------------- |
 | `golden_e2e_complete_workflow` | (1) index (action=clear)(collection) succeeds and response contains "clear"/"Clear"/"cleared". (2) index (action=status)(collection) succeeds, not error, text contains "Indexing Status" or "Idle" or "indexing". (3) index (action=start)(path, collection) succeeds, not error, text contains "chunks"/"file"/"Index"/"Files processed"/"Indexing Started". (4) index (action=status) again succeeds. (5) search (resource=code)(collection, query) succeeds, not error, text contains "Search"/"Results"/"Result". (6) index (action=clear) again succeeds. (7) index (action=status) again succeeds. |
@@ -31,7 +32,7 @@ assert on handler responses and content.
 
 ## 2. Index
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Test | Contract |
 | ------ | ---------- |
 | `golden_index_test_repository` | index (action=start)(sample_codebase_path, collection) succeeds, not error, response content non-empty and contains "chunk"/"file"/"Index"/"Files processed"/"Indexing Started"/"Source directory"/"Path:". |
@@ -42,7 +43,7 @@ assert on handler responses and content.
 
 ## 3. MCP response schema (content shape)
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Test | Contract |
 | ------ | ---------- |
 | `golden_mcp_index (action=start)_schema` | index (action=start) response: Ok, content non-empty, not is_error. |
@@ -55,7 +56,7 @@ assert on handler responses and content.
 
 ## 4. Search validation
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Test | Contract |
 | ------ | ---------- |
 | `golden_search_returns_relevant_results` | After indexing sample_codebase into collection, search (resource=code)(collection, "embedding vector") succeeds, not error. (With null embedding, results may be empty; at least the handler must succeed.) |
@@ -68,13 +69,12 @@ assert on handler responses and content.
 
 ## 5. Golden queries E2E (split to avoid timeout)
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Test | Contract |
 | ------ | ---------- |
 | `golden_e2e_golden_queries_setup` | index (action=clear), index (action=start), then poll index (action=status) until Idle/processed (bounded wait: 20 × 50ms). |
 | `golden_e2e_golden_queries_one_query` | After clear + index, one search (resource=code) call succeeds and response is not error. |
 | `golden_e2e_golden_queries_all_handlers_succeed` | After clear + index, run all queries from golden_queries.JSON; every search (resource=code) must succeed (no error). With null embedding, Result counts may be 0. |
-<!-- markdownlint-enable MD013 -->
 
 ---
 

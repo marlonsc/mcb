@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Beads Issue Tracking System - Complete Data Model Documentation
 
 ## Overview

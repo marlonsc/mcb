@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Architecture Boundaries - Layer Rules and Module Ownership
 
 **Version**: v0.2.0

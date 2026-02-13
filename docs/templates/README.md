@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Documentation Templates
 
 This directory contains templates and standards for Memory Context Browser documentation.

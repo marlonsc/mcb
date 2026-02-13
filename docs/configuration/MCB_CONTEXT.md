@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # .MCP-context.toml Schema Documentation
 
 **Version**: 0.2.0

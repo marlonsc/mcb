@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: In Progress
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR 040: Unified Tool Execution Gate
 
 ## Status

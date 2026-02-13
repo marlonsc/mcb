@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # daemon Module
 
 **Note**: The daemon module from the legacy codebase has been simplified in v0.2.1.

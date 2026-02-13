@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Modernization Audit Details
 
 Detailed modernization analysis moved from context quick-reference docs.

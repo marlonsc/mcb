@@ -10,7 +10,9 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
 # ADR-034: Workflow Core — Finite State Machine and Persistence
 
@@ -576,7 +578,7 @@ impl WorkflowEngine for SqliteWorkflowEngine {
 Valid transitions are enforced at runtime. Invalid transitions return
 `WorkflowError::InvalidTransition`.
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 ```text
 From \ Trigger         │ CtxDisc │ StartPlan │ StartExec │ ClaimTask │ ComplTask │ StartVer │ VerPass │ VerFail │ CompPhase │ EndSess │ Error │ Suspend │ Resume │ TimeoutDet │ Cancel │ MarkAband
 ───────────────────────┼─────────┼───────────┼───────────┼───────────┼───────────┼──────────┼─────────┼─────────┼───────────┼─────────┼───────┼─────────┼────────┼────────────┼────────┼───────────
@@ -594,7 +596,6 @@ Cancelled              │    ✗    │     ✗     │     ✗     │     ✗
 Abandoned              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │   ✗     │   ✗   │    ✗    │ Ready  │    ✗       │   ✗    │    ✗
 Completed              │    ✗    │     ✗     │     ✗     │     ✗     │     ✗     │    ✗     │    ✗    │    ✗    │     ✗     │   ✗     │   ✗   │    ✗    │   ✗    │    ✗       │   ✗    │    ✗
 ```
-<!-- markdownlint-enable MD013 -->
 
 \* Resumes to the state before suspension.
 

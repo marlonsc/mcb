@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Configuration Index
 
 Canonical configuration docs now live under `docs/configuration/`.

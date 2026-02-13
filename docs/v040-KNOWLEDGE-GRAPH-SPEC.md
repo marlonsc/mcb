@@ -12,7 +12,7 @@ network of entities, enabling high-fidelity code reasoning and hybrid search.
 
 Nodes represent semantic entities extracted from the source code.
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Node Type | Description | Attributes |
 | ----------- | ------------- | ------------ |
 | `Module` | A file or logical grouping of code | `path`, `is_external` |
@@ -21,7 +21,6 @@ Nodes represent semantic entities extracted from the source code.
 | `Interface` / `Trait` | A behavioral contract | `name`, `methods` |
 | `Import` | An external dependency reference | `source`, `alias` |
 | `Variable` | A global or significant local state | `name`, `type_ref` |
-<!-- markdownlint-enable MD013 -->
 
 ### Edge Types
 

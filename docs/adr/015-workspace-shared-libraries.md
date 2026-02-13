@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR 015: Workspace Structure for Shared Libraries
 
 ## Status

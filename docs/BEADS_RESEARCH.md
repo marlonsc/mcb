@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Beads Issue Tracking System - Research Documentation
 
 This directory contains comprehensive documentation of the Beads issue tracking system's data model, storage format, and architecture. This research was conducted to support migration to a relational database.

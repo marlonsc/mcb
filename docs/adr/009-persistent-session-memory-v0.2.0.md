@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Partial
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR 009: Persistent Session Memory v0.2.0
 
 ## Status
@@ -75,7 +77,7 @@ Implement persistent session memory in mcb v0.2.0 by porting Claude-mem's core a
 
 All memory-related MCP tools use the `memory_` prefix to avoid namespace collisions:
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | ADR Original Name | Canonical Name (v1.0.0) | Rationale |
 | ------------------- | ------------------------- | ----------- |
 | `search` | `memory (action=list, resource=observation)` | Avoids collision with `search (resource=code)` |
@@ -83,16 +85,14 @@ All memory-related MCP tools use the `memory_` prefix to avoid namespace collisi
 | `get_observations` | `memory (action=get, resource=observation)` | Consistent namespace |
 | `memory (action=store, resource=observation)` | `memory (action=store, resource=observation)` | Matches tool |
 | `inject_context` | `memory (action=inject, resource=observation)` | Avoids future collisions |
-<!-- markdownlint-enable MD013 -->
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 **Existing tools retained** (already namespaced):
 
 - `memory (action=store, resource=observation)` → alias for `memory (action=store, resource=observation)`
 - `search (resource=memory)` → alias for `memory (action=list, resource=observation)`
 - `session (action=summarize)` → unchanged (session domain)
 - `session (action=summarize)` → unchanged (session domain)
-<!-- markdownlint-enable MD013 -->
 
 Compatibility policy:
 
@@ -1392,13 +1392,12 @@ Memory search uses hybrid retrieval (BM25 + vector) with Reciprocal Rank Fusion 
 
 ### Layer Separation (Clean Architecture)
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Layer | Responsibility | Implementation |
 | ------- | | ---------------- | ---------------- |
 | Domain | `MemoryRepository` port with `search(query_embedding, filter, limit)` | No engine-specific logic |
 | Application | `MemorySearchService` orchestrates FTS + vector retrieval, performs RRF fusion | Pure business logic |
 | Infrastructure | `SqliteMemoryRepository` implements FTS5 queries + calls VectorStoreProvider | Database-specific |
-<!-- markdownlint-enable MD013 -->
 
 ### Fusion Algorithm (RRF)
 

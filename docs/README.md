@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Memory Context Browser - Documentation
 
 [![Documentation Status](https://img.shields.io/badge/docs-automated-green)](https://github.com/marlonsc/mcb/actions)
@@ -32,7 +33,7 @@ Documentation for developers contributing to the project.
 
 Technical architecture documentation following C4 model principles.
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 - **[Architecture Overview](architecture/ARCHITECTURE.md)** - Comprehensive system architecture
 - **[Architecture Diagrams](diagrams/)** - Visual architecture documentation
 - [System Context](diagrams/generated/index.html) - System boundaries and external systems
@@ -49,7 +50,6 @@ Technical architecture documentation following C4 model principles.
 - [ADR 031: Documentation Excellence](adr/031-documentation-excellence.md)
 - [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.3-v0.4.0)
 - [Full ADR Index](adr/README.md) - 47 ADRs total
-<!-- markdownlint-enable MD013 -->
 
 ### 📦 Modules (v0.2.0 Crate Structure)
 

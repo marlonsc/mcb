@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Architecture Decision Records
 
 This directory contains all Architecture Decision Records (ADRs) for the Memory Context Browser project.

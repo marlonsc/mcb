@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Complete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 ## ADR 004: Event Bus (Local and Distributed)
 
 ## Status

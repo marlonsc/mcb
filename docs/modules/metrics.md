@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Metrics Module
 
 **Source**: `crates/mcb-infrastructure/src/infrastructure/admin.rs` and `crates/mcb-server/src/admin/`

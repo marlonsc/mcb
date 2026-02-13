@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: N/A
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR 030: Multi-Provider Strategy
 
 ## Status
@@ -530,10 +532,9 @@ The existing router pattern extends to new provider types:
 
 ## References
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 - [Circuit Breaker Pattern](https://microservices.io/patterns/reliability/circuit-breaker.html)
 - [Provider Selection Strategies](https://aws.amazon.com/blogs/architecture/)
 - [Multicloud on AWS](https://aws.amazon.com/multicloud/)
 - [ADR-029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) - Current DI
 - [Shaku Documentation](https://docs.rs/shaku) (historical)
-<!-- markdownlint-enable MD013 -->

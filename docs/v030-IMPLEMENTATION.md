@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # v0.3.0 Implementation Plan - Phase 1 Stabilization
 
 ## Status

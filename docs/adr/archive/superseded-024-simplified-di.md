@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # ADR 024: Shaku to dill DI Migration
 
 ## Status

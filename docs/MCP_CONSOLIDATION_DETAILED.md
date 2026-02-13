@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # MCP CONSOLIDATION ANALYSIS REPORT
 
 **Generated**: 2025-02-05

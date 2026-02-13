@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Integration Tests - Redis and NATS
 <!-- markdownlint-disable MD024 -->
 

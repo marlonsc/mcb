@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Migration Guide: From Claude-context to mcb
 
 This guide helps you migrate from [zilliztech/Claude-context](https://github.com/zilliztech/claude-context) to mcb.

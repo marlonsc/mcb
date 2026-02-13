@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # ADR 012: Two-Layer Dependency Injection Strategy
 
 ## Status

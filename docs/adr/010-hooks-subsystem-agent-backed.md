@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Partial
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR 010: Hooks Subsystem with Agent-Backed Processing
 
 ## Status

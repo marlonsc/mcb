@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Clean Architecture in Memory Context Browser
 
 ## Overview

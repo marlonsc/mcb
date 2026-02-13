@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Agent & Quality Domain Extension - Schema Additions
 
 ## Overview

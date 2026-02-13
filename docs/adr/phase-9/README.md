@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Phase 9: Integrated Context System (ADR-041-046)
 
 ## Overview

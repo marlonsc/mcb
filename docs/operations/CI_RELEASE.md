@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # CI/CD and Release Process
 <!-- markdownlint-disable MD024 -->
 

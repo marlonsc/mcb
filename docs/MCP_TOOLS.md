@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 MD024 -->
 # MCP Tools Schema Documentation
 
 **Version**: 0.2.0

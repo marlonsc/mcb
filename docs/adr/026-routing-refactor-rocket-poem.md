@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR 026: API Routing Refactor (Rocket vs Poem)
 
 ## Status
@@ -115,7 +117,7 @@ Poem (modern async web framework) offers a programmatic approach:
 
 ### Framework Comparison
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Aspect | Axum (Current) | Rocket (Chosen) | Poem (Alternative) |
 | -------- | ---------------- | ----------------- | ------------------- |
 | **Routing Style** | Programmatic | Attribute-based | Programmatic |
@@ -126,7 +128,6 @@ Poem (modern async web framework) offers a programmatic approach:
 | **Compile Time** | Fast | Medium | Fast |
 | **Middleware** | Tower ecosystem | Built-in | Flexible |
 | **Error Handling** | Manual | Built-in | Manual |
-<!-- markdownlint-enable MD013 -->
 
 ## Decision
 

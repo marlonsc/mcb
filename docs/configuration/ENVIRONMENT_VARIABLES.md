@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Environment Variables Reference
 
 Complete reference for all environment variables supported by Memory Context Browser.

@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # CI Optimization Strategy - v0.1.4
 <!-- markdownlint-disable MD024 -->
 

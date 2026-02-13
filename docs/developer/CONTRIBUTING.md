@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Contributing to Memory Context Browser
 
 Thank you for your interest in contributing! This guide covers everything you need for MCB development.

@@ -10,6 +10,8 @@ superseded_by: [34]
 implementation_status: Incomplete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR-032: Agent & Quality Domain Extension (MCB-Only)
 
 **Status:** Superseded by [ADR-034](034-workflow-core-fsm.md)

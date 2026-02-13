@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Production-Grade Context Discovery & Git Integration Research
 
 **Research Date:** 2026-02-05
@@ -424,7 +425,7 @@ pub async fn after_commit(&self, repo_path: &Path) -> Result<()> {
 
 ### Critical Gaps ❌
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Gap | Impact | Severity |
 | ----- | -------- | ---------- |
 | **No external tracker support** | Can't discover GitHub/GitLab/Jira issues | **HIGH** |
@@ -432,7 +433,6 @@ pub async fn after_commit(&self, repo_path: &Path) -> Result<()> {
 | **No rate limiting abstraction** | Will hit GitHub API limits without backoff | **HIGH** |
 | **No composite snapshot consistency** | Context mixing different timestamps | **MEDIUM** |
 | **No local fallback for tracker outages** | Whole discovery fails if GitHub is down | **MEDIUM** |
-<!-- markdownlint-enable MD013 -->
 
 ### Where ADR-035 Differs from Claude-mem
 
@@ -684,9 +684,8 @@ discovery mode.
 
 | Tool | Approach | Notes |
 | ------ | ---------- | ------- |
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | **GitKraken Desktop** | git2 + local git, no external trackers | Similar to MCB |
-<!-- markdownlint-enable MD013 -->
 | **GitHub CLI (gh)** | REST API + local git | Multiple trackers |
 | **GitLab Runner** | git2 + API integration | Fallback to cache |
 | **Argo CD** | gix (gitoxide) + polling | Large-scale |

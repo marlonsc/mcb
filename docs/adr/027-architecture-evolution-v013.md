@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Incomplete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR 027: Architecture Evolution v0.1.3 - Onion/Clean Enhancement
 
 ## Status
@@ -39,7 +41,7 @@ MCB v0.1.2 established a SOLID Clean Architecture foundation with:
 Analysis of the [kamu-cli](https://github.com/kamu-data/kamu-cli) production
 codebase revealed opportunities to evolve MCB without rewriting:
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Aspect | MCB Current | kamu-cli Pattern | Opportunity |
 | -------- | ------------- | ------------------ | ------------- |
 | Module Organization | By layer (entities/, ports/, services/) | By bounded context (workspace/, indexing/, search/) | Feature-centric navigation |
@@ -47,7 +49,6 @@ codebase revealed opportunities to evolve MCB without rewriting:
 | Indexing | Full re-index | Incremental with checkpoints | 90%+ time reduction |
 | Operability | Binary only | Node mode with Helm | Kubernetes deployment |
 | Quality | Unit tests only | Relevance tests | Search quality gates |
-<!-- markdownlint-enable MD013 -->
 
 ### Problems Addressed
 
@@ -228,7 +229,7 @@ mcb doctor             # Environment checks
 
 Health Endpoints:
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 ```rust
 #[get("/healthz")]
 pub fn health() -> Status { Status::Ok }
@@ -241,7 +242,6 @@ pub async fn ready(ctx: &State<AppContext>) -> Status {
 #[get("/metrics")]
 pub fn metrics() -> String { /* Prometheus format */ }
 ```
-<!-- markdownlint-enable MD013 -->
 
 Deployment Artifacts:
 

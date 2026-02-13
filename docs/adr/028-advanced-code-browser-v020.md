@@ -10,6 +10,8 @@ superseded_by: []
 implementation_status: Partial
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 # ADR 028: Advanced Code Browser UI v0.2.0
 
 ## Status

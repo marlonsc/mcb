@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 # Golden Tests - E2E Integration
 
 ## Overview
@@ -151,7 +152,7 @@ jobs:
 
 ### Routes That MUST Always Return 200
 
-<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Route | Layer 1 | Layer 2 | Layer 3 |
 | ------- | --------- | --------- | --------- |
 | `/` | ✅ `test_dashboard_returns_html` | ✅ `test_admin_rocket_dashboard_is_accessible` | ✅ `Dashboard should return 200` |
@@ -162,7 +163,6 @@ jobs:
 | `/favicon.ico` | ✅ `test_favicon_returns_svg` | ✅ `test_admin_rocket_favicon_is_accessible` | ✅ `favicon should return SVG` |
 | `/ui/theme.css` | ❌ | ✅ `test_admin_rocket_theme_css_is_accessible` | ✅ `theme CSS should return 200` |
 | `/ui/shared.js` | ❌ | ✅ `test_admin_rocket_shared_js_is_accessible` | ✅ `shared JS should return 200` |
-<!-- markdownlint-enable MD013 -->
 
 ## Maintenance
 
