@@ -4,16 +4,16 @@
 
 .PHONY: docs docs-serve docs-lint docs-validate adr adr-new diagrams docs-check docs-setup docs-sync docs-build rust-docs
 
-MDBOOK := $(HOME)/.cargo/bin/mdbook
+MDBOOK := $(shell command -v mdbook 2>/dev/null || echo "$(HOME)/.cargo/bin/mdbook")
 
 ##@ Docs
 
 docs: ## Build all documentation
 	@echo "Building documentation..."
-	@./scripts/docs/inject-metrics.sh 2>/dev/null || true
+	@./scripts/docs/inject-metrics.sh
 	@cargo doc --no-deps --workspace
-	@./scripts/docs/mdbook-sync.sh 2>/dev/null || true
-	@if [ -x "$(MDBOOK)" ]; then $(MDBOOK) build book/ 2>/dev/null || true; fi
+	@./scripts/docs/mdbook-sync.sh
+	@if [ -x "$(MDBOOK)" ]; then $(MDBOOK) build book/; else echo "Warning: mdbook not found, skipping book build" >&2; fi
 
 docs-serve: ## Serve documentation with live reload
 	@echo "Starting documentation server..."

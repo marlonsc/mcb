@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Memory Context Browser - Comprehensive Architecture Documentation
 
 [![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)

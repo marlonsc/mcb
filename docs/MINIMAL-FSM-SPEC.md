@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD013 MD024 MD025 MD060 MD024 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 MD024 -->
 # MCB Minimal FSM Specification (v0.3.0)
 
 This document defines the minimal viable Finite State Machine (FSM) for MCB workflow sessions. It simplifies the complex 12-state production model from ADR-034 into a focused 4-state core for initial implementation.

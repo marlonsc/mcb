@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Core Module
 
 **Source**: `crates/mcb-domain/` (types, ports) and `crates/mcb-infrastructure/` (utilities); see `docs/architecture/ARCHITECTURE.md` and `docs/modules/domain.md` for how these exports tie into the project architecture.

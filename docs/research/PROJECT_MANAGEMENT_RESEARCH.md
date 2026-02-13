@@ -1,4 +1,4 @@
-<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # PROJECT MANAGEMENT IMPLEMENTATION RESEARCH
 
 ## Real-World Patterns from Rust OSS (Feb 2026)

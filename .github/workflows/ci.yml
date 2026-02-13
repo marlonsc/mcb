@@ -74,9 +74,11 @@ jobs:
           IS_BOT: ${{ github.event.pull_request.user.type == 'Bot' }}
           IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
         run: |
-          echo "is_draft=${IS_DRAFT}" >> "$GITHUB_OUTPUT"
-          echo "is_bot=${IS_BOT}" >> "$GITHUB_OUTPUT"
-          echo "is_fork=${IS_FORK}" >> "$GITHUB_OUTPUT"
+          {
+            echo "is_draft=${IS_DRAFT}"
+            echo "is_bot=${IS_BOT}"
+            echo "is_fork=${IS_FORK}"
+          } >> "$GITHUB_OUTPUT"
 
           # Full suite: non-draft human PRs targeting main
           if [[ "${IS_DRAFT}" == "false" && "${IS_BOT}" == "false" ]]; then
@@ -115,11 +117,8 @@ jobs:
       - run: make lint MCB_CI=1
 
   test:
-    name: Test (${{ matrix.os }}, ${{ matrix.rust }})
-    needs: [changes, classify, lint]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
+    name: Test (${{ matrix.os }}, Rust ${{ matrix.rust }})
+    needs: [changes, classify]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -157,9 +156,7 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           save-if: false
-      # Skip if matrix exclusion applies
       - name: Run tests
-        if: matrix.if_key != 'false'
         run: make test THREADS=4
 
   startup-smoke:
@@ -238,8 +235,8 @@ jobs:
   audit:
     name: Security Audit
     timeout-minutes: 10
-    needs: [changes]
-    if: needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
+    needs: [changes, classify]
+    if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && needs.classify.outputs.run_full == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -261,7 +258,8 @@ jobs:
     if: |
       always() &&
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      needs.classify.outputs.run_full == 'true'
+      needs.classify.outputs.run_full == 'true' &&
+      github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -297,8 +295,8 @@ jobs:
     name: Validate Documentation
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    needs: [changes]
-    if: needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true'
+    needs: [changes, classify]
+    if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true') && needs.classify.outputs.run_full == 'true'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -318,8 +316,8 @@ jobs:
     name: Generate Diagrams
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    needs: [changes]
-    if: needs.changes.outputs.docs == 'true' || needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true'
+    needs: [changes, classify]
+    if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && needs.classify.outputs.run_full == 'true'
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:

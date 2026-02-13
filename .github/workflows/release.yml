@@ -69,7 +69,13 @@ jobs:
           toolchain: stable
           targets: ${{ matrix.target }}
 
-      - run: make build RELEASE=1
+      - name: Build (Unix)
+        if: runner.os != 'Windows'
+        run: make build RELEASE=1
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: cargo build --release --target ${{ matrix.target }}
 
       - name: Create dist directory
         run: mkdir -p dist

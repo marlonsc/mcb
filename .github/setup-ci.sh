@@ -68,12 +68,19 @@ while [[ $# -gt 0 ]]; do
 			Darwin)
 				brew install plantuml -q
 				;;
+			MINGW* | MSYS* | CYGWIN*)
+				echo "Warning: PlantUML installation on Windows not automated. Please install manually." >&2
+				;;
+			*)
+				echo "Warning: PlantUML installation not supported on $OS" >&2
+				;;
 			esac
 		fi
 		shift
 		;;
 	*)
-		shift
+		echo "Error: Unknown option: $1" >&2
+		exit 1
 		;;
 	esac
 done

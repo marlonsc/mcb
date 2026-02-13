@@ -37,12 +37,9 @@ Commands:
 ### 🎯 **Main Commands**
 
 ```bash
-make docs          # Generate + validate complete documentation
-make docs          # Generate automated documentation
-make docs-validate # Validate quality and structure
-make docs-validate # Run quality gates
-make docs-validate # Validate ADR compliance
-make docs-setup    # Configure tools
+make docs          # Generate complete documentation (metrics, Rust API, mdBook)
+make docs-validate # Validate quality, structure, ADR compliance, and quality gates
+make docs-setup    # Configure documentation tools
 ```
 
 ### 📖 **Interactive Platform**
@@ -55,10 +52,8 @@ make docs-serve    # Development server
 ### 📋 **ADR Management**
 
 ```bash
+make adr           # List ADRs, generate ADR docs, show lifecycle status
 make adr-new       # Create new ADR
-make adr      # List ADRs
-make adr  # Generate ADR documentation
-make adr    # ADR lifecycle status
 ```
 
 ---
