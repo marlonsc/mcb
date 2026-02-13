@@ -8,7 +8,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 use crate::Result;
 
@@ -128,23 +127,48 @@ impl CargoDependencyParser {
             crates.push(self.workspace_root.clone());
         }
 
-        for entry in WalkDir::new(&self.workspace_root)
-            .follow_links(false)
-            .follow_links(false)
-            .max_depth(3)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            let path = entry.path();
-            if path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml")
-                && let Some(parent) = path.parent()
-                && parent != self.workspace_root
-            {
-                crates.push(parent.to_path_buf());
-            }
-        }
+        Self::collect_cargo_dirs(
+            &self.workspace_root,
+            &self.workspace_root,
+            0,
+            3,
+            &mut crates,
+        );
 
         crates
+    }
+
+    fn collect_cargo_dirs(
+        root: &Path,
+        current: &Path,
+        depth: usize,
+        max_depth: usize,
+        crates: &mut Vec<PathBuf>,
+    ) {
+        if depth > max_depth {
+            return;
+        }
+
+        let Ok(entries) = fs::read_dir(current) else {
+            return;
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                if path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml")
+                    && let Some(parent) = path.parent()
+                    && parent != root
+                {
+                    crates.push(parent.to_path_buf());
+                }
+                continue;
+            }
+
+            if path.is_dir() {
+                Self::collect_cargo_dirs(root, &path, depth + 1, max_depth, crates);
+            }
+        }
     }
 
     /// Parse a single Cargo.toml file

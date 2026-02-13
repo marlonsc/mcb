@@ -3,7 +3,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
-use walkdir::WalkDir;
 
 use crate::{Result, ValidationError};
 
@@ -50,20 +49,29 @@ pub struct NativePmatAnalyzer;
 impl NativePmatAnalyzer {
     fn load_rust_files(workspace_root: &Path) -> Result<Vec<(PathBuf, String)>> {
         let mut files = Vec::new();
-        for entry in WalkDir::new(workspace_root)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
+        Self::collect_rust_files(workspace_root, &mut files)?;
+        Ok(files)
+    }
+
+    fn collect_rust_files(dir: &Path, files: &mut Vec<(PathBuf, String)>) -> Result<()> {
+        for entry in fs::read_dir(dir)? {
+            let entry = entry?;
             let path = entry.path();
-            if path.is_file()
-                && path.extension().is_some_and(|ext| ext == "rs")
-                && !path.to_string_lossy().contains("/target/")
-            {
-                let content = fs::read_to_string(path)?;
-                files.push((path.to_path_buf(), content));
+            if path.is_dir() {
+                if path.to_string_lossy().contains("/target/") {
+                    continue;
+                }
+                Self::collect_rust_files(&path, files)?;
+                continue;
+            }
+
+            if path.is_file() && path.extension().is_some_and(|ext| ext == "rs") {
+                let content = fs::read_to_string(&path)?;
+                files.push((path, content));
             }
         }
-        Ok(files)
+
+        Ok(())
     }
 
     fn collect_functions(files: &[(PathBuf, String)]) -> Result<Vec<FunctionRecord>> {
