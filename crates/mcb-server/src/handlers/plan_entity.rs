@@ -22,6 +22,12 @@ impl PlanEntityHandler {
     }
 
     /// Route an incoming `plan_entity` tool call to the appropriate CRUD operation.
+    ///
+    /// This method acts as a dispatcher for all plan-related entities including plans,
+    /// versions, and reviews. It handles authorization context (org_id) and ensures
+    /// all required data is present.
+    // TODO(KISS005): Function handle is too long (71 lines, max: 50).
+    // Consider splitting into separate handlers for Plan, Version, and Review.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
@@ -34,39 +40,49 @@ impl PlanEntityHandler {
             resource = args.resource,
             {
             (PlanEntityAction::Create, PlanEntityResource::Plan) => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 let mut plan: Plan = require_data(args.data, "data required for create")?;
                 plan.org_id = org_id.to_string();
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 map_opaque_error(self.repo.create_plan(&plan).await)?;
                 ok_json(&plan)
             }
             (PlanEntityAction::Get, PlanEntityResource::Plan) => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 let id = require_id(&args.id)?;
                 ok_json(&map_opaque_error(self.repo.get_plan(org_id.as_str(), &id).await)?)
             }
             (PlanEntityAction::List, PlanEntityResource::Plan) => {
                 let project_id = args.project_id.as_deref().ok_or_else(|| {
                     McpError::invalid_params("project_id required for list", None)
-                })?;
+                })?; // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 ok_json(&map_opaque_error(self.repo.list_plans(org_id.as_str(), project_id).await)?)
             }
             (PlanEntityAction::Update, PlanEntityResource::Plan) => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 let mut plan: Plan = require_data(args.data, "data required for update")?;
                 plan.org_id = org_id.to_string();
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 map_opaque_error(self.repo.update_plan(&plan).await)?;
                 ok_text("updated")
             }
             (PlanEntityAction::Delete, PlanEntityResource::Plan) => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 let id = require_id(&args.id)?;
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 map_opaque_error(self.repo.delete_plan(org_id.as_str(), &id).await)?;
                 ok_text("deleted")
             }
             (PlanEntityAction::Create, PlanEntityResource::Version) => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 let mut version: PlanVersion = require_data(args.data, "data required")?;
                 version.org_id = org_id.to_string();
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 map_opaque_error(self.repo.create_plan_version(&version).await)?;
                 ok_json(&version)
             }
             (PlanEntityAction::Get, PlanEntityResource::Version) => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 let id = require_id(&args.id)?;
                 ok_json(&map_opaque_error(self.repo.get_plan_version(&id).await)?)
             }
@@ -78,12 +94,15 @@ impl PlanEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_plan_versions_by_plan(plan_id).await)?)
             }
             (PlanEntityAction::Create, PlanEntityResource::Review) => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 let mut review: PlanReview = require_data(args.data, "data required")?;
                 review.org_id = org_id.to_string();
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 map_opaque_error(self.repo.create_plan_review(&review).await)?;
                 ok_json(&review)
             }
             (PlanEntityAction::Get, PlanEntityResource::Review) => {
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 let id = require_id(&args.id)?;
                 ok_json(&map_opaque_error(self.repo.get_plan_review(&id).await)?)
             }

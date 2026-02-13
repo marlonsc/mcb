@@ -1,4 +1,6 @@
 //! KISS Principle Validation
+// TODO(QUAL004): File too large (899 lines, max: 500).
+// Consider splitting into separate modules for each validation type (structs, functions, etc.).
 //!
 //! Validates code against the KISS principle (Keep It Simple, Stupid):
 //! - Struct field count (max 12)
@@ -372,8 +374,9 @@ impl KissValidator {
     /// Check for structs with too many fields
     pub fn validate_struct_fields(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let struct_pattern =
-            Regex::new(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{").expect("Invalid regex");
+        let struct_pattern = Regex::new(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
+            .expect("Invalid regex");
 
         for_each_scan_rs_path(&self.config, false, |path, src_dir| {
             if self.should_skip_crate(src_dir) {
@@ -454,6 +457,7 @@ impl KissValidator {
         let fn_pattern = Regex::new(
             r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*(?:<[^>]*>)?\s*\(([^)]*)\)",
         )
+        // TODO(QUAL002): expect() in production. Use ? or handle error.
         .expect("Invalid regex");
 
         for_each_scan_rs_path(&self.config, false, |path, src_dir| {
@@ -539,8 +543,11 @@ impl KissValidator {
     pub fn validate_builder_complexity(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let builder_pattern = Regex::new(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*Builder)\s*")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Invalid regex");
-        let option_pattern = Regex::new(r"Option<").expect("Invalid regex");
+        let option_pattern = Regex::new(r"Option<")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
+            .expect("Invalid regex");
 
         for_each_scan_rs_path(&self.config, false, |path, src_dir| {
             if self.should_skip_crate(src_dir) {
@@ -579,8 +586,9 @@ impl KissValidator {
     /// Check for deeply nested code
     pub fn validate_nesting_depth(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let control_flow_pattern =
-            Regex::new(r"\b(if|match|for|while|loop)\b").expect("Invalid regex");
+        let control_flow_pattern = Regex::new(r"\b(if|match|for|while|loop)\b")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
+            .expect("Invalid regex");
 
         for_each_scan_rs_path(&self.config, false, |path, src_dir| {
             if self.should_skip_crate(src_dir) {
@@ -661,8 +669,9 @@ impl KissValidator {
     /// Check for functions that are too long
     pub fn validate_function_length(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let fn_pattern =
-            Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)").expect("Invalid regex");
+        let fn_pattern = Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
+            .expect("Invalid regex");
 
         for_each_scan_rs_path(&self.config, false, |path, src_dir| {
             if self.should_skip_crate(src_dir) {
@@ -753,8 +762,9 @@ impl KissValidator {
         let mut brace_depth = 0;
         let mut in_struct = false;
         let mut field_count = 0;
-        let field_pattern =
-            Regex::new(r"^\s*(?:pub\s+)?[a-z_][a-z0-9_]*\s*:").expect("Invalid regex");
+        let field_pattern = Regex::new(r"^\s*(?:pub\s+)?[a-z_][a-z0-9_]*\s*:")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
+            .expect("Invalid regex");
 
         for line in &lines[start_line..] {
             if line.contains('{') {

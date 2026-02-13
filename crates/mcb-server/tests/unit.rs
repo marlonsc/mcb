@@ -15,6 +15,9 @@ mod builder_tests;
 #[path = "unit/formatter_tests.rs"]
 mod formatter_tests;
 
+#[path = "unit/fairing_tests.rs"]
+mod fairing_tests;
+
 #[path = "unit/mcp_error_handling_tests.rs"]
 mod mcp_error_handling_tests;
 

@@ -316,14 +316,24 @@ validate_changes() {
 	fi
 
 	((total_checks++))
-	# TODO: Fix conditional - currently checks same file twice (impossible)
-	# Should check: old file gone AND new file exists
-	# Example: [[ ! -f "systemd/mcb.service" ]] && [[ -f "systemd/NEW_NAME.service" ]]
-	if [[ ! -f "systemd/mcb.service" ]] && [[ -f "systemd/NEW_NAME.service" ]]; then
+	local old_service="systemd/mcb.service"
+	local target_binary="${CHANGE_PATTERNS["mcb"]}"
+	local target_service="systemd/${target_binary}.service"
+
+	if [[ "$target_binary" == "NEW_NAME" ]]; then
+		log_error "Systemd service file validation skipped: update NEW_NAME placeholder first"
+	elif [[ "$old_service" == "$target_service" ]]; then
+		if [[ -f "$target_service" ]]; then
+			log_success "Systemd service file already uses target name"
+			((checks_passed++))
+		else
+			log_error "Systemd service file missing: $target_service"
+		fi
+	elif [[ ! -f "$old_service" ]] && [[ -f "$target_service" ]]; then
 		log_success "Systemd service file renamed correctly"
 		((checks_passed++))
 	else
-		log_error "Systemd service file not renamed correctly (update NEW_NAME placeholder)"
+		log_error "Systemd service file not renamed correctly ($old_service -> $target_service)"
 	fi
 
 	log_info "Validation: $checks_passed/$total_checks checks passed"

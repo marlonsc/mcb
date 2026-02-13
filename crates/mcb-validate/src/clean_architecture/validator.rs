@@ -1,4 +1,6 @@
 //! Clean Architecture validator implementation
+// TODO(QUAL004): File too large (604 lines, max: 500).
+// Consider splitting into smaller modules (boundaries, injection, entities, etc.).
 
 use std::path::PathBuf;
 
@@ -191,9 +193,11 @@ impl CleanArchitectureValidator {
         // Look for struct definitions that should have id fields
         let struct_re = PATTERNS
             .get("CA001.pub_struct_brace")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Pattern CA001.pub_struct_brace not found");
         let id_field_re = PATTERNS
             .get("CA001.id_field")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Pattern CA001.id_field not found");
         let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
@@ -279,9 +283,11 @@ impl CleanArchitectureValidator {
         // Look for &mut self methods in value objects
         let impl_re = PATTERNS
             .get("CA001.impl_block")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Pattern CA001.impl_block not found");
         let mut_method_re = PATTERNS
             .get("CA001.mut_self_method")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Pattern CA001.mut_self_method not found");
         let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
@@ -300,6 +306,7 @@ impl CleanArchitectureValidator {
             for (line_num, line) in lines.iter().enumerate() {
                 // Track impl blocks
                 if let Some(captures) = impl_re.captures(line) {
+                    // TODO(QUAL001): unwrap() in production. Use ? or match.
                     current_impl = Some(captures.get(1).map(|m| m.as_str().to_string()).unwrap());
                 }
 
@@ -449,6 +456,7 @@ impl CleanArchitectureValidator {
         // Patterns to detect local trait definitions (violations)
         let local_trait_re = PATTERNS
             .get("CA002.port_trait_decl")
+            // TODO(QUAL002): expect() in production. Use ? or handle error.
             .expect("Pattern CA002.port_trait_decl not found");
 
         // Pattern for allowed re-exports from mcb-domain

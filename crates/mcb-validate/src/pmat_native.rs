@@ -248,8 +248,6 @@ fn extract_function_body(content: &str, start_pos: usize) -> Option<String> {
                     return Some(content[body_start..=i].to_string());
                 }
             }
-            // TODO: [IMPL006] Handle or document the catch-all case.
-            // Currently ignoring all non-brace characters in body extraction.
             _ => {}
         }
         i += 1;

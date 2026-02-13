@@ -1,5 +1,4 @@
 //! Rocket fairing for managing template contexts and lifecycles.
-// TODO: [REF003] Missing test file: crates/mcb-server/tests/fairing_test.rs
 
 use rocket::fairing::{self, Fairing, Info, Kind};
 use rocket::{Build, Orbit, Rocket};
@@ -60,10 +59,10 @@ impl Fairing for TemplateFairing {
     async fn on_liftoff(&self, rocket: &Rocket<Orbit>) {
         use rocket::{figment::Source, log::PaintExt, yansi::Paint};
 
-        let cm = rocket
-            .state::<ContextManager>()
-            // TODO: [QUAL002] Avoid expect() in production. Use ? or handle explicitly.
-            .expect("Template ContextManager registered in on_ignite");
+        let Some(cm) = rocket.state::<ContextManager>() else {
+            error_!("Template ContextManager missing in on_liftoff");
+            return;
+        };
 
         info!("{}{}:", "📐 ".emoji(), "Templating".magenta());
         info_!("directory: {}", Source::from(&*cm.context().root).primary());
@@ -72,11 +71,10 @@ impl Fairing for TemplateFairing {
 
     #[cfg(debug_assertions)]
     async fn on_request(&self, req: &mut rocket::Request<'_>, _data: &mut rocket::Data<'_>) {
-        let cm = req
-            .rocket()
-            .state::<ContextManager>()
-            // TODO: [QUAL002] Avoid expect() in production. Use ? or handle explicitly.
-            .expect("Template ContextManager registered in on_ignite");
+        let Some(cm) = req.rocket().state::<ContextManager>() else {
+            error_!("Template ContextManager missing in on_request");
+            return;
+        };
 
         cm.reload_if_needed(&self.callback);
     }

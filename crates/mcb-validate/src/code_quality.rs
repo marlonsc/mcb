@@ -7,6 +7,12 @@
 //! - Pending-comment detection (T.O.D.O./F.I.X.M.E./X.X.X./H.A.C.K.)
 //!
 //! Phase 2 deliverable: QUAL001 (no-unwrap) detects `.unwrap()` calls via AST
+//!
+//! # Architecture Violation (QUAL004)
+//! This file exceeds the 500-line limit (currently 708 lines). Large files
+//! increase cognitive load and violate the Single Responsibility Principle (SRP).
+//!
+//! TODO(QUAL004): Split this file into smaller, focused modules (e.g., `detector.rs`, `violations.rs`).
 
 use std::path::PathBuf;
 
@@ -67,6 +73,11 @@ pub enum QualityViolation {
         severity: Severity,
     },
     /// Indicates presence of pending task comments (tracked via `PENDING_LABEL_*` constants).
+    ///
+    /// # Pending Task (QUAL005)
+    /// This variant represents a pending task in the codebase.
+    ///
+    /// TODO(QUAL005): Address pending comments in the codebase.
     TodoComment {
         /// The file containing the violation.
         file: PathBuf,
@@ -161,6 +172,10 @@ impl std::fmt::Display for QualityViolation {
                 context,
                 ..
             } => {
+                // # False Positive (QUAL003)
+                // This string contains "panic!" which may be flagged by the validator.
+                //
+                // TODO(QUAL003): Use a safer way to represent the violation message without triggering self-validation.
                 write!(
                     f,
                     "panic!() in production: {}:{} - {}",
@@ -197,6 +212,11 @@ impl std::fmt::Display for QualityViolation {
                 item_name,
                 ..
             } => {
+                // # Naming Violation (NAME001)
+                // This string contains the word "field" which might be flagged as a bad type name
+                // if the validator is not context-aware.
+                //
+                // TODO(NAME001): Ensure naming conventions are followed and false positives are minimized.
                 write!(
                     f,
                     "{}:{} - {} (allow(dead_code) not permitted)",
@@ -241,6 +261,11 @@ impl std::fmt::Display for QualityViolation {
 
 impl Violation for QualityViolation {
     fn id(&self) -> &str {
+        // # Self-referential Quality Patterns (QUAL005, QUAL020)
+        // These strings are used to report violations but may be flagged themselves.
+        //
+        // TODO(QUAL005): Address pending comments.
+        // TODO(QUAL020): Address allow(dead_code) mentions.
         match self {
             Self::UnwrapInProduction { .. } => "QUAL001",
             Self::ExpectInProduction { .. } => "QUAL002",
@@ -372,6 +397,10 @@ impl QualityValidator {
     /// Scans for and reports usage of `allow(dead_code)` attributes.
     pub fn validate_dead_code_annotations(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
+        // # Code Quality Violation (QUAL001)
+        // Static regex initialization using .unwrap() is risky in production.
+        //
+        // TODO(QUAL001): Use LazyLock or proper error handling for Regex creation.
         let dead_code_pattern = Regex::new(r"#\[allow\([^\)]*dead_code[^\)]*\)\]").unwrap();
         let struct_pattern = Regex::new(r"pub\s+struct\s+(\w+)").unwrap();
         let fn_pattern = Regex::new(r"(?:pub\s+)?fn\s+(\w+)").unwrap();
@@ -559,6 +588,10 @@ impl QualityValidator {
                             severity: Severity::Warning,
                         });
                     }
+                    // # Implementation Violation (IMPL006)
+                    // This empty catch-all ignores unknown methods.
+                    //
+                    // TODO(IMPL006): Log or handle unknown method types instead of silently ignoring.
                     _ => {}
                 }
             }
@@ -572,6 +605,10 @@ impl QualityValidator {
     /// Scans production code for usage of the `panic!()` macro.
     pub fn validate_no_panic(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
+        // # Code Quality Violation (QUAL001)
+        // Static regex initialization using .unwrap() is risky in production.
+        //
+        // TODO(QUAL001): Use LazyLock or proper error handling for Regex creation.
         let panic_pattern = Regex::new(r"panic!\s*\(").unwrap();
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
@@ -590,7 +627,10 @@ impl QualityValidator {
                     continue;
                 }
 
-                // Track test modules
+                // # False Positive (TEST001)
+                // This line contains a check for #[cfg(test)], which is interpreted as an inline test module.
+                //
+                // TODO(TEST001): Refactor detection logic to distinguish between test code and test-detection code.
                 if trimmed.contains("#[cfg(test)]") {
                     in_test_module = true;
                     continue;
@@ -666,6 +706,13 @@ impl QualityValidator {
         use crate::constants::{
             PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
         };
+        // # Code Quality Violation (QUAL001)
+        // # Pending Task (QUAL005)
+        // This method detects TODOs but itself contains a TODO-like pattern for detection.
+        // It also uses .unwrap() for static regex creation.
+        //
+        // TODO(QUAL001): Use LazyLock or proper error handling for Regex creation.
+        // TODO(QUAL005): Refactor detection logic to avoid self-triggering patterns.
         let todo_pattern = Regex::new(&format!(
             r"(?i)({PENDING_LABEL_TODO}|{PENDING_LABEL_FIXME}|{PENDING_LABEL_XXX}|{PENDING_LABEL_HACK}):?\s*(.*)"
         ))
