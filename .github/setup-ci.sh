@@ -73,7 +73,8 @@ while [[ $# -gt 0 ]]; do
 		shift
 		;;
 	*)
-		shift
+		echo "Error: Unknown option: $1" >&2
+		exit 1
 		;;
 	esac
 done

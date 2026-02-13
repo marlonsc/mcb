@@ -46,11 +46,10 @@ validate_adr_format() {
 		inc_errors
 		return
 	fi
-	if ! echo "$title_line" | grep -qE "^#{1,3}[[:space:]]+ADR[-[:space:]]*0*$adr_num([[:space:]]*:|:|\b)"; then
+	if ! echo "$title_line" | grep -qE "^#{1,3}[[:space:]]+ADR[-[:space:]]*0*$adr_num([[:space:]]*:|:|\\b)"; then
 		log_error "ADR number mismatch in $filename"
 		log_error "Expected ADR number: $adr_num or $adr_num_padded"
 		log_error "Found: $title_line"
-		inc_errors
 		has_errors=true
 	fi
 
