@@ -1,7 +1,8 @@
 //! Generic Reporter
 //!
-//! Generates reports from violations implementing the Violation trait.
-//! Supports multiple output formats: human-readable, JSON, and CI (GitHub Actions).
+//! This module provides the `GenericReporter` which facilitates the generation of
+//! validation reports in multiple formats. It centralizes the reporting logic
+//! for all types of architectural and code quality violations.
 
 use std::collections::HashMap;
 use std::fmt::Write;
@@ -42,7 +43,10 @@ pub struct GenericSummary {
     pub passed: bool,
 }
 
-/// Serializable violation entry
+/// Serializable violation entry.
+///
+/// # Code Smells
+/// TODO(qlty): Found 16 lines of similar code with `crates/mcb-domain/src/ports/services/validation.rs`.
 #[derive(Debug, Clone, Serialize)]
 pub struct ViolationEntry {
     /// Unique violation ID
@@ -140,7 +144,10 @@ impl GenericReporter {
         serde_json::to_string_pretty(&report).unwrap_or_else(|_| "{}".to_string())
     }
 
-    /// Generate human-readable report
+    /// Generate human-readable report.
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Function with high complexity (count = 18).
     pub fn to_human_readable(violations: &[Box<dyn Violation>], workspace_root: PathBuf) -> String {
         let report = Self::create_report(violations, workspace_root);
         let mut output = String::new();
@@ -211,7 +218,10 @@ impl GenericReporter {
         output
     }
 
-    /// Generate CI summary (GitHub Actions format)
+    /// Generate CI summary (GitHub Actions format).
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Found 22 lines of similar code between `Severity::Error` and `Severity::Warning` arms.
     pub fn to_ci_summary(violations: &[Box<dyn Violation>]) -> String {
         let mut output = String::new();
 

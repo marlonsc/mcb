@@ -24,6 +24,10 @@ impl VcsEntityHandler {
     }
 
     /// Route an incoming `vcs_entity` tool call to the appropriate CRUD operation.
+    /// # Architecture Violation (KISS005)
+    /// Function length (187 lines) exceeds the 50-line limit.
+    ///
+    // TODO(KISS005): Break 'handle' into smaller, focused functions.
     #[tracing::instrument(
         skip(self),
         fields(action = ?args.action, resource = ?args.resource, org_id = tracing::field::Empty)
@@ -65,11 +69,13 @@ impl VcsEntityHandler {
                     McpError::invalid_params("project_id required for repository create", None)
                 })?;
                 repo.org_id = org_id.to_string();
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 map_opaque_error(self.repo.create_repository(&repo).await)?;
                 ok_json(&repo)
             }
             (VcsEntityAction::Get, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
+                // TODO(ERR001): Missing error context. Add .context() or .map_err().
                 let repository = map_opaque_error(self.repo.get_repository(&org_id, &id).await)?;
                 if let Some(project_id) = args.project_id.as_deref()
                     && repository.project_id != project_id
@@ -126,6 +132,7 @@ impl VcsEntityHandler {
                 if existing.project_id != project_id {
                     return Err(McpError::invalid_params(
                         format!(
+                            // TODO(ERR001): Missing error context. Add .context() or .map_err() to help callers.
                             "conflicting project_id: args='{project_id}', repository='{}'",
                             existing.project_id
                         ),
@@ -139,6 +146,7 @@ impl VcsEntityHandler {
             // -- Branch --
             (VcsEntityAction::Create, VcsEntityResource::Branch) => {
                 let branch: Branch = require_data(args.data, "data required")?;
+                // TODO(ERR001): Missing error context.
                 map_opaque_error(self.repo.create_branch(&branch).await)?;
                 ok_json(&branch)
             }
@@ -195,10 +203,12 @@ impl VcsEntityHandler {
             // -- Assignment --
             (VcsEntityAction::Create, VcsEntityResource::Assignment) => {
                 let asgn: AgentWorktreeAssignment = require_data(args.data, "data required")?;
+                // TODO(ERR001): Missing error context.
                 map_opaque_error(self.repo.create_assignment(&asgn).await)?;
                 ok_json(&asgn)
             }
             (VcsEntityAction::Get, VcsEntityResource::Assignment) => {
+                // TODO(ERR001): Missing error context.
                 let id = require_id(&args.id)?;
                 ok_json(&map_opaque_error(self.repo.get_assignment(&id).await)?)
             }
@@ -210,6 +220,7 @@ impl VcsEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_assignments_by_worktree(wt_id).await)?)
             }
             (VcsEntityAction::Release, VcsEntityResource::Assignment) => {
+                // TODO(ERR001): Missing error context in require_id and release_assignment.
                 let id = require_id(&args.id)?;
                 map_opaque_error(self.repo.release_assignment(&id, current_timestamp()).await)?;
                 ok_text("released")

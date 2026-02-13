@@ -94,7 +94,7 @@ impl NativePmatAnalyzer {
 
     fn collect_functions(files: &[(PathBuf, String)]) -> Result<Vec<FunctionRecord>> {
         let fn_re = Regex::new(r"(?m)^\s*(?:pub\s+)?(?:async\s+)?fn\s+([A-Za-z_][A-Za-z0-9_]*)")
-            .map_err(|e| ValidationError::InvalidRegex(e.to_string()))?;
+            .map_err(ValidationError::InvalidRegex)?;
 
         let mut records = Vec::new();
         for (file, content) in files {
@@ -124,8 +124,8 @@ impl NativePmatAnalyzer {
         let mut map = HashMap::new();
         for symbol in symbols {
             let escaped = regex::escape(symbol);
-            let re = Regex::new(&format!(r"\b{escaped}\b"))
-                .map_err(|e| ValidationError::InvalidRegex(e.to_string()))?;
+            let re =
+                Regex::new(&format!(r"\b{escaped}\b")).map_err(ValidationError::InvalidRegex)?;
             let count = files
                 .iter()
                 .map(|(_, content)| re.find_iter(content).count())
@@ -227,7 +227,7 @@ struct FunctionRecord {
 fn compute_complexity_score(content: &str, start_pos: usize) -> Result<u32> {
     let body = extract_function_body(content, start_pos).unwrap_or_default();
     let re = Regex::new(r"\b(if|for|while|loop|match)\b|&&|\|\|")
-        .map_err(|e| ValidationError::InvalidRegex(e.to_string()))?;
+        .map_err(ValidationError::InvalidRegex)?;
     Ok(1 + re.find_iter(&body).count() as u32)
 }
 

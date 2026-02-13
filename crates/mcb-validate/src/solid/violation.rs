@@ -367,6 +367,7 @@ impl Violation for SolidViolation {
     fn suggestion(&self) -> Option<String> {
         match self {
             Self::PartialTraitImplementation { .. } => {
+                // TODO(NAME001): Bad type name: implementation (expected CamelCase) - False positive in string literal
                 Some("Implement the method properly or remove the trait implementation".to_string())
             }
             Self::TooManyResponsibilities { suggestion, .. }

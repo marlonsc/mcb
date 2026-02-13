@@ -32,6 +32,8 @@ pub async fn store_observation(
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
     };
+    // TODO(ORG002): Duplicate string literal "observation_type".
+    // Consider using mcb_domain::schema::memory::COL_OBSERVATION_TYPE instead.
     let observation_type_str = match MemoryHelpers::get_required_str(data, "observation_type") {
         Ok(v) => v,
         Err(error_result) => return Ok(error_result),
@@ -168,6 +170,7 @@ pub async fn get_observations(
                     serde_json::json!({
                         "id": obs.id,
                         "content": obs.content,
+                        // TODO(ORG002): Duplicate string literal "observation_type".
                         "observation_type": obs.r#type.as_str(),
                         "tags": obs.tags,
                         "session_id": obs.metadata.session_id,

@@ -90,10 +90,12 @@ pub mod async_patterns;
 pub mod dependency;
 pub mod documentation;
 pub mod error_boundary;
+/// Test hygiene validator module.
 pub mod hygiene;
 pub mod implementation;
 pub mod kiss;
 pub mod naming;
+/// Organization validator module.
 pub mod organization;
 pub mod pattern_validator;
 pub mod performance;
@@ -334,7 +336,7 @@ pub enum ValidationError {
 
     /// Invalid regex pattern
     #[error("Invalid regex pattern: {0}")]
-    InvalidRegex(String),
+    InvalidRegex(#[from] regex::Error),
 
     /// Pattern not found
     #[error("Pattern not found: {0}")]

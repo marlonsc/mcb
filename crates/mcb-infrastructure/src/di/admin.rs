@@ -263,6 +263,7 @@ pub type LanguageAdminService =
 
 macro_rules! impl_admin_interface {
     ($service:ty, $trait:ty, $config:ty) => {
+        // TODO(NAME001): Bad type name: for (expected CamelCase) - Linter misinterprets macro keyword
         impl $trait for $service {
             fn list_providers(&self) -> Vec<ProviderInfo> {
                 AdminService::list_providers(self)
@@ -278,6 +279,7 @@ macro_rules! impl_admin_interface {
         }
     };
     ($service:ty, $trait:ty, $config:ty, with_current_provider) => {
+        // TODO(NAME001): Bad type name: for (expected CamelCase) - Linter misinterprets macro keyword
         impl $trait for $service {
             fn list_providers(&self) -> Vec<ProviderInfo> {
                 AdminService::list_providers(self)

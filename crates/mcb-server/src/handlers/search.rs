@@ -120,6 +120,7 @@ impl SearchHandler {
                                     "observation_id": r.observation.id,
                                     "project_id": r.observation.project_id,
                                     "content": r.observation.content,
+                                    // TODO(ORG002): Duplicate string literal "observation_type".
                                     "observation_type": r.observation.r#type.as_str(),
                                     "tags": r.observation.tags,
                                     "similarity_score": r.similarity_score,

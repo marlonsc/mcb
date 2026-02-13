@@ -1,4 +1,8 @@
-//! User entity — a human or service account within an organization.
+//! User Domain Entity
+//!
+//! This module defines the `User` entity, representing a human or service account
+//! within an organization. It handles identity, role management, and authentication
+//! metadata for tenant isolation.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -6,6 +10,9 @@ use serde::{Deserialize, Serialize};
 /// A user belongs to exactly one organization and can be a member of
 /// multiple teams. Users authenticate via API keys (Phase 1) and
 /// external IdP / OAuth in later phases.
+///
+/// # Code Smells
+/// TODO(qlty): Found 18 lines of similar code with `crates/mcb-domain/src/entities/worktree.rs`.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct User {
     /// Unique identifier (UUID).

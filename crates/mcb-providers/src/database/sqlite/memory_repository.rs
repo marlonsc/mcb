@@ -48,7 +48,9 @@ impl SqliteMemoryRepository {
 }
 
 #[async_trait]
+/// Persistent memory repository using SQLite.
 impl MemoryRepository for SqliteMemoryRepository {
+    /// Stores an observation record.
     async fn store_observation(&self, observation: &Observation) -> Result<()> {
         // Ensure default org and project exist
         super::ensure_parent::ensure_org_and_project(
@@ -95,6 +97,8 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(())
     }
 
+    /// Retrieves an observation by ID.
+    // TODO(qlty): Found 16 lines of similar code in 2 locations (mass = 95)
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
         let row = self
             .executor
@@ -112,6 +116,8 @@ impl MemoryRepository for SqliteMemoryRepository {
         }
     }
 
+    /// Retrieves an observation by content hash.
+    // TODO(qlty): Found 16 lines of similar code in 3 locations (mass = 91)
     async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
         let row = self
             .executor
@@ -129,6 +135,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         }
     }
 
+    /// Searches observations using FTS.
     async fn search(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>> {
         let rows = self
             .executor
@@ -149,6 +156,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(results)
     }
 
+    /// Deletes an observation.
     async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
         self.executor
             .execute(
@@ -158,6 +166,7 @@ impl MemoryRepository for SqliteMemoryRepository {
             .await
     }
 
+    /// Retrieves multiple observations by ID.
     async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
         if ids.is_empty() {
             return Ok(Vec::new());
@@ -334,6 +343,8 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(())
     }
 
+    /// Retrieves the latest summary for a session.
+    // TODO(qlty): Found 17 lines of similar code in 2 locations (mass = 95)
     async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
         let row = self
             .executor

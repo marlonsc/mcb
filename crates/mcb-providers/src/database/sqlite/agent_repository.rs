@@ -40,7 +40,9 @@ impl SqliteAgentRepository {
 }
 
 #[async_trait]
+/// Persistent agent repository using SQLite.
 impl AgentRepository for SqliteAgentRepository {
+    /// Creates a new agent session.
     async fn create_session(&self, session: &AgentSession) -> Result<()> {
         if let Some(project_id) = &session.project_id {
             super::ensure_parent::ensure_org_and_project(
@@ -122,6 +124,8 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(())
     }
 
+    /// Retrieves a session by ID.
+    // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 91)
     async fn get_session(&self, id: &str) -> Result<Option<AgentSession>> {
         let row = self
             .executor
@@ -140,6 +144,7 @@ impl AgentRepository for SqliteAgentRepository {
         }
     }
 
+    /// Updates an existing session.
     async fn update_session(&self, session: &AgentSession) -> Result<()> {
         let params = [
             SqlParam::String(session.session_summary_id.clone()),
@@ -208,6 +213,7 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(())
     }
 
+    /// Lists sessions matching the query criteria.
     async fn list_sessions(&self, query: AgentSessionQuery) -> Result<Vec<AgentSession>> {
         let mut sql = String::from("SELECT * FROM agent_sessions WHERE 1=1");
         let mut params: Vec<SqlParam> = Vec::new();
@@ -254,6 +260,8 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(sessions)
     }
 
+    /// Lists sessions for a specific project.
+    // TODO(qlty): Found 18 lines of similar code in 3 locations (mass = 97)
     async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>> {
         let rows = self
             .executor
@@ -273,6 +281,8 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(sessions)
     }
 
+    /// Lists sessions for a specific worktree.
+    // TODO(qlty): Found 18 lines of similar code in 3 locations (mass = 97)
     async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>> {
         let rows = self
             .executor
@@ -292,6 +302,7 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(sessions)
     }
 
+    /// Stores a delegation record.
     async fn store_delegation(&self, delegation: &Delegation) -> Result<()> {
         let params = [
             SqlParam::String(delegation.id.clone()),
@@ -338,6 +349,7 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(())
     }
 
+    /// Stores a tool call record.
     async fn store_tool_call(&self, tool_call: &ToolCall) -> Result<()> {
         let params = [
             SqlParam::String(tool_call.id.clone()),
@@ -378,6 +390,7 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(())
     }
 
+    /// Stores a session checkpoint.
     async fn store_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
         let snapshot_json = serde_json::to_string(&checkpoint.snapshot_data)
             .map_err(|e| Error::memory_with_source("serialize checkpoint snapshot", e))?;
@@ -415,6 +428,8 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(())
     }
 
+    /// Retrieves a checkpoint by ID.
+    // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 91)
     async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>> {
         let row = self
             .executor
@@ -433,6 +448,7 @@ impl AgentRepository for SqliteAgentRepository {
         }
     }
 
+    /// Updates an existing checkpoint.
     async fn update_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
         let snapshot_json = serde_json::to_string(&checkpoint.snapshot_data)
             .map_err(|e| Error::memory_with_source("serialize checkpoint snapshot", e))?;

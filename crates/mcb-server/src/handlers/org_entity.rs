@@ -22,6 +22,10 @@ impl OrgEntityHandler {
     }
 
     /// Route an incoming `org_entity` tool call to the appropriate CRUD operation.
+    /// # Architecture Violation (KISS005)
+    /// Function length (131 lines) exceeds the 50-line limit.
+    ///
+    // TODO(KISS005): Break 'handle' into smaller, focused functions.
     pub async fn handle(
         &self,
         Parameters(args): Parameters<OrgEntityArgs>,
@@ -45,6 +49,7 @@ impl OrgEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_orgs().await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::Org) => {
+                // TODO(ORG002): Duplicate string literal "data required for update".
                 let org: Organization = require_data(args.data, "data required for update")?;
                 map_opaque_error(self.repo.update_org(&org).await)?;
                 ok_text("updated")
@@ -77,6 +82,7 @@ impl OrgEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_users(org_id.as_str()).await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::User) => {
+                // TODO(ORG002): Duplicate string literal "data required for update".
                 let mut user: User = require_data(args.data, "data required for update")?;
                 user.org_id = org_id.to_string();
                 map_opaque_error(self.repo.update_user(&user).await)?;
@@ -143,13 +149,17 @@ impl OrgEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_api_keys(org_id.as_str()).await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::ApiKey) => {
+                // TODO(ERR001): Missing error context.
                 let id = require_id(&args.id)?;
                 let revoked_at = extract_revoked_at(args.data.as_ref());
+                // TODO(ERR001): Missing error context.
                 map_opaque_error(self.repo.revoke_api_key(&id, revoked_at).await)?;
                 ok_text("updated")
             }
             (OrgEntityAction::Delete, OrgEntityResource::ApiKey) => {
+                // TODO(ERR001): Missing error context.
                 let id = require_id(&args.id)?;
+                // TODO(ERR001): Missing error context.
                 map_opaque_error(self.repo.delete_api_key(&id).await)?;
                 ok_text("deleted")
             }

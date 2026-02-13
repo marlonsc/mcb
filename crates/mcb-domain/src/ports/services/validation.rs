@@ -1,4 +1,8 @@
 //! Provides validation domain definitions.
+//!
+//! This module defines the core data structures and service interfaces for
+//! architecture and code quality validation within the MCB domain.
+//! It includes reports for violations, rules, and code complexity metrics.
 use std::path::Path;
 
 use async_trait::async_trait;
@@ -22,7 +26,10 @@ pub struct ValidationReport {
     pub passed: bool,
 }
 
-/// A single violation entry
+/// A single violation entry.
+///
+/// # Code Smells
+/// TODO(qlty): Found 16 lines of similar code with `crates/mcb-validate/src/generic_reporter.rs`.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ViolationEntry {
     /// Unique violation ID (e.g., "CA001", "SOLID002")

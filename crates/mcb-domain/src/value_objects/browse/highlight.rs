@@ -1,7 +1,10 @@
+//! Code highlighting value objects and types.
+
 use serde::{Deserialize, Serialize};
 
 /// Highlight category for code tokens
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+// TODO(qlty): Found 22 lines of similar code in 2 locations (mass = 54)
 pub enum HighlightCategory {
     /// Language keyword (e.g., if, while, return)
     Keyword,

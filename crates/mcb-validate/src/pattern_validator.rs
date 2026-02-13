@@ -1,6 +1,14 @@
 //! Pattern Compliance Validation
-// TODO(QUAL004): File too large (612 lines, max: 500).
-// Consider splitting into separate modules for DI, async traits, and result types.
+//!
+//! This module provides the `PatternValidator` which ensures code patterns across the
+//! workspace follow established best practices and architectural constraints.
+//! It validates Dependency Injection (DI) usage, async trait implementation details,
+//! and consistency in Result/Error types.
+//!
+//! # Code Smells
+//! TODO(qlty): High total complexity (count = 181).
+//! TODO(QUAL004): File too large (612 lines, max: 500).
+//! Consider splitting into separate modules for DI, async traits, and result types.
 //!
 //! Validates code patterns:
 //! - DI uses `Arc<dyn Trait>` not `Arc<ConcreteType>`
@@ -12,11 +20,20 @@ use std::path::PathBuf;
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::sync::OnceLock;
 
 use crate::config::PatternRulesConfig;
 use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
+
+static TRAIT_PATTERN: OnceLock<Regex> = OnceLock::new();
+static ASYNC_FN_PATTERN: OnceLock<Regex> = OnceLock::new();
+static SEND_SYNC_PATTERN: OnceLock<Regex> = OnceLock::new();
+static ASYNC_TRAIT_ATTR: OnceLock<Regex> = OnceLock::new();
+static ALLOW_ASYNC_FN_TRAIT: OnceLock<Regex> = OnceLock::new();
+static STD_RESULT_PATTERN: OnceLock<Regex> = OnceLock::new();
+static EXPLICIT_RESULT_PATTERN: OnceLock<Regex> = OnceLock::new();
 
 /// Pattern violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -279,15 +296,18 @@ impl PatternValidator {
         Ok(violations)
     }
 
-    /// Verify `Arc<dyn Trait>` pattern instead of `Arc<ConcreteType>`
+    /// Verify `Arc<dyn Trait>` pattern instead of `Arc<ConcreteType>`.
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Function with high complexity (count = 58).
     pub fn validate_trait_based_di(&self) -> Result<Vec<PatternViolation>> {
         let mut violations = Vec::new();
 
         // Pattern to find Arc<SomeConcreteType> where SomeConcreteType doesn't start with "dyn"
-        let arc_pattern = Regex::new(&self.rules.arc_pattern).unwrap_or_else(|_| {
-            // TODO(QUAL002): expect() in production. Use ? or handle error.
-            Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>").expect("Invalid default regex")
-        });
+        // Pattern to find Arc<SomeConcreteType> where SomeConcreteType doesn't start with "dyn"
+        let arc_pattern = Regex::new(&self.rules.arc_pattern)
+            .or_else(|_| Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>"))
+            .map_err(crate::ValidationError::InvalidRegex)?;
 
         // Known concrete types that are OK to use directly
         let allowed_concrete = &self.rules.allowed_concrete_types;
@@ -308,6 +328,7 @@ impl PatternValidator {
             }
 
             for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
+                // TODO(qlty): Deeply nested control flow (level = 5).
                 if candidate_src_dir != src_dir {
                     return Ok(());
                 }
@@ -327,6 +348,7 @@ impl PatternValidator {
                         line.contains("mcb-validate-ignore: admin_service_concrete_type");
 
                     for cap in arc_pattern.captures_iter(line) {
+                        // TODO(qlty): Deeply nested control flow (level = 5).
                         let type_name = cap.get(1).map_or("", |m| m.as_str());
 
                         // Skip allowed concrete types
@@ -388,22 +410,31 @@ impl PatternValidator {
         Ok(violations)
     }
 
-    /// Check async traits have #[`async_trait`] and Send + Sync bounds
+    /// Check async traits have #[`async_trait`] and Send + Sync bounds.
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Function with high complexity (count = 80).
     pub fn validate_async_traits(&self) -> Result<Vec<PatternViolation>> {
         let mut violations = Vec::new();
 
-        // TODO(QUAL001): unwrap() in production. Use ? or match.
-        let trait_pattern = Regex::new(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)").unwrap();
-        // TODO(QUAL001): unwrap() in production. Use ? or match.
-        let async_fn_pattern = Regex::new(r"async\s+fn\s+").unwrap();
-        // TODO(QUAL001): unwrap() in production. Use ? or match.
-        let send_sync_pattern = Regex::new(r":\s*.*Send\s*\+\s*Sync").unwrap();
+        let trait_pattern = TRAIT_PATTERN.get_or_init(|| {
+            Regex::new(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)").expect("Invalid trait pattern")
+        });
+        let async_fn_pattern = ASYNC_FN_PATTERN
+            .get_or_init(|| Regex::new(r"async\s+fn\s+").expect("Invalid async fn pattern"));
+        let send_sync_pattern = SEND_SYNC_PATTERN.get_or_init(|| {
+            Regex::new(r":\s*.*Send\s*\+\s*Sync").expect("Invalid send sync pattern")
+        });
         // Match both #[async_trait] and #[async_trait::async_trait]
-        // TODO(QUAL001): unwrap() in production. Use ? or match.
-        let async_trait_attr = Regex::new(r"#\[(async_trait::)?async_trait\]").unwrap();
+        let async_trait_attr = ASYNC_TRAIT_ATTR.get_or_init(|| {
+            Regex::new(r"#\[(async_trait::)?async_trait\]")
+                .expect("Invalid async trait attr pattern")
+        });
         // Rust 1.75+ native async trait support
-        // TODO(QUAL001): unwrap() in production. Use ? or match.
-        let allow_async_fn_trait = Regex::new(r"#\[allow\(async_fn_in_trait\)\]").unwrap();
+        let allow_async_fn_trait = ALLOW_ASYNC_FN_TRAIT.get_or_init(|| {
+            Regex::new(r"#\[allow\(async_fn_in_trait\)\]")
+                .expect("Invalid allow async fn trait pattern")
+        });
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
@@ -426,25 +457,13 @@ impl PatternValidator {
 
                         // Look ahead to see if trait has async methods
                         let mut has_async_methods = false;
-                        let mut brace_depth = 0;
-                        let mut in_trait = false;
 
-                        for subsequent_line in &lines[line_num..] {
-                            if subsequent_line.contains('{') {
-                                in_trait = true;
-                            }
-                            if in_trait {
-                                brace_depth +=
-                                    subsequent_line.chars().filter(|c| *c == '{').count();
-                                brace_depth -=
-                                    subsequent_line.chars().filter(|c| *c == '}').count();
-
+                        if let Some((body_lines, _)) =
+                            crate::scan::extract_balanced_block(&lines, line_num)
+                        {
+                            for subsequent_line in body_lines {
                                 if async_fn_pattern.is_match(subsequent_line) {
                                     has_async_methods = true;
-                                    break;
-                                }
-
-                                if brace_depth == 0 {
                                     break;
                                 }
                             }
@@ -501,19 +520,23 @@ impl PatternValidator {
         Ok(violations)
     }
 
-    /// Verify consistent error type usage
+    /// Verify consistent error type usage.
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Function with high complexity (count = 36).
     pub fn validate_result_types(&self) -> Result<Vec<PatternViolation>> {
         let mut violations = Vec::new();
 
         // Pattern to find std::result::Result usage
-        let std_result_pattern = Regex::new(r"std::result::Result<")
-            // TODO(QUAL002): expect() in production. Use ? or handle error.
-            .expect("Invalid regex");
+        let std_result_pattern = STD_RESULT_PATTERN.get_or_init(|| {
+            Regex::new(r"std::result::Result<").expect("Invalid std result pattern")
+        });
 
         // Pattern to find Result<T, E> with explicit error type (not crate::Result)
-        let explicit_result_pattern = Regex::new(r"Result<[^,]+,\s*([A-Za-z][A-Za-z0-9_:]+)>")
-            // TODO(QUAL002): expect() in production. Use ? or handle error.
-            .expect("Invalid regex");
+        let explicit_result_pattern = EXPLICIT_RESULT_PATTERN.get_or_init(|| {
+            Regex::new(r"Result<[^,]+,\s*([A-Za-z][A-Za-z0-9_:]+)>")
+                .expect("Invalid explicit result pattern")
+        });
 
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
         // Use get_scan_dirs() for proper handling of both crate-style and flat directories
@@ -528,6 +551,7 @@ impl PatternValidator {
             }
 
             for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
+                // TODO(qlty): Deeply nested control flow (level = 5).
                 if candidate_src_dir != src_dir {
                     return Ok(());
                 }
@@ -556,6 +580,7 @@ impl PatternValidator {
                     }
 
                     // Check for std::result::Result
+                    // TODO(qlty): Deeply nested control flow (level = 5).
                     if std_result_pattern.is_match(line) {
                         violations.push(PatternViolation::RawResultType {
                             file: path.to_path_buf(),
@@ -567,6 +592,7 @@ impl PatternValidator {
                     }
 
                     // Check for Result<T, SomeError> with explicit error type
+                    // TODO(qlty): Deeply nested control flow (level = 5).
                     if let Some(cap) = explicit_result_pattern.captures(line) {
                         let error_type = cap.get(1).map_or("", |m| m.as_str());
 

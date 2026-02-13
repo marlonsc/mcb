@@ -73,6 +73,7 @@ impl ProjectSchema {
         }
     }
 
+    /// Returns the table definitions for the project schema.
     fn tables() -> Vec<TableDef> {
         // Multi-tenant tables must come first (organizations referenced by projects.org_id)
         let mut tables = multi_tenant::tables();
@@ -203,6 +204,7 @@ impl ProjectSchema {
             // file_hashes (incremental indexing; collection = namespace)
             TableDef {
                 name: "file_hashes".to_string(),
+                // TODO(qlty): Found 66 lines of similar code in 2 locations (mass = 145)
                 columns: vec![
                     ColumnDef {
                         name: "id".to_string(),
@@ -282,6 +284,7 @@ impl ProjectSchema {
 }
 
 impl ProjectSchema {
+    /// Returns the FTS definition.
     fn fts_def() -> Option<FtsDef> {
         Some(FtsDef {
             virtual_table_name: "observations_fts".to_string(),
@@ -291,6 +294,7 @@ impl ProjectSchema {
         })
     }
 
+    /// Returns the index definitions.
     fn indexes() -> Vec<IndexDef> {
         let mut indexes = vec![
             IndexDef {
@@ -344,6 +348,7 @@ impl ProjectSchema {
 }
 
 impl ProjectSchema {
+    /// Returns the foreign key definitions.
     fn foreign_keys() -> Vec<ForeignKeyDef> {
         let mut fks = vec![
             ForeignKeyDef {
@@ -380,6 +385,7 @@ impl ProjectSchema {
         fks
     }
 
+    /// Returns the unique constraint definitions.
     fn unique_constraints() -> Vec<UniqueConstraintDef> {
         let mut ucs = vec![
             UniqueConstraintDef {

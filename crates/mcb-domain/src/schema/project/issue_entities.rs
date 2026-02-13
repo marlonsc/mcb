@@ -1,7 +1,9 @@
+//! Issue tracking schema entities (issues, comments, labels).
+
 use super::ForeignKeyDef;
 use crate::schema::memory::{IndexDef, TableDef};
 
-/// Performs the tables operation.
+/// Returns the table definitions (project_issues, issue_comments, issue_labels, etc).
 pub fn tables() -> Vec<TableDef> {
     vec![
         table!(
@@ -62,7 +64,7 @@ pub fn tables() -> Vec<TableDef> {
     ]
 }
 
-/// Performs the indexes operation.
+/// Returns the index definitions for issue tracking.
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!("idx_issues_org", "project_issues", ["org_id"]),
@@ -88,7 +90,7 @@ pub fn indexes() -> Vec<IndexDef> {
     ]
 }
 
-/// Performs the foreign keys operation.
+/// Returns the foreign key definitions.
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     vec![
         ForeignKeyDef {
@@ -154,7 +156,8 @@ pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     ]
 }
 
-/// Performs the unique constraints operation.
+/// Returns the unique constraint definitions.
+// TODO(qlty): Found 16 lines of similar code in 2 locations (mass = 56)
 pub fn unique_constraints() -> Vec<super::UniqueConstraintDef> {
     vec![
         super::UniqueConstraintDef {

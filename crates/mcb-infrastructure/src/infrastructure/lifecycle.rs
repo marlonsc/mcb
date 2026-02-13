@@ -1,8 +1,8 @@
 //! Service Lifecycle Management
 //!
-//! Provides centralized lifecycle management for all managed services.
-//! The ServiceManager coordinates start/stop/restart operations and
-//! publishes state change events via the EventBus.
+//! This module provides the `ServiceManager` which orchestrates the lifecycle
+//! (start, stop, restart) of all registered services. It ensures consistent
+//! state transitions and publishes domain events for system-wide observability.
 //!
 //! ## Architecture
 //!
@@ -147,7 +147,10 @@ impl ServiceManager {
         self.services.len()
     }
 
-    /// Start a specific service
+    /// Start a specific service.
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Found 18 lines of similar code with `stop` and `restart`.
     pub async fn start(&self, name: &str) -> Result<(), ServiceManagerError> {
         let service = self
             .services

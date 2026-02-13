@@ -240,20 +240,15 @@ impl TestQualityValidator {
         let mut violations = Vec::new();
 
         // Regex patterns
-        let ignore_pattern = Regex::new(r"#\[ignore\]")
-            .map_err(|e| ValidationError::InvalidRegex(format!("ignore_pattern: {e}")))?;
-        let test_pattern = Regex::new(r"#\[test\]|#\[tokio::test\]")
-            .map_err(|e| ValidationError::InvalidRegex(format!("test_pattern: {e}")))?;
-        let fn_pattern = Regex::new(r"fn\s+(\w+)")
-            .map_err(|e| ValidationError::InvalidRegex(format!("fn_pattern: {e}")))?;
-        let todo_pattern = Regex::new(r"todo!\(")
-            .map_err(|e| ValidationError::InvalidRegex(format!("todo_pattern: {e}")))?;
-        let empty_body_pattern = Regex::new(r"\{\s*\}")
-            .map_err(|e| ValidationError::InvalidRegex(format!("empty_body_pattern: {e}")))?;
+        let ignore_pattern = Regex::new(r"#\[ignore\]").map_err(ValidationError::InvalidRegex)?;
+        let test_pattern =
+            Regex::new(r"#\[test\]|#\[tokio::test\]").map_err(ValidationError::InvalidRegex)?;
+        let fn_pattern = Regex::new(r"fn\s+(\w+)").map_err(ValidationError::InvalidRegex)?;
+        let todo_pattern = Regex::new(r"todo!\(").map_err(ValidationError::InvalidRegex)?;
+        let empty_body_pattern = Regex::new(r"\{\s*\}").map_err(ValidationError::InvalidRegex)?;
         let stub_assert_pattern = Regex::new(r"assert!\(true\)|assert_eq!\(true,\s*true\)")
-            .map_err(|e| ValidationError::InvalidRegex(format!("stub_assert_pattern: {e}")))?;
-        let doc_comment_pattern = Regex::new(r"^\s*///")
-            .map_err(|e| ValidationError::InvalidRegex(format!("doc_comment_pattern: {e}")))?;
+            .map_err(ValidationError::InvalidRegex)?;
+        let doc_comment_pattern = Regex::new(r"^\s*///").map_err(ValidationError::InvalidRegex)?;
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
             if !(path.to_string_lossy().contains("/tests/")

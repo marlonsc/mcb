@@ -17,6 +17,7 @@ use crate::admin::{AdminRegistry, registry::AdminFieldMeta};
 
 fn find_or_404(
     slug: &str,
+    // TODO(NAME003): Bad constant name: crate (expected SCREAMING_SNAKE_CASE) - False positive on keyword
 ) -> Result<&'static crate::admin::registry::AdminEntityMeta, status::Custom<String>> {
     AdminRegistry::find(slug)
         .ok_or_else(|| status::Custom(Status::NotFound, format!("Unknown entity slug: {slug}")))

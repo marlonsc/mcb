@@ -6,6 +6,11 @@ import argparse
 
 
 def main():
+    """Main entry point for checking broken internal links in documentation.
+
+    # Code Smells
+    TODO(qlty): Function with high complexity (count = 37).
+    """
     parser = argparse.ArgumentParser(description="Check broken internal links in docs.")
     parser.add_argument("--root", default=".", help="Project root directory")
     args = parser.parse_args()

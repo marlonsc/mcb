@@ -1,5 +1,13 @@
 //! Performance Pattern Validation
 //!
+//! This module provides the `PerformanceValidator` which identifies common performance
+//! anti-patterns in Rust code. It focuses on identifying clone abuse, unnecessary
+//! allocations in loops, and suboptimal synchronization patterns.
+//!
+//! # Code Smells
+//! TODO(qlty): High total complexity (count = 130).
+//! TODO(mcb-validate): File too large (641 lines). Consider extracting pattern definitions.
+//!
 //! Detects performance anti-patterns that PMAT and Clippy might miss:
 //! - Clone abuse (redundant clones, clones in loops)
 //! - Allocation patterns (Vec/String in loops)
@@ -12,6 +20,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use crate::config::PerformanceRulesConfig;
+use crate::pattern_registry::{compile_regex, compile_regex_triples, compile_regexes};
 use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
@@ -282,88 +291,77 @@ impl PerformanceValidator {
         Ok(violations)
     }
 
-    /// Detect .`clone()` calls inside loops
+    /// Detect .`clone()` calls inside loops.
     pub fn validate_clone_in_loops(&self) -> Result<Vec<PerformanceViolation>> {
-        let mut violations = Vec::new();
+        let clone_pattern = compile_regex(r"\.clone\(\)")?;
+        self.scan_files_with_patterns_in_loops(&[clone_pattern], |file, line_num, line| {
+            let trimmed = line.trim();
+            if trimmed.starts_with("fn ") || trimmed.starts_with("pub fn ") {
+                return None;
+            }
+            if trimmed.starts_with("let ") {
+                return None;
+            }
+            if trimmed.contains(".insert(") {
+                return None;
+            }
+            if trimmed.contains(": ") && trimmed.ends_with(".clone(),") {
+                return None;
+            }
+            Some(PerformanceViolation::CloneInLoop {
+                file,
+                line: line_num,
+                context: line.trim().chars().take(80).collect(),
+                suggestion: "Consider borrowing or moving instead of cloning".to_string(),
+                severity: Severity::Warning,
+            })
+        })
+    }
 
-        let loop_start_pattern = Regex::new(r"^\s*(for|while|loop)\s+").unwrap();
-        let clone_pattern = Regex::new(r"\.clone\(\)").unwrap();
+    /// Helper: Scan files for patterns inside loops
+    fn scan_files_with_patterns_in_loops<F>(
+        &self,
+        patterns: &[Regex],
+        make_violation: F,
+    ) -> Result<Vec<PerformanceViolation>>
+    where
+        F: Fn(PathBuf, usize, &str) -> Option<PerformanceViolation>,
+    {
+        let mut violations = Vec::new();
+        let loop_start_pattern = compile_regex(r"^\s*(for|while|loop)\s+")?;
 
         for_each_scan_rs_path(&self.config, false, |path, src_dir| {
             if self.should_skip_crate(src_dir) || path.to_string_lossy().contains("/tests/") {
                 return Ok(());
             }
 
-            let path_str = path.to_string_lossy();
-            if path_str.ends_with("/router.rs") || path_str.contains("/routing/") {
-                return Ok(());
-            }
-
             let content = std::fs::read_to_string(path)?;
             let mut in_loop = false;
             let mut loop_depth = 0;
-            let mut in_test_module = false;
 
             for (line_num, line) in content.lines().enumerate() {
                 let trimmed = line.trim();
 
-                // Skip comments
                 if trimmed.starts_with("//") {
                     continue;
                 }
 
-                // Track test modules
-                if trimmed.contains("#[cfg(test)]") {
-                    in_test_module = true;
-                    continue;
-                }
-
-                if in_test_module {
-                    continue;
-                }
-
-                // Track loop entry
                 if loop_start_pattern.is_match(trimmed) {
                     in_loop = true;
                     loop_depth = 0;
                 }
 
                 if in_loop {
-                    let o = line.chars().filter(|c| *c == '{').count();
-                    let c = line.chars().filter(|c| *c == '}').count();
-                    loop_depth += i32::try_from(o).unwrap_or(i32::MAX);
-                    loop_depth -= i32::try_from(c).unwrap_or(i32::MAX);
+                    loop_depth += line.chars().filter(|c| *c == '{').count() as i32;
+                    loop_depth -= line.chars().filter(|c| *c == '}').count() as i32;
 
-                    if clone_pattern.is_match(line) {
-                        // Skip if it's a method definition
-                        if trimmed.starts_with("fn ") || trimmed.starts_with("pub fn ") {
-                            continue;
+                    for pattern in patterns {
+                        if pattern.is_match(line)
+                            && let Some(violation) =
+                                make_violation(path.to_path_buf(), line_num + 1, line)
+                        {
+                            violations.push(violation);
                         }
-                        // Skip struct field initialization patterns (field: value.clone())
-                        // These are typically required for ownership transfer
-                        if trimmed.contains(": ") && trimmed.ends_with(".clone(),") {
-                            continue;
-                        }
-                        // Skip let bindings that clone for the loop (setup pattern)
-                        if trimmed.starts_with("let ") && trimmed.contains("= ") {
-                            continue;
-                        }
-                        // Skip insert patterns (common in HashMap operations)
-                        if trimmed.contains(".insert(") {
-                            continue;
-                        }
-                        // Skip push patterns (common in Vec operations)
-                        if trimmed.contains(".push(") {
-                            continue;
-                        }
-                        violations.push(PerformanceViolation::CloneInLoop {
-                            file: path.to_path_buf(),
-                            line: line_num + 1,
-                            context: trimmed.chars().take(80).collect(),
-                            suggestion: "Consider borrowing or moving instead of cloning"
-                                .to_string(),
-                            severity: Severity::Warning,
-                        });
                     }
 
                     if loop_depth <= 0 {
@@ -371,99 +369,49 @@ impl PerformanceValidator {
                     }
                 }
             }
-
             Ok(())
         })?;
 
         Ok(violations)
     }
 
-    /// Detect `Vec::new()` or `String::new()` inside loops
+    /// Detect `Vec::new()` or `String::new()` inside loops.
     pub fn validate_allocation_in_loops(&self) -> Result<Vec<PerformanceViolation>> {
-        let mut violations = Vec::new();
-
-        let loop_start_pattern = Regex::new(r"^\s*(for|while|loop)\s+").unwrap();
         let allocation_patterns = [
-            (r"Vec::new\(\)", "Vec::new()"),
-            (r"Vec::with_capacity\(", "Vec::with_capacity"),
-            (r"String::new\(\)", "String::new()"),
-            (r"String::with_capacity\(", "String::with_capacity"),
-            (r"HashMap::new\(\)", "HashMap::new()"),
-            (r"HashSet::new\(\)", "HashSet::new()"),
+            r"Vec::new\(\)",
+            r"Vec::with_capacity\(",
+            r"String::new\(\)",
+            r"String::with_capacity\(",
+            r"HashMap::new\(\)",
+            r"HashSet::new\(\)",
         ];
 
-        let compiled_patterns: Vec<_> = allocation_patterns
-            .iter()
-            .filter_map(|(p, desc)| Regex::new(p).ok().map(|r| (r, *desc)))
-            .collect();
+        let compiled_patterns = compile_regexes(allocation_patterns)?;
 
-        for_each_scan_rs_path(&self.config, false, |path, src_dir| {
-            if self.should_skip_crate(src_dir) || path.to_string_lossy().contains("/tests/") {
-                return Ok(());
-            }
+        self.scan_files_with_patterns_in_loops(&compiled_patterns, |file, line_num, line| {
+            let allocation_type = if line.contains("Vec::") {
+                "Vec allocation"
+            } else if line.contains("String::") {
+                "String allocation"
+            } else if line.contains("HashMap::") {
+                "HashMap allocation"
+            } else if line.contains("HashSet::") {
+                "HashSet allocation"
+            } else {
+                "Allocation"
+            };
 
-            let content = std::fs::read_to_string(path)?;
-            let mut in_loop = false;
-            let mut loop_depth = 0;
-            let mut in_test_module = false;
-
-            for (line_num, line) in content.lines().enumerate() {
-                let trimmed = line.trim();
-
-                // Skip comments
-                if trimmed.starts_with("//") {
-                    continue;
-                }
-
-                // Track test modules
-                if trimmed.contains("#[cfg(test)]") {
-                    in_test_module = true;
-                    continue;
-                }
-
-                if in_test_module {
-                    continue;
-                }
-
-                // Track loop entry
-                if loop_start_pattern.is_match(trimmed) {
-                    in_loop = true;
-                    loop_depth = 0;
-                }
-
-                if in_loop {
-                    let o = line.chars().filter(|c| *c == '{').count();
-                    let c = line.chars().filter(|c| *c == '}').count();
-                    loop_depth += i32::try_from(o).unwrap_or(i32::MAX);
-                    loop_depth -= i32::try_from(c).unwrap_or(i32::MAX);
-
-                    // Check for allocations in loop
-                    for (pattern, alloc_type) in &compiled_patterns {
-                        if pattern.is_match(line) {
-                            violations.push(PerformanceViolation::AllocationInLoop {
-                                file: path.to_path_buf(),
-                                line: line_num + 1,
-                                allocation_type: alloc_type.to_string(),
-                                suggestion: "Move allocation outside loop or reuse buffer"
-                                    .to_string(),
-                                severity: Severity::Warning,
-                            });
-                        }
-                    }
-
-                    if loop_depth <= 0 {
-                        in_loop = false;
-                    }
-                }
-            }
-
-            Ok(())
-        })?;
-
-        Ok(violations)
+            Some(PerformanceViolation::AllocationInLoop {
+                file,
+                line: line_num,
+                allocation_type: allocation_type.to_string(),
+                suggestion: "Move allocation outside loop or reuse buffer".to_string(),
+                severity: Severity::Warning,
+            })
+        })
     }
 
-    /// Helper: Scan files and apply pattern matching with a custom violation builder
+    /// Helper: Scan files and apply pattern matching with a custom violation builder.
     fn scan_files_with_patterns<F>(
         &self,
         compiled_patterns: &[(Regex, &str, &str)],
@@ -485,12 +433,10 @@ impl PerformanceValidator {
             for (line_num, line) in content.lines().enumerate() {
                 let trimmed = line.trim();
 
-                // Skip comments
                 if trimmed.starts_with("//") {
                     continue;
                 }
 
-                // Track test modules
                 if trimmed.contains("#[cfg(test)]") {
                     in_test_module = true;
                     continue;
@@ -500,7 +446,6 @@ impl PerformanceValidator {
                     continue;
                 }
 
-                // Check for patterns
                 for (pattern, desc, sugg) in compiled_patterns {
                     if pattern.is_match(line) {
                         violations.push(make_violation(
@@ -519,7 +464,7 @@ impl PerformanceValidator {
         Ok(violations)
     }
 
-    /// Detect Arc/Mutex overuse patterns
+    /// Detect Arc/Mutex overuse patterns.
     pub fn validate_arc_mutex_overuse(&self) -> Result<Vec<PerformanceViolation>> {
         let overuse_patterns = [
             (r"Arc<Arc<", "Nested Arc<Arc<>>", "Use single Arc instead"),
@@ -532,10 +477,7 @@ impl PerformanceValidator {
             (r"RwLock<bool>", "RwLock<bool>", "Use AtomicBool instead"),
         ];
 
-        let compiled_patterns: Vec<_> = overuse_patterns
-            .iter()
-            .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
-            .collect();
+        let compiled_patterns = compile_regex_triples(&overuse_patterns)?;
 
         self.scan_files_with_patterns(&compiled_patterns, |file, line, pattern, suggestion| {
             PerformanceViolation::ArcMutexOveruse {
@@ -548,7 +490,7 @@ impl PerformanceValidator {
         })
     }
 
-    /// Detect inefficient iterator patterns
+    /// Detect inefficient iterator patterns.
     pub fn validate_inefficient_iterators(&self) -> Result<Vec<PerformanceViolation>> {
         let inefficient_patterns = [
             (
@@ -573,10 +515,7 @@ impl PerformanceValidator {
             ),
         ];
 
-        let compiled_patterns: Vec<_> = inefficient_patterns
-            .iter()
-            .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
-            .collect();
+        let compiled_patterns = compile_regex_triples(&inefficient_patterns)?;
 
         self.scan_files_with_patterns(&compiled_patterns, |file, line, pattern, suggestion| {
             PerformanceViolation::InefficientIterator {
@@ -589,7 +528,7 @@ impl PerformanceValidator {
         })
     }
 
-    /// Detect inefficient string handling patterns
+    /// Detect inefficient string handling patterns.
     pub fn validate_inefficient_strings(&self) -> Result<Vec<PerformanceViolation>> {
         let inefficient_patterns = [
             (
@@ -609,10 +548,7 @@ impl PerformanceValidator {
             ),
         ];
 
-        let compiled_patterns: Vec<_> = inefficient_patterns
-            .iter()
-            .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
-            .collect();
+        let compiled_patterns = compile_regex_triples(&inefficient_patterns)?;
 
         self.scan_files_with_patterns(&compiled_patterns, |file, line, pattern, suggestion| {
             PerformanceViolation::InefficientString {
@@ -624,7 +560,8 @@ impl PerformanceValidator {
             }
         })
     }
-    /// Check if a crate should be skipped based on configuration
+
+    /// Check if a crate should be skipped based on configuration.
     fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
         let path_str = src_dir.to_string_lossy();
         self.rules

@@ -8,6 +8,11 @@ import argparse
 
 
 def main():
+    """Main entry point for outdated documentation check.
+
+    # Code Smells
+    TODO(qlty): Function with high complexity (count = 48).
+    """
     parser = argparse.ArgumentParser(description="Check outdated content in docs.")
     parser.add_argument("--root", default=".", help="Project root directory")
     args = parser.parse_args()
@@ -75,9 +80,12 @@ def main():
                 # Check line content
                 for pattern, desc in OUTDATED_PATTERNS:
                     # Use ignore case if pattern is lowercase
+                    # TODO(qlty): Deeply nested control flow (level = 5).
                     flags = re.IGNORECASE if pattern.islower() else 0
                     if re.search(pattern, line, flags):
+                        # TODO(qlty): Deeply nested control flow (level = 5).
                         if not is_suppressed(line):
+                            # TODO(qlty): Deeply nested control flow (level = 5).
                             issues.append((rel_filepath, i, desc, line.strip()[:80]))
 
     print(f"Checked {checked} files for outdated content.")

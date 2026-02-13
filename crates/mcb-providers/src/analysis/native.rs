@@ -16,6 +16,7 @@ use crate::Result;
 pub struct NativePmatAnalyzer;
 
 impl NativePmatAnalyzer {
+    /// Loads Rust files from the workspace.
     fn load_rust_files(workspace_root: &Path) -> Result<Vec<(PathBuf, String)>> {
         let mut files = Vec::new();
         for entry in WalkDir::new(workspace_root)
@@ -36,11 +37,13 @@ impl NativePmatAnalyzer {
         Ok(files)
     }
 
+    /// Collects function definitions from files.
     fn collect_functions(files: &[(PathBuf, String)]) -> Result<Vec<FunctionRecord>> {
         let fn_re = Regex::new(r"(?m)^\s*(?:pub\s+)?(?:async\s+)?fn\s+([A-Za-z_][A-Za-z0-9_]*)")
             .map_err(|e| Error::invalid_argument(format!("invalid function regex: {e}")))?;
 
         let mut records = Vec::new();
+        // TODO(qlty): Found 17 lines of identical code in 2 locations (mass = 105)
         for (file, content) in files {
             for captures in fn_re.captures_iter(content) {
                 let Some(name_match) = captures.get(1) else {
@@ -61,6 +64,7 @@ impl NativePmatAnalyzer {
         Ok(records)
     }
 
+    /// Counts occurrences of symbols across files.
     fn all_symbol_occurrences(
         files: &[(PathBuf, String)],
         symbols: &[String],
@@ -80,7 +84,9 @@ impl NativePmatAnalyzer {
     }
 }
 
+/// Implementation of ComplexityAnalyzer.
 impl ComplexityAnalyzer for NativePmatAnalyzer {
+    // TODO(qlty): Found 20 lines of similar code in 2 locations (mass = 92)
     fn analyze_complexity(
         &self,
         workspace_root: &Path,
@@ -101,6 +107,7 @@ impl ComplexityAnalyzer for NativePmatAnalyzer {
     }
 }
 
+/// Native dead code detection using symbol counting.
 impl DeadCodeDetector for NativePmatAnalyzer {
     fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<DeadCodeFinding>> {
         let files = Self::load_rust_files(workspace_root)?;
@@ -124,7 +131,9 @@ impl DeadCodeDetector for NativePmatAnalyzer {
     }
 }
 
+/// Native technical debt scoring based on complexity and dead code.
 impl TdgScorer for NativePmatAnalyzer {
+    // TODO(qlty): Found 38 lines of identical code in 2 locations (mass = 266)
     fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<TdgFinding>> {
         let files = Self::load_rust_files(workspace_root)?;
         let functions = Self::collect_functions(&files)?;
@@ -163,6 +172,7 @@ impl TdgScorer for NativePmatAnalyzer {
     }
 }
 
+/// Record of a discovered function.
 #[derive(Debug, Clone)]
 struct FunctionRecord {
     file: PathBuf,
@@ -171,6 +181,7 @@ struct FunctionRecord {
     complexity: u32,
 }
 
+/// Computes cyclomatic complexity using control flow keyword counting.
 fn compute_complexity_score(content: &str, start_pos: usize) -> Result<u32> {
     let body = extract_function_body(content, start_pos).unwrap_or_default();
     let re = Regex::new(r"\b(if|for|while|loop|match)\b|&&|\|\|")
@@ -179,6 +190,8 @@ fn compute_complexity_score(content: &str, start_pos: usize) -> Result<u32> {
     Ok(1 + count)
 }
 
+/// Extracts the function body by balancing braces.
+// TODO(qlty): Found 23 lines of similar code in 2 locations (mass = 109)
 fn extract_function_body(content: &str, start_pos: usize) -> Option<String> {
     let after_start = &content[start_pos..];
     let brace_index = after_start.find('{')?;
@@ -203,6 +216,7 @@ fn extract_function_body(content: &str, start_pos: usize) -> Option<String> {
     None
 }
 
+/// Checks if a symbol should be exempt from dead code detection (e.g. main, tests).
 fn is_exempt_symbol(name: &str) -> bool {
     matches!(name, "main") || name.starts_with("test_")
 }

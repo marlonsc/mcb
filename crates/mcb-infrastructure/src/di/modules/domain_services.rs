@@ -8,6 +8,9 @@
 //! Services are created via `DomainServicesFactory::create_services()` at runtime
 //! using constructor injection, because they require runtime configuration
 //! (embedding provider, vector store, cache).
+//!
+//! # Code Smells
+//! TODO(qlty): Found 28 lines of similar code with `mcb-server/src/mcp_server.rs`.
 
 use std::sync::Arc;
 
@@ -38,11 +41,14 @@ use mcb_domain::ports::providers::CryptoProvider;
 // Use infrastructure validation service
 use crate::validation::InfraValidationService;
 
-/// Domain services container
+/// Domain services container.
 ///
 /// Holds all assembled domain service implementations for use throughout the application.
 /// This container is created by `DomainServicesFactory` and provides access to all
 /// domain-level services that depend on infrastructure components.
+///
+/// # Code Smells
+/// TODO(qlty): Found 28 lines of similar code with `mcb-server/src/mcp_server.rs`.
 #[derive(Clone)]
 pub struct DomainServicesContainer {
     /// Service for managing context and semantic search operations

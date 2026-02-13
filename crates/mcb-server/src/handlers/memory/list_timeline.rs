@@ -44,6 +44,7 @@ pub async fn list_observations(
                 .map(|item| {
                     serde_json::json!({
                         "id": item.id,
+                        // TODO(ORG002): Duplicate string literal "observation_type".
                         "observation_type": item.r#type.as_str(),
                         "relevance_score": item.relevance_score,
                         "tags": item.tags,
@@ -128,6 +129,7 @@ pub async fn get_timeline(
                     serde_json::json!({
                         "observation_id": observation.id,
                         "content": observation.content,
+                        // TODO(ORG002): Duplicate string literal "observation_type".
                         "observation_type": observation.r#type.as_str(),
                         "created_at": observation.created_at,
                     })

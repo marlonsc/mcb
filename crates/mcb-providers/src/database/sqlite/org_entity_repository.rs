@@ -15,10 +15,12 @@ pub struct SqliteOrgEntityRepository {
 
 impl SqliteOrgEntityRepository {
     /// Creates a new repository using the provided database executor.
+    // TODO(qlty): Found 31 lines of similar code in 3 locations (mass = 216)
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
 
+    /// Helper to query a single row and convert it.
     async fn query_one<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Option<T>>
     where
         F: FnOnce(&dyn SqlRow) -> Result<T>,
@@ -29,6 +31,7 @@ impl SqliteOrgEntityRepository {
         }
     }
 
+    /// Helper to query multiple rows and convert them.
     async fn query_all<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Vec<T>>
     where
         F: Fn(&dyn SqlRow) -> Result<T>,
@@ -45,6 +48,7 @@ impl SqliteOrgEntityRepository {
     }
 }
 
+/// Converts a SQL row to an Organization.
 fn row_to_org(row: &dyn SqlRow) -> Result<Organization> {
     Ok(Organization {
         id: req_str(row, "id")?,
@@ -56,6 +60,7 @@ fn row_to_org(row: &dyn SqlRow) -> Result<Organization> {
     })
 }
 
+/// Converts a SQL row to a User.
 fn row_to_user(row: &dyn SqlRow) -> Result<User> {
     Ok(User {
         id: req_str(row, "id")?,
@@ -71,6 +76,7 @@ fn row_to_user(row: &dyn SqlRow) -> Result<User> {
     })
 }
 
+/// Converts a SQL row to a Team.
 fn row_to_team(row: &dyn SqlRow) -> Result<Team> {
     Ok(Team {
         id: req_str(row, "id")?,
@@ -80,6 +86,7 @@ fn row_to_team(row: &dyn SqlRow) -> Result<Team> {
     })
 }
 
+/// Converts a SQL row to a TeamMember.
 fn row_to_team_member(row: &dyn SqlRow) -> Result<TeamMember> {
     Ok(TeamMember {
         team_id: req_str(row, "team_id")?,
@@ -91,6 +98,7 @@ fn row_to_team_member(row: &dyn SqlRow) -> Result<TeamMember> {
     })
 }
 
+/// Converts a SQL row to an ApiKey.
 fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
     Ok(ApiKey {
         id: req_str(row, "id")?,
@@ -105,16 +113,19 @@ fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
     })
 }
 
+/// Helper to get a required string field.
 fn req_str(row: &dyn SqlRow, col: &str) -> Result<String> {
     row.try_get_string(col)?
         .ok_or_else(|| Error::memory(format!("Missing {col}")))
 }
 
+/// Helper to get a required i64 field.
 fn req_i64(row: &dyn SqlRow, col: &str) -> Result<i64> {
     row.try_get_i64(col)?
         .ok_or_else(|| Error::memory(format!("Missing {col}")))
 }
 
+/// Helper to get an optional string field.
 fn opt_str(row: &dyn SqlRow, col: &str) -> Result<Option<String>> {
     row.try_get_string(col)
 }

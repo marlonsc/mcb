@@ -1,7 +1,8 @@
 //! Code Parsing
 //!
-//! Provides async parsing of source code using rust-code-analysis.
-//! The `Parser` trait allows for extensible parsing implementations.
+//! This module provides the infrastructure for asynchronous source code parsing
+//! and metrics extraction. It leverages `rust-code-analysis` to produce
+//! language-agnostic AST and complexity measurements.
 
 use std::path::Path;
 
@@ -23,10 +24,10 @@ pub struct ParsedFile {
     pub functions: Vec<FunctionInfo>,
 }
 
-/// File-level metrics extracted from parsing (internal representation)
+/// File-level metrics extracted from parsing (internal representation).
 ///
-/// This is the internal metrics type used within mcb-language-support.
-/// For the domain type used in the public API, see `mcb_domain::ports::providers::metrics_analysis::ParsedFileMetrics`.
+/// # Code Smells
+/// TODO(qlty): Found 18 lines of similar code with `ParsedFunctionMetrics`.
 #[derive(Debug, Clone, Default)]
 pub struct ParsedFileMetrics {
     /// Source lines of code
@@ -60,10 +61,10 @@ pub struct FunctionInfo {
     pub metrics: ParsedFunctionMetrics,
 }
 
-/// Metrics for a single function (internal representation)
+/// Metrics for a single function (internal representation).
 ///
-/// This is the internal metrics type used within mcb-language-support.
-/// For the domain type, see `mcb_domain::ports::providers::metrics_analysis::ParsedFunctionMetrics`.
+/// # Code Smells
+/// TODO(qlty): Found 18 lines of similar code with `ParsedFileMetrics`.
 #[derive(Debug, Clone, Default)]
 pub struct ParsedFunctionMetrics {
     /// Cyclomatic complexity
@@ -91,8 +92,22 @@ pub struct ParsedFunctionMetrics {
 /// ```ignore
 /// #[async_trait]
 /// impl Parser for MyParser {
-///     async fn parse_file(&self, _path: &Path) -> Result<ParsedFile> { unimplemented!() }
-///     async fn parse_content(&self, _content: &[u8], _lang: LanguageId, _path: &Path) -> Result<ParsedFile> { unimplemented!() }
+///     // TODO(SOLID006): Remove stub-style implementation patterns
+///     async fn parse_file(&self, _path: &Path) -> Result<ParsedFile> {
+///         // Example implementation logic would go here
+///         Err(LanguageError::ParseFailed {
+///             path: _path.display().to_string(),
+///             reason: "Not implemented".into()
+///         })
+///     }
+///
+///     async fn parse_content(&self, _content: &[u8], _lang: LanguageId, _path: &Path) -> Result<ParsedFile> {
+///         // Example implementation logic would go here
+///         Err(LanguageError::ParseFailed {
+///             path: _path.display().to_string(),
+///             reason: "Not implemented".into()
+///         })
+///     }
 /// }
 /// ```
 #[async_trait]
@@ -156,7 +171,10 @@ impl RcaParser {
         }
     }
 
-    /// Extract function metrics from a `FuncSpace`
+    /// Extract function metrics from a `FuncSpace`.
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Found 15 lines of similar code with `crates/mcb-validate/src/metrics/rca_analyzer.rs`.
     fn extract_function_metrics(space: &FuncSpace) -> ParsedFunctionMetrics {
         let m = &space.metrics;
         ParsedFunctionMetrics {

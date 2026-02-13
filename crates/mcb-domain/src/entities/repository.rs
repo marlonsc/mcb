@@ -1,8 +1,8 @@
 //! Repository Domain Entities
 //!
-//! # Overview
-//! This module defines entities for tracking Version Control System (VCS) repositories.
-//! It supports multi-tenant environments by linking repositories to Organizations and Projects.
+//! This module defines entities for tracking and managing Version Control System (VCS)
+//! repositories. It facilitates multi-tenant environment support by associating
+//! repositories with Organizations and Projects.
 //!
 //! # Core Entities
 //! - [`Repository`]: A persisted record of a remote or local VCS repository (Git, Hg, SVN).
@@ -16,6 +16,9 @@ use serde::{Deserialize, Serialize};
 // ---------------------------------------------------------------------------
 
 /// A tracked VCS repository belonging to a project within an organization.
+///
+/// # Code Smells
+/// TODO(qlty): Found 20 lines of similar code with `crates/mcb-domain/src/entities/plan.rs`.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Repository {
     /// Unique identifier (UUID).

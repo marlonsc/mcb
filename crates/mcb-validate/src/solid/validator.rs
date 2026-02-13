@@ -1,11 +1,22 @@
 //! Solid validator implementation
+//!
+//! This module provides the `SolidValidator` which enforces SOLID design principles:
+//! - Single Responsibility Principle (SRP)
+//! - Open/Closed Principle (OCP)
+//! - Liskov Substitution Principle (LSP)
+//! - Interface Segregation Principle (ISP)
+//! - Dependency Inversion Principle (DIP)
+//!
+//! # Code Smells
+//! TODO(qlty): High total complexity (count = 138).
+//! TODO(qlty): Found 24 lines of similar code between `validate_isp` and `validate_impl_method_count`.
 
 use std::path::PathBuf;
 
 use regex::Regex;
 
 use super::violation::SolidViolation;
-use crate::pattern_registry::PATTERNS;
+use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_rs_under_root;
 use crate::thresholds::thresholds;
 use crate::{Result, Severity, ValidationConfig};
@@ -113,12 +124,8 @@ impl SolidValidator {
     /// SRP: Check for structs/impls that are too large
     pub fn validate_srp(&self) -> Result<Vec<SolidViolation>> {
         let mut violations = Vec::new();
-        let impl_pattern = PATTERNS
-            .get("SOLID002.impl_decl")
-            .ok_or_else(|| crate::ValidationError::PatternNotFound("SOLID002.impl_decl".into()))?;
-        let struct_pattern = PATTERNS.get("SOLID002.struct_decl").ok_or_else(|| {
-            crate::ValidationError::PatternNotFound("SOLID002.struct_decl".into())
-        })?;
+        let impl_pattern = required_pattern("SOLID002.impl_decl")?;
+        let struct_pattern = required_pattern("SOLID002.struct_decl")?;
 
         self.for_each_rust_file(|path, lines| {
             let mut structs_in_file: Vec<(String, usize)> = Vec::new();
@@ -171,14 +178,12 @@ impl SolidValidator {
     /// OCP: Check for excessive match statements
     pub fn validate_ocp(&self) -> Result<Vec<SolidViolation>> {
         let mut violations = Vec::new();
-        let match_pattern = PATTERNS
-            .get("SOLID003.match_keyword")
-            .expect("Pattern SOLID003.match_keyword not found");
+        let match_pattern = required_pattern("SOLID003.match_keyword")?;
 
         self.for_each_rust_file(|path, lines| {
             for (line_num, line) in lines.iter().enumerate() {
                 if match_pattern.is_match(line) {
-                    let arm_count = self.count_match_arms(&lines, line_num);
+                    let arm_count = self.count_match_arms(&lines, line_num)?;
 
                     if arm_count > self.max_match_arms {
                         violations.push(SolidViolation::ExcessiveMatchArms {
@@ -202,12 +207,8 @@ impl SolidValidator {
 
     /// ISP: Check for traits with too many methods
     pub fn validate_isp(&self) -> Result<Vec<SolidViolation>> {
-        let trait_pattern = PATTERNS
-            .get("SOLID001.trait_decl")
-            .expect("Pattern SOLID001.trait_decl not found");
-        let fn_pattern = PATTERNS
-            .get("SOLID001.fn_decl")
-            .expect("Pattern SOLID001.fn_decl not found");
+        let trait_pattern = required_pattern("SOLID001.trait_decl")?;
+        let fn_pattern = required_pattern("SOLID001.fn_decl")?;
 
         self.scan_decl_blocks(
             trait_pattern,
@@ -226,18 +227,15 @@ impl SolidValidator {
         )
     }
 
-    /// LSP: Check for partial trait implementations (panic!/todo! in trait methods)
+    /// LSP: Check for partial trait implementations (panic!/todo! in trait methods).
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Function with high complexity (count = 38).
     pub fn validate_lsp(&self) -> Result<Vec<SolidViolation>> {
         let mut violations = Vec::new();
-        let impl_for_pattern = PATTERNS
-            .get("SOLID002.impl_for_decl")
-            .expect("Pattern SOLID002.impl_for_decl not found");
-        let fn_pattern = PATTERNS
-            .get("SOLID002.fn_decl")
-            .expect("Pattern SOLID002.fn_decl not found");
-        let panic_todo_pattern = PATTERNS
-            .get("SOLID003.panic_macros")
-            .expect("Pattern SOLID003.panic_macros not found");
+        let impl_for_pattern = required_pattern("SOLID002.impl_for_decl")?;
+        let fn_pattern = required_pattern("SOLID002.fn_decl")?;
+        let panic_todo_pattern = required_pattern("SOLID003.panic_macros")?;
 
         self.for_each_rust_file(|path, lines| {
             for (line_num, line) in lines.iter().enumerate() {
@@ -258,6 +256,7 @@ impl SolidValidator {
                             brace_depth -= impl_line.chars().filter(|c| *c == '}').count();
 
                             if let Some(fn_cap) = fn_pattern.captures(impl_line) {
+                                // TODO(qlty): Deeply nested control flow (level = 5).
                                 let method_name = fn_cap.get(1).map_or("", |m| m.as_str());
                                 current_method =
                                     Some((method_name.to_string(), line_num + idx + 1));
@@ -266,6 +265,7 @@ impl SolidValidator {
                             if let Some((ref method_name, method_line)) = current_method
                                 && panic_todo_pattern.is_match(impl_line)
                             {
+                                // TODO(qlty): Deeply nested control flow (level = 5).
                                 violations.push(SolidViolation::PartialTraitImplementation {
                                     file: path.clone(),
                                     line: method_line,
@@ -291,12 +291,8 @@ impl SolidValidator {
 
     /// SRP: Check for impl blocks with too many methods
     pub fn validate_impl_method_count(&self) -> Result<Vec<SolidViolation>> {
-        let impl_pattern = PATTERNS
-            .get("SOLID003.impl_only_decl")
-            .expect("Pattern SOLID003.impl_only_decl not found");
-        let fn_pattern = PATTERNS
-            .get("SOLID002.fn_decl")
-            .expect("Pattern SOLID002.fn_decl not found");
+        let impl_pattern = required_pattern("SOLID003.impl_only_decl")?;
+        let fn_pattern = required_pattern("SOLID002.fn_decl")?;
 
         self.scan_decl_blocks(
             impl_pattern,
@@ -320,12 +316,8 @@ impl SolidValidator {
     /// OCP: Check for string-based type dispatch
     pub fn validate_string_dispatch(&self) -> Result<Vec<SolidViolation>> {
         let mut violations = Vec::new();
-        let string_match_pattern = PATTERNS
-            .get("SOLID003.string_match")
-            .expect("Pattern SOLID003.string_match not found");
-        let string_arm_pattern = PATTERNS
-            .get("SOLID003.string_arm")
-            .expect("Pattern SOLID003.string_arm not found");
+        let string_match_pattern = required_pattern("SOLID003.string_match")?;
+        let string_arm_pattern = required_pattern("SOLID003.string_arm")?;
 
         self.for_each_rust_file(|path, lines| {
             for (line_num, line) in lines.iter().enumerate() {
@@ -421,10 +413,8 @@ impl SolidValidator {
     }
 
     /// Count match arms in a match statement
-    fn count_match_arms(&self, lines: &[&str], start_line: usize) -> usize {
-        let arrow_pattern = PATTERNS
-            .get("SOLID003.match_arrow")
-            .expect("Pattern SOLID003.match_arrow not found");
+    fn count_match_arms(&self, lines: &[&str], start_line: usize) -> Result<usize> {
+        let arrow_pattern = required_pattern("SOLID003.match_arrow")?;
 
         let mut count = 0;
         let mut brace_depth = 0;
@@ -438,7 +428,7 @@ impl SolidValidator {
             }
             true
         });
-        count
+        Ok(count)
     }
 
     /// Count methods in a trait definition
@@ -453,7 +443,10 @@ impl SolidValidator {
         count
     }
 
-    /// Check if structs seem related (share common prefix/suffix)
+    /// Check if structs seem related (share common prefix/suffix).
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Complex binary expression.
     #[allow(clippy::too_many_lines)]
     fn structs_seem_related(&self, names: &[String]) -> bool {
         if names.len() < 2 {
@@ -576,7 +569,10 @@ impl SolidValidator {
         })
     }
 
-    /// Check for partial word overlaps in CamelCase names
+    /// Check for partial word overlaps in CamelCase names.
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Function with high complexity (count = 22).
     fn has_common_words(names: &[String]) -> bool {
         let words: Vec<Vec<&str>> = names
             .iter()

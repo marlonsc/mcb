@@ -1,3 +1,9 @@
+//! VCS Commit Entity
+//!
+//! This module defines the `VcsCommit` entity, representing a single commit
+//! within a Version Control System. It captures essential metadata such as
+//! hash, message, author information, and parentage.
+
 use serde::{Deserialize, Serialize};
 
 /// VcsCommit entity.
@@ -13,7 +19,10 @@ pub struct VcsCommit {
 }
 
 impl VcsCommit {
-    /// Creates a new instance.
+    /// Creates a new `VcsCommit` instance.
+    ///
+    /// # Parameters
+    /// TODO(qlty): Function with many parameters (count = 7).
     pub fn new(
         id: String,
         hash: String,

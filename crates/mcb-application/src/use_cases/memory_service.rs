@@ -95,6 +95,10 @@ impl MemoryServiceImpl {
             .unwrap_or(0)
     }
 
+    /// Evaluates whether an observation matches the provided memory filter.
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Function with many returns (count = 7).
     fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
         // TODO(architecture): Move filtering logic to domain entity (MemoryFilter::matches).
         // This logic currently resides in the service layer but operates entirely on domain data,

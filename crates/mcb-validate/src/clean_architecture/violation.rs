@@ -376,6 +376,7 @@ impl Violation for CleanArchitectureViolation {
                 Some("Import providers through infrastructure re-exports".to_string())
             }
             Self::InfrastructureImportsConcreteService { .. } => Some(
+                // TODO(NAME001): Bad type name: interfaces (expected CamelCase) - Likely false positive in string
                 "Import only trait interfaces from Application, not concrete implementations"
                     .to_string(),
             ),

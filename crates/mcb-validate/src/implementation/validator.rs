@@ -6,7 +6,7 @@ use regex::Regex;
 
 use super::violation::ImplementationViolation;
 use crate::config::ImplementationRulesConfig;
-use crate::pattern_registry::PATTERNS;
+use crate::pattern_registry::{required_pattern, required_patterns};
 use crate::scan::for_each_scan_rs_path;
 use crate::{Result, Severity, ValidationConfig};
 
@@ -97,14 +97,14 @@ impl ImplementationQualityValidator {
             ("IMPL001.empty_ok_zero", "Ok(0)"),
         ];
 
-        let fn_pattern = PATTERNS.get("IMPL001.fn_decl");
-        let compiled: Vec<_> = compile_pattern_pairs(&empty_pattern_ids);
+        let fn_pattern = required_pattern("IMPL001.fn_decl")?;
+        let compiled = compile_pattern_pairs(&empty_pattern_ids)?;
 
         self.for_each_prod_source_file(|entry, content| {
             let mut violations = Vec::new();
             let mut current_fn_name = String::new();
             for (line_num, trimmed) in source_lines(content) {
-                track_fn_name(fn_pattern, trimmed, &mut current_fn_name);
+                track_fn_name(Some(fn_pattern), trimmed, &mut current_fn_name);
                 for (pattern, desc) in &compiled {
                     if pattern.is_match(trimmed) {
                         violations.push(ImplementationViolation::EmptyMethodBody {
@@ -132,8 +132,8 @@ impl ImplementationQualityValidator {
             ("IMPL001.return_hardcoded_string", "hardcoded string"),
         ];
 
-        let fn_pattern = PATTERNS.get("IMPL001.fn_decl");
-        let compiled: Vec<_> = compile_pattern_pairs(&hardcoded_pattern_ids);
+        let fn_pattern = required_pattern("IMPL001.fn_decl")?;
+        let compiled = compile_pattern_pairs(&hardcoded_pattern_ids)?;
 
         self.for_each_prod_source_file(|entry, content| {
             let fname = file_name_str(entry);
@@ -145,7 +145,7 @@ impl ImplementationQualityValidator {
             let lines: Vec<&str> = content.lines().collect();
             let non_test_lines = non_test_lines(&lines);
 
-            for func in extract_functions(fn_pattern, &non_test_lines) {
+            for func in extract_functions(Some(fn_pattern), &non_test_lines) {
                 if func.has_control_flow {
                     continue;
                 }
@@ -180,14 +180,14 @@ impl ImplementationQualityValidator {
             ("IMPL001.stub_panic_todo", STUB_PANIC_LABEL),
         ];
 
-        let fn_pattern = PATTERNS.get("IMPL001.fn_decl");
-        let compiled: Vec<_> = compile_pattern_pairs(&stub_pattern_ids);
+        let fn_pattern = required_pattern("IMPL001.fn_decl")?;
+        let compiled = compile_pattern_pairs(&stub_pattern_ids)?;
 
         self.for_each_source_file(|entry, content| {
             let mut violations = Vec::new();
             let mut current_fn_name = String::new();
             for (line_num, trimmed) in source_lines(content) {
-                track_fn_name(fn_pattern, trimmed, &mut current_fn_name);
+                track_fn_name(Some(fn_pattern), trimmed, &mut current_fn_name);
                 for (pattern, macro_type) in &compiled {
                     if pattern.is_match(trimmed) {
                         violations.push(ImplementationViolation::StubMacro {
@@ -214,10 +214,7 @@ impl ImplementationQualityValidator {
             "IMPL001.catchall_continue",
         ];
 
-        let compiled: Vec<_> = catchall_ids
-            .iter()
-            .filter_map(|id| PATTERNS.get(id))
-            .collect();
+        let compiled = required_patterns(catchall_ids.iter().copied())?;
 
         self.for_each_source_file(|entry, content| {
             let mut violations = Vec::new();
@@ -239,9 +236,9 @@ impl ImplementationQualityValidator {
 
     /// Detect pass-through wrappers
     pub fn validate_pass_through_wrappers(&self) -> Result<Vec<ImplementationViolation>> {
-        let passthrough_pattern = PATTERNS.get("IMPL001.passthrough");
-        let fn_pattern = PATTERNS.get("IMPL001.fn_decl");
-        let impl_pattern = PATTERNS.get("IMPL001.impl_decl");
+        let passthrough_pattern = required_pattern("IMPL001.passthrough")?;
+        let fn_pattern = required_pattern("IMPL001.fn_decl")?;
+        let impl_pattern = required_pattern("IMPL001.impl_decl")?;
 
         self.for_each_source_file(|entry, content| {
             let fname = file_name_str(entry);
@@ -256,17 +253,15 @@ impl ImplementationQualityValidator {
             // Track current impl block
             let mut current_struct_name = String::new();
             for func in extract_functions_with_body(
-                fn_pattern,
-                impl_pattern,
+                Some(fn_pattern),
+                Some(impl_pattern),
                 &non_test,
                 &mut current_struct_name,
             ) {
                 if func.meaningful_body.len() != 1 {
                     continue;
                 }
-                if let Some(re) = passthrough_pattern
-                    && let Some(cap) = re.captures(&func.meaningful_body[0])
-                {
+                if let Some(cap) = passthrough_pattern.captures(&func.meaningful_body[0]) {
                     let field = cap.get(1).map_or("", |m| m.as_str());
                     let method = cap.get(2).map_or("", |m| m.as_str());
                     if method == func.name || method.starts_with(&func.name) {
@@ -294,11 +289,8 @@ impl ImplementationQualityValidator {
             "IMPL001.log_eprintln",
         ];
 
-        let fn_pattern = PATTERNS.get("IMPL001.fn_decl");
-        let compiled_log: Vec<_> = log_pattern_ids
-            .iter()
-            .filter_map(|id| PATTERNS.get(id))
-            .collect();
+        let fn_pattern = required_pattern("IMPL001.fn_decl")?;
+        let compiled_log = required_patterns(log_pattern_ids.iter().copied())?;
 
         self.for_each_source_file(|entry, content| {
             let mut violations = Vec::new();
@@ -306,7 +298,7 @@ impl ImplementationQualityValidator {
             let non_test = non_test_lines(&lines);
             let mut dummy = String::new();
 
-            for func in extract_functions_with_body(fn_pattern, None, &non_test, &mut dummy) {
+            for func in extract_functions_with_body(Some(fn_pattern), None, &non_test, &mut dummy) {
                 if func.meaningful_body.is_empty() || func.meaningful_body.len() > 3 {
                     continue;
                 }
@@ -408,9 +400,9 @@ fn track_fn_name(fn_pattern: Option<&Regex>, trimmed: &str, name: &mut String) {
 }
 
 /// Compile `(pattern_id, description)` pairs into `(Regex, &str)`.
-fn compile_pattern_pairs<'a>(ids: &[(&str, &'a str)]) -> Vec<(&'a Regex, &'a str)> {
+fn compile_pattern_pairs<'a>(ids: &[(&str, &'a str)]) -> Result<Vec<(&'static Regex, &'a str)>> {
     ids.iter()
-        .filter_map(|(id, desc)| PATTERNS.get(id).map(|r| (r, *desc)))
+        .map(|(id, desc)| required_pattern(id).map(|r| (r, *desc)))
         .collect()
 }
 

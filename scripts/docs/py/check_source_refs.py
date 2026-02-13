@@ -8,6 +8,11 @@ import argparse
 
 
 def main():
+    """Main entry point for checking broken source references in documentation.
+
+    # Code Smells
+    TODO(qlty): Function with high complexity (count = 37).
+    """
     parser = argparse.ArgumentParser(
         description="Check broken source references in docs."
     )
@@ -59,7 +64,9 @@ def main():
                 # Check directly or check if it's a file without extension (directories)
                 # Also try checking if it's a Rust file reference without .rs extension (common in docs)
                 if not os.path.exists(target):
+                    # TODO(qlty): Deeply nested control flow (level = 5).
                     if not os.path.exists(target + ".rs"):
+                        # TODO(qlty): Deeply nested control flow (level = 5).
                         issues.append((rel_filepath, ref))
 
     print(f"Checked source refs in {checked} docs")

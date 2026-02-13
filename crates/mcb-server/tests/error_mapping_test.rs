@@ -1,3 +1,5 @@
+//! Tests for MCP/domain error mapping helpers.
+
 use mcb_domain::error::Error;
 use mcb_server::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 
@@ -25,13 +27,13 @@ fn test_to_contextual_tool_error_not_found() {
         resource: "item".to_string(),
     };
     let result = to_contextual_tool_error(err);
-    assert!(result.is_error);
-    let content = &result.content[0];
-    if let rmcp::model::Content::Text { text } = content {
-        assert_eq!(text, "Not found: item");
-    } else {
-        panic!("Expected text content");
-    }
+    assert!(result.is_error.unwrap_or(false));
+    let content_json = serde_json::to_value(&result.content[0]).expect("serialize content");
+    let text = content_json
+        .get("text")
+        .and_then(|value| value.as_str())
+        .expect("text content");
+    assert_eq!(text, "Not found: item");
 }
 
 #[test]
@@ -41,11 +43,11 @@ fn test_to_contextual_tool_error_database() {
         source: None,
     };
     let result = to_contextual_tool_error(err);
-    assert!(result.is_error);
-    let content = &result.content[0];
-    if let rmcp::model::Content::Text { text } = content {
-        assert_eq!(text, "Database error: db fail");
-    } else {
-        panic!("Expected text content");
-    }
+    assert!(result.is_error.unwrap_or(false));
+    let content_json = serde_json::to_value(&result.content[0]).expect("serialize content");
+    let text = content_json
+        .get("text")
+        .and_then(|value| value.as_str())
+        .expect("text content");
+    assert_eq!(text, "Database error: db fail");
 }

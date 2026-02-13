@@ -1,8 +1,7 @@
 //! Worktree and agent-worktree assignment entities.
 //!
-//! A worktree is an additional checkout of a repository branch on disk.
-//! Agent sessions can be assigned to worktrees to avoid concurrent
-//! modifications to the same working directory.
+//! This module defines the entities for managing git worktree checkouts and their
+//! association with agent sessions to prevent concurrent workspace conflicts.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -12,6 +11,9 @@ use serde::{Deserialize, Serialize};
 // ---------------------------------------------------------------------------
 
 /// A git worktree checkout associated with a repository and branch.
+///
+/// # Code Smells
+/// TODO(qlty): Found 18 lines of similar code with `crates/mcb-domain/src/entities/user.rs`.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Worktree {
     /// Unique identifier (UUID).

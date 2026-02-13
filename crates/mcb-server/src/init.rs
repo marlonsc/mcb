@@ -130,6 +130,8 @@ async fn run_server_mode(
 
     // Register services from AppContext
     for service in &app_context.lifecycle_services {
+        // TODO(PERF001): Performance violation - clone in loop.
+        // Consider borrowing or moving instead of cloning to avoid unnecessary allocations.
         service_manager.register(service.clone());
     }
 

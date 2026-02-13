@@ -129,3 +129,49 @@ where
 
     Ok(())
 }
+
+/// Extracts a code block defined by balanced braces `{}` starting search from `start_line_idx`.
+/// Returns the lines inclusive of the start and end lines, and the index of the last line.
+///
+/// This is a generic helper to reduce complexity in validators that need to analyze
+/// function bodies, trait definitions, or other block structures.
+pub fn extract_balanced_block<'a>(
+    lines: &'a [&'a str],
+    start_line_idx: usize,
+) -> Option<(Vec<&'a str>, usize)> {
+    let mut brace_balance = 0;
+    let mut found_start = false;
+
+    // Safety check: don't scan if start is out of bounds
+    if start_line_idx >= lines.len() {
+        return None;
+    }
+
+    for (offset, line) in lines[start_line_idx..].iter().enumerate() {
+        let current_idx = start_line_idx + offset;
+
+        let open_count = line.chars().filter(|c| *c == '{').count() as i32;
+        let close_count = line.chars().filter(|c| *c == '}').count() as i32;
+
+        if open_count > 0 {
+            found_start = true;
+        }
+
+        if found_start {
+            brace_balance += open_count;
+            brace_balance -= close_count;
+
+            if brace_balance <= 0 {
+                // Ensure we return a vector of references to strings
+                let block_lines = lines[start_line_idx..=current_idx].to_vec();
+                return Some((block_lines, current_idx));
+            }
+        } else if offset > 20 {
+            // Heuristic: if we don't find an opening brace within 20 lines, it's likely not a block definition
+            // (e.g. huge function signature or comments)
+            return None;
+        }
+    }
+
+    None
+}

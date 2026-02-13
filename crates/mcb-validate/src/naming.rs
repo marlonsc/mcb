@@ -331,9 +331,9 @@ impl NamingValidator {
     pub fn validate_type_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
-        let struct_pattern = Regex::new(r"(?:pub\s+)?struct\s+([A-Za-z_][A-Za-z0-9_]*)").unwrap();
-        let enum_pattern = Regex::new(r"(?:pub\s+)?enum\s+([A-Za-z_][A-Za-z0-9_]*)").unwrap();
-        let trait_pattern = Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z_][A-Za-z0-9_]*)").unwrap();
+        let struct_pattern = Regex::new(r"(?:pub\s+)?struct\s+([A-Za-z_][A-Za-z0-9_]*)")?;
+        let enum_pattern = Regex::new(r"(?:pub\s+)?enum\s+([A-Za-z_][A-Za-z0-9_]*)")?;
+        let trait_pattern = Regex::new(r"(?:pub\s+)?trait\s+([A-Za-z_][A-Za-z0-9_]*)")?;
 
         self.for_each_crate_src_rs_path(|path| {
             let content = std::fs::read_to_string(path)?;
@@ -398,7 +398,7 @@ impl NamingValidator {
         let mut violations = Vec::new();
 
         let fn_pattern =
-            Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+([A-Za-z_][A-Za-z0-9_]*)\s*[<(]").unwrap();
+            Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+([A-Za-z_][A-Za-z0-9_]*)\s*[<(]")?;
 
         self.for_each_crate_src_rs_path(|path| {
             let content = std::fs::read_to_string(path)?;
@@ -433,9 +433,8 @@ impl NamingValidator {
     pub fn validate_constant_names(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
 
-        let const_pattern = Regex::new(r"(?:pub\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*:").unwrap();
-        let static_pattern =
-            Regex::new(r"(?:pub\s+)?static\s+([A-Za-z_][A-Za-z0-9_]*)\s*:").unwrap();
+        let const_pattern = Regex::new(r"(?:pub\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*:")?;
+        let static_pattern = Regex::new(r"(?:pub\s+)?static\s+([A-Za-z_][A-Za-z0-9_]*)\s*:")?;
 
         self.for_each_crate_src_rs_path(|path| {
             let content = std::fs::read_to_string(path)?;

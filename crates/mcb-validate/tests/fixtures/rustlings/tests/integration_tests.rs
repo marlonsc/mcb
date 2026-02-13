@@ -98,6 +98,8 @@ impl<'a> Cmd<'a> {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'run_compilation_success'. Use 'test_run_compilation_success'.
+// TODO(TEST004): Test without assertion in function body. Ensure Cmd::success() performs assertions.
 fn run_compilation_success() {
     Cmd::default()
         .current_dir("tests/test_exercises")
@@ -106,6 +108,8 @@ fn run_compilation_success() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'run_compilation_failure'. Use 'test_run_compilation_failure'.
+// TODO(TEST004): Test without assertion in function body.
 fn run_compilation_failure() {
     Cmd::default()
         .current_dir("tests/test_exercises")
@@ -114,6 +118,8 @@ fn run_compilation_failure() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'run_test_success'. Use 'test_run_test_success'.
+// TODO(TEST004): Test without assertion in function body.
 fn run_test_success() {
     Cmd::default()
         .current_dir("tests/test_exercises")
@@ -123,6 +129,8 @@ fn run_test_success() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'run_test_failure'. Use 'test_run_test_failure'.
+// TODO(TEST004): Test without assertion in function body.
 fn run_test_failure() {
     Cmd::default()
         .current_dir("tests/test_exercises")
@@ -131,6 +139,8 @@ fn run_test_failure() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'run_exercise_not_in_info'. Use 'test_run_exercise_not_in_info'.
+// TODO(TEST004): Test without assertion in function body.
 fn run_exercise_not_in_info() {
     Cmd::default()
         .current_dir("tests/test_exercises")
@@ -139,11 +149,15 @@ fn run_exercise_not_in_info() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'reset_without_exercise_name'. Use 'test_reset_without_exercise_name'.
+// TODO(TEST004): Test without assertion in function body.
 fn reset_without_exercise_name() {
     Cmd::default().args(&["reset"]).fail();
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'hint'. Use 'test_hint'.
+// TODO(TEST004): Test without assertion in function body.
 fn hint() {
     Cmd::default()
         .current_dir("tests/test_exercises")
@@ -153,6 +167,8 @@ fn hint() {
 }
 
 #[test]
+// TODO(TEST003): Bad test function name 'init'. Use 'test_init'.
+// TODO(TEST004): Test without assertion in function body.
 fn init() {
     let test_dir = tempfile::TempDir::new().unwrap();
     let test_dir = test_dir.path().to_str().unwrap();

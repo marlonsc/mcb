@@ -4,7 +4,7 @@ use super::ForeignKeyDef;
 use crate::constants::keys;
 use crate::schema::memory::{IndexDef, TableDef};
 
-/// Returns the table definitions.
+/// Returns the table definitions (agent_sessions, delegations, tool_calls, checkpoints).
 pub fn tables() -> Vec<TableDef> {
     vec![
         table!(
@@ -72,7 +72,7 @@ pub fn tables() -> Vec<TableDef> {
     ]
 }
 
-/// Returns the index definitions.
+/// Returns the index definitions for agent-related tables.
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!(
@@ -113,7 +113,8 @@ pub fn indexes() -> Vec<IndexDef> {
     ]
 }
 
-/// Returns the foreign key definitions.
+/// Returns the foreign key definitions ensuring referential integrity.
+// TODO(qlty): Found 46 lines of similar code in 2 locations (mass = 166)
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     vec![
         ForeignKeyDef {

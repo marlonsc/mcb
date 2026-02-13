@@ -144,7 +144,7 @@ impl MemorySchema {
     }
 }
 
-/// Returns table definitions for the memory module.
+/// Returns the table definitions (observations, session_summaries) for the memory module.
 pub fn tables() -> Vec<TableDef> {
     vec![
         TableDef {
@@ -218,6 +218,7 @@ pub fn tables() -> Vec<TableDef> {
         },
         TableDef {
             name: "session_summaries".to_string(),
+            // TODO(qlty): Found 66 lines of similar code in 2 locations (mass = 145)
             columns: vec![
                 ColumnDef {
                     name: "id".to_string(),
@@ -304,6 +305,8 @@ pub fn indexes() -> Vec<IndexDef> {
         IndexDef {
             name: "idx_obs_type".to_string(),
             table: "observations".to_string(),
+            // TODO(ORG002): Duplicate string literal "observation_type".
+            // Consider using COL_OBSERVATION_TYPE instead.
             columns: vec!["observation_type".to_string()],
         },
         IndexDef {

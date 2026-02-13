@@ -1,7 +1,8 @@
 //! Workflow FSM entities for session state management and transitions.
 //!
-//! Implements the workflow finite state machine defined in ADR-034.
-//! Supports 8 states with typed state data and 11 transition triggers.
+//! This module implements the finite state machine (FSM) for workflow orchestration.
+//! It defines the various states, transition triggers, and audit records required
+//! to manage the lifecycle of an agent-led workflow session.
 
 use std::fmt;
 
@@ -183,7 +184,10 @@ pub struct Transition {
 }
 
 impl Transition {
-    /// Creates a new transition record.
+    /// Creates a new transition audit record.
+    ///
+    /// # Parameters
+    /// TODO(qlty): Function with many parameters (count = 6).
     pub fn new(
         id: String,
         session_id: String,

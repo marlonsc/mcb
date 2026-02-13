@@ -7,12 +7,12 @@
 
 use std::path::PathBuf;
 
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 
+use crate::pattern_registry::{compile_regex, compile_regex_pairs};
 use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig, ValidationError};
+use crate::{Result, Severity, ValidationConfig};
 
 /// Error boundary violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -208,10 +208,8 @@ impl ErrorBoundaryValidator {
 
         // Pattern: ? operator without .context() or .with_context()
         // This is a heuristic - we look for lines with ? but no context method
-        let question_mark_pattern = Regex::new(r"\?\s*;?\s*$")
-            .map_err(|e| ValidationError::InvalidRegex(format!("question mark pattern: {e}")))?;
-        let context_pattern = Regex::new(r"\.(context|with_context|map_err|ok_or_else)\s*\(")
-            .map_err(|e| ValidationError::InvalidRegex(format!("context pattern: {e}")))?;
+        let question_mark_pattern = compile_regex(r"\?\s*;?\s*$")?;
+        let context_pattern = compile_regex(r"\.(context|with_context|map_err|ok_or_else)\s*\(")?;
 
         // Files that are likely error boundary crossing points
         let boundary_paths = ["handlers/", "adapters/", "services/"];
@@ -289,10 +287,7 @@ impl ErrorBoundaryValidator {
             (r"serde_json::Error", "serde_json::Error"),
         ];
 
-        let compiled_errors: Vec<_> = infra_errors
-            .iter()
-            .filter_map(|(p, desc)| Regex::new(p).ok().map(|r| (r, *desc)))
-            .collect();
+        let compiled_errors = compile_regex_pairs(&infra_errors)?;
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
             let path_str = path.to_string_lossy();
@@ -375,10 +370,7 @@ impl ErrorBoundaryValidator {
             ),
         ];
 
-        let compiled_leaks: Vec<_> = leak_patterns
-            .iter()
-            .filter_map(|(p, desc)| Regex::new(p).ok().map(|r| (r, *desc)))
-            .collect();
+        let compiled_leaks = compile_regex_pairs(&leak_patterns)?;
 
         // Only check handler files (API boundary)
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {

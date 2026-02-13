@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
 SARIF Quality Analysis Tool - Parses qlty check SARIF output and provides statistics.
+
+# Code Smells
+TODO(qlty): High total complexity (count = 108). Consider refactoring this script
+into multiple modules (e.g., parsing, analysis, reporting).
 """
 
 import argparse

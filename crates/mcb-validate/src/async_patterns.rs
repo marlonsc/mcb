@@ -8,10 +8,9 @@
 
 use std::path::PathBuf;
 
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use crate::pattern_registry::PATTERNS;
+use crate::pattern_registry::{compile_regex_triples, compile_regexes, required_pattern};
 use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
@@ -235,9 +234,7 @@ impl AsyncPatternValidator {
     pub fn validate_blocking_in_async(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
-        let async_fn_pattern = PATTERNS.get("ASYNC001.async_fn_named").ok_or_else(|| {
-            crate::ValidationError::PatternNotFound("ASYNC001.async_fn_named".into())
-        })?;
+        let async_fn_pattern = required_pattern("ASYNC001.async_fn_named")?;
 
         let blocking_patterns = [
             (
@@ -287,10 +284,7 @@ impl AsyncPatternValidator {
             ),
         ];
 
-        let compiled_blocking: Vec<_> = blocking_patterns
-            .iter()
-            .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
-            .collect();
+        let compiled_blocking = compile_regex_triples(&blocking_patterns)?;
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
             if path.to_string_lossy().contains("/tests/") {
@@ -361,9 +355,7 @@ impl AsyncPatternValidator {
     pub fn validate_block_on_usage(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
-        let async_fn_pattern = PATTERNS
-            .get("ASYNC001.async_fn")
-            .ok_or_else(|| crate::ValidationError::PatternNotFound("ASYNC001.async_fn".into()))?;
+        let async_fn_pattern = required_pattern("ASYNC001.async_fn")?;
         let block_on_patterns = [
             r"block_on\(",
             r"futures::executor::block_on",
@@ -371,10 +363,7 @@ impl AsyncPatternValidator {
             r"Runtime::new\(\).*\.block_on",
         ];
 
-        let compiled_block_on: Vec<_> = block_on_patterns
-            .iter()
-            .filter_map(|p| Regex::new(p).ok())
-            .collect();
+        let compiled_block_on = compile_regexes(block_on_patterns)?;
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
             if path.to_string_lossy().contains("/tests/") {
@@ -444,9 +433,7 @@ impl AsyncPatternValidator {
     pub fn validate_mutex_types(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 
-        let async_indicator = PATTERNS.get("ASYNC001.async_indicator").ok_or_else(|| {
-            crate::ValidationError::PatternNotFound("ASYNC001.async_indicator".into())
-        })?;
+        let async_indicator = required_pattern("ASYNC001.async_indicator")?;
         let std_mutex_patterns = [
             (
                 r"use\s+std::sync::Mutex",
@@ -470,10 +457,7 @@ impl AsyncPatternValidator {
             ),
         ];
 
-        let compiled_mutex: Vec<_> = std_mutex_patterns
-            .iter()
-            .filter_map(|(p, desc, sugg)| Regex::new(p).ok().map(|r| (r, *desc, *sugg)))
-            .collect();
+        let compiled_mutex = compile_regex_triples(&std_mutex_patterns)?;
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
             if path.to_string_lossy().contains("/tests/") {
@@ -532,15 +516,9 @@ impl AsyncPatternValidator {
         let mut violations = Vec::new();
 
         // Pattern: tokio::spawn without assigning to variable or awaiting
-        let spawn_pattern = PATTERNS.get("ASYNC001.tokio_spawn").ok_or_else(|| {
-            crate::ValidationError::PatternNotFound("ASYNC001.tokio_spawn".into())
-        })?;
-        let assigned_spawn_pattern = PATTERNS.get("ASYNC001.assigned_spawn").ok_or_else(|| {
-            crate::ValidationError::PatternNotFound("ASYNC001.assigned_spawn".into())
-        })?;
-        let fn_pattern = PATTERNS
-            .get("ASYNC001.fn_decl")
-            .ok_or_else(|| crate::ValidationError::PatternNotFound("ASYNC001.fn_decl".into()))?;
+        let spawn_pattern = required_pattern("ASYNC001.tokio_spawn")?;
+        let assigned_spawn_pattern = required_pattern("ASYNC001.assigned_spawn")?;
+        let fn_pattern = required_pattern("ASYNC001.fn_decl")?;
 
         // Function name patterns that indicate intentional fire-and-forget spawns
         // Includes constructor patterns that often spawn background workers

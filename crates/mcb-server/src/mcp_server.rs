@@ -1,6 +1,10 @@
 //!
 //! Core MCP protocol server that orchestrates semantic code search operations.
 //! Follows Clean Architecture principles with dependency injection.
+//!
+//! # Code Smells
+//! TODO(QUAL004): File too large (576 lines, max: 500).
+//! TODO(mcb-validate): SRP: Impl McpServer has too many methods (31 methods).
 
 use std::path::Path;
 use std::sync::Arc;
@@ -37,9 +41,12 @@ fn meta_value_as_string(meta: &Meta, keys: &[&str]) -> Option<String> {
     for key in keys {
         let value = meta.get(*key)?;
         let extracted = match value {
+            // TODO(PERF001): Performance violation - clone in loop.
+            // This string clone occurs inside a key-iteration loop. Consider using references if possible.
             Value::String(v) => Some(v.clone()),
             Value::Number(v) => Some(v.to_string()),
             Value::Bool(v) => Some(v.to_string()),
+            // TODO(mcb-validate): Empty catch-all: match arm '_ => {}' silently ignores cases.
             _ => None,
         };
         if extracted.is_some() {
@@ -67,8 +74,10 @@ fn meta_value_as_bool(meta: &Meta, keys: &[&str]) -> Option<bool> {
             Value::String(v) => match v.trim().to_ascii_lowercase().as_str() {
                 "true" | "1" | "yes" => Some(true),
                 "false" | "0" | "no" => Some(false),
+                // TODO(mcb-validate): Empty catch-all.
                 _ => None,
             },
+            // TODO(mcb-validate): Empty catch-all.
             _ => None,
         };
         if extracted.is_some() {
@@ -102,6 +111,9 @@ pub struct McpServer {
 }
 
 /// Domain services container (keeps struct field count manageable)
+///
+/// # Code Smells
+/// TODO(qlty): Found 28 lines of similar code in `mcb-infrastructure/src/di/modules/domain_services.rs`.
 #[derive(Clone)]
 pub struct McpServices {
     /// Indexing service
@@ -133,6 +145,10 @@ pub struct McpServices {
 }
 
 impl McpServer {
+    /// Builds the execution context for a tool call.
+    ///
+    /// # Code Smells
+    /// TODO(mcb-validate): Function build_execution_context is too long (125 lines).
     async fn build_execution_context(
         &self,
         request: &CallToolRequestParams,
@@ -508,6 +524,7 @@ tools:
 }
 
 #[cfg(test)]
+// TODO(mcb-validate): Inline test module. Move to tests/ directory.
 mod tests {
     use super::resolve_context_value;
     use crate::tools::ToolExecutionContext;

@@ -68,6 +68,7 @@ impl std::fmt::Debug for MemoryFilter {
         f.debug_struct("MemoryFilter")
             .field("id", &self.id)
             .field("tags", &self.tags)
+            // TODO(ORG002): Duplicate string literal "observation_type".
             .field("observation_type", &self.r#type)
             .field(
                 "session_id_present",

@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use super::violation::CleanArchitectureViolation;
 use crate::config::CleanArchitectureRulesConfig;
-use crate::pattern_registry::PATTERNS;
+use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_rs_under_root;
 use crate::violation_trait::Violation;
 use crate::{Result, Severity, ValidationConfig};
@@ -98,9 +98,8 @@ impl CleanArchitectureValidator {
 
         // Dynamically construct regex based on provider crate name
         let pattern = format!(r"use\s+{}(?:::|;)", self.naming.providers_crate);
-        let provider_import_re = Regex::new(&pattern).map_err(|e| {
-            crate::ValidationError::InvalidRegex(format!("CA001.provider_import: {e}"))
-        })?;
+        let provider_import_re =
+            Regex::new(&pattern).map_err(crate::ValidationError::InvalidRegex)?;
         let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
         for_each_rs_under_root(&scan_config, &server_crate.join("src"), |path| {
@@ -134,8 +133,8 @@ impl CleanArchitectureValidator {
 
         // Patterns for direct service creation
         let constructor_pattern = r"(\w+)(?:Service|Provider|Repository)(?:Impl)?::new\s*\(";
-        let creation_re = Regex::new(constructor_pattern)
-            .map_err(|e| crate::ValidationError::InvalidRegex(format!("Service Creation: {e}")))?;
+        let creation_re =
+            Regex::new(constructor_pattern).map_err(crate::ValidationError::InvalidRegex)?;
         let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
         let handlers_dir = self.workspace_root.join(&self.rules.handlers_path);
@@ -191,14 +190,8 @@ impl CleanArchitectureValidator {
         }
 
         // Look for struct definitions that should have id fields
-        let struct_re = PATTERNS
-            .get("CA001.pub_struct_brace")
-            // TODO(QUAL002): expect() in production. Use ? or handle error.
-            .expect("Pattern CA001.pub_struct_brace not found");
-        let id_field_re = PATTERNS
-            .get("CA001.id_field")
-            // TODO(QUAL002): expect() in production. Use ? or handle error.
-            .expect("Pattern CA001.id_field not found");
+        let struct_re = required_pattern("CA001.pub_struct_brace")?;
+        let id_field_re = required_pattern("CA001.id_field")?;
         let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
         for_each_rs_under_root(&scan_config, &entities_dir, |path| {
@@ -281,14 +274,8 @@ impl CleanArchitectureValidator {
         }
 
         // Look for &mut self methods in value objects
-        let impl_re = PATTERNS
-            .get("CA001.impl_block")
-            // TODO(QUAL002): expect() in production. Use ? or handle error.
-            .expect("Pattern CA001.impl_block not found");
-        let mut_method_re = PATTERNS
-            .get("CA001.mut_self_method")
-            // TODO(QUAL002): expect() in production. Use ? or handle error.
-            .expect("Pattern CA001.mut_self_method not found");
+        let impl_re = required_pattern("CA001.impl_block")?;
+        let mut_method_re = required_pattern("CA001.mut_self_method")?;
         let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
         for_each_rs_under_root(&scan_config, &vo_dir, |path| {
@@ -306,8 +293,7 @@ impl CleanArchitectureValidator {
             for (line_num, line) in lines.iter().enumerate() {
                 // Track impl blocks
                 if let Some(captures) = impl_re.captures(line) {
-                    // TODO(QUAL001): unwrap() in production. Use ? or match.
-                    current_impl = Some(captures.get(1).map(|m| m.as_str().to_string()).unwrap());
+                    current_impl = captures.get(1).map(|m| m.as_str().to_string());
                 }
 
                 // Track brace depth for impl scope
@@ -369,16 +355,14 @@ impl CleanArchitectureValidator {
         // Patterns for concrete types that should NOT be imported
         let concrete_type_pattern =
             format!(r"use\s+{}::(\w+)::(\w+Impl)", self.naming.application_crate);
-        let concrete_type_re = Regex::new(&concrete_type_pattern).map_err(|e| {
-            crate::ValidationError::InvalidRegex(format!("CA002.app_impl_import: {e}"))
-        })?;
+        let concrete_type_re =
+            Regex::new(&concrete_type_pattern).map_err(crate::ValidationError::InvalidRegex)?;
 
         // Also catch any concrete service imports
         let concrete_service_pattern =
             format!(r"use\s+{}::services::(\w+)", self.naming.application_crate);
-        let concrete_service_re = Regex::new(&concrete_service_pattern).map_err(|e| {
-            crate::ValidationError::InvalidRegex(format!("CA002.app_service_import: {e}"))
-        })?;
+        let concrete_service_re =
+            Regex::new(&concrete_service_pattern).map_err(crate::ValidationError::InvalidRegex)?;
         let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
         for_each_rs_under_root(&scan_config, &infra_crate.join("src"), |path| {
@@ -454,16 +438,12 @@ impl CleanArchitectureValidator {
         }
 
         // Patterns to detect local trait definitions (violations)
-        let local_trait_re = PATTERNS
-            .get("CA002.port_trait_decl")
-            // TODO(QUAL002): expect() in production. Use ? or handle error.
-            .expect("Pattern CA002.port_trait_decl not found");
+        let local_trait_re = required_pattern("CA002.port_trait_decl")?;
 
         // Pattern for allowed re-exports from mcb-domain
         let reexport_pattern = format!(r"pub\s+use\s+{}::(.*)", self.naming.domain_crate);
-        let reexport_re = Regex::new(&reexport_pattern).map_err(|e| {
-            crate::ValidationError::InvalidRegex(format!("CA002.domain_reexport: {e}"))
-        })?;
+        let reexport_re =
+            Regex::new(&reexport_pattern).map_err(crate::ValidationError::InvalidRegex)?;
         let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
         for_each_rs_under_root(&scan_config, &app_crate, |path| {
@@ -524,14 +504,13 @@ impl CleanArchitectureValidator {
 
         // Pattern for any import from mcb_application
         let app_import_pattern = format!(r"use\s+{}(?:::|;)", self.naming.application_crate);
-        let app_import_re = Regex::new(&app_import_pattern)
-            .map_err(|e| crate::ValidationError::InvalidRegex(format!("CA009.app_import: {e}")))?;
+        let app_import_re =
+            Regex::new(&app_import_pattern).map_err(crate::ValidationError::InvalidRegex)?;
 
         // Extract specific import path
         let import_path_pattern = format!(r"use\s+({}::\S+)", self.naming.application_crate);
-        let import_path_re = Regex::new(&import_path_pattern).map_err(|e| {
-            crate::ValidationError::InvalidRegex(format!("CA009.app_import_path: {e}"))
-        })?;
+        let import_path_re =
+            Regex::new(&import_path_pattern).map_err(crate::ValidationError::InvalidRegex)?;
         let scan_config = ValidationConfig::new(self.workspace_root.clone());
 
         for_each_rs_under_root(&scan_config, &infra_crate.join("src"), |path| {

@@ -658,6 +658,7 @@ impl Violation for OrganizationViolation {
             Self::DeclarationCollision { .. } => {
                 Some("Consolidate declarations or use different names".to_string())
             }
+            // TODO(NAME001): Bad type name: to (expected CamelCase) - False positive in string literal
             Self::TraitOutsidePorts { .. } => Some("Move trait to domain/ports".to_string()),
             Self::AdapterOutsideInfrastructure { .. } => {
                 Some("Move adapter to infrastructure/adapters".to_string())
@@ -680,6 +681,7 @@ impl Violation for OrganizationViolation {
             Self::HandlerOutsideHandlers { .. } => {
                 Some("Move handler to server/handlers".to_string())
             }
+            // TODO(NAME001): Bad type name: to (expected CamelCase) - False positive in string literal
             Self::PortOutsidePorts { .. } => Some("Move port trait to domain/ports".to_string()),
         }
     }

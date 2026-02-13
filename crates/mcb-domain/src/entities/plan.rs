@@ -1,8 +1,8 @@
 //! Plan Domain Entities
 //!
-//! # Overview
-//! This module defines the entities used for high-level planning and architectural decision making.
-//! It supports versioning and review workflows.
+//! This module defines the entities used for high-level planning and architectural
+//! decision making. It supports versioning and review workflows to manage the
+//! lifecycle of strategic initiatives.
 //!
 //! # Core Entities
 //! - [`Plan`]: The high-level container for a strategic initiative.
@@ -13,6 +13,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// A plan definition owned by an organization and project.
+///
+/// # Code Smells
+/// TODO(qlty): Found 20 lines of similar code with `crates/mcb-domain/src/entities/repository.rs`.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Plan {
     /// Unique identifier (UUID).
