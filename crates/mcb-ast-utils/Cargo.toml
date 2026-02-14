@@ -37,4 +37,7 @@ derive_more.workspace = true
 tempfile.workspace = true
 rstest = { workspace = true }
 mockall = { workspace = true }
-insta = { workspace = true }
+
+[[test]]
+name = "unit"
+path = "tests/unit/mod.rs"

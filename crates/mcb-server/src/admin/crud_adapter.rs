@@ -370,8 +370,14 @@ impl EntityCrudAdapter for UnifiedEntityCrudAdapter {
         }
 
         let mut args = base_entity_args(self.resource, EntityAction::Delete);
+        // Repository delete requires project_id — fetch the record first to obtain it.
         if matches!(self.resource, EntityResource::Repository) {
-            return Err("project_id is required for repository delete".to_string());
+            let existing = self.get_by_id(id).await?;
+            let project_id = existing
+                .get("project_id")
+                .and_then(Value::as_str)
+                .ok_or_else(|| "repository record missing project_id".to_string())?;
+            args.project_id = Some(project_id.to_string());
         }
         args.id = Some(id.to_string());
         let _ = self.execute(args).await?;
@@ -393,11 +399,20 @@ pub fn resolve_adapter(slug: &str, state: &AdminState) -> Option<Box<dyn EntityC
 
 fn json_sort_key(v: &Value) -> String {
     match v {
-        Value::String(s) => s.to_lowercase(),
-        Value::Number(n) => format!("{:020}", n.as_f64().unwrap_or(0.0)),
-        Value::Bool(b) => format!("{b}"),
+        Value::String(s) => format!("s{}", s.to_lowercase()),
+        Value::Number(n) => {
+            if let Some(i) = n.as_i64() {
+                // Shift by i64::MIN so negative values sort correctly with zero-padding.
+                format!("n{:020}", (i as u64).wrapping_add(i64::MIN as u64))
+            } else if let Some(u) = n.as_u64() {
+                format!("n{:020}", u.wrapping_add(i64::MIN as u64))
+            } else {
+                format!("n{:+021.6e}", n.as_f64().unwrap_or(0.0))
+            }
+        }
+        Value::Bool(b) => format!("b{b}"),
         Value::Null => String::new(),
-        other => other.to_string(),
+        other => format!("x{other}"),
     }
 }
 
@@ -443,21 +458,21 @@ fn apply_filter_pipeline(
     if epoch_from.is_some() || epoch_to.is_some() {
         records.retain(|rec| {
             if let Value::Object(map) = rec {
-                map.iter()
+                let mut has_any_ts = false;
+                let in_range = map
+                    .iter()
                     .filter(|(k, _)| k.ends_with("_at"))
-                    .any(|(_, v)| {
-                        let ts = match v {
-                            Value::Number(n) => n.as_i64(),
-                            _ => None,
-                        };
-                        if let Some(ts) = ts {
-                            let after = epoch_from.is_none_or(|from| ts >= from);
-                            let before = epoch_to.is_none_or(|to| ts <= to);
-                            after && before
-                        } else {
-                            true
-                        }
+                    .filter_map(|(_, v)| match v {
+                        Value::Number(n) => n.as_i64(),
+                        _ => None,
                     })
+                    .any(|ts| {
+                        has_any_ts = true;
+                        let after = epoch_from.is_none_or(|from| ts >= from);
+                        let before = epoch_to.is_none_or(|to| ts <= to);
+                        after && before
+                    });
+                in_range || !has_any_ts
             } else {
                 true
             }

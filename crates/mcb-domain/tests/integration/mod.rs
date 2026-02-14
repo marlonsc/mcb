@@ -2,6 +2,8 @@
 //!
 //! Run with: `cargo test -p mcb-domain --test integration`
 
-mod entity_value_object;
+#[path = "entity_value_object_integration.rs"]
+mod entity_value_object_integration;
 mod file_tree_node_integration;
-mod semantic_search;
+#[path = "semantic_search_workflow.rs"]
+mod semantic_search_workflow;

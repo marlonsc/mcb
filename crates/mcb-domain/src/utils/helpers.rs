@@ -24,12 +24,12 @@ pub fn mask_id(id: &str) -> String {
 
 /// Compute deterministic id hash for safe correlation.
 ///
-/// Uses HMAC-SHA256 with `MCB_ID_HASH_SECRET` when configured.
-/// Falls back to SHA-256 over `kind:raw_id` when secret is missing.
-pub fn compute_stable_id_hash(kind: &str, raw_id: &str) -> String {
+/// Uses HMAC-SHA256 when `secret` is provided and non-empty.
+/// Falls back to SHA-256 over `kind:raw_id` when secret is `None` or empty.
+pub fn compute_stable_id_hash(kind: &str, raw_id: &str, secret: Option<&str>) -> String {
     let data = format!("{kind}:{raw_id}");
 
-    if let Ok(secret) = std::env::var("MCB_ID_HASH_SECRET")
+    if let Some(secret) = secret
         && !secret.is_empty()
     {
         let mut mac =

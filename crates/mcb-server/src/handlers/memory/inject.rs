@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::vcs_context::VcsContext;
+use mcb_infrastructure::project::context_resolver::capture_vcs_context;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use tracing::error;
@@ -19,7 +19,7 @@ pub async fn inject_context(
     let filter = build_memory_filter(args, None, None);
     let limit = args.limit.unwrap_or(10) as usize;
     let max_tokens = args.max_tokens.unwrap_or(2000);
-    let vcs_context = VcsContext::capture();
+    let vcs_context = capture_vcs_context();
     match memory_service
         .search_memories("", Some(filter), limit)
         .await

@@ -111,6 +111,8 @@ fn python_factory(
     Ok(Arc::new(PythonDetector::new(config)))
 }
 
+// linkme distributed_slice uses #[link_section] internally
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(PROJECT_DETECTORS)]
 static PYTHON_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "python",

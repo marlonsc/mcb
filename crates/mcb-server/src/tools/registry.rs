@@ -1,6 +1,6 @@
 //!
 //! Registry-backed tool definitions and dispatch for MCP protocol.
-
+// linkme distributed_slice uses #[link_section] internally
 #![allow(unsafe_code)]
 
 use std::borrow::Cow;

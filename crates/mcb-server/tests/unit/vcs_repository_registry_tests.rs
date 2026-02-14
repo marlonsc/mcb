@@ -1,3 +1,6 @@
+// env::set_var / env::remove_var are unsafe since Rust 1.83
+#![allow(unsafe_code)]
+
 use mcb_server::vcs_repository_registry::{lookup_repository_path, record_repository};
 use std::env;
 use std::path::PathBuf;

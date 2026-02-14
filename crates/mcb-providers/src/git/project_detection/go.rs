@@ -137,6 +137,8 @@ fn go_factory(
         })
 }
 
+// linkme distributed_slice uses #[link_section] internally
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(PROJECT_DETECTORS)]
 static GO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "go",

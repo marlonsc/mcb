@@ -2,10 +2,13 @@
 //!
 //! Run with: `cargo test -p mcb-server --test integration`
 
-// Integration test modules
+#[path = "../admin/mod.rs"]
 mod admin;
+#[path = "../handlers/mod.rs"]
 mod handlers;
+#[path = "../test_utils/mod.rs"]
 mod test_utils;
+#[path = "../tools/mod.rs"]
 mod tools;
 
 // Integration helpers - service detection and skip macros

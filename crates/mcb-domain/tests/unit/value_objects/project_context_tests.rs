@@ -18,13 +18,11 @@ fn test_parse_owner_repo(#[case] input: &str, #[case] expected: Option<&str>) {
 }
 
 #[rstest]
-#[case(2)]
-#[case(3)]
-fn resolve_returns_cached_consistent_value(#[case] calls: usize) {
-    let first = ProjectContext::resolve();
-    for _ in 1..calls {
-        let next = ProjectContext::resolve();
-        assert_eq!(first.project_id, next.project_id);
-        assert_eq!(first.project_name, next.project_name);
-    }
+fn new_constructs_project_context() {
+    let context = ProjectContext::new("marlonsc/mcb", "mcb");
+
+    assert_eq!(context.project_id, "marlonsc/mcb");
+    assert_eq!(context.project_name, "mcb");
+    assert!(!context.is_submodule);
+    assert_eq!(context.superproject_id, None);
 }

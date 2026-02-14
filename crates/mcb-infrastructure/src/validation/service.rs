@@ -264,18 +264,14 @@ fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {
 }
 
 fn extract_yaml_scalar(content: &str, key: &str) -> Option<String> {
-    let prefix = format!("{key}:");
-    content.lines().find_map(|line| {
-        let trimmed = line.trim();
-        if !trimmed.starts_with(&prefix) {
-            return None;
-        }
-        let value = trimmed[prefix.len()..].trim();
-        if value.is_empty() {
-            return None;
-        }
-        Some(value.trim_matches('"').trim_matches('\'').to_string())
-    })
+    let mapping: serde_yaml::Value = serde_yaml::from_str(content).ok()?;
+    let value = mapping.get(key)?;
+    match value {
+        serde_yaml::Value::String(s) => Some(s.clone()),
+        serde_yaml::Value::Bool(b) => Some(b.to_string()),
+        serde_yaml::Value::Number(n) => Some(n.to_string()),
+        _ => None,
+    }
 }
 
 fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<ComplexityReport> {

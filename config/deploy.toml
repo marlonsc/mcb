@@ -1,0 +1,45 @@
+# MCP Context Browser - Deployment Configuration
+# Location: ~/.config/mcb/mcb.toml
+
+# ============================================================================
+# OPERATING MODE
+# ============================================================================
+[mode]
+type = "client"
+server_url = "http://127.0.0.1:8080"
+
+# ============================================================================
+# SERVER SETTINGS (used in standalone mode and by mcb --server)
+# ============================================================================
+[server]
+transport_mode = "stdio"  # Client speaks stdio to IDE, connects via HTTP to server
+
+[server.network]
+host = "127.0.0.1"
+port = 8080
+
+# ============================================================================
+# ADMIN & AUTH
+# ============================================================================
+[admin]
+enabled = true
+
+[auth]
+enabled = false
+
+# ============================================================================
+# EMBEDDING PROVIDER - Ollama (local)
+# ============================================================================
+[providers.embedding]
+provider = "ollama"
+model = "nomic-embed-text"
+base_url = "http://localhost:11434"
+dimensions = 768
+
+# ============================================================================
+# VECTOR STORE - Milvus
+# ============================================================================
+[providers.vector_store]
+provider = "milvus"
+address = "http://localhost:29530"
+dimensions = 768

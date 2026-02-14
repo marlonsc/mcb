@@ -41,6 +41,8 @@ install: ## Install release binary + systemd service to user directories
 	@echo "Installing MCB v$(VERSION)..."
 	@$(MAKE) build RELEASE=1
 	@mkdir -p $(INSTALL_DIR) $(SYSTEMD_USER_DIR) $(CONFIG_DIR) $(DATA_DIR) || { echo "Failed to create directories"; exit 1; }
+	@echo "Installing deploy config to $(CONFIG_DIR)/mcb.toml..."
+	@cp config/deploy.toml "$(CONFIG_DIR)/mcb.toml" || { echo "Failed to install config"; exit 1; }
 	@echo "Stopping existing MCB..."
 	@-systemctl --user stop mcb.service 2>/dev/null
 	@WAIT=0; while [ $$WAIT -lt 10 ]; do \

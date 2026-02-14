@@ -1,9 +1,6 @@
 //! Infrastructure utilities
 //!
-//! Reusable helpers for timing, file I/O, and common patterns.
-//!
-mod file;
+//! Reusable helpers for timing and common patterns.
 mod timing;
 
-pub use file::FileUtils;
 pub use timing::TimedOperation;

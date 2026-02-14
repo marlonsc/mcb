@@ -23,7 +23,6 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
 
-use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::admin::IndexingOperationsInterface;
@@ -202,19 +201,6 @@ impl IndexingServiceImpl {
             .and_then(|ext| ext.to_str())
             .map(|ext| SUPPORTED_EXTENSIONS.contains(&ext.to_lowercase().as_str()))
             .unwrap_or(false)
-    }
-
-    /// Chunk file content using intelligent AST-based chunking
-    ///
-    /// Reserved for future background task integration with `IndexingProgress`.
-    /// Currently unused but retained for planned incremental indexing feature.
-    #[allow(
-        dead_code,
-        reason = "Reserved for IndexingProgress integration in background tasks"
-    )]
-    fn chunk_file_content(&self, content: &str, path: &Path) -> Vec<CodeChunk> {
-        self.language_chunker
-            .chunk(content, &path.to_string_lossy())
     }
 }
 

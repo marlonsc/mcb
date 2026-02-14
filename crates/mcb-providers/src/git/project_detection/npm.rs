@@ -98,6 +98,8 @@ fn npm_factory(
     Ok(Arc::new(NpmDetector::new(config)))
 }
 
+// linkme distributed_slice uses #[link_section] internally
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(PROJECT_DETECTORS)]
 static NPM_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "npm",

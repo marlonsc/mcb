@@ -22,11 +22,11 @@ rust-version = "1.92"
 edition = "2024"
 
 [workspace.lints.rust]
-unsafe_code = "allow"
+unsafe_code = "deny"
 missing_docs = "warn"
 non_ascii_idents = "deny"
 dead_code = "deny"
-unused_variables = "warn"
+unused_variables = "deny"
 unused_imports = "deny"
 
 [workspace.dependencies]
@@ -183,7 +183,7 @@ derive_more = { version = "2.0", features = ["full"] }
 strum = "0.27"
 strum_macros = "0.27"
 delegate = "0.13"
-typed-builder = "0.20"
+typed-builder = "0.23"
 
 # Service layer improvements
 itertools = "0.14"

@@ -1,11 +1,12 @@
 use mcb_domain::entities::memory::{ExecutionMetadata, ObservationMetadata, QualityGateResult};
 use std::sync::Arc;
 
-use mcb_domain::utils::{compute_stable_id_hash, vcs_context::VcsContext};
+use mcb_domain::utils::compute_stable_id_hash;
 use mcb_domain::{
     entities::memory::{MemoryFilter, MemorySearchResult, ObservationType},
     ports::services::MemoryServiceInterface,
 };
+use mcb_infrastructure::project::context_resolver::capture_vcs_context;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use serde_json::{Map, Value};
@@ -60,7 +61,7 @@ pub(super) fn resolve_memory_origin_context(
     data: &Map<String, Value>,
     opts: MemoryOriginOptions<'_>,
 ) -> Result<MemoryOriginResolution, McpError> {
-    let vcs_context = VcsContext::capture();
+    let vcs_context = capture_vcs_context();
     let canonical_session_id = args
         .session_id
         .clone()
