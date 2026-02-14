@@ -56,8 +56,9 @@ async fn test_memory_repository_store_and_get_observation(
     let project_id = "test-project";
     create_test_project(executor.as_ref(), project_id).await;
 
+    let obs_id = ObservationId::from_name("test-obs-1");
     let obs = Observation {
-        id: "id1".to_string(),
+        id: obs_id.to_string(),
         project_id: project_id.to_string(),
         content: "content".to_string(),
         content_hash: "hash1".to_string(),
@@ -68,14 +69,9 @@ async fn test_memory_repository_store_and_get_observation(
         embedding_id: None,
     };
 
-    // Store
     repo.store_observation(&obs).await.unwrap();
 
-    // Get
-    let got = repo
-        .get_observation(&ObservationId::from("id1"))
-        .await
-        .unwrap();
+    let got = repo.get_observation(&obs_id).await.unwrap();
 
     assert!(got.is_some());
     assert_eq!(got.unwrap().content, "content");
