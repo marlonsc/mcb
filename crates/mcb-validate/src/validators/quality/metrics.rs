@@ -1,50 +1,59 @@
 use super::{QualityValidator, QualityViolation};
-use crate::scan::for_each_scan_rs_path;
+use crate::filters::LanguageId;
+use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
 
 /// Checks that source files do not exceed the configured line count limit.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
     let mut violations = Vec::new();
 
-    for_each_scan_rs_path(&validator.config, false, |path, _src_dir| {
-        let path_str = path.to_str();
-        if path.extension().is_none_or(|ext| ext != "rs")
-            || validator.config.should_exclude(path)
-            || path_str.is_some_and(|s| s.contains("/tests/"))
-            || path_str.is_some_and(|s| s.contains("/target/"))
-            || path_str.is_some_and(|s| s.ends_with("_test.rs"))
-            || !path.exists()
-        {
-            return Ok(());
-        }
+    for_each_scan_file(
+        &validator.config,
+        Some(LanguageId::Rust),
+        false,
+        |entry, _src_dir| {
+            let path_str = entry.absolute_path.to_str();
+            if entry
+                .absolute_path
+                .extension()
+                .is_none_or(|ext| ext != "rs")
+                || validator.config.should_exclude(&entry.absolute_path)
+                || path_str.is_some_and(|s| s.contains("/tests/"))
+                || path_str.is_some_and(|s| s.contains("/target/"))
+                || path_str.is_some_and(|s| s.ends_with("_test.rs"))
+                || !entry.absolute_path.exists()
+            {
+                return Ok(());
+            }
 
-        let Some(path_str) = path_str else {
-            return Ok(());
-        };
+            let Some(path_str) = path_str else {
+                return Ok(());
+            };
 
-        // Skip paths excluded in configuration (e.g., large vector store implementations)
-        if validator
-            .excluded_paths
-            .iter()
-            .any(|excluded| path_str.contains(excluded.as_str()))
-        {
-            return Ok(());
-        }
+            // Skip paths excluded in configuration (e.g., large vector store implementations)
+            if validator
+                .excluded_paths
+                .iter()
+                .any(|excluded| path_str.contains(excluded.as_str()))
+            {
+                return Ok(());
+            }
 
-        let content = std::fs::read_to_string(path)?;
-        let line_count = content.lines().count();
+            let content = std::fs::read_to_string(&entry.absolute_path)?;
+            let line_count = content.lines().count();
 
-        if line_count > validator.max_file_lines {
-            violations.push(QualityViolation::FileTooLarge {
-                file: path.to_path_buf(),
-                lines: line_count,
-                max_allowed: validator.max_file_lines,
-                severity: Severity::Warning,
-            });
-        }
+            if line_count > validator.max_file_lines {
+                violations.push(QualityViolation::FileTooLarge {
+                    file: entry.absolute_path.to_path_buf(),
+                    lines: line_count,
+                    max_allowed: validator.max_file_lines,
+                    severity: Severity::Warning,
+                });
+            }
 
-        Ok(())
-    })?;
+            Ok(())
+        },
+    )?;
 
     Ok(violations)
 }

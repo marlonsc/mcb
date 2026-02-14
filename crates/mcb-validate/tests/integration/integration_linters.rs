@@ -518,6 +518,7 @@ fn create_test_rule(
         selectors: Vec::new(),
         ast_query: None,
         metrics: None,
+        filters: None,
     }
 }
 

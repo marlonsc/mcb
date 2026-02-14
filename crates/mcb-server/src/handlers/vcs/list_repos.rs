@@ -19,7 +19,14 @@ pub async fn list_repositories(
         .repo_path
         .as_ref()
         .map(PathBuf::from)
-        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+        .or_else(|| std::env::current_dir().ok())
+        .ok_or_else(|| {
+            tracing::error!("no repo_path provided and current_dir() failed");
+            McpError::invalid_params(
+                "repo_path is required when working directory cannot be determined",
+                None,
+            )
+        })?;
 
     let discovered_repos = vcs_provider.list_repositories(&root).await.map_err(|e| {
         tracing::error!(error = %e, "failed to list repositories");

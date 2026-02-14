@@ -1,5 +1,6 @@
 use super::violation::OrganizationViolation;
-use crate::scan::{for_each_scan_rs_path, is_test_path};
+use crate::filters::LanguageId;
+use crate::scan::{for_each_scan_file, is_test_path};
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
 use std::sync::OnceLock;
@@ -24,8 +25,8 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
         Regex::new(r"use\s+(?:crate::|super::)*server::").expect("Invalid server_import regex")
     });
 
-    for_each_scan_rs_path(config, true, |path, _src_dir| {
-        let Some(path_str) = path.to_str() else {
+    for_each_scan_file(config, Some(LanguageId::Rust), true, |entry, _src_dir| {
+        let Some(path_str) = entry.absolute_path.to_str() else {
             return Ok(());
         };
 
@@ -39,7 +40,7 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
         let is_application_layer = path_str.contains("/application/");
         let is_infrastructure_layer = path_str.contains("/infrastructure/");
 
-        let content = std::fs::read_to_string(path)?;
+        let content = std::fs::read_to_string(&entry.absolute_path)?;
         let lines: Vec<&str> = content.lines().collect();
 
         // Track test modules to skip
@@ -78,7 +79,11 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
                 let service_name = cap.get(1).map_or("", |m| m.as_str());
 
                 // Skip if it's in a builder or factory file
-                let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                let file_name = entry
+                    .absolute_path
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("");
                 if file_name.contains("builder")
                     || file_name.contains("factory")
                     || file_name.contains("bootstrap")
@@ -87,7 +92,7 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
                 }
 
                 violations.push(OrganizationViolation::ServerCreatingServices {
-                    file: path.to_path_buf(),
+                    file: entry.absolute_path.to_path_buf(),
                     line: line_num + 1,
                     service_name: service_name.to_string(),
                     suggestion: "Use DI container to resolve services".to_string(),
@@ -101,7 +106,7 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
                 && !trimmed.contains("pub use")
             {
                 violations.push(OrganizationViolation::ApplicationImportsServer {
-                    file: path.to_path_buf(),
+                    file: entry.absolute_path.to_path_buf(),
                     line: line_num + 1,
                     import_statement: trimmed.to_string(),
                     severity: Severity::Warning,

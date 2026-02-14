@@ -8,13 +8,14 @@
 //! - server: domain, application, and infrastructure (transport layer)
 //! - mcb: All crates (facade that re-exports entire public API)
 
+use crate::filters::LanguageId;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use crate::scan::for_each_rs_under_root;
+use crate::scan::for_each_file_under_root;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
 
@@ -133,12 +134,6 @@ impl DependencyValidator {
             }
         }
 
-        if allowed_deps.is_empty() {
-            panic!(
-                "DependencyValidator: No allowed dependencies found in YAML rules CA001-CA016. Configuration is required in crates/mcb-validate/rules/."
-            );
-        }
-
         Self {
             config,
             allowed_deps,
@@ -232,7 +227,8 @@ impl DependencyValidator {
             return Ok(());
         }
 
-        for_each_rs_under_root(&self.config, scan_root, |path| {
+        for_each_file_under_root(&self.config, scan_root, Some(LanguageId::Rust), |entry| {
+            let path = &entry.absolute_path;
             let rel = path
                 .strip_prefix(&self.config.workspace_root)
                 .unwrap_or(path);
@@ -321,7 +317,8 @@ impl DependencyValidator {
                 continue;
             }
 
-            for_each_rs_under_root(&self.config, &crate_src, |path| {
+            for_each_file_under_root(&self.config, &crate_src, Some(LanguageId::Rust), |entry| {
+                let path = &entry.absolute_path;
                 let content = std::fs::read_to_string(path)?;
 
                 for (line_num, line) in content.lines().enumerate() {

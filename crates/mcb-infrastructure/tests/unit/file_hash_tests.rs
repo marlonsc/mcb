@@ -1,4 +1,7 @@
+#![allow(unsafe_code)]
+
 use rstest::rstest;
+use serial_test::serial;
 use std::io::Write;
 use std::sync::Arc;
 use std::time::Duration;
@@ -11,8 +14,18 @@ use mcb_infrastructure::di::bootstrap::init_app;
 use rstest::*;
 use tempfile::NamedTempFile;
 
+fn ensure_clean_env() {
+    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
+    unsafe { std::env::remove_var("MCP__PROVIDERS__EMBEDDING__PROVIDER") };
+    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
+    unsafe { std::env::remove_var("MCP__AUTH__ENABLED") };
+    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
+    unsafe { std::env::remove_var("MCP__AUTH__JWT__SECRET") };
+}
+
 #[fixture]
 async fn file_hash_repo() -> Arc<dyn FileHashRepository> {
+    ensure_clean_env();
     let unique = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
@@ -28,6 +41,7 @@ async fn file_hash_repo() -> Arc<dyn FileHashRepository> {
 
 #[rstest]
 #[tokio::test]
+#[serial]
 async fn test_has_changed(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
     let repo = file_hash_repo.await;
 
@@ -46,6 +60,7 @@ async fn test_has_changed(#[future] file_hash_repo: Arc<dyn FileHashRepository>)
 
 #[rstest]
 #[tokio::test]
+#[serial]
 async fn test_tombstone(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
     let repo = file_hash_repo.await;
 
@@ -59,6 +74,7 @@ async fn test_tombstone(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
 
 #[rstest]
 #[tokio::test]
+#[serial]
 async fn test_resurrect_after_tombstone(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
     let repo = file_hash_repo.await;
 
@@ -74,6 +90,7 @@ async fn test_resurrect_after_tombstone(#[future] file_hash_repo: Arc<dyn FileHa
 
 #[rstest]
 #[tokio::test]
+#[serial]
 async fn test_get_indexed_files(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
     let repo = file_hash_repo.await;
 
@@ -91,6 +108,7 @@ async fn test_get_indexed_files(#[future] file_hash_repo: Arc<dyn FileHashReposi
 
 #[rstest]
 #[tokio::test]
+#[serial]
 async fn test_compute_file_hash(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
     let repo = file_hash_repo.await;
     let mut temp = NamedTempFile::new().unwrap();
@@ -106,7 +124,9 @@ async fn test_compute_file_hash(#[future] file_hash_repo: Arc<dyn FileHashReposi
 
 #[rstest]
 #[tokio::test]
+#[serial]
 async fn test_indexing_persists_file_hash_metadata() {
+    ensure_clean_env();
     let unique = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()

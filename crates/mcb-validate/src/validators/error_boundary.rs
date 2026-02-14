@@ -5,10 +5,11 @@
 //! - Context preservation across layers
 //! - Error type placement (right layer)
 
+use crate::filters::LanguageId;
 use std::path::PathBuf;
 
 use crate::pattern_registry::{compile_regex, compile_regex_pairs};
-use crate::scan::for_each_scan_rs_path;
+use crate::scan::for_each_scan_file;
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -106,63 +107,70 @@ impl ErrorBoundaryValidator {
         // Files that are likely error boundary crossing points
         let boundary_paths = ["handlers/", "adapters/", "services/"];
 
-        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            let Some(path_str) = path.to_str() else {
-                return Ok(());
-            };
+        for_each_scan_file(
+            &self.config,
+            Some(LanguageId::Rust),
+            false,
+            |entry, _src_dir| {
+                let path = &entry.absolute_path;
+                let Some(path_str) = path.to_str() else {
+                    return Ok(());
+                };
 
-            // Skip test files
-            if path_str.contains("/tests/") {
-                return Ok(());
-            }
-
-            // Only check boundary files
-            let is_boundary = boundary_paths.iter().any(|p| path_str.contains(p));
-            if !is_boundary {
-                return Ok(());
-            }
-
-            let content = std::fs::read_to_string(path)?;
-            let mut in_test_module = false;
-
-            for (line_num, line) in content.lines().enumerate() {
-                let trimmed = line.trim();
-
-                // Skip comments
-                if trimmed.starts_with("//") {
-                    continue;
+                // Skip test files
+                if path_str.contains("/tests/") {
+                    return Ok(());
                 }
 
-                // Track test modules
-                if trimmed.contains("#[cfg(test)]") {
-                    in_test_module = true;
-                    continue;
+                // Only check boundary files
+                let is_boundary = boundary_paths.iter().any(|p| path_str.contains(p));
+                if !is_boundary {
+                    return Ok(());
                 }
 
-                if in_test_module {
-                    continue;
-                }
+                let content = std::fs::read_to_string(path)?;
+                let mut in_test_module = false;
 
-                // Check for ? without context
-                if question_mark_pattern.is_match(trimmed) && !context_pattern.is_match(trimmed) {
-                    // Skip simple Result propagation
-                    if trimmed.starts_with("return ") || trimmed.contains("Ok(") {
+                for (line_num, line) in content.lines().enumerate() {
+                    let trimmed = line.trim();
+
+                    // Skip comments
+                    if trimmed.starts_with("//") {
                         continue;
                     }
 
-                    violations.push(ErrorBoundaryViolation::MissingErrorContext {
-                        file: path.to_path_buf(),
-                        line: line_num + 1,
-                        error_pattern: trimmed.chars().take(60).collect(),
-                        suggestion: "Add .context() or .map_err() for better error messages"
-                            .to_string(),
-                        severity: Severity::Info,
-                    });
-                }
-            }
+                    // Track test modules
+                    if trimmed.contains("#[cfg(test)]") {
+                        in_test_module = true;
+                        continue;
+                    }
 
-            Ok(())
-        })?;
+                    if in_test_module {
+                        continue;
+                    }
+
+                    // Check for ? without context
+                    if question_mark_pattern.is_match(trimmed) && !context_pattern.is_match(trimmed)
+                    {
+                        // Skip simple Result propagation
+                        if trimmed.starts_with("return ") || trimmed.contains("Ok(") {
+                            continue;
+                        }
+
+                        violations.push(ErrorBoundaryViolation::MissingErrorContext {
+                            file: path.to_path_buf(),
+                            line: line_num + 1,
+                            error_pattern: trimmed.chars().take(60).collect(),
+                            suggestion: "Add .context() or .map_err() for better error messages"
+                                .to_string(),
+                            severity: Severity::Info,
+                        });
+                    }
+                }
+
+                Ok(())
+            },
+        )?;
 
         Ok(violations)
     }
@@ -183,65 +191,71 @@ impl ErrorBoundaryValidator {
 
         let compiled_errors = compile_regex_pairs(&infra_errors)?;
 
-        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            let Some(path_str) = path.to_str() else {
-                return Ok(());
-            };
+        for_each_scan_file(
+            &self.config,
+            Some(LanguageId::Rust),
+            false,
+            |entry, _src_dir| {
+                let path = &entry.absolute_path;
+                let Some(path_str) = path.to_str() else {
+                    return Ok(());
+                };
 
-            // Skip test files
-            if path_str.contains("/tests/") {
-                return Ok(());
-            }
-
-            // Only check domain layer files (uses directory convention, not hardcoded crate names)
-            let is_domain = path_str.contains("/domain/");
-            if !is_domain {
-                return Ok(());
-            }
-
-            // Skip error definition files
-            let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-            if file_name == "error.rs" || file_name.starts_with("error") {
-                return Ok(());
-            }
-
-            let content = std::fs::read_to_string(path)?;
-            let mut in_test_module = false;
-
-            for (line_num, line) in content.lines().enumerate() {
-                let trimmed = line.trim();
-
-                // Skip comments
-                if trimmed.starts_with("//") {
-                    continue;
+                // Skip test files
+                if path_str.contains("/tests/") {
+                    return Ok(());
                 }
 
-                // Track test modules
-                if trimmed.contains("#[cfg(test)]") {
-                    in_test_module = true;
-                    continue;
+                // Only check domain layer files (uses directory convention, not hardcoded crate names)
+                let is_domain = path_str.contains("/domain/");
+                if !is_domain {
+                    return Ok(());
                 }
 
-                if in_test_module {
-                    continue;
+                // Skip error definition files
+                let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                if file_name == "error.rs" || file_name.starts_with("error") {
+                    return Ok(());
                 }
 
-                // Check for infrastructure error types
-                for (pattern, desc) in &compiled_errors {
-                    if pattern.is_match(line) {
-                        violations.push(ErrorBoundaryViolation::WrongLayerError {
-                            file: path.to_path_buf(),
-                            line: line_num + 1,
-                            error_type: desc.to_string(),
-                            layer: "domain".to_string(),
-                            severity: Severity::Warning,
-                        });
+                let content = std::fs::read_to_string(path)?;
+                let mut in_test_module = false;
+
+                for (line_num, line) in content.lines().enumerate() {
+                    let trimmed = line.trim();
+
+                    // Skip comments
+                    if trimmed.starts_with("//") {
+                        continue;
+                    }
+
+                    // Track test modules
+                    if trimmed.contains("#[cfg(test)]") {
+                        in_test_module = true;
+                        continue;
+                    }
+
+                    if in_test_module {
+                        continue;
+                    }
+
+                    // Check for infrastructure error types
+                    for (pattern, desc) in &compiled_errors {
+                        if pattern.is_match(line) {
+                            violations.push(ErrorBoundaryViolation::WrongLayerError {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                error_type: desc.to_string(),
+                                layer: "domain".to_string(),
+                                severity: Severity::Warning,
+                            });
+                        }
                     }
                 }
-            }
 
-            Ok(())
-        })?;
+                Ok(())
+            },
+        )?;
 
         Ok(violations)
     }
@@ -269,58 +283,65 @@ impl ErrorBoundaryValidator {
         let compiled_leaks = compile_regex_pairs(&leak_patterns)?;
 
         // Only check handler files (API boundary)
-        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            let Some(path_str) = path.to_str() else {
-                return Ok(());
-            };
+        for_each_scan_file(
+            &self.config,
+            Some(LanguageId::Rust),
+            false,
+            |entry, _src_dir| {
+                let path = &entry.absolute_path;
+                let Some(path_str) = path.to_str() else {
+                    return Ok(());
+                };
 
-            // Skip test files
-            if path_str.contains("/tests/") {
-                return Ok(());
-            }
-
-            // Only check handler files
-            let is_handler = path_str.contains("/handlers/") || path_str.contains("_handler.rs");
-            if !is_handler {
-                return Ok(());
-            }
-
-            let content = std::fs::read_to_string(path)?;
-            let mut in_test_module = false;
-
-            for (line_num, line) in content.lines().enumerate() {
-                let trimmed = line.trim();
-
-                // Skip comments
-                if trimmed.starts_with("//") {
-                    continue;
+                // Skip test files
+                if path_str.contains("/tests/") {
+                    return Ok(());
                 }
 
-                // Track test modules
-                if trimmed.contains("#[cfg(test)]") {
-                    in_test_module = true;
-                    continue;
+                // Only check handler files
+                let is_handler =
+                    path_str.contains("/handlers/") || path_str.contains("_handler.rs");
+                if !is_handler {
+                    return Ok(());
                 }
 
-                if in_test_module {
-                    continue;
-                }
+                let content = std::fs::read_to_string(path)?;
+                let mut in_test_module = false;
 
-                // Check for leak patterns
-                for (pattern, desc) in &compiled_leaks {
-                    if pattern.is_match(line) {
-                        violations.push(ErrorBoundaryViolation::LeakedInternalError {
-                            file: path.to_path_buf(),
-                            line: line_num + 1,
-                            pattern: desc.to_string(),
-                            severity: Severity::Info,
-                        });
+                for (line_num, line) in content.lines().enumerate() {
+                    let trimmed = line.trim();
+
+                    // Skip comments
+                    if trimmed.starts_with("//") {
+                        continue;
+                    }
+
+                    // Track test modules
+                    if trimmed.contains("#[cfg(test)]") {
+                        in_test_module = true;
+                        continue;
+                    }
+
+                    if in_test_module {
+                        continue;
+                    }
+
+                    // Check for leak patterns
+                    for (pattern, desc) in &compiled_leaks {
+                        if pattern.is_match(line) {
+                            violations.push(ErrorBoundaryViolation::LeakedInternalError {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                pattern: desc.to_string(),
+                                severity: Severity::Info,
+                            });
+                        }
                     }
                 }
-            }
 
-            Ok(())
-        })?;
+                Ok(())
+            },
+        )?;
 
         Ok(violations)
     }

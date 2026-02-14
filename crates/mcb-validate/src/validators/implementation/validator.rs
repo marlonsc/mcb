@@ -6,8 +6,9 @@ use regex::Regex;
 
 use super::violation::ImplementationViolation;
 use crate::config::ImplementationRulesConfig;
+use crate::filters::LanguageId;
 use crate::pattern_registry::{required_pattern, required_patterns};
-use crate::scan::for_each_scan_rs_path;
+use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
 
 /// Implementation quality validator
@@ -55,15 +56,20 @@ impl ImplementationQualityValidator {
         F: FnMut(&Path, &str) -> Vec<ImplementationViolation>,
     {
         let mut violations = Vec::new();
-        for_each_scan_rs_path(&self.config, false, |path, src_dir| {
-            if self.should_skip_crate(src_dir) || is_test_path(path) {
-                return Ok(());
-            }
+        for_each_scan_file(
+            &self.config,
+            Some(LanguageId::Rust),
+            false,
+            |entry, src_dir| {
+                if self.should_skip_crate(src_dir) || is_test_path(&entry.absolute_path) {
+                    return Ok(());
+                }
 
-            let content = std::fs::read_to_string(path)?;
-            violations.extend(visitor(path, &content));
-            Ok(())
-        })?;
+                let content = std::fs::read_to_string(&entry.absolute_path)?;
+                violations.extend(visitor(&entry.absolute_path, &content));
+                Ok(())
+            },
+        )?;
         Ok(violations)
     }
 

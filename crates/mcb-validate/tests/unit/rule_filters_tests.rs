@@ -33,6 +33,9 @@ async fn language_filter(
         languages: language.map(|lang| vec![lang.to_string()]),
         dependencies: None,
         file_patterns: None,
+        allow: None,
+        deny: None,
+        skip: None,
     };
 
     let actual = executor
@@ -67,6 +70,9 @@ serde = "1.0"
         languages: None,
         dependencies: Some(vec!["serde".to_string()]),
         file_patterns: None,
+        allow: None,
+        deny: None,
+        skip: None,
     };
 
     assert!(
@@ -85,6 +91,9 @@ serde = "1.0"
         languages: None,
         dependencies: Some(vec!["tokio".to_string()]),
         file_patterns: None,
+        allow: None,
+        deny: None,
+        skip: None,
     };
 
     assert!(
@@ -109,6 +118,9 @@ async fn test_file_pattern_filter() {
         languages: None,
         dependencies: None,
         file_patterns: Some(vec!["src/**/*.rs".to_string(), "!**/tests/**".to_string()]),
+        allow: None,
+        deny: None,
+        skip: None,
     };
 
     let workspace_deps = WorkspaceDependencies {
@@ -167,6 +179,9 @@ serde = "1.0"
         languages: Some(vec!["rust".to_string()]),
         dependencies: Some(vec!["serde".to_string()]),
         file_patterns: Some(vec!["**/src/**/*.rs".to_string()]),
+        allow: None,
+        deny: None,
+        skip: None,
     };
 
     assert!(
@@ -197,6 +212,9 @@ serde = "1.0"
         languages: Some(vec!["rust".to_string()]),
         dependencies: Some(vec!["tokio".to_string()]),
         file_patterns: Some(vec!["**/src/**/*.rs".to_string()]),
+        allow: None,
+        deny: None,
+        skip: None,
     };
 
     assert!(

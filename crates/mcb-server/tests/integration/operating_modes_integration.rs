@@ -53,6 +53,8 @@ fn create_client_config(server_port: u16) -> ModeConfig {
         timeout_secs: 30,
         auto_reconnect: true,
         max_reconnect_attempts: 5,
+        session_id: None,
+        session_file: None,
     }
 }
 

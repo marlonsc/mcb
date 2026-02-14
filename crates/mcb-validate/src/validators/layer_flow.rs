@@ -6,10 +6,7 @@
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
-use regex::Regex;
-
 use crate::config::LayerFlowRulesConfig;
-use crate::scan::for_each_rs_under_root;
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 
@@ -61,8 +58,6 @@ crate::define_violations! {
 
 /// Layer Flow Validator
 pub struct LayerFlowValidator {
-    /// Forbidden dependency mappings: source_crate -> forbidden_target_crates
-    forbidden_dependencies: HashMap<String, HashSet<String>>,
     /// List of crates to check for circular dependencies
     circular_dependency_check_crates: Vec<String>,
 }
@@ -76,13 +71,7 @@ impl LayerFlowValidator {
 
     /// Creates a new layer flow validator with current configuration.
     pub fn with_config(config: &LayerFlowRulesConfig) -> Self {
-        let mut forbidden_dependencies = HashMap::new();
-        for (k, v) in &config.forbidden_dependencies {
-            forbidden_dependencies.insert(k.clone(), v.iter().cloned().collect());
-        }
-
         Self {
-            forbidden_dependencies,
             circular_dependency_check_crates: config.circular_dependency_check_crates.clone(),
         }
     }
@@ -90,61 +79,8 @@ impl LayerFlowValidator {
     /// Validates the layer flow constraints for the given configuration.
     pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<LayerFlowViolation>> {
         let mut violations = Vec::new();
-        violations.extend(self.check_forbidden_imports(config)?);
+        // Forbidden imports are now handled by DeclarativeValidator rules (CA009-CA014)
         violations.extend(self.check_circular_dependencies(config)?);
-        Ok(violations)
-    }
-
-    fn check_forbidden_imports(
-        &self,
-        config: &ValidationConfig,
-    ) -> Result<Vec<LayerFlowViolation>> {
-        let mut violations = Vec::new();
-        let crates_dir = config.workspace_root.join("crates");
-        if !crates_dir.exists() {
-            return Ok(violations);
-        }
-
-        let import_pattern = Regex::new(r"use\s+([\w][\w\d_]*)").expect("Invalid regex");
-
-        for crate_name in self.forbidden_dependencies.keys() {
-            let crate_src_dir = crates_dir.join(crate_name).join("src");
-            if !crate_src_dir.exists() {
-                continue;
-            }
-
-            let forbidden_deps = &self.forbidden_dependencies[crate_name];
-            let crate_name_underscored = crate_name.replace('-', "_");
-
-            for_each_rs_under_root(config, &crate_src_dir, |path| {
-                let content = std::fs::read_to_string(path)?;
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
-                    if trimmed.starts_with("//") || trimmed.starts_with("/*") {
-                        continue;
-                    }
-
-                    for captures in import_pattern.captures_iter(line) {
-                        let imported_crate = captures.get(1).map_or("", |m| m.as_str());
-                        let imported_crate_dashed = imported_crate.replace('_', "-");
-                        if imported_crate == crate_name_underscored {
-                            continue;
-                        }
-                        if forbidden_deps.contains(imported_crate_dashed.as_str()) {
-                            violations.push(LayerFlowViolation::ForbiddenDependency {
-                                source_crate: crate_name.to_string(),
-                                target_crate: imported_crate_dashed,
-                                import_path: line.trim().to_string(),
-                                file: path.to_path_buf(),
-                                line: line_num + 1,
-                            });
-                        }
-                    }
-                }
-
-                Ok(())
-            })?;
-        }
         Ok(violations)
     }
 

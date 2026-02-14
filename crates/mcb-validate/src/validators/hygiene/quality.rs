@@ -1,5 +1,6 @@
+use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regex, compile_regex_pairs};
-use crate::scan::for_each_rs_under_root;
+use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
 
@@ -57,7 +58,8 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
             continue;
         }
 
-        for_each_rs_under_root(config, &tests_dir, |path| {
+        for_each_file_under_root(config, &tests_dir, Some(LanguageId::Rust), |entry| {
+            let path = &entry.absolute_path;
             if path.to_str().is_some_and(|s| s.contains("/fixtures/")) {
                 return Ok(());
             }

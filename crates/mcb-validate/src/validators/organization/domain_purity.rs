@@ -1,5 +1,6 @@
 use super::violation::OrganizationViolation;
-use crate::scan::{for_each_scan_rs_path, is_test_path};
+use crate::filters::LanguageId;
+use crate::scan::{for_each_scan_file, is_test_path};
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
 use std::sync::OnceLock;
@@ -72,13 +73,13 @@ pub fn validate_domain_traits_only(
         "from_", "into_", "as_", "to_", "get_", "is_", "has_", "with_",
     ];
 
-    for_each_scan_rs_path(config, false, |path, src_dir| {
+    for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, src_dir| {
         // Only check domain crate
         if !src_dir.to_str().is_some_and(|s| s.contains("domain")) {
             return Ok(());
         }
 
-        let Some(path_str) = path.to_str() else {
+        let Some(path_str) = entry.absolute_path.to_str() else {
             return Ok(());
         };
 
@@ -92,7 +93,7 @@ pub fn validate_domain_traits_only(
             return Ok(());
         }
 
-        let content = std::fs::read_to_string(path)?;
+        let content = std::fs::read_to_string(&entry.absolute_path)?;
         let lines: Vec<&str> = content.lines().collect();
 
         let mut in_impl_block = false;
@@ -142,7 +143,7 @@ pub fn validate_domain_traits_only(
 
                 // This looks like business logic in domain layer
                 violations.push(OrganizationViolation::DomainLayerImplementation {
-                    file: path.to_path_buf(),
+                    file: entry.absolute_path.to_path_buf(),
                     line: line_num + 1,
                     impl_type: "method".to_string(),
                     type_name: format!("{impl_name}::{method_name}"),

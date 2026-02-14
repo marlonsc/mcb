@@ -100,7 +100,21 @@
               "javascript",
               "typescript",
               "go",
-              "java"
+              "java",
+              "cpp",
+              "kotlin",
+              "ruby",
+              "shell",
+              "yaml",
+              "toml",
+              "json",
+              "markdown",
+              "html",
+              "css",
+              "sql",
+              "dockerfile",
+              "makefile",
+              "protobuf"
             ],
             "description": "Programming language"
           },

@@ -1,4 +1,8 @@
+use crate::error::{Error, Result};
 use sha2::{Digest, Sha256};
+use std::fs::File;
+use std::io::{BufReader, Read};
+use std::path::Path;
 use uuid::Uuid;
 
 /// Generates a new random UUID v4.
@@ -34,4 +38,23 @@ pub fn mask_id(id: &str) -> String {
     } else {
         format!("{}...", &id[..8])
     }
+}
+
+/// Compute SHA-256 hash of a file's content.
+pub fn compute_file_hash(path: &Path) -> Result<String> {
+    let file =
+        File::open(path).map_err(|e| Error::io(format!("Failed to open file {path:?}: {e}")))?;
+    let mut reader = BufReader::new(file);
+    let mut hasher = Sha256::new();
+    let mut buffer = [0u8; 8192];
+    loop {
+        let count = reader
+            .read(&mut buffer)
+            .map_err(|e| Error::io(format!("Failed to read file {path:?}: {e}")))?;
+        if count == 0 {
+            break;
+        }
+        hasher.update(&buffer[..count]);
+    }
+    Ok(hex::encode(hasher.finalize()))
 }

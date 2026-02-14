@@ -1,5 +1,6 @@
 use super::violation::OrganizationViolation;
-use crate::scan::{for_each_scan_rs_path, is_test_path};
+use crate::filters::LanguageId;
+use crate::scan::{for_each_scan_file, is_test_path};
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
 use std::sync::OnceLock;
@@ -32,13 +33,13 @@ pub fn validate_strict_directory(config: &ValidationConfig) -> Result<Vec<Organi
         Regex::new(r"impl\s+(?:async\s+)?([A-Z][a-zA-Z0-9_]*(?:Provider|Repository))\s+for\s+([A-Z][a-zA-Z0-9_]*)").expect("Invalid adapter regex")
     });
 
-    for_each_scan_rs_path(config, true, |path, src_dir| {
+    for_each_scan_file(config, Some(LanguageId::Rust), true, |entry, src_dir| {
         let src_dir_str = src_dir.to_str();
         let is_domain_crate = src_dir_str.is_some_and(|s| s.contains("domain"));
         let is_infrastructure_crate = src_dir_str.is_some_and(|s| s.contains("infrastructure"));
         let is_server_crate = src_dir_str.is_some_and(|s| s.contains("server"));
 
-        let Some(path_str) = path.to_str() else {
+        let Some(path_str) = entry.absolute_path.to_str() else {
             return Ok(());
         };
 
@@ -48,12 +49,16 @@ pub fn validate_strict_directory(config: &ValidationConfig) -> Result<Vec<Organi
         }
 
         // Skip mod.rs and lib.rs (aggregator files)
-        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+        let file_name = entry
+            .absolute_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
         if file_name == "mod.rs" || file_name == "lib.rs" {
             return Ok(());
         }
 
-        let content = std::fs::read_to_string(path)?;
+        let content = std::fs::read_to_string(&entry.absolute_path)?;
 
         // Check for port traits outside allowed directories
         if is_domain_crate {
@@ -70,7 +75,7 @@ pub fn validate_strict_directory(config: &ValidationConfig) -> Result<Vec<Organi
 
                     if !in_allowed_dir {
                         violations.push(OrganizationViolation::PortOutsidePorts {
-                            file: path.to_path_buf(),
+                            file: entry.absolute_path.to_path_buf(),
                             line: line_num + 1,
                             trait_name: trait_name.to_string(),
                             severity: Severity::Warning,
@@ -98,7 +103,7 @@ pub fn validate_strict_directory(config: &ValidationConfig) -> Result<Vec<Organi
 
                     if !in_allowed_location {
                         violations.push(OrganizationViolation::HandlerOutsideHandlers {
-                            file: path.to_path_buf(),
+                            file: entry.absolute_path.to_path_buf(),
                             line: line_num + 1,
                             handler_name: handler_name.to_string(),
                             severity: Severity::Warning,
@@ -130,14 +135,15 @@ pub fn validate_strict_directory(config: &ValidationConfig) -> Result<Vec<Organi
                         || file_name.contains("bootstrap");
 
                     if !in_allowed_dir {
-                        let current_dir = path
+                        let current_dir = entry
+                            .absolute_path
                             .parent()
                             .and_then(|p| p.to_str())
                             .map(std::string::ToString::to_string)
                             .unwrap_or_default();
 
                         violations.push(OrganizationViolation::StrictDirectoryViolation {
-                            file: path.to_path_buf(),
+                            file: entry.absolute_path.to_path_buf(),
                             component_type: crate::ComponentType::Adapter,
                             current_directory: current_dir,
                             expected_directory: "infrastructure/adapters/".to_string(),

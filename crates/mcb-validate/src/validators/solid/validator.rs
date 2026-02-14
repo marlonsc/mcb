@@ -7,13 +7,14 @@
 //! - Interface Segregation Principle (ISP)
 //! - Dependency Inversion Principle (DIP)
 
+use crate::filters::LanguageId;
 use std::path::PathBuf;
 
 use regex::Regex;
 
 use super::violation::SolidViolation;
 use crate::pattern_registry::required_pattern;
-use crate::scan::for_each_rs_under_root;
+use crate::scan::for_each_file_under_root;
 use crate::thresholds::thresholds;
 use crate::{Result, Severity, ValidationConfig};
 
@@ -74,7 +75,8 @@ impl SolidValidator {
                 continue;
             }
 
-            for_each_rs_under_root(&self.config, &src_dir, |path| {
+            for_each_file_under_root(&self.config, &src_dir, Some(LanguageId::Rust), |entry| {
+                let path = &entry.absolute_path;
                 let content = std::fs::read_to_string(path)?;
                 let lines: Vec<&str> = content.lines().collect();
                 visitor(path.to_path_buf(), lines)

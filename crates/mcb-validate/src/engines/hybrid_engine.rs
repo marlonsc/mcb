@@ -350,6 +350,7 @@ impl HybridRuleEngine {
             selectors: Vec::new(),
             ast_query: None,
             metrics: None,
+            filters: None,
         };
 
         let files: Vec<std::path::PathBuf> = context

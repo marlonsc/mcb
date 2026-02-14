@@ -58,6 +58,19 @@ pub struct ModeConfig {
 
     /// Maximum reconnection attempts (0 = unlimited)
     pub max_reconnect_attempts: u32,
+
+    /// External session ID for client-mode correlation.
+    ///
+    /// When set (non-empty), overrides auto-generated session identifiers.
+    /// Env override: `MCP__MODE__SESSION_ID`
+    pub session_id: Option<String>,
+
+    /// Path to a persistent session file for cross-restart correlation.
+    ///
+    /// When set (non-empty), the client reads/writes session IDs from this file
+    /// to maintain session continuity across process restarts.
+    /// Env override: `MCP__MODE__SESSION_FILE`
+    pub session_file: Option<String>,
 }
 
 impl ModeConfig {

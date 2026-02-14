@@ -10,10 +10,11 @@ use tracing::warn;
 use crate::ValidationConfig;
 use crate::config::FileConfig;
 use crate::embedded_rules::EmbeddedRules;
+use crate::filters::LanguageId;
 use crate::linters::YamlRuleExecutor;
 use crate::metrics::{MetricThresholds, MetricViolation, RcaAnalyzer};
 use crate::rules::yaml_loader::{ValidatedRule, YamlRuleLoader};
-use crate::scan::for_each_scan_rs_path;
+use crate::scan::for_each_scan_file;
 use crate::traits::validator::Validator;
 use crate::traits::violation::{Severity, Violation, ViolationCategory};
 
@@ -86,10 +87,12 @@ impl DeclarativeValidator {
 
     fn collect_rs_files(&self, config: &ValidationConfig) -> Vec<PathBuf> {
         let mut files = Vec::new();
-        if let Err(e) = for_each_scan_rs_path(config, true, |path, _src_dir| {
-            files.push(path.to_path_buf());
-            Ok(())
-        }) {
+        if let Err(e) =
+            for_each_scan_file(config, Some(LanguageId::Rust), true, |entry, _src_dir| {
+                files.push(entry.absolute_path.to_path_buf());
+                Ok(())
+            })
+        {
             warn!(error = %e, "Failed to scan workspace for Rust files");
         }
         files
@@ -308,7 +311,7 @@ impl Validator for DeclarativeValidator {
     }
 
     fn enabled_by_default(&self) -> bool {
-        false
+        true
     }
 
     fn validate(&self, config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {

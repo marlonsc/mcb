@@ -5,11 +5,12 @@
 //! - Module-level documentation (//!)
 //! - Example code blocks for traits
 
+use crate::filters::LanguageId;
 use std::path::PathBuf;
 
 use regex::Regex;
 
-use crate::scan::for_each_crate_rs_path;
+use crate::scan::for_each_crate_file;
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig, ValidationError};
 
@@ -99,31 +100,36 @@ impl DocumentationValidator {
         let mut violations = Vec::new();
         let module_doc_pattern = Regex::new(r"^//!").map_err(ValidationError::InvalidRegex)?;
 
-        for_each_crate_rs_path(&self.config, |path, _src_dir, _crate_name| {
-            let content = std::fs::read_to_string(path)?;
-            let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+        for_each_crate_file(
+            &self.config,
+            Some(LanguageId::Rust),
+            |entry, _src_dir, _crate_name| {
+                let path = &entry.absolute_path;
+                let content = std::fs::read_to_string(path)?;
+                let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
 
-            // Only check lib.rs, mod.rs, and main module files
-            if file_name != "lib.rs" && file_name != "mod.rs" {
-                return Ok(());
-            }
+                // Only check lib.rs, mod.rs, and main module files
+                if file_name != "lib.rs" && file_name != "mod.rs" {
+                    return Ok(());
+                }
 
-            // Check if first non-empty line is module doc
-            let has_module_doc = content
-                .lines()
-                .filter(|line| !line.trim().is_empty())
-                .take(1)
-                .any(|line| module_doc_pattern.is_match(line));
+                // Check if first non-empty line is module doc
+                let has_module_doc = content
+                    .lines()
+                    .filter(|line| !line.trim().is_empty())
+                    .take(1)
+                    .any(|line| module_doc_pattern.is_match(line));
 
-            if !has_module_doc {
-                violations.push(DocumentationViolation::MissingModuleDoc {
-                    file: path.to_path_buf(),
-                    severity: Severity::Warning,
-                });
-            }
+                if !has_module_doc {
+                    violations.push(DocumentationViolation::MissingModuleDoc {
+                        file: path.to_path_buf(),
+                        severity: Severity::Warning,
+                    });
+                }
 
-            Ok(())
-        })?;
+                Ok(())
+            },
+        )?;
 
         Ok(violations)
     }
@@ -144,98 +150,103 @@ impl DocumentationValidator {
         let _doc_comment_pattern = Regex::new(r"^\s*///").map_err(ValidationError::InvalidRegex)?;
         let example_pattern = Regex::new(r"#\s*Example").unwrap();
 
-        for_each_crate_rs_path(&self.config, |path, _src_dir, _crate_name| {
-            let content = std::fs::read_to_string(path)?;
-            let lines: Vec<&str> = content.lines().collect();
+        for_each_crate_file(
+            &self.config,
+            Some(LanguageId::Rust),
+            |entry, _src_dir, _crate_name| {
+                let path = &entry.absolute_path;
+                let content = std::fs::read_to_string(path)?;
+                let lines: Vec<&str> = content.lines().collect();
 
-            for (line_num, line) in lines.iter().enumerate() {
-                // Check for public structs
-                if let Some(cap) = pub_struct_pattern.captures(line) {
-                    let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                    if !self.has_doc_comment(&lines, line_num) {
-                        violations.push(DocumentationViolation::MissingPubItemDoc {
-                            file: path.to_path_buf(),
-                            line: line_num + 1,
-                            item_name: name.to_string(),
-                            item_kind: "struct".to_string(),
-                            severity: Severity::Warning,
-                        });
-                    }
-                }
-
-                // Check for public enums
-                if let Some(cap) = pub_enum_pattern.captures(line) {
-                    let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                    if !self.has_doc_comment(&lines, line_num) {
-                        violations.push(DocumentationViolation::MissingPubItemDoc {
-                            file: path.to_path_buf(),
-                            line: line_num + 1,
-                            item_name: name.to_string(),
-                            item_kind: "enum".to_string(),
-                            severity: Severity::Warning,
-                        });
-                    }
-                }
-
-                // Check for public traits
-                if let Some(cap) = pub_trait_pattern.captures(line) {
-                    let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                    let Some(path_str) = path.to_str() else {
-                        continue;
-                    };
-
-                    if self.has_doc_comment(&lines, line_num) {
-                        // Check for example code in trait documentation
-                        // Skip DI module traits and port traits - they are interface definitions
-                        // that don't need examples (they define contracts for DI injection)
-                        let is_di_or_port_trait =
-                            path_str.contains("/di/modules/") || path_str.contains("/ports/");
-
-                        if !is_di_or_port_trait {
-                            let doc_section = self.get_doc_comment_section(&lines, line_num);
-                            if !example_pattern.is_match(&doc_section) {
-                                violations.push(DocumentationViolation::MissingExampleCode {
-                                    file: path.to_path_buf(),
-                                    line: line_num + 1,
-                                    item_name: name.to_string(),
-                                    severity: Severity::Info,
-                                });
-                            }
+                for (line_num, line) in lines.iter().enumerate() {
+                    // Check for public structs
+                    if let Some(cap) = pub_struct_pattern.captures(line) {
+                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
+                        if !self.has_doc_comment(&lines, line_num) {
+                            violations.push(DocumentationViolation::MissingPubItemDoc {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                item_name: name.to_string(),
+                                item_kind: "struct".to_string(),
+                                severity: Severity::Warning,
+                            });
                         }
-                    } else {
-                        violations.push(DocumentationViolation::MissingPubItemDoc {
-                            file: path.to_path_buf(),
-                            line: line_num + 1,
-                            item_name: name.to_string(),
-                            item_kind: "trait".to_string(),
-                            severity: Severity::Warning,
-                        });
+                    }
+
+                    // Check for public enums
+                    if let Some(cap) = pub_enum_pattern.captures(line) {
+                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
+                        if !self.has_doc_comment(&lines, line_num) {
+                            violations.push(DocumentationViolation::MissingPubItemDoc {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                item_name: name.to_string(),
+                                item_kind: "enum".to_string(),
+                                severity: Severity::Warning,
+                            });
+                        }
+                    }
+
+                    // Check for public traits
+                    if let Some(cap) = pub_trait_pattern.captures(line) {
+                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
+                        let Some(path_str) = path.to_str() else {
+                            continue;
+                        };
+
+                        if self.has_doc_comment(&lines, line_num) {
+                            // Check for example code in trait documentation
+                            // Skip DI module traits and port traits - they are interface definitions
+                            // that don't need examples (they define contracts for DI injection)
+                            let is_di_or_port_trait =
+                                path_str.contains("/di/modules/") || path_str.contains("/ports/");
+
+                            if !is_di_or_port_trait {
+                                let doc_section = self.get_doc_comment_section(&lines, line_num);
+                                if !example_pattern.is_match(&doc_section) {
+                                    violations.push(DocumentationViolation::MissingExampleCode {
+                                        file: path.to_path_buf(),
+                                        line: line_num + 1,
+                                        item_name: name.to_string(),
+                                        severity: Severity::Info,
+                                    });
+                                }
+                            }
+                        } else {
+                            violations.push(DocumentationViolation::MissingPubItemDoc {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                item_name: name.to_string(),
+                                item_kind: "trait".to_string(),
+                                severity: Severity::Warning,
+                            });
+                        }
+                    }
+
+                    // Check for public functions (only top-level, not in impl blocks)
+                    if let Some(cap) = pub_fn_pattern.captures(line) {
+                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
+
+                        // Skip methods in impl blocks (approximation: indentation > 0)
+                        if line.starts_with("    ") || line.starts_with('\t') {
+                            continue;
+                        }
+
+                        if !self.has_doc_comment(&lines, line_num) {
+                            violations.push(DocumentationViolation::MissingPubItemDoc {
+                                file: path.to_path_buf(),
+                                line: line_num + 1,
+                                item_name: name.to_string(),
+                                item_kind: "function".to_string(),
+                                severity: Severity::Info,
+                            });
+                        }
                     }
                 }
 
-                // Check for public functions (only top-level, not in impl blocks)
-                if let Some(cap) = pub_fn_pattern.captures(line) {
-                    let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-
-                    // Skip methods in impl blocks (approximation: indentation > 0)
-                    if line.starts_with("    ") || line.starts_with('\t') {
-                        continue;
-                    }
-
-                    if !self.has_doc_comment(&lines, line_num) {
-                        violations.push(DocumentationViolation::MissingPubItemDoc {
-                            file: path.to_path_buf(),
-                            line: line_num + 1,
-                            item_name: name.to_string(),
-                            item_kind: "function".to_string(),
-                            severity: Severity::Info,
-                        });
-                    }
-                }
-            }
-
-            Ok(())
-        })?;
+                Ok(())
+            },
+        )?;
 
         Ok(violations)
     }

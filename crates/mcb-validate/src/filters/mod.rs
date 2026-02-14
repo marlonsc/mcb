@@ -18,4 +18,4 @@ pub use dependency_parser::{
 };
 pub use file_matcher::FilePatternMatcher;
 pub use language_detector::{LanguageDetector, LanguageId};
-pub use rule_filters::{RuleFilterExecutor, RuleFilters};
+pub use rule_filters::{ApplicabilityFilter, RuleFilterExecutor, RuleFilters};

@@ -1,4 +1,5 @@
-use crate::scan::for_each_rs_under_root;
+use crate::filters::LanguageId;
+use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
 
 use super::violation::HygieneViolation;
@@ -13,7 +14,8 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
             continue;
         }
 
-        for_each_rs_under_root(config, &tests_dir, |path| {
+        for_each_file_under_root(config, &tests_dir, Some(LanguageId::Rust), |entry| {
+            let path = &entry.absolute_path;
             let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
 
             // Skip lib.rs and mod.rs

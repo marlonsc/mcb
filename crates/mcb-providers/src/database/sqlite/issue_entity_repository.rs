@@ -14,17 +14,16 @@
 use async_trait::async_trait;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::ProjectIssue;
-use mcb_domain::entities::project::{IssueStatus, IssueType};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
+use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::issue_entity_repository::{
     IssueCommentRegistry, IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry,
 };
-use std::str::FromStr;
 use std::sync::Arc;
 
 use super::query_helpers;
-use super::row_helpers::{opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_str};
+use super::row_convert;
+use super::row_helpers::{opt_i64_param, opt_str_param};
 
 /// SQLite-based implementation of `IssueEntityRepository`.
 ///
@@ -39,61 +38,6 @@ impl SqliteIssueEntityRepository {
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
-}
-
-// TODO(architecture): Move row conversion logic to shared row_convert module.
-// This file implements its own conversion helpers instead of using the shared infrastructure.
-fn row_to_issue(row: &dyn SqlRow) -> Result<ProjectIssue> {
-    let labels_json = req_str(row, "labels")?;
-    let labels = serde_json::from_str::<Vec<String>>(&labels_json)
-        .map_err(|e| Error::memory_with_source("decode labels json", e))?;
-
-    Ok(ProjectIssue {
-        id: req_str(row, "id")?,
-        org_id: req_str(row, "org_id")?,
-        project_id: req_str(row, "project_id")?,
-        created_by: req_str(row, "created_by")?,
-        phase_id: opt_str(row, "phase_id")?,
-        title: req_str(row, "title")?,
-        description: req_str(row, "description")?,
-        issue_type: IssueType::from_str(&req_str(row, "issue_type")?)
-            .map_err(|e| Error::memory(e.to_string()))?,
-        status: IssueStatus::from_str(&req_str(row, "status")?)
-            .map_err(|e| Error::memory(e.to_string()))?,
-        priority: req_i64(row, "priority")? as i32,
-        assignee: opt_str(row, "assignee")?,
-        labels,
-        estimated_minutes: opt_i64(row, "estimated_minutes")?,
-        actual_minutes: opt_i64(row, "actual_minutes")?,
-        notes: req_str(row, "notes")?,
-        design: req_str(row, "design")?,
-        parent_issue_id: opt_str(row, "parent_issue_id")?,
-        created_at: req_i64(row, "created_at")?,
-        updated_at: req_i64(row, "updated_at")?,
-        closed_at: opt_i64(row, "closed_at")?,
-        closed_reason: req_str(row, "closed_reason")?,
-    })
-}
-
-fn row_to_comment(row: &dyn SqlRow) -> Result<IssueComment> {
-    Ok(IssueComment {
-        id: req_str(row, "id")?,
-        issue_id: req_str(row, "issue_id")?,
-        author_id: req_str(row, "author_id")?,
-        content: req_str(row, "content")?,
-        created_at: req_i64(row, "created_at")?,
-    })
-}
-
-fn row_to_label(row: &dyn SqlRow) -> Result<IssueLabel> {
-    Ok(IssueLabel {
-        id: req_str(row, "id")?,
-        org_id: req_str(row, "org_id")?,
-        project_id: req_str(row, "project_id")?,
-        name: req_str(row, "name")?,
-        color: req_str(row, "color")?,
-        created_at: req_i64(row, "created_at")?,
-    })
 }
 
 #[async_trait]
@@ -139,7 +83,7 @@ impl IssueRegistry for SqliteIssueEntityRepository {
                 SqlParam::String(org_id.to_owned()),
                 SqlParam::String(id.to_owned()),
             ],
-            row_to_issue,
+            row_convert::row_to_issue,
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("Issue {id}")))
@@ -153,7 +97,7 @@ impl IssueRegistry for SqliteIssueEntityRepository {
                 SqlParam::String(org_id.to_owned()),
                 SqlParam::String(project_id.to_owned()),
             ],
-            row_to_issue,
+            row_convert::row_to_issue,
             "issue entity",
         )
         .await
@@ -226,7 +170,7 @@ impl IssueCommentRegistry for SqliteIssueEntityRepository {
             &self.executor,
             "SELECT * FROM issue_comments WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
-            row_to_comment,
+            row_convert::row_to_comment,
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("IssueComment {id}")))
@@ -237,7 +181,7 @@ impl IssueCommentRegistry for SqliteIssueEntityRepository {
             &self.executor,
             "SELECT * FROM issue_comments WHERE issue_id = ?",
             &[SqlParam::String(issue_id.to_owned())],
-            row_to_comment,
+            row_convert::row_to_comment,
             "issue entity",
         )
         .await
@@ -276,7 +220,7 @@ impl IssueLabelRegistry for SqliteIssueEntityRepository {
             &self.executor,
             "SELECT * FROM issue_labels WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
-            row_to_label,
+            row_convert::row_to_label,
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("IssueLabel {id}")))
@@ -290,7 +234,7 @@ impl IssueLabelRegistry for SqliteIssueEntityRepository {
                 SqlParam::String(org_id.to_owned()),
                 SqlParam::String(project_id.to_owned()),
             ],
-            row_to_label,
+            row_convert::row_to_label,
             "issue entity",
         )
         .await
@@ -338,7 +282,7 @@ impl IssueLabelAssignmentManager for SqliteIssueEntityRepository {
             &self.executor,
             "SELECT l.* FROM issue_labels l INNER JOIN issue_label_assignments a ON a.label_id = l.id WHERE a.issue_id = ?",
             &[SqlParam::String(issue_id.to_owned())],
-            row_to_label,
+            row_convert::row_to_label,
             "issue entity",
         )
         .await

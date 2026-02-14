@@ -236,6 +236,7 @@ impl ValidatorRegistry {
             crate::validators::implementation::ImplementationQualityValidator,
             crate::validators::refactoring::RefactoringValidator,
             crate::validators::error_boundary::ErrorBoundaryValidator,
+            crate::validators::declarative_validator::DeclarativeValidator,
         )
     }
 

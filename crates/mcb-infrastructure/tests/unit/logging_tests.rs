@@ -1,8 +1,10 @@
 //! Logging Tests
+#![allow(unsafe_code)]
 
 use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::logging::parse_log_level;
 use rstest::rstest;
+use serial_test::serial;
 use tracing::Level;
 
 #[rstest]
@@ -21,8 +23,14 @@ fn parse_log_level_values(#[case] input: &str, #[case] expected: Option<Level>) 
 }
 
 #[rstest]
+#[serial]
 fn test_logging_config_default() {
-    // Values come from config/default.toml — the single source of truth
+    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
+    unsafe { std::env::remove_var("MCP__AUTH__ENABLED") };
+    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
+    unsafe { std::env::remove_var("MCP__AUTH__JWT__SECRET") };
+    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
+    unsafe { std::env::remove_var("MCP__PROVIDERS__EMBEDDING__PROVIDER") };
     let config = ConfigLoader::new().load().expect("load config").logging;
     assert_eq!(config.level, "info");
     assert!(!config.json_format);

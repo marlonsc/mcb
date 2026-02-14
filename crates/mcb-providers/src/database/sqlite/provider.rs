@@ -220,51 +220,11 @@ async fn apply_schema(pool: &sqlx::SqlitePool) -> Result<()> {
 }
 
 async fn verify_project_schema(pool: &sqlx::SqlitePool) -> Result<()> {
-    // TODO(architecture): Derive schema verification from domain definition to avoid drift.
-    // Manual column listing here is error-prone and duplicates the schema source of truth.
-    verify_table_columns(pool, "projects", &["id", "org_id", "name", "path"]).await?;
-    verify_table_columns(
-        pool,
-        "collections",
-        &["id", "project_id", "name", "vector_name"],
-    )
-    .await?;
-    verify_table_columns(
-        pool,
-        "session_summaries",
-        &["id", "project_id", "session_id", "origin_context"],
-    )
-    .await?;
-    verify_table_columns(
-        pool,
-        "observations",
-        &[
-            "id",
-            "project_id",
-            "metadata",
-            mcb_domain::schema::memory::COL_OBSERVATION_TYPE,
-        ],
-    )
-    .await?;
-    verify_table_columns(
-        pool,
-        "agent_sessions",
-        &[
-            "id",
-            "session_summary_id",
-            "parent_session_id",
-            "project_id",
-            "worktree_id",
-            "model",
-        ],
-    )
-    .await?;
-    verify_table_columns(
-        pool,
-        "worktrees",
-        &["id", "repository_id", "path", "assigned_agent_id"],
-    )
-    .await?;
+    let schema = ProjectSchema::definition();
+    for table_def in schema.tables {
+        let required_cols: Vec<&str> = table_def.columns.iter().map(|c| c.name.as_str()).collect();
+        verify_table_columns(pool, &table_def.name, &required_cols).await?;
+    }
 
     Ok(())
 }

@@ -53,11 +53,13 @@ impl HookProcessor {
             context.tool_name, context.status
         );
 
-        let project_id = context
-            .metadata
-            .get("project_id")
-            .cloned()
-            .unwrap_or_else(|| "default".to_string());
+        let project_id = match context.metadata.get("project_id").cloned() {
+            Some(id) if !id.trim().is_empty() => id,
+            _ => {
+                debug!("PostToolUse hook skipped: missing project_id in metadata");
+                return Ok(());
+            }
+        };
 
         let parent_session_hash = context
             .metadata

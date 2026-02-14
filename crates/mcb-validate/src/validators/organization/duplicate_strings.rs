@@ -1,5 +1,6 @@
 use super::violation::OrganizationViolation;
-use crate::scan::{for_each_crate_rs_path, is_test_path};
+use crate::filters::LanguageId;
+use crate::scan::{for_each_crate_file, is_test_path};
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
@@ -17,57 +18,61 @@ pub fn validate_duplicate_strings(config: &ValidationConfig) -> Result<Vec<Organ
     let string_pattern = STRING_PATTERN
         .get_or_init(|| Regex::new(r#""([^"\\]{15,})""#).expect("Invalid duplicate strings regex"));
 
-    for_each_crate_rs_path(config, |path, _src_dir, _crate_name| {
-        // Skip constants files (they define string constants)
-        let file_name = path.file_name().and_then(|n| n.to_str());
-        if file_name.is_some_and(|n| n.contains("constant")) {
-            return Ok(());
-        }
-
-        // Skip test files
-        let Some(path_str) = path.to_str() else {
-            return Ok(());
-        };
-        if is_test_path(path_str) {
-            return Ok(());
-        }
-
-        let content = std::fs::read_to_string(path)?;
-        let mut in_test_module = false;
-
-        for (line_num, line) in content.lines().enumerate() {
-            let trimmed = line.trim();
-
-            // Skip comments and doc strings
-            if trimmed.starts_with("//") || trimmed.starts_with("#[") {
-                continue;
+    for_each_crate_file(
+        config,
+        Some(LanguageId::Rust),
+        |entry, _src_dir, _crate_name| {
+            let path = &entry.absolute_path;
+            // Skip constants files (they define string constants)
+            let file_name = path.file_name().and_then(|n| n.to_str());
+            if file_name.is_some_and(|n| n.contains("constant")) {
+                return Ok(());
             }
 
-            // Track test module context
-            if trimmed.contains("#[cfg(test)]") {
-                in_test_module = true;
-                continue;
+            // Skip test files
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
+            if is_test_path(path_str) {
+                return Ok(());
             }
 
-            // Skip test modules
-            if in_test_module {
-                continue;
-            }
+            let content = std::fs::read_to_string(path)?;
+            let mut in_test_module = false;
 
-            // Skip const/static definitions
-            if trimmed.starts_with("const ")
-                || trimmed.starts_with("pub const ")
-                || trimmed.starts_with("static ")
-                || trimmed.starts_with("pub static ")
-            {
-                continue;
-            }
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
 
-            for cap in string_pattern.captures_iter(line) {
-                let string_val = cap.get(1).map_or("", |m| m.as_str());
+                // Skip comments and doc strings
+                if trimmed.starts_with("//") || trimmed.starts_with("#[") {
+                    continue;
+                }
 
-                // Skip common patterns that are OK to repeat
-                if string_val.contains("{}")           // Format strings
+                // Track test module context
+                if trimmed.contains("#[cfg(test)]") {
+                    in_test_module = true;
+                    continue;
+                }
+
+                // Skip test modules
+                if in_test_module {
+                    continue;
+                }
+
+                // Skip const/static definitions
+                if trimmed.starts_with("const ")
+                    || trimmed.starts_with("pub const ")
+                    || trimmed.starts_with("static ")
+                    || trimmed.starts_with("pub static ")
+                {
+                    continue;
+                }
+
+                for cap in string_pattern.captures_iter(line) {
+                    let string_val = cap.get(1).map_or("", |m| m.as_str());
+
+                    // Skip common patterns that are OK to repeat
+                    if string_val.contains("{}")           // Format strings
                     || string_val.starts_with("test_")  // Test names
                     || string_val.starts_with("Error")  // Error messages
                     || string_val.starts_with("error")
@@ -88,20 +93,21 @@ pub fn validate_duplicate_strings(config: &ValidationConfig) -> Result<Vec<Organ
                     || string_val.starts_with("CARGO_") // env!() macros
                     || string_val.contains("serde_json")// Code patterns
                     || string_val.contains(".to_string()")
-                // Method chains
-                {
-                    continue;
+                    // Method chains
+                    {
+                        continue;
+                    }
+
+                    string_occurrences
+                        .entry(string_val.to_string())
+                        .or_default()
+                        .push((path.to_path_buf(), line_num + 1));
                 }
-
-                string_occurrences
-                    .entry(string_val.to_string())
-                    .or_default()
-                    .push((path.to_path_buf(), line_num + 1));
             }
-        }
 
-        Ok(())
-    })?;
+            Ok(())
+        },
+    )?;
 
     // Report strings that appear in 4+ files (higher threshold)
     for (value, occurrences) in string_occurrences {

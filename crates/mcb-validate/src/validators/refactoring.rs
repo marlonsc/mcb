@@ -8,13 +8,14 @@
 //! - Deleted module references
 //! - Dead code from refactoring
 
+use crate::filters::LanguageId;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
 use crate::config::RefactoringRulesConfig;
-use crate::scan::{for_each_rs_under_root, for_each_scan_rs_path};
+use crate::scan::{for_each_file_under_root, for_each_scan_file};
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -189,42 +190,48 @@ impl RefactoringValidator {
                 continue;
             }
 
-            for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
-                if candidate_src_dir != src_dir {
-                    return Ok(());
-                }
-
-                let Some(path_str) = path.to_str() else {
-                    return Ok(());
-                };
-
-                // Skip test files and archived directories
-                if path_str.contains("/tests/")
-                    || path_str.contains("_test.rs")
-                    || path_str.contains(".archived")
-                    || path_str.contains(".bak")
-                {
-                    return Ok(());
-                }
-
-                let content = std::fs::read_to_string(path)?;
-
-                for cap in definition_pattern.captures_iter(&content) {
-                    let type_name = cap.get(1).map_or("", |m| m.as_str());
-
-                    // Skip generic names that are expected to appear in multiple places
-                    if self.generic_type_names.contains(type_name) {
-                        continue;
+            for_each_scan_file(
+                &self.config,
+                Some(LanguageId::Rust),
+                false,
+                |entry, candidate_src_dir| {
+                    let path = &entry.absolute_path;
+                    if candidate_src_dir != src_dir {
+                        return Ok(());
                     }
 
-                    definitions
-                        .entry(type_name.to_string())
-                        .or_default()
-                        .push(path.to_path_buf());
-                }
+                    let Some(path_str) = path.to_str() else {
+                        return Ok(());
+                    };
 
-                Ok(())
-            })?;
+                    // Skip test files and archived directories
+                    if path_str.contains("/tests/")
+                        || path_str.contains("_test.rs")
+                        || path_str.contains(".archived")
+                        || path_str.contains(".bak")
+                    {
+                        return Ok(());
+                    }
+
+                    let content = std::fs::read_to_string(path)?;
+
+                    for cap in definition_pattern.captures_iter(&content) {
+                        let type_name = cap.get(1).map_or("", |m| m.as_str());
+
+                        // Skip generic names that are expected to appear in multiple places
+                        if self.generic_type_names.contains(type_name) {
+                            continue;
+                        }
+
+                        definitions
+                            .entry(type_name.to_string())
+                            .or_default()
+                            .push(path.to_path_buf());
+                    }
+
+                    Ok(())
+                },
+            )?;
         }
 
         // Find duplicates (same name in different files)
@@ -369,7 +376,8 @@ impl RefactoringValidator {
                 std::collections::HashSet::new();
             let mut test_dirs: std::collections::HashSet<String> = std::collections::HashSet::new();
 
-            for_each_rs_under_root(&self.config, &tests_dir, |path| {
+            for_each_file_under_root(&self.config, &tests_dir, Some(LanguageId::Rust), |entry| {
+                let path = &entry.absolute_path;
                 if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
                     test_files.insert(stem.to_string());
                     if let Some(base) = stem.strip_suffix("_test") {
@@ -395,7 +403,8 @@ impl RefactoringValidator {
             })?;
 
             // Check each source file
-            for_each_rs_under_root(&self.config, &src_dir, |path| {
+            for_each_file_under_root(&self.config, &src_dir, Some(LanguageId::Rust), |entry| {
+                let path = &entry.absolute_path;
                 let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
 
                 // Skip common files that don't need dedicated tests
@@ -470,46 +479,53 @@ impl RefactoringValidator {
                 continue;
             }
 
-            for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
-                if candidate_src_dir != src_dir {
-                    return Ok(());
-                }
+            for_each_scan_file(
+                &self.config,
+                Some(LanguageId::Rust),
+                false,
+                |entry, candidate_src_dir| {
+                    let path = &entry.absolute_path;
+                    if candidate_src_dir != src_dir {
+                        return Ok(());
+                    }
 
-                let parent_dir = path.parent().unwrap_or(Path::new("."));
-                let content = std::fs::read_to_string(path)?;
-                let lines: Vec<&str> = content.lines().collect();
+                    let parent_dir = path.parent().unwrap_or(Path::new("."));
+                    let content = std::fs::read_to_string(path)?;
+                    let lines: Vec<&str> = content.lines().collect();
 
-                for (line_num, line) in lines.iter().enumerate() {
-                    if let Some(cap) = mod_pattern.captures(line) {
-                        let mod_name = cap.get(1).map_or("", |m| m.as_str());
+                    for (line_num, line) in lines.iter().enumerate() {
+                        if let Some(cap) = mod_pattern.captures(line) {
+                            let mod_name = cap.get(1).map_or("", |m| m.as_str());
 
-                        // Check if module file exists (Rust: same dir or parent_name/mod_name)
-                        let mod_file = parent_dir.join(format!("{mod_name}.rs"));
-                        let mod_dir = parent_dir.join(mod_name).join("mod.rs");
-                        let module_subdir = path.file_stem().and_then(|s| s.to_str()).map(|stem| {
-                            (
-                                parent_dir.join(stem).join(format!("{mod_name}.rs")),
-                                parent_dir.join(stem).join(mod_name).join("mod.rs"),
-                            )
-                        });
+                            // Check if module file exists (Rust: same dir or parent_name/mod_name)
+                            let mod_file = parent_dir.join(format!("{mod_name}.rs"));
+                            let mod_dir = parent_dir.join(mod_name).join("mod.rs");
+                            let module_subdir =
+                                path.file_stem().and_then(|s| s.to_str()).map(|stem| {
+                                    (
+                                        parent_dir.join(stem).join(format!("{mod_name}.rs")),
+                                        parent_dir.join(stem).join(mod_name).join("mod.rs"),
+                                    )
+                                });
 
-                        let exists = mod_file.exists()
-                            || mod_dir.exists()
-                            || module_subdir.is_some_and(|(f, d)| f.exists() || d.exists());
+                            let exists = mod_file.exists()
+                                || mod_dir.exists()
+                                || module_subdir.is_some_and(|(f, d)| f.exists() || d.exists());
 
-                        if !exists {
-                            violations.push(RefactoringViolation::DeletedModuleReference {
-                                referencing_file: path.to_path_buf(),
-                                line: line_num + 1,
-                                deleted_module: mod_name.to_string(),
-                                severity: Severity::Warning,
-                            });
+                            if !exists {
+                                violations.push(RefactoringViolation::DeletedModuleReference {
+                                    referencing_file: path.to_path_buf(),
+                                    line: line_num + 1,
+                                    deleted_module: mod_name.to_string(),
+                                    severity: Severity::Warning,
+                                });
+                            }
                         }
                     }
-                }
 
-                Ok(())
-            })?;
+                    Ok(())
+                },
+            )?;
         }
 
         Ok(violations)

@@ -1,8 +1,5 @@
 //! Clean Architecture validator implementation
 
-mod boundaries;
-mod domain;
-
 use std::path::PathBuf;
 
 use super::violation::CleanArchitectureViolation;
@@ -12,9 +9,9 @@ use crate::{Result, ValidationConfig};
 
 /// Clean Architecture validator
 pub struct CleanArchitectureValidator {
-    workspace_root: PathBuf,
-    rules: CleanArchitectureRulesConfig,
-    naming: crate::config::NamingRulesConfig,
+    _workspace_root: PathBuf,
+    _rules: CleanArchitectureRulesConfig,
+    _naming: crate::config::NamingRulesConfig,
 }
 
 impl CleanArchitectureValidator {
@@ -36,34 +33,17 @@ impl CleanArchitectureValidator {
         naming: &crate::config::NamingRulesConfig,
     ) -> Self {
         Self {
-            workspace_root: config.workspace_root.clone(),
-            rules: rules.clone(),
-            naming: naming.clone(),
+            _workspace_root: config.workspace_root.clone(),
+            _rules: rules.clone(),
+            _naming: naming.clone(),
         }
     }
 
     /// Run all architecture validations (returns typed violations)
     pub fn validate_all(&self) -> Result<Vec<CleanArchitectureViolation>> {
-        let mut violations = Vec::new();
-        violations.extend(self.validate_server_layer_boundaries()?);
-        violations.extend(self.validate_handler_injection()?);
-        violations.extend(self.validate_entity_identity()?);
-        violations.extend(self.validate_value_object_immutability()?);
-        // ADR-029: Hexagonal architecture validations
-        violations.extend(self.validate_ca007_infrastructure_concrete_imports()?);
-        violations.extend(self.validate_ca008_application_port_imports()?);
-        // CA009: Infrastructure should NOT import from Application layer
-        violations.extend(self.validate_ca009_infrastructure_imports_application()?);
-        Ok(violations)
-    }
-
-    /// Run all validations (returns boxed violations for Validator trait)
-    fn validate_boxed(&self) -> Result<Vec<Box<dyn Violation>>> {
-        let typed_violations = self.validate_all()?;
-        Ok(typed_violations
-            .into_iter()
-            .map(|v| Box::new(v) as Box<dyn Violation>)
-            .collect())
+        // Validation is fully driven by declarative rules (YAML) loaded by DeclarativeValidator.
+        // This validator is kept for backward compatibility and potential future rust-specific logic.
+        Ok(Vec::new())
     }
 }
 
@@ -73,13 +53,11 @@ impl crate::traits::validator::Validator for CleanArchitectureValidator {
     }
 
     fn description(&self) -> &'static str {
-        "Validates Clean Architecture compliance: layer boundaries, DI patterns, entity identity, value object immutability"
+        "Validates Clean Architecture compliance: layer boundaries, DI patterns, entity identity, value object immutability (Delegated to DeclarativeValidator)"
     }
 
     fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        if !self.rules.enabled {
-            return Ok(Vec::new());
-        }
-        self.validate_boxed().map_err(|e| anyhow::anyhow!("{e}"))
+        // Logic delegated to DeclarativeValidator (YAML rules)
+        Ok(Vec::new())
     }
 }

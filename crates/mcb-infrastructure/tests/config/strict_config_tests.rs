@@ -282,7 +282,12 @@ fn test_no_direct_env_var_in_production_code() {
     ];
     let mut violations = Vec::new();
 
-    for crate_dir in &["mcb-server/src", "mcb-providers/src", "mcb-application/src"] {
+    for crate_dir in &[
+        "mcb-server/src",
+        "mcb-providers/src",
+        "mcb-application/src",
+        "mcb-infrastructure/src/di",
+    ] {
         let dir = root.join("crates").join(crate_dir);
         for file_path in scan_rs_files(&dir) {
             let content = fs::read_to_string(&file_path).unwrap_or_default();
@@ -389,6 +394,61 @@ fn test_no_serde_default_in_config_types() {
     assert!(
         violations.is_empty(),
         "serde(default) found in config types (operational defaults must come from default.toml):\n{}",
+        violations.join("\n")
+    );
+}
+
+#[test]
+fn test_no_hardcoded_fallback_for_security_ids() {
+    let root = workspace_root();
+
+    let security_id_fallback_patterns: &[(&str, &str)] = &[
+        (r#""default""#, "project_id"),
+        (r#""default""#, "org_id"),
+        (r#""default""#, "repo_id"),
+        (r#""unknown""#, "project_id"),
+    ];
+
+    let scan_dirs = &[
+        "mcb-server/src",
+        "mcb-infrastructure/src/di",
+        "mcb-providers/src",
+    ];
+
+    let mut violations = Vec::new();
+
+    for crate_dir in scan_dirs {
+        let dir = root.join("crates").join(crate_dir);
+        for file_path in scan_rs_files(&dir) {
+            let content = fs::read_to_string(&file_path).unwrap_or_default();
+            let relative = file_path.strip_prefix(&root).unwrap_or(&file_path);
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+                if trimmed.starts_with("//") || trimmed.starts_with("///") {
+                    continue;
+                }
+
+                for (fallback_str, id_context) in security_id_fallback_patterns {
+                    if line.contains(fallback_str) && line.contains(id_context) {
+                        violations.push(format!(
+                            "  {}:{}: hardcoded fallback {} near {}: {}",
+                            relative.display(),
+                            line_num + 1,
+                            fallback_str,
+                            id_context,
+                            trimmed
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    assert!(
+        violations.is_empty(),
+        "Hardcoded fallback values for security-sensitive IDs (project_id, org_id, repo_id) \
+         must never exist — auto-detect from workspace/MCP or fail:\n{}",
         violations.join("\n")
     );
 }

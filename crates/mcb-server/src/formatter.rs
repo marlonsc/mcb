@@ -289,8 +289,7 @@ fn build_indexing_started_message(result: &IndexingResult, path: &Path) -> Strin
     let operation_id = result
         .operation_id
         .as_ref()
-        .map(|id| id.as_str())
-        .unwrap_or_else(|| "unknown".to_string());
+        .map_or_else(|| "N/A".to_string(), |id| id.as_str());
 
     format!(
         "🚀 **Indexing Started**\n\n\

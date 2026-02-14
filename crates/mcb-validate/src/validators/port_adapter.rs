@@ -2,13 +2,14 @@
 //!
 //! Validates Clean Architecture port/adapter patterns.
 
+use crate::filters::LanguageId;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 
 use regex::Regex;
 
 use crate::config::PortAdapterRulesConfig;
-use crate::scan::for_each_rs_under_root;
+use crate::scan::for_each_file_under_root;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, ValidationConfig};
 
@@ -118,7 +119,8 @@ impl PortAdapterValidator {
             Regex::new(r"^\s*(?:async\s+)?fn\s+\w+").expect("valid regex literal")
         });
 
-        for_each_rs_under_root(config, &ports_dir, |path| {
+        for_each_file_under_root(config, &ports_dir, Some(LanguageId::Rust), |entry| {
+            let path = &entry.absolute_path;
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
 
@@ -187,7 +189,8 @@ impl PortAdapterValidator {
             .expect("valid regex literal")
         });
 
-        for_each_rs_under_root(config, &providers_dir, |path| {
+        for_each_file_under_root(config, &providers_dir, Some(LanguageId::Rust), |entry| {
+            let path = &entry.absolute_path;
             let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
             if file_name == "mod.rs" || file_name == "lib.rs" {
                 return Ok(());

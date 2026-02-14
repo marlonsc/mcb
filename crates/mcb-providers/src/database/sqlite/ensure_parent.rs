@@ -10,7 +10,7 @@ pub async fn ensure_org_exists(executor: &dyn DatabaseExecutor, timestamp: i64) 
             &[
                 SqlParam::String(DEFAULT_ORG_ID.to_string()),
                 SqlParam::String(DEFAULT_ORG_NAME.to_string()),
-                SqlParam::String("default".to_string()),
+                SqlParam::String(DEFAULT_ORG_NAME.to_lowercase()),
                 SqlParam::String("{}".to_string()),
                 SqlParam::I64(timestamp),
                 SqlParam::I64(timestamp),
@@ -37,7 +37,7 @@ pub async fn ensure_org_and_project(
                 SqlParam::String(project_id.to_string()),
                 SqlParam::String(DEFAULT_ORG_ID.to_string()),
                 SqlParam::String(format!("Project {project_id}")),
-                SqlParam::String("default".to_string()),
+                SqlParam::String(project_id.to_string()),
                 SqlParam::I64(timestamp),
                 SqlParam::I64(timestamp),
             ],

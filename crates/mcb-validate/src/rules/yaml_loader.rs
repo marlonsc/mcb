@@ -10,6 +10,7 @@ use serde_yaml;
 use super::templates::TemplateEngine;
 use super::yaml_validator::YamlRuleValidator;
 use crate::Result;
+use crate::filters::rule_filters::RuleFilters;
 
 /// Loaded and validated YAML rule
 #[derive(Debug, Clone)]
@@ -46,6 +47,8 @@ pub struct ValidatedRule {
     pub ast_query: Option<String>,
     /// Metrics configuration for schema v3 rules (Phase 4)
     pub metrics: Option<MetricsConfig>,
+    /// Optional filters to restrict rule applicability by language, dependency, or file pattern.
+    pub filters: Option<RuleFilters>,
 }
 
 /// Metrics configuration for rule/v3 rules
@@ -423,6 +426,10 @@ impl YamlRuleLoader {
             .get("metrics")
             .and_then(|v| serde_json::from_value::<MetricsConfig>(v.clone()).ok());
 
+        let filters = obj
+            .get("filters")
+            .and_then(|v| serde_json::from_value::<RuleFilters>(v.clone()).ok());
+
         Ok(ValidatedRule {
             id,
             name,
@@ -440,6 +447,7 @@ impl YamlRuleLoader {
             selectors,
             ast_query,
             metrics,
+            filters,
         })
     }
 

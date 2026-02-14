@@ -11,21 +11,58 @@ use super::dependency_parser::{CargoDependencyParser, WorkspaceDependencies};
 use super::file_matcher::FilePatternMatcher;
 use super::language_detector::LanguageDetector;
 
-/// Filter configuration for a rule
+/// File/directory pattern filter for allow/deny/skip applicability.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct ApplicabilityFilter {
+    /// Glob patterns matching file names or paths.
+    pub file_patterns: Option<Vec<String>>,
+    /// Glob patterns matching directory names or paths.
+    pub directory_patterns: Option<Vec<String>>,
+}
+
+impl ApplicabilityFilter {
+    /// Returns `true` when neither file nor directory patterns are defined.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.file_patterns.as_ref().is_none_or(|v| v.is_empty())
+            && self
+                .directory_patterns
+                .as_ref()
+                .is_none_or(|v| v.is_empty())
+    }
+}
+
+/// Filter configuration for a rule.
+///
+/// Precedence: `skip` > `deny` > `allow`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RuleFilters {
-    /// Languages this rule applies to
+    /// Language identifiers the rule applies to (e.g. `["rust", "python"]`).
     pub languages: Option<Vec<String>>,
-    /// Dependencies that must be present for this rule to run
+    /// Crate/package names whose presence activates this rule.
     pub dependencies: Option<Vec<String>>,
-    /// File patterns this rule applies to (supports ! prefix for exclusions)
+    /// Glob patterns for files the rule should match.
     pub file_patterns: Option<Vec<String>>,
+    /// Paths explicitly allowed (overridden by `deny` and `skip`).
+    pub allow: Option<ApplicabilityFilter>,
+    /// Paths explicitly denied (overridden by `skip`).
+    pub deny: Option<ApplicabilityFilter>,
+    /// Paths unconditionally excluded from this rule.
+    pub skip: Option<ApplicabilityFilter>,
 }
 
 impl RuleFilters {
-    /// Check if filters are empty (no filtering)
+    /// Returns `true` when no filter criteria are configured.
     pub fn is_empty(&self) -> bool {
-        self.languages.is_none() && self.dependencies.is_none() && self.file_patterns.is_none()
+        self.languages.is_none()
+            && self.dependencies.is_none()
+            && self.file_patterns.is_none()
+            && self
+                .allow
+                .as_ref()
+                .is_none_or(ApplicabilityFilter::is_empty)
+            && self.deny.as_ref().is_none_or(ApplicabilityFilter::is_empty)
+            && self.skip.as_ref().is_none_or(ApplicabilityFilter::is_empty)
     }
 }
 

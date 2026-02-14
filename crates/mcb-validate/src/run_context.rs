@@ -9,6 +9,7 @@ use std::sync::{Arc, Mutex};
 use walkdir::WalkDir;
 
 use crate::config::FileConfig;
+use crate::filters::{LanguageDetector, LanguageId};
 use crate::{Result, ValidationConfig};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,6 +32,8 @@ impl FileInventorySource {
 pub struct InventoryEntry {
     pub absolute_path: PathBuf,
     pub relative_path: PathBuf,
+    /// Language detected during inventory building (single-pass).
+    pub detected_language: Option<LanguageId>,
 }
 
 #[derive(Debug)]
@@ -92,6 +95,27 @@ impl ValidationRunContext {
         self.file_inventory.len()
     }
 
+    #[must_use]
+    pub fn files_for_language(&self, lang: LanguageId) -> Vec<&InventoryEntry> {
+        self.file_inventory
+            .iter()
+            .filter(|e| e.detected_language == Some(lang))
+            .collect()
+    }
+
+    #[must_use]
+    pub fn files_matching_languages(&self, langs: &[LanguageId]) -> Vec<&InventoryEntry> {
+        self.file_inventory
+            .iter()
+            .filter(|e| e.detected_language.is_some_and(|l| langs.contains(&l)))
+            .collect()
+    }
+
+    #[must_use]
+    pub fn rs_files(&self) -> Vec<&InventoryEntry> {
+        self.files_for_language(LanguageId::Rust)
+    }
+
     /// Read file content, using cache if available.
     ///
     /// # Errors
@@ -145,19 +169,22 @@ fn enumerate_inventory(
     workspace_root: &Path,
     ignore_patterns: &[String],
 ) -> Result<(Vec<InventoryEntry>, FileInventorySource)> {
+    let detector = LanguageDetector::new();
+
     if workspace_root.join(".git").exists()
-        && let Ok(Some(entries)) = enumerate_with_git(workspace_root, ignore_patterns)
+        && let Ok(Some(entries)) = enumerate_with_git(workspace_root, ignore_patterns, &detector)
     {
         return Ok((entries, FileInventorySource::Git));
     }
 
-    let entries = enumerate_with_walkdir(workspace_root, ignore_patterns)?;
+    let entries = enumerate_with_walkdir(workspace_root, ignore_patterns, &detector)?;
     Ok((entries, FileInventorySource::WalkDir))
 }
 
 fn enumerate_with_git(
     workspace_root: &Path,
     ignore_patterns: &[String],
+    detector: &LanguageDetector,
 ) -> std::io::Result<Option<Vec<InventoryEntry>>> {
     let output = Command::new("git")
         .arg("-C")
@@ -192,9 +219,12 @@ fn enumerate_with_git(
         }
 
         if seen.insert(relative.clone()) {
+            let abs = normalize_path(&absolute)?;
+            let lang = detector.detect(&abs, None);
             entries.push(InventoryEntry {
-                absolute_path: normalize_path(&absolute)?,
+                absolute_path: abs,
                 relative_path: relative,
+                detected_language: lang,
             });
         }
     }
@@ -205,6 +235,7 @@ fn enumerate_with_git(
 fn enumerate_with_walkdir(
     workspace_root: &Path,
     ignore_patterns: &[String],
+    detector: &LanguageDetector,
 ) -> std::io::Result<Vec<InventoryEntry>> {
     let mut seen = HashSet::new();
     let mut entries = Vec::new();
@@ -241,9 +272,11 @@ fn enumerate_with_walkdir(
         }
 
         if seen.insert(relative.clone()) {
+            let lang = detector.detect(&absolute, None);
             entries.push(InventoryEntry {
                 absolute_path: absolute,
                 relative_path: relative,
+                detected_language: lang,
             });
         }
     }

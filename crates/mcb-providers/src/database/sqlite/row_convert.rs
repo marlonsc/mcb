@@ -2,17 +2,26 @@
 
 use mcb_domain::constants::keys as schema;
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, CheckpointType};
+use mcb_domain::entities::issue::{IssueComment, IssueLabel};
 use mcb_domain::entities::memory::{
     Observation, ObservationMetadata, OriginContext, SessionSummary,
 };
 use mcb_domain::entities::project::Project;
+use mcb_domain::entities::project::{IssueStatus, IssueType, ProjectIssue};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::SqlRow;
 use mcb_domain::schema::COL_OBSERVATION_TYPE;
+use std::str::FromStr;
 
 /// Helper function to extract a required string field from a row.
 fn required_string(row: &dyn SqlRow, field_name: &str) -> Result<String> {
     row.try_get_string(field_name)?
+        .ok_or_else(|| Error::memory(format!("Missing {}", field_name)))
+}
+
+/// Helper function to extract a required i64 field from a row.
+fn required_i64(row: &dyn SqlRow, field_name: &str) -> Result<i64> {
+    row.try_get_i64(field_name)?
         .ok_or_else(|| Error::memory(format!("Missing {}", field_name)))
 }
 
@@ -198,5 +207,61 @@ pub fn row_to_project(row: &dyn SqlRow) -> Result<Project> {
         updated_at: row
             .try_get_i64("updated_at")?
             .ok_or_else(|| Error::memory("Missing updated_at"))?,
+    })
+}
+
+/// Build a `ProjectIssue` from a port row.
+pub fn row_to_issue(row: &dyn SqlRow) -> Result<ProjectIssue> {
+    let labels_json = required_string(row, "labels")?;
+    let labels = serde_json::from_str::<Vec<String>>(&labels_json)
+        .map_err(|e| Error::memory_with_source("decode labels json", e))?;
+
+    Ok(ProjectIssue {
+        id: required_string(row, "id")?,
+        org_id: required_string(row, "org_id")?,
+        project_id: required_string(row, "project_id")?,
+        created_by: required_string(row, "created_by")?,
+        phase_id: row.try_get_string("phase_id")?,
+        title: required_string(row, "title")?,
+        description: required_string(row, "description")?,
+        issue_type: IssueType::from_str(&required_string(row, "issue_type")?)
+            .map_err(|e| Error::memory(e.to_string()))?,
+        status: IssueStatus::from_str(&required_string(row, "status")?)
+            .map_err(|e| Error::memory(e.to_string()))?,
+        priority: required_i64(row, "priority")? as i32,
+        assignee: row.try_get_string("assignee")?,
+        labels,
+        estimated_minutes: row.try_get_i64("estimated_minutes")?,
+        actual_minutes: row.try_get_i64("actual_minutes")?,
+        notes: required_string(row, "notes")?,
+        design: required_string(row, "design")?,
+        parent_issue_id: row.try_get_string("parent_issue_id")?,
+        created_at: required_i64(row, "created_at")?,
+        updated_at: required_i64(row, "updated_at")?,
+        closed_at: row.try_get_i64("closed_at")?,
+        closed_reason: required_string(row, "closed_reason")?,
+    })
+}
+
+/// Build an `IssueComment` from a port row.
+pub fn row_to_comment(row: &dyn SqlRow) -> Result<IssueComment> {
+    Ok(IssueComment {
+        id: required_string(row, "id")?,
+        issue_id: required_string(row, "issue_id")?,
+        author_id: required_string(row, "author_id")?,
+        content: required_string(row, "content")?,
+        created_at: required_i64(row, "created_at")?,
+    })
+}
+
+/// Build an `IssueLabel` from a port row.
+pub fn row_to_label(row: &dyn SqlRow) -> Result<IssueLabel> {
+    Ok(IssueLabel {
+        id: required_string(row, "id")?,
+        org_id: required_string(row, "org_id")?,
+        project_id: required_string(row, "project_id")?,
+        name: required_string(row, "name")?,
+        color: required_string(row, "color")?,
+        created_at: required_i64(row, "created_at")?,
     })
 }

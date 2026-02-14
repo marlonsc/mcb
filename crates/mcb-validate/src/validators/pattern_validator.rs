@@ -15,6 +15,7 @@
 //! - Error types use `crate::error::Result<T>`
 //! - Provider pattern compliance
 
+use crate::filters::LanguageId;
 use std::path::PathBuf;
 
 use regex::Regex;
@@ -22,7 +23,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
 
 use crate::config::PatternRulesConfig;
-use crate::scan::for_each_scan_rs_path;
+use crate::scan::for_each_scan_file;
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
@@ -325,22 +326,28 @@ impl PatternValidator {
                 continue;
             }
 
-            for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
-                if candidate_src_dir != src_dir {
-                    return Ok(());
-                }
+            for_each_scan_file(
+                &self.config,
+                Some(LanguageId::Rust),
+                false,
+                |entry, candidate_src_dir| {
+                    let path = &entry.absolute_path;
+                    if candidate_src_dir != src_dir {
+                        return Ok(());
+                    }
 
-                let content = std::fs::read_to_string(path)?;
-                let file_violations = self.check_arc_usage_in_file(
-                    path,
-                    &content,
-                    &arc_pattern,
-                    allowed_concrete,
-                    provider_traits,
-                );
-                violations.extend(file_violations);
-                Ok(())
-            })?;
+                    let content = std::fs::read_to_string(path)?;
+                    let file_violations = self.check_arc_usage_in_file(
+                        path,
+                        &content,
+                        &arc_pattern,
+                        allowed_concrete,
+                        provider_traits,
+                    );
+                    violations.extend(file_violations);
+                    Ok(())
+                },
+            )?;
         }
 
         Ok(violations)
@@ -437,16 +444,22 @@ impl PatternValidator {
             if self.should_skip_crate(&src_dir) {
                 continue;
             }
-            for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
-                if candidate_src_dir != src_dir {
-                    return Ok(());
-                }
+            for_each_scan_file(
+                &self.config,
+                Some(LanguageId::Rust),
+                false,
+                |entry, candidate_src_dir| {
+                    let path = &entry.absolute_path;
+                    if candidate_src_dir != src_dir {
+                        return Ok(());
+                    }
 
-                let content = std::fs::read_to_string(path)?;
-                let file_violations = self.check_async_traits_in_file(path, &content);
-                violations.extend(file_violations);
-                Ok(())
-            })?;
+                    let content = std::fs::read_to_string(path)?;
+                    let file_violations = self.check_async_traits_in_file(path, &content);
+                    violations.extend(file_violations);
+                    Ok(())
+                },
+            )?;
         }
 
         Ok(violations)
@@ -568,16 +581,22 @@ impl PatternValidator {
                 continue;
             }
 
-            for_each_scan_rs_path(&self.config, false, |path, candidate_src_dir| {
-                if candidate_src_dir != src_dir {
-                    return Ok(());
-                }
+            for_each_scan_file(
+                &self.config,
+                Some(LanguageId::Rust),
+                false,
+                |entry, candidate_src_dir| {
+                    let path = &entry.absolute_path;
+                    if candidate_src_dir != src_dir {
+                        return Ok(());
+                    }
 
-                let content = std::fs::read_to_string(path)?;
-                let file_violations = self.check_result_types_in_file(path, &content);
-                violations.extend(file_violations);
-                Ok(())
-            })?;
+                    let content = std::fs::read_to_string(path)?;
+                    let file_violations = self.check_result_types_in_file(path, &content);
+                    violations.extend(file_violations);
+                    Ok(())
+                },
+            )?;
         }
 
         Ok(violations)

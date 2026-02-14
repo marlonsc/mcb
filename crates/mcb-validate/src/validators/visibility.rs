@@ -2,6 +2,7 @@
 //!
 //! Validates proper use of pub(crate), pub, and private visibility.
 
+use crate::filters::LanguageId;
 use std::collections::HashSet;
 use std::path::PathBuf;
 use std::sync::OnceLock;
@@ -9,7 +10,7 @@ use std::sync::OnceLock;
 use regex::Regex;
 
 use crate::config::VisibilityRulesConfig;
-use crate::scan::for_each_rs_under_root;
+use crate::scan::for_each_file_under_root;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, ValidationConfig};
 
@@ -137,7 +138,8 @@ impl VisibilityValidator {
                 continue;
             }
 
-            for_each_rs_under_root(config, &full_path, |path| {
+            for_each_file_under_root(config, &full_path, Some(LanguageId::Rust), |entry| {
+                let path = &entry.absolute_path;
                 let content = std::fs::read_to_string(path)?;
                 for (line_num, line) in content.lines().enumerate() {
                     let trimmed = line.trim();
@@ -179,7 +181,8 @@ impl VisibilityValidator {
                 continue;
             }
 
-            for_each_rs_under_root(config, &crate_src, |path| {
+            for_each_file_under_root(config, &crate_src, Some(LanguageId::Rust), |entry| {
+                let path = &entry.absolute_path;
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                 if !self.utility_module_patterns.iter().any(|p| p == file_name) {
                     return Ok(());

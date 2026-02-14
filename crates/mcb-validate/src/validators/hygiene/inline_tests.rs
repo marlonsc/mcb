@@ -1,5 +1,6 @@
+use crate::filters::LanguageId;
 use crate::pattern_registry::{required_pattern, required_patterns};
-use crate::scan::for_each_rs_under_root;
+use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
 
 use super::violation::HygieneViolation;
@@ -25,7 +26,8 @@ pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<Hygiene
         // Let's implement a local helper or use a shared one if available.
         // Similar to organization/validator.rs using generic scan, we can filter inside.
 
-        for_each_rs_under_root(config, &src_dir, |path| {
+        for_each_file_under_root(config, &src_dir, Some(LanguageId::Rust), |entry| {
+            let path = &entry.absolute_path;
             if path.to_str().is_some_and(|s| s.contains("/fixtures/")) {
                 return Ok(());
             }

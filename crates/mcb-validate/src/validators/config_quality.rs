@@ -10,7 +10,8 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
-use crate::scan::for_each_scan_rs_path;
+use crate::filters::LanguageId;
+use crate::scan::for_each_scan_file;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
 
@@ -113,26 +114,55 @@ impl ConfigQualityValidator {
         let _struct_pattern = Regex::new(r"pub\s+struct\s+(\w+)").unwrap();
         let _field_pattern = Regex::new(r"pub\s+(\w+):\s+").unwrap();
 
-        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            let is_config_file = path.to_str().is_some_and(|s| s.contains("/config/"))
-                || path
-                    .file_name()
-                    .and_then(|name| name.to_str())
-                    .is_some_and(|name| name.contains("config"));
-            if !is_config_file {
-                return Ok(());
-            }
+        for_each_scan_file(
+            &self.config,
+            Some(LanguageId::Rust),
+            false,
+            |entry, _src_dir| {
+                let is_config_file = entry
+                    .absolute_path
+                    .to_str()
+                    .is_some_and(|s| s.contains("/config/"))
+                    || entry
+                        .absolute_path
+                        .file_name()
+                        .and_then(|name| name.to_str())
+                        .is_some_and(|name| name.contains("config"));
+                if !is_config_file {
+                    return Ok(());
+                }
 
-            let content = std::fs::read_to_string(path)?;
-            let lines: Vec<&str> = content.lines().collect();
+                let content = std::fs::read_to_string(&entry.absolute_path)?;
+                let lines: Vec<&str> = content.lines().collect();
 
-            self.check_hardcoded_namespaces(path, &lines, &namespace_pattern, &mut violations);
-            self.check_hardcoded_client_names(path, &lines, &client_name_pattern, &mut violations);
-            self.check_hardcoded_headers(path, &lines, &header_pattern, &mut violations);
-            self.check_undocumented_defaults(path, &lines, &default_impl_pattern, &mut violations);
+                self.check_hardcoded_namespaces(
+                    &entry.absolute_path,
+                    &lines,
+                    &namespace_pattern,
+                    &mut violations,
+                );
+                self.check_hardcoded_client_names(
+                    &entry.absolute_path,
+                    &lines,
+                    &client_name_pattern,
+                    &mut violations,
+                );
+                self.check_hardcoded_headers(
+                    &entry.absolute_path,
+                    &lines,
+                    &header_pattern,
+                    &mut violations,
+                );
+                self.check_undocumented_defaults(
+                    &entry.absolute_path,
+                    &lines,
+                    &default_impl_pattern,
+                    &mut violations,
+                );
 
-            Ok(())
-        })?;
+                Ok(())
+            },
+        )?;
 
         Ok(violations)
     }

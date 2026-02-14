@@ -104,7 +104,7 @@ async fn run_server_mode(
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let (server, app_context) = create_mcp_server(config.clone()).await?;
+    let (server, app_context) = create_mcp_server(config.clone(), "server").await?;
     info!("MCP server initialized successfully");
 
     let event_bus = app_context.event_bus();
@@ -212,7 +212,7 @@ async fn run_standalone(config: AppConfig) -> Result<(), Box<dyn std::error::Err
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let (server, _app_context) = create_mcp_server(config).await?;
+    let (server, _app_context) = create_mcp_server(config, "standalone").await?;
     info!("MCP server initialized successfully");
 
     start_transport(server, transport_mode, &http_host, http_port).await
@@ -236,17 +236,23 @@ async fn run_client(config: AppConfig) -> Result<(), Box<dyn std::error::Error>>
 
     use crate::transport::http_client::HttpClientTransport;
 
-    let session_id_key = ["MCB", "SESSION", "ID"].join("_");
-    let session_file_key = ["MCB", "SESSION", "FILE"].join("_");
-    let env_session_id = std::env::var(&session_id_key).ok();
-    let env_session_file = std::env::var(&session_file_key).ok();
+    let cfg_session_id = config
+        .mode
+        .session_id
+        .clone()
+        .filter(|v| !v.trim().is_empty());
+    let cfg_session_file = config
+        .mode
+        .session_file
+        .clone()
+        .filter(|v| !v.trim().is_empty());
 
     let client = HttpClientTransport::new_with_session_source(
         server_url.clone(),
         session_prefix.map(String::from),
         std::time::Duration::from_secs(config.mode.timeout_secs),
-        env_session_id,
-        env_session_file,
+        cfg_session_id,
+        cfg_session_file,
     )?;
 
     client.run().await
@@ -272,12 +278,10 @@ fn load_config(config_path: Option<&Path>) -> Result<AppConfig, Box<dyn std::err
 /// Create and configure the MCP server with all services
 async fn create_mcp_server(
     config: AppConfig,
+    execution_flow: &str,
 ) -> Result<(McpServer, mcb_infrastructure::di::bootstrap::AppContext), Box<dyn std::error::Error>>
 {
-    // Create AppContext with resolved providers
     let app_context = mcb_infrastructure::di::bootstrap::init_app(config.clone()).await?;
-
-    // Build domain services from AppContext
     let services = app_context.build_domain_services().await?;
 
     let mcp_services = crate::mcp_server::McpServices {
@@ -295,9 +299,7 @@ async fn create_mcp_server(
         issue_entity: services.issue_entity_repository,
         org_entity: services.org_entity_repository,
     };
-    let execution_flow_key = ["MCB", "EXECUTION", "FLOW"].join("_");
-    let execution_flow = std::env::var(&execution_flow_key).ok();
-    let server = McpServer::from_services(mcp_services, execution_flow);
+    let server = McpServer::from_services(mcp_services, Some(execution_flow.to_string()));
 
     Ok((server, app_context))
 }

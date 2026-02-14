@@ -1,4 +1,5 @@
-use crate::scan::for_each_rs_under_root;
+use crate::filters::LanguageId;
+use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
 use std::sync::OnceLock;
@@ -53,7 +54,8 @@ pub fn validate_test_function_naming(config: &ValidationConfig) -> Result<Vec<Hy
             continue;
         }
 
-        for_each_rs_under_root(config, &tests_dir, |path| {
+        for_each_file_under_root(config, &tests_dir, Some(LanguageId::Rust), |entry| {
+            let path = &entry.absolute_path;
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
 

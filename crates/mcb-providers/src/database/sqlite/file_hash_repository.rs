@@ -12,7 +12,6 @@
 //! - **Integrity Checks**: Computing SHA-256 hashes of file contents on disk.
 
 use async_trait::async_trait;
-use std::io::{BufReader, Read};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -21,7 +20,6 @@ use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::ports::infrastructure::database::SqlParam;
 use mcb_domain::ports::repositories::FileHashRepository;
 use serde_json::json;
-use sha2::{Digest, Sha256};
 
 /// Configuration for SqliteFileHashRepository
 #[derive(Debug, Clone)]
@@ -309,25 +307,8 @@ impl FileHashRepository for SqliteFileHashRepository {
     }
 
     // TODO(architecture): Extract hash computation to a separate service or utility port.
-    // Mixing file I/O with database logic violates the Single Responsibility Principle and complicates testing.
+    // Delegated to domain utility to avoid mixing IO logic directly in DB repo body.
     fn compute_hash(&self, path: &Path) -> Result<String> {
-        let file = std::fs::File::open(path)
-            .map_err(|e| Error::io(format!("Failed to open file {path:?}: {e}")))?;
-
-        let mut reader = BufReader::new(file);
-        let mut hasher = Sha256::new();
-
-        let mut buffer = [0u8; 8192];
-        loop {
-            let bytes_read = reader
-                .read(&mut buffer)
-                .map_err(|e| Error::io(format!("Failed to read file {path:?}: {e}")))?;
-            if bytes_read == 0 {
-                break;
-            }
-            hasher.update(&buffer[..bytes_read]);
-        }
-
-        Ok(format!("{:x}", hasher.finalize()))
+        mcb_domain::utils::id::compute_file_hash(path)
     }
 }

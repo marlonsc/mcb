@@ -11,7 +11,8 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use crate::config::TestQualityRulesConfig;
-use crate::scan::for_each_scan_rs_path;
+use crate::filters::LanguageId;
+use crate::scan::for_each_scan_file;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig, ValidationError};
 
@@ -151,37 +152,54 @@ impl TestQualityValidator {
             .map_err(ValidationError::InvalidRegex)?;
         let _doc_comment_pattern = Regex::new(r"^\s*///").map_err(ValidationError::InvalidRegex)?;
 
-        for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            if !path
-                .to_str()
-                .is_some_and(|s| s.contains("/tests/") || s.contains("/test_"))
-            {
-                return Ok(());
-            }
+        for_each_scan_file(
+            &self.config,
+            Some(LanguageId::Rust),
+            false,
+            |entry, _src_dir| {
+                if !entry
+                    .absolute_path
+                    .to_str()
+                    .is_some_and(|s| s.contains("/tests/") || s.contains("/test_"))
+                {
+                    return Ok(());
+                }
 
-            let content = std::fs::read_to_string(path)?;
-            let lines: Vec<&str> = content.lines().collect();
+                let content = std::fs::read_to_string(&entry.absolute_path)?;
+                let lines: Vec<&str> = content.lines().collect();
 
-            self.check_ignored_tests(path, &lines, &test_pattern, &fn_pattern, &mut violations);
-            self.check_todo_in_fixtures(path, &lines, &fn_pattern, &mut violations);
-            self.check_empty_test_bodies(
-                path,
-                &lines,
-                &test_pattern,
-                &fn_pattern,
-                &empty_body_pattern,
-                &mut violations,
-            );
-            self.check_stub_assertions(
-                path,
-                &lines,
-                &test_pattern,
-                &stub_assert_pattern,
-                &fn_pattern,
-                &mut violations,
-            );
-            Ok(())
-        })?;
+                self.check_ignored_tests(
+                    &entry.absolute_path,
+                    &lines,
+                    &test_pattern,
+                    &fn_pattern,
+                    &mut violations,
+                );
+                self.check_todo_in_fixtures(
+                    &entry.absolute_path,
+                    &lines,
+                    &fn_pattern,
+                    &mut violations,
+                );
+                self.check_empty_test_bodies(
+                    &entry.absolute_path,
+                    &lines,
+                    &test_pattern,
+                    &fn_pattern,
+                    &empty_body_pattern,
+                    &mut violations,
+                );
+                self.check_stub_assertions(
+                    &entry.absolute_path,
+                    &lines,
+                    &test_pattern,
+                    &stub_assert_pattern,
+                    &fn_pattern,
+                    &mut violations,
+                );
+                Ok(())
+            },
+        )?;
 
         Ok(violations)
     }
