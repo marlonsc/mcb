@@ -128,10 +128,8 @@ async fn run_server_mode(
     let service_manager =
         mcb_infrastructure::infrastructure::ServiceManager::new(app_context.event_bus());
 
-    // Register services from AppContext
+    // Register services from AppContext (Arc clone is O(1) — atomic refcount increment)
     for service in &app_context.lifecycle_services {
-        // TODO(PERF001): Performance violation - clone in loop.
-        // Consider borrowing or moving instead of cloning to avoid unnecessary allocations.
         service_manager.register(service.clone());
     }
 

@@ -11,7 +11,6 @@ use rstest::rstest;
 #[case("project")]
 #[case("vcs")]
 #[case("entity")]
-#[test]
 fn test_tool_definitions_create_valid_tools(#[case] expected_name: &str) {
     let tools = create_tool_list().expect("should create tool list");
     assert_eq!(tools.len(), 9);

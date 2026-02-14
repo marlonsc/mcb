@@ -1,12 +1,17 @@
-#[test]
-fn admin_crud_adapter_routes_through_unified_dispatch() {
-    let crud_adapter = include_str!("../../src/admin/crud_adapter.rs");
-    assert!(crud_adapter.contains("route_tool_call("));
-    assert!(crud_adapter.contains("project_id is required for repository create"));
-    assert!(crud_adapter.contains("project_id is required for repository update"));
-    assert!(!crud_adapter.contains("vcs_entity_repository"));
-    assert!(!crud_adapter.contains("memory_repository"));
-    assert!(!crud_adapter.contains("project_repository"));
+use rstest::*;
+
+#[rstest]
+#[case("crud_adapter")]
+#[case("mcp_server")]
+#[case("http_transport")]
+fn route_calls_are_routed_via_unified_dispatch(#[case] source_key: &str) {
+    let source = match source_key {
+        "crud_adapter" => include_str!("../../src/admin/crud_adapter.rs"),
+        "mcp_server" => include_str!("../../src/mcp_server.rs"),
+        "http_transport" => include_str!("../../src/transport/http.rs"),
+        _ => panic!("unknown source"),
+    };
+    assert!(source.contains("route_tool_call("));
 }
 
 #[test]
@@ -19,13 +24,11 @@ fn admin_web_handlers_do_not_call_repositories_directly() {
 }
 
 #[test]
-fn mcp_server_routes_tool_calls_via_unified_router() {
-    let mcp_server = include_str!("../../src/mcp_server.rs");
-    assert!(mcp_server.contains("route_tool_call("));
-}
-
-#[test]
-fn http_transport_routes_tool_calls_via_unified_router() {
-    let http_transport = include_str!("../../src/transport/http.rs");
-    assert!(http_transport.contains("route_tool_call("));
+fn admin_crud_adapter_avoids_direct_repository_access() {
+    let crud_adapter = include_str!("../../src/admin/crud_adapter.rs");
+    assert!(crud_adapter.contains("project_id is required for repository create"));
+    assert!(crud_adapter.contains("project_id is required for repository update"));
+    assert!(!crud_adapter.contains("vcs_entity_repository"));
+    assert!(!crud_adapter.contains("memory_repository"));
+    assert!(!crud_adapter.contains("project_repository"));
 }

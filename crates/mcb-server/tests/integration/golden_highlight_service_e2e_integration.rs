@@ -84,7 +84,6 @@ fn test_golden_highlight_all_languages() {
 #[case("rust", "// comment")]
 #[case("rust", "let x = 1;")]
 #[case("rust", "#[derive(Debug)]")]
-#[test]
 fn test_golden_highlight_categories(#[case] lang: &str, #[case] code: &str) {
     let result = highlight_code(code, lang, &get_service());
     assert!(
@@ -98,7 +97,6 @@ fn test_golden_highlight_categories(#[case] lang: &str, #[case] code: &str) {
 #[rstest]
 #[case("", "rust")]
 #[case("   \n\n  ", "rust")]
-#[test]
 fn test_golden_highlight_empty_like_input(#[case] code: &str, #[case] lang: &str) {
     let result = highlight_code(code, lang, &get_service());
     if code.is_empty() {

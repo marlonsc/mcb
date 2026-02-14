@@ -8,27 +8,20 @@ use mcb_infrastructure::config::{
     AuthConfig, CacheProvider, CacheSystemConfig, ServerConfig, ServerConfigBuilder,
     ServerConfigPresets, ServerSslConfig,
 };
-use rstest::rstest;
+use rstest::*;
+
+#[rstest]
+#[case(0)]
+#[case(80)]
+#[case(443)]
+#[case(65535)]
+fn server_config_port_validation(#[case] port: u16) {
+    let config = ServerConfigBuilder::new().port(port).build();
+    assert_eq!(config.network.port, port);
+}
 
 #[test]
-fn test_server_config_port_validation() {
-    // Port 0 is valid for random port allocation
-    let random_port_config = ServerConfigBuilder::new().port(0).build();
-    assert_eq!(random_port_config.network.port, 0);
-
-    // Standard HTTP port
-    let http_config = ServerConfigBuilder::new().port(80).build();
-    assert_eq!(http_config.network.port, 80);
-
-    // Standard HTTPS port
-    let https_config = ServerConfigBuilder::new().port(443).build();
-    assert_eq!(https_config.network.port, 443);
-
-    // High port number (valid)
-    let high_port_config = ServerConfigBuilder::new().port(65535).build();
-    assert_eq!(high_port_config.network.port, 65535);
-
-    // Verify address parsing works with different ports
+fn server_config_address_parsing() {
     let config = ServerConfigBuilder::new()
         .host("127.0.0.1")
         .port(8080)
@@ -211,8 +204,7 @@ fn test_default_config_is_valid() {
 #[rstest]
 #[case("localhost", 8080, false, "http://localhost:8080")]
 #[case("api.example.com", 443, true, "https://api.example.com:443")]
-#[test]
-fn test_server_url_generation(
+fn server_url_generation(
     #[case] host: &str,
     #[case] port: u16,
     #[case] https: bool,
@@ -259,8 +251,7 @@ fn test_cors_configuration() {
 #[rstest]
 #[case(120, 30)]
 #[case(60, 10)]
-#[test]
-fn test_timeout_configuration(#[case] request_secs: u64, #[case] connection_secs: u64) {
+fn timeout_configuration(#[case] request_secs: u64, #[case] connection_secs: u64) {
     let config = ServerConfigBuilder::new()
         .request_timeout(request_secs)
         .connection_timeout(connection_secs)

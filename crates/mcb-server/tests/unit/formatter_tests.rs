@@ -30,7 +30,6 @@ fn build_indexing_result(
 #[case(0, 50, 10)]
 #[case(5, 2_000, 10)]
 #[case(10, 100, 10)]
-#[test]
 fn test_format_search_response(#[case] count: usize, #[case] duration_ms: u64, #[case] max: usize) {
     let results = if count == 0 {
         Vec::new()

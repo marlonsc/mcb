@@ -1,7 +1,4 @@
 use mcb_domain::error::Error;
-// TODO(REF003): Missing test file for crates/mcb-server/src/error_mapping.rs.
-// Tracking: REF003
-
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 
 fn format_error(label: &str, detail: impl std::fmt::Display) -> String {

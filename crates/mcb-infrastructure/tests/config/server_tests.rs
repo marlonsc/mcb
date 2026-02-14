@@ -4,6 +4,7 @@ use std::net::SocketAddr;
 
 use mcb_infrastructure::config::{ServerConfig, ServerConfigBuilder, ServerConfigPresets};
 use mcb_infrastructure::constants::http::DEFAULT_HTTPS_PORT;
+use rstest::*;
 
 #[test]
 fn test_parse_address() {
@@ -15,20 +16,16 @@ fn test_parse_address() {
     assert_eq!(address, SocketAddr::from(([127, 0, 0, 1], 8080)));
 }
 
-#[test]
-fn test_server_url() {
-    let mut http_config = ServerConfig::default();
-    http_config.network.host = "127.0.0.1".to_string();
-    http_config.network.port = 8080;
-    http_config.ssl.https = false;
+#[rstest]
+#[case("127.0.0.1", 8080, false, "http://127.0.0.1:8080")]
+#[case("example.com", 8443, true, "https://example.com:8443")]
+fn server_url(#[case] host: &str, #[case] port: u16, #[case] https: bool, #[case] expected: &str) {
+    let mut config = ServerConfig::default();
+    config.network.host = host.to_string();
+    config.network.port = port;
+    config.ssl.https = https;
 
-    let mut https_config = ServerConfig::default();
-    https_config.network.host = "example.com".to_string();
-    https_config.network.port = 8443;
-    https_config.ssl.https = true;
-
-    assert_eq!(http_config.get_base_url(), "http://127.0.0.1:8080");
-    assert_eq!(https_config.get_base_url(), "https://example.com:8443");
+    assert_eq!(config.get_base_url(), expected);
 }
 
 #[test]

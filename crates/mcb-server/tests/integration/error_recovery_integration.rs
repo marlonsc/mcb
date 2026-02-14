@@ -44,7 +44,6 @@ fn unique_test_config() -> AppConfig {
 #[case("vector_store")]
 #[case("cache")]
 #[case("language")]
-#[test]
 fn test_unknown_provider_error_message(#[case] provider_kind: &str) {
     let result_text = match provider_kind {
         "embedding" => {

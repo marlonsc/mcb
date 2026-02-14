@@ -23,7 +23,7 @@ use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
-use rstest::rstest;
+use rstest::*;
 
 fn test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
@@ -44,8 +44,7 @@ fn test_config() -> (AppConfig, tempfile::TempDir) {
 #[case("vector_store", "edgevec")]
 #[case("cache", "moka")]
 #[case("language", "universal")]
-#[test]
-fn test_all_expected_providers_registered(#[case] provider_type: &str, #[case] expected: &str) {
+fn all_expected_providers_registered(#[case] provider_type: &str, #[case] expected: &str) {
     let provider_names: Vec<&str> = match provider_type {
         "embedding" => list_embedding_providers()
             .iter()
@@ -263,8 +262,7 @@ fn test_registry_entries_have_valid_descriptions() {
 #[case("vector_store")]
 #[case("cache")]
 #[case("language")]
-#[test]
-fn test_provider_resolution_fails_gracefully_for_unknown(#[case] provider_type: &str) {
+fn provider_resolution_fails_gracefully_for_unknown(#[case] provider_type: &str) {
     let result = match provider_type {
         "embedding" => {
             resolve_embedding_provider(&EmbeddingProviderConfig::new("xyz123")).map(|_| ())

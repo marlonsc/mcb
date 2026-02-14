@@ -35,7 +35,6 @@ fn test_mcp_request_serialization(
 #[rstest]
 #[case(true, Some(serde_json::json!(1)), -32600, "Invalid request")]
 #[case(false, Some(serde_json::json!(1)), -32600, "Invalid request")]
-#[test]
 fn test_mcp_response_shapes(
     #[case] is_error: bool,
     #[case] id: Option<serde_json::Value>,

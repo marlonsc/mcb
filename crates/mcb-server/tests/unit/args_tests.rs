@@ -48,7 +48,6 @@ fn build_index_args(path: Option<&str>, collection: Option<&str>) -> IndexArgs {
 #[case(build_index_args(Some("/tmp/test"), Some("test")), true)]
 #[case(build_index_args(None, None), true)]
 #[case(build_index_args(Some("../../../etc/passwd"), None), false)]
-#[test]
 fn test_index_args_validation(#[case] args: IndexArgs, #[case] expected_valid: bool) {
     assert_eq!(args.validate().is_ok(), expected_valid);
 }

@@ -17,7 +17,6 @@ fn test_admin_auth_config_default() {
 #[case(Some("secret-key"), "secret-key", true, true)]
 #[case(Some("secret-key"), "wrong-key", false, true)]
 #[case(None, "any-key", false, false)]
-#[test]
 fn test_admin_auth_key_validation(
     #[case] api_key: Option<&str>,
     #[case] candidate_key: &str,
@@ -41,7 +40,6 @@ fn test_admin_auth_key_validation(
 #[case("/config", false)]
 #[case("/metrics", false)]
 #[case("/shutdown", false)]
-#[test]
 fn test_is_unauthenticated_route(#[case] path: &str, #[case] expected: bool) {
     assert_eq!(is_unauthenticated_route(path), expected);
 }

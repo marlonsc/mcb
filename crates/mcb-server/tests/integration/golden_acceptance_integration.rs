@@ -146,7 +146,6 @@ fn test_golden_queries_fixture_valid() {
 #[case("timeout_ms", true)]
 #[case("top_k", true)]
 #[case("relevance_threshold", true)]
-#[test]
 fn test_config_values_reasonable(#[case] field: &str, #[case] expected_valid: bool) {
     let config = load_golden_queries();
     let is_valid = match field {
@@ -207,7 +206,6 @@ fn test_sample_codebase_files_exist() {
 #[case("di.rs")]
 #[case("error.rs")]
 #[case("chunking.rs")]
-#[test]
 fn test_sample_codebase_contains_expected_file(#[case] expected_file: &str) {
     let file_names: Vec<String> = read_sample_codebase_files()
         .into_iter()

@@ -27,7 +27,6 @@ fn create_test_admin_api() -> AdminApi {
 #[rstest]
 #[case("current_provider", "ollama", json!({ "current_provider": "ollama" }))]
 #[case("switched_to", "openai", json!({ "switched_to": "openai" }))]
-#[test]
 fn test_admin_api_provider_payload_shapes(
     #[case] field: &str,
     #[case] expected: &str,
@@ -67,7 +66,6 @@ fn test_admin_api_creation_with_config() {
 #[case("status")]
 #[case("uptime_seconds")]
 #[case("active_indexing_operations")]
-#[test]
 fn test_admin_api_health_check_payload_contains_required_fields(#[case] field: &str) {
     let _admin_api = create_test_admin_api();
 

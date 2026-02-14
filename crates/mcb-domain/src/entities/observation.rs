@@ -75,7 +75,6 @@ pub struct ObservationMetadata {
     /// Details about the quality gate result (if applicable).
     pub quality_gate: Option<QualityGateResult>,
     /// Contextual information about the origin of the observation.
-    #[allow(missing_docs)]
     pub origin_context: Option<OriginContext>,
 }
 

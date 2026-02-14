@@ -23,7 +23,7 @@ use mcb_server::session::SessionManager;
 use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
 use mcb_server::transport::http_client::HttpClientTransport;
 use mcb_server::transport::types::{McpRequest, McpResponse};
-use rstest::rstest;
+use rstest::*;
 
 /// Get a random available port by binding to port 0 and extracting the assigned port
 fn get_free_port() -> u16 {
@@ -406,23 +406,26 @@ fn test_mcp_response_error_serialization_roundtrip() {
 // App Config Mode Integration Tests
 // ============================================================================
 
-#[test]
-fn test_app_config_default_mode_is_standalone() {
-    let (config, _temp_dir) = create_test_config();
-
-    assert_eq!(config.mode.mode_type, OperatingMode::Standalone);
-    assert!(config.mode.is_standalone());
-}
-
-#[test]
-fn test_app_config_with_client_mode() {
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn app_config_mode_setup(#[case] use_client_mode: bool) {
     let (mut config, _temp_dir) = create_test_config();
-    let port = get_free_port();
+    let mut expected_port = None;
 
-    config.mode = create_client_config(port);
+    if use_client_mode {
+        let port = get_free_port();
+        config.mode = create_client_config(port);
+        expected_port = Some(port);
+    }
 
-    assert!(config.mode.is_client());
-    assert!(config.mode.server_url.contains(&port.to_string()));
+    if let Some(port) = expected_port {
+        assert!(config.mode.is_client());
+        assert!(config.mode.server_url.contains(&port.to_string()));
+    } else {
+        assert_eq!(config.mode.mode_type, OperatingMode::Standalone);
+        assert!(config.mode.is_standalone());
+    }
 }
 
 // ============================================================================

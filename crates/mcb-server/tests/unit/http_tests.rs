@@ -16,7 +16,6 @@ fn test_http_config_default() {
 #[rstest]
 #[case(7)]
 #[case(9)]
-#[test]
 fn test_http_config_localhost_variants(#[case] offset: u16) {
     let loaded = ConfigLoader::new().load().expect("load config");
     let override_port = loaded.server.network.port.saturating_add(offset);

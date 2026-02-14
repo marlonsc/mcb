@@ -7,7 +7,6 @@ use rstest::rstest;
 #[rstest]
 #[case(Error::NotFound { resource: "test".to_string() }, "Not found: test")]
 #[case(Error::Internal { message: "secret".to_string() }, "internal server error")]
-#[test]
 fn test_to_opaque_mcp_error(#[case] err: Error, #[case] expected_message: &str) {
     let mcp_err = to_opaque_mcp_error(err);
     assert_eq!(mcp_err.message, expected_message);

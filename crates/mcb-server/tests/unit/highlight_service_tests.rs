@@ -189,7 +189,6 @@ fn main() {
 #[case("comment", HighlightCategory::Comment)]
 #[case("number", HighlightCategory::Number)]
 #[case("unknown", HighlightCategory::Other)]
-#[test]
 fn test_highlight_category_mapping(#[case] token_type: &str, #[case] expected: HighlightCategory) {
     assert_eq!(map_highlight_to_category(token_type), expected);
 }

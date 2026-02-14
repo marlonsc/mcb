@@ -7,7 +7,6 @@ use rstest::rstest;
 #[case(JSONRPC_INVALID_REQUEST, -32600)]
 #[case(JSONRPC_INVALID_PARAMS, -32602)]
 #[case(JSONRPC_INTERNAL_ERROR, -32603)]
-#[test]
 fn test_jsonrpc_constants_exist(#[case] actual: i32, #[case] expected: i32) {
     assert_eq!(actual, expected);
 }

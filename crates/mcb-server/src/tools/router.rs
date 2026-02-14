@@ -78,7 +78,7 @@ pub struct ToolExecutionContext {
     pub delegated: Option<bool>,
     /// Execution timestamp (Unix timestamp in seconds).
     pub timestamp: Option<i64>,
-    #[allow(missing_docs)]
+    /// Optional execution flow identifier for tracing.
     pub execution_flow: Option<String>,
 }
 

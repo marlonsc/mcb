@@ -22,7 +22,6 @@ pub struct SessionSummary {
     /// Stores the key files value.
     pub key_files: Vec<String>,
     /// Contextual information about the origin of the session.
-    #[allow(missing_docs)]
     pub origin_context: Option<OriginContext>,
     /// Stores the created at value.
     pub created_at: i64,

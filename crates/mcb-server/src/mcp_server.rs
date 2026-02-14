@@ -41,8 +41,6 @@ fn meta_value_as_string(meta: &Meta, keys: &[&str]) -> Option<String> {
     for key in keys {
         let value = meta.get(*key)?;
         let extracted = match value {
-            // TODO(PERF001): Performance violation - clone in loop.
-            // This string clone occurs inside a key-iteration loop. Consider using references if possible.
             Value::String(v) => Some(v.clone()),
             Value::Number(v) => Some(v.to_string()),
             Value::Bool(v) => Some(v.to_string()),

@@ -19,7 +19,6 @@ fn test_default_is_stdio() {
 #[case("stdio", 0, TransportMode::Stdio)]
 #[case("http", 8, TransportMode::Http)]
 #[case("hybrid", 3, TransportMode::Hybrid)]
-#[test]
 fn test_transport_constructors(
     #[case] kind: &str,
     #[case] offset: u16,

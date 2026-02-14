@@ -11,8 +11,8 @@ use rstest::*;
 fn traverse_variants(#[case] nested: bool) {
     let root = if nested {
         let root = FileTreeNode::directory("root", "root");
-        let mut subdir = FileTreeNode::directory("subdir", "root/subdir");
-        subdir = subdir.with_child(FileTreeNode::file(
+        let subdir = FileTreeNode::directory("subdir", "root/subdir");
+        let subdir = subdir.with_child(FileTreeNode::file(
             "file.rs",
             "root/subdir/file.rs",
             3,

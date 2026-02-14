@@ -1,7 +1,6 @@
 //! Macros shared by CRUD-style tool handlers.
 
 #[macro_export]
-// TODO(NAME006): CA naming: Handler file outside handlers/ directory - Move to handlers/, admin/, or tools/
 /// Dispatches `(action, resource)` pairs to handler expressions with an optional fallback.
 macro_rules! entity_crud_dispatch {
     (

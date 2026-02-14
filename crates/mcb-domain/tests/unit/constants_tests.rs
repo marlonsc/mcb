@@ -17,12 +17,12 @@ fn test_indexing_constant_values(#[case] constant: usize, #[case] expected: usiz
 
 #[test]
 fn test_indexing_constants_relationships() {
-    assert!(INDEXING_BATCH_SIZE > 0);
-    assert!(INDEXING_BATCH_SIZE <= 100);
-    assert!(INDEXING_CHUNK_MIN_LENGTH >= 10);
-    assert!(INDEXING_CHUNK_MIN_LINES >= 1);
-    assert!(INDEXING_CHUNKS_MAX_PER_FILE >= 10);
-    assert!(INDEXING_CHUNKS_MAX_PER_FILE <= 200);
+    const { assert!(INDEXING_BATCH_SIZE > 0) };
+    const { assert!(INDEXING_BATCH_SIZE <= 100) };
+    const { assert!(INDEXING_CHUNK_MIN_LENGTH >= 10) };
+    const { assert!(INDEXING_CHUNK_MIN_LINES >= 1) };
+    const { assert!(INDEXING_CHUNKS_MAX_PER_FILE >= 10) };
+    const { assert!(INDEXING_CHUNKS_MAX_PER_FILE <= 200) };
 }
 
 #[rstest]

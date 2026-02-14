@@ -139,7 +139,6 @@ pub fn create_test_indexing_result(
 
 /// Create a single test search result
 #[allow(dead_code)]
-#[allow(dead_code)]
 pub fn create_test_search_result(
     file_path: &str,
     content: &str,

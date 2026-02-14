@@ -23,23 +23,22 @@ fn test_performance_metrics_initial_state(metrics: AtomicPerformanceMetrics) {
 }
 
 #[rstest]
-#[case(100, true, false, 1, 1, 0, 100.0, 0.0)]
-#[case(50, false, false, 1, 0, 1, 0.0, 0.0)]
-// Note: avg response time logic might only count successful ones?
-// Checking original test: test_record_failed_query -> avg response time not asserted.
-// Checking test_record_successful_query -> avg response time IS asserted.
-// Let's stick to separate tests if logic differs significanly, or use logic in test.
+#[case((100, true, false), (1, 1, 0, 100.0, 0.0))]
+#[case((50, false, false), (1, 0, 1, 0.0, 0.0))]
 fn test_record_query(
     metrics: AtomicPerformanceMetrics,
-    #[case] time_ms: u64,
-    #[case] success: bool,
-    #[case] cache_hit: bool,
-    #[case] expected_total: u64,
-    #[case] expected_success: u64,
-    #[case] expected_failed: u64,
-    #[case] expected_avg_time: f64,
-    #[case] expected_cache_hit_rate: f64,
+    #[case] input: (u64, bool, bool),
+    #[case] expected: (u64, u64, u64, f64, f64),
 ) {
+    let (time_ms, success, cache_hit) = input;
+    let (
+        expected_total,
+        expected_success,
+        expected_failed,
+        expected_avg_time,
+        expected_cache_hit_rate,
+    ) = expected;
+
     metrics.record_query(time_ms, success, cache_hit);
     let data = metrics.get_performance_metrics();
 

@@ -23,7 +23,6 @@ fn test_get_str() {
 #[rstest]
 #[case(json!({"key": 42}), Some(42))]
 #[case(json!({"missing": 10}), None)]
-#[test]
 fn test_get_i64(#[case] value: serde_json::Value, #[case] expected: Option<i64>) {
     let map = value.as_object().unwrap();
     assert_eq!(map.get("key").and_then(|entry| entry.as_i64()), expected);
@@ -32,7 +31,6 @@ fn test_get_i64(#[case] value: serde_json::Value, #[case] expected: Option<i64>)
 #[rstest]
 #[case(json!({"key": true}), Some(true))]
 #[case(json!({"missing": false}), None)]
-#[test]
 fn test_get_bool(#[case] value: serde_json::Value, #[case] expected: Option<bool>) {
     let map = value.as_object().unwrap();
     assert_eq!(map.get("key").and_then(|entry| entry.as_bool()), expected);

@@ -9,7 +9,6 @@ use rstest::rstest;
 #[case("search")]
 #[case("validate")]
 #[case("memory")]
-#[test]
 fn test_tool_definitions_core(#[case] tool_name: &str) {
     let tool = match tool_name {
         "index" => ToolDefinitions::index().expect("Should create index tool"),

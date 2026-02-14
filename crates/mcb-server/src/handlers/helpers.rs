@@ -1,10 +1,6 @@
 //! Shared helper functions for tool handlers.
 
 use std::time::{SystemTime, UNIX_EPOCH};
-// TODO(REF003): Missing test file for crates/mcb-server/src/handler_helpers.rs.
-// Expected: crates/mcb-server/tests/handler_helpers_test.rs
-// TODO(NAME006): Handler file outside handlers/ directory.
-// Move to handlers/, admin/, or tools/.
 
 use mcb_domain::entities::memory::OriginContext;
 use mcb_domain::error::Error;
@@ -85,7 +81,6 @@ pub fn resolve_identifier_precedence(
 }
 
 /// Input parameters for resolving an `OriginContext`.
-#[allow(missing_docs)]
 pub struct OriginContextInput<'a> {
     /// The organization ID.
     pub org_id: Option<&'a str>,
@@ -160,7 +155,6 @@ pub struct OriginContextInput<'a> {
 }
 
 /// Resolves an `OriginContext` from the provided input, handling precedence between args and payload.
-#[allow(missing_docs)]
 // TODO(KISS005): Function resolve_origin_context is too long (88 lines, max: 50).
 // Break into smaller, focused functions.
 pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginContext, McpError> {

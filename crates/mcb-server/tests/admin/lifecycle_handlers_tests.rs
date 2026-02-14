@@ -8,7 +8,6 @@ use rstest::rstest;
 #[rstest]
 #[case(2, true)]
 #[case(0, false)]
-#[test]
 fn test_service_list_response_serialization(#[case] count: usize, #[case] with_services: bool) {
     let response = ServiceListResponse {
         count,

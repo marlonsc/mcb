@@ -2,18 +2,22 @@
 
 use mcb_infrastructure::constants::logging::{DEFAULT_LOG_LEVEL, LOG_MAX_FILES, LOG_ROTATION_SIZE};
 use mcb_infrastructure::logging::{LoggingConfig, parse_log_level};
+use rstest::*;
 use tracing::Level;
 
-#[test]
-fn test_parse_log_level() {
-    assert_eq!(parse_log_level("trace").unwrap(), Level::TRACE);
-    assert_eq!(parse_log_level("debug").unwrap(), Level::DEBUG);
-    assert_eq!(parse_log_level("info").unwrap(), Level::INFO);
-    assert_eq!(parse_log_level("warn").unwrap(), Level::WARN);
-    assert_eq!(parse_log_level("warning").unwrap(), Level::WARN);
-    assert_eq!(parse_log_level("error").unwrap(), Level::ERROR);
-
-    assert!(parse_log_level("invalid").is_err());
+#[rstest]
+#[case("trace", Some(Level::TRACE))]
+#[case("debug", Some(Level::DEBUG))]
+#[case("info", Some(Level::INFO))]
+#[case("warn", Some(Level::WARN))]
+#[case("warning", Some(Level::WARN))]
+#[case("error", Some(Level::ERROR))]
+#[case("invalid", None)]
+fn parse_log_level_values(#[case] input: &str, #[case] expected: Option<Level>) {
+    match expected {
+        Some(level) => assert_eq!(parse_log_level(input).unwrap(), level),
+        None => assert!(parse_log_level(input).is_err()),
+    }
 }
 
 #[test]

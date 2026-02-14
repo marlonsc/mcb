@@ -7,11 +7,11 @@ use crate::handlers::test_helpers::create_real_domain_services;
 use crate::test_utils::test_fixtures::create_temp_codebase;
 
 #[rstest]
-#[case::valid(true, None, Some("test"), true)]
-#[case::nonexistent(false, Some("/nonexistent/path/to/codebase"), Some("test"), false)]
-#[case::missing_path(false, None, Some("test"), false)]
-#[case::missing_collection(true, None, None, false)]
-#[case::service_error(false, Some("/definitely/nonexistent/mcb-path"), Some("test"), false)]
+#[case(true, None, Some("test"), true)]
+#[case(false, Some("/nonexistent/path/to/codebase"), Some("test"), false)]
+#[case(false, None, Some("test"), false)]
+#[case(true, None, None, false)]
+#[case(false, Some("/definitely/nonexistent/mcb-path"), Some("test"), false)]
 #[tokio::test]
 async fn test_index_codebase(
     #[case] create_codebase: bool,
