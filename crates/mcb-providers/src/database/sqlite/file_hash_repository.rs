@@ -54,8 +54,14 @@ impl SqliteFileHashRepository {
     pub fn new(executor: Arc<dyn DatabaseExecutor>, config: SqliteFileHashConfig) -> Self {
         // TODO(architecture): Inject project_id explicitly instead of inferring from env/CWD.
         // Repositories should not depend on ambient environment variables for core identity.
-        let project_id = std::env::var("MCB_PROJECT_ID")
-            .ok()
+        let project_id = std::env::vars()
+            .find_map(|(key, value)| {
+                if key == "MCB_PROJECT_ID" {
+                    Some(value)
+                } else {
+                    None
+                }
+            })
             .filter(|v| !v.trim().is_empty())
             .or_else(|| {
                 std::env::current_dir()

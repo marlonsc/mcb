@@ -202,24 +202,7 @@ fn run_file_validation(
 // TODO(architecture): Use shared workspace detection utility from domain/providers.
 // Reimplementing this logic here duplicates code and risks inconsistency.
 fn find_workspace_root(start: &Path) -> Option<std::path::PathBuf> {
-    let mut current = if start.is_file() {
-        start.parent()?.to_path_buf()
-    } else {
-        start.to_path_buf()
-    };
-
-    loop {
-        let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists()
-            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
-            && content.contains("[workspace]")
-        {
-            return Some(current);
-        }
-        if !current.pop() {
-            return None;
-        }
-    }
+    mcb_validate::find_workspace_root_from(start)
 }
 
 fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {

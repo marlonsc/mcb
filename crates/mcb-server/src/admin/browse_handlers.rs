@@ -224,7 +224,7 @@ pub async fn get_file_chunks(
         {
             Ok(h) => {
                 let html =
-                    mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(&h);
+                    mcb_infrastructure::services::highlight_renderer::HtmlRenderer::render(&h);
                 (html, c.content, c.language)
             }
             Err(_) => {
@@ -234,8 +234,9 @@ pub async fn get_file_chunks(
                     vec![],
                     c.language,
                 );
-                let html =
-                    mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(&fallback);
+                let html = mcb_infrastructure::services::highlight_renderer::HtmlRenderer::render(
+                    &fallback,
+                );
                 (html, fallback.original, fallback.language)
             }
         };

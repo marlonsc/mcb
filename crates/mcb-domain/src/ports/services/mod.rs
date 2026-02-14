@@ -10,7 +10,9 @@ pub mod project;
 pub mod search;
 pub mod validation;
 
-pub use agent::AgentSessionServiceInterface;
+pub use agent::{
+    AgentSessionManager, AgentSessionServiceInterface, CheckpointManager, DelegationTracker,
+};
 pub use chunking::{ChunkingOptions, ChunkingOrchestratorInterface, ChunkingResult, CodeChunker};
 pub use context::ContextServiceInterface;
 pub use hash::FileHashService;

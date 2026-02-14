@@ -3,11 +3,13 @@
 //! Tests for configuration validation across all config types.
 
 use rstest::rstest;
+use serial_test::serial;
 use std::path::PathBuf;
 
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::{
-    AuthConfig, CacheProvider, CacheSystemConfig, ServerConfig, ServerConfigBuilder,
-    ServerConfigPresets, ServerSslConfig,
+    CacheProvider, CacheSystemConfig, ServerConfig, ServerConfigBuilder, ServerConfigPresets,
+    ServerSslConfig,
 };
 
 #[rstest]
@@ -31,17 +33,18 @@ fn server_config_address_parsing() {
 }
 
 #[test]
+#[serial]
 fn test_auth_config_jwt_secret_length() {
     // Default config has empty secret - MUST be configured when auth is enabled
     // per ADR-025: fail-fast on missing configuration
-    let default_auth = AuthConfig::default();
+    let default_auth = ConfigLoader::new().load().unwrap().auth;
     assert!(
         default_auth.jwt.secret.is_empty(),
         "Default JWT secret should be empty (must be configured via MCP__AUTH__JWT__SECRET)"
     );
 
     // Custom secret can be set - minimum 32 characters required
-    let mut custom_auth = AuthConfig::default();
+    let mut custom_auth = default_auth.clone();
     custom_auth.jwt.secret = "custom_secret_at_least_32_chars_long!".to_string();
     assert_eq!(custom_auth.jwt.secret.len(), 37);
     assert!(
@@ -55,6 +58,7 @@ fn test_auth_config_jwt_secret_length() {
 }
 
 #[test]
+#[serial]
 fn test_cache_config_ttl_when_enabled() {
     // When cache is enabled, TTL should be positive
     let enabled_cache = CacheSystemConfig {
@@ -70,7 +74,12 @@ fn test_cache_config_ttl_when_enabled() {
     assert!(enabled_cache.max_size > 0);
 
     // Default cache config has reasonable TTL
-    let default_cache = CacheSystemConfig::default();
+    let default_cache = ConfigLoader::new()
+        .load()
+        .unwrap()
+        .system
+        .infrastructure
+        .cache;
     assert!(
         default_cache.default_ttl_secs >= 60,
         "Default TTL should be at least 60 seconds"
@@ -83,7 +92,12 @@ fn test_cache_config_ttl_when_enabled() {
     // Disabled cache still maintains valid config
     let disabled_cache = CacheSystemConfig {
         enabled: false,
-        ..Default::default()
+        provider: default_cache.provider.clone(),
+        default_ttl_secs: default_cache.default_ttl_secs,
+        max_size: default_cache.max_size,
+        redis_url: default_cache.redis_url.clone(),
+        redis_pool_size: default_cache.redis_pool_size,
+        namespace: default_cache.namespace.clone(),
     };
     assert!(!disabled_cache.enabled);
     // TTL and size should still be valid even when disabled
@@ -93,11 +107,13 @@ fn test_cache_config_ttl_when_enabled() {
     let redis_cache = CacheSystemConfig {
         enabled: true,
         provider: CacheProvider::Redis,
+        default_ttl_secs: default_cache.default_ttl_secs,
+        max_size: default_cache.max_size,
         redis_url: Some(mcb_domain::test_services_config::required_test_service_url(
             "redis_url",
         )),
         redis_pool_size: 16,
-        ..Default::default()
+        namespace: default_cache.namespace.clone(),
     };
     assert!(redis_cache.redis_url.is_some());
     assert!(redis_cache.redis_pool_size > 0);
@@ -107,12 +123,15 @@ fn test_cache_config_ttl_when_enabled() {
 fn test_ssl_cert_required_for_https() {
     // HTTPS without SSL paths should fail validation
     let https_no_ssl = ServerConfig {
+        transport_mode: ServerConfigBuilder::new().build().transport_mode,
+        network: ServerConfigBuilder::new().build().network,
         ssl: ServerSslConfig {
             https: true,
             ssl_cert_path: None,
             ssl_key_path: None,
         },
-        ..Default::default()
+        timeouts: ServerConfigBuilder::new().build().timeouts,
+        cors: ServerConfigBuilder::new().build().cors,
     };
     let result = https_no_ssl.validate_ssl();
     assert!(result.is_err());
@@ -125,12 +144,15 @@ fn test_ssl_cert_required_for_https() {
 
     // HTTPS with only cert path should fail
     let https_cert_only = ServerConfig {
+        transport_mode: ServerConfigBuilder::new().build().transport_mode,
+        network: ServerConfigBuilder::new().build().network,
         ssl: ServerSslConfig {
             https: true,
             ssl_cert_path: Some(PathBuf::from("/path/to/cert.pem")),
             ssl_key_path: None,
         },
-        ..Default::default()
+        timeouts: ServerConfigBuilder::new().build().timeouts,
+        cors: ServerConfigBuilder::new().build().cors,
     };
     let result = https_cert_only.validate_ssl();
     assert!(result.is_err());
@@ -143,21 +165,25 @@ fn test_ssl_cert_required_for_https() {
 
     // HTTP config doesn't require SSL
     let http_config = ServerConfig {
+        transport_mode: ServerConfigBuilder::new().build().transport_mode,
+        network: ServerConfigBuilder::new().build().network,
         ssl: ServerSslConfig {
             https: false,
             ssl_cert_path: None,
             ssl_key_path: None,
         },
-        ..Default::default()
+        timeouts: ServerConfigBuilder::new().build().timeouts,
+        cors: ServerConfigBuilder::new().build().cors,
     };
     let result = http_config.validate_ssl();
     assert!(result.is_ok());
 }
 
 #[test]
+#[serial]
 fn test_default_config_is_valid() {
     // Default server config should be parseable
-    let server_config = ServerConfig::default();
+    let server_config = ServerConfigBuilder::new().build();
     let addr_result = server_config.parse_address();
     assert!(
         addr_result.is_ok(),
@@ -188,7 +214,7 @@ fn test_default_config_is_valid() {
     // So we just verify the address is valid
 
     // Default auth config - JWT secret is empty by design (must be configured)
-    let auth_config = AuthConfig::default();
+    let auth_config = ConfigLoader::new().load().unwrap().auth;
     assert!(
         auth_config.jwt.secret.is_empty(),
         "Default JWT secret should be empty per ADR-025"
@@ -196,7 +222,12 @@ fn test_default_config_is_valid() {
     assert!(auth_config.jwt.expiration_secs > 0);
 
     // Default cache config should have valid values
-    let cache_config = CacheSystemConfig::default();
+    let cache_config = ConfigLoader::new()
+        .load()
+        .unwrap()
+        .system
+        .infrastructure
+        .cache;
     assert!(cache_config.default_ttl_secs > 0);
     assert!(cache_config.max_size > 0);
 }

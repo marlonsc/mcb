@@ -54,8 +54,6 @@ impl DeclarativeValidator {
             "infrastructure",
             "server",
             "validate",
-            "language_support",
-            "ast_utils",
         ];
         for name in crates {
             let key = format!("{name}_crate");

@@ -11,6 +11,7 @@ use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
+use super::helpers::HttpEmbeddingClient;
 use crate::constants::{
     CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
     EMBEDDING_DIMENSION_OLLAMA_MINILM, EMBEDDING_DIMENSION_OLLAMA_MXBAI,
@@ -46,10 +47,7 @@ use crate::utils::http::RequestErrorKind;
 /// }
 /// ```
 pub struct OllamaEmbeddingProvider {
-    base_url: String,
-    model: String,
-    timeout: Duration,
-    http_client: Client,
+    client: HttpEmbeddingClient,
 }
 
 impl OllamaEmbeddingProvider {
@@ -62,21 +60,25 @@ impl OllamaEmbeddingProvider {
     /// * `http_client` - Reqwest HTTP client for making API requests
     pub fn new(base_url: String, model: String, timeout: Duration, http_client: Client) -> Self {
         Self {
-            base_url,
-            model,
-            timeout,
-            http_client,
+            client: HttpEmbeddingClient::new(
+                "".to_string(), // No API key for Ollama
+                Some(base_url),
+                "http://localhost:11434",
+                model,
+                timeout,
+                http_client,
+            ),
         }
     }
 
     /// Get the model name for this provider
     pub fn model(&self) -> &str {
-        &self.model
+        &self.client.model
     }
 
     /// Get the maximum tokens supported by this provider
     pub fn max_tokens(&self) -> usize {
-        match self.model.as_str() {
+        match self.client.model.as_str() {
             "nomic-embed-text" => 8192,
             "all-minilm" => 512,
             "mxbai-embed-large" => 512,
@@ -88,7 +90,7 @@ impl OllamaEmbeddingProvider {
     /// Fetch embedding for a single text
     async fn fetch_single_embedding(&self, text: &str) -> Result<serde_json::Value> {
         let payload = serde_json::json!({
-            "model": self.model,
+            "model": self.client.model,
             "prompt": text,
             "stream": false
         });
@@ -96,10 +98,13 @@ impl OllamaEmbeddingProvider {
         let headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_string())];
 
         send_json_request(JsonRequestParams {
-            client: &self.http_client,
+            client: &self.client.client,
             method: reqwest::Method::POST,
-            url: format!("{}/api/embeddings", self.base_url.trim_end_matches('/')),
-            timeout: self.timeout,
+            url: format!(
+                "{}/api/embeddings",
+                self.client.base_url.trim_end_matches('/')
+            ),
+            timeout: self.client.timeout,
             provider: "Ollama",
             operation: "embeddings",
             kind: RequestErrorKind::Embedding,
@@ -130,7 +135,7 @@ impl OllamaEmbeddingProvider {
         let dimensions = embedding_vec.len();
         Ok(Embedding {
             vector: embedding_vec,
-            model: self.model.clone(),
+            model: self.client.model.clone(),
             dimensions,
         })
     }
@@ -154,7 +159,7 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
     }
 
     fn dimensions(&self) -> usize {
-        match self.model.as_str() {
+        match self.client.model.as_str() {
             "nomic-embed-text" => EMBEDDING_DIMENSION_OLLAMA_NOMIC,
             "all-minilm" => EMBEDDING_DIMENSION_OLLAMA_MINILM,
             "mxbai-embed-large" => EMBEDDING_DIMENSION_OLLAMA_MXBAI,

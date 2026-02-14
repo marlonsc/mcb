@@ -11,12 +11,12 @@ use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
+use super::helpers::{HttpEmbeddingClient, process_batch};
 use crate::constants::{
     CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_VOYAGEAI_CODE, EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
     VOYAGEAI_MAX_INPUT_TOKENS,
 };
-use crate::embedding::helpers::constructor;
-use crate::provider_utils::{JsonRequestParams, embedding_data_array, send_json_request};
+use crate::provider_utils::{JsonRequestParams, send_json_request};
 use crate::utils::http::{RequestErrorKind, create_http_provider_config, parse_embedding_vector};
 
 /// VoyageAI embedding provider
@@ -43,11 +43,7 @@ use crate::utils::http::{RequestErrorKind, create_http_provider_config, parse_em
 /// }
 /// ```
 pub struct VoyageAIEmbeddingProvider {
-    api_key: String,
-    base_url: Option<String>,
-    model: String,
-    timeout: Duration,
-    http_client: Client,
+    client: HttpEmbeddingClient,
 }
 
 impl VoyageAIEmbeddingProvider {
@@ -59,7 +55,6 @@ impl VoyageAIEmbeddingProvider {
     /// * `model` - Model name (e.g., "voyage-code-3")
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
-    // TODO(qlty): Found 17 lines of similar code in 4 locations (mass = 54)
     pub fn new(
         api_key: String,
         base_url: Option<String>,
@@ -67,25 +62,21 @@ impl VoyageAIEmbeddingProvider {
         timeout: Duration,
         http_client: Client,
     ) -> Self {
-        let api_key = constructor::validate_api_key(&api_key);
-        let base_url = constructor::validate_url(base_url);
         Self {
-            api_key,
-            base_url,
-            model,
-            timeout,
-            http_client,
+            client: HttpEmbeddingClient::new(
+                api_key,
+                base_url,
+                "https://api.voyageai.com/v1",
+                model,
+                timeout,
+                http_client,
+            ),
         }
-    }
-
-    /// Get the effective base URL
-    fn effective_base_url(&self) -> String {
-        constructor::get_effective_url(self.base_url.as_deref(), "https://api.voyageai.com/v1")
     }
 
     /// Get the model name for this provider
     pub fn model(&self) -> &str {
-        &self.model
+        &self.client.model
     }
 
     /// Get the maximum tokens supported by this provider
@@ -96,31 +87,31 @@ impl VoyageAIEmbeddingProvider {
 
     /// Get the API key for this provider
     pub fn api_key(&self) -> &str {
-        &self.api_key
+        &self.client.api_key
     }
 
     /// Get the base URL for this provider
     pub fn base_url(&self) -> String {
-        self.effective_base_url()
+        self.client.base_url.clone()
     }
 
     /// Send embedding request and get response data
     async fn fetch_embeddings(&self, texts: &[String]) -> Result<serde_json::Value> {
         let payload = serde_json::json!({
             "input": texts,
-            "model": self.model
+            "model": self.client.model
         });
 
         let headers = vec![
-            ("Authorization", format!("Bearer {}", self.api_key)),
+            ("Authorization", format!("Bearer {}", self.client.api_key)),
             ("Content-Type", CONTENT_TYPE_JSON.to_string()),
         ];
 
         send_json_request(JsonRequestParams {
-            client: &self.http_client,
+            client: &self.client.client,
             method: reqwest::Method::POST,
-            url: format!("{}/embeddings", self.effective_base_url()),
-            timeout: self.timeout,
+            url: format!("{}/embeddings", self.client.base_url),
+            timeout: self.client.timeout,
             provider: "VoyageAI",
             operation: "embeddings",
             kind: RequestErrorKind::Embedding,
@@ -136,7 +127,7 @@ impl VoyageAIEmbeddingProvider {
 
         Ok(Embedding {
             vector: embedding_vec,
-            model: self.model.clone(),
+            model: self.client.model.clone(),
             dimensions: self.dimensions(),
         })
     }
@@ -147,23 +138,15 @@ impl VoyageAIEmbeddingProvider {
 impl EmbeddingProvider for VoyageAIEmbeddingProvider {
     /// Generates embeddings for a batch of texts.
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
-        if texts.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let response_data = self.fetch_embeddings(texts).await?;
-
-        let data = embedding_data_array(&response_data, texts.len())?;
-
-        data.iter()
-            .enumerate()
-            .map(|(i, item)| self.parse_embedding(i, item))
-            .collect()
+        process_batch(texts, self.fetch_embeddings(texts), |i, item| {
+            self.parse_embedding(i, item)
+        })
+        .await
     }
 
     /// Returns the embedding dimensions for the configured model.
     fn dimensions(&self) -> usize {
-        match self.model.as_str() {
+        match self.client.model.as_str() {
             "voyage-code-3" => EMBEDDING_DIMENSION_VOYAGEAI_CODE,
             _ => EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
         }

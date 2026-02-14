@@ -10,8 +10,9 @@ use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
+use super::helpers::HttpEmbeddingClient;
 use crate::constants::{CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_GEMINI};
-use crate::embedding::helpers::constructor;
+
 use crate::provider_utils::{JsonRequestParams, parse_float_array_lossy, send_json_request};
 use crate::utils::http::RequestErrorKind;
 
@@ -42,11 +43,7 @@ use crate::utils::http::RequestErrorKind;
 /// }
 /// ```
 pub struct GeminiEmbeddingProvider {
-    api_key: String,
-    base_url: Option<String>,
-    model: String,
-    timeout: Duration,
-    http_client: Client,
+    client: HttpEmbeddingClient,
 }
 
 impl GeminiEmbeddingProvider {
@@ -58,7 +55,6 @@ impl GeminiEmbeddingProvider {
     /// * `model` - Model name (e.g., "text-embedding-004")
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
-    // TODO(qlty): Found 17 lines of similar code in 4 locations (mass = 54)
     pub fn new(
         api_key: String,
         base_url: Option<String>,
@@ -66,33 +62,29 @@ impl GeminiEmbeddingProvider {
         timeout: Duration,
         http_client: Client,
     ) -> Self {
-        let api_key = constructor::validate_api_key(&api_key);
-        let base_url = constructor::validate_url(base_url);
         Self {
-            api_key,
-            base_url,
-            model,
-            timeout,
-            http_client,
+            client: HttpEmbeddingClient::new(
+                api_key,
+                base_url,
+                "https://generativelanguage.googleapis.com",
+                model,
+                timeout,
+                http_client,
+            ),
         }
-    }
-
-    /// Get the effective base URL
-    fn effective_base_url(&self) -> String {
-        constructor::get_effective_url(
-            self.base_url.as_deref(),
-            "https://generativelanguage.googleapis.com",
-        )
     }
 
     /// Get the model name for API calls (remove prefix if present)
     pub fn api_model_name(&self) -> &str {
-        self.model.strip_prefix("models/").unwrap_or(&self.model)
+        self.client
+            .model
+            .strip_prefix("models/")
+            .unwrap_or(&self.client.model)
     }
 
     /// Get the model name for this provider
     pub fn model(&self) -> &str {
-        &self.model
+        &self.client.model
     }
 
     /// Get the maximum tokens supported by this provider
@@ -106,12 +98,12 @@ impl GeminiEmbeddingProvider {
 
     /// Get the API key for this provider
     pub fn api_key(&self) -> &str {
-        &self.api_key
+        &self.client.api_key
     }
 
     /// Get the base URL for this provider
     pub fn base_url(&self) -> String {
-        self.effective_base_url()
+        self.client.base_url.clone()
     }
 
     /// Fetch embedding for a single text
@@ -122,20 +114,20 @@ impl GeminiEmbeddingProvider {
 
         let url = format!(
             "{}/v1beta/models/{}:embedContent",
-            self.effective_base_url(),
+            self.client.base_url,
             self.api_model_name()
         );
 
         let headers = vec![
             ("Content-Type", CONTENT_TYPE_JSON.to_string()),
-            ("x-goog-api-key", self.api_key.clone()),
+            ("x-goog-api-key", self.client.api_key.clone()),
         ];
 
         send_json_request(JsonRequestParams {
-            client: &self.http_client,
+            client: &self.client.client,
             method: reqwest::Method::POST,
             url,
-            timeout: self.timeout,
+            timeout: self.client.timeout,
             provider: "Gemini",
             operation: "embedContent",
             kind: RequestErrorKind::Embedding,
@@ -156,7 +148,7 @@ impl GeminiEmbeddingProvider {
         let dimensions = embedding_vec.len();
         Ok(Embedding {
             vector: embedding_vec,
-            model: self.model.clone(),
+            model: self.client.model.clone(),
             dimensions,
         })
     }

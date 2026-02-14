@@ -102,8 +102,6 @@ fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
 }
 
 #[async_trait]
-/// Persistent organization entity repository using SQLite.
-#[async_trait]
 /// Persistent organization registry using SQLite.
 impl OrgRegistry for SqliteOrgEntityRepository {
     /// Creates a new organization.

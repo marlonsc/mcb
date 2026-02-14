@@ -9,11 +9,6 @@ use crate::entities::{ApiKey, Organization, Team, TeamMember, User};
 use crate::error::Result;
 
 #[async_trait]
-/// Defines behavior for OrgEntityRepository.
-// TODO(architecture): Consider splitting into smaller interfaces (ISP).
-// Current interface combines Org, User, Team, and ApiKey management.
-// TODO(PORT003): Port OrgEntityRepository has 23 methods (>10) - Consider splitting into smaller interfaces (ISP)
-#[async_trait]
 /// Registry for organizations.
 pub trait OrgRegistry: Send + Sync {
     /// Performs the create org operation.

@@ -10,7 +10,7 @@ use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::loader::ConfigLoader;
 use mcb_infrastructure::config::watcher::{ConfigWatcher, ConfigWatcherBuilder};
-use mcb_infrastructure::constants::http::DEFAULT_HTTP_PORT;
+use serial_test::serial;
 use tempfile::TempDir;
 
 #[derive(Default)]
@@ -51,12 +51,14 @@ fn test_config() -> AppConfig {
 }
 
 #[tokio::test]
+#[serial]
 async fn test_config_watcher_creation() {
     let temp_dir = TempDir::new().unwrap();
     let config_path = temp_dir.path().join("test_config.toml");
 
     // Create initial config file with auth disabled
     let initial_config = test_config();
+    let expected_port = initial_config.server.network.port;
     let loader = ConfigLoader::new();
     loader.save_to_file(&initial_config, &config_path).unwrap();
 
@@ -65,10 +67,11 @@ async fn test_config_watcher_creation() {
         .unwrap();
     let config = watcher.get_config().await;
 
-    assert_eq!(config.server.network.port, DEFAULT_HTTP_PORT);
+    assert_eq!(config.server.network.port, expected_port);
 }
 
 #[tokio::test]
+#[serial]
 async fn test_manual_reload() {
     let temp_dir = TempDir::new().unwrap();
     let config_path = temp_dir.path().join("test_config.toml");
@@ -102,6 +105,7 @@ async fn test_manual_reload() {
 }
 
 #[test]
+#[serial]
 fn test_watcher_builder() {
     let temp_dir = TempDir::new().unwrap();
     let config_path = temp_dir.path().join("test_config.toml");
@@ -121,6 +125,7 @@ fn test_watcher_builder() {
 
 // Note: should_reload_config is private, so we test the public API instead
 #[test]
+#[serial]
 fn test_config_watcher_exists() {
     // Test that ConfigWatcher type exists and can be referenced
     let _ = std::any::type_name::<ConfigWatcher>();

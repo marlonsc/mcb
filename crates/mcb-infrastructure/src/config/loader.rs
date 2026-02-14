@@ -16,6 +16,8 @@ use crate::constants::auth::*;
 use crate::constants::config::*;
 use crate::error_ext::ErrorContext;
 use crate::logging::log_config_loaded;
+use mcb_domain::value_objects::ProjectSettings;
+use mcb_validate::find_workspace_root_from;
 
 /// Configuration loader service
 #[derive(Clone)]
@@ -99,6 +101,13 @@ impl ConfigLoader {
         // Validate configuration
         self.validate_config(&app_config)?;
 
+        // Apply project settings if available
+        let mut app_config = app_config;
+        if let Some(settings) = Self::load_project_settings() {
+            app_config = resolve_config_with_project_settings(app_config, &settings);
+            app_config.project_settings = Some(settings);
+        }
+
         Ok(app_config)
     }
 
@@ -153,6 +162,77 @@ impl ConfigLoader {
     fn validate_config(&self, config: &AppConfig) -> Result<()> {
         validate_app_config(config)
     }
+
+    /// Load project-specific settings from workspace root
+    fn load_project_settings() -> Option<ProjectSettings> {
+        let current_dir = env::current_dir().ok()?;
+        // Try to find workspace root using mcb-validate logic (cargo workspace or git root)
+        let root = find_workspace_root_from(&current_dir).unwrap_or(current_dir);
+
+        let possible_paths = vec![
+            root.join("mcb.yaml"),
+            root.join(".mcb/config.yaml"),
+            root.join("mcb.yml"),
+            root.join(".mcb/config.yml"),
+        ];
+
+        for path in possible_paths {
+            if path.exists() {
+                match std::fs::read_to_string(&path) {
+                    Ok(content) => match serde_yaml::from_str(&content) {
+                        Ok(settings) => {
+                            log_config_loaded(&path, true);
+                            return Some(settings);
+                        }
+                        Err(e) => {
+                            eprintln!(
+                                "Failed to parse project settings at {}: {}",
+                                path.display(),
+                                e
+                            );
+                        }
+                    },
+                    Err(e) => {
+                        eprintln!(
+                            "Failed to read project settings at {}: {}",
+                            path.display(),
+                            e
+                        );
+                    }
+                }
+            }
+        }
+        None
+    }
+}
+
+/// Helper to merge defaults, project settings, and env vars (though env vars are already merged).
+/// This function overrides AppConfig values with ProjectSettings if present.
+fn resolve_config_with_project_settings(
+    mut config: AppConfig,
+    settings: &ProjectSettings,
+) -> AppConfig {
+    if let Some(providers) = &settings.providers {
+        // Override Embedding Provider
+        if let Some(embedding) = &providers.embedding {
+            if let Some(provider) = &embedding.provider {
+                config.providers.embedding.provider = Some(provider.clone());
+            }
+            if let Some(model) = &embedding.model {
+                config.providers.embedding.model = Some(model.clone());
+            }
+        }
+        // Override Vector Store Provider
+        if let Some(vector_store) = &providers.vector_store {
+            if let Some(provider) = &vector_store.provider {
+                config.providers.vector_store.provider = Some(provider.clone());
+            }
+            if let Some(collection) = &vector_store.collection {
+                config.providers.vector_store.collection = Some(collection.clone());
+            }
+        }
+    }
+    config
 }
 
 /// Validate application configuration

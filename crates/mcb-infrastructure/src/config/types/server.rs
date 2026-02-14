@@ -34,6 +34,7 @@ pub enum TransportMode {
 
 /// Network configuration for server
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ServerNetworkConfig {
     /// Server host address
     pub host: String,
@@ -44,6 +45,7 @@ pub struct ServerNetworkConfig {
 
 /// SSL/TLS configuration for server
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct ServerSslConfig {
     /// HTTPS enabled
     pub https: bool,
@@ -57,6 +59,7 @@ pub struct ServerSslConfig {
 
 /// Timeout configuration for server
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ServerTimeoutConfig {
     /// Request timeout in seconds
     pub request_timeout_secs: u64,
@@ -70,6 +73,7 @@ pub struct ServerTimeoutConfig {
 
 /// CORS configuration for server
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ServerCorsConfig {
     /// Enable CORS
     pub cors_enabled: bool,
@@ -79,10 +83,10 @@ pub struct ServerCorsConfig {
 }
 
 /// Server configuration
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ServerConfig {
     /// Transport mode (stdio, http, hybrid)
-    #[serde(default)]
     pub transport_mode: TransportMode,
 
     /// Network configuration
@@ -98,44 +102,7 @@ pub struct ServerConfig {
     pub cors: ServerCorsConfig,
 }
 
-// Default implementations for config structs
-
-/// Returns default network configuration with:
-/// - Host and port from infrastructure constants
-impl Default for ServerNetworkConfig {
-    fn default() -> Self {
-        Self {
-            host: DEFAULT_SERVER_HOST.to_string(),
-            port: DEFAULT_HTTP_PORT,
-        }
-    }
-}
-
-/// Returns default timeout configuration with:
-/// - Request and connection timeouts from infrastructure constants
-/// - Max request body size from infrastructure constants
-impl Default for ServerTimeoutConfig {
-    fn default() -> Self {
-        Self {
-            request_timeout_secs: REQUEST_TIMEOUT_SECS,
-            connection_timeout_secs: CONNECTION_TIMEOUT_SECS,
-            max_request_body_size: MAX_REQUEST_BODY_SIZE,
-        }
-    }
-}
-
 use mcb_domain::error::{Error, Result};
-/// Returns default CORS configuration with:
-/// - CORS enabled
-/// - Allow all origins (*)
-impl Default for ServerCorsConfig {
-    fn default() -> Self {
-        Self {
-            cors_enabled: true,
-            cors_origins: vec![DEFAULT_CORS_ORIGIN.to_string()],
-        }
-    }
-}
 
 use std::net::{IpAddr, SocketAddr};
 use std::time::Duration;
@@ -226,7 +193,23 @@ impl ServerConfigBuilder {
     /// Create a new server config builder with defaults
     pub fn new() -> Self {
         Self {
-            config: ServerConfig::default(),
+            config: ServerConfig {
+                transport_mode: TransportMode::default(),
+                network: ServerNetworkConfig {
+                    host: DEFAULT_SERVER_HOST.to_string(),
+                    port: DEFAULT_HTTP_PORT,
+                },
+                ssl: ServerSslConfig::default(),
+                timeouts: ServerTimeoutConfig {
+                    request_timeout_secs: REQUEST_TIMEOUT_SECS,
+                    connection_timeout_secs: CONNECTION_TIMEOUT_SECS,
+                    max_request_body_size: MAX_REQUEST_BODY_SIZE,
+                },
+                cors: ServerCorsConfig {
+                    cors_enabled: true,
+                    cors_origins: vec![DEFAULT_CORS_ORIGIN.to_string()],
+                },
+            },
         }
     }
 

@@ -8,7 +8,6 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 use crate::constants::cache::*;
-use crate::constants::http::*;
 use crate::constants::limits::*;
 use crate::constants::logging::*;
 use crate::constants::metrics::*;
@@ -20,6 +19,7 @@ use crate::constants::resilience::*;
 
 /// Logging configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct LoggingConfig {
     /// Log level (trace, debug, info, warn, error)
     pub level: String,
@@ -33,13 +33,6 @@ pub struct LoggingConfig {
     pub max_files: usize,
 }
 
-/// Default logging configuration using infrastructure constants.
-///
-/// - `level`: `DEFAULT_LOG_LEVEL` ("info")
-/// - `json_format`: false (text format)
-/// - `file_output`: None
-/// - `max_file_size`: `LOG_ROTATION_SIZE`
-/// - `max_files`: `LOG_MAX_FILES`
 impl Default for LoggingConfig {
     fn default() -> Self {
         Self {
@@ -58,6 +51,7 @@ impl Default for LoggingConfig {
 
 /// Resource limits configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct LimitsConfig {
     /// Memory limit in bytes
     pub memory_limit: usize,
@@ -71,13 +65,6 @@ pub struct LimitsConfig {
     pub max_requests_per_connection: u32,
 }
 
-/// Default resource limits using infrastructure constants.
-///
-/// - `memory_limit`: `DEFAULT_MEMORY_LIMIT`
-/// - `cpu_limit`: `DEFAULT_CPU_LIMIT`
-/// - `disk_io_limit`: `DEFAULT_DISK_IO_LIMIT`
-/// - `max_connections`: 1000
-/// - `max_requests_per_connection`: 100
 impl Default for LimitsConfig {
     fn default() -> Self {
         Self {
@@ -95,9 +82,10 @@ impl Default for LimitsConfig {
 // ============================================================================
 
 /// Cache providers for infrastructure caching
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum CacheProvider {
     /// In-memory cache (Moka)
+    #[default]
     Moka,
     /// Distributed cache (Redis)
     Redis,
@@ -115,6 +103,7 @@ impl CacheProvider {
 
 /// Infrastructure cache system configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CacheSystemConfig {
     /// Cache enabled
     pub enabled: bool,
@@ -132,19 +121,11 @@ pub struct CacheSystemConfig {
     pub namespace: String,
 }
 
-/// Default cache system configuration using infrastructure constants.
-///
-/// - `enabled`: true
-/// - `provider`: Moka (in-memory)
-/// - `default_ttl_secs`: `CACHE_DEFAULT_TTL_SECS`
-/// - `max_size`: `CACHE_DEFAULT_SIZE_LIMIT`
-/// - `redis_pool_size`: `REDIS_POOL_SIZE`
-/// - `namespace`: `DEFAULT_CACHE_NAMESPACE`
 impl Default for CacheSystemConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            provider: CacheProvider::Moka,
+            provider: CacheProvider::default(),
             default_ttl_secs: CACHE_DEFAULT_TTL_SECS,
             max_size: CACHE_DEFAULT_SIZE_LIMIT,
             redis_url: None,
@@ -160,6 +141,7 @@ impl Default for CacheSystemConfig {
 
 /// Metrics configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct MetricsConfig {
     /// Metrics enabled
     pub enabled: bool,
@@ -175,13 +157,6 @@ pub struct MetricsConfig {
     pub exporter_url: Option<String>,
 }
 
-/// Default metrics configuration using infrastructure constants.
-///
-/// - `enabled`: true
-/// - `collection_interval_secs`: `METRICS_COLLECTION_INTERVAL_SECS`
-/// - `prefix`: `METRICS_PREFIX`
-/// - `endpoint_enabled`: true
-/// - `endpoint_path`: `METRICS_PATH`
 impl Default for MetricsConfig {
     fn default() -> Self {
         Self {
@@ -189,7 +164,7 @@ impl Default for MetricsConfig {
             collection_interval_secs: METRICS_COLLECTION_INTERVAL_SECS,
             prefix: METRICS_PREFIX.to_string(),
             endpoint_enabled: true,
-            endpoint_path: METRICS_PATH.to_string(),
+            endpoint_path: "/metrics".to_string(),
             exporter_url: None,
         }
     }
@@ -201,6 +176,7 @@ impl Default for MetricsConfig {
 
 /// Resilience configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ResilienceConfig {
     /// Circuit breaker failure threshold
     pub circuit_breaker_failure_threshold: u32,
@@ -218,11 +194,6 @@ pub struct ResilienceConfig {
     pub retry_delay_ms: u64,
 }
 
-/// Default resilience configuration using infrastructure constants.
-///
-/// Circuit breaker: `CIRCUIT_BREAKER_*` constants
-/// Rate limiter: `RATE_LIMITER_DEFAULT_*` constants
-/// Retry: 3 attempts with 1000ms delay
 impl Default for ResilienceConfig {
     fn default() -> Self {
         Self {

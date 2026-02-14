@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
+use mcb_domain::value_objects::{EmbeddingConfig, ProjectSettings, VectorStoreConfig};
 use serde::{Deserialize, Serialize};
 
 // Re-export all config types from modules
@@ -21,7 +21,8 @@ pub use super::system::{
 };
 
 /// Embedding configuration container
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct EmbeddingConfigContainer {
     /// Provider name
     pub provider: Option<String>,
@@ -36,12 +37,12 @@ pub struct EmbeddingConfigContainer {
     /// Cache directory for local embedding providers
     pub cache_dir: Option<PathBuf>,
     /// Named configs for TOML format
-    #[serde(default)]
     pub configs: HashMap<String, EmbeddingConfig>,
 }
 
 /// Vector store configuration container
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct VectorStoreConfigContainer {
     /// Provider name
     pub provider: Option<String>,
@@ -52,46 +53,24 @@ pub struct VectorStoreConfigContainer {
     /// Collection name
     pub collection: Option<String>,
     /// Named configs for TOML format
-    #[serde(default)]
     pub configs: HashMap<String, VectorStoreConfig>,
 }
 
 /// Provider configurations
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ProvidersConfig {
     /// Database provider name (e.g. "sqlite", "postgres")
-    #[serde(default = "default_database_provider")]
     pub database: String,
     /// Embedding provider configuration
-    #[serde(default)]
     pub embedding: EmbeddingConfigContainer,
     /// Vector store provider configuration
-    #[serde(default)]
     pub vector_store: VectorStoreConfigContainer,
 }
 
-fn default_database_provider() -> String {
-    "sqlite".to_string()
-}
-
-impl Default for ProvidersConfig {
-    fn default() -> Self {
-        Self {
-            database: default_database_provider(),
-            embedding: EmbeddingConfigContainer {
-                provider: Some("fastembed".to_string()),
-                ..Default::default()
-            },
-            vector_store: VectorStoreConfigContainer {
-                provider: Some("edgevec".to_string()),
-                ..Default::default()
-            },
-        }
-    }
-}
-
 /// Infrastructure configurations
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct InfrastructureConfig {
     /// Cache system configuration
     pub cache: CacheSystemConfig,
@@ -106,7 +85,8 @@ pub struct InfrastructureConfig {
 }
 
 /// Data management configurations
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct DataConfig {
     /// Snapshot configuration
     pub snapshot: SnapshotConfig,
@@ -117,7 +97,8 @@ pub struct DataConfig {
 }
 
 /// System infrastructure and data configurations
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SystemConfig {
     /// Infrastructure configurations
     pub infrastructure: InfrastructureConfig,
@@ -126,7 +107,8 @@ pub struct SystemConfig {
 }
 
 /// Operations and daemon configurations combined
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct OperationsDaemonConfig {
     /// Daemon configuration
     pub daemon: DaemonConfig,
@@ -135,10 +117,10 @@ pub struct OperationsDaemonConfig {
 }
 
 /// Main application configuration
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct AppConfig {
     /// Operating mode configuration
-    #[serde(default)]
     pub mode: ModeConfig,
     /// Server configuration
     pub server: ServerConfig,
@@ -152,4 +134,14 @@ pub struct AppConfig {
     pub system: SystemConfig,
     /// Operations and daemon configurations
     pub operations_daemon: OperationsDaemonConfig,
+    /// Project settings loaded from workspace
+    #[serde(skip)]
+    pub project_settings: Option<ProjectSettings>,
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        toml::from_str(include_str!("../../../../../config/default.toml"))
+            .expect("AppConfig::default requires valid config/default.toml")
+    }
 }

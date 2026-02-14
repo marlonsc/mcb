@@ -5,11 +5,6 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Default server URL for client mode
-fn default_server_url() -> String {
-    "http://127.0.0.1:3000".to_string()
-}
-
 /// Operating mode for MCB
 ///
 /// Determines how MCB behaves when started without the `--server` flag:
@@ -41,14 +36,14 @@ pub enum OperatingMode {
 ///
 /// When `--server` flag is used, mode configuration is ignored and MCB runs as server.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ModeConfig {
     /// Operating mode type
-    #[serde(default, rename = "type")]
+    #[serde(rename = "type")]
     pub mode_type: OperatingMode,
 
     /// Server URL for client mode
     /// Only used when mode_type = Client
-    #[serde(default = "default_server_url")]
     pub server_url: String,
 
     /// Session prefix for context isolation
@@ -56,46 +51,24 @@ pub struct ModeConfig {
     pub session_prefix: Option<String>,
 
     /// Connection timeout in seconds for client mode
-    #[serde(default = "default_timeout_secs")]
     pub timeout_secs: u64,
 
     /// Enable automatic reconnection on connection loss
-    #[serde(default = "default_auto_reconnect")]
     pub auto_reconnect: bool,
 
     /// Maximum reconnection attempts (0 = unlimited)
-    #[serde(default = "default_max_reconnect_attempts")]
     pub max_reconnect_attempts: u32,
 }
 
-fn default_timeout_secs() -> u64 {
-    30
-}
-
-fn default_auto_reconnect() -> bool {
-    true
-}
-
-fn default_max_reconnect_attempts() -> u32 {
-    5
-}
-
-/// Default configuration for standalone mode operation.
-///
-/// Provides sensible defaults for local development:
-/// - Mode: Standalone (local providers)
-/// - Server URL: http://127.0.0.1:3000 (used only in client mode)
-/// - Timeout: 30 seconds
-/// - Auto-reconnect: enabled with 5 max attempts
 impl Default for ModeConfig {
     fn default() -> Self {
         Self {
             mode_type: OperatingMode::default(),
-            server_url: default_server_url(),
+            server_url: "http://127.0.0.1:3000".to_string(),
             session_prefix: None,
-            timeout_secs: default_timeout_secs(),
-            auto_reconnect: default_auto_reconnect(),
-            max_reconnect_attempts: default_max_reconnect_attempts(),
+            timeout_secs: 30,
+            auto_reconnect: true,
+            max_reconnect_attempts: 5,
         }
     }
 }

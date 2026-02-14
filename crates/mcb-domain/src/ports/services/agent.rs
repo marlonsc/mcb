@@ -11,10 +11,8 @@ use crate::ports::repositories::agent_repository::AgentSessionQuery;
 
 /// Port for agent session lifecycle and delegation tracking.
 #[async_trait]
-// TODO(architecture): Consider splitting into smaller interfaces (ISP).
-// Current interface combines Session control, Delegation, and Checkpoint operations.
-// TODO(PORT003): Port AgentSessionServiceInterface has 12 methods (>10) - Consider splitting into smaller interfaces (ISP)
-pub trait AgentSessionServiceInterface: Send + Sync {
+/// Manages agent session lifecycle.
+pub trait AgentSessionManager: Send + Sync {
     /// Performs the create session operation.
     async fn create_session(&self, session: AgentSession) -> Result<String>;
     /// Performs the get session operation.
@@ -34,14 +32,35 @@ pub trait AgentSessionServiceInterface: Send + Sync {
         status: AgentSessionStatus,
         result_summary: Option<String>,
     ) -> Result<()>;
+}
+
+#[async_trait]
+/// Tracks delegations and tool calls.
+pub trait DelegationTracker: Send + Sync {
     /// Performs the store delegation operation.
     async fn store_delegation(&self, delegation: Delegation) -> Result<String>;
     /// Performs the store tool call operation.
     async fn store_tool_call(&self, tool_call: ToolCall) -> Result<String>;
+}
+
+#[async_trait]
+/// Manages checkpoints and restoration.
+pub trait CheckpointManager: Send + Sync {
     /// Performs the store checkpoint operation.
     async fn store_checkpoint(&self, checkpoint: Checkpoint) -> Result<String>;
     /// Performs the get checkpoint operation.
     async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>>;
     /// Performs the restore checkpoint operation.
     async fn restore_checkpoint(&self, id: &str) -> Result<()>;
+}
+
+/// Aggregate trait for agent session service.
+pub trait AgentSessionServiceInterface:
+    AgentSessionManager + DelegationTracker + CheckpointManager + Send + Sync
+{
+}
+
+impl<T> AgentSessionServiceInterface for T where
+    T: AgentSessionManager + DelegationTracker + CheckpointManager + Send + Sync
+{
 }

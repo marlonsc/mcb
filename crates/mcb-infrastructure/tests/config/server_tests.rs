@@ -3,12 +3,12 @@
 use rstest::rstest;
 use std::net::SocketAddr;
 
-use mcb_infrastructure::config::{ServerConfig, ServerConfigBuilder, ServerConfigPresets};
+use mcb_infrastructure::config::{ServerConfigBuilder, ServerConfigPresets};
 use mcb_infrastructure::constants::http::DEFAULT_HTTPS_PORT;
 
 #[test]
 fn test_parse_address() {
-    let mut config = ServerConfig::default();
+    let mut config = ServerConfigBuilder::new().build();
     config.network.host = "127.0.0.1".to_string();
     config.network.port = 8080;
 
@@ -20,7 +20,7 @@ fn test_parse_address() {
 #[case("127.0.0.1", 8080, false, "http://127.0.0.1:8080")]
 #[case("example.com", 8443, true, "https://example.com:8443")]
 fn server_url(#[case] host: &str, #[case] port: u16, #[case] https: bool, #[case] expected: &str) {
-    let mut config = ServerConfig::default();
+    let mut config = ServerConfigBuilder::new().build();
     config.network.host = host.to_string();
     config.network.port = port;
     config.ssl.https = https;

@@ -3,6 +3,7 @@
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::TransportMode;
+use serial_test::serial;
 use tempfile::TempDir;
 
 /// Create test config with auth disabled (avoids JWT secret validation per ADR-025)
@@ -17,6 +18,7 @@ fn test_config() -> AppConfig {
 /// Note: Per ADR-025, when auth is enabled, JWT secret MUST be configured.
 /// We use auth disabled to test the builder without validation failure.
 #[test]
+#[serial]
 fn test_config_loader_default() {
     // Build config directly with auth disabled
     let config = test_config();
@@ -27,6 +29,7 @@ fn test_config_loader_default() {
 }
 
 #[test]
+#[serial]
 fn test_config_builder() {
     let mut config = test_config();
     let loaded = ConfigLoader::new().load().expect("load config");
@@ -40,12 +43,14 @@ fn test_config_builder() {
 
 // Note: validate_config is private, so we test the public API instead
 #[test]
+#[serial]
 fn test_config_loader_exists() {
     // Test that ConfigLoader type exists and can be created
     let _ = ConfigLoader::new();
 }
 
 #[test]
+#[serial]
 fn test_config_save_load() {
     let temp_dir = TempDir::new().unwrap();
     let config_path = temp_dir.path().join("test_config.toml");
@@ -73,6 +78,7 @@ fn test_config_save_load() {
 }
 
 #[test]
+#[serial]
 fn test_config_loader_rejects_http_transport_mode() {
     let temp_dir = TempDir::new().unwrap();
     let config_path = temp_dir.path().join("invalid_http_transport.toml");

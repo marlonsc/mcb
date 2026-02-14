@@ -22,16 +22,8 @@ use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
-use mcb_infrastructure::config::AppConfig;
-use mcb_infrastructure::di::bootstrap::init_app;
 
-fn test_config() -> (AppConfig, tempfile::TempDir) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let db_path = temp_dir.path().join("test.db");
-    let mut config = AppConfig::default();
-    config.auth.user_db_path = Some(db_path);
-    (config, temp_dir)
-}
+use crate::shared_context::shared_app_context;
 
 // ============================================================================
 // Registry Completeness Validation
@@ -80,35 +72,23 @@ fn all_expected_providers_registered(#[case] provider_type: &str, #[case] expect
 
 #[tokio::test]
 async fn test_config_provider_names_match_resolved_providers() {
-    let (config, _temp) = test_config();
-
-    let expected_embedding = config
-        .providers
-        .embedding
-        .provider
-        .clone()
-        .unwrap_or_else(|| "fastembed".to_string());
-
-    let ctx = init_app(config).await.expect("init_app should succeed");
+    let ctx = shared_app_context();
     let embedding = ctx.embedding_handle().get();
 
     assert_eq!(
         embedding.provider_name(),
-        expected_embedding,
-        "Resolved provider name should match config"
+        "fastembed",
+        "Resolved provider name should match config default"
     );
 }
 
 #[tokio::test]
 async fn test_handle_based_di_prevents_direct_construction() {
-    let (config, _temp) = test_config();
-    let ctx = init_app(config).await.expect("init_app should succeed");
+    let ctx = shared_app_context();
 
-    // Get provider via handle (correct DI usage)
     let via_handle_1 = ctx.embedding_handle().get();
     let via_handle_2 = ctx.embedding_handle().get();
 
-    // Both should be the same Arc instance
     assert!(
         Arc::ptr_eq(&via_handle_1, &via_handle_2),
         "Handle should return same instance (proving DI is used, not direct construction)"
@@ -117,14 +97,11 @@ async fn test_handle_based_di_prevents_direct_construction() {
 
 #[tokio::test]
 async fn test_multiple_handles_reference_same_underlying_provider() {
-    let (config, _temp) = test_config();
-    let ctx = init_app(config).await.expect("init_app should succeed");
+    let ctx = shared_app_context();
 
-    // Get embedding handle twice
     let handle1 = ctx.embedding_handle();
     let handle2 = ctx.embedding_handle();
 
-    // Both handles should return the same provider
     let provider1 = handle1.get();
     let provider2 = handle2.get();
 
@@ -175,11 +152,8 @@ async fn test_provider_factories_return_working_providers() {
 
 #[tokio::test]
 async fn test_admin_services_accessible_via_context() {
-    let (config, _temp) = test_config();
-    let ctx = init_app(config).await.expect("init_app should succeed");
+    let ctx = shared_app_context();
 
-    // Admin services should be accessible and functional
-    // This validates they're properly wired in the DI container
     let embedding_admin = ctx.embedding_admin();
     let vector_store_admin = ctx.vector_store_admin();
     let cache_admin = ctx.cache_admin();

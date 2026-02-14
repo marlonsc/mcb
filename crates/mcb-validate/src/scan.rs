@@ -116,7 +116,12 @@ where
 
     let context = ValidationRunContext::active_or_build(config)?;
     let inventory = context.file_inventory();
-    let normalized_root = std::fs::canonicalize(root).unwrap_or_else(|_| root.to_path_buf());
+    let normalized_root = std::fs::canonicalize(root).map_err(|e| {
+        crate::ValidationError::Config(format!(
+            "Failed to canonicalize root {}: {e}",
+            root.display()
+        ))
+    })?;
 
     for entry in inventory {
         if !entry.absolute_path.starts_with(&normalized_root) {

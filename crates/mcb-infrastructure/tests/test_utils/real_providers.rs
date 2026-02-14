@@ -40,15 +40,7 @@ use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 use serde_json::json;
 
-/// Create a test AppContext with real local providers
-///
-/// Uses FastEmbedProvider and EdgeVecVectorStoreProvider (depending on config).
-/// These are real local implementations, not mocks.
-///
-/// # Important
-///
-/// The `extern crate mcb_providers` at the top of this module forces linkme
-/// to register all providers. Without it, the registry would be empty.
+/// Create a NEW AppContext (for tests that need isolated state).
 pub async fn create_test_app_context() -> Result<AppContext> {
     let mut config = AppConfig::default();
     let temp_dir = std::env::temp_dir().join(format!(

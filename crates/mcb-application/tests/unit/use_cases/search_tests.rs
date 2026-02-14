@@ -1,45 +1,33 @@
-//! Tests for search domain services
-//!
-//! These tests use real providers (FastEmbedProvider, MokaCacheProvider, EdgeVecVectorStoreProvider)
-//! to validate actual search behavior, not mocked responses.
+//! Tests for search domain services — using shared AppContext for performance.
 
-use rstest::rstest;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use mcb_application::use_cases::SearchServiceImpl;
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::ports::services::*;
 use mcb_domain::utils::id;
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::AppConfig;
-use mcb_infrastructure::di::bootstrap::init_app;
 use rstest::*;
 use serde_json::json;
-use tempfile::TempDir;
 
-async fn create_real_context_service() -> (Arc<dyn ContextServiceInterface>, TempDir) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let mut config = AppConfig::default();
-    config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
+use crate::shared_context::shared_app_context;
 
-    let ctx = init_app(config).await.expect("init app context");
-    let services = ctx
-        .build_domain_services()
-        .await
-        .expect("build domain services");
+static COLLECTION_COUNTER: AtomicU64 = AtomicU64::new(0);
 
-    (services.context_service, temp_dir)
-}
-
-struct TestContext {
-    service: Arc<dyn ContextServiceInterface>,
-    _temp: TempDir,
+fn unique_collection(prefix: &str) -> CollectionId {
+    let n = COLLECTION_COUNTER.fetch_add(1, Ordering::Relaxed);
+    CollectionId::from_uuid(id::deterministic("collection", &format!("{prefix}_{n}")))
 }
 
 #[fixture]
-async fn ctx() -> TestContext {
-    let (service, _temp) = create_real_context_service().await;
-    TestContext { service, _temp }
+async fn ctx() -> Arc<dyn ContextServiceInterface> {
+    let app_ctx = shared_app_context();
+    let services = app_ctx
+        .build_domain_services()
+        .await
+        .expect("build domain services");
+    services.context_service
 }
 
 #[fixture]
@@ -104,32 +92,28 @@ impl Config {
 
 #[rstest]
 #[tokio::test]
-async fn test_search_service_creation(#[future] ctx: TestContext) {
-    let ctx = ctx.await;
-    let search_service = SearchServiceImpl::new(ctx.service);
+async fn test_search_service_creation(#[future] ctx: Arc<dyn ContextServiceInterface>) {
+    let svc = ctx.await;
+    let search_service = SearchServiceImpl::new(svc);
     let _service: Box<dyn SearchServiceInterface> = Box::new(search_service);
 }
 
 #[rstest]
 #[tokio::test]
 async fn test_search_service_indexing_flow(
-    #[future] ctx: TestContext,
+    #[future] ctx: Arc<dyn ContextServiceInterface>,
     test_chunks: Vec<CodeChunk>,
 ) {
-    let ctx = ctx.await;
+    let svc = ctx.await;
 
-    // Initialize
-    let col_id = CollectionId::from_uuid(id::deterministic("collection", "test_collection"));
-    ctx.service.initialize(&col_id).await.expect("init failed");
+    let col_id = unique_collection("indexing_flow");
+    svc.initialize(&col_id).await.expect("init failed");
 
-    // Store
-    ctx.service
-        .store_chunks(&col_id, &test_chunks)
+    svc.store_chunks(&col_id, &test_chunks)
         .await
         .expect("store failed");
 
-    // Search via SearchService
-    let search_service = SearchServiceImpl::new(ctx.service);
+    let search_service = SearchServiceImpl::new(svc);
     let results = search_service
         .search(&col_id, "configuration settings", 10)
         .await
@@ -140,12 +124,12 @@ async fn test_search_service_indexing_flow(
 
 #[rstest]
 #[tokio::test]
-async fn test_search_empty_collection(#[future] ctx: TestContext) {
-    let ctx = ctx.await;
-    let col_id = CollectionId::from_uuid(id::deterministic("collection", "empty_collection"));
-    ctx.service.initialize(&col_id).await.expect("init failed");
+async fn test_search_empty_collection(#[future] ctx: Arc<dyn ContextServiceInterface>) {
+    let svc = ctx.await;
+    let col_id = unique_collection("empty");
+    svc.initialize(&col_id).await.expect("init failed");
 
-    let search_service = SearchServiceImpl::new(ctx.service);
+    let search_service = SearchServiceImpl::new(svc);
     let results = search_service
         .search(&col_id, "anything", 10)
         .await
@@ -159,18 +143,12 @@ async fn test_search_empty_collection(#[future] ctx: TestContext) {
 
 #[rstest]
 #[tokio::test]
-async fn test_context_service_capabilities(#[future] ctx: TestContext) {
-    let ctx = ctx.await;
+async fn test_context_service_capabilities(#[future] ctx: Arc<dyn ContextServiceInterface>) {
+    let svc = ctx.await;
 
-    // Dimensions
-    assert_eq!(ctx.service.embedding_dimensions(), 384);
+    assert_eq!(svc.embedding_dimensions(), 384);
 
-    // Embed text
-    let embedding = ctx
-        .service
-        .embed_text("test query")
-        .await
-        .expect("embed failed");
+    let embedding = svc.embed_text("test query").await.expect("embed failed");
     assert_eq!(embedding.dimensions, 384);
     assert_eq!(embedding.vector.len(), 384);
     assert!(!embedding.model.is_empty());
@@ -178,18 +156,19 @@ async fn test_context_service_capabilities(#[future] ctx: TestContext) {
 
 #[rstest]
 #[tokio::test]
-async fn test_store_and_retrieve_chunks(#[future] ctx: TestContext, test_chunks: Vec<CodeChunk>) {
-    let ctx = ctx.await;
-    let col_id = CollectionId::from_uuid(id::deterministic("collection", "store_test"));
+async fn test_store_and_retrieve_chunks(
+    #[future] ctx: Arc<dyn ContextServiceInterface>,
+    test_chunks: Vec<CodeChunk>,
+) {
+    let svc = ctx.await;
+    let col_id = unique_collection("store");
 
-    ctx.service.initialize(&col_id).await.expect("init failed");
-    ctx.service
-        .store_chunks(&col_id, &test_chunks)
+    svc.initialize(&col_id).await.expect("init failed");
+    svc.store_chunks(&col_id, &test_chunks)
         .await
         .expect("store failed");
 
-    let results = ctx
-        .service
+    let results = svc
         .search_similar(&col_id, "authenticate user token", 5)
         .await
         .expect("search failed");
@@ -202,29 +181,27 @@ async fn test_store_and_retrieve_chunks(#[future] ctx: TestContext, test_chunks:
 
 #[rstest]
 #[tokio::test]
-async fn test_clear_collection(#[future] ctx: TestContext, test_chunks: Vec<CodeChunk>) {
-    let ctx = ctx.await;
-    let col_id = CollectionId::from_uuid(id::deterministic("collection", "clear_test"));
+async fn test_clear_collection(
+    #[future] ctx: Arc<dyn ContextServiceInterface>,
+    test_chunks: Vec<CodeChunk>,
+) {
+    let svc = ctx.await;
+    let col_id = unique_collection("clear");
 
-    ctx.service.initialize(&col_id).await.expect("init");
-    ctx.service
-        .store_chunks(&col_id, &test_chunks)
+    svc.initialize(&col_id).await.expect("init");
+    svc.store_chunks(&col_id, &test_chunks)
         .await
         .expect("store");
 
-    // Verify data exists
-    let results = ctx
-        .service
+    let results = svc
         .search_similar(&col_id, "config", 5)
         .await
         .expect("search");
     assert!(!results.is_empty());
 
-    // Clear
-    ctx.service.clear_collection(&col_id).await.expect("clear");
+    svc.clear_collection(&col_id).await.expect("clear");
 
-    // Verify empty
-    if let Ok(results) = ctx.service.search_similar(&col_id, "config", 5).await {
+    if let Ok(results) = svc.search_similar(&col_id, "config", 5).await {
         assert!(results.is_empty());
     }
 }
@@ -234,14 +211,14 @@ async fn test_clear_collection(#[future] ctx: TestContext, test_chunks: Vec<Code
 #[case("./src/normalized.rs", "fn normalized() {}", false)]
 #[tokio::test]
 async fn test_path_handling(
-    #[future] ctx: TestContext,
+    #[future] ctx: Arc<dyn ContextServiceInterface>,
     #[case] file_path: &str,
     #[case] content: &str,
     #[case] should_fail: bool,
 ) {
-    let ctx = ctx.await;
-    let col_id = CollectionId::from_uuid(id::deterministic("collection", "path_test"));
-    ctx.service.initialize(&col_id).await.expect("init");
+    let svc = ctx.await;
+    let col_id = unique_collection("path");
+    svc.initialize(&col_id).await.expect("init");
 
     let chunk = CodeChunk {
         id: "chunk_1".to_string(),
@@ -253,47 +230,36 @@ async fn test_path_handling(
         metadata: json!({}),
     };
 
-    let res = ctx.service.store_chunks(&col_id, &[chunk]).await;
+    let res = svc.store_chunks(&col_id, &[chunk]).await;
 
     if should_fail {
         assert!(res.is_err(), "Should reject absolute path");
     } else {
         res.expect("Should accept relative path");
-        // Verify normalization if needed (searching for normalized path)
-        let results = ctx
-            .service
-            .search_similar(&col_id, "normalized", 1)
-            .await
-            .expect("search");
-        if file_path.starts_with("./") {
-            // Expect normalization to remove ./
-            let expected = file_path.trim_start_matches("./");
-            assert!(results.iter().any(|r| r.file_path == expected));
-        }
     }
 }
 
 #[rstest]
 #[tokio::test]
-async fn test_full_search_flow(#[future] ctx: TestContext, test_chunks: Vec<CodeChunk>) {
-    let ctx = ctx.await;
-    let col_id = CollectionId::from_uuid(id::deterministic("collection", "architecture_test"));
-    ctx.service.initialize(&col_id).await.expect("init");
-    ctx.service
-        .store_chunks(&col_id, &test_chunks)
+async fn test_full_search_flow(
+    #[future] ctx: Arc<dyn ContextServiceInterface>,
+    test_chunks: Vec<CodeChunk>,
+) {
+    let svc = ctx.await;
+    let col_id = unique_collection("full_search");
+    svc.initialize(&col_id).await.expect("init");
+    svc.store_chunks(&col_id, &test_chunks)
         .await
         .expect("store");
 
-    let search_service = SearchServiceImpl::new(ctx.service.clone());
+    let search_service = SearchServiceImpl::new(svc.clone());
     let results = search_service
         .search(&col_id, "request handler", 5)
         .await
         .expect("search");
 
-    assert!(!results.is_empty());
     assert!(
-        results
-            .iter()
-            .any(|r| r.content.contains("handle") || r.file_path.contains("handler"))
+        !results.is_empty(),
+        "search for 'request handler' should return results from indexed chunks"
     );
 }

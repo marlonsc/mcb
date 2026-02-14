@@ -16,10 +16,11 @@ use crate::constants::{
     ANTHROPIC_MAX_INPUT_TOKENS, CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_ANTHROPIC_CODE,
     EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT, EMBEDDING_DIMENSION_ANTHROPIC_LITE,
 };
-use crate::embedding::helpers::constructor;
-use crate::provider_utils::{JsonRequestParams, embedding_data_array, send_json_request};
+use crate::provider_utils::{JsonRequestParams, send_json_request};
 use crate::utils::http::RequestErrorKind;
 use crate::utils::parse_embedding_vector;
+
+use super::helpers::{HttpEmbeddingClient, process_batch};
 
 /// Anthropic embedding provider
 ///
@@ -49,11 +50,7 @@ use crate::utils::parse_embedding_vector;
 /// }
 /// ```
 pub struct AnthropicEmbeddingProvider {
-    api_key: String,
-    base_url: Option<String>,
-    model: String,
-    timeout: Duration,
-    http_client: Client,
+    client: HttpEmbeddingClient,
 }
 
 impl AnthropicEmbeddingProvider {
@@ -73,28 +70,26 @@ impl AnthropicEmbeddingProvider {
         timeout: Duration,
         http_client: Client,
     ) -> Self {
-        let api_key = constructor::validate_api_key(&api_key);
-        let base_url = constructor::validate_url(base_url);
-
         Self {
-            api_key,
-            base_url,
-            model,
-            timeout,
-            http_client,
+            client: HttpEmbeddingClient::new(
+                api_key,
+                base_url,
+                "https://api.voyageai.com/v1",
+                model,
+                timeout,
+                http_client,
+            ),
         }
     }
 
     /// Get the base URL for this provider
     pub fn base_url(&self) -> &str {
-        self.base_url
-            .as_deref()
-            .unwrap_or("https://api.voyageai.com/v1")
+        &self.client.base_url
     }
 
     /// Get the model name
     pub fn model(&self) -> &str {
-        &self.model
+        &self.client.model
     }
 
     /// Get the maximum tokens for this model
@@ -107,21 +102,21 @@ impl AnthropicEmbeddingProvider {
     async fn fetch_embeddings(&self, texts: &[String]) -> Result<serde_json::Value> {
         let payload = serde_json::json!({
             "input": texts,
-            "model": self.model,
+            "model": self.client.model,
             "input_type": "document",
             "encoding_format": "float"
         });
 
         let headers = vec![
-            ("Authorization", format!("Bearer {}", self.api_key)),
+            ("Authorization", format!("Bearer {}", self.client.api_key)),
             ("Content-Type", CONTENT_TYPE_JSON.to_string()),
         ];
 
         send_json_request(JsonRequestParams {
-            client: &self.http_client,
+            client: &self.client.client,
             method: reqwest::Method::POST,
             url: format!("{}/embeddings", self.base_url()),
-            timeout: self.timeout,
+            timeout: self.client.timeout,
             provider: "Anthropic",
             operation: "embeddings",
             kind: RequestErrorKind::Embedding,
@@ -137,7 +132,7 @@ impl AnthropicEmbeddingProvider {
 
         Ok(Embedding {
             vector: embedding_vec,
-            model: self.model.clone(),
+            model: self.client.model.clone(),
             dimensions: self.dimensions(),
         })
     }
@@ -147,25 +142,16 @@ impl AnthropicEmbeddingProvider {
 /// Implementation of EmbeddingProvider using Anthropic/Voyage.
 impl EmbeddingProvider for AnthropicEmbeddingProvider {
     /// Generates embeddings for a batch of texts.
-    // TODO(qlty): Found 29 lines of similar code in 2 locations (mass = 138)
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
-        if texts.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let response_data = self.fetch_embeddings(texts).await?;
-
-        let data = embedding_data_array(&response_data, texts.len())?;
-
-        data.iter()
-            .enumerate()
-            .map(|(i, item)| self.parse_embedding(i, item))
-            .collect()
+        process_batch(texts, self.fetch_embeddings(texts), |i, item| {
+            self.parse_embedding(i, item)
+        })
+        .await
     }
 
     /// Returns the embedding dimensions for the configured model.
     fn dimensions(&self) -> usize {
-        match self.model.as_str() {
+        match self.client.model.as_str() {
             "voyage-3" => EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT,
             "voyage-3-lite" => EMBEDDING_DIMENSION_ANTHROPIC_LITE,
             "voyage-code-3" => EMBEDDING_DIMENSION_ANTHROPIC_CODE,

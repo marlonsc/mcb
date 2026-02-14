@@ -1,23 +1,18 @@
 //! Unit tests for InstrumentedEmbeddingProvider decorator
 
-use rstest::rstest;
+use rstest::*;
 use std::sync::Arc;
 
 use mcb_application::decorators::InstrumentedEmbeddingProvider;
 use mcb_domain::ports::admin::PerformanceMetricsInterface;
 use mcb_domain::ports::providers::EmbeddingProvider;
-use mcb_infrastructure::config::AppConfig;
-use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_infrastructure::infrastructure::admin::AtomicPerformanceMetrics;
-use rstest::*;
+
+use crate::shared_context::shared_app_context;
 
 #[fixture]
-async fn provider_context() -> (Arc<dyn EmbeddingProvider>, tempfile::TempDir) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let mut config = AppConfig::default();
-    config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
-    let ctx = init_app(config).await.expect("init app context");
-    (ctx.embedding_handle().get(), temp_dir)
+async fn provider_context() -> Arc<dyn EmbeddingProvider> {
+    shared_app_context().embedding_handle().get()
 }
 
 #[fixture]
@@ -27,41 +22,30 @@ fn metrics() -> Arc<AtomicPerformanceMetrics> {
 
 #[fixture]
 async fn instrumented(
-    #[future] provider_context: (Arc<dyn EmbeddingProvider>, tempfile::TempDir),
+    #[future] provider_context: Arc<dyn EmbeddingProvider>,
     metrics: Arc<AtomicPerformanceMetrics>,
-) -> (
-    InstrumentedEmbeddingProvider,
-    Arc<AtomicPerformanceMetrics>,
-    tempfile::TempDir,
-) {
-    let (inner, temp_dir) = provider_context.await;
+) -> (InstrumentedEmbeddingProvider, Arc<AtomicPerformanceMetrics>) {
+    let inner = provider_context.await;
     let provider = InstrumentedEmbeddingProvider::new(
         inner,
         Arc::clone(&metrics) as Arc<dyn PerformanceMetricsInterface>,
     );
-    (provider, metrics, temp_dir)
+    (provider, metrics)
 }
 
 #[rstest]
 #[tokio::test]
 async fn test_instrumented_records_metrics(
-    #[future] instrumented: (
-        InstrumentedEmbeddingProvider,
-        Arc<AtomicPerformanceMetrics>,
-        tempfile::TempDir,
-    ),
+    #[future] instrumented: (InstrumentedEmbeddingProvider, Arc<AtomicPerformanceMetrics>),
 ) {
-    let (provider, metrics, _temp_dir) = instrumented.await;
+    let (provider, metrics) = instrumented.await;
 
-    // Initial state
     assert_eq!(metrics.get_performance_metrics().total_queries, 0);
 
-    // Call embed
     let result = provider.embed("test").await;
     assert!(result.is_ok());
     assert_eq!(metrics.get_performance_metrics().total_queries, 1);
 
-    // Call embed_batch
     let result = provider
         .embed_batch(&["a".to_string(), "b".to_string()])
         .await;
@@ -72,16 +56,11 @@ async fn test_instrumented_records_metrics(
 #[rstest]
 #[tokio::test]
 async fn test_instrumented_delegates_to_inner(
-    #[future] instrumented: (
-        InstrumentedEmbeddingProvider,
-        Arc<AtomicPerformanceMetrics>,
-        tempfile::TempDir,
-    ),
+    #[future] instrumented: (InstrumentedEmbeddingProvider, Arc<AtomicPerformanceMetrics>),
 ) {
-    let (provider, _metrics, _temp_dir) = instrumented.await;
+    let (provider, _metrics) = instrumented.await;
 
-    // Check delegation
-    assert_eq!(provider.dimensions(), 384); // Assuming fastembed default
+    assert_eq!(provider.dimensions(), 384);
     assert_eq!(provider.provider_name(), "fastembed");
     assert_eq!(provider.inner_provider_name(), "fastembed");
 }

@@ -23,7 +23,9 @@ use mcb_domain::entities::agent::{
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
-use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::services::agent::{
+    AgentSessionManager, CheckpointManager, DelegationTracker,
+};
 use mcb_domain::utils::time as domain_time;
 
 /// Application service for managing agent session lifecycle and persistence.
@@ -54,7 +56,8 @@ impl AgentSessionServiceImpl {
 }
 
 #[async_trait]
-impl AgentSessionServiceInterface for AgentSessionServiceImpl {
+#[async_trait]
+impl AgentSessionManager for AgentSessionServiceImpl {
     async fn create_session(&self, session: AgentSession) -> Result<String> {
         let id = session.id.clone();
         self.repository.create_session(&session).await?;
@@ -98,7 +101,10 @@ impl AgentSessionServiceInterface for AgentSessionServiceImpl {
         }
         Ok(())
     }
+}
 
+#[async_trait]
+impl DelegationTracker for AgentSessionServiceImpl {
     async fn store_delegation(&self, delegation: Delegation) -> Result<String> {
         let id = delegation.id.clone();
         self.repository.store_delegation(&delegation).await?;
@@ -110,7 +116,10 @@ impl AgentSessionServiceInterface for AgentSessionServiceImpl {
         self.repository.store_tool_call(&tool_call).await?;
         Ok(id)
     }
+}
 
+#[async_trait]
+impl CheckpointManager for AgentSessionServiceImpl {
     async fn store_checkpoint(&self, checkpoint: Checkpoint) -> Result<String> {
         let id = checkpoint.id.clone();
         self.repository.store_checkpoint(&checkpoint).await?;

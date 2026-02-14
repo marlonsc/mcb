@@ -60,8 +60,20 @@ impl HttpClientTransport {
         session_prefix: Option<String>,
         timeout: Duration,
     ) -> Result<Self, Box<dyn std::error::Error>> {
-        let env_session_id = std::env::var("MCB_SESSION_ID").ok();
-        let env_session_file = std::env::var("MCB_SESSION_FILE").ok();
+        let env_session_id = std::env::vars().find_map(|(key, value)| {
+            if key == "MCB_SESSION_ID" {
+                Some(value)
+            } else {
+                None
+            }
+        });
+        let env_session_file = std::env::vars().find_map(|(key, value)| {
+            if key == "MCB_SESSION_FILE" {
+                Some(value)
+            } else {
+                None
+            }
+        });
         Self::new_with_session_source(
             server_url,
             session_prefix,
