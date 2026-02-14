@@ -1,7 +1,7 @@
 use mcb_domain::entities::memory::{ExecutionMetadata, ObservationMetadata, QualityGateResult};
 use std::sync::Arc;
 
-use mcb_domain::utils::compute_stable_id_hash;
+use crate::handlers::helpers::hash_id;
 use mcb_domain::{
     entities::memory::{MemoryFilter, MemorySearchResult, ObservationType},
     ports::services::MemoryServiceInterface,
@@ -65,11 +65,11 @@ pub(super) fn resolve_memory_origin_context(
     let canonical_session_id = args
         .session_id
         .clone()
-        .map(|id| compute_stable_id_hash("session", id.as_str()));
+        .map(|id| hash_id("session", id.as_str()));
     let parent_session_hash = args
         .parent_session_id
         .clone()
-        .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
+        .map(|id| hash_id("parent_session", id.as_str()));
 
     let payload = OriginPayloadFields::extract(data);
     let mut input = payload.to_input();

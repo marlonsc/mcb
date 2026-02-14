@@ -1,11 +1,28 @@
 //! Shared helper functions for tool handlers.
 
+use std::sync::OnceLock;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::entities::memory::OriginContext;
 use mcb_domain::error::Error;
 use mcb_domain::utils::compute_stable_id_hash;
 use mcb_domain::value_objects::OrgContext;
+
+static ID_HASH_SECRET: OnceLock<Option<String>> = OnceLock::new();
+
+fn id_hash_secret() -> Option<&'static str> {
+    ID_HASH_SECRET
+        .get_or_init(|| {
+            std::env::var("MCB_ID_HASH_SECRET")
+                .ok()
+                .filter(|s| !s.is_empty())
+        })
+        .as_deref()
+}
+
+pub fn hash_id(kind: &str, raw_id: &str) -> String {
+    compute_stable_id_hash(kind, raw_id, id_hash_secret())
+}
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -183,7 +200,7 @@ fn resolve_session_hash(
 ) -> Result<Option<String>, McpError> {
     Ok(resolve_field(field, args_value, payload_value)?
         .as_deref()
-        .map(|v| compute_stable_id_hash(hash_prefix, v)))
+        .map(|v| hash_id(hash_prefix, v)))
 }
 
 /// Common payload fields extracted from a JSON data map for origin context resolution.

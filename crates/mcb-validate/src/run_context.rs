@@ -211,7 +211,12 @@ fn enumerate_with_walkdir(
     let mut seen = HashSet::new();
     let mut entries = Vec::new();
 
-    for entry in WalkDir::new(workspace_root)
+    // Canonicalize workspace_root so strip_prefix works consistently with
+    // canonicalized file paths. On macOS /tmp → /private/tmp symlink and on
+    // Windows the \\?\ prefix would otherwise cause strip_prefix to fail.
+    let canonical_root = normalize_path(workspace_root);
+
+    for entry in WalkDir::new(&canonical_root)
         .follow_links(false)
         .into_iter()
         .filter_map(std::result::Result::ok)
@@ -222,7 +227,7 @@ fn enumerate_with_walkdir(
         }
 
         let absolute = normalize_path(path);
-        let Ok(relative) = absolute.strip_prefix(workspace_root) else {
+        let Ok(relative) = absolute.strip_prefix(&canonical_root) else {
             continue;
         };
         let relative = relative.to_path_buf();
