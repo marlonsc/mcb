@@ -257,10 +257,16 @@ macro_rules! define_violations {
         }
     ) => {
         #[derive(Debug, Clone, serde::Serialize)]
+        #[doc = concat!("Violation types emitted by the [`", stringify!($name), "`] validator.")]
         $vis enum $name {
             $(
                 $(#[doc = $doc])*
-                $variant { $( $field: $field_ty ),* }
+                $variant {
+                    $(
+                        #[doc = concat!(" `", stringify!($field), "` value.")]
+                        $field: $field_ty
+                    ),*
+                }
             ),*
         }
     };

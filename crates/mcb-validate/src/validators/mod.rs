@@ -8,6 +8,7 @@ pub mod error_boundary;
 /// Hygiene validation (e.g., TODOs, formatting)
 pub mod hygiene;
 pub mod implementation;
+/// KISS principle validation (Keep It Simple, Stupid).
 pub mod kiss;
 pub mod layer_flow;
 pub mod naming;

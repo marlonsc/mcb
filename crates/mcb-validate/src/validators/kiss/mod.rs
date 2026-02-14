@@ -1,3 +1,12 @@
+//! KISS Principle Validation
+//!
+//! Validates code simplicity by detecting overly complex structures:
+//! - Structs with too many fields
+//! - Functions with too many parameters
+//! - Overly complex builders
+//! - Deep nesting
+//! - Long functions
+
 use std::path::PathBuf;
 
 use crate::config::KISSRulesConfig;
@@ -10,23 +19,36 @@ mod violations;
 
 pub use self::violations::KissViolation;
 
+/// Validates code against KISS (Keep It Simple, Stupid) principles.
+///
+/// Checks struct field counts, function parameter counts, builder complexity,
+/// nesting depth, and function length against configurable thresholds.
 pub struct KissValidator {
+    /// Configuration for validation scans
     config: ValidationConfig,
+    /// KISS-specific rule configuration
     rules: KISSRulesConfig,
+    /// Maximum allowed fields per struct
     max_struct_fields: usize,
+    /// Maximum allowed parameters per function
     max_function_params: usize,
+    /// Maximum allowed optional fields per builder
     max_builder_fields: usize,
+    /// Maximum allowed nesting depth
     max_nesting_depth: usize,
+    /// Maximum allowed lines per function
     max_function_lines: usize,
 }
 
 impl KissValidator {
+    /// Creates a new KISS validator with configuration loaded from the workspace root.
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         let root: PathBuf = workspace_root.into();
         let file_config = crate::config::FileConfig::load(&root);
         Self::with_config(ValidationConfig::new(root), &file_config.rules.kiss)
     }
 
+    /// Creates a new KISS validator with explicit configuration and rules.
     pub fn with_config(config: ValidationConfig, rules: &KISSRulesConfig) -> Self {
         let t = thresholds();
         Self {
@@ -40,18 +62,21 @@ impl KissValidator {
         }
     }
 
+    /// Overrides the maximum allowed struct fields threshold.
     #[must_use]
     pub fn with_max_struct_fields(mut self, max: usize) -> Self {
         self.max_struct_fields = max;
         self
     }
 
+    /// Overrides the maximum allowed function parameters threshold.
     #[must_use]
     pub fn with_max_function_params(mut self, max: usize) -> Self {
         self.max_function_params = max;
         self
     }
 
+    /// Runs all KISS validations and returns detected violations.
     pub fn validate_all(&self) -> Result<Vec<KissViolation>> {
         if !self.rules.enabled {
             return Ok(Vec::new());

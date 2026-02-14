@@ -7,6 +7,7 @@ crate::define_violations! {
     dynamic_severity,
     ViolationCategory::Kiss,
     pub enum KissViolation {
+        /// Struct has too many fields, violating simplicity.
         #[violation(
             id = "KISS001",
             severity = Warning,
@@ -21,6 +22,7 @@ crate::define_violations! {
             max_allowed: usize,
             severity: Severity,
         },
+        /// Function has too many parameters, suggesting a need for a config struct.
         #[violation(
             id = "KISS002",
             severity = Warning,
@@ -35,6 +37,7 @@ crate::define_violations! {
             max_allowed: usize,
             severity: Severity,
         },
+        /// Builder struct has too many optional fields.
         #[violation(
             id = "KISS003",
             severity = Warning,
@@ -49,6 +52,7 @@ crate::define_violations! {
             max_allowed: usize,
             severity: Severity,
         },
+        /// Code block has excessive nesting depth.
         #[violation(
             id = "KISS004",
             severity = Warning,
@@ -63,6 +67,7 @@ crate::define_violations! {
             context: String,
             severity: Severity,
         },
+        /// Function body exceeds maximum allowed line count.
         #[violation(
             id = "KISS005",
             severity = Warning,
@@ -81,6 +86,7 @@ crate::define_violations! {
 }
 
 impl KissViolation {
+    /// Returns the severity level of this KISS violation.
     pub fn severity(&self) -> Severity {
         <Self as Violation>::severity(self)
     }
