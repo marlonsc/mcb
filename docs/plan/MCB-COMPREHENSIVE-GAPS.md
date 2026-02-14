@@ -16,7 +16,7 @@ MCB v0.2.0 provides functional code search and basic MCP tools, but **significan
 The core gap is **Project as Central Hub** not being implemented. MCB currently lacks:
 
 | Dimension | Current State | Required State |
-|-----------|---------------|----------------|
+| ----------- | --------------- | ---------------- |
 | **Project-Repository Link** | None | 1:1 mapping to git repo |
 | **Multi-Collection** | Single collection | 1:N collections per worktree |
 | **Multi-Session** | Basic session list | Session tracks user + agent + worktree |
@@ -30,7 +30,7 @@ The core gap is **Project as Central Hub** not being implemented. MCB currently 
 ## Gap Matrix
 
 | Layer | Total Gaps | Critical (P0) | High (P1) | Medium (P2) |
-|-------|------------|---------------|-----------|-------------|
+| ------- | ------------ | --------------- | ----------- | ------------- |
 | Domain | 7 | 3 | 3 | 1 |
 | Handlers | 4 | 2 | 1 | 1 |
 | Providers | 5 | 2 | 2 | 1 |
@@ -302,7 +302,7 @@ bd create --title "GAP-P5: Improve error handling - preserve driver context" --t
 ## Traceability Matrix
 
 | Gap ID | Finding | Target Version | Roadmap Status |
-|--------|---------|----------------|----------------|
+| -------- | --------- | ---------------- | ---------------- |
 | **GAP-P3** | Milvus health metrics incomplete | v0.2.1 | Added (Missing) |
 | **GAP-P4** | Pinecone listing using zero-vector workaround | v0.2.1 | Added (Missing) |
 | **GAP-D5** | SemanticExtractorProvider missing port | v0.4.0 | Refined (Vague) |

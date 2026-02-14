@@ -10,8 +10,8 @@ use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
 use crate::handlers::helpers::{
-    current_timestamp, map_opaque_error, ok_json, ok_text, require_data, require_id,
-    resolve_identifier_precedence, resolve_org_id,
+    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_identifier_precedence,
+    resolve_org_id,
 };
 
 /// Handler for the consolidated `vcs_entity` MCP tool.
@@ -251,7 +251,19 @@ impl VcsEntityHandler {
                         None,
                     )
                 })?;
-                map_opaque_error(self.repo.release_assignment(&id, current_timestamp()).await)
+                map_opaque_error(
+                    self.repo
+                        .release_assignment(
+                            &id,
+                            mcb_domain::utils::time::epoch_secs_i64().map_err(|e| {
+                                McpError::internal_error(
+                                    format!("failed to resolve current timestamp: {e}"),
+                                    None,
+                                )
+                            })?,
+                        )
+                        .await,
+                )
                     .map_err(|e| {
                         McpError::internal_error(
                             format!("failed to release assignment '{id}': {e}"),

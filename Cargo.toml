@@ -8,8 +8,6 @@ members = [
     "crates/mcb-providers",
     "crates/mcb-server",
     "crates/mcb-validate",
-    "crates/mcb-language-support",
-    "crates/mcb-ast-utils",
 ]
 
 [workspace.package]
@@ -105,7 +103,7 @@ sha2 = "0.10"
 hex = "0.4"
 
 # Utilities
-uuid = { version = "1.20", features = ["v4"] }
+uuid = { version = "1.20", features = ["v4", "v5", "serde"] }
 dirs = "6.0"
 
 # HTTP server - Rocket (migrated from Axum in v0.1.2 - ADR-026)
@@ -264,7 +262,7 @@ evalexpr = "13"
 garde = { version = "0.22", features = ["derive"] }
 
 # JSON Schema validation
-jsonschema = "0.41"
+jsonschema = "0.42"
 
 # Pest parser for DSL
 pest = "2.8"

@@ -13,7 +13,7 @@ pub(super) fn require_session_id(args: &SessionArgs) -> Result<&SessionId, CallT
         .ok_or_else(|| CallToolResult::error(vec![Content::text("Missing session_id")]))
 }
 
-pub(super) fn require_session_id_str(args: &SessionArgs) -> Result<&str, CallToolResult> {
+pub(super) fn require_session_id_str(args: &SessionArgs) -> Result<String, CallToolResult> {
     require_session_id(args).map(|id| id.as_str())
 }
 

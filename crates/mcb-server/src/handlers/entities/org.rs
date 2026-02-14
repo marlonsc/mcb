@@ -9,7 +9,7 @@ use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use crate::handlers::helpers::{
-    current_timestamp, map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
+    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
 };
 
 /// Handler for the consolidated `org_entity` MCP tool.
@@ -176,5 +176,8 @@ impl OrgEntityHandler {
 
 fn extract_revoked_at(data: Option<&serde_json::Value>) -> i64 {
     data.and_then(|value| value.get("revoked_at").and_then(serde_json::Value::as_i64))
-        .unwrap_or_else(current_timestamp)
+        .unwrap_or_else(|| {
+            mcb_domain::utils::time::epoch_secs_i64()
+                .unwrap_or_else(|e| panic!("system clock failure: {e}"))
+        })
 }

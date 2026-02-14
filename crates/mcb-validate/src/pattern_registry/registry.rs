@@ -69,15 +69,13 @@ impl PatternRegistry {
         );
 
         // Map each layer key to (crate_name, module_name) from NamingRulesConfig
-        let crates: [(&str, &str); 8] = [
+        let crates: [(&str, &str); 6] = [
             ("domain", &naming_config.domain_crate),
             ("application", &naming_config.application_crate),
             ("providers", &naming_config.providers_crate),
             ("infrastructure", &naming_config.infrastructure_crate),
             ("server", &naming_config.server_crate),
             ("validate", &naming_config.validate_crate),
-            ("language_support", &naming_config.language_support_crate),
-            ("ast_utils", &naming_config.ast_utils_crate),
         ];
 
         for (key, crate_name) in crates {

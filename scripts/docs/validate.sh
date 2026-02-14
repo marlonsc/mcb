@@ -266,7 +266,7 @@ validate_external_links() {
 			if [[ "$link" == *'.to_string'* ]]; then
 				continue
 			fi
-			if [[ "$link" == *'docs.rs/mcp-context-browser'* ]]; then
+			if [[ "$link" == *'docs.rs/mcb'* ]]; then
 				continue
 			fi
 

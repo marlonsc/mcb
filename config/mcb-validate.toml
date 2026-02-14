@@ -130,8 +130,6 @@ infrastructure_crate = ""
 application_crate = ""
 providers_crate = ""
 validate_crate = ""
-language_support_crate = ""
-ast_utils_crate = ""
 
 # ==============================================================================
 # KISS Rules

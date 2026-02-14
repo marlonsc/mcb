@@ -96,7 +96,8 @@ impl VcsProvider for Git2Provider {
     async fn open_repository(&self, path: &Path) -> Result<VcsRepository> {
         let repo = Self::open_repo(path)?;
 
-        let id = RepositoryId::new(Self::get_root_commit_hash(&repo)?);
+        let root_hash = Self::get_root_commit_hash(&repo)?;
+        let id = RepositoryId::from_name(&root_hash);
         let default_branch = Self::get_default_branch(&repo);
         let branches = Self::list_branch_names(&repo)?;
         let remote_url = Self::get_remote_url(&repo);

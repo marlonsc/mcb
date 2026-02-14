@@ -87,7 +87,7 @@ pub async fn get_observations(
     match memory_service
         .get_observations_by_ids(
             &ids.iter()
-                .map(|id| ObservationId::new(id.clone()))
+                .map(|id| ObservationId::from_string(id))
                 .collect::<Vec<_>>(),
         )
         .await

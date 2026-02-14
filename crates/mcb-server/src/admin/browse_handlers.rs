@@ -126,7 +126,7 @@ pub async fn list_collection_files(
 ) -> Result<Json<FileListResponse>, (Status, Json<BrowseErrorResponse>)> {
     tracing::info!("list_collection_files called");
     let limit = limit.unwrap_or(100);
-    let collection = CollectionId::new(name);
+    let collection = CollectionId::from_name(name);
 
     let files = state
         .browser
@@ -189,7 +189,7 @@ pub async fn get_file_chunks(
 ) -> Result<Json<ChunkListResponse>, (Status, Json<BrowseErrorResponse>)> {
     tracing::info!("get_file_chunks called");
     let file_path = path.to_string_lossy().to_string();
-    let collection_id = CollectionId::new(name);
+    let collection_id = CollectionId::from_name(name);
 
     let chunks = state
         .browser
@@ -272,7 +272,7 @@ pub async fn get_collection_tree(
     name: &str,
 ) -> Result<Json<FileTreeNode>, (Status, Json<BrowseErrorResponse>)> {
     tracing::info!("get_collection_tree called");
-    let collection_id = CollectionId::new(name);
+    let collection_id = CollectionId::from_name(name);
     let files = state
         .browser
         .list_file_paths(&collection_id, LIST_FILE_PATHS_LIMIT)

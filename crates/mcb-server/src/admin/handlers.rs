@@ -5,7 +5,7 @@
 
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::Duration;
 
 use mcb_domain::ports::admin::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation,
@@ -19,6 +19,7 @@ use mcb_domain::ports::repositories::{
     IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
     VcsEntityRepository,
 };
+use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::OperationId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
@@ -608,7 +609,7 @@ pub fn extended_health_check(
     tracing::info!("extended_health_check called");
     let metrics = state.metrics.get_performance_metrics();
     let operations = state.indexing.get_operations();
-    let now = current_timestamp();
+    let now = domain_time::epoch_secs_u64().unwrap_or_else(|e| panic!("system clock failure: {e}"));
 
     let dependencies = build_dependency_checks(&metrics, &operations, now);
     let dependencies_status = calculate_overall_health(&dependencies);
@@ -626,14 +627,6 @@ pub fn extended_health_check(
     };
 
     Json(response)
-}
-
-/// Get current timestamp in seconds since UNIX epoch
-fn current_timestamp() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_secs()
 }
 
 /// Build dependency health checks from metrics and operations

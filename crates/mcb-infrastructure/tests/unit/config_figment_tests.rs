@@ -13,8 +13,8 @@ struct EnvVarGuard {
 
 impl EnvVarGuard {
     fn new(vars: &[(&str, &str)]) -> Self {
-        // SAFETY: Tests must run with --test-threads=1 or #[serial]
         for (k, v) in vars {
+            // SAFETY: Tests run serially via #[serial], so no concurrent env access.
             unsafe {
                 env::set_var(k, v);
             }
@@ -27,8 +27,8 @@ impl EnvVarGuard {
 
 impl Drop for EnvVarGuard {
     fn drop(&mut self) {
-        // SAFETY: Tests must run with --test-threads=1 or #[serial]
         for k in &self.keys {
+            // SAFETY: Tests run serially via #[serial], so no concurrent env access.
             unsafe {
                 env::remove_var(k);
             }
@@ -145,10 +145,10 @@ fn test_auth_disabled_by_default_loads_without_jwt_secret() {
     // Ensure clean state - remove any auth env vars from previous tests
     // EnvVarGuard drop logic handles cleanup of manually set vars.
     // To be extra safe against leaks from other tests (though serial helps):
-    unsafe {
-        env::remove_var("MCP__AUTH__ENABLED");
-        env::remove_var("MCP__AUTH__JWT__SECRET");
-    }
+    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
+    unsafe { env::remove_var("MCP__AUTH__ENABLED") };
+    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
+    unsafe { env::remove_var("MCP__AUTH__JWT__SECRET") };
 
     let result = ConfigLoader::new().load();
 

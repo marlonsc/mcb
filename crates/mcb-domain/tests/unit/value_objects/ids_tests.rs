@@ -1,45 +1,61 @@
 //! Tests for strong-typed ID value objects
 
+use mcb_domain::utils::id;
 use mcb_domain::value_objects::ids::{
     ChunkId, CollectionId, ObservationId, OperationId, RepositoryId, SessionId,
 };
 use rstest::rstest;
 
 #[rstest]
-#[case(CollectionId::new("test-collection").as_str().to_string(), "test-collection")]
-#[case(CollectionId::from("test".to_string()).as_str().to_string(), "test")]
-#[case(CollectionId::from("test").as_str().to_string(), "test")]
-#[case(CollectionId::new("display-test").to_string(), "display-test")]
-#[case(ChunkId::new("chunk-1").as_str().to_string(), "chunk-1")]
-#[case(RepositoryId::new("repo-1").as_str().to_string(), "repo-1")]
-#[case(SessionId::new("session-1").as_str().to_string(), "session-1")]
-#[case(ObservationId::new("obs-1").as_str().to_string(), "obs-1")]
-#[case(OperationId::new("op-1").as_str().to_string(), "op-1")]
-fn id_creation_and_conversions(#[case] actual: String, #[case] expected: &str) {
-    assert_eq!(actual, expected);
+#[case(
+    CollectionId::from_uuid(id::deterministic("collection", "test")),
+    "collection",
+    "test"
+)]
+#[case(ChunkId::from_uuid(id::deterministic("chunk", "c1")), "chunk", "c1")]
+#[case(
+    RepositoryId::from_uuid(id::deterministic("repository", "r1")),
+    "repository",
+    "r1"
+)]
+#[case(
+    SessionId::from_uuid(id::deterministic("session", "s1")),
+    "session",
+    "s1"
+)]
+#[case(
+    ObservationId::from_uuid(id::deterministic("observation", "o1")),
+    "observation",
+    "o1"
+)]
+#[case(
+    OperationId::from_uuid(id::deterministic("operation", "op1")),
+    "operation",
+    "op1"
+)]
+fn id_string_conversion_determinism<T: ToString>(
+    #[case] id_obj: T,
+    #[case] namespace: &str,
+    #[case] input: &str,
+) {
+    let expected = id::deterministic(namespace, input).to_string();
+    assert_eq!(id_obj.to_string(), expected);
 }
 
 #[rstest]
-#[case("equality")]
-#[case("into_string")]
-#[case("as_ref")]
-fn collection_id_core_behaviors(#[case] mode: &str) {
-    match mode {
-        "equality" => {
-            let id1 = CollectionId::new("test");
-            let id2 = CollectionId::new("test");
-            assert_eq!(id1, id2);
-        }
-        "into_string" => {
-            let id = CollectionId::new("test");
-            let s: String = id.into();
-            assert_eq!(s, "test");
-        }
-        "as_ref" => {
-            let id = CollectionId::new("test");
-            let s: &str = id.as_ref();
-            assert_eq!(s, "test");
-        }
-        _ => unreachable!(),
-    }
+fn collection_id_determinism() {
+    let id1 = CollectionId::from_uuid(id::deterministic("collection", "test"));
+    let id2 = CollectionId::from_uuid(id::deterministic("collection", "test"));
+    assert_eq!(id1, id2);
+    assert_eq!(
+        id1.to_string(),
+        id::deterministic("collection", "test").to_string()
+    );
+}
+
+#[rstest]
+fn collection_id_into_string() {
+    let id = CollectionId::from_uuid(id::deterministic("collection", "test"));
+    let s: String = id.clone().into();
+    assert_eq!(s, id.to_string());
 }

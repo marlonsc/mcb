@@ -62,11 +62,21 @@ fn row_to_team(row: &dyn SqlRow) -> Result<Team> {
     })
 }
 
+use mcb_domain::utils::id;
+use mcb_domain::value_objects::ids::TeamMemberId;
+
+// ...
+
 /// Converts a SQL row to a TeamMember.
 fn row_to_team_member(row: &dyn SqlRow) -> Result<TeamMember> {
+    let team_id = req_str(row, "team_id")?;
+    let user_id = req_str(row, "user_id")?;
+    let id_uuid = id::deterministic("team_member", &format!("{}:{}", team_id, user_id));
+
     Ok(TeamMember {
-        team_id: req_str(row, "team_id")?,
-        user_id: req_str(row, "user_id")?,
+        id: TeamMemberId::from_uuid(id_uuid),
+        team_id,
+        user_id,
         role: req_str(row, "role")?
             .parse::<TeamMemberRole>()
             .map_err(|e| Error::memory(format!("Invalid team member role: {e}")))?,

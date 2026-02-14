@@ -147,7 +147,7 @@ impl ContextServiceImpl {
 #[async_trait::async_trait]
 impl ContextServiceInterface for ContextServiceImpl {
     async fn initialize(&self, collection: &CollectionId) -> Result<()> {
-        let name = collection.as_str();
+        let name = collection.to_string();
         // Create collection if it doesn't exist
         if !self.collection_exists(collection).await? {
             let dimensions = self.embedding_provider.dimensions();
@@ -157,12 +157,12 @@ impl ContextServiceInterface for ContextServiceImpl {
         }
 
         // Track initialization in cache
-        self.cache_set(&cache_keys::collection(name), "\"initialized\"")
+        self.cache_set(&cache_keys::collection(&name), "\"initialized\"")
             .await
     }
 
     async fn store_chunks(&self, collection: &CollectionId, chunks: &[CodeChunk]) -> Result<()> {
-        let name = collection.as_str();
+        let name = collection.to_string();
         let mut texts = Vec::with_capacity(chunks.len());
         let mut metadata = Vec::with_capacity(chunks.len());
 
@@ -182,7 +182,7 @@ impl ContextServiceInterface for ContextServiceImpl {
 
         // Update collection metadata in cache
         self.cache_set(
-            &cache_keys::collection_meta(name),
+            &cache_keys::collection_meta(&name),
             &chunks.len().to_string(),
         )
         .await
@@ -207,7 +207,7 @@ impl ContextServiceInterface for ContextServiceImpl {
     }
 
     async fn clear_collection(&self, collection: &CollectionId) -> Result<()> {
-        let name = collection.as_str();
+        let name = collection.to_string();
         // Delete collection from vector store if it exists
         if self.collection_exists(collection).await? {
             self.vector_store_provider
@@ -216,9 +216,9 @@ impl ContextServiceInterface for ContextServiceImpl {
         }
 
         // Clear cache metadata
-        self.cache.delete(&cache_keys::collection(name)).await?;
+        self.cache.delete(&cache_keys::collection(&name)).await?;
         self.cache
-            .delete(&cache_keys::collection_meta(name))
+            .delete(&cache_keys::collection_meta(&name))
             .await?;
         Ok(())
     }

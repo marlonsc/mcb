@@ -5,7 +5,6 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::{Arc, Mutex};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use walkdir::WalkDir;
 
@@ -98,7 +97,7 @@ impl ValidationRunContext {
     /// # Errors
     /// Returns an error if file reading fails.
     pub fn read_cached(&self, path: &Path) -> std::io::Result<Arc<str>> {
-        let normalized = normalize_path(path);
+        let normalized = normalize_path(path)?;
         if let Ok(cache) = self.content_cache.lock()
             && let Some(content) = cache.get(&normalized)
         {
@@ -195,7 +194,7 @@ fn enumerate_with_git(
 
         if seen.insert(relative.clone()) {
             entries.push(InventoryEntry {
-                absolute_path: normalize_path(&absolute),
+                absolute_path: normalize_path(&absolute)?,
                 relative_path: relative,
             });
         }
@@ -214,7 +213,7 @@ fn enumerate_with_walkdir(
     // Canonicalize workspace_root so strip_prefix works consistently with
     // canonicalized file paths. On macOS /tmp → /private/tmp symlink and on
     // Windows the \\?\ prefix would otherwise cause strip_prefix to fail.
-    let canonical_root = normalize_path(workspace_root);
+    let canonical_root = normalize_path(workspace_root)?;
 
     for entry in WalkDir::new(&canonical_root)
         .follow_links(false)
@@ -226,7 +225,7 @@ fn enumerate_with_walkdir(
             continue;
         }
 
-        let absolute = normalize_path(path);
+        let absolute = normalize_path(path)?;
         let Ok(relative) = absolute.strip_prefix(&canonical_root) else {
             continue;
         };
@@ -256,14 +255,15 @@ fn should_ignore(path: &str, ignore_patterns: &[String]) -> bool {
 }
 
 fn build_trace_id() -> String {
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0, |duration| duration.as_nanos());
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
     format!("validate-run-{nanos}")
 }
 
-fn normalize_path(path: &Path) -> PathBuf {
-    std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+fn normalize_path(path: &Path) -> std::io::Result<PathBuf> {
+    std::fs::canonicalize(path)
 }
 
 #[cfg(test)]

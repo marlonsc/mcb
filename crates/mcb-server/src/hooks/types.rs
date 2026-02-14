@@ -3,8 +3,8 @@
 //! Includes hook event types, contexts, and errors.
 
 use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
 
+use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::ids::SessionId;
 use thiserror::Error;
 
@@ -91,10 +91,8 @@ impl PostToolUseContext {
             ToolExecutionStatus::Success
         };
 
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs())
-            .unwrap_or(0);
+        let timestamp =
+            domain_time::epoch_secs_u64().unwrap_or_else(|e| panic!("system clock failure: {e}"));
 
         Self {
             tool_name,
@@ -123,10 +121,8 @@ impl PostToolUseContext {
 impl SessionStartContext {
     /// Creates a new `SessionStartContext` for a given session ID.
     pub fn new(session_id: SessionId) -> Self {
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs())
-            .unwrap_or(0);
+        let timestamp =
+            domain_time::epoch_secs_u64().unwrap_or_else(|e| panic!("system clock failure: {e}"));
 
         Self {
             session_id,

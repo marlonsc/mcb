@@ -25,6 +25,7 @@ pub async fn summarize_session(
         }
     };
     if let Some(data) = optional_data_map(&args.data) {
+        let session_id_str = session_id.to_string();
         let topics = str_vec(data, "topics");
         let decisions = str_vec(data, "decisions");
         let next_steps = str_vec(data, "next_steps");
@@ -33,7 +34,7 @@ pub async fn summarize_session(
         let mut input = payload.to_input();
         input.org_id = args.org_id.as_deref();
         input.project_id_args = args.project_id.as_deref();
-        input.session_from_args = Some(session_id.as_str());
+        input.session_from_args = Some(&session_id_str);
         input.parent_session_from_args = args.parent_session_id.as_deref();
         input.tool_name_args = Some("session");
         input.worktree_id_args = args.worktree_id.as_deref();
@@ -56,7 +57,7 @@ pub async fn summarize_session(
         {
             Ok(summary_id) => ResponseFormatter::json_success(&serde_json::json!({
                 "summary_id": summary_id,
-                "session_id": session_id.as_str(),
+                "session_id": session_id_str,
             })),
             Err(e) => Ok(to_contextual_tool_error(e)),
         }

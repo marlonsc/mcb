@@ -18,13 +18,15 @@ pub struct Team {
     pub created_at: i64,
 }
 
+use crate::value_objects::ids::TeamMemberId;
+
 /// A membership link between a user and a team, with a role describing
 /// the user's authority within that team.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-// TODO(architecture): Add id: Uuid or similar identity field to entity.
-// Current implementation relies on composite key (team_id, user_id).
-// TODO(CA004): Entity TeamMember missing id/uuid field - Add id: Uuid or similar identity field to entity
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 pub struct TeamMember {
+    /// Unique identifier for the membership (composite of team_id:user_id).
+    #[serde(default)]
+    pub id: TeamMemberId,
     /// Team the user belongs to.
     pub team_id: String,
     /// User who is a member.

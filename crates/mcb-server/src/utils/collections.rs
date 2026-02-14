@@ -20,5 +20,5 @@ pub fn normalize_collection_name(user_name: &str) -> Result<CollectionId, String
         return Err("collection name contains invalid characters".into());
     }
     let normalized = user_name.replace(['-', '.'], "_").to_lowercase();
-    Ok(CollectionId::new(normalized))
+    Ok(CollectionId::from_name(&normalized))
 }

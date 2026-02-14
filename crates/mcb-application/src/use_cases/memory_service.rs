@@ -22,7 +22,6 @@
 
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::entities::memory::{
     ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
@@ -34,7 +33,10 @@ use mcb_domain::ports::providers::VectorStoreProvider;
 use mcb_domain::ports::repositories::MemoryRepository;
 use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
 use mcb_domain::utils::compute_content_hash;
+use mcb_domain::utils::id;
+use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
+use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::constants::{
@@ -77,22 +79,6 @@ impl MemoryServiceImpl {
             embedding_provider,
             vector_store,
         }
-    }
-
-    /// Returns the current Unix timestamp in seconds.
-    ///
-    /// Used to record observation creation times and session summary timestamps.
-    /// Falls back to 0 if the system clock is unavailable (extremely rare).
-    ///
-    /// # Returns
-    ///
-    /// Current Unix timestamp as seconds since UNIX_EPOCH, or 0 if unavailable.
-    #[must_use]
-    pub fn current_timestamp() -> i64 {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0)
     }
 
     /// Evaluates whether an observation matches the provided memory filter.
@@ -229,7 +215,10 @@ impl MemoryServiceImpl {
             );
         }
 
-        let collection_id = CollectionId::new(crate::constants::MEMORY_COLLECTION_NAME);
+        let collection_id = CollectionId::from_uuid(id::deterministic(
+            "collection",
+            crate::constants::MEMORY_COLLECTION_NAME,
+        ));
         let ids = self
             .vector_store
             .insert_vectors(&collection_id, &[embedding], vec![vector_metadata])
@@ -245,7 +234,7 @@ impl MemoryServiceImpl {
             tags,
             r#type,
             metadata,
-            created_at: Self::current_timestamp(),
+            created_at: domain_time::epoch_secs_i64()?,
             embedding_id,
         };
 
@@ -265,7 +254,8 @@ impl MemoryServiceImpl {
         let candidate_limit = limit * HYBRID_SEARCH_MULTIPLIER;
 
         let query_embedding = self.embedding_provider.embed(query).await?;
-        let collection_id = CollectionId::new(MEMORY_COLLECTION_NAME);
+        let collection_id =
+            CollectionId::from_uuid(id::deterministic("collection", MEMORY_COLLECTION_NAME));
 
         let (fts_result, vector_result) = tokio::join!(
             self.repository.search(query, candidate_limit),
@@ -320,7 +310,7 @@ impl MemoryServiceImpl {
     ) -> Result<Vec<MemorySearchResult>> {
         let top_ids: Vec<ObservationId> = ranked
             .iter()
-            .map(|(id, _)| ObservationId::new(id))
+            .filter_map(|(id, _)| ObservationId::from_str(id).ok())
             .collect();
         let observations = self.repository.get_observations_by_ids(&top_ids).await?;
 
@@ -382,8 +372,8 @@ impl MemoryServiceImpl {
         &self,
         input: CreateSessionSummaryInput,
     ) -> Result<String> {
-        let session_id = input.session_id.into_string();
-        let timestamp = Self::current_timestamp();
+        let session_id = input.session_id.to_string();
+        let timestamp = domain_time::epoch_secs_i64()?;
         let project_id = if input.project_id.trim().is_empty() {
             self.project_id.clone()
         } else {
@@ -460,7 +450,9 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         let (id, new) = self
             .store_observation_impl(project_id, content, r#type, tags, metadata)
             .await?;
-        Ok((ObservationId::new(id), new))
+        let obs_id = ObservationId::from_str(&id)
+            .map_err(|e| mcb_domain::error::Error::invalid_argument(e.to_string()))?;
+        Ok((obs_id, new))
     }
 
     async fn store_error_pattern(&self, pattern: ErrorPattern) -> Result<String> {
@@ -482,7 +474,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             )
             .await?;
 
-        Ok(id.into_string())
+        Ok(id.to_string())
     }
 
     async fn search_error_patterns(

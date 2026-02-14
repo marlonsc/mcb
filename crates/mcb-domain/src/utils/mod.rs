@@ -1,11 +1,19 @@
-/// Module for project type utility helpers.
-/// Module for general utility helpers.
-pub mod helpers;
-/// Module for project type utility helpers.
+//! Cross-crate utility modules for the MCB workspace.
+//!
+//! **Policy**: See [`UTILITIES_POLICY.md`](./UTILITIES_POLICY.md) for naming, strictness,
+//! and no-wrapper rules before adding code here.
+
+/// ID generation, deterministic correlation (UUID v5), content hashing, and masking.
+pub mod id;
+/// Canonical path utilities — strict, no fallbacks.
+pub mod path;
+/// Project type detection helpers.
 pub mod project_type;
-/// Module for submodule path utility helpers.
+/// Submodule path helpers.
 pub mod submodule;
+/// Canonical time utilities — strict, no fallbacks.
+pub mod time;
 /// VCS context data types for memory observations.
 pub mod vcs_context;
 
-pub use helpers::*;
+pub use id::*;

@@ -361,7 +361,7 @@ All configurations follow this priority (highest to lowest):
 ### ✅ All Defaults Documented
 
 | Component | Default Location | Documented? | Issue? |
-|-----------|------------------|-------------|--------|
+| ----------- | ------------------ | ------------- | -------- |
 | Server | server.rs | ✅ Yes | None |
 | Cache | cache/config.rs | ✅ Yes | None |
 | Event Bus | events/mod.rs | ✅ Yes | None (factory disabled) |

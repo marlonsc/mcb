@@ -7,7 +7,7 @@
 MCB exposes 9 tools through the MCP protocol. Tool names as returned by `tools/list`:
 
 | # | Tool | Description |
-|---|------|-------------|
+| --- | ------ | ------------- |
 | 1 | `index` | Index operations (start, status, clear) |
 | 2 | `search` | Search operations for code and memory |
 | 3 | `validate` | Validation and analysis operations |
@@ -27,7 +27,7 @@ Index operations (start, git_index, status, clear).
 **Actions**: `start`, `git_index`, `status`, `clear`
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| ----------- | ------ | ---------- | ------------- |
 | `action` | enum | **yes** | `start`, `git_index`, `status`, `clear` |
 | `path` | string | no | Path to codebase directory (required for `start`) |
 | `collection` | string | no | Collection name for the index |
@@ -47,7 +47,7 @@ Search operations for code and memory.
 **Resources**: `code`, `memory`, `context`
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| ----------- | ------ | ---------- | ------------- |
 | `query` | string | **yes** | Natural language search query |
 | `resource` | enum | **yes** | `code`, `memory`, `context` |
 | `collection` | string | no | Collection name |
@@ -68,7 +68,7 @@ Validation and analysis operations.
 **Actions**: `run`, `list_rules`, `analyze`
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| ----------- | ------ | ---------- | ------------- |
 | `action` | enum | **yes** | `run`, `list_rules`, `analyze` |
 | `scope` | enum | no | `file` or `project` |
 | `path` | string | no | Path to file or project directory |
@@ -86,7 +86,7 @@ Memory storage, retrieval, and timeline operations.
 **Resources**: `observation`, `execution`, `quality_gate`, `error_pattern`, `session`
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| ----------- | ------ | ---------- | ------------- |
 | `action` | enum | **yes** | `store`, `get`, `list`, `timeline`, `inject` |
 | `resource` | enum | **yes** | `observation`, `execution`, `quality_gate`, `error_pattern`, `session` |
 | `data` | object | no | Data payload for store action |
@@ -113,7 +113,7 @@ Session lifecycle operations.
 **Actions**: `create`, `get`, `update`, `list`, `summarize`
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| ----------- | ------ | ---------- | ------------- |
 | `action` | enum | **yes** | `create`, `get`, `update`, `list`, `summarize` |
 | `session_id` | string | no | Session ID (required for get/update/summarize) |
 | `data` | object | no | Data payload for create/update |
@@ -132,7 +132,7 @@ Agent activity logging operations.
 **Actions**: `log_tool`, `log_delegation`
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| ----------- | ------ | ---------- | ------------- |
 | `action` | enum | **yes** | `log_tool`, `log_delegation` |
 | `session_id` | string | **yes** | Session ID for the agent |
 | `data` | object | **yes** | Activity data payload |
@@ -148,7 +148,7 @@ Project workflow management (phases, issues, dependencies, decisions).
 **Resources**: `project`, `phase`, `issue`, `dependency`, `decision`
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| ----------- | ------ | ---------- | ------------- |
 | `action` | enum | **yes** | `create`, `get`, `update`, `list`, `delete` |
 | `resource` | enum | **yes** | `project`, `phase`, `issue`, `dependency`, `decision` |
 | `project_id` | string | **yes** | Project ID |
@@ -164,7 +164,7 @@ Version control operations (list, index, compare, search, impact).
 **Actions**: `list_repositories`, `index_repository`, `compare_branches`, `search_branch`, `analyze_impact`
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| ----------- | ------ | ---------- | ------------- |
 | `action` | enum | **yes** | `list_repositories`, `index_repository`, `compare_branches`, `search_branch`, `analyze_impact` |
 | `repo_id` | string | **yes** | Repository identifier |
 | `repo_path` | string | **yes** | Repository path on disk |
@@ -187,7 +187,7 @@ Unified entity CRUD (vcs/plan/issue/org resources).
 **Resources**: `repository`, `branch`, `worktree`, `assignment`, `plan`, `version`, `review`, `issue`, `comment`, `label`, `label_assignment`, `org`, `user`, `team`, `team_member`, `api_key`
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| ----------- | ------ | ---------- | ------------- |
 | `action` | enum | **yes** | `create`, `get`, `update`, `list`, `delete`, `release` |
 | `resource` | enum | **yes** | See resources list above |
 | `data` | object | no | JSON payload for create/update |
@@ -211,7 +211,7 @@ Unified entity CRUD (vcs/plan/issue/org resources).
 Tools `index`, `search`, and `memory` require full execution provenance:
 
 | Field | Type | Required |
-|-------|------|----------|
+| ------- | ------ | ---------- |
 | `session_id` | string | **yes** |
 | `project_id` | string | **yes** |
 | `repo_id` | string | **yes** |
@@ -231,7 +231,7 @@ When `delegated` is `true`, `parent_session_id` is also required.
 ## Operation Mode Matrix
 
 | Tool | `stdio-only` | `client-hybrid` | `server-hybrid` |
-|------|:---:|:---:|:---:|
+| ------ |:---:|:---:|:---:|
 | `index` | ✅ | ✅ | ✅ |
 | `search` | ✅ | ❌ | ✅ |
 | `validate` | ✅ | ✅ | ❌ |

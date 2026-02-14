@@ -6,17 +6,17 @@ severity: "error"
 enabled: true
 engine: "rust-rule-engine"
 
-description: "mcb-validate depends on language support and AST utilities"
-rationale: "Validation logic needs AST analysis but should not depend on other domain layers to avoid circularity"
+description: "mcb-validate is a standalone analysis crate"
+rationale: "Validation logic should not depend on other domain layers to avoid circularity"
 
 crate_name: "{{validate_crate}}"
 forbidden_prefixes: []
-allowed_dependencies: ["{{language_support_crate}}", "{{ast_utils_crate}}"]
+allowed_dependencies: []
 
 config:
   crate_name: "{{validate_crate}}"
   forbidden_prefixes: []
-  allowed_dependencies: ["{{language_support_crate}}", "{{ast_utils_crate}}"]
+  allowed_dependencies: []
 
 rule: |
   rule ValidatorBoundaries "Validator Crate Boundaries" {

@@ -1,66 +1,62 @@
-//! Tests for domain utility hashing helpers.
-
-use mcb_domain::utils::compute_stable_id_hash;
+use mcb_domain::utils::id;
 use rstest::rstest;
 
 #[test]
-fn test_compute_stable_id_hash_is_deterministic() {
-    let first = compute_stable_id_hash("session", "ses_1234567890", None);
-    let second = compute_stable_id_hash("session", "ses_1234567890", None);
-
+fn correlate_id_is_deterministic() {
+    let first = id::correlate_id("session", "ses_1234567890");
+    let second = id::correlate_id("session", "ses_1234567890");
     assert_eq!(first, second);
 }
 
 #[rstest]
 #[case("session", "same-id", "project", "same-id")]
 #[case("session", "ses-1", "session", "ses-2")]
-fn compute_stable_id_hash_changes_with_input(
+fn correlate_id_changes_with_input(
     #[case] kind_a: &str,
     #[case] value_a: &str,
     #[case] kind_b: &str,
     #[case] value_b: &str,
 ) {
-    let first = compute_stable_id_hash(kind_a, value_a, None);
-    let second = compute_stable_id_hash(kind_b, value_b, None);
+    let first = id::correlate_id(kind_a, value_a);
+    let second = id::correlate_id(kind_b, value_b);
     assert_ne!(first, second);
 }
 
 #[test]
-fn test_compute_stable_id_hash_is_hex_encoded() {
-    let hash = compute_stable_id_hash("session", "ses_abcdef", None);
-
-    assert_eq!(hash.len(), 64);
-    assert!(hash.chars().all(|ch| ch.is_ascii_hexdigit()));
+fn correlate_id_returns_valid_uuid_format() {
+    let result = id::correlate_id("session", "ses_abcdef");
+    let parsed = uuid::Uuid::parse_str(&result);
+    assert!(
+        parsed.is_ok(),
+        "correlate_id must return a valid UUID string"
+    );
+    assert_eq!(parsed.unwrap().get_version_num(), 5);
 }
 
 #[test]
-fn test_compute_stable_id_hash_no_secret_pinned() {
-    let hash = compute_stable_id_hash("session", "ses_1234567890", None);
+fn correlate_id_pinned_value() {
+    let result = id::correlate_id("session", "ses_1234567890");
     assert_eq!(
-        hash,
-        "14537b4d16fc0d90b25b87b4ee433d612992458d5a70715ef6c36ab8ea080fdd"
+        result,
+        id::deterministic("session", "ses_1234567890").to_string()
     );
 }
 
 #[test]
-fn test_compute_stable_id_hash_with_secret_pinned() {
-    let hash = compute_stable_id_hash("session", "ses_1234567890", Some("test-secret-key"));
-    assert_eq!(
-        hash,
-        "1f3a9f61bca079ec9913c93e70e7c5282799b9e226ce8d9228092eba87a56112"
-    );
+fn deterministic_uuid_is_v5() {
+    let uuid = id::deterministic("session", "ses_1234567890");
+    assert_eq!(uuid.get_version_num(), 5);
 }
 
 #[test]
-fn test_compute_stable_id_hash_empty_secret_uses_fallback() {
-    let with_empty = compute_stable_id_hash("session", "ses_1234567890", Some(""));
-    let without = compute_stable_id_hash("session", "ses_1234567890", None);
-    assert_eq!(with_empty, without);
+fn generate_returns_v4() {
+    let uuid = id::generate();
+    assert_eq!(uuid.get_version_num(), 4);
 }
 
 #[test]
-fn test_compute_stable_id_hash_with_secret_is_deterministic() {
-    let first = compute_stable_id_hash("session", "ses_1234567890", Some("my-secret"));
-    let second = compute_stable_id_hash("session", "ses_1234567890", Some("my-secret"));
-    assert_eq!(first, second);
+fn generate_is_unique() {
+    let a = id::generate();
+    let b = id::generate();
+    assert_ne!(a, b);
 }

@@ -81,9 +81,14 @@ fn test_issue_label_serialization_roundtrip() {
     assert_eq!(parsed.created_at, 123);
 }
 
+use mcb_domain::utils::id;
+use mcb_domain::value_objects::ids::IssueLabelAssignmentId;
+
 #[rstest]
 fn test_issue_label_assignment_construction() {
+    let id_uuid = id::deterministic("issue_label_assignment", "iss-1:l-1");
     let assignment = IssueLabelAssignment {
+        id: IssueLabelAssignmentId::from_uuid(id_uuid),
         issue_id: "iss-1".to_string(),
         label_id: "l-1".to_string(),
         created_at: 987,

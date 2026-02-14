@@ -392,12 +392,6 @@ pub struct NamingRulesConfig {
 
     /// Target crate for validation logic (e.g., "mcb-validate")
     pub validate_crate: String,
-
-    /// Target crate for language support (e.g., "mcb-language-support")
-    pub language_support_crate: String,
-
-    /// Target crate for AST utilities (e.g., "mcb-ast-utils")
-    pub ast_utils_crate: String,
 }
 
 /// KISS rules configuration

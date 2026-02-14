@@ -165,13 +165,18 @@ async fn test_team_and_members() {
     let teams = repo.list_teams(DEFAULT_ORG_ID).await.expect("list teams");
     assert_eq!(teams.len(), 1);
 
+    use mcb_domain::utils::id;
+    use mcb_domain::value_objects::ids::TeamMemberId;
+
     let m1 = TeamMember {
+        id: TeamMemberId::from_uuid(id::deterministic("team_member", "team-1:user-1")),
         team_id: "team-1".to_string(),
         user_id: "user-1".to_string(),
         role: TeamMemberRole::Lead,
         joined_at: TEST_NOW,
     };
     let m2 = TeamMember {
+        id: TeamMemberId::from_uuid(id::deterministic("team_member", "team-1:user-2")),
         team_id: "team-1".to_string(),
         user_id: "user-2".to_string(),
         role: TeamMemberRole::Member,

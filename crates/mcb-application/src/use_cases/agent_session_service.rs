@@ -16,7 +16,6 @@
 //! from the application layer.
 
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use async_trait::async_trait;
 use mcb_domain::entities::agent::{
@@ -25,6 +24,7 @@ use mcb_domain::entities::agent::{
 use mcb_domain::error::Result;
 use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::utils::time as domain_time;
 
 /// Application service for managing agent session lifecycle and persistence.
 ///
@@ -50,23 +50,6 @@ impl AgentSessionServiceImpl {
     /// A new `AgentSessionServiceImpl` instance ready to manage agent sessions.
     pub fn new(repository: Arc<dyn AgentRepository>) -> Self {
         Self { repository }
-    }
-
-    /// Returns the current Unix timestamp in seconds.
-    ///
-    /// Used throughout the service to record session start times, end times, and
-    /// checkpoint restoration timestamps. Falls back to 0 if the system clock is
-    /// unavailable (which should be extremely rare).
-    ///
-    /// # Returns
-    ///
-    /// Current Unix timestamp as seconds since UNIX_EPOCH, or 0 if unavailable.
-    #[must_use]
-    pub fn current_timestamp() -> i64 {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0)
     }
 }
 
@@ -106,7 +89,7 @@ impl AgentSessionServiceInterface for AgentSessionServiceImpl {
     ) -> Result<()> {
         let session = self.repository.get_session(id).await?;
         if let Some(mut session) = session {
-            let now = Self::current_timestamp();
+            let now = domain_time::epoch_secs_i64()?;
             session.ended_at = Some(now);
             session.duration_ms = Some((now - session.started_at) * 1000);
             session.status = status;
@@ -141,7 +124,7 @@ impl AgentSessionServiceInterface for AgentSessionServiceImpl {
     async fn restore_checkpoint(&self, id: &str) -> Result<()> {
         let checkpoint = self.repository.get_checkpoint(id).await?;
         if let Some(mut checkpoint) = checkpoint {
-            checkpoint.restored_at = Some(Self::current_timestamp());
+            checkpoint.restored_at = Some(domain_time::epoch_secs_i64()?);
             self.repository.update_checkpoint(&checkpoint).await?;
         }
         Ok(())

@@ -10,11 +10,9 @@
 //!
 //! Supports: Rust, Python, JavaScript, TypeScript, Java, C, C++, Kotlin
 //!
-//! Uses `mcb-language-support` for language detection to avoid code duplication.
-
 use std::path::Path;
 
-use mcb_language_support::LanguageDetector;
+use crate::filters::LanguageDetector;
 use rust_code_analysis::{FuncSpace, LANG, get_function_spaces};
 
 use super::MetricViolation;
@@ -90,10 +88,7 @@ impl RcaAnalyzer {
         }
     }
 
-    /// Detect language from file path using mcb-language-support
-    ///
-    /// Delegates to `LanguageDetector` from mcb-language-support to avoid
-    /// duplicate language detection logic.
+    /// Detect language from file path via RCA.
     pub fn detect_language(&self, path: &Path) -> Option<LANG> {
         self.detector.detect_rca_lang(path, None)
     }

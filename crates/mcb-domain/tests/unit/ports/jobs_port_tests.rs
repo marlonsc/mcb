@@ -1,6 +1,7 @@
 //! Unit tests for jobs domain ports.
 
 use mcb_domain::ports::{Job, JobCounts, JobStatus, JobType};
+use mcb_domain::utils::id;
 use mcb_domain::value_objects::OperationId;
 use rstest::rstest;
 
@@ -31,7 +32,7 @@ fn job_type_display(#[case] job_type: JobType, #[case] expected: &str) {
 #[test]
 fn new_job_defaults() {
     let job = Job::new(
-        OperationId::new("test-123"),
+        OperationId::from_uuid(id::deterministic("operation", "test-123")),
         JobType::Indexing,
         "Index codebase",
     );

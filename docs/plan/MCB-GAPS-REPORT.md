@@ -122,7 +122,7 @@ repositories: [
 ## Working Features
 
 | Feature | Status | Notes |
-|---------|--------|-------|
+| --------- | -------- | ------- |
 | Index codebase | ✅ | Works with Milvus |
 | Search code | ✅ | Low relevance scores (~0.05) |
 | Session list | ✅ | Returns empty (expected) |
@@ -183,7 +183,7 @@ The intended integration pattern uses **Project as Central Hub**:
 ## Recommended Fix Priority
 
 | Priority | Gap | Effort | Impact |
-|----------|-----|--------|--------|
+| ---------- | ----- | -------- | -------- |
 | P0 | GAP-2 Memory fails | 2-4h | Unlocks observation storage |
 | P0 | GAP-1 Project not implemented | 1-2d | Unlocks project-scoped context |
 | P1 | GAP-4 Context search | 4-8h | Unlocks unified search |

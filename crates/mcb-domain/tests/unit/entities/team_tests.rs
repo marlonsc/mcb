@@ -28,9 +28,14 @@ fn team_serialization_roundtrip() {
     assert_eq!(deserialized.name, "Backend");
 }
 
+use mcb_domain::utils::id;
+use mcb_domain::value_objects::ids::TeamMemberId;
+
 #[rstest]
 fn team_member_construction() {
+    let id_uuid = id::deterministic("team_member", "team-001:usr-001");
     let member = TeamMember {
+        id: TeamMemberId::from_uuid(id_uuid),
         team_id: "team-001".to_string(),
         user_id: "usr-001".to_string(),
         role: TeamMemberRole::Lead,

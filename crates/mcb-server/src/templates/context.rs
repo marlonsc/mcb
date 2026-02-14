@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 
+use mcb_domain::utils::path as domain_path;
 use normpath::PathExt;
 use rocket::http::ContentType;
 
@@ -47,7 +48,18 @@ impl Context {
                     Ok(_) | Err(_) => continue,
                 };
 
-                let (name, data_type_str) = split_path(&root, entry.path());
+                let (name, data_type_str) = match split_path(&root, entry.path()) {
+                    Ok(parts) => parts,
+                    Err(error) => {
+                        warn_!(
+                            "Failed to split template path '{}' against root '{}': {}",
+                            entry.path().display(),
+                            root.display(),
+                            error
+                        );
+                        continue;
+                    }
+                };
                 if let Some(info) = templates.get(&*name) {
                     warn_!("Template name '{}' does not have a unique source.", name);
                     match info.path {
@@ -284,28 +296,19 @@ fn remove_extension(path: &Path) -> PathBuf {
     }
 }
 
-fn split_path(root: &Path, path: &Path) -> (String, Option<String>) {
-    let rel_path = match path.strip_prefix(root) {
-        Ok(relative) => relative.to_path_buf(),
-        Err(error) => {
-            warn_!(
-                "Template path '{}' is not under root '{}': {}. Falling back to absolute path.",
-                path.display(),
-                root.display(),
-                error
-            );
-            path.to_path_buf()
-        }
-    };
+fn split_path(root: &Path, path: &Path) -> mcb_domain::error::Result<(String, Option<String>)> {
+    let rel_path = domain_path::strict_strip_prefix(path, root)?;
     let path_no_ext = remove_extension(&rel_path);
     let data_type = path_no_ext.extension();
-    let mut name = remove_extension(&path_no_ext)
-        .to_string_lossy()
-        .into_owned();
+    let mut name = domain_path::path_to_utf8_string(&remove_extension(&path_no_ext))?;
 
     if cfg!(windows) {
         name = name.replace("\\", "/");
     }
 
-    (name, data_type.map(|d| d.to_string_lossy().into_owned()))
+    let data_type = data_type
+        .map(|d| domain_path::path_to_utf8_string(Path::new(d)))
+        .transpose()?;
+
+    Ok((name, data_type))
 }

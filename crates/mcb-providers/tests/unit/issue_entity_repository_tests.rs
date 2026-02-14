@@ -168,12 +168,23 @@ async fn test_label_assignment() {
     repo.create_label(&l1).await.expect("create l1");
     repo.create_label(&l2).await.expect("create l2");
 
+    use mcb_domain::utils::id;
+    use mcb_domain::value_objects::ids::IssueLabelAssignmentId;
+
     let a1 = IssueLabelAssignment {
+        id: IssueLabelAssignmentId::from_uuid(id::deterministic(
+            "issue_label_assignment",
+            "issue-1:lbl-1",
+        )),
         issue_id: "issue-1".to_string(),
         label_id: "lbl-1".to_string(),
         created_at: TEST_NOW,
     };
     let a2 = IssueLabelAssignment {
+        id: IssueLabelAssignmentId::from_uuid(id::deterministic(
+            "issue_label_assignment",
+            "issue-1:lbl-2",
+        )),
         issue_id: "issue-1".to_string(),
         label_id: "lbl-2".to_string(),
         created_at: TEST_NOW,

@@ -13,7 +13,6 @@ use mcb_domain::ports::admin::{
     PerformanceMetricsInterface,
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
-use uuid::Uuid;
 
 // ============================================================================
 // Performance Metrics - Real Implementation
@@ -168,7 +167,7 @@ impl DefaultIndexingOperations {
         collection: &CollectionId,
         total_files: usize,
     ) -> OperationId {
-        let id = OperationId::new(Uuid::new_v4().to_string());
+        let id = OperationId::new();
         let operation = IndexingOperation {
             id: id.clone(),
             collection: collection.clone(),

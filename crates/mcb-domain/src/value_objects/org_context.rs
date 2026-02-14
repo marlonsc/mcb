@@ -33,16 +33,16 @@ impl OrgContext {
         Self::default()
     }
 
-    /// Performs the id str operation.
-    pub fn id_str(&self) -> &str {
-        self.org_id.as_str()
+    /// Returns the org id as a string.
+    pub fn id_str(&self) -> String {
+        self.org_id.to_string()
     }
 }
 
 impl Default for OrgContext {
     fn default() -> Self {
         Self {
-            org_id: OrgId::new(DEFAULT_ORG_ID),
+            org_id: OrgId::from_uuid(crate::utils::id::deterministic("org", DEFAULT_ORG_ID)),
             org_name: DEFAULT_ORG_NAME.to_string(),
         }
     }

@@ -34,14 +34,13 @@ async-trait = { workspace = true }
 # Dependency injection interfaces - port traits for dill IoC
 
 # Schema generation for MCP - pure lib acceptable for domain
-schemars = { workspace = true }
+schemars = { workspace = true, features = ["uuid1"] }
 
 # Text processing
 unicode-segmentation = { workspace = true }
 
 # Hashing utilities
 sha2 = { workspace = true }
-hmac = { workspace = true }
 
 # UUID generation
 uuid = { workspace = true }
@@ -81,11 +80,14 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
+toml = { workspace = true }
 
 [[test]]
 name = "unit"
 path = "tests/unit/mod.rs"
+required-features = ["test-utils"]
 
 [[test]]
 name = "integration"
 path = "tests/integration/mod.rs"
+required-features = ["test-utils"]

@@ -74,7 +74,7 @@ Problems:
 ### Key Architecture Principles
 
 | Principle | Description |
-|-----------|-------------|
+| ----------- | ------------- |
 | **Project = Repository** | 1:1 mapping between MCB project and git repository |
 | **Collection per Worktree** | Each git worktree has its own semantic index |
 | **Memory is Project-Scoped** | Observations belong to project, shared across worktrees |
@@ -110,7 +110,7 @@ Problems:
 **Replace**:
 
 | Current | MCB Replacement | Savings |
-|---------|-----------------|---------|
+| --------- | ----------------- | --------- |
 | `explore` agent for code patterns | `mcp_mcb_search(resource="code")` | -1 agent spawn |
 | `grep` for semantic queries | `mcp_mcb_search` | Better relevance |
 | Manual session tracking | `mcp_mcb_session` | Automatic |
@@ -134,7 +134,7 @@ mcp_mcb_search(query="authentication patterns", collection="opencode", limit=10)
 **Replace**:
 
 | Current | MCB Replacement | Savings |
-|---------|-----------------|---------|
+| --------- | ----------------- | --------- |
 | `mcp_memory` skill | `mcp_mcb_memory` | Unified storage |
 | `oc-memory` observations | Project-linked observations | Context aware |
 | Pattern storage | MCB memory with embeddings | Semantic recall |
@@ -162,7 +162,7 @@ mcp_mcb_memory(action="store", resource="observation", data={
 **Replace**:
 
 | Current | MCB Replacement | Savings |
-|---------|-----------------|---------|
+| --------- | ----------------- | --------- |
 | `.planning/` directory | MCB project phases | Unified tracking |
 | Beads issues (partial) | MCB project issues | Linked to code |
 | Manual context gathering | Project-scoped queries | Automatic |
@@ -187,7 +187,7 @@ mcp_mcb_project(action="get", resource="phase", project_id="opencode")
 **Replace**:
 
 | Current | MCB Replacement | Savings |
-|---------|-----------------|---------|
+| --------- | ----------------- | --------- |
 | explore + librarian + memory | Single context search | -2 agents |
 | Multi-step context gathering | One unified query | Faster |
 | Manual context assembly | Automatic fusion | Better quality |
@@ -231,7 +231,7 @@ mcp_mcb_memory(project_id="opencode", ...)
 ### 2. Deprecate Redundant Skills (After Full Integration)
 
 | Skill | Status | Replacement |
-|-------|--------|-------------|
+| ------- | -------- | ------------- |
 | `oc-memory` | Deprecate | `mcp_mcb_memory` |
 | `oc-session-tracker` | Deprecate | `mcp_mcb_session` |
 | `oc-cartography` | Keep | Complements MCB (structure vs semantic) |
@@ -241,7 +241,7 @@ mcp_mcb_memory(project_id="opencode", ...)
 ```typescript
 // In AGENTS.md, update delegation table:
 | Domain | Current | After MCB |
-|--------|---------|-----------|
+| -------- | --------- | ----------- |
 | Code patterns | explore agent | mcp_mcb_search |
 | Memory/observations | mcp_memory | mcp_mcb_memory |
 | Session context | manual | mcp_mcb_session |
@@ -281,7 +281,7 @@ mcp_mcb_memory(project_id="opencode", ...)
 ## Metrics to Track
 
 | Metric | Before MCB | Target | How to Measure |
-|--------|------------|--------|----------------|
+| -------- | ------------ | -------- | ---------------- |
 | Agent spawns per task | 2-4 | 0-1 | Count task() calls |
 | Context gathering time | 30-60s | 5-10s | Time to first relevant Result |
 | Memory persistence | Session-only | Permanent | Check MCB memory.db |
@@ -292,7 +292,7 @@ mcp_mcb_memory(project_id="opencode", ...)
 ## Blockers Summary
 
 | Blocker | Issue | Priority | Status |
-|---------|-------|----------|--------|
+| --------- | ------- | ---------- | -------- |
 | Memory query fails | mcb-ibnx | P0 | Open |
 | Project not implemented | mcb-e2uy | P0 | Open |
 | Context search missing | mcb-vist | P1 | Open |

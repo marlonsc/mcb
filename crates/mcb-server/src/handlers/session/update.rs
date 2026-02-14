@@ -43,7 +43,7 @@ pub async fn update_session(
             })
             .transpose()?,
     };
-    match agent_service.get_session(session_id).await {
+    match agent_service.get_session(&session_id).await {
         Ok(Some(mut session)) => {
             let payload_project_id = data.and_then(|d| opt_str(d, schema::PROJECT_ID));
             let payload_worktree_id = data.and_then(|d| opt_str(d, schema::WORKTREE_ID));

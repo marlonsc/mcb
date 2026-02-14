@@ -3,7 +3,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use mcb_language_support::LanguageDetector;
+use crate::filters::LanguageDetector;
 
 use super::detector::{CloneDetector, tokenize_source};
 use super::fingerprint::TokenFingerprinter;
@@ -89,7 +89,6 @@ impl DuplicationAnalyzer {
         true
     }
 
-    /// Detect language from file path using mcb-language-support
     fn detect_language(&self, path: &Path) -> String {
         if let Some(name) = self.detector.detect_name(path, None) {
             return name;
@@ -99,7 +98,6 @@ impl DuplicationAnalyzer {
         self.extension_to_language_fallback(extension).to_string()
     }
 
-    /// Fallback extension to language mapping for languages not in mcb-language-support
     fn extension_to_language_fallback(&self, extension: &str) -> &str {
         match extension {
             "go" => "go",

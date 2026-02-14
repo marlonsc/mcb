@@ -85,7 +85,7 @@ pub async fn get_timeline(
     let depth_after = args.depth_after.unwrap_or(5);
     match memory_service
         .get_timeline(
-            &ObservationId::new(&anchor_id),
+            &ObservationId::from_string(&anchor_id),
             depth_before,
             depth_after,
             Some(filter),

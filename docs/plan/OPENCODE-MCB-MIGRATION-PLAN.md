@@ -21,7 +21,7 @@ This document maps every OpenCode hook, skill, command, and agent to its MCB rep
 ## Current OpenCode Inventory
 
 | Component Type | Count | Location |
-|----------------|-------|----------|
+| ---------------- | ------- | ---------- |
 | Hooks | 13 | `~/.config/opencode/hooks/*.sh` |
 | Skills | 16 | `~/.config/opencode/skills/*/SKILL.md` |
 | Commands | 44 | `~/.config/opencode/command/*.md` |
@@ -35,7 +35,7 @@ This document maps every OpenCode hook, skill, command, and agent to its MCB rep
 ### Available MCB Capabilities
 
 | MCB Tool | Function | Status |
-|----------|----------|--------|
+| ---------- | ---------- | -------- |
 | `mcp_mcb_index` | Index codebase | ✅ Working |
 | `mcp_mcb_search` | Semantic search | ✅ Working |
 | `mcp_mcb_session` | Session lifecycle | ✅ Working |
@@ -78,7 +78,7 @@ mcp_mcb_search(
 **Migration Actions**:
 
 | # | File | Action |
-|---|------|--------|
+| --- | ------ | -------- |
 | 1.1.1 | `~/.config/opencode/AGENTS.md` | Add MCB preference: "For semantic code queries, prefer `mcp_mcb_search` over spawning explore agent" |
 | 1.1.2 | `~/.config/opencode/skills/oc-mcb/SKILL.md` | Add section: "Replacing Explore Agent" with usage examples |
 | 1.1.3 | `~/.config/opencode/oh-my-opencode.json` | Add `tool_preferences.code_search: ["mcp_mcb_search", "ast_grep_search", "grep"]` |
@@ -153,7 +153,7 @@ mcp_mcb_session(action="end", data={
 **Migration Actions**:
 
 | # | File | Action |
-|---|------|--------|
+| --- | ------ | -------- |
 | 1.2.1 | `~/.config/opencode/skills/oc-session-tracker/SKILL.md` | Add deprecation notice + MCB migration guide |
 | 1.2.2 | `~/.config/opencode/skills/oc-mcb/SKILL.md` | Add "Session Tracking" section |
 | 1.2.3 | `~/.config/opencode/command/oc-welcome.md` | Replace `memory(mode="add")` with `mcp_mcb_session(action="start")` |
@@ -197,7 +197,7 @@ mcp_mcb_session(action="start", data={
 **Migration Actions**:
 
 | # | File | Action |
-|---|------|--------|
+| --- | ------ | -------- |
 | 1.3.1 | `~/.config/opencode/command/oc-init.md` | Add `<mcb_index>` section after beads init |
 | 1.3.2 | `~/.config/opencode/skills/oc-mcb/SKILL.md` | Add "Project Indexing" section |
 
@@ -214,7 +214,7 @@ File: ~/.config/opencode/skills/oc-memory/SKILL.md
 
 Core Operations (lines 12-16):
 | Capability | Memory Operation | When to Use |
-|------------|------------------|-------------|
+| ------------ | ------------------ | ------------- |
 | **Recall** | `memory search` | Before any task |
 | **Learn** | `memory add` | After completing tasks |
 | **Profile** | `memory profile` | User preferences |
@@ -251,7 +251,7 @@ mcp_mcb_memory(
 **Migration Actions** (Blocked until GAP-H2):
 
 | # | File | Action | Blocked By |
-|---|------|--------|------------|
+| --- | ------ | -------- | ------------ |
 | 1.4.1 | `~/.config/opencode/skills/oc-memory/SKILL.md` | Add MCB section with project-scoped examples | mcb-ibnx |
 | 1.4.2 | `~/.config/opencode/skills/oc-mcb/SKILL.md` | Add "Memory Integration" section | mcb-ibnx |
 
@@ -262,7 +262,7 @@ mcp_mcb_memory(
 ### New MCB Capabilities in v0.3.0
 
 | Feature | ADR | MCB Tool |
-|---------|-----|----------|
+| --------- | ----- | ---------- |
 | Workflow FSM | ADR-034 | `mcp_mcb_workflow` |
 | Context Scout | ADR-035 | Integrated in search |
 | Policy Engine | ADR-036 | `mcp_mcb_workflow` policies |
@@ -319,7 +319,7 @@ mcp_mcb_workflow(
 **Migration Actions**:
 
 | # | File | Action | Depends On |
-|---|------|--------|------------|
+| --- | ------ | -------- | ------------ |
 | 2.1.1 | `~/.config/opencode/hooks/oc-state-machine.sh` | Add MCB workflow integration | v0.3.0 release |
 | 2.1.2 | `~/.config/opencode/lib/oc-state.sh` | Add MCB state sync functions | v0.3.0 release |
 | 2.1.3 | `~/.config/opencode/oc-workflow.jsonc` | Map states to MCB workflow | v0.3.0 release |
@@ -373,7 +373,7 @@ mcp_mcb_workflow(
 **Migration Actions**:
 
 | # | File | Action | Depends On |
-|---|------|--------|------------|
+| --- | ------ | -------- | ------------ |
 | 2.1.4 | `~/.config/opencode/hooks/oc-workflow-orchestration.sh` | Replace orchestration with MCB workflow gates | v0.3.0 release |
 | 2.1.5 | `~/.config/opencode/lib/oc-workflow-orchestrator.sh` | Add MCB workflow client | v0.3.0 release |
 
@@ -428,7 +428,7 @@ if (session.is_new) {
 **Migration Actions**:
 
 | # | File | Action | Depends On |
-|---|------|--------|------------|
+| --- | ------ | -------- | ------------ |
 | 2.2.1 | `~/.config/opencode/command/oc-welcome.md` | Replace session detection with MCB | v0.3.0 release |
 | 2.2.2 | Remove `oc-session-tracker` from load_skills | Add `oc-mcb` instead | v0.3.0 release |
 
@@ -475,7 +475,7 @@ await mcp_mcb_memory(
 **Migration Actions**:
 
 | # | File | Action | Depends On |
-|---|------|--------|------------|
+| --- | ------ | -------- | ------------ |
 | 2.2.3 | `~/.config/opencode/command/oc-plan.md` | Add MCB pattern search before planning | v0.3.0 + GAP-H2 fix |
 | 2.2.4 | `~/.config/opencode/command/oc-plan.md` | Add MCB pattern storage after planning | v0.3.0 + GAP-H2 fix |
 
@@ -488,7 +488,7 @@ await mcp_mcb_memory(
 **Migration Actions**:
 
 | # | File | Action |
-|---|------|--------|
+| --- | ------ | -------- |
 | 2.3.1 | `~/.config/opencode/skills/oc-memory/SKILL.md` | Add deprecation header with migration guide |
 | 2.3.2 | All commands using `mcp_memory` | Replace with `mcp_mcb_memory` |
 
@@ -509,7 +509,7 @@ This skill is deprecated. Migrate to MCB memory for project-scoped observations.
 ## Migration Guide
 
 | Before (oc-memory) | After (oc-mcb) |
-|--------------------|----------------|
+| -------------------- | ---------------- |
 | `memory(mode="add", content="...", tags="...")` | `mcp_mcb_memory(action="store", resource="observation", data={project_id:"...", content:"...", tags:[...]})` |
 | `memory(mode="search", query="...")` | `mcp_mcb_memory(action="search", resource="observation", query="...", project_id:"...")` |
 ```
@@ -521,7 +521,7 @@ This skill is deprecated. Migrate to MCB memory for project-scoped observations.
 **Migration Actions**:
 
 | # | File | Action |
-|---|------|--------|
+| --- | ------ | -------- |
 | 2.3.3 | `~/.config/opencode/skills/oc-session-tracker/SKILL.md` | Add deprecation header |
 | 2.3.4 | Commands loading this skill | Replace with `oc-mcb` |
 
@@ -532,7 +532,7 @@ This skill is deprecated. Migrate to MCB memory for project-scoped observations.
 ### New MCB Capabilities in v0.4.0
 
 | Feature | ADR | MCB Tool |
-|---------|-----|----------|
+| --------- | ----- | ---------- |
 | Knowledge Graph | ADR-042 | `mcp_mcb_search(resource="graph")` |
 | Hybrid Search | ADR-043 | RRF fusion auto-enabled |
 | Time-Travel | ADR-045 | `mcp_mcb_search(..., snapshot="v1.0")` |
@@ -587,7 +587,7 @@ Time: 5-10 seconds
 **Migration Actions**:
 
 | # | File | Action | Depends On |
-|---|------|--------|------------|
+| --- | ------ | -------- | ------------ |
 | 3.1.1 | `~/.config/opencode/AGENTS.md` | Update delegation table: context queries → MCB | v0.4.0 release |
 | 3.1.2 | `~/.config/opencode/skills/oc-mcb/SKILL.md` | Add "Unified Context Search" section | v0.4.0 release |
 
@@ -649,7 +649,7 @@ const deps = await mcp_mcb_search(
 **Migration Actions**:
 
 | # | File | Action | Depends On |
-|---|------|--------|------------|
+| --- | ------ | -------- | ------------ |
 | 3.2.1 | `~/.config/opencode/skills/oc-cartography/SKILL.md` | Add deprecation notice | v0.4.0 release |
 | 3.2.2 | `~/.config/opencode/skills/oc-mcb/SKILL.md` | Add "Knowledge Graph" section | v0.4.0 release |
 | 3.2.3 | `~/.config/opencode/command/oc-refactor.md` | Add MCB impact analysis | v0.4.0 release |
@@ -703,7 +703,7 @@ const diff = await mcp_mcb_vcs(
 **Migration Actions**:
 
 | # | File | Action | Depends On |
-|---|------|--------|------------|
+| --- | ------ | -------- | ------------ |
 | 3.3.1 | `~/.config/opencode/command/oc-debug.md` | Add MCB time-travel section | v0.4.0 release |
 | 3.3.2 | `~/.config/opencode/skills/oc-mcb/SKILL.md` | Add "Time-Travel Debugging" section | v0.4.0 release |
 
@@ -714,7 +714,7 @@ const diff = await mcp_mcb_vcs(
 ### Phase 1 (v0.2.0) - 8 Files
 
 | File | Change Type | Priority |
-|------|-------------|----------|
+| ------ | ------------- | ---------- |
 | `AGENTS.md` | MODIFY - Add MCB preferences | P1 |
 | `skills/oc-mcb/SKILL.md` | MODIFY - Add sections | P1 |
 | `skills/oc-session-tracker/SKILL.md` | MODIFY - Add deprecation | P2 |
@@ -726,7 +726,7 @@ const diff = await mcp_mcb_vcs(
 ### Phase 2 (v0.3.0) - 12 Files
 
 | File | Change Type | Priority |
-|------|-------------|----------|
+| ------ | ------------- | ---------- |
 | `hooks/oc-state-machine.sh` | MODIFY - Add MCB workflow | P1 |
 | `hooks/oc-workflow-orchestration.sh` | MODIFY - Add MCB gates | P1 |
 | `lib/oc-state.sh` | MODIFY - Add MCB sync | P1 |
@@ -740,7 +740,7 @@ const diff = await mcp_mcb_vcs(
 ### Phase 3 (v0.4.0) - 6 Files
 
 | File | Change Type | Priority |
-|------|-------------|----------|
+| ------ | ------------- | ---------- |
 | `AGENTS.md` | MODIFY - Update delegation | P1 |
 | `skills/oc-cartography/SKILL.md` | DEPRECATE | P2 |
 | `command/oc-refactor.md` | MODIFY - Add impact analysis | P1 |
@@ -753,7 +753,7 @@ const diff = await mcp_mcb_vcs(
 ## Deprecation Schedule
 
 | Component | v0.2.0 | v0.3.0 | v0.4.0 | v1.0.0 |
-|-----------|--------|--------|--------|--------|
+| ----------- | -------- | -------- | -------- | -------- |
 | explore agent (semantic) | Deprecated | Warn | Removed | - |
 | explore agent (structural) | Keep | Keep | Keep | Keep |
 | oc-memory skill | Keep | Deprecated | Warn | Removed |
@@ -770,7 +770,7 @@ const diff = await mcp_mcb_vcs(
 ### MCB Repository Issues (10)
 
 | Issue | Type | Priority | Gap |
-|-------|------|----------|-----|
+| ------- | ------ | ---------- | ----- |
 | mcb-ibnx | bug | P0 | Memory query fails |
 | mcb-e2uy | feature | P0 | Project not implemented |
 | mcb-v9o3 | feature | P0 | CodeGraph entity |
@@ -785,7 +785,7 @@ const diff = await mcp_mcb_vcs(
 ### OpenCode Repository Issues (3)
 
 | Issue | Type | Priority | Phase |
-|-------|------|----------|-------|
+| ------- | ------ | ---------- | ------- |
 | opencode-o5t8 | feature | P1 | Phase 1 - Replace explore |
 | opencode-rn79 | feature | P1 | Phase 1 - MCB session |
 | opencode-5mcn | feature | P2 | Phase 1 - MCB index |
@@ -795,7 +795,7 @@ const diff = await mcp_mcb_vcs(
 ## Success Metrics
 
 | Metric | Before MCB | After v0.2.0 | After v0.3.0 | After v0.4.0 |
-|--------|------------|--------------|--------------|--------------|
+| -------- | ------------ | -------------- | -------------- | -------------- |
 | Agent spawns/task | 2-4 | 1-2 | 0-1 | 0-1 |
 | Context gather time | 30-60s | 10-20s | 5-10s | 3-5s |
 | Memory persistence | Session | Session | Permanent | Permanent |

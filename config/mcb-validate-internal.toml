@@ -34,8 +34,6 @@ infrastructure_crate = "mcb-infrastructure"
 application_crate = "mcb-application"
 providers_crate = "mcb-providers"
 validate_crate = "mcb-validate"
-language_support_crate = "mcb-language-support"
-ast_utils_crate = "mcb-ast-utils"
 
 [rules.kiss]
 enabled = true

@@ -1,41 +1,14 @@
 //! Shared helper functions for tool handlers.
 
-use std::sync::OnceLock;
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use mcb_domain::entities::memory::OriginContext;
 use mcb_domain::error::Error;
-use mcb_domain::utils::compute_stable_id_hash;
+use mcb_domain::utils::id as domain_id;
+use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::OrgContext;
-
-static ID_HASH_SECRET: OnceLock<Option<String>> = OnceLock::new();
-
-fn id_hash_secret() -> Option<&'static str> {
-    ID_HASH_SECRET
-        .get_or_init(|| {
-            std::env::var("MCB_ID_HASH_SECRET")
-                .ok()
-                .filter(|s| !s.is_empty())
-        })
-        .as_deref()
-}
-
-/// Compute a stable ID hash using the cached `MCB_ID_HASH_SECRET` env value.
-pub fn hash_id(kind: &str, raw_id: &str) -> String {
-    compute_stable_id_hash(kind, raw_id, id_hash_secret())
-}
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::{Map, Value};
-
-/// Returns the current Unix timestamp in seconds.
-pub fn current_timestamp() -> i64 {
-    match SystemTime::now().duration_since(UNIX_EPOCH) {
-        Ok(duration) => i64::try_from(duration.as_secs()).unwrap_or(i64::MAX),
-        Err(_) => 0,
-    }
-}
 
 /// Returns the required `id` parameter or an MCP invalid params error.
 pub fn require_id(id: &Option<String>) -> Result<String, McpError> {
@@ -192,16 +165,15 @@ fn resolve_field(
     resolve_identifier_precedence(field, args_value, payload_value)
 }
 
-/// Resolves an identifier pair and hashes the result as a stable session ID.
-fn resolve_session_hash(
+fn resolve_session_correlation(
     field: &str,
-    hash_prefix: &str,
+    namespace: &str,
     args_value: Option<&str>,
     payload_value: Option<&str>,
 ) -> Result<Option<String>, McpError> {
     Ok(resolve_field(field, args_value, payload_value)?
         .as_deref()
-        .map(|v| hash_id(hash_prefix, v)))
+        .map(|v| domain_id::correlate_id(namespace, v)))
 }
 
 /// Common payload fields extracted from a JSON data map for origin context resolution.
@@ -293,13 +265,13 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
     Ok(OriginContext::builder()
         .org_id(Some(resolve_org_id(input.org_id)))
         .project_id(project_id)
-        .session_id_hash(resolve_session_hash(
+        .session_id_correlation(resolve_session_correlation(
             "session_id",
             "session",
             input.session_from_args,
             input.session_from_data,
         )?)
-        .parent_session_id_hash(resolve_session_hash(
+        .parent_session_id_correlation(resolve_session_correlation(
             "parent_session_id",
             "parent_session",
             input.parent_session_from_args,
@@ -366,7 +338,13 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
             input.commit_args,
             input.commit_payload,
         )?)
-        .timestamp(input.timestamp.or(Some(current_timestamp())))
+        .timestamp(
+            input
+                .timestamp
+                .or(Some(domain_time::epoch_secs_i64().map_err(|e| {
+                    McpError::internal_error(e.to_string(), None)
+                })?)),
+        )
         .build())
 }
 

@@ -11,6 +11,7 @@ use dashmap::DashMap;
 use edgevec::hnsw::VectorId;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use tokio::sync::{mpsc, oneshot};
 
@@ -225,7 +226,7 @@ impl EdgeVecVectorStoreProvider {
 
         Ok(Self {
             sender: tx,
-            collection: CollectionId::new("default"),
+            collection: CollectionId::from_uuid(id::deterministic("collection", "default")),
         })
     }
 
@@ -749,7 +750,7 @@ impl EdgeVecActor {
                 let file_count = file_paths.len() as u64;
 
                 CollectionInfo::new(
-                    CollectionId::new(name),
+                    CollectionId::from_uuid(id::deterministic("collection", &name)),
                     vector_count,
                     file_count,
                     None,

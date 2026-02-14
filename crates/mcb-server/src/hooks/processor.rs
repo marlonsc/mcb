@@ -8,7 +8,7 @@ use mcb_domain::entities::memory::{MemoryFilter, ObservationType, OriginContext}
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::mask_id;
 
-use crate::handlers::helpers::hash_id;
+use mcb_domain::utils::id as domain_id;
 use tracing::debug;
 
 use super::types::{
@@ -62,7 +62,7 @@ impl HookProcessor {
         let parent_session_hash = context
             .metadata
             .get("parent_session_id")
-            .map(|parent| hash_id("parent_session", parent.as_str()));
+            .map(|parent| domain_id::correlate_id("parent_session", parent.as_str()));
         let delegated = context.metadata.get("delegated").and_then(|value| {
             match value.trim().to_ascii_lowercase().as_str() {
                 "true" | "1" | "yes" => Some(true),
@@ -76,7 +76,7 @@ impl HookProcessor {
             origin_context: Some(
                 OriginContext::builder()
                     .project_id(Some(project_id.clone()))
-                    .parent_session_id_hash(parent_session_hash)
+                    .parent_session_id_correlation(parent_session_hash)
                     .tool_name(Some(context.tool_name.clone()))
                     .repo_id(context.metadata.get("repo_id").cloned())
                     .repo_path(context.metadata.get("repo_path").cloned())
@@ -119,9 +119,10 @@ impl HookProcessor {
             .memory_service
             .as_ref()
             .ok_or(HookError::MemoryServiceUnavailable)?;
+        let session_id_str = context.session_id.to_string();
 
         debug!(
-            session_id = %mask_id(context.session_id.as_str()),
+            session_id = %mask_id(&session_id_str),
             "Processing SessionStart hook"
         );
 
@@ -130,7 +131,7 @@ impl HookProcessor {
             project_id: None,
             tags: None,
             r#type: None,
-            session_id: Some(hash_id("session", context.session_id.as_str())),
+            session_id: Some(domain_id::correlate_id("session", &session_id_str)),
             parent_session_id: None,
             repo_id: None,
             time_range: None,

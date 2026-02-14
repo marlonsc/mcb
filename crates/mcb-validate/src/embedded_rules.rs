@@ -35,10 +35,6 @@ impl EmbeddedRules {
         include_str!("../rules/clean-architecture/CA013_mcb-boundaries.yml");
     const RULES_CLEAN_ARCHITECTURE_CA014_VALIDATE_BOUNDARIES_YML: &'static str =
         include_str!("../rules/clean-architecture/CA014_validate-boundaries.yml");
-    const RULES_CLEAN_ARCHITECTURE_CA015_LANGUAGE_SUPPORT_BOUNDARIES_YML: &'static str =
-        include_str!("../rules/clean-architecture/CA015_language-support-boundaries.yml");
-    const RULES_CLEAN_ARCHITECTURE_CA016_AST_UTILS_BOUNDARIES_YML: &'static str =
-        include_str!("../rules/clean-architecture/CA016_ast-utils-boundaries.yml");
     const RULES_CLEAN_ARCHITECTURE_CA017_DI_PATTERNS_YML: &'static str =
         include_str!("../rules/clean-architecture/CA017_di-patterns.yml");
     const RULES_CLEAN_ARCHITECTURE_LAYER001_LAYER_FLOW_RULES_YML: &'static str =
@@ -188,14 +184,6 @@ impl EmbeddedRules {
             (
                 "rules/clean-architecture/CA014_validate-boundaries.yml",
                 Self::RULES_CLEAN_ARCHITECTURE_CA014_VALIDATE_BOUNDARIES_YML,
-            ),
-            (
-                "rules/clean-architecture/CA015_language-support-boundaries.yml",
-                Self::RULES_CLEAN_ARCHITECTURE_CA015_LANGUAGE_SUPPORT_BOUNDARIES_YML,
-            ),
-            (
-                "rules/clean-architecture/CA016_ast-utils-boundaries.yml",
-                Self::RULES_CLEAN_ARCHITECTURE_CA016_AST_UTILS_BOUNDARIES_YML,
             ),
             (
                 "rules/clean-architecture/CA017_di-patterns.yml",

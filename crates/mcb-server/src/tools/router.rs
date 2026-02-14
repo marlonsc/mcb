@@ -310,7 +310,7 @@ async fn trigger_post_tool_use_hook(
         PostToolUseContext::new(tool_name.to_string(), result.is_error.unwrap_or(false));
 
     if let Some(session_id) = &execution_context.session_id {
-        context = context.with_session_id(SessionId::new(session_id));
+        context = context.with_session_id(SessionId::from_string(session_id));
     }
     if let Some(parent_session_id) = &execution_context.parent_session_id {
         context = context.with_metadata("parent_session_id", parent_session_id.as_str());

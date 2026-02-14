@@ -21,7 +21,7 @@ pub async fn get_session(
         Ok(id) => id,
         Err(error_result) => return Ok(error_result),
     };
-    match agent_service.get_session(session_id).await {
+    match agent_service.get_session(&session_id).await {
         Ok(Some(session)) => ResponseFormatter::json_success(&serde_json::json!({
             schema::ID: session.id,
             schema::SESSION_SUMMARY_ID: session.session_summary_id,

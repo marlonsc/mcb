@@ -19,12 +19,14 @@ pub struct OriginContext {
     pub project_id: Option<String>,
     /// The ID of the session.
     pub session_id: Option<String>,
-    /// Stable hash of session ID for safe correlation.
-    pub session_id_hash: Option<String>,
+    /// Deterministic UUID v5 correlation of session ID for safe cross-session linking.
+    #[serde(alias = "session_id_hash")]
+    pub session_id_correlation: Option<String>,
     /// The ID of the parent session when delegated.
     pub parent_session_id: Option<String>,
-    /// Stable hash of parent session ID for safe correlation.
-    pub parent_session_id_hash: Option<String>,
+    /// Deterministic UUID v5 correlation of parent session ID for safe cross-session linking.
+    #[serde(alias = "parent_session_id_hash")]
+    pub parent_session_id_correlation: Option<String>,
     /// The ID of the execution.
     pub execution_id: Option<String>,
     /// The name of the tool being executed.

@@ -56,11 +56,7 @@ fn get_default_substitution_variables() -> serde_yaml::Value {
         "server_module": "mcb_server",
         "providers_module": "mcb_providers",
         "validate_crate": "mcb-validate",
-        "validate_module": "mcb_validate",
-        "language_support_crate": "mcb-language-support",
-        "language_support_module": "mcb_language_support",
-        "ast_utils_crate": "mcb-ast-utils",
-        "ast_utils_module": "mcb_ast_utils"
+        "validate_module": "mcb_validate"
     });
     serde_yaml::to_value(json).unwrap()
 }

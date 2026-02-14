@@ -2949,9 +2949,9 @@ dependencies = [
 
 [[package]]
 name = "jsonschema"
-version = "0.41.0"
+version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9320368abda84a3aad44953d61e70515681fe43ae94529dff5567e0215b88438"
+checksum = "c56489aa781cefb9c10edebf4469cf29cddfd6695408b6158acfec49cda73480"
 dependencies = [
  "ahash",
  "bytecount",
@@ -3279,28 +3279,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mcb-ast-utils"
-version = "0.2.1-dev"
-dependencies = [
- "derive_more",
- "mcb-language-support",
- "mockall",
- "rstest",
- "tempfile",
- "thiserror 2.0.18",
- "tree-sitter",
- "tree-sitter-c",
- "tree-sitter-cpp",
- "tree-sitter-go",
- "tree-sitter-java",
- "tree-sitter-javascript",
- "tree-sitter-kotlin-ng",
- "tree-sitter-python",
- "tree-sitter-rust",
- "tree-sitter-typescript",
-]
-
-[[package]]
 name = "mcb-domain"
 version = "0.2.1-dev"
 dependencies = [
@@ -3310,7 +3288,6 @@ dependencies = [
  "derive_more",
  "futures",
  "hex",
- "hmac",
  "insta",
  "linkme",
  "mockall",
@@ -3410,23 +3387,6 @@ dependencies = [
  "uuid",
  "validator",
  "walkdir",
-]
-
-[[package]]
-name = "mcb-language-support"
-version = "0.2.1-dev"
-dependencies = [
- "async-trait",
- "derive_more",
- "mockall",
- "rstest",
- "rust-code-analysis",
- "serde",
- "strum 0.27.2",
- "strum_macros 0.27.2",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
 ]
 
 [[package]]
@@ -3550,8 +3510,7 @@ dependencies = [
  "globset",
  "insta",
  "jsonschema",
- "mcb-ast-utils",
- "mcb-language-support",
+ "mcb-domain",
  "mockall",
  "petgraph 0.8.3",
  "regex",
@@ -5063,9 +5022,9 @@ dependencies = [
 
 [[package]]
 name = "referencing"
-version = "0.41.0"
+version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5773259506800a8c6ef38df3674b061c62c5941162507891ff8b580e93d954e"
+checksum = "1871aca1d163bb628f2282b79c169e9ad3b4aeda58ecea174ec4d6bddfdfa375"
 dependencies = [
  "ahash",
  "fluent-uri",
@@ -5665,6 +5624,7 @@ dependencies = [
  "schemars_derive",
  "serde",
  "serde_json",
+ "uuid",
 ]
 
 [[package]]
@@ -7567,6 +7527,8 @@ checksum = "ee48d38b119b0cd71fe4141b30f5ba9c7c5d9f4e7a3a8b4a674e4b6ef789976f"
 dependencies = [
  "getrandom 0.3.4",
  "js-sys",
+ "serde_core",
+ "sha1_smol",
  "wasm-bindgen",
 ]
 

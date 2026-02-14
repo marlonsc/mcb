@@ -105,15 +105,7 @@ pub struct IndexingServiceImpl {
 
 impl IndexingServiceImpl {
     fn workspace_relative_path(file_path: &Path, workspace_root: &Path) -> Result<String> {
-        let relative = file_path.strip_prefix(workspace_root).map_err(|_| {
-            mcb_domain::error::Error::invalid_argument(format!(
-                "file path '{}' is outside workspace root '{}'",
-                file_path.display(),
-                workspace_root.display()
-            ))
-        })?;
-
-        Ok(relative.to_string_lossy().replace('\\', "/"))
+        mcb_domain::utils::path::workspace_relative_path(file_path, workspace_root)
     }
 
     /// Create new indexing service with injected dependencies
@@ -350,7 +342,7 @@ impl IndexingServiceImpl {
                 match file_hash_repository.compute_hash(file_path.as_path()) {
                     Ok(hash) => {
                         match file_hash_repository
-                            .has_changed(collection.as_str(), &relative_path, &hash)
+                            .has_changed(&collection.to_string(), &relative_path, &hash)
                             .await
                         {
                             Ok(false) => {
@@ -392,7 +384,7 @@ impl IndexingServiceImpl {
             if let (Some(file_hash_repository), Some(hash)) =
                 (&service.file_hash_repository, computed_hash.as_deref())
                 && let Err(e) = file_hash_repository
-                    .upsert_hash(collection.as_str(), &relative_path, hash)
+                    .upsert_hash(&collection.to_string(), &relative_path, hash)
                     .await
             {
                 warn!(

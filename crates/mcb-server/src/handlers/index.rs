@@ -100,19 +100,19 @@ impl IndexHandler {
                         return Err(McpError::invalid_params(reason, None));
                     }
                 };
+                let milvus_collection_str = milvus_collection.to_string();
                 match self
                     .indexing_service
                     .clear_collection(&milvus_collection)
                     .await
                 {
                     Ok(()) => Ok(ResponseFormatter::format_clear_index(
-                        milvus_collection.as_str(),
+                        &milvus_collection_str,
                     )),
                     Err(e) => Ok(ResponseFormatter::format_indexing_error(
                         &format!(
                             "Failed to clear collection {}: {}",
-                            milvus_collection.as_str(),
-                            e
+                            milvus_collection_str, e
                         ),
                         &PathBuf::from("."),
                     )),
