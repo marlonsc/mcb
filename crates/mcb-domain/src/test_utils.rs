@@ -133,12 +133,14 @@ pub struct FileTreeBuilder {
 }
 
 impl FileTreeBuilder {
+    /// Create a new builder starting with a directory.
     pub fn new_dir(name: &str) -> Self {
         Self {
             root: FileTreeNode::directory(name, name),
         }
     }
 
+    /// Add a file child to the current directory.
     pub fn add_file(mut self, name: &str, chunks: u32) -> Self {
         let path = format!("{}/{}", self.root.path, name);
         self.root = self
@@ -147,11 +149,13 @@ impl FileTreeBuilder {
         self
     }
 
+    /// Add a generic child to the current directory.
     pub fn add_child(mut self, child: FileTreeNode) -> Self {
         self.root = self.root.with_child(child);
         self
     }
 
+    /// Finalize the builder and return the root node.
     pub fn build(self) -> FileTreeNode {
         self.root
     }

@@ -166,8 +166,6 @@ pub struct OriginContextInput<'a> {
 }
 
 /// Resolves an `OriginContext` from the provided input, handling precedence between args and payload.
-// TODO(KISS005): Function resolve_origin_context is too long (88 lines, max: 50).
-// Break into smaller, focused functions.
 pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginContext, McpError> {
     let project_id = resolve_identifier_precedence(
         "project_id",
