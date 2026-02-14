@@ -63,60 +63,29 @@ macro_rules! define_violations {
             ),* $(,)?
         }
     ) => {
-
-        #[derive(Debug, Clone, serde::Serialize)]
-                $vis enum $name {
-            $(
-                $(#[doc = $doc])*
-                $variant { $( $field: $field_ty ),* }
-            ),*
+        define_violations! {
+            @enum_def
+            $vis enum $name {
+                $(
+                    $(#[doc = $doc])*
+                    $variant { $( $field : $field_ty ),* }
+                ),*
+            }
         }
 
-        impl $crate::traits::violation::Violation for $name {
-            fn id(&self) -> &str {
-                match self {
-                    $( Self::$variant { .. } => $id ),*
-                }
-            }
-
-            fn category(&self) -> $crate::traits::violation::ViolationCategory {
-                $category
-            }
-
-            fn severity(&self) -> $crate::traits::violation::Severity {
-                match self {
-                    $( Self::$variant { severity, .. } => *severity ),*
-                }
-            }
-
-                        fn file(&self) -> Option<&std::path::PathBuf> {
-                match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@get_file $( $field : $field_ty ),*)
-                        }
-                    ),*
-                }
-            }
-
-                        fn line(&self) -> Option<usize> {
-                match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@get_line $( $field : $field_ty ),*)
-                        }
-                    ),*
-                }
-            }
-
-                        fn suggestion(&self) -> Option<String> {
-                match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@suggestion $($suggestion,)? $( $field : $field_ty ),*)
-                        }
-                    ),*
-                }
+        define_violations! {
+            @impl_violation
+            dynamic_severity,
+            $category,
+            $name {
+                $(
+                    #[violation(
+                        id = $id,
+                        severity = $severity
+                        $(, suggestion = $suggestion)?
+                    )]
+                    $variant { $( $field : $field_ty ),* }
+                ),*
             }
         }
     };
@@ -139,72 +108,41 @@ macro_rules! define_violations {
             ),* $(,)?
         }
     ) => {
-
-        #[derive(Debug, Clone, serde::Serialize)]
-                $vis enum $name {
-            $(
-                $(#[doc = $doc])*
-                $variant { $( $field: $field_ty ),* }
-            ),*
-        }
-
-        impl std::fmt::Display for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@format f, $($msg,)? $( $field : $field_ty ),*)
-                        }
-                    ),*
-                }
+        define_violations! {
+            @enum_def
+            $vis enum $name {
+                $(
+                    $(#[doc = $doc])*
+                    $variant { $( $field : $field_ty ),* }
+                ),*
             }
         }
 
-        impl $crate::traits::violation::Violation for $name {
-            fn id(&self) -> &str {
-                match self {
-                    $( Self::$variant { .. } => $id ),*
-                }
+        define_violations! {
+            @impl_display
+            $name {
+                $(
+                    $variant {
+                        $( $field : $field_ty ),*
+                    }
+                    $(=> $msg)?
+                ),*
             }
+        }
 
-            fn category(&self) -> $crate::traits::violation::ViolationCategory {
-                $category
-            }
-
-            fn severity(&self) -> $crate::traits::violation::Severity {
-                match self {
-                    $( Self::$variant { severity, .. } => *severity ),*
-                }
-            }
-
-                        fn file(&self) -> Option<&std::path::PathBuf> {
-                match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@get_file $( $field : $field_ty ),*)
-                        }
-                    ),*
-                }
-            }
-
-                        fn line(&self) -> Option<usize> {
-                match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@get_line $( $field : $field_ty ),*)
-                        }
-                    ),*
-                }
-            }
-
-                        fn suggestion(&self) -> Option<String> {
-                match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@suggestion $($suggestion,)? $( $field : $field_ty ),*)
-                        }
-                    ),*
-                }
+        define_violations! {
+            @impl_violation
+            dynamic_severity,
+            $category,
+            $name {
+                $(
+                    #[violation(
+                        id = $id,
+                        severity = $severity
+                        $(, suggestion = $suggestion)?
+                    )]
+                    $variant { $( $field : $field_ty ),* }
+                ),*
             }
         }
     };
@@ -227,60 +165,29 @@ macro_rules! define_violations {
             ),* $(,)?
         }
     ) => {
-
-        #[derive(Debug, Clone, serde::Serialize)]
-                $vis enum $name {
-            $(
-                $(#[doc = $doc])*
-                $variant { $( $field: $field_ty ),* }
-            ),*
+        define_violations! {
+            @enum_def
+            $vis enum $name {
+                $(
+                    $(#[doc = $doc])*
+                    $variant { $( $field : $field_ty ),* }
+                ),*
+            }
         }
 
-        impl $crate::traits::violation::Violation for $name {
-            fn id(&self) -> &str {
-                match self {
-                    $( Self::$variant { .. } => $id ),*
-                }
-            }
-
-            fn category(&self) -> $crate::traits::violation::ViolationCategory {
-                $category
-            }
-
-            fn severity(&self) -> $crate::traits::violation::Severity {
-                match self {
-                    $( Self::$variant { .. } => $crate::traits::violation::Severity::$severity ),*
-                }
-            }
-
-                        fn file(&self) -> Option<&std::path::PathBuf> {
-                match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@get_file $( $field : $field_ty ),*)
-                        }
-                    ),*
-                }
-            }
-
-                        fn line(&self) -> Option<usize> {
-                match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@get_line $( $field : $field_ty ),*)
-                        }
-                    ),*
-                }
-            }
-
-                        fn suggestion(&self) -> Option<String> {
-                match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@suggestion $($suggestion,)? $( $field : $field_ty ),*)
-                        }
-                    ),*
-                }
+        define_violations! {
+            @impl_violation
+            static_severity,
+            $category,
+            $name {
+                $(
+                    #[violation(
+                        id = $id,
+                        severity = $severity
+                        $(, suggestion = $suggestion)?
+                    )]
+                    $variant { $( $field : $field_ty ),* }
+                ),*
             }
         }
     };
@@ -302,15 +209,70 @@ macro_rules! define_violations {
             ),* $(,)?
         }
     ) => {
+        define_violations! {
+            @enum_def
+            $vis enum $name {
+                $(
+                    $(#[doc = $doc])*
+                    $variant { $( $field : $field_ty ),* }
+                ),*
+            }
+        }
 
+        define_violations! {
+            @impl_display
+            $name {
+                $(
+                    $variant {
+                        $( $field : $field_ty ),*
+                    }
+                    $(=> $msg)?
+                ),*
+            }
+        }
+
+        define_violations! {
+            @impl_violation
+            static_severity,
+            $category,
+            $name {
+                $(
+                    #[violation(
+                        id = $id,
+                        severity = $severity
+                        $(, suggestion = $suggestion)?
+                    )]
+                    $variant { $( $field : $field_ty ),* }
+                ),*
+            }
+        }
+    };
+
+    (@enum_def
+        $vis:vis enum $name:ident {
+            $(
+                $(#[doc = $doc:literal])*
+                $variant:ident { $( $field:ident : $field_ty:ty ),* }
+            ),* $(,)?
+        }
+    ) => {
         #[derive(Debug, Clone, serde::Serialize)]
-                $vis enum $name {
+        $vis enum $name {
             $(
                 $(#[doc = $doc])*
                 $variant { $( $field: $field_ty ),* }
             ),*
         }
+    };
 
+    (@impl_display
+        $name:ident {
+            $(
+                $variant:ident { $( $field:ident : $field_ty:ty ),* }
+                $(=> $msg:literal)?
+            ),* $(,)?
+        }
+    ) => {
         impl std::fmt::Display for $name {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 match self {
@@ -322,7 +284,73 @@ macro_rules! define_violations {
                 }
             }
         }
+    };
 
+    (@impl_violation
+        dynamic_severity,
+        $category:expr,
+        $name:ident {
+            $(
+                #[violation(
+                    id = $id:literal,
+                    severity = $severity:ident
+                    $(, suggestion = $suggestion:literal)?
+                )]
+                $variant:ident { $( $field:ident : $field_ty:ty ),* }
+            ),* $(,)?
+        }
+    ) => {
+        impl $crate::traits::violation::Violation for $name {
+            fn id(&self) -> &str {
+                match self {
+                    $( Self::$variant { .. } => $id ),*
+                }
+            }
+
+            fn category(&self) -> $crate::traits::violation::ViolationCategory {
+                $category
+            }
+
+            fn severity(&self) -> $crate::traits::violation::Severity {
+                match self {
+                    $( Self::$variant { severity, .. } => *severity ),*
+                }
+            }
+
+            fn file(&self) -> Option<&std::path::PathBuf> {
+                match self {
+                    $( Self::$variant { .. } => define_violations!(@select_file_arm self, $variant, $( $field : $field_ty ),*) ),*
+                }
+            }
+
+            fn line(&self) -> Option<usize> {
+                match self {
+                    $( Self::$variant { .. } => define_violations!(@select_line_arm self, $variant, $( $field : $field_ty ),*) ),*
+                }
+            }
+
+            fn suggestion(&self) -> Option<String> {
+                match self {
+                    $( Self::$variant { .. } => define_violations!(@select_suggestion_arm self, $variant, $($suggestion,)? $( $field : $field_ty ),*) ),*
+                }
+            }
+        }
+    };
+
+    (@impl_violation
+        static_severity,
+        $category:expr,
+        $name:ident {
+            $(
+                #[violation(
+                    id = $id:literal,
+                    severity = $severity:ident
+                    $(, suggestion = $suggestion:literal)?
+                )]
+                $variant:ident { $( $field:ident : $field_ty:ty ),* }
+            ),* $(,)?
+        }
+    ) => {
         impl $crate::traits::violation::Violation for $name {
             fn id(&self) -> &str {
                 match self {
@@ -340,33 +368,21 @@ macro_rules! define_violations {
                 }
             }
 
-                        fn file(&self) -> Option<&std::path::PathBuf> {
+            fn file(&self) -> Option<&std::path::PathBuf> {
                 match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@get_file $( $field : $field_ty ),*)
-                        }
-                    ),*
+                    $( Self::$variant { .. } => define_violations!(@select_file_arm self, $variant, $( $field : $field_ty ),*) ),*
                 }
             }
 
-                        fn line(&self) -> Option<usize> {
+            fn line(&self) -> Option<usize> {
                 match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@get_line $( $field : $field_ty ),*)
-                        }
-                    ),*
+                    $( Self::$variant { .. } => define_violations!(@select_line_arm self, $variant, $( $field : $field_ty ),*) ),*
                 }
             }
 
-                        fn suggestion(&self) -> Option<String> {
+            fn suggestion(&self) -> Option<String> {
                 match self {
-                    $(
-                        Self::$variant { $( $field ),* } => {
-                            define_violations!(@suggestion $($suggestion,)? $( $field : $field_ty ),*)
-                        }
-                    ),*
+                    $( Self::$variant { .. } => define_violations!(@select_suggestion_arm self, $variant, $($suggestion,)? $( $field : $field_ty ),*) ),*
                 }
             }
         }
@@ -382,58 +398,95 @@ macro_rules! define_violations {
         write!($f, "{:?}", ($( $field ),*))
     };
 
-    // Get file field helper
-    (@get_file $( $field:ident : $field_ty:ty ),*) => {{
-                        let mut file_path = None;
-        $(
-            define_violations!(@check_file_field file_path, $field, $field : $field_ty);
-        )*
-        file_path
-    }};
-
-    (@check_file_field $var:ident, file, $f:ident : $field_ty:ty) => { $var = Some($f) };
-    (@check_file_field $var:ident, location, $f:ident : $field_ty:ty) => { $var = Some($f) };
-    (@check_file_field $var:ident, path, $f:ident : $field_ty:ty) => { $var = Some($f) };
-    (@check_file_field $var:ident, source_file, $f:ident : $field_ty:ty) => { $var = Some($f) };
-    (@check_file_field $var:ident, referencing_file, $f:ident : $field_ty:ty) => { $var = Some($f) };
-    (@check_file_field $var:ident, locations, $f:ident : Vec<PathBuf>) => { $var = $f.first() };
-    (@check_file_field $var:ident, locations, $f:ident : Vec<std::path::PathBuf>) => { $var = $f.first() };
-    (@check_file_field $var:ident, $ignore:ident, $f:ident : $field_ty:ty) => {};
-
-    // Get line field helper
-    (@get_line $( $field:ident : $field_ty:ty ),*) => {{
-                        let mut line_num = None;
-        $(
-            define_violations!(@check_line_field line_num, $field, $field : $field_ty);
-        )*
-        line_num
-    }};
-
-    (@check_line_field $var:ident, line, $f:ident : $field_ty:ty) => { $var = Some(*$f) };
-    (@check_line_field $var:ident, $ignore:ident, $f:ident : $field_ty:ty) => {};
-
-    // Suggestion helper - with suggestion template
-    (@suggestion $suggestion:literal, $( $field:ident : $field_ty:ty ),*) => {
-        Some(define_violations!(@render_template $suggestion, $( $field : $field_ty ),*))
+    (@select_file_arm $self:expr, $variant:ident, file : $file_ty:ty $(, $rest:ident : $rest_ty:ty )* ) => {
+        match $self {
+            Self::$variant { file, .. } => Some(file),
+            _ => None,
+        }
     };
-
-    (@suggestion $( $field:ident : $field_ty:ty ),*) => {
-        define_violations!(@find_suggestion_field $( $field : $field_ty ),*)
+    (@select_file_arm $self:expr, $variant:ident, path : $path_ty:ty $(, $rest:ident : $rest_ty:ty )* ) => {
+        match $self {
+            Self::$variant { path, .. } => Some(path),
+            _ => None,
+        }
     };
-
-    (@find_suggestion_field suggestion : String, $( $rest:ident : $rest_ty:ty ),*) => {
-        Some(suggestion.clone())
+    (@select_file_arm $self:expr, $variant:ident, location : $location_ty:ty $(, $rest:ident : $rest_ty:ty )* ) => {
+        match $self {
+            Self::$variant { location, .. } => Some(location),
+            _ => None,
+        }
     };
-    (@find_suggestion_field suggestion : String) => {
-        Some(suggestion.clone())
+    (@select_file_arm $self:expr, $variant:ident, source_file : $source_file_ty:ty $(, $rest:ident : $rest_ty:ty )* ) => {
+        match $self {
+            Self::$variant { source_file, .. } => Some(source_file),
+            _ => None,
+        }
     };
-    (@find_suggestion_field $other:ident : $other_ty:ty, $( $rest:ident : $rest_ty:ty ),*) => {
-        define_violations!(@find_suggestion_field $( $rest : $rest_ty ),*)
+    (@select_file_arm $self:expr, $variant:ident, referencing_file : $referencing_file_ty:ty $(, $rest:ident : $rest_ty:ty )* ) => {
+        match $self {
+            Self::$variant { referencing_file, .. } => Some(referencing_file),
+            _ => None,
+        }
     };
-    (@find_suggestion_field $other:ident : $other_ty:ty) => {
+    (@select_file_arm $self:expr, $variant:ident, locations : Vec<PathBuf> $(, $rest:ident : $rest_ty:ty )* ) => {
+        match $self {
+            Self::$variant { locations, .. } => locations.first(),
+            _ => None,
+        }
+    };
+    (@select_file_arm $self:expr, $variant:ident, locations : Vec<std::path::PathBuf> $(, $rest:ident : $rest_ty:ty )* ) => {
+        match $self {
+            Self::$variant { locations, .. } => locations.first(),
+            _ => None,
+        }
+    };
+    (@select_file_arm $self:expr, $variant:ident, $skip:ident : $skip_ty:ty, $( $rest:ident : $rest_ty:ty ),+ ) => {
+        define_violations!(@select_file_arm $self, $variant, $( $rest : $rest_ty ),+)
+    };
+    (@select_file_arm $self:expr, $variant:ident, $skip:ident : $skip_ty:ty) => {
         None
     };
-    (@find_suggestion_field) => {
+    (@select_file_arm $self:expr, $variant:ident,) => {
+        None
+    };
+
+    (@select_line_arm $self:expr, $variant:ident, line : $line_ty:ty $(, $rest:ident : $rest_ty:ty )* ) => {
+        match $self {
+            Self::$variant { line, .. } => Some(*line),
+            _ => None,
+        }
+    };
+    (@select_line_arm $self:expr, $variant:ident, $skip:ident : $skip_ty:ty, $( $rest:ident : $rest_ty:ty ),+ ) => {
+        define_violations!(@select_line_arm $self, $variant, $( $rest : $rest_ty ),+)
+    };
+    (@select_line_arm $self:expr, $variant:ident, $skip:ident : $skip_ty:ty) => {
+        None
+    };
+    (@select_line_arm $self:expr, $variant:ident,) => {
+        None
+    };
+
+    (@select_suggestion_arm $self:expr, $variant:ident, $suggestion:literal, $( $field:ident : $field_ty:ty ),*) => {
+        match $self {
+            Self::$variant { $( $field ),* } => {
+                Some(define_violations!(@render_template $suggestion, $( $field : $field_ty ),*))
+            }
+            _ => None,
+        }
+    };
+    (@select_suggestion_arm $self:expr, $variant:ident, suggestion : String $(, $rest:ident : $rest_ty:ty )* ) => {
+        match $self {
+            Self::$variant { suggestion, .. } => Some(suggestion.clone()),
+            _ => None,
+        }
+    };
+    (@select_suggestion_arm $self:expr, $variant:ident, $skip:ident : $skip_ty:ty, $( $rest:ident : $rest_ty:ty ),+ ) => {
+        define_violations!(@select_suggestion_arm $self, $variant, $( $rest : $rest_ty ),+)
+    };
+    (@select_suggestion_arm $self:expr, $variant:ident, $skip:ident : $skip_ty:ty) => {
+        None
+    };
+    (@select_suggestion_arm $self:expr, $variant:ident,) => {
         None
     };
 

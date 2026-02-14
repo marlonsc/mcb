@@ -3,12 +3,6 @@ use sha2::{Digest, Sha256};
 
 type HmacSha256 = Hmac<Sha256>;
 
-/// Module for project type utility helpers.
-pub mod project_type;
-/// Module for submodule path utility helpers.
-pub mod submodule;
-pub mod vcs_context;
-
 /// SHA-256 hex digest of content for deduplication.
 pub fn compute_content_hash(content: &str) -> String {
     let mut hasher = Sha256::new();

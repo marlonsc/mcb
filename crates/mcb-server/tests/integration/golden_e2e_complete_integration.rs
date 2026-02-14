@@ -51,26 +51,11 @@ fn golden_queries_path() -> std::path::PathBuf {
 struct GoldenQuery {
     id: String,
     query: String,
-    description: String,
-    expected_files: Vec<String>,
-    max_latency_ms: u64,
-    min_results: u32,
 }
 
 #[derive(Debug, Deserialize)]
 struct GoldenQueriesFixture {
-    version: String,
-    description: String,
     queries: Vec<GoldenQuery>,
-    config: GoldenConfig,
-}
-
-#[derive(Debug, Deserialize)]
-struct GoldenConfig {
-    collection_name: String,
-    timeout_ms: u64,
-    relevance_threshold: f64,
-    top_k: u32,
 }
 
 fn load_golden_queries_fixture() -> GoldenQueriesFixture {

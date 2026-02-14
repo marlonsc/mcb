@@ -1,10 +1,4 @@
-//! Domain layer constants
-//!
-//! Contains constants that are part of the domain logic and are used by
-//! the application layer. Infrastructure-specific constants remain in
-//! `infrastructure/constants.rs`.
-
-pub mod keys;
+//! Domain layer constants definitions
 
 // ============================================================================
 // INDEXING DOMAIN CONSTANTS

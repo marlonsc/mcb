@@ -13,7 +13,7 @@ use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
 use mcb_server::formatter::ResponseFormatter;
 use rstest::rstest;
 
-use crate::test_utils::test_fixtures::{create_test_search_result, create_test_search_results};
+use crate::search_fixtures::{create_test_search_result, create_test_search_results};
 
 // =============================================================================
 // ERROR RESPONSE TESTS

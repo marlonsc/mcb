@@ -22,10 +22,9 @@ use mcb_domain::ports::services::{
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
 use rmcp::model::{
-    CallToolRequestParams, CallToolResult, Implementation, ListToolsResult, Meta,
-    PaginatedRequestParams, ProtocolVersion, ServerCapabilities, ServerInfo,
+    CallToolRequestParams, CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams,
+    ProtocolVersion, ServerCapabilities, ServerInfo,
 };
-use serde_json::Value;
 
 use crate::handlers::{
     AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,

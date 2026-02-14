@@ -1,22 +1,13 @@
-//! Unified project schema: all persistence entities and relationships.
-//!
-//! Single source of truth for the whole project: memory (observations,
-//! session_summaries), collections (vector store mapping), file_hashes
-//! (incremental indexing), agent sessions (agent tracking), with FKs so
-//! backends generate correct REFERENCES. Aligns database port data with
-//! vector stores (collections) and project org.
+//! Unified project schema types.
 
-pub mod agent;
-pub mod error_patterns;
-/// Module for issue entity schema definitions.
-pub mod issue_entities;
-pub mod multi_tenant;
-/// Module for plan entity schema definitions.
-pub mod plan_entities;
-/// Module for VCS entity schema definitions.
-pub mod vcs_entities;
+use super::super::memory::{ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
 
-use super::memory::{ColumnDef, ColumnType, FtsDef, IndexDef, TableDef};
+use super::agent;
+use super::error_patterns;
+use super::issue_entities;
+use super::multi_tenant;
+use super::plan_entities;
+use super::vcs_entities;
 
 /// Foreign key: (from_table.from_column) REFERENCES to_table(to_column).
 #[derive(Debug, Clone)]
@@ -43,7 +34,7 @@ pub struct UniqueConstraintDef {
 /// Full project schema: all tables, FTS, indexes, FKs, unique constraints.
 ///
 /// Use this for one database that serves memory, collections, and file hashes.
-/// Each backend (SQLite, PostgreSQL, MySQL) implements [`super::SchemaDdlGenerator`]
+/// Each backend (SQLite, PostgreSQL, MySQL) implements [`SchemaDdlGenerator`]
 /// to produce dialect-specific DDL from this schema.
 #[derive(Debug, Clone)]
 pub struct ProjectSchema {
@@ -180,7 +171,7 @@ impl ProjectSchema {
         ]);
 
         // Add memory tables (observations, session_summaries)
-        let memory_tables = super::memory::tables().into_iter().map(|mut t| {
+        let memory_tables = super::super::memory::tables().into_iter().map(|mut t| {
             if !t.columns.iter().any(|c| c.name == "project_id") {
                 t.columns.insert(
                     1,
@@ -335,7 +326,7 @@ impl ProjectSchema {
         ];
 
         // Add memory indexes
-        indexes.extend(super::memory::indexes());
+        indexes.extend(super::super::memory::indexes());
 
         indexes.extend(agent::indexes());
         indexes.extend(error_patterns::indexes());
