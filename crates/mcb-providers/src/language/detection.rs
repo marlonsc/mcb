@@ -4,11 +4,8 @@
 //! check language support for AST chunking, and retrieve language-specific
 //! configuration values.
 
-use super::common::constants::{
-    CHUNK_SIZE_GENERIC, EXTENSION_LANG_MAP, LANG_C, LANG_CHUNK_SIZE_MAP, LANG_CPP, LANG_CSHARP,
-    LANG_GO, LANG_JAVA, LANG_JAVASCRIPT, LANG_KOTLIN, LANG_PHP, LANG_PYTHON, LANG_RUBY, LANG_RUST,
-    LANG_SWIFT, LANG_TYPESCRIPT, LANG_UNKNOWN,
-};
+use super::common::constants::{CHUNK_SIZE_GENERIC, EXTENSION_LANG_MAP, LANG_CHUNK_SIZE_MAP};
+use mcb_domain::constants::lang::*;
 
 /// Detect language from file extension
 ///

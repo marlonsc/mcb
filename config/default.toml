@@ -31,8 +31,12 @@ max_request_body_size = 10485760
 cors_enabled = true
 cors_origins = ["*"]
 
-[providers]
-database = "sqlite"
+[providers.database]
+provider = "sqlite"
+
+[providers.database.configs.default]
+provider = "sqlite"
+path = ""
 
 [providers.embedding]
 provider = "fastembed"
@@ -58,7 +62,6 @@ max_files = 5
 
 [auth]
 enabled = false
-user_db_path = ""
 password_algorithm = "Argon2"
 
 [auth.jwt]

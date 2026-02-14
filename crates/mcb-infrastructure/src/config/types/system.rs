@@ -74,8 +74,6 @@ pub struct AuthConfig {
     pub api_key: ApiKeyConfig,
     /// Admin API key configuration
     pub admin: AdminApiKeyConfig,
-    /// User database path
-    pub user_db_path: Option<PathBuf>,
     /// Password hashing algorithm
     pub password_algorithm: PasswordAlgorithm,
 }

@@ -5,13 +5,14 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use super::helpers::HttpEmbeddingClient;
-use crate::constants::{CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_GEMINI};
+use crate::constants::EMBEDDING_DIMENSION_GEMINI;
 
 use crate::provider_utils::{JsonRequestParams, parse_float_array_lossy, send_json_request};
 use crate::utils::http::RequestErrorKind;

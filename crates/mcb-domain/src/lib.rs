@@ -73,7 +73,7 @@ pub mod utils;
 pub mod value_objects;
 
 // Re-export commonly used types for convenience
-pub use constants::*;
+pub use constants::values::*;
 pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};

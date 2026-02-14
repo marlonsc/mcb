@@ -29,7 +29,13 @@ fn test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let db_path = temp_dir.path().join("test.db");
     let mut config = ConfigLoader::new().load().expect("load config");
-    config.auth.user_db_path = Some(db_path);
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(db_path),
+        },
+    );
     (config, temp_dir)
 }
 

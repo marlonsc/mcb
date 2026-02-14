@@ -9,13 +9,11 @@ use std::sync::Arc;
 use tracing::{info, warn};
 
 use crate::ValidationConfig;
+use crate::filters::LanguageId;
 use crate::run_context::ValidationRunContext;
 use crate::traits::violation::Violation;
 
-/// All validators implement this trait
-///
-/// This enables a plugin-like architecture where validators can be
-/// registered and run uniformly.
+/// Unified interface for all validators, enabling plugin-like registration.
 pub trait Validator: Send + Sync {
     /// Unique name of this validator
     fn name(&self) -> &'static str;
@@ -31,6 +29,11 @@ pub trait Validator: Send + Sync {
     /// Description of what this validator checks
     fn description(&self) -> &'static str {
         ""
+    }
+
+    /// Languages this validator applies to. Empty = all languages (always run).
+    fn supported_languages(&self) -> &[LanguageId] {
+        &[LanguageId::Rust]
     }
 }
 
@@ -112,27 +115,39 @@ impl ValidatorRegistry {
             );
 
             for validator in &self.validators {
-                if validator.enabled_by_default() {
+                if !validator.enabled_by_default() {
+                    continue;
+                }
+
+                let langs = validator.supported_languages();
+                if !langs.is_empty() && !langs.iter().any(|l| active.has_files_for_language(*l)) {
                     info!(
                         validator = %validator.name(),
                         trace_id = %active.trace_id(),
-                        file_inventory_source = active.file_inventory_source().as_str(),
-                        file_inventory_count = active.file_inventory_count(),
-                        "Running validator"
+                        "Skipping validator: no files match supported languages"
                     );
+                    continue;
+                }
 
-                    match validator.validate(config) {
-                        Ok(violations) => all_violations.extend(violations),
-                        Err(e) => {
-                            warn!(
-                                validator = %validator.name(),
-                                trace_id = %active.trace_id(),
-                                file_inventory_source = active.file_inventory_source().as_str(),
-                                file_inventory_count = active.file_inventory_count(),
-                                error = %e,
-                                "Validator failed, skipping"
-                            );
-                        }
+                info!(
+                    validator = %validator.name(),
+                    trace_id = %active.trace_id(),
+                    file_inventory_source = active.file_inventory_source().as_str(),
+                    file_inventory_count = active.file_inventory_count(),
+                    "Running validator"
+                );
+
+                match validator.validate(config) {
+                    Ok(violations) => all_violations.extend(violations),
+                    Err(e) => {
+                        warn!(
+                            validator = %validator.name(),
+                            trace_id = %active.trace_id(),
+                            file_inventory_source = active.file_inventory_source().as_str(),
+                            file_inventory_count = active.file_inventory_count(),
+                            error = %e,
+                            "Validator failed, skipping"
+                        );
                     }
                 }
             }

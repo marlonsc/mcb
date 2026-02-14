@@ -229,7 +229,13 @@ fn unique_test_config() -> AppConfig {
     let thread_id = std::thread::current().id();
     let db_path =
         std::env::temp_dir().join(format!("mcb-golden-test-{}-{:?}.db", stamp, thread_id));
-    config.auth.user_db_path = Some(db_path);
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(db_path),
+        },
+    );
     config
 }
 

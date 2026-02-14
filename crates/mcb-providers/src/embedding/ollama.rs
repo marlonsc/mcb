@@ -13,13 +13,14 @@ use reqwest::Client;
 
 use super::helpers::HttpEmbeddingClient;
 use crate::constants::{
-    CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
+    EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
     EMBEDDING_DIMENSION_OLLAMA_MINILM, EMBEDDING_DIMENSION_OLLAMA_MXBAI,
     EMBEDDING_DIMENSION_OLLAMA_NOMIC,
 };
 /// Error message for request timeouts
 use crate::provider_utils::{JsonRequestParams, parse_float_array_lossy, send_json_request};
 use crate::utils::http::RequestErrorKind;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
 /// Ollama embedding provider
 ///

@@ -2,10 +2,10 @@
 
 #![cfg(feature = "hybrid-search")]
 
+use mcb_domain::constants::search::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::ports::providers::HybridSearchProvider;
 use mcb_domain::value_objects::SearchResult;
-use mcb_providers::constants::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
 use mcb_providers::hybrid_search::{BM25Params, BM25Scorer, HybridSearchEngine};
 use rstest::rstest;
 
@@ -138,9 +138,9 @@ fn bm25_relevant_chunk_ranks_higher(#[case] mode: &str) {
 async fn hybrid_search_engine_creation(#[case] weight_kind: &str) {
     let engine = HybridSearchEngine::new();
     if weight_kind == "bm25" {
-        assert!((engine.bm25_weight() - HYBRID_SEARCH_BM25_WEIGHT).abs() < f32::EPSILON);
+        assert!((engine.bm25_weight() - HYBRID_SEARCH_BM25_WEIGHT).abs() < f64::EPSILON);
     } else {
-        assert!((engine.semantic_weight() - HYBRID_SEARCH_SEMANTIC_WEIGHT).abs() < f32::EPSILON);
+        assert!((engine.semantic_weight() - HYBRID_SEARCH_SEMANTIC_WEIGHT).abs() < f64::EPSILON);
     }
 }
 

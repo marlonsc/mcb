@@ -54,8 +54,9 @@ async fn test_post_tool_use_context_enrichment(
 ) {
     let mut context = PostToolUseContext::new(tool_name.to_string(), false);
 
+    let session_id_val = SessionId::from("session_123");
     if with_session_id {
-        context = context.with_session_id(SessionId::from("session_123"));
+        context = context.with_session_id(session_id_val);
     }
     if with_metadata {
         context = context.with_metadata("key".to_string(), "value".to_string());
@@ -65,7 +66,7 @@ async fn test_post_tool_use_context_enrichment(
     if with_session_id {
         assert_eq!(
             context.session_id.as_ref().map(|id| id.as_str()),
-            Some("session_123".to_string())
+            Some(session_id_val.as_str())
         );
     }
     if with_metadata {
@@ -75,8 +76,9 @@ async fn test_post_tool_use_context_enrichment(
 
 #[tokio::test]
 async fn test_session_start_context_creation() {
-    let context = SessionStartContext::new(SessionId::from("session_456"));
-    assert_eq!(context.session_id.as_str(), "session_456");
+    let sid = SessionId::from("session_456");
+    let context = SessionStartContext::new(sid);
+    assert_eq!(context.session_id.as_str(), sid.as_str());
     assert!(context.timestamp > 0);
 }
 

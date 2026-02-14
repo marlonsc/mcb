@@ -161,6 +161,23 @@ fn test_admin_bypass_boundary_blocks_non_allowlisted_imports() {
     )
     .unwrap();
 
+    let config_dir = temp.path().join("config");
+    fs::create_dir_all(&config_dir).unwrap();
+    fs::write(
+        config_dir.join("mcb-validate-internal.toml"),
+        r#"
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP004"
+scan_root = "crates/mcb-server/src/admin"
+pattern = "mcb_domain::ports::repositories"
+allowed_files = [
+    "crates/mcb-server/src/admin/crud_adapter.rs",
+    "crates/mcb-server/src/admin/handlers.rs",
+]
+"#,
+    )
+    .unwrap();
+
     let validator = DependencyValidator::new(temp.path());
     let violations = validator.validate_bypass_boundaries().unwrap();
 
@@ -184,6 +201,20 @@ fn test_cli_bypass_boundary_blocks_non_allowlisted_direct_validate_usage() {
     fs::write(
         cli_dir.join("validate.rs"),
         "use mcb_validate::ValidationConfig;",
+    )
+    .unwrap();
+
+    let config_dir = temp.path().join("config");
+    fs::create_dir_all(&config_dir).unwrap();
+    fs::write(
+        config_dir.join("mcb-validate-internal.toml"),
+        r#"
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP005"
+scan_root = "crates/mcb/src/cli"
+pattern = "mcb_validate::"
+allowed_files = ["crates/mcb/src/cli/validate.rs"]
+"#,
     )
     .unwrap();
 

@@ -12,12 +12,13 @@ use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use crate::constants::{
-    CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_OPENAI_ADA, EMBEDDING_DIMENSION_OPENAI_LARGE,
+    EMBEDDING_DIMENSION_OPENAI_ADA, EMBEDDING_DIMENSION_OPENAI_LARGE,
     EMBEDDING_DIMENSION_OPENAI_SMALL,
 };
 use crate::provider_utils::{JsonRequestParams, send_json_request};
 use crate::utils::http::RequestErrorKind;
 use crate::utils::parse_embedding_vector;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
 use super::helpers::{HttpEmbeddingClient, process_batch};
 

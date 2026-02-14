@@ -33,7 +33,13 @@ async fn file_hash_repo() -> Arc<dyn FileHashRepository> {
     let db_path = std::env::temp_dir().join(format!("mcb-file-hash-tests-{unique}.db"));
 
     let mut config = ConfigLoader::new().load().expect("load config");
-    config.auth.user_db_path = Some(db_path);
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(db_path),
+        },
+    );
 
     let ctx = init_app(config).await.unwrap();
     ctx.file_hash_repository()
@@ -134,7 +140,13 @@ async fn test_indexing_persists_file_hash_metadata() {
     let db_path = std::env::temp_dir().join(format!("mcb-indexing-tests-{unique}.db"));
 
     let mut config = ConfigLoader::new().load().expect("load config");
-    config.auth.user_db_path = Some(db_path);
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(db_path),
+        },
+    );
 
     let ctx = init_app(config).await.unwrap();
     let services = ctx.build_domain_services().await.unwrap();

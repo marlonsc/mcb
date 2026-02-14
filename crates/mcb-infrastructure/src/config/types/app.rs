@@ -56,12 +56,32 @@ pub struct VectorStoreConfigContainer {
     pub configs: HashMap<String, VectorStoreConfig>,
 }
 
+/// Database provider configuration entry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DatabaseConfig {
+    /// Database provider name (e.g. "sqlite", "postgres")
+    pub provider: String,
+    /// Database file path (for file-based providers like SQLite)
+    pub path: Option<PathBuf>,
+}
+
+/// Database configuration container
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DatabaseConfigContainer {
+    /// Active database provider name
+    pub provider: String,
+    /// Named database configurations
+    pub configs: HashMap<String, DatabaseConfig>,
+}
+
 /// Provider configurations
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProvidersConfig {
-    /// Database provider name (e.g. "sqlite", "postgres")
-    pub database: String,
+    /// Database provider configuration
+    pub database: DatabaseConfigContainer,
     /// Embedding provider configuration
     pub embedding: EmbeddingConfigContainer,
     /// Vector store provider configuration

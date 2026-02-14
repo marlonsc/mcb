@@ -150,63 +150,44 @@ impl DependencyValidator {
         Ok(violations)
     }
 
-    /// Validate anti-bypass boundaries for admin and CLI surfaces.
+    /// Validate anti-bypass boundaries from config.
     pub fn validate_bypass_boundaries(&self) -> Result<Vec<DependencyViolation>> {
         let mut violations = Vec::new();
+        let file_config = crate::config::FileConfig::load(&self.config.workspace_root);
 
-        let admin_allowed_import_roots = [
-            "crates/mcb-server/src/admin/crud_adapter.rs",
-            "crates/mcb-server/src/admin/handlers.rs",
-        ];
-        let cli_allowed_direct_validate = ["crates/mcb/src/cli/validate.rs"];
+        for boundary in &file_config.rules.dependency.bypass_boundaries {
+            let scan_root = self.config.workspace_root.join(&boundary.scan_root);
+            let allowed: Vec<&str> = boundary.allowed_files.iter().map(|s| s.as_str()).collect();
+            let violation_id = boundary.violation_id.clone();
+            let pattern = boundary.pattern.clone();
 
-        let admin_root = self
-            .config
-            .workspace_root
-            .join("crates")
-            .join("mcb-server")
-            .join("src")
-            .join("admin");
-        self.scan_bypass_patterns(
-            &admin_root,
-            |rel| {
-                !admin_allowed_import_roots
-                    .iter()
-                    .any(|allowed| rel == Path::new(allowed))
-            },
-            "mcb_domain::ports::repositories",
-            |file, line, context| DependencyViolation::AdminBypassImport {
-                file,
-                line,
-                context,
-                severity: Severity::Error,
-            },
-            &mut violations,
-        )?;
-
-        let cli_root = self
-            .config
-            .workspace_root
-            .join("crates")
-            .join("mcb")
-            .join("src")
-            .join("cli");
-        self.scan_bypass_patterns(
-            &cli_root,
-            |rel| {
-                !cli_allowed_direct_validate
-                    .iter()
-                    .any(|allowed| rel == Path::new(allowed))
-            },
-            "mcb_validate::",
-            |file, line, context| DependencyViolation::CliBypassPath {
-                file,
-                line,
-                context,
-                severity: Severity::Error,
-            },
-            &mut violations,
-        )?;
+            self.scan_bypass_patterns(
+                &scan_root,
+                |rel| !allowed.iter().any(|a| rel == Path::new(a)),
+                &pattern,
+                |file, line, context| match violation_id.as_str() {
+                    "DEP004" => DependencyViolation::AdminBypassImport {
+                        file,
+                        line,
+                        context,
+                        severity: Severity::Error,
+                    },
+                    "DEP005" => DependencyViolation::CliBypassPath {
+                        file,
+                        line,
+                        context,
+                        severity: Severity::Error,
+                    },
+                    _ => DependencyViolation::AdminBypassImport {
+                        file,
+                        line,
+                        context,
+                        severity: Severity::Error,
+                    },
+                },
+                &mut violations,
+            )?;
+        }
 
         Ok(violations)
     }

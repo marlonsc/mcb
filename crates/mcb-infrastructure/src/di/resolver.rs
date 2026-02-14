@@ -59,9 +59,11 @@ use mcb_domain::registry::language::{LanguageProviderConfig, resolve_language_pr
 use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
-use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 
 use crate::config::AppConfig;
+use crate::di::provider_resolvers::{
+    embedding_config_to_registry, vector_store_config_to_registry,
+};
 
 /// Resolved providers from configuration
 ///
@@ -128,7 +130,11 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
             .values()
             .next()
             .map(embedding_config_to_registry)
-            .unwrap_or_else(default_embedding_config)
+            .ok_or_else(|| {
+                Error::configuration(
+                    "No embedding provider configured; set [providers.embedding.configs.default] in config",
+                )
+            })?
     };
 
     // Get vector store config: prefer direct config (env vars), fallback to named config
@@ -158,7 +164,11 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
             .values()
             .next()
             .map(vector_store_config_to_registry)
-            .unwrap_or_else(default_vector_store_config)
+            .ok_or_else(|| {
+                Error::configuration(
+                    "No vector store provider configured; set [providers.vector_store.configs.default] in config",
+                )
+            })?
     };
 
     // Cache config from system.infrastructure.cache
@@ -198,43 +208,6 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
         cache,
         language,
     })
-}
-
-/// Convert domain EmbeddingConfig to registry EmbeddingProviderConfig
-fn embedding_config_to_registry(config: &EmbeddingConfig) -> EmbeddingProviderConfig {
-    EmbeddingProviderConfig {
-        provider: config.provider.to_string(),
-        model: Some(config.model.clone()),
-        api_key: config.api_key.clone(),
-        base_url: config.base_url.clone(),
-        dimensions: config.dimensions,
-        cache_dir: None,
-        extra: Default::default(),
-    }
-}
-
-/// Convert domain VectorStoreConfig to registry VectorStoreProviderConfig
-fn vector_store_config_to_registry(config: &VectorStoreConfig) -> VectorStoreProviderConfig {
-    VectorStoreProviderConfig {
-        provider: config.provider.to_string(),
-        uri: config.address.clone(),
-        collection: config.collection.clone(),
-        dimensions: config.dimensions,
-        api_key: config.token.clone(),
-        encrypted: None,
-        encryption_key: None,
-        extra: Default::default(),
-    }
-}
-
-/// Default embedding config for testing (uses local FastEmbed)
-fn default_embedding_config() -> EmbeddingProviderConfig {
-    EmbeddingProviderConfig::new("fastembed")
-}
-
-/// Default vector store config for testing (local EdgeVec HNSW)
-fn default_vector_store_config() -> VectorStoreProviderConfig {
-    VectorStoreProviderConfig::new("edgevec")
 }
 
 /// List all available providers across all categories

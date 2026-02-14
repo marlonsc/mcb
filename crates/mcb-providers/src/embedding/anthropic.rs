@@ -13,12 +13,13 @@ use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use crate::constants::{
-    ANTHROPIC_MAX_INPUT_TOKENS, CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_ANTHROPIC_CODE,
+    ANTHROPIC_MAX_INPUT_TOKENS, EMBEDDING_DIMENSION_ANTHROPIC_CODE,
     EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT, EMBEDDING_DIMENSION_ANTHROPIC_LITE,
 };
 use crate::provider_utils::{JsonRequestParams, send_json_request};
 use crate::utils::http::RequestErrorKind;
 use crate::utils::parse_embedding_vector;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
 use super::helpers::{HttpEmbeddingClient, process_batch};
 

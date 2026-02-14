@@ -12,13 +12,13 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::constants::CONTENT_TYPE_JSON;
 use crate::provider_utils::{JsonRequestParams, send_json_request};
 use crate::utils::http::RequestErrorKind;
 

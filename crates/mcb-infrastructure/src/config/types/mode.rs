@@ -38,38 +38,22 @@ pub enum OperatingMode {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ModeConfig {
-    /// Operating mode type
+    /// Operating mode type (`standalone` or `client`).
     #[serde(rename = "type")]
     pub mode_type: OperatingMode,
-
-    /// Server URL for client mode
-    /// Only used when mode_type = Client
+    /// Server URL for client mode.
     pub server_url: String,
-
-    /// Session prefix for context isolation
-    /// Optional: if set, collections will be prefixed with this value
+    /// Optional prefix for session isolation.
     pub session_prefix: Option<String>,
-
-    /// Connection timeout in seconds for client mode
+    /// Request timeout in seconds (client mode).
     pub timeout_secs: u64,
-
-    /// Enable automatic reconnection on connection loss
+    /// Whether to auto-reconnect on connection loss (client mode).
     pub auto_reconnect: bool,
-
-    /// Maximum reconnection attempts (0 = unlimited)
+    /// Maximum reconnection attempts before giving up.
     pub max_reconnect_attempts: u32,
-
-    /// External session ID for client-mode correlation.
-    ///
-    /// When set (non-empty), overrides auto-generated session identifiers.
-    /// Env override: `MCP__MODE__SESSION_ID`
+    /// Active session identifier for session resumption.
     pub session_id: Option<String>,
-
-    /// Path to a persistent session file for cross-restart correlation.
-    ///
-    /// When set (non-empty), the client reads/writes session IDs from this file
-    /// to maintain session continuity across process restarts.
-    /// Env override: `MCP__MODE__SESSION_FILE`
+    /// Path to session state file for persistence.
     pub session_file: Option<String>,
 }
 

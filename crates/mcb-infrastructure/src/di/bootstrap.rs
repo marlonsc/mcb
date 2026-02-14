@@ -433,14 +433,16 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     // Create Domain Services & Repositories
     // ========================================================================
 
-    // Use configured path or fallback to default
-    let memory_db_path = config.auth.user_db_path.clone().unwrap_or_else(|| {
-        dirs::data_local_dir()
-            .or_else(|| std::env::current_dir().ok())
-            .unwrap_or_else(|| std::path::PathBuf::from("."))
-            .join(".mcb")
-            .join("memory.db")
-    });
+    let db_config = config.providers.database.configs.get("default").ok_or_else(|| {
+        mcb_domain::error::Error::config(
+            "providers.database.configs.default is required; set path in config/default.toml under [providers.database.configs.default]",
+        )
+    })?;
+    let memory_db_path = db_config.path.clone().ok_or_else(|| {
+        mcb_domain::error::Error::config(
+            "providers.database.configs.default.path is required; set the database file path in config/default.toml",
+        )
+    })?;
 
     let db_resolver = DatabaseProviderResolver::new(config.clone());
     let db_executor = db_resolver

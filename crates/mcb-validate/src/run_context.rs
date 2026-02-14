@@ -96,6 +96,13 @@ impl ValidationRunContext {
     }
 
     #[must_use]
+    pub fn has_files_for_language(&self, lang: LanguageId) -> bool {
+        self.file_inventory
+            .iter()
+            .any(|e| e.detected_language == Some(lang))
+    }
+
+    #[must_use]
     pub fn files_for_language(&self, lang: LanguageId) -> Vec<&InventoryEntry> {
         self.file_inventory
             .iter()

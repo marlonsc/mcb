@@ -1,49 +1,51 @@
-/// Test file to reproduce the issue with the path resolution logic.
-
 #[cfg(test)]
 mod tests {
-    use mcb_infrastructure::config::{AppConfig, AuthConfig};
     use std::path::PathBuf;
 
-    #[test]
-    fn test_auth_config_default() {
-        let config = AuthConfig::default();
-        assert_eq!(config.user_db_path, None);
-    }
+    use mcb_infrastructure::config::{AuthConfig, DatabaseConfigContainer};
 
     #[test]
-    fn test_path_resolution_logic() {
-        let config = AuthConfig::default();
-        let memory_db_path = config.user_db_path.clone().unwrap_or_else(|| {
-            PathBuf::from("/tmp/fallback")
-                .join(".mcb")
-                .join("memory.db")
-        });
-        assert_eq!(
-            memory_db_path,
-            PathBuf::from("/tmp/fallback/.mcb/memory.db")
-        );
-    }
-
-    #[test]
-    fn test_toml_deserialization() {
+    fn test_database_config_container_path() {
         let toml = r#"
-        [mode]
-        type = "client"
-        server_url = "http://127.0.0.1:8080"
-        
-        [server]
-        transport_mode = "stdio"
-        
-        [server.network]
-        host = "127.0.0.1"
-        port = 8080
-        
-        [auth]
-        enabled = false
+        provider = "sqlite"
+
+        [configs.default]
+        provider = "sqlite"
+        path = "/tmp/mcb-test.db"
         "#;
 
-        let config: AppConfig = toml::from_str(toml).expect("Failed to parse TOML");
-        assert_eq!(config.auth.user_db_path, None);
+        let config: DatabaseConfigContainer = toml::from_str(toml).expect("parse database config");
+        let default = config
+            .configs
+            .get("default")
+            .expect("default database config");
+
+        assert_eq!(config.provider, "sqlite");
+        assert_eq!(default.provider, "sqlite");
+        assert_eq!(default.path, Some(PathBuf::from("/tmp/mcb-test.db")));
+    }
+
+    #[test]
+    fn test_auth_config_deserialization_without_user_db_path() {
+        let toml = r#"
+        enabled = false
+        password_algorithm = "Argon2"
+
+        [jwt]
+        secret = ""
+        expiration_secs = 86400
+        refresh_expiration_secs = 604800
+
+        [api_key]
+        enabled = true
+        header = "X-API-Key"
+
+        [admin]
+        enabled = false
+        header = "X-Admin-Key"
+        "#;
+
+        let config: AuthConfig = toml::from_str(toml).expect("parse auth config");
+        assert!(!config.enabled);
     }
 }

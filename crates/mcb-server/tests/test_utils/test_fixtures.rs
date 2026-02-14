@@ -149,7 +149,13 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
 
     let mut config = ConfigLoader::new().load().expect("load config");
     // Configure SQLite path to use temp dir
-    config.auth.user_db_path = Some(db_path.clone());
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(db_path.clone()),
+        },
+    );
 
     let ctx = init_app(config).await.expect("Failed to init app");
 

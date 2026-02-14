@@ -125,6 +125,24 @@ enabled = true
 [rules.port_adapter]
 enabled = true
 
+[rules.dependency]
+enabled = true
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP004"
+scan_root = "crates/mcb-server/src/admin"
+pattern = "mcb_domain::ports::repositories"
+allowed_files = [
+    "crates/mcb-server/src/admin/crud_adapter.rs",
+    "crates/mcb-server/src/admin/handlers.rs",
+]
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP005"
+scan_root = "crates/mcb/src/cli"
+pattern = "mcb_validate::"
+allowed_files = ["crates/mcb/src/cli/validate.rs"]
+
 [validators]
 architecture = true
 naming = true

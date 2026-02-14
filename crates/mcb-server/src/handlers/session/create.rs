@@ -64,10 +64,10 @@ pub async fn create_session(
     };
     let now = mcb_domain::utils::time::epoch_secs_i64()
         .map_err(|e| McpError::internal_error(e.to_string(), None))?;
-    let session_id = format!("agent_{}", Uuid::new_v4());
+    let session_id = Uuid::new_v4().to_string();
     let session_summary_id = payload
         .session_summary_id
-        .unwrap_or_else(|| format!("auto_{}", Uuid::new_v4()));
+        .unwrap_or_else(|| format!("auto_{}", Uuid::new_v4().simple()));
     let model = match payload.model {
         Some(value) => value,
         None => match require_str(data, schema::MODEL) {

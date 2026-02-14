@@ -66,7 +66,6 @@ impl EmbeddingProviderResolver {
         }
 
         // Fallback to named config (TOML: [providers.embedding.default])
-        // TODO(qlty): Found 20 lines of similar code in 2 locations (mass = 90)
         if let Some(default_config) = self.config.providers.embedding.configs.get("default") {
             // If there's a specific config for this provider, use it
             if let Some(specific_config) = self
@@ -145,7 +144,6 @@ impl VectorStoreProviderResolver {
         }
 
         // Fallback to named config (TOML: [providers.vector_store.default])
-        // TODO(qlty): Found 20 lines of similar code in 2 locations (mass = 90)
         if let Some(default_config) = self.config.providers.vector_store.configs.get("default") {
             // If there's a specific config for this provider, use it
             if let Some(specific_config) = self
@@ -298,7 +296,7 @@ impl std::fmt::Debug for LanguageProviderResolver {
 // ============================================================================
 
 /// Convert domain EmbeddingConfig to registry EmbeddingProviderConfig
-fn embedding_config_to_registry(config: &EmbeddingConfig) -> EmbeddingProviderConfig {
+pub(crate) fn embedding_config_to_registry(config: &EmbeddingConfig) -> EmbeddingProviderConfig {
     EmbeddingProviderConfig {
         provider: config.provider.to_string(),
         model: Some(config.model.clone()),
@@ -311,7 +309,9 @@ fn embedding_config_to_registry(config: &EmbeddingConfig) -> EmbeddingProviderCo
 }
 
 /// Convert domain VectorStoreConfig to registry VectorStoreProviderConfig
-fn vector_store_config_to_registry(config: &VectorStoreConfig) -> VectorStoreProviderConfig {
+pub(crate) fn vector_store_config_to_registry(
+    config: &VectorStoreConfig,
+) -> VectorStoreProviderConfig {
     VectorStoreProviderConfig {
         provider: config.provider.to_string(),
         uri: config.address.clone(),

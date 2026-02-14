@@ -145,9 +145,6 @@ pub const LANGUAGE_PRIORITY_THRESHOLD: usize = 50;
 // HTTP CONSTANTS
 // ============================================================================
 
-/// JSON content type
-pub const CONTENT_TYPE_JSON: &str = "application/json";
-
 /// HTTP request timeout in seconds (for embedding API calls)
 pub const HTTP_REQUEST_TIMEOUT_SECS: u64 = 30;
 
@@ -184,49 +181,6 @@ pub const AST_NODE_INTERFACE_DECLARATION: &str = "interface_declaration";
 
 /// Tree-sitter node type: struct specifier (C/C++)
 pub const AST_NODE_STRUCT_SPECIFIER: &str = "struct_specifier";
-
-// ============================================================================
-// LANGUAGE IDENTIFIERS
-// ============================================================================
-
-/// JavaScript language identifier
-pub const LANG_JAVASCRIPT: &str = "javascript";
-
-/// TypeScript language identifier
-pub const LANG_TYPESCRIPT: &str = "typescript";
-
-/// Python language identifier
-pub const LANG_PYTHON: &str = "python";
-
-/// Rust language identifier
-pub const LANG_RUST: &str = "rust";
-
-/// Go language identifier
-pub const LANG_GO: &str = "go";
-
-/// Java language identifier
-pub const LANG_JAVA: &str = "java";
-
-/// C language identifier
-pub const LANG_C: &str = "c";
-
-/// C++ language identifier
-pub const LANG_CPP: &str = "cpp";
-
-/// C# language identifier
-pub const LANG_CSHARP: &str = "csharp";
-
-/// Ruby language identifier
-pub const LANG_RUBY: &str = "ruby";
-
-/// PHP language identifier
-pub const LANG_PHP: &str = "php";
-
-/// Swift language identifier
-pub const LANG_SWIFT: &str = "swift";
-
-/// Kotlin language identifier
-pub const LANG_KOTLIN: &str = "kotlin";
 
 // ============================================================================
 // EDGEVEC VECTOR STORE CONSTANTS
@@ -291,22 +245,3 @@ pub const MILVUS_QUERY_BATCH_SIZE: usize = 100;
 
 /// Qdrant default server port
 pub const QDRANT_DEFAULT_PORT: u16 = 6333;
-
-// ============================================================================
-// HYBRID SEARCH CONSTANTS
-// ============================================================================
-
-/// BM25 weight in hybrid search (0.0-1.0), default 40% BM25
-pub const HYBRID_SEARCH_BM25_WEIGHT: f32 = 0.4;
-
-/// Semantic weight in hybrid search (0.0-1.0), default 60% semantic
-pub const HYBRID_SEARCH_SEMANTIC_WEIGHT: f32 = 0.6;
-
-/// BM25 k1 parameter (term frequency saturation, standard tuning value)
-pub const HYBRID_SEARCH_BM25_K1: f32 = 1.2;
-
-/// BM25 b parameter (document length normalization, standard tuning value)
-pub const HYBRID_SEARCH_BM25_B: f32 = 0.75;
-
-/// BM25 token minimum length filter (filter very short tokens)
-pub const BM25_TOKEN_MIN_LENGTH: usize = 2;

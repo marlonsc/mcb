@@ -193,6 +193,9 @@ pub struct RulesConfig {
 
     /// Implementation rules
     pub implementation: ImplementationRulesConfig,
+
+    /// Dependency rules
+    pub dependency: DependencyRulesConfig,
 }
 
 /// Architecture validation rules configuration
@@ -479,6 +482,36 @@ pub struct ImplementationRulesConfig {
 
     /// Crates excluded from implementation checks
     pub excluded_crates: Vec<String>,
+}
+
+/// Dependency validation rules configuration
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct DependencyRulesConfig {
+    /// Whether dependency validation is enabled
+    pub enabled: bool,
+
+    /// Anti-bypass boundary definitions.
+    /// Each entry defines a scan root, the import pattern to flag, and allowed files.
+    #[serde(default)]
+    pub bypass_boundaries: Vec<BypassBoundaryConfig>,
+}
+
+/// A single bypass boundary check: scan files under `scan_root` for `pattern`
+/// and flag violations except in files listed in `allowed_files`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct BypassBoundaryConfig {
+    /// Violation ID to emit (e.g., "DEP004", "DEP005")
+    pub violation_id: String,
+
+    /// Directory to scan (relative to workspace root)
+    pub scan_root: String,
+
+    /// Import pattern to flag
+    pub pattern: String,
+
+    /// Files where this pattern is allowed (relative to workspace root)
+    #[serde(default)]
+    pub allowed_files: Vec<String>,
 }
 
 /// Validator enable/disable flags

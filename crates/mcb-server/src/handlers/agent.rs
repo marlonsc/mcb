@@ -40,7 +40,10 @@ impl AgentHandler {
         let _org_id = resolve_org_id(args.org_id.as_deref());
 
         let session_id = args.session_id.as_str();
-        if session_id.is_empty() {
+        if session_id.is_empty()
+            || args.session_id.inner() == uuid::Uuid::nil()
+            || args.session_id == mcb_domain::value_objects::SessionId::from_name("")
+        {
             return Err(McpError::invalid_params("session_id is required", None));
         }
 

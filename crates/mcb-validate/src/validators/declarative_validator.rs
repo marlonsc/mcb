@@ -85,15 +85,17 @@ impl DeclarativeValidator {
         serde_yaml::Value::Mapping(variables)
     }
 
-    fn collect_rs_files(&self, config: &ValidationConfig) -> Vec<PathBuf> {
+    fn collect_files(
+        &self,
+        config: &ValidationConfig,
+        language: Option<LanguageId>,
+    ) -> Vec<PathBuf> {
         let mut files = Vec::new();
-        if let Err(e) =
-            for_each_scan_file(config, Some(LanguageId::Rust), true, |entry, _src_dir| {
-                files.push(entry.absolute_path.to_path_buf());
-                Ok(())
-            })
-        {
-            warn!(error = %e, "Failed to scan workspace for Rust files");
+        if let Err(e) = for_each_scan_file(config, language, true, |entry, _src_dir| {
+            files.push(entry.absolute_path.to_path_buf());
+            Ok(())
+        }) {
+            warn!(error = %e, "Failed to scan workspace for files");
         }
         files
     }
@@ -162,21 +164,27 @@ impl DeclarativeValidator {
         let file_refs: Vec<&Path> = files.iter().map(PathBuf::as_path).collect();
         let mut violations: Vec<Box<dyn Violation>> = Vec::new();
 
-        let block_on: Box<dyn Fn(_) -> _> =
-            if let Ok(handle) = tokio::runtime::Handle::try_current() {
-                Box::new(move |fut| handle.block_on(fut))
-            } else {
-                match tokio::runtime::Runtime::new() {
-                    Ok(rt) => Box::new(move |fut| rt.block_on(fut)),
-                    Err(e) => {
-                        warn!(error = %e, "Failed to create Tokio runtime for lint execution");
-                        return violations;
-                    }
-                }
+        // Spawn a dedicated thread with its own runtime so we never
+        // call `block_on` or `block_in_place` inside the caller's
+        // async context (which panics on both single- and multi-threaded
+        // tokio runtimes).
+        let run_on_dedicated =
+            |fut: std::pin::Pin<Box<dyn std::future::Future<Output = _> + Send>>| -> _ {
+                std::thread::scope(|s| {
+                    s.spawn(|| {
+                        let rt = tokio::runtime::Builder::new_current_thread()
+                            .enable_all()
+                            .build()
+                            .expect("failed to build lint runtime");
+                        rt.block_on(fut)
+                    })
+                    .join()
+                    .expect("lint thread panicked")
+                })
             };
 
         for rule in &lint_rules {
-            match block_on(YamlRuleExecutor::execute_rule(rule, &file_refs)) {
+            match run_on_dedicated(Box::pin(YamlRuleExecutor::execute_rule(rule, &file_refs))) {
                 Ok(lint_violations) => {
                     violations.extend(lint_violations.into_iter().map(|mut v| {
                         v.ensure_file_path();
@@ -316,7 +324,7 @@ impl Validator for DeclarativeValidator {
 
     fn validate(&self, config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {
         let rules = self.load_embedded_rules()?;
-        let files = self.collect_rs_files(config);
+        let files = self.collect_files(config, Some(LanguageId::Rust));
 
         let mut violations = Vec::new();
         violations.extend(self.validate_metrics_rules(&rules, &files));

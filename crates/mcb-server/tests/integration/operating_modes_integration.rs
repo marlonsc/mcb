@@ -40,7 +40,13 @@ fn create_test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let db_path = temp_dir.path().join("test.db");
     let mut config = ConfigLoader::new().load().expect("load config");
-    config.auth.user_db_path = Some(db_path);
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(db_path),
+        },
+    );
     (config, temp_dir)
 }
 
@@ -108,11 +114,14 @@ fn test_mode_config_toml_deserialization() {
 fn test_mode_config_toml_with_defaults() {
     let toml = r#"
         type = "standalone"
+        server_url = "http://127.0.0.1:3000"
+        timeout_secs = 30
+        auto_reconnect = true
+        max_reconnect_attempts = 5
     "#;
     let config: ModeConfig = toml::from_str(toml).expect("Should deserialize");
 
     assert!(config.is_standalone());
-    // Check defaults are applied
     assert_eq!(config.server_url(), "http://127.0.0.1:3000");
     assert!(config.auto_reconnect);
     assert_eq!(config.max_reconnect_attempts, 5);
@@ -549,7 +558,13 @@ async fn test_session_isolation_with_vector_store() {
 async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let mut config = ConfigLoader::new().load().expect("load config");
-    config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(temp_dir.path().join("test.db")),
+        },
+    );
 
     let ctx = init_app(config).await.expect("Failed to init app");
     let services = ctx

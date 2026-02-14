@@ -108,60 +108,77 @@ async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
             .map_err(|e| Error::memory_with_source("create db directory", e))?;
     }
     let db_url = format!("sqlite:{}?mode=rwc", path.display());
-    let pool = sqlx::SqlitePool::connect(&db_url)
+
+    match try_connect_and_init(&path, &db_url).await {
+        Ok(pool) => Ok(pool),
+        Err(first_err) if path.exists() => {
+            tracing::warn!(
+                error = %first_err,
+                path = %path.display(),
+                "Database initialization failed on existing file, backing up and recreating"
+            );
+            backup_and_remove(&path)?;
+
+            let fresh_pool = sqlx::SqlitePool::connect(&db_url)
+                .await
+                .map_err(|e| Error::memory_with_source("reconnect SQLite after backup", e))?;
+            configure_pragmas(&fresh_pool).await?;
+            apply_schema(&fresh_pool).await?;
+            tracing::info!(
+                "Memory database recreated at {} (old data backed up)",
+                path.display()
+            );
+            Ok(fresh_pool)
+        }
+        Err(first_err) => {
+            tracing::error!(
+                error = %first_err,
+                path = %path.display(),
+                "Database initialization failed on NEW file (path.exists()=false)"
+            );
+            Err(first_err)
+        }
+    }
+}
+
+async fn try_connect_and_init(path: &std::path::Path, db_url: &str) -> Result<sqlx::SqlitePool> {
+    use mcb_domain::error::Error;
+
+    let pool = sqlx::SqlitePool::connect(db_url)
         .await
         .map_err(|e| Error::memory_with_source("connect SQLite", e))?;
 
-    // Enable WAL mode for better concurrency
-    sqlx::query("PRAGMA journal_mode = WAL;")
-        .execute(&pool)
-        .await
-        .map_err(|e| Error::memory_with_source("enable WAL mode", e))?;
-
-    sqlx::query("PRAGMA synchronous = NORMAL;")
-        .execute(&pool)
-        .await
-        .map_err(|e| Error::memory_with_source("set synchronous mode", e))?;
+    if let Err(e) = configure_pragmas(&pool).await {
+        pool.close().await;
+        return Err(e);
+    }
 
     match apply_schema(&pool).await {
         Ok(()) => {
             tracing::info!("Memory database initialized at {}", path.display());
             Ok(pool)
         }
-        Err(first_err) => {
-            // Check existence explicitly to debug potential issues
-            let exists = path.exists();
-            if exists {
-                tracing::warn!(
-                    error = %first_err,
-                    path = %path.display(),
-                    "DDL failed on existing database, backing up and recreating"
-                );
-                pool.close().await;
-                // TODO(architecture): Decouple destructive recovery policy.
-                // The provider should likely report a SchemaMismatch error, and a higher-level
-                // bootstrap service should decide whether to backup and recreate.
-                backup_and_remove(&path)?;
-
-                let fresh_pool = sqlx::SqlitePool::connect(&db_url)
-                    .await
-                    .map_err(|e| Error::memory_with_source("reconnect SQLite after backup", e))?;
-                apply_schema(&fresh_pool).await?;
-                tracing::info!(
-                    "Memory database recreated at {} (old data backed up)",
-                    path.display()
-                );
-                Ok(fresh_pool)
-            } else {
-                tracing::error!(
-                    error = %first_err,
-                    path = %path.display(),
-                    "DDL failed on NEW database (path.exists()=false). This indicates a serious issue."
-                );
-                Err(first_err)
-            }
+        Err(schema_err) => {
+            pool.close().await;
+            Err(schema_err)
         }
     }
+}
+
+async fn configure_pragmas(pool: &sqlx::SqlitePool) -> Result<()> {
+    use mcb_domain::error::Error;
+
+    sqlx::query("PRAGMA journal_mode = WAL;")
+        .execute(pool)
+        .await
+        .map_err(|e| Error::memory_with_source("enable WAL mode", e))?;
+
+    sqlx::query("PRAGMA synchronous = NORMAL;")
+        .execute(pool)
+        .await
+        .map_err(|e| Error::memory_with_source("set synchronous mode", e))?;
+
+    Ok(())
 }
 
 fn backup_and_remove(path: &std::path::Path) -> Result<()> {

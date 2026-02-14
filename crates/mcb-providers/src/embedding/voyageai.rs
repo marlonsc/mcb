@@ -13,11 +13,12 @@ use reqwest::Client;
 
 use super::helpers::{HttpEmbeddingClient, process_batch};
 use crate::constants::{
-    CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_VOYAGEAI_CODE, EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
+    EMBEDDING_DIMENSION_VOYAGEAI_CODE, EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
     VOYAGEAI_MAX_INPUT_TOKENS,
 };
 use crate::provider_utils::{JsonRequestParams, send_json_request};
 use crate::utils::http::{RequestErrorKind, create_http_provider_config, parse_embedding_vector};
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
 /// VoyageAI embedding provider
 ///

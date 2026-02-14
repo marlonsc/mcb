@@ -33,7 +33,7 @@ pub fn resolve_org_id(explicit: Option<&str>) -> String {
     if let Some(org_id) = explicit {
         return org_id.to_string();
     }
-    OrgContext::current().id_str().to_string()
+    OrgContext::default().id_str().to_string()
 }
 
 /// Normalizes optional identifier input by trimming whitespace and discarding empty values.

@@ -50,7 +50,13 @@ pub async fn create_test_app_context() -> Result<AppContext> {
             .unwrap()
             .as_nanos()
     ));
-    config.auth.user_db_path = Some(temp_dir);
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(temp_dir),
+        },
+    );
     config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
     init_app(config).await
 }

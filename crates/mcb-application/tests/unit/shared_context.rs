@@ -33,7 +33,13 @@ pub fn shared_app_context() -> &'static AppContext {
                 std::mem::forget(temp_dir); // leak so path stays valid
 
                 let mut config = ConfigLoader::new().load().expect("load config");
-                config.auth.user_db_path = Some(temp_path);
+                config.providers.database.configs.insert(
+                    "default".to_string(),
+                    mcb_infrastructure::config::DatabaseConfig {
+                        provider: "sqlite".to_string(),
+                        path: Some(temp_path),
+                    },
+                );
                 init_app(config)
                     .await
                     .expect("shared init_app should succeed")

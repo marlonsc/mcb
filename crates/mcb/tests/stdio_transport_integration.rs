@@ -62,7 +62,10 @@ fn create_test_command(mcb_path: &PathBuf) -> Command {
     );
     cmd.arg("serve");
     cmd.arg("--config").arg(config_path);
-    cmd.env("MCP__AUTH__USER_DB_PATH", unique_db);
+    cmd.env(
+        "MCP__PROVIDERS__DATABASE__CONFIGS__DEFAULT__PATH",
+        unique_db,
+    );
     cmd
 }
 

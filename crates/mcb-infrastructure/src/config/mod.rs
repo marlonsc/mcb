@@ -12,9 +12,9 @@ pub mod watcher;
 
 // Re-export main configuration types
 pub use types::{
-    AppConfig, AuthConfig, CacheProvider, CacheSystemConfig, LoggingConfig, ServerConfig,
-    ServerConfigBuilder, ServerConfigPresets, ServerCorsConfig, ServerNetworkConfig,
-    ServerSslConfig, ServerTimeoutConfig, TransportMode,
+    AppConfig, AuthConfig, CacheProvider, CacheSystemConfig, DatabaseConfig,
+    DatabaseConfigContainer, LoggingConfig, ServerConfig, ServerConfigBuilder, ServerConfigPresets,
+    ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig, TransportMode,
 };
 
 pub use loader::ConfigLoader;

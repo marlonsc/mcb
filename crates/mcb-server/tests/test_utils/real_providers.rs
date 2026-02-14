@@ -27,7 +27,13 @@ fn unique_test_path(prefix: &str) -> std::path::PathBuf {
 /// Local HNSW vector store suitable for tests that need actual vector storage and search.
 pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> {
     let mut config = ConfigLoader::new().load().expect("load config");
-    config.auth.user_db_path = Some(unique_test_path("mcb-server-test-db"));
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(unique_test_path("mcb-server-test-db")),
+        },
+    );
     config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
     let ctx = init_app(config).await?;
     Ok(ctx.vector_store_handle().get())
@@ -43,7 +49,13 @@ pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> 
 /// - `Err` - If model initialization fails (e.g., network issues, disk space)
 pub async fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvider>> {
     let mut config = ConfigLoader::new().load().expect("load config");
-    config.auth.user_db_path = Some(unique_test_path("mcb-server-test-db"));
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(unique_test_path("mcb-server-test-db")),
+        },
+    );
     config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
     let ctx = init_app(config).await?;
     Ok(ctx.embedding_handle().get())

@@ -452,3 +452,175 @@ fn test_no_hardcoded_fallback_for_security_ids() {
         violations.join("\n")
     );
 }
+
+// ── Enforcement: no duplicated domain constants outside mcb-domain ───────────
+
+#[test]
+fn test_no_lang_constants_outside_domain() {
+    let root = workspace_root();
+    let domain_lang = root.join("crates/mcb-domain/src/constants/lang.rs");
+
+    // Only scan non-domain crate source dirs for LANG_ constant definitions
+    let scan_dirs = &[
+        "mcb-server/src",
+        "mcb-providers/src",
+        "mcb-application/src",
+        "mcb-infrastructure/src",
+    ];
+
+    let mut violations = Vec::new();
+
+    for crate_dir in scan_dirs {
+        let dir = root.join("crates").join(crate_dir);
+        for file_path in scan_rs_files(&dir) {
+            // Skip re-export files (allowed to `pub use mcb_domain::...`)
+            let content = fs::read_to_string(&file_path).unwrap_or_default();
+            let relative = file_path.strip_prefix(&root).unwrap_or(&file_path);
+
+            // Skip the canonical definition
+            if file_path == domain_lang {
+                continue;
+            }
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+                if trimmed.starts_with("//") || trimmed.starts_with("///") {
+                    continue;
+                }
+                // Allow re-exports from domain
+                if trimmed.contains("pub use mcb_domain::") {
+                    continue;
+                }
+                // Detect local definitions of LANG_* string identifier constants
+                // Allow LANG_CHUNK_SIZE_MAP (provider-specific mapping table, not an identifier)
+                if trimmed.starts_with("pub const LANG_")
+                    && trimmed.contains("&str")
+                    && !trimmed.contains("LANG_CHUNK_SIZE_MAP")
+                {
+                    violations.push(format!(
+                        "  {}:{}: {}",
+                        relative.display(),
+                        line_num + 1,
+                        trimmed
+                    ));
+                }
+            }
+        }
+    }
+
+    assert!(
+        violations.is_empty(),
+        "LANG_* constants must only be defined in mcb-domain/src/constants/lang.rs \
+         (Single Source of Truth). Found duplicate definitions:\n{}",
+        violations.join("\n")
+    );
+}
+
+#[test]
+fn test_no_bm25_constants_outside_domain() {
+    let root = workspace_root();
+
+    let scan_dirs = &[
+        "mcb-server/src",
+        "mcb-providers/src",
+        "mcb-application/src",
+        "mcb-infrastructure/src",
+    ];
+
+    let bm25_patterns = &[
+        "pub const HYBRID_SEARCH_BM25_K1",
+        "pub const HYBRID_SEARCH_BM25_B",
+        "pub const BM25_TOKEN_MIN_LENGTH",
+        "pub const HYBRID_SEARCH_BM25_WEIGHT",
+        "pub const HYBRID_SEARCH_SEMANTIC_WEIGHT",
+        "pub const HYBRID_SEARCH_MAX_CANDIDATES",
+        "pub const CONTENT_TYPE_JSON",
+    ];
+
+    let mut violations = Vec::new();
+
+    for crate_dir in scan_dirs {
+        let dir = root.join("crates").join(crate_dir);
+        for file_path in scan_rs_files(&dir) {
+            let content = fs::read_to_string(&file_path).unwrap_or_default();
+            let relative = file_path.strip_prefix(&root).unwrap_or(&file_path);
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+                if trimmed.starts_with("//") || trimmed.starts_with("///") {
+                    continue;
+                }
+                // Allow re-exports from domain
+                if trimmed.contains("pub use mcb_domain::") {
+                    continue;
+                }
+                for pattern in bm25_patterns {
+                    if trimmed.starts_with(pattern) {
+                        violations.push(format!(
+                            "  {}:{}: {}",
+                            relative.display(),
+                            line_num + 1,
+                            trimmed
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    assert!(
+        violations.is_empty(),
+        "BM25/CONTENT_TYPE constants must only be defined in mcb-domain/src/constants/ \
+         (Single Source of Truth). Found duplicate definitions:\n{}",
+        violations.join("\n")
+    );
+}
+
+#[test]
+fn test_no_hardcoded_provider_defaults() {
+    let root = workspace_root();
+
+    // These function names indicate hardcoded fallback defaults for providers
+    let banned_patterns = &[
+        "default_embedding_config",
+        "default_vector_store_config",
+        "default_cache_config",
+        "default_language_config",
+    ];
+
+    let scan_dirs = &["mcb-infrastructure/src/di"];
+
+    let mut violations = Vec::new();
+
+    for crate_dir in scan_dirs {
+        let dir = root.join("crates").join(crate_dir);
+        for file_path in scan_rs_files(&dir) {
+            let content = fs::read_to_string(&file_path).unwrap_or_default();
+            let relative = file_path.strip_prefix(&root).unwrap_or(&file_path);
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+                if trimmed.starts_with("//") || trimmed.starts_with("///") {
+                    continue;
+                }
+                for pattern in banned_patterns {
+                    if trimmed.contains(&format!("fn {pattern}")) {
+                        violations.push(format!(
+                            "  {}:{}: {}",
+                            relative.display(),
+                            line_num + 1,
+                            trimmed
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    assert!(
+        violations.is_empty(),
+        "Hardcoded provider default functions must not exist in DI layer. \
+         Provider defaults come from config/default.toml:\n{}",
+        violations.join("\n")
+    );
+}

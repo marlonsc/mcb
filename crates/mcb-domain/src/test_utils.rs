@@ -5,7 +5,6 @@ use crate::entities::project::{
     IssueStatus, IssueType, PhaseStatus, Project, ProjectIssue, ProjectPhase,
 };
 use crate::entities::user::User;
-use crate::value_objects::FileTreeNode;
 use uuid::Uuid;
 
 /// Creates a test `Project` with default values.
@@ -124,39 +123,5 @@ pub fn create_test_checkpoint(id: &str) -> Checkpoint {
         created_at: 1700000000,
         restored_at: None,
         expired: false,
-    }
-}
-
-/// Builder pattern for creating complex `FileTreeNode` structures for testing.
-pub struct FileTreeBuilder {
-    root: FileTreeNode,
-}
-
-impl FileTreeBuilder {
-    /// Create a new builder starting with a directory.
-    pub fn new_dir(name: &str) -> Self {
-        Self {
-            root: FileTreeNode::directory(name, name),
-        }
-    }
-
-    /// Add a file child to the current directory.
-    pub fn add_file(mut self, name: &str, chunks: u32) -> Self {
-        let path = format!("{}/{}", self.root.path, name);
-        self.root = self
-            .root
-            .with_child(FileTreeNode::file(name, &path, chunks, "rust"));
-        self
-    }
-
-    /// Add a generic child to the current directory.
-    pub fn add_child(mut self, child: FileTreeNode) -> Self {
-        self.root = self.root.with_child(child);
-        self
-    }
-
-    /// Finalize the builder and return the root node.
-    pub fn build(self) -> FileTreeNode {
-        self.root
     }
 }
