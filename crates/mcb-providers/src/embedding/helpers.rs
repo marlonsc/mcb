@@ -7,7 +7,6 @@
 //!
 //! | Helper | Purpose |
 //! | -------- | --------- |
-//! | [`constructor`] | API key/URL validation, defaults |
 
 use crate::provider_utils::embedding_data_array;
 use mcb_domain::error::Result;
