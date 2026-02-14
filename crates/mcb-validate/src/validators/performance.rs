@@ -186,7 +186,9 @@ impl PerformanceValidator {
         let loop_start_pattern = compile_regex(r"^\s*(for|while|loop)\s+")?;
 
         for_each_scan_rs_path(&self.config, false, |path, src_dir| {
-            if self.should_skip_crate(src_dir) || path.to_string_lossy().contains("/tests/") {
+            if self.should_skip_crate(src_dir)
+                || path.to_str().is_some_and(|s| s.contains("/tests/"))
+            {
                 return Ok(());
             }
 
@@ -278,7 +280,9 @@ impl PerformanceValidator {
         let mut violations = Vec::new();
 
         for_each_scan_rs_path(&self.config, false, |path, src_dir| {
-            if self.should_skip_crate(src_dir) || path.to_string_lossy().contains("/tests/") {
+            if self.should_skip_crate(src_dir)
+                || path.to_str().is_some_and(|s| s.contains("/tests/"))
+            {
                 return Ok(());
             }
 
@@ -418,7 +422,9 @@ impl PerformanceValidator {
 
     /// Check if a crate should be skipped based on configuration.
     fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
-        let path_str = src_dir.to_string_lossy();
+        let Some(path_str) = src_dir.to_str() else {
+            return false;
+        };
         self.rules
             .excluded_crates
             .iter()

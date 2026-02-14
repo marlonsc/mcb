@@ -45,7 +45,7 @@ fn test_event_bus() -> Arc<dyn EventBusProvider> {
 
 /// Create test config with auth disabled (avoids JWT secret validation)
 fn test_config() -> AppConfig {
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     config.auth.enabled = false;
     config
 }

@@ -5,7 +5,7 @@
 use std::path::{Path, PathBuf};
 
 use mcb_domain::ports::services::IndexingResult;
-use mcb_infrastructure::config::types::AppConfig;
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
@@ -147,7 +147,7 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let db_path = temp_dir.path().join("test.db");
 
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     // Configure SQLite path to use temp dir
     config.auth.user_db_path = Some(db_path.clone());
 

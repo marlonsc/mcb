@@ -138,10 +138,3 @@ pub struct AppConfig {
     #[serde(skip)]
     pub project_settings: Option<ProjectSettings>,
 }
-
-impl Default for AppConfig {
-    fn default() -> Self {
-        toml::from_str(include_str!("../../../../../config/default.toml"))
-            .expect("AppConfig::default requires valid config/default.toml")
-    }
-}

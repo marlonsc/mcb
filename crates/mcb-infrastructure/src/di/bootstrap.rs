@@ -24,7 +24,7 @@ use mcb_providers::database::{
 };
 use tracing::info;
 
-use crate::config::AppConfig;
+use crate::config::{AppConfig, ConfigLoader};
 use crate::crypto::CryptoService;
 use crate::di::admin::{
     CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface, EmbeddingAdminService,
@@ -521,7 +521,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 
 /// Initialize application for testing
 pub async fn init_test_app() -> Result<AppContext> {
-    let config = AppConfig::default();
+    let config = ConfigLoader::new().load().expect("load config");
     init_app(config).await
 }
 

@@ -1,4 +1,4 @@
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_server::args::{IssueEntityAction, IssueEntityArgs, IssueEntityResource};
 use mcb_server::handlers::entities::IssueEntityHandler;
@@ -6,7 +6,7 @@ use rmcp::handler::server::wrapper::Parameters;
 
 async fn create_handler() -> (IssueEntityHandler, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
     let ctx = init_app(config).await.expect("init app context");
     (

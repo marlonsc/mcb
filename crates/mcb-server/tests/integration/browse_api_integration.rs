@@ -87,7 +87,9 @@ fn create_test_admin_state() -> AdminState {
         metrics: AtomicPerformanceMetrics::new_shared(),
         indexing: DefaultIndexingOperations::new_shared(),
         config_watcher: None,
-        current_config: mcb_infrastructure::config::types::AppConfig::default(),
+        current_config: mcb_infrastructure::config::ConfigLoader::new()
+            .load()
+            .expect("load config"),
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: 30,

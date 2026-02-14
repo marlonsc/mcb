@@ -20,7 +20,7 @@ use std::sync::Arc;
 
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 use mcb_infrastructure::di::bootstrap::init_app;
 use rstest::rstest;
 use serde_json::json;
@@ -28,7 +28,7 @@ use serde_json::json;
 fn test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let db_path = temp_dir.path().join("test.db");
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     config.auth.user_db_path = Some(db_path);
     (config, temp_dir)
 }

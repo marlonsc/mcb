@@ -7,7 +7,7 @@
 // Force linkme registration of all providers
 extern crate mcb_providers;
 
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 use std::sync::OnceLock;
 
@@ -32,7 +32,7 @@ pub fn shared_app_context() -> &'static AppContext {
                 let temp_path = temp_dir.path().join("shared-test.db");
                 std::mem::forget(temp_dir); // leak so path stays valid
 
-                let mut config = AppConfig::default();
+                let mut config = ConfigLoader::new().load().expect("load config");
                 config.auth.user_db_path = Some(temp_path);
                 init_app(config)
                     .await

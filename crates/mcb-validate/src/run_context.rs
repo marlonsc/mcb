@@ -187,8 +187,7 @@ fn enumerate_with_git(
             continue;
         }
 
-        let relative_str = relative.to_string_lossy();
-        if should_ignore(&relative_str, ignore_patterns) {
+        if should_ignore(line, ignore_patterns) {
             continue;
         }
 
@@ -231,7 +230,9 @@ fn enumerate_with_walkdir(
         };
         let relative = relative.to_path_buf();
 
-        let relative_str = relative.to_string_lossy();
+        let Some(relative_str) = relative.to_str() else {
+            continue;
+        };
         if should_ignore(&relative_str, ignore_patterns)
             || relative_str.contains("/.git/")
             || relative_str.starts_with(".git/")
@@ -298,12 +299,12 @@ mod tests {
                 .iter()
                 .any(|entry| entry.relative_path == std::path::Path::new("src/lib.rs"))
         );
-        assert!(
-            context
-                .file_inventory()
-                .iter()
-                .all(|entry| !entry.relative_path.to_string_lossy().contains("target/"))
-        );
+        assert!(context.file_inventory().iter().all(|entry| {
+            entry
+                .relative_path
+                .to_str()
+                .is_none_or(|path| !path.contains("target/"))
+        }));
     }
 
     #[test]

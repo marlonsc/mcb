@@ -1,7 +1,8 @@
 //! Logging Tests
 
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::constants::logging::{DEFAULT_LOG_LEVEL, LOG_MAX_FILES, LOG_ROTATION_SIZE};
-use mcb_infrastructure::logging::{LoggingConfig, parse_log_level};
+use mcb_infrastructure::logging::parse_log_level;
 use rstest::rstest;
 use tracing::Level;
 
@@ -22,7 +23,7 @@ fn parse_log_level_values(#[case] input: &str, #[case] expected: Option<Level>) 
 
 #[rstest]
 fn test_logging_config_default() {
-    let config = LoggingConfig::default();
+    let config = ConfigLoader::new().load().expect("load config").logging;
     assert_eq!(config.level, DEFAULT_LOG_LEVEL);
     assert!(!config.json_format);
     assert!(config.file_output.is_none());

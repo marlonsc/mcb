@@ -24,7 +24,7 @@ use std::time::{Duration, Instant};
 use mcb_domain::entities::CodeChunk;
 // Note: EmbeddingProvider/VectorStoreProvider traits are used via ctx.embedding_handle().get()
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 use mcb_infrastructure::di::bootstrap::init_app;
 use rstest::rstest;
 use serde_json::json;
@@ -221,7 +221,7 @@ fn test_sample_codebase_contains_expected_file(#[case] expected_file: &str) {
 
 /// Create a test configuration with a unique database path to allow parallel execution
 fn unique_test_config() -> AppConfig {
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     let stamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .expect("system time")

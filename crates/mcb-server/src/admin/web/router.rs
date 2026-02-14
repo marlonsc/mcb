@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use rocket::{Build, Rocket, routes};
 
@@ -53,7 +53,7 @@ fn default_admin_state() -> AdminState {
         metrics: Arc::new(AtomicPerformanceMetrics::new()),
         indexing: Arc::new(DefaultIndexingOperations::new()),
         config_watcher: None,
-        current_config: AppConfig::default(),
+        current_config: ConfigLoader::new().load().expect("load config"),
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: 30,

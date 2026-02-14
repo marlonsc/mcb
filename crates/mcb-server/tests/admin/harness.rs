@@ -101,7 +101,9 @@ impl AdminTestHarness {
             metrics: self.metrics.clone(),
             indexing: self.indexing.clone(),
             config_watcher: None,
-            current_config: mcb_infrastructure::config::types::AppConfig::default(),
+            current_config: mcb_infrastructure::config::ConfigLoader::new()
+                .load()
+                .expect("load config"),
             config_path: None,
             shutdown_coordinator: None,
             shutdown_timeout_secs: self.shutdown_timeout_secs,

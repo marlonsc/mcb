@@ -18,12 +18,12 @@ use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 use mcb_infrastructure::di::bootstrap::init_app;
 use rstest::rstest;
 
 fn unique_test_config() -> AppConfig {
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     let stamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .expect("system time")

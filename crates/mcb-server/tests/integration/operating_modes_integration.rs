@@ -39,7 +39,7 @@ fn get_free_port() -> u16 {
 fn create_test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let db_path = temp_dir.path().join("test.db");
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     config.auth.user_db_path = Some(db_path);
     (config, temp_dir)
 }
@@ -59,14 +59,6 @@ fn create_client_config(server_port: u16) -> ModeConfig {
 // ============================================================================
 // Mode Configuration Tests
 // ============================================================================
-
-#[test]
-fn test_mode_config_defaults_to_standalone() {
-    let config = ModeConfig::default();
-    assert_eq!(config.mode_type, OperatingMode::Standalone);
-    assert!(config.is_standalone());
-    assert!(!config.is_client());
-}
 
 #[test]
 fn test_operating_mode_enum_variants() {
@@ -542,7 +534,7 @@ async fn test_session_isolation_with_vector_store() {
 /// Helper to create an MCP server with null providers for testing
 async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
 
     let ctx = init_app(config).await.expect("Failed to init app");

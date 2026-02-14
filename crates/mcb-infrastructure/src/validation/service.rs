@@ -164,7 +164,7 @@ fn run_file_validation(
 ) -> Result<ValidationReport> {
     // For single file validation, we need to find the workspace root
     // and run validation scoped to that file
-    let workspace_root = find_workspace_root(file_path)
+    let workspace_root = mcb_validate::find_workspace_root_from(file_path)
         .unwrap_or_else(|| file_path.parent().unwrap_or(file_path).to_path_buf());
 
     // Run standard validation - mcb-validate doesn't have single-file mode yet
@@ -197,12 +197,6 @@ fn run_file_validation(
         violations: file_violations,
         passed: errors == 0,
     })
-}
-
-// TODO(architecture): Use shared workspace detection utility from domain/providers.
-// Reimplementing this logic here duplicates code and risks inconsistency.
-fn find_workspace_root(start: &Path) -> Option<std::path::PathBuf> {
-    mcb_validate::find_workspace_root_from(start)
 }
 
 fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {

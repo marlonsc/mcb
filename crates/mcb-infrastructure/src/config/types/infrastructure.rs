@@ -7,12 +7,6 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::constants::cache::*;
-use crate::constants::limits::*;
-use crate::constants::logging::*;
-use crate::constants::metrics::*;
-use crate::constants::resilience::*;
-
 // ============================================================================
 // Logging Configuration
 // ============================================================================
@@ -33,18 +27,6 @@ pub struct LoggingConfig {
     pub max_files: usize,
 }
 
-impl Default for LoggingConfig {
-    fn default() -> Self {
-        Self {
-            level: DEFAULT_LOG_LEVEL.to_string(),
-            json_format: false,
-            file_output: None,
-            max_file_size: LOG_ROTATION_SIZE,
-            max_files: LOG_MAX_FILES,
-        }
-    }
-}
-
 // ============================================================================
 // Resource Limits Configuration
 // ============================================================================
@@ -63,18 +45,6 @@ pub struct LimitsConfig {
     pub max_connections: u32,
     /// Maximum concurrent requests per connection
     pub max_requests_per_connection: u32,
-}
-
-impl Default for LimitsConfig {
-    fn default() -> Self {
-        Self {
-            memory_limit: DEFAULT_MEMORY_LIMIT,
-            cpu_limit: DEFAULT_CPU_LIMIT,
-            disk_io_limit: DEFAULT_DISK_IO_LIMIT,
-            max_connections: DEFAULT_MAX_CONNECTIONS,
-            max_requests_per_connection: DEFAULT_MAX_REQUESTS_PER_CONNECTION,
-        }
-    }
 }
 
 // ============================================================================
@@ -121,20 +91,6 @@ pub struct CacheSystemConfig {
     pub namespace: String,
 }
 
-impl Default for CacheSystemConfig {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            provider: CacheProvider::default(),
-            default_ttl_secs: CACHE_DEFAULT_TTL_SECS,
-            max_size: CACHE_DEFAULT_SIZE_LIMIT,
-            redis_url: None,
-            redis_pool_size: REDIS_POOL_SIZE as u32,
-            namespace: DEFAULT_CACHE_NAMESPACE.to_string(),
-        }
-    }
-}
-
 // ============================================================================
 // Metrics Configuration
 // ============================================================================
@@ -155,19 +111,6 @@ pub struct MetricsConfig {
     pub endpoint_path: String,
     /// External metrics exporter URL
     pub exporter_url: Option<String>,
-}
-
-impl Default for MetricsConfig {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            collection_interval_secs: METRICS_COLLECTION_INTERVAL_SECS,
-            prefix: METRICS_PREFIX.to_string(),
-            endpoint_enabled: true,
-            endpoint_path: "/metrics".to_string(),
-            exporter_url: None,
-        }
-    }
 }
 
 // ============================================================================
@@ -192,18 +135,4 @@ pub struct ResilienceConfig {
     pub retry_attempts: u32,
     /// Retry delay in milliseconds
     pub retry_delay_ms: u64,
-}
-
-impl Default for ResilienceConfig {
-    fn default() -> Self {
-        Self {
-            circuit_breaker_failure_threshold: CIRCUIT_BREAKER_FAILURE_THRESHOLD,
-            circuit_breaker_timeout_secs: CIRCUIT_BREAKER_TIMEOUT_SECS,
-            circuit_breaker_success_threshold: CIRCUIT_BREAKER_SUCCESS_THRESHOLD,
-            rate_limiter_rps: RATE_LIMITER_DEFAULT_RPS,
-            rate_limiter_burst: RATE_LIMITER_DEFAULT_BURST,
-            retry_attempts: DEFAULT_RETRY_ATTEMPTS,
-            retry_delay_ms: DEFAULT_RETRY_DELAY_MS,
-        }
-    }
 }

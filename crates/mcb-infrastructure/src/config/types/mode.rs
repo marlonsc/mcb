@@ -60,19 +60,6 @@ pub struct ModeConfig {
     pub max_reconnect_attempts: u32,
 }
 
-impl Default for ModeConfig {
-    fn default() -> Self {
-        Self {
-            mode_type: OperatingMode::default(),
-            server_url: "http://127.0.0.1:3000".to_string(),
-            session_prefix: None,
-            timeout_secs: 30,
-            auto_reconnect: true,
-            max_reconnect_attempts: 5,
-        }
-    }
-}
-
 impl ModeConfig {
     /// Check if running in client mode
     pub fn is_client(&self) -> bool {

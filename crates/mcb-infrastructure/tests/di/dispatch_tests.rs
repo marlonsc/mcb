@@ -6,9 +6,10 @@
 //! providers are registered via linkme distributed slices.
 
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 use mcb_infrastructure::di::EmbeddingHandleExt;
 use mcb_infrastructure::di::bootstrap::init_app;
+use serial_test::serial;
 
 // Force linkme registration by linking mcb_providers crate
 extern crate mcb_providers;
@@ -16,12 +17,18 @@ extern crate mcb_providers;
 fn test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let db_path = temp_dir.path().join("test.db");
-    let mut config = AppConfig::default();
+    let default_path =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../config/default.toml");
+    let mut config = ConfigLoader::new()
+        .with_config_path(default_path)
+        .load()
+        .expect("load config");
     config.auth.user_db_path = Some(db_path);
     (config, temp_dir)
 }
 
 #[tokio::test]
+#[serial]
 async fn test_di_container_builder() {
     let (config, _temp) = test_config();
     let result = init_app(config).await;
@@ -46,6 +53,7 @@ async fn test_di_container_builder() {
 }
 
 #[tokio::test]
+#[serial]
 async fn test_provider_selection_from_config() {
     // Test that providers are correctly selected based on configuration
 
@@ -95,6 +103,7 @@ async fn test_provider_selection_from_config() {
 }
 
 #[tokio::test]
+#[serial]
 async fn test_provider_resolution_uses_registry() {
     let (config, _temp) = test_config();
     let app_context = init_app(config)
@@ -135,6 +144,7 @@ async fn test_provider_resolution_uses_registry() {
 }
 
 #[tokio::test]
+#[serial]
 async fn test_admin_services_are_accessible() {
     let (config, _temp) = test_config();
     let app_context = init_app(config)
@@ -160,6 +170,7 @@ async fn test_admin_services_are_accessible() {
 }
 
 #[tokio::test]
+#[serial]
 async fn test_infrastructure_services_from_app_context() {
     let (config, _temp) = test_config();
     let app_context = init_app(config)

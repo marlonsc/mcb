@@ -36,13 +36,13 @@ use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 use serde_json::json;
 
 /// Create a NEW AppContext (for tests that need isolated state).
 pub async fn create_test_app_context() -> Result<AppContext> {
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     let temp_dir = std::env::temp_dir().join(format!(
         "mcb-test-ctx-{}.db",
         std::time::SystemTime::now()

@@ -5,7 +5,8 @@ use std::time::Duration;
 
 use mcb_domain::ports::repositories::FileHashRepository;
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::types::AppConfig;
+use mcb_infrastructure::config::ConfigLoader;
+
 use mcb_infrastructure::di::bootstrap::init_app;
 use rstest::*;
 use tempfile::NamedTempFile;
@@ -18,7 +19,7 @@ async fn file_hash_repo() -> Arc<dyn FileHashRepository> {
         .as_nanos();
     let db_path = std::env::temp_dir().join(format!("mcb-file-hash-tests-{unique}.db"));
 
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     config.auth.user_db_path = Some(db_path);
 
     let ctx = init_app(config).await.unwrap();
@@ -112,7 +113,7 @@ async fn test_indexing_persists_file_hash_metadata() {
         .as_nanos();
     let db_path = std::env::temp_dir().join(format!("mcb-indexing-tests-{unique}.db"));
 
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     config.auth.user_db_path = Some(db_path);
 
     let ctx = init_app(config).await.unwrap();

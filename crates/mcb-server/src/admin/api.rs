@@ -97,7 +97,9 @@ impl AdminApi {
                 metrics,
                 indexing,
                 config_watcher: None,
-                current_config: mcb_infrastructure::config::AppConfig::default(),
+                current_config: mcb_infrastructure::config::ConfigLoader::new()
+                    .load()
+                    .unwrap_or_else(|e| panic!("Failed to load config: {e}")),
                 config_path: None,
                 shutdown_coordinator: None,
                 shutdown_timeout_secs: 30,
@@ -130,7 +132,9 @@ impl AdminApi {
                 metrics,
                 indexing,
                 config_watcher: None,
-                current_config: mcb_infrastructure::config::AppConfig::default(),
+                current_config: mcb_infrastructure::config::ConfigLoader::new()
+                    .load()
+                    .unwrap_or_else(|e| panic!("Failed to load config: {e}")),
                 config_path: None,
                 shutdown_coordinator: None,
                 shutdown_timeout_secs: 30,
@@ -165,7 +169,9 @@ impl AdminApi {
                 metrics,
                 indexing,
                 config_watcher: Some(config_watcher),
-                current_config: mcb_infrastructure::config::AppConfig::default(),
+                current_config: mcb_infrastructure::config::ConfigLoader::new()
+                    .load()
+                    .unwrap_or_else(|e| panic!("Failed to load config: {e}")),
                 config_path: Some(config_path),
                 shutdown_coordinator: None,
                 shutdown_timeout_secs: 30,

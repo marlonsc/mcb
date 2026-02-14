@@ -114,10 +114,11 @@ impl ConfigQualityValidator {
         let _field_pattern = Regex::new(r"pub\s+(\w+):\s+").unwrap();
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            let is_config_file = path.to_string_lossy().contains("/config/")
+            let is_config_file = path.to_str().is_some_and(|s| s.contains("/config/"))
                 || path
                     .file_name()
-                    .is_some_and(|name| name.to_string_lossy().contains("config"));
+                    .and_then(|name| name.to_str())
+                    .is_some_and(|name| name.contains("config"));
             if !is_config_file {
                 return Ok(());
             }
