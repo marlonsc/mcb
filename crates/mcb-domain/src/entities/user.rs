@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// # Code Smells
 /// TODO(qlty): Found 18 lines of similar code with `crates/mcb-domain/src/entities/worktree.rs`.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct User {
     /// Unique identifier (UUID).
     pub id: String,
@@ -37,6 +37,7 @@ pub struct User {
 #[derive(
     Debug,
     Clone,
+    Default,
     PartialEq,
     Eq,
     Serialize,
@@ -49,6 +50,7 @@ pub struct User {
 #[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum UserRole {
     /// Full administrative access.
+    #[default]
     Admin,
     /// Standard member with read/write access.
     Member,

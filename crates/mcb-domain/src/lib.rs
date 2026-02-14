@@ -64,6 +64,9 @@ pub mod schema;
 #[cfg(any(test, feature = "test-utils"))]
 /// Test-only configuration helpers for external service endpoints.
 pub mod test_services_config;
+#[cfg(any(test, feature = "test-utils"))]
+/// Shared test fixtures and utilities.
+pub mod test_utils;
 /// Common utilities
 pub mod utils;
 /// Immutable value objects

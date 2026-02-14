@@ -1,20 +1,24 @@
+use std::sync::LazyLock;
+
 use regex::Regex;
 
 use super::{QualityValidator, QualityViolation};
 use crate::scan::for_each_scan_rs_path;
 use crate::{Result, Severity};
 
+static DEAD_CODE_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"#\[allow\([^\)]*dead_code[^\)]*\)\]").expect("valid regex literal")
+});
+static STRUCT_PATTERN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"pub\s+struct\s+(\w+)").expect("valid regex literal"));
+static FN_PATTERN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?:pub\s+)?fn\s+(\w+)").expect("valid regex literal"));
+static FIELD_PATTERN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?:pub\s+)?(\w+):\s+").expect("valid regex literal"));
+
 /// Scans for and reports usage of `allow(dead_code)` attributes.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
     let mut violations = Vec::new();
-    // # Code Quality Violation (QUAL001)
-    // Static regex initialization using .unwrap() is risky in production.
-    //
-    // TODO(QUAL001): Use LazyLock or proper error handling for Regex creation.
-    let dead_code_pattern = Regex::new(r"#\[allow\([^\)]*dead_code[^\)]*\)\]").unwrap();
-    let struct_pattern = Regex::new(r"pub\s+struct\s+(\w+)").unwrap();
-    let fn_pattern = Regex::new(r"(?:pub\s+)?fn\s+(\w+)").unwrap();
-    let field_pattern = Regex::new(r"(?:pub\s+)?(\w+):\s+").unwrap();
 
     for_each_scan_rs_path(&validator.config, false, |path, _src_dir| {
         if path.extension().is_none_or(|ext| ext != "rs")
@@ -28,9 +32,9 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
         let lines: Vec<&str> = content.lines().collect();
 
         for (i, line) in lines.iter().enumerate() {
-            if dead_code_pattern.is_match(line) {
+            if DEAD_CODE_PATTERN.is_match(line) {
                 let item_name =
-                    find_dead_code_item(&lines, i, &struct_pattern, &fn_pattern, &field_pattern)
+                    find_dead_code_item(&lines, i, &STRUCT_PATTERN, &FN_PATTERN, &FIELD_PATTERN)
                         .unwrap_or_else(|| "allow(dead_code)".to_string());
                 violations.push(QualityViolation::DeadCodeAllowNotPermitted {
                     file: path.to_path_buf(),

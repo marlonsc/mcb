@@ -1,17 +1,17 @@
+use std::sync::LazyLock;
+
 use regex::Regex;
 
 use super::{QualityValidator, QualityViolation};
 use crate::scan::for_each_scan_rs_path;
 use crate::{Result, Severity};
 
+static PANIC_PATTERN: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"panic!\s*\(").expect("valid regex literal"));
+
 /// Scans production code for usage of the `panic!()` macro.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
     let mut violations = Vec::new();
-    // # Code Quality Violation (QUAL001)
-    // Static regex initialization using .unwrap() is risky in production.
-    //
-    // TODO(QUAL001): Use LazyLock or proper error handling for Regex creation.
-    let panic_pattern = Regex::new(r"panic!\s*\(").unwrap();
 
     for_each_scan_rs_path(&validator.config, false, |path, _src_dir| {
         if path.extension().is_none_or(|ext| ext != "rs") {
@@ -43,7 +43,7 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
             }
 
             // Check for panic!
-            if panic_pattern.is_match(line) {
+            if PANIC_PATTERN.is_match(line) {
                 violations.push(QualityViolation::PanicInProduction {
                     file: path.to_path_buf(),
                     line: line_num + 1,

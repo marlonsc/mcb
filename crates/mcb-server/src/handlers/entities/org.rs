@@ -51,7 +51,6 @@ impl OrgEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_orgs().await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::Org) => {
-                // TODO(ORG002): Duplicate string literal "data required for update".
                 let org: Organization = require_data(args.data, "data required for update")?;
                 map_opaque_error(self.repo.update_org(&org).await)?;
                 ok_text("updated")
@@ -84,7 +83,6 @@ impl OrgEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_users(org_id.as_str()).await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::User) => {
-                // TODO(ORG002): Duplicate string literal "data required for update".
                 let mut user: User = require_data(args.data, "data required for update")?;
                 user.org_id = org_id.to_string();
                 map_opaque_error(self.repo.update_user(&user).await)?;
@@ -151,18 +149,28 @@ impl OrgEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_api_keys(org_id.as_str()).await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::ApiKey) => {
-                // TODO(ERR001): Missing error context.
-                let id = require_id(&args.id)?;
+                let id = require_id(&args.id).map_err(|e| {
+                    McpError::invalid_params(
+                        format!("failed to parse api key id from request: {e}"),
+                        None,
+                    )
+                })?;
                 let revoked_at = extract_revoked_at(args.data.as_ref());
-                // TODO(ERR001): Missing error context.
-                map_opaque_error(self.repo.revoke_api_key(&id, revoked_at).await)?;
+                map_opaque_error(self.repo.revoke_api_key(&id, revoked_at).await).map_err(|e| {
+                    McpError::internal_error(format!("failed to revoke api key '{id}': {e}"), None)
+                })?;
                 ok_text("updated")
             }
             (OrgEntityAction::Delete, OrgEntityResource::ApiKey) => {
-                // TODO(ERR001): Missing error context.
-                let id = require_id(&args.id)?;
-                // TODO(ERR001): Missing error context.
-                map_opaque_error(self.repo.delete_api_key(&id).await)?;
+                let id = require_id(&args.id).map_err(|e| {
+                    McpError::invalid_params(
+                        format!("failed to parse api key id from request: {e}"),
+                        None,
+                    )
+                })?;
+                map_opaque_error(self.repo.delete_api_key(&id).await).map_err(|e| {
+                    McpError::internal_error(format!("failed to delete api key '{id}': {e}"), None)
+                })?;
                 ok_text("deleted")
             }
             }

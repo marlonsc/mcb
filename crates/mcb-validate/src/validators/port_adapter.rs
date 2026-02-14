@@ -3,6 +3,7 @@
 //! Validates Clean Architecture port/adapter patterns.
 
 use std::path::PathBuf;
+use std::sync::LazyLock;
 
 use regex::Regex;
 
@@ -111,10 +112,11 @@ impl PortAdapterValidator {
             return Ok(violations);
         }
 
-        // TODO(QUAL001): unwrap() in production. Use ? or match.
-        let trait_start_re = Regex::new(r"pub\s+trait\s+(\w+)").unwrap();
-        // TODO(QUAL001): unwrap() in production. Use ? or match.
-        let fn_re = Regex::new(r"^\s*(?:async\s+)?fn\s+\w+").unwrap();
+        static TRAIT_START_RE: LazyLock<Regex> =
+            LazyLock::new(|| Regex::new(r"pub\s+trait\s+(\w+)").expect("valid regex literal"));
+        static FN_RE: LazyLock<Regex> = LazyLock::new(|| {
+            Regex::new(r"^\s*(?:async\s+)?fn\s+\w+").expect("valid regex literal")
+        });
 
         for_each_rs_under_root(config, &ports_dir, |path| {
             let content = std::fs::read_to_string(path)?;
@@ -125,12 +127,9 @@ impl PortAdapterValidator {
             let mut in_trait = false;
 
             for (line_num, line) in lines.iter().enumerate() {
-                if let Some(captures) = trait_start_re.captures(line) {
-                    let trait_name = captures
-                        .get(1)
-                        .map(|m| m.as_str().to_string())
-                        // TODO(QUAL002): expect() in production. Use ? or handle error.
-                        .expect("Trait regex should capture group 1");
+                if let Some(captures) = TRAIT_START_RE.captures(line)
+                    && let Some(trait_name) = captures.get(1).map(|m| m.as_str().to_string())
+                {
                     current_trait = Some((trait_name, line_num + 1, 0));
                     in_trait = true;
                 }
@@ -139,17 +138,17 @@ impl PortAdapterValidator {
                     brace_depth += line.matches('{').count();
                     brace_depth -= line.matches('}').count();
 
-                    if fn_re.is_match(line)
+                    if FN_RE.is_match(line)
                         && let Some((_, _, ref mut count)) = current_trait
                     {
                         *count += 1;
                     }
 
                     if brace_depth == 0 && current_trait.is_some() {
-                        let (trait_name, start_line, method_count) = current_trait
-                            .take()
-                            // TODO(QUAL002): expect() in production.
-                            .expect("current_trait should exist when brace_depth == 0");
+                        let Some((trait_name, start_line, method_count)) = current_trait.take()
+                        else {
+                            continue;
+                        };
                         in_trait = false;
 
                         // Flag ports with too many methods (violates ISP)
@@ -181,11 +180,12 @@ impl PortAdapterValidator {
             return Ok(violations);
         }
 
-        let adapter_import_re = Regex::new(
-            r"use\s+(?:crate|super)::(?:\w+::)*(\w+(?:Provider|Repository|Adapter|Client))",
-        )
-        // TODO(QUAL001): unwrap() in production.
-        .unwrap();
+        static ADAPTER_IMPORT_RE: LazyLock<Regex> = LazyLock::new(|| {
+            Regex::new(
+                r"use\s+(?:crate|super)::(?:\w+::)*(\w+(?:Provider|Repository|Adapter|Client))",
+            )
+            .expect("valid regex literal")
+        });
 
         for_each_rs_under_root(config, &providers_dir, |path| {
             let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
@@ -211,7 +211,7 @@ impl PortAdapterValidator {
                     continue;
                 }
 
-                if let Some(captures) = adapter_import_re.captures(line) {
+                if let Some(captures) = ADAPTER_IMPORT_RE.captures(line) {
                     let imported = captures.get(1).map_or("", |m| m.as_str());
                     if imported.to_lowercase().contains(current_adapter) {
                         continue;

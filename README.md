@@ -74,18 +74,19 @@ Add to your `claude_desktop_config.json`:
 
 ## MCP Tools
 
-MCB exposes 8 tools through the MCP protocol:
+MCB exposes 9 tools through the MCP protocol:
 
 | Tool | Description | Status |
 | ------ | ------------- | -------- |
-| `mcb_index` | Index codebases for semantic search (start, status, clear) | ✅ Stable |
-| `mcb_search` | Semantic search across code and memory | ✅ Stable |
-| `mcb_memory` | Store, retrieve, and query persistent observations | ✅ Stable |
-| `mcb_validate` | Architecture validation and complexity analysis | ✅ Stable |
-| `mcb_vcs` | Git operations — repo indexing, branch comparison, impact analysis | ✅ Stable |
-| `mcb_session` | Session lifecycle management and summaries | ✅ Stable |
-| `mcb_agent` | Agent activity logging and tracking | ✅ Stable |
-| `mcb_project` | Project workflow management (phases, issues, decisions) | 🚧 Preview |
+| `index` | Index operations (start, status, clear) | ✅ Stable |
+| `search` | Search operations for code and memory | ✅ Stable |
+| `validate` | Validation and analysis operations | ✅ Stable |
+| `memory` | Memory storage, retrieval, and timeline operations | ✅ Stable |
+| `session` | Session lifecycle operations | ✅ Stable |
+| `agent` | Agent activity logging operations | ✅ Stable |
+| `project` | Project workflow management (phases, issues, dependencies, decisions) | ✅ Stable |
+| `vcs` | Version control operations (list, index, compare, search, impact) | ✅ Stable |
+| `entity` | Unified entity CRUD (vcs/plan/issue/org resources) | ✅ Stable |
 
 See [MCP Tools Documentation](./docs/MCP_TOOLS.md) for full schemas and examples.
 

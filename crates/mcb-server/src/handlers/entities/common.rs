@@ -48,10 +48,18 @@ impl EntityHandler {
             | EntityResource::Branch
             | EntityResource::Worktree
             | EntityResource::Assignment => {
-                // TODO(ERR001): Missing error context. Add .context() or .map_err() for better error messages.
-                let action = map_vcs_action(args.action)?;
-                // TODO(ERR001): Missing error context.
-                let resource = map_vcs_resource(args.resource)?;
+                let action = map_vcs_action(args.action).map_err(|e| {
+                    McpError::internal_error(
+                        format!("failed to map entity action to vcs action: {e}"),
+                        None,
+                    )
+                })?;
+                let resource = map_vcs_resource(args.resource).map_err(|e| {
+                    McpError::internal_error(
+                        format!("failed to map entity resource to vcs resource: {e}"),
+                        None,
+                    )
+                })?;
                 self.vcs
                     .handle(Parameters(VcsEntityArgs {
                         action,
@@ -66,10 +74,18 @@ impl EntityHandler {
                     .await
             }
             EntityResource::Plan | EntityResource::Version | EntityResource::Review => {
-                // TODO(ERR001): Missing error context. Add .context() or .map_err() for better error messages.
-                let action = map_standard_action_to_plan(args.action)?;
-                // TODO(ERR001): Missing error context.
-                let resource = map_plan_resource(args.resource)?;
+                let action = map_standard_action_to_plan(args.action).map_err(|e| {
+                    McpError::internal_error(
+                        format!("failed to map entity action to plan action: {e}"),
+                        None,
+                    )
+                })?;
+                let resource = map_plan_resource(args.resource).map_err(|e| {
+                    McpError::internal_error(
+                        format!("failed to map entity resource to plan resource: {e}"),
+                        None,
+                    )
+                })?;
                 self.plan
                     .handle(Parameters(PlanEntityArgs {
                         action,
@@ -87,10 +103,18 @@ impl EntityHandler {
             | EntityResource::Comment
             | EntityResource::Label
             | EntityResource::LabelAssignment => {
-                // TODO(ERR001): Missing error context. Add .context() or .map_err() for better error messages.
-                let action = map_standard_action_to_issue(args.action)?;
-                // TODO(ERR001): Missing error context.
-                let resource = map_issue_resource(args.resource)?;
+                let action = map_standard_action_to_issue(args.action).map_err(|e| {
+                    McpError::internal_error(
+                        format!("failed to map entity action to issue action: {e}"),
+                        None,
+                    )
+                })?;
+                let resource = map_issue_resource(args.resource).map_err(|e| {
+                    McpError::internal_error(
+                        format!("failed to map entity resource to issue resource: {e}"),
+                        None,
+                    )
+                })?;
                 self.issue
                     .handle(Parameters(IssueEntityArgs {
                         action,
@@ -109,10 +133,18 @@ impl EntityHandler {
             | EntityResource::Team
             | EntityResource::TeamMember
             | EntityResource::ApiKey => {
-                // TODO(ERR001): Missing error context. Add .context() or .map_err() for better error messages.
-                let action = map_standard_action_to_org(args.action)?;
-                // TODO(ERR001): Missing error context.
-                let resource = map_org_resource(args.resource)?;
+                let action = map_standard_action_to_org(args.action).map_err(|e| {
+                    McpError::internal_error(
+                        format!("failed to map entity action to org action: {e}"),
+                        None,
+                    )
+                })?;
+                let resource = map_org_resource(args.resource).map_err(|e| {
+                    McpError::internal_error(
+                        format!("failed to map entity resource to org resource: {e}"),
+                        None,
+                    )
+                })?;
                 self.org
                     .handle(Parameters(OrgEntityArgs {
                         action,

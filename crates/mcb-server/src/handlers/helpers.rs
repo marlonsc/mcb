@@ -81,6 +81,17 @@ pub fn resolve_identifier_precedence(
 }
 
 /// Input parameters for resolving an `OriginContext`.
+///
+/// All fields default to `None`/`false`. Use struct update syntax with `Default::default()`
+/// to only specify non-default fields:
+/// ```ignore
+/// resolve_origin_context(OriginContextInput {
+///     org_id: args.org_id.as_deref(),
+///     require_project_id: true,
+///     ..Default::default()
+/// })
+/// ```
+#[derive(Default)]
 pub struct OriginContextInput<'a> {
     /// The organization ID.
     pub org_id: Option<&'a str>,

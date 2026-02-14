@@ -71,14 +71,25 @@ impl VcsEntityHandler {
                     McpError::invalid_params("project_id required for repository create", None)
                 })?;
                 repo.org_id = org_id.to_string();
-                // TODO(ERR001): Missing error context. Add .context() or .map_err().
-                map_opaque_error(self.repo.create_repository(&repo).await)?;
+                map_opaque_error(self.repo.create_repository(&repo).await).map_err(|e| {
+                    McpError::internal_error(format!("failed to create repository: {e}"), None)
+                })?;
                 ok_json(&repo)
             }
             (VcsEntityAction::Get, VcsEntityResource::Repository) => {
-                let id = require_id(&args.id)?;
-                // TODO(ERR001): Missing error context. Add .context() or .map_err().
-                let repository = map_opaque_error(self.repo.get_repository(&org_id, &id).await)?;
+                let id = require_id(&args.id).map_err(|e| {
+                    McpError::invalid_params(
+                        format!("failed to parse repository id from request: {e}"),
+                        None,
+                    )
+                })?;
+                let repository = map_opaque_error(self.repo.get_repository(&org_id, &id).await)
+                    .map_err(|e| {
+                        McpError::internal_error(
+                            format!("failed to get repository '{id}' for org '{org_id}': {e}"),
+                            None,
+                        )
+                    })?;
                 if let Some(project_id) = args.project_id.as_deref()
                     && repository.project_id != project_id
                 {
@@ -134,7 +145,6 @@ impl VcsEntityHandler {
                 if existing.project_id != project_id {
                     return Err(McpError::invalid_params(
                         format!(
-                            // TODO(ERR001): Missing error context. Add .context() or .map_err() to help callers.
                             "conflicting project_id: args='{project_id}', repository='{}'",
                             existing.project_id
                         ),
@@ -147,9 +157,15 @@ impl VcsEntityHandler {
 
             // -- Branch --
             (VcsEntityAction::Create, VcsEntityResource::Branch) => {
-                let branch: Branch = require_data(args.data, "data required")?;
-                // TODO(ERR001): Missing error context.
-                map_opaque_error(self.repo.create_branch(&branch).await)?;
+                let branch: Branch = require_data(args.data, "data required").map_err(|e| {
+                    McpError::invalid_params(
+                        format!("failed to parse branch payload from request: {e}"),
+                        None,
+                    )
+                })?;
+                map_opaque_error(self.repo.create_branch(&branch).await).map_err(|e| {
+                    McpError::internal_error(format!("failed to create branch: {e}"), None)
+                })?;
                 ok_json(&branch)
             }
             (VcsEntityAction::Get, VcsEntityResource::Branch) => {
@@ -204,14 +220,25 @@ impl VcsEntityHandler {
 
             // -- Assignment --
             (VcsEntityAction::Create, VcsEntityResource::Assignment) => {
-                let asgn: AgentWorktreeAssignment = require_data(args.data, "data required")?;
-                // TODO(ERR001): Missing error context.
-                map_opaque_error(self.repo.create_assignment(&asgn).await)?;
+                let asgn: AgentWorktreeAssignment =
+                    require_data(args.data, "data required").map_err(|e| {
+                        McpError::invalid_params(
+                            format!("failed to parse assignment payload from request: {e}"),
+                            None,
+                        )
+                    })?;
+                map_opaque_error(self.repo.create_assignment(&asgn).await).map_err(|e| {
+                    McpError::internal_error(format!("failed to create worktree assignment: {e}"), None)
+                })?;
                 ok_json(&asgn)
             }
             (VcsEntityAction::Get, VcsEntityResource::Assignment) => {
-                // TODO(ERR001): Missing error context.
-                let id = require_id(&args.id)?;
+                let id = require_id(&args.id).map_err(|e| {
+                    McpError::invalid_params(
+                        format!("failed to parse assignment id from request: {e}"),
+                        None,
+                    )
+                })?;
                 ok_json(&map_opaque_error(self.repo.get_assignment(&id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Assignment) => {
@@ -222,9 +249,19 @@ impl VcsEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_assignments_by_worktree(wt_id).await)?)
             }
             (VcsEntityAction::Release, VcsEntityResource::Assignment) => {
-                // TODO(ERR001): Missing error context in require_id and release_assignment.
-                let id = require_id(&args.id)?;
-                map_opaque_error(self.repo.release_assignment(&id, current_timestamp()).await)?;
+                let id = require_id(&args.id).map_err(|e| {
+                    McpError::invalid_params(
+                        format!("failed to parse assignment id from request: {e}"),
+                        None,
+                    )
+                })?;
+                map_opaque_error(self.repo.release_assignment(&id, current_timestamp()).await)
+                    .map_err(|e| {
+                        McpError::internal_error(
+                            format!("failed to release assignment '{id}': {e}"),
+                            None,
+                        )
+                    })?;
                 ok_text("released")
             }
 

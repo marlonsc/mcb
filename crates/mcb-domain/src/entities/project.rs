@@ -15,7 +15,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Registered project in MCB - serves as root entity linking collections, observations, and file hashes.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Project {
     /// Unique identifier for the project.
     pub id: String,

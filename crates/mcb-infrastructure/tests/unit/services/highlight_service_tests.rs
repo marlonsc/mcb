@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use mcb_domain::ports::browse::HighlightService;
+    use mcb_domain::ports::browse::HighlightServiceInterface;
     use mcb_infrastructure::services::highlight_service::HighlightServiceImpl;
 
     #[tokio::test]

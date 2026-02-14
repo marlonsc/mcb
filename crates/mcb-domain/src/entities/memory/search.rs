@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 use crate::entities::observation::{Observation, ObservationType};
 
@@ -14,6 +15,7 @@ pub struct MemorySearchResult {
 }
 
 /// Index entry for a memory observation used in search operations.
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemorySearchIndex {
     /// Unique identifier for the index entry.
@@ -38,6 +40,7 @@ pub struct MemorySearchIndex {
 }
 
 /// Filter criteria for querying memory observations.
+#[skip_serializing_none]
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub struct MemoryFilter {
     /// Filter by specific observation identifier.

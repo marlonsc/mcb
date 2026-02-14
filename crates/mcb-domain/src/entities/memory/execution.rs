@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 /// Type of execution or command that was run.
 #[derive(
@@ -33,6 +34,7 @@ impl ExecutionType {
 }
 
 /// Metadata about an execution event (test, lint, build, or CI).
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExecutionMetadata {
     /// Unique identifier for the execution event.

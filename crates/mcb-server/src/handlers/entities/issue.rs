@@ -110,10 +110,16 @@ impl IssueEntityHandler {
                 ok_text("deleted")
             }
             (IssueEntityAction::Create, IssueEntityResource::LabelAssignment) => {
-                // TODO(ERR001): Missing error context.
-                let assignment: IssueLabelAssignment = require_data(args.data, "data required")?;
-                // TODO(ERR001): Missing error context.
-                map_opaque_error(self.repo.assign_label(&assignment).await)?;
+                let assignment: IssueLabelAssignment =
+                    require_data(args.data, "data required").map_err(|e| {
+                        McpError::invalid_params(
+                            format!("failed to parse label assignment payload from request: {e}"),
+                            None,
+                        )
+                    })?;
+                map_opaque_error(self.repo.assign_label(&assignment).await).map_err(|e| {
+                    McpError::internal_error(format!("failed to assign label to issue: {e}"), None)
+                })?;
                 ok_text("assigned")
             }
             (IssueEntityAction::Delete, IssueEntityResource::LabelAssignment) => {
@@ -125,8 +131,14 @@ impl IssueEntityHandler {
                     .label_id
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("label_id required", None))?;
-                // TODO(ERR001): Missing error context.
-                map_opaque_error(self.repo.unassign_label(issue_id, label_id).await)?;
+                map_opaque_error(self.repo.unassign_label(issue_id, label_id).await).map_err(|e| {
+                    McpError::internal_error(
+                        format!(
+                            "failed to unassign label '{label_id}' from issue '{issue_id}': {e}"
+                        ),
+                        None,
+                    )
+                })?;
                 ok_text("unassigned")
             }
             (IssueEntityAction::List, IssueEntityResource::LabelAssignment) => {

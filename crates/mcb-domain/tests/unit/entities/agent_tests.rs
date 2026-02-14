@@ -1,5 +1,8 @@
 use mcb_domain::entities::agent::{
-    AgentSession, AgentSessionStatus, AgentType, Checkpoint, CheckpointType, Delegation, ToolCall,
+    AgentSession, AgentSessionStatus, AgentType, CheckpointType, Delegation,
+};
+use mcb_domain::test_utils::{
+    create_test_agent_session, create_test_checkpoint, create_test_tool_call,
 };
 use rstest::*;
 
@@ -25,24 +28,16 @@ fn agent_enums_as_str(#[case] actual: String, #[case] expected: &str) {
 fn entity_serialization(#[case] entity: &str) {
     match entity {
         "session" => {
-            let session = AgentSession {
-                id: "sess-123".to_string(),
-                session_summary_id: "sum-456".to_string(),
-                agent_type: AgentType::Sisyphus,
-                model: "claude-sonnet".to_string(),
-                parent_session_id: None,
-                started_at: 1700000000,
-                ended_at: Some(1700001000),
-                duration_ms: Some(1000000),
-                status: AgentSessionStatus::Completed,
-                prompt_summary: Some("Test prompt".to_string()),
-                result_summary: Some("Success".to_string()),
-                token_count: Some(1000),
-                tool_calls_count: Some(5),
-                delegations_count: Some(2),
-                project_id: None,
-                worktree_id: None,
-            };
+            let mut session = create_test_agent_session("sess-123");
+            // Customize to match original test expectations if needed,
+            // but here we just check round-trip ID and type.
+            // The fixture uses Sisyphus, so we are good.
+            // But let's verify fixture defaults match what we expect.
+            session.duration_ms = Some(1000000); // Matches original test
+            session.status = AgentSessionStatus::Completed; // Matches original test
+            session.token_count = Some(1000);
+            session.tool_calls_count = Some(5);
+            session.delegations_count = Some(2);
 
             let json = serde_json::to_string(&session).expect("serialize");
             let deserialized: AgentSession = serde_json::from_str(&json).expect("deserialize");
@@ -67,31 +62,15 @@ fn entity_serialization(#[case] entity: &str) {
             assert!(json.contains("del-001"));
         }
         "tool_call" => {
-            let tool_call = ToolCall {
-                id: "tc-001".to_string(),
-                session_id: "sess-123".to_string(),
-                tool_name: "read_file".to_string(),
-                params_summary: Some("path=/foo".to_string()),
-                success: true,
-                error_message: None,
-                duration_ms: Some(100),
-                created_at: 1700000000,
-            };
+            let tool_call = create_test_tool_call("tc-001");
+            // Fixture sets tool_name to "test_tool". Original was "read_file".
+            // We just check json contains ID.
 
             let json = serde_json::to_string(&tool_call).expect("serialize");
-            assert!(json.contains("read_file"));
+            assert!(json.contains("tc-001"));
         }
         "checkpoint" => {
-            let checkpoint = Checkpoint {
-                id: "ckpt-001".to_string(),
-                session_id: "sess-123".to_string(),
-                checkpoint_type: CheckpointType::Git,
-                description: "Before risky operation".to_string(),
-                snapshot_data: serde_json::json!({"files": ["a.rs", "b.rs"]}),
-                created_at: 1700000000,
-                restored_at: None,
-                expired: false,
-            };
+            let checkpoint = create_test_checkpoint("ckpt-001");
 
             let json = serde_json::to_string(&checkpoint).expect("serialize");
             assert!(json.contains("ckpt-001"));

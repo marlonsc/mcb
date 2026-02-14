@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 /// Represents the status of a quality gate check.
 ///
@@ -44,6 +45,7 @@ impl QualityGateStatus {
 ///
 /// Contains the outcome and metadata of a single quality gate check, including
 /// the gate name, status, optional message, and timing information.
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityGateResult {
     /// Unique identifier for this quality gate result.

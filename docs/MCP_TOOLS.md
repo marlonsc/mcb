@@ -1,432 +1,270 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 MD024 -->
 # MCP Tools Schema Documentation
 
-**Version**: 0.2.0
-**Last Updated**: 2026-02-05
+**Version**: 0.2.1
+**Last Updated**: 2026-02-14
 
-This document provides complete schema documentation for all 8 MCP tools available in MCB v0.2.0.
+MCB exposes 9 tools through the MCP protocol. Tool names as returned by `tools/list`:
 
----
-
-## 1. INDEX_CODEBASE Tool
-
-**Purpose**: Index a codebase for semantic search
-
-### Parameters
-
-```json
-{
-  "collection": {
-    "type": "string",
-    "required": true,
-    "description": "Collection name (alphanumeric, underscores, hyphens)"
-  },
-  "repository_path": {
-    "type": "string",
-    "required": true,
-    "description": "Path to git repository or directory to index"
-  },
-  "depth": {
-    "type": "integer",
-    "required": false,
-    "default": 1000,
-    "description": "Number of commits to analyze (git repositories)"
-  }
-}
-```
-
-### Return Type
-
-```json
-{
-  "status": "string (started|completed|failed)",
-  "collection": "string",
-  "files_processed": "integer",
-  "chunks_created": "integer",
-  "operation_id": "string (UUID)",
-  "error": "string (if failed)"
-}
-```
-
-### Example Usage
-
-```bash
-mcb index_codebase \
-  --collection my_project \
-  --repository_path /path/to/repo \
-  --depth 100
-```
+| # | Tool | Description |
+|---|------|-------------|
+| 1 | `index` | Index operations (start, status, clear) |
+| 2 | `search` | Search operations for code and memory |
+| 3 | `validate` | Validation and analysis operations |
+| 4 | `memory` | Memory storage, retrieval, and timeline operations |
+| 5 | `session` | Session lifecycle operations |
+| 6 | `agent` | Agent activity logging operations |
+| 7 | `project` | Project workflow management (phases, issues, dependencies, decisions) |
+| 8 | `vcs` | Version control operations (list, index, compare, search, impact) |
+| 9 | `entity` | Unified entity CRUD (vcs/plan/issue/org resources) |
 
 ---
 
-## 2. SEARCH_CODE Tool
+## 1. `index` Tool
 
-**Purpose**: Search indexed codebase with semantic queries
+Index operations (start, git_index, status, clear).
 
-### Parameters
+**Actions**: `start`, `git_index`, `status`, `clear`
 
-```json
-{
-  "query": {
-    "type": "string",
-    "required": true,
-    "description": "Natural language search query"
-  },
-  "collection": {
-    "type": "string",
-    "required": true,
-    "description": "Collection to search in"
-  },
-  "limit": {
-    "type": "integer",
-    "required": false,
-    "default": 10,
-    "minimum": 1,
-    "maximum": 100,
-    "description": "Maximum results to return"
-  },
-  "filter": {
-    "type": "object",
-    "required": false,
-    "properties": {
-      "languages": { "type": "array of strings" },
-      "file_extensions": { "type": "array of strings" }
-    }
-  }
-}
-```
-
-### Return Type
-
-```json
-{
-  "results": [
-    {
-      "file": "string",
-      "content": "string (code snippet)",
-      "relevance_score": "float (0-1)",
-      "line_number": "integer"
-    }
-  ],
-  "count": "integer",
-  "query_time_ms": "integer"
-}
-```
-
-### Example Usage
-
-```bash
-mcb search_code \
-  --query "authenticate user" \
-  --collection my_project \
-  --limit 5
-```
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | enum | **yes** | `start`, `git_index`, `status`, `clear` |
+| `path` | string | no | Path to codebase directory (required for `start`) |
+| `collection` | string | no | Collection name for the index |
+| `extensions` | string[] | no | File extensions to include |
+| `exclude_dirs` | string[] | no | Directories to exclude |
+| `ignore_patterns` | string[] | no | Glob patterns for files/directories to exclude |
+| `max_file_size` | integer | no | Maximum file size to index (bytes) |
+| `follow_symlinks` | boolean | no | Follow symbolic links during indexing |
+| `token` | string | no | JWT token for authenticated requests |
 
 ---
 
-## 3. GET_INDEXING_STATUS Tool
+## 2. `search` Tool
 
-**Purpose**: Get current indexing status for a collection
+Search operations for code and memory.
 
-### Parameters
+**Resources**: `code`, `memory`, `context`
 
-```json
-{
-  "collection": {
-    "type": "string",
-    "required": true,
-    "description": "Collection name"
-  }
-}
-```
-
-### Return Type
-
-```json
-{
-  "is_indexing": "boolean",
-  "progress_percent": "float (0-100)",
-  "files_processed": "integer",
-  "files_total": "integer",
-  "current_file": "string",
-  "estimated_time_remaining": "integer (seconds)"
-}
-```
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | **yes** | Natural language search query |
+| `resource` | enum | **yes** | `code`, `memory`, `context` |
+| `collection` | string | no | Collection name |
+| `extensions` | string[] | no | File extensions to include (code search) |
+| `filters` | string[] | no | Additional search filters |
+| `limit` | integer | no | Maximum results to return |
+| `min_score` | float | no | Minimum similarity score (0.0–1.0) |
+| `tags` | string[] | no | Filter by tags (memory search) |
+| `session_id` | string | no | Filter by session ID (memory search) |
+| `token` | string | no | JWT token for authenticated requests |
 
 ---
 
-## 4. CLEAR_INDEX Tool
+## 3. `validate` Tool
 
-**Purpose**: Clear indexed data from a collection
+Validation and analysis operations.
 
-### Parameters
+**Actions**: `run`, `list_rules`, `analyze`
 
-```json
-{
-  "collection": {
-    "type": "string",
-    "required": true,
-    "description": "Collection to clear"
-  }
-}
-```
-
-### Return Type
-
-```json
-{
-  "status": "string (cleared|failed)",
-  "collection": "string",
-  "items_deleted": "integer"
-}
-```
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | enum | **yes** | `run`, `list_rules`, `analyze` |
+| `scope` | enum | no | `file` or `project` |
+| `path` | string | no | Path to file or project directory |
+| `rules` | string[] | no | Specific rules to run (empty = all) |
+| `category` | string | no | Rule category filter |
 
 ---
 
-## 5. MEMORY Tool (NEW in v0.2.0)
+## 4. `memory` Tool
 
-**Purpose**: Store and retrieve session observations
+Memory storage, retrieval, and timeline operations.
 
-### Sub-operations
+**Actions**: `store`, `get`, `list`, `timeline`, `inject`
 
-- `store`: Save observation
-- `search`: Find observations
-- `timeline`: Get temporal sequence
-- `get`: Retrieve specific observations
-- `inject`: Get context for session
+**Resources**: `observation`, `execution`, `quality_gate`, `error_pattern`, `session`
 
-**Parameters** (vary by operation):
-
-### 5.1 Store Observation
-
-```json
-{
-  "operation": "store",
-  "content": {
-    "type": "string",
-    "required": true,
-    "description": "Observation content"
-  },
-  "observation_type": {
-    "type": "string",
-    "enum": ["Decision", "Execution", "Summary", "Insight", "Pattern"],
-    "required": true
-  },
-  "tags": {
-    "type": "array of strings",
-    "required": false,
-    "description": "Categorization tags"
-  }
-}
-```
-
-### 5.2 Search Memory
-
-```json
-{
-  "operation": "search",
-  "query": {
-    "type": "string",
-    "required": true,
-    "description": "Search query"
-  },
-  "tags": {
-    "type": "array of strings",
-    "required": false,
-    "description": "Filter by tags"
-  },
-  "limit": {
-    "type": "integer",
-    "required": false,
-    "default": 10
-  }
-}
-```
-
-### Return Type
-
-```json
-{
-  "observations": [
-    {
-      "id": "string (UUID)",
-      "content": "string",
-      "type": "string",
-      "relevance_score": "float",
-      "created_at": "ISO8601 timestamp",
-      "tags": "array of strings"
-    }
-  ]
-}
-```
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | enum | **yes** | `store`, `get`, `list`, `timeline`, `inject` |
+| `resource` | enum | **yes** | `observation`, `execution`, `quality_gate`, `error_pattern`, `session` |
+| `data` | object | no | Data payload for store action |
+| `ids` | string[] | no | Resource IDs for get action |
+| `query` | string | no | Query string for list/search |
+| `tags` | string[] | no | Filter by tags |
+| `session_id` | string | no | Filter by session ID |
+| `project_id` | string | no | Filter by project ID |
+| `repo_id` | string | no | Filter by repository ID |
+| `limit` | integer | no | Maximum results |
+| `anchor_id` | string | no | Anchor observation ID (timeline) |
+| `depth_before` | integer | no | Timeline depth before anchor |
+| `depth_after` | integer | no | Timeline depth after anchor |
+| `window_secs` | integer | no | Time window in seconds (timeline) |
+| `observation_types` | string[] | no | Observation types to include (inject) |
+| `max_tokens` | integer | no | Maximum token budget for injected context |
 
 ---
 
-## 6. SESSION Tool (NEW in v0.2.0)
+## 5. `session` Tool
 
-**Purpose**: Manage session context and memory
+Session lifecycle operations.
 
-### Parameters
+**Actions**: `create`, `get`, `update`, `list`, `summarize`
 
-```json
-{
-  "operation": {
-    "type": "string",
-    "enum": ["start", "end", "get_context"],
-    "required": true
-  },
-  "session_id": {
-    "type": "string",
-    "required": true,
-    "description": "Session identifier"
-  }
-}
-```
-
-### Return Type
-
-```json
-{
-  "session_id": "string",
-  "status": "string (started|ended|active)",
-  "context": "object (if get_context)",
-  "timestamp": "ISO8601"
-}
-```
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | enum | **yes** | `create`, `get`, `update`, `list`, `summarize` |
+| `session_id` | string | no | Session ID (required for get/update/summarize) |
+| `data` | object | no | Data payload for create/update |
+| `project_id` | string | no | Filter by project ID |
+| `worktree_id` | string | no | Filter by worktree ID |
+| `agent_type` | string | no | Filter by agent type |
+| `status` | string | no | Filter by status |
+| `limit` | integer | no | Maximum results for list |
 
 ---
 
-## 7. VCS Tool (NEW in v0.2.0)
+## 6. `agent` Tool
 
-**Purpose**: Version control operations (git-aware indexing)
+Agent activity logging operations.
 
-### Sub-operations
+**Actions**: `log_tool`, `log_delegation`
 
-- `index_repository`: Index with git metadata
-- `search_branch`: Search within branch
-- `compare_branches`: Compare branches
-- `analyze_impact`: Analyze commit impact
-
-### 7.1 Index Repository
-
-```json
-{
-  "operation": "index_repository",
-  "collection": "string",
-  "repository_path": "string",
-  "branches": ["main", "develop"],
-  "depth": 100,
-  "ignore_patterns": ["*.log", "target/", "node_modules"]
-}
-```
-
-### 7.2 Compare Branches
-
-```json
-{
-  "operation": "compare_branches",
-  "collection": "string",
-  "branch_a": "main",
-  "branch_b": "develop"
-}
-```
-
-### Return Type
-
-```json
-{
-  "branch_a": "string",
-  "branch_b": "string",
-  "commits_ahead": "integer",
-  "commits_behind": "integer",
-  "files_changed": "integer",
-  "differences": "array of objects"
-}
-```
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | enum | **yes** | `log_tool`, `log_delegation` |
+| `session_id` | string | **yes** | Session ID for the agent |
+| `data` | object | **yes** | Activity data payload |
 
 ---
 
-## 8. AGENT Tool (v0.2.0)
+## 7. `project` Tool
 
-**Purpose**: Manage agent sessions and tracking
+Project workflow management (phases, issues, dependencies, decisions).
 
-### Parameters
+**Actions**: `create`, `get`, `update`, `list`, `delete`
 
-```json
-{
-  "operation": {
-    "type": "string",
-    "enum": ["create_session", "track_execution", "get_state"],
-    "required": true
-  },
-  "agent_name": {
-    "type": "string",
-    "required": true
-  }
-}
-```
+**Resources**: `project`, `phase`, `issue`, `dependency`, `decision`
 
-### Return Type
-
-```json
-{
-  "agent_id": "string (UUID)",
-  "status": "string",
-  "session_active": "boolean"
-}
-```
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | enum | **yes** | `create`, `get`, `update`, `list`, `delete` |
+| `resource` | enum | **yes** | `project`, `phase`, `issue`, `dependency`, `decision` |
+| `project_id` | string | **yes** | Project ID |
+| `data` | object | no | Data payload for create/update |
+| `filters` | object | no | Additional filters for list |
 
 ---
 
-## 9. PROJECT Tool (v0.2.0)
+## 8. `vcs` Tool
 
-**Purpose**: Project-level operations
+Version control operations (list, index, compare, search, impact).
 
-### Parameters
+**Actions**: `list_repositories`, `index_repository`, `compare_branches`, `search_branch`, `analyze_impact`
 
-```json
-{
-  "operation": {
-    "type": "string",
-    "enum": ["list", "get_stats", "get_health"],
-    "required": true
-  }
-}
-```
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | enum | **yes** | `list_repositories`, `index_repository`, `compare_branches`, `search_branch`, `analyze_impact` |
+| `repo_id` | string | **yes** | Repository identifier |
+| `repo_path` | string | **yes** | Repository path on disk |
+| `base_branch` | string | no | Base branch name |
+| `target_branch` | string | no | Compare/target branch name |
+| `query` | string | no | Search query for branch search |
+| `branches` | string[] | no | Branches to index |
+| `include_commits` | boolean | no | Include commit history when indexing |
+| `depth` | integer | no | Commit history depth |
+| `limit` | integer | no | Limit for search or list actions |
+
+---
+
+## 9. `entity` Tool
+
+Unified entity CRUD (vcs/plan/issue/org resources).
+
+**Actions**: `create`, `get`, `update`, `list`, `delete`, `release`
+
+**Resources**: `repository`, `branch`, `worktree`, `assignment`, `plan`, `version`, `review`, `issue`, `comment`, `label`, `label_assignment`, `org`, `user`, `team`, `team_member`, `api_key`
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | enum | **yes** | `create`, `get`, `update`, `list`, `delete`, `release` |
+| `resource` | enum | **yes** | See resources list above |
+| `data` | object | no | JSON payload for create/update |
+| `id` | string | no | Resource ID (for get/update/delete/release) |
+| `org_id` | string | no | Organization ID |
+| `repository_id` | string | no | Repository ID (branch/worktree list) |
+| `plan_id` | string | no | Plan ID (version list) |
+| `plan_version_id` | string | no | Plan version ID (review list) |
+| `issue_id` | string | no | Issue ID (comment/label operations) |
+| `label_id` | string | no | Label ID (label unassignment) |
+| `project_id` | string | no | Project ID (project-scoped list) |
+| `team_id` | string | no | Team ID (team member list) |
+| `user_id` | string | no | User ID (team member delete) |
+| `worktree_id` | string | no | Worktree ID (assignment list) |
+| `email` | string | no | User email (lookup operations) |
+
+---
+
+## Provenance Requirements
+
+Tools `index`, `search`, and `memory` require full execution provenance:
+
+| Field | Type | Required |
+|-------|------|----------|
+| `session_id` | string | **yes** |
+| `project_id` | string | **yes** |
+| `repo_id` | string | **yes** |
+| `repo_path` | string | **yes** |
+| `worktree_id` | string | **yes** |
+| `operator_id` | string | **yes** |
+| `machine_id` | string | **yes** |
+| `agent_program` | string | **yes** |
+| `model_id` | string | **yes** |
+| `delegated` | boolean | **yes** |
+| `timestamp` | integer | **yes** |
+
+When `delegated` is `true`, `parent_session_id` is also required.
+
+---
+
+## Operation Mode Matrix
+
+| Tool | `stdio-only` | `client-hybrid` | `server-hybrid` |
+|------|:---:|:---:|:---:|
+| `index` | ✅ | ✅ | ✅ |
+| `search` | ✅ | ❌ | ✅ |
+| `validate` | ✅ | ✅ | ❌ |
+| `memory` | ✅ | ❌ | ✅ |
+| `session` | ✅ | ❌ | ✅ |
+| `agent` | ✅ | ❌ | ✅ |
+| `project` | ✅ | ❌ | ✅ |
+| `vcs` | ✅ | ❌ | ✅ |
+| `entity` | ✅ | ❌ | ✅ |
 
 ---
 
 ## Error Response Format
 
-All tools return errors in consistent format:
+All tools return errors via JSON-RPC 2.0 error objects:
 
 ```json
 {
+  "jsonrpc": "2.0",
+  "id": 1,
   "error": {
-    "type": "string (InvalidInput|NotFound|InternalError|Unavailable)",
-    "message": "string",
-    "details": "string (optional)"
+    "code": -32602,
+    "message": "Missing execution provenance for 'index': session_id, project_id"
   }
 }
 ```
 
----
+Error codes follow JSON-RPC 2.0 conventions:
+- `-32601`: Method not found
+- `-32602`: Invalid params
+- `-32603`: Internal error
 
-## v0.2.0 Changes from v0.2.0
-
-### New Tools
-
-- MEMORY (observation storage + search)
-- SESSION (session context management)
-- VCS (git-aware indexing)
-- AGENT (agent session tracking)
-
-### Enhanced Tools
-
-- INDEX_CODEBASE: Added `depth` parameter + git support
-- SEARCH_CODE: Added filtering support
-
-**Deprecated**: None
+Internal error details are sanitized — no stack traces or implementation details leak to clients.
 
 ---
 

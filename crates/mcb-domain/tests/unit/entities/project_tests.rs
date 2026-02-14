@@ -1,9 +1,8 @@
-//! Tests for project entity (REF003: dedicated test file).
-
 use mcb_domain::entities::project::{
     DependencyType, DetectedProject, IssueStatus, IssueType, PhaseStatus, ProjectDecision,
-    ProjectDependency, ProjectIssue, ProjectPhase, ProjectType,
+    ProjectDependency, ProjectType,
 };
+use mcb_domain::test_utils::{create_test_issue, create_test_phase};
 use rstest::*;
 
 #[rstest]
@@ -117,46 +116,25 @@ fn dependency_type_from_str(#[case] input: &str, #[case] expected: Result<Depend
 fn project_entities_construction(#[case] entity: &str) {
     match entity {
         "phase" => {
-            let phase = ProjectPhase {
-                id: "ph-001".to_string(),
-                project_id: "proj-1".to_string(),
-                name: "Phase 1".to_string(),
-                description: "Initial setup".to_string(),
-                sequence: 1,
-                status: PhaseStatus::InProgress,
-                started_at: Some(1000),
-                completed_at: None,
-                created_at: 900,
-                updated_at: 1000,
-            };
+            let mut phase = create_test_phase("ph-001", "proj-1");
+            phase.sequence = 1;
+            phase.status = PhaseStatus::InProgress;
+
             assert_eq!(phase.id, "ph-001");
             assert_eq!(phase.sequence, 1);
             assert_eq!(phase.status, PhaseStatus::InProgress);
         }
         "issue" => {
-            let issue = ProjectIssue {
-                id: "iss-001".to_string(),
-                org_id: "org-1".to_string(),
-                project_id: "proj-1".to_string(),
-                created_by: "creator".to_string(),
-                phase_id: Some("ph-001".to_string()),
-                title: "Fix bug".to_string(),
-                description: "Something is broken".to_string(),
-                issue_type: IssueType::Bug,
-                status: IssueStatus::Open,
-                priority: 1,
-                assignee: Some("alice".to_string()),
-                labels: vec!["urgent".to_string()],
-                estimated_minutes: None,
-                actual_minutes: None,
-                notes: String::new(),
-                design: String::new(),
-                parent_issue_id: None,
-                created_at: 1000,
-                updated_at: 1000,
-                closed_at: None,
-                closed_reason: String::new(),
-            };
+            let mut issue = create_test_issue("iss-001", "proj-1");
+            issue.phase_id = Some("ph-001".to_string());
+            issue.title = "Fix bug".to_string();
+            issue.description = "Something is broken".to_string();
+            issue.issue_type = IssueType::Bug;
+            issue.status = IssueStatus::Open;
+            issue.priority = 1;
+            issue.assignee = Some("alice".to_string());
+            issue.labels = vec!["urgent".to_string()];
+
             assert_eq!(issue.id, "iss-001");
             assert_eq!(issue.priority, 1);
             assert_eq!(issue.issue_type, IssueType::Bug);

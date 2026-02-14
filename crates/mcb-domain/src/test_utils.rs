@@ -1,0 +1,158 @@
+use crate::entities::agent::{
+    AgentSession, AgentSessionStatus, AgentType, Checkpoint, CheckpointType, ToolCall,
+};
+use crate::entities::project::{
+    IssueStatus, IssueType, PhaseStatus, Project, ProjectIssue, ProjectPhase,
+};
+use crate::entities::user::User;
+use crate::value_objects::FileTreeNode;
+use uuid::Uuid;
+
+/// Creates a test `Project` with default values.
+pub fn create_test_project(id: &str) -> Project {
+    Project {
+        id: id.to_string(),
+        org_id: "test-org".to_string(),
+        name: "test-project".to_string(),
+        path: "/tmp/test-project".to_string(),
+        created_at: 0,
+        updated_at: 0,
+    }
+}
+
+/// Creates a test `User` with default values.
+pub fn create_test_user() -> User {
+    User {
+        id: Uuid::new_v4().to_string(),
+        org_id: "test-org".to_string(),
+        email: "test@example.com".to_string(),
+        display_name: "Test User".to_string(),
+        role: crate::entities::user::UserRole::Member,
+        api_key_hash: None,
+        created_at: 0,
+        updated_at: 0,
+    }
+}
+
+/// Creates a test `ProjectPhase` with default values.
+pub fn create_test_phase(id: &str, project_id: &str) -> ProjectPhase {
+    ProjectPhase {
+        id: id.to_string(),
+        project_id: project_id.to_string(),
+        name: format!("Phase {}", id),
+        description: "Test Phase Description".to_string(),
+        sequence: 1,
+        status: PhaseStatus::Planned,
+        started_at: None,
+        completed_at: None,
+        created_at: 1000,
+        updated_at: 1000,
+    }
+}
+
+/// Creates a test `ProjectIssue` with default values.
+pub fn create_test_issue(id: &str, project_id: &str) -> ProjectIssue {
+    ProjectIssue {
+        id: id.to_string(),
+        org_id: "test-org".to_string(),
+        project_id: project_id.to_string(),
+        created_by: "test-user".to_string(),
+        phase_id: None,
+        title: format!("Issue {}", id),
+        description: "Test Issue Description".to_string(),
+        issue_type: IssueType::Task,
+        status: IssueStatus::Open,
+        priority: 2,
+        assignee: None,
+        labels: vec![],
+        estimated_minutes: None,
+        actual_minutes: None,
+        notes: String::new(),
+        design: String::new(),
+        parent_issue_id: None,
+        created_at: 1000,
+        updated_at: 1000,
+        closed_at: None,
+        closed_reason: String::new(),
+    }
+}
+
+/// Creates a test `AgentSession` with default values.
+pub fn create_test_agent_session(id: &str) -> AgentSession {
+    AgentSession {
+        id: id.to_string(),
+        session_summary_id: Uuid::new_v4().to_string(),
+        agent_type: AgentType::Sisyphus,
+        model: "claude-sonnet".to_string(),
+        parent_session_id: None,
+        started_at: 1700000000,
+        ended_at: None,
+        duration_ms: None,
+        status: AgentSessionStatus::Active,
+        prompt_summary: Some("Test Prompt".to_string()),
+        result_summary: None,
+        token_count: Some(0),
+        tool_calls_count: Some(0),
+        delegations_count: Some(0),
+        project_id: Some("test-project".to_string()),
+        worktree_id: None,
+    }
+}
+
+/// Creates a test `ToolCall` with default values.
+pub fn create_test_tool_call(id: &str) -> ToolCall {
+    ToolCall {
+        id: id.to_string(),
+        session_id: "test-session".to_string(),
+        tool_name: "test_tool".to_string(),
+        params_summary: Some("check=true".to_string()),
+        success: true,
+        error_message: None,
+        duration_ms: Some(100),
+        created_at: 1700000000,
+    }
+}
+
+/// Creates a test `Checkpoint` with default values.
+pub fn create_test_checkpoint(id: &str) -> Checkpoint {
+    Checkpoint {
+        id: id.to_string(),
+        session_id: "test-session".to_string(),
+        checkpoint_type: CheckpointType::Git,
+        description: "Test Checkpoint".to_string(),
+        snapshot_data: serde_json::json!({"status": "clean"}),
+        created_at: 1700000000,
+        restored_at: None,
+        expired: false,
+    }
+}
+
+/// Builder pattern for creating complex `FileTreeNode` structures for testing.
+pub struct FileTreeBuilder {
+    root: FileTreeNode,
+}
+
+impl FileTreeBuilder {
+    pub fn new_dir(name: &str) -> Self {
+        Self {
+            root: FileTreeNode::directory(name, name),
+        }
+    }
+
+    pub fn add_file(mut self, name: &str, chunks: u32) -> Self {
+        let path = format!("{}/{}", self.root.path, name);
+        self.root = self
+            .root
+            .with_child(FileTreeNode::file(name, &path, chunks, "rust"));
+        self
+    }
+
+    pub fn add_child(mut self, child: FileTreeNode) -> Self {
+        self.root = self.root.with_child(child);
+        self
+    }
+
+    pub fn build(self) -> FileTreeNode {
+        self.root
+    }
+}
