@@ -4,6 +4,7 @@
 //! test infrastructure.
 
 use mcb_validate::ast::UnwrapDetector;
+use rstest::rstest;
 use rstest::*;
 
 use crate::test_constants::{EXPECT_METHOD, UNWRAP_METHOD};

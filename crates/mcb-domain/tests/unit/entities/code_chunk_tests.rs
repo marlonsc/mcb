@@ -6,7 +6,7 @@
 #[cfg(test)]
 mod tests {
     use mcb_domain::CodeChunk;
-    use rstest::*;
+    use rstest::rstest;
     use serde_json::json;
 
     #[rstest]

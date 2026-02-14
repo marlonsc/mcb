@@ -15,7 +15,6 @@ use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
-use rstest::rstest;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
@@ -64,8 +63,9 @@ fn test_service_url(key: &str) -> String {
 #[cfg(test)]
 mod embedding_registry_tests {
     use super::*;
+    use rstest::rstest;
 
-    #[test]
+    #[rstest]
     fn test_config_builder() {
         let config = EmbeddingProviderConfig::new("test")
             .with_model("model-1")
@@ -82,7 +82,7 @@ mod embedding_registry_tests {
         assert_eq!(config.extra.get("custom"), Some(&"value".to_string()));
     }
 
-    #[test]
+    #[rstest]
     fn test_list_providers_includes_fastembed_provider() {
         // With extern crate mcb_providers, providers should be registered
         let providers = list_embedding_providers();
@@ -134,7 +134,7 @@ mod embedding_registry_tests {
         );
     }
 
-    #[test]
+    #[rstest]
     fn test_resolve_unknown_provider_fails() {
         let config = EmbeddingProviderConfig::new("nonexistent_provider_xyz");
 
@@ -155,7 +155,7 @@ mod embedding_registry_tests {
         }
     }
 
-    #[test]
+    #[rstest]
     fn test_list_providers_has_descriptions() {
         let providers = list_embedding_providers();
 
@@ -177,8 +177,9 @@ mod embedding_registry_tests {
 #[cfg(test)]
 mod vector_store_registry_tests {
     use super::*;
+    use rstest::rstest;
 
-    #[test]
+    #[rstest]
     fn test_config_builder() {
         let milvus_uri = test_service_url("milvus_address");
         let strict_milvus_uri =
@@ -197,7 +198,7 @@ mod vector_store_registry_tests {
         assert_eq!(config.encrypted, Some(true));
     }
 
-    #[test]
+    #[rstest]
     fn test_list_vector_store_providers() {
         let providers = list_vector_store_providers();
 
@@ -247,8 +248,9 @@ mod vector_store_registry_tests {
 #[cfg(test)]
 mod cache_registry_tests {
     use super::*;
+    use rstest::rstest;
 
-    #[test]
+    #[rstest]
     fn test_config_builder() {
         let redis_uri = test_service_url("redis_url");
         let strict_redis_uri =
@@ -267,7 +269,7 @@ mod cache_registry_tests {
         assert_eq!(config.namespace, Some("mcb".to_string()));
     }
 
-    #[test]
+    #[rstest]
     fn test_list_cache_providers() {
         let providers = list_cache_providers();
 
@@ -285,7 +287,7 @@ mod cache_registry_tests {
         );
     }
 
-    #[test]
+    #[rstest]
     fn test_resolve_moka_cache_provider() {
         let config = CacheProviderConfig::new("moka");
 
@@ -317,8 +319,9 @@ mod cache_registry_tests {
 #[cfg(test)]
 mod language_registry_tests {
     use super::*;
+    use rstest::rstest;
 
-    #[test]
+    #[rstest]
     fn test_config_builder() {
         let config = LanguageProviderConfig::new("universal")
             .with_max_chunk_size(4096)
@@ -331,7 +334,7 @@ mod language_registry_tests {
         assert_eq!(config.overlap, Some(50));
     }
 
-    #[test]
+    #[rstest]
     fn test_list_language_providers() {
         let providers = list_language_providers();
 
@@ -349,7 +352,7 @@ mod language_registry_tests {
         );
     }
 
-    #[test]
+    #[rstest]
     fn test_resolve_universal_language_provider() {
         let config = LanguageProviderConfig::new("universal");
 
@@ -374,6 +377,7 @@ mod language_registry_tests {
 #[cfg(test)]
 mod integration_tests {
     use super::*;
+    use rstest::rstest;
 
     #[rstest]
     #[case("embedding")]

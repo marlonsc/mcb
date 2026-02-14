@@ -4,7 +4,7 @@
 //! and `DOMAIN_CRATE` / `FORBIDDEN_PREFIX_PATTERN` from shared constants.
 
 use mcb_validate::engines::{RoutedEngine, RuleEngineRouter};
-use rstest::*;
+use rstest::rstest;
 use serde_json::json;
 
 use crate::test_constants::*;

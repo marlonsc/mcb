@@ -1,8 +1,9 @@
 //! Unit tests for browse value objects.
 
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, FileInfo};
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn test_collection_info_new() {
     let info = CollectionInfo::new(
         CollectionId::new("test-collection"),
@@ -19,7 +20,7 @@ fn test_collection_info_new() {
     assert_eq!(info.provider, "milvus");
 }
 
-#[test]
+#[rstest]
 fn test_collection_info_serialization() {
     let info = CollectionInfo::new(CollectionId::new("test"), 50, 5, None, "in_memory");
     let json = serde_json::to_string(&info).expect("serialization should succeed");
@@ -29,7 +30,7 @@ fn test_collection_info_serialization() {
     assert_eq!(info, deserialized);
 }
 
-#[test]
+#[rstest]
 fn test_file_info_new() {
     let info = FileInfo::new("src/main.rs", 5, "rust", Some(1024));
 
@@ -39,7 +40,7 @@ fn test_file_info_new() {
     assert_eq!(info.size_bytes, Some(1024));
 }
 
-#[test]
+#[rstest]
 fn test_file_info_serialization() {
     let info = FileInfo::new("lib.rs", 3, "rust", None);
     let json = serde_json::to_string(&info).expect("serialization should succeed");

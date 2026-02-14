@@ -12,7 +12,7 @@ use mcb_validate::{
     ImplementationQualityValidator, KissValidator, OrganizationValidator, PatternValidator,
     PerformanceValidator, QualityValidator, RefactoringValidator, SolidValidator,
 };
-use rstest::*;
+use rstest::rstest;
 
 use crate::test_constants::*;
 use crate::test_utils::*;

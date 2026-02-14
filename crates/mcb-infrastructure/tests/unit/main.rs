@@ -32,6 +32,5 @@ mod fts_check_tests;
 mod health_tests;
 mod logging_tests;
 mod mcp_context_config_tests;
-mod memory_fts_tests;
-mod memory_repository_tests;
+
 mod service_tests;

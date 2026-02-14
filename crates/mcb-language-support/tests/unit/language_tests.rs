@@ -3,7 +3,7 @@
 //! Tests for `LanguageId` and `LanguageRegistry` functionality.
 
 use mcb_language_support::language::{LanguageId, LanguageRegistry};
-use rstest::*;
+use rstest::rstest;
 use rust_code_analysis::LANG;
 
 #[test]

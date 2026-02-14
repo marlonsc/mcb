@@ -3,7 +3,7 @@
 //! Covers: traverse, Display, to_ansi, to_html methods
 
 use mcb_domain::value_objects::FileTreeNode;
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case(false)]

@@ -229,9 +229,12 @@ async fn verify_project_schema(pool: &sqlx::SqlitePool) -> Result<()> {
     verify_table_columns(
         pool,
         "observations",
-        // TODO(ORG002): Duplicate string literal "observation_type".
-        // Consider using mcb_domain::schema::memory::COL_OBSERVATION_TYPE instead.
-        &["id", "project_id", "metadata", "observation_type"],
+        &[
+            "id",
+            "project_id",
+            "metadata",
+            mcb_domain::schema::memory::COL_OBSERVATION_TYPE,
+        ],
     )
     .await?;
     verify_table_columns(

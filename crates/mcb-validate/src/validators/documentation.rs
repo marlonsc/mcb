@@ -135,13 +135,10 @@ impl DocumentationValidator {
         // Patterns for public items
         let pub_struct_pattern = Regex::new(r"pub\s+struct\s+([A-Z][a-zA-Z0-9_]*)")
             .map_err(ValidationError::InvalidRegex)?;
-        // TODO(NAME001): Bad type name: pattern (expected CamelCase) - False positive on variable name
         let pub_enum_pattern = Regex::new(r"pub\s+enum\s+([A-Z][a-zA-Z0-9_]*)")
             .map_err(ValidationError::InvalidRegex)?;
-        // TODO(NAME001): Bad type name: pattern (expected CamelCase) - False positive on variable name
         let pub_trait_pattern = Regex::new(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)")
             .map_err(ValidationError::InvalidRegex)?;
-        // TODO(NAME001): Bad type name: pattern (expected CamelCase) - False positive on variable name
         let pub_fn_pattern = Regex::new(r"pub\s+(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)")
             .map_err(ValidationError::InvalidRegex)?;
         let _doc_comment_pattern = Regex::new(r"^\s*///").map_err(ValidationError::InvalidRegex)?;

@@ -1,7 +1,7 @@
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_providers::events::TokioEventBusProvider;
-use rstest::*;
+use rstest::rstest;
 
 #[tokio::test]
 async fn test_event_bus_clone() {
@@ -33,7 +33,7 @@ fn event_bus_initial_subscriber_state(#[case] use_default: bool) {
     assert!(!bus.has_subscribers());
 }
 
-#[test]
+#[rstest]
 fn test_event_bus_debug() {
     let bus = TokioEventBusProvider::new();
     let debug = format!("{:?}", bus);

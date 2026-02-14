@@ -2,13 +2,13 @@
 //!
 //! Tests for `SemanticChunking` and `LineBasedChunking` functionality.
 
+use rstest::rstest;
 use std::path::Path;
 
 use mcb_language_support::chunking::{
     ChunkType, ChunkingConfig, ChunkingStrategy, LineBasedChunking, SemanticChunking,
 };
 use mcb_language_support::language::LanguageId;
-use rstest::*;
 
 #[tokio::test]
 async fn semantic_chunking_rust() {

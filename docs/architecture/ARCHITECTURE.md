@@ -1,8 +1,8 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Memory Context Browser - Comprehensive Architecture Documentation
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
-[![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
+[![Version](https://img.shields.io/badge/version-0.2.1--dev-blue)](https://github.com/marlonsc/mcb/releases)
+[![Rust](https://img.shields.io/badge/rust-1.92%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
 
 ## Model Context Protocol Server for Semantic Code Analysis using Vector Embeddings
@@ -54,7 +54,7 @@ Memory Context Browser is a high-performance, extensible Model Context Protocol 
 **Architecture Maturity**: ✅ **100% Complete DI Implementation**
 **DI Status**: ✅ 20+ Port Traits, ✅ Provider Registry, ✅ Service Factory, ✅ Full Port/Adapter Wiring
 **Provider Registration**: ✅ Linkme distributed slices (compile-time), ✅ Inventory removed
-**Validation**: ✅ mcb-validate crate Phases 1–7 verified (750+ tests); 1634+ tests project-wide
+**Validation**: ✅ mcb-validate crate Phases 1–7 verified (349 tests); 1700+ tests project-wide
 **Port Traits**: `crates/mcb-domain/src/ports/` - Provider traits in domain layer (Clean Architecture compliant)
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
@@ -844,7 +844,7 @@ async fn test_full_flow() {
 
 ### Crate Structure (Clean Architecture Monorepo)
 
-The system follows Clean Architecture principles with 8 crates organized as a Cargo workspace:
+The system follows Clean Architecture principles with 9 crates organized as a Cargo workspace:
 
 #### 📦 Domain Layer (`crates/mcb-domain/`)
 
@@ -921,7 +921,7 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Status**: Phases 1–7 all VERIFIED (v0.2.0) - 750+ tests pass
+**Status**: Phases 1–7 all VERIFIED (v0.2.1) - 349+ tests pass
 
 ### Components (1)
 

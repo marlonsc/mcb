@@ -39,6 +39,7 @@ async fn ctx() -> TestContext {
 
 mod integration_tests {
     use super::*;
+    use rstest::rstest;
 
     #[rstest]
     #[tokio::test]

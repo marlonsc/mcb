@@ -1,7 +1,7 @@
 use mcb_domain::entities::user::{User, UserRole};
-use rstest::*;
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn user_construction() {
     let user = User {
         id: "usr-001".to_string(),
@@ -20,7 +20,7 @@ fn user_construction() {
     assert!(user.api_key_hash.is_none());
 }
 
-#[test]
+#[rstest]
 fn user_serialization_roundtrip() {
     let user = User {
         id: "usr-002".to_string(),

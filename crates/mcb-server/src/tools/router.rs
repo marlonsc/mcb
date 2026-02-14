@@ -85,19 +85,23 @@ pub struct ToolExecutionContext {
 impl ToolExecutionContext {
     /// Inject execution context into tool arguments when those keys are missing.
     pub fn apply_to_request_if_missing(&self, request: &mut CallToolRequestParams) {
-        insert_argument_if_missing(request, "session_id", self.session_id.clone());
-        insert_argument_if_missing(request, "parent_session_id", self.parent_session_id.clone());
-        insert_argument_if_missing(request, "project_id", self.project_id.clone());
-        insert_argument_if_missing(request, "worktree_id", self.worktree_id.clone());
-        insert_argument_if_missing(request, "repo_id", self.repo_id.clone());
-        insert_argument_if_missing(request, "repo_path", self.repo_path.clone());
-        insert_argument_if_missing(request, "operator_id", self.operator_id.clone());
-        insert_argument_if_missing(request, "machine_id", self.machine_id.clone());
-        insert_argument_if_missing(request, "agent_program", self.agent_program.clone());
-        insert_argument_if_missing(request, "model_id", self.model_id.clone());
+        insert_argument_if_missing(request, "session_id", self.session_id.as_deref());
+        insert_argument_if_missing(
+            request,
+            "parent_session_id",
+            self.parent_session_id.as_deref(),
+        );
+        insert_argument_if_missing(request, "project_id", self.project_id.as_deref());
+        insert_argument_if_missing(request, "worktree_id", self.worktree_id.as_deref());
+        insert_argument_if_missing(request, "repo_id", self.repo_id.as_deref());
+        insert_argument_if_missing(request, "repo_path", self.repo_path.as_deref());
+        insert_argument_if_missing(request, "operator_id", self.operator_id.as_deref());
+        insert_argument_if_missing(request, "machine_id", self.machine_id.as_deref());
+        insert_argument_if_missing(request, "agent_program", self.agent_program.as_deref());
+        insert_argument_if_missing(request, "model_id", self.model_id.as_deref());
         insert_bool_argument_if_missing(request, "delegated", self.delegated);
         insert_i64_argument_if_missing(request, "timestamp", self.timestamp);
-        insert_argument_if_missing(request, "execution_flow", self.execution_flow.clone());
+        insert_argument_if_missing(request, "execution_flow", self.execution_flow.as_deref());
     }
 }
 
@@ -134,7 +138,7 @@ fn insert_bool_argument_if_missing(
 fn insert_argument_if_missing(
     request: &mut CallToolRequestParams,
     key: &'static str,
-    value: Option<String>,
+    value: Option<&str>,
 ) {
     let Some(value) = value else {
         return;
@@ -143,7 +147,7 @@ fn insert_argument_if_missing(
     let arguments = request.arguments.get_or_insert_with(Default::default);
     arguments
         .entry(key.to_string())
-        .or_insert_with(|| Value::String(value));
+        .or_insert_with(|| Value::String(value.to_owned()));
 }
 
 /// Route a tool call request to the appropriate handler
@@ -157,11 +161,10 @@ pub async fn route_tool_call(
 ) -> Result<CallToolResult, McpError> {
     validate_execution_context(request.name.as_ref(), &execution_context)?;
 
-    let tool_name = request.name.clone();
     let result = dispatch_tool_call(&request, handlers).await?;
 
     if let Err(e) = trigger_post_tool_use_hook(
-        &tool_name,
+        request.name.as_ref(),
         &result,
         &handlers.hook_processor,
         &execution_context,
@@ -303,43 +306,44 @@ async fn trigger_post_tool_use_hook(
     hook_processor: &HookProcessor,
     execution_context: &ToolExecutionContext,
 ) -> Result<(), String> {
-    let mut context = PostToolUseContext::new(tool_name.to_string(), result.clone());
+    let mut context =
+        PostToolUseContext::new(tool_name.to_string(), result.is_error.unwrap_or(false));
 
     if let Some(session_id) = &execution_context.session_id {
         context = context.with_session_id(SessionId::new(session_id));
     }
     if let Some(parent_session_id) = &execution_context.parent_session_id {
-        context = context.with_metadata("parent_session_id".to_string(), parent_session_id.clone());
+        context = context.with_metadata("parent_session_id", parent_session_id.as_str());
     }
     if let Some(project_id) = &execution_context.project_id {
-        context = context.with_metadata("project_id".to_string(), project_id.clone());
+        context = context.with_metadata("project_id", project_id.as_str());
     }
     if let Some(worktree_id) = &execution_context.worktree_id {
-        context = context.with_metadata("worktree_id".to_string(), worktree_id.clone());
+        context = context.with_metadata("worktree_id", worktree_id.as_str());
     }
     if let Some(repo_id) = &execution_context.repo_id {
-        context = context.with_metadata("repo_id".to_string(), repo_id.clone());
+        context = context.with_metadata("repo_id", repo_id.as_str());
     }
     if let Some(repo_path) = &execution_context.repo_path {
-        context = context.with_metadata("repo_path".to_string(), repo_path.clone());
+        context = context.with_metadata("repo_path", repo_path.as_str());
     }
     if let Some(operator_id) = &execution_context.operator_id {
-        context = context.with_metadata("operator_id".to_string(), operator_id.clone());
+        context = context.with_metadata("operator_id", operator_id.as_str());
     }
     if let Some(machine_id) = &execution_context.machine_id {
-        context = context.with_metadata("machine_id".to_string(), machine_id.clone());
+        context = context.with_metadata("machine_id", machine_id.as_str());
     }
     if let Some(agent_program) = &execution_context.agent_program {
-        context = context.with_metadata("agent_program".to_string(), agent_program.clone());
+        context = context.with_metadata("agent_program", agent_program.as_str());
     }
     if let Some(model_id) = &execution_context.model_id {
-        context = context.with_metadata("model_id".to_string(), model_id.clone());
+        context = context.with_metadata("model_id", model_id.as_str());
     }
     if let Some(delegated) = execution_context.delegated {
-        context = context.with_metadata("delegated".to_string(), delegated.to_string());
+        context = context.with_metadata("delegated", delegated.to_string());
     }
     if let Some(timestamp) = execution_context.timestamp {
-        context = context.with_metadata("timestamp".to_string(), timestamp.to_string());
+        context = context.with_metadata("timestamp", timestamp.to_string());
     }
 
     hook_processor

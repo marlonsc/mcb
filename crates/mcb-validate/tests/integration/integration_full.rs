@@ -11,6 +11,7 @@
 
 #[cfg(test)]
 mod full_integration_tests {
+    use rstest::rstest;
     use std::collections::HashMap;
     use std::fs;
     use std::io::Write;
@@ -20,7 +21,6 @@ mod full_integration_tests {
     use mcb_validate::ValidatorRegistry;
     use mcb_validate::generic_reporter::{GenericReport, GenericReporter, GenericSummary};
     use mcb_validate::{Severity, Violation, ViolationCategory};
-    use rstest::*;
     use tempfile::TempDir;
 
     fn create_test_workspace(dir: &TempDir) -> PathBuf {

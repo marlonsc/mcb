@@ -24,10 +24,6 @@ impl OrgEntityHandler {
     }
 
     /// Route an incoming `org_entity` tool call to the appropriate CRUD operation.
-    /// # Architecture Violation (KISS005)
-    /// Function length (131 lines) exceeds the 50-line limit.
-    ///
-    // TODO(KISS005): Break 'handle' into smaller, focused functions.
     pub async fn handle(
         &self,
         Parameters(args): Parameters<OrgEntityArgs>,

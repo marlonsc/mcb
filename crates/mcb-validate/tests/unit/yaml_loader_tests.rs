@@ -1,5 +1,6 @@
 //! Tests for YAML rule loader
 
+use rstest::rstest;
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 

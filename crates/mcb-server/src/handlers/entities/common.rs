@@ -37,8 +37,6 @@ impl EntityHandler {
     }
 
     /// Route an `entity` tool call to the matching legacy entity handler.
-    // TODO(KISS005): Function handle is too long (78 lines, max: 50).
-    // Consider splitting into domain-specific sub-handlers (VCS, Plan, Issue, Org).
     pub async fn handle(
         &self,
         Parameters(args): Parameters<EntityArgs>,
@@ -47,118 +45,135 @@ impl EntityHandler {
             EntityResource::Repository
             | EntityResource::Branch
             | EntityResource::Worktree
-            | EntityResource::Assignment => {
-                let action = map_vcs_action(args.action).map_err(|e| {
-                    McpError::internal_error(
-                        format!("failed to map entity action to vcs action: {e}"),
-                        None,
-                    )
-                })?;
-                let resource = map_vcs_resource(args.resource).map_err(|e| {
-                    McpError::internal_error(
-                        format!("failed to map entity resource to vcs resource: {e}"),
-                        None,
-                    )
-                })?;
-                self.vcs
-                    .handle(Parameters(VcsEntityArgs {
-                        action,
-                        resource,
-                        id: args.id,
-                        org_id: args.org_id,
-                        project_id: args.project_id,
-                        repository_id: args.repository_id,
-                        worktree_id: args.worktree_id,
-                        data: args.data,
-                    }))
-                    .await
-            }
+            | EntityResource::Assignment => self.route_vcs(args).await,
+
             EntityResource::Plan | EntityResource::Version | EntityResource::Review => {
-                let action = map_standard_action_to_plan(args.action).map_err(|e| {
-                    McpError::internal_error(
-                        format!("failed to map entity action to plan action: {e}"),
-                        None,
-                    )
-                })?;
-                let resource = map_plan_resource(args.resource).map_err(|e| {
-                    McpError::internal_error(
-                        format!("failed to map entity resource to plan resource: {e}"),
-                        None,
-                    )
-                })?;
-                self.plan
-                    .handle(Parameters(PlanEntityArgs {
-                        action,
-                        resource,
-                        id: args.id,
-                        org_id: args.org_id,
-                        project_id: args.project_id,
-                        plan_id: args.plan_id,
-                        plan_version_id: args.plan_version_id,
-                        data: args.data,
-                    }))
-                    .await
+                self.route_plan(args).await
             }
+
             EntityResource::Issue
             | EntityResource::Comment
             | EntityResource::Label
-            | EntityResource::LabelAssignment => {
-                let action = map_standard_action_to_issue(args.action).map_err(|e| {
-                    McpError::internal_error(
-                        format!("failed to map entity action to issue action: {e}"),
-                        None,
-                    )
-                })?;
-                let resource = map_issue_resource(args.resource).map_err(|e| {
-                    McpError::internal_error(
-                        format!("failed to map entity resource to issue resource: {e}"),
-                        None,
-                    )
-                })?;
-                self.issue
-                    .handle(Parameters(IssueEntityArgs {
-                        action,
-                        resource,
-                        id: args.id,
-                        org_id: args.org_id,
-                        project_id: args.project_id,
-                        issue_id: args.issue_id,
-                        label_id: args.label_id,
-                        data: args.data,
-                    }))
-                    .await
-            }
+            | EntityResource::LabelAssignment => self.route_issue(args).await,
+
             EntityResource::Org
             | EntityResource::User
             | EntityResource::Team
             | EntityResource::TeamMember
-            | EntityResource::ApiKey => {
-                let action = map_standard_action_to_org(args.action).map_err(|e| {
-                    McpError::internal_error(
-                        format!("failed to map entity action to org action: {e}"),
-                        None,
-                    )
-                })?;
-                let resource = map_org_resource(args.resource).map_err(|e| {
-                    McpError::internal_error(
-                        format!("failed to map entity resource to org resource: {e}"),
-                        None,
-                    )
-                })?;
-                self.org
-                    .handle(Parameters(OrgEntityArgs {
-                        action,
-                        resource,
-                        id: args.id,
-                        org_id: args.org_id,
-                        team_id: args.team_id,
-                        user_id: args.user_id,
-                        email: args.email,
-                        data: args.data,
-                    }))
-                    .await
-            }
+            | EntityResource::ApiKey => self.route_org(args).await,
         }
+    }
+
+    async fn route_vcs(&self, args: EntityArgs) -> Result<CallToolResult, McpError> {
+        let action = map_vcs_action(args.action).map_err(|e| {
+            McpError::internal_error(
+                format!("failed to map entity action to vcs action: {e}"),
+                None,
+            )
+        })?;
+        let resource = map_vcs_resource(args.resource).map_err(|e| {
+            McpError::internal_error(
+                format!("failed to map entity resource to vcs resource: {e}"),
+                None,
+            )
+        })?;
+
+        self.vcs
+            .handle(Parameters(VcsEntityArgs {
+                action,
+                resource,
+                id: args.id,
+                org_id: args.org_id,
+                project_id: args.project_id,
+                repository_id: args.repository_id,
+                worktree_id: args.worktree_id,
+                data: args.data,
+            }))
+            .await
+    }
+
+    async fn route_plan(&self, args: EntityArgs) -> Result<CallToolResult, McpError> {
+        let action = map_standard_action_to_plan(args.action).map_err(|e| {
+            McpError::internal_error(
+                format!("failed to map entity action to plan action: {e}"),
+                None,
+            )
+        })?;
+        let resource = map_plan_resource(args.resource).map_err(|e| {
+            McpError::internal_error(
+                format!("failed to map entity resource to plan resource: {e}"),
+                None,
+            )
+        })?;
+
+        self.plan
+            .handle(Parameters(PlanEntityArgs {
+                action,
+                resource,
+                id: args.id,
+                org_id: args.org_id,
+                project_id: args.project_id,
+                plan_id: args.plan_id,
+                plan_version_id: args.plan_version_id,
+                data: args.data,
+            }))
+            .await
+    }
+
+    async fn route_issue(&self, args: EntityArgs) -> Result<CallToolResult, McpError> {
+        let action = map_standard_action_to_issue(args.action).map_err(|e| {
+            McpError::internal_error(
+                format!("failed to map entity action to issue action: {e}"),
+                None,
+            )
+        })?;
+        let resource = map_issue_resource(args.resource).map_err(|e| {
+            McpError::internal_error(
+                format!("failed to map entity resource to issue resource: {e}"),
+                None,
+            )
+        })?;
+
+        self.issue
+            .handle(Parameters(IssueEntityArgs {
+                action,
+                resource,
+                id: args.id,
+                org_id: args.org_id,
+                project_id: args.project_id,
+                issue_id: args.issue_id,
+                label_id: args.label_id,
+                data: args.data,
+            }))
+            .await
+    }
+
+    async fn route_org(&self, args: EntityArgs) -> Result<CallToolResult, McpError> {
+        let action = map_standard_action_to_org(args.action).map_err(|e| {
+            McpError::internal_error(
+                format!("failed to map entity action to org action: {e}"),
+                None,
+            )
+        })?;
+        let resource = map_org_resource(args.resource).map_err(|e| {
+            McpError::internal_error(
+                format!("failed to map entity resource to org resource: {e}"),
+                None,
+            )
+        })?;
+
+        self.org
+            .handle(Parameters(OrgEntityArgs {
+                action,
+                resource,
+                id: args.id,
+                org_id: args.org_id,
+                team_id: args.team_id,
+                user_id: args.user_id,
+                email: args.email,
+                data: args.data,
+            }))
+            .await
     }
 }
 

@@ -1,9 +1,9 @@
 //! Integration tests that validate the actual workspace
 
+use rstest::rstest;
 use std::path::PathBuf;
 
 use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry, Violation};
-use rstest::*;
 
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))

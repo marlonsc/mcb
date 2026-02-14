@@ -1,5 +1,6 @@
 //! Unit tests for rule filter executor.
 
+use rstest::rstest;
 use std::fs;
 use std::path::Path;
 

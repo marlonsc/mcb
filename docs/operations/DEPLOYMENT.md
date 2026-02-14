@@ -11,7 +11,7 @@ with AI assistants.
 
 ### Prerequisites
 
-- **Rust 1.70+**: Install from [rustup.rs](https://rustup.rs/)
+- **Rust 1.92+**: Install from [rustup.rs](https://rustup.rs/)
 - **Git**: For cloning the repository
 
 ### Build from Source

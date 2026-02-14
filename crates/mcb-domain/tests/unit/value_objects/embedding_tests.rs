@@ -1,7 +1,7 @@
 //! Unit tests for Embedding value object
 
 use mcb_domain::Embedding;
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case(vec![0.1, 0.2, 0.3, 0.4, 0.5], "text-embedding-ada-002", 5)]

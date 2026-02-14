@@ -1,5 +1,6 @@
 //! Unit tests for InstrumentedEmbeddingProvider decorator
 
+use rstest::rstest;
 use std::sync::Arc;
 
 use mcb_application::decorators::InstrumentedEmbeddingProvider;

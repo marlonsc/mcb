@@ -13,7 +13,7 @@ use mcb_infrastructure::constants::health::*;
 use mcb_infrastructure::constants::http::*;
 use mcb_infrastructure::constants::process::*;
 use mcb_infrastructure::constants::resilience::*;
-use rstest::*;
+use rstest::rstest;
 
 // ============================================================================
 // HTTP Pool Constants Tests
@@ -35,7 +35,7 @@ fn test_http_count_constants(#[case] value: usize, #[case] min: usize, #[case] m
     assert!(value <= max);
 }
 
-#[test]
+#[rstest]
 fn test_http_timeout_relationships() {
     assert!(
         HTTP_CLIENT_IDLE_TIMEOUT_SECS >= HTTP_REQUEST_TIMEOUT_SECS,
@@ -65,7 +65,7 @@ fn test_embedding_dimensions_positive(#[case] dim: usize) {
     assert!(dim > 0);
 }
 
-#[test]
+#[rstest]
 fn test_embedding_dimension_common_values() {
     let common_dims = [256, 384, 512, 768, 1024, 1536, 2048, 3072];
     assert!(common_dims.contains(&EMBEDDING_DIMENSION_NULL));
@@ -96,7 +96,7 @@ fn test_cache_size_range(#[case] value: usize, #[case] min: usize, #[case] max: 
     assert!(value <= max);
 }
 
-#[test]
+#[rstest]
 fn test_cache_namespace_separator() {
     assert_eq!(CACHE_NAMESPACE_SEPARATOR.len(), 1);
 }
@@ -112,7 +112,7 @@ fn test_jwt_constants_range(#[case] value: u64, #[case] min: u64, #[case] max: u
     assert!(value <= max);
 }
 
-#[test]
+#[rstest]
 fn test_jwt_relationship() {
     assert!(JWT_REFRESH_EXPIRATION_SECS > JWT_DEFAULT_EXPIRATION_SECS);
 }
@@ -131,7 +131,7 @@ fn test_auth_headers_lowercase(#[case] header: &str) {
     assert_eq!(header.to_lowercase(), header);
 }
 
-#[test]
+#[rstest]
 fn test_bearer_prefix() {
     assert!(BEARER_PREFIX.ends_with(' '));
 }
@@ -140,13 +140,13 @@ fn test_bearer_prefix() {
 // Crypto Constants Tests
 // ============================================================================
 
-#[test]
+#[rstest]
 fn test_aes_gcm_constants() {
     assert_eq!(AES_GCM_KEY_SIZE, 32);
     assert_eq!(AES_GCM_NONCE_SIZE, 12);
 }
 
-#[test]
+#[rstest]
 fn test_pbkdf2_iterations() {
     assert!(PBKDF2_ITERATIONS >= 10_000);
 }
@@ -163,7 +163,7 @@ fn test_server_ports(#[case] port: u16) {
     assert!(port < 65535);
 }
 
-#[test]
+#[rstest]
 fn test_server_ports_distinct() {
     assert_ne!(DEFAULT_HTTP_PORT, DEFAULT_HTTPS_PORT);
 }
@@ -175,7 +175,7 @@ fn test_server_timeouts(#[case] value: u64, #[case] min: u64) {
     assert!(value >= min);
 }
 
-#[test]
+#[rstest]
 fn test_server_timeout_relationship() {
     assert!(REQUEST_TIMEOUT_SECS >= CONNECTION_TIMEOUT_SECS);
 }
@@ -209,7 +209,7 @@ fn test_circuit_breaker_min_values(#[case] value: u32, #[case] min: u32) {
     assert!(value >= min);
 }
 
-#[test]
+#[rstest]
 fn test_circuit_breaker_time_values() {
     assert!(
         CIRCUIT_BREAKER_TIMEOUT_SECS >= 30,
@@ -217,7 +217,7 @@ fn test_circuit_breaker_time_values() {
     );
 }
 
-#[test]
+#[rstest]
 fn test_circuit_breaker_relationships() {
     assert!(CIRCUIT_BREAKER_SUCCESS_THRESHOLD <= CIRCUIT_BREAKER_FAILURE_THRESHOLD);
 }
@@ -226,7 +226,7 @@ fn test_circuit_breaker_relationships() {
 // Rate Limiter Constants Tests
 // ============================================================================
 
-#[test]
+#[rstest]
 fn test_rate_limiter_constants() {
     assert!(RATE_LIMITER_DEFAULT_RPS >= 10);
     assert!(RATE_LIMITER_DEFAULT_BURST >= RATE_LIMITER_DEFAULT_RPS);
@@ -236,7 +236,7 @@ fn test_rate_limiter_constants() {
 // File System Constants Tests
 // ============================================================================
 
-#[test]
+#[rstest]
 fn test_file_permissions() {
     assert_eq!(DEFAULT_FILE_PERMISSIONS, 0o644);
     assert_eq!(DEFAULT_DIR_PERMISSIONS, 0o755);
@@ -258,7 +258,7 @@ fn test_force_shutdown_limits(#[case] value: u64, #[case] min: u64) {
     assert!(value >= min);
 }
 
-#[test]
+#[rstest]
 fn test_shutdown_relationship() {
     assert!(GRACEFUL_SHUTDOWN_TIMEOUT_SECS > FORCE_SHUTDOWN_TIMEOUT_SECS);
 }

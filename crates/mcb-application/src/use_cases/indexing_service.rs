@@ -334,8 +334,6 @@ impl IndexingServiceImpl {
 
             service
                 .indexing_ops
-                // TODO(PERF001): Performance violation - clone in loop.
-                // relative_path is cloned multiple times per iteration. Consider passing a reference.
                 .update_progress(&operation_id, Some(relative_path.clone()), i);
 
             if i % PROGRESS_UPDATE_INTERVAL == 0
@@ -345,7 +343,6 @@ impl IndexingServiceImpl {
                         collection: collection.to_string(),
                         processed: i,
                         total,
-                        // TODO(PERF001): Performance violation - clone in loop.
                         current_file: Some(relative_path.clone()),
                     })
                     .await

@@ -2,8 +2,8 @@
 
 #[cfg(test)]
 mod phase7_integration_tests {
+    use rstest::rstest;
     use mcb_domain::entities::memory::{MemoryFilter, ObservationMetadata, ObservationType};
-    use rstest::*;
     use uuid::Uuid;
 
     fn metadata_with_context(branch: Option<&str>, commit: Option<&str>) -> ObservationMetadata {

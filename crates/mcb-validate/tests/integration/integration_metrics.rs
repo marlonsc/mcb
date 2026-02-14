@@ -5,11 +5,11 @@
 
 #[cfg(test)]
 mod integration_metrics_tests {
+    use rstest::rstest;
     use std::path::Path;
 
     use mcb_validate::Severity;
     use mcb_validate::metrics::{MetricThresholds, MetricType, RcaAnalyzer};
-    use rstest::*;
     use rust_code_analysis::LANG;
     use tempfile::TempDir;
 

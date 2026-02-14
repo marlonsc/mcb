@@ -20,23 +20,31 @@ The infrastructure module contains DI bootstrap, configuration, routing, project
 - `validation/` - Validation support
 - `routing/` - Routing and dispatch helpers
 - `utils/` - Utility helpers
-- `cache/`, `crypto/`, `infrastructure/` - Cross-cutting infrastructure modules
+- `cache/` - Caching infrastructure
+- `crypto/` - Cryptographic utilities
+- `infrastructure/` - Cross-cutting infrastructure modules
+- `error_ext.rs` - Error extension traits
+- `health.rs` - Health check infrastructure
+- `logging.rs` - Logging configuration
 
 ## File Structure
 
 ```text
 crates/mcb-infrastructure/src/
-├── di/
+├── cache/
 ├── config/
 ├── constants/
-├── project/
-├── services/
-├── validation/
-├── routing/
-├── utils/
-├── cache/
 ├── crypto/
+├── di/
 ├── infrastructure/
+├── project/
+├── routing/
+├── services/
+├── utils/
+├── validation/
+├── error_ext.rs
+├── health.rs
+├── logging.rs
 └── lib.rs
 ```
 
@@ -52,4 +60,4 @@ Infrastructure tests are in `crates/mcb-infrastructure/tests/`.
 
 ---
 
-### Updated 2026-02-12 - Reflects dill IoC and current crate structure (v0.2.1)
+### Updated 2026-02-14 - Added error_ext.rs, health.rs, logging.rs; accurate file tree (v0.2.1)

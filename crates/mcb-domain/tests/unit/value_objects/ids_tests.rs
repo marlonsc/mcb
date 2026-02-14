@@ -3,7 +3,7 @@
 use mcb_domain::value_objects::ids::{
     ChunkId, CollectionId, ObservationId, OperationId, RepositoryId, SessionId,
 };
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case(CollectionId::new("test-collection").as_str().to_string(), "test-collection")]

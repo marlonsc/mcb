@@ -1,10 +1,10 @@
 //! Server Configuration Tests
 
+use rstest::rstest;
 use std::net::SocketAddr;
 
 use mcb_infrastructure::config::{ServerConfig, ServerConfigBuilder, ServerConfigPresets};
 use mcb_infrastructure::constants::http::DEFAULT_HTTPS_PORT;
-use rstest::*;
 
 #[test]
 fn test_parse_address() {

@@ -25,10 +25,6 @@ impl IssueEntityHandler {
     }
 
     /// Route an incoming `issue_entity` tool call to the appropriate CRUD operation.
-    /// # Architecture Violation (KISS005)
-    /// Function length (103 lines) exceeds the 50-line limit.
-    ///
-    // TODO(KISS005): Break 'handle' into smaller, focused functions.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,

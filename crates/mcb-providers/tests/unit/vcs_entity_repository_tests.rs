@@ -1,3 +1,4 @@
+use rstest::rstest;
 use std::sync::Arc;
 
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
@@ -6,7 +7,6 @@ use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, Worktree
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::VcsEntityRepository;
 use mcb_providers::database::SqliteVcsEntityRepository;
-use rstest::*;
 
 use super::entity_test_utils::{
     TEST_NOW, assert_not_found, seed_default_scope, seed_isolated_org_scope, seed_project,

@@ -1,9 +1,9 @@
 //! Unit tests for `mcb_validate::lib` module
 
+use rstest::rstest;
 use std::path::PathBuf;
 
 use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry};
-use rstest::*;
 
 #[test]
 fn test_severity_serialization() {

@@ -2,11 +2,11 @@
 //!
 //! Tests for `LanguageDetector` functionality.
 
+use rstest::rstest;
 use std::path::Path;
 
 use mcb_language_support::detection::LanguageDetector;
 use mcb_language_support::language::LanguageId;
-use rstest::*;
 
 #[rstest]
 #[case("main.rs", LanguageId::Rust)]

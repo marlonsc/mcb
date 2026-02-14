@@ -2,7 +2,7 @@
 
 use mcb_domain::ports::{Job, JobCounts, JobStatus, JobType};
 use mcb_domain::value_objects::OperationId;
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case(JobStatus::Queued, false, true)]

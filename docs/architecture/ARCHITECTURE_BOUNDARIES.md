@@ -1,11 +1,11 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Architecture Boundaries - Layer Rules and Module Ownership
 
-**Version**: v0.2.0
+**Version**: v0.2.1
 **Status**: Baseline Documentation
-**Last Updated**: 2026-01-28
+**Last Updated**: 2026-02-14
 
-This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 8 workspace crates.
+This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 9 workspace crates.
 
 ---
 
@@ -33,6 +33,8 @@ crates/
 ├── mcb-infrastructure/  # Layer 4: DI, config, health, logging
 ├── mcb-server/          # Layer 5: MCP protocol, handlers, transport
 ├── mcb-validate/        # Dev tooling: architecture validation
+├── mcb-ast-utils/       # Shared AST/tree-sitter utilities
+├── mcb-language-support/ # Language detection and processing
 └── (tests/)             # Integration and golden tests
 ```
 

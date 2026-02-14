@@ -163,7 +163,59 @@ crates/mcb-domain/src/
 ├── events/                     # Domain events
 │   ├── domain_events.rs
 │   └── mod.rs
-├── repositories/               # Repository port traits
+├── ports/                      # Port trait boundaries (Clean Architecture)
+│   ├── providers/              # External service port traits
+│   │   ├── analysis.rs         # Code analysis provider
+│   │   ├── cache.rs            # Cache provider
+│   │   ├── config.rs           # Config provider
+│   │   ├── crypto.rs           # Crypto provider
+│   │   ├── embedding.rs        # Embedding provider
+│   │   ├── http.rs             # HTTP client provider
+│   │   ├── hybrid_search.rs    # Hybrid search provider
+│   │   ├── language_chunking.rs # Language chunking provider
+│   │   ├── metrics.rs          # Metrics provider
+│   │   ├── metrics_analysis.rs # Metrics analysis provider
+│   │   ├── project_detection.rs # Project detection provider
+│   │   ├── validation.rs       # Validation provider
+│   │   ├── vcs.rs              # VCS provider
+│   │   ├── vector_store.rs     # Vector store provider
+│   │   └── mod.rs
+│   ├── repositories/           # Persistence port traits
+│   │   ├── agent_repository.rs
+│   │   ├── file_hash_repository.rs
+│   │   ├── issue_entity_repository.rs
+│   │   ├── memory_repository.rs
+│   │   ├── org_entity_repository.rs
+│   │   ├── plan_entity_repository.rs
+│   │   ├── project_repository.rs
+│   │   ├── vcs_entity_repository.rs
+│   │   └── mod.rs
+│   ├── services/               # Business logic port traits
+│   │   ├── agent.rs
+│   │   ├── chunking.rs
+│   │   ├── context.rs
+│   │   ├── hash.rs
+│   │   ├── indexing.rs
+│   │   ├── memory.rs
+│   │   ├── project.rs
+│   │   ├── search.rs
+│   │   ├── validation.rs
+│   │   └── mod.rs
+│   ├── infrastructure/         # Infrastructure port traits
+│   │   ├── auth.rs
+│   │   ├── database.rs
+│   │   ├── events.rs
+│   │   ├── metrics.rs
+│   │   ├── routing.rs
+│   │   ├── snapshot.rs
+│   │   ├── state_store.rs
+│   │   ├── sync.rs
+│   │   └── mod.rs
+│   ├── admin.rs                # Admin port traits
+│   ├── browse.rs               # Browse port traits
+│   ├── jobs.rs                 # Job scheduling port traits
+│   └── mod.rs
+├── repositories/               # Legacy repository port traits
 │   ├── chunk_repository.rs
 │   ├── search_repository.rs
 │   └── mod.rs
@@ -184,4 +236,4 @@ crates/mcb-domain/src/
 
 ---
 
-### Updated 2026-02-12 — Enriched with full entity catalog, port interfaces, state machines, and domain invariants (v0.2.1)
+### Updated 2026-02-14 — Added full ports/ directory tree (providers, repositories, services, infrastructure), accurate file listing (v0.2.1)

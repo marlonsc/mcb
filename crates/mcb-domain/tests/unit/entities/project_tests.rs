@@ -3,7 +3,7 @@ use mcb_domain::entities::project::{
     ProjectDependency, ProjectType,
 };
 use mcb_domain::test_utils::{create_test_issue, create_test_phase};
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case("foo", "0.1.0")]

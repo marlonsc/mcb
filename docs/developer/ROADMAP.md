@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Development Roadmap
 
-**Last updated:** 2026-02-12
+**Last updated:** 2026-02-14
 
 Development roadmap for**Memory Context Browser (MCB)** — a high-performance MCP server for semantic code search, persistent memory, and agent-aware context management.
 
@@ -11,12 +11,12 @@ Development roadmap for**Memory Context Browser (MCB)** — a high-performance M
 
 | Field | Value |
 | ------- | ------- |
-| **Version** | v0.2.1-dev |
+| **Version** | v0.2.1 |
 | **Branch** | `release/v0.2.1` (only active release branch) |
 | **Build** | ✅ `cargo check --workspace` passes |
-| **Tests** | 1,485 passing (`cargo test --workspace`), 1,559 listed |
+| **Tests** | 1,705 passing (`cargo test --workspace`) |
 | **Crates** | 9 (Clean Architecture workspace) |
-| **ADRs** | 47 (including Phase 8-9) |
+| **ADRs** | 48 (including Phase 8-9) |
 
 ### Project Metrics
 

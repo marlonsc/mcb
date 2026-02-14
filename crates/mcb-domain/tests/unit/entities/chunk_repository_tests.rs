@@ -2,8 +2,9 @@
 
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::repositories::{ChunkRepository, RepositoryStats};
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn test_repository_stats_creation() {
     let stats = RepositoryStats {
         total_chunks: 100,
@@ -18,7 +19,7 @@ fn test_repository_stats_creation() {
     assert_eq!(stats.avg_chunk_size_bytes, 10.24);
 }
 
-#[test]
+#[rstest]
 fn test_repository_stats_default() {
     let stats = RepositoryStats::default();
 
@@ -28,7 +29,7 @@ fn test_repository_stats_default() {
     assert_eq!(stats.avg_chunk_size_bytes, 0.0);
 }
 
-#[test]
+#[rstest]
 fn test_code_chunk_creation() {
     let chunk = CodeChunk {
         id: "test-chunk-1".to_string(),
@@ -47,7 +48,7 @@ fn test_code_chunk_creation() {
     assert_eq!(chunk.language, "rust");
 }
 
-#[test]
+#[rstest]
 fn test_chunk_repository_is_interface() {
     // Test that ChunkRepository is properly defined as an interface
     fn assert_is_interface<T: ?Sized>() {}
@@ -60,7 +61,7 @@ fn test_chunk_repository_is_interface() {
     assert!(result.is_ok());
 }
 
-#[test]
+#[rstest]
 fn test_repository_stats_debug() {
     let stats = RepositoryStats {
         total_chunks: 42,

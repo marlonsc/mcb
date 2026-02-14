@@ -2,6 +2,7 @@
 #![allow(unsafe_code)]
 
 use mcb_infrastructure::config::loader::ConfigLoader;
+use rstest::rstest;
 use rstest::*;
 use serial_test::serial;
 use std::env;

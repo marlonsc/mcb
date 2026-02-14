@@ -2,7 +2,7 @@
 
 use mcb_infrastructure::constants::logging::{DEFAULT_LOG_LEVEL, LOG_MAX_FILES, LOG_ROTATION_SIZE};
 use mcb_infrastructure::logging::{LoggingConfig, parse_log_level};
-use rstest::*;
+use rstest::rstest;
 use tracing::Level;
 
 #[rstest]
@@ -20,7 +20,7 @@ fn parse_log_level_values(#[case] input: &str, #[case] expected: Option<Level>) 
     }
 }
 
-#[test]
+#[rstest]
 fn test_logging_config_default() {
     let config = LoggingConfig::default();
     assert_eq!(config.level, DEFAULT_LOG_LEVEL);

@@ -4,7 +4,7 @@ use mcb_domain::entities::memory::{
     ErrorPattern, ErrorPatternCategory, ErrorPatternMatch, MemoryFilter, Observation,
     ObservationMetadata, ObservationType,
 };
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case("code", Ok(ObservationType::Code))]
@@ -28,14 +28,14 @@ fn observation_type_as_str(#[case] observation_type: ObservationType, #[case] ex
     assert_eq!(observation_type.as_str(), expected);
 }
 
-#[test]
+#[rstest]
 fn test_observation_metadata_default() {
     let m = ObservationMetadata::default();
     assert!(!m.id.is_empty());
     assert!(m.session_id.is_none());
 }
 
-#[test]
+#[rstest]
 fn test_memory_filter_construction() {
     let f = MemoryFilter {
         id: None,
@@ -52,7 +52,7 @@ fn test_memory_filter_construction() {
     assert_eq!(f.session_id.as_deref(), Some("s1"));
 }
 
-#[test]
+#[rstest]
 fn test_observation_has_required_fields() {
     let o = Observation {
         id: "id1".to_string(),
@@ -102,7 +102,7 @@ fn error_pattern_category_as_str(#[case] category: ErrorPatternCategory, #[case]
     assert_eq!(category.as_str(), expected);
 }
 
-#[test]
+#[rstest]
 fn test_error_pattern_construction() {
     let pattern = ErrorPattern {
         id: "ep-001".to_string(),
@@ -123,7 +123,7 @@ fn test_error_pattern_construction() {
     assert_eq!(pattern.solutions.len(), 1);
 }
 
-#[test]
+#[rstest]
 fn test_error_pattern_match_construction() {
     let match_ = ErrorPatternMatch {
         id: "epm-001".to_string(),

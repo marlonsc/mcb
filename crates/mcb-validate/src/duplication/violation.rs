@@ -94,7 +94,6 @@ impl Violation for DuplicationViolation {
             DuplicationType::GappedClone => Some(
                 "Near-duplicate code detected. Consider refactoring into a common abstraction with small differences parameterized".to_string(),
             ),
-            // TODO(NAME001): Bad type name: could (expected CamelCase) - False positive in string literal
             DuplicationType::SemanticClone => Some(
                 "Functionally similar code detected. Review if a common interface or trait could reduce duplication".to_string(),
             ),

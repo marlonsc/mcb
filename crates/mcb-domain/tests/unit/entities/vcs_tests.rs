@@ -1,9 +1,9 @@
 //! Tests for VCS entities (REF003: dedicated test file).
 
+use rstest::rstest;
 use std::path::PathBuf;
 
 use mcb_domain::entities::vcs::{RepositoryId, VcsBranch, VcsRepository};
-use rstest::*;
 
 #[rstest]
 #[case("abc123")]
@@ -16,7 +16,7 @@ fn repository_id_construction(#[case] input: &str) {
     assert_eq!(from_into.as_str(), input);
 }
 
-#[test]
+#[rstest]
 fn test_vcs_repository_has_required_fields() {
     let repo = VcsRepository::new(
         RepositoryId::new("r1".to_string()),
@@ -29,7 +29,7 @@ fn test_vcs_repository_has_required_fields() {
     assert_eq!(repo.default_branch(), "main");
 }
 
-#[test]
+#[rstest]
 fn test_vcs_branch_has_id_and_name() {
     let branch = VcsBranch::new(
         "b1".to_string(),

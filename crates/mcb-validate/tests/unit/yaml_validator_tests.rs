@@ -1,6 +1,7 @@
 //! Unit tests for YAML rule validator.
 
 use mcb_validate::rules::YamlRuleValidator;
+use rstest::rstest;
 use rstest::*;
 use serde_json::json;
 

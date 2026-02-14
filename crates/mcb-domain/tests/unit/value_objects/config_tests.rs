@@ -1,7 +1,7 @@
 //! Unit tests for configuration value objects.
 
 use mcb_domain::{EmbeddingConfig, VectorStoreConfig};
-use rstest::*;
+use rstest::rstest;
 
 fn make_embedding_config(
     provider: &str,
@@ -39,7 +39,7 @@ fn make_vector_store_config(
     }
 }
 
-#[test]
+#[rstest]
 fn test_embedding_config_creation() {
     let config = EmbeddingConfig {
         provider: "openai".to_string(),
@@ -94,7 +94,7 @@ fn embedding_config_variants(
     assert_eq!(config.max_tokens, max_tokens);
 }
 
-#[test]
+#[rstest]
 fn test_vector_store_config_creation() {
     let config = VectorStoreConfig {
         provider: "qdrant".to_string(),

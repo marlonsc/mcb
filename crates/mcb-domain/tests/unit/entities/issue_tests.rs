@@ -2,8 +2,9 @@
 
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::{IssueStatus, IssueType, ProjectIssue};
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn test_enhanced_project_issue_construction() {
     let issue = ProjectIssue {
         id: "iss-001".to_string(),
@@ -38,7 +39,7 @@ fn test_enhanced_project_issue_construction() {
     assert_eq!(issue.design, "Follow plan_entity layering");
 }
 
-#[test]
+#[rstest]
 fn test_issue_comment_serialization_roundtrip() {
     let comment = IssueComment {
         id: "c-1".to_string(),
@@ -58,7 +59,7 @@ fn test_issue_comment_serialization_roundtrip() {
     assert_eq!(parsed.created_at, 123);
 }
 
-#[test]
+#[rstest]
 fn test_issue_label_serialization_roundtrip() {
     let label = IssueLabel {
         id: "l-1".to_string(),
@@ -80,7 +81,7 @@ fn test_issue_label_serialization_roundtrip() {
     assert_eq!(parsed.created_at, 123);
 }
 
-#[test]
+#[rstest]
 fn test_issue_label_assignment_construction() {
     let assignment = IssueLabelAssignment {
         issue_id: "iss-1".to_string(),

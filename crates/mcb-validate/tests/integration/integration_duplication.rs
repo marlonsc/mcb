@@ -13,6 +13,7 @@
 
 #[cfg(test)]
 mod duplication_integration_tests {
+    use rstest::rstest;
     use std::fs;
     use std::io::Write;
     use std::path::PathBuf;
@@ -22,7 +23,6 @@ mod duplication_integration_tests {
         DuplicationAnalyzer, DuplicationThresholds, DuplicationType, TokenFingerprinter,
         tokenize_source,
     };
-    use rstest::*;
     use tempfile::TempDir;
 
     fn create_temp_file(dir: &TempDir, name: &str, content: &str) -> PathBuf {

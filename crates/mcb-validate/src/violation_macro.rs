@@ -63,8 +63,9 @@ macro_rules! define_violations {
             ),* $(,)?
         }
     ) => {
-        #[allow(missing_docs)]
+
         #[derive(Debug, Clone, serde::Serialize)]
+        #[allow(missing_docs)]
         $vis enum $name {
             $(
                 $(#[doc = $doc])*
@@ -142,8 +143,9 @@ macro_rules! define_violations {
             ),* $(,)?
         }
     ) => {
-        #[allow(missing_docs)]
+
         #[derive(Debug, Clone, serde::Serialize)]
+        #[allow(missing_docs)]
         $vis enum $name {
             $(
                 $(#[doc = $doc])*
@@ -233,8 +235,9 @@ macro_rules! define_violations {
             ),* $(,)?
         }
     ) => {
-        #[allow(missing_docs)]
+
         #[derive(Debug, Clone, serde::Serialize)]
+        #[allow(missing_docs)]
         $vis enum $name {
             $(
                 $(#[doc = $doc])*
@@ -311,8 +314,9 @@ macro_rules! define_violations {
             ),* $(,)?
         }
     ) => {
-        #[allow(missing_docs)]
+
         #[derive(Debug, Clone, serde::Serialize)]
+        #[allow(missing_docs)]
         $vis enum $name {
             $(
                 $(#[doc = $doc])*
@@ -479,7 +483,7 @@ pub mod violation_field_fmt {
 
     impl ViolationFieldFmt for PathBuf {
         fn fmt_field(&self) -> String {
-            format!("{}", self.display())
+            self.display().to_string()
         }
     }
 
@@ -534,7 +538,7 @@ pub mod violation_field_fmt {
     impl ViolationFieldFmt for Vec<PathBuf> {
         fn fmt_field(&self) -> String {
             self.iter()
-                .map(|p| format!("{}", p.display()))
+                .map(|p| p.display().to_string())
                 .collect::<Vec<_>>()
                 .join(", ")
         }

@@ -1,7 +1,7 @@
 use git2::Repository;
 use mcb_domain::entities::submodule::SubmoduleInfo;
 use mcb_providers::git::submodule::collect_submodules;
-use rstest::*;
+use rstest::rstest;
 use tempfile::TempDir;
 
 #[tokio::test]

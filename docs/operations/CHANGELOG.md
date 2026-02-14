@@ -48,8 +48,8 @@ reconciliation.
 ### Metrics
 
 - Commits since v0.2.0: 63
-- Rust Tests: 1,485 passing (`cargo test --workspace`)
-- mcb-validate listed tests: 382 (`cargo test -p mcb-validate -- --list`)
+- Rust Tests: 1,705 passing (`cargo test --workspace`)
+- mcb-validate listed tests: 349 (`cargo test -p mcb-validate -- --list`)
 - Crates: 9 workspace members
 - Beads open issues triaged with scope tags: 50/50
 

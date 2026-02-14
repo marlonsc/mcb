@@ -1,5 +1,5 @@
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case(WorktreeStatus::Active, "active")]

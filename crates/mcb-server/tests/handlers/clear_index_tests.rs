@@ -1,7 +1,7 @@
 use mcb_server::args::{IndexAction, IndexArgs};
 use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
-use rstest::*;
+use rstest::rstest;
 
 use crate::handlers::test_helpers::create_real_domain_services;
 

@@ -3,7 +3,7 @@
 use mcb_infrastructure::crypto::{
     CryptoService, HashUtils, PasswordService, SecureErasure, TokenGenerator,
 };
-use rstest::*;
+use rstest::rstest;
 
 #[test]
 fn test_crypto_service_encrypt_decrypt() {

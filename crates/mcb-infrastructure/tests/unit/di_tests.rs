@@ -1,8 +1,9 @@
 //! Unit tests for DI resolver module.
 
 use mcb_infrastructure::di::{AvailableProviders, list_available_providers};
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn test_list_available_providers() {
     // Verifies the function is callable and returns valid data
     let providers = list_available_providers();
@@ -17,7 +18,7 @@ fn test_list_available_providers() {
     );
 }
 
-#[test]
+#[rstest]
 fn test_available_providers_display() {
     let providers = AvailableProviders {
         embedding: vec![("fastembed", "FastEmbed local provider")],
@@ -37,7 +38,7 @@ fn test_available_providers_display() {
     assert!(display.contains("universal"));
 }
 
-#[test]
+#[rstest]
 fn test_available_providers_empty() {
     let providers = AvailableProviders {
         embedding: vec![],

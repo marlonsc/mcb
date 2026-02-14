@@ -3,9 +3,9 @@
 //! Uses `AST_ROOT_*` constants for expected root node kinds instead
 //! of hardcoded strings. Removed redundant `#[cfg(test)] mod` wrapper.
 
+use rstest::rstest;
 use std::path::Path;
 
-use rstest::*;
 use rust_code_analysis::{Callback, LANG, ParserTrait, action, guess_language};
 
 use crate::test_constants::{AST_ROOT_PROGRAM, AST_ROOT_PYTHON, AST_ROOT_RUST};

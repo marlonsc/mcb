@@ -1,3 +1,4 @@
+use rstest::rstest;
 use std::fs;
 
 use mcb_domain::ports::providers::{ComplexityAnalyzer, DeadCodeDetector, TdgScorer};

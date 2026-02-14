@@ -8,7 +8,7 @@ mod yaml_metrics_tests {
     use mcb_validate::Severity;
     use mcb_validate::metrics::{MetricThresholds, MetricType, RcaAnalyzer};
     use mcb_validate::rules::yaml_loader::{MetricThresholdConfig, MetricsConfig, YamlRuleLoader};
-    use rstest::*;
+    use rstest::rstest;
     use tempfile::TempDir;
 
     /// Test that `MetricsConfig` can be converted to `MetricThresholds`

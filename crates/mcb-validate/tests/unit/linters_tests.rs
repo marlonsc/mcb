@@ -3,7 +3,7 @@
 //! Uses shared constants for severity levels, rule codes, and file extensions.
 
 use mcb_validate::linters::*;
-use rstest::*;
+use rstest::rstest;
 
 use crate::test_constants::*;
 

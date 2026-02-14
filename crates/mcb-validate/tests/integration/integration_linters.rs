@@ -6,11 +6,11 @@
 //! - `LintViolation` structs are properly populated
 //! - `lint_select` codes are correctly categorized
 
+use rstest::rstest;
 use std::path::PathBuf;
 
 use mcb_validate::linters::{LintViolation, LinterEngine, LinterType, YamlRuleExecutor};
 use mcb_validate::{ValidatedRule, YamlRuleLoader};
-use rstest::*;
 
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))

@@ -82,7 +82,10 @@ fn parse_args<T>(request: &CallToolRequestParams) -> Result<T, McpError>
 where
     T: serde::de::DeserializeOwned + Validate,
 {
-    let args_value = serde_json::Value::Object(request.arguments.clone().unwrap_or_default());
+    let args_value = match &request.arguments {
+        Some(map) => serde_json::Value::Object(map.clone()),
+        None => serde_json::Value::Object(Default::default()),
+    };
     let args: T = serde_json::from_value(args_value)
         .map_err(|e| McpError::invalid_params(format!("Failed to parse arguments: {e}"), None))?;
 

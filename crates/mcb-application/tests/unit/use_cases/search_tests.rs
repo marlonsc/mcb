@@ -3,6 +3,7 @@
 //! These tests use real providers (FastEmbedProvider, MokaCacheProvider, EdgeVecVectorStoreProvider)
 //! to validate actual search behavior, not mocked responses.
 
+use rstest::rstest;
 use std::sync::Arc;
 
 use mcb_application::use_cases::SearchServiceImpl;

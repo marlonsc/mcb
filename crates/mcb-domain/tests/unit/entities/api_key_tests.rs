@@ -1,6 +1,7 @@
 use mcb_domain::entities::api_key::ApiKey;
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn api_key_construction() {
     let key = ApiKey {
         id: "key-001".to_string(),
@@ -21,7 +22,7 @@ fn api_key_construction() {
     assert!(key.revoked_at.is_none());
 }
 
-#[test]
+#[rstest]
 fn api_key_serialization_roundtrip() {
     let key = ApiKey {
         id: "key-002".to_string(),
@@ -41,7 +42,7 @@ fn api_key_serialization_roundtrip() {
     assert!(deserialized.expires_at.is_none());
 }
 
-#[test]
+#[rstest]
 fn api_key_revoked() {
     let key = ApiKey {
         id: "key-003".to_string(),

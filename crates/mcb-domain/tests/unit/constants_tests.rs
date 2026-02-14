@@ -4,7 +4,7 @@ use mcb_domain::{
     INDEXING_BATCH_SIZE, INDEXING_CHUNK_MIN_LENGTH, INDEXING_CHUNK_MIN_LINES,
     INDEXING_CHUNKS_MAX_PER_FILE,
 };
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case(INDEXING_BATCH_SIZE, 10)]

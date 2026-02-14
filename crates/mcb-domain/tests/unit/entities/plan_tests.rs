@@ -1,5 +1,5 @@
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case(PlanStatus::Draft, "draft")]

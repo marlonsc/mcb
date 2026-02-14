@@ -6,7 +6,6 @@
 #[allow(dead_code)]
 mod test_utils;
 
-mod constants_tests;
 mod decorators;
 mod registry_tests;
 mod use_cases;

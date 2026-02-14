@@ -3,8 +3,9 @@
 #[cfg(test)]
 mod tests {
     use mcb_domain::{EmbeddingProviderKind, Language, OperationType, VectorStoreProviderKind};
+    use rstest::rstest;
 
-    #[test]
+    #[rstest]
     fn test_language_type_alias() {
         let lang: Language = "rust".to_string();
         assert_eq!(lang, "rust");
@@ -16,7 +17,7 @@ mod tests {
         assert_eq!(custom_lang, "kotlinscript");
     }
 
-    #[test]
+    #[rstest]
     fn test_operation_type_alias() {
         let op: OperationType = "indexing".to_string();
         assert_eq!(op, "indexing");
@@ -28,7 +29,7 @@ mod tests {
         assert_eq!(custom_op, "custom-operation");
     }
 
-    #[test]
+    #[rstest]
     fn test_embedding_provider_kind_alias() {
         let provider: EmbeddingProviderKind = "openai".to_string();
         assert_eq!(provider, "openai");
@@ -40,7 +41,7 @@ mod tests {
         assert_eq!(custom, "my-custom-embedder");
     }
 
-    #[test]
+    #[rstest]
     fn test_vector_store_provider_kind_alias() {
         let store: VectorStoreProviderKind = "qdrant".to_string();
         assert_eq!(store, "qdrant");
@@ -52,7 +53,7 @@ mod tests {
         assert_eq!(custom, "my-vector-db");
     }
 
-    #[test]
+    #[rstest]
     fn test_type_alias_equality() {
         let lang1: Language = "javascript".to_string();
         let lang2: Language = "javascript".to_string();
@@ -63,7 +64,7 @@ mod tests {
         assert_eq!(op1, op2);
     }
 
-    #[test]
+    #[rstest]
     fn test_type_alias_inequality() {
         let lang1: Language = "rust".to_string();
         let lang2: Language = "python".to_string();

@@ -3,7 +3,7 @@ use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::MemoryRepository;
 use mcb_domain::value_objects::{ObservationId, SessionId};
 use mcb_providers::database::create_memory_repository_with_executor;
-use rstest::*;
+use rstest::rstest;
 
 async fn setup_memory_repo() -> (
     std::sync::Arc<dyn MemoryRepository>,

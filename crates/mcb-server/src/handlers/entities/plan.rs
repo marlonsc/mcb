@@ -28,8 +28,6 @@ impl PlanEntityHandler {
     /// This method acts as a dispatcher for all plan-related entities including plans,
     /// versions, and reviews. It handles authorization context (org_id) and ensures
     /// all required data is present.
-    // TODO(KISS005): Function handle is too long (71 lines, max: 50).
-    // Consider splitting into separate handlers for Plan, Version, and Review.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,

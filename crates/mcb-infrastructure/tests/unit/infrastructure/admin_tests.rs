@@ -3,6 +3,7 @@ use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::infrastructure::admin::{
     AtomicPerformanceMetrics, DefaultIndexingOperations,
 };
+use rstest::rstest;
 use rstest::*;
 
 #[fixture]

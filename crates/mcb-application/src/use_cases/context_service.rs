@@ -44,10 +44,16 @@ mod cache_keys {
 }
 
 /// Build metadata map from a code chunk
-fn build_chunk_metadata(chunk: &CodeChunk) -> HashMap<String, serde_json::Value> {
+fn build_chunk_metadata(
+    chunk: &CodeChunk,
+    normalized_file_path: &str,
+) -> HashMap<String, serde_json::Value> {
     HashMap::from([
         ("id".to_string(), json!(chunk.id)),
-        (METADATA_KEY_FILE_PATH.to_string(), json!(chunk.file_path)),
+        (
+            METADATA_KEY_FILE_PATH.to_string(),
+            json!(normalized_file_path),
+        ),
         ("content".to_string(), json!(chunk.content)),
         (METADATA_KEY_START_LINE.to_string(), json!(chunk.start_line)),
         (METADATA_KEY_END_LINE.to_string(), json!(chunk.end_line)),
@@ -157,22 +163,17 @@ impl ContextServiceInterface for ContextServiceImpl {
 
     async fn store_chunks(&self, collection: &CollectionId, chunks: &[CodeChunk]) -> Result<()> {
         let name = collection.as_str();
-        let mut normalized_chunks = Vec::with_capacity(chunks.len());
+        let mut texts = Vec::with_capacity(chunks.len());
+        let mut metadata = Vec::with_capacity(chunks.len());
+
         for chunk in chunks {
-            let mut normalized = chunk.clone();
-            normalized.file_path = normalize_relative_file_path(&chunk.file_path)?;
-            normalized_chunks.push(normalized);
+            let normalized_file_path = normalize_relative_file_path(&chunk.file_path)?;
+            texts.push(chunk.content.clone());
+            metadata.push(build_chunk_metadata(chunk, &normalized_file_path));
         }
 
         // Generate embeddings for each chunk
-        let texts: Vec<String> = normalized_chunks
-            .iter()
-            .map(|c| c.content.clone())
-            .collect();
         let embeddings = self.embedding_provider.embed_batch(&texts).await?;
-
-        // Build metadata for each chunk
-        let metadata: Vec<_> = normalized_chunks.iter().map(build_chunk_metadata).collect();
 
         // Insert into vector store
         self.vector_store_provider
@@ -182,7 +183,7 @@ impl ContextServiceInterface for ContextServiceImpl {
         // Update collection metadata in cache
         self.cache_set(
             &cache_keys::collection_meta(name),
-            &normalized_chunks.len().to_string(),
+            &chunks.len().to_string(),
         )
         .await
     }

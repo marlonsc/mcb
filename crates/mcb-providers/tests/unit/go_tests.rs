@@ -2,7 +2,7 @@
 
 use mcb_domain::ports::providers::project_detection::{ProjectDetector, ProjectDetectorConfig};
 use mcb_providers::git::project_detection::GoDetector;
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case(false)]

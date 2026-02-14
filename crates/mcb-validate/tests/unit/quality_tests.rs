@@ -4,7 +4,7 @@
 //! file + line + violation-type assertions.
 
 use mcb_validate::{QualityValidator, QualityViolation};
-use rstest::*;
+use rstest::rstest;
 
 use crate::test_constants::{
     DOMAIN_CRATE, FILE_SIZE_LOW_THRESHOLD, FIXTURE_DOMAIN_SERVICE_PATH,

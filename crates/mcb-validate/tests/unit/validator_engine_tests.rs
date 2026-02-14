@@ -1,7 +1,7 @@
 //! Unit tests for `ValidatorEngine`.
 
 use mcb_validate::engines::ValidatorEngine;
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case("architecture", "rust-rule-engine", true)]

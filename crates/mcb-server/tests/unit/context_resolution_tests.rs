@@ -1,5 +1,5 @@
 use mcb_server::handlers::helpers::{normalize_identifier, resolve_identifier_precedence};
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case(None, None)]

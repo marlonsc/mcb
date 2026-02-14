@@ -1,7 +1,7 @@
 //! Tests for domain utility hashing helpers.
 
 use mcb_domain::utils::compute_stable_id_hash;
-use rstest::*;
+use rstest::rstest;
 
 #[test]
 fn test_compute_stable_id_hash_is_deterministic() {

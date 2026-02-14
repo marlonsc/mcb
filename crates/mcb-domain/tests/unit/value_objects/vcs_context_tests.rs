@@ -1,6 +1,7 @@
 use mcb_domain::utils::vcs_context::VcsContext;
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn test_vcs_context_fields_optional() {
     let ctx = VcsContext {
         branch: Some("main".to_string()),

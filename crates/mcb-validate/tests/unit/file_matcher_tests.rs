@@ -1,9 +1,9 @@
 //! Unit tests for `FilePatternMatcher`.
 
+use rstest::rstest;
 use std::path::Path;
 
 use mcb_validate::filters::FilePatternMatcher;
-use rstest::*;
 
 #[rstest]
 #[case("main.rs", true)]

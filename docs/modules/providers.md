@@ -129,16 +129,11 @@ AST-based code chunking via**tree-sitter v0.26**for**13 languages (12 parsers; J
 | Swift | tree-sitter-swift | Production |
 | Kotlin | tree-sitter-kotlin-ng | Production |
 
-## Routing System (`routing/`)
+## Analysis (`analysis/`)
 
-Intelligent provider selection and management.
+Native code analysis using Rust-code-analysis integration:
 
-- **CircuitBreaker** — Failure detection and recovery (per-provider)
-- **HealthMonitor** — Continuous health checking
-
-## Storage (`storage/`)
-
-File-system backed storage utilities for data persistence.
+- `native.rs` — RCA-based metrics analysis
 
 ## Workflow (`workflow/`)
 
@@ -179,6 +174,15 @@ MCP__INFRASTRUCTURE__CACHE__PROVIDER=moka
 
 ```text
 crates/mcb-providers/src/
+├── analysis/           # Code analysis
+│   ├── native.rs       # Rust-code-analysis integration
+│   └── mod.rs
+├── cache/
+│   ├── moka.rs         # Moka cache (feature-gated)
+│   ├── redis.rs        # Redis cache (feature-gated)
+│   └── mod.rs
+├── database/
+│   └── sqlite/         # SQLite + FTS5 repositories
 ├── embedding/
 │   ├── anthropic.rs    # Anthropic API
 │   ├── fastembed.rs    # Local ONNX embeddings (feature-gated)
@@ -188,24 +192,18 @@ crates/mcb-providers/src/
 │   ├── openai.rs       # OpenAI API
 │   ├── voyageai.rs     # VoyageAI
 │   └── mod.rs
-├── vector_store/
-│   ├── edgevec.rs      # In-process HNSW
-│   ├── encrypted.rs    # AES-GCM encrypted decorator (feature-gated)
-│   ├── helpers.rs      # Shared vector utilities
-│   ├── milvus.rs       # Milvus gRPC client
-│   ├── pinecone.rs     # Pinecone REST client
-│   ├── qdrant.rs       # Qdrant REST client
-│   └── mod.rs
-├── database/
-│   └── sqlite/         # SQLite + FTS5 repositories
-├── cache/
-│   ├── moka.rs         # Moka cache (feature-gated)
-│   ├── redis.rs        # Redis cache (feature-gated)
-│   └── mod.rs
 ├── events/             # Event bus implementations
 ├── git/                # git2 VCS provider
 ├── hybrid_search/      # BM25 + semantic combined search
 ├── language/
+│   ├── common/         # Shared language utilities
+│   │   ├── config.rs   # Language configuration
+│   │   ├── constants.rs # Language constants
+│   │   ├── processor.rs # Common processor logic
+│   │   ├── traverser.rs # AST traversal utilities
+│   │   └── mod.rs
+│   ├── detection.rs    # Language detection
+│   ├── engine.rs       # Chunking engine
 │   ├── rust.rs         # Rust processor
 │   ├── python.rs       # Python processor
 │   ├── javascript.rs   # JavaScript + TypeScript (mode)
@@ -219,15 +217,18 @@ crates/mcb-providers/src/
 │   ├── swift.rs        # Swift processor
 │   ├── kotlin.rs       # Kotlin processor
 │   └── mod.rs
-├── routing/
-│   ├── circuit_breaker.rs
-│   ├── health.rs
-│   └── mod.rs
-├── storage/            # File-system storage
 ├── utils/              # Shared utilities
-├── workflow/           # Workflow engine
-├── admin/
-│   └── metrics.rs      # AtomicPerformanceMetrics
+├── vector_store/
+│   ├── edgevec.rs      # In-process HNSW
+│   ├── encrypted.rs    # AES-GCM encrypted decorator (feature-gated)
+│   ├── helpers.rs      # Shared vector utilities
+│   ├── milvus.rs       # Milvus gRPC client
+│   ├── pinecone.rs     # Pinecone REST client
+│   ├── qdrant.rs       # Qdrant REST client
+│   └── mod.rs
+├── workflow/
+│   ├── mod.rs          # Workflow module
+│   └── transitions.rs  # State transitions
 ├── constants.rs        # Provider constants
 ├── provider_utils.rs   # Provider utilities
 └── lib.rs              # Crate root

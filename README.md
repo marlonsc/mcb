@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.92%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.2.0-green)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
+[![Version](https://img.shields.io/badge/version-0.2.1--dev-green)](https://github.com/marlonsc/mcb/releases)
 
 **Memory Context Browser** (MCB) is a high-performance [MCP](https://modelcontextprotocol.io/) server
 that gives AI coding agents persistent memory, semantic code search, and deep codebase
@@ -15,7 +15,7 @@ understanding — all through the standard Model Context Protocol.
 - 🧠 **Persistent Memory** — Cross-session observation storage with timeline, tagging, and context injection
 - 🏗️ **Multi-Provider Architecture** — 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed) and 5 vector stores (Milvus, EdgeVec)
 - 🌳 **AST-Aware Analysis** — Tree-sitter parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
-- ✅ **Architecture Validation** — Built-in Clean Architecture rule enforcement (9 rules, 7 phases, 3,143+ tests)
+- ✅ **Architecture Validation** — Built-in Clean Architecture rule enforcement (9 rules, 7 phases, 349+ validate tests, 1700+ total tests)
 - 🔌 **MCP Protocol Native** — Seamless integration with Claude Desktop, Claude Code, and any MCP-compatible client
 - 🔒 **Git-Aware Indexing** — Repository-level context with branch comparison and impact analysis
 
@@ -117,7 +117,7 @@ MCB follows **Clean Architecture** with strict inward-only dependency flow:
 [linkme](https://crates.io/crates/linkme) provider registration (zero runtime overhead).
 
 See [Architecture Documentation](./docs/architecture/ARCHITECTURE.md) for detailed design
-and [ADR index](./docs/adr/) for all 46 Architecture Decision Records.
+and [ADR index](./docs/adr/) for all 48 Architecture Decision Records.
 
 ## Documentation
 
@@ -129,7 +129,7 @@ and [ADR index](./docs/adr/) for all 46 Architecture Decision Records.
 ### Architecture & Design
 
 - [Architecture Overview](./docs/architecture/ARCHITECTURE.md) — Clean Architecture layers, crate map, dependency flow
-- [Architecture Decision Records](./docs/adr/) — 46 ADRs documenting every major design choice
+- [Architecture Decision Records](./docs/adr/) — 48 ADRs documenting every major design choice
 - [MCP Tools Schema](./docs/MCP_TOOLS.md) — Full tool API documentation
 
 ### Developer Guide
@@ -148,7 +148,7 @@ and [ADR index](./docs/adr/) for all 46 Architecture Decision Records.
 ```bash
 make build          # Debug build
 make build RELEASE=1  # Optimized release build
-make test           # Run all tests (~2900+)
+make test           # Run all tests (1700+)
 make lint           # Clippy + format check
 make validate       # Architecture rule enforcement
 make check        # Full pipeline: fmt + lint + test + validate

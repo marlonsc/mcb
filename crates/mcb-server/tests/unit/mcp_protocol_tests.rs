@@ -8,6 +8,7 @@
 //!
 //! Run with: `cargo test -p mcb-server --test unit mcp_protocol`
 
+use rstest::rstest;
 extern crate mcb_providers;
 
 use std::net::TcpListener;

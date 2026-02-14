@@ -1,4 +1,5 @@
 use mcb_domain::entities::repository::{Branch, Repository, VcsType};
+use rstest::rstest;
 use rstest::*;
 
 #[rstest]

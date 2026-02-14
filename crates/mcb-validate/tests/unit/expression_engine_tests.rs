@@ -4,6 +4,7 @@
 //! the duplicated `create_test_context` function, and `SNIPPET_*` constants
 //! for inline file contents.
 
+use rstest::rstest;
 use std::collections::HashMap;
 
 use mcb_validate::engines::expression_engine::ExpressionEngine;

@@ -1,3 +1,4 @@
+use rstest::rstest;
 use std::sync::Arc;
 
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
@@ -7,7 +8,6 @@ use mcb_domain::entities::{
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::ports::repositories::OrgEntityRepository;
 use mcb_providers::database::SqliteOrgEntityRepository;
-use rstest::*;
 
 use super::entity_test_utils::{TEST_NOW, assert_not_found, setup_executor};
 

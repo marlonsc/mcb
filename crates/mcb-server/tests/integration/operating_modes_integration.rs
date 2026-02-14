@@ -7,6 +7,7 @@
 //!
 //! All tests use random free ports to avoid conflicts.
 
+use rstest::rstest;
 extern crate mcb_providers;
 
 use std::net::TcpListener;
@@ -23,7 +24,6 @@ use mcb_server::session::SessionManager;
 use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
 use mcb_server::transport::http_client::HttpClientTransport;
 use mcb_server::transport::types::{McpRequest, McpResponse};
-use rstest::*;
 
 /// Get a random available port by binding to port 0 and extracting the assigned port
 fn get_free_port() -> u16 {

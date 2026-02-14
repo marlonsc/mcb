@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Quickstart Guide
 
-Get Memory Context Browser v0.2.0 running in 5 minutes.
+Get Memory Context Browser v0.2.1 running in 5 minutes.
 
 ## 1. Download
 

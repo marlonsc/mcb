@@ -44,7 +44,6 @@ fn meta_value_as_string(meta: &Meta, keys: &[&str]) -> Option<String> {
             Value::String(v) => Some(v.clone()),
             Value::Number(v) => Some(v.to_string()),
             Value::Bool(v) => Some(v.to_string()),
-            // TODO(mcb-validate): Empty catch-all: match arm '_ => {}' silently ignores cases.
             _ => None,
         };
         if extracted.is_some() {
@@ -72,10 +71,8 @@ fn meta_value_as_bool(meta: &Meta, keys: &[&str]) -> Option<bool> {
             Value::String(v) => match v.trim().to_ascii_lowercase().as_str() {
                 "true" | "1" | "yes" => Some(true),
                 "false" | "0" | "no" => Some(false),
-                // TODO(mcb-validate): Empty catch-all.
                 _ => None,
             },
-            // TODO(mcb-validate): Empty catch-all.
             _ => None,
         };
         if extracted.is_some() {

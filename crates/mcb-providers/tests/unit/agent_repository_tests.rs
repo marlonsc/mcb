@@ -3,6 +3,7 @@
 //! Tests cover creation and storage of agent sessions and tool calls, verifying
 //! SQL schema integration and foreign key constraints.
 
+use rstest::rstest;
 use std::sync::Arc;
 
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
@@ -15,7 +16,6 @@ use mcb_providers::database::{
     create_agent_repository_from_executor, create_memory_repository_with_executor,
     create_project_repository_from_executor,
 };
-use rstest::*;
 
 async fn setup_repositories() -> (
     Arc<dyn AgentRepository>,

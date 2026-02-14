@@ -3,6 +3,7 @@
 //! Tests the InMemoryHealthMonitor state transitions and DefaultProviderRouter
 //! provider selection logic based on health status.
 
+use rstest::rstest;
 use std::sync::Arc;
 
 use mcb_domain::ports::infrastructure::routing::{

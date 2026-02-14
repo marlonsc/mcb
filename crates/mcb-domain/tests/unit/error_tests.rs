@@ -1,7 +1,7 @@
 //! Unit tests for domain error types
 
 use mcb_domain::Error;
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case::not_found(Error::not_found("user"), "NotFound", "user")]

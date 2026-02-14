@@ -1,9 +1,9 @@
 //! Unit tests for language detection (filters).
 
+use rstest::rstest;
 use std::path::Path;
 
 use mcb_validate::filters::LanguageDetector;
-use rstest::*;
 
 #[rstest]
 #[case("main.rs", "rust")]

@@ -3,6 +3,7 @@
 //! Tests service state tracking, lifecycle operations, and the LifecycleManaged trait.
 //! Includes a test implementation to verify trait behavior.
 
+use rstest::rstest;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -58,7 +59,7 @@ fn test_all_service_states_distinct() {
     }
 }
 
-#[test]
+#[rstest]
 fn test_service_state_default() {
     assert_eq!(PortServiceState::default(), PortServiceState::Stopped);
 }
@@ -80,14 +81,14 @@ fn test_dependency_health_properties(#[case] health: DependencyHealth) {
     assert_eq!(deserialized, health);
 }
 
-#[test]
+#[rstest]
 fn test_dependency_health_values_distinct() {
     assert_ne!(DependencyHealth::Healthy, DependencyHealth::Degraded);
     assert_ne!(DependencyHealth::Degraded, DependencyHealth::Unhealthy);
     assert_ne!(DependencyHealth::Unhealthy, DependencyHealth::Unknown);
 }
 
-#[test]
+#[rstest]
 fn test_dependency_health_default() {
     assert_eq!(DependencyHealth::default(), DependencyHealth::Unknown);
 }
@@ -96,7 +97,7 @@ fn test_dependency_health_default() {
 // DependencyHealthCheck Tests
 // =============================================================================
 
-#[test]
+#[rstest]
 fn test_health_check_default() {
     let check: DependencyHealthCheck = Default::default();
     assert_eq!(check.name, "");

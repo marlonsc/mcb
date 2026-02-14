@@ -1,12 +1,12 @@
 //! Unit tests for Git2 VCS provider.
 
+use rstest::rstest;
 use std::error::Error;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_providers::git::Git2Provider;
-use rstest::*;
 use tempfile::TempDir;
 use tokio::fs::write as tokio_write;
 

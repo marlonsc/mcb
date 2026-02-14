@@ -12,6 +12,7 @@
 //! 4. Handles return consistent provider instances
 //! 5. Admin services can switch providers at runtime
 
+use rstest::rstest;
 // Force linkme registration of all providers
 extern crate mcb_providers;
 
@@ -23,7 +24,6 @@ use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
-use rstest::*;
 
 fn test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");

@@ -305,9 +305,7 @@ pub fn indexes() -> Vec<IndexDef> {
         IndexDef {
             name: "idx_obs_type".to_string(),
             table: "observations".to_string(),
-            // TODO(ORG002): Duplicate string literal "observation_type".
-            // Consider using COL_OBSERVATION_TYPE instead.
-            columns: vec!["observation_type".to_string()],
+            columns: vec![COL_OBSERVATION_TYPE.to_string()],
         },
         IndexDef {
             name: "idx_obs_embedding".to_string(),

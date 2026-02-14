@@ -1,7 +1,7 @@
 use mcb_domain::entities::organization::{OrgStatus, Organization};
-use rstest::*;
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn organization_construction() {
     let org = Organization {
         id: "org-001".to_string(),
@@ -17,7 +17,7 @@ fn organization_construction() {
     assert_eq!(org.settings_json, "{}");
 }
 
-#[test]
+#[rstest]
 fn organization_serialization_roundtrip() {
     let org = Organization {
         id: "org-002".to_string(),

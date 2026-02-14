@@ -4,7 +4,7 @@ use mcb_domain::entities::agent::{
 use mcb_domain::test_utils::{
     create_test_agent_session, create_test_checkpoint, create_test_tool_call,
 };
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case(AgentType::Sisyphus.as_str().to_string(), "sisyphus")]

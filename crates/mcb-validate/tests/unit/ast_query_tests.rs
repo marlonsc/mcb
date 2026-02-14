@@ -1,7 +1,7 @@
 //! Unit tests for AST query (`AstQueryBuilder`, `AstQueryPatterns`).
 
 use mcb_validate::ast::query::{AstQueryBuilder, AstQueryPatterns, QueryCondition};
-use rstest::*;
+use rstest::rstest;
 
 #[test]
 fn test_query_builder() {

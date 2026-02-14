@@ -1,8 +1,9 @@
 //! Tests for submodule entity (REF003: dedicated test file).
 
 use mcb_domain::entities::submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn test_submodule_discovery_config_default() {
     let c = SubmoduleDiscoveryConfig::default();
     assert_eq!(c.max_depth, 2);
@@ -10,7 +11,7 @@ fn test_submodule_discovery_config_default() {
     assert!(c.continue_on_error);
 }
 
-#[test]
+#[rstest]
 fn test_submodule_info_fields() {
     let s = SubmoduleInfo {
         id: "sub-1".to_string(),

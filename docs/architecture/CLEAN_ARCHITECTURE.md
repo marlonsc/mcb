@@ -3,7 +3,7 @@
 
 ## Overview
 
-Memory Context Browser follows**Clean Architecture** principles with strict layer separation across 8 Cargo workspace crates. This document explains the architecture, layer interactions, and extension patterns.
+Memory Context Browser follows**Clean Architecture** principles with strict layer separation across 9 Cargo workspace crates. This document explains the architecture, layer interactions, and extension patterns.
 
 ## The 6 Layers
 

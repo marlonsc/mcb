@@ -1,10 +1,10 @@
 //! Unit tests for domain events
 
+use rstest::rstest;
 use std::sync::Mutex;
 
 use async_trait::async_trait;
 use mcb_domain::events::{DomainEvent, EventPublisher};
-use rstest::*;
 
 // Mock event publisher for testing
 struct TestEventPublisher {

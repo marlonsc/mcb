@@ -3,6 +3,7 @@
 use mcb_infrastructure::health::{
     HealthCheck, HealthChecker, HealthRegistry, HealthResponse, HealthStatus, checkers,
 };
+use rstest::rstest;
 use rstest::*;
 
 #[rstest]
@@ -70,7 +71,7 @@ fn test_health_status_predicates(#[case] status: HealthStatus, #[case] is_operat
     }
 }
 
-#[test]
+#[rstest]
 fn test_status_specifics() {
     assert!(HealthStatus::Up.is_healthy());
     assert!(!HealthStatus::Down.is_healthy());

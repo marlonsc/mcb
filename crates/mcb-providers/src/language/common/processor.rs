@@ -110,8 +110,8 @@ impl LanguageProcessor for BaseProcessor {
     }
 }
 
-#[allow(missing_docs)]
 #[macro_export]
+#[allow(missing_docs)]
 macro_rules! impl_delegating_language_processor {
     ($processor_ty:ty, $inner_field:ident) => {
         impl Default for $processor_ty {
@@ -139,8 +139,8 @@ macro_rules! impl_delegating_language_processor {
     };
 }
 
-#[allow(missing_docs)]
 #[macro_export]
+#[allow(missing_docs)]
 macro_rules! impl_simple_language_processor {
     (
         $processor_ty:ident,
@@ -149,13 +149,15 @@ macro_rules! impl_simple_language_processor {
         max_depth = $max_depth:expr,
         nodes = [$($node_type:expr),+ $(,)?]
     ) => {
+
         #[allow(missing_docs)]
         pub struct $processor_ty {
             processor: $crate::language::common::BaseProcessor,
         }
 
-        #[allow(missing_docs)]
+
         impl $processor_ty {
+            #[allow(missing_docs)]
             pub fn new() -> Self {
                 let config = $crate::language::common::LanguageConfig::new($language)
                     .with_rules(vec![$crate::language::common::NodeExtractionRule {

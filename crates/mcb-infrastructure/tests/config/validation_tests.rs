@@ -2,13 +2,13 @@
 //!
 //! Tests for configuration validation across all config types.
 
+use rstest::rstest;
 use std::path::PathBuf;
 
 use mcb_infrastructure::config::{
     AuthConfig, CacheProvider, CacheSystemConfig, ServerConfig, ServerConfigBuilder,
     ServerConfigPresets, ServerSslConfig,
 };
-use rstest::*;
 
 #[rstest]
 #[case(0)]

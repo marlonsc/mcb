@@ -3,8 +3,9 @@
 #[cfg(test)]
 mod tests {
     use mcb_domain::SearchResult;
+    use rstest::rstest;
 
-    #[test]
+    #[rstest]
     fn test_search_result_creation() {
         let result = SearchResult {
             id: "chunk-123".to_string(),
@@ -26,7 +27,7 @@ mod tests {
         assert_eq!(result.language, "rust");
     }
 
-    #[test]
+    #[rstest]
     fn test_search_result_high_score() {
         let result = SearchResult {
             id: "perfect-match".to_string(),
@@ -41,7 +42,7 @@ mod tests {
         assert_eq!(result.score, 0.99);
     }
 
-    #[test]
+    #[rstest]
     fn test_search_result_low_score() {
         let result = SearchResult {
             id: "poor-match".to_string(),
@@ -56,7 +57,7 @@ mod tests {
         assert_eq!(result.score, 0.12);
     }
 
-    #[test]
+    #[rstest]
     fn test_search_result_different_languages() {
         let rust_result = SearchResult {
             id: "rust-chunk".to_string(),
@@ -81,7 +82,7 @@ mod tests {
         assert!(rust_result.score > python_result.score);
     }
 
-    #[test]
+    #[rstest]
     fn test_search_result_zero_score() {
         let result = SearchResult {
             id: "no-match".to_string(),
@@ -95,7 +96,7 @@ mod tests {
         assert_eq!(result.score, 0.0);
     }
 
-    #[test]
+    #[rstest]
     fn test_search_result_perfect_score() {
         let result = SearchResult {
             id: "exact-match".to_string(),

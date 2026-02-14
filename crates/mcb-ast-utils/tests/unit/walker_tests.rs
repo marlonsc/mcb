@@ -4,7 +4,7 @@
 
 use mcb_ast_utils::visitor::KindCounter;
 use mcb_ast_utils::walker::TreeWalker;
-use rstest::*;
+use rstest::rstest;
 
 fn parse_rust_code(code: &str) -> tree_sitter::Tree {
     let mut parser = tree_sitter::Parser::new();

@@ -8,12 +8,12 @@
 //!
 //! Using rust-code-analysis (RCA) directly - NO wrappers.
 
+use rstest::rstest;
 use std::path::Path;
 
 use mcb_validate::ast::{
     AstNode, AstQuery, AstQueryBuilder, AstQueryPatterns, Position, QueryCondition, Span,
 };
-use rstest::*;
 use rust_code_analysis::{Callback, LANG, ParserTrait, action, find, guess_language};
 
 // ==================== RCA Callback for Parsing Tests ====================

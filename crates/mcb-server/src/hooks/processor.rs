@@ -9,7 +9,9 @@ use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::{compute_stable_id_hash, mask_id};
 use tracing::debug;
 
-use super::types::{HookError, HookResult, PostToolUseContext, SessionStartContext};
+use super::types::{
+    HookError, HookResult, PostToolUseContext, SessionStartContext, ToolExecutionStatus,
+};
 
 /// Processor for tool execution hooks.
 ///
@@ -88,7 +90,7 @@ impl HookProcessor {
         };
 
         let mut tags = vec!["tool".to_string(), context.tool_name.clone()];
-        if context.tool_output.is_error.unwrap_or(false) {
+        if context.status == ToolExecutionStatus::Error {
             tags.push("error".to_string());
         }
 

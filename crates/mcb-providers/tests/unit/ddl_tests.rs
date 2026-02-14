@@ -2,6 +2,7 @@ use mcb_domain::schema::{
     MemorySchema, MemorySchemaDdlGenerator, ProjectSchema, SchemaDdlGenerator,
 };
 use mcb_providers::database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
+use rstest::rstest;
 use rstest::*;
 
 #[fixture]

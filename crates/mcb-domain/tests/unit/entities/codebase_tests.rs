@@ -3,10 +3,10 @@
 //! Tests the CodebaseSnapshot and FileSnapshot entities, including
 //! change tracking functionality.
 
+use rstest::rstest;
 use std::collections::HashMap;
 
 use mcb_domain::entities::codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
-use rstest::*;
 
 #[rstest]
 #[case("src/lib.rs", 1641081600, 2048, "def456", "rust")]

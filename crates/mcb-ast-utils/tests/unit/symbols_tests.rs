@@ -4,7 +4,7 @@
 
 use mcb_ast_utils::symbols::{SymbolExtractor, SymbolKind};
 use mcb_language_support::language::LanguageId;
-use rstest::*;
+use rstest::rstest;
 
 use super::common::{parse_python, parse_rust};
 

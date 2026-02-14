@@ -6,7 +6,6 @@ use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::value_objects::ids::SessionId;
-use rmcp::model::CallToolResult;
 use thiserror::Error;
 
 /// Result type for hook operations.
@@ -43,8 +42,6 @@ pub enum Hook {
 pub struct PostToolUseContext {
     /// Name of the tool that was executed.
     pub tool_name: String,
-    /// The result output from the tool execution.
-    pub tool_output: CallToolResult,
     /// The execution status (success, error, partial).
     pub status: ToolExecutionStatus,
     /// Timestamp when the execution finished (Unix epoch).
@@ -83,11 +80,12 @@ pub struct HookContext {
 }
 
 impl PostToolUseContext {
-    /// Creates a new `PostToolUseContext` from a tool name and output.
+    /// Creates a new `PostToolUseContext` from a tool name and error status.
     ///
-    /// Automatically determines the status based on `tool_output.is_error`.
-    pub fn new(tool_name: String, tool_output: CallToolResult) -> Self {
-        let status = if tool_output.is_error.unwrap_or(false) {
+    /// This avoids cloning the entire `CallToolResult` — only the `is_error`
+    /// flag is needed by the hook processor.
+    pub fn new(tool_name: String, is_error: bool) -> Self {
+        let status = if is_error {
             ToolExecutionStatus::Error
         } else {
             ToolExecutionStatus::Success
@@ -100,7 +98,6 @@ impl PostToolUseContext {
 
         Self {
             tool_name,
-            tool_output,
             status,
             timestamp,
             session_id: None,
@@ -117,8 +114,8 @@ impl PostToolUseContext {
 
     /// Adds a key-value pair to the metadata.
     #[must_use]
-    pub fn with_metadata(mut self, key: String, value: String) -> Self {
-        self.metadata.insert(key, value);
+    pub fn with_metadata(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.metadata.insert(key.into(), value.into());
         self
     }
 }

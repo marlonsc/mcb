@@ -2,7 +2,7 @@
 
 use mcb_domain::entities::{TransitionTrigger, WorkflowSession, WorkflowState};
 use mcb_providers::workflow::apply_transition;
-use rstest::*;
+use rstest::rstest;
 
 #[rstest]
 #[case("initializing", "ctx-1", "", "ready")]

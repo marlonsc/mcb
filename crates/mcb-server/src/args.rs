@@ -31,14 +31,48 @@ pub(crate) fn validate_collection_name(collection: &str) -> Result<(), Validatio
     Ok(())
 }
 
-/// Consolidated argument types.
+pub(crate) mod macros;
+
+#[allow(missing_docs)]
+pub mod agent;
+
+#[allow(missing_docs)]
 pub mod consolidated;
 
-pub use consolidated::{
-    AgentAction, AgentArgs, EntityAction, EntityArgs, EntityResource, IndexAction, IndexArgs,
-    IssueEntityAction, IssueEntityArgs, IssueEntityResource, MemoryAction, MemoryArgs,
-    MemoryResource, OrgEntityAction, OrgEntityArgs, OrgEntityResource, PlanEntityAction,
-    PlanEntityArgs, PlanEntityResource, ProjectAction, ProjectArgs, ProjectResource, SearchArgs,
-    SearchResource, SessionAction, SessionArgs, ValidateAction, ValidateArgs, ValidateScope,
-    VcsAction, VcsArgs, VcsEntityAction, VcsEntityArgs, VcsEntityResource,
+#[allow(missing_docs)]
+pub mod entity;
+
+#[allow(missing_docs)]
+pub mod index;
+
+#[allow(missing_docs)]
+pub mod memory;
+
+#[allow(missing_docs)]
+pub mod project;
+
+#[allow(missing_docs)]
+pub mod search;
+
+#[allow(missing_docs)]
+pub mod session;
+
+#[allow(missing_docs)]
+pub mod validate;
+
+#[allow(missing_docs)]
+pub mod vcs;
+
+pub use agent::{AgentAction, AgentArgs};
+pub use entity::{
+    EntityAction, EntityArgs, EntityResource, IssueEntityAction, IssueEntityArgs,
+    IssueEntityResource, OrgEntityAction, OrgEntityArgs, OrgEntityResource, PlanEntityAction,
+    PlanEntityArgs, PlanEntityResource, VcsEntityAction, VcsEntityArgs, VcsEntityResource,
 };
+pub use index::{IndexAction, IndexArgs};
+pub use memory::{MemoryAction, MemoryArgs, MemoryResource};
+pub use project::{ProjectAction, ProjectArgs, ProjectResource};
+pub use search::{SearchArgs, SearchResource};
+pub use session::{SessionAction, SessionArgs};
+pub use validate::{ValidateAction, ValidateArgs, ValidateScope};
+pub use vcs::{VcsAction, VcsArgs};

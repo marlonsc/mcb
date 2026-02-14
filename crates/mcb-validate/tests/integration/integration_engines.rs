@@ -82,6 +82,7 @@ fn test_main() {
 
 mod expression_engine_tests {
     use super::*;
+    use rstest::rstest;
 
     #[test]
     fn test_expression_engine_creation() {
@@ -226,6 +227,7 @@ rule "DomainIndependence" salience 10 {
 
 mod router_tests {
     use super::*;
+    use rstest::rstest;
 
     #[fixture]
     fn router() -> RuleEngineRouter {
@@ -369,6 +371,7 @@ mod router_tests {
 
 mod hybrid_engine_tests {
     use super::*;
+    use rstest::rstest;
 
     #[fixture]
     fn engine() -> HybridRuleEngine {

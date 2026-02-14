@@ -1,7 +1,7 @@
 use mcb_domain::entities::team::{Team, TeamMember, TeamMemberRole};
-use rstest::*;
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn team_construction() {
     let team = Team {
         id: "team-001".to_string(),
@@ -14,7 +14,7 @@ fn team_construction() {
     assert_eq!(team.name, "Platform");
 }
 
-#[test]
+#[rstest]
 fn team_serialization_roundtrip() {
     let team = Team {
         id: "team-002".to_string(),
@@ -28,7 +28,7 @@ fn team_serialization_roundtrip() {
     assert_eq!(deserialized.name, "Backend");
 }
 
-#[test]
+#[rstest]
 fn team_member_construction() {
     let member = TeamMember {
         team_id: "team-001".to_string(),

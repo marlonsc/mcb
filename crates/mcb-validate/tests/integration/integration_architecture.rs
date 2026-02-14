@@ -19,6 +19,7 @@
 
 #[cfg(test)]
 mod architecture_integration_tests {
+    use rstest::rstest;
     use std::fs;
     use std::io::Write;
     use std::path::{Path, PathBuf};
@@ -28,7 +29,6 @@ mod architecture_integration_tests {
     use mcb_validate::config::NamingRulesConfig;
     use mcb_validate::{CleanArchitectureValidator, CleanArchitectureViolation};
     use mcb_validate::{Severity, Violation, ViolationCategory};
-    use rstest::*;
     use tempfile::TempDir;
 
     fn mcb_naming_config() -> NamingRulesConfig {
