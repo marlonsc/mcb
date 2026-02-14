@@ -7,6 +7,7 @@ use mcb_domain::value_objects::project_context::{ProjectContext, parse_owner_rep
 static VCS_CONTEXT: OnceLock<VcsContext> = OnceLock::new();
 static PROJECT_CONTEXT: OnceLock<ProjectContext> = OnceLock::new();
 
+/// Capture VCS context (branch, commit, repo) from the git environment. Cached after first call.
 #[must_use]
 pub fn capture_vcs_context() -> VcsContext {
     VCS_CONTEXT
@@ -45,6 +46,7 @@ pub fn capture_vcs_context() -> VcsContext {
         .clone()
 }
 
+/// Resolve project identity from the current git repository. Cached after first call.
 #[must_use]
 pub fn resolve_project_context() -> ProjectContext {
     PROJECT_CONTEXT.get_or_init(detect_project_context).clone()

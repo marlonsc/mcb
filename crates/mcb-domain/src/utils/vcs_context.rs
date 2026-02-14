@@ -10,6 +10,7 @@ pub struct VcsContext {
 }
 
 impl VcsContext {
+    /// Creates a new `VcsContext` from pre-resolved values.
     #[must_use]
     pub fn new(branch: Option<String>, commit: Option<String>, repo_id: Option<String>) -> Self {
         Self {

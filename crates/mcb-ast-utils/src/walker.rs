@@ -18,8 +18,7 @@ impl TreeWalker {
         Self::walk_node(tree.root_node(), source, visitor, ctx);
     }
 
-    /// Walk starting from a specific node
-    pub fn walk_node<V: NodeVisitor>(
+    fn walk_node<V: NodeVisitor>(
         node: Node<'_>,
         source: &[u8],
         visitor: &mut V,

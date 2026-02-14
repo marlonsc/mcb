@@ -6,7 +6,9 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType, OriginContext};
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::{compute_stable_id_hash, mask_id};
+use mcb_domain::utils::mask_id;
+
+use crate::handlers::helpers::hash_id;
 use tracing::debug;
 
 use super::types::{
@@ -60,7 +62,7 @@ impl HookProcessor {
         let parent_session_hash = context
             .metadata
             .get("parent_session_id")
-            .map(|parent| compute_stable_id_hash("parent_session", parent.as_str()));
+            .map(|parent| hash_id("parent_session", parent.as_str()));
         let delegated = context.metadata.get("delegated").and_then(|value| {
             match value.trim().to_ascii_lowercase().as_str() {
                 "true" | "1" | "yes" => Some(true),
@@ -128,10 +130,7 @@ impl HookProcessor {
             project_id: None,
             tags: None,
             r#type: None,
-            session_id: Some(compute_stable_id_hash(
-                "session",
-                context.session_id.as_str(),
-            )),
+            session_id: Some(hash_id("session", context.session_id.as_str())),
             parent_session_id: None,
             repo_id: None,
             time_range: None,

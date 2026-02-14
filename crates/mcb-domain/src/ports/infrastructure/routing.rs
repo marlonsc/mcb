@@ -50,36 +50,6 @@ impl ProviderContext {
         Self::default()
     }
 
-    /// Create a context optimized for low cost
-    pub fn cost_optimized() -> Self {
-        Self {
-            cost_sensitivity: 1.0,
-            quality_requirement: 0.3,
-            latency_sensitivity: 0.3,
-            ..Default::default()
-        }
-    }
-
-    /// Create a context optimized for high quality
-    pub fn quality_optimized() -> Self {
-        Self {
-            cost_sensitivity: 0.3,
-            quality_requirement: 1.0,
-            latency_sensitivity: 0.3,
-            ..Default::default()
-        }
-    }
-
-    /// Create a context optimized for low latency
-    pub fn latency_optimized() -> Self {
-        Self {
-            cost_sensitivity: 0.3,
-            quality_requirement: 0.3,
-            latency_sensitivity: 1.0,
-            ..Default::default()
-        }
-    }
-
     /// Set the operation type
     pub fn with_operation(mut self, operation: impl Into<String>) -> Self {
         self.operation_type = operation.into();

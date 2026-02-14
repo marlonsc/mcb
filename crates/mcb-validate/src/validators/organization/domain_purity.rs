@@ -42,7 +42,6 @@ pub fn validate_domain_traits_only(
         "indexes",
         "foreign_keys",
         "unique_constraints", // Schema builder helpers (data definition)
-        "capture",            // VcsContext::capture() - environment snapshot, not business logic
         "from",
         "into",
         "as_ref",

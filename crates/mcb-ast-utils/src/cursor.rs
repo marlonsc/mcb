@@ -2,7 +2,7 @@
 //!
 //! Provides utilities for working with tree-sitter cursors.
 
-use tree_sitter::{Node, TreeCursor};
+use tree_sitter::Node;
 
 /// Cursor utilities for tree-sitter navigation
 pub struct CursorUtils;
@@ -44,11 +44,6 @@ impl CursorUtils {
             .unwrap_or_default()
     }
 
-    /// Get the previous sibling of a node
-    pub fn prev_sibling(node: Node<'_>) -> Option<Node<'_>> {
-        node.prev_sibling()
-    }
-
     /// Get the next sibling of a node
     pub fn next_sibling(node: Node<'_>) -> Option<Node<'_>> {
         node.next_sibling()
@@ -86,21 +81,5 @@ impl CursorUtils {
     /// Get child by field name
     pub fn child_by_field<'a>(node: Node<'a>, field: &str) -> Option<Node<'a>> {
         node.child_by_field_name(field)
-    }
-
-    /// Iterate over a cursor's children
-    pub fn for_each_child<F>(cursor: &mut TreeCursor<'_>, mut f: F)
-    where
-        F: FnMut(Node<'_>),
-    {
-        if cursor.goto_first_child() {
-            loop {
-                f(cursor.node());
-                if !cursor.goto_next_sibling() {
-                    break;
-                }
-            }
-            cursor.goto_parent();
-        }
     }
 }

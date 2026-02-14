@@ -20,6 +20,7 @@ fn id_hash_secret() -> Option<&'static str> {
         .as_deref()
 }
 
+/// Compute a stable ID hash using the cached `MCB_ID_HASH_SECRET` env value.
 pub fn hash_id(kind: &str, raw_id: &str) -> String {
     compute_stable_id_hash(kind, raw_id, id_hash_secret())
 }

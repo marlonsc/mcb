@@ -3,11 +3,11 @@
 use std::sync::Arc;
 use std::time::Instant;
 
+use crate::handlers::helpers::hash_id;
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::error::Error;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::ports::services::SearchServiceInterface;
-use mcb_domain::utils::compute_stable_id_hash;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
@@ -97,7 +97,7 @@ impl SearchHandler {
                     session_id: args
                         .session_id
                         .clone()
-                        .map(|id| compute_stable_id_hash("session", id.as_str())),
+                        .map(|id| hash_id("session", id.as_str())),
                     ..Default::default()
                 };
                 let limit = args.limit.unwrap_or(10) as usize;

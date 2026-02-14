@@ -138,25 +138,6 @@ impl SupportedLanguage {
         }
     }
 
-    /// Get file extensions for this language
-    pub fn get_extensions(&self) -> &'static [&'static str] {
-        match self {
-            Self::Rust => &["rs"],
-            Self::Python => &["py", "pyi", "pyw"],
-            Self::JavaScript => &["js", "jsx", "mjs", "cjs"],
-            Self::TypeScript => &["ts", "tsx", "mts", "cts"],
-            Self::Go => &["go"],
-            Self::Java => &["java"],
-            Self::C => &["c", "h"],
-            Self::Cpp => &["cpp", "cc", "cxx", "hpp", "hxx", "hh"],
-            Self::CSharp => &["cs"],
-            Self::Ruby => &["rb", "rake", "gemspec"],
-            Self::Php => &["php", "phtml"],
-            Self::Swift => &["swift"],
-            Self::Kotlin => &["kt", "kts"],
-        }
-    }
-
     /// Get all supported languages
     pub fn get_all() -> &'static [Self] {
         &[
@@ -174,12 +155,6 @@ impl SupportedLanguage {
             Self::Swift,
             Self::Kotlin,
         ]
-    }
-
-    /// Check if this language supports metrics via RCA
-    pub fn is_metrics_supported(&self) -> bool {
-        // RCA supports all these languages
-        true
     }
 }
 

@@ -292,39 +292,11 @@ impl Error {
         }
     }
 
-    /// Create a configuration error with source
-    pub fn configuration_with_source<
-        S: Into<String>,
-        E: std::error::Error + Send + Sync + 'static,
-    >(
-        message: S,
-        source: E,
-    ) -> Self {
-        Self::Configuration {
-            message: message.into(),
-            source: Some(Box::new(source)),
-        }
-    }
-
     /// Create an authentication error
     pub fn authentication<S: Into<String>>(message: S) -> Self {
         Self::Authentication {
             message: message.into(),
             source: None,
-        }
-    }
-
-    /// Create an authentication error with source
-    pub fn authentication_with_source<
-        S: Into<String>,
-        E: std::error::Error + Send + Sync + 'static,
-    >(
-        message: S,
-        source: E,
-    ) -> Self {
-        Self::Authentication {
-            message: message.into(),
-            source: Some(Box::new(source)),
         }
     }
 
@@ -336,33 +308,11 @@ impl Error {
         }
     }
 
-    /// Create a network error with source
-    pub fn network_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
-        message: S,
-        source: E,
-    ) -> Self {
-        Self::Network {
-            message: message.into(),
-            source: Some(Box::new(source)),
-        }
-    }
-
     /// Create a database error
     pub fn database<S: Into<String>>(message: S) -> Self {
         Self::Database {
             message: message.into(),
             source: None,
-        }
-    }
-
-    /// Create a database error with source
-    pub fn database_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
-        message: S,
-        source: E,
-    ) -> Self {
-        Self::Database {
-            message: message.into(),
-            source: Some(Box::new(source)),
         }
     }
 
@@ -385,20 +335,6 @@ impl Error {
         Self::Infrastructure {
             message: message.into(),
             source: None,
-        }
-    }
-
-    /// Create an infrastructure error with source
-    pub fn infrastructure_with_source<
-        S: Into<String>,
-        E: std::error::Error + Send + Sync + 'static,
-    >(
-        message: S,
-        source: E,
-    ) -> Self {
-        Self::Infrastructure {
-            message: message.into(),
-            source: Some(Box::new(source)),
         }
     }
 
@@ -449,18 +385,6 @@ impl Error {
         Self::ObservationStorage {
             message: full_message,
             source: Some(Box::new(source)),
-        }
-    }
-
-    /// Create an observation not found error
-    pub fn observation_not_found<S: Into<String>>(id: S) -> Self {
-        Self::ObservationNotFound { id: id.into() }
-    }
-
-    /// Create a duplicate observation error
-    pub fn duplicate_observation<S: Into<String>>(content_hash: S) -> Self {
-        Self::DuplicateObservation {
-            content_hash: content_hash.into(),
         }
     }
 }

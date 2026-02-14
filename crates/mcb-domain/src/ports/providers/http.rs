@@ -33,16 +33,6 @@ impl Default for HttpClientConfig {
     }
 }
 
-impl HttpClientConfig {
-    /// Create configuration with custom timeout only
-    pub fn with_timeout(timeout: Duration) -> Self {
-        Self {
-            timeout,
-            ..Default::default()
-        }
-    }
-}
-
 /// HTTP client provider trait
 ///
 /// Defines the interface for HTTP client operations used by API-based providers.

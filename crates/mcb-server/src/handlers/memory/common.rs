@@ -176,7 +176,7 @@ pub(super) fn build_memory_filter(
         session_id: args
             .session_id
             .clone()
-            .map(|id| compute_stable_id_hash("session", id.as_str())),
+            .map(|id| hash_id("session", id.as_str())),
         parent_session_id: args.parent_session_id.clone(),
         repo_id: args.repo_id.clone(),
         time_range: None,

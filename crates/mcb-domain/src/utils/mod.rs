@@ -5,6 +5,7 @@ pub mod helpers;
 pub mod project_type;
 /// Module for submodule path utility helpers.
 pub mod submodule;
+/// VCS context data types for memory observations.
 pub mod vcs_context;
 
 pub use helpers::*;
