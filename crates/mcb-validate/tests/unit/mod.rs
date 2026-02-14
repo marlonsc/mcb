@@ -111,3 +111,6 @@ mod walkdir_guardrail_tests;
 
 #[path = "display_parity_tests.rs"]
 mod display_parity_tests;
+
+#[path = "field_selection_tests.rs"]
+mod field_selection_tests;

@@ -24,6 +24,28 @@
 //! }
 //! ```
 
+pub trait ExtractFilePath {
+    fn extract_file_path(&self) -> &std::path::PathBuf;
+}
+
+impl ExtractFilePath for std::path::PathBuf {
+    fn extract_file_path(&self) -> &std::path::PathBuf {
+        self
+    }
+}
+
+impl<T> ExtractFilePath for (std::path::PathBuf, T) {
+    fn extract_file_path(&self) -> &std::path::PathBuf {
+        &self.0
+    }
+}
+
+impl<T, U> ExtractFilePath for (std::path::PathBuf, T, U) {
+    fn extract_file_path(&self) -> &std::path::PathBuf {
+        &self.0
+    }
+}
+
 /// Macro to define violation enums with automatic trait implementations
 ///
 /// This macro generates:
@@ -434,9 +456,9 @@ macro_rules! define_violations {
             _ => None,
         }
     };
-    (@select_file_arm $self:expr, $variant:ident, locations : Vec<PathBuf> $(, $rest:ident : $rest_ty:ty )* ) => {
+    (@select_file_arm $self:expr, $variant:ident, locations : $loc_ty:ty $(, $rest:ident : $rest_ty:ty )* ) => {
         match $self {
-            Self::$variant { locations, .. } => locations.first(),
+            Self::$variant { locations, .. } => locations.first().map(|loc| $crate::violation_macro::ExtractFilePath::extract_file_path(loc)),
             _ => None,
         }
     };

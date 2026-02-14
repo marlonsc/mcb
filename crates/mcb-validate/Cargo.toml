@@ -95,11 +95,11 @@ tracing.workspace = true
 # from being auto-discovered as standalone test binaries.
 [[test]]
 name = "unit"
-path = "tests/unit.rs"
+path = "tests/unit/mod.rs"
 
 [[test]]
 name = "integration"
-path = "tests/integration.rs"
+path = "tests/integration/mod.rs"
 
 [dev-dependencies]
 tempfile.workspace = true
