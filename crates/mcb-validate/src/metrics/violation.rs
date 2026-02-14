@@ -2,11 +2,23 @@
 
 use std::path::PathBuf;
 
+use derive_more::Display;
+
 use super::MetricType;
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
 
 /// A metric violation when a threshold is exceeded
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Display)]
+#[display(
+    "[{}] {} `{}` has {} of {} (threshold: {}) in {}",
+    self.metric_rule_id(),
+    metric_type.name(),
+    item_name,
+    metric_type.description(),
+    actual_value,
+    threshold,
+    file.display()
+)]
 pub struct MetricViolation {
     /// File path
     pub file: PathBuf,
@@ -32,22 +44,6 @@ impl MetricViolation {
             MetricType::FunctionLength => "METRIC002",
             MetricType::NestingDepth => "METRIC003",
         }
-    }
-}
-
-impl std::fmt::Display for MetricViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "[{}] {} `{}` has {} of {} (threshold: {}) in {}",
-            self.metric_rule_id(),
-            self.metric_type.name(),
-            self.item_name,
-            self.metric_type.description(),
-            self.actual_value,
-            self.threshold,
-            self.file.display()
-        )
     }
 }
 

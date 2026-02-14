@@ -23,6 +23,7 @@ use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
+use rstest::rstest;
 
 fn test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
@@ -36,76 +37,42 @@ fn test_config() -> (AppConfig, tempfile::TempDir) {
 // Registry Completeness Validation
 // ============================================================================
 
+#[rstest]
+#[case("embedding", "fastembed")]
+#[case("embedding", "ollama")]
+#[case("embedding", "openai")]
+#[case("vector_store", "edgevec")]
+#[case("cache", "moka")]
+#[case("language", "universal")]
 #[test]
-fn test_all_expected_embedding_providers_registered() {
-    let providers = list_embedding_providers();
-    let provider_names: Vec<&str> = providers.iter().map(|(name, _)| *name).collect();
+fn test_all_expected_providers_registered(#[case] provider_type: &str, #[case] expected: &str) {
+    let provider_names: Vec<&str> = match provider_type {
+        "embedding" => list_embedding_providers()
+            .iter()
+            .map(|(name, _)| *name)
+            .collect(),
+        "vector_store" => list_vector_store_providers()
+            .iter()
+            .map(|(name, _)| *name)
+            .collect(),
+        "cache" => list_cache_providers()
+            .iter()
+            .map(|(name, _)| *name)
+            .collect(),
+        "language" => list_language_providers()
+            .iter()
+            .map(|(name, _)| *name)
+            .collect(),
+        _ => vec![],
+    };
 
-    // Expected providers that should always be registered
-    let expected = ["fastembed", "ollama", "openai"];
-
-    for exp in expected {
-        assert!(
-            provider_names.contains(&exp),
-            "Missing expected embedding provider '{}'. Registered: {:?}",
-            exp,
-            provider_names
-        );
-    }
-}
-
-#[test]
-fn test_all_expected_vector_store_providers_registered() {
-    let providers = list_vector_store_providers();
-    let provider_names: Vec<&str> = providers.iter().map(|(name, _)| *name).collect();
-
-    // Expected providers that should always be registered
-    let expected = ["edgevec"];
-
-    for exp in expected {
-        assert!(
-            provider_names.contains(&exp),
-            "Missing expected vector store provider '{}'. Registered: {:?}",
-            exp,
-            provider_names
-        );
-    }
-}
-
-#[test]
-fn test_all_expected_cache_providers_registered() {
-    let providers = list_cache_providers();
-    let provider_names: Vec<&str> = providers.iter().map(|(name, _)| *name).collect();
-
-    // Expected providers that should always be registered
-    let expected = ["moka"];
-
-    for exp in expected {
-        assert!(
-            provider_names.contains(&exp),
-            "Missing expected cache provider '{}'. Registered: {:?}",
-            exp,
-            provider_names
-        );
-    }
-}
-
-#[test]
-fn test_all_expected_language_providers_registered() {
-    let providers = list_language_providers();
-    let provider_names: Vec<&str> = providers.iter().map(|(name, _)| *name).collect();
-
-    // Expected providers that should always be registered
-    let expected = ["universal"];
-
-    for exp in expected {
-        assert!(
-            provider_names.contains(&exp),
-            "Missing expected language provider '{}'. Registered: {:?}",
-            exp,
-            provider_names
-        );
-    }
+    assert!(
+        provider_names.contains(&expected),
+        "Missing expected {} provider '{}'. Registered: {:?}",
+        provider_type,
+        expected,
+        provider_names
+    );
 }
 
 // ============================================================================
@@ -291,31 +258,27 @@ fn test_registry_entries_have_valid_descriptions() {
     }
 }
 
+#[rstest]
+#[case("embedding")]
+#[case("vector_store")]
+#[case("cache")]
+#[case("language")]
 #[test]
-fn test_provider_resolution_fails_gracefully_for_unknown() {
-    // Unknown providers should fail with descriptive errors
-
-    let unknown_embedding = resolve_embedding_provider(&EmbeddingProviderConfig::new("xyz123"));
+fn test_provider_resolution_fails_gracefully_for_unknown(#[case] provider_type: &str) {
+    let result = match provider_type {
+        "embedding" => {
+            resolve_embedding_provider(&EmbeddingProviderConfig::new("xyz123")).map(|_| ())
+        }
+        "vector_store" => {
+            resolve_vector_store_provider(&VectorStoreProviderConfig::new("xyz123")).map(|_| ())
+        }
+        "cache" => resolve_cache_provider(&CacheProviderConfig::new("xyz123")).map(|_| ()),
+        "language" => resolve_language_provider(&LanguageProviderConfig::new("xyz123")).map(|_| ()),
+        _ => Ok(()),
+    };
     assert!(
-        unknown_embedding.is_err(),
-        "Should fail for unknown embedding provider"
-    );
-
-    let unknown_vs = resolve_vector_store_provider(&VectorStoreProviderConfig::new("xyz123"));
-    assert!(
-        unknown_vs.is_err(),
-        "Should fail for unknown vector store provider"
-    );
-
-    let unknown_cache = resolve_cache_provider(&CacheProviderConfig::new("xyz123"));
-    assert!(
-        unknown_cache.is_err(),
-        "Should fail for unknown cache provider"
-    );
-
-    let unknown_lang = resolve_language_provider(&LanguageProviderConfig::new("xyz123"));
-    assert!(
-        unknown_lang.is_err(),
-        "Should fail for unknown language provider"
+        result.is_err(),
+        "Should fail for unknown {} provider",
+        provider_type
     );
 }

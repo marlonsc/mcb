@@ -1,15 +1,4 @@
 use mcb_application::use_cases::memory_service::MemoryServiceImpl;
-
-#[test]
-fn test_current_timestamp_reports_recent_time() {
-    let ts = MemoryServiceImpl::current_timestamp();
-    assert!(ts > 1_700_000_000, "Timestamp should be after 2023");
-    assert!(ts < 2_000_000_000, "Timestamp should be before 2033");
-}
-
-use std::sync::Arc;
-
-use mcb_application::use_cases::memory_service::MemoryServiceImpl;
 use mcb_domain::entities::memory::{MemoryFilter, ObservationMetadata, ObservationType};
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_infrastructure::config::AppConfig;
@@ -35,16 +24,11 @@ async fn ctx() -> TestContext {
     config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
 
     let app_ctx = init_app(config).await.expect("init app context");
-    let domain_services = app_ctx
-        .build_domain_services()
-        .await
-        .expect("build domain services");
-
     let service = MemoryServiceImpl::new(
         "test-project".to_string(),
-        domain_services.memory_repository,
-        domain_services.embedding_provider,
-        domain_services.vector_store_provider,
+        app_ctx.memory_repository(),
+        app_ctx.embedding_handle().get(),
+        app_ctx.vector_store_handle().get(),
     );
 
     TestContext {
@@ -137,7 +121,7 @@ mod integration_tests {
             session_id: Some("session-2".to_string()),
             ..Default::default()
         };
-        let (id_b, _) = ctx
+        let (_id_b, _) = ctx
             .service
             .store_observation(
                 "test-project".to_string(),

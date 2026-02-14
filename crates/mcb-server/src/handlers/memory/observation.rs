@@ -1,18 +1,17 @@
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::ObservationMetadata;
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::{compute_stable_id_hash, vcs_context::VcsContext};
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
-use uuid::Uuid;
 
-use super::common::{opt_bool, opt_str, require_data_map, require_str, str_vec};
+use super::common::{
+    MemoryOriginOptions, build_observation_metadata, require_data_map, require_str,
+    resolve_memory_origin_context, str_vec,
+};
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -45,96 +44,25 @@ pub async fn store_observation(
             }
         };
     let tags = str_vec(data, "tags");
-    let vcs_context = VcsContext::capture();
-    let arg_session_id = args
-        .session_id
-        .clone()
-        .map(|id| compute_stable_id_hash("session", id.as_str()));
-    let canonical_session_id = arg_session_id.clone();
-    let parent_session_hash = args
-        .parent_session_id
-        .clone()
-        .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
-    let payload_repo_id = opt_str(data, "repo_id");
-    let payload_project_id = opt_str(data, "project_id");
-    let payload_file_path = opt_str(data, "file_path");
-    let payload_branch = opt_str(data, "branch");
-    let payload_commit = opt_str(data, "commit");
-    let payload_repo_path = opt_str(data, "repo_path");
-    let payload_worktree_id = opt_str(data, "worktree_id");
-    let payload_operator_id = opt_str(data, "operator_id");
-    let payload_machine_id = opt_str(data, "machine_id");
-    let payload_agent_program = opt_str(data, "agent_program");
-    let payload_model_id = opt_str(data, "model_id");
-    let payload_delegated = opt_bool(data, "delegated");
+    let origin = resolve_memory_origin_context(
+        args,
+        data,
+        MemoryOriginOptions {
+            execution_from_args: None,
+            execution_from_data: None,
+            file_path_payload: data.get("file_path").and_then(|v| v.as_str()),
+            timestamp: None,
+        },
+    )?;
 
-    let mut origin_context = resolve_origin_context(OriginContextInput {
-        org_id: args.org_id.as_deref(),
-        project_id_args: args.project_id.as_deref(),
-        project_id_payload: payload_project_id.as_deref(),
-        session_from_args: None,
-        session_from_data: None,
-        parent_session_from_args: None,
-        parent_session_from_data: None,
-        execution_from_args: None,
-        execution_from_data: None,
-        tool_name_args: Some("memory"),
-        tool_name_payload: None,
-        repo_id_args: args.repo_id.as_deref(),
-        repo_id_payload: payload_repo_id.as_deref(),
-        repo_path_args: None,
-        repo_path_payload: payload_repo_path.as_deref(),
-        worktree_id_args: None,
-        worktree_id_payload: payload_worktree_id.as_deref(),
-        file_path_args: None,
-        file_path_payload: payload_file_path.as_deref(),
-        branch_args: None,
-        branch_payload: payload_branch.as_deref(),
-        commit_args: None,
-        commit_payload: payload_commit.as_deref(),
-        operator_id_args: None,
-        operator_id_payload: payload_operator_id.as_deref(),
-        machine_id_args: None,
-        machine_id_payload: payload_machine_id.as_deref(),
-        agent_program_args: None,
-        agent_program_payload: payload_agent_program.as_deref(),
-        model_id_args: None,
-        model_id_payload: payload_model_id.as_deref(),
-        delegated_args: None,
-        delegated_payload: payload_delegated,
-        require_project_id: true,
-        timestamp: None,
-    })?;
-    if origin_context.repo_id.is_none() {
-        origin_context.repo_id = vcs_context.repo_id.clone();
-    }
-    if origin_context.branch.is_none() {
-        origin_context.branch = vcs_context.branch.clone();
-    }
-    if origin_context.commit.is_none() {
-        origin_context.commit = vcs_context.commit.clone();
-    }
-    origin_context.session_id = None;
-    origin_context.session_id_hash = canonical_session_id.clone();
-    origin_context.parent_session_id = None;
-    origin_context.parent_session_id_hash = parent_session_hash;
-    let project_id = origin_context.project_id.clone().ok_or_else(|| {
-        McpError::invalid_params("project_id is required for storing observation", None)
-    })?;
-
-    let metadata = ObservationMetadata {
-        id: Uuid::new_v4().to_string(),
-        session_id: canonical_session_id,
-        repo_id: origin_context.repo_id.clone(),
-        file_path: origin_context.file_path.clone(),
-        branch: origin_context.branch.clone(),
-        commit: origin_context.commit.clone(),
-        execution: None,
-        quality_gate: None,
-        origin_context: Some(origin_context),
-    };
+    let metadata = build_observation_metadata(
+        origin.canonical_session_id,
+        origin.origin_context,
+        None,
+        None,
+    );
     match memory_service
-        .store_observation(project_id, content, observation_type, tags, metadata)
+        .store_observation(origin.project_id, content, observation_type, tags, metadata)
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({

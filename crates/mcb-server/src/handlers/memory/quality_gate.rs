@@ -1,20 +1,20 @@
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::{
-    MemoryFilter, ObservationMetadata, ObservationType, QualityGateResult,
-};
+use mcb_domain::entities::memory::{MemoryFilter, ObservationType, QualityGateResult};
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::{compute_stable_id_hash, vcs_context::VcsContext};
+use mcb_domain::utils::compute_stable_id_hash;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use serde_json::Value;
-use uuid::Uuid;
 
-use super::common::{opt_bool, opt_str, require_data_map, require_str};
+use super::common::{
+    MemoryOriginOptions, build_observation_metadata, opt_str, require_data_map, require_str,
+    resolve_memory_origin_context,
+};
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
+use uuid::Uuid;
 
 /// Stores a quality gate result as a semantic observation.
 #[tracing::instrument(skip_all)]
@@ -54,7 +54,6 @@ pub async fn store_quality_gate(
         timestamp,
         execution_id: opt_str(data, "execution_id"),
     };
-    let vcs_context = VcsContext::capture();
     let content = format!(
         "Quality Gate: {} (status={})",
         gate_name,
@@ -64,96 +63,27 @@ pub async fn store_quality_gate(
         "quality_gate".to_string(),
         quality_gate.status.as_str().to_owned(),
     ];
-    let arg_session_id = args
-        .session_id
-        .clone()
-        .map(|id| compute_stable_id_hash("session", id.as_str()));
-    let canonical_session_id = arg_session_id.clone();
-    let parent_session_hash = args
-        .parent_session_id
-        .clone()
-        .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
-    let payload_repo_id = opt_str(data, "repo_id");
-    let payload_project_id = opt_str(data, "project_id");
-    let payload_branch = opt_str(data, "branch");
-    let payload_commit = opt_str(data, "commit");
-    let payload_repo_path = opt_str(data, "repo_path");
-    let payload_worktree_id = opt_str(data, "worktree_id");
-    let payload_operator_id = opt_str(data, "operator_id");
-    let payload_machine_id = opt_str(data, "machine_id");
-    let payload_agent_program = opt_str(data, "agent_program");
-    let payload_model_id = opt_str(data, "model_id");
-    let payload_delegated = opt_bool(data, "delegated");
+    let origin = resolve_memory_origin_context(
+        args,
+        data,
+        MemoryOriginOptions {
+            execution_from_args: quality_gate.execution_id.as_deref(),
+            execution_from_data: quality_gate.execution_id.as_deref(),
+            file_path_payload: None,
+            timestamp: Some(timestamp),
+        },
+    )?;
 
-    let mut origin_context = resolve_origin_context(OriginContextInput {
-        org_id: args.org_id.as_deref(),
-        project_id_args: args.project_id.as_deref(),
-        project_id_payload: payload_project_id.as_deref(),
-        session_from_args: None,
-        session_from_data: None,
-        parent_session_from_args: None,
-        parent_session_from_data: None,
-        execution_from_args: quality_gate.execution_id.as_deref(),
-        execution_from_data: quality_gate.execution_id.as_deref(),
-        tool_name_args: Some("memory"),
-        tool_name_payload: None,
-        repo_id_args: args.repo_id.as_deref(),
-        repo_id_payload: payload_repo_id.as_deref(),
-        repo_path_args: None,
-        repo_path_payload: payload_repo_path.as_deref(),
-        worktree_id_args: None,
-        worktree_id_payload: payload_worktree_id.as_deref(),
-        file_path_args: None,
-        file_path_payload: None,
-        branch_args: None,
-        branch_payload: payload_branch.as_deref(),
-        commit_args: None,
-        commit_payload: payload_commit.as_deref(),
-        operator_id_args: None,
-        operator_id_payload: payload_operator_id.as_deref(),
-        machine_id_args: None,
-        machine_id_payload: payload_machine_id.as_deref(),
-        agent_program_args: None,
-        agent_program_payload: payload_agent_program.as_deref(),
-        model_id_args: None,
-        model_id_payload: payload_model_id.as_deref(),
-        delegated_args: None,
-        delegated_payload: payload_delegated,
-        require_project_id: true,
-        timestamp: Some(timestamp),
-    })?;
-    if origin_context.repo_id.is_none() {
-        origin_context.repo_id = vcs_context.repo_id.clone();
-    }
-    if origin_context.branch.is_none() {
-        origin_context.branch = vcs_context.branch.clone();
-    }
-    if origin_context.commit.is_none() {
-        origin_context.commit = vcs_context.commit.clone();
-    }
-    origin_context.session_id = None;
-    origin_context.session_id_hash = canonical_session_id.clone();
-    origin_context.parent_session_id = None;
-    origin_context.parent_session_id_hash = parent_session_hash;
-    let project_id = origin_context.project_id.clone().ok_or_else(|| {
-        McpError::invalid_params("project_id is required for quality gate store", None)
-    })?;
-
-    let obs_metadata = ObservationMetadata {
-        id: Uuid::new_v4().to_string(),
-        session_id: canonical_session_id,
-        repo_id: origin_context.repo_id.clone(),
-        file_path: None,
-        branch: origin_context.branch.clone(),
-        commit: origin_context.commit.clone(),
-        execution: None,
-        quality_gate: Some(quality_gate),
-        origin_context: Some(origin_context),
-    };
+    let obs_metadata = build_observation_metadata(
+        origin.canonical_session_id,
+        origin.origin_context,
+        None,
+        Some(quality_gate),
+    );
 
     match memory_service
         .store_observation(
-            project_id,
+            origin.project_id,
             content,
             ObservationType::QualityGate,
             tags,

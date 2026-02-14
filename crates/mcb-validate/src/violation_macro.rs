@@ -458,11 +458,15 @@ macro_rules! define_violations {
         $(
             rendered = rendered.replace(
                 concat!("{", stringify!($field), "}"),
-                &format!("{:?}", $field),
+                &define_violations!(@field_to_string $field),
             );
         )*
         rendered
     }};
+
+    (@field_to_string $field:ident) => {
+        format!("{:?}", $field)
+    };
 }
 
 /// Macro to implement the `Validator` trait for types that have a `validate_all()` method.

@@ -1,20 +1,20 @@
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::{
-    ExecutionMetadata, MemoryFilter, ObservationMetadata, ObservationType,
-};
+use mcb_domain::entities::memory::{ExecutionMetadata, MemoryFilter, ObservationType};
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::{compute_stable_id_hash, vcs_context::VcsContext};
+use mcb_domain::utils::compute_stable_id_hash;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use serde_json::Value;
 use tracing::error;
 use uuid::Uuid;
 
-use super::common::{opt_bool, opt_str, require_data_map, str_vec};
+use super::common::{
+    MemoryOriginOptions, build_observation_metadata, opt_str, require_bool, require_data_map,
+    require_i32, require_i64, require_str, resolve_memory_origin_context, str_vec,
+};
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
 
 /// Validated execution data extracted from JSON payload
 struct ValidatedExecutionData {
@@ -28,45 +28,11 @@ struct ValidatedExecutionData {
 impl ValidatedExecutionData {
     /// Validate and extract all required fields from JSON data
     fn validate(data: &serde_json::Map<String, serde_json::Value>) -> Result<Self, CallToolResult> {
-        let command = data
-            .get("command")
-            .and_then(Value::as_str)
-            .map(str::to_owned)
-            .ok_or_else(|| {
-                CallToolResult::error(vec![Content::text("Missing required field: command")])
-            })?;
-
-        let exit_code = data
-            .get("exit_code")
-            .and_then(Value::as_i64)
-            .and_then(|value| value.try_into().ok())
-            .ok_or_else(|| {
-                CallToolResult::error(vec![Content::text("Missing required field: exit_code")])
-            })?;
-
-        let duration_ms = data
-            .get("duration_ms")
-            .and_then(Value::as_i64)
-            .ok_or_else(|| {
-                CallToolResult::error(vec![Content::text("Missing required field: duration_ms")])
-            })?;
-
-        let success = data
-            .get("success")
-            .and_then(Value::as_bool)
-            .ok_or_else(|| {
-                CallToolResult::error(vec![Content::text("Missing required field: success")])
-            })?;
-
-        let execution_type_str = data
-            .get("execution_type")
-            .and_then(Value::as_str)
-            .map(str::to_owned)
-            .ok_or_else(|| {
-                CallToolResult::error(vec![Content::text(
-                    "Missing required field: execution_type",
-                )])
-            })?;
+        let command = require_str(data, "command")?;
+        let exit_code = require_i32(data, "exit_code")?;
+        let duration_ms = require_i64(data, "duration_ms")?;
+        let success = require_bool(data, "success")?;
+        let execution_type_str = require_str(data, "execution_type")?;
 
         let execution_type = execution_type_str.parse().map_err(|_| {
             CallToolResult::error(vec![Content::text(format!(
@@ -126,7 +92,6 @@ pub async fn store_execution(
             .and_then(Value::as_i64)
             .and_then(|value| value.try_into().ok()),
     };
-    let vcs_context = VcsContext::capture();
     let content = format!(
         "Execution: {} (exit_code={}, success={})",
         validated.command, validated.exit_code, validated.success
@@ -141,107 +106,36 @@ pub async fn store_execution(
         }
         .to_string(),
     ];
-    let arg_session_id = args
-        .session_id
-        .clone()
-        .map(|id| compute_stable_id_hash("session", id.as_str()));
-    let canonical_session_id = arg_session_id.clone();
-    let parent_session_hash = args
-        .parent_session_id
-        .clone()
-        .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
-    let payload_repo_id = opt_str(data, "repo_id");
-    let payload_project_id = opt_str(data, "project_id");
-    let payload_branch = opt_str(data, "branch");
-    let payload_commit = opt_str(data, "commit");
-    let payload_repo_path = opt_str(data, "repo_path");
-    let payload_worktree_id = opt_str(data, "worktree_id");
-    let payload_operator_id = opt_str(data, "operator_id");
-    let payload_machine_id = opt_str(data, "machine_id");
-    let payload_agent_program = opt_str(data, "agent_program");
-    let payload_model_id = opt_str(data, "model_id");
-    let payload_delegated = opt_bool(data, "delegated");
     let payload_execution_id = opt_str(data, "execution_id");
     let generated_execution_id = metadata.id.clone();
 
-    let mut origin_context = resolve_origin_context(OriginContextInput {
-        org_id: args.org_id.as_deref(),
-        project_id_args: args.project_id.as_deref(),
-        project_id_payload: payload_project_id.as_deref(),
-        session_from_args: None,
-        session_from_data: None,
-        parent_session_from_args: None,
-        parent_session_from_data: None,
-        execution_from_args: Some(generated_execution_id.as_str()),
-        execution_from_data: payload_execution_id.as_deref(),
-        tool_name_args: Some("memory"),
-        tool_name_payload: None,
-        repo_id_args: args.repo_id.as_deref(),
-        repo_id_payload: payload_repo_id.as_deref(),
-        repo_path_args: None,
-        repo_path_payload: payload_repo_path.as_deref(),
-        worktree_id_args: None,
-        worktree_id_payload: payload_worktree_id.as_deref(),
-        file_path_args: None,
-        file_path_payload: None,
-        branch_args: None,
-        branch_payload: payload_branch.as_deref(),
-        commit_args: None,
-        commit_payload: payload_commit.as_deref(),
-        operator_id_args: None,
-        operator_id_payload: payload_operator_id.as_deref(),
-        machine_id_args: None,
-        machine_id_payload: payload_machine_id.as_deref(),
-        agent_program_args: None,
-        agent_program_payload: payload_agent_program.as_deref(),
-        model_id_args: None,
-        model_id_payload: payload_model_id.as_deref(),
-        delegated_args: None,
-        delegated_payload: payload_delegated,
-        require_project_id: true,
-        timestamp: None,
-    })
+    let origin = resolve_memory_origin_context(
+        args,
+        data,
+        MemoryOriginOptions {
+            execution_from_args: Some(generated_execution_id.as_str()),
+            execution_from_data: payload_execution_id.as_deref(),
+            file_path_payload: None,
+            timestamp: None,
+        },
+    )
     .map_err(|err| {
         McpError::invalid_params(
             format!("failed to resolve execution origin context: {err}"),
             None,
         )
     })?;
-    if origin_context.repo_id.is_none() {
-        origin_context.repo_id = vcs_context.repo_id.clone();
-    }
-    if origin_context.branch.is_none() {
-        origin_context.branch = vcs_context.branch.clone();
-    }
-    if origin_context.commit.is_none() {
-        origin_context.commit = vcs_context.commit.clone();
-    }
-    origin_context.session_id = None;
-    origin_context.session_id_hash = canonical_session_id.clone();
-    origin_context.parent_session_id = None;
-    origin_context.parent_session_id_hash = parent_session_hash;
-    let project_id = origin_context.project_id.clone().ok_or_else(|| {
-        McpError::invalid_params(
-            "project_id is required for execution store (missing in args/payload and unresolved from context)",
-            None,
-        )
-    })?;
 
-    let obs_metadata = ObservationMetadata {
-        id: Uuid::new_v4().to_string(),
-        session_id: canonical_session_id,
-        repo_id: origin_context.repo_id.clone(),
-        file_path: None,
-        branch: origin_context.branch.clone(),
-        commit: origin_context.commit.clone(),
-        execution: Some(metadata),
-        quality_gate: None,
-        origin_context: Some(origin_context),
-    };
+    let obs_metadata = build_observation_metadata(
+        origin.canonical_session_id,
+        origin.origin_context,
+        Some(metadata),
+        None,
+    );
 
     match memory_service
         .store_observation(
-            project_id,
+            origin.project_id,
             content,
             ObservationType::Execution,
             tags,

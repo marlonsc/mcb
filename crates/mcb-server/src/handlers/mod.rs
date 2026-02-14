@@ -17,6 +17,7 @@ pub mod plan_entity;
 pub mod project;
 pub mod search;
 pub mod session;
+mod shared;
 pub mod validate;
 pub mod vcs;
 /// VCS entity CRUD handler.
