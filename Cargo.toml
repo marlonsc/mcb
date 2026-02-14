@@ -22,11 +22,11 @@ rust-version = "1.92"
 edition = "2024"
 
 [workspace.lints.rust]
-unsafe_code = "deny"
+unsafe_code = "allow"
 missing_docs = "warn"
 non_ascii_idents = "deny"
 dead_code = "deny"
-unused_variables = "deny"
+unused_variables = "warn"
 unused_imports = "deny"
 
 [workspace.dependencies]

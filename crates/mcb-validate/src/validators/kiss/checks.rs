@@ -1,186 +1,12 @@
-//! KISS Principle Validation
-// TODO(QUAL004): File too large (899 lines, max: 500).
-// Consider splitting into separate modules for each validation type (structs, functions, etc.).
-//!
-//! Validates code against the KISS principle (Keep It Simple, Stupid):
-//! - Struct field count (max 12)
-//! - Function parameter count (max 5)
-//! - Builder complexity (max 7 optional fields)
-//! - Nesting depth (max 3 levels)
-//! - Function length (max 50 lines)
-
-use std::path::PathBuf;
-
 use regex::Regex;
 
-use crate::config::KISSRulesConfig;
 use crate::scan::for_each_scan_rs_path;
 use crate::thresholds::thresholds;
-use crate::traits::violation::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig};
+use crate::{Result, Severity};
 
-crate::define_violations! {
-    dynamic_severity,
-    ViolationCategory::Kiss,
-    pub enum KissViolation {
-        /// Struct with too many fields (>12)
-        #[violation(
-            id = "KISS001",
-            severity = Warning,
-            message = "KISS: Struct {struct_name} has too many fields: {file}:{line} ({field_count} fields, max: {max_allowed})",
-            suggestion = "Split '{struct_name}' into smaller structs or use composition. {field_count} fields exceeds the maximum of {max_allowed}."
-        )]
-        StructTooManyFields {
-            file: PathBuf,
-            line: usize,
-            struct_name: String,
-            field_count: usize,
-            max_allowed: usize,
-            severity: Severity,
-        },
-
-        /// Function with too many parameters (>5)
-        #[violation(
-            id = "KISS002",
-            severity = Warning,
-            message = "KISS: Function {function_name} has too many parameters: {file}:{line} ({param_count} params, max: {max_allowed})",
-            suggestion = "Refactor '{function_name}' to use a config/options struct instead of {param_count} parameters. Maximum allowed is {max_allowed}."
-        )]
-        FunctionTooManyParams {
-            file: PathBuf,
-            line: usize,
-            function_name: String,
-            param_count: usize,
-            max_allowed: usize,
-            severity: Severity,
-        },
-
-        /// Builder with too many optional fields (>7)
-        #[violation(
-            id = "KISS003",
-            severity = Warning,
-            message = "KISS: Builder {builder_name} is too complex: {file}:{line} ({optional_field_count} optional fields, max: {max_allowed})",
-            suggestion = "Split '{builder_name}' into smaller builders or use builder composition. {optional_field_count} optional fields exceeds the maximum of {max_allowed}."
-        )]
-        BuilderTooComplex {
-            file: PathBuf,
-            line: usize,
-            builder_name: String,
-            optional_field_count: usize,
-            max_allowed: usize,
-            severity: Severity,
-        },
-
-        /// Nested conditionals too deep (>3 levels)
-        #[violation(
-            id = "KISS004",
-            severity = Warning,
-            message = "KISS: Deep nesting at {file}:{line} ({nesting_level} levels, max: {max_allowed}) - {context}",
-            suggestion = "Extract nested logic into separate functions using early returns or guard clauses. Nesting depth {nesting_level} exceeds the maximum of {max_allowed}."
-        )]
-        DeepNesting {
-            file: PathBuf,
-            line: usize,
-            nesting_level: usize,
-            max_allowed: usize,
-            context: String,
-            severity: Severity,
-        },
-
-        /// Function too long (>50 lines)
-        #[violation(
-            id = "KISS005",
-            severity = Warning,
-            message = "KISS: Function {function_name} is too long: {file}:{line} ({line_count} lines, max: {max_allowed})",
-            suggestion = "Break '{function_name}' into smaller, focused functions. {line_count} lines exceeds the maximum of {max_allowed}."
-        )]
-        FunctionTooLong {
-            file: PathBuf,
-            line: usize,
-            function_name: String,
-            line_count: usize,
-            max_allowed: usize,
-            severity: Severity,
-        },
-    }
-}
-
-impl KissViolation {
-    /// Returns the severity level of the violation.
-    ///
-    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
-    pub fn severity(&self) -> Severity {
-        <Self as Violation>::severity(self)
-    }
-}
-
-/// KISS principle validator
-pub struct KissValidator {
-    config: ValidationConfig,
-    rules: KISSRulesConfig,
-    /// Maximum allowed fields in a struct.
-    max_struct_fields: usize,
-    /// Maximum allowed parameters in a function.
-    max_function_params: usize,
-    /// Maximum allowed optional fields in a builder.
-    max_builder_fields: usize,
-    /// Maximum allowed nesting depth.
-    max_nesting_depth: usize,
-    /// Maximum allowed lines in a function.
-    max_function_lines: usize,
-}
+use super::{KissValidator, KissViolation};
 
 impl KissValidator {
-    /// Create a new KISS validator
-    pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        let root: PathBuf = workspace_root.into();
-        let file_config = crate::config::FileConfig::load(&root);
-        Self::with_config(ValidationConfig::new(root), &file_config.rules.kiss)
-    }
-
-    /// Create a validator with custom configuration for multi-directory support
-    pub fn with_config(config: ValidationConfig, rules: &KISSRulesConfig) -> Self {
-        let t = thresholds();
-        Self {
-            config,
-            rules: rules.clone(),
-            max_struct_fields: t.max_struct_fields,
-            max_function_params: t.max_function_params,
-            max_builder_fields: t.max_builder_fields,
-            max_nesting_depth: t.max_nesting_depth,
-            max_function_lines: t.max_function_lines,
-        }
-    }
-
-    /// Set custom max struct fields
-    #[must_use]
-    pub fn with_max_struct_fields(mut self, max: usize) -> Self {
-        self.max_struct_fields = max;
-        self
-    }
-
-    /// Set custom max function parameters
-    #[must_use]
-    pub fn with_max_function_params(mut self, max: usize) -> Self {
-        self.max_function_params = max;
-        self
-    }
-
-    /// Run all KISS validations
-    pub fn validate_all(&self) -> Result<Vec<KissViolation>> {
-        if !self.rules.enabled {
-            return Ok(Vec::new());
-        }
-        let mut violations = Vec::new();
-        violations.extend(self.validate_struct_fields()?);
-        violations.extend(self.validate_function_params()?);
-        violations.extend(self.validate_builder_complexity()?);
-        violations.extend(self.validate_nesting_depth()?);
-        violations.extend(self.validate_function_length()?);
-        Ok(violations)
-    }
-
-    /// Check for structs with too many fields
     pub fn validate_struct_fields(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let struct_pattern = match Regex::new(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{") {
@@ -196,7 +22,6 @@ impl KissValidator {
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
 
-            // Track test modules to skip
             let mut in_test_module = false;
             let mut test_brace_depth: i32 = 0;
             let mut brace_depth: i32 = 0;
@@ -204,7 +29,6 @@ impl KissValidator {
             for (line_num, line) in lines.iter().enumerate() {
                 let trimmed = line.trim();
 
-                // Track test module boundaries
                 if trimmed.contains("#[cfg(test)]") {
                     in_test_module = true;
                     test_brace_depth = brace_depth;
@@ -224,9 +48,6 @@ impl KissValidator {
 
                 if let Some(cap) = struct_pattern.captures(line) {
                     let struct_name = cap.get(1).map_or("", |m| m.as_str());
-
-                    // DI containers and config structs (ADR-029) have a higher limit
-                    // They legitimately aggregate many dependencies, but should still have limits
                     let is_di_container = struct_name.ends_with("Context")
                         || struct_name.ends_with("Container")
                         || struct_name.ends_with("Components")
@@ -240,7 +61,6 @@ impl KissValidator {
                         self.max_struct_fields
                     };
 
-                    // Count fields in struct
                     let field_count = self.count_struct_fields(&lines, line_num);
 
                     if field_count > max_fields {
@@ -261,7 +81,6 @@ impl KissValidator {
         Ok(violations)
     }
 
-    /// Check for functions with too many parameters
     pub fn validate_function_params(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let fn_pattern = match Regex::new(
@@ -277,8 +96,6 @@ impl KissValidator {
             }
 
             let path_str = path.to_string_lossy();
-
-            // Skip admin API files - builder-like constructors aggregate dependencies
             if path_str.ends_with("/admin/api.rs") {
                 return Ok(());
             }
@@ -286,7 +103,6 @@ impl KissValidator {
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
 
-            // Track test modules to skip
             let mut in_test_module = false;
             let mut test_brace_depth: i32 = 0;
             let mut brace_depth: i32 = 0;
@@ -294,7 +110,6 @@ impl KissValidator {
             for (line_num, line) in lines.iter().enumerate() {
                 let trimmed = line.trim();
 
-                // Track test module boundaries
                 if trimmed.contains("#[cfg(test)]") {
                     in_test_module = true;
                     test_brace_depth = brace_depth;
@@ -312,12 +127,10 @@ impl KissValidator {
                     continue;
                 }
 
-                // Only check lines that contain function definitions
                 if !line.contains("fn ") {
                     continue;
                 }
 
-                // Build full function signature (may span multiple lines)
                 let mut full_line = line.to_string();
                 let mut idx = line_num + 1;
                 while !full_line.contains(')') && idx < lines.len() {
@@ -328,8 +141,6 @@ impl KissValidator {
                 if let Some(cap) = fn_pattern.captures(&full_line) {
                     let fn_name = cap.get(1).map_or("", |m| m.as_str());
                     let params = cap.get(2).map_or("", |m| m.as_str());
-
-                    // Count parameters (comma-separated, excluding &self/self)
                     let param_count = self.count_function_params(params);
 
                     if param_count > self.max_function_params {
@@ -350,7 +161,6 @@ impl KissValidator {
         Ok(violations)
     }
 
-    /// Check for builders with too many optional fields
     pub fn validate_builder_complexity(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let builder_pattern =
@@ -374,8 +184,6 @@ impl KissValidator {
             for (line_num, line) in lines.iter().enumerate() {
                 if let Some(cap) = builder_pattern.captures(line) {
                     let builder_name = cap.get(1).map_or("", |m| m.as_str());
-
-                    // Count Option<> fields in builder struct
                     let optional_count =
                         self.count_optional_fields(&lines, line_num, &option_pattern);
 
@@ -397,7 +205,6 @@ impl KissValidator {
         Ok(violations)
     }
 
-    /// Check for deeply nested code
     pub fn validate_nesting_depth(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let control_flow_pattern = match Regex::new(r"\b(if|match|for|while|loop)\b") {
@@ -413,11 +220,9 @@ impl KissValidator {
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
 
-            // Track test modules to skip
             let mut in_test_module = false;
             let mut test_brace_depth: i32 = 0;
 
-            // Track nesting depth
             let mut nesting_depth: usize = 0;
             let mut brace_depth: i32 = 0;
             let mut reported_lines: std::collections::HashSet<usize> =
@@ -426,22 +231,18 @@ impl KissValidator {
             for (line_num, line) in lines.iter().enumerate() {
                 let trimmed = line.trim();
 
-                // Track test module boundaries
                 if trimmed.contains("#[cfg(test)]") {
                     in_test_module = true;
                     test_brace_depth = brace_depth;
                 }
 
-                // Skip comments
                 if trimmed.starts_with("//") {
                     continue;
                 }
 
-                // Track control flow nesting
                 if control_flow_pattern.is_match(line) && line.contains('{') {
                     nesting_depth += 1;
 
-                    // Check if too deep and not already reported nearby
                     if nesting_depth > self.max_nesting_depth {
                         let nearby_reported =
                             reported_lines.iter().any(|&l| l.abs_diff(line_num) < 5);
@@ -465,12 +266,10 @@ impl KissValidator {
                 brace_depth += i32::try_from(open_braces).unwrap_or(i32::MAX);
                 brace_depth -= i32::try_from(close_braces).unwrap_or(i32::MAX);
 
-                // Decrease nesting on closing braces
                 if close_braces > 0 && nesting_depth > 0 {
                     nesting_depth = nesting_depth.saturating_sub(close_braces);
                 }
 
-                // Exit test module when braces close
                 if in_test_module && brace_depth < test_brace_depth {
                     in_test_module = false;
                 }
@@ -481,7 +280,6 @@ impl KissValidator {
         Ok(violations)
     }
 
-    /// Check for functions that are too long
     pub fn validate_function_length(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let fn_pattern = match Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)") {
@@ -495,9 +293,6 @@ impl KissValidator {
             }
 
             let path_str = path.to_string_lossy();
-
-            // Skip DI composition root files (ADR-029)
-            // These are legitimately long as they wire up all dependencies
             if path_str.ends_with("/di/bootstrap.rs")
                 || path_str.ends_with("/di/catalog.rs")
                 || path_str.ends_with("/di/resolver.rs")
@@ -505,7 +300,6 @@ impl KissValidator {
                 return Ok(());
             }
 
-            // Skip health.rs - system health checks need to collect multiple metrics
             if path_str.ends_with("/health.rs") {
                 return Ok(());
             }
@@ -513,7 +307,6 @@ impl KissValidator {
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
 
-            // Track test modules to skip
             let mut in_test_module = false;
             let mut test_brace_depth: i32 = 0;
             let mut brace_depth: i32 = 0;
@@ -521,7 +314,6 @@ impl KissValidator {
             for (line_num, line) in lines.iter().enumerate() {
                 let trimmed = line.trim();
 
-                // Track test module boundaries
                 if trimmed.contains("#[cfg(test)]") {
                     in_test_module = true;
                     test_brace_depth = brace_depth;
@@ -542,17 +334,14 @@ impl KissValidator {
                 if let Some(cap) = fn_pattern.captures(line) {
                     let fn_name = cap.get(1).map_or("", |m| m.as_str());
 
-                    // Skip test functions
                     if fn_name.starts_with("test_") {
                         continue;
                     }
 
-                    // Skip trait function declarations (no body, ends with ;)
                     if self.is_trait_fn_declaration(&lines, line_num) {
                         continue;
                     }
 
-                    // Count lines in function
                     let line_count = self.count_function_lines(&lines, line_num);
 
                     if line_count > self.max_function_lines {
@@ -572,155 +361,4 @@ impl KissValidator {
 
         Ok(violations)
     }
-
-    /// Count fields in a struct
-    fn count_struct_fields(&self, lines: &[&str], start_line: usize) -> usize {
-        let mut brace_depth = 0;
-        let mut in_struct = false;
-        let mut field_count = 0;
-        let field_pattern = match Regex::new(r"^\s*(?:pub\s+)?[a-z_][a-z0-9_]*\s*:") {
-            Ok(regex) => regex,
-            Err(_) => return 0,
-        };
-
-        for line in &lines[start_line..] {
-            if line.contains('{') {
-                in_struct = true;
-            }
-            if in_struct {
-                brace_depth += line.chars().filter(|c| *c == '{').count();
-                brace_depth -= line.chars().filter(|c| *c == '}').count();
-
-                // Count field declarations (lines with `:` that look like fields)
-                if brace_depth >= 1 && field_pattern.is_match(line) {
-                    field_count += 1;
-                }
-
-                if brace_depth == 0 {
-                    break;
-                }
-            }
-        }
-
-        field_count
-    }
-
-    /// Count function parameters (excluding self)
-    fn count_function_params(&self, params: &str) -> usize {
-        if params.trim().is_empty() {
-            return 0;
-        }
-
-        // Split by comma and count, excluding &self, self, &mut self
-        let parts: Vec<&str> = params.split(',').collect();
-        let mut count = 0;
-
-        for part in parts {
-            let trimmed = part.trim();
-            if !trimmed.is_empty()
-                && !trimmed.starts_with("&self")
-                && !trimmed.starts_with("self")
-                && !trimmed.starts_with("&mut self")
-            {
-                count += 1;
-            }
-        }
-
-        count
-    }
-
-    /// Count Option<> fields in a struct
-    fn count_optional_fields(
-        &self,
-        lines: &[&str],
-        start_line: usize,
-        option_pattern: &Regex,
-    ) -> usize {
-        let mut brace_depth = 0;
-        let mut in_struct = false;
-        let mut optional_count = 0;
-
-        for line in &lines[start_line..] {
-            if line.contains('{') {
-                in_struct = true;
-            }
-            if in_struct {
-                brace_depth += line.chars().filter(|c| *c == '{').count();
-                brace_depth -= line.chars().filter(|c| *c == '}').count();
-
-                // Count Option<> types
-                if brace_depth >= 1 && option_pattern.is_match(line) {
-                    optional_count += 1;
-                }
-
-                if brace_depth == 0 {
-                    break;
-                }
-            }
-        }
-
-        optional_count
-    }
-
-    /// Check if a function declaration is a trait method without a body
-    /// (ends with `;` before any `{`)
-    fn is_trait_fn_declaration(&self, lines: &[&str], start_line: usize) -> bool {
-        // Look at the function signature lines until we find either { or ;
-        // If we find ; first, it's a trait function declaration without a body
-        for line in &lines[start_line..] {
-            // Check for opening brace (function body starts)
-            if line.contains('{') {
-                return false;
-            }
-            // Check for semicolon (trait function declaration ends)
-            if line.trim().ends_with(';') {
-                return true;
-            }
-            // Check for semicolon after return type annotation
-            // e.g., "fn foo(&self) -> Result<T>;"
-            if line.contains(';') && !line.contains('{') {
-                return true;
-            }
-        }
-        false
-    }
-
-    /// Count lines in a function
-    fn count_function_lines(&self, lines: &[&str], start_line: usize) -> usize {
-        let mut brace_depth = 0;
-        let mut in_fn = false;
-        let mut line_count = 0;
-
-        for line in &lines[start_line..] {
-            if line.contains('{') {
-                in_fn = true;
-            }
-            if in_fn {
-                brace_depth += line.chars().filter(|c| *c == '{').count();
-                brace_depth -= line.chars().filter(|c| *c == '}').count();
-                line_count += 1;
-
-                if brace_depth == 0 {
-                    break;
-                }
-            }
-        }
-
-        line_count
-    }
-
-    /// Check if a crate should be skipped based on configuration
-    fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
-        let path_str = src_dir.to_string_lossy();
-        self.rules
-            .excluded_crates
-            .iter()
-            .any(|excluded| path_str.contains(excluded))
-    }
 }
-
-crate::impl_validator!(
-    KissValidator,
-    "kiss",
-    "Validates KISS principle (Keep It Simple, Stupid)"
-);
