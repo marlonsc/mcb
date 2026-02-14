@@ -14,7 +14,6 @@ use async_trait::async_trait;
 use dashmap::DashMap;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
 use serde_json::Value;
@@ -423,13 +422,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
                 arr.iter()
                     .map(|item| {
                         let name = item["name"].as_str().unwrap_or("").to_string();
-                        CollectionInfo::new(
-                            CollectionId::from_uuid(id::deterministic("collection", &name)),
-                            0,
-                            0,
-                            None,
-                            self.provider_name(),
-                        )
+                        CollectionInfo::new(name, 0, 0, None, self.provider_name())
                     })
                     .collect()
             })

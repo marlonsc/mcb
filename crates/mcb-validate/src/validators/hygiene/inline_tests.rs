@@ -39,7 +39,6 @@ pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<Hygiene
                 if cfg_test_pattern.is_match(line) {
                     last_cfg_test_line = Some(line_num);
                     has_inline_module_marker = true;
-                    // TODO: This duplication of logic is what we want to avoid but we are just moving it for now.
                     violations.push(HygieneViolation::InlineTestModule {
                         file: path.to_path_buf(),
                         line: line_num + 1,

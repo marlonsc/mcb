@@ -61,12 +61,6 @@ pub fn row_to_session_summary(row: &dyn SqlRow) -> Result<SessionSummary> {
     let next_steps_json: Option<String> = row.try_get_string("next_steps")?;
     let key_files_json: Option<String> = row.try_get_string("key_files")?;
     let origin_context_json: Option<String> = row.try_get_string("origin_context")?;
-    let origin_context: Option<OriginContext> = match origin_context_json {
-        Some(json) => serde_json::from_str::<Option<OriginContext>>(&json).map_err(|e| {
-            Error::memory_with_source("invalid session summary origin_context JSON", e)
-        })?,
-        None => None,
-    };
 
     Ok(SessionSummary {
         id: required_string(row, "id")?,
@@ -95,7 +89,12 @@ pub fn row_to_session_summary(row: &dyn SqlRow) -> Result<SessionSummary> {
             })?,
             None => Vec::new(),
         },
-        origin_context,
+        origin_context: match origin_context_json {
+            Some(json) => serde_json::from_str::<Option<OriginContext>>(&json).map_err(|e| {
+                Error::memory_with_source("invalid session summary origin_context JSON", e)
+            })?,
+            None => None,
+        },
         created_at: row
             .try_get_i64("created_at")?
             .ok_or_else(|| Error::memory("Missing created_at"))?,

@@ -749,13 +749,7 @@ impl EdgeVecActor {
                     .collect();
                 let file_count = file_paths.len() as u64;
 
-                CollectionInfo::new(
-                    CollectionId::from_uuid(id::deterministic("collection", &name)),
-                    vector_count,
-                    file_count,
-                    None,
-                    "edgevec",
-                )
+                CollectionInfo::new(name, vector_count, file_count, None, "edgevec")
             })
             .collect()
     }

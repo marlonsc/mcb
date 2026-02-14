@@ -56,10 +56,12 @@ async fn test_full_admin_stack_integration() {
     let ops = json["jobs"].as_array().unwrap();
     assert_eq!(ops.len(), 2);
 
+    let expected_alpha_label = CollectionId::from_name("project-alpha").to_string();
+
     // Find the project-alpha operation
     let alpha_op = ops
         .iter()
-        .find(|op| op["label"] == "project-alpha")
+        .find(|op| op["label"].as_str() == Some(expected_alpha_label.as_str()))
         .expect("Should find project-alpha operation");
     assert_eq!(alpha_op["processed_items"], 25);
     assert_eq!(alpha_op["total_items"], 100);

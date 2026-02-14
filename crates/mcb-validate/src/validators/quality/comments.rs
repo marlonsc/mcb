@@ -9,9 +9,6 @@ use crate::{Result, Severity};
 
 /// Scans for pending task comments matching `PENDING_LABEL_*` constants.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
-    // # Pending Task (QUAL005)
-    // This method detects TODOs but itself contains a TODO-like pattern for detection.
-    // TODO(QUAL005): Refactor detection logic to avoid self-triggering patterns.
     let todo_pattern = Regex::new(&format!(
         r"(?i)({PENDING_LABEL_TODO}|{PENDING_LABEL_FIXME}|{PENDING_LABEL_XXX}|{PENDING_LABEL_HACK}):?\s*(.*)"
     ))?;

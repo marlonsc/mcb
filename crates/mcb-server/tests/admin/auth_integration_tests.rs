@@ -380,7 +380,11 @@ async fn test_jobs_public_no_auth_required() {
     assert_eq!(ops.len(), 1, "Should have exactly 1 operation");
 
     let op = &ops[0];
-    assert_eq!(op["label"], "test-collection", "Collection should match");
+    assert_eq!(
+        op["label"],
+        CollectionId::from_name("test-collection").to_string(),
+        "Collection should match"
+    );
     assert_eq!(
         op["current_item"], "src/main.rs",
         "Current file should match"

@@ -15,7 +15,6 @@ use async_trait::async_trait;
 use std::io::{BufReader, Read};
 use std::path::Path;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
@@ -51,25 +50,11 @@ pub struct SqliteFileHashRepository {
 
 impl SqliteFileHashRepository {
     /// Create a new SqliteFileHashRepository
-    pub fn new(executor: Arc<dyn DatabaseExecutor>, config: SqliteFileHashConfig) -> Self {
-        // TODO(architecture): Inject project_id explicitly instead of inferring from env/CWD.
-        // Repositories should not depend on ambient environment variables for core identity.
-        let project_id = std::env::vars()
-            .find_map(|(key, value)| {
-                if key == "MCB_PROJECT_ID" {
-                    Some(value)
-                } else {
-                    None
-                }
-            })
-            .filter(|v| !v.trim().is_empty())
-            .or_else(|| {
-                std::env::current_dir()
-                    .ok()
-                    .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(String::from))
-            })
-            .unwrap_or_else(|| "default".to_string());
-
+    pub fn new(
+        executor: Arc<dyn DatabaseExecutor>,
+        config: SqliteFileHashConfig,
+        project_id: String,
+    ) -> Self {
         Self {
             executor,
             config,
@@ -79,10 +64,8 @@ impl SqliteFileHashRepository {
 
     /// Get current Unix timestamp
     fn now() -> i64 {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs() as i64
+        mcb_domain::utils::time::epoch_secs_i64()
+            .unwrap_or_else(|e| panic!("system clock failure: {e}"))
     }
 
     async fn ensure_project_exists(&self) -> Result<()> {

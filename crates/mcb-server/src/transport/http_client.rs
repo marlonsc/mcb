@@ -44,45 +44,6 @@ pub struct HttpClientTransport {
 }
 
 impl HttpClientTransport {
-    /// Create a new HTTP client transport
-    ///
-    /// # Arguments
-    ///
-    /// * `server_url` - URL of the MCB server (e.g., "http://127.0.0.1:8080")
-    /// * `session_prefix` - Optional prefix for session ID generation
-    /// * `timeout` - Request timeout duration
-    ///
-    /// # Errors
-    ///
-    /// Returns error if the HTTP client cannot be created.
-    pub fn new(
-        server_url: String,
-        session_prefix: Option<String>,
-        timeout: Duration,
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        let env_session_id = std::env::vars().find_map(|(key, value)| {
-            if key == "MCB_SESSION_ID" {
-                Some(value)
-            } else {
-                None
-            }
-        });
-        let env_session_file = std::env::vars().find_map(|(key, value)| {
-            if key == "MCB_SESSION_FILE" {
-                Some(value)
-            } else {
-                None
-            }
-        });
-        Self::new_with_session_source(
-            server_url,
-            session_prefix,
-            timeout,
-            env_session_id,
-            env_session_file,
-        )
-    }
-
     /// Create a new HTTP client transport with explicit session source values.
     ///
     /// Used by tests to validate session source precedence without mutating process env.

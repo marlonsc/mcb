@@ -251,10 +251,12 @@ fn test_http_transport_config_default() {
 #[test]
 fn test_http_client_session_id_with_prefix() {
     let port = get_free_port();
-    let client = HttpClientTransport::new(
+    let client = HttpClientTransport::new_with_session_source(
         format!("http://127.0.0.1:{}", port),
         Some("test-prefix".to_string()),
         Duration::from_secs(30),
+        None,
+        None,
     )
     .expect("Failed to create client");
 
@@ -264,10 +266,12 @@ fn test_http_client_session_id_with_prefix() {
 #[test]
 fn test_http_client_session_id_without_prefix() {
     let port = get_free_port();
-    let client = HttpClientTransport::new(
+    let client = HttpClientTransport::new_with_session_source(
         format!("http://127.0.0.1:{}", port),
         None,
         Duration::from_secs(30),
+        None,
+        None,
     )
     .expect("Failed to create client");
 
@@ -280,8 +284,14 @@ fn test_http_client_session_id_without_prefix() {
 fn test_http_client_server_url() {
     let port = get_free_port();
     let expected_url = format!("http://127.0.0.1:{}", port);
-    let client = HttpClientTransport::new(expected_url.clone(), None, Duration::from_secs(30))
-        .expect("Failed to create client");
+    let client = HttpClientTransport::new_with_session_source(
+        expected_url.clone(),
+        None,
+        Duration::from_secs(30),
+        None,
+        None,
+    )
+    .expect("Failed to create client");
 
     assert_eq!(client.server_url(), expected_url);
 }
@@ -291,10 +301,12 @@ fn test_http_client_from_mode_config() {
     let port = get_free_port();
     let mode_config = create_client_config(port);
 
-    let client = HttpClientTransport::new(
+    let client = HttpClientTransport::new_with_session_source(
         mode_config.server_url.clone(),
         mode_config.session_prefix.clone(),
         Duration::from_secs(mode_config.timeout_secs),
+        None,
+        None,
     )
     .expect("Failed to create client");
 

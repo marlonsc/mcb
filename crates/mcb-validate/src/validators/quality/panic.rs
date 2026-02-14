@@ -29,10 +29,6 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                 continue;
             }
 
-            // # False Positive (TEST001)
-            // This line contains a check for #[cfg(test)], which is interpreted as an inline test module.
-            //
-            // TODO(TEST001): Refactor detection logic to distinguish between test code and test-detection code.
             if trimmed.contains("#[cfg(test)]") {
                 in_test_module = true;
                 continue;

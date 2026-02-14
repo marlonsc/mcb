@@ -256,10 +256,8 @@ fn should_ignore(path: &str, ignore_patterns: &[String]) -> bool {
 }
 
 fn build_trace_id() -> String {
-    let nanos = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_nanos();
+    let nanos = mcb_domain::utils::time::epoch_nanos_u128()
+        .unwrap_or_else(|e| panic!("system clock failure: {e}"));
     format!("validate-run-{nanos}")
 }
 

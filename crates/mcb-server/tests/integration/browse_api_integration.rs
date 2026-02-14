@@ -412,10 +412,11 @@ async fn test_e2e_real_store_list_collections() {
 
     // Parse and validate JSON response
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
+    let expected_collection = CollectionId::from_name("test_project").to_string();
 
     // Validate collection exists
     assert!(
-        body.contains("test_project"),
+        body.contains(&expected_collection),
         "Should contain collection name"
     );
 
@@ -424,7 +425,7 @@ async fn test_e2e_real_store_list_collections() {
     assert_eq!(collections.len(), 1, "Should have 1 collection");
 
     let collection = &collections[0];
-    assert_eq!(collection["name"], "test_project");
+    assert_eq!(collection["name"], expected_collection);
     assert_eq!(collection["vector_count"], 8, "Should have 8 chunks total");
     assert_eq!(collection["file_count"], 4, "Should have 4 unique files");
     assert_eq!(collection["provider"], "edgevec");
@@ -594,7 +595,10 @@ async fn test_e2e_real_store_navigate_full_flow() {
     );
 
     let collection_name = collections[0]["name"].as_str().expect("collection name");
-    assert_eq!(collection_name, "my_rust_project");
+    assert_eq!(
+        collection_name,
+        CollectionId::from_name("my_rust_project").to_string()
+    );
 
     // Step 2: List files in the collection
     let files_url = format!("/collections/{}/files", collection_name);
@@ -706,6 +710,8 @@ async fn test_e2e_real_store_multiple_collections() {
 
     let collections = json["collections"].as_array().expect("collections array");
     assert_eq!(collections.len(), 2, "Should have 2 collections");
+    let expected_alpha = CollectionId::from_name("project_alpha").to_string();
+    let expected_beta = CollectionId::from_name("project_beta").to_string();
 
     let names: Vec<&str> = collections
         .iter()
@@ -713,10 +719,13 @@ async fn test_e2e_real_store_multiple_collections() {
         .collect();
 
     assert!(
-        names.contains(&"project_alpha"),
+        names.contains(&expected_alpha.as_str()),
         "Should have project_alpha"
     );
-    assert!(names.contains(&"project_beta"), "Should have project_beta");
+    assert!(
+        names.contains(&expected_beta.as_str()),
+        "Should have project_beta"
+    );
 
     // Validate total count
     assert_eq!(json["total"], 2);

@@ -65,11 +65,12 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
 
     match scenario {
         "observation_metadata" => {
+            let obs_id = ObservationId::from_name("obs-malformed");
             executor
                 .execute(
                     "INSERT INTO observations (id, project_id, content, content_hash, tags, observation_type, metadata, created_at, embedding_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     &[
-                        SqlParam::String("obs-malformed".to_string()),
+                        SqlParam::String(obs_id.to_string()),
                         SqlParam::String("proj-schema-upgrade".to_string()),
                         SqlParam::String("content".to_string()),
                         SqlParam::String("hash-obs-malformed".to_string()),
@@ -84,7 +85,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                 .expect("insert malformed observation row");
 
             let err = memory_repo
-                .get_observation(&ObservationId::from("obs-malformed"))
+                .get_observation(&obs_id)
                 .await
                 .expect_err("malformed metadata must fail");
             assert!(
@@ -94,13 +95,15 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
             );
         }
         "session_origin_context" => {
+            let session_id = SessionId::from_name("session-malformed");
+            let summary_id = ObservationId::from_name("summary-malformed");
             executor
                 .execute(
                     "INSERT INTO session_summaries (id, project_id, session_id, topics, decisions, next_steps, key_files, origin_context, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     &[
-                        SqlParam::String("summary-malformed".to_string()),
+                        SqlParam::String(summary_id.to_string()),
                         SqlParam::String("proj-schema-upgrade".to_string()),
-                        SqlParam::String("session-malformed".to_string()),
+                        SqlParam::String(session_id.to_string()),
                         SqlParam::String("[]".to_string()),
                         SqlParam::String("[]".to_string()),
                         SqlParam::String("[]".to_string()),
@@ -113,7 +116,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                 .expect("insert malformed session summary row");
 
             let err = memory_repo
-                .get_session_summary(&SessionId::from("session-malformed"))
+                .get_session_summary(&session_id)
                 .await
                 .expect_err("malformed origin_context must fail");
             assert!(
@@ -123,11 +126,12 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
             );
         }
         "observation_tags" => {
+            let obs_id = ObservationId::from_name("obs-bad-tags");
             executor
                 .execute(
                     "INSERT INTO observations (id, project_id, content, content_hash, tags, observation_type, metadata, created_at, embedding_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     &[
-                        SqlParam::String("obs-bad-tags".to_string()),
+                        SqlParam::String(obs_id.to_string()),
                         SqlParam::String("proj-schema-upgrade".to_string()),
                         SqlParam::String("content".to_string()),
                         SqlParam::String("hash-obs-bad-tags".to_string()),
@@ -142,7 +146,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                 .expect("insert malformed tags row");
 
             let err = memory_repo
-                .get_observation(&ObservationId::from("obs-bad-tags"))
+                .get_observation(&obs_id)
                 .await
                 .expect_err("malformed tags must fail");
             assert!(
@@ -151,13 +155,15 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
             );
         }
         "session_topics" => {
+            let session_id = SessionId::from_name("session-bad-topics");
+            let summary_id = ObservationId::from_name("summary-bad-topics");
             executor
                 .execute(
                     "INSERT INTO session_summaries (id, project_id, session_id, topics, decisions, next_steps, key_files, origin_context, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     &[
-                        SqlParam::String("summary-bad-topics".to_string()),
+                        SqlParam::String(summary_id.to_string()),
                         SqlParam::String("proj-schema-upgrade".to_string()),
-                        SqlParam::String("session-bad-topics".to_string()),
+                        SqlParam::String(session_id.to_string()),
                         SqlParam::String("{bad-topics-json".to_string()),
                         SqlParam::String("[]".to_string()),
                         SqlParam::String("[]".to_string()),
@@ -170,7 +176,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                 .expect("insert malformed topics row");
 
             let err = memory_repo
-                .get_session_summary(&SessionId::from("session-bad-topics"))
+                .get_session_summary(&session_id)
                 .await
                 .expect_err("malformed topics must fail");
             assert!(

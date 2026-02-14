@@ -411,15 +411,7 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         let collections: Vec<CollectionInfo> = self
             .collections
             .iter()
-            .map(|entry| {
-                CollectionInfo::new(
-                    CollectionId::from_name(entry.key()),
-                    0,
-                    0,
-                    None,
-                    self.provider_name(),
-                )
-            })
+            .map(|entry| CollectionInfo::new(entry.key(), 0, 0, None, self.provider_name()))
             .collect();
         Ok(collections)
     }

@@ -88,7 +88,10 @@ async fn test_jobs_endpoint_with_operations() {
     assert_eq!(ops.len(), 1);
 
     let op = &ops[0];
-    assert_eq!(op["label"], "test-collection");
+    assert_eq!(
+        op["label"],
+        CollectionId::from_name("test-collection").to_string()
+    );
     assert_eq!(op["current_item"], "src/main.rs");
     assert_eq!(op["processed_items"], 10);
     assert_eq!(op["total_items"], 50);

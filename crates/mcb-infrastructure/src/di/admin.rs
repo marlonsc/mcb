@@ -220,10 +220,8 @@ where
             status: DependencyHealth::Healthy,
             message: Some(format!("Service active: {}", self.name)),
             latency_ms: None,
-            last_check: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs(),
+            last_check: mcb_domain::utils::time::epoch_secs_u64()
+                .unwrap_or_else(|e| panic!("system clock failure: {e}")),
         }
     }
 }

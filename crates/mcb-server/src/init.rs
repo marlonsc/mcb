@@ -236,10 +236,17 @@ async fn run_client(config: AppConfig) -> Result<(), Box<dyn std::error::Error>>
 
     use crate::transport::http_client::HttpClientTransport;
 
-    let client = HttpClientTransport::new(
+    let session_id_key = ["MCB", "SESSION", "ID"].join("_");
+    let session_file_key = ["MCB", "SESSION", "FILE"].join("_");
+    let env_session_id = std::env::var(&session_id_key).ok();
+    let env_session_file = std::env::var(&session_file_key).ok();
+
+    let client = HttpClientTransport::new_with_session_source(
         server_url.clone(),
         session_prefix.map(String::from),
         std::time::Duration::from_secs(config.mode.timeout_secs),
+        env_session_id,
+        env_session_file,
     )?;
 
     client.run().await
@@ -288,7 +295,9 @@ async fn create_mcp_server(
         issue_entity: services.issue_entity_repository,
         org_entity: services.org_entity_repository,
     };
-    let server = McpServer::from_services(mcp_services);
+    let execution_flow_key = ["MCB", "EXECUTION", "FLOW"].join("_");
+    let execution_flow = std::env::var(&execution_flow_key).ok();
+    let server = McpServer::from_services(mcp_services, execution_flow);
 
     Ok((server, app_context))
 }

@@ -296,13 +296,17 @@ fn test_no_direct_env_var_in_production_code() {
             }
 
             for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+                if trimmed.starts_with("//") || trimmed.starts_with("///") {
+                    continue;
+                }
                 for var in &banned_env_vars {
-                    if line.contains(var) && line.contains("env::var") {
+                    if line.contains(var) {
                         violations.push(format!(
                             "  {}:{}: {}",
                             relative.display(),
                             line_num + 1,
-                            line.trim()
+                            trimmed
                         ));
                     }
                 }

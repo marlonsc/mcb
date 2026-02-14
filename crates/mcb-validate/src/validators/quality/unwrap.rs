@@ -119,11 +119,14 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                         severity: Severity::Warning,
                     });
                 }
-                // # Implementation Violation (IMPL006)
-                // This empty catch-all ignores unknown methods.
-                //
-                // TODO(IMPL006): Log or handle unknown method types instead of silently ignoring.
-                _ => {}
+                other => {
+                    tracing::debug!(
+                        method = other,
+                        file = %path.display(),
+                        line = detection.line,
+                        "unhandled detection method type"
+                    );
+                }
             }
         }
 

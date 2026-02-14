@@ -411,7 +411,7 @@ impl RustyRulesEngineWrapper {
 
         if condition == "exceeds_limit" {
             // Check files that match the pattern
-            let max_lines = 500; // Hardcoded for now, could be configurable
+            let max_lines = crate::constants::DEFAULT_MAX_FILE_LINES;
 
             for (file_path, content) in &context.file_contents {
                 if file_path.ends_with(pattern) {

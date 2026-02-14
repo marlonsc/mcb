@@ -89,7 +89,7 @@ pub async fn list_collections(
     let collection_responses: Vec<CollectionInfoResponse> = collections
         .into_iter()
         .map(|c| CollectionInfoResponse {
-            name: c.id.into_string(),
+            name: c.name,
             vector_count: c.vector_count,
             file_count: c.file_count,
             last_indexed: c.last_indexed,
@@ -126,7 +126,7 @@ pub async fn list_collection_files(
 ) -> Result<Json<FileListResponse>, (Status, Json<BrowseErrorResponse>)> {
     tracing::info!("list_collection_files called");
     let limit = limit.unwrap_or(100);
-    let collection = CollectionId::from_name(name);
+    let collection = CollectionId::from_string(name);
 
     let files = state
         .browser
@@ -189,7 +189,7 @@ pub async fn get_file_chunks(
 ) -> Result<Json<ChunkListResponse>, (Status, Json<BrowseErrorResponse>)> {
     tracing::info!("get_file_chunks called");
     let file_path = path.to_str().unwrap_or_default().to_string();
-    let collection_id = CollectionId::from_name(name);
+    let collection_id = CollectionId::from_string(name);
 
     let chunks = state
         .browser
@@ -273,7 +273,7 @@ pub async fn get_collection_tree(
     name: &str,
 ) -> Result<Json<FileTreeNode>, (Status, Json<BrowseErrorResponse>)> {
     tracing::info!("get_collection_tree called");
-    let collection_id = CollectionId::from_name(name);
+    let collection_id = CollectionId::from_string(name);
     let files = state
         .browser
         .list_file_paths(&collection_id, LIST_FILE_PATHS_LIMIT)

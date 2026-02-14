@@ -14,7 +14,6 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use milvus::client::Client;
 use milvus::data::FieldColumn;
@@ -789,7 +788,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let mut collections = Vec::new();
 
         for name in collection_names {
-            let collection_id = CollectionId::from_uuid(id::deterministic("collection", &name));
+            let collection_id = CollectionId::from_name(&name);
             // Get stats for each collection
             let stats = self.get_stats(&collection_id).await.unwrap_or_default();
             let vector_count = stats
@@ -800,7 +799,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
             // For now, we don't have a quick way to count unique files without querying all data
             // In a future optimization, we could cache this or use Milvus aggregation
             collections.push(CollectionInfo::new(
-                collection_id,
+                name,
                 vector_count,
                 0, // file_count will be populated when listing files
                 None,

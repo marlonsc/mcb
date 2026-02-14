@@ -6,7 +6,6 @@
 
 use std::path::Path;
 use std::sync::Arc;
-use std::time::SystemTime;
 
 use mcb_domain::constants::keys as schema;
 use mcb_domain::ports::providers::VcsProvider;
@@ -47,6 +46,7 @@ pub struct McpServer {
     services: McpServices,
     /// Tool handlers for MCP protocol
     handlers: ToolHandlers,
+    execution_flow: Option<String>,
 }
 
 /// Domain services container (keeps struct field count manageable)
@@ -202,17 +202,8 @@ impl McpServer {
             }
         }
 
-        let timestamp = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .ok()
-            .map(|d| d.as_secs() as i64);
-        let execution_flow = std::env::vars().find_map(|(key, value)| {
-            if key == "MCB_EXECUTION_FLOW" {
-                Some(value)
-            } else {
-                None
-            }
-        });
+        let timestamp = mcb_domain::utils::time::epoch_secs_i64().ok();
+        let execution_flow = self.execution_flow.clone();
 
         ToolExecutionContext {
             session_id,
@@ -232,7 +223,7 @@ impl McpServer {
     }
 
     /// Create a new MCP server with injected dependencies
-    pub fn new(services: McpServices) -> Self {
+    pub fn new(services: McpServices, execution_flow: Option<String>) -> Self {
         let hook_processor = HookProcessor::new(Some(services.memory.clone()));
         let vcs_entity_handler = Arc::new(VcsEntityHandler::new(services.vcs_entity.clone()));
         let plan_entity_handler = Arc::new(PlanEntityHandler::new(services.plan_entity.clone()));
@@ -268,13 +259,17 @@ impl McpServer {
             hook_processor: Arc::new(hook_processor),
         };
 
-        Self { services, handlers }
+        Self {
+            services,
+            handlers,
+            execution_flow,
+        }
     }
 
     /// Create a new MCP server from domain services
     /// This is the preferred constructor that uses the DI container
-    pub fn from_services(services: McpServices) -> Self {
-        Self::new(services)
+    pub fn from_services(services: McpServices, execution_flow: Option<String>) -> Self {
+        Self::new(services, execution_flow)
     }
 
     /// Access to indexing service

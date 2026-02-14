@@ -7,8 +7,6 @@ crate::define_violations! {
     ViolationCategory::Testing,
     pub enum HygieneViolation {
         /// Inline test module found in src/
-        // TODO(TEST001): Move pre-existing inline tests (line 25) to tests/ directory.
-        // This is part of the "Clean src/" initiative.
         #[violation(
             id = "TEST001",
             severity = Warning,

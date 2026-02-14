@@ -454,9 +454,21 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         Arc::new(SqliteMemoryRepository::new(Arc::clone(&db_executor)));
     let agent_repository = create_agent_repository_from_executor(Arc::clone(&db_executor));
     let project_repository = create_project_repository_from_executor(Arc::clone(&db_executor));
-    let file_hash_repository: Arc<dyn FileHashRepository> = Arc::new(
-        SqliteFileHashRepository::new(Arc::clone(&db_executor), SqliteFileHashConfig::default()),
-    );
+    let project_id = std::env::var("MCB_PROJECT_ID")
+        .ok()
+        .filter(|v| !v.trim().is_empty())
+        .or_else(|| {
+            std::env::current_dir()
+                .ok()
+                .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(String::from))
+        })
+        .unwrap_or_else(|| "default".to_string());
+    let file_hash_repository: Arc<dyn FileHashRepository> =
+        Arc::new(SqliteFileHashRepository::new(
+            Arc::clone(&db_executor),
+            SqliteFileHashConfig::default(),
+            project_id,
+        ));
 
     let vcs_provider = crate::di::vcs::default_vcs_provider();
     let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new());

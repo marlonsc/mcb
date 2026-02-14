@@ -345,10 +345,8 @@ pub trait LifecycleManaged: Send + Sync {
             },
             message: None,
             latency_ms: None,
-            last_check: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs(),
+            last_check: crate::utils::time::epoch_secs_u64()
+                .unwrap_or_else(|e| panic!("system clock failure: {e}")),
         }
     }
 }
