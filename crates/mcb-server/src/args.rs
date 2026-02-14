@@ -33,34 +33,25 @@ pub(crate) fn validate_collection_name(collection: &str) -> Result<(), Validatio
 
 pub(crate) mod macros;
 
-#[allow(missing_docs)]
 pub mod agent;
 
-#[allow(missing_docs)]
 pub mod consolidated;
 
-#[allow(missing_docs)]
 pub mod entity;
 
-#[allow(missing_docs)]
 pub mod index;
 
-#[allow(missing_docs)]
 pub mod memory;
 
-#[allow(missing_docs)]
-pub mod project;
+// pub mod project;
+// pub use project::{ProjectAction, ProjectArgs, ProjectResource};
 
-#[allow(missing_docs)]
 pub mod search;
 
-#[allow(missing_docs)]
 pub mod session;
 
-#[allow(missing_docs)]
 pub mod validate;
 
-#[allow(missing_docs)]
 pub mod vcs;
 
 pub use agent::{AgentAction, AgentArgs};

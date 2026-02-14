@@ -32,6 +32,89 @@ use tracing::debug;
 use super::query_helpers;
 use super::row_convert;
 
+/// Serializes the complex JSON fields of a `SessionSummary` for database storage.
+fn serialize_summary_fields(
+    summary: &SessionSummary,
+) -> Result<(String, String, String, String, String)> {
+    let topics = serde_json::to_string(&summary.topics)
+        .map_err(|e| Error::memory_with_source("serialize topics", e))?;
+    let decisions = serde_json::to_string(&summary.decisions)
+        .map_err(|e| Error::memory_with_source("serialize decisions", e))?;
+    let next_steps = serde_json::to_string(&summary.next_steps)
+        .map_err(|e| Error::memory_with_source("serialize next_steps", e))?;
+    let key_files = serde_json::to_string(&summary.key_files)
+        .map_err(|e| Error::memory_with_source("serialize key_files", e))?;
+    let origin_context = serde_json::to_string(&summary.origin_context)
+        .map_err(|e| Error::memory_with_source("serialize origin_context", e))?;
+    Ok((topics, decisions, next_steps, key_files, origin_context))
+}
+
+/// Builds the base SQL `WHERE` clause and parameters from an optional `MemoryFilter`.
+///
+/// Returns a `(sql_fragment, params)` tuple where `sql_fragment` starts with
+/// `"SELECT * FROM observations WHERE 1=1"` followed by any filter conditions.
+fn build_timeline_filter_sql(filter: Option<&MemoryFilter>) -> (String, Vec<SqlParam>) {
+    let mut sql = String::from("SELECT * FROM observations WHERE 1=1");
+    let mut params: Vec<SqlParam> = Vec::new();
+
+    let Some(f) = filter else {
+        return (sql, params);
+    };
+
+    if let Some(session_id) = &f.session_id {
+        sql.push_str(" AND json_extract(metadata, '$.session_id') = ?");
+        params.push(SqlParam::String(session_id.clone()));
+    }
+    if let Some(parent_session_id) = &f.parent_session_id {
+        sql.push_str(" AND json_extract(metadata, '$.origin_context.parent_session_id') = ?");
+        params.push(SqlParam::String(parent_session_id.clone()));
+    }
+    if let Some(repo_id) = &f.repo_id {
+        sql.push_str(" AND json_extract(metadata, '$.repo_id') = ?");
+        params.push(SqlParam::String(repo_id.clone()));
+    }
+    if let Some(branch) = &f.branch {
+        sql.push_str(" AND json_extract(metadata, '$.branch') = ?");
+        params.push(SqlParam::String(branch.clone()));
+    }
+    if let Some(commit) = &f.commit {
+        sql.push_str(" AND json_extract(metadata, '$.commit') = ?");
+        params.push(SqlParam::String(commit.clone()));
+    }
+    if let Some(obs_type) = &f.r#type {
+        sql.push_str(" AND observation_type = ?");
+        params.push(SqlParam::String(obs_type.as_str().to_owned()));
+    }
+
+    (sql, params)
+}
+
+/// Assembles a timeline from before/after row sets plus the anchor observation.
+async fn assemble_timeline(
+    before_rows: &[Box<dyn mcb_domain::ports::infrastructure::database::RowAccess>],
+    after_rows: &[Box<dyn mcb_domain::ports::infrastructure::database::RowAccess>],
+    repo: &SqliteMemoryRepository,
+    anchor_id: &ObservationId,
+) -> Result<Vec<Observation>> {
+    let mut timeline = Vec::new();
+    for row in before_rows.iter().rev() {
+        timeline.push(
+            row_convert::row_to_observation(row.as_ref())
+                .map_err(|e| Error::memory_with_source("decode observation", e))?,
+        );
+    }
+    if let Some(anchor_obs) = repo.get_observation(anchor_id).await? {
+        timeline.push(anchor_obs);
+    }
+    for row in after_rows {
+        timeline.push(
+            row_convert::row_to_observation(row.as_ref())
+                .map_err(|e| Error::memory_with_source("decode observation", e))?,
+        );
+    }
+    Ok(timeline)
+}
+
 /// SQLite-based implementation of the `MemoryRepository`.
 ///
 /// Uses standard SQL queries to manage `observations` and `session_summaries` tables.
@@ -45,6 +128,26 @@ impl SqliteMemoryRepository {
     /// Create a repository that uses the given executor (from provider factory).
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
+    }
+
+    /// Queries a time window of observations relative to an anchor timestamp.
+    async fn query_timeline_window(
+        &self,
+        base_sql: &str,
+        base_params: &[SqlParam],
+        anchor_time: i64,
+        limit: usize,
+        order: &str,
+    ) -> Result<Vec<Box<dyn mcb_domain::ports::infrastructure::database::RowAccess>>> {
+        let op = if order == "DESC" { "<" } else { ">" };
+        let sql = format!("{base_sql} AND created_at {op} ? ORDER BY created_at {order} LIMIT ?");
+        let mut params = base_params.to_vec();
+        params.push(SqlParam::I64(anchor_time));
+        params.push(SqlParam::I64(limit as i64));
+        self.executor
+            .query_all(&sql, &params)
+            .await
+            .map_err(Into::into)
     }
 }
 
@@ -183,8 +286,6 @@ impl MemoryRepository for SqliteMemoryRepository {
     ///
     /// The timeline includes a specified number of observations before and after the anchor,
     /// optionally filtered by session, repository, or observation type.
-    // TODO(KISS005): Function get_timeline is too long (76 lines, max: 50).
-    // Break into smaller, focused functions for query building and result processing.
     async fn get_timeline(
         &self,
         anchor_id: &ObservationId,
@@ -198,83 +299,22 @@ impl MemoryRepository for SqliteMemoryRepository {
             None => return Ok(Vec::new()),
         };
 
-        let mut base_sql = String::from("SELECT * FROM observations WHERE 1=1");
-        let mut base_params: Vec<SqlParam> = Vec::new();
+        let (base_sql, base_params) = build_timeline_filter_sql(filter.as_ref());
 
-        if let Some(ref f) = filter {
-            if let Some(session_id) = &f.session_id {
-                base_sql.push_str(" AND json_extract(metadata, '$.session_id') = ?");
-                base_params.push(SqlParam::String(session_id.clone()));
-            }
-            if let Some(parent_session_id) = &f.parent_session_id {
-                base_sql.push_str(
-                    " AND json_extract(metadata, '$.origin_context.parent_session_id') = ?",
-                );
-                base_params.push(SqlParam::String(parent_session_id.clone()));
-            }
-            if let Some(repo_id) = &f.repo_id {
-                base_sql.push_str(" AND json_extract(metadata, '$.repo_id') = ?");
-                base_params.push(SqlParam::String(repo_id.clone()));
-            }
-            if let Some(branch) = &f.branch {
-                base_sql.push_str(" AND json_extract(metadata, '$.branch') = ?");
-                base_params.push(SqlParam::String(branch.clone()));
-            }
-            if let Some(commit) = &f.commit {
-                base_sql.push_str(" AND json_extract(metadata, '$.commit') = ?");
-                base_params.push(SqlParam::String(commit.clone()));
-            }
-            if let Some(obs_type) = &f.r#type {
-                base_sql.push_str(" AND observation_type = ?");
-                base_params.push(SqlParam::String(obs_type.as_str().to_owned()));
-            }
-        }
+        let before_rows = self
+            .query_timeline_window(&base_sql, &base_params, anchor_time, before, "DESC")
+            .await?;
+        let after_rows = self
+            .query_timeline_window(&base_sql, &base_params, anchor_time, after, "ASC")
+            .await?;
 
-        let before_sql = format!(
-            "{} AND created_at < ? ORDER BY created_at DESC LIMIT ?",
-            base_sql
-        );
-        let mut before_params = base_params.clone();
-        before_params.push(SqlParam::I64(anchor_time));
-        before_params.push(SqlParam::I64(before as i64));
-
-        let after_sql = format!(
-            "{} AND created_at > ? ORDER BY created_at ASC LIMIT ?",
-            base_sql
-        );
-        let mut after_params = base_params;
-        after_params.push(SqlParam::I64(anchor_time));
-        after_params.push(SqlParam::I64(after as i64));
-
-        let before_rows = self.executor.query_all(&before_sql, &before_params).await?;
-        let after_rows = self.executor.query_all(&after_sql, &after_params).await?;
-
-        let mut timeline = Vec::new();
-        for row in before_rows.iter().rev() {
-            timeline.push(
-                row_convert::row_to_observation(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode observation", e))?,
-            );
-        }
-        if let Some(anchor_obs) = self.get_observation(anchor_id).await? {
-            timeline.push(anchor_obs);
-        }
-        for row in after_rows {
-            timeline.push(
-                row_convert::row_to_observation(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode observation", e))?,
-            );
-        }
-        Ok(timeline)
+        assemble_timeline(&before_rows, &after_rows, self, anchor_id).await
     }
 
     /// Persists a session summary to the database, updating it if it already exists.
     ///
     /// Handles serialization of topics, decisions, and other complex fields into JSON.
-    // TODO(KISS005): Function store_session_summary is too long (54 lines, max: 50).
-    // Break into smaller, focused functions for serialization and DB execution.
     async fn store_session_summary(&self, summary: &SessionSummary) -> Result<()> {
-        // Ensure default org and project exist
         super::ensure_parent::ensure_org_and_project(
             self.executor.as_ref(),
             &summary.project_id,
@@ -282,26 +322,18 @@ impl MemoryRepository for SqliteMemoryRepository {
         )
         .await?;
 
-        let topics_json = serde_json::to_string(&summary.topics)
-            .map_err(|e| Error::memory_with_source("serialize topics", e))?;
-        let decisions_json = serde_json::to_string(&summary.decisions)
-            .map_err(|e| Error::memory_with_source("serialize decisions", e))?;
-        let next_steps_json = serde_json::to_string(&summary.next_steps)
-            .map_err(|e| Error::memory_with_source("serialize next_steps", e))?;
-        let key_files_json = serde_json::to_string(&summary.key_files)
-            .map_err(|e| Error::memory_with_source("serialize key_files", e))?;
-        let origin_context_json = serde_json::to_string(&summary.origin_context)
-            .map_err(|e| Error::memory_with_source("serialize origin_context", e))?;
+        let (topics, decisions, next_steps, key_files, origin_ctx) =
+            serialize_summary_fields(summary)?;
 
         let params = [
             SqlParam::String(summary.id.clone()),
             SqlParam::String(summary.project_id.clone()),
             SqlParam::String(summary.session_id.clone()),
-            SqlParam::String(topics_json),
-            SqlParam::String(decisions_json),
-            SqlParam::String(next_steps_json),
-            SqlParam::String(key_files_json),
-            SqlParam::String(origin_context_json),
+            SqlParam::String(topics),
+            SqlParam::String(decisions),
+            SqlParam::String(next_steps),
+            SqlParam::String(key_files),
+            SqlParam::String(origin_ctx),
             SqlParam::I64(summary.created_at),
         ];
 

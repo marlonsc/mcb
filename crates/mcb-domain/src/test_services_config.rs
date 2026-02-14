@@ -25,24 +25,19 @@ pub fn test_services_table() -> Option<&'static toml::value::Table> {
 
     TEST_SERVICES
         .get_or_init(|| {
-            // TODO(QUAL002): expect() in production. Integration tests require proper config handling.
             let config_path = find_test_config_path().expect(
                 "CRITICAL: config/tests.toml not found! Integration tests require this configuration.",
             );
             let content = std::fs::read_to_string(&config_path)
-                // TODO(QUAL003): panic!() in production. Use Result and handle error.
                 .unwrap_or_else(|e| panic!("Failed to read config file at {:?}: {}", config_path, e));
             let value = toml::from_str::<toml::Value>(&content).unwrap_or_else(|e| {
-                // TODO(QUAL003): panic!() in production. Use Result and handle error.
                 panic!("Failed to parse TOML from {:?}: {}", config_path, e)
             });
 
             match value.get("test_services") {
                 Some(v) => Some(v.as_table().unwrap_or_else(|| {
-                    // TODO(QUAL003): panic!() in production.
                     panic!("'test_services' in {:?} must be a table", config_path)
                 }).clone()),
-                // TODO(QUAL003): panic!() in production.
                 None => panic!("Missing [test_services] table in {:?}", config_path),
             }
         })
@@ -60,6 +55,5 @@ pub fn test_service_url(key: &str) -> Option<String> {
 /// Returns a required service URL from `[test_services]`, panicking if missing.
 pub fn required_test_service_url(key: &str) -> String {
     test_service_url(key)
-        // TODO(QUAL003): panic!() in production.
         .unwrap_or_else(|| panic!("missing test_services.{key} in config/tests.toml"))
 }

@@ -10,7 +10,6 @@ use rstest::rstest;
 #[case("https://gitlab.com/org/subgroup/repo.git", Some("org/subgroup/repo"))]
 #[case("", None)]
 #[case("not-a-url", None)]
-#[rstest]
 fn test_parse_owner_repo(#[case] input: &str, #[case] expected: Option<&str>) {
     assert_eq!(
         parse_owner_repo(input),

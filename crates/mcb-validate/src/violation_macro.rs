@@ -65,7 +65,7 @@ macro_rules! define_violations {
     ) => {
 
         #[derive(Debug, Clone, serde::Serialize)]
-        #[allow(missing_docs)]
+
         $vis enum $name {
             $(
                 $(#[doc = $doc])*
@@ -145,7 +145,7 @@ macro_rules! define_violations {
     ) => {
 
         #[derive(Debug, Clone, serde::Serialize)]
-        #[allow(missing_docs)]
+
         $vis enum $name {
             $(
                 $(#[doc = $doc])*
@@ -237,7 +237,7 @@ macro_rules! define_violations {
     ) => {
 
         #[derive(Debug, Clone, serde::Serialize)]
-        #[allow(missing_docs)]
+
         $vis enum $name {
             $(
                 $(#[doc = $doc])*
@@ -316,7 +316,7 @@ macro_rules! define_violations {
     ) => {
 
         #[derive(Debug, Clone, serde::Serialize)]
-        #[allow(missing_docs)]
+
         $vis enum $name {
             $(
                 $(#[doc = $doc])*

@@ -1,6 +1,6 @@
 use mcb_domain::entities::repository::{Branch, Repository, VcsType};
-use rstest::rstest;
-use rstest::*;
+
+use rstest::{fixture, rstest};
 
 #[rstest]
 #[case(VcsType::Git, "git")]
