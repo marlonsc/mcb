@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use serde::Serialize;
 
 use crate::Severity;
-use crate::violation_trait::{Violation, ViolationCategory};
+use crate::traits::violation::{Violation, ViolationCategory};
 
 /// Report containing all violations with summary
 #[derive(Debug, Clone, Serialize)]

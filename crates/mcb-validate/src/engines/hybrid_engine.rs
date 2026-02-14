@@ -16,7 +16,7 @@ use super::router::{RoutedEngine, RuleEngineRouter};
 use super::validator_engine::ValidatorEngine;
 use crate::Result;
 use crate::ValidationConfig;
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::traits::violation::{Severity, Violation, ViolationCategory};
 
 /// Types of rule engines supported
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

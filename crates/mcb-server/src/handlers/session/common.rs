@@ -2,7 +2,7 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
 use crate::args::SessionArgs;
-pub(super) use crate::handlers::shared::{
+pub(super) use crate::handlers::helpers::{
     opt_str, optional_data_map, require_data_map, require_str, str_vec,
 };
 use mcb_domain::value_objects::ids::SessionId;

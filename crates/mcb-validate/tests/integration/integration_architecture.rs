@@ -25,11 +25,10 @@ mod architecture_integration_tests {
 
     use mcb_validate::ValidationConfig;
     use mcb_validate::Validator;
-    use mcb_validate::clean_architecture::{
-        CleanArchitectureValidator, CleanArchitectureViolation,
-    };
     use mcb_validate::config::NamingRulesConfig;
-    use mcb_validate::violation_trait::{Severity, Violation, ViolationCategory};
+    use mcb_validate::{CleanArchitectureValidator, CleanArchitectureViolation};
+    use mcb_validate::{Severity, Violation, ViolationCategory};
+    use rstest::*;
     use tempfile::TempDir;
 
     fn mcb_naming_config() -> NamingRulesConfig {
@@ -399,63 +398,72 @@ impl Server {
     }
 
     /// Test all violation IDs are correct
-    #[test]
-    fn test_violation_ids() {
-        let violations = [
-            CleanArchitectureViolation::DomainContainsImplementation {
-                file: PathBuf::new(),
-                line: 1,
-                impl_type: "struct".to_string(),
-                severity: Severity::Warning,
-            },
-            CleanArchitectureViolation::HandlerCreatesService {
-                file: PathBuf::new(),
-                line: 1,
-                service_name: "Svc".to_string(),
-                context: String::new(),
-                severity: Severity::Warning,
-            },
-            CleanArchitectureViolation::PortMissingComponentDerive {
-                file: PathBuf::new(),
-                line: 1,
-                struct_name: "Port".to_string(),
-                trait_name: "Trait".to_string(),
-                severity: Severity::Warning,
-            },
-            CleanArchitectureViolation::EntityMissingIdentity {
-                file: PathBuf::new(),
-                line: 1,
-                entity_name: "Entity".to_string(),
-                severity: Severity::Warning,
-            },
-            CleanArchitectureViolation::ValueObjectMutable {
-                file: PathBuf::new(),
-                line: 1,
-                vo_name: "VO".to_string(),
-                method_name: "set".to_string(),
-                severity: Severity::Warning,
-            },
-            CleanArchitectureViolation::ServerImportsProviderDirectly {
-                file: PathBuf::new(),
-                line: 1,
-                import_path: "mcb_providers::x".to_string(),
-                severity: Severity::Warning,
-            },
-        ];
-
-        let expected_ids = ["CA001", "CA002", "CA003", "CA004", "CA005", "CA006"];
-
-        for (violation, expected_id) in violations.iter().zip(expected_ids.iter()) {
-            assert_eq!(violation.id(), *expected_id);
-            assert_eq!(violation.category(), ViolationCategory::Architecture);
-        }
+    #[rstest]
+    #[case(
+        CleanArchitectureViolation::DomainContainsImplementation {
+            file: PathBuf::new(),
+            line: 1,
+            impl_type: "struct".to_string(),
+            severity: Severity::Warning,
+        },
+        "CA001"
+    )]
+    #[case(
+        CleanArchitectureViolation::HandlerCreatesService {
+            file: PathBuf::new(),
+            line: 1,
+            service_name: "Svc".to_string(),
+            context: String::new(),
+            severity: Severity::Warning,
+        },
+        "CA002"
+    )]
+    #[case(
+        CleanArchitectureViolation::PortMissingComponentDerive {
+            file: PathBuf::new(),
+            line: 1,
+            struct_name: "Port".to_string(),
+            trait_name: "Trait".to_string(),
+            severity: Severity::Warning,
+        },
+        "CA003"
+    )]
+    #[case(
+        CleanArchitectureViolation::EntityMissingIdentity {
+            file: PathBuf::new(),
+            line: 1,
+            entity_name: "Entity".to_string(),
+            severity: Severity::Warning,
+        },
+        "CA004"
+    )]
+    #[case(
+        CleanArchitectureViolation::ValueObjectMutable {
+            file: PathBuf::new(),
+            line: 1,
+            vo_name: "VO".to_string(),
+            method_name: "set".to_string(),
+            severity: Severity::Warning,
+        },
+        "CA005"
+    )]
+    #[case(
+        CleanArchitectureViolation::ServerImportsProviderDirectly {
+            file: PathBuf::new(),
+            line: 1,
+            import_path: "mcb_providers::x".to_string(),
+            severity: Severity::Warning,
+        },
+        "CA006"
+    )]
+    fn violation_ids(#[case] violation: CleanArchitectureViolation, #[case] expected_id: &str) {
+        assert_eq!(violation.id(), expected_id);
+        assert_eq!(violation.category(), ViolationCategory::Architecture);
     }
 
     /// Test Validator trait integration
     #[test]
     fn test_validator_trait() {
-        use mcb_validate::validator_trait::Validator;
-
         let dir = TempDir::new().unwrap();
         let root = create_workspace_structure(&dir);
         let config = ValidationConfig::new(&root);

@@ -2,7 +2,8 @@
 
 use std::path::PathBuf;
 
-use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry};
+use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry, Violation};
+use rstest::*;
 
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -13,25 +14,34 @@ fn get_workspace_root() -> PathBuf {
         .to_path_buf()
 }
 
-#[test]
-fn test_validate_workspace_dependencies() {
+#[rstest]
+#[case("dependency", "Dependency Violations", true)]
+#[case("patterns", "Pattern Violations", false)]
+#[case("hygiene", "Test Hygiene Violations", false)]
+#[case("naming", "Naming Violations", false)]
+fn validate_workspace_group(
+    #[case] validator_name: &str,
+    #[case] header: &str,
+    #[case] must_be_clean: bool,
+) {
     let workspace_root = get_workspace_root();
     let config = ValidationConfig::new(&workspace_root);
     let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let violations = registry.validate_named(&config, &["dependency"]).unwrap();
+    let violations = registry.validate_named(&config, &[validator_name]).unwrap();
 
-    println!("\n=== Dependency Violations ===");
+    println!("\n=== {header} ===");
     for v in &violations {
         println!("  [{:?}] {}", v.severity(), v);
     }
-    println!("Total: {} dependency violations\n", violations.len());
+    println!("Total: {} {validator_name} violations\n", violations.len());
 
-    // Dependencies should follow Clean Architecture
-    assert!(
-        violations.is_empty(),
-        "Found {} dependency violations - Clean Architecture rules violated",
-        violations.len()
-    );
+    if must_be_clean {
+        assert!(
+            violations.is_empty(),
+            "Found {} dependency violations - Clean Architecture rules violated",
+            violations.len()
+        );
+    }
 }
 
 #[test]
@@ -77,40 +87,6 @@ fn test_validate_workspace_quality() {
 }
 
 #[test]
-fn test_validate_workspace_patterns() {
-    let workspace_root = get_workspace_root();
-    let config = ValidationConfig::new(&workspace_root);
-    let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let violations = registry.validate_named(&config, &["patterns"]).unwrap();
-
-    println!("\n=== Pattern Violations ===");
-    for v in &violations {
-        println!("  [{:?}] {}", v.severity(), v);
-    }
-    println!("Total: {} pattern violations\n", violations.len());
-
-    // Ensure test executed successfully
-    // Validation completed successfully
-}
-
-#[test]
-fn test_validate_workspace_tests() {
-    let workspace_root = get_workspace_root();
-    let config = ValidationConfig::new(&workspace_root);
-    let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let violations = registry.validate_named(&config, &["hygiene"]).unwrap();
-
-    println!("\n=== Test Hygiene Violations ===");
-    for v in &violations {
-        println!("  [{:?}] {}", v.severity(), v);
-    }
-    println!("Total: {} test hygiene violations\n", violations.len());
-
-    // Ensure test executed successfully
-    // Validation completed successfully
-}
-
-#[test]
 fn test_validate_workspace_documentation() {
     let workspace_root = get_workspace_root();
     let config = ValidationConfig::new(&workspace_root);
@@ -143,23 +119,6 @@ fn test_validate_workspace_documentation() {
 }
 
 #[test]
-fn test_validate_workspace_naming() {
-    let workspace_root = get_workspace_root();
-    let config = ValidationConfig::new(&workspace_root);
-    let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let violations = registry.validate_named(&config, &["naming"]).unwrap();
-
-    println!("\n=== Naming Violations ===");
-    for v in &violations {
-        println!("  [{:?}] {}", v.severity(), v);
-    }
-    println!("Total: {} naming violations\n", violations.len());
-
-    // Ensure test executed successfully
-    // Validation completed successfully
-}
-
-#[test]
 fn test_full_validation_report() {
     let handle = std::thread::Builder::new()
         .name("full-report".into())
@@ -173,7 +132,7 @@ fn run_full_validation_report() {
     let workspace_root = get_workspace_root();
     let validator_names = ValidatorRegistry::standard_validator_names();
 
-    let mut all_violations: Vec<Box<dyn mcb_validate::violation_trait::Violation>> = Vec::new();
+    let mut all_violations: Vec<Box<dyn Violation>> = Vec::new();
 
     for &name in validator_names {
         let root = workspace_root.clone();

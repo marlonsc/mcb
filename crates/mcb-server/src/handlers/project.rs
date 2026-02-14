@@ -9,7 +9,7 @@ use serde_json::Value;
 use tracing::info;
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
-use crate::handler_helpers::{map_opaque_error, ok_json, resolve_org_id};
+use crate::handlers::helpers::{map_opaque_error, ok_json, resolve_org_id};
 
 /// Handler for the consolidated `project` MCP tool.
 pub struct ProjectHandler {

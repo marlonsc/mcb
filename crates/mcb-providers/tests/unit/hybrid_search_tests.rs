@@ -7,7 +7,7 @@ use mcb_domain::ports::providers::HybridSearchProvider;
 use mcb_domain::value_objects::SearchResult;
 use mcb_providers::constants::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
 use mcb_providers::hybrid_search::{BM25Params, BM25Scorer, HybridSearchEngine};
-use rstest::rstest;
+use rstest::*;
 
 // ============================================================================
 // Test Helpers
@@ -46,7 +46,7 @@ fn create_test_search_result(file_path: &str, start_line: u32, score: f64) -> Se
 #[case("fn hello_world() { println!(\"Hello, World!\"); }", "println", true)]
 #[case("fn hello_world() { println!(\"Hello, World!\"); }", "fn", false)]
 #[test]
-fn test_tokenize(#[case] input: &str, #[case] token: &str, #[case] should_contain: bool) {
+fn tokenize(#[case] input: &str, #[case] token: &str, #[case] should_contain: bool) {
     let tokens = BM25Scorer::tokenize(input);
     assert_eq!(tokens.contains(&token.to_string()), should_contain);
 }
@@ -139,15 +139,24 @@ fn test_bm25_batch_scoring() {
 // Hybrid Search Engine Tests
 // ============================================================================
 
+#[rstest]
+#[case("bm25")]
+#[case("semantic")]
 #[tokio::test]
-async fn test_hybrid_search_engine_creation() {
+async fn hybrid_search_engine_creation(#[case] weight_kind: &str) {
     let engine = HybridSearchEngine::new();
-    assert!((engine.bm25_weight() - HYBRID_SEARCH_BM25_WEIGHT).abs() < f32::EPSILON);
-    assert!((engine.semantic_weight() - HYBRID_SEARCH_SEMANTIC_WEIGHT).abs() < f32::EPSILON);
+    if weight_kind == "bm25" {
+        assert!((engine.bm25_weight() - HYBRID_SEARCH_BM25_WEIGHT).abs() < f32::EPSILON);
+    } else {
+        assert!((engine.semantic_weight() - HYBRID_SEARCH_SEMANTIC_WEIGHT).abs() < f32::EPSILON);
+    }
 }
 
+#[rstest]
+#[case(false, 1)]
+#[case(true, 0)]
 #[tokio::test]
-async fn test_index_chunks() {
+async fn index_and_clear_collection(#[case] should_clear: bool, #[case] expected_count: i32) {
     let engine = HybridSearchEngine::new();
 
     let chunks = vec![
@@ -156,9 +165,15 @@ async fn test_index_chunks() {
     ];
 
     engine.index_chunks("test", &chunks).await.unwrap();
+    if should_clear {
+        engine.clear_collection("test").await.unwrap();
+    }
 
     let stats = engine.get_stats().await;
-    assert_eq!(stats.get("collection_count"), Some(&serde_json::json!(1)));
+    assert_eq!(
+        stats.get("collection_count"),
+        Some(&serde_json::json!(expected_count))
+    );
 }
 
 #[tokio::test]
@@ -206,27 +221,11 @@ async fn test_hybrid_search() {
     );
 }
 
-#[tokio::test]
-async fn test_clear_collection() {
-    let engine = HybridSearchEngine::new();
-
-    let chunks = vec![create_test_chunk("fn test() {}", "test.rs", 1)];
-    engine.index_chunks("test", &chunks).await.unwrap();
-
-    let stats = engine.get_stats().await;
-    assert_eq!(stats.get("collection_count"), Some(&serde_json::json!(1)));
-
-    engine.clear_collection("test").await.unwrap();
-
-    let stats = engine.get_stats().await;
-    assert_eq!(stats.get("collection_count"), Some(&serde_json::json!(0)));
-}
-
 #[rstest]
 #[case(10)]
 #[case(1)]
 #[tokio::test]
-async fn test_search_without_index(#[case] limit: usize) {
+async fn search_without_index(#[case] limit: usize) {
     let engine = HybridSearchEngine::new();
 
     // Search without indexing should return semantic results as-is

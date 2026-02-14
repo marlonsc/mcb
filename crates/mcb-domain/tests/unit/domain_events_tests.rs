@@ -4,7 +4,7 @@ use std::sync::Mutex;
 
 use async_trait::async_trait;
 use mcb_domain::events::{DomainEvent, EventPublisher};
-use rstest::rstest;
+use rstest::*;
 
 // Mock event publisher for testing
 struct TestEventPublisher {
@@ -62,8 +62,7 @@ impl EventPublisher for TestEventPublisher {
     DomainEvent::FileChangesDetected { root_path: "/code".to_string(), added: 5, modified: 10, removed: 2 },
     "FileChangesDetected"
 )]
-#[test]
-fn test_domain_event_variants(#[case] event: DomainEvent, #[case] expected_debug_fragment: &str) {
+fn domain_event_variants(#[case] event: DomainEvent, #[case] expected_debug_fragment: &str) {
     let debug_str = format!("{:?}", event);
     assert!(debug_str.contains(expected_debug_fragment));
 }
@@ -90,8 +89,7 @@ fn test_event_publisher_creation() {
 #[rstest]
 #[case(true)]
 #[case(false)]
-#[test]
-fn test_has_subscribers(#[case] expected_has_subscribers: bool) {
+fn has_subscribers(#[case] expected_has_subscribers: bool) {
     let publisher = if expected_has_subscribers {
         TestEventPublisher::new()
     } else {
@@ -100,47 +98,34 @@ fn test_has_subscribers(#[case] expected_has_subscribers: bool) {
     assert_eq!(publisher.has_subscribers(), expected_has_subscribers);
 }
 
-#[tokio::test]
-async fn test_publish_single_event() {
-    let publisher = TestEventPublisher::new();
-
-    let event = DomainEvent::IndexRebuild {
-        collection: Some("test".to_string()),
-    };
-
-    let result = publisher.publish(event).await;
-    assert!(result.is_ok());
-
-    let published_events = publisher.get_published_events();
-    assert_eq!(published_events.len(), 1);
-
-    assert!(matches!(
-        &published_events[0],
-        DomainEvent::IndexRebuild { collection } if collection == &Some("test".to_string())
-    ));
-}
-
-#[tokio::test]
-async fn test_publish_multiple_events() {
-    let publisher = TestEventPublisher::new();
-
-    let events = vec![
-        DomainEvent::IndexRebuild {
-            collection: Some("coll-1".to_string()),
-        },
-        DomainEvent::SyncCompleted {
-            path: "/path".to_string(),
-            files_changed: 5,
-        },
+#[rstest]
+#[case(vec![DomainEvent::IndexRebuild { collection: Some("test".to_string()) }], 1)]
+#[case(
+    vec![
+        DomainEvent::IndexRebuild { collection: Some("coll-1".to_string()) },
+        DomainEvent::SyncCompleted { path: "/path".to_string(), files_changed: 5 },
         DomainEvent::CacheInvalidate { namespace: None },
-    ];
+    ],
+    3
+)]
+#[tokio::test]
+async fn publish_events(#[case] events: Vec<DomainEvent>, #[case] expected_len: usize) {
+    let publisher = TestEventPublisher::new();
 
     for event in events {
-        publisher.publish(event).await.unwrap();
+        let result = publisher.publish(event).await;
+        assert!(result.is_ok());
     }
 
     let published_events = publisher.get_published_events();
-    assert_eq!(published_events.len(), 3);
+    assert_eq!(published_events.len(), expected_len);
+
+    if expected_len == 1 {
+        assert!(matches!(
+            &published_events[0],
+            DomainEvent::IndexRebuild { collection } if collection == &Some("test".to_string())
+        ));
+    }
 }
 
 #[test]

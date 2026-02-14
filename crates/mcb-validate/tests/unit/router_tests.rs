@@ -4,7 +4,7 @@
 //! and `DOMAIN_CRATE` / `FORBIDDEN_PREFIX_PATTERN` from shared constants.
 
 use mcb_validate::engines::{RoutedEngine, RuleEngineRouter};
-use rstest::rstest;
+use rstest::*;
 use serde_json::json;
 
 use crate::test_constants::*;
@@ -30,42 +30,26 @@ use crate::test_constants::*;
     json!({"type": "cargo_dependencies", "pattern": FORBIDDEN_PREFIX_PATTERN}),
     RoutedEngine::RustyRules
 )]
-#[test]
-fn test_detect_engine(#[case] rule: serde_json::Value, #[case] expected: RoutedEngine) {
+fn detect_engine(#[case] rule: serde_json::Value, #[case] expected: RoutedEngine) {
     let router = RuleEngineRouter::new();
     assert_eq!(router.detect_engine(&rule), expected);
 }
 
-#[test]
-fn test_validate_rete_rule() {
+#[rstest]
+#[case(
+    json!({"engine": ENGINE_NAME_RETE, "rule": "rule Test { when true then Action(); }"}),
+    true
+)]
+#[case(json!({"engine": ENGINE_NAME_RETE, "message": "Something"}), false)]
+#[case(
+    json!({"engine": ENGINE_NAME_EXPRESSION, "expression": "x > 5"}),
+    true
+)]
+#[case(
+    json!({"engine": ENGINE_NAME_EXPRESSION, "message": "Something"}),
+    false
+)]
+fn validate_rule(#[case] rule: serde_json::Value, #[case] expected: bool) {
     let router = RuleEngineRouter::new();
-
-    let valid_rule = json!({
-        "engine": ENGINE_NAME_RETE,
-        "rule": "rule Test { when true then Action(); }"
-    });
-    assert!(router.validate_rule(&valid_rule).is_ok());
-
-    let invalid_rule = json!({
-        "engine": ENGINE_NAME_RETE,
-        "message": "Something"
-    });
-    assert!(router.validate_rule(&invalid_rule).is_err());
-}
-
-#[test]
-fn test_validate_expression_rule() {
-    let router = RuleEngineRouter::new();
-
-    let valid_rule = json!({
-        "engine": ENGINE_NAME_EXPRESSION,
-        "expression": "x > 5"
-    });
-    assert!(router.validate_rule(&valid_rule).is_ok());
-
-    let invalid_rule = json!({
-        "engine": ENGINE_NAME_EXPRESSION,
-        "message": "Something"
-    });
-    assert!(router.validate_rule(&invalid_rule).is_err());
+    assert_eq!(router.validate_rule(&rule).is_ok(), expected);
 }

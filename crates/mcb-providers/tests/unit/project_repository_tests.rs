@@ -7,7 +7,7 @@ use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_providers::database::{
     create_memory_repository_with_executor, create_project_repository_from_executor,
 };
-use rstest::rstest;
+use rstest::*;
 
 async fn setup_repository() -> (Arc<dyn ProjectRepository>, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
@@ -63,23 +63,15 @@ fn create_test_project(id: &str, name: &str, path: &str) -> Project {
     }
 }
 
+#[rstest]
+#[case("proj-1", "Test Project", "/test/path")]
+#[case("proj-2", "Project 2", "/path/2")]
 #[tokio::test]
-async fn test_create_project() {
-    let (repo, _project, _temp) = setup_with_project("proj-1", "Test Project", "/test/path").await;
-
-    let retrieved = repo
-        .get_by_id(DEFAULT_ORG_ID, "proj-1")
-        .await
-        .expect("Failed to get project");
-    assert_eq!(retrieved.name, "Test Project");
-}
-
-#[tokio::test]
-async fn test_get_project_by_id() {
-    let (repo, project, _temp) = setup_with_project("proj-2", "Project 2", "/path/2").await;
+async fn get_project_by_id(#[case] id: &str, #[case] name: &str, #[case] path: &str) {
+    let (repo, project, _temp) = setup_with_project(id, name, path).await;
 
     let p = repo
-        .get_by_id(DEFAULT_ORG_ID, "proj-2")
+        .get_by_id(DEFAULT_ORG_ID, id)
         .await
         .expect("Failed to get project");
     assert_eq!(p.id, project.id);
@@ -103,7 +95,7 @@ async fn test_get_project_by_id_not_found() {
 #[case("name", "proj-3", "Unique Name", "/path/3", "Unique Name")]
 #[case("path", "proj-4", "Project 4", "/unique/path", "/unique/path")]
 #[tokio::test]
-async fn test_get_project_by_unique_fields(
+async fn get_project_by_unique_fields(
     #[case] lookup_kind: &str,
     #[case] expected_id: &str,
     #[case] name: &str,

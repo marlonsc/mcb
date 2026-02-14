@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 
-use crate::violation_trait::Severity;
+use crate::traits::violation::Severity;
 
 /// Types of metrics we can measure
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

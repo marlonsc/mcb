@@ -5,6 +5,7 @@ use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, Revi
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::ports::repositories::PlanEntityRepository;
 use mcb_providers::database::SqlitePlanEntityRepository;
+use rstest::*;
 
 use super::entity_test_utils::{
     TEST_NOW, assert_not_found, seed_default_scope, seed_isolated_org_scope, setup_executor,
@@ -134,8 +135,11 @@ async fn test_plan_review_lifecycle() {
     assert_eq!(reviews.len(), 2);
 }
 
+#[rstest]
+#[case("org-A", true)]
+#[case("org-B", false)]
 #[tokio::test]
-async fn test_org_isolation_plans() {
+async fn org_isolation_plans(#[case] org_id: &str, #[case] should_find: bool) {
     let (executor, _temp_dir) = setup_executor().await;
 
     for org_id in &["org-A", "org-B"] {
@@ -156,14 +160,18 @@ async fn test_org_isolation_plans() {
     };
     repo.create_plan(&plan).await.expect("create");
 
-    assert!(repo.get_plan("org-A", "plan-iso").await.is_ok());
-    assert_not_found(repo.get_plan("org-B", "plan-iso").await);
-    assert!(
-        repo.list_plans("org-B", "proj-org-B")
-            .await
-            .unwrap()
-            .is_empty()
-    );
+    let get_result = repo.get_plan(org_id, "plan-iso").await;
+    if should_find {
+        assert!(get_result.is_ok());
+    } else {
+        assert_not_found(get_result);
+        assert!(
+            repo.list_plans("org-B", "proj-org-B")
+                .await
+                .unwrap()
+                .is_empty()
+        );
+    }
 }
 
 #[tokio::test]

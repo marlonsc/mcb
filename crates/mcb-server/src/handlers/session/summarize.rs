@@ -9,7 +9,7 @@ use super::common::{opt_str, optional_data_map, require_session_id, str_vec};
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
+use crate::handlers::helpers::{OriginContextInput, resolve_origin_context};
 
 /// Creates or retrieves a session summary.
 #[tracing::instrument(skip_all)]

@@ -7,6 +7,7 @@ use mcb_domain::entities::{
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::ports::repositories::OrgEntityRepository;
 use mcb_providers::database::SqliteOrgEntityRepository;
+use rstest::*;
 
 use super::entity_test_utils::{TEST_NOW, assert_not_found, setup_executor};
 
@@ -228,8 +229,11 @@ async fn test_api_key_lifecycle() {
     assert_not_found(repo.get_api_key("key-1").await);
 }
 
+#[rstest]
+#[case("org-A", 1)]
+#[case("org-B", 0)]
 #[tokio::test]
-async fn test_org_isolation_users() {
+async fn org_isolation_users(#[case] org_id: &str, #[case] expected_count: usize) {
     let (repo, _executor, _temp) = setup_repo().await;
     let org_a = create_test_org("org-A", "Org A", "org-a");
     let org_b = create_test_org("org-B", "Org B", "org-b");
@@ -239,11 +243,8 @@ async fn test_org_isolation_users() {
     let user = create_test_user("user-1", "org-A", "alice@a.com");
     repo.create_user(&user).await.expect("create user");
 
-    let users_a = repo.list_users("org-A").await.expect("list org-A");
-    assert_eq!(users_a.len(), 1);
-
-    let users_b = repo.list_users("org-B").await.expect("list org-B");
-    assert!(users_b.is_empty());
+    let users = repo.list_users(org_id).await.expect("list users");
+    assert_eq!(users.len(), expected_count);
 }
 
 #[tokio::test]

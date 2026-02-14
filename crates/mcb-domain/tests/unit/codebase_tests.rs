@@ -6,61 +6,37 @@
 use std::collections::HashMap;
 
 use mcb_domain::entities::codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
-use rstest::rstest;
+use rstest::*;
 
-#[test]
-fn test_file_snapshot_creation() {
+#[rstest]
+#[case("src/lib.rs", 1641081600, 2048, "def456", "rust")]
+fn file_snapshot_creation(
+    #[case] path: &str,
+    #[case] modified_at: i64,
+    #[case] size: u64,
+    #[case] hash: &str,
+    #[case] language: &str,
+) {
     let file_snapshot = FileSnapshot {
         id: "file-001".to_string(),
-        path: "src/lib.rs".to_string(),
-        modified_at: 1641081600, // 2022-01-02 00:00:00 UTC
-        size: 2048,
-        hash: "def456".to_string(),
-        language: "rust".to_string(),
+        path: path.to_string(),
+        modified_at,
+        size,
+        hash: hash.to_string(),
+        language: language.to_string(),
     };
 
-    assert_eq!(file_snapshot.path, "src/lib.rs");
-    assert_eq!(file_snapshot.modified_at, 1641081600);
-    assert_eq!(file_snapshot.size, 2048);
-    assert_eq!(file_snapshot.hash, "def456");
-    assert_eq!(file_snapshot.language, "rust");
+    assert_eq!(file_snapshot.path, path);
+    assert_eq!(file_snapshot.modified_at, modified_at);
+    assert_eq!(file_snapshot.size, size);
+    assert_eq!(file_snapshot.hash, hash);
+    assert_eq!(file_snapshot.language, language);
 }
 
-#[test]
-fn test_codebase_snapshot_creation() {
-    let mut files = HashMap::new();
-    files.insert(
-        "src/main.rs".to_string(),
-        FileSnapshot {
-            id: "file-main".to_string(),
-            path: "src/main.rs".to_string(),
-            modified_at: 1640995200,
-            size: 1024,
-            hash: "abc123".to_string(),
-            language: "rust".to_string(),
-        },
-    );
-
-    let snapshot = CodebaseSnapshot {
-        id: "snapshot-001".to_string(),
-        created_at: 1640995200,
-        collection: "my-project".to_string(),
-        files: files.clone(),
-        total_files: 1,
-        total_size: 1024,
-    };
-
-    assert_eq!(snapshot.id, "snapshot-001");
-    assert_eq!(snapshot.created_at, 1640995200);
-    assert_eq!(snapshot.collection, "my-project");
-    assert_eq!(snapshot.total_files, 1);
-    assert_eq!(snapshot.total_size, 1024);
-    assert_eq!(snapshot.files.len(), 1);
-    assert!(snapshot.files.contains_key("src/main.rs"));
-}
-
-#[test]
-fn test_codebase_snapshot_multiple_files() {
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn codebase_snapshot_creation(#[case] multiple_files: bool) {
     let mut files = HashMap::new();
 
     files.insert(
@@ -75,45 +51,64 @@ fn test_codebase_snapshot_multiple_files() {
         },
     );
 
-    files.insert(
-        "src/lib.rs".to_string(),
-        FileSnapshot {
-            id: "file-lib".to_string(),
-            path: "src/lib.rs".to_string(),
-            modified_at: 1641081600,
-            size: 2048,
-            hash: "def456".to_string(),
-            language: "rust".to_string(),
-        },
-    );
+    if multiple_files {
+        files.insert(
+            "src/lib.rs".to_string(),
+            FileSnapshot {
+                id: "file-lib".to_string(),
+                path: "src/lib.rs".to_string(),
+                modified_at: 1641081600,
+                size: 2048,
+                hash: "def456".to_string(),
+                language: "rust".to_string(),
+            },
+        );
 
-    files.insert(
-        "Cargo.toml".to_string(),
-        FileSnapshot {
-            id: "file-cargo".to_string(),
-            path: "Cargo.toml".to_string(),
-            modified_at: 1640995200,
-            size: 512,
-            hash: "toml123".to_string(),
-            language: "toml".to_string(),
-        },
-    );
+        files.insert(
+            "Cargo.toml".to_string(),
+            FileSnapshot {
+                id: "file-cargo".to_string(),
+                path: "Cargo.toml".to_string(),
+                modified_at: 1640995200,
+                size: 512,
+                hash: "toml123".to_string(),
+                language: "toml".to_string(),
+            },
+        );
+    }
 
     let snapshot = CodebaseSnapshot {
-        id: "multi-file-snapshot".to_string(),
-        created_at: 1641081600,
-        collection: "test-project".to_string(),
+        id: if multiple_files {
+            "multi-file-snapshot".to_string()
+        } else {
+            "snapshot-001".to_string()
+        },
+        created_at: if multiple_files {
+            1641081600
+        } else {
+            1640995200
+        },
+        collection: if multiple_files {
+            "test-project".to_string()
+        } else {
+            "my-project".to_string()
+        },
         files: files.clone(),
-        total_files: 3,
-        total_size: 3584, // 1024 + 2048 + 512
+        total_files: files.len(),
+        total_size: files.values().map(|f| f.size).sum(),
     };
 
-    assert_eq!(snapshot.total_files, 3);
-    assert_eq!(snapshot.total_size, 3584);
-    assert_eq!(snapshot.files.len(), 3);
+    assert_eq!(snapshot.total_files, if multiple_files { 3 } else { 1 });
+    assert_eq!(
+        snapshot.total_size,
+        if multiple_files { 3584 } else { 1024 }
+    );
+    assert_eq!(snapshot.files.len(), if multiple_files { 3 } else { 1 });
     assert!(snapshot.files.contains_key("src/main.rs"));
-    assert!(snapshot.files.contains_key("src/lib.rs"));
-    assert!(snapshot.files.contains_key("Cargo.toml"));
+    if multiple_files {
+        assert!(snapshot.files.contains_key("src/lib.rs"));
+        assert!(snapshot.files.contains_key("Cargo.toml"));
+    }
 }
 
 #[rstest]
@@ -122,8 +117,7 @@ fn test_codebase_snapshot_multiple_files() {
 #[case(vec!["new.rs"], vec!["changed.rs", "updated.rs"], vec!["deleted.rs"], true, 4)]
 #[case(vec![], vec!["modified1.rs", "modified2.rs", "modified3.rs"], vec![], true, 3)]
 #[case(vec![], vec![], vec!["gone1.rs", "gone2.rs"], true, 2)]
-#[test]
-fn test_snapshot_changes_variants(
+fn snapshot_changes_variants(
     #[case] added: Vec<&str>,
     #[case] modified: Vec<&str>,
     #[case] removed: Vec<&str>,

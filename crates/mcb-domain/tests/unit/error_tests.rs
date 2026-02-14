@@ -1,7 +1,7 @@
 //! Unit tests for domain error types
 
 use mcb_domain::Error;
-use rstest::rstest;
+use rstest::*;
 
 #[rstest]
 #[case::not_found(Error::not_found("user"), "NotFound", "user")]
@@ -44,11 +44,12 @@ fn test_error_variants(
     );
 }
 
-#[test]
-fn test_error_generic() {
-    let error = Error::generic("Something went wrong");
+#[rstest]
+#[case("Something went wrong")]
+fn error_generic(#[case] message: &str) {
+    let error = Error::generic(message);
     let display_str = format!("{}", error);
-    assert!(display_str.contains("Something went wrong"));
+    assert!(display_str.contains(message));
 }
 
 #[test]

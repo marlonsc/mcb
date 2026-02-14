@@ -6,6 +6,7 @@ use mcb_domain::entities::project::{IssueStatus, IssueType, ProjectIssue};
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::ports::repositories::IssueEntityRepository;
 use mcb_providers::database::SqliteIssueEntityRepository;
+use rstest::*;
 
 use super::entity_test_utils::{
     TEST_NOW, assert_not_found, seed_default_scope, seed_isolated_org_scope, setup_executor,
@@ -194,8 +195,11 @@ async fn test_label_assignment() {
     assert_eq!(after_unassign[0].id, "lbl-2");
 }
 
+#[rstest]
+#[case("org-A", true)]
+#[case("org-B", false)]
 #[tokio::test]
-async fn test_org_isolation_issues() {
+async fn org_isolation_issues(#[case] org_id: &str, #[case] should_find: bool) {
     let (executor, _temp_dir) = setup_executor().await;
 
     for org_id in &["org-A", "org-B"] {
@@ -228,14 +232,18 @@ async fn test_org_isolation_issues() {
     };
     repo.create_issue(&issue).await.expect("create");
 
-    assert!(repo.get_issue("org-A", "issue-iso").await.is_ok());
-    assert_not_found(repo.get_issue("org-B", "issue-iso").await);
-    assert!(
-        repo.list_issues("org-B", "proj-org-B")
-            .await
-            .unwrap()
-            .is_empty()
-    );
+    let get_result = repo.get_issue(org_id, "issue-iso").await;
+    if should_find {
+        assert!(get_result.is_ok());
+    } else {
+        assert_not_found(get_result);
+        assert!(
+            repo.list_issues("org-B", "proj-org-B")
+                .await
+                .unwrap()
+                .is_empty()
+        );
+    }
 }
 
 #[tokio::test]

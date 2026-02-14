@@ -1,4 +1,5 @@
 use mcb_domain::entities::user::{User, UserRole};
+use rstest::*;
 
 #[test]
 fn user_construction() {
@@ -38,25 +39,26 @@ fn user_serialization_roundtrip() {
     assert!(deserialized.api_key_hash.is_some());
 }
 
-#[test]
-fn user_role_as_str() {
-    assert_eq!(UserRole::Admin.as_str(), "admin");
-    assert_eq!(UserRole::Member.as_str(), "member");
-    assert_eq!(UserRole::Viewer.as_str(), "viewer");
-    assert_eq!(UserRole::Service.as_str(), "service");
+#[rstest]
+#[case(UserRole::Admin, "admin")]
+#[case(UserRole::Member, "member")]
+#[case(UserRole::Viewer, "viewer")]
+#[case(UserRole::Service, "service")]
+fn user_role_as_str(#[case] role: UserRole, #[case] expected: &str) {
+    assert_eq!(role.as_str(), expected);
 }
 
-#[test]
-fn user_role_from_str() {
-    assert_eq!("admin".parse::<UserRole>(), Ok(UserRole::Admin));
-    assert_eq!("member".parse::<UserRole>(), Ok(UserRole::Member));
-    assert_eq!("viewer".parse::<UserRole>(), Ok(UserRole::Viewer));
-    assert_eq!("service".parse::<UserRole>(), Ok(UserRole::Service));
-    assert!("invalid".parse::<UserRole>().is_err());
-}
-
-#[test]
-fn user_role_from_str_case_insensitive() {
-    assert_eq!("ADMIN".parse::<UserRole>(), Ok(UserRole::Admin));
-    assert_eq!("Service".parse::<UserRole>(), Ok(UserRole::Service));
+#[rstest]
+#[case("admin", Ok(UserRole::Admin))]
+#[case("member", Ok(UserRole::Member))]
+#[case("viewer", Ok(UserRole::Viewer))]
+#[case("service", Ok(UserRole::Service))]
+#[case("ADMIN", Ok(UserRole::Admin))]
+#[case("Service", Ok(UserRole::Service))]
+#[case("invalid", Err(()))]
+fn user_role_from_str(#[case] input: &str, #[case] expected: Result<UserRole, ()>) {
+    match expected {
+        Ok(role) => assert_eq!(input.parse::<UserRole>(), Ok(role)),
+        Err(()) => assert!(input.parse::<UserRole>().is_err()),
+    }
 }

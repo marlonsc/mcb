@@ -6,7 +6,7 @@ use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, Worktree
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::VcsEntityRepository;
 use mcb_providers::database::SqliteVcsEntityRepository;
-use rstest::rstest;
+use rstest::*;
 
 use super::entity_test_utils::{
     TEST_NOW, assert_not_found, seed_default_scope, seed_isolated_org_scope, seed_project,
@@ -152,8 +152,11 @@ async fn test_repository_crud() {
     assert_not_found(repo.get_repository(DEFAULT_ORG_ID, "repo-1").await);
 }
 
+#[rstest]
+#[case("branch")]
+#[case("worktree")]
 #[tokio::test]
-async fn test_branch_crud() {
+async fn branch_and_worktree_crud(#[case] entity_kind: &str) {
     let (repo, _executor, _temp) = setup_repo().await;
     let vcs_repo = create_test_repository("repo-1", "proj-1");
     repo.create_repository(&vcs_repo)
@@ -163,33 +166,25 @@ async fn test_branch_crud() {
     let branch = create_test_branch("branch-1", "repo-1", "main");
     repo.create_branch(&branch).await.expect("create branch");
 
-    let retrieved = repo.get_branch("branch-1").await.expect("get");
-    assert_eq!(retrieved.name, "main");
-    assert!(retrieved.is_default);
+    if entity_kind == "branch" {
+        let retrieved = repo.get_branch("branch-1").await.expect("get");
+        assert_eq!(retrieved.name, "main");
+        assert!(retrieved.is_default);
 
-    let list = repo.list_branches("repo-1").await.expect("list");
-    assert_eq!(list.len(), 1);
+        let list = repo.list_branches("repo-1").await.expect("list");
+        assert_eq!(list.len(), 1);
 
-    let mut updated = branch.clone();
-    updated.head_commit = "def456".to_string();
-    repo.update_branch(&updated).await.expect("update");
+        let mut updated = branch.clone();
+        updated.head_commit = "def456".to_string();
+        repo.update_branch(&updated).await.expect("update");
 
-    let after_update = repo.get_branch("branch-1").await.expect("get");
-    assert_eq!(after_update.head_commit, "def456");
+        let after_update = repo.get_branch("branch-1").await.expect("get");
+        assert_eq!(after_update.head_commit, "def456");
 
-    repo.delete_branch("branch-1").await.expect("delete");
-    assert_not_found(repo.get_branch("branch-1").await);
-}
-
-#[tokio::test]
-async fn test_worktree_crud() {
-    let (repo, _executor, _temp) = setup_repo().await;
-    let vcs_repo = create_test_repository("repo-1", "proj-1");
-    repo.create_repository(&vcs_repo)
-        .await
-        .expect("create repo");
-    let branch = create_test_branch("branch-1", "repo-1", "main");
-    repo.create_branch(&branch).await.expect("create branch");
+        repo.delete_branch("branch-1").await.expect("delete");
+        assert_not_found(repo.get_branch("branch-1").await);
+        return;
+    }
 
     let wt = create_test_worktree("wt-1", "repo-1", "branch-1");
     repo.create_worktree(&wt).await.expect("create worktree");
@@ -323,7 +318,7 @@ async fn test_project_isolation_same_org_same_local_path() {
 #[case("branches")]
 #[case("worktrees")]
 #[tokio::test]
-async fn test_list_entities_filter_by_repository(#[case] entity_kind: &str) {
+async fn list_entities_filter_by_repository(#[case] entity_kind: &str) {
     let (repo, _executor, _temp) = setup_repo().await;
 
     let repo1 = create_test_repository("repo-1", "proj-1");

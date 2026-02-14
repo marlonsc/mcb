@@ -3,17 +3,17 @@
 use std::path::PathBuf;
 
 use mcb_domain::entities::vcs::{RepositoryId, VcsBranch, VcsRepository};
+use rstest::*;
 
-#[test]
-fn test_repository_id_new_and_as_str() {
-    let id = RepositoryId::new("abc123".to_string());
-    assert_eq!(id.as_str(), "abc123");
-}
+#[rstest]
+#[case("abc123")]
+#[case("xyz")]
+fn repository_id_construction(#[case] input: &str) {
+    let id = RepositoryId::new(input.to_string());
+    assert_eq!(id.as_str(), input);
 
-#[test]
-fn test_repository_id_from_str() {
-    let id: RepositoryId = "xyz".into();
-    assert_eq!(id.as_str(), "xyz");
+    let from_into: RepositoryId = input.into();
+    assert_eq!(from_into.as_str(), input);
 }
 
 #[test]

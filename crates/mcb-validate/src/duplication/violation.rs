@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 
 use super::{CloneCandidate, DuplicationType};
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::traits::violation::{Severity, Violation, ViolationCategory};
 use derive_more::Display;
 
 /// A duplication violation representing a detected code clone

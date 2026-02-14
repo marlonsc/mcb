@@ -1,7 +1,7 @@
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_server::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
-use mcb_server::handlers::vcs_entity::VcsEntityHandler;
+use mcb_server::handlers::entities::VcsEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 

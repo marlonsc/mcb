@@ -4,7 +4,7 @@ use mcb_domain::entities::memory::{
     ErrorPattern, ErrorPatternCategory, ErrorPatternMatch, MemoryFilter, Observation,
     ObservationMetadata, ObservationType,
 };
-use rstest::rstest;
+use rstest::*;
 
 #[rstest]
 #[case("code", Ok(ObservationType::Code))]
@@ -12,11 +12,7 @@ use rstest::rstest;
 #[case("execution", Ok(ObservationType::Execution))]
 #[case("quality_gate", Ok(ObservationType::QualityGate))]
 #[case("unknown", Err(()))]
-#[test]
-fn test_observation_type_from_str(
-    #[case] input: &str,
-    #[case] expected: Result<ObservationType, ()>,
-) {
+fn observation_type_from_str(#[case] input: &str, #[case] expected: Result<ObservationType, ()>) {
     match expected {
         Ok(observation_type) => assert_eq!(input.parse::<ObservationType>(), Ok(observation_type)),
         Err(()) => assert!(input.parse::<ObservationType>().is_err()),
@@ -28,8 +24,7 @@ fn test_observation_type_from_str(
 #[case(ObservationType::Summary, "summary")]
 #[case(ObservationType::Execution, "execution")]
 #[case(ObservationType::QualityGate, "quality_gate")]
-#[test]
-fn test_observation_type_as_str(#[case] observation_type: ObservationType, #[case] expected: &str) {
+fn observation_type_as_str(#[case] observation_type: ObservationType, #[case] expected: &str) {
     assert_eq!(observation_type.as_str(), expected);
 }
 
@@ -84,8 +79,7 @@ fn test_observation_has_required_fields() {
 #[case("network", Ok(ErrorPatternCategory::Network))]
 #[case("other", Ok(ErrorPatternCategory::Other))]
 #[case("invalid", Err(()))]
-#[test]
-fn test_error_pattern_category_from_str(
+fn error_pattern_category_from_str(
     #[case] input: &str,
     #[case] expected: Result<ErrorPatternCategory, ()>,
 ) {
@@ -104,11 +98,7 @@ fn test_error_pattern_category_from_str(
 #[case(ErrorPatternCategory::Config, "config")]
 #[case(ErrorPatternCategory::Network, "network")]
 #[case(ErrorPatternCategory::Other, "other")]
-#[test]
-fn test_error_pattern_category_as_str(
-    #[case] category: ErrorPatternCategory,
-    #[case] expected: &str,
-) {
+fn error_pattern_category_as_str(#[case] category: ErrorPatternCategory, #[case] expected: &str) {
     assert_eq!(category.as_str(), expected);
 }
 

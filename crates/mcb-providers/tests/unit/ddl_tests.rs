@@ -2,13 +2,20 @@ use mcb_domain::schema::{
     MemorySchema, MemorySchemaDdlGenerator, ProjectSchema, SchemaDdlGenerator,
 };
 use mcb_providers::database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
-use rstest::rstest;
+use rstest::*;
+
+#[fixture]
+fn project_ddl() -> Vec<String> {
+    let generator = SqliteSchemaDdlGenerator;
+    let schema = ProjectSchema::definition();
+    generator.generate_ddl(&schema)
+}
 
 #[rstest]
 #[case("memory")]
 #[case("project")]
 #[test]
-fn test_sqlite_ddl_generators_produce_statements(#[case] schema_kind: &str) {
+fn sqlite_ddl_generators_produce_statements(#[case] schema_kind: &str) {
     let ddl: Vec<String> = if schema_kind == "memory" {
         let generator = SqliteMemoryDdlGenerator;
         let schema = MemorySchema::definition();
@@ -40,11 +47,9 @@ fn test_sqlite_ddl_generators_produce_statements(#[case] schema_kind: &str) {
     assert!(ddl.iter().any(|s| s.contains("AUTOINCREMENT")));
 }
 
-#[test]
-fn test_project_schema_has_27_create_table_statements() {
-    let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+#[rstest]
+fn project_schema_has_27_create_table_statements(project_ddl: Vec<String>) {
+    let ddl = project_ddl;
     let create_count = ddl.iter().filter(|s| s.starts_with("CREATE TABLE")).count();
     assert_eq!(
         create_count, 27,
@@ -52,11 +57,9 @@ fn test_project_schema_has_27_create_table_statements() {
     );
 }
 
-#[test]
-fn test_project_schema_contains_all_multi_tenant_tables() {
-    let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+#[rstest]
+fn project_schema_contains_all_multi_tenant_tables(project_ddl: Vec<String>) {
+    let ddl = project_ddl;
     let joined = ddl.join("\n");
 
     let expected_tables = [
@@ -95,11 +98,9 @@ fn test_project_schema_contains_all_multi_tenant_tables() {
     }
 }
 
-#[test]
-fn test_project_schema_contains_all_fk_references() {
-    let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+#[rstest]
+fn project_schema_contains_all_fk_references(project_ddl: Vec<String>) {
+    let ddl = project_ddl;
 
     let expected_fks = [
         // Core project FKs
@@ -181,11 +182,9 @@ fn test_project_schema_contains_all_fk_references() {
     );
 }
 
-#[test]
-fn test_project_schema_contains_all_indexes() {
-    let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+#[rstest]
+fn project_schema_contains_all_indexes(project_ddl: Vec<String>) {
+    let ddl = project_ddl;
     let joined = ddl.join("\n");
 
     let expected_indexes = [
@@ -284,11 +283,9 @@ fn test_project_schema_contains_all_indexes() {
     }
 }
 
-#[test]
-fn test_project_schema_contains_unique_constraints() {
-    let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+#[rstest]
+fn project_schema_contains_unique_constraints(project_ddl: Vec<String>) {
+    let ddl = project_ddl;
     let joined = ddl.join("\n");
 
     let expected_uniques = [

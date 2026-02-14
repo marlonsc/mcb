@@ -4,59 +4,41 @@ use std::fs;
 use std::path::Path;
 
 use mcb_validate::filters::{RuleFilterExecutor, RuleFilters, WorkspaceDependencies};
+use rstest::*;
 use tempfile::TempDir;
 
-#[tokio::test]
-async fn test_no_filters() {
-    let temp_dir = TempDir::new().unwrap();
-    let executor = RuleFilterExecutor::new(temp_dir.path().to_path_buf());
-
-    let filters = RuleFilters {
-        languages: None,
-        dependencies: None,
-        file_patterns: None,
-    };
-
-    let workspace_deps = WorkspaceDependencies {
+#[fixture]
+fn empty_workspace_deps() -> WorkspaceDependencies {
+    WorkspaceDependencies {
         deps: std::collections::HashMap::new(),
-    };
-
-    assert!(
-        executor
-            .should_execute_rule(&filters, Path::new("main.rs"), None, &workspace_deps)
-            .await
-            .unwrap()
-    );
+    }
 }
 
+#[rstest]
+#[case(None, "main.rs", true)]
+#[case(Some("rust"), "main.rs", true)]
+#[case(Some("rust"), "script.py", false)]
 #[tokio::test]
-async fn test_language_filter() {
+async fn language_filter(
+    #[case] language: Option<&str>,
+    #[case] file: &str,
+    #[case] expected: bool,
+    empty_workspace_deps: WorkspaceDependencies,
+) {
     let temp_dir = TempDir::new().unwrap();
     let executor = RuleFilterExecutor::new(temp_dir.path().to_path_buf());
 
     let filters = RuleFilters {
-        languages: Some(vec!["rust".to_string()]),
+        languages: language.map(|lang| vec![lang.to_string()]),
         dependencies: None,
         file_patterns: None,
     };
 
-    let workspace_deps = WorkspaceDependencies {
-        deps: std::collections::HashMap::new(),
-    };
-
-    assert!(
-        executor
-            .should_execute_rule(&filters, Path::new("main.rs"), None, &workspace_deps)
-            .await
-            .unwrap()
-    );
-
-    assert!(
-        !executor
-            .should_execute_rule(&filters, Path::new("script.py"), None, &workspace_deps)
-            .await
-            .unwrap()
-    );
+    let actual = executor
+        .should_execute_rule(&filters, Path::new(file), None, &empty_workspace_deps)
+        .await
+        .unwrap();
+    assert_eq!(actual, expected);
 }
 
 #[tokio::test]

@@ -1,5 +1,5 @@
 use mcb_domain::value_objects::project_context::{ProjectContext, parse_owner_repo};
-use rstest::rstest;
+use rstest::*;
 
 #[rstest]
 #[case("git@github.com:marlonsc/mcb.git", Some("marlonsc/mcb"))]
@@ -18,11 +18,14 @@ fn test_parse_owner_repo(#[case] input: &str, #[case] expected: Option<&str>) {
     );
 }
 
-#[test]
-// TODO(TEST003): Bad test function name 'resolve_returns_cached_consistent_value'. Use 'test_resolve_returns_cached_consistent_value'.
-fn resolve_returns_cached_consistent_value() {
-    let ctx1 = ProjectContext::resolve();
-    let ctx2 = ProjectContext::resolve();
-    assert_eq!(ctx1.project_id, ctx2.project_id);
-    assert_eq!(ctx1.project_name, ctx2.project_name);
+#[rstest]
+#[case(2)]
+#[case(3)]
+fn resolve_returns_cached_consistent_value(#[case] calls: usize) {
+    let first = ProjectContext::resolve();
+    for _ in 1..calls {
+        let next = ProjectContext::resolve();
+        assert_eq!(first.project_id, next.project_id);
+        assert_eq!(first.project_name, next.project_name);
+    }
 }

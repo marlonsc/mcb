@@ -10,7 +10,7 @@ use super::common::{opt_str, optional_data_map, require_session_id_str};
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::resolve_identifier_precedence;
+use crate::handlers::helpers::resolve_identifier_precedence;
 use tracing::error;
 
 /// Updates an existing agent session.

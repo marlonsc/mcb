@@ -3,46 +3,39 @@
 //! Covers: traverse, Display, to_ansi, to_html methods
 
 use mcb_domain::value_objects::FileTreeNode;
-use rstest::rstest;
+use rstest::*;
 
-#[test]
-fn test_traverse_visits_all_nodes() {
-    let mut root = FileTreeNode::directory("src", "src");
-    root = root.with_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
-    root = root.with_child(FileTreeNode::file("main.rs", "src/main.rs", 5, "rust"));
-
-    let mut visited = Vec::new();
-    root.traverse(&mut |node| {
-        visited.push(node.name.clone());
-    });
-
-    assert_eq!(visited.len(), 3);
-    assert_eq!(visited[0], "src");
-    assert!(visited.contains(&"lib.rs".to_string()));
-    assert!(visited.contains(&"main.rs".to_string()));
-}
-
-#[test]
-fn test_traverse_depth_first_order() {
-    let mut root = FileTreeNode::directory("root", "root");
-    let mut subdir = FileTreeNode::directory("subdir", "root/subdir");
-    subdir = subdir.with_child(FileTreeNode::file(
-        "file.rs",
-        "root/subdir/file.rs",
-        3,
-        "rust",
-    ));
-    root = root.with_child(subdir);
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn traverse_variants(#[case] nested: bool) {
+    let root = if nested {
+        let mut root = FileTreeNode::directory("root", "root");
+        let mut subdir = FileTreeNode::directory("subdir", "root/subdir");
+        subdir = subdir.with_child(FileTreeNode::file(
+            "file.rs",
+            "root/subdir/file.rs",
+            3,
+            "rust",
+        ));
+        root.with_child(subdir)
+    } else {
+        let mut root = FileTreeNode::directory("src", "src");
+        root = root.with_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
+        root.with_child(FileTreeNode::file("main.rs", "src/main.rs", 5, "rust"))
+    };
 
     let mut visited = Vec::new();
-    root.traverse(&mut |node| {
-        visited.push(node.name.clone());
-    });
+    root.traverse(&mut |node| visited.push(node.name.clone()));
 
     assert_eq!(visited.len(), 3);
-    assert_eq!(visited[0], "root");
-    assert_eq!(visited[1], "subdir");
-    assert_eq!(visited[2], "file.rs");
+    if nested {
+        assert_eq!(visited, vec!["root", "subdir", "file.rs"]);
+    } else {
+        assert_eq!(visited[0], "src");
+        assert!(visited.contains(&"lib.rs".to_string()));
+        assert!(visited.contains(&"main.rs".to_string()));
+    }
 }
 
 #[test]
@@ -156,8 +149,10 @@ fn test_traverse_empty_tree() {
     assert_eq!(count, 1); // just the root
 }
 
-#[test]
-fn test_to_ansi_nested_structure() {
+#[rstest]
+#[case("ansi")]
+#[case("html")]
+fn nested_structure_rendering(#[case] render_mode: &str) {
     let mut root = FileTreeNode::directory("root", "root");
     let mut level1 = FileTreeNode::directory("level1", "root/level1");
     let mut level2 = FileTreeNode::directory("level2", "root/level1/level2");
@@ -170,36 +165,20 @@ fn test_to_ansi_nested_structure() {
     level1 = level1.with_child(level2);
     root = root.with_child(level1);
 
-    let ansi = root.to_ansi();
+    let rendered = if render_mode == "ansi" {
+        root.to_ansi()
+    } else {
+        root.to_html()
+    };
 
-    assert!(ansi.contains("root"));
-    assert!(ansi.contains("level1"));
-    assert!(ansi.contains("level2"));
-    assert!(ansi.contains("deep.rs"));
-}
-
-#[test]
-fn test_to_html_nested_structure() {
-    let mut root = FileTreeNode::directory("root", "root");
-    let mut level1 = FileTreeNode::directory("level1", "root/level1");
-    let mut level2 = FileTreeNode::directory("level2", "root/level1/level2");
-    level2 = level2.with_child(FileTreeNode::file(
-        "deep.rs",
-        "root/level1/level2/deep.rs",
-        5,
-        "rust",
-    ));
-    level1 = level1.with_child(level2);
-    root = root.with_child(level1);
-
-    let html = root.to_html();
-
-    assert!(html.contains("root"));
-    assert!(html.contains("level1"));
-    assert!(html.contains("level2"));
-    assert!(html.contains("deep.rs"));
-    assert!(html.contains("<ul>"));
-    assert!(html.contains("</ul>"));
+    assert!(rendered.contains("root"));
+    assert!(rendered.contains("level1"));
+    assert!(rendered.contains("level2"));
+    assert!(rendered.contains("deep.rs"));
+    if render_mode == "html" {
+        assert!(rendered.contains("<ul>"));
+        assert!(rendered.contains("</ul>"));
+    }
 }
 
 #[test]

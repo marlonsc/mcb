@@ -1,12 +1,11 @@
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
-use rstest::rstest;
+use rstest::*;
 
 #[rstest]
 #[case(WorktreeStatus::Active, "active")]
 #[case(WorktreeStatus::InUse, "in_use")]
 #[case(WorktreeStatus::Pruned, "pruned")]
-#[test]
-fn test_worktree_status_as_str(#[case] status: WorktreeStatus, #[case] expected: &str) {
+fn worktree_status_as_str(#[case] status: WorktreeStatus, #[case] expected: &str) {
     assert_eq!(status.as_str(), expected);
 }
 
@@ -18,116 +17,96 @@ fn test_worktree_status_as_str(#[case] status: WorktreeStatus, #[case] expected:
 #[case("In_Use", Ok(WorktreeStatus::InUse))]
 #[case("PRUNED", Ok(WorktreeStatus::Pruned))]
 #[case("invalid", Err(()))]
-#[test]
-fn test_worktree_status_from_str(
-    #[case] input: &str,
-    #[case] expected: Result<WorktreeStatus, ()>,
-) {
+fn worktree_status_from_str(#[case] input: &str, #[case] expected: Result<WorktreeStatus, ()>) {
     match expected {
         Ok(status) => assert_eq!(input.parse::<WorktreeStatus>(), Ok(status)),
         Err(()) => assert!(input.parse::<WorktreeStatus>().is_err()),
     }
 }
 
-#[test]
-// TODO(TEST003): Bad test function name 'worktree_construction'. Use 'test_worktree_construction'.
-fn worktree_construction() {
+#[rstest]
+#[case(
+    "wt-001",
+    "repo-001",
+    "br-001",
+    "/home/dev/mcb-wt-feat",
+    WorktreeStatus::Active,
+    None
+)]
+#[case(
+    "wt-002",
+    "repo-001",
+    "br-002",
+    "/home/dev/mcb-wt-fix",
+    WorktreeStatus::InUse,
+    Some("agent-session-001")
+)]
+#[case(
+    "wt-003",
+    "repo-002",
+    "br-003",
+    "/tmp/worktrees/wt-003",
+    WorktreeStatus::Pruned,
+    None
+)]
+fn worktree_variants(
+    #[case] id: &str,
+    #[case] repository_id: &str,
+    #[case] branch_id: &str,
+    #[case] path: &str,
+    #[case] status: WorktreeStatus,
+    #[case] assigned_agent_id: Option<&str>,
+) {
     let wt = Worktree {
-        id: "wt-001".to_string(),
-        repository_id: "repo-001".to_string(),
-        branch_id: "br-001".to_string(),
-        path: "/home/dev/mcb-wt-feat".to_string(),
-        status: WorktreeStatus::Active,
-        assigned_agent_id: None,
+        id: id.to_string(),
+        repository_id: repository_id.to_string(),
+        branch_id: branch_id.to_string(),
+        path: path.to_string(),
+        status: status.clone(),
+        assigned_agent_id: assigned_agent_id.map(str::to_string),
         created_at: 1000,
         updated_at: 1000,
     };
-    assert_eq!(wt.id, "wt-001");
-    assert_eq!(wt.repository_id, "repo-001");
-    assert_eq!(wt.branch_id, "br-001");
-    assert_eq!(wt.status, WorktreeStatus::Active);
-    assert!(wt.assigned_agent_id.is_none());
-}
 
-#[test]
-// TODO(TEST003): Bad test function name 'worktree_with_assigned_agent'. Use 'test_worktree_with_assigned_agent'.
-fn worktree_with_assigned_agent() {
-    let wt = Worktree {
-        id: "wt-002".to_string(),
-        repository_id: "repo-001".to_string(),
-        branch_id: "br-002".to_string(),
-        path: "/home/dev/mcb-wt-fix".to_string(),
-        status: WorktreeStatus::InUse,
-        assigned_agent_id: Some("agent-session-001".to_string()),
-        created_at: 2000,
-        updated_at: 3000,
-    };
-    assert_eq!(wt.status, WorktreeStatus::InUse);
-    assert_eq!(wt.assigned_agent_id, Some("agent-session-001".to_string()));
-}
+    assert_eq!(wt.id, id);
+    assert_eq!(wt.repository_id, repository_id);
+    assert_eq!(wt.branch_id, branch_id);
+    assert_eq!(wt.path, path);
+    assert_eq!(wt.assigned_agent_id.as_deref(), assigned_agent_id);
 
-#[test]
-// TODO(TEST003): Bad test function name 'worktree_serialization_roundtrip'. Use 'test_worktree_serialization_roundtrip'.
-fn worktree_serialization_roundtrip() {
-    let wt = Worktree {
-        id: "wt-003".to_string(),
-        repository_id: "repo-002".to_string(),
-        branch_id: "br-003".to_string(),
-        path: "/tmp/worktrees/wt-003".to_string(),
-        status: WorktreeStatus::Pruned,
-        assigned_agent_id: None,
-        created_at: 4000,
-        updated_at: 5000,
-    };
     let json = serde_json::to_string(&wt).expect("serialize");
     let deserialized: Worktree = serde_json::from_str(&json).expect("deserialize");
-    assert_eq!(deserialized.id, "wt-003");
-    assert_eq!(deserialized.status, WorktreeStatus::Pruned);
-    assert_eq!(deserialized.path, "/tmp/worktrees/wt-003");
+    assert_eq!(deserialized.id, id);
+    assert_eq!(deserialized.status, status);
+    assert_eq!(deserialized.path, path);
 }
 
-#[test]
-// TODO(TEST003): Bad test function name 'assignment_construction_active'. Use 'test_assignment_construction_active'.
-fn assignment_construction_active() {
+#[rstest]
+#[case("assign-001", "agent-session-001", "wt-001", 1000, None)]
+#[case("assign-002", "agent-session-002", "wt-002", 1000, Some(2000))]
+#[case("assign-003", "agent-session-003", "wt-003", 5000, Some(6000))]
+fn assignment_variants(
+    #[case] id: &str,
+    #[case] agent_session_id: &str,
+    #[case] worktree_id: &str,
+    #[case] assigned_at: i64,
+    #[case] released_at: Option<i64>,
+) {
     let assign = AgentWorktreeAssignment {
-        id: "assign-001".to_string(),
-        agent_session_id: "agent-session-001".to_string(),
-        worktree_id: "wt-001".to_string(),
-        assigned_at: 1000,
-        released_at: None,
+        id: id.to_string(),
+        agent_session_id: agent_session_id.to_string(),
+        worktree_id: worktree_id.to_string(),
+        assigned_at,
+        released_at,
     };
-    assert_eq!(assign.id, "assign-001");
-    assert_eq!(assign.agent_session_id, "agent-session-001");
-    assert_eq!(assign.worktree_id, "wt-001");
-    assert!(assign.released_at.is_none());
-}
+    assert_eq!(assign.id, id);
+    assert_eq!(assign.agent_session_id, agent_session_id);
+    assert_eq!(assign.worktree_id, worktree_id);
+    assert_eq!(assign.released_at, released_at);
 
-#[test]
-// TODO(TEST003): Bad test function name 'assignment_construction_released'. Use 'test_assignment_construction_released'.
-fn assignment_construction_released() {
-    let assign = AgentWorktreeAssignment {
-        id: "assign-002".to_string(),
-        agent_session_id: "agent-session-002".to_string(),
-        worktree_id: "wt-002".to_string(),
-        assigned_at: 1000,
-        released_at: Some(2000),
-    };
-    assert_eq!(assign.released_at, Some(2000));
-}
-
-#[test]
-// TODO(TEST003): Bad test function name 'assignment_serialization_roundtrip'. Use 'test_assignment_serialization_roundtrip'.
-fn assignment_serialization_roundtrip() {
-    let assign = AgentWorktreeAssignment {
-        id: "assign-003".to_string(),
-        agent_session_id: "agent-session-003".to_string(),
-        worktree_id: "wt-003".to_string(),
-        assigned_at: 5000,
-        released_at: Some(6000),
-    };
     let json = serde_json::to_string(&assign).expect("serialize");
     let deserialized: AgentWorktreeAssignment = serde_json::from_str(&json).expect("deserialize");
-    assert_eq!(deserialized.id, "assign-003");
-    assert_eq!(deserialized.assigned_at, 5000);
-    assert_eq!(deserialized.released_at, Some(6000));
+    assert_eq!(deserialized.id, id);
+    assert_eq!(deserialized.assigned_at, assigned_at);
+    assert_eq!(deserialized.released_at, released_at);
 }

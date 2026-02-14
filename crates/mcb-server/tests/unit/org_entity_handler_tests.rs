@@ -1,7 +1,7 @@
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
-use mcb_server::handlers::org_entity::OrgEntityHandler;
+use mcb_server::handlers::entities::OrgEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
 async fn create_handler() -> (OrgEntityHandler, tempfile::TempDir) {

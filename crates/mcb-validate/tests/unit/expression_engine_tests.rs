@@ -7,38 +7,32 @@
 use std::collections::HashMap;
 
 use mcb_validate::engines::expression_engine::ExpressionEngine;
+use rstest::*;
 
 use crate::test_constants::{SNIPPET_LIB_RS, SNIPPET_MAIN_RS};
 use crate::test_utils::create_rule_context_with_files;
 
-#[test]
-fn test_simple_expression() {
-    let engine = ExpressionEngine::new();
-    let context = create_rule_context_with_files(&[
+#[fixture]
+fn expression_context() -> mcb_validate::engines::hybrid_engine::RuleContext {
+    create_rule_context_with_files(&[
         ("src/main.rs", SNIPPET_MAIN_RS),
         ("src/lib.rs", SNIPPET_LIB_RS),
-    ]);
-
-    let result = engine.evaluate_expression("file_count == 2", &context);
-    assert!(result.is_ok());
-    assert!(result.unwrap());
-
-    let result = engine.evaluate_expression("file_count > 10", &context);
-    assert!(result.is_ok());
-    assert!(!result.unwrap());
+    ])
 }
 
-#[test]
-fn test_boolean_expression() {
+#[rstest]
+#[case("file_count == 2", true)]
+#[case("file_count > 10", false)]
+#[case("has_unwrap == false", true)]
+fn expression_evaluation(
+    expression_context: mcb_validate::engines::hybrid_engine::RuleContext,
+    #[case] expression: &str,
+    #[case] expected: bool,
+) {
     let engine = ExpressionEngine::new();
-    let context = create_rule_context_with_files(&[
-        ("src/main.rs", SNIPPET_MAIN_RS),
-        ("src/lib.rs", SNIPPET_LIB_RS),
-    ]);
-
-    let result = engine.evaluate_expression("has_unwrap == false", &context);
+    let result = engine.evaluate_expression(expression, &expression_context);
     assert!(result.is_ok());
-    assert!(result.unwrap());
+    assert_eq!(result.unwrap(), expected);
 }
 
 #[test]

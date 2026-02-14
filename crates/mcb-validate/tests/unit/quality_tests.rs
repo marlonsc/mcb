@@ -4,6 +4,7 @@
 //! file + line + violation-type assertions.
 
 use mcb_validate::{QualityValidator, QualityViolation};
+use rstest::*;
 
 use crate::test_constants::{
     DOMAIN_CRATE, FILE_SIZE_LOW_THRESHOLD, FIXTURE_DOMAIN_SERVICE_PATH,
@@ -66,26 +67,41 @@ fn test_quality_full_workspace() {
 // validate_file_sizes() — threshold-based
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[test]
-fn test_file_size_with_low_threshold() {
+#[rstest]
+#[case(Some(FILE_SIZE_LOW_THRESHOLD), true)]
+#[case(None, false)]
+fn file_size_threshold_behavior(
+    #[case] max_lines: Option<usize>,
+    #[case] expect_file_too_large: bool,
+) {
     let (_temp, root) = with_fixture_crate(TEST_CRATE);
-    let validator = QualityValidator::new(&root).with_max_file_lines(FILE_SIZE_LOW_THRESHOLD);
-    let violations = validator.validate_file_sizes().unwrap();
+    let validator = if let Some(max) = max_lines {
+        QualityValidator::new(&root).with_max_file_lines(max)
+    } else {
+        QualityValidator::new(&root)
+    };
+    let violations = validator.validate_all().unwrap();
 
-    assert_has_violation_matching(
-        &violations,
-        |v| matches!(v, QualityViolation::FileTooLarge { .. }),
-        "FileTooLarge",
-    );
-}
-
-#[test]
-fn test_file_size_default_no_violation() {
-    let (_temp, root) = with_fixture_crate(TEST_CRATE);
-    let validator = QualityValidator::new(&root);
-    let violations = validator.validate_file_sizes().unwrap();
-
-    assert_no_violations(&violations, "Fixture file under default threshold (500)");
+    if expect_file_too_large {
+        assert_has_violation_matching(
+            &violations,
+            |v| matches!(v, QualityViolation::FileTooLarge { .. }),
+            "FileTooLarge",
+        );
+    } else {
+        // Default threshold (500 lines) should NOT trigger FileTooLarge,
+        // but other quality violations (hygiene, todo, etc.) may still appear.
+        let file_too_large_violations: Vec<_> = violations
+            .iter()
+            .filter(|v| matches!(v, QualityViolation::FileTooLarge { .. }))
+            .collect();
+        assert!(
+            file_too_large_violations.is_empty(),
+            "Fixture file under default threshold (500): expected no FileTooLarge violations, got {} - {:?}",
+            file_too_large_violations.len(),
+            file_too_large_violations
+        );
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -96,7 +112,7 @@ fn test_file_size_default_no_violation() {
 fn test_unwrap_exempt_in_test_code() {
     let (_temp, root) = with_fixture_crate(TEST_CRATE);
     let validator = QualityValidator::new(&root);
-    let violations = validator.validate_no_unwrap_expect().unwrap();
+    let violations = validator.validate_all().unwrap();
 
     // #[cfg(test)] mod tests in lib.rs should be completely exempt.
     assert_no_violation_from_file(&violations, "mod tests");

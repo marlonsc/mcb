@@ -4,6 +4,7 @@
 //! test infrastructure.
 
 use mcb_validate::ast::UnwrapDetector;
+use rstest::*;
 
 use crate::test_constants::{EXPECT_METHOD, UNWRAP_METHOD};
 
@@ -16,31 +17,26 @@ fn test_detector_creation() {
     );
 }
 
-#[test]
-fn test_detect_unwrap_simple() {
-    let mut detector = UnwrapDetector::new().expect("Should create detector");
-    let code = "fn main() { let x = Some(1).unwrap(); }";
-
-    let detections = detector
-        .detect_in_content(code, "test.rs")
-        .expect("Should detect unwrap");
-
-    assert_eq!(detections.len(), 1);
-    assert_eq!(detections[0].method, UNWRAP_METHOD);
-    assert!(!detections[0].in_test);
+#[fixture]
+fn detector() -> UnwrapDetector {
+    UnwrapDetector::new().expect("Should create detector")
 }
 
-#[test]
-fn test_detect_expect() {
-    let mut detector = UnwrapDetector::new().expect("Should create detector");
-    let code = "fn main() { let x = Some(1).expect(\"error\"); }";
-
+#[rstest]
+#[case("fn main() { let x = Some(1).unwrap(); }", UNWRAP_METHOD)]
+#[case("fn main() { let x = Some(1).expect(\"error\"); }", EXPECT_METHOD)]
+fn detect_single_unwrap_or_expect(
+    mut detector: UnwrapDetector,
+    #[case] code: &str,
+    #[case] expected_method: &str,
+) {
     let detections = detector
         .detect_in_content(code, "test.rs")
-        .expect("Should detect expect");
+        .expect("Should detect unwrap/expect");
 
     assert_eq!(detections.len(), 1);
-    assert_eq!(detections[0].method, EXPECT_METHOD);
+    assert_eq!(detections[0].method, expected_method);
+    assert!(!detections[0].in_test);
 }
 
 #[test]

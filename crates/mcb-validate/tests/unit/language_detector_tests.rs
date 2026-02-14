@@ -3,26 +3,18 @@
 use std::path::Path;
 
 use mcb_validate::filters::LanguageDetector;
+use rstest::*;
 
-#[test]
-fn test_extension_detection() {
+#[rstest]
+#[case("main.rs", "rust")]
+#[case("script.py", "python")]
+#[case("app.js", "javascript")]
+#[case("component.tsx", "typescript")]
+fn extension_detection(#[case] file: &str, #[case] expected_language: &str) {
     let detector = LanguageDetector::new();
-
     assert_eq!(
-        detector.detect_name(Path::new("main.rs"), None),
-        Some("rust".to_string())
-    );
-    assert_eq!(
-        detector.detect_name(Path::new("script.py"), None),
-        Some("python".to_string())
-    );
-    assert_eq!(
-        detector.detect_name(Path::new("app.js"), None),
-        Some("javascript".to_string())
-    );
-    assert_eq!(
-        detector.detect_name(Path::new("component.tsx"), None),
-        Some("typescript".to_string())
+        detector.detect_name(Path::new(file), None),
+        Some(expected_language.to_string())
     );
 }
 
@@ -43,21 +35,23 @@ fn test_unknown_extension() {
     assert_eq!(detector.detect_name(Path::new("file.unknown"), None), None);
 }
 
-#[test]
-fn test_matches_languages() {
+#[rstest]
+#[case("main.rs", vec!["rust".to_string(), "python".to_string()], true)]
+#[case(
+    "main.rs",
+    vec!["python".to_string(), "javascript".to_string()],
+    false
+)]
+fn matches_languages(
+    #[case] file: &str,
+    #[case] allowed_languages: Vec<String>,
+    #[case] expected: bool,
+) {
     let detector = LanguageDetector::new();
-
-    assert!(detector.matches_languages(
-        Path::new("main.rs"),
-        None,
-        &["rust".to_string(), "python".to_string()]
-    ));
-
-    assert!(!detector.matches_languages(
-        Path::new("main.rs"),
-        None,
-        &["python".to_string(), "javascript".to_string()]
-    ));
+    assert_eq!(
+        detector.matches_languages(Path::new(file), None, &allowed_languages),
+        expected
+    );
 }
 
 #[test]

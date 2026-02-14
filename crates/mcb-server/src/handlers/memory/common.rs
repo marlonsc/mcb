@@ -1,13 +1,19 @@
 use mcb_domain::entities::memory::{ExecutionMetadata, ObservationMetadata, QualityGateResult};
+use std::sync::Arc;
+
 use mcb_domain::utils::{compute_stable_id_hash, vcs_context::VcsContext};
+use mcb_domain::{
+    entities::memory::{MemoryFilter, MemorySearchResult, ObservationType},
+    ports::services::MemoryServiceInterface,
+};
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use serde_json::{Map, Value};
 use uuid::Uuid;
 
 use crate::args::MemoryArgs;
-use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
-pub(super) use crate::handlers::shared::{
+use crate::handlers::helpers::{OriginContextInput, resolve_origin_context};
+pub(super) use crate::handlers::helpers::{
     opt_bool, opt_str, require_data_map, require_str, str_vec,
 };
 
@@ -159,5 +165,60 @@ pub(super) fn build_observation_metadata(
         execution,
         quality_gate,
         origin_context: Some(origin_context),
+    }
+}
+
+pub(super) async fn search_memories_as_json(
+    memory_service: &Arc<dyn MemoryServiceInterface>,
+    args: &MemoryArgs,
+    query: &'static str,
+    obs_type: ObservationType,
+    result_key: &'static str,
+    mapper: impl Fn(&MemorySearchResult) -> Option<Value>,
+) -> Result<CallToolResult, McpError> {
+    let filter = build_memory_filter(args, Some(obs_type), None);
+
+    let limit = args.limit.unwrap_or(10) as usize;
+    let fetch_limit = limit * 5;
+    match memory_service
+        .search_memories(query, Some(filter), fetch_limit)
+        .await
+    {
+        Ok(results) => {
+            let mut items: Vec<_> = results.iter().filter_map(mapper).collect();
+            items.sort_by(|a, b| {
+                b.get("created_at")
+                    .and_then(Value::as_i64)
+                    .cmp(&a.get("created_at").and_then(Value::as_i64))
+            });
+            items.truncate(limit);
+            crate::formatter::ResponseFormatter::json_success(&serde_json::json!({
+                "count": items.len(),
+                result_key: items,
+            }))
+        }
+        Err(e) => Ok(crate::error_mapping::to_contextual_tool_error(e)),
+    }
+}
+
+pub(super) fn build_memory_filter(
+    args: &MemoryArgs,
+    obs_type: Option<ObservationType>,
+    tags: Option<Vec<String>>,
+) -> MemoryFilter {
+    MemoryFilter {
+        id: None,
+        project_id: args.project_id.clone(),
+        tags,
+        r#type: obs_type,
+        session_id: args
+            .session_id
+            .clone()
+            .map(|id| compute_stable_id_hash("session", id.as_str())),
+        parent_session_id: args.parent_session_id.clone(),
+        repo_id: args.repo_id.clone(),
+        time_range: None,
+        branch: None,
+        commit: None,
     }
 }

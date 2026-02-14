@@ -2,10 +2,16 @@ use std::fs;
 
 use mcb_domain::ports::providers::{ComplexityAnalyzer, DeadCodeDetector, TdgScorer};
 use mcb_providers::analysis::NativePmatAnalyzer;
+use rstest::*;
 use tempfile::TempDir;
 
-#[test]
-fn detects_high_complexity_functions() {
+#[fixture]
+fn analyzer() -> NativePmatAnalyzer {
+    NativePmatAnalyzer
+}
+
+#[rstest]
+fn detects_high_complexity_functions(analyzer: NativePmatAnalyzer) {
     let temp = TempDir::new().expect("create tempdir");
     let file = temp.path().join("sample.rs");
     fs::write(
@@ -23,7 +29,6 @@ fn complex(a: i32) {
     )
     .expect("write sample");
 
-    let analyzer = NativePmatAnalyzer;
     let findings = analyzer
         .analyze_complexity(temp.path(), 3)
         .expect("analyze complexity");
@@ -32,8 +37,8 @@ fn complex(a: i32) {
     assert_eq!(findings[0].function, "complex");
 }
 
-#[test]
-fn detects_dead_code_functions() {
+#[rstest]
+fn detects_dead_code_functions(analyzer: NativePmatAnalyzer) {
     let temp = TempDir::new().expect("create tempdir");
     let file = temp.path().join("sample.rs");
     fs::write(
@@ -49,7 +54,6 @@ fn caller() {
     )
     .expect("write sample");
 
-    let analyzer = NativePmatAnalyzer;
     let findings = analyzer
         .detect_dead_code(temp.path())
         .expect("detect dead code");
@@ -57,8 +61,8 @@ fn caller() {
     assert!(findings.iter().any(|f| f.name == "dead_fn"));
 }
 
-#[test]
-fn computes_tdg_score_above_threshold() {
+#[rstest]
+fn computes_tdg_score_above_threshold(analyzer: NativePmatAnalyzer) {
     let temp = TempDir::new().expect("create tempdir");
     let file = temp.path().join("sample.rs");
     fs::write(
@@ -76,7 +80,6 @@ fn heavy(x: i32) {
     )
     .expect("write sample");
 
-    let analyzer = NativePmatAnalyzer;
     let findings = analyzer.score_tdg(temp.path(), 15).expect("score tdg");
 
     assert_eq!(findings.len(), 1);

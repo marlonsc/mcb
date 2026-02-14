@@ -15,7 +15,7 @@ use validator::Validate;
 
 use crate::args::{AgentAction, AgentArgs};
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::resolve_org_id;
+use crate::handlers::helpers::resolve_org_id;
 
 /// Handler for agent tool call and delegation logging operations.
 #[derive(Clone)]

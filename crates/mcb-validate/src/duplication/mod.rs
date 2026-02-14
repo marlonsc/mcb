@@ -34,10 +34,10 @@ pub mod fingerprint;
 pub mod thresholds;
 pub mod violation;
 
-pub use analyzer::{DuplicationAnalyzer, DuplicationStats};
-pub use detector::{CloneCandidate, CloneDetector, tokenize_source};
-pub use fingerprint::{
+pub use self::analyzer::{DuplicationAnalyzer, DuplicationStats};
+pub use self::detector::{CloneCandidate, CloneDetector, tokenize_source};
+pub use self::fingerprint::{
     Fingerprint, FingerprintLocation, FingerprintMatch, Token, TokenFingerprinter,
 };
-pub use thresholds::{DuplicationThresholds, DuplicationType};
-pub use violation::DuplicationViolation;
+pub use self::thresholds::{DuplicationThresholds, DuplicationType};
+pub use self::violation::DuplicationViolation;

@@ -3,11 +3,11 @@
 //! Tests for `LanguageId` and `LanguageRegistry` functionality.
 
 use mcb_language_support::language::{LanguageId, LanguageRegistry};
-use rstest::rstest;
+use rstest::*;
 use rust_code_analysis::LANG;
 
 #[test]
-fn test_language_id_all() {
+fn language_id_all() {
     let all = LanguageId::all();
     assert_eq!(all.len(), 7);
     assert!(all.contains(&LanguageId::Rust));
@@ -18,8 +18,7 @@ fn test_language_id_all() {
 #[case(LanguageId::Rust.name(), "rust")]
 #[case(LanguageId::Cpp.name(), "cpp")]
 #[case(LanguageId::JavaScript.name(), "javascript")]
-#[test]
-fn test_language_id_name(#[case] actual: &str, #[case] expected: &str) {
+fn language_id_name(#[case] actual: &str, #[case] expected: &str) {
     assert_eq!(actual, expected);
 }
 
@@ -27,13 +26,12 @@ fn test_language_id_name(#[case] actual: &str, #[case] expected: &str) {
 #[case(LanguageId::Cpp.display_name(), "C/C++")]
 #[case(LanguageId::JavaScript.display_name(), "JavaScript")]
 #[case(LanguageId::TypeScript.display_name(), "TypeScript")]
-#[test]
-fn test_language_id_display_name(#[case] actual: &str, #[case] expected: &str) {
+fn language_id_display_name(#[case] actual: &str, #[case] expected: &str) {
     assert_eq!(actual, expected);
 }
 
 #[test]
-fn test_language_id_extensions() {
+fn language_id_extensions() {
     assert!(LanguageId::Rust.extensions().contains(&"rs"));
     assert!(LanguageId::Python.extensions().contains(&"py"));
     assert!(LanguageId::JavaScript.extensions().contains(&"jsx"));

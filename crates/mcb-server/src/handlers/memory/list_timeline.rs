@@ -1,12 +1,11 @@
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::compute_stable_id_hash;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
+use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
 use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
@@ -17,21 +16,7 @@ pub async fn list_observations(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let filter = MemoryFilter {
-        id: None,
-        project_id: args.project_id.clone(),
-        tags: args.tags.clone(),
-        r#type: None,
-        session_id: args
-            .session_id
-            .clone()
-            .map(|id| compute_stable_id_hash("session", id.as_str())),
-        parent_session_id: args.parent_session_id.clone(),
-        repo_id: args.repo_id.clone(),
-        time_range: None,
-        branch: None,
-        commit: None,
-    };
+    let filter = build_memory_filter(args, None, args.tags.clone());
     let limit = args.limit.unwrap_or(10) as usize;
     let query = args.query.clone().unwrap_or_default();
     match memory_service
@@ -96,21 +81,7 @@ pub async fn get_timeline(
             "Missing anchor_id or query for timeline",
         )]));
     };
-    let filter = MemoryFilter {
-        id: None,
-        project_id: args.project_id.clone(),
-        tags: None,
-        r#type: None,
-        session_id: args
-            .session_id
-            .clone()
-            .map(|id| compute_stable_id_hash("session", id.as_str())),
-        parent_session_id: args.parent_session_id.clone(),
-        repo_id: args.repo_id.clone(),
-        time_range: None,
-        branch: None,
-        commit: None,
-    };
+    let filter = build_memory_filter(args, None, None);
     let depth_before = args.depth_before.unwrap_or(5);
     let depth_after = args.depth_after.unwrap_or(5);
     match memory_service

@@ -5,6 +5,7 @@
 
 use std::path::Path;
 
+use rstest::*;
 use rust_code_analysis::{Callback, LANG, ParserTrait, action, guess_language};
 
 use crate::test_constants::{AST_ROOT_PROGRAM, AST_ROOT_PYTHON, AST_ROOT_RUST};
@@ -21,61 +22,36 @@ impl Callback for RootKindCallback {
     }
 }
 
-#[test]
-fn test_language_detection() {
-    // Rust
-    let (lang, _) = guess_language(b"fn main() {}", Path::new("main.rs"));
-    assert_eq!(lang, Some(LANG::Rust));
+#[rstest]
+#[case(b"fn main() {}", "main.rs", "rust")]
+#[case(b"def main(): pass", "script.py", "python")]
+#[case(b"function main() {}", "app.js", "javascript")]
+#[case(b"function main(): void {}", "component.ts", "typescript")]
+#[case(b"some content", "unknown.xyz", "unknown")]
+fn language_detection(#[case] code: &[u8], #[case] file: &str, #[case] expected: &str) {
+    let (lang, _) = guess_language(code, Path::new(file));
 
-    // Python
-    let (lang, _) = guess_language(b"def main(): pass", Path::new("script.py"));
-    assert_eq!(lang, Some(LANG::Python));
-
-    // JavaScript (detected as Mozjs in RCA)
-    let (lang, _) = guess_language(b"function main() {}", Path::new("app.js"));
-    assert!(matches!(lang, Some(LANG::Javascript | LANG::Mozjs)));
-
-    // TypeScript
-    let (lang, _) = guess_language(b"function main(): void {}", Path::new("component.ts"));
-    assert!(matches!(lang, Some(LANG::Typescript | LANG::Tsx)));
-
-    // Unknown
-    let (lang, _) = guess_language(b"some content", Path::new("unknown.xyz"));
-    assert_eq!(lang, None);
+    match expected {
+        "rust" => assert_eq!(lang, Some(LANG::Rust)),
+        "python" => assert_eq!(lang, Some(LANG::Python)),
+        "javascript" => assert!(matches!(lang, Some(LANG::Javascript | LANG::Mozjs))),
+        "typescript" => assert!(matches!(lang, Some(LANG::Typescript | LANG::Tsx))),
+        _ => assert_eq!(lang, None),
+    }
 }
 
-#[test]
-fn test_rust_parser() {
-    let code = b"fn hello_world() { println!(\"Hello\"); }";
-    let path = Path::new("test.rs");
-
-    let root_kind = action::<RootKindCallback>(&LANG::Rust, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, AST_ROOT_RUST);
-}
-
-#[test]
-fn test_python_parser() {
-    let code = b"def hello(): print('Hello')";
-    let path = Path::new("test.py");
-
-    let root_kind = action::<RootKindCallback>(&LANG::Python, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, AST_ROOT_PYTHON);
-}
-
-#[test]
-fn test_javascript_parser() {
-    let code = b"function hello() { console.log('Hello'); }";
-    let path = Path::new("test.js");
-
-    let root_kind = action::<RootKindCallback>(&LANG::Mozjs, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, AST_ROOT_PROGRAM);
-}
-
-#[test]
-fn test_typescript_parser() {
-    let code = b"function hello(): void { console.log('Hello'); }";
-    let path = Path::new("test.ts");
-
-    let root_kind = action::<RootKindCallback>(&LANG::Typescript, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, AST_ROOT_PROGRAM);
+#[rstest]
+#[case(&LANG::Rust, b"fn hello_world() { println!(\"Hello\"); }", "test.rs", AST_ROOT_RUST)]
+#[case(&LANG::Python, b"def hello(): print('Hello')", "test.py", AST_ROOT_PYTHON)]
+#[case(&LANG::Mozjs, b"function hello() { console.log('Hello'); }", "test.js", AST_ROOT_PROGRAM)]
+#[case(&LANG::Typescript, b"function hello(): void { console.log('Hello'); }", "test.ts", AST_ROOT_PROGRAM)]
+fn parser_root_kind(
+    #[case] lang: &LANG,
+    #[case] code: &[u8],
+    #[case] file: &str,
+    #[case] expected_root: &str,
+) {
+    let path = Path::new(file);
+    let root_kind = action::<RootKindCallback>(lang, code.to_vec(), path, None, ());
+    assert_eq!(root_kind, expected_root);
 }

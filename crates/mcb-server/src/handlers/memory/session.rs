@@ -4,13 +4,12 @@ use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterf
 use mcb_domain::value_objects::SessionId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
-use serde_json::Value;
 
+use super::common::{require_data_map, str_vec};
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
-use crate::utils::json;
+use crate::handlers::helpers::{OriginContextInput, opt_bool, opt_str, resolve_origin_context};
 
 /// Stores a session summary in the memory service.
 #[tracing::instrument(skip_all)]
@@ -18,19 +17,14 @@ pub async fn store_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match json::json_map(&args.data) {
-        Some(data) => data,
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing data payload for session summary",
-            )]));
-        }
+    let data = match require_data_map(&args.data, "Missing data payload for session summary") {
+        Ok(data) => data,
+        Err(error_result) => return Ok(error_result),
     };
-    let session_id = args.session_id.clone().or_else(|| {
-        data.get("session_id")
-            .and_then(Value::as_str)
-            .map(SessionId::from)
-    });
+    let session_id = args
+        .session_id
+        .clone()
+        .or_else(|| opt_str(data, "session_id").as_deref().map(SessionId::from));
     let session_id = match session_id {
         Some(value) => value,
         None => {
@@ -39,79 +33,19 @@ pub async fn store_session(
             )]));
         }
     };
-    let topics = data
-        .get("topics")
-        .and_then(Value::as_array)
-        .map(|items| {
-            items
-                .iter()
-                .filter_map(|item| item.as_str().map(str::to_owned))
-                .collect()
-        })
-        .unwrap_or_default();
-    let decisions = data
-        .get("decisions")
-        .and_then(Value::as_array)
-        .map(|items| {
-            items
-                .iter()
-                .filter_map(|item| item.as_str().map(str::to_owned))
-                .collect()
-        })
-        .unwrap_or_default();
-    let next_steps = data
-        .get("next_steps")
-        .and_then(Value::as_array)
-        .map(|items| {
-            items
-                .iter()
-                .filter_map(|item| item.as_str().map(str::to_owned))
-                .collect()
-        })
-        .unwrap_or_default();
-    let key_files = data
-        .get("key_files")
-        .and_then(Value::as_array)
-        .map(|items| {
-            items
-                .iter()
-                .filter_map(|item| item.as_str().map(str::to_owned))
-                .collect()
-        })
-        .unwrap_or_default();
-    let payload_project_id = data
-        .get("project_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_parent_session_id = data
-        .get("parent_session_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_repo_path = data
-        .get("repo_path")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_worktree_id = data
-        .get("worktree_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_operator_id = data
-        .get("operator_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_machine_id = data
-        .get("machine_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_agent_program = data
-        .get("agent_program")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_model_id = data
-        .get("model_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_delegated = data.get("delegated").and_then(Value::as_bool);
+    let topics = str_vec(data, "topics");
+    let decisions = str_vec(data, "decisions");
+    let next_steps = str_vec(data, "next_steps");
+    let key_files = str_vec(data, "key_files");
+    let payload_project_id = opt_str(data, "project_id");
+    let payload_parent_session_id = opt_str(data, "parent_session_id");
+    let payload_repo_path = opt_str(data, "repo_path");
+    let payload_worktree_id = opt_str(data, "worktree_id");
+    let payload_operator_id = opt_str(data, "operator_id");
+    let payload_machine_id = opt_str(data, "machine_id");
+    let payload_agent_program = opt_str(data, "agent_program");
+    let payload_model_id = opt_str(data, "model_id");
+    let payload_delegated = opt_bool(data, "delegated");
     let session_id_str = session_id.as_str().to_owned();
 
     let origin_context = resolve_origin_context(OriginContextInput {

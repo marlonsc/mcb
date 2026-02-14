@@ -1,4 +1,5 @@
 use mcb_domain::entities::organization::{OrgStatus, Organization};
+use rstest::*;
 
 #[test]
 fn organization_construction() {
@@ -32,23 +33,24 @@ fn organization_serialization_roundtrip() {
     assert_eq!(deserialized.slug, "test-org");
 }
 
-#[test]
-fn org_status_as_str() {
-    assert_eq!(OrgStatus::Active.as_str(), "active");
-    assert_eq!(OrgStatus::Suspended.as_str(), "suspended");
-    assert_eq!(OrgStatus::Archived.as_str(), "archived");
+#[rstest]
+#[case(OrgStatus::Active, "active")]
+#[case(OrgStatus::Suspended, "suspended")]
+#[case(OrgStatus::Archived, "archived")]
+fn org_status_as_str(#[case] status: OrgStatus, #[case] expected: &str) {
+    assert_eq!(status.as_str(), expected);
 }
 
-#[test]
-fn org_status_from_str() {
-    assert_eq!("active".parse::<OrgStatus>(), Ok(OrgStatus::Active));
-    assert_eq!("suspended".parse::<OrgStatus>(), Ok(OrgStatus::Suspended));
-    assert_eq!("archived".parse::<OrgStatus>(), Ok(OrgStatus::Archived));
-    assert!("invalid".parse::<OrgStatus>().is_err());
-}
-
-#[test]
-fn org_status_from_str_case_insensitive() {
-    assert_eq!("ACTIVE".parse::<OrgStatus>(), Ok(OrgStatus::Active));
-    assert_eq!("Suspended".parse::<OrgStatus>(), Ok(OrgStatus::Suspended));
+#[rstest]
+#[case("active", Ok(OrgStatus::Active))]
+#[case("suspended", Ok(OrgStatus::Suspended))]
+#[case("archived", Ok(OrgStatus::Archived))]
+#[case("ACTIVE", Ok(OrgStatus::Active))]
+#[case("Suspended", Ok(OrgStatus::Suspended))]
+#[case("invalid", Err(()))]
+fn org_status_from_str(#[case] input: &str, #[case] expected: Result<OrgStatus, ()>) {
+    match expected {
+        Ok(status) => assert_eq!(input.parse::<OrgStatus>(), Ok(status)),
+        Err(()) => assert!(input.parse::<OrgStatus>().is_err()),
+    }
 }

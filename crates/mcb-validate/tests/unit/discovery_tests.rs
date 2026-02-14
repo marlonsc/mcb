@@ -12,6 +12,7 @@ use mcb_validate::{
     ImplementationQualityValidator, KissValidator, OrganizationValidator, PatternValidator,
     PerformanceValidator, QualityValidator, RefactoringValidator, SolidValidator,
 };
+use rstest::*;
 
 use crate::test_constants::*;
 use crate::test_utils::*;
@@ -32,261 +33,167 @@ fn expect_validation_ok<T, E: std::fmt::Debug>(
     result.unwrap_or_default()
 }
 
+#[derive(Clone, Copy)]
+enum DiscoveryValidatorKind {
+    Quality,
+    Kiss,
+    AsyncPattern,
+    Documentation,
+    Performance,
+    ImplementationQuality,
+    Organization,
+    Solid,
+    Pattern,
+    Refactoring,
+    Hygiene,
+    ErrorBoundary,
+}
+
+impl DiscoveryValidatorKind {
+    fn name(self) -> &'static str {
+        match self {
+            DiscoveryValidatorKind::Quality => "QualityValidator",
+            DiscoveryValidatorKind::Kiss => "KissValidator",
+            DiscoveryValidatorKind::AsyncPattern => "AsyncPatternValidator",
+            DiscoveryValidatorKind::Documentation => "DocumentationValidator",
+            DiscoveryValidatorKind::Performance => "PerformanceValidator",
+            DiscoveryValidatorKind::ImplementationQuality => "ImplementationQualityValidator",
+            DiscoveryValidatorKind::Organization => "OrganizationValidator",
+            DiscoveryValidatorKind::Solid => "SolidValidator",
+            DiscoveryValidatorKind::Pattern => "PatternValidator",
+            DiscoveryValidatorKind::Refactoring => "RefactoringValidator",
+            DiscoveryValidatorKind::Hygiene => "HygieneValidator",
+            DiscoveryValidatorKind::ErrorBoundary => "ErrorBoundaryValidator",
+        }
+    }
+
+    fn validate(self, root: &std::path::Path) -> Vec<String> {
+        match self {
+            DiscoveryValidatorKind::Quality => {
+                let validator = QualityValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+            DiscoveryValidatorKind::Kiss => {
+                let validator = KissValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+            DiscoveryValidatorKind::AsyncPattern => {
+                let validator = AsyncPatternValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+            DiscoveryValidatorKind::Documentation => {
+                let validator = DocumentationValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+            DiscoveryValidatorKind::Performance => {
+                let validator = PerformanceValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+            DiscoveryValidatorKind::ImplementationQuality => {
+                let validator = ImplementationQualityValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+            DiscoveryValidatorKind::Organization => {
+                let validator = OrganizationValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+            DiscoveryValidatorKind::Solid => {
+                let validator = SolidValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+            DiscoveryValidatorKind::Pattern => {
+                let validator = PatternValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+            DiscoveryValidatorKind::Refactoring => {
+                let validator = RefactoringValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+            DiscoveryValidatorKind::Hygiene => {
+                let validator = HygieneValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+            DiscoveryValidatorKind::ErrorBoundary => {
+                let validator = ErrorBoundaryValidator::new(root);
+                expect_validation_ok(self.name(), validator.validate_all())
+                    .into_iter()
+                    .map(|v| v.to_string())
+                    .collect()
+            }
+        }
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // QualityValidator
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[test]
-fn test_discover_quality_violations() {
+#[rstest]
+#[case(DiscoveryValidatorKind::Quality, true)]
+#[case(DiscoveryValidatorKind::Kiss, true)]
+#[case(DiscoveryValidatorKind::AsyncPattern, true)]
+#[case(DiscoveryValidatorKind::Documentation, false)]
+#[case(DiscoveryValidatorKind::Performance, false)]
+#[case(DiscoveryValidatorKind::ImplementationQuality, true)]
+#[case(DiscoveryValidatorKind::Organization, true)]
+#[case(DiscoveryValidatorKind::Solid, true)]
+#[case(DiscoveryValidatorKind::Pattern, false)]
+#[case(DiscoveryValidatorKind::Refactoring, false)]
+#[case(DiscoveryValidatorKind::Hygiene, true)]
+#[case(DiscoveryValidatorKind::ErrorBoundary, true)]
+fn discover_violations(
+    #[case] validator_kind: DiscoveryValidatorKind,
+    #[case] should_have_violations: bool,
+) {
     let (_temp, root) = full_workspace();
-    let validator = QualityValidator::new(&root);
-    let violations = expect_validation_ok("QualityValidator", validator.validate_all());
+    let violations = validator_kind.validate(&root);
+    let validator_name = validator_kind.name();
 
     eprintln!(
-        "\n=== QualityValidator: {} violations ===",
+        "\n=== {validator_name}: {} violations ===",
         violations.len()
     );
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
+    for (i, violation) in violations.iter().enumerate() {
+        eprintln!("  [{i}] {violation}");
     }
-    assert!(
-        !violations.is_empty(),
-        "QualityValidator should find violations in fixtures"
-    );
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// KissValidator
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_discover_kiss_violations() {
-    let (_temp, root) = full_workspace();
-    let validator = KissValidator::new(&root);
-    let violations = expect_validation_ok("KissValidator", validator.validate_all());
-
-    eprintln!("\n=== KissValidator: {} violations ===", violations.len());
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
+    if should_have_violations {
+        assert!(
+            !violations.is_empty(),
+            "{validator_name} should find violations in fixtures"
+        );
     }
-    assert!(
-        !violations.is_empty(),
-        "KissValidator should find violations in fixtures"
-    );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AsyncPatternValidator
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_discover_async_violations() {
-    let (_temp, root) = full_workspace();
-    let validator = AsyncPatternValidator::new(&root);
-    let violations = expect_validation_ok("AsyncPatternValidator", validator.validate_all());
-
-    eprintln!(
-        "\n=== AsyncPatternValidator: {} violations ===",
-        violations.len()
-    );
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
-    }
-    assert!(
-        !violations.is_empty(),
-        "AsyncPatternValidator should find violations in fixtures"
-    );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DocumentationValidator
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_discover_documentation_violations() {
-    let (_temp, root) = full_workspace();
-    let validator = DocumentationValidator::new(&root);
-    let violations = expect_validation_ok("DocumentationValidator", validator.validate_all());
-
-    eprintln!(
-        "\n=== DocumentationValidator: {} violations ===",
-        violations.len()
-    );
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
-    }
-    // Documentation may or may not find violations depending on patterns
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PerformanceValidator
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_discover_performance_violations() {
-    let (_temp, root) = full_workspace();
-    let validator = PerformanceValidator::new(&root);
-    let violations = expect_validation_ok("PerformanceValidator", validator.validate_all());
-
-    eprintln!(
-        "\n=== PerformanceValidator: {} violations ===",
-        violations.len()
-    );
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
-    }
-    // May return 0 — patterns might not match fixture code
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ImplementationQualityValidator
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_discover_implementation_violations() {
-    let (_temp, root) = full_workspace();
-    let validator = ImplementationQualityValidator::new(&root);
-    let violations =
-        expect_validation_ok("ImplementationQualityValidator", validator.validate_all());
-
-    eprintln!(
-        "\n=== ImplementationQualityValidator: {} violations ===",
-        violations.len()
-    );
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
-    }
-    assert!(
-        !violations.is_empty(),
-        "ImplementationQualityValidator should find empty methods / todo macros"
-    );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// OrganizationValidator
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_discover_organization_violations() {
-    let (_temp, root) = full_workspace();
-    let validator = OrganizationValidator::new(&root);
-    let violations = expect_validation_ok("OrganizationValidator", validator.validate_all());
-
-    eprintln!(
-        "\n=== OrganizationValidator: {} violations ===",
-        violations.len()
-    );
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
-    }
-    assert!(
-        !violations.is_empty(),
-        "OrganizationValidator should find magic number violations"
-    );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SolidValidator
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_discover_solid_violations() {
-    let (_temp, root) = full_workspace();
-    let validator = SolidValidator::new(&root);
-    let violations = expect_validation_ok("SolidValidator", validator.validate_all());
-
-    eprintln!("\n=== SolidValidator: {} violations ===", violations.len());
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
-    }
-    assert!(
-        !violations.is_empty(),
-        "SolidValidator should find ISP / LSP violations in my-domain"
-    );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PatternValidator
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_discover_pattern_violations() {
-    let (_temp, root) = full_workspace();
-    let validator = PatternValidator::new(&root);
-    let violations = expect_validation_ok("PatternValidator", validator.validate_all());
-
-    eprintln!(
-        "\n=== PatternValidator: {} violations ===",
-        violations.len()
-    );
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
-    }
-    // May return 0 — generic patterns may not match fixture code
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// RefactoringValidator
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_discover_refactoring_violations() {
-    let (_temp, root) = full_workspace();
-    let validator = RefactoringValidator::new(&root);
-    let violations = expect_validation_ok("RefactoringValidator", validator.validate_all());
-
-    eprintln!(
-        "\n=== RefactoringValidator: {} violations ===",
-        violations.len()
-    );
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
-    }
-    // May or may not find duplicate types depending on heuristics
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// HygieneValidator
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_discover_hygiene_violations() {
-    let (_temp, root) = full_workspace();
-    let validator = HygieneValidator::new(&root);
-    let violations = expect_validation_ok("HygieneValidator", validator.validate_all());
-
-    eprintln!(
-        "\n=== HygieneValidator: {} violations ===",
-        violations.len()
-    );
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
-    }
-    assert!(
-        !violations.is_empty(),
-        "HygieneValidator should find inline test modules / naming violations"
-    );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ErrorBoundaryValidator
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[test]
-fn test_discover_error_boundary_violations() {
-    let (_temp, root) = full_workspace();
-    let validator = ErrorBoundaryValidator::new(&root);
-    let violations = expect_validation_ok("ErrorBoundaryValidator", validator.validate_all());
-
-    eprintln!(
-        "\n=== ErrorBoundaryValidator: {} violations ===",
-        violations.len()
-    );
-    for (i, v) in violations.iter().enumerate() {
-        eprintln!("  [{i}] {v}");
-    }
-    assert!(
-        !violations.is_empty(),
-        "ErrorBoundaryValidator should find infra errors in domain"
-    );
 }

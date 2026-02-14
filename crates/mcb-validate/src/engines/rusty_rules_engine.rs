@@ -12,7 +12,7 @@ use crate::Result;
 use crate::ValidationConfig;
 use crate::engines::hybrid_engine::RuleViolation;
 use crate::run_context::ValidationRunContext;
-use crate::violation_trait::{Severity, ViolationCategory};
+use crate::traits::violation::{Severity, ViolationCategory};
 
 /// Wrapper for rusty-rules engine
 pub struct RustyRulesEngineWrapper {

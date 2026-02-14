@@ -4,7 +4,7 @@
 
 use std::path::PathBuf;
 
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::traits::violation::{Severity, Violation, ViolationCategory};
 use derive_more::Display;
 
 /// Unified structure representing a code violation found by any linter.

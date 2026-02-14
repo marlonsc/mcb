@@ -2,34 +2,30 @@
 
 use mcb_domain::ports::{Job, JobCounts, JobStatus, JobType};
 use mcb_domain::value_objects::OperationId;
+use rstest::*;
 
-#[test]
-fn job_status_terminal_check() {
-    assert!(!JobStatus::Queued.is_terminal());
-    assert!(!JobStatus::Running.is_terminal());
-    assert!(JobStatus::Completed.is_terminal());
-    assert!(JobStatus::Failed("oops".into()).is_terminal());
-    assert!(JobStatus::Cancelled.is_terminal());
+#[rstest]
+#[case(JobStatus::Queued, false, true)]
+#[case(JobStatus::Running, false, true)]
+#[case(JobStatus::Completed, true, false)]
+#[case(JobStatus::Failed("oops".into()), true, false)]
+#[case(JobStatus::Cancelled, true, false)]
+fn job_status_flags(
+    #[case] status: JobStatus,
+    #[case] expected_terminal: bool,
+    #[case] expected_active: bool,
+) {
+    assert_eq!(status.is_terminal(), expected_terminal);
+    assert_eq!(status.is_active(), expected_active);
 }
 
-#[test]
-fn job_status_active_check() {
-    assert!(JobStatus::Queued.is_active());
-    assert!(JobStatus::Running.is_active());
-    assert!(!JobStatus::Completed.is_active());
-    assert!(!JobStatus::Failed("error".into()).is_active());
-    assert!(!JobStatus::Cancelled.is_active());
-}
-
-#[test]
-fn job_type_display() {
-    assert_eq!(JobType::Indexing.to_string(), "indexing");
-    assert_eq!(JobType::Validation.to_string(), "validation");
-    assert_eq!(JobType::Analysis.to_string(), "analysis");
-    assert_eq!(
-        JobType::Custom("my-job".into()).to_string(),
-        "custom:my-job"
-    );
+#[rstest]
+#[case(JobType::Indexing, "indexing")]
+#[case(JobType::Validation, "validation")]
+#[case(JobType::Analysis, "analysis")]
+#[case(JobType::Custom("my-job".into()), "custom:my-job")]
+fn job_type_display(#[case] job_type: JobType, #[case] expected: &str) {
+    assert_eq!(job_type.to_string(), expected);
 }
 
 #[test]

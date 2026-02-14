@@ -72,18 +72,18 @@ macro_rules! define_violations {
             ),*
         }
 
-        impl $crate::violation_trait::Violation for $name {
+        impl $crate::traits::violation::Violation for $name {
             fn id(&self) -> &str {
                 match self {
                     $( Self::$variant { .. } => $id ),*
                 }
             }
 
-            fn category(&self) -> $crate::violation_trait::ViolationCategory {
+            fn category(&self) -> $crate::traits::violation::ViolationCategory {
                 $category
             }
 
-            fn severity(&self) -> $crate::violation_trait::Severity {
+            fn severity(&self) -> $crate::traits::violation::Severity {
                 match self {
                     $( Self::$variant { severity, .. } => *severity ),*
                 }
@@ -156,25 +156,25 @@ macro_rules! define_violations {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
-                            define_violations!(@format f, $($msg,)? $( $field ),*)
+                            define_violations!(@format f, $($msg,)? $( $field : $field_ty ),*)
                         }
                     ),*
                 }
             }
         }
 
-        impl $crate::violation_trait::Violation for $name {
+        impl $crate::traits::violation::Violation for $name {
             fn id(&self) -> &str {
                 match self {
                     $( Self::$variant { .. } => $id ),*
                 }
             }
 
-            fn category(&self) -> $crate::violation_trait::ViolationCategory {
+            fn category(&self) -> $crate::traits::violation::ViolationCategory {
                 $category
             }
 
-            fn severity(&self) -> $crate::violation_trait::Severity {
+            fn severity(&self) -> $crate::traits::violation::Severity {
                 match self {
                     $( Self::$variant { severity, .. } => *severity ),*
                 }
@@ -242,20 +242,20 @@ macro_rules! define_violations {
             ),*
         }
 
-        impl $crate::violation_trait::Violation for $name {
+        impl $crate::traits::violation::Violation for $name {
             fn id(&self) -> &str {
                 match self {
                     $( Self::$variant { .. } => $id ),*
                 }
             }
 
-            fn category(&self) -> $crate::violation_trait::ViolationCategory {
+            fn category(&self) -> $crate::traits::violation::ViolationCategory {
                 $category
             }
 
-            fn severity(&self) -> $crate::violation_trait::Severity {
+            fn severity(&self) -> $crate::traits::violation::Severity {
                 match self {
-                    $( Self::$variant { .. } => $crate::violation_trait::Severity::$severity ),*
+                    $( Self::$variant { .. } => $crate::traits::violation::Severity::$severity ),*
                 }
             }
 
@@ -325,27 +325,27 @@ macro_rules! define_violations {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
-                            define_violations!(@format f, $($msg,)? $( $field ),*)
+                            define_violations!(@format f, $($msg,)? $( $field : $field_ty ),*)
                         }
                     ),*
                 }
             }
         }
 
-        impl $crate::violation_trait::Violation for $name {
+        impl $crate::traits::violation::Violation for $name {
             fn id(&self) -> &str {
                 match self {
                     $( Self::$variant { .. } => $id ),*
                 }
             }
 
-            fn category(&self) -> $crate::violation_trait::ViolationCategory {
+            fn category(&self) -> $crate::traits::violation::ViolationCategory {
                 $category
             }
 
-            fn severity(&self) -> $crate::violation_trait::Severity {
+            fn severity(&self) -> $crate::traits::violation::Severity {
                 match self {
-                    $( Self::$variant { .. } => $crate::violation_trait::Severity::$severity ),*
+                    $( Self::$variant { .. } => $crate::traits::violation::Severity::$severity ),*
                 }
             }
 
@@ -385,12 +385,12 @@ macro_rules! define_violations {
     };
 
     // Format helper - with message template
-    (@format $f:ident, $msg:literal, $( $field:ident ),*) => {
-        write!($f, "{}", define_violations!(@render_template $msg, $( $field ),*))
+    (@format $f:ident, $msg:literal, $( $field:ident : $field_ty:ty ),*) => {
+        write!($f, "{}", define_violations!(@render_template $msg, $( $field : $field_ty ),*))
     };
 
     // Format helper - no message template (use Debug)
-    (@format $f:ident, $( $field:ident ),*) => {
+    (@format $f:ident, $( $field:ident : $field_ty:ty ),*) => {
         write!($f, "{:?}", ($( $field ),*))
     };
 
@@ -430,7 +430,7 @@ macro_rules! define_violations {
 
     // Suggestion helper - with suggestion template
     (@suggestion $suggestion:literal, $( $field:ident : $field_ty:ty ),*) => {
-        Some(define_violations!(@render_template $suggestion, $( $field ),*))
+        Some(define_violations!(@render_template $suggestion, $( $field : $field_ty ),*))
     };
 
     (@suggestion $( $field:ident : $field_ty:ty ),*) => {
@@ -453,20 +453,137 @@ macro_rules! define_violations {
         None
     };
 
-    (@render_template $template:literal, $( $field:ident ),*) => {{
+    (@render_template $template:literal, $( $field:ident : $field_ty:ty ),*) => {{
         let mut rendered = $template.to_string();
         $(
-            rendered = rendered.replace(
-                concat!("{", stringify!($field), "}"),
-                &define_violations!(@field_to_string $field),
-            );
+            let formatted = $crate::violation_macro::violation_field_fmt::ViolationFieldFmt::fmt_field($field);
+            rendered = rendered.replace(concat!("{", stringify!($field), "}"), &formatted);
         )*
         rendered
     }};
+}
 
-    (@field_to_string $field:ident) => {
-        format!("{:?}", $field)
-    };
+/// Trait-based field formatting for violation message templates.
+///
+/// Macro `@field_to_string` arms cannot match opaque `:ty` fragments,
+/// so we dispatch via trait impls instead. Each supported type gets a
+/// specialized impl that renders the field without Debug quoting.
+pub mod violation_field_fmt {
+    use std::path::PathBuf;
+
+    /// Trait for formatting fields in violation messages.
+    pub trait ViolationFieldFmt {
+        /// Format the field value for display in a violation message.
+        fn fmt_field(&self) -> String;
+    }
+
+    impl ViolationFieldFmt for PathBuf {
+        fn fmt_field(&self) -> String {
+            format!("{}", self.display())
+        }
+    }
+
+    impl ViolationFieldFmt for String {
+        fn fmt_field(&self) -> String {
+            self.clone()
+        }
+    }
+
+    impl ViolationFieldFmt for &str {
+        fn fmt_field(&self) -> String {
+            (*self).to_string()
+        }
+    }
+
+    impl ViolationFieldFmt for usize {
+        fn fmt_field(&self) -> String {
+            self.to_string()
+        }
+    }
+
+    impl ViolationFieldFmt for u32 {
+        fn fmt_field(&self) -> String {
+            self.to_string()
+        }
+    }
+
+    impl ViolationFieldFmt for i32 {
+        fn fmt_field(&self) -> String {
+            self.to_string()
+        }
+    }
+
+    impl ViolationFieldFmt for i64 {
+        fn fmt_field(&self) -> String {
+            self.to_string()
+        }
+    }
+
+    impl ViolationFieldFmt for bool {
+        fn fmt_field(&self) -> String {
+            self.to_string()
+        }
+    }
+
+    impl ViolationFieldFmt for Vec<String> {
+        fn fmt_field(&self) -> String {
+            self.join(", ")
+        }
+    }
+
+    impl ViolationFieldFmt for Vec<PathBuf> {
+        fn fmt_field(&self) -> String {
+            self.iter()
+                .map(|p| format!("{}", p.display()))
+                .collect::<Vec<_>>()
+                .join(", ")
+        }
+    }
+
+    impl ViolationFieldFmt for crate::Severity {
+        fn fmt_field(&self) -> String {
+            format!("{self}")
+        }
+    }
+
+    impl ViolationFieldFmt for crate::ComponentType {
+        fn fmt_field(&self) -> String {
+            format!("{self}")
+        }
+    }
+
+    impl ViolationFieldFmt for crate::validators::dependency::DependencyCycle {
+        fn fmt_field(&self) -> String {
+            self.0.join(" -> ")
+        }
+    }
+
+    impl ViolationFieldFmt for Vec<(PathBuf, usize)> {
+        fn fmt_field(&self) -> String {
+            self.iter()
+                .map(|(p, n)| format!("{}:{}", p.display(), n))
+                .collect::<Vec<_>>()
+                .join(", ")
+        }
+    }
+
+    impl ViolationFieldFmt for Vec<(PathBuf, usize, String)> {
+        fn fmt_field(&self) -> String {
+            self.iter()
+                .map(|(p, n, s)| format!("{}:{}:{}", p.display(), n, s))
+                .collect::<Vec<_>>()
+                .join(", ")
+        }
+    }
+
+    impl ViolationFieldFmt for Vec<(PathBuf, String)> {
+        fn fmt_field(&self) -> String {
+            self.iter()
+                .map(|(p, s)| format!("{}:{}", p.display(), s))
+                .collect::<Vec<_>>()
+                .join(", ")
+        }
+    }
 }
 
 /// Macro to implement the `Validator` trait for types that have a `validate_all()` method.
@@ -483,7 +600,7 @@ macro_rules! define_violations {
 #[macro_export]
 macro_rules! impl_validator {
     ($validator_ty:ty, $name:literal, $desc:literal) => {
-        impl $crate::validator_trait::Validator for $validator_ty {
+        impl $crate::traits::validator::Validator for $validator_ty {
             fn name(&self) -> &'static str {
                 $name
             }
@@ -495,11 +612,11 @@ macro_rules! impl_validator {
             fn validate(
                 &self,
                 _config: &$crate::ValidationConfig,
-            ) -> anyhow::Result<Vec<Box<dyn $crate::violation_trait::Violation>>> {
+            ) -> anyhow::Result<Vec<Box<dyn $crate::traits::violation::Violation>>> {
                 let violations = self.validate_all()?;
                 Ok(violations
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn $crate::violation_trait::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn $crate::traits::violation::Violation>)
                     .collect())
             }
         }

@@ -3,7 +3,7 @@
 use mcb_domain::value_objects::ids::{
     ChunkId, CollectionId, ObservationId, OperationId, RepositoryId, SessionId,
 };
-use rstest::rstest;
+use rstest::*;
 
 #[rstest]
 #[case(CollectionId::new("test-collection").as_str().to_string(), "test-collection")]
@@ -15,28 +15,31 @@ use rstest::rstest;
 #[case(SessionId::new("session-1").as_str().to_string(), "session-1")]
 #[case(ObservationId::new("obs-1").as_str().to_string(), "obs-1")]
 #[case(OperationId::new("op-1").as_str().to_string(), "op-1")]
-#[test]
-fn test_id_creation_and_conversions(#[case] actual: String, #[case] expected: &str) {
+fn id_creation_and_conversions(#[case] actual: String, #[case] expected: &str) {
     assert_eq!(actual, expected);
 }
 
-#[test]
-fn test_id_equality() {
-    let id1 = CollectionId::new("test");
-    let id2 = CollectionId::new("test");
-    assert_eq!(id1, id2);
-}
-
-#[test]
-fn test_id_into_string() {
-    let id = CollectionId::new("test");
-    let s: String = id.into();
-    assert_eq!(s, "test");
-}
-
-#[test]
-fn test_id_as_ref() {
-    let id = CollectionId::new("test");
-    let s: &str = id.as_ref();
-    assert_eq!(s, "test");
+#[rstest]
+#[case("equality")]
+#[case("into_string")]
+#[case("as_ref")]
+fn collection_id_core_behaviors(#[case] mode: &str) {
+    match mode {
+        "equality" => {
+            let id1 = CollectionId::new("test");
+            let id2 = CollectionId::new("test");
+            assert_eq!(id1, id2);
+        }
+        "into_string" => {
+            let id = CollectionId::new("test");
+            let s: String = id.into();
+            assert_eq!(s, "test");
+        }
+        "as_ref" => {
+            let id = CollectionId::new("test");
+            let s: &str = id.as_ref();
+            assert_eq!(s, "test");
+        }
+        _ => unreachable!(),
+    }
 }

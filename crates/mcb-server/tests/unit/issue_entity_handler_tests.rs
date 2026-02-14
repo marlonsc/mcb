@@ -1,7 +1,7 @@
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_server::args::{IssueEntityAction, IssueEntityArgs, IssueEntityResource};
-use mcb_server::handlers::issue_entity::IssueEntityHandler;
+use mcb_server::handlers::entities::IssueEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
 async fn create_handler() -> (IssueEntityHandler, tempfile::TempDir) {

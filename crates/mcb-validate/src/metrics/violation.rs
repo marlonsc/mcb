@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use derive_more::Display;
 
 use super::MetricType;
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::traits::violation::{Severity, Violation, ViolationCategory};
 
 /// A metric violation when a threshold is exceeded
 #[derive(Debug, Clone, Display)]

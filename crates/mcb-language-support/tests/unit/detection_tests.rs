@@ -6,15 +6,14 @@ use std::path::Path;
 
 use mcb_language_support::detection::LanguageDetector;
 use mcb_language_support::language::LanguageId;
-use rstest::rstest;
+use rstest::*;
 
 #[rstest]
 #[case("main.rs", LanguageId::Rust)]
 #[case("script.py", LanguageId::Python)]
 #[case("app.js", LanguageId::JavaScript)]
 #[case("component.tsx", LanguageId::TypeScript)]
-#[test]
-fn test_extension_detection(#[case] file_name: &str, #[case] expected: LanguageId) {
+fn extension_detection(#[case] file_name: &str, #[case] expected: LanguageId) {
     let detector = LanguageDetector::new();
     assert_eq!(
         detector.detect(Path::new(file_name), None).unwrap(),
@@ -25,8 +24,7 @@ fn test_extension_detection(#[case] file_name: &str, #[case] expected: LanguageI
 #[rstest]
 #[case("main.rs", "rust")]
 #[case("script.py", "python")]
-#[test]
-fn test_detect_name(#[case] file_name: &str, #[case] expected: &str) {
+fn detect_name(#[case] file_name: &str, #[case] expected: &str) {
     let detector = LanguageDetector::new();
     assert_eq!(
         detector.detect_name(Path::new(file_name), None),
@@ -35,11 +33,8 @@ fn test_detect_name(#[case] file_name: &str, #[case] expected: &str) {
 }
 
 #[test]
-fn test_content_detection() {
+fn content_detection() {
     let detector = LanguageDetector::new();
-
-    // rust-code-analysis uses extension-based detection primarily
-    // Test with proper extension and content
     let python_content = "#!/usr/bin/env python\nprint('hello')";
     assert_eq!(
         detector
@@ -50,13 +45,13 @@ fn test_content_detection() {
 }
 
 #[test]
-fn test_unknown_extension() {
+fn unknown_extension() {
     let detector = LanguageDetector::new();
     assert!(detector.detect(Path::new("file.unknown"), None).is_err());
 }
 
 #[test]
-fn test_matches_languages() {
+fn matches_languages() {
     let detector = LanguageDetector::new();
 
     assert!(detector.matches_languages(
@@ -73,7 +68,7 @@ fn test_matches_languages() {
 }
 
 #[test]
-fn test_matches_language_ids() {
+fn matches_language_ids() {
     let detector = LanguageDetector::new();
 
     assert!(detector.matches_language_ids(
@@ -90,7 +85,7 @@ fn test_matches_language_ids() {
 }
 
 #[test]
-fn test_supported_languages() {
+fn supported_languages() {
     let detector = LanguageDetector::new();
     let languages = detector.supported_languages();
     assert!(languages.contains(&LanguageId::Rust));
@@ -99,7 +94,7 @@ fn test_supported_languages() {
 }
 
 #[test]
-fn test_supported_language_names() {
+fn supported_language_names() {
     let detector = LanguageDetector::new();
     let names = detector.supported_language_names();
     assert!(names.contains(&"rust".to_string()));

@@ -25,8 +25,9 @@ fn test_indexing_constants_relationships() {
     assert!(INDEXING_CHUNKS_MAX_PER_FILE <= 200);
 }
 
-#[test]
-fn test_constants_compile_time_computable() {
+#[rstest]
+#[case(INDEXING_BATCH_SIZE, 20)]
+fn constants_compile_time_computable(#[case] batch: usize, #[case] expected_double: usize) {
     const _BATCH: usize = INDEXING_BATCH_SIZE;
-    assert_eq!(INDEXING_BATCH_SIZE * 2, 20);
+    assert_eq!(batch * 2, expected_double);
 }

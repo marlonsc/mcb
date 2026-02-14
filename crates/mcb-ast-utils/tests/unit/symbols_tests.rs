@@ -4,11 +4,12 @@
 
 use mcb_ast_utils::symbols::{SymbolExtractor, SymbolKind};
 use mcb_language_support::language::LanguageId;
+use rstest::*;
 
 use super::common::{parse_python, parse_rust};
 
 #[test]
-fn test_extract_rust_functions() {
+fn extract_rust_functions() {
     let code = "fn foo() {} fn bar() {}";
     let tree = parse_rust(code);
     let symbols = SymbolExtractor::extract(&tree, code.as_bytes(), LanguageId::Rust);
@@ -20,7 +21,7 @@ fn test_extract_rust_functions() {
 }
 
 #[test]
-fn test_extract_rust_struct() {
+fn extract_rust_struct() {
     let code = "struct Foo { x: i32 }";
     let tree = parse_rust(code);
     let symbols = SymbolExtractor::extract(&tree, code.as_bytes(), LanguageId::Rust);
@@ -31,7 +32,7 @@ fn test_extract_rust_struct() {
 }
 
 #[test]
-fn test_extract_python_symbols() {
+fn extract_python_symbols() {
     let code = "def greet():\n    pass\n\nclass Person:\n    pass";
     let tree = parse_python(code);
     let symbols = SymbolExtractor::extract(&tree, code.as_bytes(), LanguageId::Python);
@@ -40,9 +41,10 @@ fn test_extract_python_symbols() {
     assert!(symbols.iter().any(|s| s.name == "Person"));
 }
 
-#[test]
-fn test_symbol_kind_display() {
-    assert_eq!(SymbolKind::Function.to_string(), "function");
-    assert_eq!(SymbolKind::Method.to_string(), "method");
-    assert_eq!(SymbolKind::Class.to_string(), "class");
+#[rstest]
+#[case(SymbolKind::Function, "function")]
+#[case(SymbolKind::Method, "method")]
+#[case(SymbolKind::Class, "class")]
+fn symbol_kind_display(#[case] kind: SymbolKind, #[case] expected: &str) {
+    assert_eq!(kind.to_string(), expected);
 }

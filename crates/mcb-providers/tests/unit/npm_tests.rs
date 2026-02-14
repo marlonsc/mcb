@@ -2,19 +2,19 @@
 
 use mcb_domain::ports::providers::project_detection::{ProjectDetector, ProjectDetectorConfig};
 use mcb_providers::git::project_detection::NpmDetector;
+use rstest::*;
 
-#[test]
-fn test_npm_detector_constructs() {
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn npm_detector_basics(#[case] check_object_safety: bool) {
     let config = ProjectDetectorConfig {
         repo_path: ".".to_string(),
     };
     let detector = NpmDetector::new(&config);
     assert!(!std::any::type_name::<NpmDetector>().is_empty());
-    let _ = detector;
-}
-
-#[test]
-fn test_npm_detector_is_object_safe() {
-    fn _assert_object_safe(_: &dyn ProjectDetector) {}
-    assert!(!std::any::type_name::<NpmDetector>().is_empty());
+    if check_object_safety {
+        fn _assert_object_safe(_: &dyn ProjectDetector) {}
+        _assert_object_safe(&detector);
+    }
 }

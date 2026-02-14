@@ -1,7 +1,7 @@
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_server::args::{PlanEntityAction, PlanEntityArgs, PlanEntityResource};
-use mcb_server::handlers::plan_entity::PlanEntityHandler;
+use mcb_server::handlers::entities::PlanEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
 async fn create_handler() -> (PlanEntityHandler, tempfile::TempDir) {

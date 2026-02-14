@@ -29,7 +29,7 @@ pub async fn store_observation(
     };
     // TODO(ORG002): Duplicate string literal "observation_type".
     // Consider using mcb_domain::schema::memory::COL_OBSERVATION_TYPE instead.
-    let observation_type_str = match require_str(data, "observation_type") {
+    let observation_type_str: String = match require_str(data, "observation_type") {
         Ok(value) => value,
         Err(error_result) => return Ok(error_result),
     };

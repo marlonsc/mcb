@@ -6,7 +6,7 @@ use std::process::{Command, Stdio};
 
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_providers::git::Git2Provider;
-use rstest::rstest;
+use rstest::*;
 use tempfile::TempDir;
 use tokio::fs::write as tokio_write;
 
@@ -46,7 +46,7 @@ async fn create_test_repo() -> TestResult<TempDir> {
 #[case(false)]
 #[case(true)]
 #[test]
-fn test_git2_provider_basics(#[case] check_object_safety: bool) {
+fn git2_provider_basics(#[case] check_object_safety: bool) {
     let provider = Git2Provider::new();
     assert!(
         !std::any::type_name::<Git2Provider>().is_empty(),
@@ -65,7 +65,7 @@ fn test_git2_provider_basics(#[case] check_object_safety: bool) {
 }
 
 #[tokio::test]
-async fn test_open_repository() -> TestResult<()> {
+async fn open_repository() -> TestResult<()> {
     let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
 
@@ -75,17 +75,18 @@ async fn test_open_repository() -> TestResult<()> {
     Ok(())
 }
 
+#[rstest]
+#[case("/nonexistent/path")]
+#[case("/this/definitely/does/not/exist")]
 #[tokio::test]
-async fn test_open_repository_not_found() {
+async fn open_repository_not_found(#[case] repo_path: &str) {
     let provider = Git2Provider::new();
-    let result = provider
-        .open_repository(Path::new("/nonexistent/path"))
-        .await;
+    let result = provider.open_repository(Path::new(repo_path)).await;
     assert!(result.is_err());
 }
 
 #[tokio::test]
-async fn test_repository_id_stable() -> TestResult<()> {
+async fn repository_id_stable() -> TestResult<()> {
     let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
 
@@ -99,55 +100,47 @@ async fn test_repository_id_stable() -> TestResult<()> {
     Ok(())
 }
 
+#[rstest]
+#[case("branches")]
+#[case("files")]
 #[tokio::test]
-async fn test_list_branches() -> TestResult<()> {
+async fn list_repository_entities(#[case] entity_kind: &str) -> TestResult<()> {
     let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
     let repo = provider.open_repository(dir.path()).await?;
 
-    let branches = provider.list_branches(&repo).await?;
-    assert!(!branches.is_empty());
-    assert!(branches.iter().any(|b| b.is_default()));
+    if entity_kind == "branches" {
+        let branches = provider.list_branches(&repo).await?;
+        assert!(!branches.is_empty());
+        assert!(branches.iter().any(|b| b.is_default()));
+    } else {
+        let files = provider.list_files(&repo, repo.default_branch()).await?;
+        assert!(files.iter().any(|f| f.to_string_lossy() == "README.md"));
+    }
     Ok(())
 }
 
+#[rstest]
+#[case(None, 1)]
+#[case(Some(1), 1)]
 #[tokio::test]
-async fn test_commit_history() -> TestResult<()> {
+async fn commit_history_variants(
+    #[case] limit: Option<usize>,
+    #[case] expected_min_len: usize,
+) -> TestResult<()> {
     let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
     let repo = provider.open_repository(dir.path()).await?;
 
     let commits = provider
-        .commit_history(&repo, repo.default_branch(), None)
+        .commit_history(&repo, repo.default_branch(), limit)
         .await?;
 
-    assert!(!commits.is_empty());
+    assert!(commits.len() >= expected_min_len);
+    if let Some(limit) = limit {
+        assert_eq!(commits.len(), limit);
+    }
     assert!(commits[0].message().contains("Initial commit"));
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_commit_history_with_limit() -> TestResult<()> {
-    let dir = create_test_repo().await?;
-    let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await?;
-
-    let commits = provider
-        .commit_history(&repo, repo.default_branch(), Some(1))
-        .await?;
-
-    assert_eq!(commits.len(), 1);
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_list_files() -> TestResult<()> {
-    let dir = create_test_repo().await?;
-    let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await?;
-
-    let files = provider.list_files(&repo, repo.default_branch()).await?;
-    assert!(files.iter().any(|f| f.to_string_lossy() == "README.md"));
     Ok(())
 }
 
@@ -155,7 +148,7 @@ async fn test_list_files() -> TestResult<()> {
 #[case("README.md", true)]
 #[case("nonexistent.txt", false)]
 #[tokio::test]
-async fn test_read_file_variants(
+async fn read_file_variants(
     #[case] file_name: &str,
     #[case] should_succeed: bool,
 ) -> TestResult<()> {
@@ -178,7 +171,7 @@ async fn test_read_file_variants(
 }
 
 #[tokio::test]
-async fn test_diff_refs() -> TestResult<()> {
+async fn diff_refs() -> TestResult<()> {
     let dir = create_test_repo().await?;
 
     tokio_write(dir.path().join("new_file.txt"), "New content\n").await?;

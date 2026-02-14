@@ -17,11 +17,12 @@ mod duplication_integration_tests {
     use std::io::Write;
     use std::path::PathBuf;
 
+    use mcb_validate::Violation;
     use mcb_validate::duplication::{
         DuplicationAnalyzer, DuplicationThresholds, DuplicationType, TokenFingerprinter,
         tokenize_source,
     };
-    use mcb_validate::violation_trait::Violation;
+    use rstest::*;
     use tempfile::TempDir;
 
     fn create_temp_file(dir: &TempDir, name: &str, content: &str) -> PathBuf {
@@ -217,7 +218,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     /// Test duplication statistics calculation
     #[test]
     fn test_duplication_stats() {
-        use mcb_validate::violation_trait::Severity;
+        use mcb_validate::Severity;
 
         let violations = vec![
             mcb_validate::duplication::DuplicationViolation {
@@ -267,7 +268,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     #[test]
     fn test_violation_trait_implementation() {
         use mcb_validate::duplication::DuplicationViolation;
-        use mcb_validate::violation_trait::{Severity, ViolationCategory};
+        use mcb_validate::{Severity, ViolationCategory};
 
         let violation = DuplicationViolation {
             file: PathBuf::from("src/utils.rs"),
@@ -298,29 +299,13 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     }
 
     /// Test clone type classification
-    #[test]
-    fn test_clone_type_classification() {
-        // Test DuplicationType rule IDs
-        assert_eq!(
-            DuplicationType::ExactClone.rule_id(),
-            "DUP001",
-            "Exact clone should be DUP001"
-        );
-        assert_eq!(
-            DuplicationType::RenamedClone.rule_id(),
-            "DUP002",
-            "Renamed clone should be DUP002"
-        );
-        assert_eq!(
-            DuplicationType::GappedClone.rule_id(),
-            "DUP003",
-            "Gapped clone should be DUP003"
-        );
-        assert_eq!(
-            DuplicationType::SemanticClone.rule_id(),
-            "DUP004",
-            "Semantic clone should be DUP004"
-        );
+    #[rstest]
+    #[case(DuplicationType::ExactClone, "DUP001")]
+    #[case(DuplicationType::RenamedClone, "DUP002")]
+    #[case(DuplicationType::GappedClone, "DUP003")]
+    #[case(DuplicationType::SemanticClone, "DUP004")]
+    fn clone_type_classification(#[case] clone_type: DuplicationType, #[case] rule_id: &str) {
+        assert_eq!(clone_type.rule_id(), rule_id);
     }
 
     /// Test that exclude patterns affect analysis
@@ -374,52 +359,41 @@ fn calculate_average(numbers: &[f64]) -> f64 {
         }
     }
 
-    /// Test empty file handling
-    #[test]
-    fn test_empty_files() {
-        let dir = TempDir::new().unwrap();
-
-        let file1 = create_temp_file(&dir, "empty.rs", "");
-        let file2 = create_temp_file(&dir, "also_empty.rs", "// just a comment\n");
-
-        let analyzer = DuplicationAnalyzer::new();
-        let violations = analyzer
-            .analyze_files(&[file1, file2])
-            .expect("Should handle empty files");
-
-        assert!(
-            violations.is_empty(),
-            "Empty files should not produce violations"
-        );
-    }
-
-    /// Test that files with only comments don't cause issues
-    #[test]
-    fn test_comment_only_files() {
-        let dir = TempDir::new().unwrap();
-
-        let comments = r"
+    /// Test files without meaningful code do not produce violations
+    #[rstest]
+    #[case("", "// just a comment\n")]
+    #[case(
+        r"
 // This is a file with only comments
 // No actual code here
 /*
  * Multi-line comment
  * Also no code
  */
-";
+",
+        r"
+// This is a file with only comments
+// No actual code here
+/*
+ * Multi-line comment
+ * Also no code
+ */
+"
+    )]
+    fn non_code_files(#[case] file1_content: &str, #[case] file2_content: &str) {
+        let dir = TempDir::new().unwrap();
 
-        let file1 = create_temp_file(&dir, "comments1.rs", comments);
-        let file2 = create_temp_file(&dir, "comments2.rs", comments);
+        let file1 = create_temp_file(&dir, "file1.rs", file1_content);
+        let file2 = create_temp_file(&dir, "file2.rs", file2_content);
 
         let analyzer = DuplicationAnalyzer::new();
         let violations = analyzer
             .analyze_files(&[file1, file2])
-            .expect("Should handle comment-only files");
+            .expect("Should handle non-code files");
 
-        // Comment-only files shouldn't produce code duplication violations
-        // (comments are stripped during tokenization)
         assert!(
             violations.is_empty(),
-            "Comment-only files should not produce violations"
+            "Non-code files should not produce violations"
         );
     }
 }

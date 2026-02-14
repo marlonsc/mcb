@@ -108,3 +108,6 @@ mod discovery;
 
 #[path = "unit/walkdir_guardrail_tests.rs"]
 mod walkdir_guardrail_tests;
+
+#[path = "unit/display_parity_tests.rs"]
+mod display_parity_tests;

@@ -1,58 +1,32 @@
 //! Unit tests for `ValidatorEngine`.
 
 use mcb_validate::engines::ValidatorEngine;
+use rstest::*;
 
-#[test]
-fn test_valid_rule_config() {
+#[rstest]
+#[case("architecture", "rust-rule-engine", true)]
+#[case("invalid_category", "rust-rule-engine", false)]
+#[case("architecture", "invalid_engine", false)]
+fn validate_rule_config(
+    #[case] category: &str,
+    #[case] engine_name: &str,
+    #[case] expected_ok: bool,
+) {
     let engine = ValidatorEngine::new();
 
-    let valid_rule = serde_json::json!({
+    let rule = serde_json::json!({
         "id": "TEST001",
         "name": "Test Rule",
-        "category": "architecture",
+        "category": category,
         "severity": "error",
         "description": "This is a test rule with enough description",
         "rationale": "This rule exists for testing purposes and has enough rationale",
-        "engine": "rust-rule-engine",
+        "engine": engine_name,
         "config": {
             "crate_name": "test-crate",
             "forbidden_prefixes": ["test"]
         }
     });
 
-    assert!(engine.validate_rule_definition(&valid_rule).is_ok());
-}
-
-#[test]
-fn test_invalid_category() {
-    let engine = ValidatorEngine::new();
-
-    let invalid_rule = serde_json::json!({
-        "id": "TEST001",
-        "name": "Test Rule",
-        "category": "invalid_category",
-        "severity": "error",
-        "description": "This is a test rule",
-        "rationale": "This rule exists for testing",
-        "engine": "rust-rule-engine"
-    });
-
-    assert!(engine.validate_rule_definition(&invalid_rule).is_err());
-}
-
-#[test]
-fn test_invalid_engine() {
-    let engine = ValidatorEngine::new();
-
-    let invalid_rule = serde_json::json!({
-        "id": "TEST001",
-        "name": "Test Rule",
-        "category": "architecture",
-        "severity": "error",
-        "description": "This is a test rule",
-        "rationale": "This rule exists for testing",
-        "engine": "invalid_engine"
-    });
-
-    assert!(engine.validate_rule_definition(&invalid_rule).is_err());
+    assert_eq!(engine.validate_rule_definition(&rule).is_ok(), expected_ok);
 }

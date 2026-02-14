@@ -1,6 +1,7 @@
 use git2::Repository;
 use mcb_domain::entities::submodule::SubmoduleInfo;
 use mcb_providers::git::submodule::collect_submodules;
+use rstest::*;
 use tempfile::TempDir;
 
 #[tokio::test]
@@ -19,8 +20,10 @@ async fn test_collect_submodules_empty_repo() {
     assert!(result.unwrap().is_empty());
 }
 
-#[test]
-fn test_submodule_info_collection_name() {
+#[rstest]
+#[case("mcb", "mcb/libs-tree-sitter")]
+#[case("project-x", "project-x/libs-tree-sitter")]
+fn submodule_info_collection_name(#[case] collection: &str, #[case] expected: &str) {
     let info = SubmoduleInfo {
         id: "parent-repo:libs/tree-sitter".to_string(),
         path: "libs/tree-sitter".to_string(),
@@ -32,6 +35,6 @@ fn test_submodule_info_collection_name() {
         is_initialized: true,
     };
 
-    assert_eq!(info.collection_name("mcb"), "mcb/libs-tree-sitter");
+    assert_eq!(info.collection_name(collection), expected);
     assert_eq!(info.repo_id(), "parent-repo:libs/tree-sitter");
 }

@@ -19,7 +19,8 @@ mod full_integration_tests {
     use mcb_validate::ValidationConfig;
     use mcb_validate::ValidatorRegistry;
     use mcb_validate::generic_reporter::{GenericReport, GenericReporter, GenericSummary};
-    use mcb_validate::violation_trait::{Severity, Violation, ViolationCategory};
+    use mcb_validate::{Severity, Violation, ViolationCategory};
+    use rstest::*;
     use tempfile::TempDir;
 
     fn create_test_workspace(dir: &TempDir) -> PathBuf {
@@ -94,7 +95,7 @@ members = [
         );
 
         // Register the clean architecture validator
-        let validator = mcb_validate::clean_architecture::CleanArchitectureValidator::new(&root);
+        let validator = mcb_validate::CleanArchitectureValidator::new(&root);
         registry.register(Box::new(validator));
 
         // Now registry should have one validator
@@ -129,17 +130,24 @@ pub fn risky_function(data: Option<String>) -> String {
         assert_eq!(report.workspace_root, root);
     }
 
-    /// Test report structure
-    #[test]
-    fn test_report_structure() {
-        // Create a mock report to test structure
+    /// Test summary structure and calculations
+    #[rstest]
+    #[case(5, 2, 3, 0, false)]
+    #[case(10, 3, 5, 2, false)]
+    fn summary_structure_and_calculations(
+        #[case] total_violations: usize,
+        #[case] errors: usize,
+        #[case] warnings: usize,
+        #[case] infos: usize,
+        #[case] passed: bool,
+    ) {
         let summary = GenericSummary {
-            total_violations: 5,
-            errors: 2,
-            warnings: 3,
-            infos: 0,
+            total_violations,
+            errors,
+            warnings,
+            infos,
             by_category: HashMap::new(),
-            passed: false,
+            passed,
         };
 
         let report = GenericReport {
@@ -149,10 +157,15 @@ pub fn risky_function(data: Option<String>) -> String {
             violations_by_category: HashMap::new(),
         };
 
-        assert_eq!(report.summary.total_violations, 5);
-        assert_eq!(report.summary.errors, 2);
-        assert_eq!(report.summary.warnings, 3);
-        assert!(!report.summary.passed);
+        assert_eq!(report.summary.total_violations, total_violations);
+        assert_eq!(report.summary.errors, errors);
+        assert_eq!(report.summary.warnings, warnings);
+        assert_eq!(report.summary.infos, infos);
+        assert_eq!(report.summary.passed, passed);
+        assert_eq!(
+            report.summary.errors + report.summary.warnings + report.summary.infos,
+            report.summary.total_violations
+        );
     }
 
     /// Test full validation flow with clean code
@@ -457,25 +470,5 @@ impl MutableValueObject {
 
         // Ensure test executed successfully
         // Validation completed successfully
-    }
-
-    /// Test `GenericSummary` calculations
-    #[test]
-    fn test_summary_calculations() {
-        let summary = GenericSummary {
-            total_violations: 10,
-            errors: 3,
-            warnings: 5,
-            infos: 2,
-            by_category: HashMap::new(),
-            passed: false,
-        };
-
-        // Verify totals add up
-        assert_eq!(
-            summary.errors + summary.warnings + summary.infos,
-            summary.total_violations
-        );
-        assert!(!summary.passed);
     }
 }

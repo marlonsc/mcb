@@ -15,6 +15,7 @@ use mcb_providers::database::{
     create_agent_repository_from_executor, create_memory_repository_with_executor,
     create_project_repository_from_executor,
 };
+use rstest::*;
 
 async fn setup_repositories() -> (
     Arc<dyn AgentRepository>,
@@ -180,8 +181,11 @@ async fn seed_worktree(
 // Agent Repository Tests
 // ============================================================================
 
+#[rstest]
+#[case(false)]
+#[case(true)]
 #[tokio::test]
-async fn test_create_agent_session() {
+async fn agent_session_lifecycle(#[case] store_tool_call: bool) {
     let (agent_repo, memory_repo, project_repo, _executor, _temp) = setup_repositories().await;
 
     // Prerequisite: Create Project
@@ -212,42 +216,18 @@ async fn test_create_agent_session() {
         .expect("Failed to get session");
     assert!(retrieved.is_some());
     assert_eq!(retrieved.unwrap().id, "agent-1");
+
+    if store_tool_call {
+        let tool_call = create_test_tool_call("tool-1", "agent-1");
+        agent_repo
+            .store_tool_call(&tool_call)
+            .await
+            .expect("Failed to store tool call");
+    }
 }
 
 #[tokio::test]
-async fn test_store_tool_call() {
-    let (agent_repo, memory_repo, project_repo, _executor, _temp) = setup_repositories().await;
-
-    // Prerequisite: Create Project
-    let project = create_test_project("proj-1");
-    project_repo
-        .create(&project)
-        .await
-        .expect("Failed to create project");
-
-    // Prerequisite: Create SessionSummary and AgentSession
-    let summary = create_test_session_summary("sess-2", "proj-1");
-    memory_repo
-        .store_session_summary(&summary)
-        .await
-        .expect("Failed to store session summary");
-
-    let session = create_test_agent_session("agent-2", "sess-2");
-    agent_repo
-        .create_session(&session)
-        .await
-        .expect("Failed to create agent session");
-
-    // Test: Store ToolCall
-    let tool_call = create_test_tool_call("tool-1", "agent-2");
-    agent_repo
-        .store_tool_call(&tool_call)
-        .await
-        .expect("Failed to store tool call");
-}
-
-#[tokio::test]
-async fn test_list_sessions_by_project() {
+async fn list_sessions_by_project() {
     let (agent_repo, memory_repo, project_repo, _executor, _temp) = setup_repositories().await;
 
     let project_1 = create_test_project("proj-1");
@@ -297,7 +277,7 @@ async fn test_list_sessions_by_project() {
 }
 
 #[tokio::test]
-async fn test_list_sessions_by_worktree() {
+async fn list_sessions_by_worktree() {
     let (agent_repo, memory_repo, project_repo, executor, _temp) = setup_repositories().await;
 
     let project_1 = create_test_project("proj-1");

@@ -13,6 +13,7 @@ use std::path::Path;
 use mcb_validate::ast::{
     AstNode, AstQuery, AstQueryBuilder, AstQueryPatterns, Position, QueryCondition, Span,
 };
+use rstest::*;
 use rust_code_analysis::{Callback, LANG, ParserTrait, action, find, guess_language};
 
 // ==================== RCA Callback for Parsing Tests ====================
@@ -47,84 +48,84 @@ impl Callback for HasNodeCallback {
 
 // ==================== Language Detection Tests (using RCA guess_language) ====================
 
-#[test]
-fn test_language_detection_rust() {
-    let code = b"fn main() {}";
-    let (lang, _) = guess_language(code, Path::new("main.rs"));
-    assert_eq!(lang, Some(LANG::Rust));
+#[rstest]
+#[case(b"fn main() {}" as &[u8], "main.rs", Some(LANG::Rust))]
+#[case(b"def main(): pass" as &[u8], "script.py", Some(LANG::Python))]
+#[case(b"some content" as &[u8], "unknown.xyz", None)]
+fn language_detection_exact(
+    #[case] code: &[u8],
+    #[case] file: &str,
+    #[case] expected: Option<LANG>,
+) {
+    let (lang, _) = guess_language(code, Path::new(file));
+    assert_eq!(lang, expected);
 }
 
-#[test]
-fn test_language_detection_python() {
-    let code = b"def main(): pass";
-    let (lang, _) = guess_language(code, Path::new("script.py"));
-    assert_eq!(lang, Some(LANG::Python));
-}
-
-#[test]
-fn test_language_detection_javascript() {
-    let code = b"function main() {}";
-    let (lang, _) = guess_language(code, Path::new("app.js"));
-    // JavaScript is detected as Mozjs in RCA
-    assert!(matches!(lang, Some(LANG::Javascript | LANG::Mozjs)));
-}
-
-#[test]
-fn test_language_detection_typescript() {
-    let code = b"function main(): void {}";
-    let (lang, _) = guess_language(code, Path::new("component.ts"));
-    assert!(matches!(lang, Some(LANG::Typescript | LANG::Tsx)));
+#[rstest]
+#[case(b"function main() {}" as &[u8], "app.js", false)]
+#[case(b"function main(): void {}" as &[u8], "component.ts", true)]
+fn language_detection_js_family(#[case] code: &[u8], #[case] file: &str, #[case] is_ts: bool) {
+    let (lang, _) = guess_language(code, Path::new(file));
+    if is_ts {
+        assert!(matches!(lang, Some(LANG::Typescript | LANG::Tsx)));
+    } else {
+        assert!(matches!(lang, Some(LANG::Javascript | LANG::Mozjs)));
+    }
 }
 
 // Note: Go is not supported by rust-code-analysis
 // Go tests removed as LANG::Go doesn't exist
 
-#[test]
-fn test_language_detection_unknown() {
-    let code = b"some content";
-    let (lang, _) = guess_language(code, Path::new("unknown.xyz"));
-    assert_eq!(lang, None);
-}
-
 // ==================== Rust Parser Tests (using RCA action) ====================
 
-#[test]
-fn test_rust_parser_simple_function() {
-    let code = br#"
+#[rstest]
+#[case(
+    LANG::Rust,
+    br#"
 fn hello_world() {
     println!("Hello, World!");
 }
-"#;
-    let path = Path::new("test.rs");
-
-    let root_kind = action::<RootKindCallback>(&LANG::Rust, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "source_file");
+"# as &[u8],
+    "test.rs",
+    "source_file"
+)]
+#[case(
+    LANG::Python,
+    br#"
+def hello_world():
+    print("Hello, World!")
+"# as &[u8],
+    "test.py",
+    "module"
+)]
+#[case(
+    LANG::Javascript,
+    br#"
+function helloWorld() {
+    console.log("Hello, World!");
+}
+"# as &[u8],
+    "test.js",
+    "program"
+)]
+#[case(
+    LANG::Typescript,
+    br"
+function greet(name: string): string {
+    return `Hello, ${name}!`;
 }
 
-#[test]
-fn test_rust_parser_finds_function() {
-    let code = br#"
-fn risky_function() {
-    let value = Some(42);
-    let unwrapped = value.unwrap();
-    println!("{}", unwrapped);
+interface Person {
+    name: string;
+    age: number;
 }
-"#;
-    let path = Path::new("test.rs");
-
-    let has_function = action::<HasNodeCallback>(
-        &LANG::Rust,
-        code.to_vec(),
-        path,
-        None,
-        "function_item".into(),
-    );
-    assert!(has_function, "Should find function_item node");
-}
-
-#[test]
-fn test_rust_parser_struct() {
-    let code = br"
+" as &[u8],
+    "test.ts",
+    "program"
+)]
+#[case(
+    LANG::Rust,
+    br"
 pub struct MyService {
     name: String,
     value: i32,
@@ -138,34 +139,13 @@ impl MyService {
         }
     }
 }
-";
-    let path = Path::new("test.rs");
-
-    let root_kind = action::<RootKindCallback>(&LANG::Rust, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "source_file");
-
-    let has_struct =
-        action::<HasNodeCallback>(&LANG::Rust, code.to_vec(), path, None, "struct_item".into());
-    assert!(has_struct, "Should find struct_item node");
-}
-
-// ==================== Python Parser Tests ====================
-
-#[test]
-fn test_python_parser_simple_function() {
-    let code = br#"
-def hello_world():
-    print("Hello, World!")
-"#;
-    let path = Path::new("test.py");
-
-    let root_kind = action::<RootKindCallback>(&LANG::Python, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "module");
-}
-
-#[test]
-fn test_python_parser_class() {
-    let code = br"
+" as &[u8],
+    "test.rs",
+    "source_file"
+)]
+#[case(
+    LANG::Python,
+    br"
 class MyService:
     def __init__(self, name: str):
         self.name = name
@@ -173,79 +153,108 @@ class MyService:
 
     def get_name(self) -> str:
         return self.name
-";
-    let path = Path::new("test.py");
-
-    let root_kind = action::<RootKindCallback>(&LANG::Python, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "module");
-
-    let has_class = action::<HasNodeCallback>(
-        &LANG::Python,
-        code.to_vec(),
-        path,
-        None,
-        "class_definition".into(),
-    );
-    assert!(has_class, "Should find class_definition node");
-}
-
-// ==================== JavaScript Parser Tests ====================
-
-#[test]
-fn test_javascript_parser_simple_function() {
-    let code = br#"
-function helloWorld() {
-    console.log("Hello, World!");
-}
-"#;
-    let path = Path::new("test.js");
-
-    let root_kind = action::<RootKindCallback>(&LANG::Javascript, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "program");
-}
-
-#[test]
-fn test_javascript_parser_arrow_function() {
-    let code = br"
+" as &[u8],
+    "test.py",
+    "module"
+)]
+#[case(
+    LANG::Javascript,
+    br"
 const add = (a, b) => a + b;
 const multiply = (a, b) => {
     return a * b;
 };
-";
-    let path = Path::new("test.js");
+" as &[u8],
+    "test.js",
+    "program"
+)]
+fn parser_root_kind(
+    #[case] lang: LANG,
+    #[case] code: &[u8],
+    #[case] file: &str,
+    #[case] expected_root_kind: &str,
+) {
+    let root_kind = action::<RootKindCallback>(&lang, code.to_vec(), Path::new(file), None, ());
+    assert_eq!(root_kind, expected_root_kind);
+}
 
-    let root_kind = action::<RootKindCallback>(&LANG::Javascript, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "program");
+#[rstest]
+#[case(
+    LANG::Rust,
+    br#"
+fn risky_function() {
+    let value = Some(42);
+    let unwrapped = value.unwrap();
+    println!("{}", unwrapped);
+}
+"# as &[u8],
+    "test.rs",
+    "function_item"
+)]
+#[case(
+    LANG::Rust,
+    br"
+pub struct MyService {
+    name: String,
+    value: i32,
+}
 
-    let has_arrow = action::<HasNodeCallback>(
-        &LANG::Javascript,
+impl MyService {
+    pub fn new(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+            value: 0,
+        }
+    }
+}
+" as &[u8],
+    "test.rs",
+    "struct_item"
+)]
+#[case(
+    LANG::Python,
+    br"
+class MyService:
+    def __init__(self, name: str):
+        self.name = name
+        self.value = 0
+
+    def get_name(self) -> str:
+        return self.name
+" as &[u8],
+    "test.py",
+    "class_definition"
+)]
+#[case(
+    LANG::Javascript,
+    br"
+const add = (a, b) => a + b;
+const multiply = (a, b) => {
+    return a * b;
+};
+" as &[u8],
+    "test.js",
+    "arrow_function"
+)]
+fn parser_finds_node(
+    #[case] lang: LANG,
+    #[case] code: &[u8],
+    #[case] file: &str,
+    #[case] node_type: &str,
+) {
+    let has_node = action::<HasNodeCallback>(
+        &lang,
         code.to_vec(),
-        path,
+        Path::new(file),
         None,
-        "arrow_function".into(),
+        node_type.into(),
     );
-    assert!(has_arrow, "Should find arrow_function node");
+    assert!(has_node, "Should find {node_type} node");
 }
 
-// ==================== TypeScript Parser Tests ====================
+// ==================== Python Parser Tests ====================
 
-#[test]
-fn test_typescript_parser_typed_function() {
-    let code = br"
-function greet(name: string): string {
-    return `Hello, ${name}!`;
-}
-
-interface Person {
-    name: string;
-    age: number;
-}
-";
-    let path = Path::new("test.ts");
-
-    let root_kind = action::<RootKindCallback>(&LANG::Typescript, code.to_vec(), path, None, ());
-    assert_eq!(root_kind, "program");
-}
+// ==================== Python/JavaScript/TypeScript Parser Tests ====================
 
 // ==================== AST Query Tests ====================
 
@@ -491,23 +500,12 @@ fn test_query_condition_no_child() {
 
 // ==================== Multi-Language Query Tests ====================
 
-#[test]
-fn test_python_query_patterns() {
-    let query = AstQueryPatterns::undocumented_functions("python");
-    assert_eq!(query.language, "python");
-    assert_eq!(query.node_type, "function_definition");
-}
-
-#[test]
-fn test_javascript_query_patterns() {
-    let query = AstQueryPatterns::undocumented_functions("javascript");
-    assert_eq!(query.language, "javascript");
-    assert_eq!(query.node_type, "function_declaration");
-}
-
-#[test]
-fn test_go_query_patterns() {
-    let query = AstQueryPatterns::undocumented_functions("go");
-    assert_eq!(query.language, "go");
-    assert_eq!(query.node_type, "function_declaration");
+#[rstest]
+#[case("python", "function_definition")]
+#[case("javascript", "function_declaration")]
+#[case("go", "function_declaration")]
+fn undocumented_function_query_patterns(#[case] language: &str, #[case] node_type: &str) {
+    let query = AstQueryPatterns::undocumented_functions(language);
+    assert_eq!(query.language, language);
+    assert_eq!(query.node_type, node_type);
 }

@@ -1,4 +1,5 @@
 use mcb_domain::entities::team::{Team, TeamMember, TeamMemberRole};
+use rstest::*;
 
 #[test]
 fn team_construction() {
@@ -40,27 +41,22 @@ fn team_member_construction() {
     assert_eq!(member.role, TeamMemberRole::Lead);
 }
 
-#[test]
-fn team_member_role_as_str() {
-    assert_eq!(TeamMemberRole::Lead.as_str(), "lead");
-    assert_eq!(TeamMemberRole::Member.as_str(), "member");
+#[rstest]
+#[case(TeamMemberRole::Lead, "lead")]
+#[case(TeamMemberRole::Member, "member")]
+fn team_member_role_as_str(#[case] role: TeamMemberRole, #[case] expected: &str) {
+    assert_eq!(role.as_str(), expected);
 }
 
-#[test]
-fn team_member_role_from_str() {
-    assert_eq!("lead".parse::<TeamMemberRole>(), Ok(TeamMemberRole::Lead));
-    assert_eq!(
-        "member".parse::<TeamMemberRole>(),
-        Ok(TeamMemberRole::Member)
-    );
-    assert!("invalid".parse::<TeamMemberRole>().is_err());
-}
-
-#[test]
-fn team_member_role_from_str_case_insensitive() {
-    assert_eq!("LEAD".parse::<TeamMemberRole>(), Ok(TeamMemberRole::Lead));
-    assert_eq!(
-        "Member".parse::<TeamMemberRole>(),
-        Ok(TeamMemberRole::Member)
-    );
+#[rstest]
+#[case("lead", Ok(TeamMemberRole::Lead))]
+#[case("member", Ok(TeamMemberRole::Member))]
+#[case("LEAD", Ok(TeamMemberRole::Lead))]
+#[case("Member", Ok(TeamMemberRole::Member))]
+#[case("invalid", Err(()))]
+fn team_member_role_from_str(#[case] input: &str, #[case] expected: Result<TeamMemberRole, ()>) {
+    match expected {
+        Ok(role) => assert_eq!(input.parse::<TeamMemberRole>(), Ok(role)),
+        Err(()) => assert!(input.parse::<TeamMemberRole>().is_err()),
+    }
 }

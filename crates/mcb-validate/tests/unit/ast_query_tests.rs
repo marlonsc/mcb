@@ -1,6 +1,7 @@
 //! Unit tests for AST query (`AstQueryBuilder`, `AstQueryPatterns`).
 
 use mcb_validate::ast::query::{AstQueryBuilder, AstQueryPatterns, QueryCondition};
+use rstest::*;
 
 #[test]
 fn test_query_builder() {
@@ -19,19 +20,32 @@ fn test_query_builder() {
     assert_eq!(query.conditions.len(), 1);
 }
 
-#[test]
-fn test_query_patterns() {
-    let query = AstQueryPatterns::undocumented_functions("rust");
-    assert_eq!(query.language, "rust");
-    assert_eq!(query.node_type, "function_item");
-    assert_eq!(query.message, "Functions must be documented");
-}
+#[rstest]
+#[case(
+    "undocumented",
+    "function_item",
+    "Functions must be documented",
+    "warning"
+)]
+#[case(
+    "unwrap",
+    "call_expression",
+    "Avoid unwrap() in production code",
+    "error"
+)]
+fn query_patterns(
+    #[case] pattern: &str,
+    #[case] expected_node_type: &str,
+    #[case] expected_message: &str,
+    #[case] expected_severity: &str,
+) {
+    let query = match pattern {
+        "undocumented" => AstQueryPatterns::undocumented_functions("rust"),
+        _ => AstQueryPatterns::unwrap_usage("rust"),
+    };
 
-#[test]
-fn test_unwrap_pattern() {
-    let query = AstQueryPatterns::unwrap_usage("rust");
     assert_eq!(query.language, "rust");
-    assert_eq!(query.node_type, "call_expression");
-    assert_eq!(query.message, "Avoid unwrap() in production code");
-    assert_eq!(query.severity, "error");
+    assert_eq!(query.node_type, expected_node_type);
+    assert_eq!(query.message, expected_message);
+    assert_eq!(query.severity, expected_severity);
 }

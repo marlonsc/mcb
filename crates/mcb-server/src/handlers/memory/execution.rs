@@ -1,8 +1,7 @@
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::{ExecutionMetadata, MemoryFilter, ObservationType};
+use mcb_domain::entities::memory::{ExecutionMetadata, ObservationType};
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::compute_stable_id_hash;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use serde_json::Value;
@@ -11,7 +10,8 @@ use uuid::Uuid;
 
 use super::common::{
     MemoryOriginOptions, build_observation_metadata, opt_str, require_bool, require_data_map,
-    require_i32, require_i64, require_str, resolve_memory_origin_context, str_vec,
+    require_i32, require_i64, require_str, resolve_memory_origin_context, search_memories_as_json,
+    str_vec,
 };
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
@@ -162,70 +162,29 @@ pub async fn get_executions(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let filter = MemoryFilter {
-        id: None,
-        project_id: args.project_id.clone(),
-        tags: None,
-        r#type: Some(ObservationType::Execution),
-        session_id: args
-            .session_id
-            .clone()
-            .map(|id| compute_stable_id_hash("session", id.as_str())),
-        parent_session_id: args.parent_session_id.clone(),
-        repo_id: args.repo_id.clone(),
-        time_range: None,
-        branch: None,
-        commit: None,
-    };
-    let query = "execution";
-    let limit = args.limit.unwrap_or(10) as usize;
-    let fetch_limit = limit * 5;
-    match memory_service
-        .search_memories(query, Some(filter), fetch_limit)
-        .await
-    {
-        Ok(results) => {
-            let mut executions: Vec<_> = results
-                .into_iter()
-                .filter_map(|result| {
-                    // Extract execution metadata from observation; skip if missing
-                    // (None indicates observation is not an execution type)
-                    if let Some(execution) = result.observation.metadata.execution.as_ref() {
-                        Some(serde_json::json!({
-                                "observation_id": result.observation.id,
-                                "command": execution.command,
-                            "exit_code": execution.exit_code,
-                            "duration_ms": execution.duration_ms,
-                            "success": execution.success,
-                            "execution_type": execution.execution_type.as_str(),
-                            "coverage": execution.coverage,
-                            "files_affected": execution.files_affected,
-                            "output_summary": execution.output_summary,
-                            "warnings_count": execution.warnings_count,
-                            "errors_count": execution.errors_count,
-                            "created_at": result.observation.created_at,
-                        }))
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-            executions.sort_by(|a, b| {
-                b.get("created_at")
-                    .and_then(|v| v.as_i64())
-                    .cmp(&a.get("created_at").and_then(|v| v.as_i64()))
-            });
-            executions.truncate(limit);
-            ResponseFormatter::json_success(&serde_json::json!({
-                "count": executions.len(),
-                "executions": executions,
+    search_memories_as_json(
+        memory_service,
+        args,
+        "execution",
+        ObservationType::Execution,
+        "executions",
+        |result| {
+            let execution = result.observation.metadata.execution.as_ref()?;
+            Some(serde_json::json!({
+                "observation_id": result.observation.id,
+                "command": execution.command,
+                "exit_code": execution.exit_code,
+                "duration_ms": execution.duration_ms,
+                "success": execution.success,
+                "execution_type": execution.execution_type.as_str(),
+                "coverage": execution.coverage,
+                "files_affected": execution.files_affected,
+                "output_summary": execution.output_summary,
+                "warnings_count": execution.warnings_count,
+                "errors_count": execution.errors_count,
+                "created_at": result.observation.created_at,
             }))
-        }
-        Err(_e) => {
-            error!("Failed to get executions");
-            Ok(CallToolResult::error(vec![Content::text(
-                "Failed to get executions",
-            )]))
-        }
-    }
+        },
+    )
+    .await
 }

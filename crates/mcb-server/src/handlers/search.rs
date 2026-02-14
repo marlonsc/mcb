@@ -16,7 +16,7 @@ use validator::Validate;
 use crate::args::{SearchArgs, SearchResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handler_helpers::resolve_org_id;
+use crate::handlers::helpers::resolve_org_id;
 use crate::utils::collections::normalize_collection_name;
 
 /// Handler for code and memory search MCP tool operations.

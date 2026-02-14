@@ -1,4 +1,4 @@
-use mcb_server::handler_helpers::{normalize_identifier, resolve_identifier_precedence};
+use mcb_server::handlers::helpers::{normalize_identifier, resolve_identifier_precedence};
 use rstest::rstest;
 
 #[rstest]

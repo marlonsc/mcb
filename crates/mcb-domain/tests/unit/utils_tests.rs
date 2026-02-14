@@ -1,6 +1,7 @@
 //! Tests for domain utility hashing helpers.
 
 use mcb_domain::utils::compute_stable_id_hash;
+use rstest::*;
 
 #[test]
 fn test_compute_stable_id_hash_is_deterministic() {
@@ -10,19 +11,17 @@ fn test_compute_stable_id_hash_is_deterministic() {
     assert_eq!(first, second);
 }
 
-#[test]
-fn test_compute_stable_id_hash_changes_with_kind() {
-    let session_hash = compute_stable_id_hash("session", "same-id");
-    let project_hash = compute_stable_id_hash("project", "same-id");
-
-    assert_ne!(session_hash, project_hash);
-}
-
-#[test]
-fn test_compute_stable_id_hash_changes_with_value() {
-    let first = compute_stable_id_hash("session", "ses-1");
-    let second = compute_stable_id_hash("session", "ses-2");
-
+#[rstest]
+#[case("session", "same-id", "project", "same-id")]
+#[case("session", "ses-1", "session", "ses-2")]
+fn compute_stable_id_hash_changes_with_input(
+    #[case] kind_a: &str,
+    #[case] value_a: &str,
+    #[case] kind_b: &str,
+    #[case] value_b: &str,
+) {
+    let first = compute_stable_id_hash(kind_a, value_a);
+    let second = compute_stable_id_hash(kind_b, value_b);
     assert_ne!(first, second);
 }
 
