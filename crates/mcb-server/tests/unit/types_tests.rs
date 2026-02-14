@@ -1,49 +1,63 @@
 //! Tests for transport layer types
 
 use mcb_server::transport::types::{McpRequest, McpResponse};
+use rstest::rstest;
 
+#[rstest]
+#[case("tools/list", None, 1, "tools/list", None)]
+#[case(
+    "tools/call",
+    Some(serde_json::json!({"name": "search"})),
+    2,
+    "tools/call",
+    Some("search")
+)]
 #[test]
-fn test_mcp_request_serialization() {
+fn test_mcp_request_serialization(
+    #[case] method: &str,
+    #[case] params: Option<serde_json::Value>,
+    #[case] id: i64,
+    #[case] expected_method: &str,
+    #[case] expected_param_fragment: Option<&str>,
+) {
     let request = McpRequest {
-        method: "tools/list".to_string(),
-        params: None,
-        id: Some(serde_json::json!(1)),
+        method: method.to_string(),
+        params,
+        id: Some(serde_json::json!(id)),
     };
     let json = serde_json::to_string(&request).unwrap();
-    assert!(json.contains("tools/list"));
+    assert!(json.contains(expected_method));
+    if let Some(fragment) = expected_param_fragment {
+        assert!(json.contains(fragment));
+    }
 }
 
+#[rstest]
+#[case(true, Some(serde_json::json!(1)), -32600, "Invalid request")]
+#[case(false, Some(serde_json::json!(1)), -32600, "Invalid request")]
 #[test]
-fn test_mcp_request_with_params() {
-    let request = McpRequest {
-        method: "tools/call".to_string(),
-        params: Some(serde_json::json!({"name": "search"})),
-        id: Some(serde_json::json!(2)),
+fn test_mcp_response_shapes(
+    #[case] is_error: bool,
+    #[case] id: Option<serde_json::Value>,
+    #[case] error_code: i32,
+    #[case] error_message: &str,
+) {
+    let response = if is_error {
+        McpResponse::error(id, error_code, error_message)
+    } else {
+        McpResponse::success(id, serde_json::json!({"result": "ok"}))
     };
-    let json = serde_json::to_string(&request).unwrap();
-    assert!(json.contains("tools/call"));
-    assert!(json.contains("search"));
-}
 
-#[test]
-fn test_mcp_response_success() {
-    let response = McpResponse::success(
-        Some(serde_json::json!(1)),
-        serde_json::json!({"result": "ok"}),
-    );
-    assert!(response.result.is_some());
-    assert!(response.error.is_none());
     assert_eq!(response.jsonrpc, "2.0");
-}
-
-#[test]
-fn test_mcp_response_error() {
-    let response = McpResponse::error(Some(serde_json::json!(1)), -32600, "Invalid request");
-    assert!(response.result.is_none());
-    assert!(response.error.is_some());
-    let err = response.error.unwrap();
-    assert_eq!(err.code, -32600);
-    assert_eq!(err.message, "Invalid request");
+    if is_error {
+        assert!(response.result.is_none());
+        let err = response.error.expect("expected error payload");
+        assert_eq!(err.code, error_code);
+        assert_eq!(err.message, error_message);
+    } else {
+        assert!(response.result.is_some());
+        assert!(response.error.is_none());
+    }
 }
 
 #[test]

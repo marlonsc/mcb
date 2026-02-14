@@ -4,6 +4,7 @@
 
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 
 use crate::test_utils::test_fixtures::{GOLDEN_COLLECTION, extract_text_content};
 
@@ -139,8 +140,14 @@ async fn test_golden_e2e_complete_workflow() {
     assert!(r.is_ok());
 }
 
+#[rstest]
+#[case(Some(GOLDEN_COLLECTION.to_string()), None)]
+#[case(Some("golden_multi_lang".to_string()), Some(vec!["rs".to_string()]))]
 #[tokio::test]
-async fn test_golden_index_test_repository() {
+async fn test_golden_index_variants(
+    #[case] collection: Option<String>,
+    #[case] extensions: Option<Vec<String>>,
+) {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     assert!(path.exists(), "sample_codebase must exist: {:?}", path);
@@ -149,8 +156,8 @@ async fn test_golden_index_test_repository() {
     let args = IndexArgs {
         action: IndexAction::Start,
         path: Some(path.to_string_lossy().to_string()),
-        collection: Some(GOLDEN_COLLECTION.to_string()),
-        extensions: None,
+        collection,
+        extensions,
         exclude_dirs: None,
         ignore_patterns: None,
         max_file_size: None,
@@ -169,37 +176,6 @@ async fn test_golden_index_test_repository() {
             || text.contains("Indexing Started")
             || text.contains("started"),
         "response: {}",
-        text
-    );
-}
-
-#[tokio::test]
-async fn test_golden_index_handles_multiple_languages() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
-    let path = sample_codebase_path();
-    let handler = server.index_handler();
-    let args = IndexArgs {
-        action: IndexAction::Start,
-        path: Some(path.to_string_lossy().to_string()),
-        collection: Some("golden_multi_lang".to_string()),
-        extensions: Some(vec!["rs".to_string()]),
-        exclude_dirs: None,
-        ignore_patterns: None,
-        max_file_size: None,
-        follow_symlinks: None,
-        token: None,
-    };
-    let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    let response = result.unwrap();
-    assert!(!response.is_error.unwrap_or(false));
-    let text = extract_text_content(&response.content);
-    assert!(
-        text.contains("Files processed")
-            || text.contains("Chunks")
-            || text.contains("Indexing Started")
-            || text.contains("started"),
-        "{}",
         text
     );
 }

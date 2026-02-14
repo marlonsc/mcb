@@ -132,6 +132,9 @@ impl TestQualityValidator {
     }
 
     /// Validate test quality across all test files
+    ///
+    /// # Errors
+    /// Returns an error if pattern compilation fails or file reading fails.
     pub fn validate(&self) -> Result<Vec<TestQualityViolation>> {
         if !self.rules.enabled {
             return Ok(Vec::new());
@@ -139,15 +142,14 @@ impl TestQualityValidator {
         let mut violations = Vec::new();
 
         // Regex patterns
-        let ignore_pattern = Regex::new(r"#\[ignore\]").map_err(ValidationError::InvalidRegex)?;
+        let _ignore_pattern = Regex::new(r"#\[ignore\]").map_err(ValidationError::InvalidRegex)?;
         let test_pattern =
             Regex::new(r"#\[test\]|#\[tokio::test\]").map_err(ValidationError::InvalidRegex)?;
         let fn_pattern = Regex::new(r"fn\s+(\w+)").map_err(ValidationError::InvalidRegex)?;
-        let todo_pattern = Regex::new(r"todo!\(").map_err(ValidationError::InvalidRegex)?;
         let empty_body_pattern = Regex::new(r"\{\s*\}").map_err(ValidationError::InvalidRegex)?;
         let stub_assert_pattern = Regex::new(r"assert!\(true\)|assert_eq!\(true,\s*true\)")
             .map_err(ValidationError::InvalidRegex)?;
-        let doc_comment_pattern = Regex::new(r"^\s*///").map_err(ValidationError::InvalidRegex)?;
+        let _doc_comment_pattern = Regex::new(r"^\s*///").map_err(ValidationError::InvalidRegex)?;
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
             if !(path.to_string_lossy().contains("/tests/")
@@ -159,16 +161,8 @@ impl TestQualityValidator {
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
 
-            self.check_ignored_tests(
-                path,
-                &lines,
-                &ignore_pattern,
-                &test_pattern,
-                &fn_pattern,
-                &doc_comment_pattern,
-                &mut violations,
-            );
-            self.check_todo_in_fixtures(path, &lines, &todo_pattern, &fn_pattern, &mut violations);
+            self.check_ignored_tests(path, &lines, &test_pattern, &fn_pattern, &mut violations);
+            self.check_todo_in_fixtures(path, &lines, &fn_pattern, &mut violations);
             self.check_empty_test_bodies(
                 path,
                 &lines,
@@ -196,14 +190,12 @@ impl TestQualityValidator {
         &self,
         file: &Path,
         lines: &[&str],
-        ignore_pattern: &Regex,
         test_pattern: &Regex,
         fn_pattern: &Regex,
-        _doc_comment_pattern: &Regex,
         violations: &mut Vec<TestQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if ignore_pattern.is_match(line) {
+            if line.contains("#[ignore]") {
                 // Check if there's a justification comment above
                 let has_justification = i > 0 && {
                     let prev_line = lines[i - 1];
@@ -215,7 +207,8 @@ impl TestQualityValidator {
 
                 if !has_justification {
                     // Find the test function name
-                    if let Some(test_name) = self.find_test_name(lines, i, test_pattern, fn_pattern)
+                    if let Some(test_name) =
+                        Self::find_test_name(lines, i, test_pattern, fn_pattern)
                     {
                         violations.push(TestQualityViolation::IgnoreWithoutJustification {
                             file: file.to_path_buf(),
@@ -233,7 +226,6 @@ impl TestQualityValidator {
         &self,
         file: &Path,
         lines: &[&str],
-        todo_pattern: &Regex,
         fn_pattern: &Regex,
         violations: &mut Vec<TestQualityViolation>,
     ) {
@@ -242,7 +234,7 @@ impl TestQualityValidator {
         }
 
         for (i, line) in lines.iter().enumerate() {
-            if todo_pattern.is_match(line) {
+            if line.contains("todo!(") {
                 // Check if it's NOT marked as intentional stub
                 let has_stub_marker = i > 0 && {
                     let prev_line = lines[i - 1];
@@ -251,7 +243,7 @@ impl TestQualityValidator {
 
                 if !has_stub_marker {
                     // Find the function name
-                    if let Some(function_name) = self.find_function_name(lines, i, fn_pattern) {
+                    if let Some(function_name) = Self::find_function_name(lines, i, fn_pattern) {
                         violations.push(TestQualityViolation::TodoInTestFixture {
                             file: file.to_path_buf(),
                             line: i + 1,
@@ -318,7 +310,7 @@ impl TestQualityValidator {
                     }
                     if stub_assert_pattern.is_match(lines[i + offset]) {
                         if let Some(test_name) =
-                            self.find_test_name(lines, i, test_pattern, fn_pattern)
+                            Self::find_test_name(lines, i, test_pattern, fn_pattern)
                         {
                             violations.push(TestQualityViolation::StubTestAssertion {
                                 file: file.to_path_buf(),
@@ -335,7 +327,6 @@ impl TestQualityValidator {
     }
 
     fn find_test_name(
-        &self,
         lines: &[&str],
         start_idx: usize,
         _test_pattern: &Regex,
@@ -352,12 +343,7 @@ impl TestQualityValidator {
         None
     }
 
-    fn find_function_name(
-        &self,
-        lines: &[&str],
-        start_idx: usize,
-        fn_pattern: &Regex,
-    ) -> Option<String> {
+    fn find_function_name(lines: &[&str], start_idx: usize, fn_pattern: &Regex) -> Option<String> {
         // Look backwards for function name
         for i in (0..=start_idx).rev().take(10) {
             if let Some(captures) = fn_pattern.captures(lines[i])

@@ -1,17 +1,28 @@
 //! Unit tests for browse handlers.
 
 use mcb_server::admin::browse_handlers::BrowseErrorResponse;
+use rstest::rstest;
 
+#[rstest]
+#[case(true, "Collection", "Collection not found", "NOT_FOUND")]
+#[case(
+    false,
+    "Something went wrong",
+    "Something went wrong",
+    "INTERNAL_ERROR"
+)]
 #[test]
-fn test_browse_error_response_not_found() {
-    let err = BrowseErrorResponse::not_found("Collection");
-    assert_eq!(err.error, "Collection not found");
-    assert_eq!(err.code, "NOT_FOUND");
-}
-
-#[test]
-fn test_browse_error_response_internal() {
-    let err = BrowseErrorResponse::internal("Something went wrong");
-    assert_eq!(err.error, "Something went wrong");
-    assert_eq!(err.code, "INTERNAL_ERROR");
+fn test_browse_error_response_factories(
+    #[case] use_not_found: bool,
+    #[case] input: &str,
+    #[case] expected_error: &str,
+    #[case] expected_code: &str,
+) {
+    let err = if use_not_found {
+        BrowseErrorResponse::not_found(input)
+    } else {
+        BrowseErrorResponse::internal(input)
+    };
+    assert_eq!(err.error, expected_error);
+    assert_eq!(err.code, expected_code);
 }

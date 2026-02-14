@@ -3,27 +3,39 @@
 //! Tests for the service lifecycle management HTTP handlers.
 
 use mcb_server::admin::lifecycle_handlers::{ServiceInfoResponse, ServiceListResponse};
+use rstest::rstest;
 
+#[rstest]
+#[case(2, true)]
+#[case(0, false)]
 #[test]
-fn test_service_list_response_serialization() {
+fn test_service_list_response_serialization(#[case] count: usize, #[case] with_services: bool) {
     let response = ServiceListResponse {
-        count: 2,
-        services: vec![
-            ServiceInfoResponse {
-                name: "embedding".to_string(),
-                state: "Running".to_string(),
-            },
-            ServiceInfoResponse {
-                name: "vector_store".to_string(),
-                state: "Stopped".to_string(),
-            },
-        ],
+        count,
+        services: if with_services {
+            vec![
+                ServiceInfoResponse {
+                    name: "embedding".to_string(),
+                    state: "Running".to_string(),
+                },
+                ServiceInfoResponse {
+                    name: "vector_store".to_string(),
+                    state: "Stopped".to_string(),
+                },
+            ]
+        } else {
+            vec![]
+        },
     };
 
     let json = serde_json::to_string(&response).unwrap();
-    assert!(json.contains("\"count\":2"));
-    assert!(json.contains("\"name\":\"embedding\""));
-    assert!(json.contains("\"state\":\"Running\""));
+    assert!(json.contains(&format!("\"count\":{}", count)));
+    if with_services {
+        assert!(json.contains("\"name\":\"embedding\""));
+        assert!(json.contains("\"state\":\"Running\""));
+    } else {
+        assert!(json.contains("\"services\":[]"));
+    }
 }
 
 #[test]
@@ -36,16 +48,4 @@ fn test_service_info_response_serialization() {
     let json = serde_json::to_string(&info).unwrap();
     assert!(json.contains("\"name\":\"cache\""));
     assert!(json.contains("\"state\":\"Starting\""));
-}
-
-#[test]
-fn test_empty_service_list() {
-    let response = ServiceListResponse {
-        count: 0,
-        services: vec![],
-    };
-
-    let json = serde_json::to_string(&response).unwrap();
-    assert!(json.contains("\"count\":0"));
-    assert!(json.contains("\"services\":[]"));
 }

@@ -2,6 +2,7 @@
 
 use mcb_infrastructure::config::ConfigLoader;
 use mcb_server::transport::http::HttpTransportConfig;
+use rstest::rstest;
 
 #[test]
 fn test_http_config_default() {
@@ -12,21 +13,18 @@ fn test_http_config_default() {
     assert!(config.enable_cors);
 }
 
+#[rstest]
+#[case(7)]
+#[case(9)]
 #[test]
-fn test_http_config_localhost() {
+fn test_http_config_localhost_variants(#[case] offset: u16) {
     let loaded = ConfigLoader::new().load().expect("load config");
-    let override_port = loaded.server.network.port.saturating_add(7);
+    let override_port = loaded.server.network.port.saturating_add(offset);
     let config = HttpTransportConfig::localhost(override_port);
     assert_eq!(config.host, loaded.server.network.host);
     assert_eq!(config.port, override_port);
     assert!(config.enable_cors);
-}
 
-#[test]
-fn test_http_config_socket_addr() {
-    let loaded = ConfigLoader::new().load().expect("load config");
-    let override_port = loaded.server.network.port.saturating_add(9);
-    let config = HttpTransportConfig::localhost(override_port);
     let addr = config.socket_addr();
     assert_eq!(addr.port(), override_port);
     assert_eq!(addr.ip().to_string(), loaded.server.network.host);

@@ -6,11 +6,15 @@ use crate::run_context::ValidationRunContext;
 use crate::{Result, ValidationConfig};
 
 /// True if a path points to a test file or tests directory.
+#[must_use]
 pub fn is_test_path(path: &str) -> bool {
     path.contains("_test.rs") || path.contains("/tests/")
 }
 
 /// Iterate over Rust source files in each crate's `src` directory.
+///
+/// # Errors
+/// Returns an error if directory traversal fails or file access is denied.
 pub fn for_each_crate_rs_path<F>(config: &ValidationConfig, mut f: F) -> Result<()>
 where
     F: FnMut(&Path, &Path, &str) -> Result<()>,
@@ -47,6 +51,9 @@ where
 }
 
 /// Iterate over Rust source files in configured scan directories.
+///
+/// # Errors
+/// Returns an error if directory traversal fails.
 pub fn for_each_scan_rs_path<F>(
     config: &ValidationConfig,
     skip_validate_crate: bool,
@@ -135,6 +142,7 @@ where
 ///
 /// This is a generic helper to reduce complexity in validators that need to analyze
 /// function bodies, trait definitions, or other block structures.
+#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 pub fn extract_balanced_block<'a>(
     lines: &'a [&'a str],
     start_line_idx: usize,

@@ -1,46 +1,32 @@
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
+use rstest::rstest;
 
+#[rstest]
+#[case(WorktreeStatus::Active, "active")]
+#[case(WorktreeStatus::InUse, "in_use")]
+#[case(WorktreeStatus::Pruned, "pruned")]
 #[test]
-// TODO(TEST003): Bad test function name 'worktree_status_as_str'. Use 'test_worktree_status_as_str'.
-fn worktree_status_as_str() {
-    assert_eq!(WorktreeStatus::Active.as_str(), "active");
-    assert_eq!(WorktreeStatus::InUse.as_str(), "in_use");
-    assert_eq!(WorktreeStatus::Pruned.as_str(), "pruned");
+fn test_worktree_status_as_str(#[case] status: WorktreeStatus, #[case] expected: &str) {
+    assert_eq!(status.as_str(), expected);
 }
 
+#[rstest]
+#[case("active", Ok(WorktreeStatus::Active))]
+#[case("in_use", Ok(WorktreeStatus::InUse))]
+#[case("pruned", Ok(WorktreeStatus::Pruned))]
+#[case("ACTIVE", Ok(WorktreeStatus::Active))]
+#[case("In_Use", Ok(WorktreeStatus::InUse))]
+#[case("PRUNED", Ok(WorktreeStatus::Pruned))]
+#[case("invalid", Err(()))]
 #[test]
-// TODO(TEST003): Bad test function name 'worktree_status_from_str'. Use 'test_worktree_status_from_str'.
-fn worktree_status_from_str() {
-    assert_eq!(
-        "active".parse::<WorktreeStatus>(),
-        Ok(WorktreeStatus::Active)
-    );
-    assert_eq!(
-        "in_use".parse::<WorktreeStatus>(),
-        Ok(WorktreeStatus::InUse)
-    );
-    assert_eq!(
-        "pruned".parse::<WorktreeStatus>(),
-        Ok(WorktreeStatus::Pruned)
-    );
-    assert!("invalid".parse::<WorktreeStatus>().is_err());
-}
-
-#[test]
-// TODO(TEST003): Bad test function name 'worktree_status_from_str_case_insensitive'. Use 'test_worktree_status_from_str_case_insensitive'.
-fn worktree_status_from_str_case_insensitive() {
-    assert_eq!(
-        "ACTIVE".parse::<WorktreeStatus>(),
-        Ok(WorktreeStatus::Active)
-    );
-    assert_eq!(
-        "In_Use".parse::<WorktreeStatus>(),
-        Ok(WorktreeStatus::InUse)
-    );
-    assert_eq!(
-        "PRUNED".parse::<WorktreeStatus>(),
-        Ok(WorktreeStatus::Pruned)
-    );
+fn test_worktree_status_from_str(
+    #[case] input: &str,
+    #[case] expected: Result<WorktreeStatus, ()>,
+) {
+    match expected {
+        Ok(status) => assert_eq!(input.parse::<WorktreeStatus>(), Ok(status)),
+        Err(()) => assert!(input.parse::<WorktreeStatus>().is_err()),
+    }
 }
 
 #[test]

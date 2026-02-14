@@ -22,6 +22,7 @@ use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
+use rstest::rstest;
 use serde_json::json;
 
 fn test_config() -> (AppConfig, tempfile::TempDir) {
@@ -63,6 +64,24 @@ async fn main() {
             metadata: json!({"type": "function", "name": "main"}),
         },
     ]
+}
+
+async fn assert_embedding_batch_shape(
+    embedding: &Arc<dyn mcb_domain::ports::providers::EmbeddingProvider>,
+    texts: &[String],
+) {
+    let embeddings = embedding
+        .embed_batch(texts)
+        .await
+        .expect("Embedding should work");
+
+    assert_eq!(embeddings.len(), texts.len());
+    let expected_dim = embedding.dimensions();
+    for emb in embeddings {
+        assert_eq!(emb.dimensions, expected_dim);
+        assert_eq!(emb.vector.len(), expected_dim);
+        assert_eq!(emb.model, "AllMiniLML6V2");
+    }
 }
 
 // ============================================================================
@@ -107,49 +126,17 @@ async fn test_init_app_creates_working_context() {
     );
 }
 
+#[rstest]
+#[case(vec!["authentication middleware".to_string(), "database connection pool".to_string()])]
+#[case(vec!["first text".to_string()])]
+#[case(vec!["second text".to_string(), "third text".to_string()])]
 #[tokio::test]
-async fn test_embedding_generates_real_vectors() {
+async fn test_embedding_generates_real_vectors(#[case] texts: Vec<String>) {
     let (config, _temp) = test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
-
-    // Generate embeddings for test texts
-    let texts = vec![
-        "authentication middleware".to_string(),
-        "database connection pool".to_string(),
-    ];
-
-    let embeddings = embedding
-        .embed_batch(&texts)
-        .await
-        .expect("Embedding should work");
-
-    // Validate real embedding generation
-    assert_eq!(
-        embeddings.len(),
-        2,
-        "Should generate embedding for each text"
-    );
-
-    for (i, emb) in embeddings.iter().enumerate() {
-        assert_eq!(
-            emb.dimensions, 384,
-            "Embedding {} should have 384 dimensions",
-            i
-        );
-        assert_eq!(
-            emb.vector.len(),
-            384,
-            "Embedding {} vector should have 384 elements",
-            i
-        );
-        assert_eq!(
-            emb.model, "AllMiniLML6V2",
-            "Embedding should have model name for index {}",
-            i
-        );
-    }
+    assert_embedding_batch_shape(&embedding, &texts).await;
 }
 
 #[tokio::test]
@@ -319,32 +306,4 @@ async fn test_multiple_collections_isolated() {
         results_b.is_empty(),
         "Collection B should be empty (isolated)"
     );
-}
-
-#[tokio::test]
-async fn test_embedding_dimensions_consistent() {
-    let (config, _temp) = test_config();
-    let ctx = init_app(config).await.expect("init_app should succeed");
-
-    let embedding = ctx.embedding_handle().get();
-
-    // Generate multiple batches
-    let batch1 = embedding
-        .embed_batch(&["first text".to_string()])
-        .await
-        .expect("Batch 1");
-    let batch2 = embedding
-        .embed_batch(&["second text".to_string(), "third text".to_string()])
-        .await
-        .expect("Batch 2");
-
-    // All should have consistent dimensions
-    let expected_dim = embedding.dimensions();
-
-    assert_eq!(batch1[0].dimensions, expected_dim);
-    assert_eq!(batch1[0].vector.len(), expected_dim);
-    assert_eq!(batch2[0].dimensions, expected_dim);
-    assert_eq!(batch2[0].vector.len(), expected_dim);
-    assert_eq!(batch2[1].dimensions, expected_dim);
-    assert_eq!(batch2[1].vector.len(), expected_dim);
 }

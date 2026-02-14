@@ -20,7 +20,7 @@ pub enum FileInventorySource {
 
 impl FileInventorySource {
     #[must_use]
-    pub fn as_str(self) -> &'static str {
+    pub const fn as_str(self) -> &'static str {
         match self {
             Self::Git => "git",
             Self::WalkDir => "walkdir",
@@ -48,6 +48,10 @@ thread_local! {
 }
 
 impl ValidationRunContext {
+    /// Create a new validation context.
+    ///
+    /// # Errors
+    /// Returns an error if file inventory enumeration fails.
     pub fn build(config: &ValidationConfig) -> Result<Self> {
         let file_config = FileConfig::load(&config.workspace_root);
         let mut ignore_patterns = file_config.general.exclude_patterns.clone();
@@ -89,6 +93,10 @@ impl ValidationRunContext {
         self.file_inventory.len()
     }
 
+    /// Read file content, using cache if available.
+    ///
+    /// # Errors
+    /// Returns an error if file reading fails.
     pub fn read_cached(&self, path: &Path) -> std::io::Result<Arc<str>> {
         let normalized = normalize_path(path);
         if let Ok(cache) = self.content_cache.lock()
@@ -121,6 +129,10 @@ impl ValidationRunContext {
         ACTIVE_RUN_CONTEXT.with(|slot| slot.borrow().as_ref().map(Arc::clone))
     }
 
+    /// Get the active context or build a new one.
+    ///
+    /// # Errors
+    /// Returns an error if the context needs to be built and it fails.
     pub fn active_or_build(config: &ValidationConfig) -> Result<Arc<Self>> {
         if let Some(active) = Self::active() {
             return Ok(active);

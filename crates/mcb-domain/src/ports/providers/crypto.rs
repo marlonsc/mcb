@@ -43,6 +43,9 @@ pub trait CryptoProvider: Send + Sync {
     /// # Returns
     ///
     /// Encrypted data container with ciphertext and nonce
+    ///
+    /// # Errors
+    /// Returns an error if encryption primitive fails.
     fn encrypt(&self, plaintext: &[u8]) -> Result<EncryptedData>;
 
     /// Decrypt encrypted data
@@ -54,6 +57,9 @@ pub trait CryptoProvider: Send + Sync {
     /// # Returns
     ///
     /// The decrypted plaintext
+    ///
+    /// # Errors
+    /// Returns an error if decryption primitive fails.
     fn decrypt(&self, encrypted_data: &EncryptedData) -> Result<Vec<u8>>;
 
     /// Get the name/identifier of this provider implementation

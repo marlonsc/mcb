@@ -40,6 +40,9 @@ pub struct TdgFinding {
 /// Complexity analysis provider.
 pub trait ComplexityAnalyzer: Send + Sync {
     /// Analyze workspace and return functions above the provided threshold.
+    ///
+    /// # Errors
+    /// Returns an error if file analysis or traversal fails.
     fn analyze_complexity(
         &self,
         workspace_root: &Path,
@@ -50,11 +53,17 @@ pub trait ComplexityAnalyzer: Send + Sync {
 /// Dead code detection provider.
 pub trait DeadCodeDetector: Send + Sync {
     /// Analyze workspace and return dead code symbols.
+    ///
+    /// # Errors
+    /// Returns an error if file analysis fails.
     fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<DeadCodeFinding>>;
 }
 
 /// Technical Debt Gradient scoring provider.
 pub trait TdgScorer: Send + Sync {
     /// Analyze workspace and return files with score above threshold.
+    ///
+    /// # Errors
+    /// Returns an error if file analysis fails.
     fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<TdgFinding>>;
 }

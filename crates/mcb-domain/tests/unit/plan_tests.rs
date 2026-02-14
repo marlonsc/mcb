@@ -1,29 +1,33 @@
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
+use rstest::rstest;
 
+#[rstest]
+#[case(PlanStatus::Draft, "draft")]
+#[case(PlanStatus::Active, "active")]
+#[case(PlanStatus::Executing, "executing")]
+#[case(PlanStatus::Completed, "completed")]
+#[case(PlanStatus::Archived, "archived")]
 #[test]
-fn test_plan_status_as_str() {
-    assert_eq!(PlanStatus::Draft.as_str(), "draft");
-    assert_eq!(PlanStatus::Active.as_str(), "active");
-    assert_eq!(PlanStatus::Executing.as_str(), "executing");
-    assert_eq!(PlanStatus::Completed.as_str(), "completed");
-    assert_eq!(PlanStatus::Archived.as_str(), "archived");
+fn test_plan_status_as_str(#[case] status: PlanStatus, #[case] expected: &str) {
+    assert_eq!(status.as_str(), expected);
 }
 
+#[rstest]
+#[case("draft", Ok(PlanStatus::Draft))]
+#[case("active", Ok(PlanStatus::Active))]
+#[case("executing", Ok(PlanStatus::Executing))]
+#[case("completed", Ok(PlanStatus::Completed))]
+#[case("archived", Ok(PlanStatus::Archived))]
+#[case("DRAFT", Ok(PlanStatus::Draft))]
+#[case("Active", Ok(PlanStatus::Active))]
+#[case("EXECUTING", Ok(PlanStatus::Executing))]
+#[case("invalid", Err(()))]
 #[test]
-fn test_plan_status_from_str() {
-    assert_eq!("draft".parse::<PlanStatus>(), Ok(PlanStatus::Draft));
-    assert_eq!("active".parse::<PlanStatus>(), Ok(PlanStatus::Active));
-    assert_eq!("executing".parse::<PlanStatus>(), Ok(PlanStatus::Executing));
-    assert_eq!("completed".parse::<PlanStatus>(), Ok(PlanStatus::Completed));
-    assert_eq!("archived".parse::<PlanStatus>(), Ok(PlanStatus::Archived));
-    assert!("invalid".parse::<PlanStatus>().is_err());
-}
-
-#[test]
-fn test_plan_status_from_str_case_insensitive() {
-    assert_eq!("DRAFT".parse::<PlanStatus>(), Ok(PlanStatus::Draft));
-    assert_eq!("Active".parse::<PlanStatus>(), Ok(PlanStatus::Active));
-    assert_eq!("EXECUTING".parse::<PlanStatus>(), Ok(PlanStatus::Executing));
+fn test_plan_status_from_str(#[case] input: &str, #[case] expected: Result<PlanStatus, ()>) {
+    match expected {
+        Ok(status) => assert_eq!(input.parse::<PlanStatus>(), Ok(status)),
+        Err(()) => assert!(input.parse::<PlanStatus>().is_err()),
+    }
 }
 
 #[test]
@@ -105,44 +109,29 @@ fn test_plan_version_serialization_roundtrip() {
     assert_eq!(deserialized.created_by, "user-002");
 }
 
+#[rstest]
+#[case(ReviewVerdict::Approved, "approved")]
+#[case(ReviewVerdict::Rejected, "rejected")]
+#[case(ReviewVerdict::NeedsRevision, "needs_revision")]
 #[test]
-fn test_review_verdict_as_str() {
-    assert_eq!(ReviewVerdict::Approved.as_str(), "approved");
-    assert_eq!(ReviewVerdict::Rejected.as_str(), "rejected");
-    assert_eq!(ReviewVerdict::NeedsRevision.as_str(), "needs_revision");
+fn test_review_verdict_as_str(#[case] verdict: ReviewVerdict, #[case] expected: &str) {
+    assert_eq!(verdict.as_str(), expected);
 }
 
+#[rstest]
+#[case("approved", Ok(ReviewVerdict::Approved))]
+#[case("rejected", Ok(ReviewVerdict::Rejected))]
+#[case("needs_revision", Ok(ReviewVerdict::NeedsRevision))]
+#[case("APPROVED", Ok(ReviewVerdict::Approved))]
+#[case("Rejected", Ok(ReviewVerdict::Rejected))]
+#[case("NEEDS_REVISION", Ok(ReviewVerdict::NeedsRevision))]
+#[case("invalid", Err(()))]
 #[test]
-fn test_review_verdict_from_str() {
-    assert_eq!(
-        "approved".parse::<ReviewVerdict>(),
-        Ok(ReviewVerdict::Approved)
-    );
-    assert_eq!(
-        "rejected".parse::<ReviewVerdict>(),
-        Ok(ReviewVerdict::Rejected)
-    );
-    assert_eq!(
-        "needs_revision".parse::<ReviewVerdict>(),
-        Ok(ReviewVerdict::NeedsRevision)
-    );
-    assert!("invalid".parse::<ReviewVerdict>().is_err());
-}
-
-#[test]
-fn test_review_verdict_from_str_case_insensitive() {
-    assert_eq!(
-        "APPROVED".parse::<ReviewVerdict>(),
-        Ok(ReviewVerdict::Approved)
-    );
-    assert_eq!(
-        "Rejected".parse::<ReviewVerdict>(),
-        Ok(ReviewVerdict::Rejected)
-    );
-    assert_eq!(
-        "NEEDS_REVISION".parse::<ReviewVerdict>(),
-        Ok(ReviewVerdict::NeedsRevision)
-    );
+fn test_review_verdict_from_str(#[case] input: &str, #[case] expected: Result<ReviewVerdict, ()>) {
+    match expected {
+        Ok(verdict) => assert_eq!(input.parse::<ReviewVerdict>(), Ok(verdict)),
+        Err(()) => assert!(input.parse::<ReviewVerdict>().is_err()),
+    }
 }
 
 #[test]

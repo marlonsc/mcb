@@ -1,6 +1,7 @@
 use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::TransportMode;
 use mcb_server::transport::config::TransportConfig;
+use rstest::rstest;
 
 #[test]
 fn test_default_is_stdio() {
@@ -14,33 +15,31 @@ fn test_default_is_stdio() {
     );
 }
 
+#[rstest]
+#[case("stdio", 0, TransportMode::Stdio)]
+#[case("http", 8, TransportMode::Http)]
+#[case("hybrid", 3, TransportMode::Hybrid)]
 #[test]
-fn test_stdio_constructor() {
-    let config = TransportConfig::stdio();
-    assert!(matches!(config.mode, TransportMode::Stdio));
-    assert!(config.http_port.is_none());
-    assert!(config.http_host.is_none());
-}
-
-#[test]
-fn test_http_constructor() {
+fn test_transport_constructors(
+    #[case] kind: &str,
+    #[case] offset: u16,
+    #[case] expected_mode: TransportMode,
+) {
     let loaded = ConfigLoader::new().load().expect("load config");
-    let override_port = loaded.server.network.port.saturating_add(8);
-    let config = TransportConfig::http(override_port);
-    assert!(matches!(config.mode, TransportMode::Http));
-    assert_eq!(config.http_port, Some(override_port));
-    assert_eq!(
-        config.http_host.as_deref(),
-        Some(loaded.server.network.host.as_str())
-    );
-}
+    let override_port = loaded.server.network.port.saturating_add(offset);
+    let config = match kind {
+        "stdio" => TransportConfig::stdio(),
+        "http" => TransportConfig::http(override_port),
+        "hybrid" => TransportConfig::hybrid(override_port),
+        _ => panic!("unknown constructor kind"),
+    };
 
-#[test]
-fn test_hybrid_constructor() {
-    let loaded = ConfigLoader::new().load().expect("load config");
-    let override_port = loaded.server.network.port.saturating_add(3);
-    let config = TransportConfig::hybrid(override_port);
-    assert!(matches!(config.mode, TransportMode::Hybrid));
+    assert_eq!(config.mode, expected_mode);
+    if expected_mode == TransportMode::Stdio {
+        assert!(config.http_port.is_none());
+        assert!(config.http_host.is_none());
+        return;
+    }
     assert_eq!(config.http_port, Some(override_port));
     assert_eq!(
         config.http_host.as_deref(),

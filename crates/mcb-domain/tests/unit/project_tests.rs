@@ -4,6 +4,7 @@ use mcb_domain::entities::project::{
     DependencyType, DetectedProject, IssueStatus, IssueType, PhaseStatus, ProjectDecision,
     ProjectDependency, ProjectIssue, ProjectPhase, ProjectType,
 };
+use rstest::rstest;
 
 #[test]
 fn test_project_type_cargo() {
@@ -37,79 +38,77 @@ fn test_detected_project_has_path_and_id() {
     assert_eq!(p.path, "crates/foo");
 }
 
+#[rstest]
+#[case("planned", Ok(PhaseStatus::Planned))]
+#[case("in_progress", Ok(PhaseStatus::InProgress))]
+#[case("blocked", Ok(PhaseStatus::Blocked))]
+#[case("completed", Ok(PhaseStatus::Completed))]
+#[case("skipped", Ok(PhaseStatus::Skipped))]
+#[case("invalid", Err(()))]
 #[test]
-fn test_phase_status_from_str() {
-    assert_eq!("planned".parse::<PhaseStatus>(), Ok(PhaseStatus::Planned));
-    assert_eq!(
-        "in_progress".parse::<PhaseStatus>(),
-        Ok(PhaseStatus::InProgress)
-    );
-    assert_eq!("blocked".parse::<PhaseStatus>(), Ok(PhaseStatus::Blocked));
-    assert_eq!(
-        "completed".parse::<PhaseStatus>(),
-        Ok(PhaseStatus::Completed)
-    );
-    assert_eq!("skipped".parse::<PhaseStatus>(), Ok(PhaseStatus::Skipped));
-    assert!("invalid".parse::<PhaseStatus>().is_err());
+fn test_phase_status_from_str(#[case] input: &str, #[case] expected: Result<PhaseStatus, ()>) {
+    match expected {
+        Ok(status) => assert_eq!(input.parse::<PhaseStatus>(), Ok(status)),
+        Err(()) => assert!(input.parse::<PhaseStatus>().is_err()),
+    }
 }
 
+#[rstest]
+#[case(PhaseStatus::Planned, "planned")]
+#[case(PhaseStatus::InProgress, "in_progress")]
+#[case(PhaseStatus::Blocked, "blocked")]
+#[case(PhaseStatus::Completed, "completed")]
+#[case(PhaseStatus::Skipped, "skipped")]
 #[test]
-fn test_phase_status_as_str() {
-    assert_eq!(PhaseStatus::Planned.as_str(), "planned");
-    assert_eq!(PhaseStatus::InProgress.as_str(), "in_progress");
-    assert_eq!(PhaseStatus::Blocked.as_str(), "blocked");
-    assert_eq!(PhaseStatus::Completed.as_str(), "completed");
-    assert_eq!(PhaseStatus::Skipped.as_str(), "skipped");
+fn test_phase_status_as_str(#[case] status: PhaseStatus, #[case] expected: &str) {
+    assert_eq!(status.as_str(), expected);
 }
 
+#[rstest]
+#[case("task", Ok(IssueType::Task))]
+#[case("bug", Ok(IssueType::Bug))]
+#[case("feature", Ok(IssueType::Feature))]
+#[case("enhancement", Ok(IssueType::Enhancement))]
+#[case("documentation", Ok(IssueType::Documentation))]
+#[case("invalid", Err(()))]
 #[test]
-fn test_issue_type_from_str() {
-    assert_eq!("task".parse::<IssueType>(), Ok(IssueType::Task));
-    assert_eq!("bug".parse::<IssueType>(), Ok(IssueType::Bug));
-    assert_eq!("feature".parse::<IssueType>(), Ok(IssueType::Feature));
-    assert_eq!(
-        "enhancement".parse::<IssueType>(),
-        Ok(IssueType::Enhancement)
-    );
-    assert_eq!(
-        "documentation".parse::<IssueType>(),
-        Ok(IssueType::Documentation)
-    );
-    assert!("invalid".parse::<IssueType>().is_err());
+fn test_issue_type_from_str(#[case] input: &str, #[case] expected: Result<IssueType, ()>) {
+    match expected {
+        Ok(issue_type) => assert_eq!(input.parse::<IssueType>(), Ok(issue_type)),
+        Err(()) => assert!(input.parse::<IssueType>().is_err()),
+    }
 }
 
+#[rstest]
+#[case("open", Ok(IssueStatus::Open))]
+#[case("in_progress", Ok(IssueStatus::InProgress))]
+#[case("blocked", Ok(IssueStatus::Blocked))]
+#[case("resolved", Ok(IssueStatus::Resolved))]
+#[case("closed", Ok(IssueStatus::Closed))]
+#[case("invalid", Err(()))]
 #[test]
-fn test_issue_status_from_str() {
-    assert_eq!("open".parse::<IssueStatus>(), Ok(IssueStatus::Open));
-    assert_eq!(
-        "in_progress".parse::<IssueStatus>(),
-        Ok(IssueStatus::InProgress)
-    );
-    assert_eq!("blocked".parse::<IssueStatus>(), Ok(IssueStatus::Blocked));
-    assert_eq!("resolved".parse::<IssueStatus>(), Ok(IssueStatus::Resolved));
-    assert_eq!("closed".parse::<IssueStatus>(), Ok(IssueStatus::Closed));
-    assert!("invalid".parse::<IssueStatus>().is_err());
+fn test_issue_status_from_str(#[case] input: &str, #[case] expected: Result<IssueStatus, ()>) {
+    match expected {
+        Ok(issue_status) => assert_eq!(input.parse::<IssueStatus>(), Ok(issue_status)),
+        Err(()) => assert!(input.parse::<IssueStatus>().is_err()),
+    }
 }
 
+#[rstest]
+#[case("blocks", Ok(DependencyType::Blocks))]
+#[case("relates_to", Ok(DependencyType::RelatesTo))]
+#[case("duplicate_of", Ok(DependencyType::DuplicateOf))]
+#[case("parent_of", Ok(DependencyType::ParentOf))]
+#[case("invalid", Err(()))]
 #[test]
-fn test_dependency_type_from_str() {
-    assert_eq!(
-        "blocks".parse::<DependencyType>(),
-        Ok(DependencyType::Blocks)
-    );
-    assert_eq!(
-        "relates_to".parse::<DependencyType>(),
-        Ok(DependencyType::RelatesTo)
-    );
-    assert_eq!(
-        "duplicate_of".parse::<DependencyType>(),
-        Ok(DependencyType::DuplicateOf)
-    );
-    assert_eq!(
-        "parent_of".parse::<DependencyType>(),
-        Ok(DependencyType::ParentOf)
-    );
-    assert!("invalid".parse::<DependencyType>().is_err());
+fn test_dependency_type_from_str(
+    #[case] input: &str,
+    #[case] expected: Result<DependencyType, ()>,
+) {
+    match expected {
+        Ok(dep_type) => assert_eq!(input.parse::<DependencyType>(), Ok(dep_type)),
+        Err(()) => assert!(input.parse::<DependencyType>().is_err()),
+    }
 }
 
 #[test]

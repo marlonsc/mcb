@@ -1,13 +1,19 @@
 use mcb_server::handler_helpers::{normalize_identifier, resolve_identifier_precedence};
+use rstest::rstest;
 
+#[rstest]
+#[case(None, None)]
+#[case(Some(""), None)]
+#[case(Some("   "), None)]
+#[case(Some("  abc  "), Some("abc"))]
 #[test]
-fn normalize_identifier_treats_blank_as_missing() {
-    assert_eq!(normalize_identifier(None), None);
-    assert_eq!(normalize_identifier(Some("")), None);
-    assert_eq!(normalize_identifier(Some("   ")), None);
+fn normalize_identifier_treats_blank_as_missing(
+    #[case] input: Option<&str>,
+    #[case] expected: Option<&str>,
+) {
     assert_eq!(
-        normalize_identifier(Some("  abc  ")),
-        Some("abc".to_string())
+        normalize_identifier(input),
+        expected.map(std::string::ToString::to_string)
     );
 }
 

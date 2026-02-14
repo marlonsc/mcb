@@ -1,26 +1,21 @@
 use mcb_domain::entities::agent::{
     AgentSession, AgentSessionStatus, AgentType, Checkpoint, CheckpointType, Delegation, ToolCall,
 };
+use rstest::rstest;
 
+#[rstest]
+#[case(AgentType::Sisyphus.as_str().to_string(), "sisyphus")]
+#[case(AgentType::Oracle.as_str().to_string(), "oracle")]
+#[case(AgentType::Explore.as_str().to_string(), "explore")]
+#[case(AgentSessionStatus::Active.as_str().to_string(), "active")]
+#[case(AgentSessionStatus::Completed.as_str().to_string(), "completed")]
+#[case(AgentSessionStatus::Failed.as_str().to_string(), "failed")]
+#[case(CheckpointType::Git.as_str().to_string(), "git")]
+#[case(CheckpointType::File.as_str().to_string(), "file")]
+#[case(CheckpointType::Config.as_str().to_string(), "config")]
 #[test]
-fn test_agent_type_as_str() {
-    assert_eq!(AgentType::Sisyphus.as_str(), "sisyphus");
-    assert_eq!(AgentType::Oracle.as_str(), "oracle");
-    assert_eq!(AgentType::Explore.as_str(), "explore");
-}
-
-#[test]
-fn test_agent_session_status_as_str() {
-    assert_eq!(AgentSessionStatus::Active.as_str(), "active");
-    assert_eq!(AgentSessionStatus::Completed.as_str(), "completed");
-    assert_eq!(AgentSessionStatus::Failed.as_str(), "failed");
-}
-
-#[test]
-fn test_checkpoint_type_as_str() {
-    assert_eq!(CheckpointType::Git.as_str(), "git");
-    assert_eq!(CheckpointType::File.as_str(), "file");
-    assert_eq!(CheckpointType::Config.as_str(), "config");
+fn test_agent_enums_as_str(#[case] actual: String, #[case] expected: &str) {
+    assert_eq!(actual, expected);
 }
 
 #[test]

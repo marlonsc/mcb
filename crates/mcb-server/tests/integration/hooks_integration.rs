@@ -1,6 +1,7 @@
 use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::hooks::{HookProcessor, PostToolUseContext, SessionStartContext};
 use rmcp::model::{CallToolResult, Content};
+use rstest::rstest;
 
 #[tokio::test]
 async fn test_hook_processor_creation() {
@@ -13,12 +14,22 @@ async fn test_hook_processor_creation() {
     );
 }
 
+#[rstest]
+#[case("test_tool", "Test output")]
+#[case("test", "")]
 #[tokio::test]
-async fn test_post_tool_use_hook_graceful_degradation() {
+async fn test_post_tool_use_hook_graceful_degradation(
+    #[case] tool_name: &str,
+    #[case] output: &str,
+) {
     let processor = HookProcessor::new(None);
     let context = PostToolUseContext::new(
-        "test_tool".to_string(),
-        CallToolResult::success(vec![Content::text("Test output")]),
+        tool_name.to_string(),
+        if output.is_empty() {
+            CallToolResult::success(vec![])
+        } else {
+            CallToolResult::success(vec![Content::text(output)])
+        },
     );
 
     let result = processor.process_post_tool_use(context).await;
@@ -42,35 +53,36 @@ async fn test_session_start_hook_graceful_degradation() {
     );
 }
 
+#[rstest]
+#[case("search", false, false)]
+#[case("index", true, false)]
+#[case("validate", false, true)]
 #[tokio::test]
-async fn test_post_tool_use_context_creation() {
-    let tool_output = CallToolResult::success(vec![Content::text("Success output")]);
-
-    let context = PostToolUseContext::new("search".to_string(), tool_output);
-    assert_eq!(context.tool_name, "search");
-}
-
-#[tokio::test]
-async fn test_post_tool_use_context_with_session_id() {
+async fn test_post_tool_use_context_enrichment(
+    #[case] tool_name: &str,
+    #[case] with_session_id: bool,
+    #[case] with_metadata: bool,
+) {
     let tool_output = CallToolResult::success(vec![Content::text("Output")]);
+    let mut context = PostToolUseContext::new(tool_name.to_string(), tool_output);
 
-    let context = PostToolUseContext::new("index".to_string(), tool_output)
-        .with_session_id(SessionId::new("session_123"));
+    if with_session_id {
+        context = context.with_session_id(SessionId::new("session_123"));
+    }
+    if with_metadata {
+        context = context.with_metadata("key".to_string(), "value".to_string());
+    }
 
-    assert_eq!(
-        context.session_id.as_ref().map(|id| id.as_str()),
-        Some("session_123")
-    );
-}
-
-#[tokio::test]
-async fn test_post_tool_use_context_with_metadata() {
-    let tool_output = CallToolResult::success(vec![Content::text("Output")]);
-
-    let context = PostToolUseContext::new("validate".to_string(), tool_output)
-        .with_metadata("key".to_string(), "value".to_string());
-
-    assert_eq!(context.metadata.get("key"), Some(&"value".to_string()));
+    assert_eq!(context.tool_name, tool_name);
+    if with_session_id {
+        assert_eq!(
+            context.session_id.as_ref().map(|id| id.as_str()),
+            Some("session_123")
+        );
+    }
+    if with_metadata {
+        assert_eq!(context.metadata.get("key"), Some(&"value".to_string()));
+    }
 }
 
 #[tokio::test]

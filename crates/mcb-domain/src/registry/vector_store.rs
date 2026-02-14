@@ -52,21 +52,25 @@ impl VectorStoreProviderConfig {
         self
     }
 
+    /// Set the URI
     pub fn with_uri(mut self, uri: impl Into<String>) -> Self {
         self.uri = Some(uri.into());
         self
     }
 
+    /// Set the collection name
     pub fn with_collection(mut self, collection: impl Into<String>) -> Self {
         self.collection = Some(collection.into());
         self
     }
 
+    /// Set the dimensions
     pub fn with_dimensions(mut self, dimensions: usize) -> Self {
         self.dimensions = Some(dimensions);
         self
     }
 
+    /// Set the API key
     pub fn with_api_key(mut self, api_key: impl Into<String>) -> Self {
         self.api_key = Some(api_key.into());
         self
