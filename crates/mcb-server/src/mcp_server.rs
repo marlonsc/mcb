@@ -196,7 +196,7 @@ impl McpServer {
                 .open_repository(Path::new(&path_str))
                 .await
         {
-            repo_path = Some(repo.path().to_string_lossy().to_string());
+            repo_path = Some(repo.path().to_str().unwrap_or_default().to_string());
             if repo_id.is_none() {
                 repo_id = Some(self.services.vcs.repository_id(&repo).into_string());
             }

@@ -281,7 +281,7 @@ impl AppContext {
 
         let project_id = std::env::current_dir()
             .ok()
-            .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+            .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(String::from))
             .ok_or_else(|| {
                 mcb_domain::error::Error::config(
                     "cannot determine project ID from current directory",

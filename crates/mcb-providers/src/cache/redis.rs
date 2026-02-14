@@ -206,8 +206,13 @@ impl CacheProvider for RedisCacheProvider {
         let mut conn = self.get_connection().await?;
 
         // Get basic Redis stats using DBSIZE command
-        let dbsize: redis::RedisResult<usize> = redis::cmd("DBSIZE").query_async(&mut conn).await;
-        let dbsize = dbsize.unwrap_or(0);
+        let dbsize: usize = redis::cmd("DBSIZE")
+            .query_async(&mut conn)
+            .await
+            .map_err(|e| Error::Infrastructure {
+                message: format!("Redis DBSIZE failed: {e}"),
+                source: Some(Box::new(e)),
+            })?;
 
         // Get our internal stats
         let mut internal_stats = self

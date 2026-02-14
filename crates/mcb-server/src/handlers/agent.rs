@@ -1,7 +1,6 @@
 //! Agent handler for tool call and delegation logging.
 
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::entities::agent::{Delegation, ToolCall};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
@@ -53,10 +52,8 @@ impl AgentHandler {
                 )]));
             }
         };
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0);
+        let now = mcb_domain::utils::time::epoch_secs_i64()
+            .map_err(|e| McpError::internal_error(e.to_string(), None))?;
 
         match args.action {
             AgentAction::LogTool => {

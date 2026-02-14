@@ -280,7 +280,7 @@ impl YamlRuleLoader {
     /// Check if a file is a rule file
     fn is_rule_file(&self, path: &Path) -> bool {
         path.extension().and_then(|ext| ext.to_str()) == Some("yml")
-            && !path.to_string_lossy().contains("/templates/")
+            && !path.to_str().is_some_and(|s| s.contains("/templates/"))
     }
 
     /// Convert YAML/JSON value to `ValidatedRule`

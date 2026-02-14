@@ -74,14 +74,16 @@ pub fn validate_domain_traits_only(
 
     for_each_scan_rs_path(config, false, |path, src_dir| {
         // Only check domain crate
-        if !src_dir.to_string_lossy().contains("domain") {
+        if !src_dir.to_str().is_some_and(|s| s.contains("domain")) {
             return Ok(());
         }
 
-        let path_str = path.to_string_lossy();
+        let Some(path_str) = path.to_str() else {
+            return Ok(());
+        };
 
         // Skip test files
-        if is_test_path(&path_str) {
+        if is_test_path(path_str) {
             return Ok(());
         }
 

@@ -8,7 +8,9 @@ pub fn validate_file_placement(config: &ValidationConfig) -> Result<Vec<Organiza
 
     for_each_crate_rs_path(config, |path, src_dir, crate_name| {
         let rel_path = path.strip_prefix(src_dir).ok();
-        let path_str = path.to_string_lossy();
+        let Some(path_str) = path.to_str() else {
+            return Ok(());
+        };
         let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
         // Check for adapter implementations in domain crate

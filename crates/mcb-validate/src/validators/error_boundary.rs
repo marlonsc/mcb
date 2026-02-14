@@ -107,7 +107,9 @@ impl ErrorBoundaryValidator {
         let boundary_paths = ["handlers/", "adapters/", "services/"];
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            let path_str = path.to_string_lossy();
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
 
             // Skip test files
             if path_str.contains("/tests/") {
@@ -182,7 +184,9 @@ impl ErrorBoundaryValidator {
         let compiled_errors = compile_regex_pairs(&infra_errors)?;
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            let path_str = path.to_string_lossy();
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
 
             // Skip test files
             if path_str.contains("/tests/") {
@@ -266,7 +270,9 @@ impl ErrorBoundaryValidator {
 
         // Only check handler files (API boundary)
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            let path_str = path.to_string_lossy();
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
 
             // Skip test files
             if path_str.contains("/tests/") {

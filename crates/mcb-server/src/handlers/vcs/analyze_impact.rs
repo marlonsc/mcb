@@ -52,7 +52,7 @@ pub async fn analyze_impact(
             _ => modified += 1,
         }
         impacted_files.push(ImpactFile {
-            path: file.path.to_string_lossy().to_string(),
+            path: file.path.to_str().unwrap_or_default().to_string(),
             status: status.clone(),
             impact: file.additions + file.deletions,
         });

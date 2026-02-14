@@ -76,7 +76,7 @@ impl NativePmatAnalyzer {
             let entry = entry?;
             let path = entry.path();
             if path.is_dir() {
-                if path.to_string_lossy().contains("/target/") {
+                if path.to_str().is_some_and(|s| s.contains("/target/")) {
                     continue;
                 }
                 Self::collect_rust_files(&path, files)?;

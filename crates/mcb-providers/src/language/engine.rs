@@ -201,7 +201,8 @@ impl CodeChunker for IntelligentChunker {
             .await
             .map_err(|e| Error::io(e.to_string()))?;
 
-        let file_name = file_path.to_string_lossy().to_string();
+        let file_name = mcb_domain::utils::path::path_to_utf8_string(file_path)
+            .map_err(|e| Error::io(e.to_string()))?;
         let ext = file_path.extension().and_then(|e| e.to_str()).unwrap_or("");
         let language = language_from_extension(ext);
 

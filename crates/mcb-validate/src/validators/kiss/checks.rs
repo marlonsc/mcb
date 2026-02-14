@@ -97,7 +97,9 @@ impl KissValidator {
                 return Ok(());
             }
 
-            let path_str = path.to_string_lossy();
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
             if path_str.ends_with("/admin/api.rs") {
                 return Ok(());
             }
@@ -297,7 +299,9 @@ impl KissValidator {
                 return Ok(());
             }
 
-            let path_str = path.to_string_lossy();
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
             if path_str.ends_with("/di/bootstrap.rs")
                 || path_str.ends_with("/di/catalog.rs")
                 || path_str.ends_with("/di/resolver.rs")

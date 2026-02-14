@@ -194,7 +194,9 @@ impl RefactoringValidator {
                     return Ok(());
                 }
 
-                let path_str = path.to_string_lossy();
+                let Some(path_str) = path.to_str() else {
+                    return Ok(());
+                };
 
                 // Skip test files and archived directories
                 if path_str.contains("/tests/")
@@ -232,7 +234,7 @@ impl RefactoringValidator {
                 let crates: HashSet<String> = locations
                     .iter()
                     .filter_map(|p| {
-                        p.to_string_lossy()
+                        p.to_str()?
                             .split("/crates/")
                             .nth(1)
                             .and_then(|s| s.split('/').next())
@@ -266,7 +268,11 @@ impl RefactoringValidator {
                     // Same crate but duplicates - check if in different directories
                     let dirs: HashSet<String> = locations
                         .iter()
-                        .filter_map(|p| p.parent().map(|d| d.to_string_lossy().to_string()))
+                        .filter_map(|p| {
+                            let parent = p.parent()?;
+                            let parent_str = parent.to_str()?;
+                            Some(parent_str.to_string())
+                        })
                         .collect();
 
                     // Only flag if duplicates are in different directories (not just mod.rs + impl.rs)
@@ -399,7 +405,9 @@ impl RefactoringValidator {
 
                 // Get relative path for directory checks
                 let relative = path.strip_prefix(&src_dir).unwrap_or(path);
-                let path_str = relative.to_string_lossy();
+                let Some(path_str) = relative.to_str() else {
+                    return Ok(());
+                };
 
                 // Skip files in directories that are tested via integration tests
                 let in_skip_dir = self
@@ -532,7 +540,9 @@ impl RefactoringValidator {
 
     /// Check if a crate should be skipped based on configuration
     fn should_skip_crate(&self, crate_dir: &std::path::Path) -> bool {
-        let path_str = crate_dir.to_string_lossy();
+        let Some(path_str) = crate_dir.to_str() else {
+            return false;
+        };
         self.rules
             .excluded_crates
             .iter()

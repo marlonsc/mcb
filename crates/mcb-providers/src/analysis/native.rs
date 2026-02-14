@@ -26,7 +26,7 @@ impl NativePmatAnalyzer {
             let path = entry.path();
             if path.is_file()
                 && path.extension().is_some_and(|ext| ext == "rs")
-                && !path.to_string_lossy().contains("/target/")
+                && !path.to_str().is_some_and(|s| s.contains("/target/"))
             {
                 let content = fs::read_to_string(path).map_err(|e| {
                     Error::io_with_source(format!("failed to read {}", path.display()), e)

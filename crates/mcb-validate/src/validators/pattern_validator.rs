@@ -662,7 +662,9 @@ impl PatternValidator {
 
     /// Check if a crate should be skipped based on configuration
     fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
-        let path_str = src_dir.to_string_lossy();
+        let Some(path_str) = src_dir.to_str() else {
+            return false;
+        };
         self.rules
             .excluded_crates
             .iter()
@@ -671,7 +673,9 @@ impl PatternValidator {
 
     /// Check if a crate should be skipped for result checking
     fn should_skip_result_check(&self, src_dir: &std::path::Path) -> bool {
-        let path_str = src_dir.to_string_lossy();
+        let Some(path_str) = src_dir.to_str() else {
+            return false;
+        };
         self.rules
             .result_check_excluded_crates
             .iter()

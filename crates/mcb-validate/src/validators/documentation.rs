@@ -180,7 +180,9 @@ impl DocumentationValidator {
                 // Check for public traits
                 if let Some(cap) = pub_trait_pattern.captures(line) {
                     let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                    let path_str = path.to_string_lossy();
+                    let Some(path_str) = path.to_str() else {
+                        continue;
+                    };
 
                     if self.has_doc_comment(&lines, line_num) {
                         // Check for example code in trait documentation

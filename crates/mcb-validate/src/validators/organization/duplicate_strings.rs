@@ -25,8 +25,10 @@ pub fn validate_duplicate_strings(config: &ValidationConfig) -> Result<Vec<Organ
         }
 
         // Skip test files
-        let path_str = path.to_string_lossy();
-        if is_test_path(&path_str) {
+        let Some(path_str) = path.to_str() else {
+            return Ok(());
+        };
+        if is_test_path(path_str) {
             return Ok(());
         }
 

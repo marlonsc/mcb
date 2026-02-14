@@ -66,7 +66,7 @@ impl SqliteFileHashRepository {
             .or_else(|| {
                 std::env::current_dir()
                     .ok()
-                    .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
+                    .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(String::from))
             })
             .unwrap_or_else(|| "default".to_string());
 

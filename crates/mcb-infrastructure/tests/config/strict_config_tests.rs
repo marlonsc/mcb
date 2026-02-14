@@ -318,6 +318,49 @@ fn test_no_direct_env_var_in_production_code() {
 }
 
 #[test]
+fn test_no_impl_default_in_config_types() {
+    let root = workspace_root();
+    let types_dir = root.join("crates/mcb-infrastructure/src/config/types");
+
+    let allowed = [
+        "ServerConfigBuilder",
+        "CacheProvider",
+        "TransportMode",
+        "OperatingMode",
+        "PasswordAlgorithm",
+        "EventBusProvider",
+        "ServerSslConfig",
+    ];
+
+    let mut violations = Vec::new();
+
+    for file_path in scan_rs_files(&types_dir) {
+        let content = fs::read_to_string(&file_path).unwrap_or_default();
+        let relative = file_path.strip_prefix(&root).unwrap_or(&file_path);
+
+        for (line_num, line) in content.lines().enumerate() {
+            if line.contains("impl Default for") {
+                let is_allowed = allowed.iter().any(|a| line.contains(a));
+                if !is_allowed {
+                    violations.push(format!(
+                        "  {}:{}: {}",
+                        relative.display(),
+                        line_num + 1,
+                        line.trim()
+                    ));
+                }
+            }
+        }
+    }
+
+    assert!(
+        violations.is_empty(),
+        "impl Default found on operational config types (defaults must come from default.toml):\n{}",
+        violations.join("\n")
+    );
+}
+
+#[test]
 fn test_no_serde_default_in_config_types() {
     let root = workspace_root();
     let types_dir = root.join("crates/mcb-infrastructure/src/config/types");

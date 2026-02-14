@@ -22,7 +22,7 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
 
     for_each_scan_rs_path(&validator.config, false, |path, _src_dir| {
         if path.extension().is_none_or(|ext| ext != "rs")
-            || path.to_string_lossy().contains("/tests/")
+            || path.to_str().is_some_and(|s| s.contains("/tests/"))
             || !path.exists()
         {
             return Ok(());

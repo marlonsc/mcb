@@ -244,7 +244,7 @@ impl CleanArchitectureValidator {
                 .rules
                 .composition_root_skip_patterns
                 .iter()
-                .any(|p| path.to_string_lossy().contains(p))
+                .any(|p| path.to_str().is_some_and(|s| s.contains(p)))
             {
                 return Ok(());
             }

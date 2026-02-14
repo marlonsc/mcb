@@ -100,7 +100,7 @@ impl SubmoduleProvider {
             };
 
             for submodule in submodules {
-                let path = submodule.path().to_string_lossy().to_string();
+                let path = submodule.path().to_str().unwrap_or_default().to_string();
 
                 // Check for circular references
                 let unique_key = format!("{parent_id}:{path}");

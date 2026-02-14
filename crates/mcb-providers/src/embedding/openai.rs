@@ -60,7 +60,6 @@ impl OpenAIEmbeddingProvider {
     /// * `model` - Model name (e.g., "text-embedding-3-small")
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
-    // TODO(qlty): Found 18 lines of similar code in 4 locations (mass = 54)
     pub fn new(
         api_key: String,
         base_url: Option<String>,

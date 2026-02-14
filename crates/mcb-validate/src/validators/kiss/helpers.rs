@@ -120,7 +120,9 @@ impl KissValidator {
     }
 
     pub(super) fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
-        let path_str = src_dir.to_string_lossy();
+        let Some(path_str) = src_dir.to_str() else {
+            return false;
+        };
         self.rules
             .excluded_crates
             .iter()

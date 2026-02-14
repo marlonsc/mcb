@@ -185,7 +185,10 @@ pub fn detect_in_content(content: &str, filename: &str) -> Result<Vec<UnwrapDete
 /// Detect unwrap/expect in file
 pub fn detect_in_file(path: &Path) -> Result<Vec<UnwrapDetection>> {
     let content = std::fs::read_to_string(path)?;
-    detect_in_content(&content, &path.to_string_lossy())
+    let file_name = path
+        .to_str()
+        .ok_or_else(|| ValidationError::Config(format!("Non-UTF8 path: {}", path.display())))?;
+    detect_in_content(&content, file_name)
 }
 
 /// AST-based unwrap detector using rust-code-analysis

@@ -15,7 +15,7 @@ impl Engine for Handlebars<'static> {
             if let Err(e) = hb.register_template_file(name, path) {
                 error!("Handlebars template '{}' failed to register.", name);
                 error_!("{}", e);
-                info_!("Template path: '{}'.", path.to_string_lossy());
+                info_!("Template path: '{}'.", path.display());
                 ok = false;
             }
         }

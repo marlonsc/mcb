@@ -116,8 +116,8 @@ fn project_context_from_git_toplevel() -> Option<(String, String)> {
 
     let toplevel = String::from_utf8_lossy(&output.stdout).trim().to_string();
     let name = std::path::Path::new(&toplevel)
-        .file_name()?
-        .to_string_lossy()
+        .file_name()
+        .and_then(|n| n.to_str())?
         .to_string();
     Some((name.clone(), name))
 }

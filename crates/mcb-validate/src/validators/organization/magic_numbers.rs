@@ -50,8 +50,10 @@ pub fn validate_magic_numbers(config: &ValidationConfig) -> Result<Vec<Organizat
         }
 
         // Skip test files
-        let path_str = path.to_string_lossy();
-        if is_test_path(&path_str) {
+        let Some(path_str) = path.to_str() else {
+            return Ok(());
+        };
+        if is_test_path(path_str) {
             return Ok(());
         }
 

@@ -60,7 +60,9 @@ pub fn validate_trait_placement(config: &ValidationConfig) -> Result<Vec<Organiz
             return Ok(());
         }
 
-        let path_str = path.to_string_lossy();
+        let Some(path_str) = path.to_str() else {
+            return Ok(());
+        };
 
         // Skip if in ports directory (re-exports are OK)
         if path_str.contains("/ports/") {
@@ -73,7 +75,7 @@ pub fn validate_trait_placement(config: &ValidationConfig) -> Result<Vec<Organiz
         }
 
         // Skip test files
-        if is_test_path(&path_str) {
+        if is_test_path(path_str) {
             return Ok(());
         }
 

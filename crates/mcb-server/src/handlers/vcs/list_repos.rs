@@ -28,7 +28,7 @@ pub async fn list_repositories(
 
     let repositories: Vec<String> = discovered_repos
         .iter()
-        .map(|repo| repo.path().to_string_lossy().to_string())
+        .map(|repo| repo.path().to_str().unwrap_or_default().to_string())
         .collect();
 
     let result = ListRepositoriesResponse {

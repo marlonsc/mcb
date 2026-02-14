@@ -75,11 +75,13 @@ impl DuplicationAnalyzer {
             return false;
         }
 
-        let path_str = path.to_string_lossy();
+        let Some(path_str) = path.to_str() else {
+            return false;
+        };
         for pattern in &self.thresholds.exclude_patterns {
             let pattern_regex = pattern.replace("**", ".*").replace('*', "[^/]*");
             if regex::Regex::new(&pattern_regex)
-                .map(|r| r.is_match(&path_str))
+                .map(|r| r.is_match(path_str))
                 .unwrap_or(false)
             {
                 return false;

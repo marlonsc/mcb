@@ -30,7 +30,13 @@ pub async fn entities_index(state: Option<&State<AdminState>>) -> Template {
 
     for entity in AdminRegistry::all() {
         let record_count = match state.and_then(|s| resolve_adapter(entity.slug, s.inner())) {
-            Some(adapter) => adapter.list_all().await.map(|v| v.len()).unwrap_or(0),
+            Some(adapter) => match adapter.list_all().await {
+                Ok(v) => v.len(),
+                Err(e) => {
+                    tracing::warn!(entity = entity.slug, error = %e, "list_all failed");
+                    0
+                }
+            },
             None => 0,
         };
         total_records += record_count;

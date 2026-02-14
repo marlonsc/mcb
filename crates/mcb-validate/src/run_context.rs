@@ -233,7 +233,7 @@ fn enumerate_with_walkdir(
         let Some(relative_str) = relative.to_str() else {
             continue;
         };
-        if should_ignore(&relative_str, ignore_patterns)
+        if should_ignore(relative_str, ignore_patterns)
             || relative_str.contains("/.git/")
             || relative_str.starts_with(".git/")
         {

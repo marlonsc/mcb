@@ -214,7 +214,9 @@ impl ValidationConfig {
 
     /// Check if a path should be excluded based on patterns
     pub fn should_exclude(&self, path: &Path) -> bool {
-        let path_str = path.to_string_lossy();
+        let Some(path_str) = path.to_str() else {
+            return false;
+        };
         self.exclude_patterns
             .iter()
             .any(|pattern| path_str.contains(pattern))

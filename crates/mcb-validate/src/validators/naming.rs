@@ -340,7 +340,9 @@ impl NamingValidator {
                 return Ok(());
             }
 
-            let path_str = path.to_string_lossy();
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
 
             // Check repository files should have _repository suffix
             if (path_str.contains("/repositories/") || path_str.contains("/adapters/repository/"))
@@ -417,7 +419,9 @@ impl NamingValidator {
         self.for_each_crate_src_rs_path(|path| {
             let crate_name = self.crate_name_from_path(path);
             let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-            let path_str = path.to_string_lossy();
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
 
             // Skip standard files
             if file_name == "lib" || file_name == "mod" || file_name == "main" {
@@ -572,9 +576,11 @@ impl NamingValidator {
 
     fn crate_name_from_path(&self, path: &Path) -> String {
         for component in path.components() {
-            let component = component.as_os_str().to_string_lossy();
+            let Some(component) = component.as_os_str().to_str() else {
+                continue;
+            };
             if component.starts_with("mcb-") {
-                return match component.as_ref() {
+                return match component {
                     "mcb-domain" => self.rules.domain_crate.clone(),
                     "mcb-infrastructure" => self.rules.infrastructure_crate.clone(),
                     "mcb-server" => self.rules.server_crate.clone(),
@@ -586,7 +592,9 @@ impl NamingValidator {
     }
 
     fn should_skip_crate(&self, src_dir: &Path) -> bool {
-        let path_str = src_dir.to_string_lossy();
+        let Some(path_str) = src_dir.to_str() else {
+            return false;
+        };
         let file_config = crate::config::FileConfig::load(&self.config.workspace_root);
         file_config
             .general

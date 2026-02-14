@@ -26,7 +26,7 @@ pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<Hygiene
         // Similar to organization/validator.rs using generic scan, we can filter inside.
 
         for_each_rs_under_root(config, &src_dir, |path| {
-            if path.to_string_lossy().contains("/fixtures/") {
+            if path.to_str().is_some_and(|s| s.contains("/fixtures/")) {
                 return Ok(());
             }
 

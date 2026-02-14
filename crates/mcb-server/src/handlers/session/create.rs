@@ -1,7 +1,5 @@
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use mcb_domain::constants::keys as schema;
+use std::sync::Arc;
 
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
@@ -64,10 +62,8 @@ pub async fn create_session(
             )]));
         }
     };
-    let now = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs() as i64)
-        .unwrap_or(0);
+    let now = mcb_domain::utils::time::epoch_secs_i64()
+        .map_err(|e| McpError::internal_error(e.to_string(), None))?;
     let session_id = format!("agent_{}", Uuid::new_v4());
     let session_summary_id = payload
         .session_summary_id

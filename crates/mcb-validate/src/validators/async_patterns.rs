@@ -167,7 +167,7 @@ impl AsyncPatternValidator {
         let compiled_blocking = compile_regex_triples(&blocking_patterns)?;
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            if path.to_string_lossy().contains("/tests/") {
+            if path.to_str().is_some_and(|s| s.contains("/tests/")) {
                 return Ok(());
             }
 
@@ -246,7 +246,7 @@ impl AsyncPatternValidator {
         let compiled_block_on = compile_regexes(block_on_patterns)?;
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            if path.to_string_lossy().contains("/tests/") {
+            if path.to_str().is_some_and(|s| s.contains("/tests/")) {
                 return Ok(());
             }
 
@@ -340,7 +340,7 @@ impl AsyncPatternValidator {
         let compiled_mutex = compile_regex_triples(&std_mutex_patterns)?;
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            if path.to_string_lossy().contains("/tests/") {
+            if path.to_str().is_some_and(|s| s.contains("/tests/")) {
                 return Ok(());
             }
 
@@ -422,7 +422,7 @@ impl AsyncPatternValidator {
         ];
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            if path.to_string_lossy().contains("/tests/") {
+            if path.to_str().is_some_and(|s| s.contains("/tests/")) {
                 return Ok(());
             }
 

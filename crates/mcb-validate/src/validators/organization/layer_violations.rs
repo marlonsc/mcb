@@ -25,10 +25,12 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
     });
 
     for_each_scan_rs_path(config, true, |path, _src_dir| {
-        let path_str = path.to_string_lossy();
+        let Some(path_str) = path.to_str() else {
+            return Ok(());
+        };
 
         // Skip test files
-        if is_test_path(&path_str) {
+        if is_test_path(path_str) {
             return Ok(());
         }
 

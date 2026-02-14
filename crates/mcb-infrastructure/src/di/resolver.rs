@@ -34,11 +34,11 @@
 //! ## Usage
 //!
 //! ```no_run
-//! use mcb_infrastructure::config::AppConfig;
+//! use mcb_infrastructure::config::ConfigLoader;
 //! use mcb_infrastructure::di::resolve_providers;
 //!
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
-//! let config = AppConfig::default();
+//! let config = ConfigLoader::new().load()?;
 //! let providers = resolve_providers(&config)?;
 //!
 //! // Use providers for embedding operations

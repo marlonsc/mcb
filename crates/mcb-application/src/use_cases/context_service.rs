@@ -87,7 +87,7 @@ fn normalize_relative_file_path(raw: &str) -> Result<String> {
     for component in path.components() {
         match component {
             Component::CurDir => {}
-            Component::Normal(part) => parts.push(part.to_string_lossy().to_string()),
+            Component::Normal(part) => parts.push(part.to_str().unwrap_or_default().to_string()),
             Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
                 return Err(mcb_domain::error::Error::invalid_argument(format!(
                     "chunk file_path must be normalized workspace-relative: '{trimmed}'"

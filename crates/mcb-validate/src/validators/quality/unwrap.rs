@@ -17,7 +17,9 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
             return Ok(());
         }
 
-        let path_str = path.to_string_lossy();
+        let Some(path_str) = path.to_str() else {
+            return Ok(());
+        };
         if path_str.contains("/tests/")
             || path_str.contains("/target/")
             || path_str.ends_with("_test.rs")

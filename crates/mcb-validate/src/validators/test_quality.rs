@@ -152,8 +152,9 @@ impl TestQualityValidator {
         let _doc_comment_pattern = Regex::new(r"^\s*///").map_err(ValidationError::InvalidRegex)?;
 
         for_each_scan_rs_path(&self.config, false, |path, _src_dir| {
-            if !(path.to_string_lossy().contains("/tests/")
-                || path.to_string_lossy().contains("/test_"))
+            if !path
+                .to_str()
+                .is_some_and(|s| s.contains("/tests/") || s.contains("/test_"))
             {
                 return Ok(());
             }
@@ -356,7 +357,9 @@ impl TestQualityValidator {
 
     /// Check if a path should be skipped based on configuration
     fn should_skip_path(&self, path: &Path) -> bool {
-        let path_str = path.to_string_lossy();
+        let Some(path_str) = path.to_str() else {
+            return false;
+        };
         self.rules
             .excluded_paths
             .iter()

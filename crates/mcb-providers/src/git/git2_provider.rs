@@ -279,7 +279,8 @@ impl VcsProvider for Git2Provider {
             .peel_to_tree()
             .map_err(|e| Error::vcs_with_source("Failed to get branch tree", e))?;
 
-        let path_str = path.to_string_lossy();
+        let path_str = mcb_domain::utils::path::path_to_utf8_string(path)
+            .map_err(|e| Error::vcs_with_source("non-UTF-8 path", e))?;
         let entry = tree.get_path(path).map_err(|e| {
             Error::vcs_with_source(format!("File not found in branch: {path_str}"), e)
         })?;

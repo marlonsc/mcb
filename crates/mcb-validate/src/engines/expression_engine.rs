@@ -49,7 +49,12 @@ impl ExpressionEngine {
 
         let _ = ctx.set_value(
             "workspace_path_len".to_string(),
-            EvalValue::Int(rule_context.workspace_root.to_string_lossy().len() as i64),
+            EvalValue::Int(
+                rule_context
+                    .workspace_root
+                    .to_str()
+                    .map_or(0_i64, |s| s.len() as i64),
+            ),
         );
 
         // Check for common patterns in files

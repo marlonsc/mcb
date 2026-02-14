@@ -33,14 +33,17 @@ pub fn validate_strict_directory(config: &ValidationConfig) -> Result<Vec<Organi
     });
 
     for_each_scan_rs_path(config, true, |path, src_dir| {
-        let is_domain_crate = src_dir.to_string_lossy().contains("domain");
-        let is_infrastructure_crate = src_dir.to_string_lossy().contains("infrastructure");
-        let is_server_crate = src_dir.to_string_lossy().contains("server");
+        let src_dir_str = src_dir.to_str();
+        let is_domain_crate = src_dir_str.is_some_and(|s| s.contains("domain"));
+        let is_infrastructure_crate = src_dir_str.is_some_and(|s| s.contains("infrastructure"));
+        let is_server_crate = src_dir_str.is_some_and(|s| s.contains("server"));
 
-        let path_str = path.to_string_lossy();
+        let Some(path_str) = path.to_str() else {
+            return Ok(());
+        };
 
         // Skip test files
-        if is_test_path(&path_str) {
+        if is_test_path(path_str) {
             return Ok(());
         }
 
@@ -129,7 +132,8 @@ pub fn validate_strict_directory(config: &ValidationConfig) -> Result<Vec<Organi
                     if !in_allowed_dir {
                         let current_dir = path
                             .parent()
-                            .map(|p| p.to_string_lossy().to_string())
+                            .and_then(|p| p.to_str())
+                            .map(std::string::ToString::to_string)
                             .unwrap_or_default();
 
                         violations.push(OrganizationViolation::StrictDirectoryViolation {

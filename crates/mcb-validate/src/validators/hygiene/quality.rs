@@ -58,7 +58,7 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
         }
 
         for_each_rs_under_root(config, &tests_dir, |path| {
-            if path.to_string_lossy().contains("/fixtures/") {
+            if path.to_str().is_some_and(|s| s.contains("/fixtures/")) {
                 return Ok(());
             }
 

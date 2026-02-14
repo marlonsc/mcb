@@ -7,17 +7,20 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
     let mut violations = Vec::new();
 
     for_each_scan_rs_path(&validator.config, false, |path, _src_dir| {
+        let path_str = path.to_str();
         if path.extension().is_none_or(|ext| ext != "rs")
             || validator.config.should_exclude(path)
-            || path.to_string_lossy().contains("/tests/")
-            || path.to_string_lossy().contains("/target/")
-            || path.to_string_lossy().ends_with("_test.rs")
+            || path_str.is_some_and(|s| s.contains("/tests/"))
+            || path_str.is_some_and(|s| s.contains("/target/"))
+            || path_str.is_some_and(|s| s.ends_with("_test.rs"))
             || !path.exists()
         {
             return Ok(());
         }
 
-        let path_str = path.to_string_lossy();
+        let Some(path_str) = path_str else {
+            return Ok(());
+        };
 
         // Skip paths excluded in configuration (e.g., large vector store implementations)
         if validator

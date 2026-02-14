@@ -136,7 +136,7 @@ fn convert_report(
             id: v.id,
             category: v.category,
             severity: v.severity,
-            file: v.file.map(|p| p.to_string_lossy().to_string()),
+            file: v.file.map(|p| p.to_str().unwrap_or_default().to_string()),
             line: v.line,
             message: v.message,
             suggestion: v.suggestion,
@@ -171,7 +171,7 @@ fn run_file_validation(
     // So we run full validation and filter to the specific file
     let full_report = run_validation(&workspace_root, validators, None)?;
 
-    let file_str = file_path.to_string_lossy().to_string();
+    let file_str = file_path.to_str().unwrap_or_default().to_string();
     let file_violations: Vec<ViolationEntry> = full_report
         .violations
         .into_iter()
@@ -282,7 +282,7 @@ fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<
     };
 
     Ok(ComplexityReport {
-        file: file_path.to_string_lossy().to_string(),
+        file: file_path.to_str().unwrap_or_default().to_string(),
         cyclomatic: aggregate.cyclomatic,
         cognitive: aggregate.cognitive,
         maintainability_index: aggregate.maintainability_index,

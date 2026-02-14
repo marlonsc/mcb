@@ -44,7 +44,7 @@ pub async fn compare_branches(
         .files
         .iter()
         .map(|file| BranchDiffFile {
-            path: file.path.to_string_lossy().to_string(),
+            path: file.path.to_str().unwrap_or_default().to_string(),
             status: file.status.to_string(),
         })
         .collect();

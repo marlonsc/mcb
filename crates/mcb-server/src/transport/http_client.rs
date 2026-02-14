@@ -333,7 +333,7 @@ mod tests {
             Some("prefix".to_string()),
             Duration::from_secs(10),
             Some("explicit-session-id".to_string()),
-            Some(session_file.to_string_lossy().to_string()),
+            Some(session_file.to_str().unwrap().to_string()),
         )
         .expect("create client");
 
@@ -345,7 +345,7 @@ mod tests {
     fn session_id_persists_via_session_file() {
         let temp_dir = tempfile::tempdir().expect("create temp dir");
         let session_file = temp_dir.path().join("session.id");
-        let session_file_str = session_file.to_string_lossy().to_string();
+        let session_file_str = session_file.to_str().unwrap().to_string();
 
         let first = HttpClientTransport::new_with_session_source(
             "http://127.0.0.1:18080".to_string(),

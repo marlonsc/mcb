@@ -112,6 +112,17 @@ async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
         .await
         .map_err(|e| Error::memory_with_source("connect SQLite", e))?;
 
+    // Enable WAL mode for better concurrency
+    sqlx::query("PRAGMA journal_mode = WAL;")
+        .execute(&pool)
+        .await
+        .map_err(|e| Error::memory_with_source("enable WAL mode", e))?;
+
+    sqlx::query("PRAGMA synchronous = NORMAL;")
+        .execute(&pool)
+        .await
+        .map_err(|e| Error::memory_with_source("set synchronous mode", e))?;
+
     match apply_schema(&pool).await {
         Ok(()) => {
             tracing::info!("Memory database initialized at {}", path.display());
@@ -155,10 +166,8 @@ async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
 
 fn backup_and_remove(path: &std::path::Path) -> Result<()> {
     use mcb_domain::error::Error;
-    let stamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
+    let stamp = mcb_domain::utils::time::epoch_secs_u64()
+        .map_err(|e| mcb_domain::error::Error::memory_with_source("read system clock", e))?;
     let backup = path.with_extension(format!("db.bak.{stamp}"));
     std::fs::rename(path, &backup)
         .map_err(|e| Error::memory_with_source("backup old database", e))?;

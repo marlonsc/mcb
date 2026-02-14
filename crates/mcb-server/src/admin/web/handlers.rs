@@ -169,7 +169,13 @@ async fn render_dashboard_template(title: &str, state: Option<&State<AdminState>
 
     for entity in AdminRegistry::all() {
         let record_count = match state.and_then(|s| resolve_adapter(entity.slug, s.inner())) {
-            Some(adapter) => adapter.list_all().await.map(|rows| rows.len()).unwrap_or(0),
+            Some(adapter) => match adapter.list_all().await {
+                Ok(rows) => rows.len(),
+                Err(e) => {
+                    tracing::warn!(entity = entity.slug, error = %e, "list_all failed");
+                    0
+                }
+            },
             None => 0,
         };
         total_records += record_count;

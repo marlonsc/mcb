@@ -133,7 +133,9 @@ impl LinterType {
             LinterType::Ruff => {
                 let mut args = vec!["check".to_string(), "--output-format=json".to_string()];
                 for file in files {
-                    args.push(file.to_string_lossy().to_string());
+                    if let Some(file_str) = file.to_str() {
+                        args.push(file_str.to_string());
+                    }
                 }
                 args
             }

@@ -22,7 +22,9 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
             }
 
             // Skip test utility files (mocks, fixtures, helpers)
-            let path_str = path.to_string_lossy();
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
             if path_str.contains("test_utils")
                 || file_name.contains("mock")
                 || file_name.contains("fixture")

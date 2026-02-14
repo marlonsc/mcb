@@ -1,7 +1,6 @@
 //! Logging Tests
 
 use mcb_infrastructure::config::ConfigLoader;
-use mcb_infrastructure::constants::logging::{DEFAULT_LOG_LEVEL, LOG_MAX_FILES, LOG_ROTATION_SIZE};
 use mcb_infrastructure::logging::parse_log_level;
 use rstest::rstest;
 use tracing::Level;
@@ -23,10 +22,11 @@ fn parse_log_level_values(#[case] input: &str, #[case] expected: Option<Level>) 
 
 #[rstest]
 fn test_logging_config_default() {
+    // Values come from config/default.toml — the single source of truth
     let config = ConfigLoader::new().load().expect("load config").logging;
-    assert_eq!(config.level, DEFAULT_LOG_LEVEL);
+    assert_eq!(config.level, "info");
     assert!(!config.json_format);
     assert!(config.file_output.is_none());
-    assert_eq!(config.max_file_size, LOG_ROTATION_SIZE);
-    assert_eq!(config.max_files, LOG_MAX_FILES);
+    assert_eq!(config.max_file_size, 10_485_760); // 10 MB per default.toml
+    assert_eq!(config.max_files, 5);
 }

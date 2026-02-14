@@ -54,7 +54,7 @@ pub async fn search_branch(
             for (index, line) in content.lines().enumerate() {
                 if line.to_lowercase().contains(&query.to_lowercase()) {
                     matches.push(BranchSearchMatch {
-                        path: file_path.to_string_lossy().to_string(),
+                        path: file_path.to_str().unwrap_or_default().to_string(),
                         line: index + 1,
                         snippet: line.trim().to_string(),
                     });
