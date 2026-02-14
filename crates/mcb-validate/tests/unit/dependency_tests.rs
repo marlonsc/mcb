@@ -1,6 +1,7 @@
 use std::fs;
 
 use mcb_validate::{DependencyValidator, DependencyViolation};
+use rstest::*;
 use tempfile::TempDir;
 
 fn create_test_workspace() -> TempDir {
@@ -54,7 +55,7 @@ mcb-domain = { path = "../mcb-domain" }
     temp
 }
 
-#[test]
+#[rstest]
 fn test_valid_dependencies() {
     let temp = create_test_workspace();
     let validator = DependencyValidator::new(temp.path());
@@ -66,7 +67,7 @@ fn test_valid_dependencies() {
     );
 }
 
-#[test]
+#[rstest]
 fn test_forbidden_dependency() {
     let temp = TempDir::new().unwrap();
 
@@ -103,7 +104,7 @@ mcb-infrastructure = { path = "../mcb-infrastructure" }
     }
 }
 
-#[test]
+#[rstest]
 fn test_forbidden_use_statement() {
     let temp = TempDir::new().unwrap();
 
@@ -141,7 +142,7 @@ version = "0.1.1"
     }
 }
 
-#[test]
+#[rstest]
 fn test_admin_bypass_boundary_blocks_non_allowlisted_imports() {
     let temp = TempDir::new().unwrap();
     let admin_web = temp.path().join("crates/mcb-server/src/admin/web");
@@ -170,7 +171,7 @@ fn test_admin_bypass_boundary_blocks_non_allowlisted_imports() {
     ));
 }
 
-#[test]
+#[rstest]
 fn test_cli_bypass_boundary_blocks_non_allowlisted_direct_validate_usage() {
     let temp = TempDir::new().unwrap();
     let cli_dir = temp.path().join("crates/mcb/src/cli");

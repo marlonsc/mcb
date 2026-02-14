@@ -40,20 +40,157 @@ pub fn to_opaque_mcp_error(e: Error) -> McpError {
     }
 }
 
+fn map_client_error(error: &Error) -> Option<String> {
+    match error {
+        Error::NotFound { resource } => Some(format!("Not found: {resource}")),
+        Error::InvalidArgument { message } => Some(format!("Invalid argument: {message}")),
+        Error::ObservationNotFound { id } => Some(format!("Observation not found: {id}")),
+        Error::DuplicateObservation { content_hash } => {
+            Some(format!("Duplicate observation: {content_hash}"))
+        }
+        Error::RepositoryNotFound { path } => Some(format!("Repository not found: {path}")),
+        Error::BranchNotFound { name } => Some(format!("Branch not found: {name}")),
+        Error::InvalidRegex { pattern, message } => {
+            Some(format!("Invalid regex pattern '{pattern}': {message}"))
+        }
+        _ => None,
+    }
+}
+
+fn map_provider_error(error: &Error) -> Option<String> {
+    match error {
+        Error::Database { message, .. } => Some(log_and_format_error(
+            "database operation failed",
+            "Database error",
+            message,
+        )),
+        Error::VectorDb { message } => Some(log_and_format_error(
+            "vector database operation failed",
+            "Vector database error",
+            message,
+        )),
+        Error::Embedding { message } => Some(log_and_format_error(
+            "embedding operation failed",
+            "Embedding error",
+            message,
+        )),
+        Error::Network { message, .. } => Some(log_and_format_error(
+            "network operation failed",
+            "Network error",
+            message,
+        )),
+        Error::ObservationStorage { message, .. } => Some(log_and_format_error(
+            "observation storage failed",
+            "Memory storage error",
+            message,
+        )),
+        Error::Vcs { message, .. } => Some(log_and_format_error(
+            "VCS operation failed",
+            "VCS error",
+            message,
+        )),
+        _ => None,
+    }
+}
+
+fn map_config_error(error: &Error) -> Option<String> {
+    match error {
+        Error::Config { message } | Error::Configuration { message, .. } => {
+            Some(format_error("Configuration error", message))
+        }
+        Error::ConfigMissing(field) => Some(format!("Missing configuration: {field}")),
+        Error::ConfigInvalid { key, message } => {
+            Some(format!("Invalid configuration for '{key}': {message}"))
+        }
+        Error::Authentication { message, .. } => {
+            Some(format_error("Authentication error", message))
+        }
+        _ => None,
+    }
+}
+
+fn map_system_error(error: &Error) -> Option<String> {
+    match error {
+        Error::Cache { message } => Some(log_and_format_error(
+            "cache operation failed",
+            "Cache error",
+            message,
+        )),
+        Error::Infrastructure { message, .. } => Some(log_and_format_error(
+            "infrastructure error",
+            "Infrastructure error",
+            message,
+        )),
+        Error::Internal { message } => Some(log_and_format_error(
+            "internal error",
+            "Internal error",
+            message,
+        )),
+        _ => None,
+    }
+}
+
+fn map_encoding_error(error: &Error) -> Option<String> {
+    match error {
+        Error::Json { source } => Some(log_and_format_error(
+            "JSON processing failed",
+            "JSON error",
+            source,
+        )),
+        Error::Utf8(_) => Some(log_and_static_error(
+            "encoding error",
+            "Encoding error: invalid UTF-8",
+        )),
+        Error::Base64(_) => Some(log_and_static_error(
+            "encoding error",
+            "Encoding error: invalid base64",
+        )),
+        _ => None,
+    }
+}
+
+fn map_io_error(error: &Error) -> Option<String> {
+    match error {
+        Error::IoSimple { source } => Some(log_and_format_error(
+            "I/O operation failed",
+            "I/O error",
+            source.kind(),
+        )),
+        Error::Io { message, .. } => Some(log_and_format_error(
+            "I/O operation failed",
+            "I/O error",
+            message,
+        )),
+        _ => None,
+    }
+}
+
+fn map_generic_error(error: &Error) -> Option<String> {
+    match error {
+        Error::Generic(e) => Some(log_and_format_error(
+            "operation failed",
+            "Operation failed",
+            e,
+        )),
+        Error::Browse(e) => Some(log_and_format_error(
+            "browse operation failed",
+            "Browse error",
+            e,
+        )),
+        Error::Highlight(e) => Some(log_and_format_error(
+            "highlight operation failed",
+            "Highlight error",
+            e,
+        )),
+        _ => None,
+    }
+}
+
 /// Builds a contextual tool-call error response with categorization and sanitization.
 ///
-/// This function maps internal domain errors into a structured [`CallToolResult`]
-/// that can be returned by the MCP server tools. It categorizes errors into
-/// client-fixable (e.g., Not Found) and provider-specific issues (e.g., Database),
-/// while ensuring that no sensitive infrastructure information is exposed.
-///
-/// # Arguments
-///
-/// * `e` - An object that can be converted into a domain [`Error`].
-///
-/// # Returns
-///
-/// A [`CallToolResult`] containing the categorized and sanitized error message.
+/// Maps internal domain errors into a structured [`CallToolResult`] for MCP server tools,
+/// categorizing errors as client-fixable or provider-specific while preventing
+/// sensitive infrastructure information leakage.
 ///
 /// # Examples
 ///
@@ -65,94 +202,20 @@ pub fn to_opaque_mcp_error(e: Error) -> McpError {
 /// let result = to_contextual_tool_error(err);
 /// assert_eq!(result.is_error, Some(true));
 /// ```
-// TODO(KISS005): Function exceeds recommended line count (107 lines, max 50).
-// Decompose into smaller category-based mapping functions.
 pub fn to_contextual_tool_error(e: impl Into<Error>) -> CallToolResult {
     let error: Error = e.into();
-    // TODO(SOLID002): Match block contains 29 arms (max 15).
-    // Use visitor pattern or delegate mapping to maintain OCP.
-    let message = match &error {
-        // Client-fixable errors — return the specific message
-        Error::NotFound { resource } => format!("Not found: {resource}"),
-        Error::InvalidArgument { message } => format!("Invalid argument: {message}"),
-        Error::ObservationNotFound { id } => format!("Observation not found: {id}"),
-        Error::DuplicateObservation { content_hash } => {
-            format!("Duplicate observation: {content_hash}")
-        }
-        Error::RepositoryNotFound { path } => format!("Repository not found: {path}"),
-        Error::BranchNotFound { name } => format!("Branch not found: {name}"),
-        Error::InvalidRegex { pattern, message } => {
-            format!("Invalid regex pattern '{pattern}': {message}")
-        }
 
-        // Provider errors — category + sanitized reason
-        Error::Database { message, .. } => {
-            log_and_format_error("database operation failed", "Database error", message)
-        }
-        Error::VectorDb { message } => log_and_format_error(
-            "vector database operation failed",
-            "Vector database error",
-            message,
-        ),
-        Error::Embedding { message } => {
-            log_and_format_error("embedding operation failed", "Embedding error", message)
-        }
-        Error::Network { message, .. } => {
-            log_and_format_error("network operation failed", "Network error", message)
-        }
-        Error::ObservationStorage { message, .. } => log_and_format_error(
-            "observation storage failed",
-            "Memory storage error",
-            message,
-        ),
-        Error::Vcs { message, .. } => {
-            log_and_format_error("VCS operation failed", "VCS error", message)
-        }
+    let message = map_client_error(&error)
+        .or_else(|| map_provider_error(&error))
+        .or_else(|| map_config_error(&error))
+        .or_else(|| map_system_error(&error))
+        .or_else(|| map_encoding_error(&error))
+        .or_else(|| map_io_error(&error))
+        .or_else(|| map_generic_error(&error))
+        .unwrap_or_else(|| {
+            tracing::error!("unmapped error variant: {error}");
+            "Internal error".to_string()
+        });
 
-        // Config errors — category + reason
-        Error::Config { message } | Error::Configuration { message, .. } => {
-            format_error("Configuration error", message)
-        }
-        Error::ConfigMissing(field) => format!("Missing configuration: {field}"),
-        Error::ConfigInvalid { key, message } => {
-            format!("Invalid configuration for '{key}': {message}")
-        }
-        Error::Authentication { message, .. } => format_error("Authentication error", message),
-
-        // Infrastructure/system errors — log full details, return category
-        Error::Cache { message } => {
-            log_and_format_error("cache operation failed", "Cache error", message)
-        }
-        Error::Infrastructure { message, .. } => {
-            log_and_format_error("infrastructure error", "Infrastructure error", message)
-        }
-        Error::Internal { message } => {
-            log_and_format_error("internal error", "Internal error", message)
-        }
-
-        // Serialization/encoding errors — sanitized
-        Error::Json { source } => {
-            log_and_format_error("JSON processing failed", "JSON error", source)
-        }
-        Error::Utf8(_) => log_and_static_error("encoding error", "Encoding error: invalid UTF-8"),
-        Error::Base64(_) => {
-            log_and_static_error("encoding error", "Encoding error: invalid base64")
-        }
-
-        // I/O errors — sanitized (no file paths leaked)
-        Error::IoSimple { source } => {
-            log_and_format_error("I/O operation failed", "I/O error", source.kind())
-        }
-        Error::Io { message, .. } => {
-            log_and_format_error("I/O operation failed", "I/O error", message)
-        }
-
-        // Generic / Browse / Highlight — log and sanitize
-        Error::Generic(e) => log_and_format_error("operation failed", "Operation failed", e),
-        Error::Browse(e) => log_and_format_error("browse operation failed", "Browse error", e),
-        Error::Highlight(e) => {
-            log_and_format_error("highlight operation failed", "Highlight error", e)
-        }
-    };
     CallToolResult::error(vec![Content::text(message)])
 }

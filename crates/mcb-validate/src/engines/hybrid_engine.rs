@@ -221,7 +221,6 @@ impl HybridRuleEngine {
             RuleEngineType::Auto => self.router.execute(rule_definition, context).await?,
         };
 
-        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {
@@ -243,7 +242,6 @@ impl HybridRuleEngine {
 
         let violations = self.router.execute(rule_definition, context).await?;
 
-        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {
@@ -376,7 +374,6 @@ impl HybridRuleEngine {
             })
             .collect();
 
-        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {

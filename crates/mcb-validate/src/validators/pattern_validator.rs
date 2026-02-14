@@ -505,7 +505,6 @@ impl PatternValidator {
                 }
 
                 if has_async_methods {
-                    // Check for #[async_trait] attribute or #[allow(async_fn_in_trait)]
                     let has_async_trait_attr = if line_num > 0 {
                         lines[..line_num].iter().rev().take(5).any(|l| {
                             async_trait_attr.is_match(l) || allow_async_fn_trait.is_match(l)

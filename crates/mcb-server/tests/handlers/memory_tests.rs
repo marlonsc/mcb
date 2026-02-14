@@ -1,7 +1,8 @@
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
 use mcb_server::handlers::MemoryHandler;
 use rmcp::handler::server::wrapper::Parameters;
-use rstest::rstest;
+
+use rstest::*;
 use serde_json::json;
 
 use crate::handlers::test_helpers::create_base_memory_args;
@@ -45,6 +46,7 @@ fn get_missing_ids_args() -> MemoryArgs {
     }
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_memory_store_observation_success() {
     let (handler, _temp_dir) = create_handler().await;
@@ -78,6 +80,7 @@ async fn test_memory_validation_failures_return_error_response(#[case] args: Mem
     assert!(result.expect("response").is_error.unwrap_or(false));
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_memory_inject_with_filters() {
     let (handler, _temp_dir) = create_handler().await;

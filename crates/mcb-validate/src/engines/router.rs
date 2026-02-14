@@ -34,7 +34,6 @@ pub enum RoutedEngine {
 /// Rule Engine Router
 ///
 /// Analyzes rule definitions and routes them to the appropriate engine.
-#[allow(clippy::struct_field_names)]
 pub struct RuleEngineRouter {
     /// Engine for processing complex rules using RETE algorithm
     rete_engine: ReteEngine,

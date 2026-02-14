@@ -284,7 +284,6 @@ impl YamlRuleLoader {
     }
 
     /// Convert YAML/JSON value to `ValidatedRule`
-    #[allow(clippy::too_many_lines)]
     fn yaml_to_validated_rule(&self, value: &serde_json::Value) -> Result<ValidatedRule> {
         let obj = value
             .as_object()

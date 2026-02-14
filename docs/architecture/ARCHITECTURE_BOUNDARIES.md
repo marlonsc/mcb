@@ -22,7 +22,7 @@ This document defines the strict architectural boundaries for the MCB (Memory Co
 
 ## Crate Structure
 
-MCB follows a layered architecture across 8 Cargo workspace crates:
+MCB follows a layered architecture across 9 Cargo workspace crates:
 
 ```text
 crates/
@@ -541,6 +541,7 @@ make validate QUICK=1  # Fast validation
 | Version | Date | Changes |
 | --------- | ------ | --------- |
 | v0.2.0 | 2026-01-28 | Baseline documentation for architecture boundaries |
+| v0.2.1 | 2026-02-14 | Updated crate count (8→9), added mcb-ast-utils and mcb-language-support |
 
 ---
 

@@ -98,7 +98,6 @@ fn npm_factory(
     Ok(Arc::new(NpmDetector::new(config)))
 }
 
-#[allow(unsafe_code)]
 #[linkme::distributed_slice(PROJECT_DETECTORS)]
 static NPM_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "npm",

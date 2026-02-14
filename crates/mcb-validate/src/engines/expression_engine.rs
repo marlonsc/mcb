@@ -39,7 +39,6 @@ impl ExpressionEngine {
     }
 
     /// Build context from rule context for expression evaluation
-    #[allow(clippy::unused_self, clippy::cast_possible_wrap)]
     fn build_eval_context(&self, rule_context: &RuleContext) -> HashMapContext {
         let mut ctx = HashMapContext::new();
 

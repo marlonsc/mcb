@@ -7,7 +7,6 @@ use std::sync::OnceLock;
 static TRAIT_PATTERN: OnceLock<Regex> = OnceLock::new();
 
 /// Verifies that trait definitions are located in the appropriate ports directory.
-#[allow(clippy::too_many_lines)]
 pub fn validate_trait_placement(config: &ValidationConfig) -> Result<Vec<OrganizationViolation>> {
     let mut violations = Vec::new();
     let trait_pattern = TRAIT_PATTERN.get_or_init(|| {

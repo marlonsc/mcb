@@ -41,8 +41,9 @@ fn substitution_vars(workspace_root: PathBuf) -> serde_yaml::Value {
     ];
     for name in crates {
         let key = format!("{name}_crate");
-        if let Some(val) = variables.get(serde_yaml::Value::String(key.clone()))
-            && let Some(s) = val.as_str()
+        if let Some(s) = variables
+            .get(serde_yaml::Value::String(key.clone()))
+            .and_then(|val| val.as_str())
         {
             variables.insert(
                 serde_yaml::Value::String(format!("{name}_module")),
@@ -51,13 +52,13 @@ fn substitution_vars(workspace_root: PathBuf) -> serde_yaml::Value {
         }
     }
 
-    if let Some(domain_val) = variables.get(serde_yaml::Value::String("domain_crate".into()))
-        && let Some(domain_str) = domain_val.as_str()
+    if let Some(domain_str) = variables
+        .get(serde_yaml::Value::String("domain_crate".into()))
+        .and_then(|v| v.as_str())
     {
-        let prefix = if let Some(idx) = domain_str.find('-') {
-            domain_str[0..idx].to_string()
-        } else {
-            domain_str.to_string()
+        let prefix = match domain_str.find('-') {
+            Some(idx) => domain_str[0..idx].to_string(),
+            None => domain_str.to_string(),
         };
         variables.insert(
             serde_yaml::Value::String("project_prefix".into()),

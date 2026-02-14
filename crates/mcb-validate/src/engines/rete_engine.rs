@@ -56,7 +56,6 @@ impl ReteEngine {
     /// facts to be set with `facts.set("Facts.has_internal_dependencies", ...)`.
     ///
     /// Requires `cargo_metadata` to succeed. Fails fast if unavailable.
-    #[allow(clippy::unused_self)]
     fn build_facts(&self, context: &RuleContext) -> Result<Facts> {
         let facts = Facts::new();
 

@@ -5,11 +5,9 @@ use mcb_domain::ports::MemoryRepository;
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::value_objects::ObservationId;
 use mcb_providers::database::create_memory_repository_with_executor;
-use rstest::rstest;
-use uuid::Uuid;
-
 use rstest::*;
 use tempfile::TempDir;
+use uuid::Uuid;
 
 use crate::test_utils::create_test_project;
 

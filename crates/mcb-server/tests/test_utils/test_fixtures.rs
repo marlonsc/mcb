@@ -138,7 +138,6 @@ pub fn create_test_indexing_result(
 }
 
 /// Create a single test search result
-#[allow(dead_code)]
 pub fn create_test_search_result(
     file_path: &str,
     content: &str,
@@ -156,7 +155,6 @@ pub fn create_test_search_result(
 }
 
 /// Create multiple test search results
-#[allow(dead_code)]
 pub fn create_test_search_results(count: usize) -> Vec<SearchResult> {
     (0..count)
         .map(|i| {

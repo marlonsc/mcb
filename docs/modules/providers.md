@@ -240,4 +240,4 @@ Provider tests are located in `crates/mcb-providers/tests/`.
 
 ---
 
-### Updated 2026-02-12 — Enriched with Anthropic embedding, external vector stores (Milvus/Qdrant/Pinecone), SQLite/FTS5, hybrid search, git, events, config, and 13-language support via 12 parser implementations (v0.2.1)
+### Updated 2026-02-14 — Added analysis/, workflow/ (FSM transitions), language/common/ (config, constants, processor, traverser) + detection.rs + engine.rs; removed stale routing/, storage/, admin/ references (v0.2.1)

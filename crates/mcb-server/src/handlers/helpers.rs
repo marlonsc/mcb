@@ -165,10 +165,28 @@ pub struct OriginContextInput<'a> {
     pub timestamp: Option<i64>,
 }
 
-/// Extracted payload fields from a JSON data map for origin-context resolution.
-///
-/// Use `OriginPayloadFields::extract(data)` to pull all origin-related fields at once,
-/// then pass them into `OriginContextInput` to avoid repetitive `opt_str` calls.
+/// Resolves a pair of args/payload identifiers, returning an error on conflict.
+fn resolve_field(
+    field: &str,
+    args_value: Option<&str>,
+    payload_value: Option<&str>,
+) -> Result<Option<String>, McpError> {
+    resolve_identifier_precedence(field, args_value, payload_value)
+}
+
+/// Resolves an identifier pair and hashes the result as a stable session ID.
+fn resolve_session_hash(
+    field: &str,
+    hash_prefix: &str,
+    args_value: Option<&str>,
+    payload_value: Option<&str>,
+) -> Result<Option<String>, McpError> {
+    Ok(resolve_field(field, args_value, payload_value)?
+        .as_deref()
+        .map(|v| compute_stable_id_hash(hash_prefix, v)))
+}
+
+/// Common payload fields extracted from a JSON data map for origin context resolution.
 pub struct OriginPayloadFields {
     /// Project ID from payload.
     pub project_id: Option<String>,
@@ -176,12 +194,18 @@ pub struct OriginPayloadFields {
     pub session_id: Option<String>,
     /// Parent session ID from payload.
     pub parent_session_id: Option<String>,
-    /// Repository path from payload.
-    pub repo_path: Option<String>,
     /// Repository ID from payload.
     pub repo_id: Option<String>,
+    /// Repository path from payload.
+    pub repo_path: Option<String>,
     /// Worktree ID from payload.
     pub worktree_id: Option<String>,
+    /// File path from payload.
+    pub file_path: Option<String>,
+    /// Branch name from payload.
+    pub branch: Option<String>,
+    /// Commit hash from payload.
+    pub commit: Option<String>,
     /// Operator ID from payload.
     pub operator_id: Option<String>,
     /// Machine ID from payload.
@@ -190,51 +214,47 @@ pub struct OriginPayloadFields {
     pub agent_program: Option<String>,
     /// Model ID from payload.
     pub model_id: Option<String>,
-    /// Branch name from payload.
-    pub branch: Option<String>,
-    /// Commit hash from payload.
-    pub commit: Option<String>,
     /// Delegated flag from payload.
     pub delegated: Option<bool>,
 }
 
 impl OriginPayloadFields {
-    /// Extract all origin-related fields from a JSON data map in one pass.
+    /// Extracts common origin-related fields from a JSON object.
     pub fn extract(data: &Map<String, Value>) -> Self {
         Self {
             project_id: opt_str(data, "project_id"),
             session_id: opt_str(data, "session_id"),
             parent_session_id: opt_str(data, "parent_session_id"),
-            repo_path: opt_str(data, "repo_path"),
             repo_id: opt_str(data, "repo_id"),
+            repo_path: opt_str(data, "repo_path"),
             worktree_id: opt_str(data, "worktree_id"),
+            file_path: opt_str(data, "file_path"),
+            branch: opt_str(data, "branch"),
+            commit: opt_str(data, "commit"),
             operator_id: opt_str(data, "operator_id"),
             machine_id: opt_str(data, "machine_id"),
             agent_program: opt_str(data, "agent_program"),
             model_id: opt_str(data, "model_id"),
-            branch: opt_str(data, "branch"),
-            commit: opt_str(data, "commit"),
             delegated: opt_bool(data, "delegated"),
         }
     }
 
-    /// Build an `OriginContextInput` by combining these payload fields with argument-level fields.
-    ///
-    /// Callers fill in `args_*` fields and any overrides, then use `..Default::default()` for the rest.
+    /// Converts extracted fields into an `OriginContextInput` with payload slots populated.
     pub fn to_input(&self) -> OriginContextInput<'_> {
         OriginContextInput {
             project_id_payload: self.project_id.as_deref(),
             session_from_data: self.session_id.as_deref(),
             parent_session_from_data: self.parent_session_id.as_deref(),
-            repo_path_payload: self.repo_path.as_deref(),
             repo_id_payload: self.repo_id.as_deref(),
+            repo_path_payload: self.repo_path.as_deref(),
             worktree_id_payload: self.worktree_id.as_deref(),
+            file_path_payload: self.file_path.as_deref(),
+            branch_payload: self.branch.as_deref(),
+            commit_payload: self.commit.as_deref(),
             operator_id_payload: self.operator_id.as_deref(),
             machine_id_payload: self.machine_id.as_deref(),
             agent_program_payload: self.agent_program.as_deref(),
             model_id_payload: self.model_id.as_deref(),
-            branch_payload: self.branch.as_deref(),
-            commit_payload: self.commit.as_deref(),
             delegated_payload: self.delegated,
             ..Default::default()
         }
@@ -243,7 +263,7 @@ impl OriginPayloadFields {
 
 /// Resolves an `OriginContext` from the provided input, handling precedence between args and payload.
 pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginContext, McpError> {
-    let project_id = resolve_identifier_precedence(
+    let project_id = resolve_field(
         "project_id",
         input.project_id_args,
         input.project_id_payload,
@@ -252,83 +272,78 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
         return Err(McpError::invalid_params("project_id is required", None));
     }
 
-    let session_id_hash = resolve_identifier_precedence(
-        "session_id",
-        input.session_from_args,
-        input.session_from_data,
-    )?
-    .as_deref()
-    .map(|value| compute_stable_id_hash("session", value));
-    let parent_session_id_hash = resolve_identifier_precedence(
-        "parent_session_id",
-        input.parent_session_from_args,
-        input.parent_session_from_data,
-    )?
-    .as_deref()
-    .map(|value| compute_stable_id_hash("parent_session", value));
-
     Ok(OriginContext::builder()
         .org_id(Some(resolve_org_id(input.org_id)))
         .project_id(project_id)
-        .session_id_hash(session_id_hash)
-        .parent_session_id_hash(parent_session_id_hash)
-        .execution_id(resolve_identifier_precedence(
+        .session_id_hash(resolve_session_hash(
+            "session_id",
+            "session",
+            input.session_from_args,
+            input.session_from_data,
+        )?)
+        .parent_session_id_hash(resolve_session_hash(
+            "parent_session_id",
+            "parent_session",
+            input.parent_session_from_args,
+            input.parent_session_from_data,
+        )?)
+        .execution_id(resolve_field(
             "execution_id",
             input.execution_from_args,
             input.execution_from_data,
         )?)
-        .tool_name(resolve_identifier_precedence(
+        .tool_name(resolve_field(
             "tool_name",
             input.tool_name_args,
             input.tool_name_payload,
         )?)
-        .repo_id(resolve_identifier_precedence(
+        .repo_id(resolve_field(
             "repo_id",
             input.repo_id_args,
             input.repo_id_payload,
         )?)
-        .repo_path(resolve_identifier_precedence(
+        .repo_path(resolve_field(
             "repo_path",
             input.repo_path_args,
             input.repo_path_payload,
         )?)
-        .operator_id(resolve_identifier_precedence(
+        .operator_id(resolve_field(
             "operator_id",
             input.operator_id_args,
             input.operator_id_payload,
         )?)
-        .machine_id(resolve_identifier_precedence(
+        .machine_id(resolve_field(
             "machine_id",
             input.machine_id_args,
             input.machine_id_payload,
         )?)
-        .agent_program(resolve_identifier_precedence(
+        .agent_program(resolve_field(
             "agent_program",
             input.agent_program_args,
             input.agent_program_payload,
         )?)
-        .model_id(resolve_identifier_precedence(
+        .model_id(resolve_field(
             "model_id",
             input.model_id_args,
             input.model_id_payload,
         )?)
         .delegated(input.delegated_args.or(input.delegated_payload))
-        .worktree_id(resolve_identifier_precedence(
+        .worktree_id(resolve_field(
             "worktree_id",
             input.worktree_id_args,
             input.worktree_id_payload,
         )?)
-        .file_path(resolve_identifier_precedence(
+        .file_path(resolve_field(
             "file_path",
             input.file_path_args,
             input.file_path_payload,
         )?)
-        .branch(resolve_identifier_precedence(
+        .branch(resolve_field(
             "branch",
             input.branch_args,
             input.branch_payload,
         )?)
-        .commit(resolve_identifier_precedence(
+        .commit(resolve_field(
             "commit",
             input.commit_args,
             input.commit_payload,

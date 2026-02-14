@@ -33,37 +33,34 @@ pub(crate) fn validate_collection_name(collection: &str) -> Result<(), Validatio
 
 pub(crate) mod macros;
 
-pub mod agent;
-
+/// Consolidated argument types (legacy, re-exports from split modules).
 pub mod consolidated;
 
+/// Agent activity logging argument types.
+pub mod agent;
+/// Unified entity CRUD argument types.
 pub mod entity;
-
+/// Index operations argument types.
 pub mod index;
-
+/// Memory storage and retrieval argument types.
 pub mod memory;
-
-// pub mod project;
-// pub use project::{ProjectAction, ProjectArgs, ProjectResource};
-
+/// Project workflow argument types.
+pub mod project;
+/// Search operations argument types.
 pub mod search;
-
+/// Session lifecycle argument types.
 pub mod session;
-
+/// Validation and analysis argument types.
 pub mod validate;
-
+/// Version control operations argument types.
 pub mod vcs;
 
-pub use agent::{AgentAction, AgentArgs};
-pub use entity::{
-    EntityAction, EntityArgs, EntityResource, IssueEntityAction, IssueEntityArgs,
-    IssueEntityResource, OrgEntityAction, OrgEntityArgs, OrgEntityResource, PlanEntityAction,
-    PlanEntityArgs, PlanEntityResource, VcsEntityAction, VcsEntityArgs, VcsEntityResource,
+// Consolidate arguments from all modules (User refactor)
+pub use consolidated::{
+    AgentAction, AgentArgs, EntityAction, EntityArgs, EntityResource, IndexAction, IndexArgs,
+    IssueEntityAction, IssueEntityArgs, IssueEntityResource, MemoryAction, MemoryArgs,
+    MemoryResource, OrgEntityAction, OrgEntityArgs, OrgEntityResource, PlanEntityAction,
+    PlanEntityArgs, PlanEntityResource, ProjectAction, ProjectArgs, ProjectResource, SearchArgs,
+    SearchResource, SessionAction, SessionArgs, ValidateAction, ValidateArgs, ValidateScope,
+    VcsAction, VcsArgs, VcsEntityAction, VcsEntityArgs, VcsEntityResource,
 };
-pub use index::{IndexAction, IndexArgs};
-pub use memory::{MemoryAction, MemoryArgs, MemoryResource};
-pub use project::{ProjectAction, ProjectArgs, ProjectResource};
-pub use search::{SearchArgs, SearchResource};
-pub use session::{SessionAction, SessionArgs};
-pub use validate::{ValidateAction, ValidateArgs, ValidateScope};
-pub use vcs::{VcsAction, VcsArgs};

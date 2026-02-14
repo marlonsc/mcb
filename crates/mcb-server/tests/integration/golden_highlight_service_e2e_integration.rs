@@ -12,7 +12,6 @@ fn get_service() -> HighlightServiceImpl {
 }
 
 /// Test data: Language-specific code snippets covering all 12 supported languages
-#[allow(dead_code)]
 struct LanguageTestCase {
     language: &'static str,
     code: &'static str,

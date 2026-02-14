@@ -210,7 +210,6 @@ pub struct ArchitectureRulesConfig {
 
 /// Layer boundary configuration
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[allow(clippy::struct_field_names)]
 pub struct LayerBoundariesConfig {
     /// Allowed internal dependencies for domain layer
     pub domain_internal_deps: Vec<String>,
@@ -490,7 +489,6 @@ pub struct ImplementationRulesConfig {
 
 /// Validator enable/disable flags
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[allow(clippy::struct_excessive_bools)]
 pub struct ValidatorsConfig {
     /// Enable dependency validation
     pub dependency: bool,

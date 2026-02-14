@@ -65,8 +65,7 @@ macro_rules! define_violations {
     ) => {
 
         #[derive(Debug, Clone, serde::Serialize)]
-
-        $vis enum $name {
+                $vis enum $name {
             $(
                 $(#[doc = $doc])*
                 $variant { $( $field: $field_ty ),* }
@@ -90,8 +89,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn file(&self) -> Option<&std::path::PathBuf> {
+                        fn file(&self) -> Option<&std::path::PathBuf> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -101,8 +99,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn line(&self) -> Option<usize> {
+                        fn line(&self) -> Option<usize> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -112,8 +109,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn suggestion(&self) -> Option<String> {
+                        fn suggestion(&self) -> Option<String> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -145,8 +141,7 @@ macro_rules! define_violations {
     ) => {
 
         #[derive(Debug, Clone, serde::Serialize)]
-
-        $vis enum $name {
+                $vis enum $name {
             $(
                 $(#[doc = $doc])*
                 $variant { $( $field: $field_ty ),* }
@@ -182,8 +177,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn file(&self) -> Option<&std::path::PathBuf> {
+                        fn file(&self) -> Option<&std::path::PathBuf> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -193,8 +187,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn line(&self) -> Option<usize> {
+                        fn line(&self) -> Option<usize> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -204,8 +197,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn suggestion(&self) -> Option<String> {
+                        fn suggestion(&self) -> Option<String> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -237,8 +229,7 @@ macro_rules! define_violations {
     ) => {
 
         #[derive(Debug, Clone, serde::Serialize)]
-
-        $vis enum $name {
+                $vis enum $name {
             $(
                 $(#[doc = $doc])*
                 $variant { $( $field: $field_ty ),* }
@@ -262,8 +253,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn file(&self) -> Option<&std::path::PathBuf> {
+                        fn file(&self) -> Option<&std::path::PathBuf> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -273,8 +263,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn line(&self) -> Option<usize> {
+                        fn line(&self) -> Option<usize> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -284,8 +273,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn suggestion(&self) -> Option<String> {
+                        fn suggestion(&self) -> Option<String> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -316,8 +304,7 @@ macro_rules! define_violations {
     ) => {
 
         #[derive(Debug, Clone, serde::Serialize)]
-
-        $vis enum $name {
+                $vis enum $name {
             $(
                 $(#[doc = $doc])*
                 $variant { $( $field: $field_ty ),* }
@@ -353,8 +340,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn file(&self) -> Option<&std::path::PathBuf> {
+                        fn file(&self) -> Option<&std::path::PathBuf> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -364,8 +350,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn line(&self) -> Option<usize> {
+                        fn line(&self) -> Option<usize> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -375,8 +360,7 @@ macro_rules! define_violations {
                 }
             }
 
-            #[allow(unused_variables)]
-            fn suggestion(&self) -> Option<String> {
+                        fn suggestion(&self) -> Option<String> {
                 match self {
                     $(
                         Self::$variant { $( $field ),* } => {
@@ -400,9 +384,7 @@ macro_rules! define_violations {
 
     // Get file field helper
     (@get_file $( $field:ident : $field_ty:ty ),*) => {{
-        #[allow(unused_assignments)]
-        #[allow(unused_mut)]
-        let mut file_path = None;
+                        let mut file_path = None;
         $(
             define_violations!(@check_file_field file_path, $field, $field : $field_ty);
         )*
@@ -420,9 +402,7 @@ macro_rules! define_violations {
 
     // Get line field helper
     (@get_line $( $field:ident : $field_ty:ty ),*) => {{
-        #[allow(unused_assignments)]
-        #[allow(unused_mut)]
-        let mut line_num = None;
+                        let mut line_num = None;
         $(
             define_violations!(@check_line_field line_num, $field, $field : $field_ty);
         )*

@@ -5,10 +5,12 @@
 //! instead of hardcoded paths.
 
 use mcb_validate::rules::yaml_loader::YamlRuleLoader;
+use rstest::*;
 
 use crate::test_constants::*;
 use crate::test_utils::{build_yaml_variables, get_workspace_root};
 
+#[rstest]
 #[tokio::test]
 async fn test_ca001_rule_loading() {
     let workspace_root = get_workspace_root();

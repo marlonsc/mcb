@@ -50,7 +50,7 @@ Memory Context Browser is a high-performance, extensible Model Context Protocol 
 
 ### Current Status
 
-**Version**: 0.2.0 (Memory, Session, Agent, VCS + Documentation Overhaul)
+**Version**: 0.2.1 (Memory, Session, Agent, VCS + Documentation Overhaul + rstest)
 **Architecture Maturity**: ✅ **100% Complete DI Implementation**
 **DI Status**: ✅ 20+ Port Traits, ✅ Provider Registry, ✅ Service Factory, ✅ Full Port/Adapter Wiring
 **Provider Registration**: ✅ Linkme distributed slices (compile-time), ✅ Inventory removed

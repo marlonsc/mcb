@@ -13,7 +13,7 @@ understanding — all through the standard Model Context Protocol.
 
 - 🔍 **Semantic Code Search** — Natural language queries over indexed codebases using vector embeddings
 - 🧠 **Persistent Memory** — Cross-session observation storage with timeline, tagging, and context injection
-- 🏗️ **Multi-Provider Architecture** — 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed) and 5 vector stores (Milvus, EdgeVec)
+- 🏗️ **Multi-Provider Architecture** — 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic) and 5 vector stores (Milvus, EdgeVec, Qdrant, Pinecone, Encrypted)
 - 🌳 **AST-Aware Analysis** — Tree-sitter parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
 - ✅ **Architecture Validation** — Built-in Clean Architecture rule enforcement (9 rules, 7 phases, 349+ validate tests, 1700+ total tests)
 - 🔌 **MCP Protocol Native** — Seamless integration with Claude Desktop, Claude Code, and any MCP-compatible client
@@ -113,7 +113,7 @@ MCB follows **Clean Architecture** with strict inward-only dependency flow:
   (embeddings, stores)    (architecture rules)
 ```
 
-8 workspace crates enforce layer boundaries at compile time via
+9 workspace crates enforce layer boundaries at compile time via
 [linkme](https://crates.io/crates/linkme) provider registration (zero runtime overhead).
 
 See [Architecture Documentation](./docs/architecture/ARCHITECTURE.md) for detailed design
@@ -136,7 +136,7 @@ and [ADR index](./docs/adr/) for all 48 Architecture Decision Records.
 
 - [Contributing](./docs/developer/CONTRIBUTING.md) — Development setup, coding standards, PR process
 - [Roadmap](./docs/developer/ROADMAP.md) — Version plans and feature timeline
-- [Integration Tests](./docs/INTEGRATION_TESTS.md) — Test infrastructure and patterns
+- [Integration Tests](./docs/testing/INTEGRATION_TESTS.md) — Test infrastructure and patterns
 
 ### Operations
 

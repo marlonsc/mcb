@@ -4,7 +4,7 @@ use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterf
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
-use super::common::{optional_data_map, require_session_id, str_vec};
+use super::common::{optional_data_map, str_vec};
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
@@ -16,9 +16,13 @@ pub async fn summarize_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &SessionArgs,
 ) -> Result<CallToolResult, McpError> {
-    let session_id = match require_session_id(args) {
-        Ok(id) => id,
-        Err(error_result) => return Ok(error_result),
+    let session_id = match args.session_id.as_ref() {
+        Some(id) => id,
+        None => {
+            return Ok(CallToolResult::error(vec![Content::text(
+                "Missing session_id",
+            )]));
+        }
     };
     if let Some(data) = optional_data_map(&args.data) {
         let topics = str_vec(data, "topics");

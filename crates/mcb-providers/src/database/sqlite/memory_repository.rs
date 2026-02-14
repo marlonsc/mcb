@@ -91,8 +91,8 @@ fn build_timeline_filter_sql(filter: Option<&MemoryFilter>) -> (String, Vec<SqlP
 
 /// Assembles a timeline from before/after row sets plus the anchor observation.
 async fn assemble_timeline(
-    before_rows: &[Box<dyn mcb_domain::ports::infrastructure::database::RowAccess>],
-    after_rows: &[Box<dyn mcb_domain::ports::infrastructure::database::RowAccess>],
+    before_rows: &[Arc<dyn mcb_domain::ports::infrastructure::database::SqlRow>],
+    after_rows: &[Arc<dyn mcb_domain::ports::infrastructure::database::SqlRow>],
     repo: &SqliteMemoryRepository,
     anchor_id: &ObservationId,
 ) -> Result<Vec<Observation>> {
@@ -138,16 +138,13 @@ impl SqliteMemoryRepository {
         anchor_time: i64,
         limit: usize,
         order: &str,
-    ) -> Result<Vec<Box<dyn mcb_domain::ports::infrastructure::database::RowAccess>>> {
+    ) -> Result<Vec<Arc<dyn mcb_domain::ports::infrastructure::database::SqlRow>>> {
         let op = if order == "DESC" { "<" } else { ">" };
         let sql = format!("{base_sql} AND created_at {op} ? ORDER BY created_at {order} LIMIT ?");
         let mut params = base_params.to_vec();
         params.push(SqlParam::I64(anchor_time));
         params.push(SqlParam::I64(limit as i64));
-        self.executor
-            .query_all(&sql, &params)
-            .await
-            .map_err(Into::into)
+        self.executor.query_all(&sql, &params).await
     }
 }
 

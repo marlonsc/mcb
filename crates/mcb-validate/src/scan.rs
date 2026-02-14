@@ -142,7 +142,6 @@ where
 ///
 /// This is a generic helper to reduce complexity in validators that need to analyze
 /// function bodies, trait definitions, or other block structures.
-#[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 pub fn extract_balanced_block<'a>(
     lines: &'a [&'a str],
     start_line_idx: usize,

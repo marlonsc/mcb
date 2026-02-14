@@ -48,7 +48,6 @@ impl SecureErasure {
     }
 
     /// Securely erase a string by overwriting its buffer
-    #[allow(unsafe_code)]
     pub fn erase_string(s: &mut String) {
         // SAFETY: We have exclusive mutable access to the String, and we only
         // overwrite the bytes without changing the length. The bytes remain

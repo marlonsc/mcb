@@ -132,7 +132,6 @@ impl RcaAnalyzer {
 
     /// Convert RCA `CodeMetrics` to our `RcaMetrics`
     /// LOC/count metrics from `rust_code_analysis` are f64; we round and clamp for usize.
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn extract_metrics(space: &FuncSpace) -> RcaMetrics {
         let m = &space.metrics;
         let to_usize = |x: f64| x.round().max(0.0) as usize;
@@ -175,7 +174,6 @@ impl RcaAnalyzer {
         let functions = self.analyze_file(path)?;
         let mut violations = Vec::new();
 
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let to_u32_metric = |x: f64| x.round().max(0.0) as u32;
         for func in functions {
             if let Some(threshold) = self.thresholds.get(MetricType::CyclomaticComplexity) {

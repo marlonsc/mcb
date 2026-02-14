@@ -4,7 +4,7 @@ use std::process::Command;
 use mcb_server::args::{VcsAction, VcsArgs};
 use mcb_server::handlers::VcsHandler;
 use rmcp::handler::server::wrapper::Parameters;
-use rstest::rstest;
+use rstest::*;
 
 use crate::handlers::test_helpers::create_real_domain_services;
 
@@ -87,6 +87,7 @@ async fn test_vcs_list_repositories_cases(#[case] limit: Option<u32>) {
     assert!(!response.is_error.unwrap_or(false));
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_vcs_index_repository_success() {
     let (handler, _services_temp_dir) = create_handler().await;
@@ -103,6 +104,7 @@ async fn test_vcs_index_repository_success() {
     let _response = result.expect("Expected successful response");
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_vcs_index_repository_with_repo_path() {
     let (handler, _services_temp_dir) = create_handler().await;
@@ -117,6 +119,7 @@ async fn test_vcs_index_repository_with_repo_path() {
     let _response = result.expect("Expected response");
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_vcs_analyze_impact_with_defaults() {
     let (handler, _services_temp_dir) = create_handler().await;
@@ -132,6 +135,7 @@ async fn test_vcs_analyze_impact_with_defaults() {
     let _response = result.expect("Expected response");
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_vcs_analyze_impact_missing_repo_path() {
     let (handler, _services_temp_dir) = create_handler().await;

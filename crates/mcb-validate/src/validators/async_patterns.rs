@@ -111,7 +111,6 @@ impl AsyncPatternValidator {
     }
 
     /// Detect blocking calls in async functions
-    #[allow(clippy::too_many_lines)]
     pub fn validate_blocking_in_async(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
 

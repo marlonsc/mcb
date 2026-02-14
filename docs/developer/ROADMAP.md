@@ -22,7 +22,7 @@ Development roadmap for**Memory Context Browser (MCB)** — a high-performance M
 
 | Metric | Value |
 | -------- | ------- | |
-| Beads issues | 312 total (75 open, 237 closed, 39 ready, 36 blocked) |
+| Beads issues | 312+ total |
 | Avg lead time | 9.5 hours |
 | TODO/FIXME | 164 markers in `crates/` |
 | Languages | 13 via tree-sitter |

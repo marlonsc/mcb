@@ -99,9 +99,9 @@ Claude will use `search (resource=code)` to find relevant code.
 | `index (action=status)` | Check indexing progress |
 | `index (action=clear)` | Remove indexed data |
 
-## Supported Languages (12)
+## Supported Languages (13)
 
-Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin
+Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin (13 languages via 12 tree-sitter parsers; JavaScript handles both JS and TS)
 
 ## Vector Store Options
 

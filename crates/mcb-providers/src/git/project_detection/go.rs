@@ -137,7 +137,6 @@ fn go_factory(
         })
 }
 
-#[allow(unsafe_code)]
 #[linkme::distributed_slice(PROJECT_DETECTORS)]
 static GO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "go",

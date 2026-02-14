@@ -339,7 +339,6 @@ impl RefactoringValidator {
     }
 
     /// Check for source files without corresponding test files
-    #[allow(clippy::too_many_lines)]
     pub fn validate_missing_test_files(&self) -> Result<Vec<RefactoringViolation>> {
         let mut violations = Vec::new();
         for crate_dir in self.get_crate_dirs()? {

@@ -12,7 +12,6 @@ struct EnvVarGuard {
 }
 
 impl EnvVarGuard {
-    #[allow(unsafe_code)]
     fn new(vars: &[(&str, &str)]) -> Self {
         // SAFETY: Tests must run with --test-threads=1 or #[serial]
         for (k, v) in vars {

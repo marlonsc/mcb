@@ -61,7 +61,6 @@ impl DuplicationType {
 }
 
 /// Configuration thresholds for duplication detection
-#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DuplicationThresholds {
     /// Minimum number of lines for a clone to be reported

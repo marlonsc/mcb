@@ -172,13 +172,11 @@ macro_rules! context {
         use ::std::fmt::{Debug, Formatter};
         use ::std::result::Result;
 
-        #[allow(non_camel_case_types)]
-        struct ContextMacroCtxObject<$($key: Serialize),*> {
+                struct ContextMacroCtxObject<$($key: Serialize),*> {
             $($key: $key),*
         }
 
-        #[allow(non_camel_case_types)]
-        impl<$($key: Serialize),*> Serialize for ContextMacroCtxObject<$($key),*> {
+                impl<$($key: Serialize),*> Serialize for ContextMacroCtxObject<$($key),*> {
             fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
                 where S: Serializer,
             {
@@ -188,8 +186,7 @@ macro_rules! context {
             }
         }
 
-        #[allow(non_camel_case_types)]
-        impl<$($key: Debug + Serialize),*> Debug for ContextMacroCtxObject<$($key),*> {
+                impl<$($key: Debug + Serialize),*> Debug for ContextMacroCtxObject<$($key),*> {
             fn fmt(&self, f: &mut Formatter<'_>) -> ::std::fmt::Result {
                 f.debug_struct("context!")
                     $(.field(stringify!($key), &self.$key))*

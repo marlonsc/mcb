@@ -140,7 +140,6 @@ fn f64_to_usize(v: f64) -> usize {
     if v.is_nan() || v < 0.0 {
         return 0;
     }
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     let u = v.round() as u64;
     if u > usize::MAX as u64 {
         return usize::MAX;

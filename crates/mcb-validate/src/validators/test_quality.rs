@@ -185,7 +185,6 @@ impl TestQualityValidator {
         Ok(violations)
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn check_ignored_tests(
         &self,
         file: &Path,

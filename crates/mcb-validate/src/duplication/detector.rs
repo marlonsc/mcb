@@ -209,7 +209,6 @@ impl CloneDetector {
 ///
 /// This is a simplified tokenizer. A full implementation would use
 /// tree-sitter for language-aware tokenization.
-#[allow(clippy::too_many_lines)]
 pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
     let mut current_line = 1;
