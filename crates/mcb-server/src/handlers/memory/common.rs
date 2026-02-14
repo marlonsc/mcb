@@ -12,10 +12,8 @@ use serde_json::{Map, Value};
 use uuid::Uuid;
 
 use crate::args::MemoryArgs;
-use crate::handlers::helpers::{OriginContextInput, resolve_origin_context};
-pub(super) use crate::handlers::helpers::{
-    opt_bool, opt_str, require_data_map, require_str, str_vec,
-};
+use crate::handlers::helpers::{OriginPayloadFields, resolve_origin_context};
+pub(super) use crate::handlers::helpers::{opt_str, require_data_map, require_str, str_vec};
 
 pub(super) fn require_i64(data: &Map<String, Value>, key: &str) -> Result<i64, CallToolResult> {
     data.get(key).and_then(Value::as_i64).ok_or_else(|| {
@@ -72,41 +70,18 @@ pub(super) fn resolve_memory_origin_context(
         .clone()
         .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
 
-    let payload_repo_id = opt_str(data, "repo_id");
-    let payload_project_id = opt_str(data, "project_id");
-    let payload_branch = opt_str(data, "branch");
-    let payload_commit = opt_str(data, "commit");
-    let payload_repo_path = opt_str(data, "repo_path");
-    let payload_worktree_id = opt_str(data, "worktree_id");
-    let payload_operator_id = opt_str(data, "operator_id");
-    let payload_machine_id = opt_str(data, "machine_id");
-    let payload_agent_program = opt_str(data, "agent_program");
-    let payload_model_id = opt_str(data, "model_id");
-    let payload_delegated = opt_bool(data, "delegated");
-
-    let mut origin_context = resolve_origin_context(OriginContextInput {
-        org_id: args.org_id.as_deref(),
-        project_id_args: args.project_id.as_deref(),
-        project_id_payload: payload_project_id.as_deref(),
-        execution_from_args: opts.execution_from_args,
-        execution_from_data: opts.execution_from_data,
-        tool_name_args: Some("memory"),
-        repo_id_args: args.repo_id.as_deref(),
-        repo_id_payload: payload_repo_id.as_deref(),
-        repo_path_payload: payload_repo_path.as_deref(),
-        worktree_id_payload: payload_worktree_id.as_deref(),
-        file_path_payload: opts.file_path_payload,
-        branch_payload: payload_branch.as_deref(),
-        commit_payload: payload_commit.as_deref(),
-        operator_id_payload: payload_operator_id.as_deref(),
-        machine_id_payload: payload_machine_id.as_deref(),
-        agent_program_payload: payload_agent_program.as_deref(),
-        model_id_payload: payload_model_id.as_deref(),
-        delegated_payload: payload_delegated,
-        require_project_id: true,
-        timestamp: opts.timestamp,
-        ..Default::default()
-    })?;
+    let payload = OriginPayloadFields::extract(data);
+    let mut input = payload.to_input();
+    input.org_id = args.org_id.as_deref();
+    input.project_id_args = args.project_id.as_deref();
+    input.execution_from_args = opts.execution_from_args;
+    input.execution_from_data = opts.execution_from_data;
+    input.tool_name_args = Some("memory");
+    input.repo_id_args = args.repo_id.as_deref();
+    input.file_path_payload = opts.file_path_payload;
+    input.require_project_id = true;
+    input.timestamp = opts.timestamp;
+    let mut origin_context = resolve_origin_context(input)?;
 
     if origin_context.repo_id.is_none() {
         origin_context.repo_id = vcs_context.repo_id;

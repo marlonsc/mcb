@@ -165,6 +165,82 @@ pub struct OriginContextInput<'a> {
     pub timestamp: Option<i64>,
 }
 
+/// Extracted payload fields from a JSON data map for origin-context resolution.
+///
+/// Use `OriginPayloadFields::extract(data)` to pull all origin-related fields at once,
+/// then pass them into `OriginContextInput` to avoid repetitive `opt_str` calls.
+pub struct OriginPayloadFields {
+    /// Project ID from payload.
+    pub project_id: Option<String>,
+    /// Session ID from payload.
+    pub session_id: Option<String>,
+    /// Parent session ID from payload.
+    pub parent_session_id: Option<String>,
+    /// Repository path from payload.
+    pub repo_path: Option<String>,
+    /// Repository ID from payload.
+    pub repo_id: Option<String>,
+    /// Worktree ID from payload.
+    pub worktree_id: Option<String>,
+    /// Operator ID from payload.
+    pub operator_id: Option<String>,
+    /// Machine ID from payload.
+    pub machine_id: Option<String>,
+    /// Agent program from payload.
+    pub agent_program: Option<String>,
+    /// Model ID from payload.
+    pub model_id: Option<String>,
+    /// Branch name from payload.
+    pub branch: Option<String>,
+    /// Commit hash from payload.
+    pub commit: Option<String>,
+    /// Delegated flag from payload.
+    pub delegated: Option<bool>,
+}
+
+impl OriginPayloadFields {
+    /// Extract all origin-related fields from a JSON data map in one pass.
+    pub fn extract(data: &Map<String, Value>) -> Self {
+        Self {
+            project_id: opt_str(data, "project_id"),
+            session_id: opt_str(data, "session_id"),
+            parent_session_id: opt_str(data, "parent_session_id"),
+            repo_path: opt_str(data, "repo_path"),
+            repo_id: opt_str(data, "repo_id"),
+            worktree_id: opt_str(data, "worktree_id"),
+            operator_id: opt_str(data, "operator_id"),
+            machine_id: opt_str(data, "machine_id"),
+            agent_program: opt_str(data, "agent_program"),
+            model_id: opt_str(data, "model_id"),
+            branch: opt_str(data, "branch"),
+            commit: opt_str(data, "commit"),
+            delegated: opt_bool(data, "delegated"),
+        }
+    }
+
+    /// Build an `OriginContextInput` by combining these payload fields with argument-level fields.
+    ///
+    /// Callers fill in `args_*` fields and any overrides, then use `..Default::default()` for the rest.
+    pub fn to_input(&self) -> OriginContextInput<'_> {
+        OriginContextInput {
+            project_id_payload: self.project_id.as_deref(),
+            session_from_data: self.session_id.as_deref(),
+            parent_session_from_data: self.parent_session_id.as_deref(),
+            repo_path_payload: self.repo_path.as_deref(),
+            repo_id_payload: self.repo_id.as_deref(),
+            worktree_id_payload: self.worktree_id.as_deref(),
+            operator_id_payload: self.operator_id.as_deref(),
+            machine_id_payload: self.machine_id.as_deref(),
+            agent_program_payload: self.agent_program.as_deref(),
+            model_id_payload: self.model_id.as_deref(),
+            branch_payload: self.branch.as_deref(),
+            commit_payload: self.commit.as_deref(),
+            delegated_payload: self.delegated,
+            ..Default::default()
+        }
+    }
+}
+
 /// Resolves an `OriginContext` from the provided input, handling precedence between args and payload.
 pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginContext, McpError> {
     let project_id = resolve_identifier_precedence(

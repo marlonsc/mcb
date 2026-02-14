@@ -98,13 +98,7 @@ impl SearchHandler {
                         .session_id
                         .clone()
                         .map(|id| compute_stable_id_hash("session", id.as_str())),
-                    parent_session_id: None,
-                    repo_id: None,
-                    time_range: None,
-                    branch: None,
-                    commit: None,
-                    id: None,
-                    project_id: None,
+                    ..Default::default()
                 };
                 let limit = args.limit.unwrap_or(10) as usize;
                 match self

@@ -1,3 +1,6 @@
+//! Error shape tests for MCP handler error responses.
+
+use rstest::{fixture, rstest};
 #[path = "handlers/test_helpers.rs"]
 mod test_helpers;
 
@@ -5,7 +8,6 @@ use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource, SessionAction, 
 use mcb_server::handlers::{MemoryHandler, SessionHandler};
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
-use rstest::*;
 use serde_json::{Value, json};
 
 use test_helpers::{create_base_memory_args, create_real_domain_services};

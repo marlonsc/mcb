@@ -3,13 +3,12 @@ use std::sync::Arc;
 use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
-use serde_json::Value;
 
-use super::common::{opt_str, optional_data_map, require_session_id, str_vec};
+use super::common::{optional_data_map, require_session_id, str_vec};
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::{OriginContextInput, resolve_origin_context};
+use crate::handlers::helpers::{OriginPayloadFields, resolve_origin_context};
 
 /// Creates or retrieves a session summary.
 #[tracing::instrument(skip_all)]
@@ -26,36 +25,16 @@ pub async fn summarize_session(
         let decisions = str_vec(data, "decisions");
         let next_steps = str_vec(data, "next_steps");
         let key_files = str_vec(data, "key_files");
-        let payload_project_id = opt_str(data, "project_id");
-        let payload_session_id = opt_str(data, "session_id");
-        let payload_worktree_id = opt_str(data, "worktree_id");
-        let payload_parent_session_id = opt_str(data, "parent_session_id");
-        let payload_repo_path = opt_str(data, "repo_path");
-        let payload_operator_id = opt_str(data, "operator_id");
-        let payload_machine_id = opt_str(data, "machine_id");
-        let payload_agent_program = opt_str(data, "agent_program");
-        let payload_model_id = opt_str(data, "model_id");
-        let payload_delegated = data.get("delegated").and_then(Value::as_bool);
-        let origin_context = resolve_origin_context(OriginContextInput {
-            org_id: args.org_id.as_deref(),
-            project_id_args: args.project_id.as_deref(),
-            project_id_payload: payload_project_id.as_deref(),
-            session_from_args: Some(session_id.as_str()),
-            session_from_data: payload_session_id.as_deref(),
-            parent_session_from_args: args.parent_session_id.as_deref(),
-            parent_session_from_data: payload_parent_session_id.as_deref(),
-            tool_name_args: Some("session"),
-            repo_path_payload: payload_repo_path.as_deref(),
-            worktree_id_args: args.worktree_id.as_deref(),
-            worktree_id_payload: payload_worktree_id.as_deref(),
-            operator_id_payload: payload_operator_id.as_deref(),
-            machine_id_payload: payload_machine_id.as_deref(),
-            agent_program_payload: payload_agent_program.as_deref(),
-            model_id_payload: payload_model_id.as_deref(),
-            delegated_payload: payload_delegated,
-            require_project_id: true,
-            ..Default::default()
-        })?;
+        let payload = OriginPayloadFields::extract(data);
+        let mut input = payload.to_input();
+        input.org_id = args.org_id.as_deref();
+        input.project_id_args = args.project_id.as_deref();
+        input.session_from_args = Some(session_id.as_str());
+        input.parent_session_from_args = args.parent_session_id.as_deref();
+        input.tool_name_args = Some("session");
+        input.worktree_id_args = args.worktree_id.as_deref();
+        input.require_project_id = true;
+        let origin_context = resolve_origin_context(input)?;
         let project_id = origin_context.project_id.clone().ok_or_else(|| {
             McpError::invalid_params("project_id is required for summarize", None)
         })?;

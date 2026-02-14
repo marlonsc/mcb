@@ -1,9 +1,11 @@
+//! Schema regression tests for MCP tool argument types.
+
 use mcb_server::args::{
     EntityAction, EntityArgs, EntityResource, IndexAction, IndexArgs, MemoryAction, MemoryArgs,
     MemoryResource, SearchArgs, SearchResource, SessionAction, SessionArgs, ValidateAction,
     ValidateArgs, VcsAction, VcsArgs,
 };
-use rstest::*;
+use rstest::rstest;
 use schemars::{JsonSchema, schema_for};
 use serde_json::Value;
 
