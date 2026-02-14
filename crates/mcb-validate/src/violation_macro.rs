@@ -24,7 +24,9 @@
 //! }
 //! ```
 
+/// Extract the primary file path from a collection element (PathBuf or tuple).
 pub trait ExtractFilePath {
+    /// Returns a reference to the [`PathBuf`] component of this element.
     fn extract_file_path(&self) -> &std::path::PathBuf;
 }
 
@@ -459,12 +461,6 @@ macro_rules! define_violations {
     (@select_file_arm $self:expr, $variant:ident, locations : $loc_ty:ty $(, $rest:ident : $rest_ty:ty )* ) => {
         match $self {
             Self::$variant { locations, .. } => locations.first().map(|loc| $crate::violation_macro::ExtractFilePath::extract_file_path(loc)),
-            _ => None,
-        }
-    };
-    (@select_file_arm $self:expr, $variant:ident, locations : Vec<std::path::PathBuf> $(, $rest:ident : $rest_ty:ty )* ) => {
-        match $self {
-            Self::$variant { locations, .. } => locations.first(),
             _ => None,
         }
     };

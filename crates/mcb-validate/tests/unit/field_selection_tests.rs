@@ -112,20 +112,28 @@ fn file_selection_referencing_file_field() {
 }
 
 // ============================================================================
-// file() — `locations: Vec<PathBuf>` → None (opaque :ty fragment cannot match literal Vec<PathBuf>)
+// file() — `locations: Vec<PathBuf>` → first element via ExtractFilePath trait
 // ============================================================================
 
 #[test]
-fn file_selection_locations_vec_returns_none() {
-    // `locations: Vec<PathBuf>` passes through the macro as an opaque `:ty` fragment,
-    // so the `Vec<PathBuf>` literal-match arm in `@select_file_arm` never fires.
-    // This is a known declarative-macro limitation; `file()` returns None.
+fn file_selection_locations_vec_returns_first() {
     let v = mcb_validate::RefactoringViolation::DuplicateDefinition {
         type_name: "Config".to_string(),
         locations: vec![
             PathBuf::from("src/a/config.rs"),
             PathBuf::from("src/b/config.rs"),
         ],
+        suggestion: "Consolidate".to_string(),
+        severity: Severity::Warning,
+    };
+    assert_eq!(v.file(), Some(&PathBuf::from("src/a/config.rs")));
+}
+
+#[test]
+fn file_selection_locations_vec_empty_returns_none() {
+    let v = mcb_validate::RefactoringViolation::DuplicateDefinition {
+        type_name: "Config".to_string(),
+        locations: vec![],
         suggestion: "Consolidate".to_string(),
         severity: Severity::Warning,
     };
