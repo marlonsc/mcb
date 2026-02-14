@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 /// Categories for error patterns to classify the type of error encountered.
 #[derive(
@@ -44,6 +45,7 @@ impl ErrorPatternCategory {
 ///
 /// An error pattern captures the signature, category, and metadata of errors
 /// that occur repeatedly, enabling pattern recognition and solution tracking.
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorPattern {
     /// Unique identifier for this error pattern.
@@ -76,6 +78,7 @@ pub struct ErrorPattern {
 ///
 /// Tracks when an error pattern is detected, the confidence level, and whether
 /// a solution was applied and successful.
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorPatternMatch {
     /// Unique identifier for this match record.
