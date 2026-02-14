@@ -4,7 +4,9 @@ use async_trait::async_trait;
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use mcb_domain::ports::repositories::PlanEntityRepository;
+use mcb_domain::ports::repositories::plan_entity_repository::{
+    PlanRegistry, PlanReviewRegistry, PlanVersionRegistry,
+};
 
 use super::query_helpers;
 use super::row_helpers::{req_i64, req_str};
@@ -73,8 +75,8 @@ fn row_to_plan_review(row: &dyn SqlRow) -> Result<PlanReview> {
 }
 
 #[async_trait]
-/// Persistent plan entity repository using SQLite.
-impl PlanEntityRepository for SqlitePlanEntityRepository {
+/// Persistent plan registry using SQLite.
+impl PlanRegistry for SqlitePlanEntityRepository {
     /// Creates a new plan.
     async fn create_plan(&self, plan: &Plan) -> Result<()> {
         self.executor
@@ -154,7 +156,11 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
             )
             .await
     }
+}
 
+#[async_trait]
+/// Persistent plan version registry using SQLite.
+impl PlanVersionRegistry for SqlitePlanEntityRepository {
     /// Creates a new plan version.
     async fn create_plan_version(&self, version: &PlanVersion) -> Result<()> {
         self.executor
@@ -197,7 +203,11 @@ impl PlanEntityRepository for SqlitePlanEntityRepository {
         )
         .await
     }
+}
 
+#[async_trait]
+/// Persistent plan review registry using SQLite.
+impl PlanReviewRegistry for SqlitePlanEntityRepository {
     /// Creates a new plan review.
     async fn create_plan_review(&self, review: &PlanReview) -> Result<()> {
         self.executor

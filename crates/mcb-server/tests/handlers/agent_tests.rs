@@ -16,7 +16,7 @@ fn build_args(action: AgentAction, session_id: &str, data: serde_json::Value) ->
     AgentArgs {
         action,
         org_id: None,
-        session_id: SessionId::new(session_id),
+        session_id: SessionId::from_name(session_id),
         data,
     }
 }
@@ -69,7 +69,7 @@ async fn test_agent_log_tool_empty_session_id() {
     let args = AgentArgs {
         action: AgentAction::LogTool,
         org_id: None,
-        session_id: SessionId::new(""),
+        session_id: SessionId::from_name(""),
         data: json!({ "tool_name": "search_code", "success": true }),
     };
 

@@ -152,7 +152,7 @@ async fn test_full_index_and_search_flow() {
 
     // Step 1: Create collection
     vector_store
-        .create_collection(&CollectionId::new(collection), 384)
+        .create_collection(&CollectionId::from_name(collection), 384)
         .await
         .expect("Collection creation should succeed");
 
@@ -180,7 +180,7 @@ async fn test_full_index_and_search_flow() {
 
     // Step 4: Insert into vector store
     let ids = vector_store
-        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
+        .insert_vectors(&CollectionId::from_name(collection), &embeddings, metadata)
         .await
         .expect("Insert should succeed");
 
@@ -195,7 +195,7 @@ async fn test_full_index_and_search_flow() {
     let query_vector = &query_embeddings[0].vector;
 
     let results = vector_store
-        .search_similar(&CollectionId::new(collection), query_vector, 5, None)
+        .search_similar(&CollectionId::from_name(collection), query_vector, 5, None)
         .await
         .expect("Search should succeed");
 
@@ -246,11 +246,11 @@ async fn test_multiple_collections_isolated() {
     let collection_b = "isolation_test_b";
 
     vector_store
-        .create_collection(&CollectionId::new(collection_a), 384)
+        .create_collection(&CollectionId::from_name(collection_a), 384)
         .await
         .expect("Create collection A");
     vector_store
-        .create_collection(&CollectionId::new(collection_b), 384)
+        .create_collection(&CollectionId::from_name(collection_b), 384)
         .await
         .expect("Create collection B");
 
@@ -270,7 +270,11 @@ async fn test_multiple_collections_isolated() {
         .collect();
 
     vector_store
-        .insert_vectors(&CollectionId::new(collection_a), &embeddings, metadata)
+        .insert_vectors(
+            &CollectionId::from_name(collection_a),
+            &embeddings,
+            metadata,
+        )
         .await
         .expect("Insert into A");
 
@@ -282,7 +286,7 @@ async fn test_multiple_collections_isolated() {
 
     let results_a = vector_store
         .search_similar(
-            &CollectionId::new(collection_a),
+            &CollectionId::from_name(collection_a),
             &query_emb[0].vector,
             10,
             None,
@@ -292,7 +296,7 @@ async fn test_multiple_collections_isolated() {
 
     let results_b = vector_store
         .search_similar(
-            &CollectionId::new(collection_b),
+            &CollectionId::from_name(collection_b),
             &query_emb[0].vector,
             10,
             None,

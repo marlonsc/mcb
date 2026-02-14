@@ -67,7 +67,7 @@ async fn test_jobs_endpoint_with_operations() {
     let harness = AdminTestHarness::new();
     let op_id = harness
         .indexing()
-        .start_operation(&CollectionId::new("test-collection"), 50);
+        .start_operation(&CollectionId::from_name("test-collection"), 50);
     harness
         .indexing()
         .update_progress(&op_id, Some("src/main.rs".to_string()), 10);

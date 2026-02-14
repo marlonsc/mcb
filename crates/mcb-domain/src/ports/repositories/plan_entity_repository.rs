@@ -13,7 +13,9 @@ use crate::error::Result;
 // TODO(architecture): Consider splitting into smaller interfaces (ISP).
 // Current interface combines Plan, PlanVersion, and PlanReview management.
 // TODO(PORT003): Port PlanEntityRepository has 11 methods (>10) - Consider splitting into smaller interfaces (ISP)
-pub trait PlanEntityRepository: Send + Sync {
+#[async_trait]
+/// Registry for plans.
+pub trait PlanRegistry: Send + Sync {
     /// Performs the create plan operation.
     async fn create_plan(&self, plan: &Plan) -> Result<()>;
     /// Performs the get plan operation.
@@ -24,18 +26,37 @@ pub trait PlanEntityRepository: Send + Sync {
     async fn update_plan(&self, plan: &Plan) -> Result<()>;
     /// Performs the delete plan operation.
     async fn delete_plan(&self, org_id: &str, id: &str) -> Result<()>;
+}
 
+#[async_trait]
+/// Registry for plan versions.
+pub trait PlanVersionRegistry: Send + Sync {
     /// Performs the create plan version operation.
     async fn create_plan_version(&self, version: &PlanVersion) -> Result<()>;
     /// Performs the get plan version operation.
     async fn get_plan_version(&self, id: &str) -> Result<PlanVersion>;
     /// Performs the list plan versions by plan operation.
     async fn list_plan_versions_by_plan(&self, plan_id: &str) -> Result<Vec<PlanVersion>>;
+}
 
+#[async_trait]
+/// Registry for plan reviews.
+pub trait PlanReviewRegistry: Send + Sync {
     /// Performs the create plan review operation.
     async fn create_plan_review(&self, review: &PlanReview) -> Result<()>;
     /// Performs the get plan review operation.
     async fn get_plan_review(&self, id: &str) -> Result<PlanReview>;
     /// Performs the list plan reviews by version operation.
     async fn list_plan_reviews_by_version(&self, plan_version_id: &str) -> Result<Vec<PlanReview>>;
+}
+
+/// Aggregate trait for plan entity management.
+pub trait PlanEntityRepository:
+    PlanRegistry + PlanVersionRegistry + PlanReviewRegistry + Send + Sync
+{
+}
+
+impl<T> PlanEntityRepository for T where
+    T: PlanRegistry + PlanVersionRegistry + PlanReviewRegistry + Send + Sync
+{
 }

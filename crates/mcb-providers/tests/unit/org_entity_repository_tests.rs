@@ -6,7 +6,9 @@ use mcb_domain::entities::{
     ApiKey, Organization, Team, TeamMember, TeamMemberRole, User, UserRole,
 };
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
-use mcb_domain::ports::repositories::OrgEntityRepository;
+use mcb_domain::ports::repositories::org_entity_repository::{
+    ApiKeyRegistry, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
+};
 use mcb_providers::database::SqliteOrgEntityRepository;
 
 use super::entity_test_utils::{TEST_NOW, assert_not_found, setup_executor};

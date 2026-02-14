@@ -1,6 +1,6 @@
 //! Unit tests for browse value objects.
 
-use mcb_domain::value_objects::{BrowseParams, CollectionId, CollectionInfo, FileInfo};
+use mcb_domain::value_objects::{CollectionId, CollectionInfo, FileInfo};
 use rstest::rstest;
 
 use mcb_domain::utils::id;
@@ -25,15 +25,13 @@ fn test_collection_info_new() {
 
 #[rstest]
 fn test_collection_info_serialization() {
-    let browse_params = BrowseParams::new(
-        CollectionId::from_uuid(id::deterministic("collection", "col1")),
-        "path/to/file".to_string(),
-    );
-    let json = serde_json::to_string(&browse_params).expect("serialization should succeed");
-    let deserialized: BrowseParams =
+    let uuid = id::deterministic("collection", "test");
+    let info = CollectionInfo::new(CollectionId::from_uuid(uuid), 50, 5, None, "in_memory");
+    let json = serde_json::to_string(&info).expect("serialization should succeed");
+    let deserialized: CollectionInfo =
         serde_json::from_str(&json).expect("deserialization should succeed");
 
-    assert_eq!(browse_params, deserialized);
+    assert_eq!(info, deserialized);
 }
 
 #[rstest]

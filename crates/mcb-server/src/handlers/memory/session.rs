@@ -51,7 +51,6 @@ pub async fn store_session(
             .map_err(|_| McpError::invalid_params("invalid data", None))?;
     let session_id = args
         .session_id
-        .clone()
         .or_else(|| payload.session_id.as_deref().map(SessionId::from));
     let session_id = match session_id {
         Some(value) => value,

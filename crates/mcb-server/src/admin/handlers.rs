@@ -186,7 +186,7 @@ pub fn get_jobs_status(state: &State<AdminState>) -> Json<JobsStatusResponse> {
                 0
             };
             Job {
-                id: op.id.clone(),
+                id: op.id,
                 job_type: JobType::Indexing,
                 label: op.collection.to_string(),
                 status: JobStatus::Running,

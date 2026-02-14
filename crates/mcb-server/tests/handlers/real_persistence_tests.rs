@@ -330,7 +330,9 @@ async fn test_real_session_summary_store_and_retrieve() {
         })),
         ids: None,
         repo_id: None,
-        session_id: Some("sess-roundtrip".to_string().into()),
+        session_id: Some(mcb_domain::value_objects::SessionId::from_name(
+            "sess-roundtrip",
+        )),
         parent_session_id: None,
         tags: None,
         query: None,
@@ -367,7 +369,9 @@ async fn test_real_session_summary_store_and_retrieve() {
         data: None,
         ids: None,
         repo_id: None,
-        session_id: Some("sess-roundtrip".to_string().into()),
+        session_id: Some(mcb_domain::value_objects::SessionId::from_name(
+            "sess-roundtrip",
+        )),
         parent_session_id: None,
         tags: None,
         query: None,
@@ -495,7 +499,9 @@ async fn test_real_search_memory_enriches_origin_context_fields() {
         })),
         ids: None,
         repo_id: None,
-        session_id: Some("sess-origin-search".to_string().into()),
+        session_id: Some(mcb_domain::value_objects::SessionId::from_name(
+            "sess-origin-search",
+        )),
         parent_session_id: None,
         tags: None,
         query: None,
@@ -587,7 +593,9 @@ async fn test_real_agent_session_create_and_retrieve() {
         })),
         ids: None,
         repo_id: None,
-        session_id: Some("sess-agent-roundtrip".to_string().into()),
+        session_id: Some(mcb_domain::value_objects::SessionId::from_name(
+            "sess-agent-roundtrip",
+        )),
         parent_session_id: None,
         tags: None,
         query: None,
@@ -659,7 +667,9 @@ async fn test_real_agent_session_create_and_retrieve() {
     let get_args = SessionArgs {
         action: SessionAction::Get,
         org_id: None,
-        session_id: Some(agent_session_id.to_string().into()),
+        session_id: Some(mcb_domain::value_objects::SessionId::from_string(
+            agent_session_id,
+        )),
         project_id: None,
         data: None,
         worktree_id: None,
@@ -734,7 +744,9 @@ async fn test_real_agent_session_create_without_summary_id_succeeds() {
     let get_args = SessionArgs {
         action: SessionAction::Get,
         org_id: None,
-        session_id: Some(agent_session_id.to_string().into()),
+        session_id: Some(mcb_domain::value_objects::SessionId::from_string(
+            agent_session_id,
+        )),
         project_id: None,
         data: None,
         worktree_id: None,

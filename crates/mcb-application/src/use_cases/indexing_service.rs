@@ -235,8 +235,8 @@ impl IndexingServiceInterface for IndexingServiceImpl {
         // Clone service for the background task
         // IndexingServiceImpl is cheap to clone (Arc-based)
         let service = self.clone();
-        let collection_id = collection.clone();
-        let op_id = operation_id.clone();
+        let collection_id = *collection;
+        let op_id = operation_id;
         let workspace_root = path.to_path_buf();
 
         // Spawn background task - explicitly drop handle since we don't await it
@@ -471,6 +471,6 @@ mod tests {
         let err = IndexingServiceImpl::workspace_relative_path(file, workspace)
             .expect_err("outside path must fail");
 
-        assert!(err.to_string().contains("outside workspace root"));
+        assert!(err.to_string().contains("is not under root"));
     }
 }

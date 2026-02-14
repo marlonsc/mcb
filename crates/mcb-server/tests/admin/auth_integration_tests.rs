@@ -354,7 +354,7 @@ async fn test_jobs_public_no_auth_required() {
     let harness = AdminTestHarness::new().with_auth(TEST_API_KEY);
     let op_id = harness
         .indexing()
-        .start_operation(&CollectionId::new("test-collection"), 100);
+        .start_operation(&CollectionId::from_name("test-collection"), 100);
     harness
         .indexing()
         .update_progress(&op_id, Some("src/main.rs".to_string()), 25);

@@ -69,7 +69,7 @@ impl AdminTestHarness {
     pub fn with_indexing_operations(self, ops: &[(&str, usize)]) -> Self {
         for &(collection, total_files) in ops {
             self.indexing
-                .start_operation(&CollectionId::new(collection), total_files);
+                .start_operation(&CollectionId::from_name(collection), total_files);
         }
         self
     }

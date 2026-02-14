@@ -17,7 +17,9 @@ use mcb_domain::entities::project::ProjectIssue;
 use mcb_domain::entities::project::{IssueStatus, IssueType};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use mcb_domain::ports::repositories::IssueEntityRepository;
+use mcb_domain::ports::repositories::issue_entity_repository::{
+    IssueCommentRegistry, IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry,
+};
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -95,7 +97,7 @@ fn row_to_label(row: &dyn SqlRow) -> Result<IssueLabel> {
 }
 
 #[async_trait]
-impl IssueEntityRepository for SqliteIssueEntityRepository {
+impl IssueRegistry for SqliteIssueEntityRepository {
     async fn create_issue(&self, issue: &ProjectIssue) -> Result<()> {
         let labels = serde_json::to_string(&issue.labels)
             .map_err(|e| Error::memory_with_source("encode labels json", e))?;
@@ -200,7 +202,10 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             )
             .await
     }
+}
 
+#[async_trait]
+impl IssueCommentRegistry for SqliteIssueEntityRepository {
     async fn create_comment(&self, comment: &IssueComment) -> Result<()> {
         self.executor
             .execute(
@@ -246,7 +251,10 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             )
             .await
     }
+}
 
+#[async_trait]
+impl IssueLabelRegistry for SqliteIssueEntityRepository {
     async fn create_label(&self, label: &IssueLabel) -> Result<()> {
         self.executor
             .execute(
@@ -296,7 +304,10 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             )
             .await
     }
+}
 
+#[async_trait]
+impl IssueLabelAssignmentManager for SqliteIssueEntityRepository {
     async fn assign_label(&self, assignment: &IssueLabelAssignment) -> Result<()> {
         self.executor
             .execute(

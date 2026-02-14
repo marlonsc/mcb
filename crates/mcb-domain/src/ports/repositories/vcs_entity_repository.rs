@@ -14,8 +14,9 @@ use crate::error::Result;
 // TODO(architecture): Consider splitting into smaller interfaces (ISP).
 // Current interface combines Repository, Branch, Worktree, and Assignment management.
 // TODO(PORT003): Port VcsEntityRepository has 19 methods (>10) - Consider splitting into smaller interfaces (ISP)
-pub trait VcsEntityRepository: Send + Sync {
-    // -- Repository CRUD --
+#[async_trait]
+/// Registry for VCS repositories.
+pub trait RepositoryRegistry: Send + Sync {
     /// Performs the create repository operation.
     async fn create_repository(&self, repo: &Repository) -> Result<()>;
     /// Performs the get repository operation.
@@ -26,8 +27,11 @@ pub trait VcsEntityRepository: Send + Sync {
     async fn update_repository(&self, repo: &Repository) -> Result<()>;
     /// Performs the delete repository operation.
     async fn delete_repository(&self, org_id: &str, id: &str) -> Result<()>;
+}
 
-    // -- Branch CRUD --
+#[async_trait]
+/// Registry for branches.
+pub trait BranchRegistry: Send + Sync {
     /// Performs the create branch operation.
     async fn create_branch(&self, branch: &Branch) -> Result<()>;
     /// Performs the get branch operation.
@@ -38,8 +42,11 @@ pub trait VcsEntityRepository: Send + Sync {
     async fn update_branch(&self, branch: &Branch) -> Result<()>;
     /// Performs the delete branch operation.
     async fn delete_branch(&self, id: &str) -> Result<()>;
+}
 
-    // -- Worktree CRUD --
+#[async_trait]
+/// Manager for worktrees.
+pub trait WorktreeManager: Send + Sync {
     /// Performs the create worktree operation.
     async fn create_worktree(&self, wt: &Worktree) -> Result<()>;
     /// Performs the get worktree operation.
@@ -50,8 +57,11 @@ pub trait VcsEntityRepository: Send + Sync {
     async fn update_worktree(&self, wt: &Worktree) -> Result<()>;
     /// Performs the delete worktree operation.
     async fn delete_worktree(&self, id: &str) -> Result<()>;
+}
 
-    // -- Assignment CRUD --
+#[async_trait]
+/// Manager for agent worktree assignments.
+pub trait AssignmentManager: Send + Sync {
     /// Performs the create assignment operation.
     async fn create_assignment(&self, asgn: &AgentWorktreeAssignment) -> Result<()>;
     /// Performs the get assignment operation.
@@ -63,4 +73,15 @@ pub trait VcsEntityRepository: Send + Sync {
     ) -> Result<Vec<AgentWorktreeAssignment>>;
     /// Performs the release assignment operation.
     async fn release_assignment(&self, id: &str, released_at: i64) -> Result<()>;
+}
+
+/// Aggregate trait for VCS entity management.
+pub trait VcsEntityRepository:
+    RepositoryRegistry + BranchRegistry + WorktreeManager + AssignmentManager + Send + Sync
+{
+}
+
+impl<T> VcsEntityRepository for T where
+    T: RepositoryRegistry + BranchRegistry + WorktreeManager + AssignmentManager + Send + Sync
+{
 }

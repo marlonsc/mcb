@@ -6,7 +6,9 @@ use mcb_domain::entities::{
 };
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use mcb_domain::ports::repositories::OrgEntityRepository;
+use mcb_domain::ports::repositories::org_entity_repository::{
+    ApiKeyRegistry, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
+};
 
 use super::query_helpers;
 use super::row_helpers::{opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_str};
@@ -101,7 +103,9 @@ fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
 
 #[async_trait]
 /// Persistent organization entity repository using SQLite.
-impl OrgEntityRepository for SqliteOrgEntityRepository {
+#[async_trait]
+/// Persistent organization registry using SQLite.
+impl OrgRegistry for SqliteOrgEntityRepository {
     /// Creates a new organization.
     // TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)
     async fn create_org(&self, org: &Organization) -> Result<()> {
@@ -169,7 +173,11 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             )
             .await
     }
+}
 
+#[async_trait]
+/// Persistent user registry using SQLite.
+impl UserRegistry for SqliteOrgEntityRepository {
     /// Creates a new user.
     async fn create_user(&self, user: &User) -> Result<()> {
         self.executor
@@ -255,7 +263,11 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             )
             .await
     }
+}
 
+#[async_trait]
+/// Persistent team registry using SQLite.
+impl TeamRegistry for SqliteOrgEntityRepository {
     /// Creates a new team.
     async fn create_team(&self, team: &Team) -> Result<()> {
         self.executor
@@ -304,7 +316,11 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             )
             .await
     }
+}
 
+#[async_trait]
+/// Persistent team member manager using SQLite.
+impl TeamMemberManager for SqliteOrgEntityRepository {
     /// Adds a member to a team.
     async fn add_team_member(&self, member: &TeamMember) -> Result<()> {
         self.executor
@@ -344,7 +360,11 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         )
         .await
     }
+}
 
+#[async_trait]
+/// Persistent API key registry using SQLite.
+impl ApiKeyRegistry for SqliteOrgEntityRepository {
     /// Creates a new API key.
     async fn create_api_key(&self, key: &ApiKey) -> Result<()> {
         self.executor

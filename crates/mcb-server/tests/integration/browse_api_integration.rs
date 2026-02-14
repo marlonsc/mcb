@@ -129,8 +129,8 @@ fn create_test_browse_state(browser: TestVectorStoreBrowser) -> BrowseState {
 #[case(vec![], 0, None, None)]
 #[case(
     vec![
-        CollectionInfo::new("test_collection".to_string(), 100, 10, None, "memory"),
-        CollectionInfo::new("another_collection".to_string(), 50, 5, None, "memory"),
+        CollectionInfo::new("test_collection", 100, 10, None, "memory"),
+        CollectionInfo::new("another_collection", 50, 5, None, "memory"),
     ],
     2,
     Some("test_collection"),
@@ -306,7 +306,7 @@ fn create_dummy_embedding(dimensions: usize) -> Embedding {
 
 /// Populate vector store with test data simulating real indexed code
 async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) {
-    let collection_id = CollectionId::new(collection);
+    let collection_id = CollectionId::from_name(collection);
     // Create collection
     store
         .create_collection(&collection_id, 384)

@@ -93,7 +93,7 @@ async fn test_search_empty_collection_returns_empty_not_error() {
 
     // Create empty collection
     vector_store
-        .create_collection(&CollectionId::new(collection), 384)
+        .create_collection(&CollectionId::from_name(collection), 384)
         .await
         .expect("Create collection");
 
@@ -105,7 +105,7 @@ async fn test_search_empty_collection_returns_empty_not_error() {
 
     let results = vector_store
         .search_similar(
-            &CollectionId::new(collection),
+            &CollectionId::from_name(collection),
             &query_embedding[0].vector,
             10,
             None,
@@ -176,7 +176,7 @@ async fn test_failed_search_doesnt_corrupt_state() {
 
     // Create and populate collection
     vector_store
-        .create_collection(&CollectionId::new(collection), 384)
+        .create_collection(&CollectionId::from_name(collection), 384)
         .await
         .expect("Create collection");
 
@@ -192,7 +192,7 @@ async fn test_failed_search_doesnt_corrupt_state() {
     }];
 
     vector_store
-        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
+        .insert_vectors(&CollectionId::from_name(collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -201,7 +201,12 @@ async fn test_failed_search_doesnt_corrupt_state() {
 
     // This might fail, but shouldn't corrupt the collection
     let _ = vector_store
-        .search_similar(&CollectionId::new(collection), &wrong_dim_vector, 10, None)
+        .search_similar(
+            &CollectionId::from_name(collection),
+            &wrong_dim_vector,
+            10,
+            None,
+        )
         .await;
 
     // Original search should still work
@@ -212,7 +217,7 @@ async fn test_failed_search_doesnt_corrupt_state() {
 
     let results = vector_store
         .search_similar(
-            &CollectionId::new(collection),
+            &CollectionId::from_name(collection),
             &correct_query[0].vector,
             10,
             None,

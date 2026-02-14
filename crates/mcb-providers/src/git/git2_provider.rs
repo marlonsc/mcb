@@ -112,7 +112,7 @@ impl VcsProvider for Git2Provider {
     }
 
     fn repository_id(&self, repo: &VcsRepository) -> RepositoryId {
-        repo.id().clone()
+        *repo.id()
     }
 
     async fn list_branches(&self, repo: &VcsRepository) -> Result<Vec<VcsBranch>> {

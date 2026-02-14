@@ -17,7 +17,9 @@ use async_trait::async_trait;
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, Delegation, ToolCall};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
+use mcb_domain::ports::repositories::agent_repository::{
+    AgentCheckpointRepository, AgentEventRepository, AgentSessionQuery, AgentSessionRepository,
+};
 use mcb_domain::utils::mask_id;
 use tracing::debug;
 
@@ -41,8 +43,8 @@ impl SqliteAgentRepository {
 }
 
 #[async_trait]
-/// Persistent agent repository using SQLite.
-impl AgentRepository for SqliteAgentRepository {
+/// Persistent agent session repository using SQLite.
+impl AgentSessionRepository for SqliteAgentRepository {
     /// Creates a new agent session.
     async fn create_session(&self, session: &AgentSession) -> Result<()> {
         if let Some(project_id) = &session.project_id {
@@ -277,7 +279,11 @@ impl AgentRepository for SqliteAgentRepository {
         )
         .await
     }
+}
 
+#[async_trait]
+/// Persistent agent event repository using SQLite.
+impl AgentEventRepository for SqliteAgentRepository {
     /// Stores a delegation record.
     async fn store_delegation(&self, delegation: &Delegation) -> Result<()> {
         let params = [
@@ -365,7 +371,11 @@ impl AgentRepository for SqliteAgentRepository {
         debug!("Stored tool call: {}", tool_call.id);
         Ok(())
     }
+}
 
+#[async_trait]
+/// Persistent agent checkpoint repository using SQLite.
+impl AgentCheckpointRepository for SqliteAgentRepository {
     /// Stores a session checkpoint.
     async fn store_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
         let snapshot_json = serde_json::to_string(&checkpoint.snapshot_data)

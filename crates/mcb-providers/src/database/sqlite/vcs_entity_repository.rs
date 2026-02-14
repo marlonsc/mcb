@@ -7,7 +7,9 @@ use mcb_domain::entities::repository::{Branch, Repository, VcsType};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use mcb_domain::ports::repositories::VcsEntityRepository;
+use mcb_domain::ports::repositories::vcs_entity_repository::{
+    AssignmentManager, BranchRegistry, RepositoryRegistry, WorktreeManager,
+};
 use serde_json::json;
 
 use super::row_helpers::{req_i64, req_str};
@@ -115,8 +117,8 @@ fn row_to_assignment(row: &dyn SqlRow) -> Result<AgentWorktreeAssignment> {
 }
 
 #[async_trait]
-/// Persistent VCS entity repository using SQLite.
-impl VcsEntityRepository for SqliteVcsEntityRepository {
+/// Registry for VCS repositories.
+impl RepositoryRegistry for SqliteVcsEntityRepository {
     // -- Repository --
 
     /// Creates a new repository.
@@ -216,9 +218,11 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             )
             .await
     }
+}
 
-    // -- Branch --
-
+#[async_trait]
+/// Registry for branches.
+impl BranchRegistry for SqliteVcsEntityRepository {
     /// Creates a new branch.
     async fn create_branch(&self, branch: &Branch) -> Result<()> {
         self.executor
@@ -307,9 +311,11 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             )
             .await
     }
+}
 
-    // -- Worktree --
-
+#[async_trait]
+/// Manager for worktrees.
+impl WorktreeManager for SqliteVcsEntityRepository {
     /// Creates a new worktree.
     async fn create_worktree(&self, wt: &Worktree) -> Result<()> {
         self.executor
@@ -400,9 +406,11 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             )
             .await
     }
+}
 
-    // -- Assignment --
-
+#[async_trait]
+/// Manager for agent worktree assignments.
+impl AssignmentManager for SqliteVcsEntityRepository {
     /// Creates a new assignment.
     async fn create_assignment(&self, asgn: &AgentWorktreeAssignment) -> Result<()> {
         self.executor

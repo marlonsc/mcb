@@ -18,8 +18,10 @@ use crate::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, Se
 /// use mcb_domain::value_objects::CollectionId;
 /// use std::sync::Arc;
 ///
+/// use mcb_domain::utils::id;
+///
 /// async fn check_collection(provider: Arc<dyn VectorStoreAdmin>) -> mcb_domain::Result<()> {
-///     let id = CollectionId::new("code_embeddings");
+///     let id = CollectionId::from_uuid(id::deterministic("collection", "code_embeddings"));
 ///     // Check if a collection exists
 ///     if provider.collection_exists(&id).await? {
 ///         let stats = provider.get_stats(&id).await?;
@@ -93,8 +95,10 @@ pub trait VectorStoreAdmin: Send + Sync {
 /// use mcb_domain::value_objects::CollectionId;
 /// use std::sync::Arc;
 ///
+/// use mcb_domain::utils::id;
+///
 /// async fn index_code(provider: Arc<dyn VectorStoreProvider>) -> mcb_domain::Result<()> {
-///     let id = CollectionId::new("rust_code");
+///     let id = CollectionId::from_uuid(id::deterministic("collection", "rust_code"));
 ///     // Create a collection for code embeddings
 ///     provider.create_collection(&id, 384).await?;
 ///
@@ -214,6 +218,8 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
 /// use mcb_domain::value_objects::CollectionId;
 /// use std::sync::Arc;
 ///
+/// use mcb_domain::utils::id;
+///
 /// async fn browse_collections(provider: Arc<dyn VectorStoreBrowser>) -> mcb_domain::Result<()> {
 ///     // List all indexed collections
 ///     let collections = provider.list_collections().await?;
@@ -222,7 +228,7 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
 ///     }
 ///
 ///     // List files in a collection
-///     let id = CollectionId::new("my-project");
+///     let id = CollectionId::from_uuid(id::deterministic("collection", "my-project"));
 ///     let files = provider.list_file_paths(&id, 100).await?;
 ///     for file in files {
 ///         println!("File: {}", file.path);

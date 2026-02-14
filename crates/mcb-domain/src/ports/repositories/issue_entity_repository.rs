@@ -14,7 +14,9 @@ use crate::error::Result;
 // TODO(architecture): Consider splitting into smaller interfaces (ISP).
 // Current interface combines Issue, Comment, and Label management.
 // TODO(PORT003): Port IssueEntityRepository has 16 methods (>10) - Consider splitting into smaller interfaces (ISP)
-pub trait IssueEntityRepository: Send + Sync {
+#[async_trait]
+/// Registry for issues.
+pub trait IssueRegistry: Send + Sync {
     /// Performs the create issue operation.
     async fn create_issue(&self, issue: &ProjectIssue) -> Result<()>;
     /// Performs the get issue operation.
@@ -25,7 +27,11 @@ pub trait IssueEntityRepository: Send + Sync {
     async fn update_issue(&self, issue: &ProjectIssue) -> Result<()>;
     /// Performs the delete issue operation.
     async fn delete_issue(&self, org_id: &str, id: &str) -> Result<()>;
+}
 
+#[async_trait]
+/// Registry for issue comments.
+pub trait IssueCommentRegistry: Send + Sync {
     /// Performs the create comment operation.
     async fn create_comment(&self, comment: &IssueComment) -> Result<()>;
     /// Performs the get comment operation.
@@ -34,7 +40,11 @@ pub trait IssueEntityRepository: Send + Sync {
     async fn list_comments_by_issue(&self, issue_id: &str) -> Result<Vec<IssueComment>>;
     /// Performs the delete comment operation.
     async fn delete_comment(&self, id: &str) -> Result<()>;
+}
 
+#[async_trait]
+/// Registry for issue labels.
+pub trait IssueLabelRegistry: Send + Sync {
     /// Performs the create label operation.
     async fn create_label(&self, label: &IssueLabel) -> Result<()>;
     /// Performs the get label operation.
@@ -43,11 +53,36 @@ pub trait IssueEntityRepository: Send + Sync {
     async fn list_labels(&self, org_id: &str, project_id: &str) -> Result<Vec<IssueLabel>>;
     /// Performs the delete label operation.
     async fn delete_label(&self, id: &str) -> Result<()>;
+}
 
+#[async_trait]
+/// Manager for issue label assignments.
+pub trait IssueLabelAssignmentManager: Send + Sync {
     /// Performs the assign label operation.
     async fn assign_label(&self, assignment: &IssueLabelAssignment) -> Result<()>;
     /// Performs the unassign label operation.
     async fn unassign_label(&self, issue_id: &str, label_id: &str) -> Result<()>;
     /// Performs the list labels for issue operation.
     async fn list_labels_for_issue(&self, issue_id: &str) -> Result<Vec<IssueLabel>>;
+}
+
+/// Aggregate trait for issue entity management.
+pub trait IssueEntityRepository:
+    IssueRegistry
+    + IssueCommentRegistry
+    + IssueLabelRegistry
+    + IssueLabelAssignmentManager
+    + Send
+    + Sync
+{
+}
+
+impl<T> IssueEntityRepository for T where
+    T: IssueRegistry
+        + IssueCommentRegistry
+        + IssueLabelRegistry
+        + IssueLabelAssignmentManager
+        + Send
+        + Sync
+{
 }

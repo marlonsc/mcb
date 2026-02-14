@@ -108,7 +108,7 @@ impl FullStackTestContext {
 
     /// Create collection in vector store
     pub async fn create_collection(&self, name: &str, dimensions: usize) -> Result<()> {
-        let collection_id = CollectionId::new(name);
+        let collection_id = CollectionId::from_name(name);
         self.vector_store()
             .create_collection(&collection_id, dimensions)
             .await
@@ -147,7 +147,7 @@ impl FullStackTestContext {
             .collect();
 
         // Insert into vector store - returns Vec<String> of IDs
-        let collection_id = CollectionId::new(collection);
+        let collection_id = CollectionId::from_name(collection);
         self.vector_store()
             .insert_vectors(&collection_id, &embeddings, metadata)
             .await
@@ -165,7 +165,7 @@ impl FullStackTestContext {
         let query_embedding = &query_embeddings[0];
 
         // Search vector store using search_similar
-        let collection_id = CollectionId::new(collection);
+        let collection_id = CollectionId::from_name(collection);
         self.vector_store()
             .search_similar(&collection_id, &query_embedding.vector, limit, None)
             .await

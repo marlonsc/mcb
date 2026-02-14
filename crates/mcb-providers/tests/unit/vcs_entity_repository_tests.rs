@@ -5,7 +5,9 @@ use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::repository::{Branch, Repository, VcsType};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::VcsEntityRepository;
+use mcb_domain::ports::repositories::vcs_entity_repository::{
+    AssignmentManager, BranchRegistry, RepositoryRegistry, WorktreeManager,
+};
 use mcb_providers::database::SqliteVcsEntityRepository;
 
 use super::entity_test_utils::{

@@ -94,7 +94,7 @@ impl SearchHandler {
                     } else {
                         None
                     },
-                    session_id: args.session_id.clone().map(|id| {
+                    session_id: args.session_id.map(|id| {
                         let id_str = id.to_string();
                         domain_id::correlate_id("session", &id_str)
                     }),

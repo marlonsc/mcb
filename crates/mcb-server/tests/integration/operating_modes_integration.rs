@@ -514,20 +514,20 @@ async fn test_session_isolation_with_vector_store() {
 
     // Both should be able to create their own collections
     vector_store
-        .create_collection(&CollectionId::new(&coll_a), 384)
+        .create_collection(&CollectionId::from_name(&coll_a), 384)
         .await
         .expect("Create A");
     vector_store
-        .create_collection(&CollectionId::new(&coll_b), 384)
+        .create_collection(&CollectionId::from_name(&coll_b), 384)
         .await
         .expect("Create B");
 
     // Verify they're separate (search one, verify empty in other)
     let results_a = vector_store
-        .search_similar(&CollectionId::new(&coll_a), &vec![0.0; 384], 10, None)
+        .search_similar(&CollectionId::from_name(&coll_a), &vec![0.0; 384], 10, None)
         .await;
     let results_b = vector_store
-        .search_similar(&CollectionId::new(&coll_b), &vec![0.0; 384], 10, None)
+        .search_similar(&CollectionId::from_name(&coll_b), &vec![0.0; 384], 10, None)
         .await;
 
     // Both should succeed (collections exist) and be empty (no data inserted)

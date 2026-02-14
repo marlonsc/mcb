@@ -34,125 +34,60 @@ pub struct AgentSessionQuery {
 }
 
 /// Port for agent session persistence.
-///
-/// Defines the interface for storing and retrieving agent sessions, delegations, tool calls,
-/// and checkpoints. Implementations handle all persistence concerns for the agent domain.
 #[async_trait]
-// TODO(architecture): Consider splitting into smaller interfaces (ISP).
-// Current interface combines Session, Delegation, ToolCall, and Checkpoint management.
-// TODO(PORT003): Port AgentRepository has 11 methods (>10) - Consider splitting into smaller interfaces (ISP)
-pub trait AgentRepository: Send + Sync {
-    /// Creates a new agent session in the repository.
-    ///
-    /// # Arguments
-    /// * `session` - The agent session to create
-    ///
-    /// # Errors
-    /// Returns an error if the session cannot be created (e.g., duplicate ID, storage failure).
+pub trait AgentSessionRepository: Send + Sync {
+    /// Creates a new agent session.
     async fn create_session(&self, session: &AgentSession) -> Result<()>;
 
     /// Retrieves an agent session by ID.
-    ///
-    /// # Arguments
-    /// * `id` - The session ID to retrieve
-    ///
-    /// # Returns
-    /// `Ok(Some(session))` if found, `Ok(None)` if not found.
-    ///
-    /// # Errors
-    /// Returns an error if the retrieval fails (e.g., storage error).
     async fn get_session(&self, id: &str) -> Result<Option<AgentSession>>;
 
     /// Updates an existing agent session.
-    ///
-    /// # Arguments
-    /// * `session` - The updated session data
-    ///
-    /// # Errors
-    /// Returns an error if the session cannot be updated (e.g., not found, storage failure).
     async fn update_session(&self, session: &AgentSession) -> Result<()>;
 
     /// Lists agent sessions matching the provided query filters.
-    ///
-    /// # Arguments
-    /// * `query` - Query filters to apply
-    ///
-    /// # Returns
-    /// A vector of sessions matching the query criteria.
-    ///
-    /// # Errors
-    /// Returns an error if the query fails (e.g., storage error).
     async fn list_sessions(&self, query: AgentSessionQuery) -> Result<Vec<AgentSession>>;
 
     /// Lists agent sessions belonging to a specific project.
-    ///
-    /// # Arguments
-    /// * `project_id` - The project ID to filter by
-    ///
-    /// # Returns
-    /// A vector of sessions associated with the project.
-    ///
-    /// # Errors
-    /// Returns an error if the query fails (e.g., storage error).
     async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>>;
 
     /// Lists agent sessions associated with a specific worktree.
-    ///
-    /// # Arguments
-    /// * `worktree_id` - The worktree ID to filter by
-    ///
-    /// # Returns
-    /// A vector of sessions associated with the worktree.
-    ///
-    /// # Errors
-    /// Returns an error if the query fails (e.g., storage error).
     async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>>;
+}
 
-    /// Stores a delegation record for an agent session.
-    ///
-    /// # Arguments
-    /// * `delegation` - The delegation to store
-    ///
-    /// # Errors
-    /// Returns an error if the delegation cannot be stored (e.g., storage failure).
+/// Port for agent event persistence (delegations, tool calls).
+#[async_trait]
+pub trait AgentEventRepository: Send + Sync {
+    /// Stores a delegation record.
     async fn store_delegation(&self, delegation: &Delegation) -> Result<()>;
 
-    /// Stores a tool call record for an agent session.
-    ///
-    /// # Arguments
-    /// * `tool_call` - The tool call to store
-    ///
-    /// # Errors
-    /// Returns an error if the tool call cannot be stored (e.g., storage failure).
+    /// Stores a tool call record.
     async fn store_tool_call(&self, tool_call: &ToolCall) -> Result<()>;
+}
 
-    /// Stores a checkpoint for session state persistence.
-    ///
-    /// # Arguments
-    /// * `checkpoint` - The checkpoint to store
-    ///
-    /// # Errors
-    /// Returns an error if the checkpoint cannot be stored (e.g., storage failure).
+/// Port for agent checkpoint persistence.
+#[async_trait]
+pub trait AgentCheckpointRepository: Send + Sync {
+    /// Stores a checkpoint.
     async fn store_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()>;
 
     /// Retrieves a checkpoint by ID.
-    ///
-    /// # Arguments
-    /// * `id` - The checkpoint ID to retrieve
-    ///
-    /// # Returns
-    /// `Ok(Some(checkpoint))` if found, `Ok(None)` if not found.
-    ///
-    /// # Errors
-    /// Returns an error if the retrieval fails (e.g., storage error).
     async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>>;
 
     /// Updates an existing checkpoint.
-    ///
-    /// # Arguments
-    /// * `checkpoint` - The updated checkpoint data
-    ///
-    /// # Errors
-    /// Returns an error if the checkpoint cannot be updated (e.g., not found, storage failure).
     async fn update_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()>;
+}
+
+/// Aggregate trait for full agent persistence capabilities.
+///
+/// This trait combines session, event, and checkpoint management.
+/// It is automatically implemented for any type that implements the sub-traits.
+pub trait AgentRepository:
+    AgentSessionRepository + AgentEventRepository + AgentCheckpointRepository + Send + Sync
+{
+}
+
+impl<T> AgentRepository for T where
+    T: AgentSessionRepository + AgentEventRepository + AgentCheckpointRepository + Send + Sync
+{
 }

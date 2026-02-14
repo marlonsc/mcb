@@ -38,7 +38,7 @@ async fn test_validation_agent_sql_storage_flow() {
         .handle(Parameters(AgentArgs {
             action: AgentAction::LogTool,
             org_id: None,
-            session_id: mcb_domain::value_objects::SessionId::new("missing-session"),
+            session_id: mcb_domain::value_objects::SessionId::from_name("missing-session"),
             data: json!({
                 "tool_name": "test",
                 "success": true,

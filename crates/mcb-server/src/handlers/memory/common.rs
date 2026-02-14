@@ -62,7 +62,7 @@ pub(super) fn resolve_memory_origin_context(
     opts: MemoryOriginOptions<'_>,
 ) -> Result<MemoryOriginResolution, McpError> {
     let vcs_context = capture_vcs_context();
-    let canonical_session_id = args.session_id.clone().map(|id| {
+    let canonical_session_id = args.session_id.map(|id| {
         let id_str = id.to_string();
         domain_id::correlate_id("session", &id_str)
     });
@@ -173,7 +173,7 @@ pub(super) fn build_memory_filter(
         project_id: args.project_id.clone(),
         tags,
         r#type: obs_type,
-        session_id: args.session_id.clone().map(|id| {
+        session_id: args.session_id.map(|id| {
             let id_str = id.to_string();
             domain_id::correlate_id("session", &id_str)
         }),

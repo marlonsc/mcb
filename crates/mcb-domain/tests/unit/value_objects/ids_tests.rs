@@ -56,6 +56,6 @@ fn collection_id_determinism() {
 #[rstest]
 fn collection_id_into_string() {
     let id = CollectionId::from_uuid(id::deterministic("collection", "test"));
-    let s: String = id.clone().into();
+    let s: String = id.into();
     assert_eq!(s, id.to_string());
 }

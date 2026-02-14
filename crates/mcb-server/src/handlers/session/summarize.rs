@@ -46,7 +46,7 @@ pub async fn summarize_session(
         match memory_service
             .create_session_summary(CreateSessionSummaryInput {
                 project_id,
-                session_id: session_id.clone(),
+                session_id: *session_id,
                 topics,
                 decisions,
                 next_steps,

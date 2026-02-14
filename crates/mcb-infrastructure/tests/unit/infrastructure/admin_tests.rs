@@ -115,7 +115,7 @@ fn tracker() -> DefaultIndexingOperations {
 
 #[fixture]
 fn collection() -> CollectionId {
-    CollectionId::new("test-collection".to_string())
+    CollectionId::from_name("test-collection")
 }
 
 #[rstest]
@@ -147,8 +147,8 @@ fn test_indexing_operations_lifecycle(
 
 #[rstest]
 fn test_indexing_operations_multiple(tracker: DefaultIndexingOperations) {
-    let c1 = CollectionId::new("c1".to_string());
-    let c2 = CollectionId::new("c2".to_string());
+    let c1 = CollectionId::from_name("c1");
+    let c2 = CollectionId::from_name("c2");
 
     let _op1 = tracker.start_operation(&c1, 10);
     let _op2 = tracker.start_operation(&c2, 20);

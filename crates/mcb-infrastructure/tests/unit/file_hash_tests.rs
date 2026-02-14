@@ -122,7 +122,7 @@ async fn test_indexing_persists_file_hash_metadata() {
     std::fs::write(temp_dir.path().join("a.rs"), "fn a() {}\n").unwrap();
     std::fs::write(temp_dir.path().join("b.rs"), "fn b() {}\n").unwrap();
 
-    let collection = CollectionId::new("index-persistence-test");
+    let collection = CollectionId::from_name("index-persistence-test");
     let result = services
         .indexing_service
         .index_codebase(temp_dir.path(), &collection)
@@ -137,9 +137,10 @@ async fn test_indexing_persists_file_hash_metadata() {
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
 
+    let collection_str = collection.to_string();
     let indexed_files = ctx
         .file_hash_repository()
-        .get_indexed_files(collection.as_str())
+        .get_indexed_files(&collection_str)
         .await
         .unwrap();
     assert!(

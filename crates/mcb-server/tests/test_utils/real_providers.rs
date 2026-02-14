@@ -113,26 +113,26 @@ mod tests {
 
         // Create collection
         store
-            .create_collection(&CollectionId::new("test"), 384)
+            .create_collection(&CollectionId::from_name("test"), 384)
             .await
             .expect("create");
 
         // Verify collection exists
         let exists = store
-            .collection_exists(&CollectionId::new("test"))
+            .collection_exists(&CollectionId::from_name("test"))
             .await
             .expect("check exists");
         assert!(exists);
 
         // Delete collection
         store
-            .delete_collection(&CollectionId::new("test"))
+            .delete_collection(&CollectionId::from_name("test"))
             .await
             .expect("delete");
 
         // Verify collection is gone
         let exists = store
-            .collection_exists(&CollectionId::new("test"))
+            .collection_exists(&CollectionId::from_name("test"))
             .await
             .expect("check exists");
         assert!(!exists);

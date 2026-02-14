@@ -132,28 +132,28 @@ session_test!(
 session_test!(
     test_session_get_success,
     SessionAction::Get,
-    session_id: SessionId::new("test-session-id"),
+    session_id: SessionId::from_name("test-session-id"),
     expect_ok
 );
 
 session_test!(
     test_session_get_nonexistent_session,
     SessionAction::Get,
-    session_id: SessionId::new("nonexistent-session"),
+    session_id: SessionId::from_name("nonexistent-session"),
     expect_ok
 );
 
 session_test!(
     test_session_summarize_success,
     SessionAction::Summarize,
-    session_id: SessionId::new("test-session-id"),
+    session_id: SessionId::from_name("test-session-id"),
     expect_ok
 );
 
 session_test!(
     test_session_summarize_nonexistent_session,
     SessionAction::Summarize,
-    session_id: SessionId::new("nonexistent-session"),
+    session_id: SessionId::from_name("nonexistent-session"),
     expect_ok
 );
 
@@ -204,7 +204,7 @@ async fn test_session_update_conflicting_project_id_rejected() {
     let update_args = SessionArgs {
         action: SessionAction::Update,
         org_id: None,
-        session_id: Some(SessionId::new(&session_id)),
+        session_id: Some(SessionId::from_string(&session_id)),
         project_id: Some("project-b".to_string()),
         data: Some(json!({
             "status": "completed"

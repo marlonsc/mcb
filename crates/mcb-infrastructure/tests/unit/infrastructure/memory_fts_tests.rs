@@ -62,7 +62,7 @@ async fn test_fts_search_flow(
     assert!(results.is_empty(), "Should not find 'dog'");
 
     // 4. Delete observation
-    repo.delete_observation(&ObservationId::new(&id))
+    repo.delete_observation(&ObservationId::from(id.as_str()))
         .await
         .unwrap();
 

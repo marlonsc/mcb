@@ -9,6 +9,7 @@ use std::sync::Arc;
 use mcb_application::use_cases::SearchServiceImpl;
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::ports::services::*;
+use mcb_domain::utils::id;
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
@@ -118,7 +119,7 @@ async fn test_search_service_indexing_flow(
     let ctx = ctx.await;
 
     // Initialize
-    let col_id = CollectionId::new("test_collection");
+    let col_id = CollectionId::from_uuid(id::deterministic("collection", "test_collection"));
     ctx.service.initialize(&col_id).await.expect("init failed");
 
     // Store
@@ -141,7 +142,7 @@ async fn test_search_service_indexing_flow(
 #[tokio::test]
 async fn test_search_empty_collection(#[future] ctx: TestContext) {
     let ctx = ctx.await;
-    let col_id = CollectionId::new("empty_collection");
+    let col_id = CollectionId::from_uuid(id::deterministic("collection", "empty_collection"));
     ctx.service.initialize(&col_id).await.expect("init failed");
 
     let search_service = SearchServiceImpl::new(ctx.service);
@@ -179,7 +180,7 @@ async fn test_context_service_capabilities(#[future] ctx: TestContext) {
 #[tokio::test]
 async fn test_store_and_retrieve_chunks(#[future] ctx: TestContext, test_chunks: Vec<CodeChunk>) {
     let ctx = ctx.await;
-    let col_id = CollectionId::new("store_test");
+    let col_id = CollectionId::from_uuid(id::deterministic("collection", "store_test"));
 
     ctx.service.initialize(&col_id).await.expect("init failed");
     ctx.service
@@ -203,7 +204,7 @@ async fn test_store_and_retrieve_chunks(#[future] ctx: TestContext, test_chunks:
 #[tokio::test]
 async fn test_clear_collection(#[future] ctx: TestContext, test_chunks: Vec<CodeChunk>) {
     let ctx = ctx.await;
-    let col_id = CollectionId::new("clear_test");
+    let col_id = CollectionId::from_uuid(id::deterministic("collection", "clear_test"));
 
     ctx.service.initialize(&col_id).await.expect("init");
     ctx.service
@@ -239,7 +240,7 @@ async fn test_path_handling(
     #[case] should_fail: bool,
 ) {
     let ctx = ctx.await;
-    let col_id = CollectionId::new("path_test");
+    let col_id = CollectionId::from_uuid(id::deterministic("collection", "path_test"));
     ctx.service.initialize(&col_id).await.expect("init");
 
     let chunk = CodeChunk {
@@ -276,7 +277,7 @@ async fn test_path_handling(
 #[tokio::test]
 async fn test_full_search_flow(#[future] ctx: TestContext, test_chunks: Vec<CodeChunk>) {
     let ctx = ctx.await;
-    let col_id = CollectionId::new("architecture_test");
+    let col_id = CollectionId::from_uuid(id::deterministic("collection", "architecture_test"));
     ctx.service.initialize(&col_id).await.expect("init");
     ctx.service
         .store_chunks(&col_id, &test_chunks)

@@ -1,3 +1,4 @@
+use mcb_domain::value_objects::SessionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_infrastructure::di::modules::domain_services::DomainServicesContainer;
@@ -19,7 +20,7 @@ pub(crate) fn create_base_memory_args(
         data,
         ids,
         repo_id: None,
-        session_id: session_id.map(Into::into),
+        session_id: session_id.map(|id| SessionId::from_string(&id)),
         parent_session_id: None,
         tags: None,
         query: None,

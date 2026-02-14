@@ -32,7 +32,7 @@ async fn test_post_tool_use_hook_graceful_degradation(#[case] tool_name: &str) {
 #[tokio::test]
 async fn test_session_start_hook_graceful_degradation() {
     let processor = HookProcessor::new(None);
-    let context = SessionStartContext::new(SessionId::new("test_session"));
+    let context = SessionStartContext::new(SessionId::from("test_session"));
 
     let result = processor.process_session_start(context).await;
     assert!(result.is_err());
@@ -55,7 +55,7 @@ async fn test_post_tool_use_context_enrichment(
     let mut context = PostToolUseContext::new(tool_name.to_string(), false);
 
     if with_session_id {
-        context = context.with_session_id(SessionId::new("session_123"));
+        context = context.with_session_id(SessionId::from("session_123"));
     }
     if with_metadata {
         context = context.with_metadata("key".to_string(), "value".to_string());
@@ -65,7 +65,7 @@ async fn test_post_tool_use_context_enrichment(
     if with_session_id {
         assert_eq!(
             context.session_id.as_ref().map(|id| id.as_str()),
-            Some("session_123")
+            Some("session_123".to_string())
         );
     }
     if with_metadata {
@@ -75,7 +75,7 @@ async fn test_post_tool_use_context_enrichment(
 
 #[tokio::test]
 async fn test_session_start_context_creation() {
-    let context = SessionStartContext::new(SessionId::new("session_456"));
+    let context = SessionStartContext::new(SessionId::from("session_456"));
     assert_eq!(context.session_id.as_str(), "session_456");
     assert!(context.timestamp > 0);
 }

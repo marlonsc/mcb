@@ -84,7 +84,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                 .expect("insert malformed observation row");
 
             let err = memory_repo
-                .get_observation(&ObservationId::new("obs-malformed"))
+                .get_observation(&ObservationId::from("obs-malformed"))
                 .await
                 .expect_err("malformed metadata must fail");
             assert!(
@@ -113,7 +113,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                 .expect("insert malformed session summary row");
 
             let err = memory_repo
-                .get_session_summary(&SessionId::new("session-malformed"))
+                .get_session_summary(&SessionId::from("session-malformed"))
                 .await
                 .expect_err("malformed origin_context must fail");
             assert!(
@@ -142,7 +142,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                 .expect("insert malformed tags row");
 
             let err = memory_repo
-                .get_observation(&ObservationId::new("obs-bad-tags"))
+                .get_observation(&ObservationId::from("obs-bad-tags"))
                 .await
                 .expect_err("malformed tags must fail");
             assert!(
@@ -170,7 +170,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                 .expect("insert malformed topics row");
 
             let err = memory_repo
-                .get_session_summary(&SessionId::new("session-bad-topics"))
+                .get_session_summary(&SessionId::from("session-bad-topics"))
                 .await
                 .expect_err("malformed topics must fail");
             assert!(

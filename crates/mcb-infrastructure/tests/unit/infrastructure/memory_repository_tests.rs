@@ -73,7 +73,7 @@ async fn test_memory_repository_store_and_get_observation(
 
     // Get
     let got = repo
-        .get_observation(&ObservationId::new("id1"))
+        .get_observation(&ObservationId::from("id1"))
         .await
         .unwrap();
 

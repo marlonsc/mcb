@@ -157,11 +157,7 @@ impl QdrantVectorStoreProvider {
 impl VectorStoreAdmin for QdrantVectorStoreProvider {
     async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
         let response = self
-            .request(
-                reqwest::Method::GET,
-                &format!("/collections/{}", name.to_string()),
-                None,
-            )
+            .request(reqwest::Method::GET, &format!("/collections/{name}"), None)
             .await;
 
         match response {
@@ -184,7 +180,7 @@ impl VectorStoreAdmin for QdrantVectorStoreProvider {
         match self
             .request(
                 reqwest::Method::GET,
-                &format!("/collections/{}", collection.to_string()),
+                &format!("/collections/{collection}"),
                 None,
             )
             .await
@@ -230,7 +226,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
 
         self.request(
             reqwest::Method::PUT,
-            &format!("/collections/{}", name.to_string()),
+            &format!("/collections/{name}"),
             Some(payload),
         )
         .await?;
@@ -242,7 +238,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
     async fn delete_collection(&self, name: &CollectionId) -> Result<()> {
         self.request(
             reqwest::Method::DELETE,
-            &format!("/collections/{}", name.to_string()),
+            &format!("/collections/{name}"),
             None,
         )
         .await?;
@@ -280,7 +276,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
 
         self.request(
             reqwest::Method::PUT,
-            &format!("/collections/{}/points", collection.to_string()),
+            &format!("/collections/{collection}/points"),
             Some(payload),
         )
         .await?;
@@ -310,7 +306,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         let response = self
             .request(
                 reqwest::Method::POST,
-                &format!("/collections/{}/points/search", collection.to_string()),
+                &format!("/collections/{collection}/points/search"),
                 Some(payload),
             )
             .await?;
@@ -341,7 +337,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
 
         self.request(
             reqwest::Method::POST,
-            &format!("/collections/{}/points/delete", collection.to_string()),
+            &format!("/collections/{collection}/points/delete"),
             Some(payload),
         )
         .await?;
@@ -366,7 +362,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         let response = self
             .request(
                 reqwest::Method::POST,
-                &format!("/collections/{}/points", collection.to_string()),
+                &format!("/collections/{collection}/points"),
                 Some(payload),
             )
             .await?;
@@ -396,7 +392,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         let response = self
             .request(
                 reqwest::Method::POST,
-                &format!("/collections/{}/points/scroll", collection.to_string()),
+                &format!("/collections/{collection}/points/scroll"),
                 Some(payload),
             )
             .await?;
@@ -470,7 +466,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
         let response = self
             .request(
                 reqwest::Method::POST,
-                &format!("/collections/{}/points/scroll", collection.to_string()),
+                &format!("/collections/{collection}/points/scroll"),
                 Some(payload),
             )
             .await?;

@@ -169,15 +169,15 @@ impl DefaultIndexingOperations {
     ) -> OperationId {
         let id = OperationId::new();
         let operation = IndexingOperation {
-            id: id.clone(),
-            collection: collection.clone(),
+            id,
+            collection: *collection,
             current_file: None,
             status: mcb_domain::ports::admin::IndexingOperationStatus::Starting,
             total_files,
             processed_files: 0,
             started_at: chrono::Utc::now().timestamp(),
         };
-        self.operations.insert(id.clone(), operation);
+        self.operations.insert(id, operation);
         id
     }
 
@@ -220,7 +220,7 @@ impl IndexingOperationsInterface for DefaultIndexingOperations {
     fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
         self.operations
             .iter()
-            .map(|entry| (entry.key().clone(), entry.value().clone()))
+            .map(|entry| (*entry.key(), entry.value().clone()))
             .collect()
     }
 
