@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use mcb_server::args::{ValidateAction, ValidateArgs, ValidateScope};
 use mcb_server::handlers::ValidateHandler;
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use tempfile::TempDir;
 
 use crate::handlers::test_helpers::create_real_domain_services;
@@ -178,8 +179,11 @@ async fn test_validate_run_with_specific_rules() {
     assert!(response.is_error.unwrap_or(false), "Should return error");
 }
 
+#[rstest]
+#[case(None)]
+#[case(Some("style".to_string()))]
 #[tokio::test]
-async fn test_validate_list_rules_all() {
+async fn test_validate_list_rules(#[case] category: Option<String>) {
     let (services, _services_temp_dir) = create_real_domain_services().await;
     let handler = ValidateHandler::new(services.validation_service);
 
@@ -188,27 +192,7 @@ async fn test_validate_list_rules_all() {
         path: None,
         scope: None,
         rules: None,
-        category: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[tokio::test]
-async fn test_validate_list_rules_by_category() {
-    let (services, _services_temp_dir) = create_real_domain_services().await;
-    let handler = ValidateHandler::new(services.validation_service);
-
-    let args = ValidateArgs {
-        action: ValidateAction::ListRules,
-        path: None,
-        scope: None,
-        rules: None,
-        category: Some("style".to_string()),
+        category,
     };
 
     let result = handler.handle(Parameters(args)).await;

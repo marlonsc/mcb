@@ -18,6 +18,7 @@ use rocket::serde::json::Json;
 use rocket::{State, get, post};
 use serde::Serialize;
 use serde_json::json;
+use serde_with::skip_serializing_none;
 
 use super::auth::AdminAuth;
 use super::handlers::AdminState;
@@ -41,18 +42,16 @@ pub struct ServiceInfoResponse {
 }
 
 /// Service error response
+#[skip_serializing_none]
 #[derive(Serialize)]
 pub struct ServiceErrorResponse {
     /// Error message describing what went wrong
     pub error: String,
     /// Name of the service involved in the error (optional)
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub service: Option<String>,
     /// Number of services (optional, used in list responses)
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub count: Option<usize>,
     /// List of services (optional, used in list responses)
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub services: Option<Vec<ServiceInfoResponse>>,
 }
 

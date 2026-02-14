@@ -2,23 +2,30 @@ use mcb_domain::schema::{
     MemorySchema, MemorySchemaDdlGenerator, ProjectSchema, SchemaDdlGenerator,
 };
 use mcb_providers::database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
+use rstest::rstest;
 
+#[rstest]
+#[case("memory")]
+#[case("project")]
 #[test]
-fn test_sqlite_memory_ddl_generator_produces_statements() {
-    let generator = SqliteMemoryDdlGenerator;
-    let schema = MemorySchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+fn test_sqlite_ddl_generators_produce_statements(#[case] schema_kind: &str) {
+    let ddl: Vec<String> = if schema_kind == "memory" {
+        let generator = SqliteMemoryDdlGenerator;
+        let schema = MemorySchema::definition();
+        generator.generate_ddl(&schema)
+    } else {
+        let generator = SqliteSchemaDdlGenerator;
+        let schema = ProjectSchema::definition();
+        generator.generate_ddl(&schema)
+    };
+
     assert!(!ddl.is_empty());
     assert!(ddl.iter().any(|s| s.contains("CREATE TABLE")));
-    assert!(ddl.iter().any(|s| s.contains("fts5")));
-}
+    if schema_kind == "memory" {
+        assert!(ddl.iter().any(|s| s.contains("fts5")));
+        return;
+    }
 
-#[test]
-fn test_sqlite_project_schema_ddl_includes_all_entities() {
-    let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
-    assert!(!ddl.is_empty());
     assert!(
         ddl.iter()
             .any(|s| s.contains("CREATE TABLE") && s.contains("collections"))

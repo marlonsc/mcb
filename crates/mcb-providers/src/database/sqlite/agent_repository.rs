@@ -60,7 +60,7 @@ impl AgentRepository for SqliteAgentRepository {
         let params = [
             SqlParam::String(session.id.clone()),
             SqlParam::String(session.session_summary_id.clone()),
-            SqlParam::String(session.agent_type.as_str().to_string()),
+            SqlParam::String(session.agent_type.as_str().to_owned()),
             SqlParam::String(session.model.clone()),
             session
                 .parent_session_id
@@ -69,7 +69,7 @@ impl AgentRepository for SqliteAgentRepository {
             SqlParam::I64(session.started_at),
             session.ended_at.map_or(SqlParam::Null, SqlParam::I64),
             session.duration_ms.map_or(SqlParam::Null, SqlParam::I64),
-            SqlParam::String(session.status.as_str().to_string()),
+            SqlParam::String(session.status.as_str().to_owned()),
             session
                 .prompt_summary
                 .as_ref()
@@ -131,7 +131,7 @@ impl AgentRepository for SqliteAgentRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM agent_sessions WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_convert::row_to_agent_session,
         )
         .await
@@ -141,7 +141,7 @@ impl AgentRepository for SqliteAgentRepository {
     async fn update_session(&self, session: &AgentSession) -> Result<()> {
         let params = [
             SqlParam::String(session.session_summary_id.clone()),
-            SqlParam::String(session.agent_type.as_str().to_string()),
+            SqlParam::String(session.agent_type.as_str().to_owned()),
             SqlParam::String(session.model.clone()),
             session
                 .parent_session_id
@@ -150,7 +150,7 @@ impl AgentRepository for SqliteAgentRepository {
             SqlParam::I64(session.started_at),
             session.ended_at.map_or(SqlParam::Null, SqlParam::I64),
             session.duration_ms.map_or(SqlParam::Null, SqlParam::I64),
-            SqlParam::String(session.status.as_str().to_string()),
+            SqlParam::String(session.status.as_str().to_owned()),
             session
                 .prompt_summary
                 .as_ref()
@@ -221,11 +221,11 @@ impl AgentRepository for SqliteAgentRepository {
         }
         if let Some(agent_type) = &query.agent_type {
             sql.push_str(" AND agent_type = ?");
-            params.push(SqlParam::String(agent_type.as_str().to_string()));
+            params.push(SqlParam::String(agent_type.as_str().to_owned()));
         }
         if let Some(status) = &query.status {
             sql.push_str(" AND status = ?");
-            params.push(SqlParam::String(status.as_str().to_string()));
+            params.push(SqlParam::String(status.as_str().to_owned()));
         }
         if let Some(project_id) = &query.project_id {
             sql.push_str(" AND project_id = ?");
@@ -258,7 +258,7 @@ impl AgentRepository for SqliteAgentRepository {
         query_helpers::query_all(
             &self.executor,
             "SELECT * FROM agent_sessions WHERE project_id = ? ORDER BY started_at DESC",
-            &[SqlParam::String(project_id.to_string())],
+            &[SqlParam::String(project_id.to_owned())],
             row_convert::row_to_agent_session,
             "agent session",
         )
@@ -271,7 +271,7 @@ impl AgentRepository for SqliteAgentRepository {
         query_helpers::query_all(
             &self.executor,
             "SELECT * FROM agent_sessions WHERE worktree_id = ? ORDER BY started_at DESC",
-            &[SqlParam::String(worktree_id.to_string())],
+            &[SqlParam::String(worktree_id.to_owned())],
             row_convert::row_to_agent_session,
             "agent session",
         )
@@ -374,7 +374,7 @@ impl AgentRepository for SqliteAgentRepository {
         let params = [
             SqlParam::String(checkpoint.id.clone()),
             SqlParam::String(checkpoint.session_id.clone()),
-            SqlParam::String(checkpoint.checkpoint_type.as_str().to_string()),
+            SqlParam::String(checkpoint.checkpoint_type.as_str().to_owned()),
             SqlParam::String(checkpoint.description.clone()),
             SqlParam::String(snapshot_json),
             SqlParam::I64(checkpoint.created_at),
@@ -410,7 +410,7 @@ impl AgentRepository for SqliteAgentRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM checkpoints WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_convert::row_to_checkpoint,
         )
         .await
@@ -423,7 +423,7 @@ impl AgentRepository for SqliteAgentRepository {
 
         let params = [
             SqlParam::String(checkpoint.session_id.clone()),
-            SqlParam::String(checkpoint.checkpoint_type.as_str().to_string()),
+            SqlParam::String(checkpoint.checkpoint_type.as_str().to_owned()),
             SqlParam::String(checkpoint.description.clone()),
             SqlParam::String(snapshot_json),
             SqlParam::I64(checkpoint.created_at),

@@ -10,13 +10,13 @@ use rmcp::model::{CallToolResult, Content};
 use serde_json::Value;
 use uuid::Uuid;
 
+use super::common::{opt_str, parse_agent_type, require_data_map, require_str};
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{
     OriginContextInput, resolve_identifier_precedence, resolve_origin_context,
 };
-use crate::utils::json;
 use tracing::error;
 
 /// Creates a new agent session.
@@ -25,28 +25,19 @@ pub async fn create_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match json::json_map(&args.data) {
-        Some(data) => data,
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing data payload for create",
-            )]));
-        }
+    let data = match require_data_map(&args.data, "Missing data payload for create") {
+        Ok(data) => data,
+        Err(error_result) => return Ok(error_result),
     };
 
-    let payload_agent_type = data
-        .get("agent_type")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
+    let payload_agent_type = opt_str(data, "agent_type");
     let agent_type_value = resolve_identifier_precedence(
         "agent_type",
         args.agent_type.as_deref(),
         payload_agent_type.as_deref(),
     )?;
     let agent_type: AgentType = match agent_type_value {
-        Some(value) => value
-            .parse::<AgentType>()
-            .map_err(|e: String| McpError::invalid_params(e, None))?,
+        Some(value) => parse_agent_type(&value)?,
         None => {
             return Ok(CallToolResult::error(vec![Content::text(
                 "Missing agent_type for create (expected in args or data)",
@@ -63,14 +54,9 @@ pub async fn create_session(
         .and_then(Value::as_str)
         .map(str::to_owned)
         .unwrap_or_else(|| format!("auto_{}", Uuid::new_v4()));
-    let model = match data.get(schema::MODEL).and_then(Value::as_str) {
-        Some(value) => value.to_owned(),
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(format!(
-                "Missing required field: {}",
-                schema::MODEL
-            ))]));
-        }
+    let model = match require_str(data, schema::MODEL) {
+        Ok(value) => value,
+        Err(error_result) => return Ok(error_result),
     };
     let session = AgentSession {
         id: session_id.clone(),
@@ -96,38 +82,14 @@ pub async fn create_session(
         project_id: None,
         worktree_id: None,
     };
-    let payload_project_id = data
-        .get(schema::PROJECT_ID)
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_worktree_id = data
-        .get(schema::WORKTREE_ID)
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_parent_session_id = data
-        .get(schema::PARENT_SESSION_ID)
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_repo_path = data
-        .get(schema::REPO_PATH)
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_operator_id = data
-        .get("operator_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_machine_id = data
-        .get("machine_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_agent_program = data
-        .get("agent_program")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_model_id = data
-        .get("model_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
+    let payload_project_id = opt_str(data, schema::PROJECT_ID);
+    let payload_worktree_id = opt_str(data, schema::WORKTREE_ID);
+    let payload_parent_session_id = opt_str(data, schema::PARENT_SESSION_ID);
+    let payload_repo_path = opt_str(data, schema::REPO_PATH);
+    let payload_operator_id = opt_str(data, "operator_id");
+    let payload_machine_id = opt_str(data, "machine_id");
+    let payload_agent_program = opt_str(data, "agent_program");
+    let payload_model_id = opt_str(data, "model_id");
     let origin_context = resolve_origin_context(OriginContextInput {
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),

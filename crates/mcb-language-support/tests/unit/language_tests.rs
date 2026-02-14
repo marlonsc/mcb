@@ -3,6 +3,7 @@
 //! Tests for `LanguageId` and `LanguageRegistry` functionality.
 
 use mcb_language_support::language::{LanguageId, LanguageRegistry};
+use rstest::rstest;
 use rust_code_analysis::LANG;
 
 #[test]
@@ -13,18 +14,22 @@ fn test_language_id_all() {
     assert!(all.contains(&LanguageId::Kotlin));
 }
 
+#[rstest]
+#[case(LanguageId::Rust.name(), "rust")]
+#[case(LanguageId::Cpp.name(), "cpp")]
+#[case(LanguageId::JavaScript.name(), "javascript")]
 #[test]
-fn test_language_id_name() {
-    assert_eq!(LanguageId::Rust.name(), "rust");
-    assert_eq!(LanguageId::Cpp.name(), "cpp");
-    assert_eq!(LanguageId::JavaScript.name(), "javascript");
+fn test_language_id_name(#[case] actual: &str, #[case] expected: &str) {
+    assert_eq!(actual, expected);
 }
 
+#[rstest]
+#[case(LanguageId::Cpp.display_name(), "C/C++")]
+#[case(LanguageId::JavaScript.display_name(), "JavaScript")]
+#[case(LanguageId::TypeScript.display_name(), "TypeScript")]
 #[test]
-fn test_language_id_display_name() {
-    assert_eq!(LanguageId::Cpp.display_name(), "C/C++");
-    assert_eq!(LanguageId::JavaScript.display_name(), "JavaScript");
-    assert_eq!(LanguageId::TypeScript.display_name(), "TypeScript");
+fn test_language_id_display_name(#[case] actual: &str, #[case] expected: &str) {
+    assert_eq!(actual, expected);
 }
 
 #[test]
@@ -36,13 +41,15 @@ fn test_language_id_extensions() {
     assert!(LanguageId::Cpp.extensions().contains(&"cpp"));
 }
 
+#[rstest]
+#[case("rust", Some(LanguageId::Rust))]
+#[case("PYTHON", Some(LanguageId::Python))]
+#[case("c++", Some(LanguageId::Cpp))]
+#[case("c", Some(LanguageId::Cpp))]
+#[case("unknown", None)]
 #[test]
-fn test_language_id_from_name() {
-    assert_eq!(LanguageId::from_name("rust"), Some(LanguageId::Rust));
-    assert_eq!(LanguageId::from_name("PYTHON"), Some(LanguageId::Python));
-    assert_eq!(LanguageId::from_name("c++"), Some(LanguageId::Cpp));
-    assert_eq!(LanguageId::from_name("c"), Some(LanguageId::Cpp));
-    assert_eq!(LanguageId::from_name("unknown"), None);
+fn test_language_id_from_name(#[case] input: &str, #[case] expected: Option<LanguageId>) {
+    assert_eq!(LanguageId::from_name(input), expected);
 }
 
 #[test]

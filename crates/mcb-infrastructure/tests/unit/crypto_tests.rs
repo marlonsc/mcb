@@ -3,6 +3,7 @@
 use mcb_infrastructure::crypto::{
     CryptoService, HashUtils, PasswordService, SecureErasure, TokenGenerator,
 };
+use rstest::rstest;
 
 #[test]
 fn test_crypto_service_encrypt_decrypt() {
@@ -61,9 +62,15 @@ fn test_secure_erasure() {
     assert_eq!(data, vec![0, 0, 0, 0, 0]);
 }
 
+#[rstest]
+#[case(b"test", b"test", true)]
+#[case(b"test", b"different", false)]
+#[case(b"test", b"test_longer", false)]
 #[test]
-fn test_constant_time_eq() {
-    assert!(HashUtils::constant_time_eq(b"test", b"test"));
-    assert!(!HashUtils::constant_time_eq(b"test", b"different"));
-    assert!(!HashUtils::constant_time_eq(b"test", b"test_longer"));
+fn test_constant_time_eq(
+    #[case] left: &'static [u8],
+    #[case] right: &'static [u8],
+    #[case] expected: bool,
+) {
+    assert_eq!(HashUtils::constant_time_eq(left, right), expected);
 }

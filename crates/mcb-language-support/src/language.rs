@@ -4,31 +4,77 @@
 //! and `LanguageRegistry` for language lookup and metadata.
 
 use std::collections::HashMap;
+use std::str::FromStr;
 
+use derive_more::Display;
 use rust_code_analysis::LANG;
 use serde::{Deserialize, Serialize};
+use strum_macros::{EnumMessage, EnumString};
 
 /// Supported programming languages
 ///
 /// Maps to Mozilla rust-code-analysis LANG enum while providing
 /// a stable, serializable representation. Only languages that RCA
 /// actually supports are included.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Serialize,
+    Deserialize,
+    Display,
+    EnumString,
+    EnumMessage,
+)]
 #[serde(rename_all = "lowercase")]
+#[strum(ascii_case_insensitive)]
 pub enum LanguageId {
     /// Rust
+    #[strum(serialize = "rust", serialize = "rs", message = "Rust")]
+    #[display("rust")]
     Rust,
     /// Python
+    #[strum(serialize = "python", serialize = "py", message = "Python")]
+    #[display("python")]
     Python,
     /// JavaScript (including JSX)
+    #[strum(
+        serialize = "javascript",
+        serialize = "js",
+        serialize = "jsx",
+        serialize = "mozjs",
+        message = "JavaScript"
+    )]
+    #[display("javascript")]
     JavaScript,
     /// TypeScript (including TSX)
+    #[strum(
+        serialize = "typescript",
+        serialize = "ts",
+        serialize = "tsx",
+        message = "TypeScript"
+    )]
+    #[display("typescript")]
     TypeScript,
     /// Java
+    #[strum(serialize = "java", message = "Java")]
+    #[display("java")]
     Java,
     /// C and C++ (RCA treats them identically)
+    #[strum(
+        serialize = "cpp",
+        serialize = "c++",
+        serialize = "c",
+        message = "C/C++"
+    )]
+    #[display("cpp")]
     Cpp,
     /// Kotlin
+    #[strum(serialize = "kotlin", serialize = "kt", message = "Kotlin")]
+    #[display("kotlin")]
     Kotlin,
 }
 
@@ -61,15 +107,7 @@ impl LanguageId {
 
     /// Get the display name of the language
     pub fn display_name(&self) -> &'static str {
-        match self {
-            LanguageId::Rust => "Rust",
-            LanguageId::Python => "Python",
-            LanguageId::JavaScript => "JavaScript",
-            LanguageId::TypeScript => "TypeScript",
-            LanguageId::Java => "Java",
-            LanguageId::Cpp => "C/C++",
-            LanguageId::Kotlin => "Kotlin",
-        }
+        strum::EnumMessage::get_message(self).expect("LanguageId display message should exist")
     }
 
     /// Get common file extensions for this language
@@ -120,26 +158,10 @@ impl LanguageId {
 
     /// Try to create from a string name
     pub fn from_name(name: &str) -> Option<LanguageId> {
-        match name.to_lowercase().as_str() {
-            "rust" | "rs" => Some(LanguageId::Rust),
-            "python" | "py" => Some(LanguageId::Python),
-            "javascript" | "js" | "jsx" | "mozjs" => Some(LanguageId::JavaScript),
-            "typescript" | "ts" | "tsx" => Some(LanguageId::TypeScript),
-            "java" => Some(LanguageId::Java),
-            "c" | "cpp" | "c++" | "cxx" => Some(LanguageId::Cpp),
-            "kotlin" | "kt" => Some(LanguageId::Kotlin),
-            // Intentional: return None for unrecognized language names
-            other => {
-                let _ = other;
-                None
-            }
+        if name.eq_ignore_ascii_case("cxx") {
+            return Some(LanguageId::Cpp);
         }
-    }
-}
-
-impl std::fmt::Display for LanguageId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.name())
+        LanguageId::from_str(name).ok()
     }
 }
 

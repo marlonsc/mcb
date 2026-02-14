@@ -3,15 +3,17 @@
 use std::path::Path;
 
 use mcb_validate::filters::FilePatternMatcher;
+use rstest::rstest;
 
+#[rstest]
+#[case("main.rs", true)]
+#[case("lib.rs", true)]
+#[case("main.py", false)]
+#[case("README.md", false)]
 #[test]
-fn test_simple_includes() {
+fn test_simple_includes(#[case] file: &str, #[case] expected: bool) {
     let matcher = FilePatternMatcher::new(&["*.rs".to_string()], &[]).unwrap();
-
-    assert!(matcher.should_include(Path::new("main.rs")));
-    assert!(matcher.should_include(Path::new("lib.rs")));
-    assert!(!matcher.should_include(Path::new("main.py")));
-    assert!(!matcher.should_include(Path::new("README.md")));
+    assert_eq!(matcher.should_include(Path::new(file)), expected);
 }
 
 #[test]
@@ -76,11 +78,12 @@ fn test_from_mixed_patterns() {
     assert!(!matcher.should_include(Path::new("lib.py")));
 }
 
+#[rstest]
+#[case("any/file.rs")]
+#[case("any/file.py")]
+#[case("any/file.txt")]
 #[test]
-fn test_default_matcher() {
+fn test_default_matcher(#[case] file: &str) {
     let matcher = FilePatternMatcher::default();
-
-    assert!(matcher.should_include(Path::new("any/file.rs")));
-    assert!(matcher.should_include(Path::new("any/file.py")));
-    assert!(matcher.should_include(Path::new("any/file.txt")));
+    assert!(matcher.should_include(Path::new(file)));
 }

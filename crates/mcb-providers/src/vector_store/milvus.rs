@@ -26,7 +26,6 @@ use crate::constants::{
     MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE,
 };
 use crate::provider_utils::{RetryConfig, retry_with_backoff};
-use crate::utils::JsonExt;
 
 /// Milvus vector store provider implementation
 pub struct MilvusVectorStoreProvider {
@@ -442,12 +441,21 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         for (embedding, meta) in vectors.iter().zip(metadata.iter()) {
             vectors_flat.extend_from_slice(&embedding.vector);
 
-            let file_path = meta.string_or("file_path", "unknown");
+            let file_path = meta
+                .get("file_path")
+                .and_then(|value| value.as_str())
+                .unwrap_or("unknown")
+                .to_owned();
             let start_line = meta
-                .opt_i64("start_line")
-                .or_else(|| meta.opt_i64("line_number"))
+                .get("start_line")
+                .and_then(|value| value.as_i64())
+                .or_else(|| meta.get("line_number").and_then(|value| value.as_i64()))
                 .unwrap_or(0);
-            let content = meta.string_or("content", "");
+            let content = meta
+                .get("content")
+                .and_then(|value| value.as_str())
+                .unwrap_or("")
+                .to_owned();
 
             file_paths.push(file_path);
             start_lines.push(start_line);

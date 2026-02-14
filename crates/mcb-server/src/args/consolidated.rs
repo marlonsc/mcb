@@ -17,13 +17,23 @@ macro_rules! tool_schema {
     };
 }
 
+macro_rules! tool_enum {
+    ($(#[$meta:meta])* $vis:vis enum $name:ident { $($variants:tt)* }) => {
+        $(#[$meta])*
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+        #[serde(rename_all = "snake_case")]
+        $vis enum $name {
+            $($variants)*
+        }
+    };
+}
+
 // =============================================================================
 // Index Tool - Consolidates: index_codebase, get_indexing_status, clear_index
 // =============================================================================
 
+tool_enum! {
 /// Actions available for the index tool.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum IndexAction {
     /// Start a new indexing operation.
     Start,
@@ -33,6 +43,7 @@ pub enum IndexAction {
     Status,
     /// Clear the index for a collection.
     Clear,
+}
 }
 
 tool_schema! {
@@ -97,9 +108,8 @@ pub struct IndexArgs {
 // Search Tool - Consolidates: search_code, search_memories, memory_search
 // =============================================================================
 
+tool_enum! {
 /// Resources available for semantic search.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum SearchResource {
     /// Search across the indexed codebase.
     Code,
@@ -107,6 +117,7 @@ pub enum SearchResource {
     Memory,
     /// Search across context snapshots.
     Context,
+}
 }
 
 tool_schema! {
@@ -173,9 +184,8 @@ pub struct SearchArgs {
 // Validate Tool - Consolidates: validate_*, list_validators, analyze_complexity
 // =============================================================================
 
+tool_enum! {
 /// Actions available for the validate tool.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum ValidateAction {
     /// Run architectural validation rules.
     Run,
@@ -184,15 +194,16 @@ pub enum ValidateAction {
     /// Analyze code complexity (cyclomatic, cognitive).
     Analyze,
 }
+}
 
+tool_enum! {
 /// Scope for the validate action.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum ValidateScope {
     /// Validate a single file.
     File,
     /// Validate an entire project.
     Project,
+}
 }
 
 // TODO(REF002): Duplicate definition 'ValidateArgs' also found in 'crates/mcb/src/cli/validate.rs'.
@@ -229,9 +240,8 @@ pub struct ValidateArgs {
 // Memory Tool - Consolidates all memory_* tools (14 tools → 1)
 // =============================================================================
 
+tool_enum! {
 /// Actions available for the memory tool.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum MemoryAction {
     /// Store a new memory item.
     Store,
@@ -244,10 +254,10 @@ pub enum MemoryAction {
     /// Inject relevant memory items into context.
     Inject,
 }
+}
 
+tool_enum! {
 /// Resource types for the memory tool.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum MemoryResource {
     /// General observation.
     Observation,
@@ -259,6 +269,7 @@ pub enum MemoryResource {
     ErrorPattern,
     /// Session metadata.
     Session,
+}
 }
 
 // TODO(KISS001): Struct MemoryArgs has too many fields (18 fields, max: 16).
@@ -367,9 +378,8 @@ pub struct MemoryArgs {
 // Session Tool - Consolidates session_summary and agent_session tools (6 → 1)
 // =============================================================================
 
+tool_enum! {
 /// Actions available for session management operations
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum SessionAction {
     /// Create a new session.
     Create,
@@ -381,6 +391,7 @@ pub enum SessionAction {
     List,
     /// Summarize a session.
     Summarize,
+}
 }
 
 tool_schema! {
@@ -438,14 +449,14 @@ pub struct SessionArgs {
 // Agent Tool - Consolidates store_tool_call, store_delegation (2 → 1)
 // =============================================================================
 
+tool_enum! {
 /// Actions available for agent activity logging
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum AgentAction {
     /// Log a tool execution.
     LogTool,
     /// Log a delegation event.
     LogDelegation,
+}
 }
 
 tool_schema! {
@@ -476,9 +487,8 @@ pub struct AgentArgs {
 // search_branch, list_repositories, analyze_impact)
 // =============================================================================
 
+tool_enum! {
 /// Actions available for version control system operations
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum VcsAction {
     /// List repositories in the workspace.
     ListRepositories,
@@ -490,6 +500,7 @@ pub enum VcsAction {
     SearchBranch,
     /// Analyze impact of changes.
     AnalyzeImpact,
+}
 }
 
 tool_schema! {
@@ -557,9 +568,8 @@ pub struct VcsArgs {
 // Entity Tool - Consolidates VCS/Plan/Issue/Org entity CRUD (4 → 1)
 // =============================================================================
 
+tool_enum! {
 /// CRUD actions for entity resources.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum EntityAction {
     /// Create a new entity.
     Create,
@@ -574,10 +584,10 @@ pub enum EntityAction {
     /// Release an assignment (VCS assignment only).
     Release,
 }
+}
 
+tool_enum! {
 /// Target resource type for consolidated entity operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum EntityResource {
     /// VCS repository resource.
     Repository,
@@ -611,6 +621,7 @@ pub enum EntityResource {
     TeamMember,
     /// API key resource.
     ApiKey,
+}
 }
 
 tool_schema! {
@@ -654,9 +665,8 @@ pub struct EntityArgs {
 // VCS Entity Tool - Repository, Branch, Worktree, Assignment CRUD
 // =============================================================================
 
+tool_enum! {
 /// CRUD actions for VCS entity resources.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum VcsEntityAction {
     /// Create a new entity.
     Create,
@@ -671,10 +681,10 @@ pub enum VcsEntityAction {
     /// Release an assignment.
     Release,
 }
+}
 
+tool_enum! {
 /// Target resource type for VCS entity operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum VcsEntityResource {
     /// Repository resource.
     Repository,
@@ -684,6 +694,7 @@ pub enum VcsEntityResource {
     Worktree,
     /// Agent-worktree assignment resource.
     Assignment,
+}
 }
 
 tool_schema! {
@@ -726,9 +737,8 @@ pub struct VcsEntityArgs {
 }
 }
 
+tool_enum! {
 /// CRUD actions for plan entity resources.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum PlanEntityAction {
     /// Create a new entity.
     Create,
@@ -741,10 +751,10 @@ pub enum PlanEntityAction {
     /// Delete an entity by ID.
     Delete,
 }
+}
 
+tool_enum! {
 /// Target resource type for plan entity operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum PlanEntityResource {
     /// Plan resource.
     Plan,
@@ -752,6 +762,7 @@ pub enum PlanEntityResource {
     Version,
     /// Plan review resource.
     Review,
+}
 }
 
 tool_schema! {
@@ -794,9 +805,8 @@ pub struct PlanEntityArgs {
 }
 }
 
+tool_enum! {
 /// Actions for org entity resource management
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum OrgEntityAction {
     /// Create a new entity.
     Create,
@@ -809,10 +819,10 @@ pub enum OrgEntityAction {
     /// Delete an entity by identifier.
     Delete,
 }
+}
 
+tool_enum! {
 /// Types of org entity resources
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum OrgEntityResource {
     /// Organization resource.
     Org,
@@ -824,6 +834,7 @@ pub enum OrgEntityResource {
     TeamMember,
     /// API key resource.
     ApiKey,
+}
 }
 
 tool_schema! {
@@ -857,9 +868,8 @@ pub struct OrgEntityArgs {
 }
 }
 
+tool_enum! {
 /// CRUD actions for issue entity resources.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum IssueEntityAction {
     /// Create a new entity.
     Create,
@@ -872,10 +882,10 @@ pub enum IssueEntityAction {
     /// Delete an entity by ID.
     Delete,
 }
+}
 
+tool_enum! {
 /// Target resource type for issue entity operations.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum IssueEntityResource {
     /// Issue resource.
     Issue,
@@ -885,6 +895,7 @@ pub enum IssueEntityResource {
     Label,
     /// Label assignment resource.
     LabelAssignment,
+}
 }
 
 tool_schema! {
@@ -931,9 +942,8 @@ pub struct IssueEntityArgs {
 // Project Tool - Consolidates all project_* tools (9 tools → 1)
 // =============================================================================
 
+tool_enum! {
 /// Actions available for project resource management
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum ProjectAction {
     /// Create a new resource.
     Create,
@@ -946,10 +956,10 @@ pub enum ProjectAction {
     /// Delete a resource.
     Delete,
 }
+}
 
+tool_enum! {
 /// Types of project resources that can be managed
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum ProjectResource {
     /// Project metadata.
     Project,
@@ -961,6 +971,7 @@ pub enum ProjectResource {
     Dependency,
     /// Project decision.
     Decision,
+}
 }
 
 tool_schema! {

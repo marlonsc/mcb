@@ -183,28 +183,32 @@ impl SupportedLanguage {
     }
 }
 
-impl std::str::FromStr for SupportedLanguage {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "rust" | "rs" => Ok(Self::Rust),
-            "python" | "py" => Ok(Self::Python),
-            "javascript" | "js" => Ok(Self::JavaScript),
-            "typescript" | "ts" => Ok(Self::TypeScript),
-            "go" | "golang" => Ok(Self::Go),
-            "java" => Ok(Self::Java),
-            "c" => Ok(Self::C),
-            "cpp" | "c++" | "cxx" => Ok(Self::Cpp),
-            "csharp" | "c#" | "cs" => Ok(Self::CSharp),
-            "ruby" | "rb" => Ok(Self::Ruby),
-            "php" => Ok(Self::Php),
-            "swift" => Ok(Self::Swift),
-            "kotlin" | "kt" => Ok(Self::Kotlin),
-            _ => Err(format!("Unsupported language: {s}")),
-        }
-    }
-}
+impl_from_str!(SupportedLanguage, "Unsupported language: {}", {
+    "rust" => SupportedLanguage::Rust,
+    "rs" => SupportedLanguage::Rust,
+    "python" => SupportedLanguage::Python,
+    "py" => SupportedLanguage::Python,
+    "javascript" => SupportedLanguage::JavaScript,
+    "js" => SupportedLanguage::JavaScript,
+    "typescript" => SupportedLanguage::TypeScript,
+    "ts" => SupportedLanguage::TypeScript,
+    "go" => SupportedLanguage::Go,
+    "golang" => SupportedLanguage::Go,
+    "java" => SupportedLanguage::Java,
+    "c" => SupportedLanguage::C,
+    "cpp" => SupportedLanguage::Cpp,
+    "c++" => SupportedLanguage::Cpp,
+    "cxx" => SupportedLanguage::Cpp,
+    "csharp" => SupportedLanguage::CSharp,
+    "c#" => SupportedLanguage::CSharp,
+    "cs" => SupportedLanguage::CSharp,
+    "ruby" => SupportedLanguage::Ruby,
+    "rb" => SupportedLanguage::Ruby,
+    "php" => SupportedLanguage::Php,
+    "swift" => SupportedLanguage::Swift,
+    "kotlin" => SupportedLanguage::Kotlin,
+    "kt" => SupportedLanguage::Kotlin,
+});
 
 /// System operation type identifier
 ///

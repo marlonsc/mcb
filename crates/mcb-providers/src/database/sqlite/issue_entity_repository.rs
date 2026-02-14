@@ -109,8 +109,8 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
                     opt_str_param(&issue.phase_id),
                     SqlParam::String(issue.title.clone()),
                     SqlParam::String(issue.description.clone()),
-                    SqlParam::String(issue.issue_type.as_str().to_string()),
-                    SqlParam::String(issue.status.as_str().to_string()),
+                    SqlParam::String(issue.issue_type.as_str().to_owned()),
+                    SqlParam::String(issue.status.as_str().to_owned()),
                     SqlParam::I64(i64::from(issue.priority)),
                     opt_str_param(&issue.assignee),
                     SqlParam::String(labels),
@@ -134,8 +134,8 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             &self.executor,
             "SELECT * FROM project_issues WHERE org_id = ? AND id = ?",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(id.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(id.to_owned()),
             ],
             row_to_issue,
         )
@@ -148,8 +148,8 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             &self.executor,
             "SELECT * FROM project_issues WHERE org_id = ? AND project_id = ?",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(project_id.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(project_id.to_owned()),
             ],
             row_to_issue,
             "issue entity",
@@ -168,8 +168,8 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
                     opt_str_param(&issue.phase_id),
                     SqlParam::String(issue.title.clone()),
                     SqlParam::String(issue.description.clone()),
-                    SqlParam::String(issue.issue_type.as_str().to_string()),
-                    SqlParam::String(issue.status.as_str().to_string()),
+                    SqlParam::String(issue.issue_type.as_str().to_owned()),
+                    SqlParam::String(issue.status.as_str().to_owned()),
                     SqlParam::I64(i64::from(issue.priority)),
                     opt_str_param(&issue.assignee),
                     SqlParam::String(labels),
@@ -194,8 +194,8 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             .execute(
                 "DELETE FROM project_issues WHERE org_id = ? AND id = ?",
                 &[
-                    SqlParam::String(org_id.to_string()),
-                    SqlParam::String(id.to_string()),
+                    SqlParam::String(org_id.to_owned()),
+                    SqlParam::String(id.to_owned()),
                 ],
             )
             .await
@@ -220,7 +220,7 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM issue_comments WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_comment,
         )
         .await?
@@ -231,7 +231,7 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
         query_helpers::query_all(
             &self.executor,
             "SELECT * FROM issue_comments WHERE issue_id = ?",
-            &[SqlParam::String(issue_id.to_string())],
+            &[SqlParam::String(issue_id.to_owned())],
             row_to_comment,
             "issue entity",
         )
@@ -242,7 +242,7 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
         self.executor
             .execute(
                 "DELETE FROM issue_comments WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }
@@ -267,7 +267,7 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM issue_labels WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_label,
         )
         .await?
@@ -279,8 +279,8 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             &self.executor,
             "SELECT * FROM issue_labels WHERE org_id = ? AND project_id = ?",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(project_id.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(project_id.to_owned()),
             ],
             row_to_label,
             "issue entity",
@@ -292,7 +292,7 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
         self.executor
             .execute(
                 "DELETE FROM issue_labels WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }
@@ -315,8 +315,8 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
             .execute(
                 "DELETE FROM issue_label_assignments WHERE issue_id = ? AND label_id = ?",
                 &[
-                    SqlParam::String(issue_id.to_string()),
-                    SqlParam::String(label_id.to_string()),
+                    SqlParam::String(issue_id.to_owned()),
+                    SqlParam::String(label_id.to_owned()),
                 ],
             )
             .await
@@ -326,7 +326,7 @@ impl IssueEntityRepository for SqliteIssueEntityRepository {
         query_helpers::query_all(
             &self.executor,
             "SELECT l.* FROM issue_labels l INNER JOIN issue_label_assignments a ON a.label_id = l.id WHERE a.issue_id = ?",
-            &[SqlParam::String(issue_id.to_string())],
+            &[SqlParam::String(issue_id.to_owned())],
             row_to_label,
             "issue entity",
         )

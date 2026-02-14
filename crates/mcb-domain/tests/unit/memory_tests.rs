@@ -4,31 +4,33 @@ use mcb_domain::entities::memory::{
     ErrorPattern, ErrorPatternCategory, ErrorPatternMatch, MemoryFilter, Observation,
     ObservationMetadata, ObservationType,
 };
+use rstest::rstest;
 
+#[rstest]
+#[case("code", Ok(ObservationType::Code))]
+#[case("context", Ok(ObservationType::Context))]
+#[case("execution", Ok(ObservationType::Execution))]
+#[case("quality_gate", Ok(ObservationType::QualityGate))]
+#[case("unknown", Err(()))]
 #[test]
-fn test_observation_type_from_str() {
-    assert_eq!("code".parse::<ObservationType>(), Ok(ObservationType::Code));
-    assert_eq!(
-        "context".parse::<ObservationType>(),
-        Ok(ObservationType::Context)
-    );
-    assert_eq!(
-        "execution".parse::<ObservationType>(),
-        Ok(ObservationType::Execution)
-    );
-    assert_eq!(
-        "quality_gate".parse::<ObservationType>(),
-        Ok(ObservationType::QualityGate)
-    );
-    assert!("unknown".parse::<ObservationType>().is_err());
+fn test_observation_type_from_str(
+    #[case] input: &str,
+    #[case] expected: Result<ObservationType, ()>,
+) {
+    match expected {
+        Ok(observation_type) => assert_eq!(input.parse::<ObservationType>(), Ok(observation_type)),
+        Err(()) => assert!(input.parse::<ObservationType>().is_err()),
+    }
 }
 
+#[rstest]
+#[case(ObservationType::Code, "code")]
+#[case(ObservationType::Summary, "summary")]
+#[case(ObservationType::Execution, "execution")]
+#[case(ObservationType::QualityGate, "quality_gate")]
 #[test]
-fn test_observation_type_as_str() {
-    assert_eq!(ObservationType::Code.as_str(), "code");
-    assert_eq!(ObservationType::Summary.as_str(), "summary");
-    assert_eq!(ObservationType::Execution.as_str(), "execution");
-    assert_eq!(ObservationType::QualityGate.as_str(), "quality_gate");
+fn test_observation_type_as_str(#[case] observation_type: ObservationType, #[case] expected: &str) {
+    assert_eq!(observation_type.as_str(), expected);
 }
 
 #[test]
@@ -72,53 +74,42 @@ fn test_observation_has_required_fields() {
     assert_eq!(o.content, "c");
 }
 
+#[rstest]
+#[case("compilation", Ok(ErrorPatternCategory::Compilation))]
+#[case("runtime", Ok(ErrorPatternCategory::Runtime))]
+#[case("test", Ok(ErrorPatternCategory::Test))]
+#[case("lint", Ok(ErrorPatternCategory::Lint))]
+#[case("build", Ok(ErrorPatternCategory::Build))]
+#[case("config", Ok(ErrorPatternCategory::Config))]
+#[case("network", Ok(ErrorPatternCategory::Network))]
+#[case("other", Ok(ErrorPatternCategory::Other))]
+#[case("invalid", Err(()))]
 #[test]
-fn test_error_pattern_category_from_str() {
-    assert_eq!(
-        "compilation".parse::<ErrorPatternCategory>(),
-        Ok(ErrorPatternCategory::Compilation)
-    );
-    assert_eq!(
-        "runtime".parse::<ErrorPatternCategory>(),
-        Ok(ErrorPatternCategory::Runtime)
-    );
-    assert_eq!(
-        "test".parse::<ErrorPatternCategory>(),
-        Ok(ErrorPatternCategory::Test)
-    );
-    assert_eq!(
-        "lint".parse::<ErrorPatternCategory>(),
-        Ok(ErrorPatternCategory::Lint)
-    );
-    assert_eq!(
-        "build".parse::<ErrorPatternCategory>(),
-        Ok(ErrorPatternCategory::Build)
-    );
-    assert_eq!(
-        "config".parse::<ErrorPatternCategory>(),
-        Ok(ErrorPatternCategory::Config)
-    );
-    assert_eq!(
-        "network".parse::<ErrorPatternCategory>(),
-        Ok(ErrorPatternCategory::Network)
-    );
-    assert_eq!(
-        "other".parse::<ErrorPatternCategory>(),
-        Ok(ErrorPatternCategory::Other)
-    );
-    assert!("invalid".parse::<ErrorPatternCategory>().is_err());
+fn test_error_pattern_category_from_str(
+    #[case] input: &str,
+    #[case] expected: Result<ErrorPatternCategory, ()>,
+) {
+    match expected {
+        Ok(category) => assert_eq!(input.parse::<ErrorPatternCategory>(), Ok(category)),
+        Err(()) => assert!(input.parse::<ErrorPatternCategory>().is_err()),
+    }
 }
 
+#[rstest]
+#[case(ErrorPatternCategory::Compilation, "compilation")]
+#[case(ErrorPatternCategory::Runtime, "runtime")]
+#[case(ErrorPatternCategory::Test, "test")]
+#[case(ErrorPatternCategory::Lint, "lint")]
+#[case(ErrorPatternCategory::Build, "build")]
+#[case(ErrorPatternCategory::Config, "config")]
+#[case(ErrorPatternCategory::Network, "network")]
+#[case(ErrorPatternCategory::Other, "other")]
 #[test]
-fn test_error_pattern_category_as_str() {
-    assert_eq!(ErrorPatternCategory::Compilation.as_str(), "compilation");
-    assert_eq!(ErrorPatternCategory::Runtime.as_str(), "runtime");
-    assert_eq!(ErrorPatternCategory::Test.as_str(), "test");
-    assert_eq!(ErrorPatternCategory::Lint.as_str(), "lint");
-    assert_eq!(ErrorPatternCategory::Build.as_str(), "build");
-    assert_eq!(ErrorPatternCategory::Config.as_str(), "config");
-    assert_eq!(ErrorPatternCategory::Network.as_str(), "network");
-    assert_eq!(ErrorPatternCategory::Other.as_str(), "other");
+fn test_error_pattern_category_as_str(
+    #[case] category: ErrorPatternCategory,
+    #[case] expected: &str,
+) {
+    assert_eq!(category.as_str(), expected);
 }
 
 #[test]

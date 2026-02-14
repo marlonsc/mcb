@@ -5,6 +5,7 @@ use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
+use super::common::require_session_id_str;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
@@ -16,13 +17,9 @@ pub async fn get_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
 ) -> Result<CallToolResult, McpError> {
-    let session_id = match args.session_id.as_ref() {
-        Some(id) => id.as_str(),
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing session_id",
-            )]));
-        }
+    let session_id = match require_session_id_str(args) {
+        Ok(id) => id,
+        Err(error_result) => return Ok(error_result),
     };
     match agent_service.get_session(session_id).await {
         Ok(Some(session)) => ResponseFormatter::json_success(&serde_json::json!({

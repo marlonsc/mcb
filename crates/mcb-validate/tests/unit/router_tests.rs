@@ -4,80 +4,36 @@
 //! and `DOMAIN_CRATE` / `FORBIDDEN_PREFIX_PATTERN` from shared constants.
 
 use mcb_validate::engines::{RoutedEngine, RuleEngineRouter};
+use rstest::rstest;
 use serde_json::json;
 
 use crate::test_constants::*;
 
+#[rstest]
+#[case(
+    json!({"engine": ENGINE_NAME_RUST_RULE, "rule": "rule Test { when true then Action(); }"}),
+    RoutedEngine::Rete
+)]
+#[case(
+    json!({"rule": format!(r#"rule DomainCheck \"Check domain\" {{ when Crate(name == \"{DOMAIN_CRATE}\") then Violation(\"Error\"); }}"#)}),
+    RoutedEngine::Rete
+)]
+#[case(
+    json!({"expression": "file_count > 100", "message": "Too many files"}),
+    RoutedEngine::Expression
+)]
+#[case(
+    json!({"condition": {"all": [{"fact_type": "file", "field": "path", "operator": "matches", "value": "*.rs"}]}, "action": {"violation": {"message": "Rule triggered"}}}),
+    RoutedEngine::RustyRules
+)]
+#[case(
+    json!({"type": "cargo_dependencies", "pattern": FORBIDDEN_PREFIX_PATTERN}),
+    RoutedEngine::RustyRules
+)]
 #[test]
-fn test_detect_rete_engine_explicit() {
+fn test_detect_engine(#[case] rule: serde_json::Value, #[case] expected: RoutedEngine) {
     let router = RuleEngineRouter::new();
-
-    let rule = json!({
-        "engine": ENGINE_NAME_RUST_RULE,
-        "rule": "rule Test { when true then Action(); }"
-    });
-
-    assert_eq!(router.detect_engine(&rule), RoutedEngine::Rete);
-}
-
-#[test]
-fn test_detect_rete_engine_by_content() {
-    let router = RuleEngineRouter::new();
-
-    let rule = json!({
-        "rule": format!(r#"
-            rule DomainCheck "Check domain" {{
-                when
-                    Crate(name == "{DOMAIN_CRATE}")
-                then
-                    Violation("Error");
-            }}
-        "#)
-    });
-
-    assert_eq!(router.detect_engine(&rule), RoutedEngine::Rete);
-}
-
-#[test]
-fn test_detect_expression_engine() {
-    let router = RuleEngineRouter::new();
-
-    let rule = json!({
-        "expression": "file_count > 100",
-        "message": "Too many files"
-    });
-
-    assert_eq!(router.detect_engine(&rule), RoutedEngine::Expression);
-}
-
-#[test]
-fn test_detect_rusty_rules_engine() {
-    let router = RuleEngineRouter::new();
-
-    let rule = json!({
-        "condition": {
-            "all": [
-                { "fact_type": "file", "field": "path", "operator": "matches", "value": "*.rs" }
-            ]
-        },
-        "action": {
-            "violation": { "message": "Rule triggered" }
-        }
-    });
-
-    assert_eq!(router.detect_engine(&rule), RoutedEngine::RustyRules);
-}
-
-#[test]
-fn test_detect_default_engine() {
-    let router = RuleEngineRouter::new();
-
-    let rule = json!({
-        "type": "cargo_dependencies",
-        "pattern": FORBIDDEN_PREFIX_PATTERN
-    });
-
-    assert_eq!(router.detect_engine(&rule), RoutedEngine::RustyRules);
+    assert_eq!(router.detect_engine(&rule), expected);
 }
 
 #[test]

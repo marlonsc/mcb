@@ -8,6 +8,7 @@ use mcb_infrastructure::config::{
     AuthConfig, CacheProvider, CacheSystemConfig, ServerConfig, ServerConfigBuilder,
     ServerConfigPresets, ServerSslConfig,
 };
+use rstest::rstest;
 
 #[test]
 fn test_server_config_port_validation() {
@@ -207,25 +208,22 @@ fn test_default_config_is_valid() {
     assert!(cache_config.max_size > 0);
 }
 
+#[rstest]
+#[case("localhost", 8080, false, "http://localhost:8080")]
+#[case("api.example.com", 443, true, "https://api.example.com:443")]
 #[test]
-fn test_server_url_generation() {
-    // HTTP URL generation
-    let http_config = ServerConfigBuilder::new()
-        .host("localhost")
-        .port(8080)
-        .https(false)
+fn test_server_url_generation(
+    #[case] host: &str,
+    #[case] port: u16,
+    #[case] https: bool,
+    #[case] expected_url: &str,
+) {
+    let config = ServerConfigBuilder::new()
+        .host(host)
+        .port(port)
+        .https(https)
         .build();
-    let url = http_config.get_base_url();
-    assert_eq!(url, "http://localhost:8080");
-
-    // HTTPS URL generation
-    let https_config = ServerConfigBuilder::new()
-        .host("api.example.com")
-        .port(443)
-        .https(true)
-        .build();
-    let url = https_config.get_base_url();
-    assert_eq!(url, "https://api.example.com:443");
+    assert_eq!(config.get_base_url(), expected_url);
 }
 
 #[test]
@@ -258,18 +256,21 @@ fn test_cors_configuration() {
     assert!(origins.contains(&"*".to_string()));
 }
 
+#[rstest]
+#[case(120, 30)]
+#[case(60, 10)]
 #[test]
-fn test_timeout_configuration() {
+fn test_timeout_configuration(#[case] request_secs: u64, #[case] connection_secs: u64) {
     let config = ServerConfigBuilder::new()
-        .request_timeout(120)
-        .connection_timeout(30)
+        .request_timeout(request_secs)
+        .connection_timeout(connection_secs)
         .build();
 
     let request_timeout = config.request_timeout();
     let connection_timeout = config.connection_timeout();
 
-    assert_eq!(request_timeout.as_secs(), 120);
-    assert_eq!(connection_timeout.as_secs(), 30);
+    assert_eq!(request_timeout.as_secs(), request_secs);
+    assert_eq!(connection_timeout.as_secs(), connection_secs);
 
     // Request timeout should generally be longer than connection timeout
     assert!(request_timeout > connection_timeout);

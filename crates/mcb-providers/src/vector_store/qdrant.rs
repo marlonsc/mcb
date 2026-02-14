@@ -20,7 +20,6 @@ use serde_json::Value;
 
 use crate::constants::CONTENT_TYPE_JSON;
 use crate::provider_utils::{JsonRequestParams, send_json_request};
-use crate::utils::JsonExt;
 use crate::utils::http::RequestErrorKind;
 
 /// Qdrant vector store provider
@@ -128,14 +127,27 @@ impl QdrantVectorStoreProvider {
 
         SearchResult {
             id,
-            file_path: payload.string_or("file_path", ""),
+            file_path: payload
+                .get("file_path")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_owned(),
             start_line: payload
-                .opt_u64("start_line")
-                .or_else(|| payload.opt_u64("line_number"))
+                .get("start_line")
+                .and_then(Value::as_u64)
+                .or_else(|| payload.get("line_number").and_then(Value::as_u64))
                 .unwrap_or(0) as u32,
-            content: payload.string_or("content", ""),
+            content: payload
+                .get("content")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_owned(),
             score,
-            language: payload.string_or("language", "unknown"),
+            language: payload
+                .get("language")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown")
+                .to_owned(),
         }
     }
 }

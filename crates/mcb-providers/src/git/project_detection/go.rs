@@ -66,14 +66,14 @@ impl ProjectDetector for GoDetector {
             if let Some(caps) = self.module_re.captures(line) {
                 module = caps
                     .get(1)
-                    .map(|m| m.as_str().to_string())
+                    .map(|m| m.as_str().to_owned())
                     .unwrap_or_default();
             }
 
             if let Some(caps) = self.go_version_re.captures(line) {
                 go_version = caps
                     .get(1)
-                    .map(|m| m.as_str().to_string())
+                    .map(|m| m.as_str().to_owned())
                     .unwrap_or_default();
             }
 
@@ -91,7 +91,7 @@ impl ProjectDetector for GoDetector {
                 && let Some(caps) = self.require_re.captures(line)
                 && let Some(dep) = caps.get(1)
             {
-                dependencies.push(dep.as_str().to_string());
+                dependencies.push(dep.as_str().to_owned());
             }
 
             // Single-line require
@@ -100,7 +100,7 @@ impl ProjectDetector for GoDetector {
                 && let Some(caps) = self.require_re.captures(&line["require ".len()..])
                 && let Some(dep) = caps.get(1)
             {
-                dependencies.push(dep.as_str().to_string());
+                dependencies.push(dep.as_str().to_owned());
             }
         }
 

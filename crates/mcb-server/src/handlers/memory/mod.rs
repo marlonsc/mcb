@@ -2,6 +2,7 @@
 //!
 //! This module provides a unified handler for memory-related MCP tool operations.
 
+mod common;
 mod execution;
 mod handler;
 mod inject;

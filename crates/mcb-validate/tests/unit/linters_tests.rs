@@ -3,6 +3,7 @@
 //! Uses shared constants for severity levels, rule codes, and file extensions.
 
 use mcb_validate::linters::*;
+use rstest::rstest;
 
 use crate::test_constants::*;
 
@@ -12,36 +13,25 @@ fn test_linter_engine_creation() {
     assert!(!engine.enabled_linters().is_empty());
 }
 
+#[rstest]
+#[case("ruff", RUFF_CODE_ERROR, SEVERITY_ERROR)]
+#[case("ruff", RUFF_CODE_WARNING, SEVERITY_WARNING)]
+#[case("ruff", RUFF_CODE_INFO, SEVERITY_INFO)]
+#[case("clippy", SEVERITY_ERROR, SEVERITY_ERROR)]
+#[case("clippy", SEVERITY_WARNING, SEVERITY_WARNING)]
+#[case("clippy", CLIPPY_LEVEL_NOTE, SEVERITY_INFO)]
 #[test]
-fn test_ruff_severity_mapping() {
-    assert_eq!(
-        mcb_validate::linters::parsers::map_ruff_severity(RUFF_CODE_ERROR),
-        SEVERITY_ERROR
-    );
-    assert_eq!(
-        mcb_validate::linters::parsers::map_ruff_severity(RUFF_CODE_WARNING),
-        SEVERITY_WARNING
-    );
-    assert_eq!(
-        mcb_validate::linters::parsers::map_ruff_severity(RUFF_CODE_INFO),
-        SEVERITY_INFO
-    );
-}
-
-#[test]
-fn test_clippy_level_mapping() {
-    assert_eq!(
-        mcb_validate::linters::parsers::map_clippy_level(SEVERITY_ERROR),
-        SEVERITY_ERROR
-    );
-    assert_eq!(
-        mcb_validate::linters::parsers::map_clippy_level(SEVERITY_WARNING),
-        SEVERITY_WARNING
-    );
-    assert_eq!(
-        mcb_validate::linters::parsers::map_clippy_level(CLIPPY_LEVEL_NOTE),
-        SEVERITY_INFO
-    );
+fn test_linter_level_mapping(
+    #[case] linter: &str,
+    #[case] input_level: &str,
+    #[case] expected: &str,
+) {
+    let actual = if linter == "ruff" {
+        mcb_validate::linters::parsers::map_ruff_severity(input_level)
+    } else {
+        mcb_validate::linters::parsers::map_clippy_level(input_level)
+    };
+    assert_eq!(actual, expected);
 }
 
 #[tokio::test]

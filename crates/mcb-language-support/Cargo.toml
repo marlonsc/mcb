@@ -19,6 +19,8 @@ rust-code-analysis.workspace = true
 # Error handling
 thiserror.workspace = true
 derive_more.workspace = true
+strum.workspace = true
+strum_macros.workspace = true
 
 # Async runtime
 tokio.workspace = true

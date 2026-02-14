@@ -20,7 +20,6 @@ use serde_json::Value;
 
 use crate::constants::CONTENT_TYPE_JSON;
 use crate::provider_utils::{JsonRequestParams, send_json_request};
-use crate::utils::JsonExt;
 use crate::utils::http::RequestErrorKind;
 
 /// Pinecone vector store provider
@@ -116,14 +115,27 @@ impl PineconeVectorStoreProvider {
 
         SearchResult {
             id,
-            file_path: metadata.string_or("file_path", ""),
+            file_path: metadata
+                .get("file_path")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_owned(),
             start_line: metadata
-                .opt_u64("start_line")
-                .or_else(|| metadata.opt_u64("line_number"))
+                .get("start_line")
+                .and_then(Value::as_u64)
+                .or_else(|| metadata.get("line_number").and_then(Value::as_u64))
                 .unwrap_or(0) as u32,
-            content: metadata.string_or("content", ""),
+            content: metadata
+                .get("content")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_owned(),
             score,
-            language: metadata.string_or("language", "unknown"),
+            language: metadata
+                .get("language")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown")
+                .to_owned(),
         }
     }
 }
@@ -337,11 +349,26 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
                             .unwrap_or(serde_json::json!({}));
                         SearchResult {
                             id: id.clone(),
-                            file_path: metadata.string_or("file_path", ""),
-                            start_line: metadata.opt_u64("start_line").unwrap_or(0) as u32,
-                            content: metadata.string_or("content", ""),
+                            file_path: metadata
+                                .get("file_path")
+                                .and_then(Value::as_str)
+                                .unwrap_or("")
+                                .to_owned(),
+                            start_line: metadata
+                                .get("start_line")
+                                .and_then(Value::as_u64)
+                                .unwrap_or(0) as u32,
+                            content: metadata
+                                .get("content")
+                                .and_then(Value::as_str)
+                                .unwrap_or("")
+                                .to_owned(),
                             score: 1.0,
-                            language: metadata.string_or("language", "unknown"),
+                            language: metadata
+                                .get("language")
+                                .and_then(Value::as_str)
+                                .unwrap_or("unknown")
+                                .to_owned(),
                         }
                     })
                     .collect()

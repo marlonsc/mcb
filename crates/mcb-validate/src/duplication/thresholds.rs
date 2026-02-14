@@ -3,6 +3,7 @@
 //! Defines duplication types (clone categories) and configurable thresholds
 //! for the duplication detection system.
 
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 /// Clone type classification following established taxonomy
@@ -11,15 +12,19 @@ use serde::{Deserialize, Serialize};
 /// - Type 2 (Renamed): Code with renamed identifiers
 /// - Type 3 (Gapped): Near-miss clones with small modifications
 /// - Type 4 (Semantic): Functionally equivalent code (future)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Display)]
 pub enum DuplicationType {
     /// Type 1: Exact copy-paste (100% identical)
+    #[display("Exact Clone")]
     ExactClone,
     /// Type 2: Renamed identifiers only
+    #[display("Renamed Clone")]
     RenamedClone,
     /// Type 3: Near-miss with small modifications
+    #[display("Gapped Clone")]
     GappedClone,
     /// Type 4: Functionally similar (future implementation)
+    #[display("Semantic Clone")]
     SemanticClone,
 }
 
@@ -52,12 +57,6 @@ impl DuplicationType {
             DuplicationType::GappedClone => 0.80,
             DuplicationType::SemanticClone => 0.70,
         }
-    }
-}
-
-impl std::fmt::Display for DuplicationType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.name())
     }
 }
 

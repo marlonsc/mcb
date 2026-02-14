@@ -49,7 +49,7 @@ impl NativePmatAnalyzer {
                 let Some(name_match) = captures.get(1) else {
                     continue;
                 };
-                let name = name_match.as_str().to_string();
+                let name = name_match.as_str().to_owned();
                 let fn_start = name_match.start();
                 let line = content[..fn_start].bytes().filter(|b| *b == b'\n').count() + 1;
                 let complexity = compute_complexity_score(content, fn_start)?;

@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 use super::OriginContext;
 
 /// Summary of an agent session.
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SessionSummary {
     /// Stores the id value.
@@ -21,7 +23,6 @@ pub struct SessionSummary {
     pub key_files: Vec<String>,
     /// Contextual information about the origin of the session.
     #[allow(missing_docs)]
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub origin_context: Option<OriginContext>,
     /// Stores the created at value.
     pub created_at: i64,

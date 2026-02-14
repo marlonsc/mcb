@@ -6,6 +6,7 @@
 use std::collections::HashMap;
 
 use mcb_domain::entities::codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
+use rstest::rstest;
 
 #[test]
 fn test_file_snapshot_creation() {
@@ -115,78 +116,26 @@ fn test_codebase_snapshot_multiple_files() {
     assert!(snapshot.files.contains_key("Cargo.toml"));
 }
 
+#[rstest]
+#[case(vec![], vec![], vec![], false, 0)]
+#[case(vec!["new_file.rs", "another.rs"], vec![], vec![], true, 2)]
+#[case(vec!["new.rs"], vec!["changed.rs", "updated.rs"], vec!["deleted.rs"], true, 4)]
+#[case(vec![], vec!["modified1.rs", "modified2.rs", "modified3.rs"], vec![], true, 3)]
+#[case(vec![], vec![], vec!["gone1.rs", "gone2.rs"], true, 2)]
 #[test]
-fn test_snapshot_changes_empty() {
+fn test_snapshot_changes_variants(
+    #[case] added: Vec<&str>,
+    #[case] modified: Vec<&str>,
+    #[case] removed: Vec<&str>,
+    #[case] expected_has_changes: bool,
+    #[case] expected_total: usize,
+) {
     let changes = SnapshotChanges {
-        added: vec![],
-        modified: vec![],
-        removed: vec![],
+        added: added.into_iter().map(str::to_string).collect(),
+        modified: modified.into_iter().map(str::to_string).collect(),
+        removed: removed.into_iter().map(str::to_string).collect(),
     };
 
-    assert!(!changes.has_changes());
-    assert_eq!(changes.total_changes(), 0);
-}
-
-#[test]
-fn test_snapshot_changes_with_additions() {
-    let changes = SnapshotChanges {
-        added: vec!["new_file.rs".to_string(), "another.rs".to_string()],
-        modified: vec![],
-        removed: vec![],
-    };
-
-    assert!(changes.has_changes());
-    assert_eq!(changes.total_changes(), 2);
-    assert_eq!(changes.added.len(), 2);
-    assert!(changes.modified.is_empty());
-    assert!(changes.removed.is_empty());
-}
-
-#[test]
-fn test_snapshot_changes_mixed() {
-    let changes = SnapshotChanges {
-        added: vec!["new.rs".to_string()],
-        modified: vec!["changed.rs".to_string(), "updated.rs".to_string()],
-        removed: vec!["deleted.rs".to_string()],
-    };
-
-    assert!(changes.has_changes());
-    assert_eq!(changes.total_changes(), 4);
-    assert_eq!(changes.added.len(), 1);
-    assert_eq!(changes.modified.len(), 2);
-    assert_eq!(changes.removed.len(), 1);
-}
-
-#[test]
-fn test_snapshot_changes_only_modifications() {
-    let changes = SnapshotChanges {
-        added: vec![],
-        modified: vec![
-            "modified1.rs".to_string(),
-            "modified2.rs".to_string(),
-            "modified3.rs".to_string(),
-        ],
-        removed: vec![],
-    };
-
-    assert!(changes.has_changes());
-    assert_eq!(changes.total_changes(), 3);
-    assert!(changes.added.is_empty());
-    assert_eq!(changes.modified.len(), 3);
-    assert!(changes.removed.is_empty());
-}
-
-#[test]
-fn test_snapshot_changes_only_removals() {
-    let changes = SnapshotChanges {
-        added: vec![],
-        modified: vec![],
-        removed: vec!["gone1.rs".to_string(), "gone2.rs".to_string()],
-    };
-
-    assert!(changes.has_changes());
-    assert_eq!(changes.total_changes(), 2);
-    assert!(changes.added.is_empty());
-    assert!(changes.modified.is_empty());
-    assert_eq!(changes.removed.len(), 2);
+    assert_eq!(changes.has_changes(), expected_has_changes);
+    assert_eq!(changes.total_changes(), expected_total);
 }

@@ -6,6 +6,7 @@ use std::process::{Command, Stdio};
 
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_providers::git::Git2Provider;
+use rstest::rstest;
 use tempfile::TempDir;
 use tokio::fs::write as tokio_write;
 
@@ -41,27 +42,26 @@ async fn create_test_repo() -> TestResult<TempDir> {
     Ok(dir)
 }
 
+#[rstest]
+#[case(false)]
+#[case(true)]
 #[test]
-fn test_git2_provider_constructs() {
+fn test_git2_provider_basics(#[case] check_object_safety: bool) {
     let provider = Git2Provider::new();
     assert!(
         !std::any::type_name::<Git2Provider>().is_empty(),
         "Git2Provider type exists"
     );
-    let _ = provider;
-}
-
-#[test]
-fn test_git2_provider_is_object_safe() {
-    fn _assert_object_safe(_: &dyn VcsProvider) {}
-    let provider = Git2Provider::new();
-    _assert_object_safe(&provider);
-    let _erased: &dyn VcsProvider = &provider;
-    assert_eq!(
-        std::mem::size_of::<&dyn VcsProvider>(),
-        2 * std::mem::size_of::<usize>(),
-        "trait object reference should be a fat pointer"
-    );
+    if check_object_safety {
+        fn _assert_object_safe(_: &dyn VcsProvider) {}
+        _assert_object_safe(&provider);
+        let _erased: &dyn VcsProvider = &provider;
+        assert_eq!(
+            std::mem::size_of::<&dyn VcsProvider>(),
+            2 * std::mem::size_of::<usize>(),
+            "trait object reference should be a fat pointer"
+        );
+    }
 }
 
 #[tokio::test]
@@ -151,31 +151,29 @@ async fn test_list_files() -> TestResult<()> {
     Ok(())
 }
 
+#[rstest]
+#[case("README.md", true)]
+#[case("nonexistent.txt", false)]
 #[tokio::test]
-async fn test_read_file() -> TestResult<()> {
+async fn test_read_file_variants(
+    #[case] file_name: &str,
+    #[case] should_succeed: bool,
+) -> TestResult<()> {
     let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
     let repo = provider.open_repository(dir.path()).await?;
 
     let content = provider
-        .read_file(&repo, repo.default_branch(), Path::new("README.md"))
-        .await?;
-
-    assert!(content.contains("# Test Repo"));
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_read_file_not_found() -> TestResult<()> {
-    let dir = create_test_repo().await?;
-    let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await?;
-
-    let result = provider
-        .read_file(&repo, repo.default_branch(), Path::new("nonexistent.txt"))
+        .read_file(&repo, repo.default_branch(), Path::new(file_name))
         .await;
 
-    assert!(result.is_err());
+    if should_succeed {
+        let content = content?;
+        assert!(content.contains("# Test Repo"));
+        return Ok(());
+    }
+
+    assert!(content.is_err());
     Ok(())
 }
 

@@ -1,5 +1,6 @@
 //! Provides observation domain definitions.
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 use uuid::Uuid;
 
 use super::memory::{ExecutionMetadata, OriginContext, QualityGateResult};
@@ -54,6 +55,7 @@ impl ObservationType {
 ///
 /// Contains contextual information about where and when an observation was recorded,
 /// including session, repository, file, and git information.
+#[skip_serializing_none]
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ObservationMetadata {
     /// Unique identifier for the metadata.
@@ -69,14 +71,11 @@ pub struct ObservationMetadata {
     /// Git commit hash.
     pub commit: Option<String>,
     /// Details about the tool execution (if applicable).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub execution: Option<ExecutionMetadata>,
     /// Details about the quality gate result (if applicable).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quality_gate: Option<QualityGateResult>,
     /// Contextual information about the origin of the observation.
     #[allow(missing_docs)]
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub origin_context: Option<OriginContext>,
 }
 

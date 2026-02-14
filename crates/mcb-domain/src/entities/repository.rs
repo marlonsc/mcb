@@ -71,7 +71,7 @@ pub enum VcsType {
 
 impl VcsType {
     /// Returns the string representation.
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &str {
         match self {
             Self::Git => "git",
             Self::Mercurial => "mercurial",

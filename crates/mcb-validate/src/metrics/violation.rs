@@ -24,12 +24,23 @@ pub struct MetricViolation {
     pub severity: Severity,
 }
 
+impl MetricViolation {
+    fn metric_rule_id(&self) -> &'static str {
+        match self.metric_type {
+            MetricType::CognitiveComplexity => "METRIC001",
+            MetricType::CyclomaticComplexity => "METRIC004",
+            MetricType::FunctionLength => "METRIC002",
+            MetricType::NestingDepth => "METRIC003",
+        }
+    }
+}
+
 impl std::fmt::Display for MetricViolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "[{}] {} `{}` has {} of {} (threshold: {}) in {}",
-            self.id(),
+            self.metric_rule_id(),
             self.metric_type.name(),
             self.item_name,
             self.metric_type.description(),
@@ -42,12 +53,7 @@ impl std::fmt::Display for MetricViolation {
 
 impl Violation for MetricViolation {
     fn id(&self) -> &str {
-        match self.metric_type {
-            MetricType::CognitiveComplexity => "METRIC001",
-            MetricType::CyclomaticComplexity => "METRIC004",
-            MetricType::FunctionLength => "METRIC002",
-            MetricType::NestingDepth => "METRIC003",
-        }
+        self.metric_rule_id()
     }
 
     fn category(&self) -> ViolationCategory {

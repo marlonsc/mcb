@@ -162,6 +162,7 @@ pub use rules::yaml_loader::{
 };
 pub use rules::yaml_validator::YamlRuleValidator;
 
+use derive_more::Display;
 pub use hygiene::{HygieneValidator, HygieneViolation};
 pub use solid::{SolidValidator, SolidViolation};
 pub use test_quality::{TestQualityValidator, TestQualityViolation};
@@ -343,69 +344,57 @@ pub enum ValidationError {
 }
 
 /// Severity level for violations
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, Display,
+)]
 pub enum Severity {
     /// Error severity
+    #[display("ERROR")]
     Error,
     /// Warning severity
+    #[display("WARNING")]
     Warning,
     /// Info severity
+    #[display("INFO")]
     Info,
-}
-
-impl std::fmt::Display for Severity {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Error => write!(f, "ERROR"),
-            Self::Warning => write!(f, "WARNING"),
-            Self::Info => write!(f, "INFO"),
-        }
-    }
 }
 
 /// Component type for strict directory validation
 ///
 /// Used to categorize code components by their architectural role,
 /// enabling strict enforcement of where each type should reside.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, Display)]
 pub enum ComponentType {
     /// Domain port trait (interface definition)
+    #[display("Port")]
     Port,
     /// Domain entity with identity
+    #[display("Entity")]
     Entity,
     /// Domain value object (immutable)
+    #[display("ValueObject")]
     ValueObject,
     /// Domain service interface
+    #[display("DomainService")]
     DomainService,
     /// Infrastructure adapter implementation
+    #[display("Adapter")]
     Adapter,
     /// Repository implementation
+    #[display("Repository")]
     Repository,
     /// Server/transport layer handler
+    #[display("Handler")]
     Handler,
     /// Configuration type
+    #[display("Config")]
     Config,
     /// Factory for creating components
+    #[display("Factory")]
     Factory,
     /// DI module definition
+    #[display("DiModule")]
     DiModule,
-}
-
-impl std::fmt::Display for ComponentType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Port => write!(f, "Port"),
-            Self::Entity => write!(f, "Entity"),
-            Self::ValueObject => write!(f, "ValueObject"),
-            Self::DomainService => write!(f, "DomainService"),
-            Self::Adapter => write!(f, "Adapter"),
-            Self::Repository => write!(f, "Repository"),
-            Self::Handler => write!(f, "Handler"),
-            Self::Config => write!(f, "Config"),
-            Self::Factory => write!(f, "Factory"),
-            Self::DiModule => write!(f, "DiModule"),
-        }
-    }
 }
 
 /// Get the workspace root from the current directory

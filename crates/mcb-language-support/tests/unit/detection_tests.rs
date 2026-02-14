@@ -6,40 +6,31 @@ use std::path::Path;
 
 use mcb_language_support::detection::LanguageDetector;
 use mcb_language_support::language::LanguageId;
+use rstest::rstest;
 
+#[rstest]
+#[case("main.rs", LanguageId::Rust)]
+#[case("script.py", LanguageId::Python)]
+#[case("app.js", LanguageId::JavaScript)]
+#[case("component.tsx", LanguageId::TypeScript)]
 #[test]
-fn test_extension_detection() {
+fn test_extension_detection(#[case] file_name: &str, #[case] expected: LanguageId) {
     let detector = LanguageDetector::new();
-
     assert_eq!(
-        detector.detect(Path::new("main.rs"), None).unwrap(),
-        LanguageId::Rust
-    );
-    assert_eq!(
-        detector.detect(Path::new("script.py"), None).unwrap(),
-        LanguageId::Python
-    );
-    assert_eq!(
-        detector.detect(Path::new("app.js"), None).unwrap(),
-        LanguageId::JavaScript
-    );
-    assert_eq!(
-        detector.detect(Path::new("component.tsx"), None).unwrap(),
-        LanguageId::TypeScript
+        detector.detect(Path::new(file_name), None).unwrap(),
+        expected
     );
 }
 
+#[rstest]
+#[case("main.rs", "rust")]
+#[case("script.py", "python")]
 #[test]
-fn test_detect_name() {
+fn test_detect_name(#[case] file_name: &str, #[case] expected: &str) {
     let detector = LanguageDetector::new();
-
     assert_eq!(
-        detector.detect_name(Path::new("main.rs"), None),
-        Some("rust".to_string())
-    );
-    assert_eq!(
-        detector.detect_name(Path::new("script.py"), None),
-        Some("python".to_string())
+        detector.detect_name(Path::new(file_name), None),
+        Some(expected.to_string())
     );
 }
 

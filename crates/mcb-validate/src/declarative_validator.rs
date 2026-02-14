@@ -3,6 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
+use derive_more::Display;
 use regex::Regex;
 use tracing::warn;
 
@@ -325,7 +326,8 @@ impl Validator for DeclarativeValidator {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Display)]
+#[display("[{rule_id}] {message}")]
 struct PatternMatchViolation {
     rule_id: String,
     file_path: PathBuf,
@@ -333,12 +335,6 @@ struct PatternMatchViolation {
     message: String,
     severity: Severity,
     category: ViolationCategory,
-}
-
-impl std::fmt::Display for PatternMatchViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}] {}", self.rule_id, self.message)
-    }
 }
 
 impl Violation for PatternMatchViolation {

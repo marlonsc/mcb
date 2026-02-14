@@ -5,11 +5,11 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use serde_json::Value;
 
+use super::common::{opt_str, optional_data_map, require_session_id, str_vec};
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
-use crate::utils::json;
 
 /// Creates or retrieves a session summary.
 #[tracing::instrument(skip_all)]
@@ -17,91 +17,24 @@ pub async fn summarize_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &SessionArgs,
 ) -> Result<CallToolResult, McpError> {
-    let session_id = match args.session_id.as_ref() {
-        Some(id) => id,
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing session_id",
-            )]));
-        }
+    let session_id = match require_session_id(args) {
+        Ok(id) => id,
+        Err(error_result) => return Ok(error_result),
     };
-    if let Some(data) = json::json_map(&args.data) {
-        let topics = data
-            .get("topics")
-            .and_then(Value::as_array)
-            .map(|items| {
-                items
-                    .iter()
-                    .filter_map(|item| item.as_str().map(str::to_owned))
-                    .collect()
-            })
-            .unwrap_or_default();
-        let decisions = data
-            .get("decisions")
-            .and_then(Value::as_array)
-            .map(|items| {
-                items
-                    .iter()
-                    .filter_map(|item| item.as_str().map(str::to_owned))
-                    .collect()
-            })
-            .unwrap_or_default();
-        let next_steps = data
-            .get("next_steps")
-            .and_then(Value::as_array)
-            .map(|items| {
-                items
-                    .iter()
-                    .filter_map(|item| item.as_str().map(str::to_owned))
-                    .collect()
-            })
-            .unwrap_or_default();
-        let key_files = data
-            .get("key_files")
-            .and_then(Value::as_array)
-            .map(|items| {
-                items
-                    .iter()
-                    .filter_map(|item| item.as_str().map(str::to_owned))
-                    .collect()
-            })
-            .unwrap_or_default();
-        let payload_project_id = data
-            .get("project_id")
-            .and_then(Value::as_str)
-            .map(str::to_owned);
-        let payload_session_id = data
-            .get("session_id")
-            .and_then(Value::as_str)
-            .map(str::to_owned);
-        let payload_worktree_id = data
-            .get("worktree_id")
-            .and_then(Value::as_str)
-            .map(str::to_owned);
-        let payload_parent_session_id = data
-            .get("parent_session_id")
-            .and_then(Value::as_str)
-            .map(str::to_owned);
-        let payload_repo_path = data
-            .get("repo_path")
-            .and_then(Value::as_str)
-            .map(str::to_owned);
-        let payload_operator_id = data
-            .get("operator_id")
-            .and_then(Value::as_str)
-            .map(str::to_owned);
-        let payload_machine_id = data
-            .get("machine_id")
-            .and_then(Value::as_str)
-            .map(str::to_owned);
-        let payload_agent_program = data
-            .get("agent_program")
-            .and_then(Value::as_str)
-            .map(str::to_owned);
-        let payload_model_id = data
-            .get("model_id")
-            .and_then(Value::as_str)
-            .map(str::to_owned);
+    if let Some(data) = optional_data_map(&args.data) {
+        let topics = str_vec(data, "topics");
+        let decisions = str_vec(data, "decisions");
+        let next_steps = str_vec(data, "next_steps");
+        let key_files = str_vec(data, "key_files");
+        let payload_project_id = opt_str(data, "project_id");
+        let payload_session_id = opt_str(data, "session_id");
+        let payload_worktree_id = opt_str(data, "worktree_id");
+        let payload_parent_session_id = opt_str(data, "parent_session_id");
+        let payload_repo_path = opt_str(data, "repo_path");
+        let payload_operator_id = opt_str(data, "operator_id");
+        let payload_machine_id = opt_str(data, "machine_id");
+        let payload_agent_program = opt_str(data, "agent_program");
+        let payload_model_id = opt_str(data, "model_id");
         let payload_delegated = data.get("delegated").and_then(Value::as_bool);
         let origin_context = resolve_origin_context(OriginContextInput {
             org_id: args.org_id.as_deref(),

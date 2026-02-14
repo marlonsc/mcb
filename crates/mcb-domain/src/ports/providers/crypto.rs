@@ -10,9 +10,8 @@
 //! - Implementations live in mcb-infrastructure (CryptoService)
 //! - Providers depend on the abstraction, not the concrete implementation
 
-use std::fmt;
-
 use async_trait::async_trait;
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
@@ -70,7 +69,12 @@ pub trait CryptoProvider: Send + Sync {
 ///
 /// Holds the ciphertext and nonce produced by encryption.
 /// Can be serialized for storage in vector store metadata.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Display)]
+#[display(
+    "EncryptedData {{ ciphertext: {} bytes, nonce: {} bytes }}",
+    ciphertext.len(),
+    nonce.len()
+)]
 pub struct EncryptedData {
     /// The encrypted ciphertext
     pub ciphertext: Vec<u8>,
@@ -82,16 +86,5 @@ impl EncryptedData {
     /// Create a new encrypted data container
     pub fn new(ciphertext: Vec<u8>, nonce: Vec<u8>) -> Self {
         Self { ciphertext, nonce }
-    }
-}
-
-impl fmt::Display for EncryptedData {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "EncryptedData {{ ciphertext: {} bytes, nonce: {} bytes }}",
-            self.ciphertext.len(),
-            self.nonce.len()
-        )
     }
 }

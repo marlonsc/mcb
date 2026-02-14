@@ -11,10 +11,10 @@ use serde_json::Value;
 use tracing::error;
 use uuid::Uuid;
 
+use super::common::{opt_bool, opt_str, require_data_map, str_vec};
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
-use crate::utils::json;
 
 /// Validated execution data extracted from JSON payload
 struct ValidatedExecutionData {
@@ -91,13 +91,9 @@ pub async fn store_execution(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match json::json_map(&args.data) {
-        Some(data) => data,
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing data payload for execution store",
-            )]));
-        }
+    let data = match require_data_map(&args.data, "Missing data payload for execution store") {
+        Ok(data) => data,
+        Err(error_result) => return Ok(error_result),
     };
 
     // Validate all required fields upfront
@@ -116,16 +112,7 @@ pub async fn store_execution(
             .get("coverage")
             .and_then(Value::as_f64)
             .map(|value| value as f32),
-        files_affected: data
-            .get("files_affected")
-            .and_then(Value::as_array)
-            .map(|items| {
-                items
-                    .iter()
-                    .filter_map(|item| item.as_str().map(str::to_owned))
-                    .collect()
-            })
-            .unwrap_or_default(),
+        files_affected: str_vec(data, "files_affected"),
         output_summary: data
             .get("output_summary")
             .and_then(Value::as_str)
@@ -146,7 +133,7 @@ pub async fn store_execution(
     );
     let tags = vec![
         "execution".to_string(),
-        metadata.execution_type.as_str().to_string(),
+        metadata.execution_type.as_str().to_owned(),
         if validated.success {
             "success"
         } else {
@@ -163,51 +150,18 @@ pub async fn store_execution(
         .parent_session_id
         .clone()
         .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
-    let payload_repo_id = data
-        .get("repo_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_project_id = data
-        .get("project_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_branch = data
-        .get("branch")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_commit = data
-        .get("commit")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_repo_path = data
-        .get("repo_path")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_worktree_id = data
-        .get("worktree_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_operator_id = data
-        .get("operator_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_machine_id = data
-        .get("machine_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_agent_program = data
-        .get("agent_program")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_model_id = data
-        .get("model_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_delegated = data.get("delegated").and_then(Value::as_bool);
-    let payload_execution_id = data
-        .get("execution_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
+    let payload_repo_id = opt_str(data, "repo_id");
+    let payload_project_id = opt_str(data, "project_id");
+    let payload_branch = opt_str(data, "branch");
+    let payload_commit = opt_str(data, "commit");
+    let payload_repo_path = opt_str(data, "repo_path");
+    let payload_worktree_id = opt_str(data, "worktree_id");
+    let payload_operator_id = opt_str(data, "operator_id");
+    let payload_machine_id = opt_str(data, "machine_id");
+    let payload_agent_program = opt_str(data, "agent_program");
+    let payload_model_id = opt_str(data, "model_id");
+    let payload_delegated = opt_bool(data, "delegated");
+    let payload_execution_id = opt_str(data, "execution_id");
     let generated_execution_id = metadata.id.clone();
 
     let mut origin_context = resolve_origin_context(OriginContextInput {

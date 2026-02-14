@@ -72,7 +72,7 @@ impl MemoryRepository for SqliteMemoryRepository {
             SqlParam::String(observation.content.clone()),
             SqlParam::String(observation.content_hash.clone()),
             SqlParam::String(tags_json),
-            SqlParam::String(observation.r#type.as_str().to_string()),
+            SqlParam::String(observation.r#type.as_str().to_owned()),
             SqlParam::String(metadata_json),
             SqlParam::I64(observation.created_at),
             observation
@@ -104,7 +104,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM observations WHERE id = ?",
-            &[SqlParam::String(id.as_str().to_string())],
+            &[SqlParam::String(id.as_str().to_owned())],
             row_convert::row_to_observation,
         )
         .await
@@ -116,7 +116,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM observations WHERE content_hash = ?",
-            &[SqlParam::String(content_hash.to_string())],
+            &[SqlParam::String(content_hash.to_owned())],
             row_convert::row_to_observation,
         )
         .await
@@ -128,7 +128,7 @@ impl MemoryRepository for SqliteMemoryRepository {
             .executor
             .query_all(
                 "SELECT id, rank FROM observations_fts WHERE observations_fts MATCH ? ORDER BY rank LIMIT ?",
-                &[SqlParam::String(query.to_string()), SqlParam::I64(limit as i64)],
+                &[SqlParam::String(query.to_owned()), SqlParam::I64(limit as i64)],
             )
             .await?;
 
@@ -148,7 +148,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         self.executor
             .execute(
                 "DELETE FROM observations WHERE id = ?",
-                &[SqlParam::String(id.as_str().to_string())],
+                &[SqlParam::String(id.as_str().to_owned())],
             )
             .await
     }
@@ -166,7 +166,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         );
         let params: Vec<SqlParam> = ids
             .iter()
-            .map(|id| SqlParam::String(id.as_str().to_string()))
+            .map(|id| SqlParam::String(id.as_str().to_owned()))
             .collect();
 
         query_helpers::query_all(
@@ -226,7 +226,7 @@ impl MemoryRepository for SqliteMemoryRepository {
             }
             if let Some(obs_type) = &f.r#type {
                 base_sql.push_str(" AND observation_type = ?");
-                base_params.push(SqlParam::String(obs_type.as_str().to_string()));
+                base_params.push(SqlParam::String(obs_type.as_str().to_owned()));
             }
         }
 
@@ -334,7 +334,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM session_summaries WHERE session_id = ? ORDER BY created_at DESC LIMIT 1",
-            &[SqlParam::String(session_id.as_str().to_string())],
+            &[SqlParam::String(session_id.as_str().to_owned())],
             row_convert::row_to_session_summary,
         )
         .await

@@ -265,33 +265,35 @@ pub struct AvailableProviders {
     pub language: Vec<(&'static str, &'static str)>,
 }
 
+impl AvailableProviders {
+    fn write_section(
+        f: &mut std::fmt::Formatter<'_>,
+        title: &str,
+        providers: &[(&'static str, &'static str)],
+    ) -> std::fmt::Result {
+        writeln!(f, "{title}:")?;
+        for (name, desc) in providers {
+            writeln!(f, "  - {}: {}", name, desc)?;
+        }
+        Ok(())
+    }
+}
+
 impl std::fmt::Display for AvailableProviders {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Available Providers:")?;
         writeln!(f)?;
 
-        writeln!(f, "Embedding Providers:")?;
-        for (name, desc) in &self.embedding {
-            writeln!(f, "  - {}: {}", name, desc)?;
-        }
+        Self::write_section(f, "Embedding Providers", &self.embedding)?;
         writeln!(f)?;
 
-        writeln!(f, "Vector Store Providers:")?;
-        for (name, desc) in &self.vector_store {
-            writeln!(f, "  - {}: {}", name, desc)?;
-        }
+        Self::write_section(f, "Vector Store Providers", &self.vector_store)?;
         writeln!(f)?;
 
-        writeln!(f, "Cache Providers:")?;
-        for (name, desc) in &self.cache {
-            writeln!(f, "  - {}: {}", name, desc)?;
-        }
+        Self::write_section(f, "Cache Providers", &self.cache)?;
         writeln!(f)?;
 
-        writeln!(f, "Language Providers:")?;
-        for (name, desc) in &self.language {
-            writeln!(f, "  - {}: {}", name, desc)?;
-        }
+        Self::write_section(f, "Language Providers", &self.language)?;
 
         Ok(())
     }

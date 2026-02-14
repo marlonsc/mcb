@@ -15,6 +15,7 @@ use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
+use rstest::rstest;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
@@ -374,30 +375,21 @@ mod language_registry_tests {
 mod integration_tests {
     use super::*;
 
+    #[rstest]
+    #[case("embedding")]
+    #[case("vector_store")]
+    #[case("cache")]
+    #[case("language")]
     #[test]
-    fn test_all_registries_have_providers() {
-        // All registries should have at least one provider registered
-        let embedding_providers = list_embedding_providers();
-        let vector_store_providers = list_vector_store_providers();
-        let cache_providers = list_cache_providers();
-        let language_providers = list_language_providers();
-
-        assert!(
-            !embedding_providers.is_empty(),
-            "Embedding registry should not be empty"
-        );
-        assert!(
-            !vector_store_providers.is_empty(),
-            "Vector store registry should not be empty"
-        );
-        assert!(
-            !cache_providers.is_empty(),
-            "Cache registry should not be empty"
-        );
-        assert!(
-            !language_providers.is_empty(),
-            "Language registry should not be empty"
-        );
+    fn test_all_registries_have_providers(#[case] registry: &str) {
+        let count = match registry {
+            "embedding" => list_embedding_providers().len(),
+            "vector_store" => list_vector_store_providers().len(),
+            "cache" => list_cache_providers().len(),
+            "language" => list_language_providers().len(),
+            _ => 0,
+        };
+        assert!(count > 0, "{} registry should not be empty", registry);
     }
 
     #[tokio::test]

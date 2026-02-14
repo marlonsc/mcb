@@ -4,9 +4,19 @@ use std::path::PathBuf;
 
 use super::{CloneCandidate, DuplicationType};
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use derive_more::Display;
 
 /// A duplication violation representing a detected code clone
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Display)]
+#[display(
+    "{} at {}:{}: {} lines duplicated from {}:{}",
+    duplication_type.name(),
+    file.display(),
+    line,
+    duplicated_lines,
+    duplicate_file.display(),
+    duplicate_line
+)]
 pub struct DuplicationViolation {
     /// File containing the original code
     pub file: PathBuf,
@@ -43,21 +53,6 @@ impl DuplicationViolation {
             duplicated_lines: candidate.duplicated_lines,
             severity,
         }
-    }
-}
-
-impl std::fmt::Display for DuplicationViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{} at {}:{}: {} lines duplicated from {}:{}",
-            self.duplication_type.name(),
-            self.file.display(),
-            self.line,
-            self.duplicated_lines,
-            self.duplicate_file.display(),
-            self.duplicate_line
-        )
     }
 }
 

@@ -14,6 +14,7 @@ use mcb_server::args::{
     SessionArgs,
 };
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::json;
 
 use crate::test_utils::test_fixtures::create_test_mcp_server;
@@ -880,27 +881,59 @@ async fn test_real_session_list_filters_by_parent_session_id() {
     assert!(list_text.contains(&parent_id));
 }
 
+#[rstest]
+#[case("observation")]
+#[case("execution")]
 #[tokio::test]
-async fn test_real_memory_store_observation_conflicting_project_rejected_without_side_effect() {
+async fn test_real_memory_store_conflicting_ids_rejected_without_side_effect(#[case] mode: &str) {
     let (server, _temp) = create_test_mcp_server().await;
     let memory_h = server.memory_handler();
-    let query = "conflict-observation-side-effect-token";
+    let query = if mode == "observation" {
+        "conflict-observation-side-effect-token"
+    } else {
+        "conflict-execution-side-effect-token"
+    };
 
     let before_count = list_observation_count(&memory_h, query).await;
+
+    let (resource, project_id, repo_id, data, expected_error) = if mode == "observation" {
+        (
+            MemoryResource::Observation,
+            Some("project-from-args".to_string()),
+            None,
+            json!({
+                "content": query,
+                "observation_type": "context",
+                "project_id": "project-from-data",
+                "tags": ["conflict-test"]
+            }),
+            "conflicting project_id",
+        )
+    } else {
+        (
+            MemoryResource::Execution,
+            Some("project-exec".to_string()),
+            Some("repo-from-args".to_string()),
+            json!({
+                "command": query,
+                "exit_code": 0,
+                "duration_ms": 1,
+                "success": true,
+                "execution_type": "test",
+                "repo_id": "repo-from-data"
+            }),
+            "conflicting repo_id",
+        )
+    };
 
     let store_args = MemoryArgs {
         action: MemoryAction::Store,
         org_id: None,
-        resource: MemoryResource::Observation,
-        project_id: Some("project-from-args".to_string()),
-        data: Some(json!({
-            "content": query,
-            "observation_type": "context",
-            "project_id": "project-from-data",
-            "tags": ["conflict-test"]
-        })),
+        resource,
+        project_id,
+        data: Some(data),
         ids: None,
-        repo_id: None,
+        repo_id,
         session_id: None,
         parent_session_id: None,
         tags: None,
@@ -917,54 +950,8 @@ async fn test_real_memory_store_observation_conflicting_project_rejected_without
     let err = memory_h
         .handle(Parameters(store_args))
         .await
-        .expect_err("conflicting project_id must fail");
-    assert!(err.message.contains("conflicting project_id"));
-
-    let after_count = list_observation_count(&memory_h, query).await;
-    assert_eq!(after_count, before_count);
-}
-
-#[tokio::test]
-async fn test_real_memory_store_execution_conflicting_repo_rejected_without_side_effect() {
-    let (server, _temp) = create_test_mcp_server().await;
-    let memory_h = server.memory_handler();
-    let query = "conflict-execution-side-effect-token";
-
-    let before_count = list_observation_count(&memory_h, query).await;
-
-    let store_args = MemoryArgs {
-        action: MemoryAction::Store,
-        org_id: None,
-        resource: MemoryResource::Execution,
-        project_id: Some("project-exec".to_string()),
-        data: Some(json!({
-            "command": query,
-            "exit_code": 0,
-            "duration_ms": 1,
-            "success": true,
-            "execution_type": "test",
-            "repo_id": "repo-from-data"
-        })),
-        ids: None,
-        repo_id: Some("repo-from-args".to_string()),
-        session_id: None,
-        parent_session_id: None,
-        tags: None,
-        query: None,
-        anchor_id: None,
-        depth_before: None,
-        depth_after: None,
-        window_secs: None,
-        observation_types: None,
-        max_tokens: None,
-        limit: None,
-    };
-
-    let err = memory_h
-        .handle(Parameters(store_args))
-        .await
-        .expect_err("conflicting repo_id must fail");
-    assert!(err.message.contains("conflicting repo_id"));
+        .expect_err("conflicting identifiers must fail");
+    assert!(err.message.contains(expected_error));
 
     let after_count = list_observation_count(&memory_h, query).await;
     assert_eq!(after_count, before_count);

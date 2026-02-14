@@ -7,6 +7,7 @@ use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_providers::database::{
     create_memory_repository_with_executor, create_project_repository_from_executor,
 };
+use rstest::rstest;
 
 async fn setup_repository() -> (Arc<dyn ProjectRepository>, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
@@ -98,26 +99,29 @@ async fn test_get_project_by_id_not_found() {
     );
 }
 
+#[rstest]
+#[case("name", "proj-3", "Unique Name", "/path/3", "Unique Name")]
+#[case("path", "proj-4", "Project 4", "/unique/path", "/unique/path")]
 #[tokio::test]
-async fn test_get_project_by_name() {
-    let (repo, _project, _temp) = setup_with_project("proj-3", "Unique Name", "/path/3").await;
+async fn test_get_project_by_unique_fields(
+    #[case] lookup_kind: &str,
+    #[case] expected_id: &str,
+    #[case] name: &str,
+    #[case] path: &str,
+    #[case] lookup_value: &str,
+) {
+    let (repo, _project, _temp) = setup_with_project(expected_id, name, path).await;
 
-    let retrieved = repo
-        .get_by_name(DEFAULT_ORG_ID, "Unique Name")
-        .await
-        .expect("Failed to get project by name");
-    assert_eq!(retrieved.id, "proj-3");
-}
-
-#[tokio::test]
-async fn test_get_project_by_path() {
-    let (repo, _project, _temp) = setup_with_project("proj-4", "Project 4", "/unique/path").await;
-
-    let retrieved = repo
-        .get_by_path(DEFAULT_ORG_ID, "/unique/path")
-        .await
-        .expect("Failed to get project by path");
-    assert_eq!(retrieved.id, "proj-4");
+    let retrieved = if lookup_kind == "name" {
+        repo.get_by_name(DEFAULT_ORG_ID, lookup_value)
+            .await
+            .expect("Failed to get project by name")
+    } else {
+        repo.get_by_path(DEFAULT_ORG_ID, lookup_value)
+            .await
+            .expect("Failed to get project by path")
+    };
+    assert_eq!(retrieved.id, expected_id);
 }
 
 #[tokio::test]

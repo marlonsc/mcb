@@ -4,6 +4,7 @@ use std::sync::Mutex;
 
 use async_trait::async_trait;
 use mcb_domain::events::{DomainEvent, EventPublisher};
+use rstest::rstest;
 
 // Mock event publisher for testing
 struct TestEventPublisher {
@@ -43,61 +44,28 @@ impl EventPublisher for TestEventPublisher {
     }
 }
 
+#[rstest]
+#[case(DomainEvent::IndexRebuild { collection: Some("test-collection".to_string()) }, "IndexRebuild")]
+#[case(
+    DomainEvent::SyncCompleted { path: "/path/to/code".to_string(), files_changed: 42 },
+    "SyncCompleted"
+)]
+#[case(
+    DomainEvent::CacheInvalidate { namespace: Some("embeddings".to_string()) },
+    "CacheInvalidate"
+)]
+#[case(
+    DomainEvent::SnapshotCreated { root_path: "/code".to_string(), file_count: 100 },
+    "SnapshotCreated"
+)]
+#[case(
+    DomainEvent::FileChangesDetected { root_path: "/code".to_string(), added: 5, modified: 10, removed: 2 },
+    "FileChangesDetected"
+)]
 #[test]
-fn test_domain_event_creation() {
-    let event = DomainEvent::IndexRebuild {
-        collection: Some("test-collection".to_string()),
-    };
-
-    // Test that event can be created and debugged
+fn test_domain_event_variants(#[case] event: DomainEvent, #[case] expected_debug_fragment: &str) {
     let debug_str = format!("{:?}", event);
-    assert!(debug_str.contains("IndexRebuild"));
-    assert!(debug_str.contains("test-collection"));
-}
-
-#[test]
-fn test_domain_event_variants() {
-    // Test each event variant
-    let index_rebuild = DomainEvent::IndexRebuild {
-        collection: Some("my-collection".to_string()),
-    };
-
-    let sync_completed = DomainEvent::SyncCompleted {
-        path: "/path/to/code".to_string(),
-        files_changed: 42,
-    };
-
-    let cache_invalidate = DomainEvent::CacheInvalidate {
-        namespace: Some("embeddings".to_string()),
-    };
-
-    let snapshot_created = DomainEvent::SnapshotCreated {
-        root_path: "/code".to_string(),
-        file_count: 100,
-    };
-
-    let file_changes = DomainEvent::FileChangesDetected {
-        root_path: "/code".to_string(),
-        added: 5,
-        modified: 10,
-        removed: 2,
-    };
-
-    // Just verify they can be created
-    assert!(matches!(index_rebuild, DomainEvent::IndexRebuild { .. }));
-    assert!(matches!(sync_completed, DomainEvent::SyncCompleted { .. }));
-    assert!(matches!(
-        cache_invalidate,
-        DomainEvent::CacheInvalidate { .. }
-    ));
-    assert!(matches!(
-        snapshot_created,
-        DomainEvent::SnapshotCreated { .. }
-    ));
-    assert!(matches!(
-        file_changes,
-        DomainEvent::FileChangesDetected { .. }
-    ));
+    assert!(debug_str.contains(expected_debug_fragment));
 }
 
 #[test]
@@ -119,13 +87,17 @@ fn test_event_publisher_creation() {
     assert!(events.is_empty());
 }
 
+#[rstest]
+#[case(true)]
+#[case(false)]
 #[test]
-fn test_has_subscribers() {
-    let publisher_with_subs = TestEventPublisher::new();
-    assert!(publisher_with_subs.has_subscribers());
-
-    let publisher_no_subs = TestEventPublisher::with_no_subscribers();
-    assert!(!publisher_no_subs.has_subscribers());
+fn test_has_subscribers(#[case] expected_has_subscribers: bool) {
+    let publisher = if expected_has_subscribers {
+        TestEventPublisher::new()
+    } else {
+        TestEventPublisher::with_no_subscribers()
+    };
+    assert_eq!(publisher.has_subscribers(), expected_has_subscribers);
 }
 
 #[tokio::test]

@@ -6,11 +6,11 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 use serde_json::Value;
 
+use super::common::{opt_str, optional_data_map, require_session_id_str};
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::resolve_identifier_precedence;
-use crate::utils::json;
 use tracing::error;
 
 /// Updates an existing agent session.
@@ -19,15 +19,11 @@ pub async fn update_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
 ) -> Result<CallToolResult, McpError> {
-    let session_id = match args.session_id.as_ref() {
-        Some(id) => id.as_str(),
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing session_id",
-            )]));
-        }
+    let session_id = match require_session_id_str(args) {
+        Ok(id) => id,
+        Err(error_result) => return Ok(error_result),
     };
-    let data = json::json_map(&args.data);
+    let data = optional_data_map(&args.data);
     let status = match args.status.as_ref() {
         Some(status) => Some(
             status
@@ -49,16 +45,8 @@ pub async fn update_session(
     };
     match agent_service.get_session(session_id).await {
         Ok(Some(mut session)) => {
-            let payload_project_id = data.and_then(|d| {
-                d.get(schema::PROJECT_ID)
-                    .and_then(Value::as_str)
-                    .map(str::to_owned)
-            });
-            let payload_worktree_id = data.and_then(|d| {
-                d.get(schema::WORKTREE_ID)
-                    .and_then(Value::as_str)
-                    .map(str::to_owned)
-            });
+            let payload_project_id = data.and_then(|d| opt_str(d, schema::PROJECT_ID));
+            let payload_worktree_id = data.and_then(|d| opt_str(d, schema::WORKTREE_ID));
 
             let resolved_project_id = resolve_identifier_precedence(
                 schema::PROJECT_ID,

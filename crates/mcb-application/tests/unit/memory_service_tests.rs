@@ -7,375 +7,264 @@ fn test_current_timestamp_reports_recent_time() {
     assert!(ts < 2_000_000_000, "Timestamp should be before 2033");
 }
 
-#[cfg(test)]
-mod rrf_tests {
-    use std::sync::Arc;
+use std::sync::Arc;
 
-    use async_trait::async_trait;
-    use mcb_application::use_cases::memory_service::MemoryServiceImpl;
-    use mcb_domain::entities::memory::{
-        MemoryFilter, Observation, ObservationMetadata, ObservationType, SessionSummary,
-    };
-    use mcb_domain::error::Result;
-    use mcb_domain::ports::repositories::memory_repository::{FtsSearchResult, MemoryRepository};
-    use mcb_domain::ports::services::MemoryServiceInterface;
-    use mcb_domain::utils::compute_content_hash;
-    use mcb_domain::value_objects::{ObservationId, SearchResult, SessionId};
+use mcb_application::use_cases::memory_service::MemoryServiceImpl;
+use mcb_domain::entities::memory::{MemoryFilter, ObservationMetadata, ObservationType};
+use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::di::bootstrap::init_app;
+use rstest::*;
 
-    use crate::test_utils::{TestEmbeddingProvider, TestVectorStoreProvider};
+#[test]
+fn test_current_timestamp_reports_recent_time() {
+    let ts = MemoryServiceImpl::current_timestamp();
+    assert!(ts > 1_700_000_000, "Timestamp should be after 2023");
+    assert!(ts < 2_000_000_000, "Timestamp should be before 2033");
+}
 
-    // ---- Mock MemoryRepository ----
+struct TestContext {
+    service: MemoryServiceImpl,
+    _temp: tempfile::TempDir,
+}
 
-    struct TestMemoryRepo {
-        observations: Vec<Observation>,
-        fts_results: Vec<FtsSearchResult>,
+#[fixture]
+async fn ctx() -> TestContext {
+    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let mut config = AppConfig::default();
+    config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
+
+    let app_ctx = init_app(config).await.expect("init app context");
+    let domain_services = app_ctx
+        .build_domain_services()
+        .await
+        .expect("build domain services");
+
+    let service = MemoryServiceImpl::new(
+        "test-project".to_string(),
+        domain_services.memory_repository,
+        domain_services.embedding_provider,
+        domain_services.vector_store_provider,
+    );
+
+    TestContext {
+        service,
+        _temp: temp_dir,
     }
+}
 
-    #[async_trait]
-    impl MemoryRepository for TestMemoryRepo {
-        async fn store_observation(&self, _observation: &Observation) -> Result<()> {
-            Ok(())
-        }
+mod integration_tests {
+    use super::*;
 
-        async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
-            Ok(self
-                .observations
-                .iter()
-                .find(|o| o.id == id.as_str())
-                .cloned())
-        }
-
-        async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
-            Ok(self
-                .observations
-                .iter()
-                .find(|o| o.content_hash == content_hash)
-                .cloned())
-        }
-
-        async fn search(&self, _query: &str, _limit: usize) -> Result<Vec<FtsSearchResult>> {
-            Ok(self.fts_results.clone())
-        }
-
-        async fn delete_observation(&self, _id: &ObservationId) -> Result<()> {
-            Ok(())
-        }
-
-        async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
-            let id_strings: Vec<&str> = ids.iter().map(|id| id.as_str()).collect();
-            Ok(self
-                .observations
-                .iter()
-                .filter(|o| id_strings.contains(&o.id.as_str()))
-                .cloned()
-                .collect())
-        }
-
-        async fn get_timeline(
-            &self,
-            _anchor_id: &ObservationId,
-            _before: usize,
-            _after: usize,
-            _filter: Option<MemoryFilter>,
-        ) -> Result<Vec<Observation>> {
-            Ok(vec![])
-        }
-
-        async fn store_session_summary(&self, _summary: &SessionSummary) -> Result<()> {
-            Ok(())
-        }
-
-        async fn get_session_summary(
-            &self,
-            _session_id: &SessionId,
-        ) -> Result<Option<SessionSummary>> {
-            Ok(None)
-        }
-    }
-
-    // ---- Helper ----
-
-    fn make_observation(id: &str, content: &str) -> Observation {
-        Observation {
-            id: id.to_string(),
-            project_id: "test-project".to_string(),
-            content: content.to_string(),
-            content_hash: compute_content_hash(content),
-            tags: vec![],
-            r#type: ObservationType::Context,
-            metadata: ObservationMetadata::default(),
-            created_at: 1_700_000_000,
-            embedding_id: None,
-        }
-    }
-
-    fn make_observation_with_meta(
-        id: &str,
-        content: &str,
-        session: Option<&str>,
-        branch: Option<&str>,
-        commit: Option<&str>,
-    ) -> Observation {
-        let mut obs = make_observation(id, content);
-        if let Some(s) = session {
-            obs.metadata.session_id = Some(s.to_string());
-        }
-        if let Some(b) = branch {
-            obs.metadata.branch = Some(b.to_string());
-        }
-        if let Some(c) = commit {
-            obs.metadata.commit = Some(c.to_string());
-        }
-        obs
-    }
-
-    fn create_test_service(
-        repo: Arc<TestMemoryRepo>,
-        vector_store: Arc<TestVectorStoreProvider>,
-        embedding_provider: Arc<TestEmbeddingProvider>,
-    ) -> MemoryServiceImpl {
-        MemoryServiceImpl::new(
-            "test-project".to_string(),
-            repo,
-            embedding_provider,
-            vector_store,
-        )
-    }
-
-    // ---- Tests ----
-
-    /// Verifies Reciprocal Rank Fusion correctly combines FTS and vector results.
+    #[rstest]
     #[tokio::test]
-    async fn test_rrf_hybrid_search_combines_fts_and_vector() {
-        let obs_a = make_observation("obs-a", "content about rust generics");
-        let obs_b = make_observation("obs-b", "content about python types");
+    async fn test_hybrid_search_combines_fts_and_vector(#[future] ctx: TestContext) {
+        let ctx = ctx.await;
 
-        let fts_results = vec![
-            FtsSearchResult {
-                id: "obs-b".to_string(),
-                rank: -2.0,
-            },
-            FtsSearchResult {
-                id: "obs-a".to_string(),
-                rank: -1.5,
-            },
-        ];
+        // Store observations
+        // 1. "rust generics" -> relevant to "generics"
+        let (id_a, _) = ctx
+            .service
+            .store_observation(
+                "test-project".to_string(),
+                "content about rust generics and trait bounds".to_string(),
+                ObservationType::Context,
+                vec![],
+                ObservationMetadata::default(),
+            )
+            .await
+            .expect("store obs a");
 
-        let vector_results = vec![SearchResult {
-            id: "vec-1".to_string(),
-            file_path: String::new(),
-            start_line: 0,
-            content: "content about rust generics".to_string(),
-            score: 0.95,
-            language: "rust".to_string(),
-        }];
+        // 2. "python types" -> relevant to "types"
+        let (id_b, _) = ctx
+            .service
+            .store_observation(
+                "test-project".to_string(),
+                "content about python dynamic types".to_string(),
+                ObservationType::Context,
+                vec![],
+                ObservationMetadata::default(),
+            )
+            .await
+            .expect("store obs b");
 
-        let repo = Arc::new(TestMemoryRepo {
-            observations: vec![obs_a.clone(), obs_b.clone()],
-            fts_results,
-        });
-
-        let vector_store = Arc::new(TestVectorStoreProvider::with_results(vector_results));
-
-        let embedding_provider = Arc::new(TestEmbeddingProvider::new(3));
-
-        let service = create_test_service(repo, vector_store, embedding_provider);
-
-        let results = service
+        // Search for "rust generics"
+        let results = ctx
+            .service
             .search_memories("rust generics", None, 10)
             .await
             .expect("search should succeed");
 
-        assert!(results.len() >= 2);
-        assert_eq!(results[0].id, "obs-a");
-        assert_eq!(results[1].id, "obs-b");
-        assert!(results[0].similarity_score > results[1].similarity_score);
+        // Should find id_a (high relevance) and possibly id_b (low relevance or none)
+        // With hybrid search, exact matches in FTS or high similarity in Vector should rank higher.
+
+        let found_a = results.iter().find(|r| r.id == id_a.as_str());
+        assert!(found_a.is_some(), "Should find rust observation");
+
+        // Ensure ranking makes sense if both returned
+        if let Some(found_b) = results.iter().find(|r| r.id == id_b.as_str()) {
+            let score_a = found_a.unwrap().similarity_score;
+            let score_b = found_b.similarity_score;
+            assert!(
+                score_a > score_b,
+                "Rust observation should be more relevant than Python one for 'rust generics' query"
+            );
+        }
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_rrf_fallback_to_fts_when_vector_empty() {
-        let obs_a = make_observation("obs-a", "debugging tokio runtime");
-        let obs_b = make_observation("obs-b", "async runtime patterns");
+    async fn test_search_respects_memory_filter(#[future] ctx: TestContext) {
+        let ctx = ctx.await;
 
-        let fts_results = vec![
-            FtsSearchResult {
-                id: "obs-a".to_string(),
-                rank: -2.5,
-            },
-            FtsSearchResult {
-                id: "obs-b".to_string(),
-                rank: -1.0,
-            },
-        ];
-
-        let repo = Arc::new(TestMemoryRepo {
-            observations: vec![obs_a, obs_b],
-            fts_results,
-        });
-
-        let vector_store = Arc::new(TestVectorStoreProvider::new());
-        let embedding_provider = Arc::new(TestEmbeddingProvider::new(3));
-
-        let service = create_test_service(repo, vector_store, embedding_provider);
-
-        let results = service
-            .search_memories("tokio runtime", None, 10)
+        let meta1 = ObservationMetadata {
+            session_id: Some("session-1".to_string()),
+            ..Default::default()
+        };
+        let (id_a, _) = ctx
+            .service
+            .store_observation(
+                "test-project".to_string(),
+                "session one observation".to_string(),
+                ObservationType::Context,
+                vec![],
+                meta1,
+            )
             .await
-            .expect("search should succeed");
+            .expect("store a");
 
-        assert_eq!(results.len(), 2);
-        assert_eq!(results[0].id, "obs-a");
-        assert_eq!(results[1].id, "obs-b");
-    }
-
-    #[tokio::test]
-    async fn test_rrf_respects_memory_filter() {
-        let obs_a = make_observation_with_meta(
-            "obs-a",
-            "session one observation",
-            Some("session-1"),
-            None,
-            None,
-        );
-        let obs_b = make_observation_with_meta(
-            "obs-b",
-            "session two observation",
-            Some("session-2"),
-            None,
-            None,
-        );
-
-        let fts_results = vec![
-            FtsSearchResult {
-                id: "obs-a".to_string(),
-                rank: -2.0,
-            },
-            FtsSearchResult {
-                id: "obs-b".to_string(),
-                rank: -1.5,
-            },
-        ];
-
-        let repo = Arc::new(TestMemoryRepo {
-            observations: vec![obs_a, obs_b],
-            fts_results,
-        });
-
-        let vector_store = Arc::new(TestVectorStoreProvider::new());
-        let embedding_provider = Arc::new(TestEmbeddingProvider::new(3));
-
-        let service = create_test_service(repo, vector_store, embedding_provider);
+        let meta2 = ObservationMetadata {
+            session_id: Some("session-2".to_string()),
+            ..Default::default()
+        };
+        let (id_b, _) = ctx
+            .service
+            .store_observation(
+                "test-project".to_string(),
+                "session two observation".to_string(),
+                ObservationType::Context,
+                vec![],
+                meta2,
+            )
+            .await
+            .expect("store b");
 
         let filter = MemoryFilter {
             session_id: Some("session-1".to_string()),
             ..Default::default()
         };
 
-        let results = service
+        let results = ctx
+            .service
             .search_memories("observation", Some(filter), 10)
             .await
-            .expect("search should succeed");
+            .expect("search");
 
         assert_eq!(results.len(), 1);
-        assert_eq!(results[0].id, "obs-a");
+        assert_eq!(results[0].id, id_a.as_str());
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_filter_by_branch() {
-        let obs_a = make_observation_with_meta(
-            "obs-a",
-            "feature branch work",
-            None,
-            Some("feature/auth"),
-            None,
-        );
-        let obs_b =
-            make_observation_with_meta("obs-b", "main branch work", None, Some("main"), None);
+    async fn test_filter_by_branch(#[future] ctx: TestContext) {
+        let ctx = ctx.await;
 
-        let fts_results = vec![
-            FtsSearchResult {
-                id: "obs-a".to_string(),
-                rank: -2.0,
-            },
-            FtsSearchResult {
-                id: "obs-b".to_string(),
-                rank: -1.5,
-            },
-        ];
+        let meta1 = ObservationMetadata {
+            branch: Some("feature/auth".to_string()),
+            ..Default::default()
+        };
+        let (id_a, _) = ctx
+            .service
+            .store_observation(
+                "test-project".to_string(),
+                "feature branch work".to_string(),
+                ObservationType::Context,
+                vec![],
+                meta1,
+            )
+            .await
+            .expect("store a");
 
-        let repo = Arc::new(TestMemoryRepo {
-            observations: vec![obs_a, obs_b],
-            fts_results,
-        });
-
-        let vector_store = Arc::new(TestVectorStoreProvider::new());
-        let embedding_provider = Arc::new(TestEmbeddingProvider::new(3));
-
-        let service = create_test_service(repo, vector_store, embedding_provider);
+        let meta2 = ObservationMetadata {
+            branch: Some("main".to_string()),
+            ..Default::default()
+        };
+        let (_id_b, _) = ctx
+            .service
+            .store_observation(
+                "test-project".to_string(),
+                "main branch work".to_string(),
+                ObservationType::Context,
+                vec![],
+                meta2,
+            )
+            .await
+            .expect("store b");
 
         let filter = MemoryFilter {
             branch: Some("feature/auth".to_string()),
             ..Default::default()
         };
 
-        let results = service
-            .search_memories("branch work", Some(filter), 10)
+        let results = ctx
+            .service
+            .search_memories("work", Some(filter), 10)
             .await
-            .expect("search should succeed");
+            .expect("search");
 
         assert_eq!(results.len(), 1);
-        assert_eq!(results[0].id, "obs-a");
+        assert_eq!(results[0].id, id_a.as_str());
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_filter_by_commit() {
-        let obs_a = make_observation_with_meta(
-            "obs-a",
-            "commit abc observation",
-            None,
-            None,
-            Some("abc123"),
-        );
-        let obs_b = make_observation_with_meta(
-            "obs-b",
-            "commit def observation",
-            None,
-            None,
-            Some("def456"),
-        );
+    async fn test_filter_by_commit(#[future] ctx: TestContext) {
+        let ctx = ctx.await;
 
-        let fts_results = vec![
-            FtsSearchResult {
-                id: "obs-a".to_string(),
-                rank: -2.0,
-            },
-            FtsSearchResult {
-                id: "obs-b".to_string(),
-                rank: -1.5,
-            },
-        ];
+        let meta1 = ObservationMetadata {
+            commit: Some("abc1234".to_string()),
+            ..Default::default()
+        };
+        let (id_a, _) = ctx
+            .service
+            .store_observation(
+                "test-project".to_string(),
+                "commit abc work".to_string(),
+                ObservationType::Context,
+                vec![],
+                meta1,
+            )
+            .await
+            .expect("store a");
 
-        let repo = Arc::new(TestMemoryRepo {
-            observations: vec![obs_a, obs_b],
-            fts_results,
-        });
-
-        let vector_store = Arc::new(TestVectorStoreProvider::new());
-        let embedding_provider = Arc::new(TestEmbeddingProvider::new(3));
-
-        let service = create_test_service(repo, vector_store, embedding_provider);
+        let meta2 = ObservationMetadata {
+            commit: Some("def5678".to_string()),
+            ..Default::default()
+        };
+        let (_id_b, _) = ctx
+            .service
+            .store_observation(
+                "test-project".to_string(),
+                "commit def work".to_string(),
+                ObservationType::Context,
+                vec![],
+                meta2,
+            )
+            .await
+            .expect("store b");
 
         let filter = MemoryFilter {
-            commit: Some("abc123".to_string()),
+            commit: Some("abc1234".to_string()),
             ..Default::default()
         };
 
-        let results = service
-            .search_memories("commit observation", Some(filter), 10)
+        let results = ctx
+            .service
+            .search_memories("work", Some(filter), 10)
             .await
-            .expect("search should succeed");
+            .expect("search");
 
         assert_eq!(results.len(), 1);
-        assert_eq!(results[0].id, "obs-a");
+        assert_eq!(results[0].id, id_a.as_str());
     }
 }

@@ -2,6 +2,7 @@
 //!
 //! This module provides a unified handler for agent session MCP tool operations.
 
+mod common;
 mod create;
 mod get;
 mod handler;

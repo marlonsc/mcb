@@ -5,9 +5,11 @@
 use std::path::PathBuf;
 
 use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use derive_more::Display;
 
 /// Unified structure representing a code violation found by any linter.
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize, Display)]
+#[display("[{rule}] {message}")]
 pub struct LintViolation {
     /// The rule identifier (e.g., "E501", "clippy::unwrap_used").
     pub rule: String,
@@ -65,12 +67,6 @@ impl LintViolation {
             "pmat" => ViolationCategory::Pmat,
             _ => ViolationCategory::Quality,
         }
-    }
-}
-
-impl std::fmt::Display for LintViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}] {}", self.rule, self.message)
     }
 }
 

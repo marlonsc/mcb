@@ -115,7 +115,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM organizations WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_org,
         )
         .await?
@@ -155,7 +155,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         self.executor
             .execute(
                 "DELETE FROM organizations WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }
@@ -170,7 +170,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
                     SqlParam::String(user.org_id.clone()),
                     SqlParam::String(user.email.clone()),
                     SqlParam::String(user.display_name.clone()),
-                    SqlParam::String(user.role.as_str().to_string()),
+                    SqlParam::String(user.role.as_str().to_owned()),
                     opt_str_param(&user.api_key_hash),
                     SqlParam::I64(user.created_at),
                     SqlParam::I64(user.updated_at),
@@ -184,7 +184,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM users WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_user,
         )
         .await?
@@ -197,8 +197,8 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             &self.executor,
             "SELECT * FROM users WHERE org_id = ? AND email = ?",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(email.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(email.to_owned()),
             ],
             row_to_user,
         )
@@ -211,7 +211,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         query_helpers::query_all(
             &self.executor,
             "SELECT * FROM users WHERE org_id = ?",
-            &[SqlParam::String(org_id.to_string())],
+            &[SqlParam::String(org_id.to_owned())],
             row_to_user,
             "org entity",
         )
@@ -227,7 +227,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
                     SqlParam::String(user.org_id.clone()),
                     SqlParam::String(user.email.clone()),
                     SqlParam::String(user.display_name.clone()),
-                    SqlParam::String(user.role.as_str().to_string()),
+                    SqlParam::String(user.role.as_str().to_owned()),
                     opt_str_param(&user.api_key_hash),
                     SqlParam::I64(user.updated_at),
                     SqlParam::String(user.id.clone()),
@@ -241,7 +241,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         self.executor
             .execute(
                 "DELETE FROM users WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }
@@ -266,7 +266,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM teams WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_team,
         )
         .await?
@@ -278,7 +278,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         query_helpers::query_all(
             &self.executor,
             "SELECT * FROM teams WHERE org_id = ?",
-            &[SqlParam::String(org_id.to_string())],
+            &[SqlParam::String(org_id.to_owned())],
             row_to_team,
             "org entity",
         )
@@ -290,7 +290,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         self.executor
             .execute(
                 "DELETE FROM teams WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }
@@ -303,7 +303,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
                 &[
                     SqlParam::String(member.team_id.clone()),
                     SqlParam::String(member.user_id.clone()),
-                    SqlParam::String(member.role.as_str().to_string()),
+                    SqlParam::String(member.role.as_str().to_owned()),
                     SqlParam::I64(member.joined_at),
                 ],
             )
@@ -316,8 +316,8 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .execute(
                 "DELETE FROM team_members WHERE team_id = ? AND user_id = ?",
                 &[
-                    SqlParam::String(team_id.to_string()),
-                    SqlParam::String(user_id.to_string()),
+                    SqlParam::String(team_id.to_owned()),
+                    SqlParam::String(user_id.to_owned()),
                 ],
             )
             .await
@@ -328,7 +328,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         query_helpers::query_all(
             &self.executor,
             "SELECT * FROM team_members WHERE team_id = ?",
-            &[SqlParam::String(team_id.to_string())],
+            &[SqlParam::String(team_id.to_owned())],
             row_to_team_member,
             "org entity",
         )
@@ -360,7 +360,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM api_keys WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_api_key,
         )
         .await?
@@ -372,7 +372,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         query_helpers::query_all(
             &self.executor,
             "SELECT * FROM api_keys WHERE org_id = ?",
-            &[SqlParam::String(org_id.to_string())],
+            &[SqlParam::String(org_id.to_owned())],
             row_to_api_key,
             "org entity",
         )
@@ -384,7 +384,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         self.executor
             .execute(
                 "UPDATE api_keys SET revoked_at = ? WHERE id = ?",
-                &[SqlParam::I64(revoked_at), SqlParam::String(id.to_string())],
+                &[SqlParam::I64(revoked_at), SqlParam::String(id.to_owned())],
             )
             .await
     }
@@ -394,7 +394,7 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         self.executor
             .execute(
                 "DELETE FROM api_keys WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }

@@ -6,14 +6,13 @@ use mcb_domain::utils::{compute_stable_id_hash, vcs_context::VcsContext};
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
-use serde_json::Value;
 use uuid::Uuid;
 
+use super::common::{opt_bool, opt_str, require_data_map, require_str, str_vec};
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
-use crate::utils::json;
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -21,51 +20,31 @@ pub async fn store_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match json::json_map(&args.data) {
-        Some(data) => data,
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing data payload for observation store",
-            )]));
-        }
+    let data = match require_data_map(&args.data, "Missing data payload for observation store") {
+        Ok(data) => data,
+        Err(error_result) => return Ok(error_result),
     };
-    let content = match data.get("content").and_then(Value::as_str) {
-        Some(value) => value.to_owned(),
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing required field: content",
-            )]));
-        }
+    let content = match require_str(data, "content") {
+        Ok(value) => value,
+        Err(error_result) => return Ok(error_result),
     };
     // TODO(ORG002): Duplicate string literal "observation_type".
     // Consider using mcb_domain::schema::memory::COL_OBSERVATION_TYPE instead.
-    let observation_type_str = match data.get("observation_type").and_then(Value::as_str) {
-        Some(value) => value.to_owned(),
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing required field: observation_type",
-            )]));
-        }
+    let observation_type_str = match require_str(data, "observation_type") {
+        Ok(value) => value,
+        Err(error_result) => return Ok(error_result),
     };
     let observation_type: mcb_domain::entities::memory::ObservationType =
         match observation_type_str.parse() {
             Ok(v) => v,
-            Err(error) => {
-                return Ok(CallToolResult::error(vec![Content::text(
-                    error.to_string(),
-                )]));
+            Err(_) => {
+                return Ok(CallToolResult::error(vec![Content::text(format!(
+                    "Unknown observation type: {}",
+                    observation_type_str
+                ))]));
             }
         };
-    let tags = data
-        .get("tags")
-        .and_then(Value::as_array)
-        .map(|items| {
-            items
-                .iter()
-                .filter_map(|item| item.as_str().map(str::to_owned))
-                .collect()
-        })
-        .unwrap_or_default();
+    let tags = str_vec(data, "tags");
     let vcs_context = VcsContext::capture();
     let arg_session_id = args
         .session_id
@@ -76,51 +55,18 @@ pub async fn store_observation(
         .parent_session_id
         .clone()
         .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
-    let payload_repo_id = data
-        .get("repo_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_project_id = data
-        .get("project_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_file_path = data
-        .get("file_path")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_branch = data
-        .get("branch")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_commit = data
-        .get("commit")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_repo_path = data
-        .get("repo_path")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_worktree_id = data
-        .get("worktree_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_operator_id = data
-        .get("operator_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_machine_id = data
-        .get("machine_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_agent_program = data
-        .get("agent_program")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_model_id = data
-        .get("model_id")
-        .and_then(Value::as_str)
-        .map(str::to_owned);
-    let payload_delegated = data.get("delegated").and_then(Value::as_bool);
+    let payload_repo_id = opt_str(data, "repo_id");
+    let payload_project_id = opt_str(data, "project_id");
+    let payload_file_path = opt_str(data, "file_path");
+    let payload_branch = opt_str(data, "branch");
+    let payload_commit = opt_str(data, "commit");
+    let payload_repo_path = opt_str(data, "repo_path");
+    let payload_worktree_id = opt_str(data, "worktree_id");
+    let payload_operator_id = opt_str(data, "operator_id");
+    let payload_machine_id = opt_str(data, "machine_id");
+    let payload_agent_program = opt_str(data, "agent_program");
+    let payload_model_id = opt_str(data, "model_id");
+    let payload_delegated = opt_bool(data, "delegated");
 
     let mut origin_context = resolve_origin_context(OriginContextInput {
         org_id: args.org_id.as_deref(),

@@ -18,7 +18,6 @@ use crate::constants::{
     EDGEVEC_DEFAULT_DIMENSIONS, EDGEVEC_HNSW_EF_CONSTRUCTION, EDGEVEC_HNSW_EF_SEARCH,
     EDGEVEC_HNSW_M, EDGEVEC_HNSW_M0,
 };
-use crate::utils::JsonExt;
 
 /// EdgeVec vector store configuration
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -573,14 +572,27 @@ impl EdgeVecActor {
                     let meta = meta_val.as_object().cloned().unwrap_or_default();
                     final_results.push(SearchResult {
                         id: id.clone(),
-                        file_path: meta.string_or("file_path", "unknown"),
+                        file_path: meta
+                            .get("file_path")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or("unknown")
+                            .to_owned(),
                         start_line: meta
-                            .opt_u64("start_line")
-                            .or_else(|| meta.opt_u64("line_number"))
+                            .get("start_line")
+                            .and_then(|value| value.as_u64())
+                            .or_else(|| meta.get("line_number").and_then(|value| value.as_u64()))
                             .unwrap_or(0) as u32,
-                        content: meta.string_or("content", ""),
+                        content: meta
+                            .get("content")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or("")
+                            .to_owned(),
                         score: 1.0,
-                        language: meta.string_or("language", "unknown"),
+                        language: meta
+                            .get("language")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or("unknown")
+                            .to_owned(),
                     });
                 }
             }
@@ -595,14 +607,27 @@ impl EdgeVecActor {
                 let meta = meta_val.as_object().cloned().unwrap_or_default();
                 final_results.push(SearchResult {
                     id: ext_id.clone(),
-                    file_path: meta.string_or("file_path", "unknown"),
+                    file_path: meta
+                        .get("file_path")
+                        .and_then(|value| value.as_str())
+                        .unwrap_or("unknown")
+                        .to_owned(),
                     start_line: meta
-                        .opt_u64("start_line")
-                        .or_else(|| meta.opt_u64("line_number"))
+                        .get("start_line")
+                        .and_then(|value| value.as_u64())
+                        .or_else(|| meta.get("line_number").and_then(|value| value.as_u64()))
                         .unwrap_or(0) as u32,
-                    content: meta.string_or("content", ""),
+                    content: meta
+                        .get("content")
+                        .and_then(|value| value.as_str())
+                        .unwrap_or("")
+                        .to_owned(),
                     score: 1.0,
-                    language: meta.string_or("language", "unknown"),
+                    language: meta
+                        .get("language")
+                        .and_then(|value| value.as_str())
+                        .unwrap_or("unknown")
+                        .to_owned(),
                 });
             }
         }
@@ -637,16 +662,31 @@ impl EdgeVecActor {
                         {
                             let meta = meta_val.as_object().cloned().unwrap_or_default();
                             let start_line = meta
-                                .opt_u64("start_line")
-                                .or_else(|| meta.opt_u64("line_number"))
+                                .get("start_line")
+                                .and_then(|value| value.as_u64())
+                                .or_else(|| {
+                                    meta.get("line_number").and_then(|value| value.as_u64())
+                                })
                                 .unwrap_or(0) as u32;
                             final_results.push(SearchResult {
                                 id: ext_id,
-                                file_path: meta.string_or("file_path", "unknown"),
+                                file_path: meta
+                                    .get("file_path")
+                                    .and_then(|value| value.as_str())
+                                    .unwrap_or("unknown")
+                                    .to_owned(),
                                 start_line,
-                                content: meta.string_or("content", ""),
+                                content: meta
+                                    .get("content")
+                                    .and_then(|value| value.as_str())
+                                    .unwrap_or("")
+                                    .to_owned(),
                                 score: res.distance as f64,
-                                language: meta.string_or("language", "unknown"),
+                                language: meta
+                                    .get("language")
+                                    .and_then(|value| value.as_str())
+                                    .unwrap_or("unknown")
+                                    .to_owned(),
                             });
                         }
                     }
@@ -767,17 +807,26 @@ impl EdgeVecActor {
                         .is_some_and(|p| p == file_path)
                 {
                     let start_line = meta
-                        .opt_u64("start_line")
-                        .or_else(|| meta.opt_u64("line_number"))
+                        .get("start_line")
+                        .and_then(|value| value.as_u64())
+                        .or_else(|| meta.get("line_number").and_then(|value| value.as_u64()))
                         .unwrap_or(0) as u32;
 
                     results.push(SearchResult {
                         id: ext_id.clone(),
                         file_path: file_path.to_string(),
                         start_line,
-                        content: meta.string_or("content", ""),
+                        content: meta
+                            .get("content")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or("")
+                            .to_owned(),
                         score: 1.0,
-                        language: meta.string_or("language", "unknown"),
+                        language: meta
+                            .get("language")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or("unknown")
+                            .to_owned(),
                     });
                 }
             }

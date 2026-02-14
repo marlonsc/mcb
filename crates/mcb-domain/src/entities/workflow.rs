@@ -4,28 +4,31 @@
 //! It defines the various states, transition triggers, and audit records required
 //! to manage the lifecycle of an agent-led workflow session.
 
-use std::fmt;
-
 use chrono::Utc;
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 /// Workflow session states. Each variant carries context-specific data.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Display)]
 #[serde(tag = "state", content = "data")]
 pub enum WorkflowState {
     /// Initial state when a workflow session is created.
+    #[display("initializing")]
     Initializing,
     /// State when the project context is loaded and ready.
+    #[display("ready")]
     Ready {
         /// Identifier of the loaded context.
         context_id: String,
     },
     /// State when planning a specific phase.
+    #[display("planning")]
     Planning {
         /// Identifier of the phase being planned.
         phase_id: String,
     },
     /// State when executing tasks within a phase.
+    #[display("executing")]
     Executing {
         /// Identifier of the phase being executed.
         phase_id: String,
@@ -33,39 +36,28 @@ pub enum WorkflowState {
         task_id: Option<String>,
     },
     /// State when verifying the results of a phase.
+    #[display("verifying")]
     Verifying {
         /// Identifier of the phase being verified.
         phase_id: String,
     },
     /// State when a phase has been successfully completed.
+    #[display("phase_complete")]
     PhaseComplete {
         /// Identifier of the completed phase.
         phase_id: String,
     },
     /// Terminal state indicating the workflow session finished successfully.
+    #[display("completed")]
     Completed,
     /// Terminal state indicating the workflow failed.
+    #[display("failed")]
     Failed {
         /// Error message describing the failure.
         error: String,
         /// Whether the error can be recovered from.
         recoverable: bool,
     },
-}
-
-impl fmt::Display for WorkflowState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Initializing => write!(f, "initializing"),
-            Self::Ready { .. } => write!(f, "ready"),
-            Self::Planning { .. } => write!(f, "planning"),
-            Self::Executing { .. } => write!(f, "executing"),
-            Self::Verifying { .. } => write!(f, "verifying"),
-            Self::PhaseComplete { .. } => write!(f, "phase_complete"),
-            Self::Completed => write!(f, "completed"),
-            Self::Failed { .. } => write!(f, "failed"),
-        }
-    }
 }
 
 impl WorkflowState {
@@ -95,73 +87,66 @@ impl WorkflowState {
 }
 
 /// Events that trigger state transitions.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Display)]
 #[serde(tag = "trigger")]
 pub enum TransitionTrigger {
     /// Event when project context is successfully discovered.
+    #[display("ContextDiscovered")]
     ContextDiscovered {
         /// Identifier of the discovered context.
         context_id: String,
     },
     /// Event to begin planning for a phase.
+    #[display("StartPlanning")]
     StartPlanning {
         /// Identifier of the phase to plan.
         phase_id: String,
     },
     /// Event to start executing tasks in a phase.
+    #[display("StartExecution")]
     StartExecution {
         /// Identifier of the phase to execute.
         phase_id: String,
     },
     /// Event when a task is claimed for work.
+    #[display("ClaimTask")]
     ClaimTask {
         /// Identifier of the claimed task.
         task_id: String,
     },
     /// Event when a task is completed.
+    #[display("CompleteTask")]
     CompleteTask {
         /// Identifier of the completed task.
         task_id: String,
     },
     /// Event to start the verification process.
+    #[display("StartVerification")]
     StartVerification,
     /// Event when verification succeeds.
+    #[display("VerificationPassed")]
     VerificationPassed,
     /// Event when verification fails.
+    #[display("VerificationFailed")]
     VerificationFailed {
         /// Reason why verification failed.
         reason: String,
     },
     /// Event to mark the entire phase as complete.
+    #[display("CompletePhase")]
     CompletePhase,
     /// Event to end the workflow session.
+    #[display("EndSession")]
     EndSession,
     /// Event indicating an error occurred.
+    #[display("Error")]
     Error {
         /// Error message for the transition.
         message: String,
     },
     /// Event to attempt recovery from an error state.
+    #[display("Recover")]
     Recover,
-}
-
-impl fmt::Display for TransitionTrigger {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::ContextDiscovered { .. } => write!(f, "ContextDiscovered"),
-            Self::StartPlanning { .. } => write!(f, "StartPlanning"),
-            Self::StartExecution { .. } => write!(f, "StartExecution"),
-            Self::ClaimTask { .. } => write!(f, "ClaimTask"),
-            Self::CompleteTask { .. } => write!(f, "CompleteTask"),
-            Self::StartVerification => write!(f, "StartVerification"),
-            Self::VerificationPassed => write!(f, "VerificationPassed"),
-            Self::VerificationFailed { .. } => write!(f, "VerificationFailed"),
-            Self::CompletePhase => write!(f, "CompletePhase"),
-            Self::EndSession => write!(f, "EndSession"),
-            Self::Error { .. } => write!(f, "Error"),
-            Self::Recover => write!(f, "Recover"),
-        }
-    }
 }
 
 /// Recorded transition with full audit context.

@@ -6,6 +6,7 @@ use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, Worktree
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::VcsEntityRepository;
 use mcb_providers::database::SqliteVcsEntityRepository;
+use rstest::rstest;
 
 use super::entity_test_utils::{
     TEST_NOW, assert_not_found, seed_default_scope, seed_isolated_org_scope, seed_project,
@@ -318,31 +319,11 @@ async fn test_project_isolation_same_org_same_local_path() {
     assert_eq!(list_proj_2[0].local_path, "/tmp/shared-path");
 }
 
+#[rstest]
+#[case("branches")]
+#[case("worktrees")]
 #[tokio::test]
-async fn test_list_branches_filters_by_repository() {
-    let (repo, _executor, _temp) = setup_repo().await;
-
-    let repo1 = create_test_repository("repo-1", "proj-1");
-    let repo2 = create_test_repository("repo-2", "proj-1");
-    repo.create_repository(&repo1).await.expect("create repo 1");
-    repo.create_repository(&repo2).await.expect("create repo 2");
-
-    let b1 = create_test_branch("b1", "repo-1", "main");
-    let b2 = create_test_branch("b2", "repo-2", "develop");
-    repo.create_branch(&b1).await.expect("create b1");
-    repo.create_branch(&b2).await.expect("create b2");
-
-    let list_1 = repo.list_branches("repo-1").await.expect("list");
-    assert_eq!(list_1.len(), 1);
-    assert_eq!(list_1[0].name, "main");
-
-    let list_2 = repo.list_branches("repo-2").await.expect("list");
-    assert_eq!(list_2.len(), 1);
-    assert_eq!(list_2[0].name, "develop");
-}
-
-#[tokio::test]
-async fn test_list_worktrees_filters_by_repository() {
+async fn test_list_entities_filter_by_repository(#[case] entity_kind: &str) {
     let (repo, _executor, _temp) = setup_repo().await;
 
     let repo1 = create_test_repository("repo-1", "proj-1");
@@ -359,6 +340,17 @@ async fn test_list_worktrees_filters_by_repository() {
     let wt2 = create_test_worktree("wt-2", "repo-2", "b2");
     repo.create_worktree(&wt1).await.expect("create wt1");
     repo.create_worktree(&wt2).await.expect("create wt2");
+
+    if entity_kind == "branches" {
+        let list_1 = repo.list_branches("repo-1").await.expect("list");
+        assert_eq!(list_1.len(), 1);
+        assert_eq!(list_1[0].name, "main");
+
+        let list_2 = repo.list_branches("repo-2").await.expect("list");
+        assert_eq!(list_2.len(), 1);
+        assert_eq!(list_2[0].name, "develop");
+        return;
+    }
 
     let list_1 = repo.list_worktrees("repo-1").await.expect("list");
     assert_eq!(list_1.len(), 1);

@@ -18,12 +18,7 @@ pub const DEFAULT_TDG_THRESHOLD: u32 = 50;
 // ============================================================================
 
 /// Utility types that are intentionally duplicated to avoid cross-crate dependencies
-pub const UTILITY_TYPES: &[&str] = &[
-    "JsonExt",
-    "HttpResponseUtils",
-    "CacheStats",
-    "TimedOperation",
-];
+pub const UTILITY_TYPES: &[&str] = &["HttpResponseUtils", "CacheStats", "TimedOperation"];
 
 /// Generic type names expected to appear in multiple places
 pub const GENERIC_TYPE_NAMES: &[&str] = &[

@@ -5,6 +5,7 @@ use std::time::Duration;
 
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde::Deserialize;
 
 use crate::test_utils::test_fixtures::{
@@ -225,18 +226,25 @@ async fn test_golden_e2e_handles_reindex_correctly() {
     assert!(r2.is_ok());
 }
 
+#[rstest]
+#[case(Some(GOLDEN_COLLECTION.to_string()), None)]
+#[case(Some("golden_multi_lang".to_string()), Some(vec!["rs".to_string()]))]
 #[tokio::test]
-async fn test_golden_index_test_repository() {
+async fn test_golden_index_variants(
+    #[case] collection: Option<String>,
+    #[case] extensions: Option<Vec<String>>,
+) {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     assert!(path.exists(), "sample_codebase must exist: {:?}", path);
 
     let handler = server.index_handler();
-    let args = index_args(
+    let mut args = index_args(
         IndexAction::Start,
         Some(path.to_string_lossy().to_string()),
-        Some(GOLDEN_COLLECTION.to_string()),
+        collection,
     );
+    args.extensions = extensions;
 
     let result = handler.handle(Parameters(args)).await;
     assert!(result.is_ok());
@@ -254,23 +262,6 @@ async fn test_golden_index_test_repository() {
 }
 
 #[tokio::test]
-async fn test_golden_index_handles_multiple_languages() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
-    let path = sample_codebase_path();
-    let handler = server.index_handler();
-    let mut args = index_args(
-        IndexAction::Start,
-        Some(path.to_string_lossy().to_string()),
-        Some("golden_multi_lang".to_string()),
-    );
-    args.extensions = Some(vec!["rs".to_string()]);
-    let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    let response = result.unwrap();
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[tokio::test]
 async fn test_golden_index_respects_ignore_patterns() {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
@@ -285,13 +276,20 @@ async fn test_golden_index_respects_ignore_patterns() {
     assert!(result.is_ok());
 }
 
+#[rstest]
+#[case(IndexAction::Status, false)]
+#[case(IndexAction::Clear, false)]
+#[case(IndexAction::Status, true)]
 #[tokio::test]
-async fn test_golden_mcp_index_codebase_schema() {
+async fn test_golden_mcp_index_schema_actions(
+    #[case] action: IndexAction,
+    #[case] assert_status_text: bool,
+) {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let index_h = server.index_handler();
     let r = index_h
         .handle(Parameters(index_args(
-            IndexAction::Status,
+            action,
             None,
             Some("default".to_string()),
         )))
@@ -299,6 +297,14 @@ async fn test_golden_mcp_index_codebase_schema() {
     assert!(r.is_ok());
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
+    if assert_status_text {
+        let text = extract_text_content(&res.content);
+        assert!(
+            text.contains("Status") || text.contains("indexing") || text.contains("Idle"),
+            "{}",
+            text
+        );
+    }
 }
 
 #[tokio::test]
@@ -315,46 +321,16 @@ async fn test_golden_mcp_search_code_schema() {
     assert!(r.is_ok());
 }
 
+#[rstest]
+#[case("")]
+#[case("   ")]
 #[tokio::test]
-async fn test_golden_mcp_get_indexing_status_schema() {
+async fn test_golden_mcp_empty_query_error_responses(#[case] query: &str) {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
-    let r = server
-        .index_handler()
-        .handle(Parameters(index_args(
-            IndexAction::Status,
-            None,
-            Some("default".to_string()),
-        )))
+    let result = server
+        .search_handler()
+        .handle(Parameters(search_args(query, None, Some(5))))
         .await;
-    assert!(r.is_ok());
-    let text = extract_text_content(&r.unwrap().content);
-    assert!(
-        text.contains("Status") || text.contains("indexing") || text.contains("Idle"),
-        "{}",
-        text
-    );
-}
-
-#[tokio::test]
-async fn test_golden_mcp_clear_index_schema() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
-    let r = server
-        .index_handler()
-        .handle(Parameters(index_args(
-            IndexAction::Clear,
-            None,
-            Some("default".to_string()),
-        )))
-        .await;
-    assert!(r.is_ok());
-}
-
-#[tokio::test]
-async fn test_golden_mcp_error_responses_consistent() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
-    let search_h = server.search_handler();
-    let r = search_h.handle(Parameters(search_args("", None, Some(5))));
-    let result = r.await;
     assert!(result.is_ok());
     let response = result.unwrap();
     assert!(response.is_error.unwrap_or(false));
@@ -423,17 +399,6 @@ async fn test_golden_search_ranking_is_correct() {
         )))
         .await;
     assert!(r.is_ok(), "search must succeed");
-}
-
-#[tokio::test]
-async fn test_golden_search_handles_empty_query() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
-    let search_h = server.search_handler();
-    let r = search_h.handle(Parameters(search_args("   ", None, Some(5))));
-    let result = r.await;
-    assert!(result.is_ok());
-    let response = result.unwrap();
-    assert!(response.is_error.unwrap_or(false));
 }
 
 #[tokio::test]

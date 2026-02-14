@@ -8,6 +8,7 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use tracing::{error, warn};
 
@@ -32,7 +33,8 @@ pub enum RuleEngineType {
 }
 
 /// Concrete violation structure for rule engines
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Display)]
+#[display("[{id}] {message}")]
 pub struct RuleViolation {
     /// Unique identifier for the violation
     pub id: String,
@@ -75,12 +77,6 @@ impl Violation for RuleViolation {
 
     fn message(&self) -> String {
         self.message.clone()
-    }
-}
-
-impl std::fmt::Display for RuleViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}] {}", self.id, self.message)
     }
 }
 

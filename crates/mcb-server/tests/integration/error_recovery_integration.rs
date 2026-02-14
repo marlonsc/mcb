@@ -20,6 +20,7 @@ use mcb_domain::registry::vector_store::*;
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
+use rstest::rstest;
 
 fn unique_test_config() -> AppConfig {
     let mut config = AppConfig::default();
@@ -38,93 +39,43 @@ fn unique_test_config() -> AppConfig {
 // Provider Resolution Error Handling
 // ============================================================================
 
+#[rstest]
+#[case("embedding")]
+#[case("vector_store")]
+#[case("cache")]
+#[case("language")]
 #[test]
-fn test_unknown_embedding_provider_error_message() {
-    let config = EmbeddingProviderConfig::new("nonexistent_xyz_provider");
-    let result = resolve_embedding_provider(&config);
-
-    assert!(result.is_err(), "Should fail for unknown provider");
-
-    // Use match to avoid unwrap_err requiring Debug on Ok type
-    match result {
-        Err(err) => {
-            let err_text = err.to_string();
-            assert!(
-                err_text.contains("Unknown")
-                    || err_text.contains("not found")
-                    || err_text.contains("nonexistent"),
-                "Error should mention the issue. Got: {}",
-                err
-            );
+fn test_unknown_provider_error_message(#[case] provider_kind: &str) {
+    let result_text = match provider_kind {
+        "embedding" => {
+            resolve_embedding_provider(&EmbeddingProviderConfig::new("nonexistent_xyz_provider"))
+                .err()
+                .map(|e| e.to_string())
         }
-        Ok(_) => panic!("Expected error for unknown provider"),
-    }
-}
-
-#[test]
-fn test_unknown_vector_store_provider_error_message() {
-    let config = VectorStoreProviderConfig::new("nonexistent_xyz_store");
-    let result = resolve_vector_store_provider(&config);
-
-    assert!(result.is_err(), "Should fail for unknown provider");
-
-    match result {
-        Err(err) => {
-            let err_text = err.to_string();
-            assert!(
-                err_text.contains("Unknown")
-                    || err_text.contains("not found")
-                    || err_text.contains("nonexistent"),
-                "Error should mention the issue. Got: {}",
-                err
-            );
+        "vector_store" => {
+            resolve_vector_store_provider(&VectorStoreProviderConfig::new("nonexistent_xyz_store"))
+                .err()
+                .map(|e| e.to_string())
         }
-        Ok(_) => panic!("Expected error for unknown provider"),
-    }
-}
-
-#[test]
-fn test_unknown_cache_provider_error_message() {
-    let config = CacheProviderConfig::new("nonexistent_xyz_cache");
-    let result = resolve_cache_provider(&config);
-
-    assert!(result.is_err(), "Should fail for unknown provider");
-
-    match result {
-        Err(err) => {
-            let err_text = err.to_string();
-            assert!(
-                err_text.contains("Unknown")
-                    || err_text.contains("not found")
-                    || err_text.contains("nonexistent"),
-                "Error should mention the issue. Got: {}",
-                err
-            );
+        "cache" => resolve_cache_provider(&CacheProviderConfig::new("nonexistent_xyz_cache"))
+            .err()
+            .map(|e| e.to_string()),
+        "language" => {
+            resolve_language_provider(&LanguageProviderConfig::new("nonexistent_xyz_lang"))
+                .err()
+                .map(|e| e.to_string())
         }
-        Ok(_) => panic!("Expected error for unknown provider"),
-    }
-}
+        _ => None,
+    };
 
-#[test]
-fn test_unknown_language_provider_error_message() {
-    let config = LanguageProviderConfig::new("nonexistent_xyz_lang");
-    let result = resolve_language_provider(&config);
-
-    assert!(result.is_err(), "Should fail for unknown provider");
-
-    match result {
-        Err(err) => {
-            let err_text = err.to_string();
-            assert!(
-                err_text.contains("Unknown")
-                    || err_text.contains("not found")
-                    || err_text.contains("nonexistent"),
-                "Error should mention the issue. Got: {}",
-                err
-            );
-        }
-        Ok(_) => panic!("Expected error for unknown provider"),
-    }
+    let err_text = result_text.expect("Should fail for unknown provider");
+    assert!(
+        err_text.contains("Unknown")
+            || err_text.contains("not found")
+            || err_text.contains("nonexistent"),
+        "Error should mention the issue. Got: {}",
+        err_text
+    );
 }
 
 // ============================================================================
