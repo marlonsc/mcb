@@ -14,7 +14,6 @@ fn project_ddl() -> Vec<String> {
 #[rstest]
 #[case("memory")]
 #[case("project")]
-#[test]
 fn sqlite_ddl_generators_produce_statements(#[case] schema_kind: &str) {
     let ddl: Vec<String> = if schema_kind == "memory" {
         let generator = SqliteMemoryDdlGenerator;

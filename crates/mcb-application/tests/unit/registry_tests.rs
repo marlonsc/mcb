@@ -380,8 +380,7 @@ mod integration_tests {
     #[case("vector_store")]
     #[case("cache")]
     #[case("language")]
-    #[test]
-    fn test_all_registries_have_providers(#[case] registry: &str) {
+    fn all_registries_have_providers(#[case] registry: &str) {
         let count = match registry {
             "embedding" => list_embedding_providers().len(),
             "vector_store" => list_vector_store_providers().len(),

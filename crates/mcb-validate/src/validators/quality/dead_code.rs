@@ -56,22 +56,16 @@ fn find_dead_code_item(
 ) -> Option<String> {
     let end = std::cmp::min(start_idx + 5, lines.len());
     for line in lines.iter().take(end).skip(start_idx) {
-        if let Some(captures) = struct_pattern.captures(line) {
-            if let Some(name) = captures.get(1) {
-                return Some(format!("struct {}", name.as_str()));
-            }
+        if let Some(name) = struct_pattern.captures(line).and_then(|c| c.get(1)) {
+            return Some(format!("struct {}", name.as_str()));
         }
 
-        if let Some(captures) = fn_pattern.captures(line) {
-            if let Some(name) = captures.get(1) {
-                return Some(format!("fn {}", name.as_str()));
-            }
+        if let Some(name) = fn_pattern.captures(line).and_then(|c| c.get(1)) {
+            return Some(format!("fn {}", name.as_str()));
         }
 
-        if let Some(captures) = field_pattern.captures(line) {
-            if let Some(name) = captures.get(1) {
-                return Some(format!("field {}", name.as_str()));
-            }
+        if let Some(name) = field_pattern.captures(line).and_then(|c| c.get(1)) {
+            return Some(format!("field {}", name.as_str()));
         }
     }
 

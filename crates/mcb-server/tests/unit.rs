@@ -30,6 +30,9 @@ mod highlight_service_tests;
 #[path = "unit/mcp_protocol_tests.rs"]
 mod mcp_protocol_tests;
 
+#[path = "unit/mcp_contract_tests.rs"]
+mod mcp_contract_tests;
+
 #[path = "unit/fixtures_smoke.rs"]
 mod fixtures_smoke;
 

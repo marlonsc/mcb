@@ -45,7 +45,6 @@ fn create_test_search_result(file_path: &str, start_line: u32, score: f64) -> Se
 #[case("fn hello_world() { println!(\"Hello, World!\"); }", "world", true)]
 #[case("fn hello_world() { println!(\"Hello, World!\"); }", "println", true)]
 #[case("fn hello_world() { println!(\"Hello, World!\"); }", "fn", false)]
-#[test]
 fn tokenize(#[case] input: &str, #[case] token: &str, #[case] should_contain: bool) {
     let tokens = BM25Scorer::tokenize(input);
     assert_eq!(tokens.contains(&token.to_string()), should_contain);
@@ -66,46 +65,42 @@ fn test_bm25_scorer_creation() {
     assert!(scorer.avg_doc_len() > 0.0);
 }
 
-#[test]
-fn test_bm25_scoring() {
-    // Use content with clearly distinct keywords that match as separate tokens
-    let chunks = vec![
-        create_test_chunk(
-            "authenticate the user and validate their credentials with proper authentication",
-            "auth.rs",
-            1,
-        ),
-        create_test_chunk(
-            "validate the password using hash function for security",
-            "auth.rs",
-            10,
-        ),
-        create_test_chunk(
-            "process the data and compress it for storage optimization",
-            "data.rs",
-            1,
-        ),
-    ];
+#[rstest]
+#[case("single")]
+#[case("batch")]
+fn bm25_relevant_chunk_ranks_higher(#[case] mode: &str) {
+    if mode == "single" {
+        let chunks = vec![
+            create_test_chunk(
+                "authenticate the user and validate their credentials with proper authentication",
+                "auth.rs",
+                1,
+            ),
+            create_test_chunk(
+                "validate the password using hash function for security",
+                "auth.rs",
+                10,
+            ),
+            create_test_chunk(
+                "process the data and compress it for storage optimization",
+                "data.rs",
+                1,
+            ),
+        ];
 
-    let scorer = BM25Scorer::new(&chunks, BM25Params::default());
+        let scorer = BM25Scorer::new(&chunks, BM25Params::default());
+        let score_auth = scorer.score(&chunks[0], "authenticate user validate");
+        let score_data = scorer.score(&chunks[2], "authenticate user validate");
 
-    // Query with terms that appear in first chunk
-    let score_auth = scorer.score(&chunks[0], "authenticate user validate");
-    let score_data = scorer.score(&chunks[2], "authenticate user validate");
+        assert!(
+            score_auth > score_data,
+            "Auth chunk should score higher than data chunk (auth={}, data={})",
+            score_auth,
+            score_data
+        );
+        return;
+    }
 
-    // Auth chunk should score highest (contains "authenticate", "user", "validate")
-    // Data chunk has none of these terms
-    assert!(
-        score_auth > score_data,
-        "Auth chunk should score higher than data chunk (auth={}, data={})",
-        score_auth,
-        score_data
-    );
-}
-
-#[test]
-fn test_bm25_batch_scoring() {
-    // Use content with clearly distinct keywords
     let chunks = vec![
         create_test_chunk(
             "search through the codebase and find matching patterns",
@@ -121,12 +116,9 @@ fn test_bm25_batch_scoring() {
 
     let scorer = BM25Scorer::new(&chunks, BM25Params::default());
     let chunk_refs: Vec<&CodeChunk> = chunks.iter().collect();
-
-    // Query for "search codebase" - first chunk has these terms
     let scores = scorer.score_batch(&chunk_refs, "search codebase");
 
     assert_eq!(scores.len(), 2);
-    // First chunk contains "search" and "codebase", second has neither
     assert!(
         scores[0] > scores[1],
         "First chunk should score higher (search={}, index={})",

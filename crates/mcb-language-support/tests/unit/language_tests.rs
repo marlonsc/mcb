@@ -45,13 +45,12 @@ fn language_id_extensions() {
 #[case("c++", Some(LanguageId::Cpp))]
 #[case("c", Some(LanguageId::Cpp))]
 #[case("unknown", None)]
-#[test]
-fn test_language_id_from_name(#[case] input: &str, #[case] expected: Option<LanguageId>) {
+fn language_id_from_name(#[case] input: &str, #[case] expected: Option<LanguageId>) {
     assert_eq!(LanguageId::from_name(input), expected);
 }
 
 #[test]
-fn test_language_id_rca_conversion() {
+fn language_id_rca_conversion() {
     assert_eq!(LanguageId::Rust.to_rca_lang(), LANG::Rust);
     assert_eq!(LanguageId::JavaScript.to_rca_lang(), LANG::Mozjs);
 
@@ -66,7 +65,7 @@ fn test_language_id_rca_conversion() {
 }
 
 #[test]
-fn test_language_registry_by_extension() {
+fn language_registry_by_extension() {
     let registry = LanguageRegistry::new();
 
     assert_eq!(registry.by_extension("rs"), Some(LanguageId::Rust));
@@ -76,7 +75,7 @@ fn test_language_registry_by_extension() {
 }
 
 #[test]
-fn test_language_registry_info() {
+fn language_registry_info() {
     let registry = LanguageRegistry::new();
 
     let rust_info = registry
@@ -94,7 +93,7 @@ fn test_language_registry_info() {
 }
 
 #[test]
-fn test_language_registry_all_extensions() {
+fn language_registry_all_extensions() {
     let registry = LanguageRegistry::new();
     let extensions = registry.all_extensions();
 

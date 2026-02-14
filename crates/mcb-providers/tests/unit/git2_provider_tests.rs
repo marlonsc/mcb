@@ -45,7 +45,6 @@ async fn create_test_repo() -> TestResult<TempDir> {
 #[rstest]
 #[case(false)]
 #[case(true)]
-#[test]
 fn git2_provider_basics(#[case] check_object_safety: bool) {
     let provider = Git2Provider::new();
     assert!(

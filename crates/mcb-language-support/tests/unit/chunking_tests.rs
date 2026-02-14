@@ -8,9 +8,10 @@ use mcb_language_support::chunking::{
     ChunkType, ChunkingConfig, ChunkingStrategy, LineBasedChunking, SemanticChunking,
 };
 use mcb_language_support::language::LanguageId;
+use rstest::*;
 
 #[tokio::test]
-async fn test_semantic_chunking_rust() {
+async fn semantic_chunking_rust() {
     let chunker = SemanticChunking::default();
     let code = r#"fn foo() {
     println!("foo");
@@ -41,7 +42,7 @@ fn bar(x: i32) -> i32 {
 }
 
 #[tokio::test]
-async fn test_semantic_chunking_small_file() {
+async fn semantic_chunking_small_file() {
     let chunker = SemanticChunking::default();
     let code = "x = 1\ny = 2\n";
 
@@ -56,7 +57,7 @@ async fn test_semantic_chunking_small_file() {
 }
 
 #[tokio::test]
-async fn test_line_based_chunking() {
+async fn line_based_chunking() {
     let config = ChunkingConfig {
         target_lines: 3,
         ..Default::default()
@@ -79,7 +80,7 @@ async fn test_line_based_chunking() {
 }
 
 #[tokio::test]
-async fn test_empty_content() {
+async fn empty_content() {
     let chunker = SemanticChunking::default();
     let chunks = chunker
         .chunk("", LanguageId::Rust, Path::new("empty.rs"))
@@ -89,10 +90,11 @@ async fn test_empty_content() {
     assert!(chunks.is_empty());
 }
 
-#[test]
-fn test_chunk_type_display() {
-    assert_eq!(ChunkType::Function.to_string(), "function");
-    assert_eq!(ChunkType::Class.to_string(), "class");
-    assert_eq!(ChunkType::Module.to_string(), "module");
-    assert_eq!(ChunkType::Block.to_string(), "block");
+#[rstest]
+#[case(ChunkType::Function, "function")]
+#[case(ChunkType::Class, "class")]
+#[case(ChunkType::Module, "module")]
+#[case(ChunkType::Block, "block")]
+fn chunk_type_display(#[case] chunk_type: ChunkType, #[case] expected: &str) {
+    assert_eq!(chunk_type.to_string(), expected);
 }
