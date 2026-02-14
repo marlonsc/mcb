@@ -5,58 +5,64 @@
 use std::path::PathBuf;
 
 use regex::Regex;
-use serde::Serialize;
 
 use crate::config::PortAdapterRulesConfig;
 use crate::scan::for_each_rs_under_root;
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::violation_trait::ViolationCategory;
 use crate::{Result, ValidationConfig};
 
-/// Port/Adapter Violations
-#[derive(Debug, Clone, Serialize)]
-pub enum PortAdapterViolation {
-    /// Adapter lacks a corresponding port implementation
-    AdapterMissingPortImpl {
-        /// Name of the adapter that is missing an implementation of its corresponding port.
-        adapter_name: String,
-        /// File where the adapter is defined.
-        file: PathBuf,
-        /// Line number where the adapter definition begins.
-        line: usize,
-    },
-    /// Adapter depends on another concrete adapter instead of a port
-    AdapterUsesAdapter {
-        /// Name of the adapter that contains the violation.
-        adapter_name: String,
-        /// Name of the concrete adapter being incorrectly referenced.
-        other_adapter: String,
-        /// File where the incorrect usage occurred.
-        file: PathBuf,
-        /// Line number where the incorrect usage occurred.
-        line: usize,
-    },
-    /// Port has too many methods (violates ISP)
-    PortTooLarge {
-        /// Name of the port (trait) that has too many methods.
-        trait_name: String,
-        /// The total number of methods found in the port.
-        method_count: usize,
-        /// File where the port is defined.
-        file: PathBuf,
-        /// Line number where the port definition begins.
-        line: usize,
-    },
-    /// Port has too few methods (may indicate over-fragmentation)
-    PortTooSmall {
-        /// Name of the port (trait) that has too few methods.
-        trait_name: String,
-        /// The total number of methods found in the port.
-        method_count: usize,
-        /// File where the port is defined.
-        file: PathBuf,
-        /// Line number where the port definition begins.
-        line: usize,
-    },
+define_violations! {
+    no_display,
+    ViolationCategory::Architecture,
+    pub enum PortAdapterViolation {
+        /// Adapter lacks a corresponding port implementation
+        #[violation(
+            id = "PORT001",
+            severity = Warning,
+            suggestion = "Implement a port trait from mcb-application/ports/"
+        )]
+        AdapterMissingPortImpl {
+            adapter_name: String,
+            file: PathBuf,
+            line: usize,
+        },
+        /// Adapter depends on another concrete adapter instead of a port
+        #[violation(
+            id = "PORT002",
+            severity = Warning,
+            suggestion = "Depend on port traits, not concrete adapters"
+        )]
+        AdapterUsesAdapter {
+            adapter_name: String,
+            other_adapter: String,
+            file: PathBuf,
+            line: usize,
+        },
+        /// Port has too many methods (violates ISP)
+        #[violation(
+            id = "PORT003",
+            severity = Info,
+            suggestion = "Consider splitting into smaller interfaces (ISP)"
+        )]
+        PortTooLarge {
+            trait_name: String,
+            method_count: usize,
+            file: PathBuf,
+            line: usize,
+        },
+        /// Port has too few methods (may indicate over-fragmentation)
+        #[violation(
+            id = "PORT004",
+            severity = Info,
+            suggestion = "May indicate over-fragmentation"
+        )]
+        PortTooSmall {
+            trait_name: String,
+            method_count: usize,
+            file: PathBuf,
+            line: usize,
+        },
+    }
 }
 
 impl std::fmt::Display for PortAdapterViolation {
@@ -112,63 +118,6 @@ impl std::fmt::Display for PortAdapterViolation {
                 file.display(),
                 line
             ),
-        }
-    }
-}
-
-impl Violation for PortAdapterViolation {
-    fn id(&self) -> &str {
-        match self {
-            Self::AdapterMissingPortImpl { .. } => "PORT001",
-            Self::AdapterUsesAdapter { .. } => "PORT002",
-            Self::PortTooLarge { .. } => "PORT003",
-            Self::PortTooSmall { .. } => "PORT004",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Architecture
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::AdapterMissingPortImpl { .. } | Self::AdapterUsesAdapter { .. } => {
-                Severity::Warning
-            }
-            Self::PortTooLarge { .. } | Self::PortTooSmall { .. } => Severity::Info,
-        }
-    }
-
-    fn file(&self) -> Option<&PathBuf> {
-        match self {
-            Self::AdapterMissingPortImpl { file, .. }
-            | Self::AdapterUsesAdapter { file, .. }
-            | Self::PortTooLarge { file, .. }
-            | Self::PortTooSmall { file, .. } => Some(file),
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::AdapterMissingPortImpl { line, .. }
-            | Self::AdapterUsesAdapter { line, .. }
-            | Self::PortTooLarge { line, .. }
-            | Self::PortTooSmall { line, .. } => Some(*line),
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::AdapterMissingPortImpl { .. } => {
-                Some("Implement a port trait from mcb-application/ports/".to_string())
-            }
-            Self::AdapterUsesAdapter { .. } => {
-                Some("Depend on port traits, not concrete adapters".to_string())
-            }
-            Self::PortTooLarge { .. } => {
-                Some("Consider splitting into smaller interfaces (ISP)".to_string())
-            }
-            Self::PortTooSmall { .. } => Some("May indicate over-fragmentation".to_string()),
         }
     }
 }

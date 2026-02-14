@@ -1,7 +1,18 @@
 use serde::{Deserialize, Serialize};
 
 /// Type of execution or command that was run.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum ExecutionType {
     /// Test execution.
     Test,
@@ -16,27 +27,8 @@ pub enum ExecutionType {
 impl ExecutionType {
     /// Returns the string representation of the execution type.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Test => "test",
-            Self::Lint => "lint",
-            Self::Build => "build",
-            Self::CI => "ci",
-        }
-    }
-}
-
-impl std::str::FromStr for ExecutionType {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "test" => Ok(Self::Test),
-            "lint" => Ok(Self::Lint),
-            "build" => Ok(Self::Build),
-            "ci" => Ok(Self::CI),
-            _ => Err(format!("Unknown execution type: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }
 

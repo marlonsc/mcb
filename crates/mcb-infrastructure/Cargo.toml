@@ -112,6 +112,7 @@ health = { workspace = true }
 async-trait = { workspace = true }
 downcast-rs = { workspace = true }
 futures-util = { workspace = true }
+delegate = { workspace = true }
 
 # Dependency Injection (IoC Container)
 dill = { workspace = true }

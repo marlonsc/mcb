@@ -7,6 +7,16 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
+macro_rules! tool_schema {
+    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($fields:tt)* }) => {
+        $(#[$meta])*
+        #[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+        $vis struct $name {
+            $($fields)*
+        }
+    };
+}
+
 // =============================================================================
 // Index Tool - Consolidates: index_codebase, get_indexing_status, clear_index
 // =============================================================================
@@ -25,8 +35,8 @@ pub enum IndexAction {
     Clear,
 }
 
+tool_schema! {
 /// Arguments for the index tool.
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct IndexArgs {
     /// Action to perform: start, git_index, status, clear.
     #[schemars(description = "Action to perform: start, git_index, status, clear")]
@@ -81,6 +91,7 @@ pub struct IndexArgs {
     #[schemars(description = "JWT token for authenticated requests", with = "String")]
     pub token: Option<String>,
 }
+}
 
 // =============================================================================
 // Search Tool - Consolidates: search_code, search_memories, memory_search
@@ -98,8 +109,8 @@ pub enum SearchResource {
     Context,
 }
 
+tool_schema! {
 /// Arguments for the search tool.
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct SearchArgs {
     /// Natural language search query.
     #[schemars(description = "Natural language search query")]
@@ -156,6 +167,7 @@ pub struct SearchArgs {
     #[schemars(description = "JWT token for authenticated requests", with = "String")]
     pub token: Option<String>,
 }
+}
 
 // =============================================================================
 // Validate Tool - Consolidates: validate_*, list_validators, analyze_complexity
@@ -183,10 +195,10 @@ pub enum ValidateScope {
     Project,
 }
 
-/// Arguments for the validate tool.
 // TODO(REF002): Duplicate definition 'ValidateArgs' also found in 'crates/mcb/src/cli/validate.rs'.
 // Consider consolidating to a common crate or shared module.
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+tool_schema! {
+/// Arguments for the validate tool.
 pub struct ValidateArgs {
     /// Action: run (validate), list_rules, analyze (complexity).
     #[schemars(description = "Action: run (validate), list_rules, analyze (complexity)")]
@@ -210,6 +222,7 @@ pub struct ValidateArgs {
     /// Rule category filter.
     #[schemars(description = "Rule category filter", with = "String")]
     pub category: Option<String>,
+}
 }
 
 // =============================================================================
@@ -248,10 +261,10 @@ pub enum MemoryResource {
     Session,
 }
 
-/// Arguments for the memory tool.
 // TODO(KISS001): Struct MemoryArgs has too many fields (18 fields, max: 16).
 // Split into smaller structs or use composition.
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
+tool_schema! {
+/// Arguments for the memory tool.
 pub struct MemoryArgs {
     /// Action: store, get, list, timeline, inject.
     #[schemars(description = "Action: store, get, list, timeline, inject")]
@@ -348,6 +361,7 @@ pub struct MemoryArgs {
     #[schemars(description = "Maximum results", with = "u32")]
     pub limit: Option<u32>,
 }
+}
 
 // =============================================================================
 // Session Tool - Consolidates session_summary and agent_session tools (6 → 1)
@@ -369,8 +383,8 @@ pub enum SessionAction {
     Summarize,
 }
 
+tool_schema! {
 /// Arguments for session management tool operations
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct SessionArgs {
     /// Action: create, get, update, list, summarize.
     #[schemars(description = "Action: create, get, update, list, summarize")]
@@ -418,6 +432,7 @@ pub struct SessionArgs {
     #[schemars(description = "Maximum results for list", with = "u32")]
     pub limit: Option<u32>,
 }
+}
 
 // =============================================================================
 // Agent Tool - Consolidates store_tool_call, store_delegation (2 → 1)
@@ -433,8 +448,8 @@ pub enum AgentAction {
     LogDelegation,
 }
 
+tool_schema! {
 /// Arguments for agent activity logging operations
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct AgentArgs {
     /// Action: log_tool, log_delegation.
     #[schemars(description = "Action: log_tool, log_delegation")]
@@ -453,6 +468,7 @@ pub struct AgentArgs {
         description = "Activity data payload. log_tool: {tool_name, params_summary?, success, error_message?, duration_ms?}; log_delegation: {child_session_id, prompt, prompt_embedding_id?, result?, success, duration_ms?}"
     )]
     pub data: serde_json::Value,
+}
 }
 
 // =============================================================================
@@ -476,8 +492,8 @@ pub enum VcsAction {
     AnalyzeImpact,
 }
 
+tool_schema! {
 /// Arguments for version control system operations
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct VcsArgs {
     /// Action: list_repositories, index_repository, compare_branches, search_branch, analyze_impact.
     #[schemars(
@@ -534,6 +550,7 @@ pub struct VcsArgs {
     /// Limit for search or list actions.
     #[schemars(description = "Limit for search or list actions", with = "u32")]
     pub limit: Option<u32>,
+}
 }
 
 // =============================================================================
@@ -596,8 +613,8 @@ pub enum EntityResource {
     ApiKey,
 }
 
+tool_schema! {
 /// Arguments for the consolidated `entity` MCP tool.
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct EntityArgs {
     /// CRUD action to perform.
     pub action: EntityAction,
@@ -630,6 +647,7 @@ pub struct EntityArgs {
     pub user_id: Option<String>,
     /// User email (lookup operations).
     pub email: Option<String>,
+}
 }
 
 // =============================================================================
@@ -668,8 +686,8 @@ pub enum VcsEntityResource {
     Assignment,
 }
 
+tool_schema! {
 /// Arguments for the consolidated `vcs_entity` MCP tool.
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct VcsEntityArgs {
     /// CRUD action to perform.
     #[schemars(description = "Action: create, get, update, list, delete, release")]
@@ -706,6 +724,7 @@ pub struct VcsEntityArgs {
     )]
     pub data: Option<serde_json::Value>,
 }
+}
 
 /// CRUD actions for plan entity resources.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -735,8 +754,8 @@ pub enum PlanEntityResource {
     Review,
 }
 
+tool_schema! {
 /// Arguments for the consolidated `plan_entity` MCP tool.
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct PlanEntityArgs {
     /// CRUD action to perform.
     #[schemars(description = "Action: create, get, update, list, delete")]
@@ -773,6 +792,7 @@ pub struct PlanEntityArgs {
     )]
     pub data: Option<serde_json::Value>,
 }
+}
 
 /// Actions for org entity resource management
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -806,8 +826,8 @@ pub enum OrgEntityResource {
     ApiKey,
 }
 
+tool_schema! {
 /// Arguments for the consolidated `org_entity` MCP tool
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct OrgEntityArgs {
     /// Action to perform.
     #[schemars(description = "Action: create, get, update, list, delete")]
@@ -834,6 +854,7 @@ pub struct OrgEntityArgs {
     #[schemars(description = "Data payload for create/update (JSON object)")]
     #[schemars(with = "serde_json::Value")]
     pub data: Option<serde_json::Value>,
+}
 }
 
 /// CRUD actions for issue entity resources.
@@ -866,8 +887,8 @@ pub enum IssueEntityResource {
     LabelAssignment,
 }
 
+tool_schema! {
 /// Arguments for the consolidated `issue_entity` MCP tool.
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct IssueEntityArgs {
     /// CRUD action to perform.
     #[schemars(description = "Action: create, get, update, list, delete")]
@@ -903,6 +924,7 @@ pub struct IssueEntityArgs {
         with = "serde_json::Value"
     )]
     pub data: Option<serde_json::Value>,
+}
 }
 
 // =============================================================================
@@ -941,8 +963,8 @@ pub enum ProjectResource {
     Decision,
 }
 
+tool_schema! {
 /// Arguments for project resource management operations
-#[derive(Debug, Clone, Deserialize, JsonSchema, Validate)]
 pub struct ProjectArgs {
     /// Action: create, update, list, delete.
     #[schemars(description = "Action: create, update, list, delete")]
@@ -969,4 +991,5 @@ pub struct ProjectArgs {
         with = "serde_json::Value"
     )]
     pub filters: Option<serde_json::Value>,
+}
 }

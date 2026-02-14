@@ -36,7 +36,19 @@ pub struct TeamMember {
 }
 
 /// Role a user holds within a specific team.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum TeamMemberRole {
     /// Team lead with management capabilities.
     Lead,
@@ -47,22 +59,7 @@ pub enum TeamMemberRole {
 impl TeamMemberRole {
     /// Returns the string representation of the team member role.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Lead => "lead",
-            Self::Member => "member",
-        }
-    }
-}
-
-impl std::str::FromStr for TeamMemberRole {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "lead" => Ok(Self::Lead),
-            "member" => Ok(Self::Member),
-            _ => Err(format!("Unknown team member role: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }

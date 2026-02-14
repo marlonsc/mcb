@@ -1,15 +1,13 @@
-use std::sync::Arc;
-
 use mcb_server::args::{IndexAction, IndexArgs};
 use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-use crate::test_utils::mock_services::TestIndexingService;
+use crate::handlers::test_helpers::create_real_domain_services;
 
 #[tokio::test]
 async fn test_get_indexing_status_success() {
-    let mock_service = TestIndexingService::new();
-    let handler = IndexHandler::new(Arc::new(mock_service));
+    let (services, _services_temp_dir) = create_real_domain_services().await;
+    let handler = IndexHandler::new(services.indexing_service);
 
     let args = IndexArgs {
         action: IndexAction::Status,

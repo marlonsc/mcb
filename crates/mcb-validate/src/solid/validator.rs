@@ -50,6 +50,9 @@ impl SolidValidator {
     }
 
     /// Run all SOLID validations
+    ///
+    /// # Errors
+    /// Returns an error if file traversal or pattern compilation fails.
     pub fn validate_all(&self) -> Result<Vec<SolidViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_srp()?);
@@ -81,11 +84,12 @@ impl SolidValidator {
     }
 
     /// Helper: Scan declaration blocks and count methods
+    /// Helper: Scan declaration blocks and count methods
     fn scan_decl_blocks<F>(
         &self,
         decl_pattern: &Regex,
         member_fn_pattern: &Regex,
-        count_fn: fn(&Self, &[&str], usize, &Regex) -> usize,
+        count_fn: fn(&[&str], usize, &Regex) -> usize,
         max_allowed: usize,
         make_violation: F,
     ) -> Result<Vec<SolidViolation>>
@@ -98,7 +102,7 @@ impl SolidValidator {
             for (line_num, line) in lines.iter().enumerate() {
                 if let Some(cap) = decl_pattern.captures(line) {
                     let name = cap.get(1).map_or("", |m| m.as_str());
-                    let method_count = count_fn(self, &lines, line_num, member_fn_pattern);
+                    let method_count = count_fn(&lines, line_num, member_fn_pattern);
 
                     if method_count > max_allowed {
                         violations.push(make_violation(
@@ -118,6 +122,9 @@ impl SolidValidator {
     }
 
     /// SRP: Check for structs/impls that are too large
+    ///
+    /// # Errors
+    /// Returns an error if patterns fail to compile or file reading fails.
     pub fn validate_srp(&self) -> Result<Vec<SolidViolation>> {
         let mut violations = Vec::new();
         let impl_pattern = required_pattern("SOLID002.impl_decl")?;
@@ -134,7 +141,7 @@ impl SolidValidator {
 
                 if let Some(cap) = impl_pattern.captures(line) {
                     let name = cap.get(1).or(cap.get(2)).map_or("", |m| m.as_str());
-                    let block_lines = self.count_block_lines(&lines, line_num);
+                    let block_lines = Self::count_block_lines(&lines, line_num);
 
                     if block_lines > self.max_struct_lines {
                         violations.push(SolidViolation::TooManyResponsibilities {
@@ -156,7 +163,7 @@ impl SolidValidator {
                 let struct_names: Vec<String> =
                     structs_in_file.iter().map(|(n, _)| n.clone()).collect();
 
-                if !self.structs_seem_related(&struct_names) {
+                if !Self::structs_seem_related(&struct_names) {
                     violations.push(SolidViolation::MultipleUnrelatedStructs {
                         file: path.clone(),
                         struct_names,
@@ -172,6 +179,9 @@ impl SolidValidator {
     }
 
     /// OCP: Check for excessive match statements
+    ///
+    /// # Errors
+    /// Returns an error if pattern compilation fails.
     pub fn validate_ocp(&self) -> Result<Vec<SolidViolation>> {
         let mut violations = Vec::new();
         let match_pattern = required_pattern("SOLID003.match_keyword")?;
@@ -179,7 +189,7 @@ impl SolidValidator {
         self.for_each_rust_file(|path, lines| {
             for (line_num, line) in lines.iter().enumerate() {
                 if match_pattern.is_match(line) {
-                    let arm_count = self.count_match_arms(&lines, line_num)?;
+                    let arm_count = Self::count_match_arms(&lines, line_num)?;
 
                     if arm_count > self.max_match_arms {
                         violations.push(SolidViolation::ExcessiveMatchArms {
@@ -202,6 +212,9 @@ impl SolidValidator {
     }
 
     /// ISP: Check for traits with too many methods
+    ///
+    /// # Errors
+    /// Returns an error if pattern compilation fails.
     pub fn validate_isp(&self) -> Result<Vec<SolidViolation>> {
         let trait_pattern = required_pattern("SOLID001.trait_decl")?;
         let fn_pattern = required_pattern("SOLID001.fn_decl")?;
@@ -224,6 +237,9 @@ impl SolidValidator {
     }
 
     /// LSP: Check for partial trait implementations (panic!/todo! in trait methods).
+    ///
+    /// # Errors
+    /// Returns an error if pattern compilation fails.
     pub fn validate_lsp(&self) -> Result<Vec<SolidViolation>> {
         let mut violations = Vec::new();
         let impl_for_pattern = required_pattern("SOLID002.impl_for_decl")?;
@@ -271,6 +287,9 @@ impl SolidValidator {
     }
 
     /// SRP: Check for impl blocks with too many methods
+    ///
+    /// # Errors
+    /// Returns an error if pattern compilation fails.
     pub fn validate_impl_method_count(&self) -> Result<Vec<SolidViolation>> {
         let impl_pattern = required_pattern("SOLID003.impl_only_decl")?;
         let fn_pattern = required_pattern("SOLID002.fn_decl")?;
@@ -295,6 +314,9 @@ impl SolidValidator {
     }
 
     /// OCP: Check for string-based type dispatch
+    ///
+    /// # Errors
+    /// Returns an error if pattern compilation fails.
     pub fn validate_string_dispatch(&self) -> Result<Vec<SolidViolation>> {
         let mut violations = Vec::new();
         let string_match_pattern = required_pattern("SOLID003.string_match")?;
@@ -306,7 +328,7 @@ impl SolidValidator {
 
                 if string_match_pattern.is_match(line) {
                     let string_arm_count =
-                        self.count_string_match_arms(&lines, line_num, string_arm_pattern);
+                        Self::count_string_match_arms(&lines, line_num, string_arm_pattern);
 
                     if string_arm_count >= 3 {
                         violations.push(SolidViolation::StringBasedDispatch {
@@ -328,7 +350,7 @@ impl SolidValidator {
     }
 
     /// Generic helper: iterate over lines within a brace-delimited block
-    fn within_block<F>(&self, lines: &[&str], start_line: usize, mut visitor: F)
+    fn within_block<F>(lines: &[&str], start_line: usize, mut visitor: F)
     where
         F: FnMut(&str, usize) -> bool,
     {
@@ -355,9 +377,9 @@ impl SolidValidator {
     }
 
     /// Count methods in an impl block
-    fn count_impl_methods(&self, lines: &[&str], start_line: usize, fn_pattern: &Regex) -> usize {
+    fn count_impl_methods(lines: &[&str], start_line: usize, fn_pattern: &Regex) -> usize {
         let mut count = 0;
-        self.within_block(lines, start_line, |line, _| {
+        Self::within_block(lines, start_line, |line, _| {
             if fn_pattern.is_match(line) {
                 count += 1;
             }
@@ -368,13 +390,12 @@ impl SolidValidator {
 
     /// Count string match arms
     fn count_string_match_arms(
-        &self,
         lines: &[&str],
         start_line: usize,
         string_arm_pattern: &Regex,
     ) -> usize {
         let mut count = 0;
-        self.within_block(lines, start_line, |line, _| {
+        Self::within_block(lines, start_line, |line, _| {
             if string_arm_pattern.is_match(line) {
                 count += 1;
             }
@@ -384,9 +405,9 @@ impl SolidValidator {
     }
 
     /// Count lines in a code block (impl, struct, etc.)
-    fn count_block_lines(&self, lines: &[&str], start_line: usize) -> usize {
+    fn count_block_lines(lines: &[&str], start_line: usize) -> usize {
         let mut count = 0;
-        self.within_block(lines, start_line, |_, _| {
+        Self::within_block(lines, start_line, |_, _| {
             count += 1;
             true
         });
@@ -394,13 +415,13 @@ impl SolidValidator {
     }
 
     /// Count match arms in a match statement
-    fn count_match_arms(&self, lines: &[&str], start_line: usize) -> Result<usize> {
+    fn count_match_arms(lines: &[&str], start_line: usize) -> Result<usize> {
         let arrow_pattern = required_pattern("SOLID003.match_arrow")?;
 
         let mut count = 0;
         let mut brace_depth = 0;
 
-        self.within_block(lines, start_line, |line, _| {
+        Self::within_block(lines, start_line, |line, _| {
             brace_depth += line.chars().filter(|c| *c == '{').count();
             brace_depth -= line.chars().filter(|c| *c == '}').count();
 
@@ -413,9 +434,9 @@ impl SolidValidator {
     }
 
     /// Count methods in a trait definition
-    fn count_trait_methods(&self, lines: &[&str], start_line: usize, fn_pattern: &Regex) -> usize {
+    fn count_trait_methods(lines: &[&str], start_line: usize, fn_pattern: &Regex) -> usize {
         let mut count = 0;
-        self.within_block(lines, start_line, |line, _| {
+        Self::within_block(lines, start_line, |line, _| {
             if fn_pattern.is_match(line) {
                 count += 1;
             }
@@ -425,7 +446,7 @@ impl SolidValidator {
     }
 
     /// Check if structs seem related (share common prefix/suffix).
-    fn structs_seem_related(&self, names: &[String]) -> bool {
+    fn structs_seem_related(names: &[String]) -> bool {
         if names.len() < 2 {
             return true;
         }

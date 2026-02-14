@@ -69,23 +69,21 @@ impl HookProcessor {
 
         let metadata = mcb_domain::entities::memory::ObservationMetadata {
             session_id: None,
-            origin_context: Some(OriginContext {
-                project_id: Some(project_id.clone()),
-                session_id: None,
-                session_id_hash: None,
-                parent_session_id: None,
-                parent_session_id_hash: parent_session_hash,
-                tool_name: Some(context.tool_name.clone()),
-                repo_id: context.metadata.get("repo_id").cloned(),
-                repo_path: context.metadata.get("repo_path").cloned(),
-                worktree_id: context.metadata.get("worktree_id").cloned(),
-                operator_id: context.metadata.get("operator_id").cloned(),
-                machine_id: context.metadata.get("machine_id").cloned(),
-                agent_program: context.metadata.get("agent_program").cloned(),
-                model_id: context.metadata.get("model_id").cloned(),
-                delegated,
-                ..OriginContext::default()
-            }),
+            origin_context: Some(
+                OriginContext::builder()
+                    .project_id(Some(project_id.clone()))
+                    .parent_session_id_hash(parent_session_hash)
+                    .tool_name(Some(context.tool_name.clone()))
+                    .repo_id(context.metadata.get("repo_id").cloned())
+                    .repo_path(context.metadata.get("repo_path").cloned())
+                    .worktree_id(context.metadata.get("worktree_id").cloned())
+                    .operator_id(context.metadata.get("operator_id").cloned())
+                    .machine_id(context.metadata.get("machine_id").cloned())
+                    .agent_program(context.metadata.get("agent_program").cloned())
+                    .model_id(context.metadata.get("model_id").cloned())
+                    .delegated(delegated)
+                    .build(),
+            ),
             ..Default::default()
         };
 

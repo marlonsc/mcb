@@ -5,7 +5,18 @@ use uuid::Uuid;
 use super::memory::{ExecutionMetadata, OriginContext, QualityGateResult};
 
 /// Categorizes the type of observation recorded.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
 pub enum ObservationType {
     /// Represents a code snippet or file content.
     Code,
@@ -34,47 +45,8 @@ impl ObservationType {
     /// assert_eq!(ObservationType::Decision.as_str(), "decision");
     /// ```
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Code => "code",
-            Self::Decision => "decision",
-            Self::Context => "context",
-            Self::Error => "error",
-            Self::Summary => "summary",
-            Self::Execution => "execution",
-            Self::QualityGate => "quality_gate",
-        }
-    }
-}
-
-impl std::str::FromStr for ObservationType {
-    type Err = String;
-
-    /// Parses a string into an `ObservationType`.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the string does not match any known observation type.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use std::str::FromStr;
-    /// # use mcb_domain::ObservationType;
-    /// assert!(ObservationType::from_str("code").is_ok());
-    /// assert!(ObservationType::from_str("invalid").is_err());
-    /// ```
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "code" => Ok(Self::Code),
-            "decision" => Ok(Self::Decision),
-            "context" => Ok(Self::Context),
-            "error" => Ok(Self::Error),
-            "summary" => Ok(Self::Summary),
-            "execution" => Ok(Self::Execution),
-            "quality_gate" => Ok(Self::QualityGate),
-            _ => Err(format!("Unknown observation type: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }
 

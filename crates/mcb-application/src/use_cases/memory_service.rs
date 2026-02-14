@@ -397,12 +397,15 @@ impl MemoryServiceImpl {
             decisions: input.decisions,
             next_steps: input.next_steps,
             key_files: input.key_files,
-            origin_context: Some(input.origin_context.unwrap_or(OriginContext {
-                project_id: Some(project_id),
-                session_id: Some(session_id),
-                timestamp: Some(timestamp),
-                ..OriginContext::default()
-            })),
+            origin_context: Some(
+                input.origin_context.unwrap_or(
+                    OriginContext::builder()
+                        .project_id(Some(project_id))
+                        .session_id(Some(session_id))
+                        .timestamp(Some(timestamp))
+                        .build(),
+                ),
+            ),
             created_at: timestamp,
         };
 

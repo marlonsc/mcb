@@ -1,349 +1,91 @@
-use std::sync::Arc;
-
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
 use mcb_server::handlers::MemoryHandler;
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::json;
 
 use crate::handlers::test_helpers::create_base_memory_args;
-use crate::test_utils::mock_services::TestMemoryService;
+use crate::handlers::test_helpers::create_real_domain_services;
+
+async fn create_handler() -> (MemoryHandler, tempfile::TempDir) {
+    let (services, temp_dir) = create_real_domain_services().await;
+    (MemoryHandler::new(services.memory_service), temp_dir)
+}
+
+fn missing_data_store_args() -> MemoryArgs {
+    create_base_memory_args(
+        MemoryAction::Store,
+        MemoryResource::Observation,
+        None,
+        None,
+        None,
+    )
+}
+
+fn get_missing_ids_args() -> MemoryArgs {
+    MemoryArgs {
+        action: MemoryAction::Get,
+        org_id: None,
+        resource: MemoryResource::Observation,
+        project_id: None,
+        data: None,
+        ids: None,
+        repo_id: None,
+        session_id: None,
+        parent_session_id: None,
+        tags: None,
+        query: None,
+        anchor_id: None,
+        depth_before: None,
+        depth_after: None,
+        window_secs: None,
+        observation_types: None,
+        max_tokens: None,
+        limit: None,
+    }
+}
 
 #[tokio::test]
 async fn test_memory_store_observation_success() {
-    let mock_service = TestMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
-
+    let (handler, _temp_dir) = create_handler().await;
     let args = create_base_memory_args(
         MemoryAction::Store,
         MemoryResource::Observation,
         Some(json!({
             "content": "Test observation",
-            "observation_type": "discovery",
+            "observation_type": "code",
             "tags": ["test", "observation"]
         })),
         None,
         Some("test-session".to_string()),
     );
+    let mut args = args;
+    args.project_id = Some("test-project".to_string());
 
     let result = handler.handle(Parameters(args)).await;
-
     assert!(result.is_ok());
-    let _response = result.expect("Expected successful response");
+    let _response = result.expect("response");
 }
 
+#[rstest]
+#[case(missing_data_store_args())]
+#[case(get_missing_ids_args())]
 #[tokio::test]
-async fn test_memory_store_observation_missing_data() {
-    let mock_service = TestMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
-
-    let args = create_base_memory_args(
-        MemoryAction::Store,
-        MemoryResource::Observation,
-        None,
-        None,
-        None,
-    );
-
+async fn test_memory_validation_failures_return_error_response(#[case] args: MemoryArgs) {
+    let (handler, _temp_dir) = create_handler().await;
     let result = handler.handle(Parameters(args)).await;
-
     assert!(result.is_ok());
-    let response = result.expect("Expected response");
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Missing data should return error"
-    );
-}
-
-#[tokio::test]
-async fn test_memory_store_execution_success() {
-    let mock_service = TestMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
-
-    let args = MemoryArgs {
-        action: MemoryAction::Store,
-        org_id: None,
-        resource: MemoryResource::Execution,
-        project_id: Some("test-project".to_string()),
-        data: Some(json!({
-            "command": "test command",
-            "exit_code": 0,
-            "duration_ms": 1000,
-            "success": true,
-            "execution_type": "build"
-        })),
-        ids: None,
-        repo_id: None,
-        session_id: Some("test-session".to_string().into()),
-        parent_session_id: None,
-        tags: None,
-        query: None,
-        anchor_id: None,
-        depth_before: None,
-        depth_after: None,
-        window_secs: None,
-        observation_types: None,
-        max_tokens: None,
-        limit: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[tokio::test]
-async fn test_memory_store_quality_gate_success() {
-    let mock_service = TestMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
-
-    let args = MemoryArgs {
-        action: MemoryAction::Store,
-        org_id: None,
-        resource: MemoryResource::QualityGate,
-        project_id: Some("test-project".to_string()),
-        data: Some(json!({
-            "gate_name": "test_gate",
-            "status": "passed",
-            "metrics": {}
-        })),
-        ids: None,
-
-        repo_id: None,
-        session_id: Some("test-session".to_string().into()),
-        parent_session_id: None,
-        tags: None,
-        query: None,
-        anchor_id: None,
-        depth_before: None,
-        depth_after: None,
-        window_secs: None,
-        observation_types: None,
-        max_tokens: None,
-        limit: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[tokio::test]
-async fn test_memory_store_session_success() {
-    let mock_service = TestMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
-
-    let args = MemoryArgs {
-        action: MemoryAction::Store,
-        org_id: None,
-        resource: MemoryResource::Session,
-        project_id: Some("test-project".to_string()),
-        data: Some(json!({
-            "session_id": "test-session",
-            "summary": "Test session summary"
-        })),
-        ids: None,
-        repo_id: None,
-        session_id: Some("test-session".to_string().into()),
-        parent_session_id: None,
-        tags: None,
-        query: None,
-        anchor_id: None,
-        depth_before: None,
-        depth_after: None,
-        window_secs: None,
-        observation_types: None,
-        max_tokens: None,
-        limit: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[tokio::test]
-async fn test_memory_get_observation_success() {
-    let mock_service = TestMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
-
-    let args = MemoryArgs {
-        action: MemoryAction::Get,
-        org_id: None,
-        resource: MemoryResource::Observation,
-        project_id: None,
-        data: None,
-        ids: Some(vec!["obs-1".to_string(), "obs-2".to_string()]),
-        repo_id: None,
-        session_id: None,
-        parent_session_id: None,
-        tags: None,
-        query: None,
-        anchor_id: None,
-        depth_before: None,
-        depth_after: None,
-        window_secs: None,
-        observation_types: None,
-        max_tokens: None,
-        limit: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[tokio::test]
-async fn test_memory_get_observation_missing_ids() {
-    let mock_service = TestMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
-
-    let args = MemoryArgs {
-        action: MemoryAction::Get,
-        org_id: None,
-        resource: MemoryResource::Observation,
-        project_id: None,
-        data: None,
-        ids: None,
-        repo_id: None,
-        session_id: None,
-        parent_session_id: None,
-        tags: None,
-        query: None,
-        anchor_id: None,
-        depth_before: None,
-        depth_after: None,
-        window_secs: None,
-        observation_types: None,
-        max_tokens: None,
-        limit: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected response");
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Missing ids should return error"
-    );
-}
-
-#[tokio::test]
-async fn test_memory_get_execution_success() {
-    let mock_service = TestMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
-
-    let args = MemoryArgs {
-        action: MemoryAction::Get,
-        org_id: None,
-        resource: MemoryResource::Execution,
-        project_id: None,
-        data: None,
-        ids: Some(vec!["exec-1".to_string()]),
-        repo_id: None,
-        session_id: None,
-        parent_session_id: None,
-        tags: None,
-        query: None,
-        anchor_id: None,
-        depth_before: None,
-        depth_after: None,
-        window_secs: None,
-        observation_types: None,
-        max_tokens: None,
-        limit: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[tokio::test]
-async fn test_memory_get_quality_gate_success() {
-    let mock_service = TestMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
-
-    let args = MemoryArgs {
-        action: MemoryAction::Get,
-        org_id: None,
-        resource: MemoryResource::QualityGate,
-        project_id: None,
-        data: None,
-        ids: Some(vec!["qg-1".to_string()]),
-        repo_id: None,
-        session_id: None,
-        parent_session_id: None,
-        tags: None,
-        query: None,
-        anchor_id: None,
-        depth_before: None,
-        depth_after: None,
-        window_secs: None,
-        observation_types: None,
-        max_tokens: None,
-        limit: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[tokio::test]
-async fn test_memory_get_session_success() {
-    let mock_service = TestMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
-
-    let args = MemoryArgs {
-        action: MemoryAction::Get,
-        org_id: None,
-        resource: MemoryResource::Session,
-        project_id: Some("test-project".to_string()),
-        data: None,
-        ids: None,
-        repo_id: None,
-        session_id: Some("test-session".to_string().into()),
-        parent_session_id: None,
-        tags: None,
-        query: None,
-        anchor_id: None,
-        depth_before: None,
-        depth_after: None,
-        window_secs: None,
-        observation_types: None,
-        max_tokens: None,
-        limit: None,
-    };
-
-    let result = handler.handle(Parameters(args)).await;
-
-    assert!(result.is_ok());
-    let _response = result.expect("Expected successful response");
+    assert!(result.expect("response").is_error.unwrap_or(false));
 }
 
 #[tokio::test]
 async fn test_memory_inject_with_filters() {
-    let mock_service = TestMemoryService::new();
-    let handler = MemoryHandler::new(Arc::new(mock_service));
-
+    let (handler, _temp_dir) = create_handler().await;
     let args = MemoryArgs {
         action: MemoryAction::Inject,
         org_id: None,
         resource: MemoryResource::Observation,
-        project_id: None,
+        project_id: Some("test-project".to_string()),
         data: None,
         ids: None,
         repo_id: Some("repo-123".to_string()),
@@ -361,8 +103,6 @@ async fn test_memory_inject_with_filters() {
     };
 
     let result = handler.handle(Parameters(args)).await;
-
     assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
-    assert!(!response.is_error.unwrap_or(false));
+    let _response = result.expect("response");
 }

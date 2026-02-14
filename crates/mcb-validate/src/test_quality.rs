@@ -9,203 +9,81 @@
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 
 use crate::config::TestQualityRulesConfig;
 use crate::scan::for_each_scan_rs_path;
-use crate::violation_trait::{Violation, ViolationCategory};
+use crate::violation_trait::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig, ValidationError};
 
-/// Test quality violation types
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum TestQualityViolation {
-    /// Test with `#[ignore]` attribute missing justification
-    IgnoreWithoutJustification {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the ignored test function.
-        test_name: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// todo!() macro in test fixture without proper stub marker
-    TodoInTestFixture {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the function in the test fixture containing the todo!() macro.
-        function_name: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Test function with empty body
-    EmptyTestBody {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the test function that has an empty body.
-        test_name: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Test missing documentation comment
-    TestMissingDocumentation {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the test function that is missing documentation.
-        test_name: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Test with only assert!(true) or similar stub
-    StubTestAssertion {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the test function that contains a stub assertion.
-        test_name: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-}
-
-impl std::fmt::Display for TestQualityViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::IgnoreWithoutJustification {
-                file,
-                line,
-                test_name,
-                ..
-            } => write!(
-                f,
-                "{}:{} - Test '{}' has #[ignore] without justification comment",
-                file.display(),
-                line,
-                test_name
-            ),
-            Self::TodoInTestFixture {
-                file,
-                line,
-                function_name,
-                ..
-            } => write!(
-                f,
-                "{}:{} - Function '{}' in test fixture contains todo!() - implement or mark as intentional stub",
-                file.display(),
-                line,
-                function_name
-            ),
-            Self::EmptyTestBody {
-                file,
-                line,
-                test_name,
-                ..
-            } => write!(
-                f,
-                "{}:{} - Test '{}' has empty body - implement or remove",
-                file.display(),
-                line,
-                test_name
-            ),
-            Self::TestMissingDocumentation {
-                file,
-                line,
-                test_name,
-                ..
-            } => write!(
-                f,
-                "{}:{} - Test '{}' missing documentation comment explaining what it tests",
-                file.display(),
-                line,
-                test_name
-            ),
-            Self::StubTestAssertion {
-                file,
-                line,
-                test_name,
-                ..
-            } => write!(
-                f,
-                "{}:{} - Test '{}' contains stub assertion (assert!(true)) - implement real test",
-                file.display(),
-                line,
-                test_name
-            ),
-        }
-    }
-}
-
-impl Violation for TestQualityViolation {
-    fn id(&self) -> &str {
-        match self {
-            Self::IgnoreWithoutJustification { .. } => "TST001",
-            Self::TodoInTestFixture { .. } => "TST002",
-            Self::EmptyTestBody { .. } => "TST003",
-            Self::TestMissingDocumentation { .. } => "TST004",
-            Self::StubTestAssertion { .. } => "TST005",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Testing
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::IgnoreWithoutJustification { severity, .. }
-            | Self::TodoInTestFixture { severity, .. }
-            | Self::EmptyTestBody { severity, .. }
-            | Self::TestMissingDocumentation { severity, .. }
-            | Self::StubTestAssertion { severity, .. } => *severity,
-        }
-    }
-
-    fn file(&self) -> Option<&PathBuf> {
-        match self {
-            Self::IgnoreWithoutJustification { file, .. }
-            | Self::TodoInTestFixture { file, .. }
-            | Self::EmptyTestBody { file, .. }
-            | Self::TestMissingDocumentation { file, .. }
-            | Self::StubTestAssertion { file, .. } => Some(file),
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::IgnoreWithoutJustification { line, .. }
-            | Self::TodoInTestFixture { line, .. }
-            | Self::EmptyTestBody { line, .. }
-            | Self::TestMissingDocumentation { line, .. }
-            | Self::StubTestAssertion { line, .. } => Some(*line),
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::IgnoreWithoutJustification { .. } => Some(
-                "Add a comment explaining why the test is ignored (e.g., // Requires external tool: ruff)".to_string()
-            ),
-            Self::TodoInTestFixture { .. } => Some(
-                "Implement the test fixture function or add comment: // Intentional stub for X".to_string()
-            ),
-            Self::EmptyTestBody { .. } => Some(
-                "Implement the test logic or remove the test function".to_string()
-            ),
-            Self::TestMissingDocumentation { .. } => Some(
-                "Add documentation comment: /// Tests that [scenario] [expected behavior]".to_string()
-            ),
-            Self::StubTestAssertion { .. } => Some(
-                "Replace assert!(true) with actual test logic and assertions".to_string()
-            ),
-        }
+define_violations! {
+    dynamic_severity,
+    ViolationCategory::Testing,
+    pub enum TestQualityViolation {
+        /// Test with `#[ignore]` attribute missing justification
+        #[violation(
+            id = "TST001",
+            severity = Warning,
+            message = "{file}:{line} - Test '{test_name}' has #[ignore] without justification comment",
+            suggestion = "Add a comment explaining why the test is ignored (e.g., // Requires external tool: ruff)"
+        )]
+        IgnoreWithoutJustification {
+            file: PathBuf,
+            line: usize,
+            test_name: String,
+            severity: Severity,
+        },
+        /// todo!() macro in test fixture without proper stub marker
+        #[violation(
+            id = "TST002",
+            severity = Warning,
+            message = "{file}:{line} - Function '{function_name}' in test fixture contains todo!() - implement or mark as intentional stub",
+            suggestion = "Implement the test fixture function or add comment: // Intentional stub for X"
+        )]
+        TodoInTestFixture {
+            file: PathBuf,
+            line: usize,
+            function_name: String,
+            severity: Severity,
+        },
+        /// Test function with empty body
+        #[violation(
+            id = "TST003",
+            severity = Warning,
+            message = "{file}:{line} - Test '{test_name}' has empty body - implement or remove",
+            suggestion = "Implement the test logic or remove the test function"
+        )]
+        EmptyTestBody {
+            file: PathBuf,
+            line: usize,
+            test_name: String,
+            severity: Severity,
+        },
+        /// Test missing documentation comment
+        #[violation(
+            id = "TST004",
+            severity = Warning,
+            message = "{file}:{line} - Test '{test_name}' missing documentation comment explaining what it tests",
+            suggestion = "Add documentation comment: /// Tests that [scenario] [expected behavior]"
+        )]
+        TestMissingDocumentation {
+            file: PathBuf,
+            line: usize,
+            test_name: String,
+            severity: Severity,
+        },
+        /// Test with only assert!(true) or similar stub
+        #[violation(
+            id = "TST005",
+            severity = Warning,
+            message = "{file}:{line} - Test '{test_name}' contains stub assertion (assert!(true)) - implement real test",
+            suggestion = "Replace assert!(true) with actual test logic and assertions"
+        )]
+        StubTestAssertion {
+            file: PathBuf,
+            line: usize,
+            test_name: String,
+            severity: Severity,
+        },
     }
 }
 

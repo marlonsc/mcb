@@ -14,9 +14,11 @@
 use async_trait::async_trait;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::ProjectIssue;
+use mcb_domain::entities::project::{IssueStatus, IssueType};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::repositories::IssueEntityRepository;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use super::query_helpers;
@@ -52,12 +54,10 @@ fn row_to_issue(row: &dyn SqlRow) -> Result<ProjectIssue> {
         phase_id: opt_str(row, "phase_id")?,
         title: req_str(row, "title")?,
         description: req_str(row, "description")?,
-        issue_type: req_str(row, "issue_type")?
-            .parse()
-            .map_err(|e: String| Error::memory(e))?,
-        status: req_str(row, "status")?
-            .parse()
-            .map_err(|e: String| Error::memory(e))?,
+        issue_type: IssueType::from_str(&req_str(row, "issue_type")?)
+            .map_err(|e| Error::memory(e.to_string()))?,
+        status: IssueStatus::from_str(&req_str(row, "status")?)
+            .map_err(|e| Error::memory(e.to_string()))?,
         priority: req_i64(row, "priority")? as i32,
         assignee: opt_str(row, "assignee")?,
         labels,

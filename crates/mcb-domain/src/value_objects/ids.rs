@@ -1,6 +1,5 @@
 //! Provides ids domain definitions.
-use std::fmt;
-
+use derive_more::{AsRef, Display, From, Into};
 use serde::{Deserialize, Serialize};
 
 macro_rules! define_id {
@@ -14,10 +13,15 @@ macro_rules! define_id {
             PartialOrd,
             Ord,
             Hash,
+            Display,
+            From,
+            Into,
+            AsRef,
             Serialize,
             Deserialize,
             schemars::JsonSchema,
         )]
+        #[display("{_0}")]
         pub struct $name(String);
 
         impl $name {
@@ -37,33 +41,9 @@ macro_rules! define_id {
             }
         }
 
-        impl fmt::Display for $name {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "{}", self.0)
-            }
-        }
-
-        impl From<String> for $name {
-            fn from(s: String) -> Self {
-                Self::new(s)
-            }
-        }
-
         impl From<&str> for $name {
             fn from(s: &str) -> Self {
                 Self::new(s)
-            }
-        }
-
-        impl AsRef<str> for $name {
-            fn as_ref(&self) -> &str {
-                self.as_str()
-            }
-        }
-
-        impl From<$name> for String {
-            fn from(id: $name) -> Self {
-                id.0
             }
         }
     };

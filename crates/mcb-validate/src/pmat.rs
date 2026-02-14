@@ -16,81 +16,87 @@
 
 use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
-
 use crate::constants::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 use crate::pmat_native::{ComplexityAnalyzer, DeadCodeDetector, NativePmatAnalyzer, TdgScorer};
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
-/// PMAT violation types.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum PmatViolation {
-    /// High cyclomatic complexity.
-    ///
-    /// ## Why
-    /// Complex functions are harder to test, maintain, and reason about.
-    /// Enforces code quality standards defined in **ADR-036 (Enforcement Layer)**.
-    HighComplexity {
-        /// The source file containing the complex code.
-        file: PathBuf,
-        /// The specific function or method identifier.
-        function: String,
-        /// The calculated cyclomatic complexity score.
-        complexity: u32,
-        /// The maximum allowed complexity before violation.
-        threshold: u32,
-        /// The enforcement level (Error/Warn) based on violation magnitude.
-        severity: Severity,
-    },
-    /// Dead code detected.
-    ///
-    /// ## Why
-    /// Unused code bloats the codebase, confuses readers, and increases maintenance burden.
-    /// See **ADR-036** for policy on code hygiene.
-    DeadCode {
-        /// The source file containing the unused code.
-        file: PathBuf,
-        /// The line number where the definition starts.
-        line: usize,
-        /// The type of item (e.g., "function", "struct").
-        item_type: String,
-        /// The name of the unused item.
-        name: String,
-        /// The enforcement level.
-        severity: Severity,
-    },
-    /// Low TDG score (high technical debt).
-    ///
-    /// ## Why
-    /// Technical Debt Gradient (TDG) predicts maintenance effort.
-    /// Compares code complexity against its churn/age to identify "hotspots".
-    LowTdgScore {
-        /// The source file being analyzed.
-        file: PathBuf,
-        /// The calculated Technical Debt Gradient score.
-        score: u32,
-        /// The minimum acceptable score (lower means higher debt).
-        threshold: u32,
-        /// The enforcement level.
-        severity: Severity,
-    },
-    /// PMAT tooling unavailable (kept for compatibility).
-    PmatUnavailable {
-        /// Description of why the tool is unavailable.
-        message: String,
-        /// The enforcement level (usually Info/Warn).
-        severity: Severity,
-    },
-    /// PMAT execution error.
-    PmatError {
-        /// The command or operation that failed.
-        command: String,
-        /// The error details.
-        error: String,
-        /// The enforcement level.
-        severity: Severity,
-    },
+define_violations! {
+    no_display,
+    dynamic_severity,
+    ViolationCategory::Pmat,
+    pub enum PmatViolation {
+        /// High cyclomatic complexity.
+        ///
+        /// ## Why
+        /// Complex functions are harder to test, maintain, and reason about.
+        /// Enforces code quality standards defined in **ADR-036 (Enforcement Layer)**.
+        #[violation(
+            id = "PMAT001",
+            severity = Warning,
+            suggestion = "Consider refactoring '{function}' to reduce complexity from {complexity} to below {threshold}. Split into smaller functions or simplify control flow."
+        )]
+        HighComplexity {
+            file: PathBuf,
+            function: String,
+            complexity: u32,
+            threshold: u32,
+            severity: Severity,
+        },
+        /// Dead code detected.
+        ///
+        /// ## Why
+        /// Unused code bloats the codebase, confuses readers, and increases maintenance burden.
+        /// See **ADR-036** for policy on code hygiene.
+        #[violation(
+            id = "PMAT002",
+            severity = Warning,
+            suggestion = "{item_type} {name}"
+        )]
+        DeadCode {
+            file: PathBuf,
+            line: usize,
+            item_type: String,
+            name: String,
+            severity: Severity,
+        },
+        /// Low TDG score (high technical debt).
+        ///
+        /// ## Why
+        /// Technical Debt Gradient (TDG) predicts maintenance effort.
+        /// Compares code complexity against its churn/age to identify "hotspots".
+        #[violation(
+            id = "PMAT003",
+            severity = Warning,
+            suggestion = "Technical debt score {score} exceeds threshold {threshold}. Address code smells and reduce complexity."
+        )]
+        LowTdgScore {
+            file: PathBuf,
+            score: u32,
+            threshold: u32,
+            severity: Severity,
+        },
+        /// PMAT tooling unavailable (kept for compatibility).
+        #[violation(
+            id = "PMAT004",
+            severity = Info
+        )]
+        PmatUnavailable {
+            message: String,
+            severity: Severity,
+        },
+        /// PMAT execution error.
+        #[violation(
+            id = "PMAT005",
+            severity = Error,
+            suggestion = "Check analyzer configuration for '{command}'."
+        )]
+        PmatError {
+            command: String,
+            error: String,
+            severity: Severity,
+        },
+    }
 }
 
 impl PmatViolation {
@@ -152,73 +158,6 @@ impl std::fmt::Display for PmatViolation {
             Self::PmatUnavailable { message, .. } => write!(f, "PMAT unavailable: {message}"),
             Self::PmatError { command, error, .. } => {
                 write!(f, "PMAT error running '{command}': {error}")
-            }
-        }
-    }
-}
-
-impl Violation for PmatViolation {
-    fn id(&self) -> &str {
-        match self {
-            Self::HighComplexity { .. } => "PMAT001",
-            Self::DeadCode { .. } => "PMAT002",
-            Self::LowTdgScore { .. } => "PMAT003",
-            Self::PmatUnavailable { .. } => "PMAT004",
-            Self::PmatError { .. } => "PMAT005",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Pmat
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::HighComplexity { severity, .. }
-            | Self::DeadCode { severity, .. }
-            | Self::LowTdgScore { severity, .. }
-            | Self::PmatUnavailable { severity, .. }
-            | Self::PmatError { severity, .. } => *severity,
-        }
-    }
-
-    fn file(&self) -> Option<&PathBuf> {
-        match self {
-            Self::HighComplexity { file, .. }
-            | Self::DeadCode { file, .. }
-            | Self::LowTdgScore { file, .. } => Some(file),
-            Self::PmatUnavailable { .. } | Self::PmatError { .. } => None,
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::DeadCode { line, .. } => Some(*line),
-            _ => None,
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::HighComplexity {
-                function,
-                complexity,
-                threshold,
-                ..
-            } => Some(format!(
-                "Consider refactoring '{function}' to reduce complexity from {complexity} to below {threshold}. Split into smaller functions or simplify control flow."
-            )),
-            Self::DeadCode {
-                item_type, name, ..
-            } => Some(format!("{item_type} {name}")),
-            Self::LowTdgScore {
-                score, threshold, ..
-            } => Some(format!(
-                "Technical debt score {score} exceeds threshold {threshold}. Address code smells and reduce complexity."
-            )),
-            Self::PmatUnavailable { .. } => None,
-            Self::PmatError { command, .. } => {
-                Some(format!("Check analyzer configuration for '{command}'."))
             }
         }
     }

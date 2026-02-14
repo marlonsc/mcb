@@ -8,64 +8,67 @@
 
 use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
-
 use crate::pattern_registry::{compile_regex_triples, compile_regexes, required_pattern};
 use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
-/// Async violation types
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum AsyncViolation {
-    /// Blocking call in async function
-    BlockingInAsync {
-        /// File containing the violation.
-        file: PathBuf,
-        /// Line number where the blocking call was detected.
-        line: usize,
-        /// Description of the blocking call detected (e.g., "std::thread::sleep").
-        blocking_call: String,
-        /// Recommended non-blocking alternative (e.g., "Use tokio::time::sleep").
-        suggestion: String,
-        /// Severity of the violation.
-        severity: Severity,
-    },
-    /// `block_on()` used in async context
-    BlockOnInAsync {
-        /// File containing the violation.
-        file: PathBuf,
-        /// Line number where the `block_on` call was detected.
-        line: usize,
-        /// Context snippet of the call for easier identification.
-        context: String,
-        /// Severity of the violation.
-        severity: Severity,
-    },
-    /// `std::sync::Mutex` used in async code (should use `tokio::sync::Mutex`)
-    WrongMutexType {
-        /// File containing the violation.
-        file: PathBuf,
-        /// Line number where the incorrect mutex usage was detected.
-        line: usize,
-        /// The type of mutex being used (e.g., "std::sync::Mutex").
-        mutex_type: String,
-        /// Recommended async-safe alternative.
-        suggestion: String,
-        /// Severity of the violation.
-        severity: Severity,
-    },
-    /// Spawn without awaiting `JoinHandle`
-    UnawaitedSpawn {
-        /// File containing the violation.
-        file: PathBuf,
-        /// Line number where the unawaited spawn was detected.
-        line: usize,
-        /// Context snippet of the spawn call.
-        context: String,
-        /// Severity of the violation.
-        severity: Severity,
-    },
+define_violations! {
+    no_display,
+    dynamic_severity,
+    ViolationCategory::Async,
+    pub enum AsyncViolation {
+        /// Blocking call in async function
+        #[violation(
+            id = "ASYNC001",
+            severity = Warning,
+            suggestion = "{suggestion}"
+        )]
+        BlockingInAsync {
+            file: PathBuf,
+            line: usize,
+            blocking_call: String,
+            suggestion: String,
+            severity: Severity,
+        },
+        /// `block_on()` used in async context
+        #[violation(
+            id = "ASYNC002",
+            severity = Warning,
+            suggestion = "Use .await instead of block_on() in async context"
+        )]
+        BlockOnInAsync {
+            file: PathBuf,
+            line: usize,
+            context: String,
+            severity: Severity,
+        },
+        /// `std::sync::Mutex` used in async code (should use `tokio::sync::Mutex`)
+        #[violation(
+            id = "ASYNC003",
+            severity = Warning,
+            suggestion = "{suggestion}"
+        )]
+        WrongMutexType {
+            file: PathBuf,
+            line: usize,
+            mutex_type: String,
+            suggestion: String,
+            severity: Severity,
+        },
+        /// Spawn without awaiting `JoinHandle`
+        #[violation(
+            id = "ASYNC004",
+            severity = Info,
+            suggestion = "Assign JoinHandle to a variable or use let _ = to explicitly ignore"
+        )]
+        UnawaitedSpawn {
+            file: PathBuf,
+            line: usize,
+            context: String,
+            severity: Severity,
+        },
+    }
 }
 
 /// Helper methods for async violations.
@@ -142,63 +145,6 @@ impl std::fmt::Display for AsyncViolation {
                     context
                 )
             }
-        }
-    }
-}
-
-/// Violation trait implementation for async violations.
-impl Violation for AsyncViolation {
-    fn id(&self) -> &str {
-        match self {
-            Self::BlockingInAsync { .. } => "ASYNC001",
-            Self::BlockOnInAsync { .. } => "ASYNC002",
-            Self::WrongMutexType { .. } => "ASYNC003",
-            Self::UnawaitedSpawn { .. } => "ASYNC004",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Async
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::BlockingInAsync { severity, .. }
-            | Self::BlockOnInAsync { severity, .. }
-            | Self::WrongMutexType { severity, .. }
-            | Self::UnawaitedSpawn { severity, .. } => *severity,
-        }
-    }
-
-    fn file(&self) -> Option<&PathBuf> {
-        match self {
-            Self::BlockingInAsync { file, .. }
-            | Self::BlockOnInAsync { file, .. }
-            | Self::WrongMutexType { file, .. }
-            | Self::UnawaitedSpawn { file, .. } => Some(file),
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::BlockingInAsync { line, .. }
-            | Self::BlockOnInAsync { line, .. }
-            | Self::WrongMutexType { line, .. }
-            | Self::UnawaitedSpawn { line, .. } => Some(*line),
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::BlockingInAsync { suggestion, .. } | Self::WrongMutexType { suggestion, .. } => {
-                Some(suggestion.clone())
-            }
-            Self::BlockOnInAsync { .. } => {
-                Some("Use .await instead of block_on() in async context".to_string())
-            }
-            Self::UnawaitedSpawn { .. } => Some(
-                "Assign JoinHandle to a variable or use let _ = to explicitly ignore".to_string(),
-            ),
         }
     }
 }

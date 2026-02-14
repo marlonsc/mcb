@@ -12,7 +12,6 @@
 use std::path::PathBuf;
 
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 
 use crate::config::KISSRulesConfig;
 use crate::scan::for_each_scan_rs_path;
@@ -20,88 +19,86 @@ use crate::thresholds::thresholds;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
-/// KISS violation types
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum KissViolation {
-    /// Struct with too many fields (>12)
-    StructTooManyFields {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the struct.
-        struct_name: String,
-        /// Number of fields in the struct.
-        field_count: usize,
-        /// Maximum allowed fields.
-        max_allowed: usize,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+define_violations! {
+    no_display,
+    dynamic_severity,
+    ViolationCategory::Kiss,
+    pub enum KissViolation {
+        /// Struct with too many fields (>12)
+        #[violation(
+            id = "KISS001",
+            severity = Warning,
+            suggestion = "Split '{struct_name}' into smaller structs or use composition. {field_count} fields exceeds the maximum of {max_allowed}."
+        )]
+        StructTooManyFields {
+            file: PathBuf,
+            line: usize,
+            struct_name: String,
+            field_count: usize,
+            max_allowed: usize,
+            severity: Severity,
+        },
 
-    /// Function with too many parameters (>5)
-    FunctionTooManyParams {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the function.
-        function_name: String,
-        /// Number of parameters in the function.
-        param_count: usize,
-        /// Maximum allowed parameters.
-        max_allowed: usize,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// Function with too many parameters (>5)
+        #[violation(
+            id = "KISS002",
+            severity = Warning,
+            suggestion = "Refactor '{function_name}' to use a config/options struct instead of {param_count} parameters. Maximum allowed is {max_allowed}."
+        )]
+        FunctionTooManyParams {
+            file: PathBuf,
+            line: usize,
+            function_name: String,
+            param_count: usize,
+            max_allowed: usize,
+            severity: Severity,
+        },
 
-    /// Builder with too many optional fields (>7)
-    BuilderTooComplex {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the builder struct.
-        builder_name: String,
-        /// Number of optional fields in the builder.
-        optional_field_count: usize,
-        /// Maximum allowed optional fields.
-        max_allowed: usize,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// Builder with too many optional fields (>7)
+        #[violation(
+            id = "KISS003",
+            severity = Warning,
+            suggestion = "Split '{builder_name}' into smaller builders or use builder composition. {optional_field_count} optional fields exceeds the maximum of {max_allowed}."
+        )]
+        BuilderTooComplex {
+            file: PathBuf,
+            line: usize,
+            builder_name: String,
+            optional_field_count: usize,
+            max_allowed: usize,
+            severity: Severity,
+        },
 
-    /// Nested conditionals too deep (>3 levels)
-    DeepNesting {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Current nesting level.
-        nesting_level: usize,
-        /// Maximum allowed nesting level.
-        max_allowed: usize,
-        /// Contextual code snippet.
-        context: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// Nested conditionals too deep (>3 levels)
+        #[violation(
+            id = "KISS004",
+            severity = Warning,
+            suggestion = "Extract nested logic into separate functions using early returns or guard clauses. Nesting depth {nesting_level} exceeds the maximum of {max_allowed}."
+        )]
+        DeepNesting {
+            file: PathBuf,
+            line: usize,
+            nesting_level: usize,
+            max_allowed: usize,
+            context: String,
+            severity: Severity,
+        },
 
-    /// Function too long (>50 lines)
-    FunctionTooLong {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the function.
-        function_name: String,
-        /// Number of lines in the function.
-        line_count: usize,
-        /// Maximum allowed lines.
-        max_allowed: usize,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// Function too long (>50 lines)
+        #[violation(
+            id = "KISS005",
+            severity = Warning,
+            suggestion = "Break '{function_name}' into smaller, focused functions. {line_count} lines exceeds the maximum of {max_allowed}."
+        )]
+        FunctionTooLong {
+            file: PathBuf,
+            line: usize,
+            function_name: String,
+            line_count: usize,
+            max_allowed: usize,
+            severity: Severity,
+        },
+    }
 }
 
 impl KissViolation {
@@ -206,101 +203,6 @@ impl std::fmt::Display for KissViolation {
                     max_allowed
                 )
             }
-        }
-    }
-}
-
-impl Violation for KissViolation {
-    fn id(&self) -> &str {
-        match self {
-            Self::StructTooManyFields { .. } => "KISS001",
-            Self::FunctionTooManyParams { .. } => "KISS002",
-            Self::BuilderTooComplex { .. } => "KISS003",
-            Self::DeepNesting { .. } => "KISS004",
-            Self::FunctionTooLong { .. } => "KISS005",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Kiss
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::StructTooManyFields { severity, .. }
-            | Self::FunctionTooManyParams { severity, .. }
-            | Self::BuilderTooComplex { severity, .. }
-            | Self::DeepNesting { severity, .. }
-            | Self::FunctionTooLong { severity, .. } => *severity,
-        }
-    }
-
-    fn file(&self) -> Option<&PathBuf> {
-        match self {
-            Self::StructTooManyFields { file, .. }
-            | Self::FunctionTooManyParams { file, .. }
-            | Self::BuilderTooComplex { file, .. }
-            | Self::DeepNesting { file, .. }
-            | Self::FunctionTooLong { file, .. } => Some(file),
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::StructTooManyFields { line, .. }
-            | Self::FunctionTooManyParams { line, .. }
-            | Self::BuilderTooComplex { line, .. }
-            | Self::DeepNesting { line, .. }
-            | Self::FunctionTooLong { line, .. } => Some(*line),
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::StructTooManyFields {
-                struct_name,
-                field_count,
-                max_allowed,
-                ..
-            } => Some(format!(
-                "Split '{struct_name}' into smaller structs or use composition. \
-                 {field_count} fields exceeds the maximum of {max_allowed}."
-            )),
-            Self::FunctionTooManyParams {
-                function_name,
-                param_count,
-                max_allowed,
-                ..
-            } => Some(format!(
-                "Refactor '{function_name}' to use a config/options struct instead of {param_count} parameters. \
-                 Maximum allowed is {max_allowed}."
-            )),
-            Self::BuilderTooComplex {
-                builder_name,
-                optional_field_count,
-                max_allowed,
-                ..
-            } => Some(format!(
-                "Split '{builder_name}' into smaller builders or use builder composition. \
-                 {optional_field_count} optional fields exceeds the maximum of {max_allowed}."
-            )),
-            Self::DeepNesting {
-                nesting_level,
-                max_allowed,
-                ..
-            } => Some(format!(
-                "Extract nested logic into separate functions using early returns or guard clauses. \
-                 Nesting depth {nesting_level} exceeds the maximum of {max_allowed}."
-            )),
-            Self::FunctionTooLong {
-                function_name,
-                line_count,
-                max_allowed,
-                ..
-            } => Some(format!(
-                "Break '{function_name}' into smaller, focused functions. \
-                 {line_count} lines exceeds the maximum of {max_allowed}."
-            )),
         }
     }
 }

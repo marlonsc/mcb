@@ -7,14 +7,14 @@ use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::{compute_stable_id_hash, vcs_context::VcsContext};
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use serde_json::Value;
 use uuid::Uuid;
 
-use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
-use crate::utils::json::{self, JsonMapExt};
+use crate::utils::json;
 
 /// Stores a quality gate result as a semantic observation.
 #[tracing::instrument(skip_all)]
@@ -30,28 +30,47 @@ pub async fn store_quality_gate(
             )]));
         }
     };
-    let gate_name = match data.required_string("gate_name") {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
+    let gate_name = match data.get("gate_name").and_then(Value::as_str) {
+        Some(value) => value.to_owned(),
+        None => {
+            return Ok(CallToolResult::error(vec![Content::text(
+                "Missing required field: gate_name",
+            )]));
+        }
     };
-    let status_str = match data.required_string("status") {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
+    let status_str = match data.get("status").and_then(Value::as_str) {
+        Some(value) => value.to_owned(),
+        None => {
+            return Ok(CallToolResult::error(vec![Content::text(
+                "Missing required field: status",
+            )]));
+        }
     };
-    let status = match MemoryHelpers::parse_quality_gate_status(&status_str) {
+    let status: mcb_domain::entities::memory::QualityGateStatus = match status_str.parse() {
         Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
+        Err(error) => {
+            return Ok(CallToolResult::error(vec![Content::text(
+                error.to_string(),
+            )]));
+        }
     };
     let timestamp = data
-        .int64("timestamp")
+        .get("timestamp")
+        .and_then(Value::as_i64)
         .unwrap_or_else(|| chrono::Utc::now().timestamp());
     let quality_gate = QualityGateResult {
         id: Uuid::new_v4().to_string(),
         gate_name: gate_name.clone(),
         status,
-        message: data.string("message"),
+        message: data
+            .get("message")
+            .and_then(Value::as_str)
+            .map(str::to_owned),
         timestamp,
-        execution_id: data.string("execution_id"),
+        execution_id: data
+            .get("execution_id")
+            .and_then(Value::as_str)
+            .map(str::to_owned),
     };
     let vcs_context = VcsContext::capture();
     let content = format!(
@@ -72,17 +91,47 @@ pub async fn store_quality_gate(
         .parent_session_id
         .clone()
         .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
-    let payload_repo_id = data.string("repo_id");
-    let payload_project_id = data.string("project_id");
-    let payload_branch = data.string("branch");
-    let payload_commit = data.string("commit");
-    let payload_repo_path = data.string("repo_path");
-    let payload_worktree_id = data.string("worktree_id");
-    let payload_operator_id = data.string("operator_id");
-    let payload_machine_id = data.string("machine_id");
-    let payload_agent_program = data.string("agent_program");
-    let payload_model_id = data.string("model_id");
-    let payload_delegated = data.boolean("delegated");
+    let payload_repo_id = data
+        .get("repo_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_project_id = data
+        .get("project_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_branch = data
+        .get("branch")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_commit = data
+        .get("commit")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_repo_path = data
+        .get("repo_path")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_worktree_id = data
+        .get("worktree_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_operator_id = data
+        .get("operator_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_machine_id = data
+        .get("machine_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_agent_program = data
+        .get("agent_program")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_model_id = data
+        .get("model_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_delegated = data.get("delegated").and_then(Value::as_bool);
 
     let mut origin_context = resolve_origin_context(OriginContextInput {
         org_id: args.org_id.as_deref(),
@@ -189,11 +238,11 @@ pub async fn get_quality_gates(
         branch: None,
         commit: None,
     };
-    let query = "quality gate".to_string();
+    let query = "quality gate";
     let limit = args.limit.unwrap_or(10) as usize;
     let fetch_limit = limit * 5;
     match memory_service
-        .search_memories(&query, Some(filter), fetch_limit)
+        .search_memories(query, Some(filter), fetch_limit)
         .await
     {
         Ok(results) => {

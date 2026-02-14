@@ -9,6 +9,7 @@
 use std::fmt;
 use std::sync::Arc;
 
+use delegate::delegate;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{CacheEntryConfig, CacheProvider, CacheStats};
 
@@ -66,9 +67,12 @@ impl SharedCacheProvider {
         self.namespace = None;
     }
 
-    /// Get the underlying cache provider as an Arc
-    pub fn as_provider(&self) -> Arc<dyn CacheProvider> {
-        self.provider.clone()
+    delegate! {
+        to self.provider {
+            /// Get the underlying cache provider as an Arc
+            #[call(clone)]
+            pub fn as_provider(&self) -> Arc<dyn CacheProvider>;
+        }
     }
 
     /// Get a namespaced key
@@ -135,19 +139,17 @@ impl SharedCacheProvider {
         self.provider.exists(&namespaced_key).await
     }
 
-    /// Clear all values from the cache
-    pub async fn clear(&self) -> Result<()> {
-        self.provider.clear().await
-    }
+    delegate! {
+        to self.provider {
+            /// Clear all values from the cache
+            pub async fn clear(&self) -> Result<()>;
 
-    /// Get cache statistics
-    pub async fn stats(&self) -> Result<CacheStats> {
-        self.provider.stats().await
-    }
+            /// Get cache statistics
+            pub async fn stats(&self) -> Result<CacheStats>;
 
-    /// Get the cache size
-    pub async fn size(&self) -> Result<usize> {
-        self.provider.size().await
+            /// Get the cache size
+            pub async fn size(&self) -> Result<usize>;
+        }
     }
 }
 

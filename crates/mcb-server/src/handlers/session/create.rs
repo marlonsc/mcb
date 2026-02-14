@@ -2,20 +2,21 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::constants::keys as schema;
-use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus};
+
+use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use serde_json::Value;
 use uuid::Uuid;
 
-use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{
     OriginContextInput, resolve_identifier_precedence, resolve_origin_context,
 };
-use crate::utils::json::{self, JsonMapExt};
+use crate::utils::json;
 use tracing::error;
 
 /// Creates a new agent session.
@@ -33,14 +34,19 @@ pub async fn create_session(
         }
     };
 
-    let payload_agent_type = data.string("agent_type");
+    let payload_agent_type = data
+        .get("agent_type")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
     let agent_type_value = resolve_identifier_precedence(
         "agent_type",
         args.agent_type.as_deref(),
         payload_agent_type.as_deref(),
     )?;
-    let agent_type = match agent_type_value {
-        Some(value) => SessionHelpers::parse_agent_type(&value)?,
+    let agent_type: AgentType = match agent_type_value {
+        Some(value) => value
+            .parse::<AgentType>()
+            .map_err(|e: String| McpError::invalid_params(e, None))?,
         None => {
             return Ok(CallToolResult::error(vec![Content::text(
                 "Missing agent_type for create (expected in args or data)",
@@ -53,23 +59,36 @@ pub async fn create_session(
         .unwrap_or(0);
     let session_id = format!("agent_{}", Uuid::new_v4());
     let session_summary_id = data
-        .string(schema::SESSION_SUMMARY_ID)
+        .get(schema::SESSION_SUMMARY_ID)
+        .and_then(Value::as_str)
+        .map(str::to_owned)
         .unwrap_or_else(|| format!("auto_{}", Uuid::new_v4()));
-    let model = match data.required_string(schema::MODEL) {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
+    let model = match data.get(schema::MODEL).and_then(Value::as_str) {
+        Some(value) => value.to_owned(),
+        None => {
+            return Ok(CallToolResult::error(vec![Content::text(format!(
+                "Missing required field: {}",
+                schema::MODEL
+            ))]));
+        }
     };
     let session = AgentSession {
         id: session_id.clone(),
         session_summary_id,
         agent_type: agent_type.clone(),
         model,
-        parent_session_id: data.string(schema::PARENT_SESSION_ID),
+        parent_session_id: data
+            .get(schema::PARENT_SESSION_ID)
+            .and_then(Value::as_str)
+            .map(str::to_owned),
         started_at: now,
         ended_at: None,
         duration_ms: None,
         status: AgentSessionStatus::Active,
-        prompt_summary: data.string(schema::PROMPT_SUMMARY),
+        prompt_summary: data
+            .get(schema::PROMPT_SUMMARY)
+            .and_then(Value::as_str)
+            .map(str::to_owned),
         result_summary: None,
         token_count: None,
         tool_calls_count: None,
@@ -77,14 +96,38 @@ pub async fn create_session(
         project_id: None,
         worktree_id: None,
     };
-    let payload_project_id = data.string(schema::PROJECT_ID);
-    let payload_worktree_id = data.string(schema::WORKTREE_ID);
-    let payload_parent_session_id = data.string(schema::PARENT_SESSION_ID);
-    let payload_repo_path = data.string(schema::REPO_PATH);
-    let payload_operator_id = data.string("operator_id");
-    let payload_machine_id = data.string("machine_id");
-    let payload_agent_program = data.string("agent_program");
-    let payload_model_id = data.string("model_id");
+    let payload_project_id = data
+        .get(schema::PROJECT_ID)
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_worktree_id = data
+        .get(schema::WORKTREE_ID)
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_parent_session_id = data
+        .get(schema::PARENT_SESSION_ID)
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_repo_path = data
+        .get(schema::REPO_PATH)
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_operator_id = data
+        .get("operator_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_machine_id = data
+        .get("machine_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_agent_program = data
+        .get("agent_program")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_model_id = data
+        .get("model_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
     let origin_context = resolve_origin_context(OriginContextInput {
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),

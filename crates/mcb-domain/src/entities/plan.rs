@@ -39,8 +39,20 @@ pub struct Plan {
 }
 
 /// Lifecycle status for a plan.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::Display,
+    strum_macros::AsRefStr,
+    strum_macros::EnumString,
+)]
 #[serde(rename_all = "snake_case")]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
 pub enum PlanStatus {
     /// Plan is in draft state.
     Draft,
@@ -57,35 +69,8 @@ pub enum PlanStatus {
 impl PlanStatus {
     /// Returns the string representation.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Draft => "draft",
-            Self::Active => "active",
-            Self::Executing => "executing",
-            Self::Completed => "completed",
-            Self::Archived => "archived",
-        }
-    }
-}
-
-impl std::fmt::Display for PlanStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
-
-impl std::str::FromStr for PlanStatus {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "draft" => Ok(Self::Draft),
-            "active" => Ok(Self::Active),
-            "executing" => Ok(Self::Executing),
-            "completed" => Ok(Self::Completed),
-            "archived" => Ok(Self::Archived),
-            _ => Err(format!("Unknown plan status: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }
 
@@ -130,8 +115,20 @@ pub struct PlanReview {
 }
 
 /// Verdict values for a plan review.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::Display,
+    strum_macros::AsRefStr,
+    strum_macros::EnumString,
+)]
 #[serde(rename_all = "snake_case")]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
 pub enum ReviewVerdict {
     /// Review approved the plan version.
     Approved,
@@ -144,30 +141,7 @@ pub enum ReviewVerdict {
 impl ReviewVerdict {
     /// Returns the string representation.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Approved => "approved",
-            Self::Rejected => "rejected",
-            Self::NeedsRevision => "needs_revision",
-        }
-    }
-}
-
-impl std::fmt::Display for ReviewVerdict {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
-
-impl std::str::FromStr for ReviewVerdict {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "approved" => Ok(Self::Approved),
-            "rejected" => Ok(Self::Rejected),
-            "needs_revision" => Ok(Self::NeedsRevision),
-            _ => Err(format!("Unknown review verdict: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }

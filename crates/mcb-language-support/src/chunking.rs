@@ -6,6 +6,7 @@
 use std::path::Path;
 
 use async_trait::async_trait;
+use derive_more::Display;
 
 use crate::error::Result;
 use crate::language::LanguageId;
@@ -30,27 +31,20 @@ pub struct ParsedChunk {
 }
 
 /// Type of code chunk
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
 pub enum ChunkType {
     /// A complete function or method
+    #[display("function")]
     Function,
     /// A class or struct definition
+    #[display("class")]
     Class,
     /// A module or file-level code
+    #[display("module")]
     Module,
     /// An arbitrary block of code (fallback)
+    #[display("block")]
     Block,
-}
-
-impl std::fmt::Display for ChunkType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ChunkType::Function => write!(f, "function"),
-            ChunkType::Class => write!(f, "class"),
-            ChunkType::Module => write!(f, "module"),
-            ChunkType::Block => write!(f, "block"),
-        }
-    }
 }
 
 /// Configuration for chunking strategy

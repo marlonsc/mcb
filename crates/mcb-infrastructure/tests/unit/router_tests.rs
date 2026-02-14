@@ -9,64 +9,46 @@ use mcb_domain::ports::infrastructure::routing::{
     ProviderContext, ProviderHealthStatus, ProviderRouter,
 };
 use mcb_infrastructure::routing::{DefaultProviderRouter, HealthMonitor, InMemoryHealthMonitor};
+use rstest::*;
 
 // =============================================================================
 // InMemoryHealthMonitor Tests
 // =============================================================================
 
-/// Test that new providers start as healthy
-#[test]
-fn test_new_provider_starts_healthy() {
-    let monitor = InMemoryHealthMonitor::new();
+#[fixture]
+fn monitor() -> InMemoryHealthMonitor {
+    InMemoryHealthMonitor::new()
+}
 
-    // Unknown provider should be healthy
+#[rstest]
+fn test_new_provider_starts_healthy(monitor: InMemoryHealthMonitor) {
     let status = monitor.get_health("unknown-provider");
     assert_eq!(status, ProviderHealthStatus::Healthy);
 }
 
-/// Test health transitions from Healthy → Degraded after failures
-#[test]
-fn test_health_transitions_to_degraded() {
-    // Default thresholds: degraded=2, unhealthy=5
-    let monitor = InMemoryHealthMonitor::new();
-
-    // Record 2 failures to trigger degraded
-    monitor.record_failure("provider-a");
-    monitor.record_failure("provider-a");
-
-    let status = monitor.get_health("provider-a");
-    assert_eq!(status, ProviderHealthStatus::Degraded);
-}
-
-/// Test health transitions from Degraded → Unhealthy after more failures
-#[test]
-fn test_health_transitions_to_unhealthy() {
-    // Default thresholds: degraded=2, unhealthy=5
-    let monitor = InMemoryHealthMonitor::new();
-
-    // Record 5 failures to trigger unhealthy
-    for _ in 0..5 {
+#[rstest]
+#[case(2, ProviderHealthStatus::Degraded)]
+#[case(5, ProviderHealthStatus::Unhealthy)]
+fn test_health_transitions_failure_count(
+    monitor: InMemoryHealthMonitor,
+    #[case] failure_count: usize,
+    #[case] expected: ProviderHealthStatus,
+) {
+    for _ in 0..failure_count {
         monitor.record_failure("provider-a");
     }
-
-    let status = monitor.get_health("provider-a");
-    assert_eq!(status, ProviderHealthStatus::Unhealthy);
+    assert_eq!(monitor.get_health("provider-a"), expected);
 }
 
-/// Test that success resets failure count and restores healthy status
-#[test]
-fn test_success_resets_to_healthy() {
-    let monitor = InMemoryHealthMonitor::new();
-
-    // Make provider degraded
+#[rstest]
+fn test_success_resets_to_healthy(monitor: InMemoryHealthMonitor) {
     monitor.record_failure("provider-a");
-    monitor.record_failure("provider-a");
+    monitor.record_failure("provider-a"); // Degraded
     assert_eq!(
         monitor.get_health("provider-a"),
         ProviderHealthStatus::Degraded
     );
 
-    // Record success - should reset to healthy
     monitor.record_success("provider-a");
     assert_eq!(
         monitor.get_health("provider-a"),
@@ -74,39 +56,31 @@ fn test_success_resets_to_healthy() {
     );
 }
 
-/// Test custom thresholds
-#[test]
+#[rstest]
 fn test_custom_thresholds() {
-    // Custom thresholds: degraded=1, unhealthy=3
     let monitor = InMemoryHealthMonitor::with_thresholds(1, 3);
 
-    // 1 failure should trigger degraded
     monitor.record_failure("provider-a");
     assert_eq!(
         monitor.get_health("provider-a"),
         ProviderHealthStatus::Degraded
     );
 
-    // 2 more failures (total 3) should trigger unhealthy
-    monitor.record_failure("provider-a");
-    monitor.record_failure("provider-a");
+    monitor.record_failure("provider-a"); // 2
+    monitor.record_failure("provider-a"); // 3
     assert_eq!(
         monitor.get_health("provider-a"),
         ProviderHealthStatus::Unhealthy
     );
 }
 
-/// Test get_all_health returns all tracked providers
-#[test]
-fn test_get_all_health() {
-    let monitor = InMemoryHealthMonitor::new();
-
+#[rstest]
+fn test_get_all_health(monitor: InMemoryHealthMonitor) {
     monitor.record_success("provider-a");
     monitor.record_failure("provider-b");
-    monitor.record_failure("provider-b");
+    monitor.record_failure("provider-b"); // Degraded
 
     let all_health = monitor.get_all_health();
-
     assert_eq!(all_health.len(), 2);
     assert_eq!(
         all_health.get("provider-a"),
@@ -122,171 +96,121 @@ fn test_get_all_health() {
 // DefaultProviderRouter Tests
 // =============================================================================
 
-/// Test router selects healthy provider over unhealthy
-#[tokio::test]
-async fn test_router_prefers_healthy_provider() {
+#[fixture]
+fn router_setup() -> (Arc<InMemoryHealthMonitor>, DefaultProviderRouter) {
     let monitor = Arc::new(InMemoryHealthMonitor::new());
+    let router = DefaultProviderRouter::new(
+        monitor.clone(),
+        vec!["provider-a".to_string(), "provider-b".to_string()],
+        vec![],
+    );
+    (monitor, router)
+}
 
-    // Make provider-a unhealthy
+#[rstest]
+#[tokio::test]
+async fn test_router_selection_scenarios(
+    router_setup: (Arc<InMemoryHealthMonitor>, DefaultProviderRouter),
+) {
+    let (monitor, router) = router_setup;
+
+    // Case 1: Prefers healthy over unhealthy
     for _ in 0..5 {
         monitor.record_failure("provider-a");
-    }
+    } // A Unhealthy
+    monitor.record_success("provider-b"); // B Healthy
 
-    // provider-b stays healthy
-    monitor.record_success("provider-b");
-
-    let router = DefaultProviderRouter::new(
-        monitor,
-        vec!["provider-a".to_string(), "provider-b".to_string()],
-        vec![],
-    );
-
-    let context = ProviderContext::new();
-    let selected = router.select_embedding_provider(&context).await.unwrap();
-
-    // Should select provider-b (healthy) over provider-a (unhealthy)
+    let ctx = ProviderContext::new();
+    let selected = router.select_embedding_provider(&ctx).await.unwrap();
     assert_eq!(selected, "provider-b");
-}
 
-/// Test router respects excluded providers
-#[tokio::test]
-async fn test_router_excludes_providers() {
-    let monitor = Arc::new(InMemoryHealthMonitor::new());
-
-    let router = DefaultProviderRouter::new(
-        monitor,
-        vec!["provider-a".to_string(), "provider-b".to_string()],
-        vec![],
-    );
-
-    // Exclude provider-a
-    let context = ProviderContext::new().exclude("provider-a");
-    let selected = router.select_embedding_provider(&context).await.unwrap();
-
-    // Should select provider-b since provider-a is excluded
-    assert_eq!(selected, "provider-b");
-}
-
-/// Test router respects preferred providers when healthy
-#[tokio::test]
-async fn test_router_prefers_preferred_provider() {
-    let monitor = Arc::new(InMemoryHealthMonitor::new());
-
-    let router = DefaultProviderRouter::new(
-        monitor,
-        vec!["provider-a".to_string(), "provider-b".to_string()],
-        vec![],
-    );
-
-    // Prefer provider-b
-    let context = ProviderContext::new().prefer("provider-b");
-    let selected = router.select_embedding_provider(&context).await.unwrap();
-
-    // Should select provider-b since it's preferred and healthy
-    assert_eq!(selected, "provider-b");
-}
-
-/// Test router falls back when preferred provider is unhealthy
-#[tokio::test]
-async fn test_router_fallback_when_preferred_unhealthy() {
-    let monitor = Arc::new(InMemoryHealthMonitor::new());
-
-    // Make preferred provider unhealthy
+    // Case 2: Prefers degraded over unhealthy
+    monitor.record_success("provider-a"); // Reset A
+    monitor.record_failure("provider-a");
+    monitor.record_failure("provider-a"); // A Degraded
     for _ in 0..5 {
         monitor.record_failure("provider-b");
-    }
+    } // B Unhealthy
 
-    let router = DefaultProviderRouter::new(
-        monitor,
-        vec!["provider-a".to_string(), "provider-b".to_string()],
-        vec![],
-    );
-
-    // Prefer provider-b (unhealthy)
-    let context = ProviderContext::new().prefer("provider-b");
-    let selected = router.select_embedding_provider(&context).await.unwrap();
-
-    // Should fall back to provider-a since provider-b is unhealthy
+    let selected = router.select_embedding_provider(&ctx).await.unwrap();
     assert_eq!(selected, "provider-a");
 }
 
-/// Test router prefers degraded over unhealthy
+#[rstest]
 #[tokio::test]
-async fn test_router_prefers_degraded_over_unhealthy() {
-    let monitor = Arc::new(InMemoryHealthMonitor::new());
-
-    // provider-a: degraded (2 failures)
-    monitor.record_failure("provider-a");
-    monitor.record_failure("provider-a");
-
-    // provider-b: unhealthy (5 failures)
-    for _ in 0..5 {
-        monitor.record_failure("provider-b");
-    }
-
-    let router = DefaultProviderRouter::new(
-        monitor,
-        vec!["provider-a".to_string(), "provider-b".to_string()],
-        vec![],
-    );
-
-    let context = ProviderContext::new();
-    let selected = router.select_embedding_provider(&context).await.unwrap();
-
-    // Should select provider-a (degraded) over provider-b (unhealthy)
-    assert_eq!(selected, "provider-a");
+async fn test_router_excludes_providers(
+    router_setup: (Arc<InMemoryHealthMonitor>, DefaultProviderRouter),
+) {
+    let (_, router) = router_setup;
+    let ctx = ProviderContext::new().exclude("provider-a");
+    let selected = router.select_embedding_provider(&ctx).await.unwrap();
+    assert_eq!(selected, "provider-b");
 }
 
-/// Test router reports failures correctly
+#[rstest]
 #[tokio::test]
-async fn test_router_report_failure() {
-    let monitor = Arc::new(InMemoryHealthMonitor::new());
+async fn test_router_prefers_preferred_provider(
+    router_setup: (Arc<InMemoryHealthMonitor>, DefaultProviderRouter),
+) {
+    let (_, router) = router_setup;
+    // Both healthy
+    let ctx = ProviderContext::new().prefer("provider-b");
+    assert_eq!(
+        router.select_embedding_provider(&ctx).await.unwrap(),
+        "provider-b"
+    );
+}
 
-    let router =
-        DefaultProviderRouter::new(monitor.clone(), vec!["provider-a".to_string()], vec![]);
+#[rstest]
+#[tokio::test]
+async fn test_router_fallback_when_preferred_unhealthy(
+    router_setup: (Arc<InMemoryHealthMonitor>, DefaultProviderRouter),
+) {
+    let (monitor, router) = router_setup;
+    for _ in 0..5 {
+        monitor.record_failure("provider-b");
+    } // B Unhealthy
 
-    // Report failures via router
+    let ctx = ProviderContext::new().prefer("provider-b");
+    // Should fallback to A
+    assert_eq!(
+        router.select_embedding_provider(&ctx).await.unwrap(),
+        "provider-a"
+    );
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_router_reporting(router_setup: (Arc<InMemoryHealthMonitor>, DefaultProviderRouter)) {
+    let (_, router) = router_setup;
+
     for _ in 0..5 {
         router
             .report_failure("provider-a", "timeout")
             .await
             .unwrap();
     }
+    assert_eq!(
+        router.get_provider_health("provider-a").await.unwrap(),
+        ProviderHealthStatus::Unhealthy
+    );
 
-    // Check health through router
-    let health = router.get_provider_health("provider-a").await.unwrap();
-    assert_eq!(health, ProviderHealthStatus::Unhealthy);
-}
-
-/// Test router reports success correctly
-#[tokio::test]
-async fn test_router_report_success() {
-    let monitor = Arc::new(InMemoryHealthMonitor::new());
-
-    // Make provider degraded first
-    monitor.record_failure("provider-a");
-    monitor.record_failure("provider-a");
-
-    let router = DefaultProviderRouter::new(monitor, vec!["provider-a".to_string()], vec![]);
-
-    // Report success via router
     router.report_success("provider-a").await.unwrap();
-
-    // Should be healthy now
-    let health = router.get_provider_health("provider-a").await.unwrap();
-    assert_eq!(health, ProviderHealthStatus::Healthy);
+    assert_eq!(
+        router.get_provider_health("provider-a").await.unwrap(),
+        ProviderHealthStatus::Healthy
+    );
 }
 
-/// Test router returns error when no providers available
+#[rstest]
 #[tokio::test]
-async fn test_router_error_no_providers() {
-    let monitor = Arc::new(InMemoryHealthMonitor::new());
-
-    let router = DefaultProviderRouter::new(monitor, vec!["provider-a".to_string()], vec![]);
-
-    // Exclude the only provider
-    let context = ProviderContext::new().exclude("provider-a");
-    let result = router.select_embedding_provider(&context).await;
-
-    assert!(result.is_err());
+async fn test_router_error_no_providers(
+    router_setup: (Arc<InMemoryHealthMonitor>, DefaultProviderRouter),
+) {
+    let (_, router) = router_setup;
+    // Exclude all
+    let ctx = ProviderContext::new()
+        .exclude("provider-a")
+        .exclude("provider-b");
+    assert!(router.select_embedding_provider(&ctx).await.is_err());
 }

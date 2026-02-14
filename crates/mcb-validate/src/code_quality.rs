@@ -17,7 +17,6 @@
 use std::path::PathBuf;
 
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 
 use crate::ast::UnwrapDetector;
 use crate::scan::for_each_scan_rs_path;
@@ -25,104 +24,114 @@ use crate::thresholds::thresholds;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
-/// Quality violation types representing specific code quality issues.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum QualityViolation {
-    /// Indicates usage of `unwrap()` in production code, which poses a panic risk.
-    UnwrapInProduction {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the `unwrap()` call was detected.
-        line: usize,
-        /// Contextual code snippet showing the usage of `unwrap()`.
-        context: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates usage of `expect()` in production code, which poses a panic risk.
-    ExpectInProduction {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the `expect()` call was detected.
-        line: usize,
-        /// Contextual code snippet showing the usage of `expect()`.
-        context: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates usage of `panic!()` macro in production code.
-    PanicInProduction {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the `panic!()` macro occurred.
-        line: usize,
-        /// Contextual code snippet showing the usage of `panic!()`.
-        context: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates a file that exceeds the maximum allowed line count.
-    FileTooLarge {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The current total number of lines in the file.
-        lines: usize,
-        /// The maximum allowed number of lines for this file.
-        max_allowed: usize,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates presence of pending task comments (tracked via `PENDING_LABEL_*` constants).
-    ///
-    /// # Pending Task (QUAL005)
-    /// This variant represents a pending task in the codebase.
-    ///
-    /// TODO(QUAL005): Address pending comments in the codebase.
-    TodoComment {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the pending task comment was found.
-        line: usize,
-        /// The content of the comment, including the label type and message text.
-        content: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates usage of `allow(dead_code)` attribute, which is not permitted.
-    DeadCodeAllowNotPermitted {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the `#[allow(dead_code)]` attribute was found.
-        line: usize,
-        /// The name of the item (struct, function, field) marked as allowed dead code.
-        item_name: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates a struct field that is defined but never used.
-    UnusedStructField {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the field is defined.
-        line: usize,
-        /// The name of the struct containing the unused field.
-        struct_name: String,
-        /// The name of the field that appears to be unused.
-        field_name: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
-    /// Indicates a function that is marked as dead code and appears uncalled.
-    DeadFunctionUncalled {
-        /// The file containing the violation.
-        file: PathBuf,
-        /// The line number where the function is defined.
-        line: usize,
-        /// The name of the function that appears to be dead/uncalled.
-        function_name: String,
-        /// The severity level of the violation.
-        severity: Severity,
-    },
+define_violations! {
+    no_display,
+    dynamic_severity,
+    ViolationCategory::Quality,
+    pub enum QualityViolation {
+        /// Indicates usage of `unwrap()` in production code, which poses a panic risk.
+        #[violation(
+            id = "QUAL001",
+            severity = Error,
+            suggestion = "Use `?` operator or handle the error explicitly"
+        )]
+        UnwrapInProduction {
+            file: PathBuf,
+            line: usize,
+            context: String,
+            severity: Severity,
+        },
+        /// Indicates usage of `expect()` in production code, which poses a panic risk.
+        #[violation(
+            id = "QUAL002",
+            severity = Error,
+            suggestion = "Use `?` operator or handle the error explicitly"
+        )]
+        ExpectInProduction {
+            file: PathBuf,
+            line: usize,
+            context: String,
+            severity: Severity,
+        },
+        /// Indicates usage of `panic!()` macro in production code.
+        #[violation(
+            id = "QUAL003",
+            severity = Error,
+            suggestion = "Return an error instead of panicking"
+        )]
+        PanicInProduction {
+            file: PathBuf,
+            line: usize,
+            context: String,
+            severity: Severity,
+        },
+        /// Indicates a file that exceeds the maximum allowed line count.
+        #[violation(
+            id = "QUAL004",
+            severity = Warning,
+            suggestion = "Split file into smaller modules (max {max_allowed} lines)"
+        )]
+        FileTooLarge {
+            file: PathBuf,
+            lines: usize,
+            max_allowed: usize,
+            severity: Severity,
+        },
+        /// Indicates presence of pending task comments (tracked via `PENDING_LABEL_*` constants).
+        ///
+        /// # Pending Task (QUAL005)
+        /// This variant represents a pending task in the codebase.
+        ///
+        /// TODO(QUAL005): Address pending comments in the codebase.
+        #[violation(
+            id = "QUAL005",
+            severity = Warning,
+            suggestion = "Address the pending comment or create an issue to track it"
+        )]
+        TodoComment {
+            file: PathBuf,
+            line: usize,
+            content: String,
+            severity: Severity,
+        },
+        /// Indicates usage of `allow(dead_code)` attribute, which is not permitted.
+        #[violation(
+            id = "QUAL020",
+            severity = Warning,
+            suggestion = "Remove #[allow(dead_code)] and fix or remove the dead code; justifications are not permitted"
+        )]
+        DeadCodeAllowNotPermitted {
+            file: PathBuf,
+            line: usize,
+            item_name: String,
+            severity: Severity,
+        },
+        /// Indicates a struct field that is defined but never used.
+        #[violation(
+            id = "QUAL021",
+            severity = Warning,
+            suggestion = "Remove the unused field or document why it's kept (e.g., for serialization format versioning)"
+        )]
+        UnusedStructField {
+            file: PathBuf,
+            line: usize,
+            struct_name: String,
+            field_name: String,
+            severity: Severity,
+        },
+        /// Indicates a function that is marked as dead code and appears uncalled.
+        #[violation(
+            id = "QUAL022",
+            severity = Warning,
+            suggestion = "Remove the dead function or connect it to the public API if it's intended for future use"
+        )]
+        DeadFunctionUncalled {
+            file: PathBuf,
+            line: usize,
+            function_name: String,
+            severity: Severity,
+        },
+    }
 }
 
 impl QualityViolation {
@@ -254,95 +263,6 @@ impl std::fmt::Display for QualityViolation {
                     line,
                     function_name
                 )
-            }
-        }
-    }
-}
-
-impl Violation for QualityViolation {
-    fn id(&self) -> &str {
-        // # Self-referential Quality Patterns (QUAL005, QUAL020)
-        // These strings are used to report violations but may be flagged themselves.
-        //
-        // TODO(QUAL005): Address pending comments.
-        // TODO(QUAL020): Address allow(dead_code) mentions.
-        match self {
-            Self::UnwrapInProduction { .. } => "QUAL001",
-            Self::ExpectInProduction { .. } => "QUAL002",
-            Self::PanicInProduction { .. } => "QUAL003",
-            Self::FileTooLarge { .. } => "QUAL004",
-            Self::TodoComment { .. } => "QUAL005",
-            Self::DeadCodeAllowNotPermitted { .. } => "QUAL020",
-            Self::UnusedStructField { .. } => "QUAL021",
-            Self::DeadFunctionUncalled { .. } => "QUAL022",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Quality
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::UnwrapInProduction { severity, .. }
-            | Self::ExpectInProduction { severity, .. }
-            | Self::PanicInProduction { severity, .. }
-            | Self::FileTooLarge { severity, .. }
-            | Self::TodoComment { severity, .. }
-            | Self::DeadCodeAllowNotPermitted { severity, .. }
-            | Self::UnusedStructField { severity, .. }
-            | Self::DeadFunctionUncalled { severity, .. } => *severity,
-        }
-    }
-
-    fn file(&self) -> Option<&std::path::PathBuf> {
-        match self {
-            Self::UnwrapInProduction { file, .. }
-            | Self::ExpectInProduction { file, .. }
-            | Self::PanicInProduction { file, .. }
-            | Self::FileTooLarge { file, .. }
-            | Self::TodoComment { file, .. }
-            | Self::DeadCodeAllowNotPermitted { file, .. }
-            | Self::UnusedStructField { file, .. }
-            | Self::DeadFunctionUncalled { file, .. } => Some(file),
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::UnwrapInProduction { line, .. }
-            | Self::ExpectInProduction { line, .. }
-            | Self::PanicInProduction { line, .. }
-            | Self::TodoComment { line, .. }
-            | Self::DeadCodeAllowNotPermitted { line, .. }
-            | Self::UnusedStructField { line, .. }
-            | Self::DeadFunctionUncalled { line, .. } => Some(*line),
-            Self::FileTooLarge { .. } => None,
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::UnwrapInProduction { .. } | Self::ExpectInProduction { .. } => {
-                Some("Use `?` operator or handle the error explicitly".to_string())
-            }
-            Self::PanicInProduction { .. } => {
-                Some("Return an error instead of panicking".to_string())
-            }
-            Self::FileTooLarge { max_allowed, .. } => Some(format!(
-                "Split file into smaller modules (max {max_allowed} lines)"
-            )),
-            Self::TodoComment { .. } => {
-                Some("Address the pending comment or create an issue to track it".to_string())
-            }
-            Self::DeadCodeAllowNotPermitted { .. } => {
-                Some("Remove #[allow(dead_code)] and fix or remove the dead code; justifications are not permitted".to_string())
-            }
-            Self::UnusedStructField { .. } => {
-                Some("Remove the unused field or document why it's kept (e.g., for serialization format versioning)".to_string())
-            }
-            Self::DeadFunctionUncalled { .. } => {
-                Some("Remove the dead function or connect it to the public API if it's intended for future use".to_string())
             }
         }
     }

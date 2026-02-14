@@ -9,141 +9,134 @@
 
 use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
-
 use crate::Severity;
 use crate::violation_trait::{Violation, ViolationCategory};
 
-/// SOLID violation types
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SolidViolation {
-    /// SRP: Struct/Impl has too many responsibilities (too large)
-    TooManyResponsibilities {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Type of the item (struct, impl).
-        item_type: String,
-        /// Name of the item.
-        item_name: String,
-        /// Current line count.
-        line_count: usize,
-        /// Maximum allowed line count.
-        max_allowed: usize,
-        /// Suggested remediation action.
-        suggestion: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+define_violations! {
+    no_display,
+    dynamic_severity,
+    ViolationCategory::Solid,
+    pub enum SolidViolation {
+        /// SRP: Struct/Impl has too many responsibilities (too large)
+        #[violation(
+            id = "SOLID001",
+            severity = Warning,
+            suggestion = "{suggestion}"
+        )]
+        TooManyResponsibilities {
+            file: PathBuf,
+            line: usize,
+            item_type: String,
+            item_name: String,
+            line_count: usize,
+            max_allowed: usize,
+            suggestion: String,
+            severity: Severity,
+        },
 
-    /// OCP: Large match statement that may need extension pattern
-    ExcessiveMatchArms {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Number of match arms found.
-        arm_count: usize,
-        /// Recommended maximum number of arms.
-        max_recommended: usize,
-        /// Suggested remediation action.
-        suggestion: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// OCP: Large match statement that may need extension pattern
+        #[violation(
+            id = "SOLID002",
+            severity = Warning,
+            suggestion = "{suggestion}"
+        )]
+        ExcessiveMatchArms {
+            file: PathBuf,
+            line: usize,
+            arm_count: usize,
+            max_recommended: usize,
+            suggestion: String,
+            severity: Severity,
+        },
 
-    /// ISP: Trait has too many methods
-    TraitTooLarge {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the trait.
-        trait_name: String,
-        /// Number of methods in the trait.
-        method_count: usize,
-        /// Maximum allowed method count.
-        max_allowed: usize,
-        /// Suggested remediation action.
-        suggestion: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// ISP: Trait has too many methods
+        #[violation(
+            id = "SOLID003",
+            severity = Warning,
+            suggestion = "{suggestion}"
+        )]
+        TraitTooLarge {
+            file: PathBuf,
+            line: usize,
+            trait_name: String,
+            method_count: usize,
+            max_allowed: usize,
+            suggestion: String,
+            severity: Severity,
+        },
 
-    /// DIP: Module depends on concrete implementation
-    ConcreteDependency {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the concrete dependency.
-        dependency: String,
-        /// Layer where the violation occurred.
-        layer: String,
-        /// Suggested remediation action.
-        suggestion: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// DIP: Module depends on concrete implementation
+        #[violation(
+            id = "SOLID004",
+            severity = Warning,
+            suggestion = "{suggestion}"
+        )]
+        ConcreteDependency {
+            file: PathBuf,
+            line: usize,
+            dependency: String,
+            layer: String,
+            suggestion: String,
+            severity: Severity,
+        },
 
-    /// SRP: File has multiple unrelated structs
-    MultipleUnrelatedStructs {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// List of unrelated struct names.
-        struct_names: Vec<String>,
-        /// Suggested remediation action.
-        suggestion: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// SRP: File has multiple unrelated structs
+        #[violation(
+            id = "SOLID005",
+            severity = Info,
+            suggestion = "{suggestion}"
+        )]
+        MultipleUnrelatedStructs {
+            file: PathBuf,
+            struct_names: Vec<String>,
+            suggestion: String,
+            severity: Severity,
+        },
 
-    /// LSP: Trait method not implemented (only panic/todo)
-    PartialTraitImplementation {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the implementation.
-        impl_name: String,
-        /// Name of the method.
-        method_name: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// LSP: Trait method not implemented (only panic/todo)
+        #[violation(
+            id = "SOLID006",
+            severity = Warning,
+            suggestion = "Implement the method properly or remove the trait implementation"
+        )]
+        PartialTraitImplementation {
+            file: PathBuf,
+            line: usize,
+            impl_name: String,
+            method_name: String,
+            severity: Severity,
+        },
 
-    /// SRP: Impl block has too many methods
-    ImplTooManyMethods {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// Name of the type.
-        type_name: String,
-        /// Number of methods in the impl block.
-        method_count: usize,
-        /// Maximum allowed method count.
-        max_allowed: usize,
-        /// Suggested remediation action.
-        suggestion: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// SRP: Impl block has too many methods
+        #[violation(
+            id = "SOLID007",
+            severity = Warning,
+            suggestion = "{suggestion}"
+        )]
+        ImplTooManyMethods {
+            file: PathBuf,
+            line: usize,
+            type_name: String,
+            method_count: usize,
+            max_allowed: usize,
+            suggestion: String,
+            severity: Severity,
+        },
 
-    /// OCP: String-based type dispatch instead of polymorphism
-    StringBasedDispatch {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// The match expression being dispatched on.
-        match_expression: String,
-        /// Suggested remediation action.
-        suggestion: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+        /// OCP: String-based type dispatch instead of polymorphism
+        #[violation(
+            id = "SOLID008",
+            severity = Warning,
+            suggestion = "{suggestion}"
+        )]
+        StringBasedDispatch {
+            file: PathBuf,
+            line: usize,
+            match_expression: String,
+            suggestion: String,
+            severity: Severity,
+        },
+    }
 }
 
 impl SolidViolation {
@@ -303,80 +296,6 @@ impl std::fmt::Display for SolidViolation {
                     suggestion
                 )
             }
-        }
-    }
-}
-
-impl Violation for SolidViolation {
-    fn id(&self) -> &str {
-        match self {
-            Self::TooManyResponsibilities { .. } => "SOLID001",
-            Self::ExcessiveMatchArms { .. } => "SOLID002",
-            Self::TraitTooLarge { .. } => "SOLID003",
-            Self::ConcreteDependency { .. } => "SOLID004",
-            Self::MultipleUnrelatedStructs { .. } => "SOLID005",
-            Self::PartialTraitImplementation { .. } => "SOLID006",
-            Self::ImplTooManyMethods { .. } => "SOLID007",
-            Self::StringBasedDispatch { .. } => "SOLID008",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Solid
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::TooManyResponsibilities { severity, .. }
-            | Self::ExcessiveMatchArms { severity, .. }
-            | Self::TraitTooLarge { severity, .. }
-            | Self::ConcreteDependency { severity, .. }
-            | Self::MultipleUnrelatedStructs { severity, .. }
-            | Self::PartialTraitImplementation { severity, .. }
-            | Self::ImplTooManyMethods { severity, .. }
-            | Self::StringBasedDispatch { severity, .. } => *severity,
-        }
-    }
-
-    fn file(&self) -> Option<&PathBuf> {
-        match self {
-            Self::TooManyResponsibilities { file, .. }
-            | Self::ExcessiveMatchArms { file, .. }
-            | Self::TraitTooLarge { file, .. }
-            | Self::ConcreteDependency { file, .. }
-            | Self::MultipleUnrelatedStructs { file, .. }
-            | Self::PartialTraitImplementation { file, .. }
-            | Self::ImplTooManyMethods { file, .. }
-            | Self::StringBasedDispatch { file, .. } => Some(file),
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::MultipleUnrelatedStructs { .. } => None,
-            Self::TooManyResponsibilities { line, .. }
-            | Self::ExcessiveMatchArms { line, .. }
-            | Self::TraitTooLarge { line, .. }
-            | Self::ConcreteDependency { line, .. }
-            | Self::PartialTraitImplementation { line, .. }
-            | Self::ImplTooManyMethods { line, .. }
-            | Self::StringBasedDispatch { line, .. } => Some(*line),
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::PartialTraitImplementation { .. } => {
-                // TODO(NAME001): Bad type name: implementation (expected CamelCase) - False positive in string literal
-                Some("Implement the method properly or remove the trait implementation".to_string())
-            }
-            Self::TooManyResponsibilities { suggestion, .. }
-            | Self::ExcessiveMatchArms { suggestion, .. }
-            | Self::TraitTooLarge { suggestion, .. }
-            | Self::ConcreteDependency { suggestion, .. }
-            | Self::MultipleUnrelatedStructs { suggestion, .. }
-            | Self::ImplTooManyMethods { suggestion, .. }
-            | Self::StringBasedDispatch { suggestion, .. } => Some(suggestion.clone()),
         }
     }
 }

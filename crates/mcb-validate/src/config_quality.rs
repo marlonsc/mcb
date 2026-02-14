@@ -9,213 +9,82 @@
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 
 use crate::scan::for_each_scan_rs_path;
-use crate::violation_trait::{Violation, ViolationCategory};
+use crate::violation_trait::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
 
-/// Configuration quality violation types
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ConfigQualityViolation {
-    /// Hardcoded string in configuration that should be configurable
-    HardcodedConfigString {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// The hardcoded string value found in the configuration.
-        string_value: String,
-        /// Context describing where the hardcoded string is used (e.g., "HTTP header").
-        context: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Magic number in code outside constants module
-    MagicNumber {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// The magic number value found.
-        number: String,
-        /// Context describing where the magic number is used.
-        context: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Default implementation without documentation
-    UndocumentedDefault {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number where the `Default` implementation begins.
-        line: usize,
-        /// Name of the struct that has an undocumented `Default` implementation.
-        struct_name: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Configuration field without documentation
-    UndocumentedConfigField {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number where the configuration field is defined.
-        line: usize,
-        /// Name of the configuration field that is missing documentation.
-        field_name: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Hardcoded namespace or prefix that should be configurable
-    HardcodedNamespace {
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-        /// The hardcoded namespace string found.
-        namespace: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-}
-
-impl std::fmt::Display for ConfigQualityViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::HardcodedConfigString {
-                file,
-                line,
-                string_value,
-                context,
-                ..
-            } => write!(
-                f,
-                "{}:{} - Hardcoded string '{}' in {} - should be configurable",
-                file.display(),
-                line,
-                string_value,
-                context
-            ),
-            Self::MagicNumber {
-                file,
-                line,
-                number,
-                context,
-                ..
-            } => write!(
-                f,
-                "{}:{} - Magic number {} in {} - extract to constant",
-                file.display(),
-                line,
-                number,
-                context
-            ),
-            Self::UndocumentedDefault {
-                file,
-                line,
-                struct_name,
-                ..
-            } => write!(
-                f,
-                "{}:{} - Default implementation for '{}' missing documentation comment",
-                file.display(),
-                line,
-                struct_name
-            ),
-            Self::UndocumentedConfigField {
-                file,
-                line,
-                field_name,
-                ..
-            } => write!(
-                f,
-                "{}:{} - Configuration field '{}' missing documentation comment",
-                file.display(),
-                line,
-                field_name
-            ),
-            Self::HardcodedNamespace {
-                file,
-                line,
-                namespace,
-                ..
-            } => write!(
-                f,
-                "{}:{} - Hardcoded namespace '{}' - should be configurable with safe default",
-                file.display(),
-                line,
-                namespace
-            ),
-        }
-    }
-}
-
-impl Violation for ConfigQualityViolation {
-    fn id(&self) -> &str {
-        match self {
-            Self::HardcodedConfigString { .. } => "CFG001",
-            Self::MagicNumber { .. } => "CFG002",
-            Self::UndocumentedDefault { .. } => "CFG003",
-            Self::UndocumentedConfigField { .. } => "CFG004",
-            Self::HardcodedNamespace { .. } => "CFG005",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Configuration
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::HardcodedConfigString { severity, .. }
-            | Self::MagicNumber { severity, .. }
-            | Self::UndocumentedDefault { severity, .. }
-            | Self::UndocumentedConfigField { severity, .. }
-            | Self::HardcodedNamespace { severity, .. } => *severity,
-        }
-    }
-
-    fn file(&self) -> Option<&PathBuf> {
-        match self {
-            Self::HardcodedConfigString { file, .. }
-            | Self::MagicNumber { file, .. }
-            | Self::UndocumentedDefault { file, .. }
-            | Self::UndocumentedConfigField { file, .. }
-            | Self::HardcodedNamespace { file, .. } => Some(file),
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::HardcodedConfigString { line, .. }
-            | Self::MagicNumber { line, .. }
-            | Self::UndocumentedDefault { line, .. }
-            | Self::UndocumentedConfigField { line, .. }
-            | Self::HardcodedNamespace { line, .. } => Some(*line),
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::HardcodedConfigString { .. } => Some(
-                "Extract to configuration field with Option<String> and provide safe default"
-                    .to_string(),
-            ),
-            Self::MagicNumber { .. } => {
-                Some("Define as const in constants.rs or as configuration field".to_string())
-            }
-            Self::UndocumentedDefault { .. } => Some(
-                "Add documentation comment explaining default values and when to override"
-                    .to_string(),
-            ),
-            Self::UndocumentedConfigField { .. } => Some(
-                "Add documentation comment explaining the field's purpose and valid values"
-                    .to_string(),
-            ),
-            Self::HardcodedNamespace { .. } => Some(
-                "Make configurable via Option<String> with documented default value".to_string(),
-            ),
-        }
+define_violations! {
+    dynamic_severity,
+    ViolationCategory::Configuration,
+    pub enum ConfigQualityViolation {
+        /// Hardcoded string in configuration that should be configurable
+        #[violation(
+            id = "CFG001",
+            severity = Warning,
+            message = "{file}:{line} - Hardcoded string '{string_value}' in {context} - should be configurable",
+            suggestion = "Extract to configuration field with Option<String> and provide safe default"
+        )]
+        HardcodedConfigString {
+            file: PathBuf,
+            line: usize,
+            string_value: String,
+            context: String,
+            severity: Severity,
+        },
+        /// Magic number in code outside constants module
+        #[violation(
+            id = "CFG002",
+            severity = Warning,
+            message = "{file}:{line} - Magic number {number} in {context} - extract to constant",
+            suggestion = "Define as const in constants.rs or as configuration field"
+        )]
+        MagicNumber {
+            file: PathBuf,
+            line: usize,
+            number: String,
+            context: String,
+            severity: Severity,
+        },
+        /// Default implementation without documentation
+        #[violation(
+            id = "CFG003",
+            severity = Info,
+            message = "{file}:{line} - Default implementation for '{struct_name}' missing documentation comment",
+            suggestion = "Add documentation comment explaining default values and when to override"
+        )]
+        UndocumentedDefault {
+            file: PathBuf,
+            line: usize,
+            struct_name: String,
+            severity: Severity,
+        },
+        /// Configuration field without documentation
+        #[violation(
+            id = "CFG004",
+            severity = Info,
+            message = "{file}:{line} - Configuration field '{field_name}' missing documentation comment",
+            suggestion = "Add documentation comment explaining the field's purpose and valid values"
+        )]
+        UndocumentedConfigField {
+            file: PathBuf,
+            line: usize,
+            field_name: String,
+            severity: Severity,
+        },
+        /// Hardcoded namespace or prefix that should be configurable
+        #[violation(
+            id = "CFG005",
+            severity = Warning,
+            message = "{file}:{line} - Hardcoded namespace '{namespace}' - should be configurable with safe default",
+            suggestion = "Make configurable via Option<String> with documented default value"
+        )]
+        HardcodedNamespace {
+            file: PathBuf,
+            line: usize,
+            namespace: String,
+            severity: Severity,
+        },
     }
 }
 

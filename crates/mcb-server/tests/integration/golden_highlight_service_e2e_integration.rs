@@ -5,6 +5,7 @@
 
 use mcb_server::admin::web::highlight::highlight_code;
 use mcb_server::handlers::highlight_service::HighlightServiceImpl;
+use rstest::rstest;
 
 fn get_service() -> HighlightServiceImpl {
     HighlightServiceImpl::new()
@@ -77,39 +78,33 @@ fn test_golden_highlight_all_languages() {
     }
 }
 
+#[rstest]
+#[case("rust", "fn foo() {}")]
+#[case("rust", "\"hello\"")]
+#[case("rust", "// comment")]
+#[case("rust", "let x = 1;")]
+#[case("rust", "#[derive(Debug)]")]
 #[test]
-fn test_golden_highlight_categories() {
-    // Verify highlighting produces at least some category spans for code
-    let test_snippets = vec![
-        ("rust", "fn foo() {}"),
-        ("rust", "\"hello\""),
-        ("rust", "// comment"),
-        ("rust", "let x = 1;"),
-        ("rust", "#[derive(Debug)]"),
-    ];
+fn test_golden_highlight_categories(#[case] lang: &str, #[case] code: &str) {
+    let result = highlight_code(code, lang, &get_service());
+    assert!(
+        result.contains("hl-"),
+        "Expected highlighting classes in output for {}: {}",
+        code,
+        result
+    );
+}
 
-    for (lang, code) in test_snippets {
-        let result = highlight_code(code, lang, &get_service());
-        // Just verify some highlighting occurred (contains any hl- class)
-        assert!(
-            result.contains("hl-"),
-            "Expected highlighting classes in output for {}: {}",
-            code,
-            result
-        );
+#[rstest]
+#[case("", "rust")]
+#[case("   \n\n  ", "rust")]
+#[test]
+fn test_golden_highlight_empty_like_input(#[case] code: &str, #[case] lang: &str) {
+    let result = highlight_code(code, lang, &get_service());
+    if code.is_empty() {
+        assert_eq!(result, "", "Empty input should produce empty output");
+        return;
     }
-}
-
-#[test]
-fn test_golden_highlight_empty_input() {
-    let result = highlight_code("", "rust", &get_service());
-    assert_eq!(result, "", "Empty input should produce empty output");
-}
-
-#[test]
-fn test_golden_highlight_whitespace_only() {
-    let result = highlight_code("   \n\n  ", "rust", &get_service());
-    // Should handle gracefully (may produce empty or whitespace wrapper)
     assert!(
         !result.is_empty() || result.is_empty(),
         "Should not panic on whitespace-only input"

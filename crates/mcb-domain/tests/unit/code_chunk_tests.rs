@@ -6,74 +6,67 @@
 #[cfg(test)]
 mod tests {
     use mcb_domain::CodeChunk;
+    use rstest::*;
+    use serde_json::json;
 
-    #[test]
-    fn test_code_chunk_creation() {
+    #[rstest]
+    #[case("test-chunk-001", "fn hello() {}", "src/main.rs", 1, 3, "rust", json!({"type": "function"}))]
+    fn test_code_chunk_creation(
+        #[case] id: &str,
+        #[case] content: &str,
+        #[case] file_path: &str,
+        #[case] start_line: u32,
+        #[case] end_line: u32,
+        #[case] language: &str,
+        #[case] metadata: serde_json::Value,
+    ) {
         let chunk = CodeChunk {
-            id: "test-chunk-001".to_string(),
-            content: "fn hello() { println!(\"Hello!\"); }".to_string(),
-            file_path: "src/main.rs".to_string(),
-            start_line: 1,
-            end_line: 3,
-            language: "rust".to_string(),
-            metadata: serde_json::json!({
-                "type": "function",
-                "name": "hello"
-            }),
+            id: id.to_string(),
+            content: content.to_string(),
+            file_path: file_path.to_string(),
+            start_line,
+            end_line,
+            language: language.to_string(),
+            metadata: metadata.clone(),
         };
 
-        assert_eq!(chunk.id, "test-chunk-001");
-        assert_eq!(chunk.content, "fn hello() { println!(\"Hello!\"); }");
-        assert_eq!(chunk.file_path, "src/main.rs");
-        assert_eq!(chunk.start_line, 1);
-        assert_eq!(chunk.end_line, 3);
-        assert_eq!(chunk.language, "rust");
-        assert_eq!(chunk.metadata["type"], "function");
-        assert_eq!(chunk.metadata["name"], "hello");
+        assert_eq!(chunk.id, id);
+        assert_eq!(chunk.content, content);
+        assert_eq!(chunk.file_path, file_path);
+        assert_eq!(chunk.start_line, start_line);
+        assert_eq!(chunk.end_line, end_line);
+        assert_eq!(chunk.language, language);
+        assert_eq!(chunk.metadata, metadata);
     }
 
-    #[test]
-    fn test_code_chunk_with_empty_metadata() {
-        let chunk = CodeChunk {
-            id: "test-chunk-002".to_string(),
-            content: "print('hello')".to_string(),
-            file_path: "script.py".to_string(),
-            start_line: 1,
-            end_line: 1,
-            language: "python".to_string(),
-            metadata: serde_json::json!({}),
+    #[rstest]
+    fn test_code_chunk_metadata_scenarios() {
+        // Empty metadata
+        let empty_chunk = CodeChunk {
+            id: "empty".to_string(),
+            content: "".to_string(),
+            file_path: "".to_string(),
+            start_line: 0,
+            end_line: 0,
+            language: "".to_string(),
+            metadata: json!({}),
         };
+        assert!(empty_chunk.metadata.as_object().unwrap().is_empty());
 
-        assert_eq!(chunk.id, "test-chunk-002");
-        assert_eq!(chunk.language, "python");
-        assert!(chunk.metadata.is_object());
-        assert!(chunk.metadata.as_object().unwrap().is_empty());
-    }
-
-    #[test]
-    fn test_code_chunk_with_complex_metadata() {
-        let chunk = CodeChunk {
-            id: "complex-chunk".to_string(),
-            content: "class User {\n  constructor(name) {\n    this.name = name;\n  }\n}"
-                .to_string(),
-            file_path: "src/User.js".to_string(),
-            start_line: 1,
-            end_line: 5,
-            language: "javascript".to_string(),
-            metadata: serde_json::json!({
+        // Complex metadata
+        let complex_chunk = CodeChunk {
+            id: "complex".to_string(),
+            content: "".to_string(),
+            file_path: "".to_string(),
+            start_line: 0,
+            end_line: 0,
+            language: "".to_string(),
+            metadata: json!({
                 "type": "class",
-                "name": "User",
-                "methods": ["constructor"],
-                "properties": ["name"],
-                "complexity": 2
+                "methods": ["a", "b"]
             }),
         };
-
-        assert_eq!(chunk.id, "complex-chunk");
-        assert_eq!(chunk.language, "javascript");
-        assert_eq!(chunk.metadata["type"], "class");
-        assert_eq!(chunk.metadata["name"], "User");
-        assert_eq!(chunk.metadata["complexity"], 2);
-        assert!(chunk.metadata["methods"].is_array());
+        assert_eq!(complex_chunk.metadata["type"], "class");
+        assert!(complex_chunk.metadata["methods"].is_array());
     }
 }

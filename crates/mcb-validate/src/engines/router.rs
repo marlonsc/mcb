@@ -8,6 +8,7 @@
 //! - Rules with "condition"/"action" -> Rusty Rules engine (JSON DSL)
 //! - Default fallback -> Rusty Rules engine
 
+use derive_more::Display;
 use serde_json::Value;
 
 use crate::Result;
@@ -17,24 +18,17 @@ use crate::engines::rete_engine::ReteEngine;
 use crate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
 
 /// Engine type determined by router
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
 pub enum RoutedEngine {
     /// RETE engine for GRL rules with when/then
+    #[display("RETE")]
     Rete,
     /// Expression engine for simple boolean expressions
+    #[display("Expression")]
     Expression,
     /// Rusty Rules engine for JSON DSL rules
+    #[display("RustyRules")]
     RustyRules,
-}
-
-impl std::fmt::Display for RoutedEngine {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Rete => write!(f, "RETE"),
-            Self::Expression => write!(f, "Expression"),
-            Self::RustyRules => write!(f, "RustyRules"),
-        }
-    }
 }
 
 /// Rule Engine Router

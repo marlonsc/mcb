@@ -6,9 +6,11 @@ use mcb_domain::ports::repositories::FileHashRepository;
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::types::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
+use rstest::*;
 use tempfile::NamedTempFile;
 
-async fn create_repo() -> Arc<dyn FileHashRepository> {
+#[fixture]
+async fn file_hash_repo() -> Arc<dyn FileHashRepository> {
     let unique = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
@@ -22,9 +24,10 @@ async fn create_repo() -> Arc<dyn FileHashRepository> {
     ctx.file_hash_repository()
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_has_changed() {
-    let repo = create_repo().await;
+async fn test_has_changed(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
+    let repo = file_hash_repo.await;
 
     // New file
     assert!(repo.has_changed("test", "new.rs", "hash1").await.unwrap());
@@ -39,9 +42,10 @@ async fn test_has_changed() {
     assert!(repo.has_changed("test", "new.rs", "hash2").await.unwrap());
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_tombstone() {
-    let repo = create_repo().await;
+async fn test_tombstone(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
+    let repo = file_hash_repo.await;
 
     repo.upsert_hash("test", "file.rs", "hash").await.unwrap();
     repo.mark_deleted("test", "file.rs").await.unwrap();
@@ -51,9 +55,10 @@ async fn test_tombstone() {
     assert!(hash.is_none());
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_resurrect_after_tombstone() {
-    let repo = create_repo().await;
+async fn test_resurrect_after_tombstone(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
+    let repo = file_hash_repo.await;
 
     repo.upsert_hash("test", "file.rs", "hash1").await.unwrap();
     repo.mark_deleted("test", "file.rs").await.unwrap();
@@ -65,9 +70,10 @@ async fn test_resurrect_after_tombstone() {
     assert_eq!(hash, Some("hash2".to_string()));
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_get_indexed_files() {
-    let repo = create_repo().await;
+async fn test_get_indexed_files(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
+    let repo = file_hash_repo.await;
 
     repo.upsert_hash("col", "a.rs", "h1").await.unwrap();
     repo.upsert_hash("col", "b.rs", "h2").await.unwrap();
@@ -81,9 +87,10 @@ async fn test_get_indexed_files() {
     assert!(!files.contains(&"b.rs".to_string()));
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_compute_file_hash() {
-    let repo = create_repo().await;
+async fn test_compute_file_hash(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
+    let repo = file_hash_repo.await;
     let mut temp = NamedTempFile::new().unwrap();
     write!(temp, "Hello, World!").unwrap();
 
@@ -95,6 +102,7 @@ async fn test_compute_file_hash() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_indexing_persists_file_hash_metadata() {
     let unique = std::time::SystemTime::now()

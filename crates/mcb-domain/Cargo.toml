@@ -19,9 +19,14 @@ path = "src/lib.rs"
 # Serialization - pure lib acceptable for domain
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_with = { workspace = true }
 
 # Error handling - pure lib acceptable for domain
 thiserror = { workspace = true }
+derive_more = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
+typed-builder = { workspace = true }
 
 # Async traits - needed for port definitions
 async-trait = { workspace = true }

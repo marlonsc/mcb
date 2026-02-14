@@ -396,30 +396,37 @@ macro_rules! define_violations {
 
     // Get file field helper
     (@get_file $( $field:ident : $field_ty:ty ),*) => {{
+        #[allow(unused_assignments)]
+        #[allow(unused_mut)]
+        let mut file_path = None;
         $(
-            define_violations!(@check_file_field $field : $field_ty);
+            define_violations!(@check_file_field file_path, $field, $field : $field_ty);
         )*
-        None
+        file_path
     }};
 
-    (@check_file_field file : PathBuf) => { return Some(file) };
-    (@check_file_field file : std::path::PathBuf) => { return Some(file) };
-    (@check_file_field location : PathBuf) => { return Some(location) };
-    (@check_file_field location : std::path::PathBuf) => { return Some(location) };
-    (@check_file_field path : PathBuf) => { return Some(path) };
-    (@check_file_field path : std::path::PathBuf) => { return Some(path) };
-    (@check_file_field $field:ident : $field_ty:ty) => {};
+    (@check_file_field $var:ident, file, $f:ident : $field_ty:ty) => { $var = Some($f) };
+    (@check_file_field $var:ident, location, $f:ident : $field_ty:ty) => { $var = Some($f) };
+    (@check_file_field $var:ident, path, $f:ident : $field_ty:ty) => { $var = Some($f) };
+    (@check_file_field $var:ident, source_file, $f:ident : $field_ty:ty) => { $var = Some($f) };
+    (@check_file_field $var:ident, referencing_file, $f:ident : $field_ty:ty) => { $var = Some($f) };
+    (@check_file_field $var:ident, locations, $f:ident : Vec<PathBuf>) => { $var = $f.first() };
+    (@check_file_field $var:ident, locations, $f:ident : Vec<std::path::PathBuf>) => { $var = $f.first() };
+    (@check_file_field $var:ident, $ignore:ident, $f:ident : $field_ty:ty) => {};
 
     // Get line field helper
     (@get_line $( $field:ident : $field_ty:ty ),*) => {{
+        #[allow(unused_assignments)]
+        #[allow(unused_mut)]
+        let mut line_num = None;
         $(
-            define_violations!(@check_line_field $field : $field_ty);
+            define_violations!(@check_line_field line_num, $field, $field : $field_ty);
         )*
-        None
+        line_num
     }};
 
-    (@check_line_field line : usize) => { return Some(*line) };
-    (@check_line_field $field:ident : $field_ty:ty) => {};
+    (@check_line_field $var:ident, line, $f:ident : $field_ty:ty) => { $var = Some(*$f) };
+    (@check_line_field $var:ident, $ignore:ident, $f:ident : $field_ty:ty) => {};
 
     // Suggestion helper - with suggestion template
     (@suggestion $suggestion:literal, $( $field:ident : $field_ty:ty ),*) => {

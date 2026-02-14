@@ -4,7 +4,6 @@
 
 mod execution;
 mod handler;
-mod helpers;
 mod inject;
 mod list_timeline;
 mod observation;
@@ -12,4 +11,3 @@ mod quality_gate;
 mod session;
 
 pub use handler::MemoryHandler;
-pub use helpers::MemoryHelpers;

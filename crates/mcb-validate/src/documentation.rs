@@ -8,46 +8,54 @@
 use std::path::PathBuf;
 
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 
 use crate::scan::for_each_crate_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig, ValidationError};
 
-/// Documentation violation types
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum DocumentationViolation {
-    /// Missing module-level documentation
-    MissingModuleDoc {
-        /// File that is missing module-level documentation (`//!`).
-        file: PathBuf,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Missing documentation on public item
-    MissingPubItemDoc {
-        /// File containing the undocumented public item.
-        file: PathBuf,
-        /// Line number where the public item is defined.
-        line: usize,
-        /// Name of the public item missing documentation.
-        item_name: String,
-        /// Kind of item missing documentation (e.g., "struct", "enum", "trait", "function").
-        item_kind: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
-    /// Missing example code in documentation
-    MissingExampleCode {
-        /// File containing the item missing an example in its documentation.
-        file: PathBuf,
-        /// Line number where the item is defined.
-        line: usize,
-        /// Name of the item missing an example section.
-        item_name: String,
-        /// Severity level of the violation.
-        severity: Severity,
-    },
+define_violations! {
+    dynamic_severity,
+    ViolationCategory::Documentation,
+    pub enum DocumentationViolation {
+        /// Missing module-level documentation
+        #[violation(
+            id = "DOC001",
+            severity = Warning,
+            message = "Missing module doc: {file}",
+            suggestion = "Add //! module-level documentation at the top of the file"
+        )]
+        MissingModuleDoc {
+            file: PathBuf,
+            severity: Severity,
+        },
+        /// Missing documentation on public item
+        #[violation(
+            id = "DOC002",
+            severity = Warning,
+            message = "Missing {item_kind} doc: {file}:{line} - {item_name}",
+            suggestion = "Add /// documentation for {item_kind} {item_name}"
+        )]
+        MissingPubItemDoc {
+            file: PathBuf,
+            line: usize,
+            item_name: String,
+            item_kind: String,
+            severity: Severity,
+        },
+        /// Missing example code in documentation
+        #[violation(
+            id = "DOC003",
+            severity = Info,
+            message = "Missing example: {file}:{line} - {item_name}",
+            suggestion = "Add # Example section to {item_name} documentation"
+        )]
+        MissingExampleCode {
+            file: PathBuf,
+            line: usize,
+            item_name: String,
+            severity: Severity,
+        },
+    }
 }
 
 impl DocumentationViolation {
@@ -56,101 +64,6 @@ impl DocumentationViolation {
     /// Delegates to the [`Violation`] trait implementation to avoid duplication.
     pub fn severity(&self) -> Severity {
         <Self as Violation>::severity(self)
-    }
-}
-
-impl std::fmt::Display for DocumentationViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::MissingModuleDoc { file, .. } => {
-                write!(f, "Missing module doc: {}", file.display())
-            }
-            Self::MissingPubItemDoc {
-                file,
-                line,
-                item_name,
-                item_kind,
-                ..
-            } => {
-                write!(
-                    f,
-                    "Missing {} doc: {}:{} - {}",
-                    item_kind,
-                    file.display(),
-                    line,
-                    item_name
-                )
-            }
-            Self::MissingExampleCode {
-                file,
-                line,
-                item_name,
-                ..
-            } => {
-                write!(
-                    f,
-                    "Missing example: {}:{} - {}",
-                    file.display(),
-                    line,
-                    item_name
-                )
-            }
-        }
-    }
-}
-
-impl Violation for DocumentationViolation {
-    fn id(&self) -> &str {
-        match self {
-            Self::MissingModuleDoc { .. } => "DOC001",
-            Self::MissingPubItemDoc { .. } => "DOC002",
-            Self::MissingExampleCode { .. } => "DOC003",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Documentation
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::MissingModuleDoc { severity, .. }
-            | Self::MissingPubItemDoc { severity, .. }
-            | Self::MissingExampleCode { severity, .. } => *severity,
-        }
-    }
-
-    fn file(&self) -> Option<&PathBuf> {
-        match self {
-            Self::MissingModuleDoc { file, .. }
-            | Self::MissingPubItemDoc { file, .. }
-            | Self::MissingExampleCode { file, .. } => Some(file),
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::MissingModuleDoc { .. } => None,
-            Self::MissingPubItemDoc { line, .. } | Self::MissingExampleCode { line, .. } => {
-                Some(*line)
-            }
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::MissingModuleDoc { .. } => {
-                Some("Add //! module-level documentation at the top of the file".to_string())
-            }
-            Self::MissingPubItemDoc {
-                item_kind,
-                item_name,
-                ..
-            } => Some(format!("Add /// documentation for {item_kind} {item_name}")),
-            Self::MissingExampleCode { item_name, .. } => Some(format!(
-                "Add # Example section to {item_name} documentation"
-            )),
-        }
     }
 }
 

@@ -8,6 +8,7 @@
 
 use std::collections::HashMap;
 
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::value_objects::OperationId;
@@ -20,27 +21,20 @@ use crate::value_objects::OperationId;
 pub type JobId = OperationId;
 
 /// The type of work a job performs
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Display)]
 pub enum JobType {
     /// Codebase indexing operation
+    #[display("indexing")]
     Indexing,
     /// Architectural validation operation
+    #[display("validation")]
     Validation,
     /// Code analysis / complexity assessment
+    #[display("analysis")]
     Analysis,
     /// Custom job type with a user-defined label
+    #[display("custom:{_0}")]
     Custom(String),
-}
-
-impl std::fmt::Display for JobType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Indexing => write!(f, "indexing"),
-            Self::Validation => write!(f, "validation"),
-            Self::Analysis => write!(f, "analysis"),
-            Self::Custom(label) => write!(f, "custom:{label}"),
-        }
-    }
 }
 
 /// Lifecycle status of a job

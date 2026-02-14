@@ -5,6 +5,7 @@
 
 use std::path::Path;
 
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 /// Programming language identifier
@@ -30,34 +31,47 @@ pub type Language = String;
 /// let display = SupportedLanguage::Rust.as_str();
 /// assert_eq!(display, "rust");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Display)]
 #[serde(rename_all = "lowercase")]
 pub enum SupportedLanguage {
     /// Rust programming language
+    #[display("rust")]
     Rust,
     /// Python programming language
+    #[display("python")]
     Python,
     /// JavaScript (including JSX)
+    #[display("javascript")]
     JavaScript,
     /// TypeScript (including TSX)
+    #[display("typescript")]
     TypeScript,
     /// Go programming language
+    #[display("go")]
     Go,
     /// Java programming language
+    #[display("java")]
     Java,
     /// C programming language
+    #[display("c")]
     C,
     /// C++ programming language
+    #[display("cpp")]
     Cpp,
     /// C# programming language
+    #[display("csharp")]
     CSharp,
     /// Ruby programming language
+    #[display("ruby")]
     Ruby,
     /// PHP programming language
+    #[display("php")]
     Php,
     /// Swift programming language
+    #[display("swift")]
     Swift,
     /// Kotlin programming language
+    #[display("kotlin")]
     Kotlin,
 }
 
@@ -166,12 +180,6 @@ impl SupportedLanguage {
     pub fn is_metrics_supported(&self) -> bool {
         // RCA supports all these languages
         true
-    }
-}
-
-impl std::fmt::Display for SupportedLanguage {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
     }
 }
 

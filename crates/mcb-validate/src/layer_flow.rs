@@ -7,51 +7,54 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use regex::Regex;
-use serde::Serialize;
 
 use crate::config::LayerFlowRulesConfig;
 use crate::scan::for_each_rs_under_root;
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 
-/// Layer Flow Violations
-#[derive(Debug, Clone, Serialize)]
-pub enum LayerFlowViolation {
-    /// Dependency detected that violates the allowed layer flow.
-    ForbiddenDependency {
-        /// Name of the crate containing the violation.
-        source_crate: String,
-        /// Name of the crate being illegally imported.
-        target_crate: String,
-        /// The specific import path used in the source code.
-        import_path: String,
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-    },
-    /// Circular dependency detected between crates.
-    CircularDependency {
-        /// Name of the first crate involved in the circular dependency.
-        crate_a: String,
-        /// Name of the second crate involved in the circular dependency.
-        crate_b: String,
-        /// File where the dependency is declared (e.g., a Cargo.toml file).
-        file: PathBuf,
-        /// Line number where the declaration was found (usually 1 for Cargo.toml).
-        line: usize,
-    },
-    /// Domain layer importing external crates (should be pure).
-    DomainExternalDependency {
-        /// Name of the domain crate containing the external dependency.
-        crate_name: String,
-        /// Name of the external crate being imported.
-        external_crate: String,
-        /// File where the violation occurred.
-        file: PathBuf,
-        /// Line number of the violation.
-        line: usize,
-    },
+define_violations! {
+    no_display,
+    ViolationCategory::Architecture,
+    pub enum LayerFlowViolation {
+        /// Dependency detected that violates the allowed layer flow.
+        #[violation(
+            id = "LAYER001",
+            severity = Error,
+            suggestion = "Remove {target_crate} from {source_crate} - violates CA"
+        )]
+        ForbiddenDependency {
+            source_crate: String,
+            target_crate: String,
+            import_path: String,
+            file: PathBuf,
+            line: usize,
+        },
+        /// Circular dependency detected between crates.
+        #[violation(
+            id = "LAYER002",
+            severity = Error,
+            suggestion = "Extract shared types to the domain crate"
+        )]
+        CircularDependency {
+            crate_a: String,
+            crate_b: String,
+            file: PathBuf,
+            line: usize,
+        },
+        /// Domain layer importing external crates (should be pure).
+        #[violation(
+            id = "LAYER003",
+            severity = Warning,
+            suggestion = "Domain should only use std/serde/thiserror"
+        )]
+        DomainExternalDependency {
+            crate_name: String,
+            external_crate: String,
+            file: PathBuf,
+            line: usize,
+        },
+    }
 }
 
 impl std::fmt::Display for LayerFlowViolation {
@@ -98,61 +101,6 @@ impl std::fmt::Display for LayerFlowViolation {
                 file.display(),
                 line
             ),
-        }
-    }
-}
-
-impl Violation for LayerFlowViolation {
-    fn id(&self) -> &str {
-        match self {
-            Self::ForbiddenDependency { .. } => "LAYER001",
-            Self::CircularDependency { .. } => "LAYER002",
-            Self::DomainExternalDependency { .. } => "LAYER003",
-        }
-    }
-
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::Architecture
-    }
-
-    fn severity(&self) -> Severity {
-        match self {
-            Self::ForbiddenDependency { .. } | Self::CircularDependency { .. } => Severity::Error,
-            Self::DomainExternalDependency { .. } => Severity::Warning,
-        }
-    }
-
-    fn file(&self) -> Option<&PathBuf> {
-        match self {
-            Self::ForbiddenDependency { file, .. }
-            | Self::CircularDependency { file, .. }
-            | Self::DomainExternalDependency { file, .. } => Some(file),
-        }
-    }
-
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::ForbiddenDependency { line, .. }
-            | Self::CircularDependency { line, .. }
-            | Self::DomainExternalDependency { line, .. } => Some(*line),
-        }
-    }
-
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::ForbiddenDependency {
-                source_crate,
-                target_crate,
-                ..
-            } => Some(format!(
-                "Remove {target_crate} from {source_crate} - violates CA"
-            )),
-            Self::CircularDependency { .. } => {
-                Some("Extract shared types to the domain crate".to_string())
-            }
-            Self::DomainExternalDependency { .. } => {
-                Some("Domain should only use std/serde/thiserror".to_string())
-            }
         }
     }
 }

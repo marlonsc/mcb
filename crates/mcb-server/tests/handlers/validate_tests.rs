@@ -1,13 +1,12 @@
 use std::fs;
 use std::path::PathBuf;
-use std::sync::Arc;
 
 use mcb_server::args::{ValidateAction, ValidateArgs, ValidateScope};
 use mcb_server::handlers::ValidateHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use tempfile::TempDir;
 
-use crate::test_utils::mock_services::TestValidationService;
+use crate::handlers::test_helpers::create_real_domain_services;
 
 fn create_temp_file() -> (TempDir, PathBuf) {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
@@ -33,8 +32,8 @@ macro_rules! validate_test {
     ($test_name:ident, $action:expr, expect_mcp_error) => {
         #[tokio::test]
         async fn $test_name() {
-            let mock_service = TestValidationService::new();
-            let handler = ValidateHandler::new(Arc::new(mock_service));
+            let (services, _services_temp_dir) = create_real_domain_services().await;
+            let handler = ValidateHandler::new(services.validation_service);
 
             let args = ValidateArgs {
                 action: $action,
@@ -53,8 +52,8 @@ macro_rules! validate_test {
         #[tokio::test]
         async fn $test_name() {
             let (_temp_dir, path) = $path_expr;
-            let mock_service = TestValidationService::new();
-            let handler = ValidateHandler::new(Arc::new(mock_service));
+            let (services, _services_temp_dir) = create_real_domain_services().await;
+            let handler = ValidateHandler::new(services.validation_service);
 
             let args = ValidateArgs {
                 action: $action,
@@ -74,8 +73,8 @@ macro_rules! validate_test {
     ($test_name:ident, $action:expr, path: $path:expr, $(scope: $scope:expr,)? expect_error) => {
         #[tokio::test]
         async fn $test_name() {
-            let mock_service = TestValidationService::new();
-            let handler = ValidateHandler::new(Arc::new(mock_service));
+            let (services, _services_temp_dir) = create_real_domain_services().await;
+            let handler = ValidateHandler::new(services.validation_service);
 
             let args = ValidateArgs {
                 action: $action,
@@ -96,8 +95,8 @@ macro_rules! validate_test {
         #[tokio::test]
         async fn $test_name() {
             let (_temp_dir, path) = $path_expr;
-            let mock_service = TestValidationService::new();
-            let handler = ValidateHandler::new(Arc::new(mock_service));
+            let (services, _services_temp_dir) = create_real_domain_services().await;
+            let handler = ValidateHandler::new(services.validation_service);
 
             let args = ValidateArgs {
                 action: $action,
@@ -159,19 +158,30 @@ validate_test!(
     expect_ok
 );
 
-validate_test!(
-    test_validate_run_with_specific_rules,
-    ValidateAction::Run,
-    create_temp_file(),
-    scope: Some(ValidateScope::File),
-    rules: Some(vec!["rule1".to_string(), "rule2".to_string()]),
-    expect_ok
-);
+#[tokio::test]
+async fn test_validate_run_with_specific_rules() {
+    let (_temp_dir, path) = create_temp_file();
+    let (services, _services_temp_dir) = create_real_domain_services().await;
+    let handler = ValidateHandler::new(services.validation_service);
+
+    let args = ValidateArgs {
+        action: ValidateAction::Run,
+        path: Some(path.to_string_lossy().to_string()),
+        scope: Some(ValidateScope::File),
+        rules: Some(vec!["rule1".to_string(), "rule2".to_string()]),
+        category: None,
+    };
+
+    let result = handler.handle(Parameters(args)).await;
+    assert!(result.is_ok());
+    let response = result.expect("Expected response");
+    assert!(response.is_error.unwrap_or(false), "Should return error");
+}
 
 #[tokio::test]
 async fn test_validate_list_rules_all() {
-    let mock_service = TestValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
+    let (services, _services_temp_dir) = create_real_domain_services().await;
+    let handler = ValidateHandler::new(services.validation_service);
 
     let args = ValidateArgs {
         action: ValidateAction::ListRules,
@@ -190,8 +200,8 @@ async fn test_validate_list_rules_all() {
 
 #[tokio::test]
 async fn test_validate_list_rules_by_category() {
-    let mock_service = TestValidationService::new();
-    let handler = ValidateHandler::new(Arc::new(mock_service));
+    let (services, _services_temp_dir) = create_real_domain_services().await;
+    let handler = ValidateHandler::new(services.validation_service);
 
     let args = ValidateArgs {
         action: ValidateAction::ListRules,

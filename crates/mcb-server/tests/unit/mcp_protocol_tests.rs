@@ -13,8 +13,12 @@ extern crate mcb_providers;
 use std::net::TcpListener;
 use std::sync::Arc;
 
+use mcb_server::McpServer;
 use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
 use mcb_server::transport::types::{McpRequest, McpResponse};
+use rocket::local::asynchronous::Client;
+use rstest::*;
+use tempfile::TempDir;
 
 use crate::test_utils::test_fixtures::create_test_mcp_server;
 
@@ -29,35 +33,49 @@ fn get_free_port() -> u16 {
     port
 }
 
-// =============================================================================
-// PROTOCOL VERSION TESTS - Prevent regression of commit a1af74c
-// =============================================================================
+struct TestContext {
+    client: Client,
+    _server: Arc<McpServer>,
+    _temp: TempDir,
+}
 
-/// Test that initialize response returns protocolVersion as a string, not Debug format
-///
-/// This prevents regression of the fix in commit a1af74c where protocolVersion
-/// was incorrectly returning `ProtocolVersion("2025-03-26")` instead of `"2025-03-26"`.
-#[tokio::test]
-async fn test_initialize_response_protocol_version_is_string() {
+#[fixture]
+async fn ctx() -> TestContext {
     let port = get_free_port();
-    let (server_instance, _temp) = create_test_mcp_server().await;
+    let (server_instance, temp) = create_test_mcp_server().await;
     let server = Arc::new(server_instance);
 
     let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server);
+    let transport = HttpTransport::new(http_config, server.clone());
 
     let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
+    let client = Client::tracked(rocket)
         .await
         .expect("Failed to create test client");
 
+    TestContext {
+        client,
+        _server: server,
+        _temp: temp,
+    }
+}
+
+// =============================================================================
+// PROTOCOL VERSION & INITIALIZE TESTS
+// =============================================================================
+
+#[rstest]
+#[tokio::test]
+async fn test_initialize_response(#[future] ctx: TestContext) {
+    let ctx = ctx.await;
     let request = McpRequest {
         method: "initialize".to_string(),
         params: None,
         id: Some(serde_json::json!(1)),
     };
 
-    let response = client
+    let response = ctx
+        .client
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
         .body(serde_json::to_string(&request).unwrap())
@@ -72,159 +90,75 @@ async fn test_initialize_response_protocol_version_is_string() {
     assert!(mcp_response.error.is_none(), "Initialize should not error");
 
     let result = mcp_response.result.expect("Should have result");
+
+    // Check protocol version (regression test for a1af74c)
     let version = result
         .get("protocolVersion")
         .expect("Should have protocolVersion");
 
-    // CRITICAL: Protocol version MUST be a string, not Debug format
     assert!(
         version.is_string(),
-        "protocolVersion must be a JSON string, not Debug format. Got: {:?}",
+        "protocolVersion must be a JSON string. Got: {:?}",
         version
     );
-
     let version_str = version.as_str().unwrap();
-
-    // Should NOT contain "ProtocolVersion(" which indicates Debug format leak
     assert!(
         !version_str.contains("ProtocolVersion"),
         "protocolVersion has Debug format leak: {}",
         version_str
     );
-
-    // Should be a valid version string (e.g., "2025-03-26")
     assert!(
         version_str.contains("-"),
-        "protocolVersion should be date-formatted version string: {}",
+        "protocolVersion should be date-formatted: {}",
         version_str
     );
-}
 
-/// Test that initialize response has required serverInfo structure
-#[tokio::test]
-async fn test_initialize_response_has_server_info() {
-    let port = get_free_port();
-    let (server_instance, _temp) = create_test_mcp_server().await;
-    let server = Arc::new(server_instance);
-
-    let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server);
-
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
-
-    let request = McpRequest {
-        method: "initialize".to_string(),
-        params: None,
-        id: Some(serde_json::json!(1)),
-    };
-
-    let response = client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request).unwrap())
-        .dispatch()
-        .await;
-
-    let body = response.into_string().await.expect("Response body");
-    let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
-    let result = mcp_response.result.expect("Should have result");
-
-    // Verify serverInfo structure
+    // Check serverInfo
     let server_info = result.get("serverInfo").expect("Should have serverInfo");
     assert!(server_info.is_object(), "serverInfo should be an object");
-
-    let name = server_info
-        .get("name")
-        .expect("serverInfo should have name");
-    assert!(name.is_string(), "serverInfo.name should be a string");
+    let name = server_info.get("name").expect("Should have name");
     assert!(
-        !name.as_str().unwrap().is_empty(),
-        "serverInfo.name should not be empty"
+        name.is_string() && !name.as_str().unwrap().is_empty(),
+        "Invalid name"
+    );
+    assert!(
+        server_info
+            .get("version")
+            .expect("Should have version")
+            .is_string(),
+        "Invalid version"
     );
 
-    let version = server_info
-        .get("version")
-        .expect("serverInfo should have version");
-    assert!(version.is_string(), "serverInfo.version should be a string");
-}
-
-/// Test that initialize response has capabilities structure
-#[tokio::test]
-async fn test_initialize_response_has_capabilities() {
-    let port = get_free_port();
-    let (server_instance, _temp) = create_test_mcp_server().await;
-    let server = Arc::new(server_instance);
-
-    let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server);
-
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
-
-    let request = McpRequest {
-        method: "initialize".to_string(),
-        params: None,
-        id: Some(serde_json::json!(1)),
-    };
-
-    let response = client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request).unwrap())
-        .dispatch()
-        .await;
-
-    let body = response.into_string().await.expect("Response body");
-    let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
-    let result = mcp_response.result.expect("Should have result");
-
-    // Verify capabilities structure
+    // Check capabilities
     let capabilities = result
         .get("capabilities")
         .expect("Should have capabilities");
     assert!(capabilities.is_object(), "capabilities should be an object");
-
-    // Verify tools capability is present
-    let tools = capabilities
-        .get("tools")
-        .expect("capabilities should have tools");
-    assert!(tools.is_object(), "capabilities.tools should be an object");
+    assert!(
+        capabilities
+            .get("tools")
+            .expect("Should have tools")
+            .is_object(),
+        "tools cap should be object"
+    );
 }
 
 // =============================================================================
-// TOOL SCHEMA VALIDATION TESTS - Prevent regression of commit a1af74c
+// TOOL SCHEMA VALIDATION TESTS
 // =============================================================================
 
-/// Test that all tools have non-null inputSchema
-///
-/// This prevents regression of the fix in commit a1af74c where inputSchema
-/// was incorrectly returning null instead of the actual JSON Schema.
+#[rstest]
 #[tokio::test]
-async fn test_tools_list_has_input_schemas() {
-    let port = get_free_port();
-    let (server_instance, _temp) = create_test_mcp_server().await;
-    let server = Arc::new(server_instance);
-
-    let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server);
-
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
-
+async fn test_tools_schemas(#[future] ctx: TestContext) {
+    let ctx = ctx.await;
     let request = McpRequest {
         method: "tools/list".to_string(),
         params: None,
         id: Some(serde_json::json!(1)),
     };
 
-    let response = client
+    let response = ctx
+        .client
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
         .body(serde_json::to_string(&request).unwrap())
@@ -237,296 +171,97 @@ async fn test_tools_list_has_input_schemas() {
 
     let tools = result.get("tools").expect("Should have tools array");
     let tools_array = tools.as_array().expect("tools should be array");
-
     assert!(!tools_array.is_empty(), "Should have at least one tool");
 
-    // CRITICAL: Every tool MUST have a non-null inputSchema
+    // Verify all tools have valid schemas
     for tool in tools_array {
         let tool_name = tool
             .get("name")
             .and_then(|n| n.as_str())
             .unwrap_or("unknown");
-        let schema = tool.get("inputSchema");
+        let schema = tool.get("inputSchema").expect("Missing inputSchema");
 
+        // Regression check: not null
         assert!(
-            schema.is_some(),
-            "Tool '{}' is missing inputSchema field",
+            !schema.is_null(),
+            "Tool '{}' has null inputSchema",
+            tool_name
+        );
+        assert!(
+            schema.is_object(),
+            "Tool '{}' inputSchema should be object",
             tool_name
         );
 
-        let schema_value = schema.unwrap();
-        assert!(
-            !schema_value.is_null(),
-            "Tool '{}' has null inputSchema - regression of commit a1af74c fix!",
-            tool_name
+        let schema_type = schema.get("type").expect("Missing type in schema");
+        assert_eq!(
+            schema_type.as_str(),
+            Some("object"),
+            "Schema type must be object"
         );
 
-        // Schema should be a valid JSON Schema object
         assert!(
-            schema_value.is_object(),
-            "Tool '{}' inputSchema should be an object, got: {:?}",
-            tool_name,
-            schema_value
+            schema
+                .get("properties")
+                .expect("Missing properties")
+                .is_object(),
+            "properties must be object"
         );
     }
-}
 
-/// Test that index tool schema has required 'action' field
-#[tokio::test]
-async fn test_index_schema_has_required_action() {
-    let port = get_free_port();
-    let (server_instance, _temp) = create_test_mcp_server().await;
-    let server = Arc::new(server_instance);
-
-    let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server);
-
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
-
-    let request = McpRequest {
-        method: "tools/list".to_string(),
-        params: None,
-        id: Some(serde_json::json!(1)),
-    };
-
-    let response = client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request).unwrap())
-        .dispatch()
-        .await;
-
-    let body = response.into_string().await.expect("Response body");
-    let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
-    let result = mcp_response.result.expect("Should have result");
-
-    let tools = result.get("tools").unwrap().as_array().unwrap();
-    let index_tool = tools
+    // Verify specific tools requirements
+    let index_tool = tools_array
         .iter()
         .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("index"))
-        .expect("Should have index tool");
-
-    let schema = index_tool.get("inputSchema").unwrap();
-
-    // Check for required field
-    let required = schema.get("required");
-    assert!(
-        required.is_some(),
-        "index schema should have 'required' field"
-    );
-
-    let required_array = required
+        .expect("index tool missing");
+    let required = index_tool
+        .get("inputSchema")
         .unwrap()
+        .get("required")
+        .expect("req missing")
         .as_array()
-        .expect("required should be array");
+        .expect("req array");
     assert!(
-        required_array.iter().any(|v| v.as_str() == Some("action")),
-        "index schema should require 'action' field. Required: {:?}",
-        required_array
+        required.iter().any(|v| v.as_str() == Some("action")),
+        "index tool must require action"
     );
-}
 
-/// Test that search tool schema has required 'query' field
-#[tokio::test]
-async fn test_search_schema_has_required_query() {
-    let port = get_free_port();
-    let (server_instance, _temp) = create_test_mcp_server().await;
-    let server = Arc::new(server_instance);
-
-    let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server);
-
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
-
-    let request = McpRequest {
-        method: "tools/list".to_string(),
-        params: None,
-        id: Some(serde_json::json!(1)),
-    };
-
-    let response = client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request).unwrap())
-        .dispatch()
-        .await;
-
-    let body = response.into_string().await.expect("Response body");
-    let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
-    let result = mcp_response.result.expect("Should have result");
-
-    let tools = result.get("tools").unwrap().as_array().unwrap();
-    let search_tool = tools
+    let search_tool = tools_array
         .iter()
         .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("search"))
-        .expect("Should have search tool");
-
-    let schema = search_tool.get("inputSchema").unwrap();
-
-    // Check for required field
-    let required = schema.get("required");
-    assert!(
-        required.is_some(),
-        "search schema should have 'required' field"
-    );
-
-    let required_array = required
+        .expect("search tool missing");
+    let required = search_tool
+        .get("inputSchema")
         .unwrap()
+        .get("required")
+        .expect("req missing")
         .as_array()
-        .expect("required should be array");
+        .expect("req array");
     assert!(
-        required_array.iter().any(|v| v.as_str() == Some("query")),
-        "search schema should require 'query' field. Required: {:?}",
-        required_array
+        required.iter().any(|v| v.as_str() == Some("query")),
+        "search tool must require query"
     );
-}
-
-/// Test that all tool schemas have valid JSON Schema structure
-#[tokio::test]
-async fn test_tool_schemas_have_valid_structure() {
-    let port = get_free_port();
-    let (server_instance, _temp) = create_test_mcp_server().await;
-    let server = Arc::new(server_instance);
-
-    let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server);
-
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
-
-    let request = McpRequest {
-        method: "tools/list".to_string(),
-        params: None,
-        id: Some(serde_json::json!(1)),
-    };
-
-    let response = client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request).unwrap())
-        .dispatch()
-        .await;
-
-    let body = response.into_string().await.expect("Response body");
-    let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
-    let result = mcp_response.result.expect("Should have result");
-
-    let tools = result.get("tools").unwrap().as_array().unwrap();
-
-    for tool in tools {
-        let tool_name = tool
-            .get("name")
-            .and_then(|n| n.as_str())
-            .unwrap_or("unknown");
-        let schema = tool.get("inputSchema").unwrap();
-
-        // Verify JSON Schema structure
-        let schema_type = schema.get("type");
-        assert!(
-            schema_type.is_some(),
-            "Tool '{}' schema should have 'type' field",
-            tool_name
-        );
-        assert_eq!(
-            schema_type.unwrap().as_str(),
-            Some("object"),
-            "Tool '{}' schema type should be 'object'",
-            tool_name
-        );
-
-        // Properties should exist (even if empty)
-        let properties = schema.get("properties");
-        assert!(
-            properties.is_some(),
-            "Tool '{}' schema should have 'properties' field",
-            tool_name
-        );
-        assert!(
-            properties.unwrap().is_object(),
-            "Tool '{}' properties should be an object",
-            tool_name
-        );
-    }
 }
 
 // =============================================================================
 // JSON-RPC 2.0 FORMAT TESTS
 // =============================================================================
 
-/// Test that all responses have jsonrpc field set to "2.0"
+#[rstest]
+#[case("initialize")]
+#[case("tools/list")]
+#[case("ping")]
 #[tokio::test]
-async fn test_response_has_jsonrpc_field() {
-    let port = get_free_port();
-    let (server_instance, _temp) = create_test_mcp_server().await;
-    let server = Arc::new(server_instance);
-
-    let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server);
-
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
-
-    // Test multiple methods
-    let methods = vec!["initialize", "tools/list", "ping"];
-
-    for method in methods {
-        let request = McpRequest {
-            method: method.to_string(),
-            params: None,
-            id: Some(serde_json::json!(1)),
-        };
-
-        let response = client
-            .post("/mcp")
-            .header(rocket::http::ContentType::JSON)
-            .body(serde_json::to_string(&request).unwrap())
-            .dispatch()
-            .await;
-
-        let body = response.into_string().await.expect("Response body");
-        let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
-
-        assert_eq!(
-            mcp_response.jsonrpc, "2.0",
-            "Response for '{}' should have jsonrpc: \"2.0\"",
-            method
-        );
-    }
-}
-
-/// Test that response echoes back the request id
-#[tokio::test]
-async fn test_response_echoes_request_id() {
-    let port = get_free_port();
-    let (server_instance, _temp) = create_test_mcp_server().await;
-    let server = Arc::new(server_instance);
-
-    let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server);
-
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
-
-    // Test with numeric id
+async fn test_response_has_jsonrpc_field(#[future] ctx: TestContext, #[case] method: &str) {
+    let ctx = ctx.await;
     let request = McpRequest {
-        method: "ping".to_string(),
+        method: method.to_string(),
         params: None,
-        id: Some(serde_json::json!(42)),
+        id: Some(serde_json::json!(1)),
     };
 
-    let response = client
+    let response = ctx
+        .client
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
         .body(serde_json::to_string(&request).unwrap())
@@ -537,19 +272,29 @@ async fn test_response_echoes_request_id() {
     let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
 
     assert_eq!(
-        mcp_response.id,
-        Some(serde_json::json!(42)),
-        "Response should echo numeric request id"
+        mcp_response.jsonrpc, "2.0",
+        "Response for '{}' should have jsonrpc: \"2.0\"",
+        method
     );
+}
 
-    // Test with string id
+#[rstest]
+#[case(serde_json::json!(42))]
+#[case(serde_json::json!("test-id-123"))]
+#[tokio::test]
+async fn test_response_echoes_request_id(
+    #[future] ctx: TestContext,
+    #[case] id: serde_json::Value,
+) {
+    let ctx = ctx.await;
     let request = McpRequest {
         method: "ping".to_string(),
         params: None,
-        id: Some(serde_json::json!("test-id-123")),
+        id: Some(id.clone()),
     };
 
-    let response = client
+    let response = ctx
+        .client
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
         .body(serde_json::to_string(&request).unwrap())
@@ -559,36 +304,21 @@ async fn test_response_echoes_request_id() {
     let body = response.into_string().await.expect("Response body");
     let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
 
-    assert_eq!(
-        mcp_response.id,
-        Some(serde_json::json!("test-id-123")),
-        "Response should echo string request id"
-    );
+    assert_eq!(mcp_response.id, Some(id));
 }
 
-/// Test that error responses have code and message fields
+#[rstest]
 #[tokio::test]
-async fn test_error_response_has_code_and_message() {
-    let port = get_free_port();
-    let (server_instance, _temp) = create_test_mcp_server().await;
-    let server = Arc::new(server_instance);
-
-    let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server);
-
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
-
-    // Send unknown method to trigger error
+async fn test_error_response_structure(#[future] ctx: TestContext) {
+    let ctx = ctx.await;
     let request = McpRequest {
         method: "nonexistent/method".to_string(),
         params: None,
         id: Some(serde_json::json!(1)),
     };
 
-    let response = client
+    let response = ctx
+        .client
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
         .body(serde_json::to_string(&request).unwrap())
@@ -598,18 +328,8 @@ async fn test_error_response_has_code_and_message() {
     let body = response.into_string().await.expect("Response body");
     let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
 
-    assert!(
-        mcp_response.error.is_some(),
-        "Should have error for unknown method"
-    );
-
+    assert!(mcp_response.error.is_some(), "Should have error");
     let error = mcp_response.error.unwrap();
-    assert_eq!(
-        error.code, -32601,
-        "Error code should be -32601 (method not found)"
-    );
-    assert!(
-        !error.message.is_empty(),
-        "Error message should not be empty"
-    );
+    assert_eq!(error.code, -32601, "Error code -32601");
+    assert!(!error.message.is_empty(), "Error message not empty");
 }

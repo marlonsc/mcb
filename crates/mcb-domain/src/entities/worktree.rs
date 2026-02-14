@@ -35,8 +35,20 @@ pub struct Worktree {
 }
 
 /// Lifecycle status of a worktree.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::Display,
+    strum_macros::AsRefStr,
+    strum_macros::EnumString,
+)]
 #[serde(rename_all = "snake_case")]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
 pub enum WorktreeStatus {
     /// Worktree is available for use.
     Active,
@@ -49,31 +61,8 @@ pub enum WorktreeStatus {
 impl WorktreeStatus {
     /// Returns the string representation.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Active => "active",
-            Self::InUse => "in_use",
-            Self::Pruned => "pruned",
-        }
-    }
-}
-
-impl std::fmt::Display for WorktreeStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
-
-impl std::str::FromStr for WorktreeStatus {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "active" => Ok(Self::Active),
-            "in_use" => Ok(Self::InUse),
-            "pruned" => Ok(Self::Pruned),
-            _ => Err(format!("Unknown worktree status: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }
 

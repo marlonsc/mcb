@@ -26,6 +26,7 @@ use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
+use rstest::rstest;
 use serde_json::json;
 
 /// Test query structure matching the JSON fixture format
@@ -141,6 +142,24 @@ fn test_golden_queries_fixture_valid() {
     }
 }
 
+#[rstest]
+#[case("timeout_ms", true)]
+#[case("top_k", true)]
+#[case("relevance_threshold", true)]
+#[test]
+fn test_config_values_reasonable(#[case] field: &str, #[case] expected_valid: bool) {
+    let config = load_golden_queries();
+    let is_valid = match field {
+        "timeout_ms" => config.config.timeout_ms >= 1000,
+        "top_k" => config.config.top_k >= 1 && config.config.top_k <= 100,
+        "relevance_threshold" => {
+            config.config.relevance_threshold >= 0.0 && config.config.relevance_threshold <= 1.0
+        }
+        _ => false,
+    };
+    assert_eq!(is_valid, expected_valid, "Config field '{}' invalid", field);
+}
+
 #[test]
 fn test_query_ids_unique() {
     let config = load_golden_queries();
@@ -156,24 +175,6 @@ fn test_query_ids_unique() {
 }
 
 #[test]
-fn test_config_values_reasonable() {
-    let config = load_golden_queries();
-
-    assert!(
-        config.config.timeout_ms >= 1000,
-        "Timeout should be at least 1000ms"
-    );
-    assert!(
-        config.config.top_k >= 1 && config.config.top_k <= 100,
-        "top_k should be between 1 and 100"
-    );
-    assert!(
-        config.config.relevance_threshold >= 0.0 && config.config.relevance_threshold <= 1.0,
-        "Relevance threshold should be between 0 and 1"
-    );
-}
-
-#[test]
 fn test_sample_codebase_files_exist() {
     let chunks = read_sample_codebase_files();
 
@@ -185,23 +186,39 @@ fn test_sample_codebase_files_exist() {
     // Verify expected files exist
     let file_names: Vec<&str> = chunks.iter().map(|c| c.file_path.as_str()).collect();
 
-    let expected = [
-        "embedding.rs",
-        "vector_store.rs",
-        "handlers.rs",
-        "cache.rs",
-        "di.rs",
-        "error.rs",
-        "chunking.rs",
-    ];
-    for exp in expected {
-        assert!(
-            file_names.contains(&exp),
-            "Missing expected file {} in sample_codebase. Found: {:?}",
-            exp,
-            file_names
-        );
-    }
+    assert!(
+        file_names.contains(&"embedding.rs")
+            && file_names.contains(&"vector_store.rs")
+            && file_names.contains(&"handlers.rs")
+            && file_names.contains(&"cache.rs")
+            && file_names.contains(&"di.rs")
+            && file_names.contains(&"error.rs")
+            && file_names.contains(&"chunking.rs"),
+        "Missing expected files in sample_codebase. Found: {:?}",
+        file_names
+    );
+}
+
+#[rstest]
+#[case("embedding.rs")]
+#[case("vector_store.rs")]
+#[case("handlers.rs")]
+#[case("cache.rs")]
+#[case("di.rs")]
+#[case("error.rs")]
+#[case("chunking.rs")]
+#[test]
+fn test_sample_codebase_contains_expected_file(#[case] expected_file: &str) {
+    let file_names: Vec<String> = read_sample_codebase_files()
+        .into_iter()
+        .map(|c| c.file_path)
+        .collect();
+    assert!(
+        file_names.iter().any(|f| f == expected_file),
+        "Missing expected file {} in sample_codebase. Found: {:?}",
+        expected_file,
+        file_names
+    );
 }
 
 /// Create a test configuration with a unique database path to allow parallel execution

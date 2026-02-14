@@ -1,23 +1,24 @@
-use std::sync::Arc;
-
 use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::args::{SessionAction, SessionArgs};
 use mcb_server::handlers::SessionHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::test_utils::mock_services::{TestAgentSessionService, TestMemoryService};
+use crate::handlers::test_helpers::create_real_domain_services;
+
+async fn create_handler() -> (SessionHandler, tempfile::TempDir) {
+    let (services, temp_dir) = create_real_domain_services().await;
+    (
+        SessionHandler::new(services.agent_session_service, services.memory_service),
+        temp_dir,
+    )
+}
 
 macro_rules! session_test {
     ($test_name:ident, $action:expr, session_id: $session_id:expr, expect_ok) => {
         #[tokio::test]
         async fn $test_name() {
-            let agent_service = TestAgentSessionService::new();
-            let memory_service = TestMemoryService::new();
-            let handler = SessionHandler::new(
-                Arc::new(agent_service),
-                Arc::new(memory_service),
-            );
+            let (handler, _services_temp_dir) = create_handler().await;
 
             let args = SessionArgs {
                 action: $action,
@@ -41,12 +42,7 @@ macro_rules! session_test {
     ($test_name:ident, $action:expr, data: $data:expr, $(agent_type: $agent_type:expr,)? expect_ok) => {
         #[tokio::test]
         async fn $test_name() {
-            let agent_service = TestAgentSessionService::new();
-            let memory_service = TestMemoryService::new();
-            let handler = SessionHandler::new(
-                Arc::new(agent_service),
-                Arc::new(memory_service),
-            );
+            let (handler, _services_temp_dir) = create_handler().await;
 
             let args = SessionArgs {
                 action: $action,
@@ -71,12 +67,7 @@ macro_rules! session_test {
     ($test_name:ident, $action:expr, data: $data:expr, $(agent_type: $agent_type:expr,)? expect_error) => {
         #[tokio::test]
         async fn $test_name() {
-            let agent_service = TestAgentSessionService::new();
-            let memory_service = TestMemoryService::new();
-            let handler = SessionHandler::new(
-                Arc::new(agent_service),
-                Arc::new(memory_service),
-            );
+            let (handler, _services_temp_dir) = create_handler().await;
 
             let args = SessionArgs {
                 action: $action,
@@ -168,9 +159,7 @@ session_test!(
 
 #[tokio::test]
 async fn test_session_update_conflicting_project_id_rejected() {
-    let agent_service = TestAgentSessionService::new();
-    let memory_service = TestMemoryService::new();
-    let handler = SessionHandler::new(Arc::new(agent_service), Arc::new(memory_service));
+    let (handler, _services_temp_dir) = create_handler().await;
 
     let create_args = SessionArgs {
         action: SessionAction::Create,

@@ -35,25 +35,25 @@ impl CacheProviderConfig {
         }
     }
 
-    /// Set the URI
+    /// Set the connection URI (for distributed caches)
     pub fn with_uri(mut self, uri: impl Into<String>) -> Self {
         self.uri = Some(uri.into());
         self
     }
 
-    /// Set the max size
+    /// Set the maximum cache size (entries or bytes depending on provider)
     pub fn with_max_size(mut self, max_size: usize) -> Self {
         self.max_size = Some(max_size);
         self
     }
 
-    /// Set the TTL in seconds
+    /// Set the default TTL in seconds
     pub fn with_ttl_secs(mut self, ttl_secs: u64) -> Self {
         self.ttl_secs = Some(ttl_secs);
         self
     }
 
-    /// Set the namespace
+    /// Set the namespace prefix for keys
     pub fn with_namespace(mut self, namespace: impl Into<String>) -> Self {
         self.namespace = Some(namespace.into());
         self

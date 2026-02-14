@@ -102,10 +102,14 @@ async fn test_validate_detects_inline_tests_in_src_via_registry_path() {
 
     assert!(report.passed);
     assert!(report.warnings > 0);
-    assert!(report.violations.iter().any(|v| {
-        v.id == "TEST001"
-            && v.file
-                .as_deref()
-                .is_some_and(|f| f.ends_with("crates/foo/src/lib.rs"))
-    }));
+    assert!(
+        report.violations.iter().any(|v| {
+            v.id == "TEST001"
+                && v.file
+                    .as_deref()
+                    .is_some_and(|f| f.ends_with("crates/foo/src/lib.rs"))
+        }),
+        "violations={:?}",
+        report.violations
+    );
 }

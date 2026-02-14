@@ -49,6 +49,7 @@ cargo_metadata.workspace = true
 # Error handling
 thiserror.workspace = true
 anyhow.workspace = true
+derive_more.workspace = true
 
 # Date/time for timestamps
 chrono.workspace = true

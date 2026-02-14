@@ -17,45 +17,12 @@
 
 use std::sync::Arc;
 
-use async_trait::async_trait;
-use mcb_domain::error::Result;
-use mcb_domain::events::DomainEvent;
-use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
 use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
+use mcb_providers::events::TokioEventBusProvider;
 use mcb_server::admin::{auth::AdminAuthConfig, handlers::AdminState, routes::admin_rocket};
 use rocket::local::asynchronous::Client;
-
-// ============================================================================
-// Shared Test Event Bus
-// ============================================================================
-
-/// Null EventBus for admin testing.
-pub struct TestEventBus;
-
-#[async_trait]
-impl EventBusProvider for TestEventBus {
-    async fn publish_event(&self, _event: DomainEvent) -> Result<()> {
-        Ok(())
-    }
-
-    async fn subscribe_events(&self) -> Result<DomainEventStream> {
-        Ok(Box::pin(futures::stream::empty()))
-    }
-
-    fn has_subscribers(&self) -> bool {
-        false
-    }
-
-    async fn publish(&self, _topic: &str, _payload: &[u8]) -> Result<()> {
-        Ok(())
-    }
-
-    async fn subscribe(&self, _topic: &str) -> Result<String> {
-        Ok("test-subscription".to_string())
-    }
-}
 
 // ============================================================================
 // Admin Test Harness Builder
@@ -138,7 +105,7 @@ impl AdminTestHarness {
             config_path: None,
             shutdown_coordinator: None,
             shutdown_timeout_secs: self.shutdown_timeout_secs,
-            event_bus: Arc::new(TestEventBus),
+            event_bus: TokioEventBusProvider::new_shared(),
             service_manager: None,
             cache: None,
             project_workflow: None,

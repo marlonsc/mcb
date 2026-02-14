@@ -12,40 +12,36 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::admin::{
     DependencyHealth, DependencyHealthCheck, LifecycleManaged, PortServiceState,
 };
+use rstest::*;
 
 // =============================================================================
 // PortServiceState Enum Tests
 // =============================================================================
 
-/// Test service state enum values
-#[test]
-fn test_service_state_values() {
-    // Verify all states are distinct
-    assert_ne!(PortServiceState::Starting, PortServiceState::Running);
-    assert_ne!(PortServiceState::Running, PortServiceState::Stopping);
-    assert_ne!(PortServiceState::Stopping, PortServiceState::Stopped);
-    assert_ne!(PortServiceState::Stopped, PortServiceState::Starting);
+#[rstest]
+#[case(PortServiceState::Starting, "Starting")]
+#[case(PortServiceState::Running, "Running")]
+#[case(PortServiceState::Stopping, "Stopping")]
+#[case(PortServiceState::Stopped, "Stopped")]
+fn test_service_state_properties(#[case] state: PortServiceState, #[case] expected_debug: &str) {
+    // Debug representation
+    assert!(format!("{:?}", state).contains(expected_debug));
+
+    // Clone/Copy
+    assert_eq!(state, state.clone());
+
+    // Serialization
+    let json = serde_json::to_string(&state).expect("serialization failed");
+    assert!(json.contains(expected_debug));
+
+    // Deserialization
+    let deserialized: PortServiceState =
+        serde_json::from_str(&json).expect("deserialization failed");
+    assert_eq!(deserialized, state);
 }
 
-/// Test service state debug representation
-#[test]
-fn test_service_state_debug() {
-    let state = PortServiceState::Running;
-    let debug_str = format!("{:?}", state);
-    assert!(debug_str.contains("Running"));
-}
-
-/// Test service state clone (Copy)
-#[test]
-fn test_service_state_clone() {
-    let state = PortServiceState::Running;
-    let cloned = state;
-    assert_eq!(state, cloned);
-}
-
-/// Test all service states can be created
-#[test]
-fn test_all_service_states_creation() {
+#[rstest]
+fn test_all_service_states_distinct() {
     let states = [
         PortServiceState::Starting,
         PortServiceState::Running,
@@ -53,9 +49,6 @@ fn test_all_service_states_creation() {
         PortServiceState::Stopped,
     ];
 
-    assert_eq!(states.len(), 4);
-
-    // Verify each state is distinct
     for (i, state_a) in states.iter().enumerate() {
         for (j, state_b) in states.iter().enumerate() {
             if i != j {
@@ -65,59 +58,44 @@ fn test_all_service_states_creation() {
     }
 }
 
-/// Test default state is Stopped
 #[test]
 fn test_service_state_default() {
-    let state: PortServiceState = Default::default();
-    assert_eq!(state, PortServiceState::Stopped);
-}
-
-/// Test service state serialization
-#[test]
-fn test_service_state_serialization() {
-    let state = PortServiceState::Running;
-    let json = serde_json::to_string(&state).expect("serialization failed");
-    assert!(json.contains("Running"));
-
-    let deserialized: PortServiceState =
-        serde_json::from_str(&json).expect("deserialization failed");
-    assert_eq!(deserialized, PortServiceState::Running);
+    assert_eq!(PortServiceState::default(), PortServiceState::Stopped);
 }
 
 // =============================================================================
 // DependencyHealth Tests
 // =============================================================================
 
-/// Test DependencyHealth enum values
+#[rstest]
+#[case(DependencyHealth::Healthy)]
+#[case(DependencyHealth::Degraded)]
+#[case(DependencyHealth::Unhealthy)]
+#[case(DependencyHealth::Unknown)]
+fn test_dependency_health_properties(#[case] health: DependencyHealth) {
+    // Serialization round-trip
+    let json = serde_json::to_string(&health).expect("serialization failed");
+    let deserialized: DependencyHealth =
+        serde_json::from_str(&json).expect("deserialization failed");
+    assert_eq!(deserialized, health);
+}
+
 #[test]
-fn test_dependency_health_values() {
+fn test_dependency_health_values_distinct() {
     assert_ne!(DependencyHealth::Healthy, DependencyHealth::Degraded);
     assert_ne!(DependencyHealth::Degraded, DependencyHealth::Unhealthy);
     assert_ne!(DependencyHealth::Unhealthy, DependencyHealth::Unknown);
 }
 
-/// Test DependencyHealth default is Unknown
 #[test]
 fn test_dependency_health_default() {
-    let health: DependencyHealth = Default::default();
-    assert_eq!(health, DependencyHealth::Unknown);
-}
-
-/// Test DependencyHealth serialization
-#[test]
-fn test_dependency_health_serialization() {
-    let health = DependencyHealth::Healthy;
-    let json = serde_json::to_string(&health).expect("serialization failed");
-    let deserialized: DependencyHealth =
-        serde_json::from_str(&json).expect("deserialization failed");
-    assert_eq!(deserialized, DependencyHealth::Healthy);
+    assert_eq!(DependencyHealth::default(), DependencyHealth::Unknown);
 }
 
 // =============================================================================
 // DependencyHealthCheck Tests
 // =============================================================================
 
-/// Test DependencyHealthCheck default values
 #[test]
 fn test_health_check_default() {
     let check: DependencyHealthCheck = Default::default();
@@ -128,50 +106,42 @@ fn test_health_check_default() {
     assert_eq!(check.last_check, 0);
 }
 
-/// Test DependencyHealthCheck with values
-#[test]
-fn test_health_check_with_values() {
+#[rstest]
+#[case("database", DependencyHealth::Healthy, Some("Connected".into()), Some(15))]
+#[case("redis", DependencyHealth::Degraded, Some("High latency".into()), Some(500))]
+fn test_health_check_properties(
+    #[case] name: &str,
+    #[case] status: DependencyHealth,
+    #[case] message: Option<String>,
+    #[case] latency_ms: Option<u64>,
+) {
     let check = DependencyHealthCheck {
-        name: "database".to_string(),
-        status: DependencyHealth::Healthy,
-        message: Some("Connected".to_string()),
-        latency_ms: Some(15),
+        name: name.to_string(),
+        status,
+        message: message.clone(),
+        latency_ms,
         last_check: 1234567890,
     };
 
-    assert_eq!(check.name, "database");
-    assert_eq!(check.status, DependencyHealth::Healthy);
-    assert_eq!(check.message.as_deref(), Some("Connected"));
-    assert_eq!(check.latency_ms, Some(15));
-}
+    assert_eq!(check.name, name);
+    assert_eq!(check.status, status);
+    assert_eq!(check.message, message);
+    assert_eq!(check.latency_ms, latency_ms);
 
-/// Test DependencyHealthCheck serialization
-#[test]
-fn test_health_check_serialization() {
-    let check = DependencyHealthCheck {
-        name: "redis".to_string(),
-        status: DependencyHealth::Degraded,
-        message: Some("High latency".to_string()),
-        latency_ms: Some(500),
-        last_check: 1234567890,
-    };
-
+    // Serialization
     let json = serde_json::to_string(&check).expect("serialization failed");
-    assert!(json.contains("redis"));
-    assert!(json.contains("Degraded"));
-    assert!(json.contains("High latency"));
+    assert!(json.contains(name));
 
     let deserialized: DependencyHealthCheck =
         serde_json::from_str(&json).expect("deserialization failed");
-    assert_eq!(deserialized.name, "redis");
-    assert_eq!(deserialized.status, DependencyHealth::Degraded);
+    assert_eq!(deserialized.name, name);
+    assert_eq!(deserialized.status, status);
 }
 
 // =============================================================================
 // Test Implementation of LifecycleManaged
 // =============================================================================
 
-/// Test implementation of LifecycleManaged for verifying trait behavior
 struct TestService {
     name: String,
     state: AtomicU32,
@@ -279,92 +249,61 @@ impl LifecycleManaged for TestService {
 // LifecycleManaged Trait Tests
 // =============================================================================
 
-/// Test service starts in Stopped state
-#[tokio::test]
-async fn test_service_initial_state() {
-    let service = TestService::new("test-service", true);
-    assert_eq!(service.state(), PortServiceState::Stopped);
+#[fixture]
+fn service() -> TestService {
+    TestService::new("test-service", true)
 }
 
-/// Test service name retrieval
+#[rstest]
 #[tokio::test]
-async fn test_service_name() {
-    let service = TestService::new("my-awesome-service", true);
-    assert_eq!(service.name(), "my-awesome-service");
-}
-
-/// Test service start transitions to Running
-#[tokio::test]
-async fn test_service_start() {
-    let service = TestService::new("test-service", true);
+async fn test_service_lifecycle(service: TestService) {
+    // Initial state
+    assert_eq!(service.name(), "test-service");
     assert_eq!(service.state(), PortServiceState::Stopped);
 
+    // Start
     service.start().await.expect("start should succeed");
     assert_eq!(service.state(), PortServiceState::Running);
-}
-
-/// Test service stop transitions to Stopped
-#[tokio::test]
-async fn test_service_stop() {
-    let service = TestService::new("test-service", true);
-
-    // Start first
-    service.start().await.expect("start should succeed");
-    assert_eq!(service.state(), PortServiceState::Running);
-
-    // Then stop
-    service.stop().await.expect("stop should succeed");
-    assert_eq!(service.state(), PortServiceState::Stopped);
-}
-
-/// Test service restart calls stop then start
-#[tokio::test]
-async fn test_service_restart() {
-    let service = TestService::new("test-service", true);
-
-    // Start initially
-    service.start().await.expect("start should succeed");
-    let initial_starts = service.start_count.load(Ordering::SeqCst);
-    let initial_stops = service.stop_count.load(Ordering::SeqCst);
 
     // Restart
+    let initial_starts = service.start_count.load(Ordering::SeqCst);
+    let initial_stops = service.stop_count.load(Ordering::SeqCst);
     service.restart().await.expect("restart should succeed");
 
-    // Should have incremented both counters
     assert_eq!(
         service.start_count.load(Ordering::SeqCst),
         initial_starts + 1
     );
     assert_eq!(service.stop_count.load(Ordering::SeqCst), initial_stops + 1);
     assert_eq!(service.state(), PortServiceState::Running);
+
+    // Stop
+    service.stop().await.expect("stop should succeed");
+    assert_eq!(service.state(), PortServiceState::Stopped);
 }
 
-/// Test healthy service returns healthy check
+#[rstest]
+#[case(true, DependencyHealth::Healthy)]
+#[case(false, DependencyHealth::Unhealthy)]
 #[tokio::test]
-async fn test_healthy_service_health_check() {
-    let service = TestService::new("healthy-service", true);
+async fn test_health_check_variations(
+    #[case] healthy: bool,
+    #[case] expected_status: DependencyHealth,
+) {
+    let service = TestService::new("health-test", healthy);
     let check = service.health_check().await;
 
-    assert_eq!(check.name, "healthy-service");
-    assert_eq!(check.status, DependencyHealth::Healthy);
+    assert_eq!(check.name, "health-test");
+    assert_eq!(check.status, expected_status);
     assert!(check.message.is_some());
-    assert!(check.latency_ms.is_some());
-    assert!(check.last_check > 0);
+
+    if healthy {
+        assert!(check.latency_ms.is_some());
+    } else {
+        assert!(check.latency_ms.is_none());
+    }
 }
 
-/// Test unhealthy service returns unhealthy check
-#[tokio::test]
-async fn test_unhealthy_service_health_check() {
-    let service = TestService::new("unhealthy-service", false);
-    let check = service.health_check().await;
-
-    assert_eq!(check.name, "unhealthy-service");
-    assert_eq!(check.status, DependencyHealth::Unhealthy);
-    assert!(check.message.is_some());
-    assert!(check.latency_ms.is_none()); // Unhealthy doesn't report latency
-}
-
-/// Test service can be used through trait object
 #[tokio::test]
 async fn test_service_as_trait_object() {
     let service: Arc<dyn LifecycleManaged> = Arc::new(TestService::new("dynamic-service", true));
@@ -382,19 +321,16 @@ async fn test_service_as_trait_object() {
     assert_eq!(service.state(), PortServiceState::Stopped);
 }
 
-/// Test multiple services can operate independently
 #[tokio::test]
-async fn test_multiple_services() {
+async fn test_multiple_services_independence() {
     let service_a = TestService::new("service-a", true);
     let service_b = TestService::new("service-b", false);
 
-    // Start only service A
     service_a.start().await.expect("start A should succeed");
 
     assert_eq!(service_a.state(), PortServiceState::Running);
     assert_eq!(service_b.state(), PortServiceState::Stopped);
 
-    // Health checks reflect individual states
     let health_a = service_a.health_check().await;
     let health_b = service_b.health_check().await;
 

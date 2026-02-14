@@ -1,7 +1,18 @@
 use serde::{Deserialize, Serialize};
 
 /// Categories for error patterns to classify the type of error encountered.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum ErrorPatternCategory {
     /// Compilation errors.
     Compilation,
@@ -24,37 +35,8 @@ pub enum ErrorPatternCategory {
 impl ErrorPatternCategory {
     /// Returns the string representation of the error pattern category.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Compilation => "compilation",
-            Self::Runtime => "runtime",
-            Self::Test => "test",
-            Self::Lint => "lint",
-            Self::Build => "build",
-            Self::Config => "config",
-            Self::Network => "network",
-            Self::Other => "other",
-        }
-    }
-}
-
-impl std::str::FromStr for ErrorPatternCategory {
-    /// Error type for parsing failures.
-    type Err = String;
-
-    /// Parses a string into an `ErrorPatternCategory`.
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "compilation" => Ok(Self::Compilation),
-            "runtime" => Ok(Self::Runtime),
-            "test" => Ok(Self::Test),
-            "lint" => Ok(Self::Lint),
-            "build" => Ok(Self::Build),
-            "config" => Ok(Self::Config),
-            "network" => Ok(Self::Network),
-            "other" => Ok(Self::Other),
-            _ => Err(format!("Unknown error pattern category: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }
 

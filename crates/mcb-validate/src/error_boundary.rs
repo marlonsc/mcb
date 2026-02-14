@@ -7,53 +7,55 @@
 
 use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
-
 use crate::pattern_registry::{compile_regex, compile_regex_pairs};
 use crate::scan::for_each_scan_rs_path;
 use crate::violation_trait::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
-/// Error boundary violation types
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ErrorBoundaryViolation {
-    /// Error crossing layer without context
-    MissingErrorContext {
-        /// File containing the violation.
-        file: PathBuf,
-        /// Line number where the error propagation occurred.
-        line: usize,
-        /// Description of the error pattern detected (e.g., "?" operator usage).
-        error_pattern: String,
-        /// Recommended fix for the violation.
-        suggestion: String,
-        /// Severity of the violation.
-        severity: Severity,
-    },
-    /// Infrastructure error type used in domain layer
-    WrongLayerError {
-        /// File containing the violation.
-        file: PathBuf,
-        /// Line number where the incorrect error type was used.
-        line: usize,
-        /// The infrastructure error type detected (e.g., "std::io::Error").
-        error_type: String,
-        /// The architectural layer where the violation occurred.
-        layer: String,
-        /// Severity of the violation.
-        severity: Severity,
-    },
-    /// Internal error details leaked to external API
-    LeakedInternalError {
-        /// File containing the violation.
-        file: PathBuf,
-        /// Line number where the internal error leak occurred.
-        line: usize,
-        /// Description of the leak pattern detected (e.g., Debug formatting).
-        pattern: String,
-        /// Severity of the violation.
-        severity: Severity,
-    },
+define_violations! {
+    no_display,
+    dynamic_severity,
+    ViolationCategory::ErrorBoundary,
+    pub enum ErrorBoundaryViolation {
+        /// Error crossing layer without context
+        #[violation(
+            id = "ERR001",
+            severity = Warning,
+            suggestion = "{suggestion}"
+        )]
+        MissingErrorContext {
+            file: PathBuf,
+            line: usize,
+            error_pattern: String,
+            suggestion: String,
+            severity: Severity,
+        },
+        /// Infrastructure error type used in domain layer
+        #[violation(
+            id = "ERR002",
+            severity = Warning,
+            suggestion = "Wrap {error_type} in a domain error type instead of using it directly in {layer}"
+        )]
+        WrongLayerError {
+            file: PathBuf,
+            line: usize,
+            error_type: String,
+            layer: String,
+            severity: Severity,
+        },
+        /// Internal error details leaked to external API
+        #[violation(
+            id = "ERR003",
+            severity = Error,
+            suggestion = "Replace {pattern} with a sanitized error response that doesn't expose internal details"
+        )]
+        LeakedInternalError {
+            file: PathBuf,
+            line: usize,
+            pattern: String,
+            severity: Severity,
+        },
+    }
 }
 
 impl ErrorBoundaryViolation {
@@ -115,64 +117,6 @@ impl std::fmt::Display for ErrorBoundaryViolation {
                     pattern
                 )
             }
-        }
-    }
-}
-
-impl Violation for ErrorBoundaryViolation {
-    /// Returns the unique identifier for this violation type
-    fn id(&self) -> &str {
-        match self {
-            Self::MissingErrorContext { .. } => "ERR001",
-            Self::WrongLayerError { .. } => "ERR002",
-            Self::LeakedInternalError { .. } => "ERR003",
-        }
-    }
-
-    /// Returns the violation category
-    fn category(&self) -> ViolationCategory {
-        ViolationCategory::ErrorBoundary
-    }
-
-    /// Returns the severity level of this violation
-    fn severity(&self) -> Severity {
-        match self {
-            Self::MissingErrorContext { severity, .. }
-            | Self::WrongLayerError { severity, .. }
-            | Self::LeakedInternalError { severity, .. } => *severity,
-        }
-    }
-
-    /// Returns the file path where the violation was detected
-    fn file(&self) -> Option<&PathBuf> {
-        match self {
-            Self::MissingErrorContext { file, .. }
-            | Self::WrongLayerError { file, .. }
-            | Self::LeakedInternalError { file, .. } => Some(file),
-        }
-    }
-
-    /// Returns the line number where the violation was detected
-    fn line(&self) -> Option<usize> {
-        match self {
-            Self::MissingErrorContext { line, .. }
-            | Self::WrongLayerError { line, .. }
-            | Self::LeakedInternalError { line, .. } => Some(*line),
-        }
-    }
-
-    /// Returns a suggestion for fixing this violation
-    fn suggestion(&self) -> Option<String> {
-        match self {
-            Self::MissingErrorContext { suggestion, .. } => Some(suggestion.clone()),
-            Self::WrongLayerError {
-                error_type, layer, ..
-            } => Some(format!(
-                "Wrap {error_type} in a domain error type instead of using it directly in {layer}"
-            )),
-            Self::LeakedInternalError { pattern, .. } => Some(format!(
-                "Replace {pattern} with a sanitized error response that doesn't expose internal details"
-            )),
         }
     }
 }

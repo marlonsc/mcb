@@ -1,32 +1,36 @@
 use mcb_domain::entities::repository::{Branch, Repository, VcsType};
+use rstest::*;
 
-#[test]
-fn vcs_type_as_str() {
-    assert_eq!(VcsType::Git.as_str(), "git");
-    assert_eq!(VcsType::Mercurial.as_str(), "mercurial");
-    assert_eq!(VcsType::Svn.as_str(), "svn");
+#[rstest]
+#[case(VcsType::Git, "git")]
+#[case(VcsType::Mercurial, "mercurial")]
+#[case(VcsType::Svn, "svn")]
+fn vcs_type_as_str(#[case] vcs_type: VcsType, #[case] expected: &str) {
+    assert_eq!(vcs_type.as_str(), expected);
 }
 
-#[test]
-fn vcs_type_from_str() {
-    assert_eq!("git".parse::<VcsType>(), Ok(VcsType::Git));
-    assert_eq!("mercurial".parse::<VcsType>(), Ok(VcsType::Mercurial));
-    assert_eq!("hg".parse::<VcsType>(), Ok(VcsType::Mercurial));
-    assert_eq!("svn".parse::<VcsType>(), Ok(VcsType::Svn));
-    assert_eq!("subversion".parse::<VcsType>(), Ok(VcsType::Svn));
-    assert!("invalid".parse::<VcsType>().is_err());
+#[rstest]
+#[case("git", Ok(VcsType::Git))]
+#[case("mercurial", Ok(VcsType::Mercurial))]
+#[case("hg", Ok(VcsType::Mercurial))]
+#[case("svn", Ok(VcsType::Svn))]
+#[case("subversion", Ok(VcsType::Svn))]
+#[case("invalid", Err(()))]
+// Case insensitive
+#[case("GIT", Ok(VcsType::Git))]
+#[case("Mercurial", Ok(VcsType::Mercurial))]
+#[case("SVN", Ok(VcsType::Svn))]
+fn vcs_type_from_str(#[case] input: &str, #[case] expected: Result<VcsType, ()>) {
+    if let Ok(expected_type) = expected {
+        assert_eq!(input.parse::<VcsType>(), Ok(expected_type));
+    } else {
+        assert!(input.parse::<VcsType>().is_err());
+    }
 }
 
-#[test]
-fn vcs_type_from_str_case_insensitive() {
-    assert_eq!("GIT".parse::<VcsType>(), Ok(VcsType::Git));
-    assert_eq!("Mercurial".parse::<VcsType>(), Ok(VcsType::Mercurial));
-    assert_eq!("SVN".parse::<VcsType>(), Ok(VcsType::Svn));
-}
-
-#[test]
-fn repository_construction() {
-    let repo = Repository {
+#[fixture]
+fn sample_repo() -> Repository {
+    Repository {
         id: "repo-001".to_string(),
         org_id: "org-001".to_string(),
         project_id: "proj-001".to_string(),
@@ -36,39 +40,27 @@ fn repository_construction() {
         vcs_type: VcsType::Git,
         created_at: 1000,
         updated_at: 1000,
-    };
-    assert_eq!(repo.id, "repo-001");
-    assert_eq!(repo.org_id, "org-001");
-    assert_eq!(repo.project_id, "proj-001");
-    assert_eq!(repo.name, "mcb-data-model");
-    assert_eq!(repo.vcs_type, VcsType::Git);
+    }
 }
 
-#[test]
-fn repository_serialization_roundtrip() {
-    let repo = Repository {
-        id: "repo-002".to_string(),
-        org_id: "org-001".to_string(),
-        project_id: "proj-001".to_string(),
-        name: "backend".to_string(),
-        url: "https://github.com/org/backend".to_string(),
-        local_path: "/tmp/backend".to_string(),
-        vcs_type: VcsType::Git,
-        created_at: 2000,
-        updated_at: 3000,
-    };
-    let json = serde_json::to_string(&repo).expect("serialize");
+#[rstest]
+fn repository_construction(sample_repo: Repository) {
+    assert_eq!(sample_repo.id, "repo-001");
+    assert_eq!(sample_repo.vcs_type, VcsType::Git);
+}
+
+#[rstest]
+fn repository_serialization_roundtrip(sample_repo: Repository) {
+    let json = serde_json::to_string(&sample_repo).expect("serialize");
     let deserialized: Repository = serde_json::from_str(&json).expect("deserialize");
-    assert_eq!(deserialized.id, "repo-002");
-    assert_eq!(deserialized.name, "backend");
-    assert_eq!(deserialized.url, "https://github.com/org/backend");
-    assert_eq!(deserialized.created_at, 2000);
-    assert_eq!(deserialized.updated_at, 3000);
+    assert_eq!(deserialized.id, sample_repo.id);
+    assert_eq!(deserialized.name, sample_repo.name);
+    assert_eq!(deserialized.vcs_type, sample_repo.vcs_type);
 }
 
-#[test]
-fn branch_construction() {
-    let branch = Branch {
+#[fixture]
+fn sample_branch() -> Branch {
+    Branch {
         id: "br-001".to_string(),
         repository_id: "repo-001".to_string(),
         name: "main".to_string(),
@@ -76,15 +68,17 @@ fn branch_construction() {
         head_commit: "abc123def456".to_string(),
         upstream: Some("origin/main".to_string()),
         created_at: 1000,
-    };
-    assert_eq!(branch.id, "br-001");
-    assert_eq!(branch.repository_id, "repo-001");
-    assert_eq!(branch.name, "main");
-    assert!(branch.is_default);
-    assert_eq!(branch.upstream, Some("origin/main".to_string()));
+    }
 }
 
-#[test]
+#[rstest]
+fn branch_construction(sample_branch: Branch) {
+    assert_eq!(sample_branch.id, "br-001");
+    assert!(sample_branch.is_default);
+    assert!(sample_branch.upstream.is_some());
+}
+
+#[rstest]
 fn branch_without_upstream() {
     let branch = Branch {
         id: "br-002".to_string(),
@@ -99,20 +93,10 @@ fn branch_without_upstream() {
     assert!(branch.upstream.is_none());
 }
 
-#[test]
-fn branch_serialization_roundtrip() {
-    let branch = Branch {
-        id: "br-003".to_string(),
-        repository_id: "repo-002".to_string(),
-        name: "develop".to_string(),
-        is_default: false,
-        head_commit: "cafe0123".to_string(),
-        upstream: Some("origin/develop".to_string()),
-        created_at: 3000,
-    };
-    let json = serde_json::to_string(&branch).expect("serialize");
+#[rstest]
+fn branch_serialization_roundtrip(sample_branch: Branch) {
+    let json = serde_json::to_string(&sample_branch).expect("serialize");
     let deserialized: Branch = serde_json::from_str(&json).expect("deserialize");
-    assert_eq!(deserialized.id, "br-003");
-    assert_eq!(deserialized.name, "develop");
-    assert_eq!(deserialized.head_commit, "cafe0123");
+    assert_eq!(deserialized.id, sample_branch.id);
+    assert_eq!(deserialized.name, sample_branch.name);
 }

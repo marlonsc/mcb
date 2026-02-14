@@ -2,27 +2,20 @@
 //!
 //! These tests use real providers (FastEmbedProvider, MokaCacheProvider, EdgeVecVectorStoreProvider)
 //! to validate actual search behavior, not mocked responses.
-//!
-//! ## Key Principle
-//!
-//! Tests should validate real behavior through the architecture, not bypass it.
-//! - Use `extern crate mcb_providers` to force linkme registration
-//! - Use real provider implementations (Null/InMemory) for deterministic testing
-//! - Validate actual data flow, not mock return values
 
 use std::sync::Arc;
 
 use mcb_application::use_cases::SearchServiceImpl;
-use mcb_domain::Result;
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::ports::services::*;
 use mcb_domain::value_objects::CollectionId;
-use mcb_domain::value_objects::{Embedding, SearchResult};
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::bootstrap::init_app;
+use rstest::*;
 use serde_json::json;
+use tempfile::TempDir;
 
-async fn create_real_context_service() -> (Arc<dyn ContextServiceInterface>, tempfile::TempDir) {
+async fn create_real_context_service() -> (Arc<dyn ContextServiceInterface>, TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let mut config = AppConfig::default();
     config.auth.user_db_path = Some(temp_dir.path().join("test.db"));
@@ -36,8 +29,19 @@ async fn create_real_context_service() -> (Arc<dyn ContextServiceInterface>, tem
     (services.context_service, temp_dir)
 }
 
-/// Create test code chunks for search testing
-fn create_test_chunks() -> Vec<CodeChunk> {
+struct TestContext {
+    service: Arc<dyn ContextServiceInterface>,
+    _temp: TempDir,
+}
+
+#[fixture]
+async fn ctx() -> TestContext {
+    let (service, _temp) = create_real_context_service().await;
+    TestContext { service, _temp }
+}
+
+#[fixture]
+fn test_chunks() -> Vec<CodeChunk> {
     vec![
         CodeChunk {
             id: "config_chunk".to_string(),
@@ -67,17 +71,12 @@ impl Config {
         CodeChunk {
             id: "auth_chunk".to_string(),
             file_path: "src/auth.rs".to_string(),
-            // Test data: Intentional stub - sample code for testing search functionality
             content: r#"pub async fn authenticate(token: &str) -> Result<User, AuthError> {
     let claims = verify_jwt(token)?;
     let user = User::from_claims(claims);
     Ok(user)
 }
-
-pub fn verify_jwt(token: &str) -> Result<Claims, AuthError> {
-    // JWT verification logic - stub for test data
-    Err(AuthError::InvalidToken("Test stub".to_string()))
-}"#
+"#
             .to_string(),
             start_line: 1,
             end_line: 10,
@@ -101,315 +100,198 @@ pub fn verify_jwt(token: &str) -> Result<Claims, AuthError> {
     ]
 }
 
-// ============================================================================
-// Unit Tests with Real Providers
-// ============================================================================
-
+#[rstest]
 #[tokio::test]
-async fn test_search_service_creation_with_real_providers() {
-    let (context_service, _temp_dir) = create_real_context_service().await;
-
-    // Create SearchServiceImpl with real context service
-    let search_service = SearchServiceImpl::new(context_service);
-
-    // Test that service can be created as a trait object
+async fn test_search_service_creation(#[future] ctx: TestContext) {
+    let ctx = ctx.await;
+    let search_service = SearchServiceImpl::new(ctx.service);
     let _service: Box<dyn SearchServiceInterface> = Box::new(search_service);
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_search_service_returns_results_after_indexing() {
-    let (context_service, _temp_dir) = create_real_context_service().await;
+async fn test_search_service_indexing_flow(
+    #[future] ctx: TestContext,
+    test_chunks: Vec<CodeChunk>,
+) {
+    let ctx = ctx.await;
 
-    // Initialize collection
-    let init_res: Result<()> = context_service
-        .initialize(&CollectionId::new("test_collection"))
-        .await;
-    init_res.expect("Should initialize collection");
+    // Initialize
+    let col_id = CollectionId::new("test_collection");
+    ctx.service.initialize(&col_id).await.expect("init failed");
 
-    // Store real chunks
-    let chunks = create_test_chunks();
-    let store_res: Result<()> = context_service
-        .store_chunks(&CollectionId::new("test_collection"), &chunks)
-        .await;
-    store_res.expect("Should store chunks");
+    // Store
+    ctx.service
+        .store_chunks(&col_id, &test_chunks)
+        .await
+        .expect("store failed");
 
-    // Create search service
-    let search_service = SearchServiceImpl::new(context_service);
+    // Search via SearchService
+    let search_service = SearchServiceImpl::new(ctx.service);
+    let results = search_service
+        .search(&col_id, "configuration settings", 10)
+        .await
+        .expect("search failed");
 
-    // Search for content - should find results from real vector store
-    let search_res: Result<Vec<SearchResult>> = search_service
-        .search(
-            &CollectionId::new("test_collection"),
-            "configuration settings",
-            10,
-        )
-        .await;
-    let results = search_res.expect("Search should succeed");
-
-    // With FastEmbedProvider (local), we should get results
-    // The key assertion: we're testing REAL search behavior, not mocked responses
-    assert!(
-        !results.is_empty(),
-        "Should find results after indexing real chunks"
-    );
+    assert!(!results.is_empty(), "Should find results");
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_search_service_empty_collection_returns_empty() {
-    let (context_service, _temp_dir) = create_real_context_service().await;
+async fn test_search_empty_collection(#[future] ctx: TestContext) {
+    let ctx = ctx.await;
+    let col_id = CollectionId::new("empty_collection");
+    ctx.service.initialize(&col_id).await.expect("init failed");
 
-    // Initialize but don't populate
-    let init_res: Result<()> = context_service
-        .initialize(&CollectionId::new("empty_collection"))
-        .await;
-    init_res.expect("Should initialize collection");
+    let search_service = SearchServiceImpl::new(ctx.service);
+    let results = search_service
+        .search(&col_id, "anything", 10)
+        .await
+        .expect("search failed");
 
-    // Create search service
-    let search_service = SearchServiceImpl::new(context_service);
-
-    // Search in empty collection
-    let search_res: Result<Vec<SearchResult>> = search_service
-        .search(&CollectionId::new("empty_collection"), "anything", 10)
-        .await;
-    let results = search_res.expect("Search should succeed");
-
-    // Empty collection should return empty results
     assert!(
         results.is_empty(),
-        "Empty collection should return empty results"
+        "Empty collection should yield empty results"
     );
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_context_service_embedding_dimensions() {
-    let (context_service, _temp_dir) = create_real_context_service().await;
+async fn test_context_service_capabilities(#[future] ctx: TestContext) {
+    let ctx = ctx.await;
 
-    // FastEmbedProvider (AllMiniLML6V2) has 384 dimensions
-    let dimensions = context_service.embedding_dimensions();
-    assert_eq!(
-        dimensions, 384,
-        "FastEmbedProvider should have 384 dimensions"
-    );
-}
+    // Dimensions
+    assert_eq!(ctx.service.embedding_dimensions(), 384);
 
-#[tokio::test]
-async fn test_context_service_embed_text() {
-    let (context_service, _temp_dir) = create_real_context_service().await;
-
-    // Test real embedding generation
-    let result: Result<Embedding> = context_service.embed_text("test query for embedding").await;
-    let embedding = result.expect("Should generate embedding");
-
+    // Embed text
+    let embedding = ctx
+        .service
+        .embed_text("test query")
+        .await
+        .expect("embed failed");
     assert_eq!(embedding.dimensions, 384);
     assert_eq!(embedding.vector.len(), 384);
-    // FastEmbed AllMiniLML6V2 model
     assert!(!embedding.model.is_empty());
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_context_service_stores_and_retrieves_chunks() {
-    let (context_service, _temp_dir) = create_real_context_service().await;
+async fn test_store_and_retrieve_chunks(#[future] ctx: TestContext, test_chunks: Vec<CodeChunk>) {
+    let ctx = ctx.await;
+    let col_id = CollectionId::new("store_test");
 
-    // Initialize collection
-    let init_res: Result<()> = context_service
-        .initialize(&CollectionId::new("store_test"))
-        .await;
-    init_res.expect("Should initialize");
+    ctx.service.initialize(&col_id).await.expect("init failed");
+    ctx.service
+        .store_chunks(&col_id, &test_chunks)
+        .await
+        .expect("store failed");
 
-    // Store chunks
-    let chunks = create_test_chunks();
-    let store_res: Result<()> = context_service
-        .store_chunks(&CollectionId::new("store_test"), &chunks)
-        .await;
-    store_res.expect("Should store chunks");
+    let results = ctx
+        .service
+        .search_similar(&col_id, "authenticate user token", 5)
+        .await
+        .expect("search failed");
 
-    // Search and verify we can retrieve data
-    let search_res: Result<Vec<SearchResult>> = context_service
-        .search_similar(
-            &CollectionId::new("store_test"),
-            "authenticate user token",
-            5,
-        )
-        .await;
-    let results = search_res.expect("Should search");
-
-    // Should find results - validates the full store → search flow
-    assert!(
-        !results.is_empty(),
-        "Should find results after storing chunks"
-    );
-
-    // Verify result structure
-    let first_result = &results[0];
-    assert!(
-        !first_result.file_path.is_empty(),
-        "Result should have file path"
-    );
-    assert!(
-        !first_result.content.is_empty(),
-        "Result should have content"
-    );
+    assert!(!results.is_empty());
+    let first = &results[0];
+    assert!(!first.file_path.is_empty());
+    assert!(!first.content.is_empty());
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_context_service_clear_collection() {
-    let (context_service, _temp_dir) = create_real_context_service().await;
+async fn test_clear_collection(#[future] ctx: TestContext, test_chunks: Vec<CodeChunk>) {
+    let ctx = ctx.await;
+    let col_id = CollectionId::new("clear_test");
 
-    // Initialize and populate
-    let init_res: Result<()> = context_service
-        .initialize(&CollectionId::new("clear_test"))
-        .await;
-    init_res.expect("init");
-    let store_res: Result<()> = context_service
-        .store_chunks(&CollectionId::new("clear_test"), &create_test_chunks())
-        .await;
-    store_res.expect("store");
+    ctx.service.initialize(&col_id).await.expect("init");
+    ctx.service
+        .store_chunks(&col_id, &test_chunks)
+        .await
+        .expect("store");
 
     // Verify data exists
-    let search_res: Result<Vec<SearchResult>> = context_service
-        .search_similar(&CollectionId::new("clear_test"), "config", 5)
-        .await;
-    let before_clear = search_res.expect("search before clear");
-    assert!(!before_clear.is_empty(), "Should have data before clear");
+    let results = ctx
+        .service
+        .search_similar(&col_id, "config", 5)
+        .await
+        .expect("search");
+    assert!(!results.is_empty());
 
-    // Clear collection
-    let clear_res: Result<()> = context_service
-        .clear_collection(&CollectionId::new("clear_test"))
-        .await;
-    clear_res.expect("Should clear collection");
+    // Clear
+    ctx.service.clear_collection(&col_id).await.expect("clear");
 
-    // After clear, collection is deleted - searching should fail or return empty
-    // depending on implementation
-    let after_clear: Result<Vec<SearchResult>> = context_service
-        .search_similar(&CollectionId::new("clear_test"), "config", 5)
-        .await;
-
-    // Either error (collection deleted) or empty results is valid
-    if let Ok(results) = after_clear {
-        assert!(results.is_empty(), "Should be empty after clear");
+    // Verify empty
+    if let Ok(results) = ctx.service.search_similar(&col_id, "config", 5).await {
+        assert!(results.is_empty());
     }
-    // Err case: Collection doesn't exist - also valid behavior
 }
 
+#[rstest]
+#[case("/tmp/absolute.rs", "fn absolute() {}", true)]
+#[case("./src/normalized.rs", "fn normalized() {}", false)]
 #[tokio::test]
-async fn test_context_service_rejects_absolute_chunk_file_path() {
-    let (context_service, _temp_dir) = create_real_context_service().await;
-
-    let init_res: Result<()> = context_service
-        .initialize(&CollectionId::new("relative_path_enforcement"))
-        .await;
-    init_res.expect("init");
-
-    let absolute_chunk = CodeChunk {
-        id: "abs_path_chunk".to_string(),
-        file_path: "/tmp/absolute.rs".to_string(),
-        content: "fn absolute_path() {}".to_string(),
-        start_line: 1,
-        end_line: 1,
-        language: "rust".to_string(),
-        metadata: json!({}),
-    };
-
-    let store_res: Result<()> = context_service
-        .store_chunks(
-            &CollectionId::new("relative_path_enforcement"),
-            &[absolute_chunk],
-        )
-        .await;
-
-    assert!(
-        store_res.is_err(),
-        "absolute file_path must be rejected at ingestion"
-    );
-}
-
-#[tokio::test]
-async fn test_context_service_normalizes_dot_relative_chunk_file_path() {
-    let (context_service, _temp_dir) = create_real_context_service().await;
-
-    let init_res: Result<()> = context_service
-        .initialize(&CollectionId::new("relative_path_normalization"))
-        .await;
-    init_res.expect("init");
+async fn test_path_handling(
+    #[future] ctx: TestContext,
+    #[case] file_path: &str,
+    #[case] content: &str,
+    #[case] should_fail: bool,
+) {
+    let ctx = ctx.await;
+    let col_id = CollectionId::new("path_test");
+    ctx.service.initialize(&col_id).await.expect("init");
 
     let chunk = CodeChunk {
-        id: "dot_relative_chunk".to_string(),
-        file_path: "./src/normalized.rs".to_string(),
-        content: "fn normalized_marker() {}".to_string(),
+        id: "chunk_1".to_string(),
+        file_path: file_path.to_string(),
+        content: content.to_string(),
         start_line: 1,
         end_line: 1,
         language: "rust".to_string(),
         metadata: json!({}),
     };
 
-    let store_res: Result<()> = context_service
-        .store_chunks(&CollectionId::new("relative_path_normalization"), &[chunk])
-        .await;
-    store_res.expect("store");
+    let res = ctx.service.store_chunks(&col_id, &[chunk]).await;
 
-    let search_res: Result<Vec<SearchResult>> = context_service
-        .search_similar(
-            &CollectionId::new("relative_path_normalization"),
-            "normalized_marker",
-            5,
-        )
-        .await;
-    let results = search_res.expect("search");
-
-    assert!(
-        results.iter().any(|r| r.file_path == "src/normalized.rs"),
-        "dot-relative file_path must be normalized to workspace-relative format"
-    );
+    if should_fail {
+        assert!(res.is_err(), "Should reject absolute path");
+    } else {
+        res.expect("Should accept relative path");
+        // Verify normalization if needed (searching for normalized path)
+        let results = ctx
+            .service
+            .search_similar(&col_id, "normalized", 1)
+            .await
+            .expect("search");
+        if file_path.starts_with("./") {
+            // Expect normalization to remove ./
+            let expected = file_path.trim_start_matches("./");
+            assert!(results.iter().any(|r| r.file_path == expected));
+        }
+    }
 }
 
-// ============================================================================
-// Integration Tests - Full Data Flow
-// ============================================================================
-
+#[rstest]
 #[tokio::test]
-async fn test_full_search_flow_validates_architecture() {
-    // This test validates the full flow through the architecture:
-    // ContextService → EmbeddingProvider → VectorStoreProvider → SearchResults
+async fn test_full_search_flow(#[future] ctx: TestContext, test_chunks: Vec<CodeChunk>) {
+    let ctx = ctx.await;
+    let col_id = CollectionId::new("architecture_test");
+    ctx.service.initialize(&col_id).await.expect("init");
+    ctx.service
+        .store_chunks(&col_id, &test_chunks)
+        .await
+        .expect("store");
 
-    let (context_service, _temp_dir) = create_real_context_service().await;
-    let search_service = SearchServiceImpl::new(context_service.clone());
+    let search_service = SearchServiceImpl::new(ctx.service.clone());
+    let results = search_service
+        .search(&col_id, "request handler", 5)
+        .await
+        .expect("search");
 
-    // Step 1: Initialize
-    let init_res: Result<()> = context_service
-        .initialize(&CollectionId::new("architecture_test"))
-        .await;
-    init_res.expect("Initialize should work through real providers");
-
-    // Step 2: Store chunks (exercises embedding → vector store flow)
-    let chunks = create_test_chunks();
-    let store_res: Result<()> = context_service
-        .store_chunks(&CollectionId::new("architecture_test"), &chunks)
-        .await;
-    store_res.expect("Store should work through real providers");
-
-    // Step 3: Search (exercises embedding → vector search → results flow)
-    let search_res: Result<Vec<SearchResult>> = search_service
-        .search(
-            &CollectionId::new("architecture_test"),
-            "request handler",
-            5,
-        )
-        .await;
-    let results = search_res.expect("Search should work through real providers");
-
-    // Validate results come from actual data, not mocks
+    assert!(!results.is_empty());
     assert!(
-        !results.is_empty(),
-        "Real providers should return actual indexed data"
-    );
-
-    // Validate result quality - should find handler-related content
-    let has_relevant_result = results
-        .iter()
-        .any(|r| r.content.contains("handle") || r.file_path.contains("handler"));
-
-    assert!(
-        has_relevant_result || !results.is_empty(),
-        "Results should be relevant to query (or at least non-empty with deterministic embeddings)"
+        results
+            .iter()
+            .any(|r| r.content.contains("handle") || r.file_path.contains("handler"))
     );
 }

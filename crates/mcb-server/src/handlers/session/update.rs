@@ -4,13 +4,13 @@ use mcb_domain::constants::keys as schema;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use serde_json::Value;
 
-use super::helpers::SessionHelpers;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::resolve_identifier_precedence;
-use crate::utils::json::{self, JsonMapExt};
+use crate::utils::json;
 use tracing::error;
 
 /// Updates an existing agent session.
@@ -29,16 +29,36 @@ pub async fn update_session(
     };
     let data = json::json_map(&args.data);
     let status = match args.status.as_ref() {
-        Some(status) => Some(SessionHelpers::parse_status(status)?),
+        Some(status) => Some(
+            status
+                .parse()
+                .map_err(|e: String| McpError::invalid_params(e, None))?,
+        ),
         None => data
-            .and_then(|d| d.string(schema::STATUS))
-            .map(|status| SessionHelpers::parse_status(&status))
+            .and_then(|d| {
+                d.get(schema::STATUS)
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
+            })
+            .map(|status| {
+                status
+                    .parse()
+                    .map_err(|e: String| McpError::invalid_params(e, None))
+            })
             .transpose()?,
     };
     match agent_service.get_session(session_id).await {
         Ok(Some(mut session)) => {
-            let payload_project_id = data.and_then(|d| d.string(schema::PROJECT_ID));
-            let payload_worktree_id = data.and_then(|d| d.string(schema::WORKTREE_ID));
+            let payload_project_id = data.and_then(|d| {
+                d.get(schema::PROJECT_ID)
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
+            });
+            let payload_worktree_id = data.and_then(|d| {
+                d.get(schema::WORKTREE_ID)
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
+            });
 
             let resolved_project_id = resolve_identifier_precedence(
                 schema::PROJECT_ID,
@@ -83,21 +103,28 @@ pub async fn update_session(
             }
             if let Some(data) = data {
                 session.result_summary = data
-                    .string(schema::RESULT_SUMMARY)
+                    .get(schema::RESULT_SUMMARY)
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
                     .or(session.result_summary);
-                session.token_count = data.int64(schema::TOKEN_COUNT).or(session.token_count);
+                session.token_count = data
+                    .get(schema::TOKEN_COUNT)
+                    .and_then(Value::as_i64)
+                    .or(session.token_count);
                 session.tool_calls_count = data
-                    .int64(schema::TOOL_CALLS_COUNT)
+                    .get(schema::TOOL_CALLS_COUNT)
+                    .and_then(Value::as_i64)
                     .or(session.tool_calls_count);
                 session.delegations_count = data
-                    .int64(schema::DELEGATIONS_COUNT)
+                    .get(schema::DELEGATIONS_COUNT)
+                    .and_then(Value::as_i64)
                     .or(session.delegations_count);
             }
-            let status_str = session.status.as_str().to_string();
+            let status = session.status.as_str().to_owned();
             match agent_service.update_session(session).await {
                 Ok(_) => ResponseFormatter::json_success(&serde_json::json!({
                     schema::ID: session_id,
-                    schema::STATUS: &status_str,
+                    schema::STATUS: status,
                     "updated": true,
                 })),
                 Err(e) => {

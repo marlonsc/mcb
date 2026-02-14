@@ -133,7 +133,7 @@ async fn test_validation_memory_observation_enum_error() {
     assert!(resp.is_error.unwrap_or(false));
     let text = extract_text(&resp.content);
     assert!(
-        text.contains("Valid types: code, decision"),
+        text.contains("Unknown observation type:"),
         "Error message validation failed: {}",
         text
     );

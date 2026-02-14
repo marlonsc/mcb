@@ -7,38 +7,27 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::value_objects::ids::SessionId;
 use rmcp::model::CallToolResult;
+use thiserror::Error;
 
 /// Result type for hook operations.
 pub type HookResult<T> = Result<T, HookError>;
 
 /// Errors that can occur during hook execution.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Error)]
 pub enum HookError {
     /// The memory service is not available.
+    #[error("Memory service unavailable")]
     MemoryServiceUnavailable,
     /// Failed to store an observation in memory.
+    #[error("Failed to store observation: {0}")]
     FailedToStoreObservation(String),
     /// Failed to inject context into the session.
+    #[error("Failed to inject context: {0}")]
     FailedToInjectContext(String),
     /// The tool output provided is invalid.
+    #[error("Invalid tool output: {0}")]
     InvalidToolOutput(String),
 }
-
-impl std::fmt::Display for HookError {
-    /// Formats the error message.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            HookError::MemoryServiceUnavailable => write!(f, "Memory service unavailable"),
-            HookError::FailedToStoreObservation(msg) => {
-                write!(f, "Failed to store observation: {}", msg)
-            }
-            HookError::FailedToInjectContext(msg) => write!(f, "Failed to inject context: {}", msg),
-            HookError::InvalidToolOutput(msg) => write!(f, "Invalid tool output: {}", msg),
-        }
-    }
-}
-
-impl std::error::Error for HookError {}
 
 /// Represents the type of hook event being triggered.
 #[derive(Debug, Clone)]

@@ -8,6 +8,7 @@ use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, Content};
+use serde_json::Value;
 
 use uuid::Uuid;
 use validator::Validate;
@@ -15,7 +16,6 @@ use validator::Validate;
 use crate::args::{AgentAction, AgentArgs};
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::resolve_org_id;
-use crate::utils::json::{get_bool, get_i64, get_str};
 
 /// Handler for agent tool call and delegation logging operations.
 #[derive(Clone)]
@@ -40,7 +40,8 @@ impl AgentHandler {
 
         let _org_id = resolve_org_id(args.org_id.as_deref());
 
-        if args.session_id.to_string().is_empty() {
+        let session_id = args.session_id.as_str();
+        if session_id.is_empty() {
             return Err(McpError::invalid_params("session_id is required", None));
         }
 
@@ -59,7 +60,11 @@ impl AgentHandler {
 
         match args.action {
             AgentAction::LogTool => {
-                let tool_name = match get_str(data, "tool_name") {
+                let tool_name = match data
+                    .get("tool_name")
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
+                {
                     Some(value) => value,
                     None => {
                         return Ok(CallToolResult::error(vec![Content::text(
@@ -69,18 +74,24 @@ impl AgentHandler {
                 };
                 let tool_call = ToolCall {
                     id: format!("tc_{}", Uuid::new_v4()),
-                    session_id: args.session_id.to_string(),
+                    session_id: session_id.to_owned(),
                     tool_name: tool_name.clone(),
-                    params_summary: get_str(data, "params_summary"),
-                    success: get_bool(data, "success").unwrap_or(true),
-                    error_message: get_str(data, "error_message"),
-                    duration_ms: get_i64(data, "duration_ms"),
+                    params_summary: data
+                        .get("params_summary")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned),
+                    success: data.get("success").and_then(Value::as_bool).unwrap_or(true),
+                    error_message: data
+                        .get("error_message")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned),
+                    duration_ms: data.get("duration_ms").and_then(Value::as_i64),
                     created_at: now,
                 };
                 match self.agent_service.store_tool_call(tool_call).await {
                     Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                         "tool_call_id": id,
-                        "session_id": args.session_id.to_string(),
+                        "session_id": session_id,
                         "tool_name": tool_name,
                     })),
                     Err(_) => Ok(CallToolResult::error(vec![Content::text(
@@ -89,7 +100,11 @@ impl AgentHandler {
                 }
             }
             AgentAction::LogDelegation => {
-                let child_session_id = match get_str(data, "child_session_id") {
+                let child_session_id = match data
+                    .get("child_session_id")
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
+                {
                     Some(value) => value,
                     None => {
                         return Ok(CallToolResult::error(vec![Content::text(
@@ -99,20 +114,30 @@ impl AgentHandler {
                 };
                 let delegation = Delegation {
                     id: format!("del_{}", Uuid::new_v4()),
-                    parent_session_id: args.session_id.to_string(),
+                    parent_session_id: session_id.to_owned(),
                     child_session_id: child_session_id.clone(),
-                    prompt: get_str(data, "prompt").unwrap_or_default(),
-                    prompt_embedding_id: get_str(data, "prompt_embedding_id"),
-                    result: get_str(data, "result"),
-                    success: get_bool(data, "success").unwrap_or(true),
+                    prompt: data
+                        .get("prompt")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned)
+                        .unwrap_or_default(),
+                    prompt_embedding_id: data
+                        .get("prompt_embedding_id")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned),
+                    result: data
+                        .get("result")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned),
+                    success: data.get("success").and_then(Value::as_bool).unwrap_or(true),
                     created_at: now,
                     completed_at: None,
-                    duration_ms: get_i64(data, "duration_ms"),
+                    duration_ms: data.get("duration_ms").and_then(Value::as_i64),
                 };
                 match self.agent_service.store_delegation(delegation).await {
                     Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                         "delegation_id": id,
-                        "parent_session_id": args.session_id.to_string(),
+                        "parent_session_id": session_id,
                         "child_session_id": child_session_id,
                     })),
                     Err(_) => Ok(CallToolResult::error(vec![Content::text(

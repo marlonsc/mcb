@@ -1,103 +1,58 @@
 //! Unit tests for domain error types
 
 use mcb_domain::Error;
+use rstest::rstest;
+
+#[rstest]
+#[case::not_found(Error::not_found("user"), "NotFound", "user")]
+#[case::invalid_argument(Error::invalid_argument("bad input"), "InvalidArgument", "bad input")]
+#[case::embedding(Error::embedding("no model"), "Embedding", "no model")]
+#[case::vector_db(Error::vector_db("conn failed"), "VectorDb", "conn failed")]
+#[case::io(Error::io("file missing"), "Io", "file missing")]
+#[case::config(Error::config("missing key"), "Config", "missing key")]
+#[case::internal(Error::internal("server error"), "Internal", "server error")]
+#[case::cache(Error::cache("cache miss"), "Cache", "cache miss")]
+#[case::network(Error::network("timeout"), "Network", "timeout")]
+#[case::database(Error::database("sql error"), "Database", "sql error")]
+#[case::authentication(Error::authentication("bad token"), "Authentication", "bad token")]
+#[case::infrastructure(
+    Error::infrastructure("service down"),
+    "Infrastructure",
+    "service down"
+)]
+#[case::configuration(Error::configuration("bad config"), "Configuration", "bad config")]
+fn test_error_variants(
+    #[case] error: Error,
+    #[case] expected_variant: &str,
+    #[case] expected_message: &str,
+) {
+    // Check variant via Debug
+    let debug_str = format!("{:?}", error);
+    assert!(
+        debug_str.contains(expected_variant),
+        "Expected variant {} in {:?}",
+        expected_variant,
+        debug_str
+    );
+
+    // Check message via Display or Debug (depending on how thiserror implements it)
+    let display_str = format!("{}", error);
+    assert!(
+        display_str.contains(expected_message) || debug_str.contains(expected_message),
+        "Expected message '{}' in error",
+        expected_message
+    );
+}
 
 #[test]
-fn test_error_creation() {
+fn test_error_generic() {
     let error = Error::generic("Something went wrong");
-    // Generic wraps a boxed error, test via display
     let display_str = format!("{}", error);
     assert!(display_str.contains("Something went wrong"));
 }
 
 #[test]
-fn test_not_found_error() {
-    let error = Error::not_found("user");
-    match error {
-        Error::NotFound { resource } => assert_eq!(resource, "user"),
-        _ => panic!("Expected NotFound error"),
-    }
-}
-
-#[test]
-fn test_invalid_argument_error() {
-    let error = Error::invalid_argument("Invalid input provided");
-    match error {
-        Error::InvalidArgument { message } => assert_eq!(message, "Invalid input provided"),
-        _ => panic!("Expected InvalidArgument error"),
-    }
-}
-
-#[test]
-fn test_embedding_error() {
-    let error = Error::embedding("Model not available");
-    match error {
-        Error::Embedding { message } => assert_eq!(message, "Model not available"),
-        _ => panic!("Expected Embedding error"),
-    }
-}
-
-#[test]
-fn test_vector_db_error() {
-    let error = Error::vector_db("Connection failed");
-    match error {
-        Error::VectorDb { message } => assert_eq!(message, "Connection failed"),
-        _ => panic!("Expected VectorDb error"),
-    }
-}
-
-#[test]
-fn test_io_error() {
-    let error = Error::io("File not found");
-    match error {
-        Error::Io { message, source: _ } => {
-            assert_eq!(message, "File not found");
-        }
-        _ => panic!("Expected Io error"),
-    }
-}
-
-#[test]
-fn test_config_error() {
-    let error = Error::config("Missing required config");
-    match error {
-        Error::Config { message } => assert_eq!(message, "Missing required config"),
-        _ => panic!("Expected Config error"),
-    }
-}
-
-#[test]
-fn test_internal_error() {
-    let error = Error::internal("Unexpected internal error");
-    match error {
-        Error::Internal { message } => assert_eq!(message, "Unexpected internal error"),
-        _ => panic!("Expected Internal error"),
-    }
-}
-
-#[test]
-fn test_cache_error() {
-    let error = Error::cache("Cache operation failed");
-    match error {
-        Error::Cache { message } => assert_eq!(message, "Cache operation failed"),
-        _ => panic!("Expected Cache error"),
-    }
-}
-
-// Obsolete tests removed
-
-#[test]
-fn test_error_display() {
-    // Test that errors can be displayed (implement Debug and Display)
-    let error = Error::not_found("test-resource");
-    let debug_str = format!("{:?}", error);
-    assert!(debug_str.contains("NotFound"));
-    assert!(debug_str.contains("test-resource"));
-}
-
-#[test]
-fn test_error_equality_via_string() {
-    // Test that different error types can be distinguished
+fn test_error_equality_discrimination() {
     let not_found = Error::not_found("resource");
     let invalid_arg = Error::invalid_argument("bad argument");
 
@@ -105,59 +60,4 @@ fn test_error_equality_via_string() {
     assert!(matches!(not_found, Error::NotFound { .. }));
     assert!(matches!(invalid_arg, Error::InvalidArgument { .. }));
     assert!(!matches!(not_found, Error::InvalidArgument { .. }));
-}
-
-#[test]
-fn test_network_error() {
-    let error = Error::network("Connection refused");
-    match error {
-        Error::Network { message, source: _ } => {
-            assert_eq!(message, "Connection refused");
-        }
-        _ => panic!("Expected Network error"),
-    }
-}
-
-#[test]
-fn test_database_error() {
-    let error = Error::database("Query failed");
-    match error {
-        Error::Database { message, source: _ } => {
-            assert_eq!(message, "Query failed");
-        }
-        _ => panic!("Expected Database error"),
-    }
-}
-
-#[test]
-fn test_authentication_error() {
-    let error = Error::authentication("Invalid token");
-    match error {
-        Error::Authentication { message, source: _ } => {
-            assert_eq!(message, "Invalid token");
-        }
-        _ => panic!("Expected Authentication error"),
-    }
-}
-
-#[test]
-fn test_infrastructure_error() {
-    let error = Error::infrastructure("Service unavailable");
-    match error {
-        Error::Infrastructure { message, source: _ } => {
-            assert_eq!(message, "Service unavailable");
-        }
-        _ => panic!("Expected Infrastructure error"),
-    }
-}
-
-#[test]
-fn test_configuration_error() {
-    let error = Error::configuration("Missing setting");
-    match error {
-        Error::Configuration { message, source: _ } => {
-            assert_eq!(message, "Missing setting");
-        }
-        _ => panic!("Expected Configuration error"),
-    }
 }

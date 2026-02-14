@@ -34,7 +34,19 @@ pub struct User {
 }
 
 /// Role a user holds within an organization.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum UserRole {
     /// Full administrative access.
     Admin,
@@ -49,26 +61,7 @@ pub enum UserRole {
 impl UserRole {
     /// Returns the string representation of the user role.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Admin => "admin",
-            Self::Member => "member",
-            Self::Viewer => "viewer",
-            Self::Service => "service",
-        }
-    }
-}
-
-impl std::str::FromStr for UserRole {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "admin" => Ok(Self::Admin),
-            "member" => Ok(Self::Member),
-            "viewer" => Ok(Self::Viewer),
-            "service" => Ok(Self::Service),
-            _ => Err(format!("Unknown user role: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }

@@ -1,32 +1,26 @@
 use std::path::PathBuf;
 
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 /// Represents the status of a file in a version control diff.
 ///
 /// Indicates whether a file was added, modified, deleted, or renamed
 /// in a particular commit or change set.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Display)]
 pub enum DiffStatus {
     /// File was newly added in this diff
+    #[display("added")]
     Added,
     /// File was modified in this diff
+    #[display("modified")]
     Modified,
     /// File was deleted in this diff
+    #[display("deleted")]
     Deleted,
     /// File was renamed in this diff
+    #[display("renamed")]
     Renamed,
-}
-
-impl std::fmt::Display for DiffStatus {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Added => write!(f, "added"),
-            Self::Modified => write!(f, "modified"),
-            Self::Deleted => write!(f, "deleted"),
-            Self::Renamed => write!(f, "renamed"),
-        }
-    }
 }
 
 /// Represents a single file's changes in a version control diff.

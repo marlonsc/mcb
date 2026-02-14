@@ -4,12 +4,13 @@ use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterf
 use mcb_domain::value_objects::SessionId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use serde_json::Value;
 
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
-use crate::utils::json::{self, JsonMapExt};
+use crate::utils::json;
 
 /// Stores a session summary in the memory service.
 #[tracing::instrument(skip_all)]
@@ -25,10 +26,11 @@ pub async fn store_session(
             )]));
         }
     };
-    let session_id = args
-        .session_id
-        .clone()
-        .or_else(|| data.string("session_id").map(SessionId::new));
+    let session_id = args.session_id.clone().or_else(|| {
+        data.get("session_id")
+            .and_then(Value::as_str)
+            .map(SessionId::from)
+    });
     let session_id = match session_id {
         Some(value) => value,
         None => {
@@ -37,26 +39,86 @@ pub async fn store_session(
             )]));
         }
     };
-    let topics = data.string_list("topics");
-    let decisions = data.string_list("decisions");
-    let next_steps = data.string_list("next_steps");
-    let key_files = data.string_list("key_files");
-    let payload_project_id = data.string("project_id");
-    let payload_parent_session_id = data.string("parent_session_id");
-    let payload_repo_path = data.string("repo_path");
-    let payload_worktree_id = data.string("worktree_id");
-    let payload_operator_id = data.string("operator_id");
-    let payload_machine_id = data.string("machine_id");
-    let payload_agent_program = data.string("agent_program");
-    let payload_model_id = data.string("model_id");
-    let payload_delegated = data.boolean("delegated");
-    let raw_session_id = session_id.as_str().to_string();
+    let topics = data
+        .get("topics")
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|item| item.as_str().map(str::to_owned))
+                .collect()
+        })
+        .unwrap_or_default();
+    let decisions = data
+        .get("decisions")
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|item| item.as_str().map(str::to_owned))
+                .collect()
+        })
+        .unwrap_or_default();
+    let next_steps = data
+        .get("next_steps")
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|item| item.as_str().map(str::to_owned))
+                .collect()
+        })
+        .unwrap_or_default();
+    let key_files = data
+        .get("key_files")
+        .and_then(Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|item| item.as_str().map(str::to_owned))
+                .collect()
+        })
+        .unwrap_or_default();
+    let payload_project_id = data
+        .get("project_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_parent_session_id = data
+        .get("parent_session_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_repo_path = data
+        .get("repo_path")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_worktree_id = data
+        .get("worktree_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_operator_id = data
+        .get("operator_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_machine_id = data
+        .get("machine_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_agent_program = data
+        .get("agent_program")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_model_id = data
+        .get("model_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_delegated = data.get("delegated").and_then(Value::as_bool);
+    let session_id_str = session_id.as_str().to_owned();
 
     let origin_context = resolve_origin_context(OriginContextInput {
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),
         project_id_payload: payload_project_id.as_deref(),
-        session_from_args: Some(raw_session_id.as_str()),
+        session_from_args: Some(session_id_str.as_str()),
         session_from_data: None,
         parent_session_from_args: None,
         parent_session_from_data: payload_parent_session_id.as_deref(),
@@ -92,7 +154,6 @@ pub async fn store_session(
     let project_id = origin_context.project_id.clone().ok_or_else(|| {
         McpError::invalid_params("project_id is required for session summary", None)
     })?;
-    let session_id_str = session_id.as_str().to_string();
     match memory_service
         .create_session_summary(CreateSessionSummaryInput {
             project_id,

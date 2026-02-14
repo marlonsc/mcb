@@ -1,5 +1,6 @@
 use std::process::Command;
 use std::sync::OnceLock;
+use typed_builder::TypedBuilder;
 
 static PROJECT_CONTEXT: OnceLock<ProjectContext> = OnceLock::new();
 
@@ -9,27 +10,29 @@ static PROJECT_CONTEXT: OnceLock<ProjectContext> = OnceLock::new();
 /// parsed from `git remote.origin.url`.  This is stable across
 /// worktrees, directory renames, and multiple checkouts of the same
 /// repository.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, TypedBuilder)]
 pub struct ProjectContext {
     /// Stable project identifier (e.g. `"marlonsc/mcb"`).
+    #[builder(setter(into))]
     pub project_id: String,
     /// Human-readable short name (e.g. `"mcb"`).
+    #[builder(setter(into))]
     pub project_name: String,
     /// Whether this repository is a git submodule.
+    #[builder(default)]
     pub is_submodule: bool,
     /// The superproject's owner/repo if this is a submodule.
+    #[builder(default, setter(strip_option, into))]
     pub superproject_id: Option<String>,
 }
 
 impl ProjectContext {
     /// Explicit constructor for tests and overrides.
     pub fn new(project_id: impl Into<String>, project_name: impl Into<String>) -> Self {
-        Self {
-            project_id: project_id.into(),
-            project_name: project_name.into(),
-            is_submodule: false,
-            superproject_id: None,
-        }
+        Self::builder()
+            .project_id(project_id.into())
+            .project_name(project_name.into())
+            .build()
     }
 
     /// Resolve project identity from the current git repository.

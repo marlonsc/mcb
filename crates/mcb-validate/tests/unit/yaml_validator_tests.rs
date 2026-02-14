@@ -1,25 +1,23 @@
 //! Unit tests for YAML rule validator.
 
 use mcb_validate::rules::YamlRuleValidator;
+use rstest::*;
+use serde_json::json;
 
-#[test]
-fn test_schema_loading() {
-    let validator = YamlRuleValidator::new();
-    assert!(validator.is_ok());
+#[fixture]
+fn validator() -> YamlRuleValidator {
+    YamlRuleValidator::new().unwrap()
 }
 
-#[test]
-fn test_valid_rule_validation() {
-    let validator = YamlRuleValidator::new().unwrap();
-
-    let valid_rule = serde_json::json!({
+fn base_rule() -> serde_json::Value {
+    json!({
         "schema": "rule/v1",
         "id": "TEST001",
         "name": "Test Rule",
         "category": "architecture",
         "severity": "error",
-        "description": "This is a test rule with enough description to pass validation requirements",
-        "rationale": "This rule exists for testing purposes and has enough rationale text",
+        "description": "Valid description",
+        "rationale": "Valid rationale",
         "engine": "rust-rule-engine",
         "config": {
             "crate_name": "test-crate"
@@ -27,76 +25,44 @@ fn test_valid_rule_validation() {
         "rule": {
             "type": "cargo_dependencies"
         }
-    });
+    })
+}
 
+#[rstest]
+fn test_schema_loading() {
+    let validator = YamlRuleValidator::new();
+    assert!(validator.is_ok());
+}
+
+#[rstest]
+fn test_valid_rule_validation(validator: YamlRuleValidator) {
+    let valid_rule = base_rule();
     assert!(validator.validate_rule(&valid_rule).is_ok());
 }
 
-#[test]
-fn test_invalid_rule_validation() {
-    let validator = YamlRuleValidator::new().unwrap();
+#[rstest]
+#[case("category", "invalid_category")]
+#[case("severity", "invalid_severity")]
+#[case("engine", "invalid_engine")]
+fn test_invalid_field_values(
+    validator: YamlRuleValidator,
+    #[case] field: &str,
+    #[case] value: &str,
+) {
+    let mut invalid_rule = base_rule();
+    invalid_rule[field] = value.into();
+    assert!(
+        validator.validate_rule(&invalid_rule).is_err(),
+        "Expected error for invalid {}",
+        field
+    );
+}
 
-    let invalid_rule = serde_json::json!({
+#[rstest]
+fn test_missing_required_fields(validator: YamlRuleValidator) {
+    let invalid_rule = json!({
         "name": "Test Rule",
         "category": "architecture"
     });
-
-    assert!(validator.validate_rule(&invalid_rule).is_err());
-}
-
-#[test]
-fn test_invalid_category() {
-    let validator = YamlRuleValidator::new().unwrap();
-
-    let invalid_rule = serde_json::json!({
-        "schema": "rule/v1",
-        "id": "TEST001",
-        "name": "Test Rule",
-        "category": "invalid_category",
-        "severity": "error",
-        "description": "This is a test rule description",
-        "rationale": "This is the rationale for the rule",
-        "engine": "rust-rule-engine",
-        "rule": {}
-    });
-
-    assert!(validator.validate_rule(&invalid_rule).is_err());
-}
-
-#[test]
-fn test_invalid_severity() {
-    let validator = YamlRuleValidator::new().unwrap();
-
-    let invalid_rule = serde_json::json!({
-        "schema": "rule/v1",
-        "id": "TEST001",
-        "name": "Test Rule",
-        "category": "architecture",
-        "severity": "invalid_severity",
-        "description": "This is a test rule description",
-        "rationale": "This is the rationale for the rule",
-        "engine": "rust-rule-engine",
-        "rule": {}
-    });
-
-    assert!(validator.validate_rule(&invalid_rule).is_err());
-}
-
-#[test]
-fn test_invalid_engine() {
-    let validator = YamlRuleValidator::new().unwrap();
-
-    let invalid_rule = serde_json::json!({
-        "schema": "rule/v1",
-        "id": "TEST001",
-        "name": "Test Rule",
-        "category": "architecture",
-        "severity": "error",
-        "description": "This is a test rule description",
-        "rationale": "This is the rationale for the rule",
-        "engine": "invalid_engine",
-        "rule": {}
-    });
-
     assert!(validator.validate_rule(&invalid_rule).is_err());
 }

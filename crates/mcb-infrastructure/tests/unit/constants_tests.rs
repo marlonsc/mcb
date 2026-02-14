@@ -13,36 +13,30 @@ use mcb_infrastructure::constants::health::*;
 use mcb_infrastructure::constants::http::*;
 use mcb_infrastructure::constants::process::*;
 use mcb_infrastructure::constants::resilience::*;
+use rstest::*;
 
 // ============================================================================
 // HTTP Pool Constants Tests
 // ============================================================================
 
-#[test]
-fn test_http_pool_constants_reasonable() {
-    // Timeouts should be reasonable (not too short, not too long)
-    assert!(HTTP_REQUEST_TIMEOUT_SECS >= 5, "Request timeout too short");
-    assert!(HTTP_REQUEST_TIMEOUT_SECS <= 120, "Request timeout too long");
+#[rstest]
+#[case(HTTP_REQUEST_TIMEOUT_SECS, 5, 120)]
+#[case(HTTP_CLIENT_IDLE_TIMEOUT_SECS, 30, 300)]
+#[case(HTTP_KEEPALIVE_SECS, 30, 120)]
+fn test_http_time_constants(#[case] value: u64, #[case] min: u64, #[case] max: u64) {
+    assert!(value >= min, "Value {} too small (< {})", value, min);
+    assert!(value <= max, "Value {} too large (> {})", value, max);
+}
 
-    assert!(
-        HTTP_CLIENT_IDLE_TIMEOUT_SECS >= 30,
-        "Idle timeout too short"
-    );
-    assert!(
-        HTTP_CLIENT_IDLE_TIMEOUT_SECS <= 300,
-        "Idle timeout too long"
-    );
-
-    assert!(HTTP_KEEPALIVE_SECS >= 30, "Keepalive too short");
-    assert!(HTTP_KEEPALIVE_SECS <= 120, "Keepalive too long");
-
-    assert!(HTTP_MAX_IDLE_PER_HOST >= 5, "Max idle per host too low");
-    assert!(HTTP_MAX_IDLE_PER_HOST <= 50, "Max idle per host too high");
+#[rstest]
+#[case(HTTP_MAX_IDLE_PER_HOST, 5, 50)]
+fn test_http_count_constants(#[case] value: usize, #[case] min: usize, #[case] max: usize) {
+    assert!(value >= min);
+    assert!(value <= max);
 }
 
 #[test]
 fn test_http_timeout_relationships() {
-    // Idle timeout should be greater than request timeout
     assert!(
         HTTP_CLIENT_IDLE_TIMEOUT_SECS >= HTTP_REQUEST_TIMEOUT_SECS,
         "Idle timeout should be >= request timeout"
@@ -53,52 +47,34 @@ fn test_http_timeout_relationships() {
 // Embedding Dimension Constants Tests
 // ============================================================================
 
-#[test]
-fn test_embedding_dimension_constants() {
-    // All embedding dimensions should be positive
-    assert!(EMBEDDING_DIMENSION_NULL > 0);
-    assert!(EMBEDDING_DIMENSION_FASTEMBED_DEFAULT > 0);
-    assert!(EMBEDDING_DIMENSION_OPENAI_SMALL > 0);
-    assert!(EMBEDDING_DIMENSION_OPENAI_LARGE > 0);
-    assert!(EMBEDDING_DIMENSION_OPENAI_ADA > 0);
-    assert!(EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT > 0);
-    assert!(EMBEDDING_DIMENSION_VOYAGEAI_CODE > 0);
-    assert!(EMBEDDING_DIMENSION_OLLAMA_NOMIC > 0);
-    assert!(EMBEDDING_DIMENSION_OLLAMA_MINILM > 0);
-    assert!(EMBEDDING_DIMENSION_OLLAMA_MXBAI > 0);
-    assert!(EMBEDDING_DIMENSION_OLLAMA_ARCTIC > 0);
-    assert!(EMBEDDING_DIMENSION_OLLAMA_DEFAULT > 0);
-    assert!(EMBEDDING_DIMENSION_GEMINI > 0);
+#[rstest]
+#[case(EMBEDDING_DIMENSION_NULL)]
+#[case(EMBEDDING_DIMENSION_FASTEMBED_DEFAULT)]
+#[case(EMBEDDING_DIMENSION_OPENAI_SMALL)]
+#[case(EMBEDDING_DIMENSION_OPENAI_LARGE)]
+#[case(EMBEDDING_DIMENSION_OPENAI_ADA)]
+#[case(EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT)]
+#[case(EMBEDDING_DIMENSION_VOYAGEAI_CODE)]
+#[case(EMBEDDING_DIMENSION_OLLAMA_NOMIC)]
+#[case(EMBEDDING_DIMENSION_OLLAMA_MINILM)]
+#[case(EMBEDDING_DIMENSION_OLLAMA_MXBAI)]
+#[case(EMBEDDING_DIMENSION_OLLAMA_ARCTIC)]
+#[case(EMBEDDING_DIMENSION_OLLAMA_DEFAULT)]
+#[case(EMBEDDING_DIMENSION_GEMINI)]
+fn test_embedding_dimensions_positive(#[case] dim: usize) {
+    assert!(dim > 0);
 }
 
 #[test]
 fn test_embedding_dimension_common_values() {
-    // Common embedding dimensions are powers of 2 or multiples of 128/256
     let common_dims = [256, 384, 512, 768, 1024, 1536, 2048, 3072];
+    assert!(common_dims.contains(&EMBEDDING_DIMENSION_NULL));
 
-    // Null provider uses common dimension
-    assert!(
-        common_dims.contains(&EMBEDDING_DIMENSION_NULL),
-        "Null dimension should be a common value"
-    );
-
-    // OpenAI dimensions should be in known range
-    assert!(
-        EMBEDDING_DIMENSION_OPENAI_SMALL >= 1024,
-        "OpenAI small should be >= 1024"
-    );
-    assert!(
-        EMBEDDING_DIMENSION_OPENAI_LARGE > EMBEDDING_DIMENSION_OPENAI_SMALL,
-        "OpenAI large should be > small"
-    );
-}
-
-#[test]
-fn test_embedding_dimension_openai_consistency() {
-    // OpenAI ADA and Small should have same dimension
+    assert!(EMBEDDING_DIMENSION_OPENAI_SMALL >= 1024);
+    assert!(EMBEDDING_DIMENSION_OPENAI_LARGE > EMBEDDING_DIMENSION_OPENAI_SMALL);
     assert_eq!(
-        EMBEDDING_DIMENSION_OPENAI_ADA, EMBEDDING_DIMENSION_OPENAI_SMALL,
-        "OpenAI ADA and small should have same dimensions"
+        EMBEDDING_DIMENSION_OPENAI_ADA,
+        EMBEDDING_DIMENSION_OPENAI_SMALL
     );
 }
 
@@ -106,85 +82,58 @@ fn test_embedding_dimension_openai_consistency() {
 // Cache Constants Tests
 // ============================================================================
 
-#[test]
-fn test_cache_ttl_constants() {
-    // Cache TTL should be reasonable
-    assert!(CACHE_DEFAULT_TTL_SECS >= 60, "Cache TTL too short");
-    assert!(CACHE_DEFAULT_TTL_SECS <= 86400, "Cache TTL too long");
+#[rstest]
+#[case(CACHE_DEFAULT_TTL_SECS, 60, 86400)]
+fn test_cache_ttl_range(#[case] value: u64, #[case] min: u64, #[case] max: u64) {
+    assert!(value >= min);
+    assert!(value <= max);
 }
 
-#[test]
-fn test_cache_size_constants() {
-    // Cache size should be reasonable
-    assert!(
-        CACHE_DEFAULT_SIZE_LIMIT >= 1024 * 1024,
-        "Cache size too small"
-    ); // At least 1MB
-    assert!(
-        CACHE_DEFAULT_SIZE_LIMIT <= 1024 * 1024 * 1024,
-        "Cache size too large"
-    ); // At most 1GB
+#[rstest]
+#[case(CACHE_DEFAULT_SIZE_LIMIT, 1024 * 1024, 1024 * 1024 * 1024)]
+fn test_cache_size_range(#[case] value: usize, #[case] min: usize, #[case] max: usize) {
+    assert!(value >= min);
+    assert!(value <= max);
 }
 
 #[test]
 fn test_cache_namespace_separator() {
-    // Namespace separator should be a single character
-    assert_eq!(
-        CACHE_NAMESPACE_SEPARATOR.len(),
-        1,
-        "Namespace separator should be single char"
-    );
+    assert_eq!(CACHE_NAMESPACE_SEPARATOR.len(), 1);
 }
 
 // ============================================================================
 // Authentication Constants Tests
 // ============================================================================
 
-#[test]
-fn test_jwt_expiration_constants() {
-    // JWT expiration should be reasonable
-    assert!(
-        JWT_DEFAULT_EXPIRATION_SECS >= 3600,
-        "JWT expiration too short"
-    ); // At least 1 hour
-    assert!(
-        JWT_DEFAULT_EXPIRATION_SECS <= 604800,
-        "JWT expiration too long"
-    ); // At most 1 week
-
-    // Refresh token should be longer than access token
-    assert!(
-        JWT_REFRESH_EXPIRATION_SECS > JWT_DEFAULT_EXPIRATION_SECS,
-        "Refresh token should be longer than access token"
-    );
+#[rstest]
+#[case(JWT_DEFAULT_EXPIRATION_SECS, 3600, 604800)]
+fn test_jwt_constants_range(#[case] value: u64, #[case] min: u64, #[case] max: u64) {
+    assert!(value >= min);
+    assert!(value <= max);
 }
 
 #[test]
-fn test_bcrypt_cost() {
-    // Bcrypt cost should be in reasonable range
-    assert!(BCRYPT_DEFAULT_COST >= 10, "Bcrypt cost too low (insecure)");
-    assert!(BCRYPT_DEFAULT_COST <= 15, "Bcrypt cost too high (slow)");
+fn test_jwt_relationship() {
+    assert!(JWT_REFRESH_EXPIRATION_SECS > JWT_DEFAULT_EXPIRATION_SECS);
+}
+
+#[rstest]
+#[case(BCRYPT_DEFAULT_COST, 10, 15)]
+fn test_bcrypt_cost_range(#[case] value: u32, #[case] min: u32, #[case] max: u32) {
+    assert!(value >= min);
+    assert!(value <= max);
+}
+
+#[rstest]
+#[case(API_KEY_HEADER)]
+#[case(AUTHORIZATION_HEADER)]
+fn test_auth_headers_lowercase(#[case] header: &str) {
+    assert_eq!(header.to_lowercase(), header);
 }
 
 #[test]
-fn test_auth_headers() {
-    // Headers should be lowercase (HTTP/2 requirement)
-    assert_eq!(
-        API_KEY_HEADER.to_lowercase(),
-        API_KEY_HEADER,
-        "API key header should be lowercase"
-    );
-    assert_eq!(
-        AUTHORIZATION_HEADER.to_lowercase(),
-        AUTHORIZATION_HEADER,
-        "Authorization header should be lowercase"
-    );
-
-    // Bearer prefix should end with space
-    assert!(
-        BEARER_PREFIX.ends_with(' '),
-        "Bearer prefix should end with space"
-    );
+fn test_bearer_prefix() {
+    assert!(BEARER_PREFIX.ends_with(' '));
 }
 
 // ============================================================================
@@ -193,108 +142,84 @@ fn test_auth_headers() {
 
 #[test]
 fn test_aes_gcm_constants() {
-    // AES-256-GCM standard sizes
-    assert_eq!(AES_GCM_KEY_SIZE, 32, "AES-256 key size should be 32 bytes");
-    assert_eq!(
-        AES_GCM_NONCE_SIZE, 12,
-        "AES-GCM nonce size should be 12 bytes"
-    );
+    assert_eq!(AES_GCM_KEY_SIZE, 32);
+    assert_eq!(AES_GCM_NONCE_SIZE, 12);
 }
 
 #[test]
 fn test_pbkdf2_iterations() {
-    // PBKDF2 iterations should be high enough for security
-    assert!(
-        PBKDF2_ITERATIONS >= 10_000,
-        "PBKDF2 iterations too low (insecure)"
-    );
+    assert!(PBKDF2_ITERATIONS >= 10_000);
 }
 
 // ============================================================================
 // Server Constants Tests
 // ============================================================================
 
-#[test]
-fn test_server_port_constants() {
-    // Ports should be in valid range
-    assert!(DEFAULT_HTTP_PORT > 1024, "HTTP port should be > 1024");
-    assert!(DEFAULT_HTTPS_PORT > 1024, "HTTPS port should be > 1024");
-    assert!(DEFAULT_HTTP_PORT < 65535, "HTTP port should be < 65535");
-    assert!(DEFAULT_HTTPS_PORT < 65535, "HTTPS port should be < 65535");
-
-    // HTTPS should be different from HTTP
-    assert_ne!(
-        DEFAULT_HTTP_PORT, DEFAULT_HTTPS_PORT,
-        "HTTP and HTTPS ports should differ"
-    );
+#[rstest]
+#[case(DEFAULT_HTTP_PORT)]
+#[case(DEFAULT_HTTPS_PORT)]
+fn test_server_ports(#[case] port: u16) {
+    assert!(port > 1024);
+    assert!(port < 65535);
 }
 
 #[test]
-fn test_server_timeout_constants() {
-    assert!(REQUEST_TIMEOUT_SECS >= 10, "Request timeout too short");
-    assert!(CONNECTION_TIMEOUT_SECS >= 5, "Connection timeout too short");
-    assert!(
-        REQUEST_TIMEOUT_SECS >= CONNECTION_TIMEOUT_SECS,
-        "Request timeout should be >= connection timeout"
-    );
+fn test_server_ports_distinct() {
+    assert_ne!(DEFAULT_HTTP_PORT, DEFAULT_HTTPS_PORT);
+}
+
+#[rstest]
+#[case(REQUEST_TIMEOUT_SECS, 10)]
+#[case(CONNECTION_TIMEOUT_SECS, 5)]
+fn test_server_timeouts(#[case] value: u64, #[case] min: u64) {
+    assert!(value >= min);
+}
+
+#[test]
+fn test_server_timeout_relationship() {
+    assert!(REQUEST_TIMEOUT_SECS >= CONNECTION_TIMEOUT_SECS);
 }
 
 // ============================================================================
 // Health Check Constants Tests
 // ============================================================================
 
-#[test]
-fn test_health_check_constants() {
-    // Health check should be quick
-    assert!(
-        HEALTH_CHECK_TIMEOUT_SECS <= 30,
-        "Health check timeout too long"
-    );
+#[rstest]
+#[case(HEALTH_CHECK_TIMEOUT_SECS, 0, 30)]
+#[case(HEALTH_CHECK_INTERVAL_SECS, 10, 300)]
+fn test_health_time_constants_range(#[case] value: u64, #[case] min: u64, #[case] max: u64) {
+    assert!(value >= min);
+    assert!(value <= max);
+}
 
-    // Interval should be reasonable
-    assert!(
-        HEALTH_CHECK_INTERVAL_SECS >= 10,
-        "Health check interval too short"
-    );
-    assert!(
-        HEALTH_CHECK_INTERVAL_SECS <= 300,
-        "Health check interval too long"
-    );
-
-    // Failure threshold should be reasonable
-    assert!(
-        HEALTH_CHECK_FAILURE_THRESHOLD >= 2,
-        "Failure threshold too low"
-    );
-    assert!(
-        HEALTH_CHECK_FAILURE_THRESHOLD <= 10,
-        "Failure threshold too high"
-    );
+#[rstest]
+#[case(HEALTH_CHECK_FAILURE_THRESHOLD, 2, 10)]
+fn test_health_count_constants_range(#[case] value: u32, #[case] min: u32, #[case] max: u32) {
+    assert!(value >= min);
+    assert!(value <= max);
 }
 
 // ============================================================================
 // Circuit Breaker Constants Tests
 // ============================================================================
 
+#[rstest]
+#[case(CIRCUIT_BREAKER_FAILURE_THRESHOLD, 3u32)]
+fn test_circuit_breaker_min_values(#[case] value: u32, #[case] min: u32) {
+    assert!(value >= min);
+}
+
 #[test]
-fn test_circuit_breaker_constants() {
-    // Failure threshold should be reasonable
-    assert!(
-        CIRCUIT_BREAKER_FAILURE_THRESHOLD >= 3,
-        "Circuit breaker failure threshold too low"
-    );
-
-    // Success threshold should be less than failure threshold
-    assert!(
-        CIRCUIT_BREAKER_SUCCESS_THRESHOLD <= CIRCUIT_BREAKER_FAILURE_THRESHOLD,
-        "Success threshold should be <= failure threshold"
-    );
-
-    // Timeout should be reasonable
+fn test_circuit_breaker_time_values() {
     assert!(
         CIRCUIT_BREAKER_TIMEOUT_SECS >= 30,
         "Circuit breaker timeout too short"
     );
+}
+
+#[test]
+fn test_circuit_breaker_relationships() {
+    assert!(CIRCUIT_BREAKER_SUCCESS_THRESHOLD <= CIRCUIT_BREAKER_FAILURE_THRESHOLD);
 }
 
 // ============================================================================
@@ -303,14 +228,8 @@ fn test_circuit_breaker_constants() {
 
 #[test]
 fn test_rate_limiter_constants() {
-    // Default RPS should be reasonable
-    assert!(RATE_LIMITER_DEFAULT_RPS >= 10, "Default RPS too low");
-
-    // Burst should be greater than or equal to RPS
-    assert!(
-        RATE_LIMITER_DEFAULT_BURST >= RATE_LIMITER_DEFAULT_RPS,
-        "Burst should be >= RPS"
-    );
+    assert!(RATE_LIMITER_DEFAULT_RPS >= 10);
+    assert!(RATE_LIMITER_DEFAULT_BURST >= RATE_LIMITER_DEFAULT_RPS);
 }
 
 // ============================================================================
@@ -319,33 +238,27 @@ fn test_rate_limiter_constants() {
 
 #[test]
 fn test_file_permissions() {
-    // Standard Unix permissions
-    assert_eq!(
-        DEFAULT_FILE_PERMISSIONS, 0o644,
-        "File permissions should be 0o644"
-    );
-    assert_eq!(
-        DEFAULT_DIR_PERMISSIONS, 0o755,
-        "Dir permissions should be 0o755"
-    );
+    assert_eq!(DEFAULT_FILE_PERMISSIONS, 0o644);
+    assert_eq!(DEFAULT_DIR_PERMISSIONS, 0o755);
 }
 
 // ============================================================================
 // Shutdown Constants Tests
 // ============================================================================
 
-#[test]
-fn test_shutdown_constants() {
-    // Graceful should be longer than force
-    assert!(
-        GRACEFUL_SHUTDOWN_TIMEOUT_SECS > FORCE_SHUTDOWN_TIMEOUT_SECS,
-        "Graceful timeout should be > force timeout"
-    );
+#[rstest]
+#[case(GRACEFUL_SHUTDOWN_TIMEOUT_SECS, 120)]
+fn test_graceful_shutdown_limits(#[case] value: u64, #[case] max: u64) {
+    assert!(value <= max);
+}
 
-    // Both should be reasonable
-    assert!(
-        GRACEFUL_SHUTDOWN_TIMEOUT_SECS <= 120,
-        "Graceful timeout too long"
-    );
-    assert!(FORCE_SHUTDOWN_TIMEOUT_SECS >= 5, "Force timeout too short");
+#[rstest]
+#[case(FORCE_SHUTDOWN_TIMEOUT_SECS, 5)]
+fn test_force_shutdown_limits(#[case] value: u64, #[case] min: u64) {
+    assert!(value >= min);
+}
+
+#[test]
+fn test_shutdown_relationship() {
+    assert!(GRACEFUL_SHUTDOWN_TIMEOUT_SECS > FORCE_SHUTDOWN_TIMEOUT_SECS);
 }

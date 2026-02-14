@@ -42,44 +42,40 @@ pub struct Repository {
 }
 
 /// Type of version control system.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::Display,
+    strum_macros::AsRefStr,
+    strum_macros::EnumString,
+)]
 #[serde(rename_all = "snake_case")]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
 pub enum VcsType {
     /// Git repository.
+    #[strum(serialize = "git")]
     Git,
     /// Mercurial repository.
+    #[strum(serialize = "mercurial", serialize = "hg")]
     Mercurial,
     /// Subversion repository.
+    #[strum(serialize = "svn", serialize = "subversion")]
     Svn,
 }
 
 impl VcsType {
     /// Returns the string representation.
-    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Git => "git",
             Self::Mercurial => "mercurial",
             Self::Svn => "svn",
-        }
-    }
-}
-
-impl std::fmt::Display for VcsType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
-
-impl std::str::FromStr for VcsType {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "git" => Ok(Self::Git),
-            "mercurial" | "hg" => Ok(Self::Mercurial),
-            "svn" | "subversion" => Ok(Self::Svn),
-            _ => Err(format!("Unknown VCS type: {s}")),
         }
     }
 }

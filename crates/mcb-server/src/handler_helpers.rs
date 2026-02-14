@@ -185,68 +185,74 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
     .as_deref()
     .map(|value| compute_stable_id_hash("parent_session", value));
 
-    Ok(OriginContext {
-        org_id: Some(resolve_org_id(input.org_id)),
-        project_id,
-        session_id: None,
-        session_id_hash,
-        parent_session_id: None,
-        parent_session_id_hash,
-        execution_id: resolve_identifier_precedence(
+    Ok(OriginContext::builder()
+        .org_id(Some(resolve_org_id(input.org_id)))
+        .project_id(project_id)
+        .session_id_hash(session_id_hash)
+        .parent_session_id_hash(parent_session_id_hash)
+        .execution_id(resolve_identifier_precedence(
             "execution_id",
             input.execution_from_args,
             input.execution_from_data,
-        )?,
-        tool_name: resolve_identifier_precedence(
+        )?)
+        .tool_name(resolve_identifier_precedence(
             "tool_name",
             input.tool_name_args,
             input.tool_name_payload,
-        )?,
-        repo_id: resolve_identifier_precedence(
+        )?)
+        .repo_id(resolve_identifier_precedence(
             "repo_id",
             input.repo_id_args,
             input.repo_id_payload,
-        )?,
-        repo_path: resolve_identifier_precedence(
+        )?)
+        .repo_path(resolve_identifier_precedence(
             "repo_path",
             input.repo_path_args,
             input.repo_path_payload,
-        )?,
-        operator_id: resolve_identifier_precedence(
+        )?)
+        .operator_id(resolve_identifier_precedence(
             "operator_id",
             input.operator_id_args,
             input.operator_id_payload,
-        )?,
-        machine_id: resolve_identifier_precedence(
+        )?)
+        .machine_id(resolve_identifier_precedence(
             "machine_id",
             input.machine_id_args,
             input.machine_id_payload,
-        )?,
-        agent_program: resolve_identifier_precedence(
+        )?)
+        .agent_program(resolve_identifier_precedence(
             "agent_program",
             input.agent_program_args,
             input.agent_program_payload,
-        )?,
-        model_id: resolve_identifier_precedence(
+        )?)
+        .model_id(resolve_identifier_precedence(
             "model_id",
             input.model_id_args,
             input.model_id_payload,
-        )?,
-        delegated: input.delegated_args.or(input.delegated_payload),
-        worktree_id: resolve_identifier_precedence(
+        )?)
+        .delegated(input.delegated_args.or(input.delegated_payload))
+        .worktree_id(resolve_identifier_precedence(
             "worktree_id",
             input.worktree_id_args,
             input.worktree_id_payload,
-        )?,
-        file_path: resolve_identifier_precedence(
+        )?)
+        .file_path(resolve_identifier_precedence(
             "file_path",
             input.file_path_args,
             input.file_path_payload,
-        )?,
-        branch: resolve_identifier_precedence("branch", input.branch_args, input.branch_payload)?,
-        commit: resolve_identifier_precedence("commit", input.commit_args, input.commit_payload)?,
-        timestamp: input.timestamp.or(Some(current_timestamp())),
-    })
+        )?)
+        .branch(resolve_identifier_precedence(
+            "branch",
+            input.branch_args,
+            input.branch_payload,
+        )?)
+        .commit(resolve_identifier_precedence(
+            "commit",
+            input.commit_args,
+            input.commit_payload,
+        )?)
+        .timestamp(input.timestamp.or(Some(current_timestamp())))
+        .build())
 }
 
 /// Deserializes required request data into the target type.

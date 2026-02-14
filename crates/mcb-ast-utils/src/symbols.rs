@@ -3,6 +3,7 @@
 //! Provides utilities for extracting function, class, and other symbol names
 //! from parsed AST trees.
 
+use derive_more::Display;
 use mcb_language_support::LanguageId;
 use tree_sitter::{Node, Tree};
 
@@ -27,36 +28,29 @@ pub struct SymbolInfo {
 }
 
 /// Kind of symbol
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
 pub enum SymbolKind {
     /// A function
+    #[display("function")]
     Function,
     /// A method (function inside a class/impl)
+    #[display("method")]
     Method,
     /// A class or struct
+    #[display("class")]
     Class,
     /// A module
+    #[display("module")]
     Module,
     /// A variable or constant
+    #[display("variable")]
     Variable,
     /// An interface or trait
+    #[display("interface")]
     Interface,
     /// An enum
+    #[display("enum")]
     Enum,
-}
-
-impl std::fmt::Display for SymbolKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            SymbolKind::Function => write!(f, "function"),
-            SymbolKind::Method => write!(f, "method"),
-            SymbolKind::Class => write!(f, "class"),
-            SymbolKind::Module => write!(f, "module"),
-            SymbolKind::Variable => write!(f, "variable"),
-            SymbolKind::Interface => write!(f, "interface"),
-            SymbolKind::Enum => write!(f, "enum"),
-        }
-    }
 }
 
 /// Symbol extractor for different languages

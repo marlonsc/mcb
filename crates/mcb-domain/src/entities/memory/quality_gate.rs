@@ -7,7 +7,18 @@ use serde::{Deserialize, Serialize};
 /// - `Failed`: The check completed but did not meet required criteria
 /// - `Warning`: The check completed with non-critical issues
 /// - `Skipped`: The check was not executed
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum QualityGateStatus {
     /// Represents the Passed variant.
     Passed,
@@ -24,27 +35,8 @@ impl QualityGateStatus {
     ///
     /// Returns a static string slice representing the status value.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Passed => "passed",
-            Self::Failed => "failed",
-            Self::Warning => "warning",
-            Self::Skipped => "skipped",
-        }
-    }
-}
-
-impl std::str::FromStr for QualityGateStatus {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "passed" => Ok(Self::Passed),
-            "failed" => Ok(Self::Failed),
-            "warning" => Ok(Self::Warning),
-            "skipped" => Ok(Self::Skipped),
-            _ => Err(format!("Unknown quality gate status: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }
 

@@ -7,14 +7,14 @@ use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::utils::{compute_stable_id_hash, vcs_context::VcsContext};
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+use serde_json::Value;
 use tracing::error;
 use uuid::Uuid;
 
-use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
 use crate::handler_helpers::{OriginContextInput, resolve_origin_context};
-use crate::utils::json::{self, JsonMapExt};
+use crate::utils::json;
 
 /// Validated execution data extracted from JSON payload
 struct ValidatedExecutionData {
@@ -28,35 +28,52 @@ struct ValidatedExecutionData {
 impl ValidatedExecutionData {
     /// Validate and extract all required fields from JSON data
     fn validate(data: &serde_json::Map<String, serde_json::Value>) -> Result<Self, CallToolResult> {
-        let command = data.required_string("command").map_err(|_| {
-            CallToolResult::error(vec![Content::text("Missing required field: command")])
-        })?;
-
-        let exit_code = data.int32("exit_code").ok_or_else(|| {
-            CallToolResult::error(vec![Content::text("Missing required field: exit_code")])
-        })?;
-
-        let duration_ms = data.int64("duration_ms").ok_or_else(|| {
-            CallToolResult::error(vec![Content::text("Missing required field: duration_ms")])
-        })?;
-
-        let success = data.boolean("success").ok_or_else(|| {
-            CallToolResult::error(vec![Content::text("Missing required field: success")])
-        })?;
-
-        let execution_type_str = data.required_string("execution_type").map_err(|_| {
-            CallToolResult::error(vec![Content::text(
-                "Missing required field: execution_type",
-            )])
-        })?;
-
-        let execution_type =
-            MemoryHelpers::parse_execution_type(&execution_type_str).map_err(|_| {
-                CallToolResult::error(vec![Content::text(format!(
-                    "Invalid execution_type: {}",
-                    execution_type_str
-                ))])
+        let command = data
+            .get("command")
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+            .ok_or_else(|| {
+                CallToolResult::error(vec![Content::text("Missing required field: command")])
             })?;
+
+        let exit_code = data
+            .get("exit_code")
+            .and_then(Value::as_i64)
+            .and_then(|value| value.try_into().ok())
+            .ok_or_else(|| {
+                CallToolResult::error(vec![Content::text("Missing required field: exit_code")])
+            })?;
+
+        let duration_ms = data
+            .get("duration_ms")
+            .and_then(Value::as_i64)
+            .ok_or_else(|| {
+                CallToolResult::error(vec![Content::text("Missing required field: duration_ms")])
+            })?;
+
+        let success = data
+            .get("success")
+            .and_then(Value::as_bool)
+            .ok_or_else(|| {
+                CallToolResult::error(vec![Content::text("Missing required field: success")])
+            })?;
+
+        let execution_type_str = data
+            .get("execution_type")
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+            .ok_or_else(|| {
+                CallToolResult::error(vec![Content::text(
+                    "Missing required field: execution_type",
+                )])
+            })?;
+
+        let execution_type = execution_type_str.parse().map_err(|_| {
+            CallToolResult::error(vec![Content::text(format!(
+                "Invalid execution_type: {}",
+                execution_type_str
+            ))])
+        })?;
 
         Ok(Self {
             command,
@@ -95,11 +112,32 @@ pub async fn store_execution(
         duration_ms: Some(validated.duration_ms),
         success: validated.success,
         execution_type: validated.execution_type,
-        coverage: data.float32("coverage"),
-        files_affected: data.string_list("files_affected"),
-        output_summary: data.string("output_summary"),
-        warnings_count: data.int32("warnings_count"),
-        errors_count: data.int32("errors_count"),
+        coverage: data
+            .get("coverage")
+            .and_then(Value::as_f64)
+            .map(|value| value as f32),
+        files_affected: data
+            .get("files_affected")
+            .and_then(Value::as_array)
+            .map(|items| {
+                items
+                    .iter()
+                    .filter_map(|item| item.as_str().map(str::to_owned))
+                    .collect()
+            })
+            .unwrap_or_default(),
+        output_summary: data
+            .get("output_summary")
+            .and_then(Value::as_str)
+            .map(str::to_owned),
+        warnings_count: data
+            .get("warnings_count")
+            .and_then(Value::as_i64)
+            .and_then(|value| value.try_into().ok()),
+        errors_count: data
+            .get("errors_count")
+            .and_then(Value::as_i64)
+            .and_then(|value| value.try_into().ok()),
     };
     let vcs_context = VcsContext::capture();
     let content = format!(
@@ -125,18 +163,51 @@ pub async fn store_execution(
         .parent_session_id
         .clone()
         .map(|id| compute_stable_id_hash("parent_session", id.as_str()));
-    let payload_repo_id = data.string("repo_id");
-    let payload_project_id = data.string("project_id");
-    let payload_branch = data.string("branch");
-    let payload_commit = data.string("commit");
-    let payload_repo_path = data.string("repo_path");
-    let payload_worktree_id = data.string("worktree_id");
-    let payload_operator_id = data.string("operator_id");
-    let payload_machine_id = data.string("machine_id");
-    let payload_agent_program = data.string("agent_program");
-    let payload_model_id = data.string("model_id");
-    let payload_delegated = data.boolean("delegated");
-    let payload_execution_id = data.string("execution_id");
+    let payload_repo_id = data
+        .get("repo_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_project_id = data
+        .get("project_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_branch = data
+        .get("branch")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_commit = data
+        .get("commit")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_repo_path = data
+        .get("repo_path")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_worktree_id = data
+        .get("worktree_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_operator_id = data
+        .get("operator_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_machine_id = data
+        .get("machine_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_agent_program = data
+        .get("agent_program")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_model_id = data
+        .get("model_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let payload_delegated = data.get("delegated").and_then(Value::as_bool);
+    let payload_execution_id = data
+        .get("execution_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
     let generated_execution_id = metadata.id.clone();
 
     let mut origin_context = resolve_origin_context(OriginContextInput {
@@ -258,11 +329,11 @@ pub async fn get_executions(
         branch: None,
         commit: None,
     };
-    let query = "execution".to_string();
+    let query = "execution";
     let limit = args.limit.unwrap_or(10) as usize;
     let fetch_limit = limit * 5;
     match memory_service
-        .search_memories(&query, Some(filter), fetch_limit)
+        .search_memories(query, Some(filter), fetch_limit)
         .await
     {
         Ok(results) => {
