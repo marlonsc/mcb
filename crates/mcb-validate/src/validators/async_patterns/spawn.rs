@@ -80,7 +80,7 @@ pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncVio
                         continue;
                     }
                     violations.push(AsyncViolation::UnawaitedSpawn {
-                        file: path.to_path_buf(),
+                        file: path.clone(),
                         line: line_num + 1,
                         context: trimmed.chars().take(80).collect(),
                         severity: Severity::Info,

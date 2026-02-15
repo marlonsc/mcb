@@ -26,10 +26,10 @@ async fn seed_default_org(executor: &dyn DatabaseExecutor) {
         .execute(
             "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
             &[
-                SqlParam::String(DEFAULT_ORG_ID.to_string()),
-                SqlParam::String("default".to_string()),
-                SqlParam::String("default".to_string()),
-                SqlParam::String("{}".to_string()),
+                SqlParam::String(DEFAULT_ORG_ID.to_owned()),
+                SqlParam::String("default".to_owned()),
+                SqlParam::String("default".to_owned()),
+                SqlParam::String("{}".to_owned()),
                 SqlParam::I64(0),
                 SqlParam::I64(0),
             ],
@@ -54,10 +54,10 @@ async fn setup_with_project(
 fn create_test_project(id: &str, name: &str, path: &str) -> Project {
     let now = 1000000i64;
     Project {
-        id: id.to_string(),
-        org_id: DEFAULT_ORG_ID.to_string(),
-        name: name.to_string(),
-        path: path.to_string(),
+        id: id.to_owned(),
+        org_id: DEFAULT_ORG_ID.to_owned(),
+        name: name.to_owned(),
+        path: path.to_owned(),
         created_at: now,
         updated_at: now,
     }
@@ -147,8 +147,8 @@ async fn test_update_project() {
         .await
         .expect("Failed to create project");
 
-    project.name = "Updated Name".to_string();
-    project.path = "/updated/path".to_string();
+    project.name = "Updated Name".to_owned();
+    project.path = "/updated/path".to_owned();
     project.updated_at = 2000000i64;
 
     repo.update(&project)
@@ -195,7 +195,7 @@ async fn test_org_isolation() {
                     SqlParam::String(org_id.to_string()),
                     SqlParam::String(org_id.to_string()),
                     SqlParam::String(org_id.to_string()),
-                    SqlParam::String("{}".to_string()),
+                    SqlParam::String("{}".to_owned()),
                     SqlParam::I64(0),
                     SqlParam::I64(0),
                 ],
@@ -206,10 +206,10 @@ async fn test_org_isolation() {
 
     let repo = create_project_repository_from_executor(executor);
     let project = Project {
-        id: "proj-iso".to_string(),
-        org_id: "org-A".to_string(),
-        name: "Org A Project".to_string(),
-        path: "/orgA/path".to_string(),
+        id: "proj-iso".to_owned(),
+        org_id: "org-A".to_owned(),
+        name: "Org A Project".to_owned(),
+        path: "/orgA/path".to_owned(),
         created_at: 1000000,
         updated_at: 1000000,
     };

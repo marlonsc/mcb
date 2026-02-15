@@ -16,7 +16,7 @@ fn extract_text(content: &[rmcp::model::Content]) -> String {
             if let Ok(json) = serde_json::to_value(c)
                 && let Some(text) = json.get("text")
             {
-                text.as_str().map(|s| s.to_string())
+                text.as_str().map(std::borrow::ToOwned::to_owned)
             } else {
                 None
             }
@@ -39,7 +39,7 @@ async fn test_golden_memory_store_with_default_project() {
         action: MemoryAction::Store,
         org_id: None,
         resource: MemoryResource::Observation,
-        project_id: Some("golden-test-project".to_string()),
+        project_id: Some("golden-test-project".to_owned()),
         data: Some(json!({
             "content": "This is a test observation",
             "observation_type": "context",
@@ -68,7 +68,7 @@ async fn test_golden_memory_store_with_default_project() {
     let resp = result.unwrap();
     let text = extract_text(&resp.content);
     // Response format is JSON with observation_id
-    assert!(text.contains("observation_id"), "response: {}", text);
+    assert!(text.contains("observation_id"), "response: {text}");
 }
 
 #[tokio::test]
@@ -88,7 +88,7 @@ async fn test_golden_memory_list_empty_graceful() {
         session_id: None,
         parent_session_id: None,
         tags: None,
-        query: Some("missingterm".to_string()),
+        query: Some("missingterm".to_owned()),
         anchor_id: None,
         depth_before: None,
         depth_after: None,
@@ -105,8 +105,7 @@ async fn test_golden_memory_list_empty_graceful() {
     // Should return valid JSON with empty results, not error
     assert!(
         text.contains("\"count\": 0") || text.contains("[]"),
-        "response: {}",
-        text
+        "response: {text}"
     );
 }
 
@@ -127,7 +126,7 @@ async fn test_golden_context_search_basic() {
             action: MemoryAction::Store,
             org_id: None,
             resource: MemoryResource::Observation,
-            project_id: Some(project_id.to_string()),
+            project_id: Some(project_id.to_owned()),
             data: Some(json!({
                 "content": "The reactor core temperature is critical.",
                 "observation_type": "context",
@@ -152,7 +151,7 @@ async fn test_golden_context_search_basic() {
 
     // 2. Search using Context resource
     let search_args = SearchArgs {
-        query: "reactor temperature".to_string(),
+        query: "reactor temperature".to_owned(),
         org_id: None,
         resource: SearchResource::Context,
         collection: None,
@@ -171,7 +170,6 @@ async fn test_golden_context_search_basic() {
     let text = extract_text(&resp.content);
     assert!(
         text.contains("reactor core temperature"),
-        "Search results missing content: {}",
-        text
+        "Search results missing content: {text}"
     );
 }

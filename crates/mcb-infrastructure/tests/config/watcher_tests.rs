@@ -35,7 +35,7 @@ impl EventBusProvider for TestEventBus {
     }
 
     async fn subscribe(&self, _topic: &str) -> Result<String> {
-        Ok("test-subscription".to_string())
+        Ok("test-subscription".to_owned())
     }
 }
 

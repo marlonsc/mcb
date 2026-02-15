@@ -73,7 +73,7 @@ pub trait LanguageChunkingProvider: Send + Sync {
 
     /// Check if this provider supports a given file extension
     ///
-    /// Default implementation checks against the extensions() slice.
+    /// Default implementation checks against the `extensions()` slice.
     ///
     /// # Arguments
     /// * `ext` - File extension without the dot (e.g., "rs", "py")

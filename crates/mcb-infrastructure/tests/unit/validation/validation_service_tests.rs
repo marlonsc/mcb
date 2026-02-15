@@ -1,4 +1,4 @@
-//! Unit tests for ValidationService
+//! Unit tests for `ValidationService`
 
 use std::path::PathBuf;
 
@@ -21,9 +21,9 @@ async fn test_list_validators() {
     let service = InfraValidationService::new();
     let validators = service.list_validators().await.unwrap();
 
-    assert!(validators.contains(&"clean_architecture".to_string()));
-    assert!(validators.contains(&"solid".to_string()));
-    assert!(validators.contains(&"quality".to_string()));
+    assert!(validators.contains(&"clean_architecture".to_owned()));
+    assert!(validators.contains(&"solid".to_owned()));
+    assert!(validators.contains(&"quality".to_owned()));
 }
 
 #[tokio::test]
@@ -37,7 +37,7 @@ async fn test_validate_mcb_workspace_quality_only() {
         .spawn(move || {
             tokio::runtime::Runtime::new()
                 .unwrap()
-                .block_on(service.validate(&workspace_root, Some(&["quality".to_string()]), None))
+                .block_on(service.validate(&workspace_root, Some(&["quality".to_owned()]), None))
         })
         .expect("spawn thread")
         .join()
@@ -59,7 +59,7 @@ async fn test_validate_with_specific_validator() {
                 .unwrap()
                 .block_on(service.validate(
                     &workspace_root,
-                    Some(&["quality".to_string()]),
+                    Some(&["quality".to_owned()]),
                     Some("warning"),
                 ))
         })
@@ -96,7 +96,7 @@ async fn test_validate_detects_inline_tests_in_src_via_registry_path() {
 
     let service = InfraValidationService::new();
     let report = service
-        .validate(workspace, Some(&["hygiene".to_string()]), Some("warning"))
+        .validate(workspace, Some(&["hygiene".to_owned()]), Some("warning"))
         .await
         .expect("validate should succeed");
 

@@ -52,8 +52,10 @@ fn test_service_url(key: &str) -> String {
     test_services_table()
         .and_then(|services| services.get(key))
         .and_then(|value| value.as_str())
-        .map(str::to_string)
-        .unwrap_or_else(|| panic!("missing test_services.{key} in config/tests.toml"))
+        .map_or_else(
+            || panic!("missing test_services.{key} in config/tests.toml"),
+            str::to_string,
+        )
 }
 
 // ============================================================================
@@ -75,11 +77,11 @@ mod embedding_registry_tests {
             .with_extra("custom", "value");
 
         assert_eq!(config.provider, "test");
-        assert_eq!(config.model, Some("model-1".to_string()));
-        assert_eq!(config.api_key, Some("secret".to_string()));
-        assert_eq!(config.base_url, Some("http://localhost".to_string()));
+        assert_eq!(config.model, Some("model-1".to_owned()));
+        assert_eq!(config.api_key, Some("secret".to_owned()));
+        assert_eq!(config.base_url, Some("http://localhost".to_owned()));
         assert_eq!(config.dimensions, Some(384));
-        assert_eq!(config.extra.get("custom"), Some(&"value".to_string()));
+        assert_eq!(config.extra.get("custom"), Some(&"value".to_owned()));
     }
 
     #[rstest]
@@ -97,8 +99,7 @@ mod embedding_registry_tests {
         let has_fastembed = providers.iter().any(|(name, _)| *name == "fastembed");
         assert!(
             has_fastembed,
-            "FastEmbed (local) provider should be registered. Available: {:?}",
-            providers
+            "FastEmbed (local) provider should be registered. Available: {providers:?}"
         );
     }
 
@@ -137,8 +138,7 @@ mod embedding_registry_tests {
             Err(err) => {
                 assert!(
                     err.to_string().contains("Unknown provider"),
-                    "Error should describe the issue: {}",
-                    err
+                    "Error should describe the issue: {err}"
                 );
             }
             Ok(_) => panic!("Expected error for unknown provider"),
@@ -153,8 +153,7 @@ mod embedding_registry_tests {
             assert!(!name.is_empty(), "Provider name should not be empty");
             assert!(
                 !description.is_empty(),
-                "Provider '{}' should have a description",
-                name
+                "Provider '{name}' should have a description"
             );
         }
     }
@@ -183,7 +182,7 @@ mod vector_store_registry_tests {
 
         assert_eq!(config.provider, "milvus");
         assert_eq!(config.uri, Some(milvus_uri));
-        assert_eq!(config.collection, Some("embeddings".to_string()));
+        assert_eq!(config.collection, Some("embeddings".to_owned()));
         assert_eq!(config.dimensions, Some(384));
         assert_eq!(config.encrypted, Some(true));
     }
@@ -201,8 +200,7 @@ mod vector_store_registry_tests {
         let has_edgevec = providers.iter().any(|(name, _)| *name == "edgevec");
         assert!(
             has_edgevec,
-            "Should have edgevec vector store provider. Available: {:?}",
-            providers
+            "Should have edgevec vector store provider. Available: {providers:?}"
         );
     }
 
@@ -218,8 +216,7 @@ mod vector_store_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.to_string())
-                .unwrap_or_else(|| "unknown".to_string())
+                .map_or_else(|| "unknown".to_owned(), std::string::ToString::to_string)
         );
 
         let provider = result.expect("Provider should be valid");
@@ -256,7 +253,7 @@ mod cache_registry_tests {
         assert_eq!(config.uri, Some(redis_uri));
         assert_eq!(config.max_size, Some(10000));
         assert_eq!(config.ttl_secs, Some(3600));
-        assert_eq!(config.namespace, Some("mcb".to_string()));
+        assert_eq!(config.namespace, Some("mcb".to_owned()));
     }
 
     #[rstest]
@@ -272,8 +269,7 @@ mod cache_registry_tests {
         let has_moka = providers.iter().any(|(name, _)| *name == "moka");
         assert!(
             has_moka,
-            "Should have moka cache provider. Available: {:?}",
-            providers
+            "Should have moka cache provider. Available: {providers:?}"
         );
     }
 
@@ -289,8 +285,7 @@ mod cache_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.to_string())
-                .unwrap_or_else(|| "unknown".to_string())
+                .map_or_else(|| "unknown".to_owned(), std::string::ToString::to_string)
         );
 
         let provider = result.expect("Provider should be valid");
@@ -337,8 +332,7 @@ mod language_registry_tests {
         let has_universal = providers.iter().any(|(name, _)| *name == "universal");
         assert!(
             has_universal,
-            "Should have universal language provider. Available: {:?}",
-            providers
+            "Should have universal language provider. Available: {providers:?}"
         );
     }
 
@@ -354,8 +348,7 @@ mod language_registry_tests {
             result
                 .as_ref()
                 .err()
-                .map(|e| e.to_string())
-                .unwrap_or_else(|| "unknown".to_string())
+                .map_or_else(|| "unknown".to_owned(), std::string::ToString::to_string)
         );
     }
 }
@@ -382,7 +375,7 @@ mod integration_tests {
             "language" => list_language_providers().len(),
             _ => 0,
         };
-        assert!(count > 0, "{} registry should not be empty", registry);
+        assert!(count > 0, "{registry} registry should not be empty");
     }
 
     #[tokio::test]

@@ -21,7 +21,7 @@ pub enum IndexAction {
 tool_schema! {
 /// Arguments for the index tool.
 pub struct IndexArgs {
-    /// Action to perform: start, git_index, status, clear.
+    /// Action to perform: start, `git_index`, status, clear.
     #[schemars(description = "Action to perform: start, git_index, status, clear")]
     pub action: IndexAction,
 

@@ -70,7 +70,7 @@ impl NativePmatAnalyzer {
     // No longer needed: all_symbol_occurrences
 }
 
-/// Implementation of ComplexityAnalyzer.
+/// Implementation of `ComplexityAnalyzer`.
 impl ComplexityAnalyzer for NativePmatAnalyzer {
     // TODO(qlty): Found 20 lines of similar code in 2 locations (mass = 92)
     fn analyze_complexity(
@@ -109,7 +109,7 @@ impl DeadCodeDetector for NativePmatAnalyzer {
             .map(|f| DeadCodeFinding {
                 file: f.file,
                 line: f.line,
-                item_type: "function".to_string(),
+                item_type: "function".to_owned(),
                 name: f.name,
             })
             .collect();

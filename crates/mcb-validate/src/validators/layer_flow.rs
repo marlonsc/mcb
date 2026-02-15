@@ -70,6 +70,7 @@ impl LayerFlowValidator {
     }
 
     /// Creates a new layer flow validator with current configuration.
+    #[must_use]
     pub fn with_config(config: &LayerFlowRulesConfig) -> Self {
         Self {
             circular_dependency_check_crates: config.circular_dependency_check_crates.clone(),
@@ -133,11 +134,11 @@ impl LayerFlowValidator {
                         && (trimmed.starts_with(dep_crate)
                             || trimmed.contains(&format!("\"{dep_crate}\"")))
                     {
-                        crate_deps.insert(dep_crate.to_string());
+                        crate_deps.insert(dep_crate.clone());
                     }
                 }
             }
-            deps.insert(crate_name.to_string(), crate_deps);
+            deps.insert(crate_name.clone(), crate_deps);
         }
 
         let crate_list: Vec<_> = deps.keys().cloned().collect();

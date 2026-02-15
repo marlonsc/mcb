@@ -36,15 +36,15 @@ async fn test_fts_search_flow(
 ) {
     let (repo, executor, _dir) = repo_and_executor.await;
 
-    let project_id = "test-project".to_string();
+    let project_id = "test-project".to_owned();
     create_test_project(executor.as_ref(), &project_id).await;
 
     let id = Uuid::new_v4().to_string();
     let obs = Observation {
         id: id.clone(),
         project_id: project_id.clone(),
-        content: "The quick brown fox".to_string(),
-        content_hash: "hash1".to_string(),
+        content: "The quick brown fox".to_owned(),
+        content_hash: "hash1".to_owned(),
         tags: vec![],
         r#type: ObservationType::Context,
         metadata: Default::default(),

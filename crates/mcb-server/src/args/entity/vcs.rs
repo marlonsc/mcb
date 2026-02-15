@@ -67,7 +67,7 @@ pub struct VcsEntityArgs {
     #[schemars(description = "Worktree ID (for assignment listing)")]
     pub worktree_id: Option<String>,
 
-    /// Data payload for create/update. phase: {name, status, order}; issue: {title, description?, status?, priority?}; dependency: {from_issue_id, to_issue_id, kind?}; decision: {title, rationale, impact?, status?}
+    /// Data payload for create/update. phase: {name, status, order}; issue: {title, description?, status?, priority?}; dependency: {`from_issue_id`, `to_issue_id`, kind?}; decision: {title, rationale, impact?, status?}
     #[schemars(
         description = "Data payload for create/update. phase: {name, status, order}; issue: {title, description?, status?, priority?}; dependency: {from_issue_id, to_issue_id, kind?}; decision: {title, rationale, impact?, status?}",
         with = "serde_json::Value"

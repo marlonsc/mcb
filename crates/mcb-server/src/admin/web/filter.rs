@@ -54,6 +54,7 @@ pub struct FilterParams {
 
 /// Parse an ISO date string ("YYYY-MM-DD") to a Unix epoch timestamp (start of day UTC).
 /// Returns `None` if the string is empty or unparseable.
+#[must_use]
 pub fn parse_iso_date_to_epoch(date_str: &str) -> Option<i64> {
     chrono::NaiveDate::parse_from_str(date_str.trim(), "%Y-%m-%d")
         .ok()
@@ -62,6 +63,7 @@ pub fn parse_iso_date_to_epoch(date_str: &str) -> Option<i64> {
 }
 
 /// Parse an ISO date string to end-of-day epoch (23:59:59 UTC).
+#[must_use]
 pub fn parse_iso_date_to_epoch_end(date_str: &str) -> Option<i64> {
     chrono::NaiveDate::parse_from_str(date_str.trim(), "%Y-%m-%d")
         .ok()

@@ -70,7 +70,7 @@ fn test_organization_full_workspace() {
 fn test_clean_organization_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
-        r"
+        "
 /// A well-organized module with named constants.
 pub const MAX_RETRIES: u32 = 3;
 pub fn retry(attempts: u32) -> bool {
@@ -92,9 +92,9 @@ fn test_organization_violation_severity_is_non_recursive() {
     let violation = OrganizationViolation::MagicNumber {
         file: std::path::PathBuf::from("dummy.rs"),
         line: 1,
-        value: "99999".to_string(),
-        context: "let n = 99999;".to_string(),
-        suggestion: "Use constant".to_string(),
+        value: "99999".to_owned(),
+        context: "let n = 99999;".to_owned(),
+        suggestion: "Use constant".to_owned(),
         severity: Severity::Info,
     };
 

@@ -30,8 +30,7 @@ fn get_mcb_path() -> PathBuf {
     }
 
     panic!(
-        "mcb binary not found. Checked CARGO_BIN_EXE_mcb and target/debug|release/mcb from {}",
-        manifest_dir
+        "mcb binary not found. Checked CARGO_BIN_EXE_mcb and target/debug|release/mcb from {manifest_dir}"
     );
 }
 
@@ -40,7 +39,7 @@ fn unique_temp_path(name: &str) -> PathBuf {
         .duration_since(std::time::UNIX_EPOCH)
         .expect("system time")
         .as_nanos();
-    std::env::temp_dir().join(format!("mcb-startup-smoke-{}-{}", name, stamp))
+    std::env::temp_dir().join(format!("mcb-startup-smoke-{name}-{stamp}"))
 }
 
 fn config_path() -> PathBuf {
@@ -116,7 +115,7 @@ fn corrupted_db_is_backed_up_and_recreated() {
 
     let has_backup = fs::read_dir(db_path.parent().unwrap())
         .expect("read temp dir")
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
         .any(|e| {
             e.file_name()
                 .to_string_lossy()
@@ -171,7 +170,6 @@ fn ddl_error_messages_include_source_context() {
 
     assert!(
         recovery_worked || error_has_context,
-        "should either recover or show actionable error; logs={}",
-        logs
+        "should either recover or show actionable error; logs={logs}"
     );
 }

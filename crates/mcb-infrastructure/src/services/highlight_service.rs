@@ -38,6 +38,7 @@ impl HighlightLanguageConfig {
 }
 
 /// Maps tree-sitter highlight names to our category enum.
+#[must_use]
 pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
     match name {
         "keyword" => HighlightCategory::Keyword,
@@ -63,6 +64,7 @@ pub struct HighlightServiceImpl {
 
 impl HighlightServiceImpl {
     /// Creates a syntax highlight service with an internal tree-sitter highlighter.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             highlighter: Arc::new(tokio::sync::Mutex::new(Highlighter::new())),
@@ -134,7 +136,7 @@ impl HighlightServiceImpl {
                 tree_sitter_swift::LANGUAGE.into(),
                 tree_sitter_swift::HIGHLIGHTS_QUERY,
             )),
-            _ => Err(HighlightError::UnsupportedLanguage(language.to_string())),
+            _ => Err(HighlightError::UnsupportedLanguage(language.to_owned())),
         }
     }
 
@@ -163,9 +165,9 @@ impl HighlightServiceImpl {
     ) -> Result<HighlightedCode, HighlightError> {
         if code.is_empty() {
             return Ok(HighlightedCode {
-                original: code.to_string(),
+                original: code.to_owned(),
                 spans: vec![],
-                language: language.to_string(),
+                language: language.to_owned(),
             });
         }
 
@@ -215,9 +217,9 @@ impl HighlightServiceImpl {
         }
 
         Ok(HighlightedCode {
-            original: code.to_string(),
+            original: code.to_owned(),
             spans,
-            language: language.to_string(),
+            language: language.to_owned(),
         })
     }
 }
@@ -231,8 +233,8 @@ impl Default for HighlightServiceImpl {
 #[async_trait::async_trait]
 impl HighlightServiceInterface for HighlightServiceImpl {
     async fn highlight(&self, code: &str, language: &str) -> mcb_domain::Result<HighlightedCode> {
-        let code = code.to_string();
-        let language = language.to_string();
+        let code = code.to_owned();
+        let language = language.to_owned();
         let highlighter = Arc::clone(&self.highlighter);
 
         let result = tokio::task::spawn_blocking(move || {
@@ -240,7 +242,7 @@ impl HighlightServiceInterface for HighlightServiceImpl {
             service.highlight_code_internal(&code, &language)
         })
         .await
-        .map_err(|e| HighlightError::HighlightingFailed(format!("Blocking task failed: {}", e)))?;
+        .map_err(|e| HighlightError::HighlightingFailed(format!("Blocking task failed: {e}")))?;
 
         result.map_err(mcb_domain::Error::from)
     }

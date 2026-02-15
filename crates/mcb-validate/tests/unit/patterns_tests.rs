@@ -3,7 +3,7 @@
 //! Validates `PatternValidator` against fixture crates with precise
 //! file + line + violation-type assertions.
 //!
-//! Codes covered: PAT001 (ConcreteTypeInDi), PAT004 (RawResultType).
+//! Codes covered: PAT001 (`ConcreteTypeInDi`), PAT004 (`RawResultType`).
 
 use mcb_validate::PatternValidator;
 
@@ -41,12 +41,12 @@ fn test_patterns_full_workspace() {
 fn test_clean_patterns_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
-        r#"
+        "
 /// Clean DI using trait objects.
 pub trait CacheService {
     fn get(&self, key: &str) -> Option<String>;
 }
-"#,
+",
     );
     let validator = PatternValidator::new(&root);
     let violations = validator.validate_all().unwrap();

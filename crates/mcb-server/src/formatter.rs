@@ -53,6 +53,7 @@ impl ResponseFormatter {
     }
 
     /// Format indexing status response
+    #[must_use]
     pub fn format_indexing_status(status: &IndexingStatus) -> CallToolResult {
         let message = build_indexing_status_message(status);
         CallToolResult::success(vec![Content::text(message)])
@@ -68,10 +69,10 @@ impl ResponseFormatter {
     }
 
     /// Format clear index response
+    #[must_use]
     pub fn format_clear_index(collection: &str) -> CallToolResult {
         let message = format!(
-            "✅ **Index Cleared**\n\nCollection `{}` has been cleared successfully.",
-            collection
+            "✅ **Index Cleared**\n\nCollection `{collection}` has been cleared successfully."
         );
         CallToolResult::success(vec![Content::text(message)])
     }
@@ -113,8 +114,8 @@ fn build_search_response_message(
     duration: Duration,
     limit: usize,
 ) -> String {
-    let mut message = "🔍 **Semantic Code Search Results**\n\n".to_string();
-    message.push_str(&format!("**Query:** \"{}\" \n", query));
+    let mut message = "🔍 **Semantic Code Search Results**\n\n".to_owned();
+    message.push_str(&format!("**Query:** \"{query}\" \n"));
     message.push_str(&format!(
         "**Search completed in:** {:.2}s\n",
         duration.as_secs_f64()
@@ -165,8 +166,7 @@ fn append_search_results(
 
     if results.len() == limit {
         message.push_str(&format!(
-            "💡 **Showing top {} results.** For more results, try:\n",
-            limit
+            "💡 **Showing top {limit} results.** For more results, try:\n"
         ));
         message.push_str("• More specific search terms\n");
         message.push_str("• Different query formulations\n");
@@ -203,9 +203,9 @@ fn append_code_preview(message: &mut String, result: &SearchResult) {
     let lang_hint = get_language_hint(file_ext, &result.language);
 
     if lang_hint.is_empty() {
-        message.push_str(&format!("```\n{}\n```\n", preview_lines));
+        message.push_str(&format!("```\n{preview_lines}\n```\n"));
     } else {
-        message.push_str(&format!("``` {}\n{}\n```\n", lang_hint, preview_lines));
+        message.push_str(&format!("``` {lang_hint}\n{preview_lines}\n```\n"));
     }
 }
 
@@ -268,7 +268,7 @@ fn build_indexing_success_message(
             result.errors.len()
         ));
         for error in &result.errors {
-            message.push_str(&format!("• {}\n", error));
+            message.push_str(&format!("• {error}\n"));
         }
     } else {
         message.push_str("\n🎯 **Next Steps:**\n");
@@ -285,7 +285,7 @@ fn build_indexing_started_message(result: &IndexingResult, path: &Path) -> Strin
     let operation_id = result
         .operation_id
         .as_ref()
-        .map_or_else(|| "N/A".to_string(), |id| id.as_str());
+        .map_or_else(|| "N/A".to_owned(), mcb_domain::OperationId::as_str);
 
     format!(
         "🚀 **Indexing Started**\n\n\
@@ -324,7 +324,7 @@ fn build_indexing_status_message(status: &IndexingStatus) -> String {
         message.push_str("🔄 **Indexing Status: In Progress**\n");
         message.push_str(&format!("Progress: {:.1}%\n", status.progress * 100.0));
         if let Some(current_file) = &status.current_file {
-            message.push_str(&format!("Current file: `{}`\n", current_file));
+            message.push_str(&format!("Current file: `{current_file}`\n"));
         }
         message.push_str(&format!(
             "Files processed: {}/{}\n",

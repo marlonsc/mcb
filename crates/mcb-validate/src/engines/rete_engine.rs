@@ -29,6 +29,7 @@ impl Default for ReteEngine {
 
 impl ReteEngine {
     /// Create a new RETE engine instance
+    #[must_use]
     pub fn new() -> Self {
         Self {
             kb: KnowledgeBase::new("mcb-validate"),
@@ -81,7 +82,7 @@ impl ReteEngine {
                     .root_package()
                     .map(|p| p.name.to_string())
                     .or_else(|| metadata.packages.first().map(|p| p.name.to_string()))
-                    .unwrap_or_else(|| "unknown".to_string());
+                    .unwrap_or_else(|| "unknown".to_owned());
 
                 facts.set("Facts.crate_name", RreValue::String(root_name));
 
@@ -178,7 +179,7 @@ impl ReteEngine {
                             None
                         }
                     })
-                    .unwrap_or_else(|| "Rule violation detected".to_string());
+                    .unwrap_or_else(|| "Rule violation detected".to_owned());
 
                 let rule_name = facts
                     .get("Facts.violation_rule_name")
@@ -189,7 +190,7 @@ impl ReteEngine {
                             None
                         }
                     })
-                    .unwrap_or_else(|| "GRL_RULE".to_string());
+                    .unwrap_or_else(|| "GRL_RULE".to_owned());
 
                 violations.push(
                     RuleViolation::new(

@@ -23,17 +23,19 @@ pub struct HookProcessor {
 }
 
 impl HookProcessor {
-    /// Create a new HookProcessor with optional memory service.
+    /// Create a new `HookProcessor` with optional memory service.
+    #[must_use]
     pub fn new(memory_service: Option<Arc<dyn MemoryServiceInterface>>) -> Self {
         Self { memory_service }
     }
 
     /// Check if the processor is ready to handle events.
+    #[must_use]
     pub fn is_ready(&self) -> bool {
         true
     }
 
-    /// Process the PostToolUse hook event.
+    /// Process the `PostToolUse` hook event.
     ///
     /// Stores tool execution results as observations in memory.
     pub async fn process_post_tool_use(&self, context: PostToolUseContext) -> HookResult<()> {
@@ -93,9 +95,9 @@ impl HookProcessor {
             ..Default::default()
         };
 
-        let mut tags = vec!["tool".to_string(), context.tool_name.clone()];
+        let mut tags = vec!["tool".to_owned(), context.tool_name.clone()];
         if context.status == ToolExecutionStatus::Error {
-            tags.push("error".to_string());
+            tags.push("error".to_owned());
         }
 
         memory_service
@@ -113,7 +115,7 @@ impl HookProcessor {
         Ok(())
     }
 
-    /// Process the SessionStart hook event.
+    /// Process the `SessionStart` hook event.
     ///
     /// Injects relevant context from previous sessions.
     pub async fn process_session_start(&self, context: SessionStartContext) -> HookResult<()> {

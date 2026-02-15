@@ -21,6 +21,7 @@ pub enum MetricType {
 
 impl MetricType {
     /// Get the human-readable name
+    #[must_use]
     pub fn name(&self) -> &'static str {
         match self {
             Self::CognitiveComplexity
@@ -31,6 +32,7 @@ impl MetricType {
     }
 
     /// Get metric description
+    #[must_use]
     pub fn description(&self) -> &'static str {
         match self {
             Self::CognitiveComplexity => "cognitive complexity",
@@ -41,27 +43,28 @@ impl MetricType {
     }
 
     /// Get suggestion for fixing
+    #[must_use]
     pub fn suggestion(&self) -> String {
         match self {
             Self::CognitiveComplexity => {
                 "Consider breaking this function into smaller, focused functions. \
                  Extract complex conditions into named functions or early returns."
-                    .to_string()
+                    .to_owned()
             }
             Self::CyclomaticComplexity => {
                 "Reduce the number of decision points (if/else, switch, loops). \
                  Consider using polymorphism or strategy pattern instead of conditionals."
-                    .to_string()
+                    .to_owned()
             }
             Self::FunctionLength => {
                 "Consider extracting helper functions or using the Extract Method refactoring. \
                  Functions should ideally do one thing well."
-                    .to_string()
+                    .to_owned()
             }
             Self::NestingDepth => {
                 "Consider using early returns, guard clauses, or extracting nested logic \
                  into separate functions to reduce nesting."
-                    .to_string()
+                    .to_owned()
             }
         }
     }
@@ -95,6 +98,7 @@ impl Default for MetricThresholds {
 
 impl MetricThresholds {
     /// Create empty thresholds
+    #[must_use]
     pub fn new() -> Self {
         Self {
             thresholds: HashMap::new(),
@@ -120,6 +124,7 @@ impl MetricThresholds {
     }
 
     /// Get threshold for a metric type
+    #[must_use]
     pub fn get(&self, metric: MetricType) -> Option<&MetricThreshold> {
         self.thresholds.get(&metric)
     }
@@ -163,6 +168,7 @@ impl MetricThresholds {
     }
 
     /// Parse thresholds from YAML rule config
+    #[must_use]
     pub fn from_yaml(config: &serde_json::Value) -> Self {
         let mut thresholds = Self::new();
 
@@ -185,6 +191,7 @@ impl MetricThresholds {
     }
 
     /// Create thresholds from a `MetricsConfig` struct (from `ValidatedRule`)
+    #[must_use]
     pub fn from_metrics_config(config: &crate::rules::yaml_loader::MetricsConfig) -> Self {
         let mut thresholds = Self::new();
 

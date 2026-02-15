@@ -40,7 +40,7 @@ pub fn validate_empty_methods(
             for (pattern, desc) in &compiled {
                 if pattern.is_match(trimmed) {
                     violations.push(ImplementationViolation::EmptyMethodBody {
-                        file: file_path.to_path_buf(),
+                        file: file_path.clone(),
                         line: line_num,
                         method_name: current_fn_name.clone(),
                         pattern: desc.to_string(),

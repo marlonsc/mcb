@@ -32,7 +32,7 @@ fn test_http_config_localhost_variants(#[case] offset: u16) {
 #[test]
 fn test_http_config_clone() {
     let config = HttpTransportConfig {
-        host: "0.0.0.0".to_string(),
+        host: "0.0.0.0".to_owned(),
         port: 4000,
         enable_cors: false,
     };
@@ -45,6 +45,6 @@ fn test_http_config_clone() {
 #[test]
 fn test_http_config_debug() {
     let config = HttpTransportConfig::default();
-    let debug = format!("{:?}", config);
+    let debug = format!("{config:?}");
     assert!(debug.contains("HttpTransportConfig"));
 }

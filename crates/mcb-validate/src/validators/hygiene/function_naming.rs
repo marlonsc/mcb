@@ -75,9 +75,9 @@ pub fn validate_test_function_naming(config: &ValidationConfig) -> Result<Vec<Hy
                             // Check naming convention - must start with test_
                             if !fn_name.starts_with("test_") {
                                 violations.push(HygieneViolation::BadTestFunctionName {
-                                    file: path.to_path_buf(),
+                                    file: path.clone(),
                                     line: fn_line_idx + 1,
-                                    function_name: fn_name.to_string(),
+                                    function_name: fn_name.to_owned(),
                                     suggestion: format!("test_{fn_name}"),
                                     severity: Severity::Warning,
                                 });
@@ -104,9 +104,9 @@ pub fn validate_test_function_naming(config: &ValidationConfig) -> Result<Vec<Hy
 
                             if !has_assertion && !is_smoke_test {
                                 violations.push(HygieneViolation::TestWithoutAssertion {
-                                    file: path.to_path_buf(),
+                                    file: path.clone(),
                                     line: fn_line_idx + 1,
-                                    function_name: fn_name.to_string(),
+                                    function_name: fn_name.to_owned(),
                                     severity: Severity::Warning,
                                 });
                             }

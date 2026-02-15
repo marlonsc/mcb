@@ -3,6 +3,7 @@
 use rmcp::model::Content;
 
 /// Concatenate all text segments from an MCP `Content` slice.
+#[must_use]
 pub fn extract_text_content(content: &[Content]) -> String {
     content
         .iter()

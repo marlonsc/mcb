@@ -1,6 +1,6 @@
 //! Configuration Types Tests
 //!
-//! Note: ConfigKey, ConfigProfile, and ValidationResult types were removed
+//! Note: `ConfigKey`, `ConfigProfile`, and `ValidationResult` types were removed
 //! during the configuration refactoring. These tests are retained as a
 //! placeholder for future configuration type testing.
 
@@ -27,7 +27,7 @@ fn test_server_config_defaults() {
 #[test]
 fn test_server_network_config() {
     let network = ServerNetworkConfig {
-        host: "0.0.0.0".to_string(),
+        host: "0.0.0.0".to_owned(),
         port: 9000,
     };
 

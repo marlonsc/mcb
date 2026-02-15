@@ -30,7 +30,7 @@ fn language_filter(
     let executor = RuleFilterExecutor::new(temp_dir.path().to_path_buf());
 
     let filters = RuleFilters {
-        languages: language.map(|lang| vec![lang.to_string()]),
+        languages: language.map(|lang| vec![lang.to_owned()]),
         dependencies: None,
         file_patterns: None,
         allow: None,
@@ -67,7 +67,7 @@ serde = "1.0"
 
     let filters = RuleFilters {
         languages: None,
-        dependencies: Some(vec!["serde".to_string()]),
+        dependencies: Some(vec!["serde".to_owned()]),
         file_patterns: None,
         allow: None,
         deny: None,
@@ -87,7 +87,7 @@ serde = "1.0"
 
     let tokio_filters = RuleFilters {
         languages: None,
-        dependencies: Some(vec!["tokio".to_string()]),
+        dependencies: Some(vec!["tokio".to_owned()]),
         file_patterns: None,
         allow: None,
         deny: None,
@@ -114,7 +114,7 @@ fn test_file_pattern_filter() {
     let filters = RuleFilters {
         languages: None,
         dependencies: None,
-        file_patterns: Some(vec!["src/**/*.rs".to_string(), "!**/tests/**".to_string()]),
+        file_patterns: Some(vec!["src/**/*.rs".to_owned(), "!**/tests/**".to_owned()]),
         allow: None,
         deny: None,
         skip: None,
@@ -170,9 +170,9 @@ serde = "1.0"
     let workspace_deps = executor.parse_workspace_dependencies().unwrap();
 
     let filters = RuleFilters {
-        languages: Some(vec!["rust".to_string()]),
-        dependencies: Some(vec!["serde".to_string()]),
-        file_patterns: Some(vec!["**/src/**/*.rs".to_string()]),
+        languages: Some(vec!["rust".to_owned()]),
+        dependencies: Some(vec!["serde".to_owned()]),
+        file_patterns: Some(vec!["**/src/**/*.rs".to_owned()]),
         allow: None,
         deny: None,
         skip: None,
@@ -201,9 +201,9 @@ serde = "1.0"
     );
 
     let missing_dep_filters = RuleFilters {
-        languages: Some(vec!["rust".to_string()]),
-        dependencies: Some(vec!["tokio".to_string()]),
-        file_patterns: Some(vec!["**/src/**/*.rs".to_string()]),
+        languages: Some(vec!["rust".to_owned()]),
+        dependencies: Some(vec!["tokio".to_owned()]),
+        file_patterns: Some(vec!["**/src/**/*.rs".to_owned()]),
         allow: None,
         deny: None,
         skip: None,

@@ -42,13 +42,13 @@ pub struct OrgEntityArgs {
     /// Action: create, get, update, list, delete
     #[schemars(description = "Action: create, get, update, list, delete")]
     pub action: OrgEntityAction,
-    /// Resource: org, user, team, team_member, api_key
+    /// Resource: org, user, team, `team_member`, `api_key`
     #[schemars(description = "Resource: org, user, team, team_member, api_key")]
     pub resource: OrgEntityResource,
     /// Resource ID (for get/update/delete)
     #[schemars(description = "Resource ID (for get/update/delete)")]
     pub id: Option<String>,
-    /// Organization ID (for listing users/teams/api_keys)
+    /// Organization ID (for listing `users/teams/api_keys`)
     #[schemars(description = "Organization ID (for listing users/teams/api_keys)")]
     pub org_id: Option<String>,
     /// Team ID (for listing members)

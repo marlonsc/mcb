@@ -108,7 +108,7 @@ impl Context {
                     engine_ext,
                     data_type,
                 };
-                templates.insert(name.to_string(), info);
+                templates.insert(name.to_owned(), info);
             }
         }
 
@@ -135,7 +135,7 @@ impl Context {
                 .unwrap_or(ContentType::HTML);
 
             templates.insert(
-                name.to_string(),
+                name.to_owned(),
                 TemplateInfo {
                     path: None,
                     engine_ext: "hbs",
@@ -153,7 +153,7 @@ impl Context {
                     .unwrap_or(ContentType::Text);
 
                 templates.insert(
-                    name.to_string(),
+                    name.to_owned(),
                     TemplateInfo {
                         path: None,
                         engine_ext,

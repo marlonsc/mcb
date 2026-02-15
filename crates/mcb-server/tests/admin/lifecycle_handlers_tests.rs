@@ -14,12 +14,12 @@ fn test_service_list_response_serialization(#[case] count: usize, #[case] with_s
         services: if with_services {
             vec![
                 ServiceInfoResponse {
-                    name: "embedding".to_string(),
-                    state: "Running".to_string(),
+                    name: "embedding".to_owned(),
+                    state: "Running".to_owned(),
                 },
                 ServiceInfoResponse {
-                    name: "vector_store".to_string(),
-                    state: "Stopped".to_string(),
+                    name: "vector_store".to_owned(),
+                    state: "Stopped".to_owned(),
                 },
             ]
         } else {
@@ -28,7 +28,7 @@ fn test_service_list_response_serialization(#[case] count: usize, #[case] with_s
     };
 
     let json = serde_json::to_string(&response).unwrap();
-    assert!(json.contains(&format!("\"count\":{}", count)));
+    assert!(json.contains(&format!("\"count\":{count}")));
     if with_services {
         assert!(json.contains("\"name\":\"embedding\""));
         assert!(json.contains("\"state\":\"Running\""));
@@ -40,8 +40,8 @@ fn test_service_list_response_serialization(#[case] count: usize, #[case] with_s
 #[test]
 fn test_service_info_response_serialization() {
     let info = ServiceInfoResponse {
-        name: "cache".to_string(),
-        state: "Starting".to_string(),
+        name: "cache".to_owned(),
+        state: "Starting".to_owned(),
     };
 
     let json = serde_json::to_string(&info).unwrap();

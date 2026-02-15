@@ -23,7 +23,8 @@ pub fn opt_i64(row: &dyn SqlRow, col: &str) -> Result<Option<i64>> {
     row.try_get_i64(col)
 }
 
-/// Helper to convert Option<String> to SqlParam.
+/// Helper to convert Option<String> to `SqlParam`.
+#[must_use]
 pub fn opt_str_param(value: &Option<String>) -> SqlParam {
     match value {
         Some(v) => SqlParam::String(v.clone()),
@@ -31,7 +32,8 @@ pub fn opt_str_param(value: &Option<String>) -> SqlParam {
     }
 }
 
-/// Helper to convert Option<i64> to SqlParam.
+/// Helper to convert Option<i64> to `SqlParam`.
+#[must_use]
 pub fn opt_i64_param(value: Option<i64>) -> SqlParam {
     match value {
         Some(v) => SqlParam::I64(v),

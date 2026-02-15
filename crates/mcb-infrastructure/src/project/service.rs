@@ -25,6 +25,7 @@ pub struct ProjectService;
 
 impl ProjectService {
     /// Creates a project detector service instance.
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

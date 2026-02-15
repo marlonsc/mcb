@@ -21,6 +21,7 @@ pub struct DuplicationAnalyzer {
 
 impl DuplicationAnalyzer {
     /// Create a new analyzer with default thresholds
+    #[must_use]
     pub fn new() -> Self {
         Self {
             thresholds: DuplicationThresholds::default(),
@@ -29,6 +30,7 @@ impl DuplicationAnalyzer {
     }
 
     /// Create an analyzer with custom thresholds
+    #[must_use]
     pub fn with_thresholds(thresholds: DuplicationThresholds) -> Self {
         Self {
             thresholds,
@@ -69,6 +71,7 @@ impl DuplicationAnalyzer {
     }
 
     /// Check if a file should be analyzed based on language and patterns
+    #[must_use]
     pub fn should_analyze_file(&self, path: &Path) -> bool {
         let language = self.detect_language(path);
         if !self.thresholds.languages.contains(&language) {
@@ -97,7 +100,7 @@ impl DuplicationAnalyzer {
         }
 
         let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-        self.extension_to_language_fallback(extension).to_string()
+        self.extension_to_language_fallback(extension).to_owned()
     }
 
     fn extension_to_language_fallback(&self, extension: &str) -> &str {
@@ -113,6 +116,7 @@ impl DuplicationAnalyzer {
     }
 
     /// Get duplication statistics from analysis
+    #[must_use]
     pub fn get_stats(&self, violations: &[DuplicationViolation]) -> DuplicationStats {
         let mut exact_count = 0;
         let mut renamed_count = 0;

@@ -13,7 +13,7 @@ async fn rejects_empty_project_id_for_get() {
     let args = ProjectArgs {
         action: ProjectAction::Get,
         resource: ProjectResource::Project,
-        project_id: "  ".to_string(),
+        project_id: "  ".to_owned(),
         data: None,
         filters: None,
     };

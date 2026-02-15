@@ -40,7 +40,7 @@ use crate::value_objects::ids::IssueLabelAssignmentId;
 /// Junction entity assigning labels to issues.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 pub struct IssueLabelAssignment {
-    /// Unique identifier for the assignment (composite of issue_id:label_id).
+    /// Unique identifier for the assignment (composite of `issue_id:label_id`).
     #[serde(default)]
     pub id: IssueLabelAssignmentId,
     /// Issue identifier.

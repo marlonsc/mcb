@@ -116,106 +116,127 @@ macro_rules! app_context_entity_repo_getter {
 
 impl AppContext {
     /// Get embedding provider handle
+    #[must_use]
     pub fn embedding_handle(&self) -> Arc<EmbeddingProviderHandle> {
         self.embedding_handle.clone()
     }
 
     /// Get vector store provider handle
+    #[must_use]
     pub fn vector_store_handle(&self) -> Arc<VectorStoreProviderHandle> {
         self.vector_store_handle.clone()
     }
 
     /// Get cache provider handle
+    #[must_use]
     pub fn cache_handle(&self) -> Arc<CacheProviderHandle> {
         self.cache_handle.clone()
     }
 
     /// Get language provider handle
+    #[must_use]
     pub fn language_handle(&self) -> Arc<LanguageProviderHandle> {
         self.language_handle.clone()
     }
 
     /// Get embedding provider resolver
+    #[must_use]
     pub fn embedding_resolver(&self) -> Arc<EmbeddingProviderResolver> {
         self.embedding_resolver.clone()
     }
 
     /// Get vector store provider resolver
+    #[must_use]
     pub fn vector_store_resolver(&self) -> Arc<VectorStoreProviderResolver> {
         self.vector_store_resolver.clone()
     }
 
     /// Get cache provider resolver
+    #[must_use]
     pub fn cache_resolver(&self) -> Arc<CacheProviderResolver> {
         self.cache_resolver.clone()
     }
 
     /// Get language provider resolver
+    #[must_use]
     pub fn language_resolver(&self) -> Arc<LanguageProviderResolver> {
         self.language_resolver.clone()
     }
 
     /// Get embedding admin service
+    #[must_use]
     pub fn embedding_admin(&self) -> Arc<dyn EmbeddingAdminInterface> {
         self.embedding_admin.clone()
     }
 
     /// Get vector store admin service
+    #[must_use]
     pub fn vector_store_admin(&self) -> Arc<dyn VectorStoreAdminInterface> {
         self.vector_store_admin.clone()
     }
 
     /// Get cache admin service
+    #[must_use]
     pub fn cache_admin(&self) -> Arc<dyn CacheAdminInterface> {
         self.cache_admin.clone()
     }
 
     /// Get language admin service
+    #[must_use]
     pub fn language_admin(&self) -> Arc<dyn LanguageAdminInterface> {
         self.language_admin.clone()
     }
 
     /// Get event bus
+    #[must_use]
     pub fn event_bus(&self) -> Arc<dyn EventBusProvider> {
         self.event_bus.clone()
     }
 
     /// Get shutdown coordinator
+    #[must_use]
     pub fn shutdown(&self) -> Arc<dyn ShutdownCoordinator> {
         self.shutdown_coordinator.clone()
     }
 
     /// Get performance metrics
+    #[must_use]
     pub fn performance(&self) -> Arc<dyn PerformanceMetricsInterface> {
         self.performance_metrics.clone()
     }
 
     /// Get indexing operations
+    #[must_use]
     pub fn indexing(&self) -> Arc<dyn IndexingOperationsInterface> {
         self.indexing_operations.clone()
     }
 
     /// Get memory repository
+    #[must_use]
     pub fn memory_repository(&self) -> Arc<dyn MemoryRepository> {
         self.memory_repository.clone()
     }
 
     /// Get agent repository
+    #[must_use]
     pub fn agent_repository(&self) -> Arc<dyn AgentRepository> {
         self.agent_repository.clone()
     }
 
     /// Get project repository
+    #[must_use]
     pub fn project_repository(&self) -> Arc<dyn ProjectRepository> {
         self.project_repository.clone()
     }
 
     /// Get VCS provider
+    #[must_use]
     pub fn vcs_provider(&self) -> Arc<dyn VcsProvider> {
         self.vcs_provider.clone()
     }
 
     /// Get project service
+    #[must_use]
     pub fn project_service(&self) -> Arc<dyn ProjectDetectorService> {
         self.project_service.clone()
     }
@@ -249,22 +270,25 @@ impl AppContext {
     );
 
     /// Get file hash repository
+    #[must_use]
     pub fn file_hash_repository(&self) -> Arc<dyn FileHashRepository> {
         self.file_hash_repository.clone()
     }
 
     /// Get highlight service
+    #[must_use]
     pub fn highlight_service(&self) -> Arc<dyn HighlightServiceInterface> {
         self.highlight_service.clone()
     }
 
     /// Get crypto service
+    #[must_use]
     pub fn crypto_service(&self) -> Arc<dyn CryptoProvider> {
         self.crypto_service.clone()
     }
 
     /// Build domain services for the server layer
-    /// This method creates all domain services needed by McpServer
+    /// This method creates all domain services needed by `McpServer`
     pub async fn build_domain_services(
         &self,
     ) -> Result<crate::di::modules::domain_services::DomainServicesContainer> {

@@ -1,4 +1,4 @@
-//! Tests for ConfigPropagator
+//! Tests for `ConfigPropagator`
 //!
 //! Tests configuration propagation and callback functionality.
 

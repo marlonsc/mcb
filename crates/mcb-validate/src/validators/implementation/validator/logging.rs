@@ -36,7 +36,7 @@ pub fn validate_log_only_methods(
                 .all(|line| compiled_log.iter().any(|p| p.is_match(line)));
             if all_logging {
                 violations.push(ImplementationViolation::LogOnlyMethod {
-                    file: file_path.to_path_buf(),
+                    file: file_path.clone(),
                     line: func.start_line,
                     method_name: func.name.clone(),
                     severity: Severity::Warning,

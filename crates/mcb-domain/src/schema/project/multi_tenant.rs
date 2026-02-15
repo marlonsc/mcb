@@ -1,9 +1,10 @@
-//! Multi-tenant schema elements: organizations, users, teams, api_keys.
+//! Multi-tenant schema elements: organizations, users, teams, `api_keys`.
 
 use super::ForeignKeyDef;
 use crate::schema::memory::{IndexDef, TableDef};
 
 /// Performs the tables operation.
+#[must_use]
 pub fn tables() -> Vec<TableDef> {
     vec![
         table!(
@@ -66,6 +67,7 @@ pub fn tables() -> Vec<TableDef> {
 }
 
 /// Performs the indexes operation.
+#[must_use]
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!("idx_users_org", "users", ["org_id"]),
@@ -82,68 +84,70 @@ pub fn indexes() -> Vec<IndexDef> {
 }
 
 /// Performs the foreign keys operation.
+#[must_use]
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     vec![
         ForeignKeyDef {
-            from_table: "users".to_string(),
-            from_column: "org_id".to_string(),
-            to_table: "organizations".to_string(),
-            to_column: "id".to_string(),
+            from_table: "users".to_owned(),
+            from_column: "org_id".to_owned(),
+            to_table: "organizations".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "teams".to_string(),
-            from_column: "org_id".to_string(),
-            to_table: "organizations".to_string(),
-            to_column: "id".to_string(),
+            from_table: "teams".to_owned(),
+            from_column: "org_id".to_owned(),
+            to_table: "organizations".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "team_members".to_string(),
-            from_column: "team_id".to_string(),
-            to_table: "teams".to_string(),
-            to_column: "id".to_string(),
+            from_table: "team_members".to_owned(),
+            from_column: "team_id".to_owned(),
+            to_table: "teams".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "team_members".to_string(),
-            from_column: "user_id".to_string(),
-            to_table: "users".to_string(),
-            to_column: "id".to_string(),
+            from_table: "team_members".to_owned(),
+            from_column: "user_id".to_owned(),
+            to_table: "users".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "api_keys".to_string(),
-            from_column: "user_id".to_string(),
-            to_table: "users".to_string(),
-            to_column: "id".to_string(),
+            from_table: "api_keys".to_owned(),
+            from_column: "user_id".to_owned(),
+            to_table: "users".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "api_keys".to_string(),
-            from_column: "org_id".to_string(),
-            to_table: "organizations".to_string(),
-            to_column: "id".to_string(),
+            from_table: "api_keys".to_owned(),
+            from_column: "org_id".to_owned(),
+            to_table: "organizations".to_owned(),
+            to_column: "id".to_owned(),
         },
         // projects.org_id → organizations.id (upgrade existing FK)
         ForeignKeyDef {
-            from_table: "projects".to_string(),
-            from_column: "org_id".to_string(),
-            to_table: "organizations".to_string(),
-            to_column: "id".to_string(),
+            from_table: "projects".to_owned(),
+            from_column: "org_id".to_owned(),
+            to_table: "organizations".to_owned(),
+            to_column: "id".to_owned(),
         },
     ]
 }
 
 /// Performs the unique constraints operation.
+#[must_use]
 pub fn unique_constraints() -> Vec<super::UniqueConstraintDef> {
     vec![
         super::UniqueConstraintDef {
-            table: "users".to_string(),
-            columns: vec!["org_id".to_string(), "email".to_string()],
+            table: "users".to_owned(),
+            columns: vec!["org_id".to_owned(), "email".to_owned()],
         },
         super::UniqueConstraintDef {
-            table: "teams".to_string(),
-            columns: vec!["org_id".to_string(), "name".to_string()],
+            table: "teams".to_owned(),
+            columns: vec!["org_id".to_owned(), "name".to_owned()],
         },
         super::UniqueConstraintDef {
-            table: "team_members".to_string(),
-            columns: vec!["team_id".to_string(), "user_id".to_string()],
+            table: "team_members".to_owned(),
+            columns: vec!["team_id".to_owned(), "user_id".to_owned()],
         },
     ]
 }

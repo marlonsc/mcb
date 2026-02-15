@@ -99,10 +99,7 @@ pub fn shutdown(
     info!(timeout_secs = timeout_secs, "Graceful shutdown requested");
     spawn_graceful_shutdown(Arc::clone(coordinator), timeout_secs);
 
-    let msg = format!(
-        "Graceful shutdown initiated, server will stop in {} seconds",
-        timeout_secs
-    );
+    let msg = format!("Graceful shutdown initiated, server will stop in {timeout_secs} seconds");
     (
         Status::Ok,
         Json(ShutdownResponse::success(msg, timeout_secs)),

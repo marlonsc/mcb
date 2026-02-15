@@ -25,10 +25,10 @@ async fn setup_repo() -> (
 
 fn create_test_org(id: &str, name: &str, slug: &str) -> Organization {
     Organization {
-        id: id.to_string(),
-        name: name.to_string(),
-        slug: slug.to_string(),
-        settings_json: "{}".to_string(),
+        id: id.to_owned(),
+        name: name.to_owned(),
+        slug: slug.to_owned(),
+        settings_json: "{}".to_owned(),
         created_at: TEST_NOW,
         updated_at: TEST_NOW,
     }
@@ -37,12 +37,12 @@ fn create_test_org(id: &str, name: &str, slug: &str) -> Organization {
 fn create_test_user(id: &str, org_id: &str, email: &str) -> User {
     User {
         metadata: mcb_domain::entities::EntityMetadata {
-            id: id.to_string(),
+            id: id.to_owned(),
             created_at: TEST_NOW,
             updated_at: TEST_NOW,
         },
-        org_id: org_id.to_string(),
-        email: email.to_string(),
+        org_id: org_id.to_owned(),
+        email: email.to_owned(),
         display_name: format!("User {id}"),
         role: UserRole::Member,
         api_key_hash: None,
@@ -51,21 +51,21 @@ fn create_test_user(id: &str, org_id: &str, email: &str) -> User {
 
 fn create_test_team(id: &str, org_id: &str, name: &str) -> Team {
     Team {
-        id: id.to_string(),
-        org_id: org_id.to_string(),
-        name: name.to_string(),
+        id: id.to_owned(),
+        org_id: org_id.to_owned(),
+        name: name.to_owned(),
         created_at: TEST_NOW,
     }
 }
 
 fn create_test_api_key(id: &str, user_id: &str, org_id: &str, name: &str) -> ApiKey {
     ApiKey {
-        id: id.to_string(),
-        user_id: user_id.to_string(),
-        org_id: org_id.to_string(),
+        id: id.to_owned(),
+        user_id: user_id.to_owned(),
+        org_id: org_id.to_owned(),
         key_hash: format!("hash-{id}"),
-        name: name.to_string(),
-        scopes_json: "[]".to_string(),
+        name: name.to_owned(),
+        scopes_json: "[]".to_owned(),
         expires_at: None,
         created_at: TEST_NOW,
         revoked_at: None,
@@ -87,7 +87,7 @@ async fn test_org_crud() {
     assert_eq!(list.len(), 1);
 
     let mut updated = org.clone();
-    updated.name = "Updated Org".to_string();
+    updated.name = "Updated Org".to_owned();
     updated.updated_at = 2_000_000;
     repo.update_org(&updated).await.expect("update");
 
@@ -115,7 +115,7 @@ async fn test_user_crud() {
     assert_eq!(list.len(), 1);
 
     let mut updated = user.clone();
-    updated.display_name = "Updated User".to_string();
+    updated.display_name = "Updated User".to_owned();
     updated.role = UserRole::Admin;
     updated.metadata.updated_at = 2_000_000;
     repo.update_user(&updated).await.expect("update");
@@ -174,15 +174,15 @@ async fn test_team_and_members() {
 
     let m1 = TeamMember {
         id: TeamMemberId::from_uuid(id::deterministic("team_member", "team-1:user-1")),
-        team_id: "team-1".to_string(),
-        user_id: "user-1".to_string(),
+        team_id: "team-1".to_owned(),
+        user_id: "user-1".to_owned(),
         role: TeamMemberRole::Lead,
         joined_at: TEST_NOW,
     };
     let m2 = TeamMember {
         id: TeamMemberId::from_uuid(id::deterministic("team_member", "team-1:user-2")),
-        team_id: "team-1".to_string(),
-        user_id: "user-2".to_string(),
+        team_id: "team-1".to_owned(),
+        user_id: "user-2".to_owned(),
         role: TeamMemberRole::Member,
         joined_at: TEST_NOW,
     };

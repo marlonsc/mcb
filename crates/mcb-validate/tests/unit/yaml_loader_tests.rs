@@ -65,7 +65,7 @@ fn substitution_vars(workspace_root: PathBuf) -> serde_yaml::Value {
     {
         let prefix = match domain_str.find('-') {
             Some(idx) => domain_str[0..idx].to_string(),
-            None => domain_str.to_string(),
+            None => domain_str.to_owned(),
         };
         variables.insert(
             serde_yaml::Value::String("project_prefix".into()),

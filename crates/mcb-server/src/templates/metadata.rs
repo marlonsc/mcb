@@ -15,11 +15,13 @@ pub struct Metadata<'a>(&'a ContextManager);
 
 impl Metadata<'_> {
     /// Returns `true` if the template with the given `name` is currently loaded.
+    #[must_use]
     pub fn contains_template(&self, name: &str) -> bool {
         self.0.context().templates.contains_key(name)
     }
 
     /// Returns `true` if template reloading is enabled.
+    #[must_use]
     pub fn reloading(&self) -> bool {
         self.0.is_reloading()
     }
@@ -61,14 +63,13 @@ impl<'r> FromRequest<'r> for Metadata<'r> {
     type Error = ();
 
     async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, ()> {
-        request
-            .rocket()
-            .state::<ContextManager>()
-            .map(|cm| request::Outcome::Success(Metadata(cm)))
-            .unwrap_or_else(|| {
+        request.rocket().state::<ContextManager>().map_or_else(
+            || {
                 error_!("Uninitialized template context: missing fairing.");
                 info_!("To use templates, you must attach `Template::fairing()`.");
                 request::Outcome::Error((Status::InternalServerError, ()))
-            })
+            },
+            |cm| request::Outcome::Success(Metadata(cm)),
+        )
     }
 }

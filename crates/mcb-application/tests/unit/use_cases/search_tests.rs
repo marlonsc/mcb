@@ -1,4 +1,4 @@
-//! Tests for search domain services — using shared AppContext for performance.
+//! Tests for search domain services — using shared `AppContext` for performance.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -34,8 +34,8 @@ async fn ctx() -> Arc<dyn ContextServiceInterface> {
 fn test_chunks() -> Vec<CodeChunk> {
     vec![
         CodeChunk {
-            id: "config_chunk".to_string(),
-            file_path: "src/config.rs".to_string(),
+            id: "config_chunk".to_owned(),
+            file_path: "src/config.rs".to_owned(),
             content: r#"#[derive(Debug, Clone)]
 pub struct Config {
     pub host: String,
@@ -52,39 +52,39 @@ impl Config {
         }
     }
 }"#
-            .to_string(),
+            .to_owned(),
             start_line: 1,
             end_line: 15,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: json!({"type": "struct", "name": "Config"}),
         },
         CodeChunk {
-            id: "auth_chunk".to_string(),
-            file_path: "src/auth.rs".to_string(),
-            content: r#"pub async fn authenticate(token: &str) -> Result<User, AuthError> {
+            id: "auth_chunk".to_owned(),
+            file_path: "src/auth.rs".to_owned(),
+            content: "pub async fn authenticate(token: &str) -> Result<User, AuthError> {
     let claims = verify_jwt(token)?;
     let user = User::from_claims(claims);
     Ok(user)
 }
-"#
-            .to_string(),
+"
+            .to_owned(),
             start_line: 1,
             end_line: 10,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: json!({"type": "function", "name": "authenticate"}),
         },
         CodeChunk {
-            id: "handler_chunk".to_string(),
-            file_path: "src/handlers.rs".to_string(),
-            content: r#"pub async fn handle_request(req: Request) -> Response {
+            id: "handler_chunk".to_owned(),
+            file_path: "src/handlers.rs".to_owned(),
+            content: "pub async fn handle_request(req: Request) -> Response {
     let config = Config::new();
     let result = process_data(&req, &config).await?;
     Response::ok(result)
-}"#
-            .to_string(),
+}"
+            .to_owned(),
             start_line: 1,
             end_line: 5,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: json!({"type": "function", "name": "handle_request"}),
         },
     ]
@@ -221,12 +221,12 @@ async fn test_path_handling(
     svc.initialize(&col_id).await.expect("init");
 
     let chunk = CodeChunk {
-        id: "chunk_1".to_string(),
-        file_path: file_path.to_string(),
-        content: content.to_string(),
+        id: "chunk_1".to_owned(),
+        file_path: file_path.to_owned(),
+        content: content.to_owned(),
         start_line: 1,
         end_line: 1,
-        language: "rust".to_string(),
+        language: "rust".to_owned(),
         metadata: json!({}),
     };
 

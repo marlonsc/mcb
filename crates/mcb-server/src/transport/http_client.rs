@@ -21,7 +21,7 @@ use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR};
 /// MCP client transport configuration
 #[derive(Debug, Clone)]
 pub struct McpClientConfig {
-    /// Server URL (e.g., "http://127.0.0.1:8080")
+    /// Server URL (e.g., "<http://127.0.0.1:8080>")
     pub server_url: String,
 
     /// Local client instance identifier for log correlation.
@@ -102,7 +102,7 @@ impl HttpClientTransport {
             {
                 std::fs::create_dir_all(parent)?;
             }
-            std::fs::write(path, format!("{}\n", generated))?;
+            std::fs::write(path, format!("{generated}\n"))?;
             return Ok(());
         }
 
@@ -157,7 +157,7 @@ impl HttpClientTransport {
         if normalized.is_empty() {
             None
         } else {
-            Some(normalized.to_string())
+            Some(normalized.to_owned())
         }
     }
 
@@ -243,11 +243,13 @@ impl HttpClientTransport {
     }
 
     /// Get the server URL
+    #[must_use]
     pub fn server_url(&self) -> &str {
         &self.config.server_url
     }
 
     /// Get the local public session identifier.
+    #[must_use]
     pub fn session_id(&self) -> &str {
         &self.config.public_session_id
     }
@@ -266,11 +268,11 @@ impl HttpClientTransport {
     /// Create a JSON-RPC parse error response
     fn create_parse_error(e: serde_json::Error) -> McpResponse {
         McpResponse {
-            jsonrpc: "2.0".to_string(),
+            jsonrpc: "2.0".to_owned(),
             result: None,
             error: Some(super::types::McpError {
                 code: JSONRPC_PARSE_ERROR,
-                message: format!("Parse error: {}", e),
+                message: format!("Parse error: {e}"),
             }),
             id: None,
         }
@@ -279,11 +281,11 @@ impl HttpClientTransport {
     /// Create a JSON-RPC server error response
     fn create_server_error(e: reqwest::Error, id: Option<serde_json::Value>) -> McpResponse {
         McpResponse {
-            jsonrpc: "2.0".to_string(),
+            jsonrpc: "2.0".to_owned(),
             result: None,
             error: Some(super::types::McpError {
                 code: JSONRPC_INTERNAL_ERROR,
-                message: format!("Server communication error: {}", e),
+                message: format!("Server communication error: {e}"),
             }),
             id,
         }
@@ -296,7 +298,7 @@ impl HttpClientTransport {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let response_json = serde_json::to_string(response)?;
         debug!(response = %response_json, "Sending response to stdout");
-        writeln!(stdout, "{}", response_json)?;
+        writeln!(stdout, "{response_json}")?;
         stdout.flush()?;
         Ok(())
     }
@@ -328,11 +330,11 @@ mod tests {
         let session_file = temp_dir.path().join("session.id");
 
         let client = HttpClientTransport::new_with_session_source(
-            "http://127.0.0.1:18080".to_string(),
-            Some("prefix".to_string()),
+            "http://127.0.0.1:18080".to_owned(),
+            Some("prefix".to_owned()),
             Duration::from_secs(10),
-            Some("explicit-session-id".to_string()),
-            Some(session_file.to_str().unwrap().to_string()),
+            Some("explicit-session-id".to_owned()),
+            Some(session_file.to_str().unwrap().to_owned()),
         )
         .expect("create client");
 
@@ -344,11 +346,11 @@ mod tests {
     fn session_id_persists_via_session_file() {
         let temp_dir = tempfile::tempdir().expect("create temp dir");
         let session_file = temp_dir.path().join("session.id");
-        let session_file_str = session_file.to_str().unwrap().to_string();
+        let session_file_str = session_file.to_str().unwrap().to_owned();
 
         let first = HttpClientTransport::new_with_session_source(
-            "http://127.0.0.1:18080".to_string(),
-            Some("persist".to_string()),
+            "http://127.0.0.1:18080".to_owned(),
+            Some("persist".to_owned()),
             Duration::from_secs(10),
             None,
             Some(session_file_str.clone()),
@@ -359,8 +361,8 @@ mod tests {
         let first_session = fs::read_to_string(&session_file).expect("read first session file");
 
         let second = HttpClientTransport::new_with_session_source(
-            "http://127.0.0.1:18080".to_string(),
-            Some("persist".to_string()),
+            "http://127.0.0.1:18080".to_owned(),
+            Some("persist".to_owned()),
             Duration::from_secs(10),
             None,
             Some(session_file_str),

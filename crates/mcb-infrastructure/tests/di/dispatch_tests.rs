@@ -11,9 +11,12 @@ use mcb_infrastructure::di::EmbeddingHandleExt;
 use mcb_infrastructure::di::bootstrap::init_app;
 use serial_test::serial;
 
+use crate::shared_context::shared_app_context;
+
 // Force linkme registration by linking mcb_providers crate
 extern crate mcb_providers;
 
+/// Build a fresh config+tempdir for tests that intentionally test `init_app()`.
 fn test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let db_path = temp_dir.path().join("test.db");
@@ -24,13 +27,31 @@ fn test_config() -> (AppConfig, tempfile::TempDir) {
         .load()
         .expect("load config");
     config.providers.database.configs.insert(
-        "default".to_string(),
+        "default".to_owned(),
         mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
+            provider: "sqlite".to_owned(),
             path: Some(db_path),
         },
     );
+    config.providers.embedding.cache_dir = Some(shared_fastembed_cache_dir());
     (config, temp_dir)
+}
+
+/// Persistent shared cache dir for `FastEmbed` ONNX model.
+///
+/// Avoids re-downloading the model on every test invocation.
+fn shared_fastembed_cache_dir() -> std::path::PathBuf {
+    use std::sync::OnceLock;
+    static DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
+    DIR.get_or_init(|| {
+        let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
+            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
+            std::path::PathBuf::from,
+        );
+        std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
+        cache_dir
+    })
+    .clone()
 }
 
 #[tokio::test]
@@ -66,10 +87,10 @@ async fn test_provider_selection_from_config() {
     let (_base, _temp) = test_config();
     let mut config = _base;
     config.providers.embedding.configs.insert(
-        "default".to_string(),
+        "default".to_owned(),
         EmbeddingConfig {
-            provider: "fastembed".to_string(),
-            model: "test".to_string(),
+            provider: "fastembed".to_owned(),
+            model: "test".to_owned(),
             api_key: None,
             base_url: None,
             dimensions: Some(384),
@@ -77,12 +98,12 @@ async fn test_provider_selection_from_config() {
         },
     );
     config.providers.vector_store.configs.insert(
-        "default".to_string(),
+        "default".to_owned(),
         VectorStoreConfig {
-            provider: "edgevec".to_string(),
+            provider: "edgevec".to_owned(),
             address: None,
             token: None,
-            collection: Some("test".to_string()),
+            collection: Some("test".to_owned()),
             dimensions: Some(384),
             timeout_secs: None,
         },
@@ -111,10 +132,7 @@ async fn test_provider_selection_from_config() {
 #[tokio::test]
 #[serial]
 async fn test_provider_resolution_uses_registry() {
-    let (config, _temp) = test_config();
-    let app_context = init_app(config)
-        .await
-        .expect("Should initialize successfully");
+    let app_context = shared_app_context();
 
     // Verify that providers implement the expected traits
     // (This would fail at compile time if providers didn't implement the traits)
@@ -152,10 +170,7 @@ async fn test_provider_resolution_uses_registry() {
 #[tokio::test]
 #[serial]
 async fn test_admin_services_are_accessible() {
-    let (config, _temp) = test_config();
-    let app_context = init_app(config)
-        .await
-        .expect("Should initialize successfully");
+    let app_context = shared_app_context();
 
     // Verify admin services are accessible
     let embedding_admin = app_context.embedding_admin();
@@ -178,10 +193,7 @@ async fn test_admin_services_are_accessible() {
 #[tokio::test]
 #[serial]
 async fn test_infrastructure_services_from_app_context() {
-    let (config, _temp) = test_config();
-    let app_context = init_app(config)
-        .await
-        .expect("Should initialize successfully");
+    let app_context = shared_app_context();
 
     // Verify infrastructure services are accessible
     // Arc<dyn Trait> types have a strong_count >= 1 if valid

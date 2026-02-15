@@ -30,6 +30,7 @@ pub enum DuplicationType {
 
 impl DuplicationType {
     /// Get the rule ID prefix for this duplication type
+    #[must_use]
     pub fn rule_id(&self) -> &'static str {
         match self {
             DuplicationType::ExactClone => "DUP001",
@@ -40,6 +41,7 @@ impl DuplicationType {
     }
 
     /// Get human-readable name
+    #[must_use]
     pub fn name(&self) -> &'static str {
         match self {
             DuplicationType::ExactClone => "Exact Clone",
@@ -50,6 +52,7 @@ impl DuplicationType {
     }
 
     /// Get minimum similarity threshold for this type
+    #[must_use]
     pub fn min_similarity(&self) -> f64 {
         match self {
             DuplicationType::ExactClone => 1.0,
@@ -96,16 +99,16 @@ impl Default for DuplicationThresholds {
             detect_gapped: true,
             detect_semantic: false, // Disabled by default (experimental)
             languages: vec![
-                "rust".to_string(),
-                "python".to_string(),
-                "javascript".to_string(),
-                "typescript".to_string(),
+                "rust".to_owned(),
+                "python".to_owned(),
+                "javascript".to_owned(),
+                "typescript".to_owned(),
             ],
             exclude_patterns: vec![
-                "**/target/**".to_string(),
-                "**/node_modules/**".to_string(),
-                "**/.git/**".to_string(),
-                "**/vendor/**".to_string(),
+                "**/target/**".to_owned(),
+                "**/node_modules/**".to_owned(),
+                "**/.git/**".to_owned(),
+                "**/vendor/**".to_owned(),
             ],
             max_gap_size: 5,
         }
@@ -114,6 +117,7 @@ impl Default for DuplicationThresholds {
 
 impl DuplicationThresholds {
     /// Create thresholds for strict detection (higher sensitivity)
+    #[must_use]
     pub fn strict() -> Self {
         Self {
             min_lines: 4,
@@ -124,6 +128,7 @@ impl DuplicationThresholds {
     }
 
     /// Create thresholds for lenient detection (lower sensitivity)
+    #[must_use]
     pub fn lenient() -> Self {
         Self {
             min_lines: 10,
@@ -134,6 +139,7 @@ impl DuplicationThresholds {
     }
 
     /// Check if a duplication type should be detected based on thresholds
+    #[must_use]
     pub fn should_detect(&self, dup_type: DuplicationType) -> bool {
         match dup_type {
             DuplicationType::ExactClone => self.detect_exact,
@@ -144,6 +150,7 @@ impl DuplicationThresholds {
     }
 
     /// Check if a similarity value meets the threshold for a given type
+    #[must_use]
     pub fn meets_threshold(&self, similarity: f64, dup_type: DuplicationType) -> bool {
         let type_min = dup_type.min_similarity();
         similarity >= self.similarity_threshold.max(type_min)

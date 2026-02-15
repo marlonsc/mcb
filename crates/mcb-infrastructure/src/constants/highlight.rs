@@ -1,6 +1,6 @@
 //! Syntax highlighting constants
 
-/// Tree-sitter highlight capture names (order must match HighlightConfiguration)
+/// Tree-sitter highlight capture names (order must match `HighlightConfiguration`)
 pub const HIGHLIGHT_NAMES: [&str; 13] = [
     "keyword",
     "function",

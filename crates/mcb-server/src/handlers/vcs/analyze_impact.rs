@@ -29,11 +29,11 @@ pub async fn analyze_impact(
     let base_ref = args
         .base_branch
         .clone()
-        .unwrap_or_else(|| repo.default_branch().to_string());
+        .unwrap_or_else(|| repo.default_branch().to_owned());
     let head_ref = args
         .target_branch
         .clone()
-        .unwrap_or_else(|| "HEAD".to_string());
+        .unwrap_or_else(|| "HEAD".to_owned());
     let diff = match vcs_provider.diff_refs(&repo, &base_ref, &head_ref).await {
         Ok(diff) => diff,
         Err(e) => {
@@ -52,7 +52,7 @@ pub async fn analyze_impact(
             _ => modified += 1,
         }
         impacted_files.push(ImpactFile {
-            path: file.path.to_str().unwrap_or_default().to_string(),
+            path: file.path.to_str().unwrap_or_default().to_owned(),
             status: status.clone(),
             impact: file.additions + file.deletions,
         });

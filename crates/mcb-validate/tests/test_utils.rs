@@ -47,9 +47,8 @@ pub fn create_test_crate_with_file(temp: &TempDir, name: &str, file_name: &str, 
         format!(
             r#"[package]
 name = "{name}"
-version = "{}"
-"#,
-            DEFAULT_VERSION
+version = "{DEFAULT_VERSION}"
+"#
         ),
     )
     .unwrap();
@@ -154,7 +153,7 @@ pub fn assert_violations_exact<V: std::fmt::Debug>(
                 && d.contains(msg_contains)
         });
         if !found {
-            missing.push(format!("  {}:{} {:?}", file_suffix, line, msg_contains));
+            missing.push(format!("  {file_suffix}:{line} {msg_contains:?}"));
         }
     }
 
@@ -168,7 +167,7 @@ pub fn assert_violations_exact<V: std::fmt::Debug>(
                     && d.contains(msg_contains)
             });
             if !matched {
-                extras.push(format!("  [{}] {}", i, d));
+                extras.push(format!("  [{i}] {d}"));
             }
         }
     }
@@ -366,7 +365,7 @@ pub fn create_rule_context() -> mcb_validate::engines::RuleContext {
 
 /// Creates a `RuleContext` pre-loaded with given file entries.
 ///
-/// Shared by `expression_engine_tests` which needs file_contents populated.
+/// Shared by `expression_engine_tests` which needs `file_contents` populated.
 ///
 /// # Example
 /// ```rust,ignore
@@ -399,18 +398,18 @@ pub fn create_rule_context_with_files(
 pub fn build_yaml_variables() -> serde_yaml::Value {
     let mut variables = serde_yaml::Mapping::new();
     variables.insert(
-        serde_yaml::Value::String("project_prefix".to_string()),
-        serde_yaml::Value::String(PROJECT_PREFIX.to_string()),
+        serde_yaml::Value::String("project_prefix".to_owned()),
+        serde_yaml::Value::String(PROJECT_PREFIX.to_owned()),
     );
 
     for &(key, crate_name, module_name) in CRATE_LAYER_MAPPINGS {
         variables.insert(
             serde_yaml::Value::String(format!("{key}_crate")),
-            serde_yaml::Value::String(crate_name.to_string()),
+            serde_yaml::Value::String(crate_name.to_owned()),
         );
         variables.insert(
             serde_yaml::Value::String(format!("{key}_module")),
-            serde_yaml::Value::String(module_name.to_string()),
+            serde_yaml::Value::String(module_name.to_owned()),
         );
     }
 

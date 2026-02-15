@@ -50,9 +50,9 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                 // Check for panic!
                 if PANIC_PATTERN.is_match(line) {
                     violations.push(QualityViolation::PanicInProduction {
-                        file: entry.absolute_path.to_path_buf(),
+                        file: entry.absolute_path.clone(),
                         line: line_num + 1,
-                        context: trimmed.to_string(),
+                        context: trimmed.to_owned(),
                         severity: Severity::Warning,
                     });
                 }

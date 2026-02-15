@@ -22,6 +22,7 @@ pub struct EntityHandler {
 
 impl EntityHandler {
     /// Create a new unified entity handler.
+    #[must_use]
     pub fn new(
         vcs: Arc<VcsEntityHandler>,
         plan: Arc<PlanEntityHandler>,

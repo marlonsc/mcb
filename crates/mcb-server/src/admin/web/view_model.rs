@@ -44,11 +44,11 @@ pub fn nav_groups() -> Vec<NavGroup> {
 
     for entity in AdminRegistry::all() {
         groups
-            .entry(entity.group.to_string())
+            .entry(entity.group.to_owned())
             .or_default()
             .push(NavEntityLink {
-                slug: entity.slug.to_string(),
-                title: entity.title.to_string(),
+                slug: entity.slug.to_owned(),
+                title: entity.title.to_owned(),
             });
     }
 

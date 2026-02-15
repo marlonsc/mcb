@@ -222,6 +222,7 @@ impl ValidationConfig {
     }
 
     /// Check if a path should be excluded based on patterns
+    #[must_use]
     pub fn should_exclude(&self, path: &Path) -> bool {
         let Some(path_str) = path.to_str() else {
             return false;
@@ -415,12 +416,14 @@ pub enum ComponentType {
 }
 
 /// Get the workspace root from the current directory
+#[must_use]
 pub fn find_workspace_root() -> Option<PathBuf> {
     let current = std::env::current_dir().ok()?;
     find_workspace_root_from(&current)
 }
 
 /// Find workspace root starting from a given path
+#[must_use]
 pub fn find_workspace_root_from(start: &Path) -> Option<PathBuf> {
     let mut current = start.to_path_buf();
     loop {

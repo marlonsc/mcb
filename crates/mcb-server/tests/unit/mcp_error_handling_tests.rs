@@ -44,9 +44,7 @@ fn test_format_indexing_error(
     for content in expected_content {
         assert!(
             text.contains(content),
-            "Expected '{}' in response text. Got: {}",
-            content,
-            text
+            "Expected '{content}' in response text. Got: {text}"
         );
     }
 }
@@ -63,7 +61,7 @@ fn test_format_indexing_error(
         files_skipped: 5,
         errors: Vec::new(),
         operation_id: None,
-        status: "completed".to_string(),
+        status: "completed".to_owned(),
     },
     "/project/src",
     Duration::from_secs(10),
@@ -76,11 +74,11 @@ fn test_format_indexing_error(
         chunks_created: 200,
         files_skipped: 10,
         errors: vec![
-            "Failed to parse binary.bin".to_string(),
-            "Encoding error in data.csv".to_string(),
+            "Failed to parse binary.bin".to_owned(),
+            "Encoding error in data.csv".to_owned(),
         ],
         operation_id: None,
-        status: "completed".to_string(),
+        status: "completed".to_owned(),
     },
     "/project",
     Duration::from_secs(5),
@@ -107,9 +105,7 @@ fn test_format_indexing_success(
     for content in expected_content {
         assert!(
             text.contains(content),
-            "Expected '{}' in response text. Got: {}",
-            content,
-            text
+            "Expected '{content}' in response text. Got: {text}"
         );
     }
 }
@@ -177,9 +173,7 @@ fn test_format_search_response(
     for content in expected_content {
         assert!(
             text.contains(content),
-            "Expected '{}' in response text. Got: {}",
-            content,
-            text
+            "Expected '{content}' in response text. Got: {text}"
         );
     }
 }
@@ -204,7 +198,7 @@ fn test_format_search_response(
     IndexingStatus {
         is_indexing: true,
         progress: 0.65,
-        current_file: Some("src/main.rs".to_string()),
+        current_file: Some("src/main.rs".to_owned()),
         total_files: 100,
         processed_files: 65,
     },
@@ -228,9 +222,7 @@ fn test_format_indexing_status(
     for content in expected_content {
         assert!(
             text.contains(content),
-            "Expected '{}' in response text. Got: {}",
-            content,
-            text
+            "Expected '{content}' in response text. Got: {text}"
         );
     }
 }
@@ -258,9 +250,7 @@ fn test_format_clear_index(
     for content in expected_content {
         assert!(
             text.contains(content),
-            "Expected '{}' in response text. Got: {}",
-            content,
-            text
+            "Expected '{content}' in response text. Got: {text}"
         );
     }
 }
@@ -269,7 +259,7 @@ fn test_format_clear_index(
 // HELPER FUNCTIONS
 // =============================================================================
 
-/// Extract text content from CallToolResult content vector
+/// Extract text content from `CallToolResult` content vector
 fn extract_text_content(content: &[rmcp::model::Content]) -> String {
     content
         .iter()
@@ -278,7 +268,7 @@ fn extract_text_content(content: &[rmcp::model::Content]) -> String {
             if let Ok(json) = serde_json::to_value(c)
                 && let Some(text) = json.get("text")
             {
-                return text.as_str().map(|s| s.to_string());
+                return text.as_str().map(std::borrow::ToOwned::to_owned);
             }
             None
         })
@@ -306,8 +296,8 @@ mod handler_error_tests {
 
         let args = IndexArgs {
             action: IndexAction::Start,
-            path: Some("/definitely/nonexistent/mcb-path".to_string()),
-            collection: Some("test".to_string()),
+            path: Some("/definitely/nonexistent/mcb-path".to_owned()),
+            collection: Some("test".to_owned()),
             extensions: None,
             exclude_dirs: None,
             ignore_patterns: None,
@@ -319,13 +309,12 @@ mod handler_error_tests {
         let result = handler.handle(Parameters(args)).await;
 
         let err = result.expect_err("expected invalid path to fail");
-        let err_str = format!("{:?}", err);
+        let err_str = format!("{err:?}");
         assert!(
             err_str.contains("path")
                 || err_str.contains("nonexistent")
                 || err_str.contains("not found"),
-            "Expected path-related error. Got: {}",
-            err_str
+            "Expected path-related error. Got: {err_str}"
         );
     }
 }

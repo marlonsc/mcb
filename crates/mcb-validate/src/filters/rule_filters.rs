@@ -25,11 +25,13 @@ impl ApplicabilityFilter {
     /// Returns `true` when neither file nor directory patterns are defined.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.file_patterns.as_ref().is_none_or(|v| v.is_empty())
+        self.file_patterns
+            .as_ref()
+            .is_none_or(std::vec::Vec::is_empty)
             && self
                 .directory_patterns
                 .as_ref()
-                .is_none_or(|v| v.is_empty())
+                .is_none_or(std::vec::Vec::is_empty)
     }
 }
 
@@ -77,6 +79,7 @@ pub struct RuleFilterExecutor {
 
 impl RuleFilterExecutor {
     /// Create a new filter executor
+    #[must_use]
     pub fn new(workspace_root: std::path::PathBuf) -> Self {
         Self {
             workspace_root: workspace_root.clone(),
@@ -247,11 +250,13 @@ impl RuleFilterExecutor {
     }
 
     /// Get the language detector for direct use
+    #[must_use]
     pub fn language_detector(&self) -> &LanguageDetector {
         &self.language_detector
     }
 
     /// Get the dependency parser for direct use
+    #[must_use]
     pub fn dependency_parser(&self) -> &CargoDependencyParser {
         &self.dependency_parser
     }

@@ -9,7 +9,7 @@ use rstest::rstest;
 #[case(true)]
 fn python_detector_basics(#[case] check_object_safety: bool) {
     let config = ProjectDetectorConfig {
-        repo_path: ".".to_string(),
+        repo_path: ".".to_owned(),
     };
     let detector = PythonDetector::new(&config);
     assert!(!std::any::type_name::<PythonDetector>().is_empty());

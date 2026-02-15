@@ -59,9 +59,9 @@ pub fn validate_use_statements(
                             violations.push(DependencyViolation::ForbiddenUseStatement {
                                 crate_name: crate_name.clone(),
                                 forbidden_dep: used_crate_kebab,
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: line_num + 1,
-                                context: line.trim().to_string(),
+                                context: line.trim().to_owned(),
                                 severity: Severity::Error,
                             });
                         }

@@ -4,16 +4,16 @@ use std::sync::Arc;
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use serde::Deserialize;
 use uuid::Uuid;
 
 use super::common::{parse_agent_type, require_data_map, require_str};
 use crate::args::SessionArgs;
-use crate::error_mapping::to_contextual_tool_error;
+use crate::error_mapping::{safe_internal_error, to_contextual_tool_error};
 use crate::formatter::ResponseFormatter;
 use crate::handlers::helpers::{
-    OriginContextInput, resolve_identifier_precedence, resolve_origin_context,
+    OriginContextInput, resolve_identifier_precedence, resolve_origin_context, tool_error,
 };
 
 /// Payload for creating an agent session from JSON data.
@@ -56,13 +56,13 @@ pub async fn create_session(
     let agent_type: AgentType = match agent_type_value {
         Some(value) => parse_agent_type(&value)?,
         None => {
-            return Ok(CallToolResult::error(vec![Content::text(
+            return Ok(tool_error(
                 "Missing agent_type for create (expected in args or data)",
-            )]));
+            ));
         }
     };
     let now = mcb_domain::utils::time::epoch_secs_i64()
-        .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
     let session_id = Uuid::new_v4().to_string();
     let session_summary_id = payload
         .session_summary_id

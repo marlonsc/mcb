@@ -337,7 +337,7 @@ pub trait LifecycleManaged: Send + Sync {
     /// Performs a health check on the service.
     async fn health_check(&self) -> DependencyHealthCheck {
         DependencyHealthCheck {
-            name: self.name().to_string(),
+            name: self.name().to_owned(),
             status: match self.state() {
                 PortServiceState::Running => DependencyHealth::Healthy,
                 PortServiceState::Starting => DependencyHealth::Unknown,

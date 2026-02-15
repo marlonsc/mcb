@@ -12,32 +12,33 @@ pub struct IndexDef {
 }
 
 /// Returns index definitions for the memory module.
+#[must_use]
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         IndexDef {
-            name: "idx_obs_hash".to_string(),
-            table: "observations".to_string(),
-            columns: vec!["content_hash".to_string()],
+            name: "idx_obs_hash".to_owned(),
+            table: "observations".to_owned(),
+            columns: vec!["content_hash".to_owned()],
         },
         IndexDef {
-            name: "idx_obs_created".to_string(),
-            table: "observations".to_string(),
-            columns: vec!["created_at".to_string()],
+            name: "idx_obs_created".to_owned(),
+            table: "observations".to_owned(),
+            columns: vec!["created_at".to_owned()],
         },
         IndexDef {
-            name: "idx_obs_type".to_string(),
-            table: "observations".to_string(),
-            columns: vec![COL_OBSERVATION_TYPE.to_string()],
+            name: "idx_obs_type".to_owned(),
+            table: "observations".to_owned(),
+            columns: vec![COL_OBSERVATION_TYPE.to_owned()],
         },
         IndexDef {
-            name: "idx_obs_embedding".to_string(),
-            table: "observations".to_string(),
-            columns: vec!["embedding_id".to_string()],
+            name: "idx_obs_embedding".to_owned(),
+            table: "observations".to_owned(),
+            columns: vec!["embedding_id".to_owned()],
         },
         IndexDef {
-            name: "idx_summary_session".to_string(),
-            table: "session_summaries".to_string(),
-            columns: vec!["session_id".to_string()],
+            name: "idx_summary_session".to_owned(),
+            table: "session_summaries".to_owned(),
+            columns: vec!["session_id".to_owned()],
         },
     ]
 }

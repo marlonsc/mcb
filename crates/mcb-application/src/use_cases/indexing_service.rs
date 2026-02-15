@@ -78,7 +78,7 @@ impl IndexingProgress {
             .push(format!("{} {}: {}", context, path.display(), error));
     }
 
-    /// Build final IndexingResult (used by sync path and tests).
+    /// Build final `IndexingResult` (used by sync path and tests).
     fn into_result(self, operation_id: Option<OperationId>, status: &str) -> IndexingResult {
         IndexingResult {
             files_processed: self.files_processed,
@@ -86,7 +86,7 @@ impl IndexingProgress {
             files_skipped: self.files_skipped,
             errors: self.errors,
             operation_id,
-            status: status.to_string(),
+            status: status.to_owned(),
         }
     }
 }
@@ -165,22 +165,21 @@ impl IndexingServiceImpl {
         let walker = WalkBuilder::new(path)
             .hidden(false)
             .filter_entry(|entry| {
-                if !entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
+                if !entry.file_type().is_some_and(|ft| ft.is_dir()) {
                     return true;
                 }
 
                 entry
                     .file_name()
                     .to_str()
-                    .map(|name| !SKIP_DIRS.contains(&name))
-                    .unwrap_or(true)
+                    .is_none_or(|name| !SKIP_DIRS.contains(&name))
             })
             .build();
 
         for entry_result in walker {
             match entry_result {
                 Ok(entry) => {
-                    if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false)
+                    if entry.file_type().is_some_and(|ft| ft.is_file())
                         && self.is_supported_file(entry.path())
                     {
                         files.push(entry.path().to_path_buf());
@@ -199,12 +198,11 @@ impl IndexingServiceImpl {
     fn is_supported_file(&self, path: &Path) -> bool {
         path.extension()
             .and_then(|ext| ext.to_str())
-            .map(|ext| {
+            .is_some_and(|ext| {
                 self.supported_extensions
                     .iter()
                     .any(|supported| supported == &ext.to_ascii_lowercase())
             })
-            .unwrap_or(false)
     }
 }
 
@@ -264,7 +262,7 @@ impl IndexingServiceInterface for IndexingServiceImpl {
             files_skipped: 0,
             errors: vec![],
             operation_id: Some(operation_id),
-            status: "started".to_string(),
+            status: "started".to_owned(),
         })
     }
 

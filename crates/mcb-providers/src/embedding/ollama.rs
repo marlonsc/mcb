@@ -1,6 +1,6 @@
 //! Ollama Embedding Provider
 //!
-//! Implements the EmbeddingProvider port using Ollama's local embedding API.
+//! Implements the `EmbeddingProvider` port using Ollama's local embedding API.
 //! Supports various local embedding models like nomic-embed-text, all-minilm, etc.
 
 use std::time::Duration;
@@ -55,14 +55,15 @@ impl OllamaEmbeddingProvider {
     /// Create a new Ollama embedding provider
     ///
     /// # Arguments
-    /// * `base_url` - Ollama server URL (e.g., "http://localhost:11434")
+    /// * `base_url` - Ollama server URL (e.g., "<http://localhost:11434>")
     /// * `model` - Model name (e.g., "nomic-embed-text")
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
+    #[must_use]
     pub fn new(base_url: String, model: String, timeout: Duration, http_client: Client) -> Self {
         Self {
             client: HttpEmbeddingClient::new(
-                "".to_string(), // No API key for Ollama
+                String::new(), // No API key for Ollama
                 Some(base_url),
                 "http://localhost:11434",
                 model,
@@ -73,11 +74,13 @@ impl OllamaEmbeddingProvider {
     }
 
     /// Get the model name for this provider
+    #[must_use]
     pub fn model(&self) -> &str {
         &self.client.model
     }
 
     /// Get the maximum tokens supported by this provider
+    #[must_use]
     pub fn max_tokens(&self) -> usize {
         match self.client.model.as_str() {
             "nomic-embed-text" => 8192,
@@ -96,7 +99,7 @@ impl OllamaEmbeddingProvider {
             "stream": false
         });
 
-        let headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_string())];
+        let headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_owned())];
 
         send_json_request(JsonRequestParams {
             client: &self.client.client,
@@ -198,7 +201,7 @@ fn ollama_factory(
     let model = config
         .model
         .clone()
-        .unwrap_or_else(|| "nomic-embed-text".to_string());
+        .unwrap_or_else(|| "nomic-embed-text".to_owned());
     let http_client = create_default_client()?;
 
     Ok(Arc::new(OllamaEmbeddingProvider::new(

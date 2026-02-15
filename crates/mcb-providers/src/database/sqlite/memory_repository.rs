@@ -1,15 +1,15 @@
-//! SQLite Memory Repository
+//! `SQLite` Memory Repository
 // TODO(REF003): Missing test file for crates/mcb-providers/src/database/sqlite/memory_repository.rs.
 // Expected: crates/mcb-providers/tests/memory_repository_test.rs
 //!
 //! # Overview
 //! The `SqliteMemoryRepository` provides persistent storage for observations and session summaries
-//! using a SQLite database. It serves as the primary source of truth for structured
+//! using a `SQLite` database. It serves as the primary source of truth for structured
 //! memory data and enables full-text search (FTS) capabilities.
 //!
 //! # Responsibilities
 //! - **Observation Persistence**: Storing and retrieving immutable observation records.
-//! - **FTS Implementation**: Leveraging SQLite's FTS5 extension to perform efficient text searches.
+//! - **FTS Implementation**: Leveraging `SQLite`'s FTS5 extension to perform efficient text searches.
 //! - **Session Summaries**: Managing the persistence of high-level session insights.
 //! - **Timeline Construction**: Querying observations efficiently by creation time.
 //!
@@ -149,7 +149,7 @@ impl SqliteMemoryRepository {
 }
 
 #[async_trait]
-/// Persistent memory repository using SQLite.
+/// Persistent memory repository using `SQLite`.
 impl MemoryRepository for SqliteMemoryRepository {
     /// Stores an observation record.
     async fn store_observation(&self, observation: &Observation) -> Result<()> {
@@ -183,7 +183,7 @@ impl MemoryRepository for SqliteMemoryRepository {
 
         self.executor
             .execute(
-                r"
+                "
                 INSERT INTO observations (id, project_id, content, content_hash, tags, observation_type, metadata, created_at, embedding_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(content_hash) DO UPDATE SET
@@ -259,7 +259,7 @@ impl MemoryRepository for SqliteMemoryRepository {
             return Ok(Vec::new());
         }
 
-        let placeholders: Vec<String> = ids.iter().map(|_| "?".to_string()).collect();
+        let placeholders: Vec<String> = ids.iter().map(|_| "?".to_owned()).collect();
         let sql = format!(
             "SELECT * FROM observations WHERE id IN ({})",
             placeholders.join(",")
@@ -336,7 +336,7 @@ impl MemoryRepository for SqliteMemoryRepository {
 
         self.executor
             .execute(
-                r"
+                "
                 INSERT INTO session_summaries (id, project_id, session_id, topics, decisions, next_steps, key_files, origin_context, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
@@ -352,7 +352,7 @@ impl MemoryRepository for SqliteMemoryRepository {
 
         debug!(
             "Stored session summary for session: {}",
-            mask_id(&summary.session_id.to_string())
+            mask_id(&summary.session_id.clone())
         );
         Ok(())
     }

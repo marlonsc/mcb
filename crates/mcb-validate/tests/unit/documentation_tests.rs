@@ -50,7 +50,7 @@ fn test_documentation_full_workspace() {
 fn test_well_documented_code_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
-        r#"
+        "
 //! Well-documented crate.
 /// A well-documented public function.
 ///
@@ -61,7 +61,7 @@ fn test_well_documented_code_no_violations() {
 pub fn add(a: i32, b: i32) -> i32 {
     a + b
 }
-"#,
+",
     );
     let validator = DocumentationValidator::new(&root);
     let violations = validator.validate_all().unwrap();

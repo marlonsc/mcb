@@ -44,8 +44,8 @@ impl AgentSessionServiceImpl {
     /// # Arguments
     ///
     /// * `repository` - The repository implementation for persisting and retrieving agent sessions.
-    ///   This is typically injected via dependency injection and may be backed by SQLite,
-    ///   PostgreSQL, or another persistent storage mechanism.
+    ///   This is typically injected via dependency injection and may be backed by `SQLite`,
+    ///   `PostgreSQL`, or another persistent storage mechanism.
     ///
     /// # Returns
     ///

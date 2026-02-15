@@ -3,7 +3,7 @@ use std::sync::Arc;
 use mcb_domain::entities::memory::{ExecutionMetadata, ObservationType};
 use mcb_domain::ports::services::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use serde_json::Value;
 use tracing::error;
 use uuid::Uuid;
@@ -15,6 +15,7 @@ use super::common::{
 };
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
+use crate::handlers::helpers::tool_error;
 
 /// Validated execution data extracted from JSON payload
 struct ValidatedExecutionData {
@@ -34,12 +35,9 @@ impl ValidatedExecutionData {
         let success = require_bool(data, "success")?;
         let execution_type_str = require_str(data, "execution_type")?;
 
-        let execution_type = execution_type_str.parse().map_err(|_| {
-            CallToolResult::error(vec![Content::text(format!(
-                "Invalid execution_type: {}",
-                execution_type_str
-            ))])
-        })?;
+        let execution_type = execution_type_str
+            .parse()
+            .map_err(|_| tool_error(format!("Invalid execution_type: {execution_type_str}")))?;
 
         Ok(Self {
             command,
@@ -97,14 +95,14 @@ pub async fn store_execution(
         validated.command, validated.exit_code, validated.success
     );
     let tags = vec![
-        "execution".to_string(),
+        "execution".to_owned(),
         metadata.execution_type.as_str().to_owned(),
         if validated.success {
             "success"
         } else {
             "failure"
         }
-        .to_string(),
+        .to_owned(),
     ];
     let payload_execution_id = opt_str(data, "execution_id");
     let generated_execution_id = metadata.id.clone();
@@ -149,9 +147,7 @@ pub async fn store_execution(
         })),
         Err(_e) => {
             error!("Failed to store execution");
-            Ok(CallToolResult::error(vec![Content::text(
-                "Failed to store execution",
-            )]))
+            Ok(tool_error("Failed to store execution"))
         }
     }
 }

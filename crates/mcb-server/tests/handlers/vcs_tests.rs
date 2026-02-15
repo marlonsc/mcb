@@ -116,8 +116,8 @@ async fn test_vcs_index_repository_with_repo_path() {
     };
 
     let mut args = base_vcs_args(VcsAction::IndexRepository);
-    args.repo_path = Some("/path/to/repo".to_string());
-    args.base_branch = Some("main".to_string());
+    args.repo_path = Some("/path/to/repo".to_owned());
+    args.base_branch = Some("main".to_owned());
 
     let result = handler.handle(Parameters(args)).await;
 
@@ -133,9 +133,9 @@ async fn test_vcs_analyze_impact_with_defaults() {
     };
 
     let mut args = base_vcs_args(VcsAction::AnalyzeImpact);
-    args.repo_id = Some("repo-123".to_string());
-    args.repo_path = Some("/path/to/repo".to_string());
-    args.target_branch = Some("feature/new-feature".to_string());
+    args.repo_id = Some("repo-123".to_owned());
+    args.repo_path = Some("/path/to/repo".to_owned());
+    args.target_branch = Some("feature/new-feature".to_owned());
 
     let result = handler.handle(Parameters(args)).await;
 
@@ -151,8 +151,8 @@ async fn test_vcs_analyze_impact_missing_repo_path() {
     };
 
     let mut args = base_vcs_args(VcsAction::AnalyzeImpact);
-    args.base_branch = Some("main".to_string());
-    args.target_branch = Some("feature/new-feature".to_string());
+    args.base_branch = Some("main".to_owned());
+    args.target_branch = Some("feature/new-feature".to_owned());
 
     let result = handler.handle(Parameters(args)).await;
 

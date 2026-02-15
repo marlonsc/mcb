@@ -42,12 +42,14 @@ impl CacheProviderConfig {
     }
 
     /// Set the maximum cache size (entries or bytes depending on provider)
+    #[must_use]
     pub fn with_max_size(mut self, max_size: usize) -> Self {
         self.max_size = Some(max_size);
         self
     }
 
     /// Set the default TTL in seconds
+    #[must_use]
     pub fn with_ttl_secs(mut self, ttl_secs: u64) -> Self {
         self.ttl_secs = Some(ttl_secs);
         self

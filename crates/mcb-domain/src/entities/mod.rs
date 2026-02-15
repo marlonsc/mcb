@@ -37,7 +37,7 @@ pub trait BaseEntity {
     fn updated_at(&self) -> i64;
 }
 
-/// Macro to implement BaseEntity for structs using EntityMetadata
+/// Macro to implement `BaseEntity` for structs using `EntityMetadata`
 #[macro_export]
 macro_rules! impl_base_entity {
     ($t:ty) => {

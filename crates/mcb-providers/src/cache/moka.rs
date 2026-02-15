@@ -44,11 +44,13 @@ struct CachedValue {
 
 impl MokaCacheProvider {
     /// Creates a provider with the configured cache capacity.
+    #[must_use]
     pub fn new(max_size: usize) -> Self {
         Self::with_capacity(max_size)
     }
 
     /// Create a new Moka cache provider with specified capacity
+    #[must_use]
     pub fn with_capacity(max_size: usize) -> Self {
         let cache = Cache::builder().max_capacity(max_size as u64).build();
 
@@ -56,6 +58,7 @@ impl MokaCacheProvider {
     }
 
     /// Create a new Moka cache provider with custom configuration
+    #[must_use]
     pub fn with_config(max_size: usize, time_to_live: Duration) -> Self {
         let cache = Cache::builder()
             .max_capacity(max_size as u64)
@@ -66,6 +69,7 @@ impl MokaCacheProvider {
     }
 
     /// Get the maximum capacity of the cache
+    #[must_use]
     pub fn max_size(&self) -> usize {
         self.max_size
     }
@@ -86,7 +90,7 @@ impl MokaCacheProvider {
         let expires_at = config.ttl.and_then(|ttl| Instant::now().checked_add(ttl));
 
         self.cache
-            .insert(key.to_string(), CachedValue { bytes, expires_at })
+            .insert(key.to_owned(), CachedValue { bytes, expires_at })
             .await;
         Ok(())
     }
@@ -106,7 +110,7 @@ impl CacheProvider for MokaCacheProvider {
 
             let json =
                 String::from_utf8(cached_value.bytes).map_err(|e| Error::Infrastructure {
-                    message: format!("Invalid UTF-8 in cached value: {}", e),
+                    message: format!("Invalid UTF-8 in cached value: {e}"),
                     source: Some(Box::new(e)),
                 })?;
             Ok(Some(json))
@@ -183,7 +187,7 @@ fn moka_cache_factory(
 ) -> std::result::Result<Arc<dyn CacheProvider>, String> {
     let max_size = config
         .max_size
-        .ok_or_else(|| "Moka cache provider requires max_size in config".to_string())?;
+        .ok_or_else(|| "Moka cache provider requires max_size in config".to_owned())?;
     let provider = MokaCacheProvider::new(max_size);
     Ok(Arc::new(provider))
 }

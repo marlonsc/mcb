@@ -1,6 +1,6 @@
-//! FastEmbed Local Embedding Provider
+//! `FastEmbed` Local Embedding Provider
 //!
-//! Implements the EmbeddingProvider port using the fastembed library for local
+//! Implements the `EmbeddingProvider` port using the fastembed library for local
 //! embedding generation. Uses ONNX models for inference without external API calls.
 
 use async_trait::async_trait;
@@ -11,7 +11,7 @@ use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use tokio::sync::{mpsc, oneshot};
 
-/// Messages for the FastEmbed actor
+/// Messages for the `FastEmbed` actor
 enum FastEmbedMessage {
     EmbedBatch {
         texts: Vec<String>,
@@ -19,7 +19,7 @@ enum FastEmbedMessage {
     },
 }
 
-/// FastEmbed local embedding provider using Actor pattern
+/// `FastEmbed` local embedding provider using Actor pattern
 ///
 /// Uses the Actor pattern to eliminate locks and ensure thread-safe access
 /// to the underlying ONNX model. The model is initialized once and processes
@@ -39,23 +39,22 @@ pub struct FastEmbedProvider {
 }
 
 impl FastEmbedProvider {
-    /// Create a new FastEmbed provider with the default model (AllMiniLML6V2)
+    /// Create a new `FastEmbed` provider with the default model (`AllMiniLML6V2`)
     pub fn new() -> Result<Self> {
         Self::with_model(EmbeddingModel::AllMiniLML6V2)
     }
 
-    /// Create a new FastEmbed provider with a specific model
+    /// Create a new `FastEmbed` provider with a specific model
     pub fn with_model(model: EmbeddingModel) -> Result<Self> {
         let init_options = InitOptions::new(model.clone()).with_show_download_progress(true);
         Self::with_options(init_options)
     }
 
-    /// Create a new FastEmbed provider with custom initialization options
+    /// Create a new `FastEmbed` provider with custom initialization options
     pub fn with_options(init_options: InitOptions) -> Result<Self> {
         let model_name = format!("{:?}", init_options.model_name);
-        let text_embedding = TextEmbedding::try_new(init_options).map_err(|e| {
-            Error::embedding(format!("Failed to initialize FastEmbed model: {}", e))
-        })?;
+        let text_embedding = TextEmbedding::try_new(init_options)
+            .map_err(|e| Error::embedding(format!("Failed to initialize FastEmbed model: {e}")))?;
 
         let (tx, rx) = mpsc::channel(100);
         let mut actor = FastEmbedActor::new(rx, text_embedding, model_name.clone());
@@ -70,11 +69,13 @@ impl FastEmbedProvider {
     }
 
     /// Get the model name
+    #[must_use]
     pub fn model(&self) -> &str {
         &self.model_name
     }
 
     /// Get the maximum tokens supported by this model (approximate)
+    #[must_use]
     pub fn max_tokens(&self) -> usize {
         // Most FastEmbed models support around 512 tokens
         512
@@ -145,7 +146,8 @@ impl FastEmbedActor {
         while let Some(msg) = self.receiver.recv().await {
             match msg {
                 FastEmbedMessage::EmbedBatch { texts, tx } => {
-                    let text_refs: Vec<&str> = texts.iter().map(|s| s.as_str()).collect();
+                    let text_refs: Vec<&str> =
+                        texts.iter().map(std::string::String::as_str).collect();
                     let embeddings_result = self.model.embed(text_refs, None);
                     let result = match embeddings_result {
                         Ok(res) => {
@@ -162,10 +164,7 @@ impl FastEmbedActor {
                                 })
                                 .collect())
                         }
-                        Err(e) => Err(Error::embedding(format!(
-                            "FastEmbed embedding failed: {}",
-                            e
-                        ))),
+                        Err(e) => Err(Error::embedding(format!("FastEmbed embedding failed: {e}"))),
                     };
                     let _ = tx.send(result);
                 }
@@ -185,7 +184,7 @@ use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
 
-/// Parse model name string to EmbeddingModel enum
+/// Parse model name string to `EmbeddingModel` enum
 fn parse_embedding_model(model_name: &str) -> EmbeddingModel {
     match model_name.to_lowercase().as_str() {
         "bgesmallenq" | "bge-small-en-q" => EmbeddingModel::BGESmallENV15Q,
@@ -200,7 +199,7 @@ fn parse_embedding_model(model_name: &str) -> EmbeddingModel {
     }
 }
 
-/// Factory function for creating FastEmbed provider instances.
+/// Factory function for creating `FastEmbed` provider instances.
 ///
 /// Uses a centralized cache directory to avoid creating `.fastembed_cache`
 /// directories in repository working directories.
@@ -210,14 +209,14 @@ fn fastembed_factory(
     let model_name = config
         .model
         .clone()
-        .unwrap_or_else(|| "AllMiniLML6V2".to_string());
+        .unwrap_or_else(|| "AllMiniLML6V2".to_owned());
 
     let model = parse_embedding_model(&model_name);
 
     let cache_dir = config
         .cache_dir
         .clone()
-        .ok_or_else(|| "FastEmbed provider requires cache_dir in config".to_string())?;
+        .ok_or_else(|| "FastEmbed provider requires cache_dir in config".to_owned())?;
 
     let init_options = InitOptions::new(model)
         .with_show_download_progress(true)

@@ -40,8 +40,8 @@ fn expression_evaluation(
 fn test_custom_variables() {
     let engine = ExpressionEngine::new();
     let mut variables = HashMap::new();
-    variables.insert("x".to_string(), serde_json::json!(10));
-    variables.insert("y".to_string(), serde_json::json!(5));
+    variables.insert("x".to_owned(), serde_json::json!(10));
+    variables.insert("y".to_owned(), serde_json::json!(5));
 
     let result = engine.evaluate_with_variables("x > y", &variables);
     assert!(result.is_ok());

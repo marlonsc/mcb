@@ -43,12 +43,12 @@ fn is_valid_snake_case(name: &str, is_uppercase: bool) -> bool {
     !name.chars().next().is_some_and(|c| c.is_ascii_digit())
 }
 
-/// Checks if a name follows snake_case convention.
+/// Checks if a name follows `snake_case` convention.
 pub fn is_snake_case(name: &str) -> bool {
     is_valid_snake_case(name, false)
 }
 
-/// Checks if a name follows SCREAMING_SNAKE_CASE convention.
+/// Checks if a name follows `SCREAMING_SNAKE_CASE` convention.
 pub fn is_screaming_snake_case(name: &str) -> bool {
     is_valid_snake_case(name, true)
 }

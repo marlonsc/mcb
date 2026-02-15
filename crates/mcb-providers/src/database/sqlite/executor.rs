@@ -1,4 +1,4 @@
-//! SQLite implementation of the database executor port.
+//! `SQLite` implementation of the database executor port.
 //!
 //! Uses the domain port [`DatabaseExecutor`] and [`SqlRow`]; repositories depend
 //! on these traits and do not use sqlx directly.
@@ -13,7 +13,7 @@ use sqlx::Column;
 use sqlx::Row;
 use sqlx::sqlite::SqliteRow;
 
-/// Row adapter that copies column values from a SQLite row so it can be returned
+/// Row adapter that copies column values from a `SQLite` row so it can be returned
 /// as `Arc<dyn SqlRow>` without holding a reference to the connection.
 #[derive(Debug)]
 struct SqliteMappedRow {
@@ -28,7 +28,7 @@ impl SqliteMappedRow {
         let mut i64s = HashMap::new();
         let mut f64s = HashMap::new();
         for (i, col) in row.columns().iter().enumerate() {
-            let name = col.name().to_string();
+            let name = col.name().to_owned();
             if let Ok(v) = row.try_get::<String, _>(i) {
                 strings.insert(name.clone(), Some(v));
             } else if let Ok(v) = row.try_get::<i64, _>(i) {
@@ -80,13 +80,14 @@ impl SqlRow for SqliteMappedRow {
     }
 }
 
-/// SQLite implementation of the database executor port.
+/// `SQLite` implementation of the database executor port.
 pub struct SqliteExecutor {
     pool: sqlx::SqlitePool,
 }
 
 impl SqliteExecutor {
     /// Create an executor that uses the given pool.
+    #[must_use]
     pub fn new(pool: sqlx::SqlitePool) -> Self {
         Self { pool }
     }
@@ -180,6 +181,7 @@ impl DatabaseExecutor for SqliteExecutor {
 
 impl SqliteExecutor {
     /// Get reference to inner pool
+    #[must_use]
     pub fn pool(&self) -> &sqlx::SqlitePool {
         &self.pool
     }

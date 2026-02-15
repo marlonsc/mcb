@@ -10,8 +10,7 @@ use rstest::rstest;
 fn test_use_cases_can_be_imported(#[case] type_name: &str, #[case] expected_name: &str) {
     assert!(
         type_name.contains(expected_name),
-        "{} type should be available",
-        expected_name
+        "{expected_name} type should be available"
     );
 }
 

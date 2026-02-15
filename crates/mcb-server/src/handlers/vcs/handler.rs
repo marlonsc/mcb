@@ -21,7 +21,7 @@ pub struct VcsHandler {
 }
 
 impl VcsHandler {
-    /// Create a new VcsHandler.
+    /// Create a new `VcsHandler`.
     pub fn new(vcs_provider: Arc<dyn VcsProvider>) -> Self {
         Self { vcs_provider }
     }

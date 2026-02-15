@@ -74,6 +74,7 @@ impl PatternViolation {
     /// Returns the severity level of the violation.
     ///
     /// Delegates to the [`Violation`] trait implementation to avoid duplication.
+    #[must_use]
     pub fn severity(&self) -> Severity {
         <Self as Violation>::severity(self)
     }
@@ -223,9 +224,9 @@ impl Violation for PatternViolation {
             Self::MissingSendSync { missing_bound, .. } => {
                 Some(format!("Add {missing_bound} bounds to trait"))
             }
-            Self::MissingAsyncTrait { .. } => Some("Add #[async_trait] attribute".to_string()),
+            Self::MissingAsyncTrait { .. } => Some("Add #[async_trait] attribute".to_owned()),
             Self::MissingInterfaceBound { .. } => {
-                Some("Add : Interface bound for dill DI".to_string())
+                Some("Add : Interface bound for dill DI".to_owned())
             }
         }
     }

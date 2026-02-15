@@ -69,6 +69,7 @@ impl AsyncViolation {
     /// Returns the severity level of this violation.
     ///
     /// Delegates to the [`Violation`] trait implementation to avoid duplication.
+    #[must_use]
     pub fn severity(&self) -> Severity {
         <Self as Violation>::severity(self)
     }

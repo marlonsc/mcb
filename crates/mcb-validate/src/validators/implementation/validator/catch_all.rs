@@ -24,9 +24,9 @@ pub fn validate_empty_catch_alls(
             for pattern in &compiled {
                 if pattern.is_match(trimmed) {
                     violations.push(ImplementationViolation::EmptyCatchAll {
-                        file: file_path.to_path_buf(),
+                        file: file_path.clone(),
                         line: line_num,
-                        context: trimmed.to_string(),
+                        context: trimmed.to_owned(),
                         severity: Severity::Warning,
                     });
                 }

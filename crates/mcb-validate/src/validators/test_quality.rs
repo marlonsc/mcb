@@ -126,6 +126,7 @@ impl TestQualityValidator {
     }
 
     /// Create a validator with a custom configuration
+    #[must_use]
     pub fn with_config(config: ValidationConfig, rules: &TestQualityRulesConfig) -> Self {
         Self {
             config,
@@ -301,7 +302,7 @@ impl TestQualityValidator {
                         violations.push(TestQualityViolation::EmptyTestBody {
                             file: file.to_path_buf(),
                             line: fn_line_idx + 1,
-                            test_name: test_name.as_str().to_string(),
+                            test_name: test_name.as_str().to_owned(),
                             severity: Severity::Error,
                         });
                     }
@@ -354,7 +355,7 @@ impl TestQualityValidator {
             if let Some(captures) = fn_pattern.captures(line)
                 && let Some(name) = captures.get(1)
             {
-                return Some(name.as_str().to_string());
+                return Some(name.as_str().to_owned());
             }
         }
         None
@@ -366,7 +367,7 @@ impl TestQualityValidator {
             if let Some(captures) = fn_pattern.captures(lines[i])
                 && let Some(name) = captures.get(1)
             {
-                return Some(name.as_str().to_string());
+                return Some(name.as_str().to_owned());
             }
         }
         None

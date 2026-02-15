@@ -37,6 +37,7 @@ impl ProjectContext {
 /// Supports SSH shorthand (`git@host:owner/repo.git`),
 /// SSH URL (`ssh://git@host/owner/repo.git`),
 /// and HTTPS (`https://host/owner/repo[.git]`).
+#[must_use]
 pub fn parse_owner_repo(url: &str) -> Option<String> {
     // SSH shorthand: git@host:owner/repo.git
     if let Some((_host, path)) = url.strip_prefix("git@").and_then(|s| s.split_once(':')) {
@@ -58,12 +59,13 @@ pub fn parse_owner_repo(url: &str) -> Option<String> {
 ///
 /// Returns `None` when the input path does not contain at least one
 /// non-empty segment.
+#[must_use]
 pub fn normalize_owner_repo(path: &str) -> Option<String> {
     let parts: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
     if parts.len() >= 2 {
         Some(parts.join("/"))
     } else if parts.len() == 1 {
-        Some(parts[0].to_string())
+        Some(parts[0].to_owned())
     } else {
         None
     }

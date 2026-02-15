@@ -13,7 +13,7 @@ pub struct SubmoduleProvider {
 }
 
 impl SubmoduleProvider {
-    /// Create a new SubmoduleProvider with given configuration
+    /// Create a new `SubmoduleProvider` with given configuration
     #[must_use]
     pub fn new(config: SubmoduleDiscoveryConfig) -> Self {
         Self { config }
@@ -31,7 +31,7 @@ impl SubmoduleProvider {
     /// Handles edge cases:
     /// - Orphaned submodules (missing .gitmodules entry) - skipped with warning
     /// - Inaccessible submodule URLs - skipped, parent indexing continues
-    /// - Detached HEAD - uses head_id() for commit hash
+    /// - Detached HEAD - uses `head_id()` for commit hash
     /// - Circular references - tracked via visited set
     pub async fn collect_submodules(
         &self,
@@ -40,7 +40,7 @@ impl SubmoduleProvider {
     ) -> Result<Vec<SubmoduleInfo>> {
         // Use spawn_blocking for git2 operations (not async-safe)
         let repo_path = repo_path.to_path_buf();
-        let parent_id = parent_repo_id.to_string();
+        let parent_id = parent_repo_id.to_owned();
         let max_depth = self.config.max_depth;
         let skip_uninitialized = self.config.skip_uninitialized;
         let continue_on_error = self.config.continue_on_error;
@@ -76,7 +76,7 @@ impl SubmoduleProvider {
 
         // BFS queue: (Repository, parent_id, current_depth)
         let mut queue: VecDeque<(Repository, String, usize)> = VecDeque::new();
-        queue.push_back((repo, parent_repo_id.to_string(), 0));
+        queue.push_back((repo, parent_repo_id.to_owned(), 0));
 
         while let Some((current_repo, parent_id, depth)) = queue.pop_front() {
             if depth >= max_depth {
@@ -100,7 +100,7 @@ impl SubmoduleProvider {
             };
 
             for submodule in submodules {
-                let path = submodule.path().to_str().unwrap_or_default().to_string();
+                let path = submodule.path().to_str().unwrap_or_default().to_owned();
 
                 // Check for circular references
                 let unique_key = format!("{parent_id}:{path}");
@@ -115,7 +115,7 @@ impl SubmoduleProvider {
 
                 // Get submodule URL (may be None for orphaned submodules)
                 let url = match submodule.url() {
-                    Some(u) => u.to_string(),
+                    Some(u) => u.to_owned(),
                     None => {
                         tracing::warn!(
                             path = %path,
@@ -134,8 +134,7 @@ impl SubmoduleProvider {
                 // Get submodule name
                 let name = submodule
                     .name()
-                    .map(ToString::to_string)
-                    .unwrap_or_else(|| path.to_owned());
+                    .map_or_else(|| path.clone(), ToString::to_string);
 
                 // Check if submodule is initialized
                 let workdir = current_repo.workdir().unwrap_or_else(|| Path::new(""));
@@ -151,7 +150,7 @@ impl SubmoduleProvider {
                     continue;
                 }
 
-                let submodule_id = format!("{}:{}", parent_id, path);
+                let submodule_id = format!("{parent_id}:{path}");
 
                 let info = SubmoduleInfo {
                     id: submodule_id,

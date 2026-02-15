@@ -1,4 +1,4 @@
-//! Unit tests for MCP context config (GitConfig, McpContextConfig).
+//! Unit tests for MCP context config (`GitConfig`, `McpContextConfig`).
 
 use mcb_infrastructure::config::{GitConfig, McpContextConfig};
 use rstest::rstest;

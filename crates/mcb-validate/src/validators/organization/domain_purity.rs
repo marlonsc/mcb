@@ -114,7 +114,7 @@ pub fn validate_domain_traits_only(
                 && !trimmed.contains("trait ")
             {
                 in_impl_block = true;
-                impl_name = cap.get(1).map_or("", |m| m.as_str()).to_string();
+                impl_name = cap.get(1).map_or("", |m| m.as_str()).to_owned();
                 impl_start_brace = brace_depth;
             }
 
@@ -143,9 +143,9 @@ pub fn validate_domain_traits_only(
 
                 // This looks like business logic in domain layer
                 violations.push(OrganizationViolation::DomainLayerImplementation {
-                    file: entry.absolute_path.to_path_buf(),
+                    file: entry.absolute_path.clone(),
                     line: line_num + 1,
-                    impl_type: "method".to_string(),
+                    impl_type: "method".to_owned(),
                     type_name: format!("{impl_name}::{method_name}"),
                     severity: Severity::Info,
                 });

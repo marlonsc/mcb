@@ -23,7 +23,7 @@ pub struct IndexHandler {
 }
 
 impl IndexHandler {
-    /// Create a new IndexHandler.
+    /// Create a new `IndexHandler`.
     pub fn new(indexing_service: Arc<dyn IndexingServiceInterface>) -> Self {
         Self { indexing_service }
     }
@@ -116,10 +116,7 @@ impl IndexHandler {
                         &milvus_collection_str,
                     )),
                     Err(e) => Ok(ResponseFormatter::format_indexing_error(
-                        &format!(
-                            "Failed to clear collection {}: {}",
-                            milvus_collection_str, e
-                        ),
+                        &format!("Failed to clear collection {milvus_collection_str}: {e}"),
                         &error_path,
                     )),
                 }

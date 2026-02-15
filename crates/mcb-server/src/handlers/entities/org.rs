@@ -59,7 +59,7 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Create, OrgEntityResource::User) => {
                 let mut user: User = require_data(args.data, "data required for create")?;
-                user.org_id = org_id.to_string();
+                user.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_user(&user).await)?;
                 ok_json(&user)
             }
@@ -81,7 +81,7 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Update, OrgEntityResource::User) => {
                 let mut user: User = require_data(args.data, "data required for update")?;
-                user.org_id = org_id.to_string();
+                user.org_id = org_id.clone();
                 map_opaque_error(self.repo.update_user(&user).await)?;
                 ok_text("updated")
             }
@@ -92,7 +92,7 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Create, OrgEntityResource::Team) => {
                 let mut team: Team = require_data(args.data, "data required for create")?;
-                team.org_id = org_id.to_string();
+                team.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_team(&team).await)?;
                 ok_json(&team)
             }
@@ -134,7 +134,7 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Create, OrgEntityResource::ApiKey) => {
                 let mut key: ApiKey = require_data(args.data, "data required for create")?;
-                key.org_id = org_id.to_string();
+                key.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_api_key(&key).await)?;
                 ok_json(&key)
             }
@@ -146,28 +146,14 @@ impl OrgEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_api_keys(org_id.as_str()).await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::ApiKey) => {
-                let id = require_id(&args.id).map_err(|e| {
-                    McpError::invalid_params(
-                        format!("failed to parse api key id from request: {e}"),
-                        None,
-                    )
-                })?;
+                let id = require_id(&args.id)?;
                 let revoked_at = extract_revoked_at(args.data.as_ref());
-                map_opaque_error(self.repo.revoke_api_key(&id, revoked_at).await).map_err(|e| {
-                    McpError::internal_error(format!("failed to revoke api key '{id}': {e}"), None)
-                })?;
+                map_opaque_error(self.repo.revoke_api_key(&id, revoked_at).await)?;
                 ok_text("updated")
             }
             (OrgEntityAction::Delete, OrgEntityResource::ApiKey) => {
-                let id = require_id(&args.id).map_err(|e| {
-                    McpError::invalid_params(
-                        format!("failed to parse api key id from request: {e}"),
-                        None,
-                    )
-                })?;
-                map_opaque_error(self.repo.delete_api_key(&id).await).map_err(|e| {
-                    McpError::internal_error(format!("failed to delete api key '{id}': {e}"), None)
-                })?;
+                let id = require_id(&args.id)?;
+                map_opaque_error(self.repo.delete_api_key(&id).await)?;
                 ok_text("deleted")
             }
             }
@@ -177,8 +163,5 @@ impl OrgEntityHandler {
 
 fn extract_revoked_at(data: Option<&serde_json::Value>) -> i64 {
     data.and_then(|value| value.get("revoked_at").and_then(serde_json::Value::as_i64))
-        .unwrap_or_else(|| {
-            mcb_domain::utils::time::epoch_secs_i64()
-                .unwrap_or_else(|e| panic!("system clock failure: {e}"))
-        })
+        .unwrap_or_else(|| mcb_domain::utils::time::epoch_secs_i64().unwrap_or(0))
 }

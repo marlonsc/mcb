@@ -44,7 +44,7 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
 
             if line_count > validator.max_file_lines {
                 violations.push(QualityViolation::FileTooLarge {
-                    file: entry.absolute_path.to_path_buf(),
+                    file: entry.absolute_path.clone(),
                     lines: line_count,
                     max_allowed: validator.max_file_lines,
                     severity: Severity::Warning,

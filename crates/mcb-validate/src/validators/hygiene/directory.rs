@@ -45,7 +45,7 @@ pub fn validate_test_directory_structure(
             if has_test_files {
                 violations.push(HygieneViolation::BadTestFileName {
                     file: tests_dir.clone(),
-                    suggestion: "Create tests/unit/ or tests/integration/ directory".to_string(),
+                    suggestion: "Create tests/unit/ or tests/integration/ directory".to_owned(),
                     severity: Severity::Warning,
                 });
             }
@@ -71,9 +71,9 @@ pub fn validate_test_directory_structure(
 
             // Any other .rs file directly in tests/ is a violation
             violations.push(HygieneViolation::BadTestFileName {
-                file: path.to_path_buf(),
+                file: path.clone(),
                 suggestion: "Move to tests/unit/, tests/integration/, or tests/e2e/ directory"
-                    .to_string(),
+                    .to_owned(),
                 severity: Severity::Warning,
             });
         }

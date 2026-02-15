@@ -46,7 +46,7 @@ impl UnifiedEntityCrudAdapter {
         let text = extract_text_content(&result.content);
         if result.is_error.unwrap_or(false) {
             return Err(if text.is_empty() {
-                "entity operation failed".to_string()
+                "entity operation failed".to_owned()
             } else {
                 text
             });
@@ -106,11 +106,11 @@ impl EntityCrudAdapter for UnifiedEntityCrudAdapter {
             self.resource,
             EntityResource::TeamMember | EntityResource::LabelAssignment
         ) {
-            return Err("resource has a composite key and cannot be fetched by id".to_string());
+            return Err("resource has a composite key and cannot be fetched by id".to_owned());
         }
 
         let mut args = base_entity_args(self.resource, EntityAction::Get);
-        args.id = Some(id.to_string());
+        args.id = Some(id.to_owned());
         self.execute(args).await
     }
 
@@ -119,7 +119,7 @@ impl EntityCrudAdapter for UnifiedEntityCrudAdapter {
         if matches!(self.resource, EntityResource::Repository) {
             args.project_id = extract_project_id(&data);
             if args.project_id.is_none() {
-                return Err("project_id is required for repository create".to_string());
+                return Err("project_id is required for repository create".to_owned());
             }
         }
         args.data = Some(data);
@@ -131,7 +131,7 @@ impl EntityCrudAdapter for UnifiedEntityCrudAdapter {
         if matches!(self.resource, EntityResource::Repository) {
             args.project_id = extract_project_id(&data);
             if args.project_id.is_none() {
-                return Err("project_id is required for repository update".to_string());
+                return Err("project_id is required for repository update".to_owned());
             }
         }
         args.data = Some(data);
@@ -144,7 +144,7 @@ impl EntityCrudAdapter for UnifiedEntityCrudAdapter {
             self.resource,
             EntityResource::TeamMember | EntityResource::LabelAssignment
         ) {
-            return Err("resource has a composite key and cannot be deleted by id".to_string());
+            return Err("resource has a composite key and cannot be deleted by id".to_owned());
         }
 
         let mut args = base_entity_args(self.resource, EntityAction::Delete);
@@ -153,10 +153,10 @@ impl EntityCrudAdapter for UnifiedEntityCrudAdapter {
             let project_id = existing
                 .get("project_id")
                 .and_then(Value::as_str)
-                .ok_or_else(|| "repository record missing project_id".to_string())?;
-            args.project_id = Some(project_id.to_string());
+                .ok_or_else(|| "repository record missing project_id".to_owned())?;
+            args.project_id = Some(project_id.to_owned());
         }
-        args.id = Some(id.to_string());
+        args.id = Some(id.to_owned());
         let _ = self.execute(args).await?;
         Ok(())
     }

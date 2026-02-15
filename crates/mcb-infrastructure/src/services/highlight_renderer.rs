@@ -5,6 +5,7 @@ pub struct HtmlRenderer;
 
 impl HtmlRenderer {
     /// Converts a `HighlightedCode` object into an HTML string with CSS classes.
+    #[must_use]
     pub fn render(highlighted: &HighlightedCode) -> String {
         if highlighted.original.is_empty() {
             return String::new();

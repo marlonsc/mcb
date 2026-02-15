@@ -81,12 +81,12 @@ fn merge_section(
     new_value: toml::Value,
 ) {
     let toml::Value::Table(new_table) = new_value else {
-        table.insert(section.to_string(), new_value);
+        table.insert(section.to_owned(), new_value);
         return;
     };
 
     let Some(existing) = table.get_mut(section).and_then(|v| v.as_table_mut()) else {
-        table.insert(section.to_string(), toml::Value::Table(new_table));
+        table.insert(section.to_owned(), toml::Value::Table(new_table));
         return;
     };
 

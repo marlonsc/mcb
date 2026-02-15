@@ -14,13 +14,13 @@ fn test_submodule_discovery_config_default() {
 #[rstest]
 fn test_submodule_info_fields() {
     let s = SubmoduleInfo {
-        id: "sub-1".to_string(),
-        path: "libs/bar".to_string(),
-        url: "https://example.com/bar.git".to_string(),
-        commit_hash: "abc123".to_string(),
-        parent_repo_id: "repo-1".to_string(),
+        id: "sub-1".to_owned(),
+        path: "libs/bar".to_owned(),
+        url: "https://example.com/bar.git".to_owned(),
+        commit_hash: "abc123".to_owned(),
+        parent_repo_id: "repo-1".to_owned(),
         depth: 1,
-        name: "bar".to_string(),
+        name: "bar".to_owned(),
         is_initialized: true,
     };
     assert_eq!(s.id, "sub-1");

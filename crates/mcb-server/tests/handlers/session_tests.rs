@@ -104,7 +104,7 @@ session_test!(
         "model": "claude-3-sonnet",
         "project_id": "test-project"
     }),
-    agent_type: Some("explore".to_string()),
+    agent_type: Some("explore".to_owned()),
     expect_ok
 );
 
@@ -115,7 +115,7 @@ session_test!(
         "model": "claude-3-sonnet",
         "project_id": "test-project"
     }),
-    agent_type: Some("explore".to_string()),
+    agent_type: Some("explore".to_owned()),
     expect_ok
 );
 
@@ -123,7 +123,7 @@ session_test!(
     test_session_create_missing_data,
     SessionAction::Create,
     data: None,
-    agent_type: Some("explore".to_string()),
+    agent_type: Some("explore".to_owned()),
     expect_error
 );
 
@@ -131,7 +131,7 @@ session_test!(
     test_session_create_invalid_data,
     SessionAction::Create,
     data: Some(json!("not an object")),
-    agent_type: Some("explore".to_string()),
+    agent_type: Some("explore".to_owned()),
     expect_error
 );
 
@@ -173,7 +173,7 @@ async fn test_session_update_conflicting_project_id_rejected() {
         action: SessionAction::Create,
         org_id: None,
         session_id: None,
-        project_id: Some("project-a".to_string()),
+        project_id: Some("project-a".to_owned()),
         data: Some(json!({
             "session_summary_id": "summary-update-conflict",
             "model": "claude-3-sonnet",
@@ -181,7 +181,7 @@ async fn test_session_update_conflicting_project_id_rejected() {
         })),
         worktree_id: None,
         parent_session_id: None,
-        agent_type: Some("explore".to_string()),
+        agent_type: Some("explore".to_owned()),
         status: None,
         limit: None,
     };
@@ -207,13 +207,13 @@ async fn test_session_update_conflicting_project_id_rejected() {
         .get("session_id")
         .and_then(|v| v.as_str())
         .expect("session_id in create response")
-        .to_string();
+        .to_owned();
 
     let update_args = SessionArgs {
         action: SessionAction::Update,
         org_id: None,
         session_id: Some(SessionId::from_string(&session_id)),
-        project_id: Some("project-b".to_string()),
+        project_id: Some("project-b".to_owned()),
         data: Some(json!({
             "status": "completed"
         })),

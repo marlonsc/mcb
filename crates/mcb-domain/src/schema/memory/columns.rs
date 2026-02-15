@@ -7,15 +7,15 @@ pub enum ColumnType {
     Integer,
     /// Floating-point number
     Real,
-    /// Boolean (stored as INTEGER 0/1 in SQLite)
+    /// Boolean (stored as INTEGER 0/1 in `SQLite`)
     Boolean,
     /// Binary large object
     Blob,
-    /// JSON data (stored as TEXT in SQLite, JSONB in Postgres)
+    /// JSON data (stored as TEXT in `SQLite`, JSONB in Postgres)
     Json,
-    /// UUID (stored as TEXT in SQLite, UUID in Postgres)
+    /// UUID (stored as TEXT in `SQLite`, UUID in Postgres)
     Uuid,
-    /// Timestamp (stored as INTEGER in SQLite, TIMESTAMPTZ in Postgres)
+    /// Timestamp (stored as INTEGER in `SQLite`, TIMESTAMPTZ in Postgres)
     Timestamp,
 }
 
@@ -32,7 +32,7 @@ pub struct ColumnDef {
     pub unique: bool,
     /// Whether this column disallows NULL values.
     pub not_null: bool,
-    /// Auto-increment (e.g. INTEGER PRIMARY KEY AUTOINCREMENT in SQLite).
+    /// Auto-increment (e.g. INTEGER PRIMARY KEY AUTOINCREMENT in `SQLite`).
     pub auto_increment: bool,
 }
 

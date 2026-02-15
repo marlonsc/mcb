@@ -29,7 +29,7 @@ pub enum ValidateScope {
 tool_schema! {
 /// Arguments for the validate tool.
 pub struct ValidateArgs {
-    /// Action: run (validate), list_rules, analyze (complexity).
+    /// Action: run (validate), `list_rules`, analyze (complexity).
     #[schemars(description = "Action: run (validate), list_rules, analyze (complexity)")]
     pub action: ValidateAction,
 

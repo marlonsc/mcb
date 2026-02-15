@@ -69,7 +69,7 @@ async fn handle_tools_list(request: &McpRequest) -> McpResponse {
             McpResponse::error(
                 request.id.clone(),
                 JSONRPC_INTERNAL_ERROR,
-                format!("Failed to list tools: {:?}", e),
+                format!("Failed to list tools: {e:?}"),
             )
         }
     }

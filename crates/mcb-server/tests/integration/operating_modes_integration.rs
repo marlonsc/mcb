@@ -18,7 +18,6 @@ use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::types::{AppConfig, ModeConfig, OperatingMode};
 use mcb_infrastructure::di::bootstrap::init_app;
-use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::session::SessionManager;
 use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
@@ -41,21 +40,37 @@ fn create_test_config() -> (AppConfig, tempfile::TempDir) {
     let db_path = temp_dir.path().join("test.db");
     let mut config = ConfigLoader::new().load().expect("load config");
     config.providers.database.configs.insert(
-        "default".to_string(),
+        "default".to_owned(),
         mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
+            provider: "sqlite".to_owned(),
             path: Some(db_path),
         },
     );
+    config.providers.embedding.cache_dir = Some(shared_fastembed_cache_dir());
     (config, temp_dir)
+}
+
+/// Persistent shared cache dir for `FastEmbed` ONNX model.
+fn shared_fastembed_cache_dir() -> std::path::PathBuf {
+    use std::sync::OnceLock;
+    static DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
+    DIR.get_or_init(|| {
+        let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
+            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
+            std::path::PathBuf::from,
+        );
+        std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
+        cache_dir
+    })
+    .clone()
 }
 
 /// Create test configuration for client mode
 fn create_client_config(server_port: u16) -> ModeConfig {
     ModeConfig {
         mode_type: OperatingMode::Client,
-        server_url: format!("http://127.0.0.1:{}", server_port),
-        session_prefix: Some("test".to_string()),
+        server_url: format!("http://127.0.0.1:{server_port}"),
+        session_prefix: Some("test".to_owned()),
         timeout_secs: 30,
         auto_reconnect: true,
         max_reconnect_attempts: 5,
@@ -84,7 +99,7 @@ fn test_mode_config_client_settings() {
 
     assert_eq!(config.mode_type, OperatingMode::Client);
     assert!(config.server_url.contains(&port.to_string()));
-    assert_eq!(config.session_prefix, Some("test".to_string()));
+    assert_eq!(config.session_prefix, Some("test".to_owned()));
     assert_eq!(config.timeout_secs, 30);
     assert!(config.auto_reconnect);
     assert_eq!(config.max_reconnect_attempts, 5);
@@ -263,8 +278,8 @@ fn test_http_transport_config_default() {
 fn test_http_client_session_id_with_prefix() {
     let port = get_free_port();
     let client = HttpClientTransport::new_with_session_source(
-        format!("http://127.0.0.1:{}", port),
-        Some("test-prefix".to_string()),
+        format!("http://127.0.0.1:{port}"),
+        Some("test-prefix".to_owned()),
         Duration::from_secs(30),
         None,
         None,
@@ -278,7 +293,7 @@ fn test_http_client_session_id_with_prefix() {
 fn test_http_client_session_id_without_prefix() {
     let port = get_free_port();
     let client = HttpClientTransport::new_with_session_source(
-        format!("http://127.0.0.1:{}", port),
+        format!("http://127.0.0.1:{port}"),
         None,
         Duration::from_secs(30),
         None,
@@ -294,7 +309,7 @@ fn test_http_client_session_id_without_prefix() {
 #[test]
 fn test_http_client_server_url() {
     let port = get_free_port();
-    let expected_url = format!("http://127.0.0.1:{}", port);
+    let expected_url = format!("http://127.0.0.1:{port}");
     let client = HttpClientTransport::new_with_session_source(
         expected_url.clone(),
         None,
@@ -332,7 +347,7 @@ fn test_http_client_from_mode_config() {
 #[test]
 fn test_mcp_request_serialization() {
     let request = McpRequest {
-        method: "tools/list".to_string(),
+        method: "tools/list".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
     };
@@ -348,7 +363,7 @@ fn test_mcp_request_serialization() {
 #[test]
 fn test_mcp_request_with_params() {
     let request = McpRequest {
-        method: "tools/call".to_string(),
+        method: "tools/call".to_owned(),
         params: Some(serde_json::json!({
             "name": "search",
             "arguments": {"query": "test", "resource": "code"}
@@ -499,7 +514,7 @@ async fn test_mode_selection_affects_nothing_in_standalone() {
 
     // Verify we have working providers
     let embedding = ctx.embedding_handle().get();
-    let texts = vec!["test".to_string()];
+    let texts = vec!["test".to_owned()];
     let result = embedding.embed_batch(&texts).await;
 
     assert!(
@@ -554,42 +569,10 @@ async fn test_session_isolation_with_vector_store() {
 // HTTP Server Integration Tests (End-to-End)
 // ============================================================================
 
-/// Helper to create an MCP server with null providers for testing
+/// Helper to create an MCP server — delegates to shared fixture which reuses
+/// the process-wide `AppContext` (ONNX model loaded once).
 async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let mut config = ConfigLoader::new().load().expect("load config");
-    config.providers.database.configs.insert(
-        "default".to_string(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
-            path: Some(temp_dir.path().join("test.db")),
-        },
-    );
-
-    let ctx = init_app(config).await.expect("Failed to init app");
-    let services = ctx
-        .build_domain_services()
-        .await
-        .expect("Failed to create services");
-
-    let server = McpServerBuilder::new()
-        .with_indexing_service(services.indexing_service)
-        .with_context_service(services.context_service)
-        .with_search_service(services.search_service)
-        .with_validation_service(services.validation_service)
-        .with_memory_service(services.memory_service)
-        .with_agent_session_service(services.agent_session_service)
-        .with_project_service(services.project_service)
-        .with_project_workflow_service(services.project_repository)
-        .with_vcs_provider(services.vcs_provider)
-        .with_vcs_entity_repository(services.vcs_entity_repository)
-        .with_plan_entity_repository(services.plan_entity_repository)
-        .with_issue_entity_repository(services.issue_entity_repository)
-        .with_org_entity_repository(services.org_entity_repository)
-        .build()
-        .expect("Failed to build MCP server");
-
-    (server, temp_dir)
+    crate::test_utils::test_fixtures::create_test_mcp_server().await
 }
 
 type TestClient = rocket::local::asynchronous::Client;
@@ -625,7 +608,7 @@ async fn test_http_server_tools_list() {
 
     // Send tools/list request
     let request = McpRequest {
-        method: "tools/list".to_string(),
+        method: "tools/list".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
     };
@@ -704,7 +687,7 @@ async fn test_http_server_core_methods(
     let (client, _temp) = create_http_test_client(port).await;
 
     let request = McpRequest {
-        method: method.to_string(),
+        method: method.to_owned(),
         params: None,
         id: Some(serde_json::json!(request_id)),
     };
@@ -785,7 +768,7 @@ async fn test_http_server_with_session_header() {
 
     // Send request with session header
     let request = McpRequest {
-        method: "ping".to_string(),
+        method: "ping".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
     };
@@ -829,7 +812,7 @@ async fn test_http_server_tools_call_index_status() {
 
     // Call index tool with status action
     let request = McpRequest {
-        method: "tools/call".to_string(),
+        method: "tools/call".to_owned(),
         params: Some(serde_json::json!({
             "name": "index",
             "arguments": {
@@ -908,7 +891,7 @@ async fn test_http_server_tools_call_without_workspace_provenance_is_rejected() 
         .expect("Failed to create test client");
 
     let request = McpRequest {
-        method: "tools/call".to_string(),
+        method: "tools/call".to_owned(),
         params: Some(serde_json::json!({
             "name": "index",
             "arguments": {
@@ -967,7 +950,7 @@ async fn test_http_server_tools_call_invalid_params_return_error(
     let (client, _temp) = create_http_test_client(port).await;
 
     let request = McpRequest {
-        method: "tools/call".to_string(),
+        method: "tools/call".to_owned(),
         params,
         id: Some(serde_json::json!(1)),
     };

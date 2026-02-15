@@ -51,6 +51,7 @@ impl Default for RuleEngineRouter {
 
 impl RuleEngineRouter {
     /// Create a new rule engine router with all available engines.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             rete_engine: ReteEngine::new(),
@@ -60,6 +61,7 @@ impl RuleEngineRouter {
     }
 
     /// Detect which engine should handle the rule
+    #[must_use]
     pub fn detect_engine(&self, rule_definition: &Value) -> RoutedEngine {
         // Check for explicit engine specification
         if let Some(engine) = rule_definition.get("engine").and_then(|v| v.as_str()) {
@@ -184,6 +186,7 @@ impl RuleEngineRouter {
     }
 
     /// Get the engine type for a rule (for logging/debugging)
+    #[must_use]
     pub fn get_engine_type(&self, rule_definition: &Value) -> String {
         self.detect_engine(rule_definition).to_string()
     }

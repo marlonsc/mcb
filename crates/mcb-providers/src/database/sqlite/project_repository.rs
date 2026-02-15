@@ -1,4 +1,4 @@
-//! SQLite Project Repository
+//! `SQLite` Project Repository
 //!
 //! # Overview
 //! The `SqliteProjectRepository` handles the persistence of project entities, which represent
@@ -36,7 +36,7 @@ impl SqliteProjectRepository {
 }
 
 #[async_trait]
-/// Persistent project repository using SQLite.
+/// Persistent project repository using `SQLite`.
 impl ProjectRepository for SqliteProjectRepository {
     /// Creates a new project.
     // TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)
@@ -62,8 +62,8 @@ impl ProjectRepository for SqliteProjectRepository {
             &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND id = ? LIMIT 1",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(id.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(id.to_owned()),
             ],
             row_convert::row_to_project,
         )
@@ -77,8 +77,8 @@ impl ProjectRepository for SqliteProjectRepository {
             &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND name = ? LIMIT 1",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(name.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(name.to_owned()),
             ],
             row_convert::row_to_project,
         )
@@ -92,8 +92,8 @@ impl ProjectRepository for SqliteProjectRepository {
             &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND path = ? LIMIT 1",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(path.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(path.to_owned()),
             ],
             row_convert::row_to_project,
         )
@@ -108,7 +108,7 @@ impl ProjectRepository for SqliteProjectRepository {
             .executor
             .query_all(
                 "SELECT * FROM projects WHERE org_id = ?",
-                &[SqlParam::String(org_id.to_string())],
+                &[SqlParam::String(org_id.to_owned())],
             )
             .await?;
         let mut projects = Vec::with_capacity(rows.len());
@@ -143,8 +143,8 @@ impl ProjectRepository for SqliteProjectRepository {
             .execute(
                 "DELETE FROM projects WHERE org_id = ? AND id = ?",
                 &[
-                    SqlParam::String(org_id.to_string()),
-                    SqlParam::String(id.to_string()),
+                    SqlParam::String(org_id.to_owned()),
+                    SqlParam::String(id.to_owned()),
                 ],
             )
             .await

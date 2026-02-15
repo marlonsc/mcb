@@ -16,6 +16,7 @@ impl Default for AuthHandler {
 
 impl AuthHandler {
     /// Create a new auth handler
+    #[must_use]
     pub fn new() -> Self {
         Self {}
     }

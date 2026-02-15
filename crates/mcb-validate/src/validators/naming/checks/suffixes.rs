@@ -25,9 +25,9 @@ pub fn validate_file_suffix(
     {
         return Some(NamingViolation::BadFileSuffix {
             path: path.to_path_buf(),
-            component_type: "Repository".to_string(),
-            current_suffix: get_suffix(file_name).to_string(),
-            expected_suffix: "_repository".to_string(),
+            component_type: "Repository".to_owned(),
+            current_suffix: get_suffix(file_name).to_owned(),
+            expected_suffix: "_repository".to_owned(),
             severity: Severity::Warning,
         });
     }
@@ -39,9 +39,9 @@ pub fn validate_file_suffix(
         if file_name.ends_with("_handler") {
             return Some(NamingViolation::BadFileSuffix {
                 path: path.to_path_buf(),
-                component_type: "Handler".to_string(),
-                current_suffix: "_handler".to_string(),
-                expected_suffix: "<tool_name> (no _handler suffix in handlers/ dir)".to_string(),
+                component_type: "Handler".to_owned(),
+                current_suffix: "_handler".to_owned(),
+                expected_suffix: "<tool_name> (no _handler suffix in handlers/ dir)".to_owned(),
                 severity: Severity::Info,
             });
         }
@@ -58,9 +58,9 @@ pub fn validate_file_suffix(
     {
         return Some(NamingViolation::BadFileSuffix {
             path: path.to_path_buf(),
-            component_type: "Service".to_string(),
-            current_suffix: get_suffix(file_name).to_string(),
-            expected_suffix: "_service".to_string(),
+            component_type: "Service".to_owned(),
+            current_suffix: get_suffix(file_name).to_owned(),
+            expected_suffix: "_service".to_owned(),
             severity: Severity::Info,
         });
     }
@@ -70,9 +70,9 @@ pub fn validate_file_suffix(
     if file_name.contains("factory") && !file_name.ends_with("_factory") && file_name != "factory" {
         return Some(NamingViolation::BadFileSuffix {
             path: path.to_path_buf(),
-            component_type: "Factory".to_string(),
-            current_suffix: get_suffix(file_name).to_string(),
-            expected_suffix: "_factory".to_string(),
+            component_type: "Factory".to_owned(),
+            current_suffix: get_suffix(file_name).to_owned(),
+            expected_suffix: "_factory".to_owned(),
             severity: Severity::Info,
         });
     }

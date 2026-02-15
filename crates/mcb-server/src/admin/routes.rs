@@ -67,6 +67,7 @@ use super::web::router::template_dir;
 ///
 /// Protected endpoints require the `X-Admin-Key` header (or configured header name)
 /// with a valid API key. Public endpoints (health probes) are exempt.
+#[must_use]
 pub fn admin_rocket(
     state: AdminState,
     auth_config: Arc<AdminAuthConfig>,

@@ -3,7 +3,8 @@
 use super::ForeignKeyDef;
 use crate::schema::memory::{IndexDef, TableDef};
 
-/// Returns the table definitions (project_issues, issue_comments, issue_labels, etc).
+/// Returns the table definitions (`project_issues`, `issue_comments`, `issue_labels`, etc).
+#[must_use]
 pub fn tables() -> Vec<TableDef> {
     vec![
         table!(
@@ -65,6 +66,7 @@ pub fn tables() -> Vec<TableDef> {
 }
 
 /// Returns the index definitions for issue tracking.
+#[must_use]
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!("idx_issues_org", "project_issues", ["org_id"]),
@@ -91,86 +93,88 @@ pub fn indexes() -> Vec<IndexDef> {
 }
 
 /// Returns the foreign key definitions.
+#[must_use]
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     vec![
         ForeignKeyDef {
-            from_table: "project_issues".to_string(),
-            from_column: "org_id".to_string(),
-            to_table: "organizations".to_string(),
-            to_column: "id".to_string(),
+            from_table: "project_issues".to_owned(),
+            from_column: "org_id".to_owned(),
+            to_table: "organizations".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "project_issues".to_string(),
-            from_column: "project_id".to_string(),
-            to_table: "projects".to_string(),
-            to_column: "id".to_string(),
+            from_table: "project_issues".to_owned(),
+            from_column: "project_id".to_owned(),
+            to_table: "projects".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "project_issues".to_string(),
-            from_column: "created_by".to_string(),
-            to_table: "users".to_string(),
-            to_column: "id".to_string(),
+            from_table: "project_issues".to_owned(),
+            from_column: "created_by".to_owned(),
+            to_table: "users".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "project_issues".to_string(),
-            from_column: "parent_issue_id".to_string(),
-            to_table: "project_issues".to_string(),
-            to_column: "id".to_string(),
+            from_table: "project_issues".to_owned(),
+            from_column: "parent_issue_id".to_owned(),
+            to_table: "project_issues".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "issue_comments".to_string(),
-            from_column: "issue_id".to_string(),
-            to_table: "project_issues".to_string(),
-            to_column: "id".to_string(),
+            from_table: "issue_comments".to_owned(),
+            from_column: "issue_id".to_owned(),
+            to_table: "project_issues".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "issue_comments".to_string(),
-            from_column: "author_id".to_string(),
-            to_table: "users".to_string(),
-            to_column: "id".to_string(),
+            from_table: "issue_comments".to_owned(),
+            from_column: "author_id".to_owned(),
+            to_table: "users".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "issue_labels".to_string(),
-            from_column: "org_id".to_string(),
-            to_table: "organizations".to_string(),
-            to_column: "id".to_string(),
+            from_table: "issue_labels".to_owned(),
+            from_column: "org_id".to_owned(),
+            to_table: "organizations".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "issue_labels".to_string(),
-            from_column: "project_id".to_string(),
-            to_table: "projects".to_string(),
-            to_column: "id".to_string(),
+            from_table: "issue_labels".to_owned(),
+            from_column: "project_id".to_owned(),
+            to_table: "projects".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "issue_label_assignments".to_string(),
-            from_column: "issue_id".to_string(),
-            to_table: "project_issues".to_string(),
-            to_column: "id".to_string(),
+            from_table: "issue_label_assignments".to_owned(),
+            from_column: "issue_id".to_owned(),
+            to_table: "project_issues".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "issue_label_assignments".to_string(),
-            from_column: "label_id".to_string(),
-            to_table: "issue_labels".to_string(),
-            to_column: "id".to_string(),
+            from_table: "issue_label_assignments".to_owned(),
+            from_column: "label_id".to_owned(),
+            to_table: "issue_labels".to_owned(),
+            to_column: "id".to_owned(),
         },
     ]
 }
 
 /// Returns the unique constraint definitions.
 // TODO(qlty): Found 16 lines of similar code in 2 locations (mass = 56)
+#[must_use]
 pub fn unique_constraints() -> Vec<super::UniqueConstraintDef> {
     vec![
         super::UniqueConstraintDef {
-            table: "issue_labels".to_string(),
+            table: "issue_labels".to_owned(),
             columns: vec![
-                "org_id".to_string(),
-                "project_id".to_string(),
-                "name".to_string(),
+                "org_id".to_owned(),
+                "project_id".to_owned(),
+                "name".to_owned(),
             ],
         },
         super::UniqueConstraintDef {
-            table: "issue_label_assignments".to_string(),
-            columns: vec!["issue_id".to_string(), "label_id".to_string()],
+            table: "issue_label_assignments".to_owned(),
+            columns: vec!["issue_id".to_owned(), "label_id".to_owned()],
         },
     ]
 }

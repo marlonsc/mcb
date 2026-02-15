@@ -140,7 +140,7 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
     /// * `metadata` - Vector of metadata maps, one per vector
     ///
     /// # Returns
-    /// Ok(vector_of_ids) containing the IDs assigned to each inserted vector
+    /// `Ok(vector_of_ids)` containing the IDs assigned to each inserted vector
     async fn insert_vectors(
         &self,
         collection: &CollectionId,
@@ -157,7 +157,7 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
     /// * `filter` - Optional filter expression to restrict search scope
     ///
     /// # Returns
-    /// Ok(vector_of_results) containing the search results ordered by similarity
+    /// `Ok(vector_of_results)` containing the search results ordered by similarity
     async fn search_similar(
         &self,
         collection: &CollectionId,
@@ -183,7 +183,7 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
     /// * `ids` - Slice of vector IDs to retrieve
     ///
     /// # Returns
-    /// Ok(vector_of_results) containing the requested vectors with their metadata
+    /// `Ok(vector_of_results)` containing the requested vectors with their metadata
     async fn get_vectors_by_ids(
         &self,
         collection: &CollectionId,
@@ -197,7 +197,7 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
     /// * `limit` - Maximum number of vectors to return
     ///
     /// # Returns
-    /// Ok(vector_of_results) containing the vectors in the collection
+    /// `Ok(vector_of_results)` containing the vectors in the collection
     async fn list_vectors(
         &self,
         collection: &CollectionId,
@@ -244,7 +244,7 @@ pub trait VectorStoreBrowser: Send + Sync {
     /// vector counts, file counts, and provider information.
     ///
     /// # Returns
-    /// Ok(vector_of_collection_info) containing info about all collections
+    /// `Ok(vector_of_collection_info)` containing info about all collections
     async fn list_collections(&self) -> Result<Vec<CollectionInfo>>;
 
     /// List unique file paths in a collection
@@ -257,7 +257,7 @@ pub trait VectorStoreBrowser: Send + Sync {
     /// * `limit` - Maximum number of files to return
     ///
     /// # Returns
-    /// Ok(vector_of_file_info) containing info about indexed files
+    /// `Ok(vector_of_file_info)` containing info about indexed files
     async fn list_file_paths(
         &self,
         collection: &CollectionId,
@@ -274,7 +274,7 @@ pub trait VectorStoreBrowser: Send + Sync {
     /// * `file_path` - Path of the file to get chunks for
     ///
     /// # Returns
-    /// Ok(vector_of_results) containing chunks from the specified file
+    /// `Ok(vector_of_results)` containing chunks from the specified file
     async fn get_chunks_by_file(
         &self,
         collection: &CollectionId,

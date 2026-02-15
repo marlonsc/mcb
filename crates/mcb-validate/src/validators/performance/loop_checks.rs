@@ -28,7 +28,7 @@ pub fn validate_clone_in_loops(
             file,
             line: line_num,
             context: line.trim().chars().take(80).collect(),
-            suggestion: "Consider borrowing or moving instead of cloning".to_string(),
+            suggestion: "Consider borrowing or moving instead of cloning".to_owned(),
             severity: Severity::Warning,
         })
     })
@@ -65,8 +65,8 @@ pub fn validate_allocation_in_loops(
         Some(PerformanceViolation::AllocationInLoop {
             file,
             line: line_num,
-            allocation_type: allocation_type.to_string(),
-            suggestion: "Move allocation outside loop or reuse buffer".to_string(),
+            allocation_type: allocation_type.to_owned(),
+            suggestion: "Move allocation outside loop or reuse buffer".to_owned(),
             severity: Severity::Warning,
         })
     })

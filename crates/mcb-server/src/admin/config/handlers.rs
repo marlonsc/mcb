@@ -67,8 +67,7 @@ pub async fn reload_config(
         Err(e) => (
             Status::InternalServerError,
             Json(ConfigReloadResponse::failure(format!(
-                "Failed to reload configuration: {}",
-                e
+                "Failed to reload configuration: {e}"
             ))),
         ),
     }
@@ -131,14 +130,14 @@ impl ConfigUpdateError {
                 Status::InternalServerError,
                 Json(Resp::failure(
                     section,
-                    format!("Failed to read configuration file: {}", e),
+                    format!("Failed to read configuration file: {e}"),
                 )),
             ),
             Self::ParseFailed(e) => (
                 Status::InternalServerError,
                 Json(Resp::failure(
                     section,
-                    format!("Failed to parse configuration file: {}", e),
+                    format!("Failed to parse configuration file: {e}"),
                 )),
             ),
             Self::InvalidFormat => (
@@ -149,21 +148,21 @@ impl ConfigUpdateError {
                 Status::InternalServerError,
                 Json(Resp::failure(
                     section,
-                    format!("Failed to serialize configuration: {}", e),
+                    format!("Failed to serialize configuration: {e}"),
                 )),
             ),
             Self::WriteFailed(e) => (
                 Status::InternalServerError,
                 Json(Resp::failure(
                     section,
-                    format!("Failed to write configuration file: {}", e),
+                    format!("Failed to write configuration file: {e}"),
                 )),
             ),
             Self::ReloadFailed(e) => (
                 Status::InternalServerError,
                 Json(Resp::failure(
                     section,
-                    format!("Configuration updated but reload failed: {}", e),
+                    format!("Configuration updated but reload failed: {e}"),
                 )),
             ),
         }

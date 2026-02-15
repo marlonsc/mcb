@@ -6,7 +6,7 @@
 //! to recall past context, decisions, and error patterns.
 //!
 //! # Responsibilities
-//! - **Hybrid Storage**: Persisting observations in both a relational DB (SQLite) for metadata/FTS
+//! - **Hybrid Storage**: Persisting observations in both a relational DB (`SQLite`) for metadata/FTS
 //!   and a Vector Store for semantic similarity.
 //! - **Hybrid Search**: Combining keyword-based (FTS) and semantic (Vector) search results using
 //!   Reciprocal Rank Fusion (RRF) for high-quality recall.
@@ -46,7 +46,7 @@ use crate::constants::{
 /// Hybrid memory service combining relational metadata with semantic vector search.
 ///
 /// Implements a sophisticated RAG (Retrieval-Augmented Generation) pipeline using
-/// Reciprocal Rank Fusion (RRF) to merge lexically precise matches (SQLite FTS)
+/// Reciprocal Rank Fusion (RRF) to merge lexically precise matches (`SQLite` FTS)
 /// with semantically relevant results (Vector Store).
 pub struct MemoryServiceImpl {
     project_id: String,
@@ -107,22 +107,22 @@ impl MemoryServiceImpl {
 
         let mut vector_metadata = HashMap::new();
         vector_metadata.insert(
-            "content".to_string(),
+            "content".to_owned(),
             serde_json::Value::String(content.clone()),
         );
         vector_metadata.insert(
-            "type".to_string(),
-            serde_json::Value::String(r#type.as_str().to_string()),
+            "type".to_owned(),
+            serde_json::Value::String(r#type.as_str().to_owned()),
         );
-        vector_metadata.insert("tags".to_string(), serde_json::json!(tags));
+        vector_metadata.insert("tags".to_owned(), serde_json::json!(tags));
         vector_metadata.insert(
-            "project_id".to_string(),
+            "project_id".to_owned(),
             serde_json::Value::String(project_id.clone()),
         );
 
         if let Some(session_id) = &metadata.session_id {
             vector_metadata.insert(
-                "session_id".to_string(),
+                "session_id".to_owned(),
                 serde_json::Value::String(session_id.clone()),
             );
         }
@@ -267,7 +267,7 @@ impl MemoryServiceImpl {
 
                 MemorySearchIndex {
                     id: r.observation.id,
-                    r#type: r.observation.r#type.as_str().to_string(),
+                    r#type: r.observation.r#type.as_str().to_owned(),
                     relevance_score: r.similarity_score,
                     tags: r.observation.tags,
                     content_preview,

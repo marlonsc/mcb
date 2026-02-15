@@ -10,6 +10,8 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::{Map, Value};
 
+use crate::error_mapping::safe_internal_error;
+
 /// Returns the required `id` parameter or an MCP invalid params error.
 pub fn require_id(id: &Option<String>) -> Result<String, McpError> {
     id.clone()
@@ -28,15 +30,22 @@ pub fn ok_text(msg: &str) -> Result<CallToolResult, McpError> {
     Ok(CallToolResult::success(vec![Content::text(msg)]))
 }
 
+/// Builds a tool error result with a contextual message.
+pub fn tool_error(msg: impl Into<String>) -> CallToolResult {
+    CallToolResult::error(vec![Content::text(msg)])
+}
+
 /// Resolves the organization id, preferring explicit input over the current context default.
+#[must_use]
 pub fn resolve_org_id(explicit: Option<&str>) -> String {
     if let Some(org_id) = explicit {
-        return org_id.to_string();
+        return org_id.to_owned();
     }
-    OrgContext::default().id_str().to_string()
+    OrgContext::default().id_str().clone()
 }
 
 /// Normalizes optional identifier input by trimming whitespace and discarding empty values.
+#[must_use]
 pub fn normalize_identifier(value: Option<&str>) -> Option<String> {
     let raw = value?;
 
@@ -44,7 +53,7 @@ pub fn normalize_identifier(value: Option<&str>) -> Option<String> {
     if trimmed.is_empty() {
         None
     } else {
-        Some(trimmed.to_string())
+        Some(trimmed.to_owned())
     }
 }
 
@@ -210,6 +219,7 @@ pub struct OriginPayloadFields {
 
 impl OriginPayloadFields {
     /// Extracts common origin-related fields from a JSON object.
+    #[must_use]
     pub fn extract(data: &Map<String, Value>) -> Self {
         Self {
             project_id: opt_str(data, "project_id"),
@@ -230,6 +240,7 @@ impl OriginPayloadFields {
     }
 
     /// Converts extracted fields into an `OriginContextInput` with payload slots populated.
+    #[must_use]
     pub fn to_input(&self) -> OriginContextInput<'_> {
         OriginContextInput {
             project_id_payload: self.project_id.as_deref(),
@@ -342,7 +353,7 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
             input
                 .timestamp
                 .or(Some(domain_time::epoch_secs_i64().map_err(|e| {
-                    McpError::internal_error(e.to_string(), None)
+                    safe_internal_error("resolve timestamp", &e)
                 })?)),
         )
         .build())
@@ -372,8 +383,7 @@ pub fn require_data_map<'a>(
     data: &'a Option<Value>,
     missing_message: &'static str,
 ) -> Result<&'a Map<String, Value>, CallToolResult> {
-    optional_data_map(data)
-        .ok_or_else(|| CallToolResult::error(vec![Content::text(missing_message)]))
+    optional_data_map(data).ok_or_else(|| tool_error(missing_message))
 }
 
 /// Requires a string value from a JSON object, returning an error if missing.
@@ -381,11 +391,7 @@ pub fn require_str(data: &Map<String, Value>, key: &str) -> Result<String, CallT
     data.get(key)
         .and_then(Value::as_str)
         .map(str::to_owned)
-        .ok_or_else(|| {
-            CallToolResult::error(vec![Content::text(format!(
-                "Missing required field: {key}"
-            ))])
-        })
+        .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
 }
 
 /// Extracts an optional string value from a JSON object.

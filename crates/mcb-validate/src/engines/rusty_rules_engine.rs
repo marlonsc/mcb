@@ -23,7 +23,7 @@ pub struct RustyRulesEngineWrapper {
 /// Rusty rule definition with composition support
 #[derive(Debug, Clone)]
 pub struct RustyRule {
-    /// The type of rule (e.g., "cargo_dependencies", "ast_pattern").
+    /// The type of rule (e.g., "`cargo_dependencies`", "`ast_pattern`").
     pub rule_type: String,
     /// The condition logic to evaluate.
     pub condition: Condition,
@@ -74,7 +74,8 @@ impl Default for RustyRulesEngineWrapper {
 }
 
 impl RustyRulesEngineWrapper {
-    /// Creates a new, empty RustyRulesEngineWrapper.
+    /// Creates a new, empty `RustyRulesEngineWrapper`.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             rule_definitions: HashMap::new(),
@@ -94,7 +95,7 @@ impl RustyRulesEngineWrapper {
             .get("type")
             .and_then(|v| v.as_str())
             .unwrap_or("generic")
-            .to_string();
+            .to_owned();
 
         // Parse condition
         let condition = if let Some(condition_json) = definition.get("condition") {
@@ -108,7 +109,7 @@ impl RustyRulesEngineWrapper {
             self.parse_action(action_json)
         } else {
             Action::Violation {
-                message: "Rule violation".to_string(),
+                message: "Rule violation".to_owned(),
                 severity: Severity::Warning,
             }
         };
@@ -151,19 +152,19 @@ impl RustyRulesEngineWrapper {
             .get("fact_type")
             .and_then(|v| v.as_str())
             .unwrap_or("generic")
-            .to_string();
+            .to_owned();
 
         let field = condition_json
             .get("field")
             .and_then(|v| v.as_str())
             .unwrap_or("value")
-            .to_string();
+            .to_owned();
 
         let operator = condition_json
             .get("operator")
             .and_then(|v| v.as_str())
             .unwrap_or("equals")
-            .to_string();
+            .to_owned();
 
         let value = condition_json.get("value").cloned().unwrap_or(Value::Null);
 
@@ -181,7 +182,7 @@ impl RustyRulesEngineWrapper {
                 .get("message")
                 .and_then(|v| v.as_str())
                 .unwrap_or("Rule violation")
-                .to_string();
+                .to_owned();
 
             let severity =
                 violation
@@ -196,7 +197,7 @@ impl RustyRulesEngineWrapper {
             return Action::Violation { message, severity };
         }
 
-        Action::Custom("Custom action".to_string())
+        Action::Custom("Custom action".to_owned())
     }
 
     fn has_forbidden_dependency(&self, pattern: &str, context: &RuleContext) -> bool {

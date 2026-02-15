@@ -8,48 +8,22 @@ use std::time::Duration;
 
 use mcb_domain::ports::repositories::FileHashRepository;
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::ConfigLoader;
 
-use mcb_infrastructure::di::bootstrap::init_app;
+use crate::shared_context::shared_app_context;
 use rstest::*;
 use tempfile::NamedTempFile;
 
-fn ensure_clean_env() {
-    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
-    unsafe { std::env::remove_var("MCP__PROVIDERS__EMBEDDING__PROVIDER") };
-    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
-    unsafe { std::env::remove_var("MCP__AUTH__ENABLED") };
-    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
-    unsafe { std::env::remove_var("MCP__AUTH__JWT__SECRET") };
-}
-
 #[fixture]
-async fn file_hash_repo() -> Arc<dyn FileHashRepository> {
-    ensure_clean_env();
-    let unique = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    let db_path = std::env::temp_dir().join(format!("mcb-file-hash-tests-{unique}.db"));
-
-    let mut config = ConfigLoader::new().load().expect("load config");
-    config.providers.database.configs.insert(
-        "default".to_string(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
-            path: Some(db_path),
-        },
-    );
-
-    let ctx = init_app(config).await.unwrap();
+fn file_hash_repo() -> Arc<dyn FileHashRepository> {
+    let ctx = shared_app_context();
     ctx.file_hash_repository()
 }
 
 #[rstest]
 #[tokio::test]
 #[serial]
-async fn test_has_changed(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
-    let repo = file_hash_repo.await;
+async fn test_has_changed(file_hash_repo: Arc<dyn FileHashRepository>) {
+    let repo = file_hash_repo;
 
     // New file
     assert!(repo.has_changed("test", "new.rs", "hash1").await.unwrap());
@@ -67,8 +41,8 @@ async fn test_has_changed(#[future] file_hash_repo: Arc<dyn FileHashRepository>)
 #[rstest]
 #[tokio::test]
 #[serial]
-async fn test_tombstone(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
-    let repo = file_hash_repo.await;
+async fn test_tombstone(file_hash_repo: Arc<dyn FileHashRepository>) {
+    let repo = file_hash_repo;
 
     repo.upsert_hash("test", "file.rs", "hash").await.unwrap();
     repo.mark_deleted("test", "file.rs").await.unwrap();
@@ -81,8 +55,8 @@ async fn test_tombstone(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
 #[rstest]
 #[tokio::test]
 #[serial]
-async fn test_resurrect_after_tombstone(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
-    let repo = file_hash_repo.await;
+async fn test_resurrect_after_tombstone(file_hash_repo: Arc<dyn FileHashRepository>) {
+    let repo = file_hash_repo;
 
     repo.upsert_hash("test", "file.rs", "hash1").await.unwrap();
     repo.mark_deleted("test", "file.rs").await.unwrap();
@@ -91,14 +65,14 @@ async fn test_resurrect_after_tombstone(#[future] file_hash_repo: Arc<dyn FileHa
     repo.upsert_hash("test", "file.rs", "hash2").await.unwrap();
 
     let hash = repo.get_hash("test", "file.rs").await.unwrap();
-    assert_eq!(hash, Some("hash2".to_string()));
+    assert_eq!(hash, Some("hash2".to_owned()));
 }
 
 #[rstest]
 #[tokio::test]
 #[serial]
-async fn test_get_indexed_files(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
-    let repo = file_hash_repo.await;
+async fn test_get_indexed_files(file_hash_repo: Arc<dyn FileHashRepository>) {
+    let repo = file_hash_repo;
 
     repo.upsert_hash("col", "a.rs", "h1").await.unwrap();
     repo.upsert_hash("col", "b.rs", "h2").await.unwrap();
@@ -107,16 +81,16 @@ async fn test_get_indexed_files(#[future] file_hash_repo: Arc<dyn FileHashReposi
 
     let files = repo.get_indexed_files("col").await.unwrap();
     assert_eq!(files.len(), 2);
-    assert!(files.contains(&"a.rs".to_string()));
-    assert!(files.contains(&"c.rs".to_string()));
-    assert!(!files.contains(&"b.rs".to_string()));
+    assert!(files.contains(&"a.rs".to_owned()));
+    assert!(files.contains(&"c.rs".to_owned()));
+    assert!(!files.contains(&"b.rs".to_owned()));
 }
 
 #[rstest]
 #[tokio::test]
 #[serial]
-async fn test_compute_file_hash(#[future] file_hash_repo: Arc<dyn FileHashRepository>) {
-    let repo = file_hash_repo.await;
+async fn test_compute_file_hash(file_hash_repo: Arc<dyn FileHashRepository>) {
+    let repo = file_hash_repo;
     let mut temp = NamedTempFile::new().unwrap();
     write!(temp, "Hello, World!").unwrap();
 
@@ -132,23 +106,7 @@ async fn test_compute_file_hash(#[future] file_hash_repo: Arc<dyn FileHashReposi
 #[tokio::test]
 #[serial]
 async fn test_indexing_persists_file_hash_metadata() {
-    ensure_clean_env();
-    let unique = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
-    let db_path = std::env::temp_dir().join(format!("mcb-indexing-tests-{unique}.db"));
-
-    let mut config = ConfigLoader::new().load().expect("load config");
-    config.providers.database.configs.insert(
-        "default".to_string(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
-            path: Some(db_path),
-        },
-    );
-
-    let ctx = init_app(config).await.unwrap();
+    let ctx = shared_app_context();
     let services = ctx.build_domain_services().await.unwrap();
 
     let temp_dir = tempfile::tempdir().unwrap();

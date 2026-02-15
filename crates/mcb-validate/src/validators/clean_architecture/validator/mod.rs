@@ -27,6 +27,7 @@ impl CleanArchitectureValidator {
     }
 
     /// Create with custom configuration
+    #[must_use]
     pub fn with_config(
         config: &ValidationConfig,
         rules: &CleanArchitectureRulesConfig,

@@ -1,6 +1,6 @@
-//! Tests for FileTreeNode traversal and formatting methods
+//! Tests for `FileTreeNode` traversal and formatting methods
 //!
-//! Covers: traverse, Display, to_ansi, to_html methods
+//! Covers: traverse, Display, `to_ansi`, `to_html` methods
 
 use mcb_domain::value_objects::FileTreeNode;
 use rstest::rstest;
@@ -33,8 +33,8 @@ fn traverse_variants(#[case] nested: bool) {
         assert_eq!(visited, vec!["root", "subdir", "file.rs"]);
     } else {
         assert_eq!(visited[0], "src");
-        assert!(visited.contains(&"lib.rs".to_string()));
-        assert!(visited.contains(&"main.rs".to_string()));
+        assert!(visited.contains(&"lib.rs".to_owned()));
+        assert!(visited.contains(&"main.rs".to_owned()));
     }
 }
 
@@ -43,7 +43,7 @@ fn test_display_trait_formats_tree() {
     let mut root = FileTreeNode::directory("src", "src");
     root = root.with_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
 
-    let display_output = format!("{}", root);
+    let display_output = format!("{root}");
 
     assert!(display_output.contains("src"));
     assert!(display_output.contains("lib.rs"));
@@ -195,9 +195,9 @@ fn test_traverse_callback_receives_correct_nodes() {
     });
 
     assert_eq!(paths.len(), 3);
-    assert!(paths.contains(&"src".to_string()));
-    assert!(paths.contains(&"src/lib.rs".to_string()));
-    assert!(paths.contains(&"src/main.rs".to_string()));
+    assert!(paths.contains(&"src".to_owned()));
+    assert!(paths.contains(&"src/lib.rs".to_owned()));
+    assert!(paths.contains(&"src/main.rs".to_owned()));
 }
 
 #[rstest]

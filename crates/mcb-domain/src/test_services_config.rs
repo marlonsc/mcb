@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 
 /// Locates `config/tests.toml` by walking up from manifest and current directories.
+#[must_use]
 pub fn find_test_config_path() -> Option<PathBuf> {
     let mut candidates = Vec::new();
 
@@ -29,16 +30,16 @@ pub fn test_services_table() -> Option<&'static toml::value::Table> {
                 "CRITICAL: config/tests.toml not found! Integration tests require this configuration.",
             );
             let content = std::fs::read_to_string(&config_path)
-                .unwrap_or_else(|e| panic!("Failed to read config file at {:?}: {}", config_path, e));
+                .unwrap_or_else(|e| panic!("Failed to read config file at {config_path:?}: {e}"));
             let value = toml::from_str::<toml::Value>(&content).unwrap_or_else(|e| {
-                panic!("Failed to parse TOML from {:?}: {}", config_path, e)
+                panic!("Failed to parse TOML from {config_path:?}: {e}")
             });
 
             match value.get("test_services") {
                 Some(v) => Some(v.as_table().unwrap_or_else(|| {
-                    panic!("'test_services' in {:?} must be a table", config_path)
+                    panic!("'test_services' in {config_path:?} must be a table")
                 }).clone()),
-                None => panic!("Missing [test_services] table in {:?}", config_path),
+                None => panic!("Missing [test_services] table in {config_path:?}"),
             }
         })
         .as_ref()
@@ -53,6 +54,7 @@ pub fn test_service_url(key: &str) -> Option<String> {
 }
 
 /// Returns a required service URL from `[test_services]`, panicking if missing.
+#[must_use]
 pub fn required_test_service_url(key: &str) -> String {
     test_service_url(key)
         .unwrap_or_else(|| panic!("missing test_services.{key} in config/tests.toml"))

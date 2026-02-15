@@ -10,7 +10,7 @@ use crate::entities::worktree::{AgentWorktreeAssignment, Worktree};
 use crate::error::Result;
 
 #[async_trait]
-/// Defines behavior for VcsEntityRepository.
+/// Defines behavior for `VcsEntityRepository`.
 #[async_trait]
 /// Registry for VCS repositories.
 pub trait RepositoryRegistry: Send + Sync {

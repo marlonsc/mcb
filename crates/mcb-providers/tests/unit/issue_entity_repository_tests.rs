@@ -27,10 +27,10 @@ async fn setup_repo() -> (
 
 fn create_test_issue(id: &str) -> ProjectIssue {
     ProjectIssue {
-        id: id.to_string(),
-        org_id: DEFAULT_ORG_ID.to_string(),
-        project_id: "proj-1".to_string(),
-        created_by: "user-1".to_string(),
+        id: id.to_owned(),
+        org_id: DEFAULT_ORG_ID.to_owned(),
+        project_id: "proj-1".to_owned(),
+        created_by: "user-1".to_owned(),
         phase_id: None,
         title: format!("Issue {id}"),
         description: format!("Description for {id}"),
@@ -53,9 +53,9 @@ fn create_test_issue(id: &str) -> ProjectIssue {
 
 fn create_test_comment(id: &str, issue_id: &str) -> IssueComment {
     IssueComment {
-        id: id.to_string(),
-        issue_id: issue_id.to_string(),
-        author_id: "user-1".to_string(),
+        id: id.to_owned(),
+        issue_id: issue_id.to_owned(),
+        author_id: "user-1".to_owned(),
         content: format!("Comment {id}"),
         created_at: TEST_NOW,
     }
@@ -63,11 +63,11 @@ fn create_test_comment(id: &str, issue_id: &str) -> IssueComment {
 
 fn create_test_label(id: &str, name: &str, color: &str) -> IssueLabel {
     IssueLabel {
-        id: id.to_string(),
-        org_id: DEFAULT_ORG_ID.to_string(),
-        project_id: "proj-1".to_string(),
-        name: name.to_string(),
-        color: color.to_string(),
+        id: id.to_owned(),
+        org_id: DEFAULT_ORG_ID.to_owned(),
+        project_id: "proj-1".to_owned(),
+        name: name.to_owned(),
+        color: color.to_owned(),
         created_at: TEST_NOW,
     }
 }
@@ -178,8 +178,8 @@ async fn test_label_assignment() {
             "issue_label_assignment",
             "issue-1:lbl-1",
         )),
-        issue_id: "issue-1".to_string(),
-        label_id: "lbl-1".to_string(),
+        issue_id: "issue-1".to_owned(),
+        label_id: "lbl-1".to_owned(),
         created_at: TEST_NOW,
     };
     let a2 = IssueLabelAssignment {
@@ -187,8 +187,8 @@ async fn test_label_assignment() {
             "issue_label_assignment",
             "issue-1:lbl-2",
         )),
-        issue_id: "issue-1".to_string(),
-        label_id: "lbl-2".to_string(),
+        issue_id: "issue-1".to_owned(),
+        label_id: "lbl-2".to_owned(),
         created_at: TEST_NOW,
     };
     repo.assign_label(&a1).await.expect("assign l1");
@@ -221,13 +221,13 @@ async fn org_isolation_issues(#[case] org_id: &str, #[case] should_find: bool) {
 
     let repo = SqliteIssueEntityRepository::new(executor);
     let issue = ProjectIssue {
-        id: "issue-iso".to_string(),
-        org_id: "org-A".to_string(),
-        project_id: "proj-org-A".to_string(),
-        created_by: "user-org-A".to_string(),
+        id: "issue-iso".to_owned(),
+        org_id: "org-A".to_owned(),
+        project_id: "proj-org-A".to_owned(),
+        created_by: "user-org-A".to_owned(),
         phase_id: None,
-        title: "Org A Issue".to_string(),
-        description: "belongs to A".to_string(),
+        title: "Org A Issue".to_owned(),
+        description: "belongs to A".to_owned(),
         issue_type: IssueType::Bug,
         status: IssueStatus::Open,
         priority: 1,

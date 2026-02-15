@@ -59,10 +59,7 @@ fn all_expected_providers_registered(#[case] provider_type: &str, #[case] expect
 
     assert!(
         provider_names.contains(&expected),
-        "Missing expected {} provider '{}'. Registered: {:?}",
-        provider_type,
-        expected,
-        provider_names
+        "Missing expected {provider_type} provider '{expected}'. Registered: {provider_names:?}"
     );
 }
 
@@ -199,38 +196,32 @@ fn test_registry_entries_have_valid_descriptions() {
     for (name, desc) in list_embedding_providers() {
         assert!(
             !desc.is_empty(),
-            "Embedding provider '{}' has empty description",
-            name
+            "Embedding provider '{name}' has empty description"
         );
         assert!(
             desc.len() > 5,
-            "Embedding provider '{}' has too short description: '{}'",
-            name,
-            desc
+            "Embedding provider '{name}' has too short description: '{desc}'"
         );
     }
 
     for (name, desc) in list_vector_store_providers() {
         assert!(
             !desc.is_empty(),
-            "Vector store provider '{}' has empty description",
-            name
+            "Vector store provider '{name}' has empty description"
         );
     }
 
     for (name, desc) in list_cache_providers() {
         assert!(
             !desc.is_empty(),
-            "Cache provider '{}' has empty description",
-            name
+            "Cache provider '{name}' has empty description"
         );
     }
 
     for (name, desc) in list_language_providers() {
         assert!(
             !desc.is_empty(),
-            "Language provider '{}' has empty description",
-            name
+            "Language provider '{name}' has empty description"
         );
     }
 }
@@ -254,7 +245,6 @@ fn provider_resolution_fails_gracefully_for_unknown(#[case] provider_type: &str)
     };
     assert!(
         result.is_err(),
-        "Should fail for unknown {} provider",
-        provider_type
+        "Should fail for unknown {provider_type} provider"
     );
 }

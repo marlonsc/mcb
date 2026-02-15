@@ -27,20 +27,17 @@ fn test_error_variants(
     #[case] expected_message: &str,
 ) {
     // Check variant via Debug
-    let debug_str = format!("{:?}", error);
+    let debug_str = format!("{error:?}");
     assert!(
         debug_str.contains(expected_variant),
-        "Expected variant {} in {:?}",
-        expected_variant,
-        debug_str
+        "Expected variant {expected_variant} in {debug_str:?}"
     );
 
     // Check message via Display or Debug (depending on how thiserror implements it)
-    let display_str = format!("{}", error);
+    let display_str = format!("{error}");
     assert!(
         display_str.contains(expected_message) || debug_str.contains(expected_message),
-        "Expected message '{}' in error",
-        expected_message
+        "Expected message '{expected_message}' in error"
     );
 }
 
@@ -48,7 +45,7 @@ fn test_error_variants(
 #[case("Something went wrong")]
 fn error_generic(#[case] message: &str) {
     let error = Error::generic(message);
-    let display_str = format!("{}", error);
+    let display_str = format!("{error}");
     assert!(display_str.contains(message));
 }
 

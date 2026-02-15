@@ -45,7 +45,7 @@ pub struct HybridSearchEngine {
     bm25_weight: f64,
     /// Weight for semantic score in hybrid combination (0.0-1.0)
     semantic_weight: f64,
-    /// Collection indexes: collection_name -> (documents, scorer, document_index)
+    /// Collection indexes: `collection_name` -> (documents, scorer, `document_index`)
     collections: RwLock<HashMap<String, CollectionIndex>>,
 }
 
@@ -55,12 +55,13 @@ struct CollectionIndex {
     documents: Vec<CodeChunk>,
     /// BM25 scorer for this collection
     scorer: BM25Scorer,
-    /// Document index mapping (file_path:start_line -> document index)
+    /// Document index mapping (`file_path:start_line` -> document index)
     document_index: HashMap<String, usize>,
 }
 
 impl HybridSearchEngine {
     /// Create a new hybrid search engine with default weights
+    #[must_use]
     pub fn new() -> Self {
         Self::with_weights(HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT)
     }
@@ -76,6 +77,7 @@ impl HybridSearchEngine {
     ///
     /// Weights do not need to sum to 1.0, but the resulting scores will be
     /// more interpretable if they do.
+    #[must_use]
     pub fn with_weights(bm25_weight: f64, semantic_weight: f64) -> Self {
         Self {
             bm25_weight,
@@ -143,7 +145,7 @@ impl HybridSearchProvider for HybridSearchEngine {
         let scorer = BM25Scorer::new(&documents, BM25Params::default());
 
         collections.insert(
-            collection.to_string(),
+            collection.to_owned(),
             CollectionIndex {
                 documents,
                 scorer,
@@ -228,15 +230,15 @@ impl HybridSearchProvider for HybridSearchEngine {
 
         // Global stats
         stats.insert(
-            "bm25_weight".to_string(),
+            "bm25_weight".to_owned(),
             serde_json::json!(self.bm25_weight),
         );
         stats.insert(
-            "semantic_weight".to_string(),
+            "semantic_weight".to_owned(),
             serde_json::json!(self.semantic_weight),
         );
         stats.insert(
-            "collection_count".to_string(),
+            "collection_count".to_owned(),
             serde_json::json!(collections.len()),
         );
 
@@ -255,7 +257,7 @@ impl HybridSearchProvider for HybridSearchEngine {
             );
         }
         stats.insert(
-            "collections".to_string(),
+            "collections".to_owned(),
             serde_json::json!(collection_stats),
         );
 

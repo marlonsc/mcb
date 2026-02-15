@@ -67,10 +67,15 @@ impl<S: Subscriber> Layer<S> for EventBusLayer {
         let mut visitor = MessageVisitor::default();
         event.record(&mut visitor);
 
+        // Prefer log.target (from log-to-tracing bridge) over generic "log" target
+        let target = visitor
+            .log_target
+            .unwrap_or_else(|| event.metadata().target().to_owned());
+
         let domain_event = DomainEvent::LogEvent {
             level: event.metadata().level().to_string(),
             message: visitor.message,
-            target: event.metadata().target().to_string(),
+            target,
             timestamp: chrono::Utc::now().timestamp_millis(),
         };
 
@@ -82,31 +87,47 @@ impl<S: Subscriber> Layer<S> for EventBusLayer {
     }
 }
 
-/// Visitor that extracts the message and structured fields from a tracing event
+/// Visitor that extracts the message, structured fields, and log bridge target
 #[derive(Default)]
 struct MessageVisitor {
     /// Accumulated message string
     message: String,
+    /// Original target from log-to-tracing bridge (more specific than "log")
+    log_target: Option<String>,
 }
 
 impl Visit for MessageVisitor {
     fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
         if field.name() == "message" {
-            let _ = write!(self.message, "{:?}", value);
-        } else if !self.message.is_empty() {
-            let _ = write!(self.message, " {}={:?}", field.name(), value);
-        } else {
-            let _ = write!(self.message, "{}={:?}", field.name(), value);
+            let _ = write!(self.message, "{value:?}");
+        } else if !is_internal_field(field.name()) {
+            if !self.message.is_empty() {
+                let _ = write!(self.message, " {}={:?}", field.name(), value);
+            } else {
+                let _ = write!(self.message, "{}={:?}", field.name(), value);
+            }
         }
     }
 
     fn record_str(&mut self, field: &Field, value: &str) {
         if field.name() == "message" {
             self.message.push_str(value);
-        } else if !self.message.is_empty() {
-            let _ = write!(self.message, " {}={}", field.name(), value);
-        } else {
-            let _ = write!(self.message, "{}={}", field.name(), value);
+        } else if field.name() == "log.target" {
+            self.log_target = Some(value.to_owned());
+        } else if !is_internal_field(field.name()) {
+            if !self.message.is_empty() {
+                let _ = write!(self.message, " {}={}", field.name(), value);
+            } else {
+                let _ = write!(self.message, "{}={}", field.name(), value);
+            }
         }
     }
+}
+
+/// Internal tracing/log-bridge metadata fields to exclude from messages
+fn is_internal_field(name: &str) -> bool {
+    matches!(
+        name,
+        "log.target" | "log.module_path" | "log.file" | "log.line"
+    )
 }

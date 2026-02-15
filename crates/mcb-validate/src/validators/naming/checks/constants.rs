@@ -22,8 +22,8 @@ pub fn validate_constant_names(
                 violations.push(NamingViolation::BadConstantName {
                     file: path.to_path_buf(),
                     line: line_num + 1,
-                    name: name.to_string(),
-                    expected_case: "SCREAMING_SNAKE_CASE".to_string(),
+                    name: name.to_owned(),
+                    expected_case: "SCREAMING_SNAKE_CASE".to_owned(),
                     severity: Severity::Warning,
                 });
             }
@@ -36,8 +36,8 @@ pub fn validate_constant_names(
                 violations.push(NamingViolation::BadConstantName {
                     file: path.to_path_buf(),
                     line: line_num + 1,
-                    name: name.to_string(),
-                    expected_case: "SCREAMING_SNAKE_CASE".to_string(),
+                    name: name.to_owned(),
+                    expected_case: "SCREAMING_SNAKE_CASE".to_owned(),
                     severity: Severity::Warning,
                 });
             }

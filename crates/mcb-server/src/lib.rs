@@ -7,8 +7,8 @@
 //! ## Features
 //!
 //! - **Semantic Search**: AI-powered code understanding and retrieval using vector embeddings
-//! - **Multi-Provider**: Support for OpenAI, Ollama, FastEmbed, VoyageAI, Gemini embedding providers
-//! - **Vector Storage**: EdgeVec (local), Milvus, Qdrant, Pinecone
+//! - **Multi-Provider**: Support for `OpenAI`, Ollama, `FastEmbed`, `VoyageAI`, Gemini embedding providers
+//! - **Vector Storage**: `EdgeVec` (local), Milvus, Qdrant, Pinecone
 //! - **AST Parsing**: 14 programming languages with tree-sitter based code chunking
 //! - **Hybrid Search**: Combines BM25 lexical search with semantic similarity
 //!
@@ -43,10 +43,10 @@
 //!
 //! ## Feature Flags
 //!
-//! - `fastembed`: Local embeddings via FastEmbed (default)
+//! - `fastembed`: Local embeddings via `FastEmbed` (default)
 //! - `edgevec`: Local HNSW vector storage (default)
 //! - `milvus`: Milvus vector database support
-//! - `edgevec`: EdgeVec in-memory vector store
+//! - `edgevec`: `EdgeVec` in-memory vector store
 //! - `redis-cache`: Redis distributed caching
 //! - `full`: All features enabled
 

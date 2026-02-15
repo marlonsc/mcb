@@ -87,8 +87,8 @@ pub const TEST_SUBJECT_CRATE: &str = "test-crate";
 // Crate layer mappings for architecture tests
 // ---------------------------------------------------------------------------
 
-/// Architecture layer → (layer_key, crate_name, module_name) tuples.
-/// Used by architecture_rules_tests and integration tests.
+/// Architecture layer → (`layer_key`, `crate_name`, `module_name`) tuples.
+/// Used by `architecture_rules_tests` and integration tests.
 pub const CRATE_LAYER_MAPPINGS: &[(&str, &str, &str)] = &[
     ("domain", "my-domain", "my_domain"),
     ("application", "my-application", "my_application"),
@@ -102,7 +102,7 @@ pub const CRATE_LAYER_MAPPINGS: &[(&str, &str, &str)] = &[
 // Validator thresholds (used to configure validators in tests)
 // ---------------------------------------------------------------------------
 
-/// Low file-size threshold for testing (triggers FileTooLarge on fixture files).
+/// Low file-size threshold for testing (triggers `FileTooLarge` on fixture files).
 pub const FILE_SIZE_LOW_THRESHOLD: usize = 100;
 
 // ---------------------------------------------------------------------------
@@ -221,10 +221,10 @@ pub const EXPECT_METHOD: &str = "expect";
 // Inline code snippets for engine tests
 // ---------------------------------------------------------------------------
 
-/// Simple Rust main.rs content for RuleContext file_contents.
+/// Simple Rust main.rs content for `RuleContext` `file_contents`.
 pub const SNIPPET_MAIN_RS: &str = r#"fn main() { println!("hello"); }"#;
 
-/// Simple Rust lib.rs content for RuleContext file_contents.
+/// Simple Rust lib.rs content for `RuleContext` `file_contents`.
 pub const SNIPPET_LIB_RS: &str = "pub fn helper() -> Result<(), Error> { Ok(()) }";
 
 // ---------------------------------------------------------------------------

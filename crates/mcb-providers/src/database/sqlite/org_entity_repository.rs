@@ -71,11 +71,11 @@ use mcb_domain::value_objects::ids::TeamMemberId;
 
 // ...
 
-/// Converts a SQL row to a TeamMember.
+/// Converts a SQL row to a `TeamMember`.
 fn row_to_team_member(row: &dyn SqlRow) -> Result<TeamMember> {
     let team_id = req_str(row, "team_id")?;
     let user_id = req_str(row, "user_id")?;
-    let id_uuid = id::deterministic("team_member", &format!("{}:{}", team_id, user_id));
+    let id_uuid = id::deterministic("team_member", &format!("{team_id}:{user_id}"));
 
     Ok(TeamMember {
         id: TeamMemberId::from_uuid(id_uuid),
@@ -88,7 +88,7 @@ fn row_to_team_member(row: &dyn SqlRow) -> Result<TeamMember> {
     })
 }
 
-/// Converts a SQL row to an ApiKey.
+/// Converts a SQL row to an `ApiKey`.
 fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
     Ok(ApiKey {
         id: req_str(row, "id")?,
@@ -104,7 +104,7 @@ fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
 }
 
 #[async_trait]
-/// Persistent organization registry using SQLite.
+/// Persistent organization registry using `SQLite`.
 impl OrgRegistry for SqliteOrgEntityRepository {
     /// Creates a new organization.
     // TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)
@@ -176,7 +176,7 @@ impl OrgRegistry for SqliteOrgEntityRepository {
 }
 
 #[async_trait]
-/// Persistent user registry using SQLite.
+/// Persistent user registry using `SQLite`.
 impl UserRegistry for SqliteOrgEntityRepository {
     /// Creates a new user.
     async fn create_user(&self, user: &User) -> Result<()> {
@@ -266,7 +266,7 @@ impl UserRegistry for SqliteOrgEntityRepository {
 }
 
 #[async_trait]
-/// Persistent team registry using SQLite.
+/// Persistent team registry using `SQLite`.
 impl TeamRegistry for SqliteOrgEntityRepository {
     /// Creates a new team.
     async fn create_team(&self, team: &Team) -> Result<()> {
@@ -319,7 +319,7 @@ impl TeamRegistry for SqliteOrgEntityRepository {
 }
 
 #[async_trait]
-/// Persistent team member manager using SQLite.
+/// Persistent team member manager using `SQLite`.
 impl TeamMemberManager for SqliteOrgEntityRepository {
     /// Adds a member to a team.
     async fn add_team_member(&self, member: &TeamMember) -> Result<()> {
@@ -363,7 +363,7 @@ impl TeamMemberManager for SqliteOrgEntityRepository {
 }
 
 #[async_trait]
-/// Persistent API key registry using SQLite.
+/// Persistent API key registry using `SQLite`.
 impl ApiKeyRegistry for SqliteOrgEntityRepository {
     /// Creates a new API key.
     async fn create_api_key(&self, key: &ApiKey) -> Result<()> {

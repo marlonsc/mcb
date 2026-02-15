@@ -47,7 +47,7 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
                     // Unit tests must follow [module]_tests.rs pattern
                     if !file_name.ends_with("_tests") {
                         violations.push(HygieneViolation::BadTestFileName {
-                            file: path.to_path_buf(),
+                            file: path.clone(),
                             suggestion: format!(
                                 "{file_name}_tests.rs (unit tests must end with _tests)"
                             ),
@@ -64,7 +64,7 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
 
                     if !is_valid_integration {
                         violations.push(HygieneViolation::BadTestFileName {
-                            file: path.to_path_buf(),
+                            file: path.clone(),
                             suggestion: format!("{file_name}_integration.rs or {file_name}_workflow.rs (integration tests should indicate their purpose)"),
                             severity: Severity::Info,
                         });
@@ -78,7 +78,7 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
 
                     if !is_valid_e2e {
                         violations.push(HygieneViolation::BadTestFileName {
-                            file: path.to_path_buf(),
+                            file: path.clone(),
                             suggestion: format!("{file_name}_e2e.rs or test_{file_name}.rs (e2e tests should indicate they're end-to-end)"),
                             severity: Severity::Info,
                         });
@@ -98,8 +98,8 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
                             | "e2e.rs"
                     ) {
                         violations.push(HygieneViolation::BadTestFileName {
-                            file: path.to_path_buf(),
-                            suggestion: "Move to a subdirectory (e.g., tests/unit/)".to_string(),
+                            file: path.clone(),
+                            suggestion: "Move to a subdirectory (e.g., tests/unit/)".to_owned(),
                             severity: Severity::Warning,
                         });
                     }

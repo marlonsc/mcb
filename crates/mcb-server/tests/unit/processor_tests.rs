@@ -1,4 +1,4 @@
-//! Unit tests for HookProcessor (hooks/processor.rs).
+//! Unit tests for `HookProcessor` (hooks/processor.rs).
 
 use mcb_server::hooks::processor::HookProcessor;
 

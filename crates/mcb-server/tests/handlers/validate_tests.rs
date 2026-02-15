@@ -179,7 +179,7 @@ async fn test_validate_run_with_specific_rules() {
         action: ValidateAction::Run,
         path: Some(path.to_string_lossy().to_string()),
         scope: Some(ValidateScope::File),
-        rules: Some(vec!["rule1".to_string(), "rule2".to_string()]),
+        rules: Some(vec!["rule1".to_owned(), "rule2".to_owned()]),
         category: None,
     };
 
@@ -191,7 +191,7 @@ async fn test_validate_run_with_specific_rules() {
 
 #[rstest]
 #[case(None)]
-#[case(Some("style".to_string()))]
+#[case(Some("style".to_owned()))]
 #[tokio::test]
 async fn test_validate_list_rules(#[case] category: Option<String>) {
     let Some((services, _services_temp_dir)) = create_real_domain_services().await else {

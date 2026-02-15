@@ -41,8 +41,11 @@ async fn test_gap1_validate_list_rules_returns_populated_list() {
     let json_val: serde_json::Value = serde_json::from_str(text).unwrap();
 
     // Expected format: { "count": N, "rules": [...] }
-    let count = json_val.get("count").and_then(|v| v.as_u64()).unwrap_or(0);
-    println!("Response JSON: {}", json_val);
+    let count = json_val
+        .get("count")
+        .and_then(serde_json::Value::as_u64)
+        .unwrap_or(0);
+    println!("Response JSON: {json_val}");
     let rules = json_val.get("validators").and_then(|v| v.as_array());
 
     assert!(count > 0, "Validator count should be > 0 (GAP-1 Fix)");
@@ -68,7 +71,7 @@ async fn test_gap1_validate_list_rules_by_category_filter() {
         .handle(Parameters(ValidateArgs {
             action: ValidateAction::ListRules,
             path: None,
-            category: Some("quality".to_string()),
+            category: Some("quality".to_owned()),
             scope: None,
             rules: None,
         }))
@@ -159,9 +162,12 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
         .expect("Text field not a string");
 
     let json_val: serde_json::Value = serde_json::from_str(text).unwrap();
-    println!("VCS Response JSON: {}", json_val);
+    println!("VCS Response JSON: {json_val}");
 
-    let count = json_val.get("count").and_then(|v| v.as_u64()).unwrap_or(0);
+    let count = json_val
+        .get("count")
+        .and_then(serde_json::Value::as_u64)
+        .unwrap_or(0);
     let repos = json_val.get("repositories").and_then(|v| v.as_array());
 
     assert!(count > 0, "Should find at least 1 repo");
@@ -171,21 +177,20 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
     let repo_strings: Vec<String> = repos
         .unwrap()
         .iter()
-        .filter_map(|v| v.as_str().map(|s| s.to_string()))
+        .filter_map(|v| v.as_str().map(std::borrow::ToOwned::to_owned))
         .collect();
 
     let found = repo_strings.iter().any(|r| r.contains("test-repo"));
     assert!(
         found,
-        "Created repo test-repo not found in list: {:?}",
-        repo_strings
+        "Created repo test-repo not found in list: {repo_strings:?}"
     );
 }
 
 #[rstest]
 #[case(None, true)]
-#[case(Some("".to_string()), true)]
-#[case(Some("not_a_real_status".to_string()), false)]
+#[case(Some(String::new()), true)]
+#[case(Some("not_a_real_status".to_owned()), false)]
 #[tokio::test]
 async fn test_gap3_session_list_status_handling(
     #[case] status: Option<String>,

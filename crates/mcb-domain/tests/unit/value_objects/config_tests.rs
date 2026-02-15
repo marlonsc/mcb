@@ -12,8 +12,8 @@ fn make_embedding_config(
     max_tokens: Option<usize>,
 ) -> EmbeddingConfig {
     EmbeddingConfig {
-        provider: provider.to_string(),
-        model: model.to_string(),
+        provider: provider.to_owned(),
+        model: model.to_owned(),
         api_key: api_key.map(str::to_string),
         base_url: base_url.map(str::to_string),
         dimensions,
@@ -30,7 +30,7 @@ fn make_vector_store_config(
     timeout_secs: Option<u64>,
 ) -> VectorStoreConfig {
     VectorStoreConfig {
-        provider: provider.to_string(),
+        provider: provider.to_owned(),
         address: address.map(str::to_string),
         token: token.map(str::to_string),
         collection: collection.map(str::to_string),
@@ -42,9 +42,9 @@ fn make_vector_store_config(
 #[rstest]
 fn test_embedding_config_creation() {
     let config = EmbeddingConfig {
-        provider: "openai".to_string(),
-        model: "text-embedding-ada-002".to_string(),
-        api_key: Some("sk-...".to_string()),
+        provider: "openai".to_owned(),
+        model: "text-embedding-ada-002".to_owned(),
+        api_key: Some("sk-...".to_owned()),
         base_url: None,
         dimensions: Some(1536),
         max_tokens: Some(8191),
@@ -52,7 +52,7 @@ fn test_embedding_config_creation() {
 
     assert_eq!(config.provider, "openai");
     assert_eq!(config.model, "text-embedding-ada-002");
-    assert_eq!(config.api_key, Some("sk-...".to_string()));
+    assert_eq!(config.api_key, Some("sk-...".to_owned()));
     assert_eq!(config.base_url, None);
     assert_eq!(config.dimensions, Some(1536));
     assert_eq!(config.max_tokens, Some(8191));
@@ -97,18 +97,18 @@ fn embedding_config_variants(
 #[rstest]
 fn test_vector_store_config_creation() {
     let config = VectorStoreConfig {
-        provider: "qdrant".to_string(),
-        address: Some("localhost:6334".to_string()),
+        provider: "qdrant".to_owned(),
+        address: Some("localhost:6334".to_owned()),
         token: None,
-        collection: Some("my-collection".to_string()),
+        collection: Some("my-collection".to_owned()),
         dimensions: Some(1536),
         timeout_secs: Some(30),
     };
 
     assert_eq!(config.provider, "qdrant");
-    assert_eq!(config.address, Some("localhost:6334".to_string()));
+    assert_eq!(config.address, Some("localhost:6334".to_owned()));
     assert_eq!(config.token, None);
-    assert_eq!(config.collection, Some("my-collection".to_string()));
+    assert_eq!(config.collection, Some("my-collection".to_owned()));
     assert_eq!(config.dimensions, Some(1536));
     assert_eq!(config.timeout_secs, Some(30));
 }

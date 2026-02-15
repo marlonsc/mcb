@@ -27,6 +27,7 @@ pub struct DependencyGraph {
 
 impl DependencyGraph {
     /// Create an empty dependency graph.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             graph: DiGraph::new(),
@@ -91,6 +92,7 @@ impl DependencyGraph {
     ///
     /// Returns a list of strongly-connected components with more than one
     /// member, plus any self-loops.
+    #[must_use]
     pub fn check_cycles(&self) -> Vec<Vec<String>> {
         let sccs = tarjan_scc(&self.graph);
         let mut cycles = Vec::new();
@@ -113,6 +115,7 @@ impl DependencyGraph {
     /// An edge from a node whose name contains `source_pattern` to a node
     /// whose name contains `target_pattern` via the `Contains → DependsOn`
     /// two-hop path is reported as a violation.
+    #[must_use]
     pub fn check_layer_violation(
         &self,
         source_pattern: &str,

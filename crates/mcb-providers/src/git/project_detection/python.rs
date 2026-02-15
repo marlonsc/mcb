@@ -46,7 +46,7 @@ impl PythonDetector {
                     .next()
                     .unwrap_or(line)
                     .trim()
-                    .to_string()
+                    .to_owned()
             })
             .filter(|s| !s.is_empty())
             .collect()
@@ -70,7 +70,7 @@ impl ProjectDetector for PythonDetector {
                     path.file_name()
                         .and_then(|n| n.to_str())
                         .unwrap_or("unknown")
-                        .to_string()
+                        .to_owned()
                 }),
                 version: project.version,
                 dependencies: project.dependencies.unwrap_or_default(),
@@ -87,7 +87,7 @@ impl ProjectDetector for PythonDetector {
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("unknown")
-                    .to_string(),
+                    .to_owned(),
                 version: None,
                 dependencies,
             }));

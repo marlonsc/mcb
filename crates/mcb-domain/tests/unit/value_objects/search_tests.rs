@@ -1,4 +1,4 @@
-//! Unit tests for SearchResult value object
+//! Unit tests for `SearchResult` value object
 
 #[cfg(test)]
 mod tests {
@@ -8,12 +8,12 @@ mod tests {
     #[rstest]
     fn test_search_result_creation() {
         let result = SearchResult {
-            id: "chunk-123".to_string(),
-            file_path: "src/search.rs".to_string(),
+            id: "chunk-123".to_owned(),
+            file_path: "src/search.rs".to_owned(),
             start_line: 42,
-            content: "impl SearchService for DefaultSearch { ... }".to_string(),
+            content: "impl SearchService for DefaultSearch { ... }".to_owned(),
             score: 0.87,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         };
 
         assert_eq!(result.id, "chunk-123");
@@ -30,12 +30,12 @@ mod tests {
     #[rstest]
     fn test_search_result_high_score() {
         let result = SearchResult {
-            id: "perfect-match".to_string(),
-            file_path: "src/perfect.rs".to_string(),
+            id: "perfect-match".to_owned(),
+            file_path: "src/perfect.rs".to_owned(),
             start_line: 1,
-            content: "fn search_perfect_match() {}".to_string(),
+            content: "fn search_perfect_match() {}".to_owned(),
             score: 0.99,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         };
 
         assert!(result.score > 0.95);
@@ -45,12 +45,12 @@ mod tests {
     #[rstest]
     fn test_search_result_low_score() {
         let result = SearchResult {
-            id: "poor-match".to_string(),
-            file_path: "src/unrelated.rs".to_string(),
+            id: "poor-match".to_owned(),
+            file_path: "src/unrelated.rs".to_owned(),
             start_line: 100,
-            content: "fn unrelated_function() {}".to_string(),
+            content: "fn unrelated_function() {}".to_owned(),
             score: 0.12,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         };
 
         assert!(result.score < 0.2);
@@ -60,21 +60,21 @@ mod tests {
     #[rstest]
     fn test_search_result_different_languages() {
         let rust_result = SearchResult {
-            id: "rust-chunk".to_string(),
-            file_path: "src/lib.rs".to_string(),
+            id: "rust-chunk".to_owned(),
+            file_path: "src/lib.rs".to_owned(),
             start_line: 10,
-            content: "pub fn process_data(data: &str) -> Result<String> { ... }".to_string(),
+            content: "pub fn process_data(data: &str) -> Result<String> { ... }".to_owned(),
             score: 0.85,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         };
 
         let python_result = SearchResult {
-            id: "python-chunk".to_string(),
-            file_path: "src/utils.py".to_string(),
+            id: "python-chunk".to_owned(),
+            file_path: "src/utils.py".to_owned(),
             start_line: 25,
-            content: "def process_data(data: str) -> str:\n    return data.upper()".to_string(),
+            content: "def process_data(data: str) -> str:\n    return data.upper()".to_owned(),
             score: 0.82,
-            language: "python".to_string(),
+            language: "python".to_owned(),
         };
 
         assert_eq!(rust_result.language, "rust");
@@ -85,12 +85,12 @@ mod tests {
     #[rstest]
     fn test_search_result_zero_score() {
         let result = SearchResult {
-            id: "no-match".to_string(),
-            file_path: "src/irrelevant.rs".to_string(),
+            id: "no-match".to_owned(),
+            file_path: "src/irrelevant.rs".to_owned(),
             start_line: 1,
-            content: "unrelated content".to_string(),
+            content: "unrelated content".to_owned(),
             score: 0.0,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         };
 
         assert_eq!(result.score, 0.0);
@@ -99,12 +99,12 @@ mod tests {
     #[rstest]
     fn test_search_result_perfect_score() {
         let result = SearchResult {
-            id: "exact-match".to_string(),
-            file_path: "src/exact.rs".to_string(),
+            id: "exact-match".to_owned(),
+            file_path: "src/exact.rs".to_owned(),
             start_line: 1,
-            content: "exact match content".to_string(),
+            content: "exact match content".to_owned(),
             score: 1.0,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         };
 
         assert_eq!(result.score, 1.0);

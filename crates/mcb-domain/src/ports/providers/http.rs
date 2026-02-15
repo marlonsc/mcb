@@ -28,7 +28,7 @@ impl Default for HttpClientConfig {
             idle_timeout: Duration::from_secs(90),
             keepalive: Duration::from_secs(60),
             timeout: Duration::from_secs(30),
-            user_agent: "mcb/domain-client".to_string(),
+            user_agent: "mcb/domain-client".to_owned(),
         }
     }
 }

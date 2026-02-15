@@ -54,9 +54,9 @@ pub fn validate_mod_declarations(
 
                         if !exists {
                             violations.push(RefactoringViolation::DeletedModuleReference {
-                                referencing_file: path.to_path_buf(),
+                                referencing_file: path.clone(),
                                 line: line_num + 1,
-                                deleted_module: mod_name.to_string(),
+                                deleted_module: mod_name.to_owned(),
                                 severity: Severity::Warning,
                             });
                         }

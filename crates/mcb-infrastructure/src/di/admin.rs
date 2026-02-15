@@ -37,7 +37,7 @@ use super::provider_resolvers::{
 
 /// Common interface for provider resolvers
 ///
-/// This trait abstracts the resolution logic so AdminService can work
+/// This trait abstracts the resolution logic so `AdminService` can work
 /// with any resolver type generically.
 ///
 /// # Example
@@ -149,13 +149,14 @@ where
     }
 
     /// List all available providers
+    #[must_use]
     pub fn list_providers(&self) -> Vec<ProviderInfo> {
         self.resolver
             .list_available()
             .into_iter()
             .map(|(name, description)| ProviderInfo {
-                name: name.to_string(),
-                description: description.to_string(),
+                name: name.to_owned(),
+                description: description.to_owned(),
             })
             .collect()
     }

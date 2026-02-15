@@ -1,4 +1,4 @@
-//! Tests for ProjectService
+//! Tests for `ProjectService`
 
 use mcb_domain::ports::services::project::ProjectDetectorService;
 use mcb_infrastructure::project::ProjectService;

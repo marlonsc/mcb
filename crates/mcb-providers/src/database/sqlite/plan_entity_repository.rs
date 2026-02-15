@@ -45,7 +45,7 @@ fn row_to_plan(row: &dyn SqlRow) -> Result<Plan> {
     })
 }
 
-/// Converts a SQL row to a PlanVersion.
+/// Converts a SQL row to a `PlanVersion`.
 fn row_to_plan_version(row: &dyn SqlRow) -> Result<PlanVersion> {
     Ok(PlanVersion {
         id: req_str(row, "id")?,
@@ -59,7 +59,7 @@ fn row_to_plan_version(row: &dyn SqlRow) -> Result<PlanVersion> {
     })
 }
 
-/// Converts a SQL row to a PlanReview.
+/// Converts a SQL row to a `PlanReview`.
 fn row_to_plan_review(row: &dyn SqlRow) -> Result<PlanReview> {
     let verdict = req_str(row, "verdict")?
         .parse::<ReviewVerdict>()
@@ -77,7 +77,7 @@ fn row_to_plan_review(row: &dyn SqlRow) -> Result<PlanReview> {
 }
 
 #[async_trait]
-/// Persistent plan registry using SQLite.
+/// Persistent plan registry using `SQLite`.
 impl PlanRegistry for SqlitePlanEntityRepository {
     /// Creates a new plan.
     async fn create_plan(&self, plan: &Plan) -> Result<()> {
@@ -105,8 +105,8 @@ impl PlanRegistry for SqlitePlanEntityRepository {
             &self.executor,
             "SELECT * FROM plans WHERE org_id = ? AND id = ?",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(id.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(id.to_owned()),
             ],
             row_to_plan,
         )
@@ -120,8 +120,8 @@ impl PlanRegistry for SqlitePlanEntityRepository {
             &self.executor,
             "SELECT * FROM plans WHERE org_id = ? AND project_id = ?",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(project_id.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(project_id.to_owned()),
             ],
             row_to_plan,
             "plan entity",
@@ -152,8 +152,8 @@ impl PlanRegistry for SqlitePlanEntityRepository {
             .execute(
                 "DELETE FROM plans WHERE org_id = ? AND id = ?",
                 &[
-                    SqlParam::String(org_id.to_string()),
-                    SqlParam::String(id.to_string()),
+                    SqlParam::String(org_id.to_owned()),
+                    SqlParam::String(id.to_owned()),
                 ],
             )
             .await
@@ -161,7 +161,7 @@ impl PlanRegistry for SqlitePlanEntityRepository {
 }
 
 #[async_trait]
-/// Persistent plan version registry using SQLite.
+/// Persistent plan version registry using `SQLite`.
 impl PlanVersionRegistry for SqlitePlanEntityRepository {
     /// Creates a new plan version.
     async fn create_plan_version(&self, version: &PlanVersion) -> Result<()> {
@@ -187,7 +187,7 @@ impl PlanVersionRegistry for SqlitePlanEntityRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM plan_versions WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_plan_version,
         )
         .await?
@@ -199,7 +199,7 @@ impl PlanVersionRegistry for SqlitePlanEntityRepository {
         query_helpers::query_all(
             &self.executor,
             "SELECT * FROM plan_versions WHERE plan_id = ?",
-            &[SqlParam::String(plan_id.to_string())],
+            &[SqlParam::String(plan_id.to_owned())],
             row_to_plan_version,
             "plan entity",
         )
@@ -208,7 +208,7 @@ impl PlanVersionRegistry for SqlitePlanEntityRepository {
 }
 
 #[async_trait]
-/// Persistent plan review registry using SQLite.
+/// Persistent plan review registry using `SQLite`.
 impl PlanReviewRegistry for SqlitePlanEntityRepository {
     /// Creates a new plan review.
     async fn create_plan_review(&self, review: &PlanReview) -> Result<()> {
@@ -233,7 +233,7 @@ impl PlanReviewRegistry for SqlitePlanEntityRepository {
         query_helpers::query_one(
             &self.executor,
             "SELECT * FROM plan_reviews WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_plan_review,
         )
         .await?
@@ -245,7 +245,7 @@ impl PlanReviewRegistry for SqlitePlanEntityRepository {
         query_helpers::query_all(
             &self.executor,
             "SELECT * FROM plan_reviews WHERE plan_version_id = ?",
-            &[SqlParam::String(plan_version_id.to_string())],
+            &[SqlParam::String(plan_version_id.to_owned())],
             row_to_plan_review,
             "plan entity",
         )

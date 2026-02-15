@@ -26,8 +26,8 @@ pub fn validate_function_names(
                 violations.push(NamingViolation::BadFunctionName {
                     file: path.to_path_buf(),
                     line: line_num + 1,
-                    name: name.to_string(),
-                    expected_case: "snake_case".to_string(),
+                    name: name.to_owned(),
+                    expected_case: "snake_case".to_owned(),
                     severity: Severity::Warning,
                 });
             }

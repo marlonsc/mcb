@@ -38,6 +38,7 @@ pub struct CloneDetector {
 
 impl CloneDetector {
     /// Create a new clone detector with the given thresholds
+    #[must_use]
     pub fn new(thresholds: DuplicationThresholds) -> Self {
         Self { thresholds }
     }
@@ -46,6 +47,7 @@ impl CloneDetector {
     ///
     /// Takes candidates from the fingerprinting phase and verifies them
     /// using more accurate AST-based similarity comparison.
+    #[must_use]
     pub fn verify_candidates(&self, matches: &[FingerprintMatch]) -> Vec<CloneCandidate> {
         let mut candidates = Vec::new();
 
@@ -209,6 +211,7 @@ impl CloneDetector {
 ///
 /// This is a simplified tokenizer. A full implementation would use
 /// tree-sitter for language-aware tokenization.
+#[must_use]
 pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
     let mut current_line = 1;

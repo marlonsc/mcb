@@ -27,9 +27,9 @@ pub fn validate_ca_naming(
         {
             return Some(NamingViolation::BadCaNaming {
                 path: path.to_path_buf(),
-                detected_type: "Provider Port".to_string(),
-                issue: "Provider file outside ports/ directory".to_string(),
-                suggestion: "Move to ports/providers/".to_string(),
+                detected_type: "Provider Port".to_owned(),
+                issue: "Provider file outside ports/ directory".to_owned(),
+                suggestion: "Move to ports/providers/".to_owned(),
                 severity: Severity::Warning,
             });
         }
@@ -41,9 +41,9 @@ pub fn validate_ca_naming(
         {
             return Some(NamingViolation::BadCaNaming {
                 path: path.to_path_buf(),
-                detected_type: "Repository Port".to_string(),
-                issue: "Repository file outside repositories/ directory".to_string(),
-                suggestion: "Move to repositories/".to_string(),
+                detected_type: "Repository Port".to_owned(),
+                issue: "Repository file outside repositories/ directory".to_owned(),
+                suggestion: "Move to repositories/".to_owned(),
                 severity: Severity::Warning,
             });
         }
@@ -57,9 +57,9 @@ pub fn validate_ca_naming(
         {
             return Some(NamingViolation::BadCaNaming {
                 path: path.to_path_buf(),
-                detected_type: "Adapter".to_string(),
-                issue: "Adapter/implementation file outside adapters/ directory".to_string(),
-                suggestion: "Move to adapters/".to_string(),
+                detected_type: "Adapter".to_owned(),
+                issue: "Adapter/implementation file outside adapters/ directory".to_owned(),
+                suggestion: "Move to adapters/".to_owned(),
                 severity: Severity::Warning,
             });
         }
@@ -68,9 +68,9 @@ pub fn validate_ca_naming(
         if file_name.contains("module") && !path_str.contains("/di/") {
             return Some(NamingViolation::BadCaNaming {
                 path: path.to_path_buf(),
-                detected_type: "DI Module".to_string(),
-                issue: "Module file outside di/ directory".to_string(),
-                suggestion: "Move to di/modules/".to_string(),
+                detected_type: "DI Module".to_owned(),
+                issue: "Module file outside di/ directory".to_owned(),
+                suggestion: "Move to di/modules/".to_owned(),
                 severity: Severity::Info,
             });
         }
@@ -85,9 +85,9 @@ pub fn validate_ca_naming(
         if file_name.contains("handler") && !in_allowed_handler_dir {
             return Some(NamingViolation::BadCaNaming {
                 path: path.to_path_buf(),
-                detected_type: "Handler".to_string(),
-                issue: "Handler file outside handlers/ directory".to_string(),
-                suggestion: "Move to handlers/, admin/, or tools/".to_string(),
+                detected_type: "Handler".to_owned(),
+                issue: "Handler file outside handlers/ directory".to_owned(),
+                suggestion: "Move to handlers/, admin/, or tools/".to_owned(),
                 severity: Severity::Warning,
             });
         }

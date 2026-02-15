@@ -1,6 +1,6 @@
-//! OpenAI Embedding Provider
+//! `OpenAI` Embedding Provider
 //!
-//! Implements the EmbeddingProvider port using OpenAI's embedding API.
+//! Implements the `EmbeddingProvider` port using `OpenAI`'s embedding API.
 //! Supports text-embedding-3-small, text-embedding-3-large, and ada-002.
 
 use std::time::Duration;
@@ -22,9 +22,9 @@ use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
 use super::helpers::{HttpEmbeddingClient, process_batch};
 
-/// OpenAI embedding provider
+/// `OpenAI` embedding provider
 ///
-/// Implements the `EmbeddingProvider` domain port using OpenAI's embedding API.
+/// Implements the `EmbeddingProvider` domain port using `OpenAI`'s embedding API.
 /// Receives HTTP client via constructor injection.
 ///
 /// ## Example
@@ -53,14 +53,15 @@ pub struct OpenAIEmbeddingProvider {
 }
 
 impl OpenAIEmbeddingProvider {
-    /// Create a new OpenAI embedding provider
+    /// Create a new `OpenAI` embedding provider
     ///
     /// # Arguments
-    /// * `api_key` - OpenAI API key
-    /// * `base_url` - Optional custom base URL (defaults to OpenAI API)
+    /// * `api_key` - `OpenAI` API key
+    /// * `base_url` - Optional custom base URL (defaults to `OpenAI` API)
     /// * `model` - Model name (e.g., "text-embedding-3-small")
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
+    #[must_use]
     pub fn new(
         api_key: String,
         base_url: Option<String>,
@@ -81,16 +82,19 @@ impl OpenAIEmbeddingProvider {
     }
 
     /// Get the base URL for this provider
+    #[must_use]
     pub fn base_url(&self) -> &str {
         &self.client.base_url
     }
 
     /// Get the model name
+    #[must_use]
     pub fn model(&self) -> &str {
         &self.client.model
     }
 
     /// Get the maximum tokens for this model
+    #[must_use]
     pub fn max_tokens(&self) -> usize {
         match self.client.model.as_str() {
             "text-embedding-3-small" => 8192,
@@ -110,7 +114,7 @@ impl OpenAIEmbeddingProvider {
 
         let headers = vec![
             ("Authorization", format!("Bearer {}", self.client.api_key)),
-            ("Content-Type", CONTENT_TYPE_JSON.to_string()),
+            ("Content-Type", CONTENT_TYPE_JSON.to_owned()),
         ];
 
         send_json_request(JsonRequestParams {
@@ -140,7 +144,7 @@ impl OpenAIEmbeddingProvider {
 }
 
 #[async_trait]
-/// OpenAI implementation of the EmbeddingProvider trait.
+/// `OpenAI` implementation of the `EmbeddingProvider` trait.
 impl EmbeddingProvider for OpenAIEmbeddingProvider {
     /// Generates embeddings for a batch of texts.
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
@@ -175,7 +179,7 @@ use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
 
-/// Factory function for creating OpenAI embedding provider instances.
+/// Factory function for creating `OpenAI` embedding provider instances.
 fn openai_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {

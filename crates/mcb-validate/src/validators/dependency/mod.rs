@@ -46,7 +46,7 @@ impl DependencyValidator {
         let mut allowed_deps = HashMap::new();
 
         for i in 1..=20 {
-            let rule_id = format!("CA{:03}", i);
+            let rule_id = format!("CA{i:03}");
             if let Some(config_val) = PATTERNS.get_config(&rule_id)
                 && let Some(crate_name) = config_val.get("crate_name").and_then(|v| v.as_str())
             {
@@ -54,7 +54,7 @@ impl DependencyValidator {
                     .get_config_list(&rule_id, "allowed_dependencies")
                     .into_iter()
                     .collect();
-                allowed_deps.insert(crate_name.to_string(), deps);
+                allowed_deps.insert(crate_name.to_owned(), deps);
             }
         }
 

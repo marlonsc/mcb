@@ -33,10 +33,11 @@ pub struct ConfigReloadResponse {
 
 impl ConfigReloadResponse {
     /// Create a success response
+    #[must_use]
     pub fn success(config: SanitizedConfig) -> Self {
         Self {
             success: true,
-            message: "Configuration reloaded successfully".to_string(),
+            message: "Configuration reloaded successfully".to_owned(),
             config: Some(config),
             reloaded_at: Some(chrono::Utc::now().to_rfc3339()),
         }
@@ -53,10 +54,11 @@ impl ConfigReloadResponse {
     }
 
     /// Create a response indicating the watcher is not available
+    #[must_use]
     pub fn watcher_unavailable() -> Self {
         Self {
             success: false,
-            message: "Configuration watcher is not enabled".to_string(),
+            message: "Configuration watcher is not enabled".to_owned(),
             config: None,
             reloaded_at: None,
         }
@@ -90,7 +92,7 @@ impl ConfigSectionUpdateResponse {
     pub fn success(section: impl Into<String>, config: SanitizedConfig) -> Self {
         Self {
             success: true,
-            message: "Configuration section updated successfully".to_string(),
+            message: "Configuration section updated successfully".to_owned(),
             section: section.into(),
             config: Some(config),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
@@ -113,7 +115,7 @@ impl ConfigSectionUpdateResponse {
         let section_name = section.into();
         Self {
             success: false,
-            message: format!("Unknown configuration section: {}", section_name),
+            message: format!("Unknown configuration section: {section_name}"),
             section: section_name,
             config: None,
             updated_at: None,
@@ -124,7 +126,7 @@ impl ConfigSectionUpdateResponse {
     pub fn watcher_unavailable(section: impl Into<String>) -> Self {
         Self {
             success: false,
-            message: "Configuration watcher is not enabled".to_string(),
+            message: "Configuration watcher is not enabled".to_owned(),
             section: section.into(),
             config: None,
             updated_at: None,
@@ -133,6 +135,7 @@ impl ConfigSectionUpdateResponse {
 }
 
 /// Check if a section name is valid for updates
+#[must_use]
 pub fn is_valid_section(section: &str) -> bool {
     VALID_SECTIONS.contains(&section)
 }

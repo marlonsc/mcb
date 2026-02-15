@@ -6,17 +6,17 @@
 //! patterns used in production violation enums:
 //!
 //! - `file: PathBuf`          (most variants)
-//! - `path: PathBuf`          (NamingViolation::BadModuleName)
-//! - `location: PathBuf`      (DependencyViolation::ForbiddenCargoDepedency)
-//! - `source_file: PathBuf`   (RefactoringViolation::MissingTestFile)
-//! - `referencing_file: PathBuf` (RefactoringViolation::DeletedModuleReference)
-//! - `locations: Vec<PathBuf>` (RefactoringViolation::DuplicateDefinition → `.first()`)
-//! - No file-like field       (DependencyViolation::CircularDependency)
+//! - `path: PathBuf`          (`NamingViolation::BadModuleName`)
+//! - `location: PathBuf`      (`DependencyViolation::ForbiddenCargoDepedency`)
+//! - `source_file: PathBuf`   (`RefactoringViolation::MissingTestFile`)
+//! - `referencing_file: PathBuf` (`RefactoringViolation::DeletedModuleReference`)
+//! - `locations: Vec<PathBuf>` (`RefactoringViolation::DuplicateDefinition` → `.first()`)
+//! - No file-like field       (`DependencyViolation::CircularDependency`)
 //! - `line: usize`            (most variants)
-//! - No `line` field          (NamingViolation::BadModuleName, DependencyViolation::CircularDependency)
+//! - No `line` field          (`NamingViolation::BadModuleName`, `DependencyViolation::CircularDependency`)
 //! - Literal `suggestion = "..."` attribute (most variants)
-//! - `suggestion: String` field (RefactoringViolation::OrphanImport, NamingViolation::BadCaNaming)
-//! - No suggestion at all     (currently not used, but tested via CircularDependency which has a literal)
+//! - `suggestion: String` field (`RefactoringViolation::OrphanImport`, `NamingViolation::BadCaNaming`)
+//! - No suggestion at all     (currently not used, but tested via `CircularDependency` which has a literal)
 
 use std::path::PathBuf;
 
@@ -32,7 +32,7 @@ fn file_selection_standard_file_field() {
     let v = mcb_validate::QualityViolation::UnwrapInProduction {
         file: PathBuf::from("src/main.rs"),
         line: 10,
-        context: "x.unwrap()".to_string(),
+        context: "x.unwrap()".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/main.rs")));
@@ -46,7 +46,7 @@ fn file_selection_standard_file_field() {
 fn file_selection_path_field() {
     let v = mcb_validate::NamingViolation::BadModuleName {
         path: PathBuf::from("src/Foo.rs"),
-        expected_case: "snake_case".to_string(),
+        expected_case: "snake_case".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/Foo.rs")));
@@ -56,9 +56,9 @@ fn file_selection_path_field() {
 fn file_selection_path_field_with_other_fields() {
     let v = mcb_validate::NamingViolation::BadFileSuffix {
         path: PathBuf::from("src/handler.rs"),
-        component_type: "Service".to_string(),
-        current_suffix: "".to_string(),
-        expected_suffix: "_service".to_string(),
+        component_type: "Service".to_owned(),
+        current_suffix: String::new(),
+        expected_suffix: "_service".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/handler.rs")));
@@ -71,8 +71,8 @@ fn file_selection_path_field_with_other_fields() {
 #[test]
 fn file_selection_location_field() {
     let v = mcb_validate::DependencyViolation::ForbiddenCargoDepedency {
-        crate_name: "mcb-server".to_string(),
-        forbidden_dep: "tokio-console".to_string(),
+        crate_name: "mcb-server".to_owned(),
+        forbidden_dep: "tokio-console".to_owned(),
         location: PathBuf::from("crates/mcb-server/Cargo.toml"),
         severity: Severity::Error,
     };
@@ -105,7 +105,7 @@ fn file_selection_referencing_file_field() {
     let v = mcb_validate::RefactoringViolation::DeletedModuleReference {
         referencing_file: PathBuf::from("src/lib.rs"),
         line: 5,
-        deleted_module: "old_mod".to_string(),
+        deleted_module: "old_mod".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/lib.rs")));
@@ -118,12 +118,12 @@ fn file_selection_referencing_file_field() {
 #[test]
 fn file_selection_locations_vec_returns_first() {
     let v = mcb_validate::RefactoringViolation::DuplicateDefinition {
-        type_name: "Config".to_string(),
+        type_name: "Config".to_owned(),
         locations: vec![
             PathBuf::from("src/a/config.rs"),
             PathBuf::from("src/b/config.rs"),
         ],
-        suggestion: "Consolidate".to_string(),
+        suggestion: "Consolidate".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/a/config.rs")));
@@ -132,9 +132,9 @@ fn file_selection_locations_vec_returns_first() {
 #[test]
 fn file_selection_locations_vec_empty_returns_none() {
     let v = mcb_validate::RefactoringViolation::DuplicateDefinition {
-        type_name: "Config".to_string(),
+        type_name: "Config".to_owned(),
         locations: vec![],
-        suggestion: "Consolidate".to_string(),
+        suggestion: "Consolidate".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(v.file(), None);
@@ -148,9 +148,9 @@ fn file_selection_locations_vec_empty_returns_none() {
 fn file_selection_no_file_field_returns_none() {
     let v = mcb_validate::DependencyViolation::CircularDependency {
         cycle: mcb_validate::validators::dependency::DependencyCycle(vec![
-            "a".to_string(),
-            "b".to_string(),
-            "a".to_string(),
+            "a".to_owned(),
+            "b".to_owned(),
+            "a".to_owned(),
         ]),
         severity: Severity::Error,
     };
@@ -166,8 +166,8 @@ fn line_selection_standard_line_field() {
     let v = mcb_validate::ErrorBoundaryViolation::MissingErrorContext {
         file: PathBuf::from("src/handler.rs"),
         line: 99,
-        error_pattern: "db.query()?".to_string(),
-        suggestion: "Add .context()".to_string(),
+        error_pattern: "db.query()?".to_owned(),
+        suggestion: "Add .context()".to_owned(),
         severity: Severity::Info,
     };
     assert_eq!(v.line(), Some(99));
@@ -179,7 +179,7 @@ fn line_selection_line_not_first_field() {
     let v = mcb_validate::RefactoringViolation::DeletedModuleReference {
         referencing_file: PathBuf::from("src/lib.rs"),
         line: 77,
-        deleted_module: "gone".to_string(),
+        deleted_module: "gone".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(v.line(), Some(77));
@@ -194,7 +194,7 @@ fn line_selection_no_line_field_returns_none() {
     // BadModuleName has only `path`, `expected_case`, `severity` — no `line`
     let v = mcb_validate::NamingViolation::BadModuleName {
         path: PathBuf::from("src/BadName.rs"),
-        expected_case: "snake_case".to_string(),
+        expected_case: "snake_case".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(v.line(), None);
@@ -204,8 +204,8 @@ fn line_selection_no_line_field_returns_none() {
 fn line_selection_no_line_circular_dep() {
     let v = mcb_validate::DependencyViolation::CircularDependency {
         cycle: mcb_validate::validators::dependency::DependencyCycle(vec![
-            "x".to_string(),
-            "y".to_string(),
+            "x".to_owned(),
+            "y".to_owned(),
         ]),
         severity: Severity::Error,
     };
@@ -221,12 +221,12 @@ fn suggestion_from_literal_attribute() {
     let v = mcb_validate::QualityViolation::UnwrapInProduction {
         file: PathBuf::from("src/lib.rs"),
         line: 1,
-        context: "x.unwrap()".to_string(),
+        context: "x.unwrap()".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(
         v.suggestion(),
-        Some("Use `?` operator or handle the error explicitly".to_string())
+        Some("Use `?` operator or handle the error explicitly".to_owned())
     );
 }
 
@@ -259,11 +259,11 @@ fn suggestion_from_string_field() {
     let v = mcb_validate::RefactoringViolation::OrphanImport {
         file: PathBuf::from("src/lib.rs"),
         line: 10,
-        import_path: "use crate::old::Thing".to_string(),
-        suggestion: "Remove the orphan import".to_string(),
+        import_path: "use crate::old::Thing".to_owned(),
+        suggestion: "Remove the orphan import".to_owned(),
         severity: Severity::Warning,
     };
-    assert_eq!(v.suggestion(), Some("Remove the orphan import".to_string()));
+    assert_eq!(v.suggestion(), Some("Remove the orphan import".to_owned()));
 }
 
 #[test]
@@ -271,12 +271,12 @@ fn suggestion_from_string_field_naming() {
     // BadCaNaming has `suggestion = "{suggestion}"` — passthrough
     let v = mcb_validate::NamingViolation::BadCaNaming {
         path: PathBuf::from("src/bad.rs"),
-        detected_type: "handler".to_string(),
-        issue: "missing suffix".to_string(),
-        suggestion: "Rename to bad_handler.rs".to_string(),
+        detected_type: "handler".to_owned(),
+        issue: "missing suffix".to_owned(),
+        suggestion: "Rename to bad_handler.rs".to_owned(),
         severity: Severity::Warning,
     };
-    assert_eq!(v.suggestion(), Some("Rename to bad_handler.rs".to_string()));
+    assert_eq!(v.suggestion(), Some("Rename to bad_handler.rs".to_owned()));
 }
 
 // ============================================================================
@@ -287,14 +287,14 @@ fn suggestion_from_string_field_naming() {
 fn suggestion_circular_dependency_literal() {
     let v = mcb_validate::DependencyViolation::CircularDependency {
         cycle: mcb_validate::validators::dependency::DependencyCycle(vec![
-            "a".to_string(),
-            "b".to_string(),
+            "a".to_owned(),
+            "b".to_owned(),
         ]),
         severity: Severity::Error,
     };
     assert_eq!(
         v.suggestion(),
-        Some("Extract shared types to the domain crate".to_string())
+        Some("Extract shared types to the domain crate".to_owned())
     );
 }
 
@@ -307,7 +307,7 @@ fn all_three_methods_on_kiss_violation() {
     let v = mcb_validate::KissViolation::StructTooManyFields {
         file: PathBuf::from("src/big.rs"),
         line: 42,
-        struct_name: "Monolith".to_string(),
+        struct_name: "Monolith".to_owned(),
         field_count: 25,
         max_allowed: 10,
         severity: Severity::Warning,
@@ -329,8 +329,8 @@ fn all_three_methods_on_kiss_violation() {
 fn all_three_methods_on_no_file_no_line_variant() {
     let v = mcb_validate::DependencyViolation::CircularDependency {
         cycle: mcb_validate::validators::dependency::DependencyCycle(vec![
-            "a".to_string(),
-            "b".to_string(),
+            "a".to_owned(),
+            "b".to_owned(),
         ]),
         severity: Severity::Error,
     };
@@ -349,7 +349,7 @@ fn severity_dynamic_reads_field_value() {
     let v = mcb_validate::QualityViolation::UnwrapInProduction {
         file: PathBuf::from("src/lib.rs"),
         line: 1,
-        context: "x".to_string(),
+        context: "x".to_owned(),
         severity: Severity::Info, // Override: attribute says Warning, but field says Info
     };
     assert_eq!(v.severity(), Severity::Info);
@@ -366,7 +366,7 @@ fn id_and_category_correct() {
         line: 1,
         nesting_level: 8,
         max_allowed: 4,
-        context: "if { if { if { ... } } }".to_string(),
+        context: "if { if { if { ... } } }".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(v.id(), "KISS004");

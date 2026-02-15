@@ -196,7 +196,7 @@ impl McpServer {
                 .open_repository(Path::new(&path_str))
                 .await
         {
-            repo_path = Some(repo.path().to_str().unwrap_or_default().to_string());
+            repo_path = Some(repo.path().to_str().unwrap_or_default().to_owned());
             if repo_id.is_none() {
                 repo_id = Some(self.services.vcs.repository_id(&repo).into_string());
             }
@@ -223,6 +223,7 @@ impl McpServer {
     }
 
     /// Create a new MCP server with injected dependencies
+    #[must_use]
     pub fn new(services: McpServices, execution_flow: Option<String>) -> Self {
         let hook_processor = HookProcessor::new(Some(services.memory.clone()));
         let vcs_entity_handler = Arc::new(VcsEntityHandler::new(services.vcs_entity.clone()));
@@ -268,51 +269,61 @@ impl McpServer {
 
     /// Create a new MCP server from domain services
     /// This is the preferred constructor that uses the DI container
+    #[must_use]
     pub fn from_services(services: McpServices, execution_flow: Option<String>) -> Self {
         Self::new(services, execution_flow)
     }
 
     /// Access to indexing service
+    #[must_use]
     pub fn indexing_service(&self) -> Arc<dyn IndexingServiceInterface> {
         Arc::clone(&self.services.indexing)
     }
 
     /// Access to context service
+    #[must_use]
     pub fn context_service(&self) -> Arc<dyn ContextServiceInterface> {
         Arc::clone(&self.services.context)
     }
 
     /// Access to VCS provider (for branch/repo handlers)
+    #[must_use]
     pub fn vcs_provider(&self) -> Arc<dyn VcsProvider> {
         Arc::clone(&self.services.vcs)
     }
 
     /// Access to search service
+    #[must_use]
     pub fn search_service(&self) -> Arc<dyn SearchServiceInterface> {
         Arc::clone(&self.services.search)
     }
 
     /// Access to validation service
+    #[must_use]
     pub fn validation_service(&self) -> Arc<dyn ValidationServiceInterface> {
         Arc::clone(&self.services.validation)
     }
 
     /// Access to memory service
+    #[must_use]
     pub fn memory_service(&self) -> Arc<dyn MemoryServiceInterface> {
         Arc::clone(&self.services.memory)
     }
 
     /// Access to agent session service
+    #[must_use]
     pub fn agent_session_service(&self) -> Arc<dyn AgentSessionServiceInterface> {
         Arc::clone(&self.services.agent_session)
     }
 
     /// Access to project service
+    #[must_use]
     pub fn project_service(&self) -> Arc<dyn ProjectDetectorService> {
         Arc::clone(&self.services.project)
     }
 
     /// Access to project workflow repository.
+    #[must_use]
     pub fn project_workflow_repository(&self) -> Arc<dyn ProjectRepository> {
         Arc::clone(&self.services.project_workflow)
     }
@@ -346,76 +357,91 @@ impl McpServer {
     );
 
     /// Access to index handler (for HTTP transport)
+    #[must_use]
     pub fn index_handler(&self) -> Arc<IndexHandler> {
         Arc::clone(&self.handlers.index)
     }
 
     /// Access to search handler (for HTTP transport)
+    #[must_use]
     pub fn search_handler(&self) -> Arc<SearchHandler> {
         Arc::clone(&self.handlers.search)
     }
 
     /// Access to validate handler (for HTTP transport)
+    #[must_use]
     pub fn validate_handler(&self) -> Arc<ValidateHandler> {
         Arc::clone(&self.handlers.validate)
     }
 
     /// Access to memory handler (for HTTP transport)
+    #[must_use]
     pub fn memory_handler(&self) -> Arc<MemoryHandler> {
         Arc::clone(&self.handlers.memory)
     }
 
     /// Access to session handler (for HTTP transport)
+    #[must_use]
     pub fn session_handler(&self) -> Arc<SessionHandler> {
         Arc::clone(&self.handlers.session)
     }
 
     /// Access to agent handler (for HTTP transport)
+    #[must_use]
     pub fn agent_handler(&self) -> Arc<AgentHandler> {
         Arc::clone(&self.handlers.agent)
     }
 
     /// Access to VCS handler (for HTTP transport)
+    #[must_use]
     pub fn vcs_handler(&self) -> Arc<VcsHandler> {
         Arc::clone(&self.handlers.vcs)
     }
 
     /// Access to unified entity handler (for HTTP transport)
+    #[must_use]
     pub fn entity_handler(&self) -> Arc<EntityHandler> {
         Arc::clone(&self.handlers.entity)
     }
 
     /// Access to project handler (for HTTP transport)
+    #[must_use]
     pub fn project_handler(&self) -> Arc<ProjectHandler> {
         Arc::clone(&self.handlers.project)
     }
 
     /// Access to VCS entity handler (for HTTP transport)
+    #[must_use]
     pub fn vcs_entity_handler(&self) -> Arc<VcsEntityHandler> {
         Arc::clone(&self.handlers.vcs_entity)
     }
 
     /// Access to plan entity handler (for HTTP transport)
+    #[must_use]
     pub fn plan_entity_handler(&self) -> Arc<PlanEntityHandler> {
         Arc::clone(&self.handlers.plan_entity)
     }
 
     /// Access to issue entity handler (for HTTP transport)
+    #[must_use]
     pub fn issue_entity_handler(&self) -> Arc<IssueEntityHandler> {
         Arc::clone(&self.handlers.issue_entity)
     }
 
     /// Access to org entity handler (for HTTP transport)
+    #[must_use]
     pub fn org_entity_handler(&self) -> Arc<OrgEntityHandler> {
         Arc::clone(&self.handlers.org_entity)
     }
 
     /// Access to hook processor (for automatic memory operations)
+    #[must_use]
     pub fn hook_processor(&self) -> Arc<HookProcessor> {
         Arc::clone(&self.handlers.hook_processor)
     }
 
     /// Clone the complete tool handlers set for unified internal execution.
+    #[must_use]
     pub fn tool_handlers(&self) -> ToolHandlers {
         self.handlers.clone()
     }
@@ -428,12 +454,12 @@ impl ServerHandler for McpServer {
             protocol_version: ProtocolVersion::V_2025_03_26,
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation {
-                name: "MCP Context Browser".to_string(),
-                version: env!("CARGO_PKG_VERSION").to_string(),
+                name: "MCP Context Browser".to_owned(),
+                version: env!("CARGO_PKG_VERSION").to_owned(),
                 ..Default::default()
             },
             instructions: Some(
-                r#"MCP Context Browser - Semantic Code Search
+                "MCP Context Browser - Semantic Code Search
 
 tools:
 - index: Index operations (start, status, clear)
@@ -445,8 +471,8 @@ tools:
 - project: Project workflow management
 - vcs: Repository operations
 - entity: Unified entity CRUD (vcs/plan/issue/org resources)
-"#
-                .to_string(),
+"
+                .to_owned(),
             ),
         }
     }

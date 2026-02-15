@@ -38,12 +38,12 @@ pub fn validate_missing_test_files(
             |entry| {
                 let path = &entry.absolute_path;
                 if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                    test_files.insert(stem.to_string());
+                    test_files.insert(stem.to_owned());
                     if let Some(base) = stem.strip_suffix("_test") {
-                        test_files.insert(base.to_string());
+                        test_files.insert(base.to_owned());
                     }
                     if let Some(base) = stem.strip_suffix("_tests") {
-                        test_files.insert(base.to_string());
+                        test_files.insert(base.to_owned());
                     }
                 }
 
@@ -53,7 +53,7 @@ pub fn validate_missing_test_files(
                         break;
                     }
                     if let Some(name) = dir.file_name().and_then(|s| s.to_str()) {
-                        test_dirs.insert(name.to_string());
+                        test_dirs.insert(name.to_owned());
                     }
                     parent = dir.parent();
                 }
@@ -120,7 +120,7 @@ pub fn validate_missing_test_files(
 
                 if !has_test && !parent_covered {
                     violations.push(RefactoringViolation::MissingTestFile {
-                        source_file: path.to_path_buf(),
+                        source_file: path.clone(),
                         expected_test: tests_dir.join(format!("{file_name}_test.rs")),
                         severity: Severity::Warning, // Warning, not Error - tests are quality, not critical
                     });

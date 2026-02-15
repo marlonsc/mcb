@@ -9,8 +9,8 @@ use rstest::rstest;
 #[case("foo", "0.1.0")]
 fn project_type_cargo(#[case] name: &str, #[case] version: &str) {
     let pt = ProjectType::Cargo {
-        name: name.to_string(),
-        version: version.to_string(),
+        name: name.to_owned(),
+        version: version.to_owned(),
         dependencies: vec![],
     };
     match &pt {
@@ -30,11 +30,11 @@ fn project_type_cargo(#[case] name: &str, #[case] version: &str) {
 #[case("proj-1", "crates/foo")]
 fn detected_project_has_path_and_id(#[case] id: &str, #[case] path: &str) {
     let p = DetectedProject {
-        id: id.to_string(),
-        path: path.to_string(),
+        id: id.to_owned(),
+        path: path.to_owned(),
         project_type: ProjectType::Cargo {
-            name: "foo".to_string(),
-            version: "0.1.0".to_string(),
+            name: "foo".to_owned(),
+            version: "0.1.0".to_owned(),
             dependencies: vec![],
         },
         parent_repo_id: None,
@@ -126,14 +126,14 @@ fn project_entities_construction(#[case] entity: &str) {
         }
         "issue" => {
             let mut issue = create_test_issue("iss-001", "proj-1");
-            issue.phase_id = Some("ph-001".to_string());
-            issue.title = "Fix bug".to_string();
-            issue.description = "Something is broken".to_string();
+            issue.phase_id = Some("ph-001".to_owned());
+            issue.title = "Fix bug".to_owned();
+            issue.description = "Something is broken".to_owned();
             issue.issue_type = IssueType::Bug;
             issue.status = IssueStatus::Open;
             issue.priority = 1;
-            issue.assignee = Some("alice".to_string());
-            issue.labels = vec!["urgent".to_string()];
+            issue.assignee = Some("alice".to_owned());
+            issue.labels = vec!["urgent".to_owned()];
 
             assert_eq!(issue.id, "iss-001");
             assert_eq!(issue.priority, 1);
@@ -141,9 +141,9 @@ fn project_entities_construction(#[case] entity: &str) {
         }
         "dependency" => {
             let dep = ProjectDependency {
-                id: "dep-001".to_string(),
-                from_issue_id: "iss-002".to_string(),
-                to_issue_id: "iss-001".to_string(),
+                id: "dep-001".to_owned(),
+                from_issue_id: "iss-002".to_owned(),
+                to_issue_id: "iss-001".to_owned(),
                 dependency_type: DependencyType::Blocks,
                 created_at: 1000,
             };
@@ -152,13 +152,13 @@ fn project_entities_construction(#[case] entity: &str) {
         }
         "decision" => {
             let decision = ProjectDecision {
-                id: "dec-001".to_string(),
-                project_id: "proj-1".to_string(),
+                id: "dec-001".to_owned(),
+                project_id: "proj-1".to_owned(),
                 issue_id: None,
-                title: "Use Rust".to_string(),
-                context: "Need a fast language".to_string(),
-                decision: "Rust for performance".to_string(),
-                consequences: "Steeper learning curve".to_string(),
+                title: "Use Rust".to_owned(),
+                context: "Need a fast language".to_owned(),
+                decision: "Rust for performance".to_owned(),
+                consequences: "Steeper learning curve".to_owned(),
                 created_at: 1000,
             };
             assert_eq!(decision.id, "dec-001");

@@ -32,6 +32,7 @@ impl HygieneValidator {
     }
 
     /// Creates a validator with custom configuration for multi-directory support.
+    #[must_use]
     pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }

@@ -205,7 +205,7 @@ pub enum DomainEvent {
         level: String,
         /// Log message
         message: String,
-        /// Module/target path (e.g., "mcb_server::handlers::index")
+        /// Module/target path (e.g., "`mcb_server::handlers::index`")
         target: String,
         /// Timestamp (Unix epoch milliseconds)
         timestamp: i64,

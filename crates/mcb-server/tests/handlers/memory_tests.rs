@@ -61,10 +61,10 @@ async fn test_memory_store_observation_success() {
             "tags": ["test", "observation"]
         })),
         None,
-        Some("test-session".to_string()),
+        Some("test-session".to_owned()),
     );
     let mut args = args;
-    args.project_id = Some("test-project".to_string());
+    args.project_id = Some("test-project".to_owned());
 
     let result = handler.handle(Parameters(args)).await;
     assert!(result.is_ok());
@@ -94,13 +94,13 @@ async fn test_memory_inject_with_filters() {
         action: MemoryAction::Inject,
         org_id: None,
         resource: MemoryResource::Observation,
-        project_id: Some("test-project".to_string()),
+        project_id: Some("test-project".to_owned()),
         data: None,
         ids: None,
-        repo_id: Some("repo-123".to_string()),
+        repo_id: Some("repo-123".to_owned()),
         session_id: None,
         parent_session_id: None,
-        tags: Some(vec!["important".to_string()]),
+        tags: Some(vec!["important".to_owned()]),
         query: None,
         anchor_id: None,
         depth_before: None,

@@ -11,7 +11,7 @@ use super::constants::{
 /// Rule for extracting specific AST node types
 #[derive(Debug, Clone)]
 pub struct NodeExtractionRule {
-    /// AST node types to extract (e.g., "function_item", "class_definition")
+    /// AST node types to extract (e.g., "`function_item`", "`class_definition`")
     pub node_types: Vec<String>,
     /// Minimum content length to consider for chunking
     pub min_length: usize,
@@ -27,9 +27,10 @@ pub struct NodeExtractionRule {
 
 impl NodeExtractionRule {
     /// Primary nodes (functions, structs, classes) - high priority, context included
+    #[must_use]
     pub fn primary(types: &[&str]) -> Self {
         Self {
-            node_types: types.iter().map(|s| s.to_string()).collect(),
+            node_types: types.iter().map(std::string::ToString::to_string).collect(),
             min_length: 40,
             min_lines: 2,
             max_depth: 4,
@@ -39,9 +40,10 @@ impl NodeExtractionRule {
     }
 
     /// Secondary nodes (modules, macros, constants) - medium priority
+    #[must_use]
     pub fn secondary(types: &[&str]) -> Self {
         Self {
-            node_types: types.iter().map(|s| s.to_string()).collect(),
+            node_types: types.iter().map(std::string::ToString::to_string).collect(),
             min_length: 25,
             min_lines: 1,
             max_depth: 3,
@@ -51,9 +53,10 @@ impl NodeExtractionRule {
     }
 
     /// Tertiary nodes (types, imports) - low priority
+    #[must_use]
     pub fn tertiary(types: &[&str]) -> Self {
         Self {
-            node_types: types.iter().map(|s| s.to_string()).collect(),
+            node_types: types.iter().map(std::string::ToString::to_string).collect(),
             min_length: 15,
             min_lines: 1,
             max_depth: 2,
@@ -76,6 +79,7 @@ pub struct LanguageConfig {
 
 impl LanguageConfig {
     /// Create a new language configuration
+    #[must_use]
     pub fn new(language: tree_sitter::Language) -> Self {
         Self {
             ts_language: language,
@@ -85,30 +89,34 @@ impl LanguageConfig {
     }
 
     /// Add an extraction rule
+    #[must_use]
     pub fn with_rule(mut self, rule: NodeExtractionRule) -> Self {
         self.extraction_rules.push(rule);
         self
     }
 
     /// Add multiple extraction rules
+    #[must_use]
     pub fn with_rules(mut self, rules: Vec<NodeExtractionRule>) -> Self {
         self.extraction_rules.extend(rules);
         self
     }
 
     /// Set chunk size
+    #[must_use]
     pub fn with_chunk_size(mut self, chunk_size: usize) -> Self {
         self.chunk_size = chunk_size;
         self
     }
 
     /// Get the tree-sitter language
+    #[must_use]
     pub fn get_language(&self) -> tree_sitter::Language {
         self.ts_language.clone()
     }
 }
 
-/// Builder for NodeExtractionRule
+/// Builder for `NodeExtractionRule`
 pub struct NodeExtractionRuleBuilder {
     node_types: Vec<String>,
     min_length: usize,
@@ -120,6 +128,7 @@ pub struct NodeExtractionRuleBuilder {
 
 impl NodeExtractionRuleBuilder {
     /// Create a new rule builder
+    #[must_use]
     pub fn new() -> Self {
         Self {
             node_types: Vec::new(),
@@ -132,6 +141,7 @@ impl NodeExtractionRuleBuilder {
     }
 
     /// Add node types to extract
+    #[must_use]
     pub fn with_node_types(mut self, node_types: Vec<String>) -> Self {
         self.node_types = node_types;
         self
@@ -144,36 +154,42 @@ impl NodeExtractionRuleBuilder {
     }
 
     /// Set minimum length
+    #[must_use]
     pub fn with_min_length(mut self, min_length: usize) -> Self {
         self.min_length = min_length;
         self
     }
 
     /// Set minimum lines
+    #[must_use]
     pub fn with_min_lines(mut self, min_lines: usize) -> Self {
         self.min_lines = min_lines;
         self
     }
 
     /// Set maximum depth
+    #[must_use]
     pub fn with_max_depth(mut self, max_depth: usize) -> Self {
         self.max_depth = max_depth;
         self
     }
 
     /// Set priority
+    #[must_use]
     pub fn with_priority(mut self, priority: i32) -> Self {
         self.priority = priority;
         self
     }
 
     /// Set include context
+    #[must_use]
     pub fn with_context(mut self, include_context: bool) -> Self {
         self.include_context = include_context;
         self
     }
 
     /// Build the rule
+    #[must_use]
     pub fn build(self) -> NodeExtractionRule {
         NodeExtractionRule {
             node_types: self.node_types,
@@ -186,7 +202,7 @@ impl NodeExtractionRuleBuilder {
     }
 }
 
-/// Returns default NodeExtractionRuleBuilder for configuring AST node extraction rules
+/// Returns default `NodeExtractionRuleBuilder` for configuring AST node extraction rules
 impl Default for NodeExtractionRuleBuilder {
     fn default() -> Self {
         Self::new()

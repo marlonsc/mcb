@@ -28,6 +28,7 @@ impl Default for HttpTransportConfig {
 
 impl HttpTransportConfig {
     /// Build a config bound to the configured host with a custom port.
+    #[must_use]
     pub fn localhost(port: u16) -> Self {
         let config = ConfigLoader::new()
             .load()
@@ -40,6 +41,7 @@ impl HttpTransportConfig {
     }
 
     /// Resolve the configured host and port into a [`SocketAddr`].
+    #[must_use]
     pub fn socket_addr(&self) -> SocketAddr {
         format!("{}:{}", self.host, self.port)
             .parse()

@@ -3,12 +3,13 @@ use std::sync::Arc;
 
 use mcb_domain::ports::providers::VcsProvider;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 
 use super::responses::{BranchSearchMatch, BranchSearchResponse, repo_path};
 use crate::args::VcsArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handlers::helpers::tool_error;
 
 /// Searches for a query string within a branch.
 #[tracing::instrument(skip_all)]
@@ -19,9 +20,7 @@ pub async fn search_branch(
     let query = match args.query.as_ref() {
         Some(value) if !value.trim().is_empty() => value.trim(),
         _ => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing query for branch search",
-            )]));
+            return Ok(tool_error("Missing query for branch search"));
         }
     };
     let path = match repo_path(args) {
@@ -37,7 +36,7 @@ pub async fn search_branch(
     let branch = args
         .target_branch
         .clone()
-        .unwrap_or_else(|| repo.default_branch().to_string());
+        .unwrap_or_else(|| repo.default_branch().to_owned());
     let files = match vcs_provider.list_files(&repo, &branch).await {
         Ok(files) => files,
         Err(e) => {
@@ -54,9 +53,9 @@ pub async fn search_branch(
             for (index, line) in content.lines().enumerate() {
                 if line.to_lowercase().contains(&query.to_lowercase()) {
                     matches.push(BranchSearchMatch {
-                        path: file_path.to_str().unwrap_or_default().to_string(),
+                        path: file_path.to_str().unwrap_or_default().to_owned(),
                         line: index + 1,
-                        snippet: line.trim().to_string(),
+                        snippet: line.trim().to_owned(),
                     });
                     if matches.len() >= limit {
                         break;
@@ -68,7 +67,7 @@ pub async fn search_branch(
     let result = BranchSearchResponse {
         repository_id: repo.id().to_string(),
         branch,
-        query: query.to_string(),
+        query: query.to_owned(),
         count: matches.len(),
         results: matches,
     };

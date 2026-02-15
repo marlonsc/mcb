@@ -50,6 +50,7 @@ impl FileTreeNode {
     }
 
     /// Add a child node to this directory (builder pattern)
+    #[must_use]
     pub fn with_child(mut self, child: FileTreeNode) -> Self {
         self.children.push(child);
         self
@@ -83,6 +84,7 @@ impl FileTreeNode {
     }
 
     /// Convert tree to ANSI-formatted string with colors and tree structure
+    #[must_use]
     pub fn to_ansi(&self) -> String {
         let mut output = String::new();
         self.format_ansi(&mut output, "", true);
@@ -101,11 +103,12 @@ impl FileTreeNode {
         output.push_str(reset);
 
         if let Some(count) = self.chunk_count {
-            output.push_str(&format!(" ({})", count));
+            use std::fmt::Write;
+            let _ = write!(output, " ({count})");
         }
         output.push('\n');
 
-        let new_prefix = format!("{}{}", prefix, if is_last { "    " } else { "│   " });
+        let new_prefix = format!("{prefix}{}", if is_last { "    " } else { "│   " });
 
         for (i, child) in self.children.iter().enumerate() {
             let is_last_child = i == self.children.len() - 1;
@@ -114,6 +117,7 @@ impl FileTreeNode {
     }
 
     /// Convert tree to HTML-formatted string with nesting
+    #[must_use]
     pub fn to_html(&self) -> String {
         let mut output = String::new();
         self.format_html(&mut output);
@@ -131,7 +135,8 @@ impl FileTreeNode {
         output.push_str(&name_html);
 
         if let Some(count) = self.chunk_count {
-            output.push_str(&format!(" <span style=\"color: #888;\">({})</span>", count));
+            use std::fmt::Write;
+            let _ = write!(output, " <span style=\"color: #888;\">({count})</span>");
         }
 
         if !self.children.is_empty() {

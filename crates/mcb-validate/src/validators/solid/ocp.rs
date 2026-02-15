@@ -31,7 +31,7 @@ pub fn validate_ocp(
                         max_recommended: max_match_arms,
                         suggestion:
                             "Consider using visitor pattern, enum dispatch, or trait objects"
-                                .to_string(),
+                                .to_owned(),
                         severity: Severity::Info,
                     });
                 }
@@ -66,7 +66,7 @@ pub fn validate_string_dispatch(config: &ValidationConfig) -> Result<Vec<SolidVi
                         line: line_num + 1,
                         match_expression: trimmed.chars().take(60).collect(),
                         suggestion: "Consider using enum types with FromStr or a registry pattern"
-                            .to_string(),
+                            .to_owned(),
                         severity: Severity::Info,
                     });
                 }

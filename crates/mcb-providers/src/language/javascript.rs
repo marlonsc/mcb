@@ -15,6 +15,7 @@ pub struct JavaScriptProcessor {
 
 impl JavaScriptProcessor {
     /// Create a new JavaScript/TypeScript language processor
+    #[must_use]
     pub fn new(is_typescript: bool) -> Self {
         let ts_language = if is_typescript {
             tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()
@@ -25,12 +26,12 @@ impl JavaScriptProcessor {
         let config = LanguageConfig::new(ts_language)
             .with_rules(vec![NodeExtractionRule {
                 node_types: vec![
-                    TS_NODE_FUNCTION_DECLARATION.to_string(),
-                    TS_NODE_CLASS_DECLARATION.to_string(),
-                    "method_definition".to_string(),
-                    "arrow_function".to_string(),
-                    AST_NODE_INTERFACE_DECLARATION.to_string(),
-                    "type_alias_declaration".to_string(),
+                    TS_NODE_FUNCTION_DECLARATION.to_owned(),
+                    TS_NODE_CLASS_DECLARATION.to_owned(),
+                    "method_definition".to_owned(),
+                    "arrow_function".to_owned(),
+                    AST_NODE_INTERFACE_DECLARATION.to_owned(),
+                    "type_alias_declaration".to_owned(),
                 ],
                 min_length: 30,
                 min_lines: 2,

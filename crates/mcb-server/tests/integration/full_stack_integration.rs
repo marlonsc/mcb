@@ -1,7 +1,7 @@
 //! Full-Stack DI Integration Tests
 //!
 //! Tests end-to-end data flow through the hexagonal architecture:
-//! AppContext → Provider Handles → Real Providers → Actual Data Operations
+//! `AppContext` → Provider Handles → Real Providers → Actual Data Operations
 //!
 //! ## Key Principle
 //!
@@ -25,48 +25,66 @@ use mcb_infrastructure::di::bootstrap::init_app;
 use rstest::rstest;
 use serde_json::json;
 
+use crate::test_utils::collection::unique_collection;
+
 fn test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let db_path = temp_dir.path().join("test.db");
     let mut config = ConfigLoader::new().load().expect("load config");
     config.providers.database.configs.insert(
-        "default".to_string(),
+        "default".to_owned(),
         mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
+            provider: "sqlite".to_owned(),
             path: Some(db_path),
         },
     );
+    config.providers.embedding.cache_dir = Some(shared_fastembed_cache_dir());
     (config, temp_dir)
+}
+
+/// Persistent shared cache dir for `FastEmbed` ONNX model.
+fn shared_fastembed_cache_dir() -> std::path::PathBuf {
+    use std::sync::OnceLock;
+    static DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
+    DIR.get_or_init(|| {
+        let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
+            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
+            std::path::PathBuf::from,
+        );
+        std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
+        cache_dir
+    })
+    .clone()
 }
 
 /// Create test code chunks for full-stack testing
 fn create_test_chunks() -> Vec<CodeChunk> {
     vec![
         CodeChunk {
-            id: "full_stack_chunk_1".to_string(),
-            file_path: "src/config.rs".to_string(),
-            content: r#"pub struct AppConfig {
+            id: "full_stack_chunk_1".to_owned(),
+            file_path: "src/config.rs".to_owned(),
+            content: "pub struct AppConfig {
     pub host: String,
     pub port: u16,
-}"#
-            .to_string(),
+}"
+            .to_owned(),
             start_line: 1,
             end_line: 4,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: json!({"type": "struct", "name": "AppConfig"}),
         },
         CodeChunk {
-            id: "full_stack_chunk_2".to_string(),
-            file_path: "src/main.rs".to_string(),
-            content: r#"#[tokio::main]
+            id: "full_stack_chunk_2".to_owned(),
+            file_path: "src/main.rs".to_owned(),
+            content: "#[tokio::main]
 async fn main() {
     let config = AppConfig::default();
     run_server(&config).await;
-}"#
-            .to_string(),
+}"
+            .to_owned(),
             start_line: 1,
             end_line: 5,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: json!({"type": "function", "name": "main"}),
         },
     ]
@@ -105,7 +123,7 @@ async fn test_init_app_creates_working_context() {
         result
             .as_ref()
             .err()
-            .map(|e| e.to_string())
+            .map(std::string::ToString::to_string)
             .unwrap_or_default()
     );
 
@@ -133,9 +151,9 @@ async fn test_init_app_creates_working_context() {
 }
 
 #[rstest]
-#[case(vec!["authentication middleware".to_string(), "database connection pool".to_string()])]
-#[case(vec!["first text".to_string()])]
-#[case(vec!["second text".to_string(), "third text".to_string()])]
+#[case(vec!["authentication middleware".to_owned(), "database connection pool".to_owned()])]
+#[case(vec!["first text".to_owned()])]
+#[case(vec!["second text".to_owned(), "third text".to_owned()])]
 #[tokio::test]
 async fn test_embedding_generates_real_vectors(#[case] texts: Vec<String>) {
     let (config, _temp) = test_config();
@@ -153,12 +171,12 @@ async fn test_full_index_and_search_flow() {
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
 
-    let collection = "full_stack_test_collection";
+    let collection = unique_collection("full-stack");
     let chunks = create_test_chunks();
 
     // Step 1: Create collection
     vector_store
-        .create_collection(&CollectionId::from_name(collection), 384)
+        .create_collection(&CollectionId::from_name(&collection), 384)
         .await
         .expect("Collection creation should succeed");
 
@@ -174,26 +192,26 @@ async fn test_full_index_and_search_flow() {
         .iter()
         .map(|chunk| {
             let mut meta = std::collections::HashMap::new();
-            meta.insert("id".to_string(), json!(chunk.id));
-            meta.insert("file_path".to_string(), json!(chunk.file_path));
-            meta.insert("content".to_string(), json!(chunk.content));
-            meta.insert("start_line".to_string(), json!(chunk.start_line));
-            meta.insert("end_line".to_string(), json!(chunk.end_line));
-            meta.insert("language".to_string(), json!(chunk.language));
+            meta.insert("id".to_owned(), json!(chunk.id));
+            meta.insert("file_path".to_owned(), json!(chunk.file_path));
+            meta.insert("content".to_owned(), json!(chunk.content));
+            meta.insert("start_line".to_owned(), json!(chunk.start_line));
+            meta.insert("end_line".to_owned(), json!(chunk.end_line));
+            meta.insert("language".to_owned(), json!(chunk.language));
             meta
         })
         .collect();
 
     // Step 4: Insert into vector store
     let ids = vector_store
-        .insert_vectors(&CollectionId::from_name(collection), &embeddings, metadata)
+        .insert_vectors(&CollectionId::from_name(&collection), &embeddings, metadata)
         .await
         .expect("Insert should succeed");
 
     assert_eq!(ids.len(), chunks.len(), "Should insert all chunks");
 
     // Step 5: Search with a query
-    let query_text = "application configuration settings".to_string();
+    let query_text = "application configuration settings".to_owned();
     let query_embeddings = embedding
         .embed_batch(&[query_text])
         .await
@@ -201,7 +219,7 @@ async fn test_full_index_and_search_flow() {
     let query_vector = &query_embeddings[0].vector;
 
     let results = vector_store
-        .search_similar(&CollectionId::from_name(collection), query_vector, 5, None)
+        .search_similar(&CollectionId::from_name(&collection), query_vector, 5, None)
         .await
         .expect("Search should succeed");
 
@@ -248,15 +266,15 @@ async fn test_multiple_collections_isolated() {
     let vector_store = ctx.vector_store_handle().get();
 
     // Create two collections
-    let collection_a = "isolation_test_a";
-    let collection_b = "isolation_test_b";
+    let collection_a = unique_collection("isolation-a");
+    let collection_b = unique_collection("isolation-b");
 
     vector_store
-        .create_collection(&CollectionId::from_name(collection_a), 384)
+        .create_collection(&CollectionId::from_name(&collection_a), 384)
         .await
         .expect("Create collection A");
     vector_store
-        .create_collection(&CollectionId::from_name(collection_b), 384)
+        .create_collection(&CollectionId::from_name(&collection_b), 384)
         .await
         .expect("Create collection B");
 
@@ -269,15 +287,15 @@ async fn test_multiple_collections_isolated() {
         .iter()
         .map(|c| {
             let mut m = std::collections::HashMap::new();
-            m.insert("content".to_string(), json!(c.content));
-            m.insert("file_path".to_string(), json!(c.file_path));
+            m.insert("content".to_owned(), json!(c.content));
+            m.insert("file_path".to_owned(), json!(c.file_path));
             m
         })
         .collect();
 
     vector_store
         .insert_vectors(
-            &CollectionId::from_name(collection_a),
+            &CollectionId::from_name(&collection_a),
             &embeddings,
             metadata,
         )
@@ -286,13 +304,13 @@ async fn test_multiple_collections_isolated() {
 
     // Search in both collections
     let query_emb = embedding
-        .embed_batch(&["config".to_string()])
+        .embed_batch(&["config".to_owned()])
         .await
         .expect("Query embed");
 
     let results_a = vector_store
         .search_similar(
-            &CollectionId::from_name(collection_a),
+            &CollectionId::from_name(&collection_a),
             &query_emb[0].vector,
             10,
             None,
@@ -302,7 +320,7 @@ async fn test_multiple_collections_isolated() {
 
     let results_b = vector_store
         .search_similar(
-            &CollectionId::from_name(collection_b),
+            &CollectionId::from_name(&collection_b),
             &query_emb[0].vector,
             10,
             None,

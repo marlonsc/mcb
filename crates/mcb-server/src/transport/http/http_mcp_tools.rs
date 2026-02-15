@@ -20,7 +20,7 @@ fn parse_tool_call_params(
             JSONRPC_INVALID_PARAMS,
             "Missing 'name' parameter for tools/call",
         ))?
-        .to_string();
+        .to_owned();
 
     let arguments = match params.get("arguments") {
         None | Some(serde_json::Value::Null) => None,
@@ -145,7 +145,7 @@ pub(super) async fn handle_tools_call(
         execution_flow: bridge_provenance
             .execution_flow
             .clone()
-            .or_else(|| Some("server-hybrid".to_string())),
+            .or_else(|| Some("server-hybrid".to_owned())),
     };
 
     execution_context.apply_to_request_if_missing(&mut call_request);
@@ -160,11 +160,7 @@ pub(super) async fn handle_tools_call(
             } else {
                 JSONRPC_INTERNAL_ERROR
             };
-            McpResponse::error(
-                request.id.clone(),
-                code,
-                format!("Tool call failed: {:?}", e),
-            )
+            McpResponse::error(request.id.clone(), code, format!("Tool call failed: {e:?}"))
         }
     }
 }

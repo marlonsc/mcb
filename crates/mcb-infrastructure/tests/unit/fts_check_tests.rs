@@ -13,7 +13,7 @@ mod tests {
 
         match result {
             Ok(_) => println!("FTS5 is available"),
-            Err(e) => panic!("FTS5 check failed: {}", e),
+            Err(e) => panic!("FTS5 check failed: {e}"),
         }
 
         // Try a simple insert and match

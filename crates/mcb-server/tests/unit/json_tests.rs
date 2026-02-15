@@ -25,7 +25,7 @@ fn test_get_str() {
 #[case(json!({"missing": 10}), None)]
 fn test_get_i64(#[case] value: serde_json::Value, #[case] expected: Option<i64>) {
     let map = value.as_object().unwrap();
-    assert_eq!(map.get("key").and_then(|entry| entry.as_i64()), expected);
+    assert_eq!(map.get("key").and_then(serde_json::Value::as_i64), expected);
 }
 
 #[rstest]
@@ -33,7 +33,10 @@ fn test_get_i64(#[case] value: serde_json::Value, #[case] expected: Option<i64>)
 #[case(json!({"missing": false}), None)]
 fn test_get_bool(#[case] value: serde_json::Value, #[case] expected: Option<bool>) {
     let map = value.as_object().unwrap();
-    assert_eq!(map.get("key").and_then(|entry| entry.as_bool()), expected);
+    assert_eq!(
+        map.get("key").and_then(serde_json::Value::as_bool),
+        expected
+    );
 }
 
 #[test]
@@ -50,8 +53,5 @@ fn test_get_string_list() {
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default();
-    assert_eq!(
-        values,
-        vec!["a".to_string(), "b".to_string(), "c".to_string()]
-    );
+    assert_eq!(values, vec!["a".to_owned(), "b".to_owned(), "c".to_owned()]);
 }

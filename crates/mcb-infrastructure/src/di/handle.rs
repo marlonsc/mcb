@@ -1,7 +1,7 @@
 //! Generic Provider Handle - Runtime-swappable provider wrapper
 //!
 //! A single generic implementation replacing four specific handle types.
-//! Wraps providers in RwLock to allow runtime reconfiguration via admin API.
+//! Wraps providers in `RwLock` to allow runtime reconfiguration via admin API.
 //!
 //! ## Pattern
 //!
@@ -15,7 +15,7 @@ use std::sync::{Arc, RwLock};
 
 /// Generic handle for runtime-swappable providers
 ///
-/// Wraps any provider type in a RwLock, allowing admin API to switch
+/// Wraps any provider type in a `RwLock`, allowing admin API to switch
 /// providers without restarting the application.
 ///
 /// # Type Parameters

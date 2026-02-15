@@ -7,71 +7,71 @@ mod tests {
 
     #[rstest]
     fn test_language_type_alias() {
-        let lang: Language = "rust".to_string();
+        let lang: Language = "rust".to_owned();
         assert_eq!(lang, "rust");
 
-        let python: Language = "python".to_string();
+        let python: Language = "python".to_owned();
         assert_eq!(python, "python");
 
-        let custom_lang: Language = "kotlinscript".to_string();
+        let custom_lang: Language = "kotlinscript".to_owned();
         assert_eq!(custom_lang, "kotlinscript");
     }
 
     #[rstest]
     fn test_operation_type_alias() {
-        let op: OperationType = "indexing".to_string();
+        let op: OperationType = "indexing".to_owned();
         assert_eq!(op, "indexing");
 
-        let search: OperationType = "search".to_string();
+        let search: OperationType = "search".to_owned();
         assert_eq!(search, "search");
 
-        let custom_op: OperationType = "custom-operation".to_string();
+        let custom_op: OperationType = "custom-operation".to_owned();
         assert_eq!(custom_op, "custom-operation");
     }
 
     #[rstest]
     fn test_embedding_provider_kind_alias() {
-        let provider: EmbeddingProviderKind = "openai".to_string();
+        let provider: EmbeddingProviderKind = "openai".to_owned();
         assert_eq!(provider, "openai");
 
-        let ollama: EmbeddingProviderKind = "ollama".to_string();
+        let ollama: EmbeddingProviderKind = "ollama".to_owned();
         assert_eq!(ollama, "ollama");
 
-        let custom: EmbeddingProviderKind = "my-custom-embedder".to_string();
+        let custom: EmbeddingProviderKind = "my-custom-embedder".to_owned();
         assert_eq!(custom, "my-custom-embedder");
     }
 
     #[rstest]
     fn test_vector_store_provider_kind_alias() {
-        let store: VectorStoreProviderKind = "qdrant".to_string();
+        let store: VectorStoreProviderKind = "qdrant".to_owned();
         assert_eq!(store, "qdrant");
 
-        let edgevec: VectorStoreProviderKind = "edgevec".to_string();
+        let edgevec: VectorStoreProviderKind = "edgevec".to_owned();
         assert_eq!(edgevec, "edgevec");
 
-        let custom: VectorStoreProviderKind = "my-vector-db".to_string();
+        let custom: VectorStoreProviderKind = "my-vector-db".to_owned();
         assert_eq!(custom, "my-vector-db");
     }
 
     #[rstest]
     fn test_type_alias_equality() {
-        let lang1: Language = "javascript".to_string();
-        let lang2: Language = "javascript".to_string();
+        let lang1: Language = "javascript".to_owned();
+        let lang2: Language = "javascript".to_owned();
         assert_eq!(lang1, lang2);
 
-        let op1: OperationType = "embedding".to_string();
-        let op2: OperationType = "embedding".to_string();
+        let op1: OperationType = "embedding".to_owned();
+        let op2: OperationType = "embedding".to_owned();
         assert_eq!(op1, op2);
     }
 
     #[rstest]
     fn test_type_alias_inequality() {
-        let lang1: Language = "rust".to_string();
-        let lang2: Language = "python".to_string();
+        let lang1: Language = "rust".to_owned();
+        let lang2: Language = "python".to_owned();
         assert_ne!(lang1, lang2);
 
-        let provider1: EmbeddingProviderKind = "openai".to_string();
-        let provider2: EmbeddingProviderKind = "anthropic".to_string();
+        let provider1: EmbeddingProviderKind = "openai".to_owned();
+        let provider2: EmbeddingProviderKind = "anthropic".to_owned();
         assert_ne!(provider1, provider2);
     }
 }

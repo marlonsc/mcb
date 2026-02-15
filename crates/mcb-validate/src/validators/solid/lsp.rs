@@ -29,7 +29,7 @@ pub fn validate_lsp(config: &ValidationConfig) -> Result<Vec<SolidViolation>> {
                     for (idx, impl_line) in block_lines.iter().enumerate() {
                         if let Some(fn_cap) = fn_pattern.captures(impl_line) {
                             let method_name = fn_cap.get(1).map_or("", |m| m.as_str());
-                            current_method = Some((method_name.to_string(), line_num + idx + 1));
+                            current_method = Some((method_name.to_owned(), line_num + idx + 1));
                         }
 
                         if let Some((ref method_name, method_line)) = current_method

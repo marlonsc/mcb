@@ -1,4 +1,4 @@
-//! SQLite Issue Entity Repository
+//! `SQLite` Issue Entity Repository
 //!
 //! # Overview
 //! The `SqliteIssueEntityRepository` provides persistence for the Issue Tracking domain.

@@ -87,6 +87,7 @@ define_violations! {
 
 impl KissViolation {
     /// Returns the severity level of this KISS violation.
+    #[must_use]
     pub fn severity(&self) -> Severity {
         <Self as Violation>::severity(self)
     }

@@ -16,13 +16,13 @@ use std::str::FromStr;
 /// Helper function to extract a required string field from a row.
 fn required_string(row: &dyn SqlRow, field_name: &str) -> Result<String> {
     row.try_get_string(field_name)?
-        .ok_or_else(|| Error::memory(format!("Missing {}", field_name)))
+        .ok_or_else(|| Error::memory(format!("Missing {field_name}")))
 }
 
 /// Helper function to extract a required i64 field from a row.
 fn required_i64(row: &dyn SqlRow, field_name: &str) -> Result<i64> {
     row.try_get_i64(field_name)?
-        .ok_or_else(|| Error::memory(format!("Missing {}", field_name)))
+        .ok_or_else(|| Error::memory(format!("Missing {field_name}")))
 }
 
 /// Build an `Observation` from a port row.
@@ -36,7 +36,7 @@ pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
 
     let obs_type_str: String = row
         .try_get_string(COL_OBSERVATION_TYPE)?
-        .unwrap_or_else(|| "context".to_string());
+        .unwrap_or_else(|| "context".to_owned());
     let observation_type = obs_type_str
         .parse()
         .map_err(|e| Error::memory(format!("Invalid observation_type: {e}")))?;

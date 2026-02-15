@@ -100,7 +100,7 @@ async fn test_ca001_detects_violation_end_to_end() {
     // Case 1: VIOLATION — has_internal_dependencies=true
     {
         let facts = create_facts(&[
-            (FACT_CRATE_NAME, RreValue::String(DOMAIN_CRATE.to_string())),
+            (FACT_CRATE_NAME, RreValue::String(DOMAIN_CRATE.to_owned())),
             (FACT_HAS_INTERNAL_DEPS, RreValue::Boolean(true)),
             (FACT_VIOLATION_TRIGGERED, RreValue::Boolean(false)),
         ]);
@@ -123,7 +123,7 @@ async fn test_ca001_detects_violation_end_to_end() {
     // Case 2: NO violation — has_internal_dependencies=false
     {
         let facts = create_facts(&[
-            (FACT_CRATE_NAME, RreValue::String(DOMAIN_CRATE.to_string())),
+            (FACT_CRATE_NAME, RreValue::String(DOMAIN_CRATE.to_owned())),
             (FACT_HAS_INTERNAL_DEPS, RreValue::Boolean(false)),
             (FACT_VIOLATION_TRIGGERED, RreValue::Boolean(false)),
         ]);

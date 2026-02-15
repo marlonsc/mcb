@@ -46,15 +46,15 @@ impl ClippyLinter {
         lint_codes: &[String],
     ) -> Result<Vec<LintViolation>> {
         let mut args = vec![
-            "clippy".to_string(),
-            "--message-format=json".to_string(),
-            "--".to_string(),
+            "clippy".to_owned(),
+            "--message-format=json".to_owned(),
+            "--".to_owned(),
         ];
 
         // Add each lint code as a warning flag
         for code in lint_codes {
             if code.starts_with("clippy::") {
-                args.push("-W".to_string());
+                args.push("-W".to_owned());
                 args.push(code.clone());
             }
         }

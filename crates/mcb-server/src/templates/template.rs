@@ -39,6 +39,7 @@ impl Template {
     ///
     /// This fairing, or the one returned by [`Template::custom()`], _must_ be
     /// attached to any `Rocket` instance that wishes to render templates.
+    #[must_use]
     pub fn fairing() -> impl Fairing {
         Template::custom(|_| {})
     }
@@ -109,7 +110,11 @@ impl Template {
     pub(crate) fn finalize(self, ctxt: &Context) -> Result<(ContentType, String), Status> {
         let name = &*self.name;
         let info = ctxt.templates.get(name).ok_or_else(|| {
-            let ts: Vec<_> = ctxt.templates.keys().map(|s| s.as_str()).collect();
+            let ts: Vec<_> = ctxt
+                .templates
+                .keys()
+                .map(std::string::String::as_str)
+                .collect();
             error_!("Template '{}' does not exist.", name);
             info_!("Known templates: {}.", ts.join(", "));
             info_!("Searched in {:?}.", ctxt.root);

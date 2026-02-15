@@ -2,56 +2,22 @@ use rstest::rstest;
 extern crate mcb_providers;
 
 use std::collections::BTreeSet;
-use std::net::TcpListener;
 use std::sync::Arc;
 
 use mcb_server::McpServer;
 use mcb_server::tools::router::{ToolExecutionContext, ToolHandlers, route_tool_call};
-use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
-use mcb_server::transport::types::{McpRequest, McpResponse};
 use rmcp::model::CallToolRequestParams;
-use rocket::http::{ContentType, Header, Status};
-use rocket::local::asynchronous::Client;
 use rstest::*;
-use tempfile::TempDir;
 
-use crate::test_utils::test_fixtures::create_test_mcp_server;
+use rocket::http::Status;
 
-fn get_free_port() -> u16 {
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to port 0");
-    let port = listener
-        .local_addr()
-        .expect("Failed to get local address")
-        .port();
-    drop(listener);
-    port
-}
-
-struct TestContext {
-    client: Client,
-    server: Arc<McpServer>,
-    _temp: TempDir,
-}
+use crate::test_utils::http_mcp::{
+    McpTestContext, post_mcp, tools_call_request, tools_list_request,
+};
 
 #[fixture]
-async fn ctx() -> TestContext {
-    let port = get_free_port();
-    let (server_instance, temp) = create_test_mcp_server().await;
-    let server = Arc::new(server_instance);
-
-    let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server.clone());
-
-    let rocket = transport.rocket();
-    let client = Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
-
-    TestContext {
-        client,
-        server,
-        _temp: temp,
-    }
+async fn ctx() -> McpTestContext {
+    McpTestContext::new().await
 }
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
@@ -75,56 +41,16 @@ fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
 
 fn direct_tool_call_request(tool_name: &str) -> CallToolRequestParams {
     CallToolRequestParams {
-        name: tool_name.to_string().into(),
+        name: tool_name.to_owned().into(),
         arguments: Some(serde_json::Map::new()),
         task: None,
         meta: None,
     }
 }
 
-async fn post_mcp(
-    ctx: &TestContext,
-    request: &McpRequest,
-    headers: &[(&str, &str)],
-) -> (Status, McpResponse) {
-    let mut builder = ctx.client.post("/mcp").header(ContentType::JSON);
-    for (name, value) in headers {
-        builder = builder.header(Header::new((*name).to_string(), (*value).to_string()));
-    }
-
-    let response = builder
-        .body(serde_json::to_string(request).expect("serialize request"))
-        .dispatch()
-        .await;
-
-    let status = response.status();
-    let body = response.into_string().await.expect("Response body");
-    let parsed: McpResponse = serde_json::from_str(&body).expect("Parse response");
-    (status, parsed)
-}
-
-fn tools_list_request() -> McpRequest {
-    McpRequest {
-        method: "tools/list".to_string(),
-        params: None,
-        id: Some(serde_json::json!(1)),
-    }
-}
-
-fn tools_call_request(tool_name: &str) -> McpRequest {
-    McpRequest {
-        method: "tools/call".to_string(),
-        params: Some(serde_json::json!({
-            "name": tool_name,
-            "arguments": {}
-        })),
-        id: Some(serde_json::json!(1)),
-    }
-}
-
 #[rstest]
 #[tokio::test]
-async fn test_tool_name_set_stability(#[future] ctx: TestContext) {
+async fn test_tool_name_set_stability(#[future] ctx: McpTestContext) {
     let ctx = ctx.await;
     let request = tools_list_request();
     let (status, response) = post_mcp(&ctx, &request, &[]).await;
@@ -157,7 +83,7 @@ async fn test_tool_name_set_stability(#[future] ctx: TestContext) {
 
 #[rstest]
 #[tokio::test]
-async fn test_tool_count_stability(#[future] ctx: TestContext) {
+async fn test_tool_count_stability(#[future] ctx: McpTestContext) {
     let ctx = ctx.await;
     let request = tools_list_request();
     let (status, response) = post_mcp(&ctx, &request, &[]).await;
@@ -176,7 +102,7 @@ async fn test_tool_count_stability(#[future] ctx: TestContext) {
 #[rstest]
 #[tokio::test]
 async fn test_each_tool_has_non_null_object_input_schema_with_properties(
-    #[future] ctx: TestContext,
+    #[future] ctx: McpTestContext,
 ) {
     let ctx = ctx.await;
     let request = tools_list_request();
@@ -206,7 +132,9 @@ async fn test_each_tool_has_non_null_object_input_schema_with_properties(
             "{name} inputSchema.type must be object"
         );
         assert!(
-            schema.get("properties").is_some_and(|v| v.is_object()),
+            schema
+                .get("properties")
+                .is_some_and(serde_json::Value::is_object),
             "{name} inputSchema.properties must be object"
         );
     }
@@ -218,7 +146,7 @@ async fn test_each_tool_has_non_null_object_input_schema_with_properties(
 #[case("memory")]
 #[tokio::test]
 async fn test_provenance_gating_requires_full_provenance_fields(
-    #[future] ctx: TestContext,
+    #[future] ctx: McpTestContext,
     #[case] tool_name: &str,
 ) {
     let ctx = ctx.await;
@@ -257,26 +185,26 @@ async fn test_provenance_gating_requires_full_provenance_fields(
 #[case("memory")]
 #[tokio::test]
 async fn test_delegation_requires_parent_session_id_when_delegated_true(
-    #[future] ctx: TestContext,
+    #[future] ctx: McpTestContext,
     #[case] tool_name: &str,
 ) {
     let ctx = ctx.await;
     let handlers = tool_handlers(&ctx.server);
     let request = direct_tool_call_request(tool_name);
     let execution_context = ToolExecutionContext {
-        session_id: Some("session-1".to_string()),
+        session_id: Some("session-1".to_owned()),
         parent_session_id: None,
-        project_id: Some("project-1".to_string()),
-        worktree_id: Some("worktree-1".to_string()),
-        repo_id: Some("repo-1".to_string()),
-        repo_path: Some("/tmp/repo".to_string()),
-        operator_id: Some("operator-1".to_string()),
-        machine_id: Some("machine-1".to_string()),
-        agent_program: Some("opencode".to_string()),
-        model_id: Some("gpt-5.3-codex".to_string()),
+        project_id: Some("project-1".to_owned()),
+        worktree_id: Some("worktree-1".to_owned()),
+        repo_id: Some("repo-1".to_owned()),
+        repo_path: Some("/tmp/repo".to_owned()),
+        operator_id: Some("operator-1".to_owned()),
+        machine_id: Some("machine-1".to_owned()),
+        agent_program: Some("opencode".to_owned()),
+        model_id: Some("gpt-5.3-codex".to_owned()),
         delegated: Some(true),
         timestamp: Some(1),
-        execution_flow: Some("stdio-only".to_string()),
+        execution_flow: Some("stdio-only".to_owned()),
     };
     let error = route_tool_call(request, &handlers, execution_context)
         .await
@@ -292,7 +220,9 @@ async fn test_delegation_requires_parent_session_id_when_delegated_true(
 
 #[rstest]
 #[tokio::test]
-async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid(#[future] ctx: TestContext) {
+async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid(
+    #[future] ctx: McpTestContext,
+) {
     let ctx = ctx.await;
     let request = tools_call_request("validate");
     let headers = [
@@ -321,7 +251,7 @@ async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid(#[future] c
 #[case("entity")]
 #[tokio::test]
 async fn test_operation_mode_matrix_blocks_tools_in_client_hybrid(
-    #[future] ctx: TestContext,
+    #[future] ctx: McpTestContext,
     #[case] tool_name: &str,
 ) {
     let ctx = ctx.await;

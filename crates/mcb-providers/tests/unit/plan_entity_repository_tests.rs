@@ -27,38 +27,38 @@ async fn setup_repo() -> (
 fn create_test_plan(id: &str) -> Plan {
     Plan {
         metadata: mcb_domain::entities::EntityMetadata {
-            id: id.to_string(),
+            id: id.to_owned(),
             created_at: TEST_NOW,
             updated_at: TEST_NOW,
         },
-        org_id: DEFAULT_ORG_ID.to_string(),
-        project_id: "proj-1".to_string(),
+        org_id: DEFAULT_ORG_ID.to_owned(),
+        project_id: "proj-1".to_owned(),
         title: format!("Plan {id}"),
         description: format!("Description for plan {id}"),
         status: PlanStatus::Draft,
-        created_by: "user-1".to_string(),
+        created_by: "user-1".to_owned(),
     }
 }
 
 fn create_test_version(id: &str, plan_id: &str, version_number: i64) -> PlanVersion {
     PlanVersion {
-        id: id.to_string(),
-        org_id: DEFAULT_ORG_ID.to_string(),
-        plan_id: plan_id.to_string(),
+        id: id.to_owned(),
+        org_id: DEFAULT_ORG_ID.to_owned(),
+        plan_id: plan_id.to_owned(),
         version_number,
         content_json: format!("{{\"v\": {version_number}}}"),
         change_summary: format!("Version {version_number} changes"),
-        created_by: "user-1".to_string(),
+        created_by: "user-1".to_owned(),
         created_at: TEST_NOW,
     }
 }
 
 fn create_test_review(id: &str, plan_version_id: &str, verdict: ReviewVerdict) -> PlanReview {
     PlanReview {
-        id: id.to_string(),
-        org_id: DEFAULT_ORG_ID.to_string(),
-        plan_version_id: plan_version_id.to_string(),
-        reviewer_id: "user-1".to_string(),
+        id: id.to_owned(),
+        org_id: DEFAULT_ORG_ID.to_owned(),
+        plan_version_id: plan_version_id.to_owned(),
+        reviewer_id: "user-1".to_owned(),
         verdict,
         feedback: format!("Feedback for review {id}"),
         created_at: TEST_NOW,
@@ -153,16 +153,16 @@ async fn org_isolation_plans(#[case] org_id: &str, #[case] should_find: bool) {
     let repo = SqlitePlanEntityRepository::new(executor);
     let plan = Plan {
         metadata: mcb_domain::entities::EntityMetadata {
-            id: "plan-iso".to_string(),
+            id: "plan-iso".to_owned(),
             created_at: TEST_NOW,
             updated_at: TEST_NOW,
         },
-        org_id: "org-A".to_string(),
-        project_id: "proj-org-A".to_string(),
-        title: "Org A Plan".to_string(),
-        description: "belongs to A".to_string(),
+        org_id: "org-A".to_owned(),
+        project_id: "proj-org-A".to_owned(),
+        title: "Org A Plan".to_owned(),
+        description: "belongs to A".to_owned(),
         status: PlanStatus::Draft,
-        created_by: "user-org-A".to_string(),
+        created_by: "user-org-A".to_owned(),
     };
     repo.create_plan(&plan).await.expect("create");
 

@@ -12,6 +12,7 @@ impl WorkspaceExplorer {
     ///
     /// Traverses up the directory tree looking for a `Cargo.toml` file
     /// that contains a `[workspace]` section.
+    #[must_use]
     pub fn find_workspace_root_from(start: &Path) -> Option<PathBuf> {
         let mut current = start.to_path_buf();
         loop {
@@ -29,6 +30,7 @@ impl WorkspaceExplorer {
     }
 
     /// Find workspace root from current directory.
+    #[must_use]
     pub fn find_workspace_root() -> Option<PathBuf> {
         let current = std::env::current_dir().ok()?;
         Self::find_workspace_root_from(&current)
@@ -38,6 +40,7 @@ impl WorkspaceExplorer {
     ///
     /// Primarily looks in `crates/<crate_name>/src`.
     /// Returns paths to `src/` directories of detected crates.
+    #[must_use]
     pub fn scan_crate_sources(workspace_root: &Path, exclude_patterns: &[&str]) -> Vec<PathBuf> {
         let mut scan_dirs = Vec::new();
         let crates_dir = workspace_root.join("crates");

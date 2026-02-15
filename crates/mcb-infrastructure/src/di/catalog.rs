@@ -1,6 +1,6 @@
 //! Dill Catalog Configuration
 //!
-//! Configures the dill IoC container with all infrastructure services.
+//! Configures the dill `IoC` container with all infrastructure services.
 
 use std::sync::Arc;
 

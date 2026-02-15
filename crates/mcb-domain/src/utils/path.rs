@@ -13,7 +13,7 @@ use crate::error::Error;
 ///
 /// # Errors
 ///
-/// - `path` is not under `root` (strip_prefix fails)
+/// - `path` is not under `root` (`strip_prefix` fails)
 /// - The relative path contains non-UTF-8 components
 ///
 /// # Examples
@@ -37,7 +37,7 @@ pub fn workspace_relative_path(path: &Path, root: &Path) -> Result<String, Error
 /// Returns an error if `path` is not under `root`.
 pub fn strict_strip_prefix(path: &Path, root: &Path) -> Result<PathBuf, Error> {
     path.strip_prefix(root)
-        .map(|p| p.to_path_buf())
+        .map(std::path::Path::to_path_buf)
         .map_err(|_| {
             Error::invalid_argument(format!(
                 "path '{}' is not under root '{}'",

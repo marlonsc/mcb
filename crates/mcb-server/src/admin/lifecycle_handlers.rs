@@ -2,7 +2,7 @@
 //!
 //! HTTP handlers for service lifecycle management endpoints.
 //! These endpoints allow starting, stopping, and restarting
-//! services via the ServiceManager.
+//! services via the `ServiceManager`.
 //!
 //! ## Endpoints
 //!
@@ -31,7 +31,7 @@ fn service_manager_unavailable(
     (
         Status::ServiceUnavailable,
         Json(ServiceErrorResponse {
-            error: "Service manager not available".to_string(),
+            error: "Service manager not available".to_owned(),
             service: None,
             count: include_list_defaults.then_some(0),
             services: include_list_defaults.then_some(vec![]),
@@ -43,8 +43,8 @@ fn service_action_success(action: &str, name: &str) -> (Status, Json<ServiceActi
     (
         Status::Ok,
         Json(ServiceActionResponse {
-            status: action.to_string(),
-            service: name.to_string(),
+            status: action.to_owned(),
+            service: name.to_owned(),
         }),
     )
 }
@@ -57,7 +57,7 @@ fn service_action_error(
         Status::BadRequest,
         Json(ServiceErrorResponse {
             error: error.to_string(),
-            service: Some(name.to_string()),
+            service: Some(name.to_owned()),
             count: None,
             services: None,
         }),

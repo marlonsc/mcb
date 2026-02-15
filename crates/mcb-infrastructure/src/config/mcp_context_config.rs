@@ -7,8 +7,8 @@ use std::path::{Path, PathBuf};
 /// Enables per-repository configuration for git-aware indexing:
 /// - branches: which branches to index (default: main, HEAD, current)
 /// - depth: commit history depth (default: 50)
-/// - ignore_patterns: patterns to exclude (e.g., "*.log", "node_modules/")
-/// - include_submodules: recursive indexing (default: true)
+/// - `ignore_patterns`: patterns to exclude (e.g., "*.log", "`node_modules`/")
+/// - `include_submodules`: recursive indexing (default: true)
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -40,7 +40,7 @@ pub struct GitConfig {
     #[serde(default = "default_depth")]
     pub depth: usize,
 
-    /// Patterns to ignore (e.g., ["*.log", "node_modules/"])
+    /// Patterns to ignore (e.g., ["*.log", "`node_modules`/"])
     #[serde(default)]
     pub ignore_patterns: Vec<String>,
 
@@ -75,12 +75,13 @@ struct EmbeddedMcpContext {
 }
 
 fn embedded_mcp_context_defaults() -> McpContextConfig {
-    toml::from_str::<EmbeddedDefaultsToml>(EMBEDDED_APP_DEFAULTS)
-        .map(|parsed| McpContextConfig {
+    toml::from_str::<EmbeddedDefaultsToml>(EMBEDDED_APP_DEFAULTS).map_or_else(
+        |e| panic!("Failed to load embedded mcp_context defaults: {e}"),
+        |parsed| McpContextConfig {
             git: parsed.mcp_context.git,
             custom: HashMap::new(),
-        })
-        .unwrap_or_else(|e| panic!("Failed to load embedded mcp_context defaults: {e}"))
+        },
+    )
 }
 
 /// Root MCP Context configuration
@@ -112,6 +113,7 @@ impl McpContextConfig {
     }
 
     /// Load configuration, returning default if file not found
+    #[must_use]
     pub fn load_from_path_or_default(path: &Path) -> Self {
         Self::load_from_path(path).unwrap_or_else(|_| embedded_mcp_context_defaults())
     }

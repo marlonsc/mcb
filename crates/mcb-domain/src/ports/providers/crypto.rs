@@ -84,6 +84,7 @@ pub struct EncryptedData {
 
 impl EncryptedData {
     /// Create a new encrypted data container
+    #[must_use]
     pub fn new(ciphertext: Vec<u8>, nonce: Vec<u8>) -> Self {
         Self { ciphertext, nonce }
     }

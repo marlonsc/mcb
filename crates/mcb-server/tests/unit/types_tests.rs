@@ -21,7 +21,7 @@ fn test_mcp_request_serialization(
     #[case] expected_param_fragment: Option<&str>,
 ) {
     let request = McpRequest {
-        method: method.to_string(),
+        method: method.to_owned(),
         params,
         id: Some(serde_json::json!(id)),
     };

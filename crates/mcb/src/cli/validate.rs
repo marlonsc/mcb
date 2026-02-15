@@ -50,6 +50,7 @@ pub struct ValidationResult {
 
 impl ValidationResult {
     /// Returns true if validation failed based on mode
+    #[must_use]
     pub fn failed(&self) -> bool {
         if self.strict_mode {
             self.errors > 0 || self.warnings > 0

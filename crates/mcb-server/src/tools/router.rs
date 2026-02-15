@@ -116,7 +116,7 @@ fn insert_i64_argument_if_missing(
 
     let arguments = request.arguments.get_or_insert_with(Default::default);
     arguments
-        .entry(key.to_string())
+        .entry(key.to_owned())
         .or_insert_with(|| Value::Number(serde_json::Number::from(value)));
 }
 
@@ -131,7 +131,7 @@ fn insert_bool_argument_if_missing(
 
     let arguments = request.arguments.get_or_insert_with(Default::default);
     arguments
-        .entry(key.to_string())
+        .entry(key.to_owned())
         .or_insert_with(|| Value::Bool(value));
 }
 
@@ -146,14 +146,14 @@ fn insert_argument_if_missing(
 
     let arguments = request.arguments.get_or_insert_with(Default::default);
     arguments
-        .entry(key.to_string())
+        .entry(key.to_owned())
         .or_insert_with(|| Value::String(value.to_owned()));
 }
 
 /// Route a tool call request to the appropriate handler
 ///
 /// Parses the request arguments and delegates to the matching handler.
-/// After tool execution, automatically triggers PostToolUse hook for memory operations.
+/// After tool execution, automatically triggers `PostToolUse` hook for memory operations.
 pub async fn route_tool_call(
     request: CallToolRequestParams,
     handlers: &ToolHandlers,
@@ -307,7 +307,7 @@ async fn trigger_post_tool_use_hook(
     execution_context: &ToolExecutionContext,
 ) -> Result<(), String> {
     let mut context =
-        PostToolUseContext::new(tool_name.to_string(), result.is_error.unwrap_or(false));
+        PostToolUseContext::new(tool_name.to_owned(), result.is_error.unwrap_or(false));
 
     if let Some(session_id) = &execution_context.session_id {
         context = context.with_session_id(SessionId::from_string(session_id));
@@ -358,26 +358,26 @@ mod tests {
 
     fn valid_context() -> ToolExecutionContext {
         ToolExecutionContext {
-            session_id: Some("session-1".to_string()),
-            parent_session_id: Some("parent-1".to_string()),
-            project_id: Some("project-1".to_string()),
-            worktree_id: Some("wt-1".to_string()),
-            repo_id: Some("repo-1".to_string()),
-            repo_path: Some("/tmp/repo".to_string()),
-            operator_id: Some("operator-1".to_string()),
-            machine_id: Some("machine-1".to_string()),
-            agent_program: Some("opencode".to_string()),
-            model_id: Some("gpt-5.3-codex".to_string()),
+            session_id: Some("session-1".to_owned()),
+            parent_session_id: Some("parent-1".to_owned()),
+            project_id: Some("project-1".to_owned()),
+            worktree_id: Some("wt-1".to_owned()),
+            repo_id: Some("repo-1".to_owned()),
+            repo_path: Some("/tmp/repo".to_owned()),
+            operator_id: Some("operator-1".to_owned()),
+            machine_id: Some("machine-1".to_owned()),
+            agent_program: Some("opencode".to_owned()),
+            model_id: Some("gpt-5.3-codex".to_owned()),
             delegated: Some(false),
             timestamp: Some(1),
-            execution_flow: Some("stdio-only".to_string()),
+            execution_flow: Some("stdio-only".to_owned()),
         }
     }
 
     #[test]
     fn rejects_blank_provenance_scope_for_search() {
         let mut context = valid_context();
-        context.project_id = Some("   ".to_string());
+        context.project_id = Some("   ".to_owned());
 
         let error = validate_execution_context("search", &context)
             .expect_err("blank project_id must be rejected");
@@ -388,7 +388,7 @@ mod tests {
     fn rejects_delegated_without_parent_session_id() {
         let mut context = valid_context();
         context.delegated = Some(true);
-        context.parent_session_id = Some(" ".to_string());
+        context.parent_session_id = Some(" ".to_owned());
 
         let error = validate_execution_context("memory", &context)
             .expect_err("delegated context must include parent_session_id");
@@ -410,7 +410,7 @@ mod tests {
             model_id: None,
             delegated: None,
             timestamp: None,
-            execution_flow: Some("stdio-only".to_string()),
+            execution_flow: Some("stdio-only".to_owned()),
         };
 
         validate_execution_context("validate", &context)
@@ -420,7 +420,7 @@ mod tests {
     #[test]
     fn rejects_validate_in_server_hybrid_flow() {
         let mut context = valid_context();
-        context.execution_flow = Some("server-hybrid".to_string());
+        context.execution_flow = Some("server-hybrid".to_owned());
 
         let err = validate_execution_context("validate", &context)
             .expect_err("validate must be rejected in server-hybrid flow");
@@ -430,7 +430,7 @@ mod tests {
     #[test]
     fn rejects_search_in_client_hybrid_flow() {
         let mut context = valid_context();
-        context.execution_flow = Some("client-hybrid".to_string());
+        context.execution_flow = Some("client-hybrid".to_owned());
 
         let err = validate_execution_context("search", &context)
             .expect_err("search must be rejected in client-hybrid flow");
@@ -440,7 +440,7 @@ mod tests {
     #[test]
     fn allows_search_in_server_hybrid_flow() {
         let mut context = valid_context();
-        context.execution_flow = Some("server-hybrid".to_string());
+        context.execution_flow = Some("server-hybrid".to_owned());
 
         validate_execution_context("search", &context)
             .expect("search must be allowed in server-hybrid flow");

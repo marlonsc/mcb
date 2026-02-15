@@ -11,16 +11,17 @@ use mcb_domain::constants::lang::*;
 ///
 /// Returns a string identifier for the programming language based on the file extension.
 /// Returns "unknown" for unsupported or unrecognized extensions.
+#[must_use]
 pub fn language_from_extension(ext: &str) -> String {
     let ext_lower = ext.to_lowercase();
     EXTENSION_LANG_MAP
         .iter()
         .find(|(exts, _)| exts.iter().any(|e| *e == ext_lower))
-        .map(|(_, lang)| (*lang).to_string())
-        .unwrap_or_else(|| LANG_UNKNOWN.to_string())
+        .map_or_else(|| LANG_UNKNOWN.to_owned(), |(_, lang)| (*lang).to_owned())
 }
 
 /// Check if a language is supported for AST-based chunking
+#[must_use]
 pub fn is_language_supported(language: &str) -> bool {
     matches!(
         language,
@@ -41,29 +42,30 @@ pub fn is_language_supported(language: &str) -> bool {
 }
 
 /// Get the chunk size for a specific language
+#[must_use]
 pub fn get_chunk_size(language: &str) -> usize {
     LANG_CHUNK_SIZE_MAP
         .iter()
         .find(|(langs, _)| langs.contains(&language))
-        .map(|(_, size)| *size)
-        .unwrap_or(CHUNK_SIZE_GENERIC)
+        .map_or(CHUNK_SIZE_GENERIC, |(_, size)| *size)
 }
 
 /// Get a list of all supported languages
+#[must_use]
 pub fn supported_languages() -> Vec<String> {
     vec![
-        LANG_RUST.to_string(),
-        LANG_PYTHON.to_string(),
-        LANG_JAVASCRIPT.to_string(),
-        LANG_TYPESCRIPT.to_string(),
-        LANG_GO.to_string(),
-        LANG_JAVA.to_string(),
-        LANG_C.to_string(),
-        LANG_CPP.to_string(),
-        LANG_CSHARP.to_string(),
-        LANG_RUBY.to_string(),
-        LANG_PHP.to_string(),
-        LANG_SWIFT.to_string(),
-        LANG_KOTLIN.to_string(),
+        LANG_RUST.to_owned(),
+        LANG_PYTHON.to_owned(),
+        LANG_JAVASCRIPT.to_owned(),
+        LANG_TYPESCRIPT.to_owned(),
+        LANG_GO.to_owned(),
+        LANG_JAVA.to_owned(),
+        LANG_C.to_owned(),
+        LANG_CPP.to_owned(),
+        LANG_CSHARP.to_owned(),
+        LANG_RUBY.to_owned(),
+        LANG_PHP.to_owned(),
+        LANG_SWIFT.to_owned(),
+        LANG_KOTLIN.to_owned(),
     ]
 }

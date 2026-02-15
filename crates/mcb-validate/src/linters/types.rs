@@ -11,7 +11,7 @@ use derive_more::Display;
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, Display)]
 #[display("[{rule}] {message}")]
 pub struct LintViolation {
-    /// The rule identifier (e.g., "E501", "clippy::unwrap_used").
+    /// The rule identifier (e.g., "E501", "`clippy::unwrap_used`").
     pub rule: String,
     /// The file path where the violation occurred.
     pub file: String,
@@ -25,7 +25,7 @@ pub struct LintViolation {
     pub severity: String,
     /// The category of the violation (e.g., "style", "correctness").
     pub category: String,
-    /// Cached PathBuf for `Violation::file()` trait method.
+    /// Cached `PathBuf` for `Violation::file()` trait method.
     #[serde(skip)]
     pub file_path_cache: Option<PathBuf>,
 }
@@ -107,6 +107,7 @@ pub enum LinterType {
 
 impl LinterType {
     /// Returns the executable command name for the linter.
+    #[must_use]
     pub fn command(&self) -> &'static str {
         match self {
             LinterType::Ruff => "ruff",
@@ -115,6 +116,7 @@ impl LinterType {
     }
 
     /// Returns the file extension targeted by this linter.
+    #[must_use]
     pub fn supported_extension(&self) -> &'static str {
         match self {
             LinterType::Ruff => "py",
@@ -123,33 +125,36 @@ impl LinterType {
     }
 
     /// Checks if a file extension matches the linter's target type.
+    #[must_use]
     pub fn matches_extension(&self, ext: Option<&str>) -> bool {
         ext == Some(self.supported_extension())
     }
 
     /// Generates the command-line arguments for running the linter on specific files.
+    #[must_use]
     pub fn args(&self, files: &[&std::path::Path]) -> Vec<String> {
         match self {
             LinterType::Ruff => {
-                let mut args = vec!["check".to_string(), "--output-format=json".to_string()];
+                let mut args = vec!["check".to_owned(), "--output-format=json".to_owned()];
                 for file in files {
                     if let Some(file_str) = file.to_str() {
-                        args.push(file_str.to_string());
+                        args.push(file_str.to_owned());
                     }
                 }
                 args
             }
             LinterType::Clippy => {
                 vec![
-                    "clippy".to_string(),
-                    "--message-format=json".to_string(),
-                    "--".to_string(),
+                    "clippy".to_owned(),
+                    "--message-format=json".to_owned(),
+                    "--".to_owned(),
                 ]
             }
         }
     }
 
     /// Parses the raw stdout output from the linter into a unified violation list.
+    #[must_use]
     pub fn parse_output(&self, output: &str) -> Vec<LintViolation> {
         match self {
             LinterType::Ruff => crate::linters::parsers::parse_ruff_output(output),
@@ -205,7 +210,7 @@ pub struct ClippyMessageContent {
 /// Code identifier info for a Clippy message.
 #[derive(serde::Deserialize)]
 pub struct ClippyCode {
-    /// The string identifier (e.g., "clippy::unwrap_used").
+    /// The string identifier (e.g., "`clippy::unwrap_used`").
     pub code: String,
     /// Optional explanation of the code.
     pub explanation: Option<String>,

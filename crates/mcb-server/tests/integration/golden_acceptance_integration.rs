@@ -1,14 +1,14 @@
 //! Golden Acceptance Tests for v0.1.2
 //!
 //! This module validates the core functionality of MCP Context Browser using
-//! real local providers (FastEmbedProvider + EdgeVec) for testing.
+//! real local providers (`FastEmbedProvider` + `EdgeVec`) for testing.
 //!
 //! ## Key Principle
 //!
 //! Golden tests validate:
 //! 1. Repository indexing completes successfully from real files
 //! 2. Queries execute within time limits
-//! 3. Search returns results matching expected_files
+//! 3. Search returns results matching `expected_files`
 //! 4. The architecture works end-to-end without external dependencies
 //!
 //! Uses `extern crate mcb_providers` to force linkme registration.
@@ -64,12 +64,12 @@ fn load_golden_queries() -> GoldenQueriesConfig {
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/golden_queries.json");
 
     let content = std::fs::read_to_string(&fixture_path)
-        .unwrap_or_else(|_| panic!("Failed to read golden queries from {:?}", fixture_path));
+        .unwrap_or_else(|_| panic!("Failed to read golden queries from {fixture_path:?}"));
 
     serde_json::from_str(&content).expect("Failed to parse golden queries JSON")
 }
 
-/// Read all source files from sample_codebase and create CodeChunks
+/// Read all source files from `sample_codebase` and create `CodeChunks`
 fn read_sample_codebase_files() -> Vec<CodeChunk> {
     let sample_path =
         Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample_codebase/src");
@@ -86,7 +86,7 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("unknown")
-                    .to_string();
+                    .to_owned();
 
                 let line_count = content.lines().count();
 
@@ -96,7 +96,7 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
                     content,
                     start_line: 1,
                     end_line: line_count as u32,
-                    language: "rust".to_string(),
+                    language: "rust".to_owned(),
                     metadata: json!({"source": "sample_codebase"}),
                 });
             }
@@ -156,7 +156,7 @@ fn test_config_values_reasonable(#[case] field: &str, #[case] expected_valid: bo
         }
         _ => false,
     };
-    assert_eq!(is_valid, expected_valid, "Config field '{}' invalid", field);
+    assert_eq!(is_valid, expected_valid, "Config field '{field}' invalid");
 }
 
 #[test]
@@ -193,8 +193,7 @@ fn test_sample_codebase_files_exist() {
             && file_names.contains(&"di.rs")
             && file_names.contains(&"error.rs")
             && file_names.contains(&"chunking.rs"),
-        "Missing expected files in sample_codebase. Found: {:?}",
-        file_names
+        "Missing expected files in sample_codebase. Found: {file_names:?}"
     );
 }
 
@@ -213,9 +212,7 @@ fn test_sample_codebase_contains_expected_file(#[case] expected_file: &str) {
         .collect();
     assert!(
         file_names.iter().any(|f| f == expected_file),
-        "Missing expected file {} in sample_codebase. Found: {:?}",
-        expected_file,
-        file_names
+        "Missing expected file {expected_file} in sample_codebase. Found: {file_names:?}"
     );
 }
 
@@ -227,16 +224,31 @@ fn unique_test_config() -> AppConfig {
         .expect("system time")
         .as_nanos();
     let thread_id = std::thread::current().id();
-    let db_path =
-        std::env::temp_dir().join(format!("mcb-golden-test-{}-{:?}.db", stamp, thread_id));
+    let db_path = std::env::temp_dir().join(format!("mcb-golden-test-{stamp}-{thread_id:?}.db"));
     config.providers.database.configs.insert(
-        "default".to_string(),
+        "default".to_owned(),
         mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
+            provider: "sqlite".to_owned(),
             path: Some(db_path),
         },
     );
+    config.providers.embedding.cache_dir = Some(shared_fastembed_cache_dir());
     config
+}
+
+/// Persistent shared cache dir for `FastEmbed` ONNX model.
+fn shared_fastembed_cache_dir() -> std::path::PathBuf {
+    use std::sync::OnceLock;
+    static DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
+    DIR.get_or_init(|| {
+        let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
+            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
+            std::path::PathBuf::from,
+        );
+        std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
+        cache_dir
+    })
+    .clone()
 }
 
 // ============================================================================
@@ -281,8 +293,7 @@ async fn test_golden_index_real_files() {
 
     assert!(
         embed_time < Duration::from_secs(60),
-        "Embedding should finish within performance budget: {:?}",
-        embed_time
+        "Embedding should finish within performance budget: {embed_time:?}"
     );
 
     // Step 3: Build metadata from real chunks
@@ -290,12 +301,12 @@ async fn test_golden_index_real_files() {
         .iter()
         .map(|chunk| {
             let mut meta = HashMap::new();
-            meta.insert("id".to_string(), json!(chunk.id));
-            meta.insert("file_path".to_string(), json!(chunk.file_path));
-            meta.insert("content".to_string(), json!(chunk.content));
-            meta.insert("start_line".to_string(), json!(chunk.start_line));
-            meta.insert("end_line".to_string(), json!(chunk.end_line));
-            meta.insert("language".to_string(), json!(chunk.language));
+            meta.insert("id".to_owned(), json!(chunk.id));
+            meta.insert("file_path".to_owned(), json!(chunk.file_path));
+            meta.insert("content".to_owned(), json!(chunk.content));
+            meta.insert("start_line".to_owned(), json!(chunk.start_line));
+            meta.insert("end_line".to_owned(), json!(chunk.end_line));
+            meta.insert("language".to_owned(), json!(chunk.language));
             meta
         })
         .collect();
@@ -338,8 +349,8 @@ async fn test_golden_search_validates_expected_files() {
         .iter()
         .map(|c| {
             let mut m = HashMap::new();
-            m.insert("file_path".to_string(), json!(c.file_path));
-            m.insert("content".to_string(), json!(c.content));
+            m.insert("file_path".to_owned(), json!(c.file_path));
+            m.insert("content".to_owned(), json!(c.content));
             m
         })
         .collect();
@@ -402,10 +413,10 @@ async fn test_golden_search_validates_expected_files() {
 
 /// Test that validates all golden queries find their expected files.
 ///
-/// Uses FastEmbedProvider (local) with embeddings that enable
+/// Uses `FastEmbedProvider` (local) with embeddings that enable
 /// semantic-like matching without requiring external embedding services.
 /// The provider generates vectors based on domain keywords
-/// (embedding, vector_store, handler, cache, di, error, chunking, etc.)
+/// (embedding, `vector_store`, handler, cache, di, error, chunking, etc.)
 #[tokio::test]
 async fn test_golden_all_queries_find_expected_files() {
     let config = unique_test_config();
@@ -431,8 +442,8 @@ async fn test_golden_all_queries_find_expected_files() {
         .iter()
         .map(|c| {
             let mut m = HashMap::new();
-            m.insert("file_path".to_string(), json!(c.file_path));
-            m.insert("content".to_string(), json!(c.content));
+            m.insert("file_path".to_owned(), json!(c.file_path));
+            m.insert("content".to_owned(), json!(c.content));
             m
         })
         .collect();
@@ -547,8 +558,8 @@ async fn test_golden_full_workflow_end_to_end() {
         .iter()
         .map(|c| {
             let mut m = HashMap::new();
-            m.insert("file_path".to_string(), json!(c.file_path));
-            m.insert("content".to_string(), json!(c.content));
+            m.insert("file_path".to_owned(), json!(c.file_path));
+            m.insert("content".to_owned(), json!(c.content));
             m
         })
         .collect();
@@ -600,8 +611,6 @@ async fn test_golden_full_workflow_end_to_end() {
     let success_rate = (successful_queries as f64) / (total as f64);
     assert!(
         success_rate >= 0.5,
-        "At least 50% of golden queries should find expected files. Got: {}/{}",
-        successful_queries,
-        total
+        "At least 50% of golden queries should find expected files. Got: {successful_queries}/{total}"
     );
 }

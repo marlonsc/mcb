@@ -19,7 +19,7 @@ mod integration_metrics_tests {
         let analyzer = RcaAnalyzer::new();
         let path = Path::new("simple.rs");
 
-        let content = br"
+        let content = b"
 fn add(a: i32, b: i32) -> i32 {
     a + b
 }
@@ -42,7 +42,7 @@ fn add(a: i32, b: i32) -> i32 {
         MetricType::CognitiveComplexity,
         5,
         Severity::Warning,
-        br"
+        b"
 fn complex(x: i32) -> i32 {
     if x > 0 {
         if x > 10 {
@@ -66,7 +66,7 @@ fn complex(x: i32) -> i32 {
         MetricType::CyclomaticComplexity,
         3,
         Severity::Error,
-        br"
+        b"
 fn branchy(x: i32) -> i32 {
     if x > 0 {
         match x {
@@ -88,7 +88,7 @@ fn branchy(x: i32) -> i32 {
         MetricType::FunctionLength,
         5,
         Severity::Warning,
-        br"
+        b"
 fn long_function() {
     let a = 1;
     let b = 2;
@@ -147,7 +147,7 @@ fn long_function() {
 
         let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
-        let content = br"
+        let content = b"
 struct Calculator;
 
 impl Calculator {
@@ -176,8 +176,8 @@ impl Calculator {
 
         // Should detect complex but not simple
         let names: Vec<_> = violations.iter().map(|v| &v.item_name).collect();
-        assert!(names.contains(&&"complex".to_string()));
-        assert!(!names.contains(&&"simple".to_string()));
+        assert!(names.contains(&&"complex".to_owned()));
+        assert!(!names.contains(&&"simple".to_owned()));
     }
 
     /// Test analyzing a real file
@@ -188,7 +188,7 @@ impl Calculator {
 
         std::fs::write(
             &file_path,
-            r"
+            "
 fn test_function(x: i32) -> i32 {
     match x {
         0 => 0,
@@ -364,7 +364,7 @@ fn nested(x: i32) {
     #[case(
         LANG::Python,
         "test.py",
-        br"
+        b"
 def complex_function(x):
     if x > 0:
         if x > 10:
@@ -376,7 +376,7 @@ def complex_function(x):
     #[case(
         LANG::Mozjs,
         "test.js",
-        br"
+        b"
 function complexFunction(x) {
     if (x > 0) {
         if (x > 10) {

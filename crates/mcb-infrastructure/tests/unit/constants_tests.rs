@@ -24,8 +24,8 @@ use rstest::rstest;
 #[case(HTTP_CLIENT_IDLE_TIMEOUT_SECS, 30, 300)]
 #[case(HTTP_KEEPALIVE_SECS, 30, 120)]
 fn test_http_time_constants(#[case] value: u64, #[case] min: u64, #[case] max: u64) {
-    assert!(value >= min, "Value {} too small (< {})", value, min);
-    assert!(value <= max, "Value {} too large (> {})", value, max);
+    assert!(value >= min, "Value {value} too small (< {min})");
+    assert!(value <= max, "Value {value} too large (> {max})");
 }
 
 #[rstest]

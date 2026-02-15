@@ -21,7 +21,7 @@ where
             let path = &entry.absolute_path;
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
-            visitor(path.to_path_buf(), lines)
+            visitor(path.clone(), lines)
         })?;
     }
     Ok(())
@@ -92,6 +92,7 @@ where
 }
 
 /// Count lines in a code block (impl, struct, etc.)
+#[must_use]
 pub fn count_block_lines(lines: &[&str], start_line: usize) -> usize {
     let mut count = 0;
     within_block(lines, start_line, |_, _| {
@@ -102,6 +103,7 @@ pub fn count_block_lines(lines: &[&str], start_line: usize) -> usize {
 }
 
 /// Generic helper: Count pattern matches within a block
+#[must_use]
 pub fn count_matches_in_block(lines: &[&str], start_line: usize, pattern: &Regex) -> usize {
     let mut count = 0;
     within_block(lines, start_line, |line, _| {
@@ -133,6 +135,7 @@ pub fn count_match_arms(lines: &[&str], start_line: usize) -> Result<usize> {
 }
 
 /// Check if structs seem related (share common prefix/suffix).
+#[must_use]
 pub fn structs_seem_related(names: &[String]) -> bool {
     if names.len() < 2 {
         return true;

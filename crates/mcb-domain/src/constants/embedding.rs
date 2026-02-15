@@ -1,12 +1,12 @@
 /// Null/placeholder provider dimension (MiniLM-L6 default).
 pub const EMBEDDING_DIMENSION_NULL: usize = 384;
-/// FastEmbed default model dimension (MiniLM-L6-v2).
+/// `FastEmbed` default model dimension (MiniLM-L6-v2).
 pub const EMBEDDING_DIMENSION_FASTEMBED_DEFAULT: usize = 384;
-/// OpenAI text-embedding-3-small dimension.
+/// `OpenAI` text-embedding-3-small dimension.
 pub const EMBEDDING_DIMENSION_OPENAI_SMALL: usize = 1536;
-/// OpenAI text-embedding-3-large dimension.
+/// `OpenAI` text-embedding-3-large dimension.
 pub const EMBEDDING_DIMENSION_OPENAI_LARGE: usize = 3072;
-/// OpenAI text-embedding-ada-002 dimension.
+/// `OpenAI` text-embedding-ada-002 dimension.
 pub const EMBEDDING_DIMENSION_OPENAI_ADA: usize = 1536;
 /// Voyage AI default model dimension.
 pub const EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT: usize = 1024;

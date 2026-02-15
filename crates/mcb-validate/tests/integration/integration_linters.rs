@@ -251,13 +251,13 @@ async fn test_linter_mapping() {
 #[test]
 fn test_lint_violation_structure() {
     let violation = LintViolation {
-        rule: "F401".to_string(),
-        file: "test.py".to_string(),
+        rule: "F401".to_owned(),
+        file: "test.py".to_owned(),
         line: 10,
         column: 5,
-        message: "Unused import".to_string(),
-        severity: "error".to_string(),
-        category: "quality".to_string(),
+        message: "Unused import".to_owned(),
+        severity: "error".to_owned(),
+        category: "quality".to_owned(),
         file_path_cache: None,
     };
 
@@ -279,11 +279,11 @@ fn test_lint_code_categorization() {
     // Clippy codes: clippy::unwrap_used, clippy::expect_used, etc.
 
     let codes = vec![
-        "F401".to_string(),
-        "E501".to_string(),
-        "clippy::unwrap_used".to_string(),
-        "clippy::expect_used".to_string(),
-        "W291".to_string(),
+        "F401".to_owned(),
+        "E501".to_owned(),
+        "clippy::unwrap_used".to_owned(),
+        "clippy::expect_used".to_owned(),
+        "W291".to_owned(),
     ];
 
     let mut ruff_count = 0;
@@ -335,7 +335,7 @@ fn test_ruff_real_execution() {
     let test_file = temp_dir.path().join("test_file.py");
     std::fs::write(
         &test_file,
-        r"import os  # F401: unused import
+        "import os  # F401: unused import
 import sys  # F401: unused import
 
 def example():
@@ -452,7 +452,7 @@ async fn test_linter_engine_real_execution() {
     let test_file = temp_dir.path().join("violations.py");
     std::fs::write(
         &test_file,
-        r"import os  # unused
+        "import os  # unused
 import sys  # unused
 
 def foo():
@@ -502,14 +502,14 @@ fn create_test_rule(
     enabled: bool,
 ) -> ValidatedRule {
     ValidatedRule {
-        id: id.to_string(),
+        id: id.to_owned(),
         name: format!("Test rule {id}"),
-        category: category.to_string(),
-        severity: "warning".to_string(),
+        category: category.to_owned(),
+        severity: "warning".to_owned(),
         enabled,
-        description: "Test rule for integration testing".to_string(),
-        rationale: "Testing YAML rule executor".to_string(),
-        engine: "none".to_string(),
+        description: "Test rule for integration testing".to_owned(),
+        rationale: "Testing YAML rule executor".to_owned(),
+        engine: "none".to_owned(),
         config: serde_json::Value::Object(serde_json::Map::new()),
         rule_definition: serde_json::Value::Object(serde_json::Map::new()),
         fixes: Vec::new(),
@@ -532,7 +532,7 @@ async fn test_yaml_rule_executor_ruff_integration() {
     let test_file = temp_dir.path().join("unused_imports.py");
     std::fs::write(
         &test_file,
-        r"import os  # F401: unused import
+        "import os  # F401: unused import
 import sys  # F401: unused import
 
 def example():
@@ -542,7 +542,7 @@ def example():
     .expect("Failed to write test file");
 
     // Create rule with F401 lint_select (Ruff unused import code)
-    let rule = create_test_rule("TEST001", vec!["F401".to_string()], "quality", true);
+    let rule = create_test_rule("TEST001", vec!["F401".to_owned()], "quality", true);
 
     // Execute via YamlRuleExecutor
     let violations = YamlRuleExecutor::execute_rule(&rule, &[test_file.as_path()])
@@ -573,7 +573,7 @@ def example():
 async fn test_yaml_rule_executor_disabled_rule() {
     let rule = create_test_rule(
         "DISABLED001",
-        vec!["F401".to_string()],
+        vec!["F401".to_owned()],
         "quality",
         false, // disabled
     );
@@ -619,7 +619,7 @@ async fn test_yaml_rule_executor_clippy_code_detection() {
 
     let rule = create_test_rule(
         "CLIPPY001",
-        vec!["clippy::unwrap_used".to_string()],
+        vec!["clippy::unwrap_used".to_owned()],
         "quality",
         true,
     );
@@ -648,7 +648,7 @@ async fn test_yaml_rule_executor_filters_to_lint_select() {
     let test_file = temp_dir.path().join("multi_violations.py");
     std::fs::write(
         &test_file,
-        r"import os  # F401: unused
+        "import os  # F401: unused
 import sys  # F401: unused
 
 x=1  # E225: missing whitespace
@@ -661,7 +661,7 @@ def f():
     .expect("Failed to write test file");
 
     // Rule only selects F401, not E225
-    let rule = create_test_rule("FILTER001", vec!["F401".to_string()], "quality", true);
+    let rule = create_test_rule("FILTER001", vec!["F401".to_owned()], "quality", true);
 
     let violations = YamlRuleExecutor::execute_rule(&rule, &[test_file.as_path()])
         .await
@@ -691,8 +691,8 @@ async fn test_yaml_rule_executor_custom_message() {
     let test_file = temp_dir.path().join("custom_msg.py");
     std::fs::write(&test_file, "import os  # unused\n").expect("Failed to write test file");
 
-    let mut rule = create_test_rule("MSG001", vec!["F401".to_string()], "quality", true);
-    rule.message = Some("Custom: Remove this unused import".to_string());
+    let mut rule = create_test_rule("MSG001", vec!["F401".to_owned()], "quality", true);
+    rule.message = Some("Custom: Remove this unused import".to_owned());
 
     let violations = YamlRuleExecutor::execute_rule(&rule, &[test_file.as_path()])
         .await
@@ -762,7 +762,7 @@ async fn test_e2e_yaml_file_to_linter_violations() {
         "QUAL005 should have lint_select codes"
     );
     assert!(
-        ruff_rule.lint_select.contains(&"F401".to_string()),
+        ruff_rule.lint_select.contains(&"F401".to_owned()),
         "QUAL005 should select F401 (unused imports)"
     );
 
@@ -845,7 +845,7 @@ async fn test_e2e_yaml_clippy_rule_loads() {
     assert!(
         unwrap_rule
             .lint_select
-            .contains(&"clippy::unwrap_used".to_string()),
+            .contains(&"clippy::unwrap_used".to_owned()),
         "QUAL001 should select clippy::unwrap_used, got {:?}",
         unwrap_rule.lint_select
     );
@@ -919,7 +919,7 @@ async fn test_e2e_yaml_clippy_rule_execution() {
     assert!(
         unwrap_rule
             .lint_select
-            .contains(&"clippy::unwrap_used".to_string()),
+            .contains(&"clippy::unwrap_used".to_owned()),
         "QUAL001 should select clippy::unwrap_used"
     );
 

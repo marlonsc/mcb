@@ -78,7 +78,7 @@ fn detect_recursive(
                     column: current.start_position().1 + 1,
                     method,
                     in_test,
-                    context: text.lines().next().unwrap_or("").trim().to_string(),
+                    context: text.lines().next().unwrap_or("").trim().to_owned(),
                 });
             }
         }
@@ -94,9 +94,9 @@ fn detect_recursive(
 /// Extract method name from call expression text
 fn extract_method(text: &str) -> String {
     if text.contains(".unwrap()") {
-        "unwrap".to_string()
+        "unwrap".to_owned()
     } else if text.contains(".expect(") {
-        "expect".to_string()
+        "expect".to_owned()
     } else {
         String::new()
     }
@@ -175,7 +175,7 @@ pub fn detect_in_content(content: &str, filename: &str) -> Result<Vec<UnwrapDete
 
     // Second pass: detect unwraps
     let cfg = UnwrapConfig {
-        filename: filename.to_string(),
+        filename: filename.to_owned(),
         test_ranges,
     };
 

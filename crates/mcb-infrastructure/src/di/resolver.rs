@@ -176,7 +176,7 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
     let cache_provider_name = config.system.infrastructure.cache.provider.as_str();
 
     let cache_config = CacheProviderConfig {
-        provider: cache_provider_name.to_string(),
+        provider: cache_provider_name.to_owned(),
         uri: config.system.infrastructure.cache.redis_url.clone(),
         max_size: Some(config.system.infrastructure.cache.max_size),
         ttl_secs: Some(config.system.infrastructure.cache.default_ttl_secs),
@@ -188,19 +188,18 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
     let language_config = LanguageProviderConfig::new("universal");
 
     // Resolve each provider from registry
-    let embedding = resolve_embedding_provider(&embedding_config).map_err(|e| {
-        Error::configuration(format!("Failed to resolve embedding provider: {}", e))
-    })?;
+    let embedding = resolve_embedding_provider(&embedding_config)
+        .map_err(|e| Error::configuration(format!("Failed to resolve embedding provider: {e}")))?;
 
     let vector_store = resolve_vector_store_provider(&vector_store_config).map_err(|e| {
-        Error::configuration(format!("Failed to resolve vector store provider: {}", e))
+        Error::configuration(format!("Failed to resolve vector store provider: {e}"))
     })?;
 
     let cache = resolve_cache_provider(&cache_config)
-        .map_err(|e| Error::configuration(format!("Failed to resolve cache provider: {}", e)))?;
+        .map_err(|e| Error::configuration(format!("Failed to resolve cache provider: {e}")))?;
 
     let language = resolve_language_provider(&language_config)
-        .map_err(|e| Error::configuration(format!("Failed to resolve language provider: {}", e)))?;
+        .map_err(|e| Error::configuration(format!("Failed to resolve language provider: {e}")))?;
 
     Ok(ResolvedProviders {
         embedding,
@@ -216,6 +215,7 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
 ///
 /// # Returns
 /// Struct containing lists of available providers by category
+#[must_use]
 pub fn list_available_providers() -> AvailableProviders {
     AvailableProviders {
         embedding: mcb_domain::registry::embedding::list_embedding_providers(),
@@ -246,7 +246,7 @@ impl AvailableProviders {
     ) -> std::fmt::Result {
         writeln!(f, "{title}:")?;
         for (name, desc) in providers {
-            writeln!(f, "  - {}: {}", name, desc)?;
+            writeln!(f, "  - {name}: {desc}")?;
         }
         Ok(())
     }

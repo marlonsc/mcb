@@ -23,7 +23,7 @@ pub struct EmbeddingProviderConfig {
     pub base_url: Option<String>,
     /// Embedding dimensions (if configurable)
     pub dimensions: Option<usize>,
-    /// Cache directory for local providers (FastEmbed)
+    /// Cache directory for local providers (`FastEmbed`)
     pub cache_dir: Option<PathBuf>,
     /// Additional provider-specific configuration
     pub extra: HashMap<String, String>,
@@ -57,6 +57,7 @@ impl EmbeddingProviderConfig {
     }
 
     /// Set the embedding dimensions
+    #[must_use]
     pub fn with_dimensions(mut self, dimensions: usize) -> Self {
         self.dimensions = Some(dimensions);
         self

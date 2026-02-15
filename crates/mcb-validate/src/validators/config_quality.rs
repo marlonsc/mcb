@@ -97,6 +97,7 @@ pub struct ConfigQualityValidator {
 
 impl ConfigQualityValidator {
     /// Create a new configuration quality validator with the given configuration
+    #[must_use]
     pub fn new(config: ValidationConfig) -> Self {
         Self { config }
     }
@@ -182,7 +183,7 @@ impl ConfigQualityValidator {
                     violations.push(ConfigQualityViolation::HardcodedNamespace {
                         file: file.to_path_buf(),
                         line: i + 1,
-                        namespace: namespace_str.to_string(),
+                        namespace: namespace_str.to_owned(),
                         severity: Severity::Warning,
                     });
                 }
@@ -207,8 +208,8 @@ impl ConfigQualityValidator {
                     violations.push(ConfigQualityViolation::HardcodedConfigString {
                         file: file.to_path_buf(),
                         line: i + 1,
-                        string_value: client_name_str.to_string(),
-                        context: "client_name".to_string(),
+                        string_value: client_name_str.to_owned(),
+                        context: "client_name".to_owned(),
                         severity: Severity::Info,
                     });
                 }
@@ -236,8 +237,8 @@ impl ConfigQualityValidator {
                     violations.push(ConfigQualityViolation::HardcodedConfigString {
                         file: file.to_path_buf(),
                         line: i + 1,
-                        string_value: header_str.to_string(),
-                        context: "HTTP header".to_string(),
+                        string_value: header_str.to_owned(),
+                        context: "HTTP header".to_owned(),
                         severity: Severity::Warning,
                     });
                 }
@@ -266,7 +267,7 @@ impl ConfigQualityValidator {
                     violations.push(ConfigQualityViolation::UndocumentedDefault {
                         file: file.to_path_buf(),
                         line: i + 1,
-                        struct_name: struct_name.as_str().to_string(),
+                        struct_name: struct_name.as_str().to_owned(),
                         severity: Severity::Info,
                     });
                 }

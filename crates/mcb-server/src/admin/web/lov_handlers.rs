@@ -43,8 +43,7 @@ fn display_field(entity: &AdminEntityMeta) -> String {
                 && !f.is_foreign_key
                 && f.input_type == "text"
         })
-        .map(|f| f.name.clone())
-        .unwrap_or_else(|| "id".to_string())
+        .map_or_else(|| "id".to_owned(), |f| f.name.clone())
 }
 
 /// LOV endpoint — returns `[{id, label}]` JSON for FK dropdown population.
@@ -84,13 +83,13 @@ pub async fn lov_endpoint(
 
             let id = match obj.get("id") {
                 Some(Value::String(s)) => s.clone(),
-                Some(v) => v.to_string().trim_matches('"').to_string(),
+                Some(v) => v.to_string().trim_matches('"').to_owned(),
                 None => return None,
             };
 
             let label = match obj.get(&label_field) {
                 Some(Value::String(s)) => s.clone(),
-                Some(v) => v.to_string().trim_matches('"').to_string(),
+                Some(v) => v.to_string().trim_matches('"').to_owned(),
                 None => id.clone(),
             };
 
@@ -115,7 +114,7 @@ pub async fn lov_endpoint(
                 if has_match {
                     match obj.get("id") {
                         Some(Value::String(s)) => Some(s.clone()),
-                        Some(v) => Some(v.to_string().trim_matches('"').to_string()),
+                        Some(v) => Some(v.to_string().trim_matches('"').to_owned()),
                         None => None,
                     }
                 } else {

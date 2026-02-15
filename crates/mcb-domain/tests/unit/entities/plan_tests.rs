@@ -37,16 +37,16 @@ fn entity_construction(#[case] entity: &str) {
         "plan" => {
             let plan = Plan {
                 metadata: mcb_domain::entities::EntityMetadata {
-                    id: "plan-001".to_string(),
+                    id: "plan-001".to_owned(),
                     created_at: 1000,
                     updated_at: 1000,
                 },
-                org_id: "org-001".to_string(),
-                project_id: "proj-001".to_string(),
-                title: "Migration plan".to_string(),
-                description: "Migrate schema and data".to_string(),
+                org_id: "org-001".to_owned(),
+                project_id: "proj-001".to_owned(),
+                title: "Migration plan".to_owned(),
+                description: "Migrate schema and data".to_owned(),
                 status: PlanStatus::Draft,
-                created_by: "user-001".to_string(),
+                created_by: "user-001".to_owned(),
             };
             assert_eq!(plan.metadata.id, "plan-001");
             assert_eq!(plan.org_id, "org-001");
@@ -55,13 +55,13 @@ fn entity_construction(#[case] entity: &str) {
         }
         "version" => {
             let version = PlanVersion {
-                id: "pv-001".to_string(),
-                org_id: "org-001".to_string(),
-                plan_id: "plan-001".to_string(),
+                id: "pv-001".to_owned(),
+                org_id: "org-001".to_owned(),
+                plan_id: "plan-001".to_owned(),
                 version_number: 1,
-                content_json: "{\"steps\":[\"a\",\"b\"]}".to_string(),
-                change_summary: "Initial draft".to_string(),
-                created_by: "user-001".to_string(),
+                content_json: "{\"steps\":[\"a\",\"b\"]}".to_owned(),
+                change_summary: "Initial draft".to_owned(),
+                created_by: "user-001".to_owned(),
                 created_at: 1000,
             };
             assert_eq!(version.id, "pv-001");
@@ -70,12 +70,12 @@ fn entity_construction(#[case] entity: &str) {
         }
         "review" => {
             let review = PlanReview {
-                id: "pr-001".to_string(),
-                org_id: "org-001".to_string(),
-                plan_version_id: "pv-001".to_string(),
-                reviewer_id: "user-003".to_string(),
+                id: "pr-001".to_owned(),
+                org_id: "org-001".to_owned(),
+                plan_version_id: "pv-001".to_owned(),
+                reviewer_id: "user-003".to_owned(),
                 verdict: ReviewVerdict::Approved,
-                feedback: "Looks good".to_string(),
+                feedback: "Looks good".to_owned(),
                 created_at: 7000,
             };
             assert_eq!(review.id, "pr-001");
@@ -95,16 +95,16 @@ fn entity_serialization_roundtrip(#[case] entity: &str) {
         "plan" => {
             let plan = Plan {
                 metadata: mcb_domain::entities::EntityMetadata {
-                    id: "plan-002".to_string(),
+                    id: "plan-002".to_owned(),
                     created_at: 2000,
                     updated_at: 3000,
                 },
-                org_id: "org-001".to_string(),
-                project_id: "proj-001".to_string(),
-                title: "Execution plan".to_string(),
-                description: "Execute rollout".to_string(),
+                org_id: "org-001".to_owned(),
+                project_id: "proj-001".to_owned(),
+                title: "Execution plan".to_owned(),
+                description: "Execute rollout".to_owned(),
                 status: PlanStatus::Active,
-                created_by: "user-001".to_string(),
+                created_by: "user-001".to_owned(),
             };
 
             let json = serde_json::to_string(&plan).expect("serialize");
@@ -115,13 +115,13 @@ fn entity_serialization_roundtrip(#[case] entity: &str) {
         }
         "version" => {
             let version = PlanVersion {
-                id: "pv-002".to_string(),
-                org_id: "org-001".to_string(),
-                plan_id: "plan-002".to_string(),
+                id: "pv-002".to_owned(),
+                org_id: "org-001".to_owned(),
+                plan_id: "plan-002".to_owned(),
                 version_number: 2,
-                content_json: "{\"milestones\":2}".to_string(),
-                change_summary: "Added milestones".to_string(),
-                created_by: "user-002".to_string(),
+                content_json: "{\"milestones\":2}".to_owned(),
+                change_summary: "Added milestones".to_owned(),
+                created_by: "user-002".to_owned(),
                 created_at: 5000,
             };
 
@@ -133,12 +133,12 @@ fn entity_serialization_roundtrip(#[case] entity: &str) {
         }
         "review" => {
             let review = PlanReview {
-                id: "pr-002".to_string(),
-                org_id: "org-001".to_string(),
-                plan_version_id: "pv-002".to_string(),
-                reviewer_id: "user-004".to_string(),
+                id: "pr-002".to_owned(),
+                org_id: "org-001".to_owned(),
+                plan_version_id: "pv-002".to_owned(),
+                reviewer_id: "user-004".to_owned(),
                 verdict: ReviewVerdict::NeedsRevision,
-                feedback: "Please split into phases".to_string(),
+                feedback: "Please split into phases".to_owned(),
                 created_at: 8000,
             };
 

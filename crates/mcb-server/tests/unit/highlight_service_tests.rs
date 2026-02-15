@@ -86,7 +86,7 @@ async fn test_highlight_unsupported_language() {
     assert!(result.is_err());
     match result.unwrap_err() {
         Error::Highlight(HighlightError::UnsupportedLanguage(lang)) => {
-            assert_eq!(lang, "brainfuck")
+            assert_eq!(lang, "brainfuck");
         }
         _ => panic!("Expected Highlight(UnsupportedLanguage) error"),
     }
@@ -124,14 +124,14 @@ async fn test_highlight_performance_under_500ms() {
 #[tokio::test]
 async fn test_highlight_multiline_rust() {
     let service = HighlightServiceImpl::new();
-    let code = r#"
+    let code = "
 fn factorial(n: u32) -> u32 {
     match n {
         0 | 1 => 1,
         n => n * factorial(n - 1),
     }
 }
-"#;
+";
     let result = service
         .highlight(code, "rust")
         .await

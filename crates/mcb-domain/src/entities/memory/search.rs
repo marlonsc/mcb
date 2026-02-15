@@ -20,7 +20,7 @@ pub struct MemorySearchResult {
 pub struct MemorySearchIndex {
     /// Unique identifier for the index entry.
     pub id: String,
-    /// Type of observation (e.g., "code_snippet", "error", "decision").
+    /// Type of observation (e.g., "`code_snippet`", "error", "decision").
     #[serde(rename = "type", alias = "observation_type")]
     pub r#type: String,
     /// Relevance score for ranking search results.
@@ -58,7 +58,7 @@ pub struct MemoryFilter {
     pub parent_session_id: Option<String>,
     /// Filter by repository identifier.
     pub repo_id: Option<String>,
-    /// Filter by time range (start_ms, end_ms).
+    /// Filter by time range (`start_ms`, `end_ms`).
     pub time_range: Option<(i64, i64)>,
     /// Filter by git branch name.
     pub branch: Option<String>,

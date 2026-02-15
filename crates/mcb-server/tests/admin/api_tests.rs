@@ -6,6 +6,8 @@ use mcb_server::admin::{auth::AdminAuthConfig, routes::admin_rocket};
 use rocket::http::Status;
 use rocket::local::asynchronous::Client;
 
+use crate::test_utils::timeouts::TEST_TIMEOUT;
+
 use super::harness::AdminTestHarness;
 
 #[rocket::async_test]
@@ -70,7 +72,7 @@ async fn test_jobs_endpoint_with_operations() {
         .start_operation(&CollectionId::from_name("test-collection"), 50);
     harness
         .indexing()
-        .update_progress(&op_id, Some("src/main.rs".to_string()), 10);
+        .update_progress(&op_id, Some("src/main.rs".to_owned()), 10);
     let (client, _, _) = harness.build_client().await;
 
     let response = client.get("/jobs").dispatch().await;
@@ -107,8 +109,7 @@ async fn test_readiness_probe_not_ready() {
     let status = response.status();
     assert!(
         status == Status::Ok || status == Status::ServiceUnavailable,
-        "Expected Ok or ServiceUnavailable, got {:?}",
-        status
+        "Expected Ok or ServiceUnavailable, got {status:?}"
     );
 
     let body = response.into_string().await.expect("response body");
@@ -121,14 +122,17 @@ async fn test_readiness_probe_not_ready() {
 #[rocket::async_test]
 async fn test_readiness_probe_ready() {
     let state = AdminTestHarness::new().build_state();
-    tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-
-    let client = Client::tracked(admin_rocket(
-        state,
-        Arc::new(AdminAuthConfig::default()),
-        None,
-    ))
+    let client = tokio::time::timeout(TEST_TIMEOUT, async {
+        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+        Client::tracked(admin_rocket(
+            state,
+            Arc::new(AdminAuthConfig::default()),
+            None,
+        ))
+        .await
+    })
     .await
+    .expect("readiness setup timed out")
     .expect("valid rocket instance");
 
     let response = client.get("/ready").dispatch().await;

@@ -15,7 +15,7 @@ pub use registry::{PATTERNS, PatternRegistry, default_rules_dir};
 pub(crate) fn required_pattern(pattern_id: &str) -> Result<&'static Regex> {
     PATTERNS
         .get(pattern_id)
-        .ok_or_else(|| crate::ValidationError::PatternNotFound(pattern_id.to_string()))
+        .ok_or_else(|| crate::ValidationError::PatternNotFound(pattern_id.to_owned()))
 }
 
 /// Function to get multiple required patterns by ID

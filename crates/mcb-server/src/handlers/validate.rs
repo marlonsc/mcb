@@ -7,12 +7,13 @@ use std::time::Instant;
 use mcb_domain::ports::services::ValidationServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use validator::Validate;
 
 use crate::args::{ValidateAction, ValidateArgs, ValidateScope};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handlers::helpers::tool_error;
 
 /// Handler for code validation MCP tool operations.
 #[derive(Clone)]
@@ -21,7 +22,7 @@ pub struct ValidateHandler {
 }
 
 impl ValidateHandler {
-    /// Create a new ValidateHandler.
+    /// Create a new `ValidateHandler`.
     pub fn new(validation_service: Arc<dyn ValidationServiceInterface>) -> Self {
         Self { validation_service }
     }
@@ -114,9 +115,7 @@ impl ValidateHandler {
                 let path_str = args.path.as_ref().ok_or_else(missing_path)?;
                 let path = PathBuf::from(path_str);
                 if !path.exists() || !path.is_file() {
-                    return Ok(CallToolResult::error(vec![Content::text(
-                        "Path must be an existing file",
-                    )]));
+                    return Ok(tool_error("Path must be an existing file"));
                 }
                 let timer = Instant::now();
                 match self

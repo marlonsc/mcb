@@ -4,6 +4,7 @@ use crate::args::{EntityAction, EntityArgs, EntityResource};
 use serde_json::Value;
 
 /// Map a URL slug to its entity resource and optional parent field.
+#[must_use]
 pub fn slug_to_resource(slug: &str) -> Option<(EntityResource, Option<&'static str>)> {
     match slug {
         "organizations" => Some((EntityResource::Org, None)),
@@ -27,6 +28,7 @@ pub fn slug_to_resource(slug: &str) -> Option<(EntityResource, Option<&'static s
 }
 
 /// Build a default `EntityArgs` with only `resource` and `action` set.
+#[must_use]
 pub fn base_entity_args(resource: EntityResource, action: EntityAction) -> EntityArgs {
     EntityArgs {
         action,
@@ -61,12 +63,12 @@ pub fn apply_parent_scope(
     };
 
     match field {
-        "team_id" => args.team_id = Some(id.to_string()),
-        "issue_id" => args.issue_id = Some(id.to_string()),
-        "plan_id" => args.plan_id = Some(id.to_string()),
-        "plan_version_id" => args.plan_version_id = Some(id.to_string()),
-        "repository_id" => args.repository_id = Some(id.to_string()),
-        "worktree_id" => args.worktree_id = Some(id.to_string()),
+        "team_id" => args.team_id = Some(id.to_owned()),
+        "issue_id" => args.issue_id = Some(id.to_owned()),
+        "plan_id" => args.plan_id = Some(id.to_owned()),
+        "plan_version_id" => args.plan_version_id = Some(id.to_owned()),
+        "repository_id" => args.repository_id = Some(id.to_owned()),
+        "worktree_id" => args.worktree_id = Some(id.to_owned()),
         _ => {}
     }
 }
@@ -81,10 +83,11 @@ pub fn extract_project_id(data: &Value) -> Option<String> {
 }
 
 /// Serialize `EntityArgs` into a JSON map suitable for tool dispatch.
+#[must_use]
 pub fn build_entity_arguments(args: EntityArgs) -> serde_json::Map<String, Value> {
     let mut map = serde_json::Map::new();
     map.insert(
-        "action".to_string(),
+        "action".to_owned(),
         Value::String(
             match args.action {
                 EntityAction::Create => "create",
@@ -94,11 +97,11 @@ pub fn build_entity_arguments(args: EntityArgs) -> serde_json::Map<String, Value
                 EntityAction::Delete => "delete",
                 EntityAction::Release => "release",
             }
-            .to_string(),
+            .to_owned(),
         ),
     );
     map.insert(
-        "resource".to_string(),
+        "resource".to_owned(),
         Value::String(
             match args.resource {
                 EntityResource::Repository => "repository",
@@ -118,48 +121,48 @@ pub fn build_entity_arguments(args: EntityArgs) -> serde_json::Map<String, Value
                 EntityResource::TeamMember => "team_member",
                 EntityResource::ApiKey => "api_key",
             }
-            .to_string(),
+            .to_owned(),
         ),
     );
 
     if let Some(value) = args.data {
-        map.insert("data".to_string(), value);
+        map.insert("data".to_owned(), value);
     }
     if let Some(value) = args.id {
-        map.insert("id".to_string(), Value::String(value));
+        map.insert("id".to_owned(), Value::String(value));
     }
     if let Some(value) = args.org_id {
-        map.insert("org_id".to_string(), Value::String(value));
+        map.insert("org_id".to_owned(), Value::String(value));
     }
     if let Some(value) = args.project_id {
-        map.insert("project_id".to_string(), Value::String(value));
+        map.insert("project_id".to_owned(), Value::String(value));
     }
     if let Some(value) = args.repository_id {
-        map.insert("repository_id".to_string(), Value::String(value));
+        map.insert("repository_id".to_owned(), Value::String(value));
     }
     if let Some(value) = args.worktree_id {
-        map.insert("worktree_id".to_string(), Value::String(value));
+        map.insert("worktree_id".to_owned(), Value::String(value));
     }
     if let Some(value) = args.plan_id {
-        map.insert("plan_id".to_string(), Value::String(value));
+        map.insert("plan_id".to_owned(), Value::String(value));
     }
     if let Some(value) = args.plan_version_id {
-        map.insert("plan_version_id".to_string(), Value::String(value));
+        map.insert("plan_version_id".to_owned(), Value::String(value));
     }
     if let Some(value) = args.issue_id {
-        map.insert("issue_id".to_string(), Value::String(value));
+        map.insert("issue_id".to_owned(), Value::String(value));
     }
     if let Some(value) = args.label_id {
-        map.insert("label_id".to_string(), Value::String(value));
+        map.insert("label_id".to_owned(), Value::String(value));
     }
     if let Some(value) = args.team_id {
-        map.insert("team_id".to_string(), Value::String(value));
+        map.insert("team_id".to_owned(), Value::String(value));
     }
     if let Some(value) = args.user_id {
-        map.insert("user_id".to_string(), Value::String(value));
+        map.insert("user_id".to_owned(), Value::String(value));
     }
     if let Some(value) = args.email {
-        map.insert("email".to_string(), Value::String(value));
+        map.insert("email".to_owned(), Value::String(value));
     }
 
     map

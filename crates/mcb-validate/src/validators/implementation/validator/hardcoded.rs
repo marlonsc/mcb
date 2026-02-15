@@ -47,7 +47,7 @@ pub fn validate_hardcoded_returns(
                 for (pattern, desc) in &compiled {
                     if pattern.is_match(line) {
                         violations.push(ImplementationViolation::HardcodedReturnValue {
-                            file: file_path.to_path_buf(),
+                            file: file_path.clone(),
                             line: func.start_line,
                             method_name: func.name.clone(),
                             return_value: desc.to_string(),

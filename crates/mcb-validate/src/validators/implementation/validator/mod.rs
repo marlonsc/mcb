@@ -41,6 +41,7 @@ impl ImplementationQualityValidator {
     }
 
     /// Create a validator with custom configuration
+    #[must_use]
     pub fn with_config(config: ValidationConfig, rules: &ImplementationRulesConfig) -> Self {
         Self {
             config,

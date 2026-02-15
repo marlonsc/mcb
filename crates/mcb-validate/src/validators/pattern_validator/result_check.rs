@@ -15,7 +15,7 @@ pub fn check_result_types(path: &Path, content: &str) -> Vec<PatternViolation> {
 
     // Pattern to find std::result::Result usage
     let std_result_pattern = STD_RESULT_PATTERN
-        .get_or_init(|| Regex::new(r"std::result::Result<").expect("Invalid std result pattern"));
+        .get_or_init(|| Regex::new("std::result::Result<").expect("Invalid std result pattern"));
 
     // Pattern to find Result<T, E> with explicit error type (not crate::Result)
     let explicit_result_pattern = EXPLICIT_RESULT_PATTERN.get_or_init(|| {
@@ -48,8 +48,8 @@ pub fn check_result_types(path: &Path, content: &str) -> Vec<PatternViolation> {
             violations.push(PatternViolation::RawResultType {
                 file: path.to_path_buf(),
                 line: line_num + 1,
-                context: trimmed.to_string(),
-                suggestion: "crate::Result<T>".to_string(),
+                context: trimmed.to_owned(),
+                suggestion: "crate::Result<T>".to_owned(),
                 severity: Severity::Warning,
             });
         }

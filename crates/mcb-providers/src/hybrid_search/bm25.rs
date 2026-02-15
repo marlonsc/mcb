@@ -63,6 +63,7 @@ impl BM25Scorer {
     /// Create a new BM25 scorer from a collection of documents
     ///
     /// Builds the document frequency index from the provided documents.
+    #[must_use]
     pub fn new(documents: &[CodeChunk], params: BM25Params) -> Self {
         let total_docs = documents.len();
         let mut document_freq = HashMap::new();
@@ -96,6 +97,7 @@ impl BM25Scorer {
     }
 
     /// Score a document against a query using BM25
+    #[must_use]
     pub fn score(&self, document: &CodeChunk, query: &str) -> f64 {
         let query_terms = Self::tokenize(query);
         self.score_with_tokens(document, &query_terms)
@@ -105,6 +107,7 @@ impl BM25Scorer {
     ///
     /// This method avoids re-tokenizing the query for each document, improving performance
     /// when scoring multiple documents against the same query.
+    #[must_use]
     pub fn score_with_tokens(&self, document: &CodeChunk, query_terms: &[String]) -> f64 {
         let doc_terms = Self::tokenize(&document.content);
         let doc_length = doc_terms.len() as f64;
@@ -156,6 +159,7 @@ impl BM25Scorer {
     ///
     /// This is more efficient than calling `score()` for each document because
     /// the query is tokenized only once.
+    #[must_use]
     pub fn score_batch(&self, documents: &[&CodeChunk], query: &str) -> Vec<f64> {
         let query_terms = Self::tokenize(query);
         documents
@@ -167,32 +171,37 @@ impl BM25Scorer {
     /// Tokenize text into terms
     ///
     /// Performs lowercase normalization and splits on whitespace, punctuation,
-    /// and underscores (for snake_case identifiers).
+    /// and underscores (for `snake_case` identifiers).
     /// Filters out tokens shorter than `BM25_TOKEN_MIN_LENGTH`.
+    #[must_use]
     pub fn tokenize(text: &str) -> Vec<String> {
         text.to_lowercase()
             .split(|c: char| !c.is_alphanumeric())
             .filter(|s| !s.is_empty() && s.len() > BM25_TOKEN_MIN_LENGTH)
-            .map(|s| s.to_string())
+            .map(std::borrow::ToOwned::to_owned)
             .collect()
     }
 
     /// Get the total number of indexed documents
+    #[must_use]
     pub fn total_docs(&self) -> usize {
         self.total_docs
     }
 
     /// Get the number of unique terms in the index
+    #[must_use]
     pub fn unique_terms(&self) -> usize {
         self.document_freq.len()
     }
 
     /// Get the average document length
+    #[must_use]
     pub fn avg_doc_len(&self) -> f64 {
         self.avg_doc_len
     }
 
     /// Get the BM25 parameters
+    #[must_use]
     pub fn params(&self) -> &BM25Params {
         &self.params
     }

@@ -49,7 +49,7 @@ impl GenericReporter {
     /// Create a domain violation entry from a violation trait object
     pub fn create_entry(v: &dyn Violation) -> ViolationEntry {
         ViolationEntry {
-            id: v.id().to_string(),
+            id: v.id().to_owned(),
             category: v.category().to_string(),
             severity: v.severity().to_string(),
             file: v.file().map(|p| p.display().to_string()),
@@ -65,6 +65,7 @@ pub struct GenericReporter;
 
 impl GenericReporter {
     /// Create a report from violations
+    #[must_use]
     pub fn create_report(
         violations: &[Box<dyn Violation>],
         workspace_root: PathBuf,
@@ -115,14 +116,16 @@ impl GenericReporter {
     }
 
     /// Generate JSON report
+    #[must_use]
     pub fn to_json(violations: &[Box<dyn Violation>], workspace_root: PathBuf) -> String {
         let report = Self::create_report(violations, workspace_root);
-        serde_json::to_string_pretty(&report).unwrap_or_else(|_| "{}".to_string())
+        serde_json::to_string_pretty(&report).unwrap_or_else(|_| "{}".to_owned())
     }
 
     /// Generate human-readable report.
     ///
     /// Generate human-readable report.
+    #[must_use]
     pub fn to_human_readable(violations: &[Box<dyn Violation>], workspace_root: PathBuf) -> String {
         let report = Self::create_report(violations, workspace_root);
         let mut output = String::new();
@@ -171,9 +174,9 @@ impl GenericReporter {
 
                 for v in violations {
                     let location = match (&v.file, v.line) {
-                        (Some(f), Some(l)) => format!("{}:{}", f, l),
-                        (Some(f), None) => f.to_string(),
-                        (None, _) => "unknown".to_string(),
+                        (Some(f), Some(l)) => format!("{f}:{l}"),
+                        (Some(f), None) => f.clone(),
+                        (None, _) => "unknown".to_owned(),
                     };
 
                     let _ = writeln!(
@@ -194,6 +197,7 @@ impl GenericReporter {
     }
 
     /// Generate CI summary (GitHub Actions format).
+    #[must_use]
     pub fn to_ci_summary(violations: &[Box<dyn Violation>]) -> String {
         let mut output = String::new();
 
@@ -232,6 +236,7 @@ impl GenericReporter {
     }
 
     /// Count violations by severity
+    #[must_use]
     pub fn count_by_severity(violations: &[Box<dyn Violation>]) -> (usize, usize, usize) {
         violations
             .iter()
@@ -243,6 +248,7 @@ impl GenericReporter {
     }
 
     /// Filter violations by category
+    #[must_use]
     pub fn filter_by_category(
         violations: Vec<Box<dyn Violation>>,
         category: ViolationCategory,
@@ -254,6 +260,7 @@ impl GenericReporter {
     }
 
     /// Filter violations by severity
+    #[must_use]
     pub fn filter_by_severity(
         violations: Vec<Box<dyn Violation>>,
         severity: Severity,

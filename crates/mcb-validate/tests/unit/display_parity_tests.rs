@@ -17,7 +17,7 @@ fn display_parity_quality_unwrap_smoke_test() {
     let v = mcb_validate::QualityViolation::UnwrapInProduction {
         file: PathBuf::from("src/test.rs"),
         line: 42,
-        context: "foo.unwrap()".to_string(),
+        context: "foo.unwrap()".to_owned(),
         severity: Severity::Warning,
     };
     let display = format!("{v}");
@@ -33,8 +33,8 @@ fn display_parity_error_boundary_missing_context() {
     let v = mcb_validate::ErrorBoundaryViolation::MissingErrorContext {
         file: PathBuf::from("src/handlers/auth.rs"),
         line: 42,
-        error_pattern: "db.query()?".to_string(),
-        suggestion: "Add .context() or .map_err() for better error messages".to_string(),
+        error_pattern: "db.query()?".to_owned(),
+        suggestion: "Add .context() or .map_err() for better error messages".to_owned(),
         severity: Severity::Info,
     };
     assert_eq!(
@@ -48,8 +48,8 @@ fn display_parity_error_boundary_wrong_layer() {
     let v = mcb_validate::ErrorBoundaryViolation::WrongLayerError {
         file: PathBuf::from("src/domain/service.rs"),
         line: 15,
-        error_type: "std::io::Error".to_string(),
-        layer: "domain".to_string(),
+        error_type: "std::io::Error".to_owned(),
+        layer: "domain".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(
@@ -63,7 +63,7 @@ fn display_parity_error_boundary_leaked_internal() {
     let v = mcb_validate::ErrorBoundaryViolation::LeakedInternalError {
         file: PathBuf::from("src/handlers/api.rs"),
         line: 88,
-        pattern: "Debug formatting in response".to_string(),
+        pattern: "Debug formatting in response".to_owned(),
         severity: Severity::Info,
     };
     assert_eq!(
@@ -81,8 +81,8 @@ fn display_parity_refactoring_orphan_import() {
     let v = mcb_validate::RefactoringViolation::OrphanImport {
         file: PathBuf::from("src/lib.rs"),
         line: 10,
-        import_path: "use crate::deleted::Item".to_string(),
-        suggestion: "Remove the import".to_string(),
+        import_path: "use crate::deleted::Item".to_owned(),
+        suggestion: "Remove the import".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(
@@ -97,9 +97,9 @@ fn display_parity_refactoring_duplicate_definition() {
     // Macro-generated Display drops the count, keeping just the path list.
     // This is an accepted minor format change documented here.
     let v = mcb_validate::RefactoringViolation::DuplicateDefinition {
-        type_name: "MyStruct".to_string(),
+        type_name: "MyStruct".to_owned(),
         locations: vec![PathBuf::from("src/a/mod.rs"), PathBuf::from("src/b/mod.rs")],
-        suggestion: "Consolidate to one location".to_string(),
+        suggestion: "Consolidate to one location".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(
@@ -126,7 +126,7 @@ fn display_parity_refactoring_stale_reexport() {
     let v = mcb_validate::RefactoringViolation::StaleReExport {
         file: PathBuf::from("src/lib.rs"),
         line: 5,
-        re_export: "old_module".to_string(),
+        re_export: "old_module".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(
@@ -140,7 +140,7 @@ fn display_parity_refactoring_deleted_module_reference() {
     let v = mcb_validate::RefactoringViolation::DeletedModuleReference {
         referencing_file: PathBuf::from("src/lib.rs"),
         line: 3,
-        deleted_module: "gone_module".to_string(),
+        deleted_module: "gone_module".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(
@@ -153,8 +153,8 @@ fn display_parity_refactoring_deleted_module_reference() {
 fn display_parity_refactoring_dead_code() {
     let v = mcb_validate::RefactoringViolation::RefactoringDeadCode {
         file: PathBuf::from("src/old.rs"),
-        item_name: "unused_fn".to_string(),
-        item_type: "function".to_string(),
+        item_name: "unused_fn".to_owned(),
+        item_type: "function".to_owned(),
         severity: Severity::Warning,
     };
     assert_eq!(
@@ -170,9 +170,9 @@ fn display_parity_refactoring_dead_code() {
 #[test]
 fn display_parity_vec_pathbuf_rendering() {
     let v = mcb_validate::RefactoringViolation::DuplicateDefinition {
-        type_name: "T".to_string(),
+        type_name: "T".to_owned(),
         locations: vec![PathBuf::from("a.rs")],
-        suggestion: "fix".to_string(),
+        suggestion: "fix".to_owned(),
         severity: Severity::Info,
     };
     assert_eq!(format!("{v}"), "Duplicate definition 'T' in [a.rs] - fix");

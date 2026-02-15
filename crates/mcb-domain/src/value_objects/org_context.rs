@@ -18,11 +18,13 @@ pub struct OrgContext {
 
 impl OrgContext {
     /// Creates a new instance.
+    #[must_use]
     pub fn new(org_id: OrgId, org_name: String) -> Self {
         Self { org_id, org_name }
     }
 
     /// Returns the org id as a string.
+    #[must_use]
     pub fn id_str(&self) -> String {
         self.org_id.to_string()
     }
@@ -32,7 +34,7 @@ impl Default for OrgContext {
     fn default() -> Self {
         Self {
             org_id: OrgId::from_uuid(crate::utils::id::deterministic("org", DEFAULT_ORG_ID)),
-            org_name: DEFAULT_ORG_NAME.to_string(),
+            org_name: DEFAULT_ORG_NAME.to_owned(),
         }
     }
 }

@@ -84,6 +84,7 @@ impl PostToolUseContext {
     ///
     /// This avoids cloning the entire `CallToolResult` — only the `is_error`
     /// flag is needed by the hook processor.
+    #[must_use]
     pub fn new(tool_name: String, is_error: bool) -> Self {
         let status = if is_error {
             ToolExecutionStatus::Error
@@ -91,8 +92,7 @@ impl PostToolUseContext {
             ToolExecutionStatus::Success
         };
 
-        let timestamp =
-            domain_time::epoch_secs_u64().unwrap_or_else(|e| panic!("system clock failure: {e}"));
+        let timestamp = domain_time::epoch_secs_u64().unwrap_or(0);
 
         Self {
             tool_name,
@@ -120,9 +120,9 @@ impl PostToolUseContext {
 
 impl SessionStartContext {
     /// Creates a new `SessionStartContext` for a given session ID.
+    #[must_use]
     pub fn new(session_id: SessionId) -> Self {
-        let timestamp =
-            domain_time::epoch_secs_u64().unwrap_or_else(|e| panic!("system clock failure: {e}"));
+        let timestamp = domain_time::epoch_secs_u64().unwrap_or(0);
 
         Self {
             session_id,

@@ -73,6 +73,7 @@ pub struct RcaAnalyzer {
 
 impl RcaAnalyzer {
     /// Create a new analyzer with default thresholds
+    #[must_use]
     pub fn new() -> Self {
         Self {
             thresholds: MetricThresholds::default(),
@@ -81,6 +82,7 @@ impl RcaAnalyzer {
     }
 
     /// Create analyzer with custom thresholds
+    #[must_use]
     pub fn with_thresholds(thresholds: MetricThresholds) -> Self {
         Self {
             thresholds,
@@ -89,6 +91,7 @@ impl RcaAnalyzer {
     }
 
     /// Detect language from file path via RCA.
+    #[must_use]
     pub fn detect_language(&self, path: &Path) -> Option<LANG> {
         self.detector.detect_rca_lang(path, None)
     }
@@ -153,7 +156,7 @@ impl RcaAnalyzer {
         let name = space.name.as_deref().unwrap_or("");
         if !name.is_empty() && name != "<unit>" {
             results.push(RcaFunctionMetrics {
-                name: name.to_string(),
+                name: name.to_owned(),
                 start_line: space.start_line,
                 end_line: space.end_line,
                 metrics: Self::extract_metrics(space),

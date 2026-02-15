@@ -37,7 +37,7 @@ pub async fn index_repository(
     let branches = args
         .branches
         .clone()
-        .unwrap_or_else(|| vec![repo.default_branch().to_string()]);
+        .unwrap_or_else(|| vec![repo.default_branch().to_owned()]);
     let mut total_files = 0;
     for branch in &branches {
         match vcs_provider.list_files(&repo, branch).await {
@@ -67,8 +67,8 @@ pub async fn index_repository(
     };
     let result = IndexResult {
         repository_id: repo.id().to_string(),
-        path: repo.path().to_str().unwrap_or_default().to_string(),
-        default_branch: repo.default_branch().to_string(),
+        path: repo.path().to_str().unwrap_or_default().to_owned(),
+        default_branch: repo.default_branch().to_owned(),
         branches_found: branches.clone(),
         total_files,
         commits_indexed,

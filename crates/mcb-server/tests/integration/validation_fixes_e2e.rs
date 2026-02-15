@@ -1,8 +1,8 @@
 //! Golden tests for v0.2.0 validation fixes.
 //!
 //! Covers:
-//! 1. Agent SQL Storage (log_tool) - P1
-//! 2. Session Create Schema Fallback (agent_type in data) - P2
+//! 1. Agent SQL Storage (`log_tool`) - P1
+//! 2. Session Create Schema Fallback (`agent_type` in data) - P2
 //! 3. Memory Observation Enum Validation - P2
 
 use mcb_server::args::{
@@ -19,7 +19,7 @@ fn extract_text(content: &[rmcp::model::Content]) -> String {
             if let Ok(json) = serde_json::to_value(c)
                 && let Some(text) = json.get("text")
             {
-                text.as_str().map(|s| s.to_string())
+                text.as_str().map(std::borrow::ToOwned::to_owned)
             } else {
                 None
             }
@@ -53,8 +53,7 @@ async fn test_validation_agent_sql_storage_flow() {
     let text = extract_text(&resp.content);
     assert!(
         text.contains("Memory storage error"),
-        "Should handle SQL error gracefully. Got: {}",
-        text
+        "Should handle SQL error gracefully. Got: {text}"
     );
     assert!(resp.is_error.unwrap_or(false));
 }
@@ -79,7 +78,7 @@ async fn test_validation_session_create_schema_fallback() {
             worktree_id: None,
             parent_session_id: None,
             session_id: None,
-            project_id: Some("test-project".to_string()),
+            project_id: Some("test-project".to_owned()),
             limit: None,
             status: None,
         }))
@@ -91,8 +90,7 @@ async fn test_validation_session_create_schema_fallback() {
     let text = extract_text(&resp.content);
     assert!(
         !text.contains("Missing agent_type"),
-        "Fallback failed: {}",
-        text
+        "Fallback failed: {text}"
     );
     // It will likely fail with "Failed to create agent session" due to missing FK, which is fine
 }
@@ -134,7 +132,6 @@ async fn test_validation_memory_observation_enum_error() {
     let text = extract_text(&resp.content);
     assert!(
         text.contains("Unknown observation type:"),
-        "Error message validation failed: {}",
-        text
+        "Error message validation failed: {text}"
     );
 }

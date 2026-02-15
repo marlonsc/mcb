@@ -1,6 +1,6 @@
-//! VoyageAI Embedding Provider
+//! `VoyageAI` Embedding Provider
 //!
-//! Implements the EmbeddingProvider port using VoyageAI's embedding API.
+//! Implements the `EmbeddingProvider` port using `VoyageAI`'s embedding API.
 //! Optimized for code embeddings with voyage-code-3 model.
 
 use std::time::Duration;
@@ -20,9 +20,9 @@ use crate::provider_utils::{JsonRequestParams, send_json_request};
 use crate::utils::http::{RequestErrorKind, create_http_provider_config, parse_embedding_vector};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
-/// VoyageAI embedding provider
+/// `VoyageAI` embedding provider
 ///
-/// Implements the `EmbeddingProvider` domain port using VoyageAI's embedding API.
+/// Implements the `EmbeddingProvider` domain port using `VoyageAI`'s embedding API.
 /// Receives HTTP client via constructor injection.
 ///
 /// ## Example
@@ -48,14 +48,15 @@ pub struct VoyageAIEmbeddingProvider {
 }
 
 impl VoyageAIEmbeddingProvider {
-    /// Create a new VoyageAI embedding provider
+    /// Create a new `VoyageAI` embedding provider
     ///
     /// # Arguments
-    /// * `api_key` - VoyageAI API key
-    /// * `base_url` - Optional custom base URL (defaults to VoyageAI API)
+    /// * `api_key` - `VoyageAI` API key
+    /// * `base_url` - Optional custom base URL (defaults to `VoyageAI` API)
     /// * `model` - Model name (e.g., "voyage-code-3")
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
+    #[must_use]
     pub fn new(
         api_key: String,
         base_url: Option<String>,
@@ -76,22 +77,26 @@ impl VoyageAIEmbeddingProvider {
     }
 
     /// Get the model name for this provider
+    #[must_use]
     pub fn model(&self) -> &str {
         &self.client.model
     }
 
     /// Get the maximum tokens supported by this provider
+    #[must_use]
     pub fn max_tokens(&self) -> usize {
         // All VoyageAI models support the same max tokens
         VOYAGEAI_MAX_INPUT_TOKENS
     }
 
     /// Get the API key for this provider
+    #[must_use]
     pub fn api_key(&self) -> &str {
         &self.client.api_key
     }
 
     /// Get the base URL for this provider
+    #[must_use]
     pub fn base_url(&self) -> String {
         self.client.base_url.clone()
     }
@@ -105,7 +110,7 @@ impl VoyageAIEmbeddingProvider {
 
         let headers = vec![
             ("Authorization", format!("Bearer {}", self.client.api_key)),
-            ("Content-Type", CONTENT_TYPE_JSON.to_string()),
+            ("Content-Type", CONTENT_TYPE_JSON.to_owned()),
         ];
 
         send_json_request(JsonRequestParams {
@@ -135,7 +140,7 @@ impl VoyageAIEmbeddingProvider {
 }
 
 #[async_trait]
-/// VoyageAI implementation of the EmbeddingProvider trait.
+/// `VoyageAI` implementation of the `EmbeddingProvider` trait.
 impl EmbeddingProvider for VoyageAIEmbeddingProvider {
     /// Generates embeddings for a batch of texts.
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
@@ -170,7 +175,7 @@ use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
 
-/// Factory function for creating VoyageAI embedding provider instances.
+/// Factory function for creating `VoyageAI` embedding provider instances.
 fn voyageai_factory(
     config: &EmbeddingProviderConfig,
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {

@@ -42,7 +42,7 @@ fn test_memory_filter_construction() {
         project_id: None,
         tags: None,
         r#type: None,
-        session_id: Some("s1".to_string()),
+        session_id: Some("s1".to_owned()),
         parent_session_id: None,
         repo_id: None,
         time_range: None,
@@ -55,10 +55,10 @@ fn test_memory_filter_construction() {
 #[rstest]
 fn test_observation_has_required_fields() {
     let o = Observation {
-        id: "id1".to_string(),
-        project_id: "test-project".to_string(),
-        content: "c".to_string(),
-        content_hash: "h".to_string(),
+        id: "id1".to_owned(),
+        project_id: "test-project".to_owned(),
+        content: "c".to_owned(),
+        content_hash: "h".to_owned(),
         tags: vec![],
         r#type: ObservationType::Context,
         metadata: ObservationMetadata::default(),
@@ -105,14 +105,14 @@ fn error_pattern_category_as_str(#[case] category: ErrorPatternCategory, #[case]
 #[rstest]
 fn test_error_pattern_construction() {
     let pattern = ErrorPattern {
-        id: "ep-001".to_string(),
-        project_id: "proj-1".to_string(),
-        pattern_signature: "error[E0277]: the trait bound".to_string(),
-        description: "Missing trait implementation".to_string(),
+        id: "ep-001".to_owned(),
+        project_id: "proj-1".to_owned(),
+        pattern_signature: "error[E0277]: the trait bound".to_owned(),
+        description: "Missing trait implementation".to_owned(),
         category: ErrorPatternCategory::Compilation,
-        solutions: vec!["Add #[derive(Debug)]".to_string()],
-        affected_files: vec!["src/lib.rs".to_string()],
-        tags: vec!["rust".to_string(), "trait".to_string()],
+        solutions: vec!["Add #[derive(Debug)]".to_owned()],
+        affected_files: vec!["src/lib.rs".to_owned()],
+        tags: vec!["rust".to_owned(), "trait".to_owned()],
         occurrence_count: 5,
         first_seen_at: 1000,
         last_seen_at: 2000,
@@ -126,9 +126,9 @@ fn test_error_pattern_construction() {
 #[rstest]
 fn test_error_pattern_match_construction() {
     let match_ = ErrorPatternMatch {
-        id: "epm-001".to_string(),
-        pattern_id: "ep-001".to_string(),
-        observation_id: "obs-001".to_string(),
+        id: "epm-001".to_owned(),
+        pattern_id: "ep-001".to_owned(),
+        observation_id: "obs-001".to_owned(),
         confidence: 950,
         solution_applied: Some(0),
         resolution_successful: Some(true),

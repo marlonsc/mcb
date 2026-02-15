@@ -10,6 +10,8 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 use rmcp::ErrorData as McpError;
+
+use crate::error_mapping::safe_internal_error;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolRequestParams, CallToolResult, Tool};
 use validator::Validate;
@@ -259,14 +261,14 @@ static ENTITY_DESCRIPTOR: ToolDescriptor = ToolDescriptor {
 
 fn create_tool_from_descriptor(descriptor: &ToolDescriptor) -> Result<Tool, McpError> {
     let schema_value = serde_json::to_value((descriptor.schema)())
-        .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        .map_err(|e| safe_internal_error("serialize tool schema", &e))?;
 
     let input_schema = schema_value
         .as_object()
         .ok_or_else(|| {
-            McpError::internal_error(
-                format!("Schema for {} is not an object", descriptor.name),
-                None,
+            safe_internal_error(
+                "validate tool schema shape",
+                &format_args!("schema for '{}' is not an object", descriptor.name),
             )
         })?
         .clone();
@@ -288,12 +290,9 @@ fn validate_registry_unique_tool_names() -> Result<(), McpError> {
     let mut names = HashSet::new();
     for descriptor in TOOL_DESCRIPTORS {
         if !names.insert(descriptor.name) {
-            return Err(McpError::internal_error(
-                format!(
-                    "Duplicate tool descriptor name detected: {}",
-                    descriptor.name
-                ),
-                None,
+            return Err(safe_internal_error(
+                "validate tool registry",
+                &format_args!("duplicate tool descriptor: {}", descriptor.name),
             ));
         }
     }

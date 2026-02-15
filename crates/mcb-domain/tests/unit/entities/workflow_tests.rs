@@ -1,4 +1,4 @@
-//! Unit tests for workflow entities (WorkflowState, WorkflowSession).
+//! Unit tests for workflow entities (`WorkflowState`, `WorkflowSession`).
 
 use mcb_domain::entities::{WorkflowSession, WorkflowState};
 use rstest::rstest;
@@ -8,7 +8,7 @@ fn test_workflow_state_display() {
     assert_eq!(WorkflowState::Initializing.to_string(), "initializing");
     assert_eq!(
         WorkflowState::Ready {
-            context_id: "ctx-1".to_string()
+            context_id: "ctx-1".to_owned()
         }
         .to_string(),
         "ready"
@@ -23,7 +23,7 @@ fn test_workflow_state_is_terminal() {
 
 #[rstest]
 fn test_workflow_session_new() {
-    let session = WorkflowSession::new("sess-1".to_string(), "proj-1".to_string());
+    let session = WorkflowSession::new("sess-1".to_owned(), "proj-1".to_owned());
     assert_eq!(session.id, "sess-1");
     assert_eq!(session.current_state, WorkflowState::Initializing);
     assert!(!session.is_complete());

@@ -4,7 +4,7 @@ use validator::Validate;
 
 fn build_search_args(query: &str, min_score: Option<f32>, collection: Option<&str>) -> SearchArgs {
     SearchArgs {
-        query: query.to_string(),
+        query: query.to_owned(),
         org_id: None,
         resource: SearchResource::Code,
         collection: collection.map(str::to_string),

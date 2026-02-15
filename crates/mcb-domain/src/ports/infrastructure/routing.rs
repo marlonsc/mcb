@@ -46,6 +46,7 @@ pub struct ProviderContext {
 
 impl ProviderContext {
     /// Create a new provider context with default values
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

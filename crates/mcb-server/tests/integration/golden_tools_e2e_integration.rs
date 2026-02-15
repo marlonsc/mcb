@@ -1,5 +1,5 @@
 //!
-//! These tests use the real DI stack (FastEmbed + EdgeVec)
+//! These tests use the real DI stack (`FastEmbed` + `EdgeVec`)
 //! and call the MCP handlers (index, search) to validate behavior.
 
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
@@ -22,8 +22,7 @@ async fn test_golden_e2e_complete_workflow() {
     let path = sample_codebase_path();
     assert!(
         path.exists(),
-        "sample_codebase fixture must exist: {:?}",
-        path
+        "sample_codebase fixture must exist: {path:?}"
     );
     let path_str = path.to_string_lossy().to_string();
     let coll = GOLDEN_COLLECTION;
@@ -35,7 +34,7 @@ async fn test_golden_e2e_complete_workflow() {
     let clear_args = IndexArgs {
         action: IndexAction::Clear,
         path: None,
-        collection: Some(coll.to_string()),
+        collection: Some(coll.to_owned()),
         extensions: None,
         exclude_dirs: None,
         ignore_patterns: None,
@@ -57,7 +56,7 @@ async fn test_golden_e2e_complete_workflow() {
     let status_args = IndexArgs {
         action: IndexAction::Status,
         path: None,
-        collection: Some(coll.to_string()),
+        collection: Some(coll.to_owned()),
         extensions: None,
         exclude_dirs: None,
         ignore_patterns: None,
@@ -78,7 +77,7 @@ async fn test_golden_e2e_complete_workflow() {
     let index_args = IndexArgs {
         action: IndexAction::Start,
         path: path_str.clone().into(),
-        collection: Some(coll.to_string()),
+        collection: Some(coll.to_owned()),
         extensions: None,
         exclude_dirs: None,
         ignore_patterns: None,
@@ -102,10 +101,10 @@ async fn test_golden_e2e_complete_workflow() {
 
     // 4. Search
     let search_args = SearchArgs {
-        query: "embedding or vector".to_string(),
+        query: "embedding or vector".to_owned(),
         org_id: None,
         resource: SearchResource::Code,
-        collection: Some(coll.to_string()),
+        collection: Some(coll.to_owned()),
         extensions: None,
         filters: None,
         limit: Some(5),
@@ -128,7 +127,7 @@ async fn test_golden_e2e_complete_workflow() {
     let clear_args = IndexArgs {
         action: IndexAction::Clear,
         path: None,
-        collection: Some(coll.to_string()),
+        collection: Some(coll.to_owned()),
         extensions: None,
         exclude_dirs: None,
         ignore_patterns: None,
@@ -141,8 +140,8 @@ async fn test_golden_e2e_complete_workflow() {
 }
 
 #[rstest]
-#[case(Some(GOLDEN_COLLECTION.to_string()), None)]
-#[case(Some("golden_multi_lang".to_string()), Some(vec!["rs".to_string()]))]
+#[case(Some(GOLDEN_COLLECTION.to_owned()), None)]
+#[case(Some("golden_multi_lang".to_owned()), Some(vec!["rs".to_owned()]))]
 #[tokio::test]
 async fn test_golden_index_variants(
     #[case] collection: Option<String>,
@@ -150,7 +149,7 @@ async fn test_golden_index_variants(
 ) {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
-    assert!(path.exists(), "sample_codebase must exist: {:?}", path);
+    assert!(path.exists(), "sample_codebase must exist: {path:?}");
 
     let handler = server.index_handler();
     let args = IndexArgs {
@@ -175,8 +174,7 @@ async fn test_golden_index_variants(
         text.contains("Files processed")
             || text.contains("Indexing Started")
             || text.contains("started"),
-        "response: {}",
-        text
+        "response: {text}"
     );
 }
 
@@ -190,7 +188,7 @@ async fn test_golden_search_returns_relevant_results() {
         .handle(Parameters(IndexArgs {
             action: IndexAction::Start,
             path: Some(path.to_string_lossy().to_string()),
-            collection: Some(collection.to_string()),
+            collection: Some(collection.to_owned()),
             extensions: None,
             exclude_dirs: None,
             ignore_patterns: None,
@@ -204,10 +202,10 @@ async fn test_golden_search_returns_relevant_results() {
     let search_h = server.search_handler();
     let r = search_h
         .handle(Parameters(SearchArgs {
-            query: "embedding vector".to_string(),
+            query: "embedding vector".to_owned(),
             org_id: None,
             resource: SearchResource::Code,
-            collection: Some(collection.to_string()),
+            collection: Some(collection.to_owned()),
             extensions: None,
             filters: None,
             limit: Some(10),
@@ -225,7 +223,7 @@ async fn test_golden_search_handles_empty_query() {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let search_h = server.search_handler();
     let r = search_h.handle(Parameters(SearchArgs {
-        query: "   ".to_string(),
+        query: "   ".to_owned(),
         org_id: None,
         resource: SearchResource::Code,
         collection: None,
@@ -253,7 +251,7 @@ async fn test_golden_search_respects_limit_parameter() {
         .handle(Parameters(IndexArgs {
             action: IndexAction::Start,
             path: Some(path.to_string_lossy().to_string()),
-            collection: Some(collection.to_string()),
+            collection: Some(collection.to_owned()),
             extensions: None,
             exclude_dirs: None,
             ignore_patterns: None,
@@ -267,10 +265,10 @@ async fn test_golden_search_respects_limit_parameter() {
     let search_h = server.search_handler();
     let r = search_h
         .handle(Parameters(SearchArgs {
-            query: "function code".to_string(),
+            query: "function code".to_owned(),
             org_id: None,
             resource: SearchResource::Code,
-            collection: Some(collection.to_string()),
+            collection: Some(collection.to_owned()),
             extensions: None,
             filters: None,
             limit: Some(2),

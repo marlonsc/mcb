@@ -30,7 +30,8 @@ pub struct SanitizedConfig {
 }
 
 impl SanitizedConfig {
-    /// Create a sanitized config from AppConfig, removing sensitive fields
+    /// Create a sanitized config from `AppConfig`, removing sensitive fields
+    #[must_use]
     pub fn from_app_config(config: &AppConfig) -> Self {
         Self {
             server: Self::server_view(config),

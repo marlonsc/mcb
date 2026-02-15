@@ -9,7 +9,7 @@
 //! - **Project**: A distinct codebase or module (e.g., a Rust crate, an NPM package).
 //! - **Issue**: A unit of work (Task, Bug, Feature) tracked within a project.
 //! - **Phase**: A milestone or stage in the project roadmap.
-//! - **Dependency**: Directed relationships between issues (Blocks, RelatesTo).
+//! - **Dependency**: Directed relationships between issues (Blocks, `RelatesTo`).
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -88,9 +88,7 @@ impl ProjectType {
     #[must_use]
     pub fn name(&self) -> &str {
         match self {
-            Self::Cargo { name, .. } => name,
-            Self::Npm { name, .. } => name,
-            Self::Python { name, .. } => name,
+            Self::Cargo { name, .. } | Self::Npm { name, .. } | Self::Python { name, .. } => name,
             Self::Go { module, .. } => module,
             Self::Maven { artifact_id, .. } => artifact_id,
         }

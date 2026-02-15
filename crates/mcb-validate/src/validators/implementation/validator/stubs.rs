@@ -29,7 +29,7 @@ pub fn validate_stub_macros(
             for (pattern, macro_type) in &compiled {
                 if pattern.is_match(trimmed) {
                     violations.push(ImplementationViolation::StubMacro {
-                        file: file_path.to_path_buf(),
+                        file: file_path.clone(),
                         line: line_num,
                         method_name: current_fn_name.clone(),
                         macro_type: macro_type.to_string(),

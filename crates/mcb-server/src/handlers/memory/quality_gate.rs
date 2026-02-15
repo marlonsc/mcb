@@ -3,7 +3,7 @@ use std::sync::Arc;
 use mcb_domain::entities::memory::{ObservationType, QualityGateResult};
 use mcb_domain::ports::services::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use serde_json::Value;
 
 use super::common::{
@@ -13,6 +13,7 @@ use super::common::{
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handlers::helpers::tool_error;
 use uuid::Uuid;
 
 /// Stores a quality gate result as a semantic observation.
@@ -36,9 +37,7 @@ pub async fn store_quality_gate(
     let status: mcb_domain::entities::memory::QualityGateStatus = match status_str.parse() {
         Ok(v) => v,
         Err(error) => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                error.to_string(),
-            )]));
+            return Ok(tool_error(error.to_string()));
         }
     };
     let timestamp = data
@@ -59,7 +58,7 @@ pub async fn store_quality_gate(
         quality_gate.status.as_str()
     );
     let tags = vec![
-        "quality_gate".to_string(),
+        "quality_gate".to_owned(),
         quality_gate.status.as_str().to_owned(),
     ];
     let origin = resolve_memory_origin_context(

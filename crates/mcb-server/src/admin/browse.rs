@@ -35,7 +35,7 @@ pub async fn list_browse_projects(
                 return Err((
                     Status::ServiceUnavailable,
                     Json(CacheErrorResponse {
-                        error: "Project workflow service not available".to_string(),
+                        error: "Project workflow service not available".to_owned(),
                     }),
                 ));
             }
@@ -67,7 +67,7 @@ pub async fn list_browse_repositories(
                 return Err((
                     Status::ServiceUnavailable,
                     Json(CacheErrorResponse {
-                        error: "VCS entity service not available".to_string(),
+                        error: "VCS entity service not available".to_owned(),
                     }),
                 ));
             }
@@ -102,7 +102,7 @@ pub async fn list_browse_plans(
                 return Err((
                     Status::ServiceUnavailable,
                     Json(CacheErrorResponse {
-                        error: "Plan entity service not available".to_string(),
+                        error: "Plan entity service not available".to_owned(),
                     }),
                 ));
             }
@@ -134,7 +134,7 @@ pub async fn list_browse_issues(
                 return Err((
                     Status::ServiceUnavailable,
                     Json(CacheErrorResponse {
-                        error: "Issue entity service not available".to_string(),
+                        error: "Issue entity service not available".to_owned(),
                     }),
                 ));
             }
@@ -163,7 +163,7 @@ pub async fn list_browse_organizations(
                 return Err((
                     Status::ServiceUnavailable,
                     Json(CacheErrorResponse {
-                        error: "Org entity service not available".to_string(),
+                        error: "Org entity service not available".to_owned(),
                     }),
                 ));
             }

@@ -5,7 +5,7 @@
 //! | Engine | Purpose | External crate |
 //! | -------- | --------- | ---------------- |
 //! | `ReteEngine` | RETE-UL algorithm with GRL when/then syntax | `rust-rule-engine` |
-//! | `ExpressionEngine` | Simple boolean expressions (file_count > 500) | `evalexpr` |
+//! | `ExpressionEngine` | Simple boolean expressions (`file_count` > 500) | `evalexpr` |
 //! | `RustyRulesEngineWrapper` | JSON DSL with all/any/not composition | `rusty-rules` |
 //! | `ValidatorEngine` | Rule _definition_ validation (field checks) | `validator` |
 //! | `RuleEngineRouter` | Auto-detects engine from rule content, dispatches | — |
@@ -20,8 +20,8 @@
 //! 1. Explicit `"engine"` field → use specified engine
 //! 2. Contains "when"/"then" → RETE
 //! 3. Has `"expression"` field → Expression
-//! 4. Has `"condition"`/`"action"` → RustyRules
-//! 5. Default → RustyRules
+//! 4. Has `"condition"`/`"action"` → `RustyRules`
+//! 5. Default → `RustyRules`
 
 pub mod expression_engine;
 pub mod hybrid_engine;

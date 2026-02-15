@@ -27,11 +27,13 @@ pub enum HealthStatus {
 
 impl HealthStatus {
     /// Check if the status indicates the service is healthy
+    #[must_use]
     pub fn is_healthy(&self) -> bool {
         matches!(self, Self::Up)
     }
 
     /// Check if the service is operational (healthy or degraded)
+    #[must_use]
     pub fn is_operational(&self) -> bool {
         matches!(self, Self::Up | Self::Degraded)
     }
@@ -92,12 +94,14 @@ impl HealthCheck {
     }
 
     /// Set response time
+    #[must_use]
     pub fn with_response_time(mut self, duration: Duration) -> Self {
         self.response_time_ms = duration.as_millis() as u64;
         self
     }
 
     /// Set additional details
+    #[must_use]
     pub fn with_details(mut self, details: serde_json::Value) -> Self {
         self.details = Some(details);
         self
@@ -127,6 +131,7 @@ impl Default for HealthResponse {
 
 impl HealthResponse {
     /// Create a new health response
+    #[must_use]
     pub fn new() -> Self {
         Self {
             status: HealthStatus::Up,
@@ -138,6 +143,7 @@ impl HealthResponse {
     }
 
     /// Add a health check result
+    #[must_use]
     pub fn add_check(mut self, check: HealthCheck) -> Self {
         // Update overall status based on individual check
         if check.status == HealthStatus::Down {
@@ -151,12 +157,14 @@ impl HealthResponse {
     }
 
     /// Set response time
+    #[must_use]
     pub fn with_response_time(mut self, duration: Duration) -> Self {
         self.response_time_ms = duration.as_millis() as u64;
         self
     }
 
     /// Check if the overall system is healthy
+    #[must_use]
     pub fn is_healthy(&self) -> bool {
         self.status.is_healthy()
     }
@@ -187,7 +195,7 @@ impl Default for SystemInfo {
             memory_available_bytes: 0,
             cpu_usage_percent: 0.0,
             active_connections: 0,
-            version: env!("CARGO_PKG_VERSION").to_string(),
+            version: env!("CARGO_PKG_VERSION").to_owned(),
         }
     }
 }
@@ -223,6 +231,7 @@ pub struct HealthRegistry {
 
 impl HealthRegistry {
     /// Create a new health registry
+    #[must_use]
     pub fn new() -> Self {
         Self {
             checkers: Arc::new(RwLock::new(HashMap::new())),
@@ -356,6 +365,7 @@ pub mod checkers {
         /// Create a new system health checker with default thresholds
         ///
         /// Default thresholds: CPU > 90%, Memory > 90%
+        #[must_use]
         pub fn new() -> Self {
             Self {
                 cpu_threshold_percent: 90.0,
@@ -364,6 +374,7 @@ pub mod checkers {
         }
 
         /// Create with custom thresholds
+        #[must_use]
         pub fn with_thresholds(cpu_threshold: f32, memory_threshold: f64) -> Self {
             Self {
                 cpu_threshold_percent: cpu_threshold,
@@ -415,7 +426,7 @@ pub mod checkers {
             };
 
             HealthCheck {
-                name: "system".to_string(),
+                name: "system".to_owned(),
                 status,
                 timestamp: chrono::Utc::now().timestamp(),
                 response_time_ms: start_time.elapsed().as_millis() as u64,
@@ -450,11 +461,13 @@ impl HealthUtils {
     }
 
     /// Check if a health response indicates the system is ready for traffic
+    #[must_use]
     pub fn is_ready(response: &HealthResponse) -> bool {
         response.status.is_operational()
     }
 
     /// Check if a health response indicates the system is alive
+    #[must_use]
     pub fn is_alive(response: &HealthResponse) -> bool {
         response.status != HealthStatus::Down
     }

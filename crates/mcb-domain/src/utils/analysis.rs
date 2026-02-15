@@ -29,6 +29,7 @@ pub fn compute_complexity_score(content: &str, start_pos: usize) -> Result<u32> 
 /// Extracts the function body by balancing braces.
 ///
 /// Returns the content within the function body, including the braces.
+#[must_use]
 pub fn extract_function_body(content: &str, start_pos: usize) -> Option<String> {
     let after_start = &content[start_pos..];
     let brace_index = after_start.find('{')?;
@@ -54,6 +55,7 @@ pub fn extract_function_body(content: &str, start_pos: usize) -> Option<String> 
 }
 
 /// Checks if a symbol should be exempt from dead code detection (e.g. main, tests).
+#[must_use]
 pub fn is_exempt_symbol(name: &str) -> bool {
     matches!(name, "main") || name.starts_with("test_")
 }

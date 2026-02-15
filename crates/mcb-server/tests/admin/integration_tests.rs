@@ -2,6 +2,8 @@ use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface
 use mcb_domain::value_objects::CollectionId;
 use rocket::http::Status;
 
+use crate::test_utils::timeouts::TEST_TIMEOUT;
+
 use super::harness::AdminTestHarness;
 
 #[rocket::async_test]
@@ -34,13 +36,12 @@ async fn test_full_admin_stack_integration() {
     let cache_hit_rate = json["cache_hit_rate"].as_f64().unwrap();
     assert!(
         (cache_hit_rate - 0.333).abs() < 0.01,
-        "Expected ~33% cache hit rate, got {}",
-        cache_hit_rate
+        "Expected ~33% cache hit rate, got {cache_hit_rate}"
     );
 
     let op1 = indexing.start_operation(&CollectionId::from_name("project-alpha"), 100);
     let _op2 = indexing.start_operation(&CollectionId::from_name("project-beta"), 200);
-    indexing.update_progress(&op1, Some("src/main.rs".to_string()), 25);
+    indexing.update_progress(&op1, Some("src/main.rs".to_owned()), 25);
 
     // 6. Verify jobs endpoint shows operations
     let response = client.get("/jobs").dispatch().await;
@@ -93,7 +94,11 @@ async fn test_full_admin_stack_integration() {
     assert_eq!(json["alive"], true);
 
     // 10. Wait for readiness (needs uptime > 1s)
-    tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+    tokio::time::timeout(TEST_TIMEOUT, async {
+        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+    })
+    .await
+    .expect("readiness wait timed out");
 
     let response = client.get("/ready").dispatch().await;
 
@@ -151,9 +156,9 @@ async fn test_indexing_lifecycle_integration() {
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
     assert_eq!(json["running"], 3);
 
-    indexing.update_progress(&op1, Some("file1.rs".to_string()), 50);
-    indexing.update_progress(&op2, Some("file2.rs".to_string()), 50);
-    indexing.update_progress(&op3, Some("file3.rs".to_string()), 75);
+    indexing.update_progress(&op1, Some("file1.rs".to_owned()), 50);
+    indexing.update_progress(&op2, Some("file2.rs".to_owned()), 50);
+    indexing.update_progress(&op3, Some("file3.rs".to_owned()), 75);
 
     indexing.complete_operation(&op1);
 

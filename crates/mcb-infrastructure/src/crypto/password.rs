@@ -15,6 +15,7 @@ pub struct PasswordService {
 
 impl PasswordService {
     /// Create a new password service with default configuration
+    #[must_use]
     pub fn new() -> Self {
         Self {
             argon2: Argon2::default(),
@@ -29,7 +30,7 @@ impl PasswordService {
             .argon2
             .hash_password(password.as_bytes(), &salt)
             .map_err(|e| Error::Infrastructure {
-                message: format!("Password hashing failed: {}", e),
+                message: format!("Password hashing failed: {e}"),
                 source: None,
             })?;
 
@@ -39,7 +40,7 @@ impl PasswordService {
     /// Verify a password against its hash
     pub fn verify_password(&self, password: &str, hash: &str) -> Result<bool> {
         let parsed_hash = PasswordHash::new(hash).map_err(|e| Error::Authentication {
-            message: format!("Invalid password hash format: {}", e),
+            message: format!("Invalid password hash format: {e}"),
             source: None,
         })?;
 

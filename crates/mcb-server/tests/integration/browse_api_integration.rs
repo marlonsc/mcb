@@ -22,7 +22,7 @@ use rocket::http::{Header, Status};
 use rocket::local::asynchronous::Client;
 use rstest::rstest;
 
-/// Mock VectorStoreBrowser for testing
+/// Mock `VectorStoreBrowser` for testing
 pub struct TestVectorStoreBrowser {
     collections: Vec<CollectionInfo>,
     files: Vec<FileInfo>,
@@ -110,8 +110,8 @@ async fn create_test_client(browse_state: BrowseState) -> Client {
     let admin_state = create_test_admin_state();
     let auth_config = Arc::new(AdminAuthConfig {
         enabled: true,
-        header_name: "X-Admin-Key".to_string(),
-        api_key: Some("test-key".to_string()),
+        header_name: "X-Admin-Key".to_owned(),
+        api_key: Some("test-key".to_owned()),
     });
 
     let rocket = admin_rocket(admin_state, auth_config, Some(browse_state));
@@ -157,7 +157,7 @@ async fn test_list_collections(
 
     assert_eq!(response.status(), Status::Ok);
     let body = response.into_string().await.expect("response body");
-    assert!(body.contains(&format!("\"total\":{}", expected_total)));
+    assert!(body.contains(&format!("\"total\":{expected_total}")));
     if expected_total == 0 {
         assert!(body.contains("\"collections\":[]"));
         return;
@@ -173,8 +173,8 @@ async fn test_list_collections(
 #[tokio::test]
 async fn test_list_files_in_collection() {
     let files = vec![
-        FileInfo::new("src/main.rs".to_string(), 5, "rust", None),
-        FileInfo::new("src/lib.rs".to_string(), 3, "rust", None),
+        FileInfo::new("src/main.rs".to_owned(), 5, "rust", None),
+        FileInfo::new("src/lib.rs".to_owned(), 3, "rust", None),
     ];
 
     let browser = TestVectorStoreBrowser::new().with_files(files);
@@ -202,20 +202,20 @@ async fn test_list_files_in_collection() {
 async fn test_get_file_chunks() {
     let chunks = vec![
         SearchResult {
-            id: "chunk_1".to_string(),
-            file_path: "src/main.rs".to_string(),
-            content: "fn main() { }".to_string(),
+            id: "chunk_1".to_owned(),
+            file_path: "src/main.rs".to_owned(),
+            content: "fn main() { }".to_owned(),
             start_line: 1,
             score: 1.0,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         },
         SearchResult {
-            id: "chunk_2".to_string(),
-            file_path: "src/main.rs".to_string(),
-            content: "fn helper() { }".to_string(),
+            id: "chunk_2".to_owned(),
+            file_path: "src/main.rs".to_owned(),
+            content: "fn helper() { }".to_owned(),
             start_line: 5,
             score: 1.0,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         },
     ];
 
@@ -242,7 +242,7 @@ async fn test_get_file_chunks() {
 
 #[rstest]
 #[case(None)]
-#[case(Some("invalid-key".to_string()))]
+#[case(Some("invalid-key".to_owned()))]
 #[tokio::test]
 async fn test_browse_auth_validation(#[case] admin_key: Option<String>) {
     let browse_state = create_test_browse_state(TestVectorStoreBrowser::new());
@@ -269,7 +269,7 @@ use mcb_domain::ports::providers::VectorStoreProvider;
 use mcb_domain::value_objects::Embedding;
 use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
 
-/// Creates a test vector store instance (EdgeVec in-memory)
+/// Creates a test vector store instance (`EdgeVec` in-memory)
 fn create_test_vector_store() -> EdgeVecVectorStoreProvider {
     let config = EdgeVecConfig {
         dimensions: 384,
@@ -286,12 +286,12 @@ fn create_chunk_metadata(
     language: &str,
 ) -> HashMap<String, serde_json::Value> {
     let mut metadata = HashMap::new();
-    metadata.insert("file_path".to_string(), serde_json::json!(file_path));
-    metadata.insert("content".to_string(), serde_json::json!(content));
-    metadata.insert("start_line".to_string(), serde_json::json!(start_line));
-    metadata.insert("language".to_string(), serde_json::json!(language));
+    metadata.insert("file_path".to_owned(), serde_json::json!(file_path));
+    metadata.insert("content".to_owned(), serde_json::json!(content));
+    metadata.insert("start_line".to_owned(), serde_json::json!(start_line));
+    metadata.insert("language".to_owned(), serde_json::json!(language));
     metadata.insert(
-        "id".to_string(),
+        "id".to_owned(),
         serde_json::json!(format!("chunk_{}_{}", file_path, start_line)),
     );
     metadata
@@ -301,7 +301,7 @@ fn create_chunk_metadata(
 fn create_dummy_embedding(dimensions: usize) -> Embedding {
     Embedding {
         vector: vec![0.1; dimensions],
-        model: "test-model".to_string(),
+        model: "test-model".to_owned(),
         dimensions,
     }
 }
@@ -485,7 +485,7 @@ async fn test_e2e_real_store_list_files() {
             "src/config.rs" => assert_eq!(chunk_count, 2, "config.rs should have 2 chunks"),
             "src/handlers.rs" => assert_eq!(chunk_count, 2, "handlers.rs should have 2 chunks"),
             "src/main.rs" => assert_eq!(chunk_count, 1, "main.rs should have 1 chunk"),
-            _ => panic!("Unexpected file: {}", path),
+            _ => panic!("Unexpected file: {path}"),
         }
     }
 }
@@ -601,7 +601,7 @@ async fn test_e2e_real_store_navigate_full_flow() {
     );
 
     // Step 2: List files in the collection
-    let files_url = format!("/collections/{}/files", collection_name);
+    let files_url = format!("/collections/{collection_name}/files");
     let response = client
         .get(&files_url)
         .header(Header::new("X-Admin-Key", "test-key"))
@@ -625,7 +625,7 @@ async fn test_e2e_real_store_navigate_full_flow() {
     assert_eq!(chunk_count, 2, "config.rs should have 2 chunks");
 
     // Step 3: Get chunks for config.rs
-    let chunks_url = format!("/collections/{}/chunks/src/config.rs", collection_name);
+    let chunks_url = format!("/collections/{collection_name}/chunks/src/config.rs");
     let response = client
         .get(&chunks_url)
         .header(Header::new("X-Admin-Key", "test-key"))

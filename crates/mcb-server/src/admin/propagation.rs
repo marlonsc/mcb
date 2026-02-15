@@ -1,7 +1,7 @@
 //! Configuration propagation for runtime config changes
 //!
 //! Handles propagating configuration changes to services that support hot-reload.
-//! Uses the ConfigWatcher event subscription mechanism.
+//! Uses the `ConfigWatcher` event subscription mechanism.
 
 use std::sync::Arc;
 
@@ -22,6 +22,7 @@ pub struct ConfigPropagator {
 
 impl ConfigPropagator {
     /// Create a new config propagator
+    #[must_use]
     pub fn new() -> Self {
         Self {
             callbacks: Vec::new(),
@@ -29,6 +30,7 @@ impl ConfigPropagator {
     }
 
     /// Register a callback to be called when config changes
+    #[must_use]
     pub fn on_config_change(mut self, callback: ConfigChangeCallback) -> Self {
         self.callbacks.push(callback);
         self
@@ -130,6 +132,7 @@ impl PropagatorHandle {
     }
 
     /// Check if the propagator task is still running
+    #[must_use]
     pub fn is_running(&self) -> bool {
         !self.handle.is_finished()
     }
@@ -142,6 +145,7 @@ pub mod callbacks {
     use super::ConfigChangeCallback;
 
     /// Create a callback that logs all config changes
+    #[must_use]
     pub fn logging_callback() -> ConfigChangeCallback {
         Box::new(|config| {
             info!(
@@ -154,6 +158,7 @@ pub mod callbacks {
     }
 
     /// Create a callback that updates logging level (if supported)
+    #[must_use]
     pub fn log_level_callback() -> ConfigChangeCallback {
         Box::new(|config| {
             // Note: Changing log level at runtime requires tracing_subscriber reload

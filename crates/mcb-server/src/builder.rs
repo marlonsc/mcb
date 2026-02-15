@@ -41,6 +41,7 @@ pub struct McpServerBuilder {
 
 impl McpServerBuilder {
     /// Create a new server builder
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -147,7 +148,7 @@ impl McpServerBuilder {
     /// Build the MCP server
     ///
     /// # Returns
-    /// A Result containing the McpServer or an error if dependencies are missing
+    /// A Result containing the `McpServer` or an error if dependencies are missing
     ///
     /// # Errors
     /// Returns `BuilderError::MissingDependency` if any required service is not provided

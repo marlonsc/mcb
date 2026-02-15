@@ -27,7 +27,7 @@ pub(super) async fn execute_tool_json<T: DeserializeOwned>(
     let handlers = state
         .tool_handlers
         .as_ref()
-        .ok_or_else(|| "Unified execution handlers are not available".to_string())?;
+        .ok_or_else(|| "Unified execution handlers are not available".to_owned())?;
 
     let arguments = args
         .as_object()
@@ -35,7 +35,7 @@ pub(super) async fn execute_tool_json<T: DeserializeOwned>(
         .ok_or_else(|| format!("{tool_name} arguments must be a JSON object"))?;
 
     let request = CallToolRequestParams {
-        name: tool_name.to_string().into(),
+        name: tool_name.to_owned().into(),
         arguments: Some(arguments),
         task: None,
         meta: None,

@@ -14,7 +14,7 @@ mod ca001_integration_tests {
 
     /// Get the workspace root for tests (the actual project root)
     fn get_workspace_root() -> PathBuf {
-        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
+        let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_owned());
         PathBuf::from(manifest_dir)
             .parent() // crates/
             .and_then(|p| p.parent()) // workspace root

@@ -182,16 +182,16 @@ async fn render_dashboard_template(title: &str, state: Option<&State<AdminState>
 
         let field_count = entity.fields().iter().filter(|field| !field.hidden).count();
         cards.push(DashboardEntityCard {
-            slug: entity.slug.to_string(),
-            title: entity.title.to_string(),
-            group: entity.group.to_string(),
+            slug: entity.slug.to_owned(),
+            title: entity.title.to_owned(),
+            group: entity.group.to_owned(),
             field_count,
             record_count,
         });
 
         if record_count > 0 {
             recent_activity.push(RecentActivityItem {
-                entity_title: entity.title.to_string(),
+                entity_title: entity.title.to_owned(),
                 record_count,
                 timestamp: now_ts,
             });

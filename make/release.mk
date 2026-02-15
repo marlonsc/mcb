@@ -43,17 +43,29 @@ install: ## Install release binary + systemd service to user directories
 	@mkdir -p $(INSTALL_DIR) $(SYSTEMD_USER_DIR) $(CONFIG_DIR) $(DATA_DIR) || { echo "Failed to create directories"; exit 1; }
 	@echo "Installing deploy config to $(CONFIG_DIR)/mcb.toml..."
 	@cp config/deploy.toml "$(CONFIG_DIR)/mcb.toml" || { echo "Failed to install config"; exit 1; }
+	@sed -i 's|^path = "mcb.db"|path = "$(DATA_DIR)/mcb.db"|' "$(CONFIG_DIR)/mcb.toml"
+	@echo "Pre-validating config..."
+	@if target/release/$(BINARY_NAME) config validate --config "$(CONFIG_DIR)/mcb.toml" >/dev/null 2>&1; then \
+		echo "  Config valid"; \
+	else \
+		echo "  Config validate sub-command not available, testing with dry run..."; \
+		if target/release/$(BINARY_NAME) serve --server --config "$(CONFIG_DIR)/mcb.toml" --dry-run >/dev/null 2>&1; then \
+			echo "  Config valid (dry-run)"; \
+		else \
+			echo "  Warning: config validation not available, proceeding..."; \
+		fi; \
+	fi
 	@echo "Stopping existing MCB..."
-	@-systemctl --user stop mcb.service 2>/dev/null
-	@WAIT=0; while [ $$WAIT -lt 10 ]; do \
-		if ! pgrep -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" >/dev/null 2>&1; then break; fi; \
-		sleep 1; WAIT=$$((WAIT + 1)); \
-	done
-	@-pkill -9 -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" 2>/dev/null; sleep 1
-	@WAIT=0; while [ $$WAIT -lt 5 ]; do \
-		if ! fuser "$(INSTALL_DIR)/$(INSTALL_BINARY)" >/dev/null 2>&1; then break; fi; \
-		sleep 1; WAIT=$$((WAIT + 1)); \
-	done
+	@-systemctl --user stop mcb.service 2>/dev/null; sleep 2
+	@-systemctl --user reset-failed mcb.service 2>/dev/null
+	@MCB_PID=$$(pgrep -x mcb 2>/dev/null || true); \
+	if [ -n "$$MCB_PID" ]; then \
+		kill $$MCB_PID 2>/dev/null || true; \
+		WAIT=0; while [ $$WAIT -lt 10 ] && kill -0 $$MCB_PID 2>/dev/null; do \
+			sleep 1; WAIT=$$((WAIT + 1)); \
+		done; \
+		kill -9 $$MCB_PID 2>/dev/null || true; sleep 1; \
+	fi
 	@rm -f "$(INSTALL_DIR)/$(INSTALL_BINARY).new" 2>/dev/null
 	@cp target/release/$(BINARY_NAME) "$(INSTALL_DIR)/$(INSTALL_BINARY).new" || { echo "Failed to copy binary"; exit 1; }
 	@chmod +x "$(INSTALL_DIR)/$(INSTALL_BINARY).new"
@@ -63,60 +75,67 @@ install: ## Install release binary + systemd service to user directories
 	@cp systemd/mcb.service $(SYSTEMD_USER_DIR)/mcb.service || { echo "Failed to install systemd service"; exit 1; }
 	@systemctl --user daemon-reload || { echo "Failed to reload systemd"; exit 1; }
 	@systemctl --user enable mcb.service || { echo "Failed to enable service"; exit 1; }
+	@-systemctl --user reset-failed mcb.service 2>/dev/null
 	@systemctl --user start mcb.service || { echo "Failed to start service"; exit 1; }
 	@sleep 2
 	@echo "Configuring MCP agent integrations..."
-	@command -v jq >/dev/null 2>&1 || { echo "jq is required for MCP config updates"; exit 1; }
-	@if [ -f ".mcp.json" ]; then \
-		jq '.mcpServers.mcb.args = ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"]' .mcp.json > .mcp.json.tmp && \
-		mv .mcp.json.tmp .mcp.json || { echo "Failed to update Claude Code config"; exit 1; }; \
-		echo "  Claude Code: .mcp.json configured"; \
+	@if command -v jq >/dev/null 2>&1; then \
+		if [ -f ".mcp.json" ]; then \
+			jq '.mcpServers.mcb.args = ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"]' .mcp.json > .mcp.json.tmp && \
+			mv .mcp.json.tmp .mcp.json && echo "  Claude Code: .mcp.json configured" || echo "  Claude Code: failed to update .mcp.json"; \
+		else \
+			echo "  Claude Code: .mcp.json not found (skipped)"; \
+		fi; \
+		if [ -f "$(HOME)/.gemini/antigravity/mcp_config.json" ]; then \
+			jq '.mcpServers.mcb.args = ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"]' "$(HOME)/.gemini/antigravity/mcp_config.json" > "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" && \
+			mv "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" "$(HOME)/.gemini/antigravity/mcp_config.json" && echo "  Gemini: mcp_config.json configured" || echo "  Gemini: failed to update config"; \
+		else \
+			echo "  Gemini: mcp_config.json not found (skipped)"; \
+		fi; \
 	else \
-		echo "  Claude Code: .mcp.json not found"; \
-	fi
-	@if [ -f "$(HOME)/.gemini/antigravity/mcp_config.json" ]; then \
-		jq '.mcpServers.mcb.args = ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"]' "$(HOME)/.gemini/antigravity/mcp_config.json" > "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" && \
-		mv "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" "$(HOME)/.gemini/antigravity/mcp_config.json" || { echo "Failed to update Gemini config"; exit 1; }; \
-		echo "  Gemini: mcp_config.json configured"; \
-	else \
-		echo "  Gemini: mcp_config.json not found"; \
+		echo "  jq not found, skipping MCP agent config updates"; \
 	fi
 	@$(MAKE) install-validate
 
 install-validate: ## Validate MCB installation with retries
 	@echo "Validating MCB installation..."
 	@if ! $(INSTALL_DIR)/$(INSTALL_BINARY) --version 2>/dev/null | grep -q "mcb"; then \
-		echo "Binary failed"; exit 1; \
+		echo "FAIL: binary not working"; exit 1; \
 	fi
+	@echo "  Binary: OK"
 	@RETRIES=0; \
-	while [ $$RETRIES -lt 5 ]; do \
+	while [ $$RETRIES -lt 8 ]; do \
 		if systemctl --user is-active --quiet mcb.service 2>/dev/null; then \
-			echo "Service active"; \
+			echo "  Service: active"; \
 			break; \
 		fi; \
 		RETRIES=$$((RETRIES + 1)); \
-		if [ $$RETRIES -lt 5 ]; then sleep 1; fi; \
+		if [ $$RETRIES -lt 8 ]; then sleep 2; fi; \
 	done; \
-	if [ $$RETRIES -eq 5 ]; then \
-		echo "Service failed to start"; \
-		journalctl --user -u mcb.service -n 10 --no-pager 2>/dev/null; \
+	if [ $$RETRIES -eq 8 ]; then \
+		echo "FAIL: service did not start"; \
+		echo "--- systemd status ---"; \
+		systemctl --user status mcb.service --no-pager 2>/dev/null || true; \
+		echo "--- recent logs ---"; \
+		journalctl --user -u mcb.service -n 20 --no-pager 2>/dev/null || true; \
 		exit 1; \
 	fi
 	@RETRIES=0; \
-	while [ $$RETRIES -lt 5 ]; do \
-		if curl -s --connect-timeout 2 http://$(SERVICE_HOST):$(SERVICE_PORT)/healthz 2>/dev/null | grep -q "OK\|status"; then \
-			echo "HTTP server responding"; \
+	while [ $$RETRIES -lt 8 ]; do \
+		if curl -sf --connect-timeout 2 http://$(SERVICE_HOST):$(SERVICE_PORT)/healthz 2>/dev/null | grep -qE "OK|status|healthy"; then \
+			echo "  HTTP: responding on $(SERVICE_HOST):$(SERVICE_PORT)"; \
 			break; \
 		fi; \
 		RETRIES=$$((RETRIES + 1)); \
-		if [ $$RETRIES -lt 5 ]; then sleep 1; fi; \
+		if [ $$RETRIES -lt 8 ]; then sleep 2; fi; \
 	done; \
-	if [ $$RETRIES -eq 5 ]; then \
-		echo "HTTP server failed"; \
-		systemctl --user status mcb.service 2>/dev/null; \
-		journalctl --user -u mcb.service -n 30 --no-pager 2>/dev/null; \
+	if [ $$RETRIES -eq 8 ]; then \
+		echo "FAIL: HTTP health check failed on $(SERVICE_HOST):$(SERVICE_PORT)"; \
+		echo "--- recent logs ---"; \
+		journalctl --user -u mcb.service -n 20 --no-pager 2>/dev/null || true; \
 		exit 1; \
 	fi
+	@echo "MCB v$(VERSION) installed successfully."
 
 version: ## Show version (BUMP=patch|minor|major to bump)
 ifeq ($(BUMP),patch)

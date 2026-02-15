@@ -86,6 +86,7 @@ impl PortAdapterValidator {
     }
 
     /// Creates a new port/adapter validator with current configuration.
+    #[must_use]
     pub fn with_config(config: &PortAdapterRulesConfig) -> Self {
         Self {
             max_port_methods: config.max_port_methods,
@@ -130,7 +131,7 @@ impl PortAdapterValidator {
 
             for (line_num, line) in lines.iter().enumerate() {
                 if let Some(captures) = TRAIT_START_RE.captures(line)
-                    && let Some(trait_name) = captures.get(1).map(|m| m.as_str().to_string())
+                    && let Some(trait_name) = captures.get(1).map(|m| m.as_str().to_owned())
                 {
                     current_trait = Some((trait_name, line_num + 1, 0));
                     in_trait = true;
@@ -159,7 +160,7 @@ impl PortAdapterValidator {
                             violations.push(PortAdapterViolation::PortTooLarge {
                                 trait_name,
                                 method_count,
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: start_line,
                             });
                         }
@@ -223,9 +224,9 @@ impl PortAdapterValidator {
                     for suffix in &self.adapter_suffixes {
                         if imported.ends_with(suffix) && !imported.starts_with("dyn") {
                             violations.push(PortAdapterViolation::AdapterUsesAdapter {
-                                adapter_name: current_adapter.to_string(),
-                                other_adapter: imported.to_string(),
-                                file: path.to_path_buf(),
+                                adapter_name: current_adapter.to_owned(),
+                                other_adapter: imported.to_owned(),
+                                file: path.clone(),
                                 line: line_num + 1,
                             });
                             break;

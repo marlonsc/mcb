@@ -82,6 +82,7 @@ impl Default for AdminApiConfig {
 
 impl AdminApiConfig {
     /// Create config for localhost with specified port
+    #[must_use]
     pub fn localhost(port: u16) -> Self {
         let config = ConfigLoader::new()
             .load()
@@ -93,6 +94,7 @@ impl AdminApiConfig {
     }
 
     /// Get the Rocket configuration
+    #[must_use]
     pub fn rocket_config(&self) -> RocketConfig {
         let address: IpAddr = self
             .host
@@ -175,6 +177,7 @@ impl AdminApi {
     ///
     /// When set, enables the browse API endpoints for navigating
     /// indexed collections, files, and code chunks.
+    #[must_use]
     pub fn with_browse_state(mut self, browse_state: BrowseState) -> Self {
         self.browse_state = Some(browse_state);
         self

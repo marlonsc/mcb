@@ -33,10 +33,9 @@ impl HttpEmbeddingClient {
         client: Client,
     ) -> Self {
         Self {
-            api_key: api_key.trim().to_string(),
+            api_key: api_key.trim().to_owned(),
             base_url: base_url
-                .map(|url| url.trim().to_string())
-                .unwrap_or_else(|| default_base_url.to_string()),
+                .map_or_else(|| default_base_url.to_owned(), |url| url.trim().to_owned()),
             model,
             timeout,
             client,

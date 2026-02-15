@@ -4,6 +4,7 @@ use super::ForeignKeyDef;
 use crate::schema::memory::{IndexDef, TableDef};
 
 /// Returns the table definitions (repositories, branches, worktrees).
+#[must_use]
 pub fn tables() -> Vec<TableDef> {
     vec![
         table!(
@@ -63,6 +64,7 @@ pub fn tables() -> Vec<TableDef> {
 }
 
 /// Returns the index definitions for VCS tables.
+#[must_use]
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!("idx_repositories_org", "repositories", ["org_id"]),
@@ -86,68 +88,70 @@ pub fn indexes() -> Vec<IndexDef> {
 
 /// Returns the foreign key definitions.
 // TODO(qlty): Found 46 lines of similar code in 2 locations (mass = 166)
+#[must_use]
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     vec![
         ForeignKeyDef {
-            from_table: "repositories".to_string(),
-            from_column: "org_id".to_string(),
-            to_table: "organizations".to_string(),
-            to_column: "id".to_string(),
+            from_table: "repositories".to_owned(),
+            from_column: "org_id".to_owned(),
+            to_table: "organizations".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "repositories".to_string(),
-            from_column: "project_id".to_string(),
-            to_table: "projects".to_string(),
-            to_column: "id".to_string(),
+            from_table: "repositories".to_owned(),
+            from_column: "project_id".to_owned(),
+            to_table: "projects".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "branches".to_string(),
-            from_column: "repository_id".to_string(),
-            to_table: "repositories".to_string(),
-            to_column: "id".to_string(),
+            from_table: "branches".to_owned(),
+            from_column: "repository_id".to_owned(),
+            to_table: "repositories".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "worktrees".to_string(),
-            from_column: "repository_id".to_string(),
-            to_table: "repositories".to_string(),
-            to_column: "id".to_string(),
+            from_table: "worktrees".to_owned(),
+            from_column: "repository_id".to_owned(),
+            to_table: "repositories".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "worktrees".to_string(),
-            from_column: "branch_id".to_string(),
-            to_table: "branches".to_string(),
-            to_column: "id".to_string(),
+            from_table: "worktrees".to_owned(),
+            from_column: "branch_id".to_owned(),
+            to_table: "branches".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "agent_worktree_assignments".to_string(),
-            from_column: "agent_session_id".to_string(),
-            to_table: "agent_sessions".to_string(),
-            to_column: "id".to_string(),
+            from_table: "agent_worktree_assignments".to_owned(),
+            from_column: "agent_session_id".to_owned(),
+            to_table: "agent_sessions".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "agent_worktree_assignments".to_string(),
-            from_column: "worktree_id".to_string(),
-            to_table: "worktrees".to_string(),
-            to_column: "id".to_string(),
+            from_table: "agent_worktree_assignments".to_owned(),
+            from_column: "worktree_id".to_owned(),
+            to_table: "worktrees".to_owned(),
+            to_column: "id".to_owned(),
         },
     ]
 }
 
 /// Returns the unique constraint definitions.
 // TODO(qlty): Found 16 lines of similar code in 2 locations (mass = 56)
+#[must_use]
 pub fn unique_constraints() -> Vec<super::UniqueConstraintDef> {
     vec![
         super::UniqueConstraintDef {
-            table: "repositories".to_string(),
+            table: "repositories".to_owned(),
             columns: vec![
-                "org_id".to_string(),
-                "project_id".to_string(),
-                "name".to_string(),
+                "org_id".to_owned(),
+                "project_id".to_owned(),
+                "name".to_owned(),
             ],
         },
         super::UniqueConstraintDef {
-            table: "branches".to_string(),
-            columns: vec!["repository_id".to_string(), "name".to_string()],
+            table: "branches".to_owned(),
+            columns: vec!["repository_id".to_owned(), "name".to_owned()],
         },
     ]
 }

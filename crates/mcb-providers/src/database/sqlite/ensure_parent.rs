@@ -8,10 +8,10 @@ pub async fn ensure_org_exists(executor: &dyn DatabaseExecutor, timestamp: i64) 
         .execute(
             "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
             &[
-                SqlParam::String(DEFAULT_ORG_ID.to_string()),
-                SqlParam::String(DEFAULT_ORG_NAME.to_string()),
+                SqlParam::String(DEFAULT_ORG_ID.to_owned()),
+                SqlParam::String(DEFAULT_ORG_NAME.to_owned()),
                 SqlParam::String(DEFAULT_ORG_NAME.to_lowercase()),
-                SqlParam::String("{}".to_string()),
+                SqlParam::String("{}".to_owned()),
                 SqlParam::I64(timestamp),
                 SqlParam::I64(timestamp),
             ],
@@ -34,10 +34,10 @@ pub async fn ensure_org_and_project(
         .execute(
             "INSERT OR IGNORE INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
             &[
-                SqlParam::String(project_id.to_string()),
-                SqlParam::String(DEFAULT_ORG_ID.to_string()),
+                SqlParam::String(project_id.to_owned()),
+                SqlParam::String(DEFAULT_ORG_ID.to_owned()),
                 SqlParam::String(format!("Project {project_id}")),
-                SqlParam::String(project_id.to_string()),
+                SqlParam::String(project_id.to_owned()),
                 SqlParam::I64(timestamp),
                 SqlParam::I64(timestamp),
             ],

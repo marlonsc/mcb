@@ -57,6 +57,7 @@ impl InstrumentedEmbeddingProvider {
     }
 
     /// Get the wrapped provider name for logging/debugging
+    #[must_use]
     pub fn inner_provider_name(&self) -> &str {
         self.inner.provider_name()
     }

@@ -1,6 +1,6 @@
 //! Unit tests for provider routing and health monitoring
 //!
-//! Tests the InMemoryHealthMonitor state transitions and DefaultProviderRouter
+//! Tests the `InMemoryHealthMonitor` state transitions and `DefaultProviderRouter`
 //! provider selection logic based on health status.
 
 use rstest::rstest;
@@ -102,7 +102,7 @@ fn router_setup() -> (Arc<InMemoryHealthMonitor>, DefaultProviderRouter) {
     let monitor = Arc::new(InMemoryHealthMonitor::new());
     let router = DefaultProviderRouter::new(
         monitor.clone(),
-        vec!["provider-a".to_string(), "provider-b".to_string()],
+        vec!["provider-a".to_owned(), "provider-b".to_owned()],
         vec![],
     );
     (monitor, router)

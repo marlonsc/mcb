@@ -13,7 +13,7 @@ use crate::constants::crypto::{AES_GCM_KEY_SIZE, AES_GCM_NONCE_SIZE};
 
 /// Encryption/decryption service
 ///
-/// Implements the CryptoProvider port from mcb-domain.
+/// Implements the `CryptoProvider` port from mcb-domain.
 #[derive(Clone)]
 pub struct CryptoService {
     /// Master key for encryption operations
@@ -38,6 +38,7 @@ impl CryptoService {
     }
 
     /// Generate a random master key
+    #[must_use]
     pub fn generate_master_key() -> Vec<u8> {
         let mut key = vec![0u8; AES_GCM_KEY_SIZE];
         AeadOsRng.fill_bytes(&mut key);
@@ -53,7 +54,7 @@ impl CryptoService {
         let ciphertext = cipher
             .encrypt(&nonce, plaintext)
             .map_err(|e| Error::Infrastructure {
-                message: format!("Encryption failed: {}", e),
+                message: format!("Encryption failed: {e}"),
                 source: None,
             })?;
 
@@ -69,12 +70,13 @@ impl CryptoService {
         cipher
             .decrypt(nonce, encrypted_data.ciphertext.as_ref())
             .map_err(|e| Error::Infrastructure {
-                message: format!("Decryption failed: {}", e),
+                message: format!("Decryption failed: {e}"),
                 source: None,
             })
     }
 
     /// Generate a secure random nonce
+    #[must_use]
     pub fn generate_nonce() -> Vec<u8> {
         let mut nonce = vec![0u8; AES_GCM_NONCE_SIZE];
         AeadOsRng.fill_bytes(&mut nonce);
@@ -82,6 +84,7 @@ impl CryptoService {
     }
 
     /// Compute SHA-256 hash of data
+    #[must_use]
     pub fn sha256(data: &[u8]) -> Vec<u8> {
         let mut hasher = Sha256::new();
         hasher.update(data);
@@ -89,6 +92,7 @@ impl CryptoService {
     }
 
     /// Compute SHA-256 hash of data as hex string
+    #[must_use]
     pub fn sha256_hex(data: &[u8]) -> String {
         bytes_to_hex(&Self::sha256(data))
     }

@@ -20,8 +20,8 @@ pub fn capture_vcs_context() -> VcsContext {
                     if o.status.success() {
                         let output = String::from_utf8_lossy(&o.stdout);
                         let mut lines = output.lines();
-                        let branch = lines.next().map(|s| s.trim().to_string());
-                        let commit = lines.next().map(|s| s.trim().to_string());
+                        let branch = lines.next().map(|s| s.trim().to_owned());
+                        let commit = lines.next().map(|s| s.trim().to_owned());
                         Some((branch, commit))
                     } else {
                         None
@@ -35,7 +35,7 @@ pub fn capture_vcs_context() -> VcsContext {
                 .ok()
                 .and_then(|o| {
                     if o.status.success() {
-                        Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
+                        Some(String::from_utf8_lossy(&o.stdout).trim().to_owned())
                     } else {
                         None
                     }
@@ -91,7 +91,7 @@ fn project_context_from_git_remote() -> Option<(String, String)> {
         return None;
     }
 
-    let url = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let url = String::from_utf8_lossy(&output.stdout).trim().to_owned();
     if url.is_empty() {
         return None;
     }
@@ -101,7 +101,7 @@ fn project_context_from_git_remote() -> Option<(String, String)> {
         .rsplit('/')
         .next()
         .unwrap_or(&owner_repo)
-        .to_string();
+        .to_owned();
     Some((owner_repo, name))
 }
 
@@ -114,11 +114,11 @@ fn project_context_from_git_toplevel() -> Option<(String, String)> {
         return None;
     }
 
-    let toplevel = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let toplevel = String::from_utf8_lossy(&output.stdout).trim().to_owned();
     let name = std::path::Path::new(&toplevel)
         .file_name()
         .and_then(|n| n.to_str())?
-        .to_string();
+        .to_owned();
     Some((name.clone(), name))
 }
 
@@ -131,7 +131,7 @@ fn detect_superproject() -> Option<String> {
         return None;
     }
 
-    let superproject_path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let superproject_path = String::from_utf8_lossy(&output.stdout).trim().to_owned();
     if superproject_path.is_empty() {
         return None;
     }
@@ -150,6 +150,6 @@ fn detect_superproject() -> Option<String> {
         return None;
     }
 
-    let url = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let url = String::from_utf8_lossy(&output.stdout).trim().to_owned();
     parse_owner_repo(&url)
 }

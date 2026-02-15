@@ -19,7 +19,7 @@ pub enum OperatingMode {
     Standalone,
 
     /// Client mode: connect to remote MCB server
-    /// Requires server_url to be configured
+    /// Requires `server_url` to be configured
     Client,
 }
 
@@ -59,21 +59,25 @@ pub struct ModeConfig {
 
 impl ModeConfig {
     /// Check if running in client mode
+    #[must_use]
     pub fn is_client(&self) -> bool {
         self.mode_type == OperatingMode::Client
     }
 
     /// Check if running in standalone mode
+    #[must_use]
     pub fn is_standalone(&self) -> bool {
         self.mode_type == OperatingMode::Standalone
     }
 
     /// Get the server URL (only meaningful in client mode)
+    #[must_use]
     pub fn server_url(&self) -> &str {
         &self.server_url
     }
 
     /// Get session prefix if configured
+    #[must_use]
     pub fn session_prefix(&self) -> Option<&str> {
         self.session_prefix.as_deref()
     }

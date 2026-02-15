@@ -38,7 +38,7 @@ impl NativePmatAnalyzer {
                 let Some(name_match) = captures.get(1) else {
                     continue;
                 };
-                let name = name_match.as_str().to_string();
+                let name = name_match.as_str().to_owned();
                 let fn_start = name_match.start();
                 let line = content[..fn_start].bytes().filter(|b| *b == b'\n').count() + 1;
                 // Use domain analysis util
@@ -99,7 +99,7 @@ impl DeadCodeDetector for NativePmatAnalyzer {
             .map(|f| DeadCodeFinding {
                 file: f.file,
                 line: f.line,
-                item_type: "function".to_string(),
+                item_type: "function".to_owned(),
                 name: f.name,
             })
             .collect())

@@ -58,6 +58,7 @@ pub struct TokioEventBusProvider {
 
 impl TokioEventBusProvider {
     /// Create a new tokio event bus with default capacity (1024)
+    #[must_use]
     pub fn new() -> Self {
         Self::with_capacity(EVENTS_TOKIO_DEFAULT_CAPACITY)
     }
@@ -67,6 +68,7 @@ impl TokioEventBusProvider {
     /// # Arguments
     ///
     /// * `capacity` - Maximum number of events in the channel buffer
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> Self {
         let (sender, _) = broadcast::channel(capacity);
         Self {
@@ -76,11 +78,13 @@ impl TokioEventBusProvider {
     }
 
     /// Create as Arc for sharing
+    #[must_use]
     pub fn new_shared() -> Arc<Self> {
         Arc::new(Self::new())
     }
 
     /// Get the current number of subscribers
+    #[must_use]
     pub fn subscriber_count(&self) -> usize {
         self.sender.receiver_count()
     }

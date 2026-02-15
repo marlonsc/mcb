@@ -9,7 +9,7 @@ use rstest::rstest;
 #[case(true)]
 fn cargo_detector_basics(#[case] check_object_safety: bool) {
     let config = ProjectDetectorConfig {
-        repo_path: ".".to_string(),
+        repo_path: ".".to_owned(),
     };
     let detector = CargoDetector::new(&config);
     assert!(!std::any::type_name::<CargoDetector>().is_empty());

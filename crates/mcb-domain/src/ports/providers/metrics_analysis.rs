@@ -44,10 +44,10 @@ pub struct FileMetrics {
     /// Detected language
     pub language: Option<SupportedLanguage>,
 
-    /// Cyclomatic complexity (McCabe's complexity)
+    /// Cyclomatic complexity (`McCabe`'s complexity)
     pub cyclomatic: f64,
 
-    /// Cognitive complexity (SonarSource metric)
+    /// Cognitive complexity (`SonarSource` metric)
     pub cognitive: f64,
 
     /// Maintainability index (0-100, higher is better)
@@ -232,8 +232,6 @@ pub trait MetricsAnalysisProvider: Send + Sync {
     /// # Returns
     /// true if the file's language is supported
     fn can_analyze(&self, path: &Path) -> bool {
-        SupportedLanguage::from_path(path)
-            .map(|lang| self.supports_language(lang))
-            .unwrap_or(false)
+        SupportedLanguage::from_path(path).is_some_and(|lang| self.supports_language(lang))
     }
 }

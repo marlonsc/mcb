@@ -9,6 +9,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
+use crate::error_mapping::safe_internal_error;
 use crate::handlers::helpers::{
     map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_identifier_precedence,
     resolve_org_id,
@@ -66,26 +67,13 @@ impl VcsEntityHandler {
                 .ok_or_else(|| {
                     McpError::invalid_params("project_id required for repository create", None)
                 })?;
-                repo.org_id = org_id.to_string();
-                map_opaque_error(self.repo.create_repository(&repo).await).map_err(|e| {
-                    McpError::internal_error(format!("failed to create repository: {e}"), None)
-                })?;
+                repo.org_id = org_id.clone();
+                map_opaque_error(self.repo.create_repository(&repo).await)?;
                 ok_json(&repo)
             }
             (VcsEntityAction::Get, VcsEntityResource::Repository) => {
-                let id = require_id(&args.id).map_err(|e| {
-                    McpError::invalid_params(
-                        format!("failed to parse repository id from request: {e}"),
-                        None,
-                    )
-                })?;
-                let repository = map_opaque_error(self.repo.get_repository(&org_id, &id).await)
-                    .map_err(|e| {
-                        McpError::internal_error(
-                            format!("failed to get repository '{id}' for org '{org_id}': {e}"),
-                            None,
-                        )
-                    })?;
+                let id = require_id(&args.id)?;
+                let repository = map_opaque_error(self.repo.get_repository(&org_id, &id).await)?;
                 if let Some(project_id) = args.project_id.as_deref()
                     && repository.project_id != project_id
                 {
@@ -128,7 +116,7 @@ impl VcsEntityHandler {
                         None,
                     ));
                 }
-                repo.org_id = org_id.to_string();
+                repo.org_id = org_id.clone();
                 map_opaque_error(self.repo.update_repository(&repo).await)?;
                 ok_text("updated")
             }
@@ -153,15 +141,8 @@ impl VcsEntityHandler {
 
             // -- Branch --
             (VcsEntityAction::Create, VcsEntityResource::Branch) => {
-                let branch: Branch = require_data(args.data, "data required").map_err(|e| {
-                    McpError::invalid_params(
-                        format!("failed to parse branch payload from request: {e}"),
-                        None,
-                    )
-                })?;
-                map_opaque_error(self.repo.create_branch(&branch).await).map_err(|e| {
-                    McpError::internal_error(format!("failed to create branch: {e}"), None)
-                })?;
+                let branch: Branch = require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.create_branch(&branch).await)?;
                 ok_json(&branch)
             }
             (VcsEntityAction::Get, VcsEntityResource::Branch) => {
@@ -217,24 +198,12 @@ impl VcsEntityHandler {
             // -- Assignment --
             (VcsEntityAction::Create, VcsEntityResource::Assignment) => {
                 let asgn: AgentWorktreeAssignment =
-                    require_data(args.data, "data required").map_err(|e| {
-                        McpError::invalid_params(
-                            format!("failed to parse assignment payload from request: {e}"),
-                            None,
-                        )
-                    })?;
-                map_opaque_error(self.repo.create_assignment(&asgn).await).map_err(|e| {
-                    McpError::internal_error(format!("failed to create worktree assignment: {e}"), None)
-                })?;
+                    require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.create_assignment(&asgn).await)?;
                 ok_json(&asgn)
             }
             (VcsEntityAction::Get, VcsEntityResource::Assignment) => {
-                let id = require_id(&args.id).map_err(|e| {
-                    McpError::invalid_params(
-                        format!("failed to parse assignment id from request: {e}"),
-                        None,
-                    )
-                })?;
+                let id = require_id(&args.id)?;
                 ok_json(&map_opaque_error(self.repo.get_assignment(&id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Assignment) => {
@@ -245,31 +214,10 @@ impl VcsEntityHandler {
                 ok_json(&map_opaque_error(self.repo.list_assignments_by_worktree(wt_id).await)?)
             }
             (VcsEntityAction::Release, VcsEntityResource::Assignment) => {
-                let id = require_id(&args.id).map_err(|e| {
-                    McpError::invalid_params(
-                        format!("failed to parse assignment id from request: {e}"),
-                        None,
-                    )
-                })?;
-                map_opaque_error(
-                    self.repo
-                        .release_assignment(
-                            &id,
-                            mcb_domain::utils::time::epoch_secs_i64().map_err(|e| {
-                                McpError::internal_error(
-                                    format!("failed to resolve current timestamp: {e}"),
-                                    None,
-                                )
-                            })?,
-                        )
-                        .await,
-                )
-                    .map_err(|e| {
-                        McpError::internal_error(
-                            format!("failed to release assignment '{id}': {e}"),
-                            None,
-                        )
-                    })?;
+                let id = require_id(&args.id)?;
+                let now = mcb_domain::utils::time::epoch_secs_i64()
+                    .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
+                map_opaque_error(self.repo.release_assignment(&id, now).await)?;
                 ok_text("released")
             }
 

@@ -1,4 +1,4 @@
-//! SQLite File Hash Repository
+//! `SQLite` File Hash Repository
 //!
 //! # Overview
 //! The `SqliteFileHashRepository` tracks file content hashes to optimize the indexing process.
@@ -21,7 +21,7 @@ use mcb_domain::ports::infrastructure::database::SqlParam;
 use mcb_domain::ports::repositories::FileHashRepository;
 use serde_json::json;
 
-/// Configuration for SqliteFileHashRepository
+/// Configuration for `SqliteFileHashRepository`
 #[derive(Debug, Clone)]
 pub struct SqliteFileHashConfig {
     /// Tombstone TTL in seconds (default: 30 days = 2592000)
@@ -47,7 +47,7 @@ pub struct SqliteFileHashRepository {
 }
 
 impl SqliteFileHashRepository {
-    /// Create a new SqliteFileHashRepository
+    /// Create a new `SqliteFileHashRepository`
     pub fn new(
         executor: Arc<dyn DatabaseExecutor>,
         config: SqliteFileHashConfig,
@@ -122,8 +122,8 @@ impl FileHashRepository for SqliteFileHashRepository {
             "SELECT content_hash FROM file_hashes WHERE project_id = ? AND collection = ? AND file_path = ? AND deleted_at IS NULL",
             &[
                 SqlParam::String(self.project_id.clone()),
-                SqlParam::String(collection.to_string()),
-                SqlParam::String(file_path.to_string()),
+                SqlParam::String(collection.to_owned()),
+                SqlParam::String(file_path.to_owned()),
             ],
             "content_hash",
         )
@@ -148,15 +148,15 @@ impl FileHashRepository for SqliteFileHashRepository {
 
         self.executor
             .execute(
-                r#"
+                "
             INSERT OR IGNORE INTO collections (id, project_id, name, vector_name, created_at)
             VALUES (?, ?, ?, ?, ?)
-            "#,
+            ",
                 &[
                     SqlParam::String(format!("{}:{}", self.project_id, collection)),
                     SqlParam::String(self.project_id.clone()),
-                    SqlParam::String(collection.to_string()),
-                    SqlParam::String(collection.to_string()),
+                    SqlParam::String(collection.to_owned()),
+                    SqlParam::String(collection.to_owned()),
                     SqlParam::I64(now),
                 ],
             )
@@ -165,7 +165,7 @@ impl FileHashRepository for SqliteFileHashRepository {
 
         self.executor
             .execute(
-                r#"
+                "
             INSERT INTO file_hashes (project_id, collection, file_path, content_hash, indexed_at, deleted_at, origin_context)
             VALUES (?, ?, ?, ?, ?, NULL, ?)
             ON CONFLICT(project_id, collection, file_path) DO UPDATE SET
@@ -173,12 +173,12 @@ impl FileHashRepository for SqliteFileHashRepository {
                 indexed_at = excluded.indexed_at,
                 deleted_at = NULL,
                 origin_context = excluded.origin_context
-            "#,
+            ",
                 &[
                     SqlParam::String(self.project_id.clone()),
-                    SqlParam::String(collection.to_string()),
-                    SqlParam::String(file_path.to_string()),
-                    SqlParam::String(hash.to_string()),
+                    SqlParam::String(collection.to_owned()),
+                    SqlParam::String(file_path.to_owned()),
+                    SqlParam::String(hash.to_owned()),
                     SqlParam::I64(now),
                     SqlParam::String(
                         json!({
@@ -206,8 +206,8 @@ impl FileHashRepository for SqliteFileHashRepository {
                 &[
                     SqlParam::I64(now),
                     SqlParam::String(self.project_id.clone()),
-                    SqlParam::String(collection.to_string()),
-                    SqlParam::String(file_path.to_string()),
+                    SqlParam::String(collection.to_owned()),
+                    SqlParam::String(file_path.to_owned()),
                 ],
             )
             .await
@@ -221,7 +221,7 @@ impl FileHashRepository for SqliteFileHashRepository {
             "SELECT file_path FROM file_hashes WHERE project_id = ? AND collection = ? AND deleted_at IS NULL",
             &[
                 SqlParam::String(self.project_id.clone()),
-                SqlParam::String(collection.to_string()),
+                SqlParam::String(collection.to_owned()),
             ],
             "file_path",
         )
@@ -275,7 +275,7 @@ impl FileHashRepository for SqliteFileHashRepository {
                 "SELECT COUNT(*) as count FROM file_hashes WHERE project_id = ? AND collection = ? AND deleted_at IS NOT NULL",
                 &[
                     SqlParam::String(self.project_id.clone()),
-                    SqlParam::String(collection.to_string()),
+                    SqlParam::String(collection.to_owned()),
                 ],
             )
             .await
@@ -287,7 +287,7 @@ impl FileHashRepository for SqliteFileHashRepository {
     async fn clear_collection(&self, collection: &str) -> Result<u64> {
         let params = &[
             SqlParam::String(self.project_id.clone()),
-            SqlParam::String(collection.to_string()),
+            SqlParam::String(collection.to_owned()),
         ];
         let count = self
             .query_count(

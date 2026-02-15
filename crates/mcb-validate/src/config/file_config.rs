@@ -86,6 +86,7 @@ impl FileConfig {
     }
 
     /// Get the workspace root path
+    #[must_use]
     pub fn workspace_root(&self) -> PathBuf {
         self.general
             .workspace_root
@@ -94,6 +95,7 @@ impl FileConfig {
     }
 
     /// Check if a validator is enabled
+    #[must_use]
     pub fn is_validator_enabled(&self, name: &str) -> bool {
         match name {
             "dependency" => self.validators.dependency,
@@ -427,7 +429,7 @@ pub struct RefactoringRulesConfig {
     /// Generic type names to ignore (e.g. "Error", "Result")
     pub generic_type_names: Vec<String>,
 
-    /// Utility types to ignore (e.g. "DateTime", "Uuid")
+    /// Utility types to ignore (e.g. "`DateTime`", "Uuid")
     pub utility_types: Vec<String>,
 
     /// Files to skip for refactoring checks

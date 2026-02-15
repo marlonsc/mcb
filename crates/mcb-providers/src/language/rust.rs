@@ -9,6 +9,7 @@ pub struct RustProcessor {
 
 impl RustProcessor {
     /// Create a new Rust language processor
+    #[must_use]
     pub fn new() -> Self {
         let config = LanguageConfig::new(tree_sitter_rust::LANGUAGE.into())
             .with_rules(Self::extraction_rules())

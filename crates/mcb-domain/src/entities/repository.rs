@@ -69,6 +69,7 @@ pub enum VcsType {
 
 impl VcsType {
     /// Returns the string representation.
+    #[must_use]
     pub fn as_str(&self) -> &str {
         match self {
             Self::Git => "git",

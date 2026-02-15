@@ -18,7 +18,7 @@ pub use crate::config::LoggingConfig;
 pub use forwarder::spawn_log_forwarder;
 
 /// Receiver half of the log event channel.
-/// The caller spawns a task to forward events to the EventBus.
+/// The caller spawns a task to forward events to the `EventBus`.
 pub type LogEventReceiver = tokio::sync::mpsc::UnboundedReceiver<mcb_domain::events::DomainEvent>;
 
 /// Initialize logging with the provided configuration.
@@ -60,7 +60,7 @@ fn create_event_bus_layer(
 
 /// Create log filter from configuration
 ///
-/// Priority: MCP_LOG env var > config level
+/// Priority: `MCP_LOG` env var > config level
 fn create_log_filter(level: &str) -> EnvFilter {
     EnvFilter::try_from_env("MCP_LOG").unwrap_or_else(|_| EnvFilter::new(level))
 }
@@ -84,7 +84,23 @@ fn init_json_logging(
     file_appender: Option<tracing_appender::rolling::RollingFileAppender>,
     event_layer: Option<event_bus_layer::EventBusLayer>,
 ) -> Result<()> {
-    let stdout = fmt::layer()
+    // Terminal mode: JSON logs to stdout
+    // Stdio mode: JSON logs to stderr (stdout reserved for JSON-RPC)
+    if std::io::stdout().is_terminal() {
+        init_json_logging_terminal(filter, file_appender, event_layer);
+    } else {
+        init_json_logging_stdio(filter, file_appender, event_layer);
+    }
+    Ok(())
+}
+
+/// Initialize JSON logging for terminal mode (output to stdout)
+fn init_json_logging_terminal(
+    filter: EnvFilter,
+    file_appender: Option<tracing_appender::rolling::RollingFileAppender>,
+    event_layer: Option<event_bus_layer::EventBusLayer>,
+) {
+    let console = fmt::layer()
         .json()
         .with_target(true)
         .with_thread_ids(true)
@@ -99,11 +115,39 @@ fn init_json_logging(
             .with_writer(appender)
             .with_ansi(false)
             .with_target(true);
-        registry.with(stdout).with(file).init();
+        registry.with(console).with(file).init();
     } else {
-        registry.with(stdout).init();
+        registry.with(console).init();
     }
-    Ok(())
+}
+
+/// Initialize JSON logging for stdio mode (output to stderr, ANSI off)
+fn init_json_logging_stdio(
+    filter: EnvFilter,
+    file_appender: Option<tracing_appender::rolling::RollingFileAppender>,
+    event_layer: Option<event_bus_layer::EventBusLayer>,
+) {
+    let console = fmt::layer()
+        .json()
+        .with_writer(std::io::stderr)
+        .with_ansi(false)
+        .with_target(true)
+        .with_thread_ids(true)
+        .with_thread_names(true)
+        .with_file(true)
+        .with_line_number(true);
+
+    let registry = Registry::default().with(filter).with(event_layer);
+    if let Some(appender) = file_appender {
+        let file = fmt::layer()
+            .json()
+            .with_writer(appender)
+            .with_ansi(false)
+            .with_target(true);
+        registry.with(console).with(file).init();
+    } else {
+        registry.with(console).init();
+    }
 }
 
 /// Initialize text logging for terminal mode (colored output to stdout)
@@ -182,10 +226,7 @@ pub fn parse_log_level(level: &str) -> Result<Level> {
         "warn" | "warning" => Ok(Level::WARN),
         "error" => Ok(Level::ERROR),
         _ => Err(Error::Configuration {
-            message: format!(
-                "Invalid log level: {}. Use trace, debug, info, warn, or error",
-                level
-            ),
+            message: format!("Invalid log level: {level}. Use trace, debug, info, warn, or error"),
             source: None,
         }),
     }

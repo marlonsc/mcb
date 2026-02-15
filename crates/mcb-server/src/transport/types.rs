@@ -32,7 +32,7 @@ pub struct McpResponse {
 }
 
 fn default_jsonrpc() -> String {
-    "2.0".to_string()
+    "2.0".to_owned()
 }
 
 /// MCP error response (JSON-RPC format)
@@ -46,9 +46,10 @@ pub struct McpError {
 
 impl McpResponse {
     /// Create a success response
+    #[must_use]
     pub fn success(id: Option<serde_json::Value>, result: serde_json::Value) -> Self {
         Self {
-            jsonrpc: "2.0".to_string(),
+            jsonrpc: "2.0".to_owned(),
             result: Some(result),
             error: None,
             id,
@@ -58,7 +59,7 @@ impl McpResponse {
     /// Create an error response
     pub fn error(id: Option<serde_json::Value>, code: i32, message: impl Into<String>) -> Self {
         Self {
-            jsonrpc: "2.0".to_string(),
+            jsonrpc: "2.0".to_owned(),
             result: None,
             error: Some(McpError {
                 code,

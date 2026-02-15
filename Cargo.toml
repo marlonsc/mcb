@@ -27,6 +27,62 @@ dead_code = "deny"
 unused_variables = "deny"
 unused_imports = "deny"
 
+[workspace.lints.clippy]
+# ── Deny: hard errors, zero tolerance ──────────────────────────
+dbg_macro = "deny"                       # no dbg!() in any code
+todo = "deny"                            # no todo!() stubs
+unimplemented = "deny"                   # no unimplemented!() stubs
+empty_loop = "deny"                      # no spin loops
+infinite_loop = "deny"                   # no unbounded loops
+mem_forget = "deny"                      # no mem::forget (leak risk)
+exit = "deny"                            # no process::exit (use proper shutdown)
+lossy_float_literal = "deny"             # no imprecise float literals
+rest_pat_in_fully_bound_structs = "deny" # no .. in fully matched structs
+verbose_file_reads = "deny"              # use fs::read_to_string
+fn_to_numeric_cast_any = "deny"          # no fn pointer to number casts
+large_include_file = "deny"              # no include_bytes! on large files
+empty_structs_with_brackets = "deny"     # use `struct Foo;` not `struct Foo {}`
+format_push_string = "deny"              # use write!() instead of push_str(&format!())
+needless_raw_strings = "deny"            # no raw strings without special chars
+redundant_type_annotations = "deny"      # no `let x: Type = Type::new()`
+rc_mutex = "deny"                        # Rc<Mutex<T>> is always wrong, use Arc<Mutex<T>>
+try_err = "deny"                         # no `Err(e)?`, just `return Err(e)`
+unnecessary_self_imports = "deny"        # no `use self as _`
+tests_outside_test_module = "warn"        # #[test] must be inside #[cfg(test)]
+manual_string_new = "warn"              # use String::new() not "".to_string()
+
+# ── Warn: should fix, tracked but non-blocking ────────────────
+unwrap_used = "warn"                     # prefer ? or explicit handling
+expect_used = "warn"                     # prefer ? or explicit handling
+panic = "warn"                           # prefer Result/Option
+print_stdout = "warn"                    # use tracing, not println!
+print_stderr = "warn"                    # use tracing, not eprintln!
+wildcard_enum_match_arm = "warn"         # explicit match arms catch new variants
+str_to_string = "warn"                   # prefer .to_owned() for &str
+inefficient_to_string = "warn"           # prefer .to_owned() when &str
+clone_on_ref_ptr = "warn"               # Arc::clone(&x) not x.clone()
+implicit_clone = "warn"                  # explicit .clone() over implicit
+semicolon_if_nothing_returned = "warn"   # trailing semicolons on () returns
+map_unwrap_or = "warn"                   # use map_or / map_or_else
+match_same_arms = "warn"                 # merge identical match arms
+redundant_closure_for_method_calls = "warn" # `.map(|x| x.foo())` → `.map(T::foo)`
+uninlined_format_args = "warn"           # `format!("{x}")` not `format!("{}", x)`
+trivially_copy_pass_by_ref = "warn"      # pass Copy types by value
+unused_self = "warn"                     # methods that don't use self
+large_futures = "warn"                   # large futures should be boxed
+large_types_passed_by_value = "warn"     # pass large types by reference
+missing_errors_doc = "warn"              # document Result error conditions
+missing_panics_doc = "warn"              # document panic conditions
+must_use_candidate = "warn"              # add #[must_use] where appropriate
+return_self_not_must_use = "warn"        # builder methods should be #[must_use]
+doc_markdown = "warn"                    # backticks for code in docs
+module_name_repetitions = "warn"         # avoid `foo::FooBar`, prefer `foo::Bar`
+needless_pass_by_value = "warn"          # pass by reference when ownership not needed
+used_underscore_binding = "warn"         # don't use bindings prefixed with _
+
+# ── Allow: intentional exceptions ──────────────────────────────
+error_impl_error = "allow"               # our domain Error type is idiomatic Rust
+
 [workspace.dependencies]
 # Core async runtime
 tokio = { version = "1.49", features = ["full"] }

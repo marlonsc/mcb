@@ -13,11 +13,13 @@ pub struct Fingerprint(u64);
 
 impl Fingerprint {
     /// Create a new fingerprint from a hash value
+    #[must_use]
     pub fn new(hash: u64) -> Self {
         Self(hash)
     }
 
     /// Get the raw hash value
+    #[must_use]
     pub fn value(&self) -> u64 {
         self.0
     }
@@ -66,6 +68,7 @@ pub struct TokenFingerprinter {
 
 impl TokenFingerprinter {
     /// Create a new fingerprinter with the given window size
+    #[must_use]
     pub fn new(window_size: usize) -> Self {
         let base: u64 = 31;
         let modulus: u64 = 1_000_000_007; // Large prime
@@ -175,6 +178,7 @@ impl TokenFingerprinter {
     }
 
     /// Find all duplicate fingerprints
+    #[must_use]
     pub fn find_duplicates(&self) -> Vec<FingerprintMatch> {
         let mut matches = Vec::new();
 
@@ -279,6 +283,7 @@ pub enum TokenType {
 
 impl Token {
     /// Create a new token
+    #[must_use]
     pub fn new(text: String, line: usize, column: usize, token_type: TokenType) -> Self {
         Self {
             text,
@@ -291,6 +296,7 @@ impl Token {
     /// Normalize the token for Type 2 (renamed) clone detection
     ///
     /// Replaces identifiers with a placeholder while keeping structure
+    #[must_use]
     pub fn normalized_text(&self) -> &str {
         match self.token_type {
             TokenType::Identifier => "$ID",

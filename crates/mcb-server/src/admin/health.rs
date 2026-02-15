@@ -78,7 +78,7 @@ pub fn extended_health_check(
     tracing::info!("extended_health_check called");
     let metrics = state.metrics.get_performance_metrics();
     let operations = state.indexing.get_operations();
-    let now = domain_time::epoch_secs_u64().unwrap_or_else(|e| panic!("system clock failure: {e}"));
+    let now = domain_time::epoch_secs_u64().unwrap_or(0);
 
     let dependencies = build_dependency_checks(&metrics, &operations, now);
     let dependencies_status = calculate_overall_health(&dependencies);
@@ -115,7 +115,7 @@ fn build_dependency_checks(
 
 fn build_embedding_health(metrics: &PerformanceMetricsData, now: u64) -> DependencyHealthCheck {
     DependencyHealthCheck {
-        name: "embedding_provider".to_string(),
+        name: "embedding_provider".to_owned(),
         status: match (metrics.total_queries, metrics.failed_queries) {
             (total, 0) if total > 0 => DependencyHealth::Healthy,
             (_, failed) if failed > 0 => DependencyHealth::Degraded,
@@ -138,7 +138,7 @@ fn build_vector_store_health(
     now: u64,
 ) -> DependencyHealthCheck {
     DependencyHealthCheck {
-        name: "vector_store".to_string(),
+        name: "vector_store".to_owned(),
         status: DependencyHealth::Healthy,
         message: Some(format!("Active indexing operations: {}", operations.len())),
         latency_ms: None,
@@ -148,7 +148,7 @@ fn build_vector_store_health(
 
 fn build_cache_health(metrics: &PerformanceMetricsData, now: u64) -> DependencyHealthCheck {
     DependencyHealthCheck {
-        name: "cache".to_string(),
+        name: "cache".to_owned(),
         status: if metrics.cache_hit_rate > 0.0 {
             DependencyHealth::Healthy
         } else {

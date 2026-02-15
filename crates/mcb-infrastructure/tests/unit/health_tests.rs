@@ -45,7 +45,7 @@ async fn test_health_registry_registration_and_execution(
     let registry = health_registry.await;
     registry
         .register_checker(
-            "test".to_string(),
+            "test".to_owned(),
             checkers::ServiceHealthChecker::new("test", || Ok(())),
         )
         .await;
@@ -163,6 +163,6 @@ async fn test_system_checker_required_fields(system_checker: checkers::SystemHea
     ];
 
     for field in fields {
-        assert!(details.get(field).is_some(), "Missing field: {}", field);
+        assert!(details.get(field).is_some(), "Missing field: {field}");
     }
 }

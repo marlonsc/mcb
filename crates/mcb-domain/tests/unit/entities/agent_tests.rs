@@ -7,15 +7,15 @@ use mcb_domain::test_utils::{
 use rstest::rstest;
 
 #[rstest]
-#[case(AgentType::Sisyphus.as_str().to_string(), "sisyphus")]
-#[case(AgentType::Oracle.as_str().to_string(), "oracle")]
-#[case(AgentType::Explore.as_str().to_string(), "explore")]
-#[case(AgentSessionStatus::Active.as_str().to_string(), "active")]
-#[case(AgentSessionStatus::Completed.as_str().to_string(), "completed")]
-#[case(AgentSessionStatus::Failed.as_str().to_string(), "failed")]
-#[case(CheckpointType::Git.as_str().to_string(), "git")]
-#[case(CheckpointType::File.as_str().to_string(), "file")]
-#[case(CheckpointType::Config.as_str().to_string(), "config")]
+#[case(AgentType::Sisyphus.as_str().to_owned(), "sisyphus")]
+#[case(AgentType::Oracle.as_str().to_owned(), "oracle")]
+#[case(AgentType::Explore.as_str().to_owned(), "explore")]
+#[case(AgentSessionStatus::Active.as_str().to_owned(), "active")]
+#[case(AgentSessionStatus::Completed.as_str().to_owned(), "completed")]
+#[case(AgentSessionStatus::Failed.as_str().to_owned(), "failed")]
+#[case(CheckpointType::Git.as_str().to_owned(), "git")]
+#[case(CheckpointType::File.as_str().to_owned(), "file")]
+#[case(CheckpointType::Config.as_str().to_owned(), "config")]
 fn agent_enums_as_str(#[case] actual: String, #[case] expected: &str) {
     assert_eq!(actual, expected);
 }
@@ -46,12 +46,12 @@ fn entity_serialization(#[case] entity: &str) {
         }
         "delegation" => {
             let delegation = Delegation {
-                id: "del-001".to_string(),
-                parent_session_id: "parent-sess".to_string(),
-                child_session_id: "child-sess".to_string(),
-                prompt: "Do something".to_string(),
+                id: "del-001".to_owned(),
+                parent_session_id: "parent-sess".to_owned(),
+                child_session_id: "child-sess".to_owned(),
+                prompt: "Do something".to_owned(),
                 prompt_embedding_id: None,
-                result: Some("Done".to_string()),
+                result: Some("Done".to_owned()),
                 success: true,
                 created_at: 1700000000,
                 completed_at: Some(1700000500),

@@ -64,6 +64,7 @@ impl SupportedLanguage {
     ///
     /// # Returns
     /// The corresponding language, or None if not supported
+    #[must_use]
     pub fn from_extension(ext: &str) -> Option<Self> {
         match ext.to_lowercase().as_str() {
             "rs" => Some(Self::Rust),
@@ -97,6 +98,7 @@ impl SupportedLanguage {
     }
 
     /// Get the string representation of this language
+    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Rust => "rust",
@@ -116,6 +118,7 @@ impl SupportedLanguage {
     }
 
     /// Get all supported languages
+    #[must_use]
     pub fn get_all() -> &'static [Self] {
         &[
             Self::Rust,

@@ -133,7 +133,7 @@ fn test_indexing_operations_lifecycle(
     assert_eq!(op.processed_files, 0);
 
     // Update
-    tracker.update_progress(&op_id, Some("file1.rs".to_string()), 2);
+    tracker.update_progress(&op_id, Some("file1.rs".to_owned()), 2);
     let ops = tracker.get_operations();
     let op = &ops[&op_id];
     assert_eq!(op.processed_files, 2);

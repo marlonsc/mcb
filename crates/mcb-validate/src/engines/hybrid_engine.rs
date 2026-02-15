@@ -161,7 +161,7 @@ pub struct RuleContext {
 ///
 /// The `HybridRuleEngine` is the top-level orchestrator. It delegates all rule
 /// execution to the [`RuleEngineRouter`], which owns the three rule engines
-/// (RETE, Expression, RustyRules) and selects the appropriate one per rule.
+/// (RETE, Expression, `RustyRules`) and selects the appropriate one per rule.
 ///
 /// Additionally, the `ValidatorEngine` handles rule _definition_ validation
 /// (field-level checks on rule JSON structure) — this is a separate concern
@@ -184,6 +184,7 @@ pub struct HybridRuleEngine {
 
 impl HybridRuleEngine {
     /// Create a new hybrid rule engine
+    #[must_use]
     pub fn new() -> Self {
         Self {
             router: RuleEngineRouter::new(),
@@ -251,6 +252,7 @@ impl HybridRuleEngine {
     }
 
     /// Get the engine type that would be used for a rule
+    #[must_use]
     pub fn detect_engine(&self, rule_definition: &serde_json::Value) -> String {
         self.router.get_engine_type(rule_definition)
     }
@@ -301,6 +303,7 @@ impl HybridRuleEngine {
     }
 
     /// Get cached compiled rule
+    #[must_use]
     pub fn get_cached_rule(&self, rule_id: &str) -> Option<&Vec<u8>> {
         self.cache.get(rule_id)
     }
@@ -334,7 +337,7 @@ impl HybridRuleEngine {
         let start_time = std::time::Instant::now();
 
         let lint_adapter_rule = ValidatedRule {
-            id: rule_id.to_string(),
+            id: rule_id.to_owned(),
             name: String::new(),
             category: String::new(),
             severity: String::new(),
@@ -385,6 +388,7 @@ impl HybridRuleEngine {
     }
 
     /// Check if a rule uses `lint_select` (linter-based validation)
+    #[must_use]
     pub fn is_lint_rule(rule_definition: &serde_json::Value) -> bool {
         rule_definition
             .get("lint_select")

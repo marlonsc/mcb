@@ -38,6 +38,7 @@ pub struct EmbeddingProviderResolver {
 
 impl EmbeddingProviderResolver {
     /// Create a new resolver with config
+    #[must_use]
     pub fn new(config: Arc<AppConfig>) -> Self {
         Self { config }
     }
@@ -73,7 +74,7 @@ impl EmbeddingProviderResolver {
                 .providers
                 .embedding
                 .configs
-                .get(&default_config.provider.to_string())
+                .get(&default_config.provider.clone())
             {
                 let registry_config = embedding_config_to_registry(specific_config);
                 resolve_embedding_provider(&registry_config)
@@ -97,6 +98,7 @@ impl EmbeddingProviderResolver {
     }
 
     /// List available embedding providers
+    #[must_use]
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
         mcb_domain::registry::embedding::list_embedding_providers()
     }
@@ -122,6 +124,7 @@ pub struct VectorStoreProviderResolver {
 
 impl VectorStoreProviderResolver {
     /// Create a new resolver with config
+    #[must_use]
     pub fn new(config: Arc<AppConfig>) -> Self {
         Self { config }
     }
@@ -151,7 +154,7 @@ impl VectorStoreProviderResolver {
                 .providers
                 .vector_store
                 .configs
-                .get(&default_config.provider.to_string())
+                .get(&default_config.provider.clone())
             {
                 let registry_config = vector_store_config_to_registry(specific_config);
                 resolve_vector_store_provider(&registry_config)
@@ -175,6 +178,7 @@ impl VectorStoreProviderResolver {
     }
 
     /// List available vector store providers
+    #[must_use]
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
         mcb_domain::registry::vector_store::list_vector_store_providers()
     }
@@ -200,6 +204,7 @@ pub struct CacheProviderResolver {
 
 impl CacheProviderResolver {
     /// Create a new resolver with config
+    #[must_use]
     pub fn new(config: Arc<AppConfig>) -> Self {
         Self { config }
     }
@@ -212,7 +217,7 @@ impl CacheProviderResolver {
         };
 
         let registry_config = CacheProviderConfig {
-            provider: cache_provider_name.to_string(),
+            provider: cache_provider_name.to_owned(),
             uri: self.config.system.infrastructure.cache.redis_url.clone(),
             max_size: Some(self.config.system.infrastructure.cache.max_size),
             ttl_secs: Some(self.config.system.infrastructure.cache.default_ttl_secs),
@@ -232,6 +237,7 @@ impl CacheProviderResolver {
     }
 
     /// List available cache providers
+    #[must_use]
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
         mcb_domain::registry::cache::list_cache_providers()
     }
@@ -257,6 +263,7 @@ pub struct LanguageProviderResolver {
 
 impl LanguageProviderResolver {
     /// Create a new resolver with config
+    #[must_use]
     pub fn new(config: Arc<AppConfig>) -> Self {
         Self { config }
     }
@@ -280,6 +287,7 @@ impl LanguageProviderResolver {
     }
 
     /// List available language providers
+    #[must_use]
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
         mcb_domain::registry::language::list_language_providers()
     }
@@ -295,10 +303,10 @@ impl std::fmt::Debug for LanguageProviderResolver {
 // Helper Functions
 // ============================================================================
 
-/// Convert domain EmbeddingConfig to registry EmbeddingProviderConfig
+/// Convert domain `EmbeddingConfig` to registry `EmbeddingProviderConfig`
 pub(crate) fn embedding_config_to_registry(config: &EmbeddingConfig) -> EmbeddingProviderConfig {
     EmbeddingProviderConfig {
-        provider: config.provider.to_string(),
+        provider: config.provider.clone(),
         model: Some(config.model.clone()),
         api_key: config.api_key.clone(),
         base_url: config.base_url.clone(),
@@ -308,12 +316,12 @@ pub(crate) fn embedding_config_to_registry(config: &EmbeddingConfig) -> Embeddin
     }
 }
 
-/// Convert domain VectorStoreConfig to registry VectorStoreProviderConfig
+/// Convert domain `VectorStoreConfig` to registry `VectorStoreProviderConfig`
 pub(crate) fn vector_store_config_to_registry(
     config: &VectorStoreConfig,
 ) -> VectorStoreProviderConfig {
     VectorStoreProviderConfig {
-        provider: config.provider.to_string(),
+        provider: config.provider.clone(),
         uri: config.address.clone(),
         collection: config.collection.clone(),
         dimensions: config.dimensions,

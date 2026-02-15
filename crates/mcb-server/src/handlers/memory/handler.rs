@@ -6,15 +6,14 @@ use mcb_domain::entities::memory::ErrorPattern;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use validator::Validate;
 
 use super::{execution, inject, list_timeline, observation, quality_gate, session};
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::resolve_identifier_precedence;
-use crate::handlers::helpers::resolve_org_id;
+use crate::handlers::helpers::{resolve_identifier_precedence, resolve_org_id, tool_error};
 use crate::utils::json;
 
 /// Handler for memory-related MCP tool operations.
@@ -27,7 +26,7 @@ pub struct MemoryHandler {
 }
 
 impl MemoryHandler {
-    /// Creates a new MemoryHandler with the given memory service.
+    /// Creates a new `MemoryHandler` with the given memory service.
     pub fn new(memory_service: Arc<dyn MemoryServiceInterface>) -> Self {
         Self { memory_service }
     }
@@ -93,9 +92,7 @@ impl MemoryHandler {
         let data = match json::json_map(&args.data) {
             Some(data) => data,
             None => {
-                return Ok(CallToolResult::error(vec![Content::text(
-                    "Missing data payload for error pattern store",
-                )]));
+                return Ok(tool_error("Missing data payload for error pattern store"));
             }
         };
 
@@ -159,9 +156,9 @@ impl MemoryHandler {
             MemoryResource::Observation => {
                 list_timeline::list_observations(&self.memory_service, args).await
             }
-            _ => Ok(CallToolResult::error(vec![Content::text(
+            _ => Ok(tool_error(
                 "List action is only supported for observation resource",
-            )])),
+            )),
         }
     }
 

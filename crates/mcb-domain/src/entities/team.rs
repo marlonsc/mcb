@@ -24,7 +24,7 @@ use crate::value_objects::ids::TeamMemberId;
 /// the user's authority within that team.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 pub struct TeamMember {
-    /// Unique identifier for the membership (composite of team_id:user_id).
+    /// Unique identifier for the membership (composite of `team_id:user_id`).
     #[serde(default)]
     pub id: TeamMemberId,
     /// Team the user belongs to.

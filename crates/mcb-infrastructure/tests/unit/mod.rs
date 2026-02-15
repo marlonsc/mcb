@@ -15,6 +15,8 @@
 #[path = "../test_utils/mod.rs"]
 mod test_utils;
 
+mod shared_context;
+
 mod infrastructure;
 mod routing;
 mod services;

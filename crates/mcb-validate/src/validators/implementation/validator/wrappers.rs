@@ -37,11 +37,11 @@ pub fn validate_pass_through_wrappers(
                 continue;
             }
             if let Some(cap) = passthrough_pattern.captures(&func.meaningful_body[0]) {
-                let field = cap.get(1).map(|m: Match| m.as_str()).unwrap_or("");
-                let method = cap.get(2).map(|m: Match| m.as_str()).unwrap_or("");
+                let field = cap.get(1).map_or("", |m: Match| m.as_str());
+                let method = cap.get(2).map_or("", |m: Match| m.as_str());
                 if method == func.name || method.starts_with(&func.name) {
                     violations.push(ImplementationViolation::PassThroughWrapper {
-                        file: file_path.to_path_buf(),
+                        file: file_path.clone(),
                         line: func.start_line,
                         struct_name: current_struct_name.clone(),
                         method_name: func.name.clone(),

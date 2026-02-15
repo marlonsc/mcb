@@ -93,6 +93,7 @@ impl Default for ValidationThresholds {
 
 impl ValidationThresholds {
     /// Create thresholds with default values
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

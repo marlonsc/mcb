@@ -26,7 +26,7 @@ impl Callback for RootKindCallback {
     type Cfg = ();
 
     fn call<T: ParserTrait>(_cfg: Self::Cfg, parser: &T) -> Self::Res {
-        parser.get_root().kind().to_string()
+        parser.get_root().kind().to_owned()
     }
 }
 
@@ -110,7 +110,7 @@ function helloWorld() {
 )]
 #[case(
     LANG::Typescript,
-    br"
+    b"
 function greet(name: string): string {
     return `Hello, ${name}!`;
 }
@@ -125,7 +125,7 @@ interface Person {
 )]
 #[case(
     LANG::Rust,
-    br"
+    b"
 pub struct MyService {
     name: String,
     value: i32,
@@ -145,7 +145,7 @@ impl MyService {
 )]
 #[case(
     LANG::Python,
-    br"
+    b"
 class MyService:
     def __init__(self, name: str):
         self.name = name
@@ -159,7 +159,7 @@ class MyService:
 )]
 #[case(
     LANG::Javascript,
-    br"
+    b"
 const add = (a, b) => a + b;
 const multiply = (a, b) => {
     return a * b;
@@ -193,7 +193,7 @@ fn risky_function() {
 )]
 #[case(
     LANG::Rust,
-    br"
+    b"
 pub struct MyService {
     name: String,
     value: i32,
@@ -213,7 +213,7 @@ impl MyService {
 )]
 #[case(
     LANG::Python,
-    br"
+    b"
 class MyService:
     def __init__(self, name: str):
         self.name = name
@@ -227,7 +227,7 @@ class MyService:
 )]
 #[case(
     LANG::Javascript,
-    br"
+    b"
 const add = (a, b) => a + b;
 const multiply = (a, b) => {
     return a * b;
@@ -262,7 +262,7 @@ fn parser_finds_node(
 fn test_ast_query_builder() {
     let query = AstQueryBuilder::new("rust", "function_item")
         .with_condition(QueryCondition::Custom {
-            name: "has_no_docstring".to_string(),
+            name: "has_no_docstring".to_owned(),
         })
         .message("Function needs documentation")
         .severity("warning")
@@ -307,8 +307,8 @@ fn test_ast_query_node_type_matching() {
     let query = AstQuery::new("rust", "identifier", "Found identifier", "info");
 
     let node = AstNode {
-        kind: "identifier".to_string(),
-        name: Some("test".to_string()),
+        kind: "identifier".to_owned(),
+        name: Some("test".to_owned()),
         span: Span {
             start: Position {
                 line: 1,
@@ -335,8 +335,8 @@ fn test_ast_query_no_match() {
     let query = AstQuery::new("rust", "function_item", "Found function", "info");
 
     let node = AstNode {
-        kind: "identifier".to_string(),
-        name: Some("test".to_string()),
+        kind: "identifier".to_owned(),
+        name: Some("test".to_owned()),
         span: Span {
             start: Position {
                 line: 1,
@@ -362,8 +362,8 @@ fn test_ast_query_recursive_matching() {
     let query = AstQuery::new("rust", "identifier", "Found identifier", "info");
 
     let child_node = AstNode {
-        kind: "identifier".to_string(),
-        name: Some("inner".to_string()),
+        kind: "identifier".to_owned(),
+        name: Some("inner".to_owned()),
         span: Span {
             start: Position {
                 line: 2,
@@ -381,7 +381,7 @@ fn test_ast_query_recursive_matching() {
     };
 
     let root_node = AstNode {
-        kind: "source_file".to_string(),
+        kind: "source_file".to_owned(),
         name: None,
         span: Span {
             start: Position {
@@ -409,14 +409,14 @@ fn test_ast_query_recursive_matching() {
 fn test_query_condition_has_child() {
     let query = AstQueryBuilder::new("rust", "function_item")
         .with_condition(QueryCondition::HasChild {
-            child_type: "block".to_string(),
+            child_type: "block".to_owned(),
         })
         .message("Function has block")
         .severity("info")
         .build();
 
     let block_node = AstNode {
-        kind: "block".to_string(),
+        kind: "block".to_owned(),
         name: None,
         span: Span {
             start: Position {
@@ -435,8 +435,8 @@ fn test_query_condition_has_child() {
     };
 
     let func_node = AstNode {
-        kind: "function_item".to_string(),
-        name: Some("test_fn".to_string()),
+        kind: "function_item".to_owned(),
+        name: Some("test_fn".to_owned()),
         span: Span {
             start: Position {
                 line: 1,
@@ -465,15 +465,15 @@ fn test_query_condition_has_child() {
 fn test_query_condition_no_child() {
     let query = AstQueryBuilder::new("rust", "function_item")
         .with_condition(QueryCondition::NoChild {
-            child_type: "unsafe_block".to_string(),
+            child_type: "unsafe_block".to_owned(),
         })
         .message("Safe function")
         .severity("info")
         .build();
 
     let func_node = AstNode {
-        kind: "function_item".to_string(),
-        name: Some("safe_fn".to_string()),
+        kind: "function_item".to_owned(),
+        name: Some("safe_fn".to_owned()),
         span: Span {
             start: Position {
                 line: 1,

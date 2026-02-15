@@ -28,6 +28,7 @@ fn json_sort_key(v: &Value) -> String {
 }
 
 /// Apply in-memory filtering, sorting, and pagination to a pre-fetched record list.
+#[must_use]
 pub fn apply_filter_pipeline(
     mut records: Vec<Value>,
     params: &FilterParams,

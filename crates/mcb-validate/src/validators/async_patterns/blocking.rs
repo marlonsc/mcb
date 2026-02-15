@@ -13,32 +13,32 @@ pub fn validate_blocking_in_async(config: &ValidationConfig) -> Result<Vec<Async
 
     let blocking_patterns = [
         (
-            r"std::thread::sleep",
+            "std::thread::sleep",
             "std::thread::sleep",
             "Use tokio::time::sleep instead",
         ),
         (
-            r"thread::sleep",
+            "thread::sleep",
             "thread::sleep",
             "Use tokio::time::sleep instead",
         ),
         (
-            r"std::fs::read",
+            "std::fs::read",
             "std::fs::read",
             "Use tokio::fs::read instead",
         ),
         (
-            r"std::fs::write",
+            "std::fs::write",
             "std::fs::write",
             "Use tokio::fs::write instead",
         ),
         (
-            r"std::fs::File::open",
+            "std::fs::File::open",
             "std::fs::File::open",
             "Use tokio::fs::File::open instead",
         ),
         (
-            r"std::fs::File::create",
+            "std::fs::File::create",
             "std::fs::File::create",
             "Use tokio::fs::File::create instead",
         ),
@@ -106,7 +106,7 @@ pub fn validate_blocking_in_async(config: &ValidationConfig) -> Result<Vec<Async
                 for (pattern, desc, sugg) in &compiled_blocking {
                     if pattern.is_match(line) {
                         violations.push(AsyncViolation::BlockingInAsync {
-                            file: path.to_path_buf(),
+                            file: path.clone(),
                             line: line_num + 1,
                             blocking_call: desc.to_string(),
                             suggestion: sugg.to_string(),

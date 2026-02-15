@@ -29,8 +29,8 @@ pub fn validate_type_names(
                 violations.push(NamingViolation::BadTypeName {
                     file: path.to_path_buf(),
                     line: line_num + 1,
-                    name: name.to_string(),
-                    expected_case: "CamelCase".to_string(),
+                    name: name.to_owned(),
+                    expected_case: "CamelCase".to_owned(),
                     severity: Severity::Warning,
                 });
             }
@@ -43,8 +43,8 @@ pub fn validate_type_names(
                 violations.push(NamingViolation::BadTypeName {
                     file: path.to_path_buf(),
                     line: line_num + 1,
-                    name: name.to_string(),
-                    expected_case: "CamelCase".to_string(),
+                    name: name.to_owned(),
+                    expected_case: "CamelCase".to_owned(),
                     severity: Severity::Warning,
                 });
             }
@@ -57,8 +57,8 @@ pub fn validate_type_names(
                 violations.push(NamingViolation::BadTypeName {
                     file: path.to_path_buf(),
                     line: line_num + 1,
-                    name: name.to_string(),
-                    expected_case: "CamelCase".to_string(),
+                    name: name.to_owned(),
+                    expected_case: "CamelCase".to_owned(),
                     severity: Severity::Warning,
                 });
             }

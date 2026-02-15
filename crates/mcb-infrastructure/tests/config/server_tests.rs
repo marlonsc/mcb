@@ -9,7 +9,7 @@ use mcb_infrastructure::constants::http::DEFAULT_HTTPS_PORT;
 #[test]
 fn test_parse_address() {
     let mut config = ServerConfigBuilder::new().build();
-    config.network.host = "127.0.0.1".to_string();
+    config.network.host = "127.0.0.1".to_owned();
     config.network.port = 8080;
 
     let address = config.parse_address().unwrap();
@@ -21,7 +21,7 @@ fn test_parse_address() {
 #[case("example.com", 8443, true, "https://example.com:8443")]
 fn server_url(#[case] host: &str, #[case] port: u16, #[case] https: bool, #[case] expected: &str) {
     let mut config = ServerConfigBuilder::new().build();
-    config.network.host = host.to_string();
+    config.network.host = host.to_owned();
     config.network.port = port;
     config.ssl.https = https;
 
@@ -35,7 +35,7 @@ fn test_server_config_builder() {
         .port(9000)
         .https(true)
         .request_timeout(120)
-        .cors(true, vec!["https://app.example.com".to_string()])
+        .cors(true, vec!["https://app.example.com".to_owned()])
         .build();
 
     assert_eq!(config.network.host, "0.0.0.0");

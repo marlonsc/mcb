@@ -60,7 +60,7 @@ pub struct VectorStoreConfigContainer {
 pub struct DatabaseConfig {
     /// Database provider name (e.g. "sqlite", "postgres")
     pub provider: String,
-    /// Database file path (for file-based providers like SQLite)
+    /// Database file path (for file-based providers like `SQLite`)
     pub path: Option<PathBuf>,
 }
 
@@ -130,7 +130,7 @@ pub struct McpContextGitDefaultsConfig {
 pub struct InfrastructureConfig {
     /// Cache system configuration
     pub cache: CacheSystemConfig,
-    /// EventBus configuration
+    /// `EventBus` configuration
     pub event_bus: EventBusConfig,
     /// Metrics configuration
     pub metrics: MetricsConfig,

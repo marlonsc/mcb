@@ -51,9 +51,9 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                         &FN_PATTERN,
                         &FIELD_PATTERN,
                     )
-                    .unwrap_or_else(|| "allow(dead_code)".to_string());
+                    .unwrap_or_else(|| "allow(dead_code)".to_owned());
                     violations.push(QualityViolation::DeadCodeAllowNotPermitted {
-                        file: entry.absolute_path.to_path_buf(),
+                        file: entry.absolute_path.clone(),
                         line: i + 1,
                         item_name,
                         severity: Severity::Warning,

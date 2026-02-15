@@ -68,6 +68,7 @@ impl HighlightedCode {
     /// # Returns
     ///
     /// A new `HighlightedCode` instance with the provided values.
+    #[must_use]
     pub fn new(original: String, spans: Vec<HighlightSpan>, language: String) -> Self {
         Self {
             original,

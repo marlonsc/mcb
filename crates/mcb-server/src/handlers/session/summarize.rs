@@ -2,13 +2,13 @@ use std::sync::Arc;
 
 use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 
 use super::common::{optional_data_map, str_vec};
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::{OriginPayloadFields, resolve_origin_context};
+use crate::handlers::helpers::{OriginPayloadFields, resolve_origin_context, tool_error};
 
 /// Creates or retrieves a session summary.
 #[tracing::instrument(skip_all)]
@@ -19,9 +19,7 @@ pub async fn summarize_session(
     let session_id = match args.session_id.as_ref() {
         Some(id) => id,
         None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing session_id",
-            )]));
+            return Ok(tool_error("Missing session_id"));
         }
     };
     if let Some(data) = optional_data_map(&args.data) {
@@ -71,9 +69,7 @@ pub async fn summarize_session(
                 "key_files": summary.key_files,
                 "created_at": summary.created_at,
             })),
-            Ok(None) => Ok(CallToolResult::error(vec![Content::text(
-                "Session summary not found",
-            )])),
+            Ok(None) => Ok(tool_error("Session summary not found")),
             Err(e) => Ok(to_contextual_tool_error(e)),
         }
     }

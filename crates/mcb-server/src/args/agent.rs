@@ -18,7 +18,7 @@ pub enum AgentAction {
 tool_schema! {
 /// Arguments for agent activity logging operations
 pub struct AgentArgs {
-    /// Action: log_tool, log_delegation
+    /// Action: `log_tool`, `log_delegation`
     #[schemars(description = "Action: log_tool, log_delegation")]
     pub action: AgentAction,
 
@@ -30,7 +30,7 @@ pub struct AgentArgs {
     #[schemars(description = "Session ID for the agent")]
     pub session_id: SessionId,
 
-    /// Activity data payload. log_tool: {tool_name, params_summary?, success, error_message?, duration_ms?}; log_delegation: {child_session_id, prompt, prompt_embedding_id?, result?, success, duration_ms?}
+    /// Activity data payload. `log_tool`: {`tool_name`, `params_summary`?, success, `error_message`?, `duration_ms`?}; `log_delegation`: {`child_session_id`, prompt, `prompt_embedding_id`?, result?, success, `duration_ms`?}
     #[schemars(
         description = "Activity data payload. log_tool: {tool_name, params_summary?, success, error_message?, duration_ms?}; log_delegation: {child_session_id, prompt, prompt_embedding_id?, result?, success, duration_ms?}"
     )]

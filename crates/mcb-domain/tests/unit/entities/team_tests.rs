@@ -4,9 +4,9 @@ use rstest::rstest;
 #[rstest]
 fn team_construction() {
     let team = Team {
-        id: "team-001".to_string(),
-        org_id: "org-001".to_string(),
-        name: "Platform".to_string(),
+        id: "team-001".to_owned(),
+        org_id: "org-001".to_owned(),
+        name: "Platform".to_owned(),
         created_at: 1000,
     };
     assert_eq!(team.id, "team-001");
@@ -17,9 +17,9 @@ fn team_construction() {
 #[rstest]
 fn team_serialization_roundtrip() {
     let team = Team {
-        id: "team-002".to_string(),
-        org_id: "org-001".to_string(),
-        name: "Backend".to_string(),
+        id: "team-002".to_owned(),
+        org_id: "org-001".to_owned(),
+        name: "Backend".to_owned(),
         created_at: 2000,
     };
     let json = serde_json::to_string(&team).expect("serialize");
@@ -36,8 +36,8 @@ fn team_member_construction() {
     let id_uuid = id::deterministic("team_member", "team-001:usr-001");
     let member = TeamMember {
         id: TeamMemberId::from_uuid(id_uuid),
-        team_id: "team-001".to_string(),
-        user_id: "usr-001".to_string(),
+        team_id: "team-001".to_owned(),
+        user_id: "usr-001".to_owned(),
         role: TeamMemberRole::Lead,
         joined_at: 1000,
     };

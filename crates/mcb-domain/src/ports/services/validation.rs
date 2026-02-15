@@ -34,7 +34,7 @@ pub struct ValidationReport {
 pub struct ViolationEntry {
     /// Unique violation ID (e.g., "CA001", "SOLID002")
     pub id: String,
-    /// Category (e.g., "clean_architecture", "solid", "quality")
+    /// Category (e.g., "`clean_architecture`", "solid", "quality")
     pub category: String,
     /// Severity level: "ERROR", "WARNING", or "INFO"
     pub severity: String,

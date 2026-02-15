@@ -75,7 +75,7 @@ where
         C: fmt::Display + Send + Sync + 'static,
     {
         self.map_err(|err| Error::Infrastructure {
-            message: format!("{}: {}", context, err),
+            message: format!("{context}: {err}"),
             source: Some(Box::new(err)),
         })
     }
@@ -97,7 +97,7 @@ where
         Self: Sized,
     {
         self.map_err(|err| Error::Io {
-            message: format!("{}: {}", context, err),
+            message: format!("{context}: {err}"),
             source: Some(Box::new(err)),
         })
     }
@@ -108,7 +108,7 @@ where
         Self: Sized,
     {
         self.map_err(|err| Error::Configuration {
-            message: format!("{}: {}", context, err),
+            message: format!("{context}: {err}"),
             source: Some(Box::new(err)),
         })
     }
@@ -119,7 +119,7 @@ where
         Self: Sized,
     {
         self.map_err(|err| Error::Authentication {
-            message: format!("{}: {}", context, err),
+            message: format!("{context}: {err}"),
             source: Some(Box::new(err)),
         })
     }
@@ -130,7 +130,7 @@ where
         Self: Sized,
     {
         self.map_err(|err| Error::Network {
-            message: format!("{}: {}", context, err),
+            message: format!("{context}: {err}"),
             source: Some(Box::new(err)),
         })
     }
@@ -141,7 +141,7 @@ where
         Self: Sized,
     {
         self.map_err(|err| Error::Database {
-            message: format!("{}: {}", context, err),
+            message: format!("{context}: {err}"),
             source: Some(Box::new(err)),
         })
     }
@@ -153,7 +153,7 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     Error::Infrastructure {
-        message: format!("{}: {}", context, error),
+        message: format!("{context}: {error}"),
         source: Some(Box::new(error)),
     }
 }
@@ -176,15 +176,16 @@ pub mod infra {
         E: std::error::Error + Send + Sync + 'static,
     {
         Error::Infrastructure {
-            message: message.to_string(),
+            message: message.to_owned(),
             source: Some(Box::new(error)),
         }
     }
 
     /// Create infrastructure error from message only
+    #[must_use]
     pub fn infrastructure_error_msg(message: &str) -> Error {
         Error::Infrastructure {
-            message: message.to_string(),
+            message: message.to_owned(),
             source: None,
         }
     }
@@ -195,7 +196,7 @@ pub mod infra {
         E: std::error::Error + Send + Sync + 'static,
     {
         Error::Io {
-            message: message.to_string(),
+            message: message.to_owned(),
             source: Some(Box::new(error)),
         }
     }
@@ -206,7 +207,7 @@ pub mod infra {
         E: std::error::Error + Send + Sync + 'static,
     {
         Error::Configuration {
-            message: message.to_string(),
+            message: message.to_owned(),
             source: Some(Box::new(error)),
         }
     }
@@ -217,7 +218,7 @@ pub mod infra {
         E: std::error::Error + Send + Sync + 'static,
     {
         Error::Authentication {
-            message: message.to_string(),
+            message: message.to_owned(),
             source: Some(Box::new(error)),
         }
     }
@@ -228,7 +229,7 @@ pub mod infra {
         E: std::error::Error + Send + Sync + 'static,
     {
         Error::Network {
-            message: message.to_string(),
+            message: message.to_owned(),
             source: Some(Box::new(error)),
         }
     }
@@ -239,7 +240,7 @@ pub mod infra {
         E: std::error::Error + Send + Sync + 'static,
     {
         Error::Database {
-            message: message.to_string(),
+            message: message.to_owned(),
             source: Some(Box::new(error)),
         }
     }

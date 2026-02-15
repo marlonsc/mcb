@@ -1,7 +1,7 @@
 //! Catalog DI Integration Tests
 //!
 //! Tests for the dill Catalog build and service resolution.
-//! These tests verify that the IoC container initializes correctly
+//! These tests verify that the `IoC` container initializes correctly
 //! with all required providers and services.
 
 use mcb_infrastructure::config::ConfigLoader;
@@ -26,7 +26,7 @@ async fn test_catalog_builds_with_default_config() {
 #[serial]
 async fn test_catalog_builds_with_custom_embedding_config() {
     let mut config = ConfigLoader::new().load().expect("load config");
-    config.providers.embedding.provider = Some("fastembed".to_string());
+    config.providers.embedding.provider = Some("fastembed".to_owned());
 
     let result = build_catalog(config).await;
 
@@ -42,7 +42,7 @@ async fn test_catalog_builds_with_custom_embedding_config() {
 #[serial]
 async fn test_catalog_builds_with_custom_vector_store_config() {
     let mut config = ConfigLoader::new().load().expect("load config");
-    config.providers.vector_store.provider = Some("edgevec".to_string());
+    config.providers.vector_store.provider = Some("edgevec".to_owned());
 
     let result = build_catalog(config).await;
 

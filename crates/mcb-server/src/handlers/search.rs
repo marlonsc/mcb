@@ -27,7 +27,7 @@ pub struct SearchHandler {
 }
 
 impl SearchHandler {
-    /// Create a new SearchHandler.
+    /// Create a new `SearchHandler`.
     pub fn new(
         search_service: Arc<dyn SearchServiceInterface>,
         memory_service: Arc<dyn MemoryServiceInterface>,

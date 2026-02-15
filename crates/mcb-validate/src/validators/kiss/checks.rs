@@ -72,9 +72,9 @@ impl KissValidator {
 
                         if field_count > max_fields {
                             violations.push(KissViolation::StructTooManyFields {
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: line_num + 1,
-                                struct_name: struct_name.to_string(),
+                                struct_name: struct_name.to_owned(),
                                 field_count,
                                 max_allowed: max_fields,
                                 severity: Severity::Warning,
@@ -158,9 +158,9 @@ impl KissValidator {
 
                         if param_count > self.max_function_params {
                             violations.push(KissViolation::FunctionTooManyParams {
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: line_num + 1,
-                                function_name: fn_name.to_string(),
+                                function_name: fn_name.to_owned(),
                                 param_count,
                                 max_allowed: self.max_function_params,
                                 severity: Severity::Warning,
@@ -183,7 +183,7 @@ impl KissValidator {
                 Ok(regex) => regex,
                 Err(_) => return Ok(violations),
             };
-        let option_pattern = match compile_regex(r"Option<") {
+        let option_pattern = match compile_regex("Option<") {
             Ok(regex) => regex,
             Err(_) => return Ok(violations),
         };
@@ -209,9 +209,9 @@ impl KissValidator {
 
                         if optional_count > self.max_builder_fields {
                             violations.push(KissViolation::BuilderTooComplex {
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: line_num + 1,
-                                builder_name: builder_name.to_string(),
+                                builder_name: builder_name.to_owned(),
                                 optional_field_count: optional_count,
                                 max_allowed: self.max_builder_fields,
                                 severity: Severity::Warning,
@@ -276,7 +276,7 @@ impl KissValidator {
 
                             if !nearby_reported {
                                 violations.push(KissViolation::DeepNesting {
-                                    file: path.to_path_buf(),
+                                    file: path.clone(),
                                     line: line_num + 1,
                                     nesting_level: nesting_depth,
                                     max_allowed: self.max_nesting_depth,
@@ -372,9 +372,9 @@ impl KissValidator {
 
                         if line_count > self.max_function_lines {
                             violations.push(KissViolation::FunctionTooLong {
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: line_num + 1,
-                                function_name: fn_name.to_string(),
+                                function_name: fn_name.to_owned(),
                                 line_count,
                                 max_allowed: self.max_function_lines,
                                 severity: Severity::Warning,

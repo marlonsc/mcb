@@ -25,7 +25,7 @@ pub enum SqlParam {
 
 /// Abstraction for a single query result row.
 ///
-/// Implementations wrap driver-specific rows (e.g. sqlx::SqliteRow) and expose
+/// Implementations wrap driver-specific rows (e.g. `sqlx::SqliteRow`) and expose
 /// values by column name so repository code can map to domain entities without
 /// depending on the driver.
 pub trait SqlRow: Send + Sync {
@@ -51,7 +51,7 @@ pub trait DatabaseExecutor: Send + Sync {
     /// Performs the query all operation.
     async fn query_all(&self, sql: &str, params: &[SqlParam]) -> Result<Vec<Arc<dyn SqlRow>>>;
 
-    /// Cast to Any to allow downcasting to concrete type (e.g. SqlitePool) for internal use
+    /// Cast to Any to allow downcasting to concrete type (e.g. `SqlitePool`) for internal use
     fn as_any(&self) -> &dyn std::any::Any;
 }
 

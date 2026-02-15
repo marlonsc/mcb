@@ -32,9 +32,10 @@ impl HelperDef for TimestampHelper {
         if val == 0 {
             out.write("\u{2014}")?;
         } else {
-            let formatted = DateTime::<Utc>::from_timestamp(val, 0)
-                .map(|ts| ts.format("%Y-%m-%d %H:%M:%S UTC").to_string())
-                .unwrap_or_else(|| "\u{2014}".to_string());
+            let formatted = DateTime::<Utc>::from_timestamp(val, 0).map_or_else(
+                || "\u{2014}".to_owned(),
+                |ts| ts.format("%Y-%m-%d %H:%M:%S UTC").to_string(),
+            );
             out.write(&formatted)?;
         }
         Ok(())
@@ -75,7 +76,7 @@ impl HelperDef for RelativeTimeHelper {
         let delta = now.saturating_sub(val);
 
         let text = if delta < 60 {
-            "just now".to_string()
+            "just now".to_owned()
         } else if delta < 3_600 {
             let mins = delta / 60;
             format!("{mins} minute{} ago", if mins == 1 { "" } else { "s" })
@@ -86,9 +87,10 @@ impl HelperDef for RelativeTimeHelper {
             let days = delta / 86_400;
             format!("{days} day{} ago", if days == 1 { "" } else { "s" })
         } else {
-            DateTime::<Utc>::from_timestamp(val, 0)
-                .map(|ts| ts.format("%Y-%m-%d %H:%M:%S UTC").to_string())
-                .unwrap_or_else(|| "\u{2014}".to_string())
+            DateTime::<Utc>::from_timestamp(val, 0).map_or_else(
+                || "\u{2014}".to_owned(),
+                |ts| ts.format("%Y-%m-%d %H:%M:%S UTC").to_string(),
+            )
         };
 
         out.write(&text)?;
@@ -114,9 +116,9 @@ impl HelperDef for JsonPrettyHelper {
         _: &mut RenderContext<'reg, 'rc>,
         out: &mut dyn Output,
     ) -> HelperResult {
-        let value = h.param(0).map(|p| p.value().clone()).unwrap_or(Value::Null);
+        let value = h.param(0).map_or(Value::Null, |p| p.value().clone());
 
-        let pretty = serde_json::to_string_pretty(&value).unwrap_or_else(|_| "null".to_string());
+        let pretty = serde_json::to_string_pretty(&value).unwrap_or_else(|_| "null".to_owned());
 
         let escaped = pretty
             .replace('&', "&amp;")
@@ -356,8 +358,8 @@ impl HelperDef for EqHelper {
         rc: &mut RenderContext<'reg, 'rc>,
         out: &mut dyn Output,
     ) -> HelperResult {
-        let a = h.param(0).map(|p| p.value());
-        let b = h.param(1).map(|p| p.value());
+        let a = h.param(0).map(handlebars::PathAndJson::value);
+        let b = h.param(1).map(handlebars::PathAndJson::value);
 
         let equal = match (a, b) {
             (Some(a), Some(b)) => a == b,

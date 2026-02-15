@@ -3,12 +3,13 @@ use std::sync::Arc;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 
 use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
 use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
+use crate::handlers::helpers::tool_error;
 
 /// Lists semantic memories based on the provided search query and filters.
 #[tracing::instrument(skip_all)]
@@ -68,14 +69,10 @@ pub async fn get_timeline(
         if let Some(first) = results.first() {
             first.observation.id.clone()
         } else {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "No anchor observation found",
-            )]));
+            return Ok(tool_error("No anchor observation found"));
         }
     } else {
-        return Ok(CallToolResult::error(vec![Content::text(
-            "Missing anchor_id or query for timeline",
-        )]));
+        return Ok(tool_error("Missing anchor_id or query for timeline"));
     };
     let filter = build_memory_filter(args, None, None);
     let depth_before = args.depth_before.unwrap_or(5);

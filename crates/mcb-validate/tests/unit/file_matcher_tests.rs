@@ -11,7 +11,7 @@ use mcb_validate::filters::FilePatternMatcher;
 #[case("main.py", false)]
 #[case("README.md", false)]
 fn simple_includes(#[case] file: &str, #[case] expected: bool) {
-    let matcher = FilePatternMatcher::new(&["*.rs".to_string()], &[]).unwrap();
+    let matcher = FilePatternMatcher::new(&["*.rs".to_owned()], &[]).unwrap();
     assert_eq!(matcher.should_include(Path::new(file)), expected);
 }
 
@@ -23,8 +23,8 @@ fn simple_includes(#[case] file: &str, #[case] expected: bool) {
 #[case("tests/main.rs", false)]
 fn includes_and_excludes(#[case] file: &str, #[case] expected: bool) {
     let matcher = FilePatternMatcher::new(
-        &["src/**/*.rs".to_string()],
-        &["**/test/**".to_string(), "**/*_test.rs".to_string()],
+        &["src/**/*.rs".to_owned()],
+        &["**/test/**".to_owned(), "**/*_test.rs".to_owned()],
     )
     .unwrap();
 
@@ -40,9 +40,9 @@ fn matches_any(#[case] file: &str, #[case] expected: bool) {
     let matcher = FilePatternMatcher::default();
 
     let patterns = vec![
-        "src/**/*.rs".to_string(),
-        "!**/test/**".to_string(),
-        "tests/**/*.py".to_string(),
+        "src/**/*.rs".to_owned(),
+        "!**/test/**".to_owned(),
+        "tests/**/*.py".to_owned(),
     ];
 
     assert_eq!(matcher.matches_any(Path::new(file), &patterns), expected);
@@ -51,10 +51,10 @@ fn matches_any(#[case] file: &str, #[case] expected: bool) {
 #[rstest]
 fn parse_patterns() {
     let patterns = vec![
-        "src/**/*.rs".to_string(),
-        "!**/test/**".to_string(),
-        "tests/**/*.py".to_string(),
-        "!**/*.tmp".to_string(),
+        "src/**/*.rs".to_owned(),
+        "!**/test/**".to_owned(),
+        "tests/**/*.py".to_owned(),
+        "!**/*.tmp".to_owned(),
     ];
 
     let (includes, excludes) = FilePatternMatcher::parse_patterns(&patterns);
@@ -70,9 +70,9 @@ fn parse_patterns() {
 #[case("lib.py", false)]
 fn from_mixed_patterns(#[case] file: &str, #[case] expected: bool) {
     let patterns = vec![
-        "src/**/*.rs".to_string(),
-        "!**/test_utils/**".to_string(),
-        "tests/**/*.py".to_string(),
+        "src/**/*.rs".to_owned(),
+        "!**/test_utils/**".to_owned(),
+        "tests/**/*.py".to_owned(),
     ];
 
     let matcher = FilePatternMatcher::from_mixed_patterns(&patterns).unwrap();

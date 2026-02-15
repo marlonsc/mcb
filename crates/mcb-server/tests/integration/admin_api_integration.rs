@@ -46,7 +46,7 @@ fn test_admin_api_provider_switch_request_payload_shape() {
     assert_eq!(request_payload["provider"].as_str(), Some("openai"));
 }
 
-/// Test: AdminApi can be created with custom config
+/// Test: `AdminApi` can be created with custom config
 #[test]
 fn test_admin_api_creation_with_config() {
     let config = AdminApiConfig {
@@ -61,7 +61,7 @@ fn test_admin_api_creation_with_config() {
     let _admin_api = create_test_admin_api();
 }
 
-/// Test: AdminApi health check returns valid metrics
+/// Test: `AdminApi` health check returns valid metrics
 #[rstest]
 #[case("status")]
 #[case("uptime_seconds")]

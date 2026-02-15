@@ -45,7 +45,7 @@ fn test_auth_config_jwt_secret_length() {
 
     // Custom secret can be set - minimum 32 characters required
     let mut custom_auth = default_auth.clone();
-    custom_auth.jwt.secret = "custom_secret_at_least_32_chars_long!".to_string();
+    custom_auth.jwt.secret = "custom_secret_at_least_32_chars_long!".to_owned();
     assert_eq!(custom_auth.jwt.secret.len(), 37);
     assert!(
         custom_auth.jwt.secret.len() >= 32,
@@ -68,7 +68,7 @@ fn test_cache_config_ttl_when_enabled() {
         max_size: 1024 * 1024,
         redis_url: None,
         redis_pool_size: 8,
-        namespace: "test".to_string(),
+        namespace: "test".to_owned(),
     };
     assert!(enabled_cache.default_ttl_secs > 0);
     assert!(enabled_cache.max_size > 0);
@@ -261,8 +261,8 @@ fn test_cors_configuration() {
         .cors(
             true,
             vec![
-                "https://app.example.com".to_string(),
-                "https://admin.example.com".to_string(),
+                "https://app.example.com".to_owned(),
+                "https://admin.example.com".to_owned(),
             ],
         )
         .build();
@@ -276,7 +276,7 @@ fn test_cors_configuration() {
         dev_config.cors.cors_origins.clone(),
     );
     assert!(enabled);
-    assert!(origins.contains(&"*".to_string()));
+    assert!(origins.contains(&"*".to_owned()));
 }
 
 #[rstest]

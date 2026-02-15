@@ -1,7 +1,7 @@
 //! Server-Sent Events (SSE) Handler
 //!
 //! Provides real-time event streaming for the admin dashboard.
-//! Events are received from the TokioBroadcastEventBus and forwarded
+//! Events are received from the `TokioBroadcastEventBus` and forwarded
 //! to connected SSE clients.
 //!
 //! ## Supported Events
@@ -21,7 +21,7 @@
 //!
 //! ## Usage
 //!
-//! Connect to `/admin/events` with an EventSource client:
+//! Connect to `/admin/events` with an `EventSource` client:
 //!
 //! ```javascript
 //! const events = new EventSource('/admin/events');
@@ -41,7 +41,7 @@ use super::handlers::AdminState;
 /// SSE event stream handler
 ///
 /// Streams domain events to connected clients in real-time.
-/// Uses the EventBusProvider's subscribe_events() method to receive events.
+/// Uses the `EventBusProvider`'s `subscribe_events()` method to receive events.
 #[get("/events")]
 #[allow(tail_expr_drop_order, impl_trait_overcaptures)]
 pub async fn events_stream(state: &State<AdminState>) -> EventStream![] {
@@ -55,7 +55,7 @@ pub async fn events_stream(state: &State<AdminState>) -> EventStream![] {
             Err(e) => {
                 warn!("Failed to subscribe to events: {}", e);
                 // Yield an error event and exit
-                yield Event::data(format!("Failed to subscribe: {}", e))
+                yield Event::data(format!("Failed to subscribe: {e}"))
                     .event("error");
                 return;
             }
@@ -83,6 +83,7 @@ pub async fn events_stream(state: &State<AdminState>) -> EventStream![] {
 }
 
 /// Get the event name string for SSE event type header
+#[must_use]
 pub fn get_event_name(event: &DomainEvent) -> &'static str {
     match event {
         // Indexing events

@@ -62,6 +62,7 @@ pub enum WorkflowState {
 
 impl WorkflowState {
     /// Returns the human-readable name of the current state.
+    #[must_use]
     pub fn name(&self) -> &'static str {
         match self {
             Self::Initializing => "Initializing",
@@ -76,11 +77,13 @@ impl WorkflowState {
     }
 
     /// Checks if the state is a terminal state (Completed).
+    #[must_use]
     pub fn is_terminal(&self) -> bool {
         matches!(self, Self::Completed)
     }
 
     /// Checks if the state represents an error condition.
+    #[must_use]
     pub fn is_error(&self) -> bool {
         matches!(self, Self::Failed { .. })
     }
@@ -173,6 +176,7 @@ impl Transition {
     ///
     /// # Parameters
     /// TODO(qlty): Function with many parameters (count = 6).
+    #[must_use]
     pub fn new(
         id: String,
         session_id: String,
@@ -212,6 +216,7 @@ pub struct WorkflowSession {
 
 impl WorkflowSession {
     /// Creates a new workflow session in Initializing state.
+    #[must_use]
     pub fn new(id: String, project_id: String) -> Self {
         let now = Utc::now().timestamp();
         Self {
@@ -225,11 +230,13 @@ impl WorkflowSession {
     }
 
     /// Checks if the session is in a terminal state.
+    #[must_use]
     pub fn is_complete(&self) -> bool {
         self.current_state.is_terminal()
     }
 
     /// Checks if the session is in an error state.
+    #[must_use]
     pub fn is_error(&self) -> bool {
         self.current_state.is_error()
     }

@@ -28,8 +28,8 @@ fn test_validate_execution(clean_workspace: std::path::PathBuf) {
         strict: false,
         rules: None,
         validators: None,
-        severity: "warning".to_string(),
-        format: "text".to_string(),
+        severity: "warning".to_owned(),
+        format: "text".to_owned(),
     };
 
     let result = args.execute();
@@ -53,8 +53,8 @@ fn test_validate_strict_mode(clean_workspace: std::path::PathBuf) {
         strict: true,
         rules: None,
         validators: None,
-        severity: "warning".to_string(),
-        format: "text".to_string(),
+        severity: "warning".to_owned(),
+        format: "text".to_owned(),
     };
 
     let result = args.execute();

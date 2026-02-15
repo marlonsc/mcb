@@ -43,8 +43,8 @@ mod integration_tests {
         // Store observations
         let (id_a, _) = service
             .store_observation(
-                "test-project".to_string(),
-                "content about rust generics and trait bounds".to_string(),
+                "test-project".to_owned(),
+                "content about rust generics and trait bounds".to_owned(),
                 ObservationType::Context,
                 vec![],
                 ObservationMetadata::default(),
@@ -54,8 +54,8 @@ mod integration_tests {
 
         let (id_b, _) = service
             .store_observation(
-                "test-project".to_string(),
-                "content about python dynamic types".to_string(),
+                "test-project".to_owned(),
+                "content about python dynamic types".to_owned(),
                 ObservationType::Context,
                 vec![],
                 ObservationMetadata::default(),
@@ -89,13 +89,13 @@ mod integration_tests {
         let service = memory_service.await;
 
         let meta1 = ObservationMetadata {
-            session_id: Some("session-1".to_string()),
+            session_id: Some("session-1".to_owned()),
             ..Default::default()
         };
         let (id_a, _) = service
             .store_observation(
-                "test-project".to_string(),
-                "session one observation".to_string(),
+                "test-project".to_owned(),
+                "session one observation".to_owned(),
                 ObservationType::Context,
                 vec![],
                 meta1,
@@ -104,13 +104,13 @@ mod integration_tests {
             .expect("store a");
 
         let meta2 = ObservationMetadata {
-            session_id: Some("session-2".to_string()),
+            session_id: Some("session-2".to_owned()),
             ..Default::default()
         };
         let (_id_b, _) = service
             .store_observation(
-                "test-project".to_string(),
-                "session two observation".to_string(),
+                "test-project".to_owned(),
+                "session two observation".to_owned(),
                 ObservationType::Context,
                 vec![],
                 meta2,
@@ -119,7 +119,7 @@ mod integration_tests {
             .expect("store b");
 
         let filter = MemoryFilter {
-            session_id: Some("session-1".to_string()),
+            session_id: Some("session-1".to_owned()),
             ..Default::default()
         };
 
@@ -139,13 +139,13 @@ mod integration_tests {
         let service = memory_service.await;
 
         let meta1 = ObservationMetadata {
-            branch: Some("feature/auth".to_string()),
+            branch: Some("feature/auth".to_owned()),
             ..Default::default()
         };
         let (id_a, _) = service
             .store_observation(
-                "test-project".to_string(),
-                "feature branch work".to_string(),
+                "test-project".to_owned(),
+                "feature branch work".to_owned(),
                 ObservationType::Context,
                 vec![],
                 meta1,
@@ -154,13 +154,13 @@ mod integration_tests {
             .expect("store a");
 
         let meta2 = ObservationMetadata {
-            branch: Some("main".to_string()),
+            branch: Some("main".to_owned()),
             ..Default::default()
         };
         let (_id_b, _) = service
             .store_observation(
-                "test-project".to_string(),
-                "main branch work".to_string(),
+                "test-project".to_owned(),
+                "main branch work".to_owned(),
                 ObservationType::Context,
                 vec![],
                 meta2,
@@ -169,7 +169,7 @@ mod integration_tests {
             .expect("store b");
 
         let filter = MemoryFilter {
-            branch: Some("feature/auth".to_string()),
+            branch: Some("feature/auth".to_owned()),
             ..Default::default()
         };
 
@@ -189,13 +189,13 @@ mod integration_tests {
         let service = memory_service.await;
 
         let meta1 = ObservationMetadata {
-            commit: Some("abc1234".to_string()),
+            commit: Some("abc1234".to_owned()),
             ..Default::default()
         };
         let (id_a, _) = service
             .store_observation(
-                "test-project".to_string(),
-                "commit abc work".to_string(),
+                "test-project".to_owned(),
+                "commit abc work".to_owned(),
                 ObservationType::Context,
                 vec![],
                 meta1,
@@ -204,13 +204,13 @@ mod integration_tests {
             .expect("store a");
 
         let meta2 = ObservationMetadata {
-            commit: Some("def5678".to_string()),
+            commit: Some("def5678".to_owned()),
             ..Default::default()
         };
         let (_id_b, _) = service
             .store_observation(
-                "test-project".to_string(),
-                "commit def work".to_string(),
+                "test-project".to_owned(),
+                "commit def work".to_owned(),
                 ObservationType::Context,
                 vec![],
                 meta2,
@@ -219,7 +219,7 @@ mod integration_tests {
             .expect("store b");
 
         let filter = MemoryFilter {
-            commit: Some("abc1234".to_string()),
+            commit: Some("abc1234".to_owned()),
             ..Default::default()
         };
 

@@ -60,6 +60,7 @@ impl AnthropicEmbeddingProvider {
     /// * `model` - Model name (e.g., "voyage-3", "voyage-code-3")
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
+    #[must_use]
     pub fn new(
         api_key: String,
         base_url: Option<String>,
@@ -80,16 +81,19 @@ impl AnthropicEmbeddingProvider {
     }
 
     /// Get the base URL for this provider
+    #[must_use]
     pub fn base_url(&self) -> &str {
         &self.client.base_url
     }
 
     /// Get the model name
+    #[must_use]
     pub fn model(&self) -> &str {
         &self.client.model
     }
 
     /// Get the maximum tokens for this model
+    #[must_use]
     pub fn max_tokens(&self) -> usize {
         // All Voyage AI models support the same max tokens
         ANTHROPIC_MAX_INPUT_TOKENS
@@ -106,7 +110,7 @@ impl AnthropicEmbeddingProvider {
 
         let headers = vec![
             ("Authorization", format!("Bearer {}", self.client.api_key)),
-            ("Content-Type", CONTENT_TYPE_JSON.to_string()),
+            ("Content-Type", CONTENT_TYPE_JSON.to_owned()),
         ];
 
         send_json_request(JsonRequestParams {
@@ -136,7 +140,7 @@ impl AnthropicEmbeddingProvider {
 }
 
 #[async_trait]
-/// Implementation of EmbeddingProvider using Anthropic/Voyage.
+/// Implementation of `EmbeddingProvider` using Anthropic/Voyage.
 impl EmbeddingProvider for AnthropicEmbeddingProvider {
     /// Generates embeddings for a batch of texts.
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {

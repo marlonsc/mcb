@@ -41,9 +41,9 @@ pub async fn entities_index(state: Option<&State<AdminState>>) -> Template {
         };
         total_records += record_count;
         entities.push(crate::admin::web::view_model::DashboardEntityCard {
-            slug: entity.slug.to_string(),
-            title: entity.title.to_string(),
-            group: entity.group.to_string(),
+            slug: entity.slug.to_owned(),
+            title: entity.title.to_owned(),
+            group: entity.group.to_owned(),
             field_count: entity.fields().iter().filter(|field| !field.hidden).count(),
             record_count,
         });
@@ -275,7 +275,7 @@ pub async fn entities_update(
 
     if let Some(adapter) = state.and_then(|s| resolve_adapter(slug, s.inner())) {
         let mut map = form.into_inner();
-        map.insert("id".to_string(), id.to_string());
+        map.insert("id".to_owned(), id.to_owned());
         let data = serde_json::to_value(map)
             .map_err(|e| status::Custom(Status::BadRequest, e.to_string()))?;
         adapter
@@ -298,10 +298,10 @@ pub async fn entities_bulk_delete(
 ) -> Result<Redirect, status::Custom<String>> {
     find_or_404(slug)?;
 
-    let ids_raw = form.get("ids").map(|s| s.as_str()).unwrap_or("");
+    let ids_raw = form.get("ids").map_or("", std::string::String::as_str);
     let ids: Vec<&str> = ids_raw
         .split(',')
-        .map(|s| s.trim())
+        .map(str::trim)
         .filter(|s| !s.is_empty())
         .collect();
 

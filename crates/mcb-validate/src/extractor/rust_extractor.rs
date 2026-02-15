@@ -34,9 +34,9 @@ impl RustExtractor {
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("unknown")
-            .to_string();
+            .to_owned();
 
-        let module_id = format!("module::{}", module_name);
+        let module_id = format!("module::{module_name}");
 
         // Add Module Fact
         facts.push(Fact::new(
@@ -78,7 +78,7 @@ impl RustExtractor {
                 let import_path = text.trim_start_matches("use ").trim_end_matches(';').trim();
 
                 facts.push(Fact::new(
-                    import_path.to_string(),
+                    import_path.to_owned(),
                     FactType::Import,
                     Location {
                         file_path: path.to_path_buf(),
@@ -99,7 +99,7 @@ impl RustExtractor {
                 && let Ok(name) = name_node.utf8_text(code_ref)
             {
                 facts.push(Fact::new(
-                    name.to_string(),
+                    name.to_owned(),
                     FactType::Struct,
                     Location {
                         file_path: path.to_path_buf(),
@@ -120,7 +120,7 @@ impl RustExtractor {
                 && let Ok(name) = name_node.utf8_text(code_ref)
             {
                 facts.push(Fact::new(
-                    name.to_string(),
+                    name.to_owned(),
                     FactType::Function,
                     Location {
                         file_path: path.to_path_buf(),

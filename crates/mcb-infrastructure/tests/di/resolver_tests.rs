@@ -15,7 +15,7 @@ fn test_available_providers_display() {
         language: vec![("universal", "Universal chunker")],
     };
 
-    let display = format!("{}", providers);
+    let display = format!("{providers}");
     assert!(display.contains("Embedding Providers"));
     assert!(display.contains("fastembed"));
 }
@@ -32,11 +32,11 @@ fn test_provider_selection_pattern() {
 
     // Add OpenAI embedding provider configuration
     config.providers.embedding.configs.insert(
-        "default".to_string(),
+        "default".to_owned(),
         EmbeddingConfig {
-            provider: "openai".to_string(),
-            model: "text-embedding-3-small".to_string(),
-            api_key: Some("sk-test".to_string()),
+            provider: "openai".to_owned(),
+            model: "text-embedding-3-small".to_owned(),
+            api_key: Some("sk-test".to_owned()),
             base_url: None,
             dimensions: Some(1536),
             max_tokens: Some(8192),
@@ -45,14 +45,14 @@ fn test_provider_selection_pattern() {
 
     // Add Milvus vector store configuration
     config.providers.vector_store.configs.insert(
-        "default".to_string(),
+        "default".to_owned(),
         VectorStoreConfig {
-            provider: "milvus".to_string(),
+            provider: "milvus".to_owned(),
             address: Some(mcb_domain::test_services_config::required_test_service_url(
                 "milvus_address",
             )),
-            token: Some("user:password".to_string()),
-            collection: Some("test_collection".to_string()),
+            token: Some("user:password".to_owned()),
+            collection: Some("test_collection".to_owned()),
             dimensions: Some(384),
             timeout_secs: Some(30),
         },

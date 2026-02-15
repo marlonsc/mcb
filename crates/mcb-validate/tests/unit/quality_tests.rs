@@ -126,7 +126,7 @@ fn test_unwrap_exempt_in_test_code() {
 fn test_clean_code_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
-        r"
+        "
 /// A well-documented function.
 pub fn safe_parse(input: &str) -> Result<i32, std::num::ParseIntError> {
     input.parse()

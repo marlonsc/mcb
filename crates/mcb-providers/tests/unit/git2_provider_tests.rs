@@ -23,7 +23,7 @@ fn run_git(dir: &Path, args: &[&str]) -> TestResult<()> {
     if status.success() {
         Ok(())
     } else {
-        Err(format!("git {:?} failed", args).into())
+        Err(format!("git {args:?} failed").into())
     }
 }
 
@@ -111,7 +111,7 @@ async fn list_repository_entities(#[case] entity_kind: &str) -> TestResult<()> {
     if entity_kind == "branches" {
         let branches = provider.list_branches(&repo).await?;
         assert!(!branches.is_empty());
-        assert!(branches.iter().any(|b| b.is_default()));
+        assert!(branches.iter().any(mcb_domain::VcsBranch::is_default));
     } else {
         let files = provider.list_files(&repo, repo.default_branch()).await?;
         assert!(files.iter().any(|f| f.to_string_lossy() == "README.md"));

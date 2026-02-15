@@ -43,7 +43,7 @@ pub use crate::ports::services::{
 /// Information about a validator available in a provider
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidatorInfo {
-    /// Validator ID (e.g., "clean_architecture", "solid", "quality")
+    /// Validator ID (e.g., "`clean_architecture`", "solid", "quality")
     pub id: String,
     /// Human-readable name
     pub name: String,

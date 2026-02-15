@@ -1,4 +1,4 @@
-//! Tests for ResponseFormatter
+//! Tests for `ResponseFormatter`
 
 use std::path::Path;
 use std::time::Duration;
@@ -21,7 +21,7 @@ fn build_indexing_result(
         files_skipped,
         errors,
         operation_id: None,
-        status: "completed".to_string(),
+        status: "completed".to_owned(),
     }
 }
 
@@ -54,8 +54,8 @@ fn test_format_search_response(#[case] count: usize, #[case] duration_ms: u64, #
         200,
         10,
         vec![
-            "Failed to parse binary.bin".to_string(),
-            "Encoding error in data.csv".to_string(),
+            "Failed to parse binary.bin".to_owned(),
+            "Encoding error in data.csv".to_owned(),
         ],
     ),
     "/project/src",
@@ -100,7 +100,7 @@ fn test_format_indexing_error() {
 #[case(IndexingStatus {
     is_indexing: true,
     progress: 0.5,
-    current_file: Some("src/main.rs".to_string()),
+    current_file: Some("src/main.rs".to_owned()),
     total_files: 100,
     processed_files: 50,
 })]
@@ -146,7 +146,7 @@ fn test_format_search_result_code_preview() {
 fn test_format_search_result_long_content() {
     // Create content with more than 10 lines
     let long_content = (0..20)
-        .map(|i| format!("line {} of content", i))
+        .map(|i| format!("line {i} of content"))
         .collect::<Vec<_>>()
         .join("\n");
     let result = create_test_search_result("src/long_file.rs", &long_content, 0.85, 1);

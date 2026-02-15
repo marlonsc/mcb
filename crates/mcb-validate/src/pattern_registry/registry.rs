@@ -19,6 +19,7 @@ pub struct PatternRegistry {
 
 impl PatternRegistry {
     /// Create an empty registry
+    #[must_use]
     pub fn new() -> Self {
         Self {
             patterns: HashMap::new(),
@@ -64,8 +65,8 @@ impl PatternRegistry {
         // Build template variables from configuration (no hardcoded crate names)
         let mut variables = serde_yaml::Mapping::new();
         variables.insert(
-            serde_yaml::Value::String("project_prefix".to_string()),
-            serde_yaml::Value::String(project_prefix.to_string()),
+            serde_yaml::Value::String("project_prefix".to_owned()),
+            serde_yaml::Value::String(project_prefix.to_owned()),
         );
 
         // Map each layer key to (crate_name, module_name) from NamingRulesConfig
@@ -82,7 +83,7 @@ impl PatternRegistry {
             let module_name = crate_name.replace('-', "_");
             variables.insert(
                 serde_yaml::Value::String(format!("{key}_crate")),
-                serde_yaml::Value::String(crate_name.to_string()),
+                serde_yaml::Value::String(crate_name.to_owned()),
             );
             variables.insert(
                 serde_yaml::Value::String(format!("{key}_module")),
@@ -125,7 +126,7 @@ impl PatternRegistry {
 
         // Load generic configuration from "config" section
         if let Some(config) = yaml.get("config") {
-            self.configs.insert(rule_id.to_string(), config.clone());
+            self.configs.insert(rule_id.to_owned(), config.clone());
         }
 
         // Also load top-level crate_name and allowed_dependencies if present (shorthand for dependency rules)
@@ -142,7 +143,7 @@ impl PatternRegistry {
             // Merge into config for this rule if it doesn't already have one, or extend it
             let entry = self
                 .configs
-                .entry(rule_id.to_string())
+                .entry(rule_id.to_owned())
                 .or_insert_with(|| serde_yaml::Value::Mapping(serde_yaml::Mapping::new()));
             if let Some(config_map) = entry.as_mapping_mut() {
                 for (k, v) in map {
@@ -159,21 +160,24 @@ impl PatternRegistry {
         let regex = Regex::new(pattern).map_err(|e| {
             crate::ValidationError::Config(format!("Invalid regex pattern '{id}': {e}"))
         })?;
-        self.patterns.insert(id.to_string(), regex);
+        self.patterns.insert(id.to_owned(), regex);
         Ok(())
     }
 
     /// Get a pattern by ID
+    #[must_use]
     pub fn get(&self, pattern_id: &str) -> Option<&Regex> {
         self.patterns.get(pattern_id)
     }
 
     /// Get a configuration by rule ID
+    #[must_use]
     pub fn get_config(&self, rule_id: &str) -> Option<&serde_yaml::Value> {
         self.configs.get(rule_id)
     }
 
     /// Get a list of strings from configuration
+    #[must_use]
     pub fn get_config_list(&self, rule_id: &str, key: &str) -> Vec<String> {
         self.get_config(rule_id)
             .and_then(|v| v.get(key))
@@ -187,6 +191,7 @@ impl PatternRegistry {
     }
 
     /// Check if a pattern exists
+    #[must_use]
     pub fn contains(&self, pattern_id: &str) -> bool {
         self.patterns.contains_key(pattern_id)
     }
@@ -197,11 +202,13 @@ impl PatternRegistry {
     }
 
     /// Get the number of registered patterns
+    #[must_use]
     pub fn len(&self) -> usize {
         self.patterns.len()
     }
 
     /// Check if the registry is empty
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.patterns.is_empty()
     }
@@ -260,6 +267,7 @@ fn collect_rule_files(rules_dir: &Path) -> Vec<PathBuf> {
 /// 3. Workspace root `crates/mcb-validate/rules` (used as dependency)
 /// 4. CWD-relative `crates/mcb-validate/rules` (running from workspace root)
 /// 5. CWD-relative `rules/` fallback
+#[must_use]
 pub fn default_rules_dir() -> PathBuf {
     // 1. Explicit override via environment variable
     if let Ok(rules_dir) = std::env::var("MCB_RULES_DIR") {

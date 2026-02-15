@@ -50,7 +50,7 @@ fn test_hygiene_full_workspace() {
 fn test_clean_hygiene_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
-        r"
+        "
 /// A well-structured module.
 pub fn add(a: i32, b: i32) -> i32 {
     a + b

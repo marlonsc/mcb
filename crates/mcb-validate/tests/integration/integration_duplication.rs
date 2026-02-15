@@ -35,7 +35,7 @@ mod duplication_integration_tests {
     /// Test that tokenizer correctly extracts tokens from Rust code
     #[test]
     fn test_tokenize_rust_code() {
-        let code = r"fn calculate_sum(numbers: &[i32]) -> i32 {
+        let code = "fn calculate_sum(numbers: &[i32]) -> i32 {
     let mut sum = 0;
     for num in numbers {
         sum += num;
@@ -71,7 +71,7 @@ mod duplication_integration_tests {
     /// Test fingerprinting identifies duplicate token sequences
     #[test]
     fn test_fingerprinter_finds_duplicates() {
-        let code1 = r"fn process_data(items: &[i32]) -> i32 {
+        let code1 = "fn process_data(items: &[i32]) -> i32 {
     let mut total = 0;
     for item in items {
         total += item;
@@ -79,7 +79,7 @@ mod duplication_integration_tests {
     total
 }";
 
-        let code2 = r"fn process_data(items: &[i32]) -> i32 {
+        let code2 = "fn process_data(items: &[i32]) -> i32 {
     let mut total = 0;
     for item in items {
         total += item;
@@ -117,7 +117,7 @@ mod duplication_integration_tests {
         let dir = TempDir::new().unwrap();
 
         // Create two files with identical function
-        let duplicated_code = r"
+        let duplicated_code = "
 fn calculate_average(numbers: &[f64]) -> f64 {
     if numbers.is_empty() {
         return 0.0;
@@ -314,7 +314,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
         let dir = TempDir::new().unwrap();
 
         // Create duplicate code
-        let code = r"fn duplicated_function(x: i32) -> i32 {
+        let code = "fn duplicated_function(x: i32) -> i32 {
     let mut result = 0;
     for i in 0..x {
         result += i;
@@ -332,7 +332,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
 
         // Configure to exclude tests directory
         let thresholds = DuplicationThresholds {
-            exclude_patterns: vec!["**/tests/**".to_string()],
+            exclude_patterns: vec!["**/tests/**".to_owned()],
             min_lines: 3,
             min_tokens: 10,
             ..Default::default()
@@ -363,7 +363,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     #[rstest]
     #[case("", "// just a comment\n")]
     #[case(
-        r"
+        "
 // This is a file with only comments
 // No actual code here
 /*
@@ -371,7 +371,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
  * Also no code
  */
 ",
-        r"
+        "
 // This is a file with only comments
 // No actual code here
 /*

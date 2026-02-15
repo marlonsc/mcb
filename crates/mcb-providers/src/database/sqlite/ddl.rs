@@ -1,7 +1,7 @@
 //! SQLite-specific DDL generation from the generic schema.
 //!
 //! Implements [`MemorySchemaDdlGenerator`] (memory subset) and [`SchemaDdlGenerator`]
-//! (full project schema) for SQLite only. Other backends (PostgreSQL, MySQL)
+//! (full project schema) for `SQLite` only. Other backends (`PostgreSQL`, `MySQL`)
 //! have their own modules with their own dialect.
 
 use mcb_domain::schema::{
@@ -9,7 +9,7 @@ use mcb_domain::schema::{
     ProjectSchema, SchemaDdlGenerator, TableDef, UniqueConstraintDef,
 };
 
-/// Generates SQLite DDL from the generic memory schema (observations, session_summaries, FTS).
+/// Generates `SQLite` DDL from the generic memory schema (observations, `session_summaries`, FTS).
 #[derive(Debug, Clone, Default)]
 pub struct SqliteMemoryDdlGenerator;
 
@@ -29,8 +29,8 @@ impl MemorySchemaDdlGenerator for SqliteMemoryDdlGenerator {
     }
 }
 
-/// Generates SQLite DDL from the full project schema (collections, observations,
-/// session_summaries, file_hashes, FTS, indexes, unique constraints).
+/// Generates `SQLite` DDL from the full project schema (collections, observations,
+/// `session_summaries`, `file_hashes`, FTS, indexes, unique constraints).
 #[derive(Debug, Clone, Default)]
 pub struct SqliteSchemaDdlGenerator;
 
@@ -141,9 +141,9 @@ fn rebuild_fts_sqlite(fts: &FtsDef) -> Vec<String> {
         .map_or("content", String::as_str);
 
     vec![
-        "DROP TRIGGER IF EXISTS obs_ai".to_string(),
-        "DROP TRIGGER IF EXISTS obs_ad".to_string(),
-        "DROP TRIGGER IF EXISTS obs_au".to_string(),
+        "DROP TRIGGER IF EXISTS obs_ai".to_owned(),
+        "DROP TRIGGER IF EXISTS obs_ad".to_owned(),
+        "DROP TRIGGER IF EXISTS obs_au".to_owned(),
         format!("DROP TABLE IF EXISTS {}", fts.virtual_table_name),
         format!(
             "CREATE VIRTUAL TABLE {} USING fts5({}, {} UNINDEXED)",
@@ -170,7 +170,7 @@ fn trigger_after_insert_sqlite(fts: &FtsDef) -> String {
         .first()
         .map_or("content", String::as_str);
     format!(
-        r"CREATE TRIGGER obs_ai AFTER INSERT ON {} BEGIN
+        "CREATE TRIGGER obs_ai AFTER INSERT ON {} BEGIN
   INSERT INTO {}({}, {}) VALUES (new.{}, new.{});
 END;",
         fts.content_table,
@@ -184,7 +184,7 @@ END;",
 
 fn trigger_after_delete_sqlite(fts: &FtsDef) -> String {
     format!(
-        r"CREATE TRIGGER obs_ad AFTER DELETE ON {} BEGIN
+        "CREATE TRIGGER obs_ad AFTER DELETE ON {} BEGIN
   DELETE FROM {} WHERE {} = old.{};
 END;",
         fts.content_table, fts.virtual_table_name, fts.id_column, fts.id_column
@@ -197,7 +197,7 @@ fn trigger_after_update_sqlite(fts: &FtsDef) -> String {
         .first()
         .map_or("content", String::as_str);
     format!(
-        r"CREATE TRIGGER obs_au AFTER UPDATE ON {} BEGIN
+        "CREATE TRIGGER obs_au AFTER UPDATE ON {} BEGIN
   DELETE FROM {} WHERE {} = old.{};
   INSERT INTO {}({}, {}) VALUES (new.{}, new.{});
 END;",
@@ -223,7 +223,7 @@ fn index_to_sqlite_ddl(idx: &IndexDef) -> String {
 
 /// Generate `ALTER TABLE ... ADD COLUMN` SQL for a single column.
 ///
-/// SQLite `ADD COLUMN` requires the column to either be nullable or have a default.
+/// `SQLite` `ADD COLUMN` requires the column to either be nullable or have a default.
 /// Since our schema evolution only adds nullable columns, this is safe.
 pub(crate) fn alter_table_add_column_sqlite(
     table: &str,

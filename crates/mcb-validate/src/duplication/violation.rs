@@ -38,6 +38,7 @@ pub struct DuplicationViolation {
 
 impl DuplicationViolation {
     /// Create a new duplication violation from a clone candidate
+    #[must_use]
     pub fn from_candidate(candidate: &CloneCandidate) -> Self {
         let severity = match candidate.clone_type {
             DuplicationType::ExactClone | DuplicationType::RenamedClone => Severity::Warning,
@@ -86,16 +87,16 @@ impl Violation for DuplicationViolation {
     fn suggestion(&self) -> Option<String> {
         match self.duplication_type {
             DuplicationType::ExactClone => Some(
-                "Extract the duplicated code into a shared function or module".to_string(),
+                "Extract the duplicated code into a shared function or module".to_owned(),
             ),
             DuplicationType::RenamedClone => Some(
-                "The code structure is identical with only renamed identifiers. Consider extracting with generics or parameters".to_string(),
+                "The code structure is identical with only renamed identifiers. Consider extracting with generics or parameters".to_owned(),
             ),
             DuplicationType::GappedClone => Some(
-                "Near-duplicate code detected. Consider refactoring into a common abstraction with small differences parameterized".to_string(),
+                "Near-duplicate code detected. Consider refactoring into a common abstraction with small differences parameterized".to_owned(),
             ),
             DuplicationType::SemanticClone => Some(
-                "Functionally similar code detected. Review if a common interface or trait could reduce duplication".to_string(),
+                "Functionally similar code detected. Review if a common interface or trait could reduce duplication".to_owned(),
             ),
         }
     }

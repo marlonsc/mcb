@@ -10,7 +10,7 @@ use crate::entities::project::ProjectIssue;
 use crate::error::Result;
 
 #[async_trait]
-/// Defines behavior for IssueEntityRepository.
+/// Defines behavior for `IssueEntityRepository`.
 #[async_trait]
 /// Registry for issues.
 pub trait IssueRegistry: Send + Sync {

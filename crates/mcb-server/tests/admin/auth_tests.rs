@@ -1,4 +1,4 @@
-//! Tests for AdminAuthConfig
+//! Tests for `AdminAuthConfig`
 //!
 //! Tests admin authentication configuration and validation.
 
@@ -25,7 +25,7 @@ fn test_admin_auth_key_validation(
 ) {
     let config = AdminAuthConfig {
         enabled: true,
-        header_name: "X-Admin-Key".to_string(),
+        header_name: "X-Admin-Key".to_owned(),
         api_key: api_key.map(std::string::ToString::to_string),
     };
 

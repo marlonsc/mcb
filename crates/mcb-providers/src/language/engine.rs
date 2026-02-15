@@ -28,55 +28,55 @@ pub(crate) static LANGUAGE_PROCESSORS: LazyLock<
     let mut processors: HashMap<String, Box<dyn LanguageProcessor + Send + Sync>> = HashMap::new();
 
     processors.insert(
-        "rust".to_string(),
+        "rust".to_owned(),
         Box::new(RustProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "python".to_string(),
+        "python".to_owned(),
         Box::new(PythonProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "javascript".to_string(),
+        "javascript".to_owned(),
         Box::new(JavaScriptProcessor::new(false)) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "typescript".to_string(),
+        "typescript".to_owned(),
         Box::new(JavaScriptProcessor::new(true)) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "go".to_string(),
+        "go".to_owned(),
         Box::new(GoProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "java".to_string(),
+        "java".to_owned(),
         Box::new(JavaProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "c".to_string(),
+        "c".to_owned(),
         Box::new(CProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "cpp".to_string(),
+        "cpp".to_owned(),
         Box::new(CppProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "csharp".to_string(),
+        "csharp".to_owned(),
         Box::new(CSharpProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "ruby".to_string(),
+        "ruby".to_owned(),
         Box::new(RubyProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "php".to_string(),
+        "php".to_owned(),
         Box::new(PhpProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "swift".to_string(),
+        "swift".to_owned(),
         Box::new(SwiftProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
     );
     processors.insert(
-        "kotlin".to_string(),
+        "kotlin".to_owned(),
         Box::new(KotlinProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
     );
 
@@ -89,6 +89,7 @@ pub struct IntelligentChunker;
 
 impl IntelligentChunker {
     /// Create a new intelligent chunker
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
@@ -144,19 +145,19 @@ impl IntelligentChunker {
         let chunk_size = CHUNK_SIZE_GENERIC;
         // Clone language once before loop to avoid repeated allocations
         let lang = language.clone();
-        let file = file_name.to_string();
+        let file = file_name.to_owned();
 
         for (chunk_idx, chunk_lines) in lines.chunks(chunk_size).enumerate() {
             let start_line = chunk_idx * chunk_size;
             let end_line = start_line + chunk_lines.len() - 1;
 
-            let content = chunk_lines.join("\n").trim().to_string();
+            let content = chunk_lines.join("\n").trim().to_owned();
             if content.is_empty() || content.len() < 20 {
                 continue;
             }
 
             chunks.push(CodeChunk {
-                id: format!("{}_{}", file_name, chunk_idx),
+                id: format!("{file_name}_{chunk_idx}"),
                 content,
                 file_path: file.clone(),
                 start_line: start_line as u32,
@@ -182,11 +183,11 @@ impl IntelligentChunker {
         let mut parser = tree_sitter::Parser::new();
         parser
             .set_language(&language)
-            .map_err(|e| Error::internal(format!("Failed to set tree-sitter language: {:?}", e)))?;
+            .map_err(|e| Error::internal(format!("Failed to set tree-sitter language: {e:?}")))?;
 
         let tree = parser
             .parse(content, None)
-            .ok_or_else(|| Error::internal("Tree-sitter parsing failed".to_string()))?;
+            .ok_or_else(|| Error::internal("Tree-sitter parsing failed".to_owned()))?;
 
         Ok(tree)
     }
@@ -223,7 +224,7 @@ impl CodeChunker for IntelligentChunker {
         let used_ast = is_language_supported(&language);
 
         Ok(ChunkingResult {
-            file_path: file_name.to_string(),
+            file_path: file_name.to_owned(),
             language,
             chunks,
             used_ast,
@@ -249,7 +250,7 @@ impl CodeChunker for IntelligentChunker {
 
 /// Universal Language Chunking Provider
 ///
-/// A provider that supports all languages by delegating to the IntelligentChunker.
+/// A provider that supports all languages by delegating to the `IntelligentChunker`.
 /// This is used for dependency injection where we need a single provider that
 /// can handle any supported language.
 pub struct UniversalLanguageChunkingProvider {
@@ -258,6 +259,7 @@ pub struct UniversalLanguageChunkingProvider {
 
 impl UniversalLanguageChunkingProvider {
     /// Create a new universal language chunking provider
+    #[must_use]
     pub fn new() -> Self {
         Self {
             chunker: IntelligentChunker::new(),
@@ -273,7 +275,7 @@ impl Default for UniversalLanguageChunkingProvider {
 
 impl mcb_domain::ports::providers::LanguageChunkingProvider for UniversalLanguageChunkingProvider {
     fn language(&self) -> mcb_domain::value_objects::Language {
-        "universal".to_string()
+        "universal".to_owned()
     }
 
     fn extensions(&self) -> &[&'static str] {

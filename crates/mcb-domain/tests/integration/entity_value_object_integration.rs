@@ -6,12 +6,12 @@ use mcb_domain::{CodeChunk, Embedding, SearchResult};
 fn test_code_chunk_with_embedding_integration() {
     // Test how CodeChunk entity works with Embedding value object
     let chunk = CodeChunk {
-        id: "chunk-with-embedding".to_string(),
-        content: "fn process_data(data: Vec<f32>) -> Vec<f32>".to_string(),
-        file_path: "src/ml.rs".to_string(),
+        id: "chunk-with-embedding".to_owned(),
+        content: "fn process_data(data: Vec<f32>) -> Vec<f32>".to_owned(),
+        file_path: "src/ml.rs".to_owned(),
         start_line: 10,
         end_line: 15,
-        language: "rust".to_string(),
+        language: "rust".to_owned(),
         metadata: serde_json::json!({
             "type": "function",
             "purpose": "machine learning processing"
@@ -20,7 +20,7 @@ fn test_code_chunk_with_embedding_integration() {
 
     let embedding = Embedding {
         vector: vec![0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
-        model: "text-embedding-3-small".to_string(),
+        model: "text-embedding-3-small".to_owned(),
         dimensions: 8,
     };
 
@@ -36,12 +36,12 @@ fn test_code_chunk_with_embedding_integration() {
 fn test_search_result_from_code_chunk() {
     // Test integration between CodeChunk and SearchResult
     let chunk = CodeChunk {
-        id: "searchable-chunk".to_string(),
-        content: "impl Database {\n    pub fn connect(&self) -> Result<Connection> {\n        // Connection logic\n    }\n}".to_string(),
-        file_path: "src/database.rs".to_string(),
+        id: "searchable-chunk".to_owned(),
+        content: "impl Database {\n    pub fn connect(&self) -> Result<Connection> {\n        // Connection logic\n    }\n}".to_owned(),
+        file_path: "src/database.rs".to_owned(),
         start_line: 20,
         end_line: 25,
-        language: "rust".to_string(),
+        language: "rust".to_owned(),
         metadata: serde_json::json!({
             "type": "implementation",
             "class": "Database",
@@ -72,24 +72,24 @@ fn test_search_result_from_code_chunk() {
 fn test_multi_language_code_chunks() {
     // Test integration with different programming languages
     let rust_chunk = CodeChunk {
-        id: "rust-func".to_string(),
-        content: "pub fn calculate_mean(data: &[f64]) -> f64 {\n    data.iter().sum::<f64>() / data.len() as f64\n}".to_string(),
-        file_path: "src/stats.rs".to_string(),
+        id: "rust-func".to_owned(),
+        content: "pub fn calculate_mean(data: &[f64]) -> f64 {\n    data.iter().sum::<f64>() / data.len() as f64\n}".to_owned(),
+        file_path: "src/stats.rs".to_owned(),
         start_line: 5,
         end_line: 7,
-        language: "rust".to_string(),
+        language: "rust".to_owned(),
         metadata: serde_json::json!({"type": "function", "name": "calculate_mean"}),
     };
 
     let python_chunk = CodeChunk {
-        id: "python-func".to_string(),
+        id: "python-func".to_owned(),
         content:
             "def calculate_mean(data: List[float]) -> float:\n    return sum(data) / len(data)"
-                .to_string(),
-        file_path: "src/stats.py".to_string(),
+                .to_owned(),
+        file_path: "src/stats.py".to_owned(),
         start_line: 8,
         end_line: 9,
-        language: "python".to_string(),
+        language: "python".to_owned(),
         metadata: serde_json::json!({"type": "function", "name": "calculate_mean"}),
     };
 
@@ -112,7 +112,7 @@ fn test_embedding_vector_properties() {
         vector: vec![
             0.123, -0.456, 0.789, 0.012, -0.345, 0.678, -0.901, 0.234, -0.567, 0.890,
         ],
-        model: "text-embedding-ada-002".to_string(),
+        model: "text-embedding-ada-002".to_owned(),
         dimensions: 10,
     };
 
@@ -130,8 +130,7 @@ fn test_embedding_vector_properties() {
     for &value in &embedding.vector {
         assert!(
             (-1.0..=1.0).contains(&value),
-            "Embedding value {} is out of expected range [-1, 1]",
-            value
+            "Embedding value {value} is out of expected range [-1, 1]"
         );
     }
 }
@@ -141,36 +140,36 @@ fn test_search_result_ranking() {
     // Test integration of search results with different relevance scores
     let results = [
         SearchResult {
-            id: "exact-match".to_string(),
-            file_path: "src/perfect.rs".to_string(),
+            id: "exact-match".to_owned(),
+            file_path: "src/perfect.rs".to_owned(),
             start_line: 1,
-            content: "fn exact_match_function() {}".to_string(),
+            content: "fn exact_match_function() {}".to_owned(),
             score: 1.0,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         },
         SearchResult {
-            id: "high-match".to_string(),
-            file_path: "src/good.rs".to_string(),
+            id: "high-match".to_owned(),
+            file_path: "src/good.rs".to_owned(),
             start_line: 5,
-            content: "fn similar_function() {}".to_string(),
+            content: "fn similar_function() {}".to_owned(),
             score: 0.85,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         },
         SearchResult {
-            id: "medium-match".to_string(),
-            file_path: "src/fair.rs".to_string(),
+            id: "medium-match".to_owned(),
+            file_path: "src/fair.rs".to_owned(),
             start_line: 10,
-            content: "fn somewhat_related() {}".to_string(),
+            content: "fn somewhat_related() {}".to_owned(),
             score: 0.65,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         },
         SearchResult {
-            id: "low-match".to_string(),
-            file_path: "src/weak.rs".to_string(),
+            id: "low-match".to_owned(),
+            file_path: "src/weak.rs".to_owned(),
             start_line: 15,
-            content: "fn barely_related() {}".to_string(),
+            content: "fn barely_related() {}".to_owned(),
             score: 0.25,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         },
     ];
 

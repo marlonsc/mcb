@@ -69,10 +69,10 @@ fn find_cycle_impl(
     visited: &mut HashSet<String>,
     path: &mut Vec<String>,
 ) -> Option<Vec<String>> {
-    if path.contains(&node.to_string()) {
+    if path.contains(&node.to_owned()) {
         let cycle_start = path.iter().position(|n| n == node)?;
         let mut cycle: Vec<String> = path[cycle_start..].to_vec();
-        cycle.push(node.to_string());
+        cycle.push(node.to_owned());
         return Some(cycle);
     }
 
@@ -80,8 +80,8 @@ fn find_cycle_impl(
         return None;
     }
 
-    visited.insert(node.to_string());
-    path.push(node.to_string());
+    visited.insert(node.to_owned());
+    path.push(node.to_owned());
 
     if let Some(deps) = graph.get(node) {
         for dep in deps {

@@ -11,6 +11,7 @@ use mcb_providers::git;
 /// Returns the default VCS provider for standalone and server modes.
 ///
 /// Centralizes provider instantiation in the infrastructure layer.
+#[must_use]
 pub fn default_vcs_provider() -> Arc<dyn VcsProvider> {
     git::default_vcs_provider()
 }

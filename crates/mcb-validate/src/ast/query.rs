@@ -79,13 +79,14 @@ pub enum QueryCondition {
 
 impl AstQuery {
     /// Create a new AST query
+    #[must_use]
     pub fn new(language: &str, node_type: &str, message: &str, severity: &str) -> Self {
         Self {
-            language: language.to_string(),
-            node_type: node_type.to_string(),
+            language: language.to_owned(),
+            node_type: node_type.to_owned(),
             conditions: Vec::new(),
-            message: message.to_string(),
-            severity: severity.to_string(),
+            message: message.to_owned(),
+            severity: severity.to_owned(),
         }
     }
 
@@ -97,13 +98,14 @@ impl AstQuery {
     }
 
     /// Execute query on AST node
+    #[must_use]
     pub fn execute(&self, node: &AstNode) -> Vec<AstViolation> {
         let mut violations = Vec::new();
 
         if self.matches_node(node) {
             violations.push(AstViolation {
                 rule_id: format!("AST_{}_{}", self.language, self.node_type),
-                file: "unknown".to_string(), // Would be set by caller
+                file: "unknown".to_owned(), // Would be set by caller
                 node: node.clone(),
                 message: self.message.clone(),
                 severity: self.severity.clone(),
@@ -207,13 +209,14 @@ pub struct AstQueryBuilder {
 
 impl AstQueryBuilder {
     /// Create a new query builder
+    #[must_use]
     pub fn new(language: &str, node_type: &str) -> Self {
         Self {
-            language: language.to_string(),
-            node_type: node_type.to_string(),
+            language: language.to_owned(),
+            node_type: node_type.to_owned(),
             conditions: Vec::new(),
             message: String::new(),
-            severity: "warning".to_string(),
+            severity: "warning".to_owned(),
         }
     }
 
@@ -227,14 +230,14 @@ impl AstQueryBuilder {
     /// Set the violation message
     #[must_use]
     pub fn message(mut self, message: &str) -> Self {
-        self.message = message.to_string();
+        self.message = message.to_owned();
         self
     }
 
     /// Set the violation severity
     #[must_use]
     pub fn severity(mut self, severity: &str) -> Self {
-        self.severity = severity.to_string();
+        self.severity = severity.to_owned();
         self
     }
 
@@ -274,12 +277,13 @@ pub struct AstQueryPatterns;
 
 impl AstQueryPatterns {
     /// Query for functions without documentation
+    #[must_use]
     pub fn undocumented_functions(language: &str) -> AstQuery {
         let node_type = function_node_type(language);
 
         AstQueryBuilder::new(language, node_type)
             .with_condition(QueryCondition::Custom {
-                name: "has_no_docstring".to_string(),
+                name: "has_no_docstring".to_owned(),
             })
             .message("Functions must be documented")
             .severity("warning")
@@ -287,16 +291,17 @@ impl AstQueryPatterns {
     }
 
     /// Query for `unwrap()` usage in non-test code
+    #[must_use]
     pub fn unwrap_usage(language: &str) -> AstQuery {
         let node_type = call_node_type(language);
 
         AstQueryBuilder::new(language, node_type)
             .with_condition(QueryCondition::HasField {
-                field: "function_name".to_string(),
-                value: "unwrap".to_string(),
+                field: "function_name".to_owned(),
+                value: "unwrap".to_owned(),
             })
             .with_condition(QueryCondition::Custom {
-                name: "is_test_function".to_string(),
+                name: "is_test_function".to_owned(),
             })
             .message("Avoid unwrap() in production code")
             .severity("error")
@@ -304,12 +309,13 @@ impl AstQueryPatterns {
     }
 
     /// Query for async functions
+    #[must_use]
     pub fn async_functions(language: &str) -> AstQuery {
         let node_type = function_node_type(language);
 
         AstQueryBuilder::new(language, node_type)
             .with_condition(QueryCondition::Custom {
-                name: "is_async".to_string(),
+                name: "is_async".to_owned(),
             })
             .message("Async function detected")
             .severity("info")

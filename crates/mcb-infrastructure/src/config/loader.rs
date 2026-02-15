@@ -31,10 +31,11 @@ pub struct ConfigLoader {
 
 impl ConfigLoader {
     /// Create a new configuration loader with default settings
+    #[must_use]
     pub fn new() -> Self {
         Self {
             config_path: None,
-            env_prefix: CONFIG_ENV_PREFIX.to_string(),
+            env_prefix: CONFIG_ENV_PREFIX.to_owned(),
         }
     }
 
@@ -59,7 +60,7 @@ impl ConfigLoader {
     pub fn load(&self) -> Result<AppConfig> {
         let default_path = Self::find_defaults_file_path().ok_or_else(|| {
             Error::ConfigMissing(
-                "Default configuration file not found. Expected config/default.toml".to_string(),
+                "Default configuration file not found. Expected config/default.toml".to_owned(),
             )
         })?;
         log_config_loaded(&default_path, true);
@@ -127,6 +128,7 @@ impl ConfigLoader {
     }
 
     /// Get the current configuration file path
+    #[must_use]
     pub fn config_path(&self) -> Option<&Path> {
         self.config_path.as_deref()
     }
@@ -207,7 +209,7 @@ impl ConfigLoader {
 }
 
 /// Helper to merge defaults, project settings, and env vars (though env vars are already merged).
-/// This function overrides AppConfig values with ProjectSettings if present.
+/// This function overrides `AppConfig` values with `ProjectSettings` if present.
 fn resolve_config_with_project_settings(
     mut config: AppConfig,
     settings: &ProjectSettings,
@@ -252,22 +254,22 @@ fn validate_app_config(config: &AppConfig) -> Result<()> {
 fn validate_server_config(config: &AppConfig) -> Result<()> {
     if config.server.network.port == 0 {
         return Err(Error::ConfigInvalid {
-            key: "server.network.port".to_string(),
-            message: "Server port cannot be 0".to_string(),
+            key: "server.network.port".to_owned(),
+            message: "Server port cannot be 0".to_owned(),
         });
     }
     if matches!(config.server.transport_mode, TransportMode::Http) {
         return Err(Error::ConfigInvalid {
-            key: "server.transport_mode".to_string(),
-            message: "transport_mode=http is not supported. Use stdio or hybrid (stdio bridge to local daemon).".to_string(),
+            key: "server.transport_mode".to_owned(),
+            message: "transport_mode=http is not supported. Use stdio or hybrid (stdio bridge to local daemon).".to_owned(),
         });
     }
     if config.server.ssl.https
         && (config.server.ssl.ssl_cert_path.is_none() || config.server.ssl.ssl_key_path.is_none())
     {
         return Err(Error::ConfigInvalid {
-            key: "server.ssl".to_string(),
-            message: "SSL certificate and key paths are required when HTTPS is enabled".to_string(),
+            key: "server.ssl".to_owned(),
+            message: "SSL certificate and key paths are required when HTTPS is enabled".to_owned(),
         });
     }
     Ok(())
@@ -277,15 +279,14 @@ fn validate_auth_config(config: &AppConfig) -> Result<()> {
     if config.auth.enabled {
         if config.auth.jwt.secret.is_empty() {
             return Err(Error::ConfigInvalid {
-                key: "auth.jwt.secret".to_string(),
-                message: "JWT secret cannot be empty when authentication is enabled".to_string(),
+                key: "auth.jwt.secret".to_owned(),
+                message: "JWT secret cannot be empty when authentication is enabled".to_owned(),
             });
         }
         if config.auth.jwt.secret.len() < MIN_JWT_SECRET_LENGTH {
             return Err(Error::Configuration {
                 message: format!(
-                    "JWT secret should be at least {} characters long",
-                    MIN_JWT_SECRET_LENGTH
+                    "JWT secret should be at least {MIN_JWT_SECRET_LENGTH} characters long"
                 ),
                 source: None,
             });
@@ -299,7 +300,7 @@ fn validate_cache_config(config: &AppConfig) -> Result<()> {
         && config.system.infrastructure.cache.default_ttl_secs == 0
     {
         return Err(Error::Configuration {
-            message: "Cache TTL cannot be 0 when cache is enabled".to_string(),
+            message: "Cache TTL cannot be 0 when cache is enabled".to_owned(),
             source: None,
         });
     }
@@ -309,13 +310,13 @@ fn validate_cache_config(config: &AppConfig) -> Result<()> {
 fn validate_limits_config(config: &AppConfig) -> Result<()> {
     if config.system.infrastructure.limits.memory_limit == 0 {
         return Err(Error::Configuration {
-            message: "Memory limit cannot be 0".to_string(),
+            message: "Memory limit cannot be 0".to_owned(),
             source: None,
         });
     }
     if config.system.infrastructure.limits.cpu_limit == 0 {
         return Err(Error::Configuration {
-            message: "CPU limit cannot be 0".to_string(),
+            message: "CPU limit cannot be 0".to_owned(),
             source: None,
         });
     }
@@ -327,7 +328,7 @@ fn validate_daemon_config(config: &AppConfig) -> Result<()> {
         && config.operations_daemon.daemon.max_restart_attempts == 0
     {
         return Err(Error::Configuration {
-            message: "Maximum restart attempts cannot be 0 when daemon is enabled".to_string(),
+            message: "Maximum restart attempts cannot be 0 when daemon is enabled".to_owned(),
             source: None,
         });
     }
@@ -337,7 +338,7 @@ fn validate_daemon_config(config: &AppConfig) -> Result<()> {
 fn validate_backup_config(config: &AppConfig) -> Result<()> {
     if config.system.data.backup.enabled && config.system.data.backup.interval_secs == 0 {
         return Err(Error::Configuration {
-            message: "Backup interval cannot be 0 when backup is enabled".to_string(),
+            message: "Backup interval cannot be 0 when backup is enabled".to_owned(),
             source: None,
         });
     }
@@ -349,14 +350,14 @@ fn validate_operations_config(config: &AppConfig) -> Result<()> {
         if config.operations_daemon.operations.cleanup_interval_secs == 0 {
             return Err(Error::Configuration {
                 message: "Operations cleanup interval cannot be 0 when tracking is enabled"
-                    .to_string(),
+                    .to_owned(),
                 source: None,
             });
         }
         if config.operations_daemon.operations.retention_secs == 0 {
             return Err(Error::Configuration {
                 message: "Operations retention period cannot be 0 when tracking is enabled"
-                    .to_string(),
+                    .to_owned(),
                 source: None,
             });
         }
@@ -364,7 +365,7 @@ fn validate_operations_config(config: &AppConfig) -> Result<()> {
     Ok(())
 }
 
-/// Returns default ConfigLoader for loading application configuration from files
+/// Returns default `ConfigLoader` for loading application configuration from files
 impl Default for ConfigLoader {
     fn default() -> Self {
         Self::new()

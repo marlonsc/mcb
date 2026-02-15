@@ -56,7 +56,7 @@ where
                     for pattern in patterns {
                         if pattern.is_match(line)
                             && let Some(violation) =
-                                make_violation(path.to_path_buf(), line_num + 1, line)
+                                make_violation(path.clone(), line_num + 1, line)
                         {
                             violations.push(violation);
                         }
@@ -118,12 +118,7 @@ where
 
                 for (pattern, desc, sugg) in compiled_patterns {
                     if pattern.is_match(line) {
-                        violations.push(make_violation(
-                            path.to_path_buf(),
-                            line_num + 1,
-                            desc,
-                            sugg,
-                        ));
+                        violations.push(make_violation(path.clone(), line_num + 1, desc, sugg));
                     }
                 }
             }

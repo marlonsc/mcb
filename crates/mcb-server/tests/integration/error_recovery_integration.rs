@@ -22,6 +22,7 @@ use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 use mcb_infrastructure::di::bootstrap::init_app;
 use rstest::rstest;
 
+use crate::test_utils::collection::unique_collection;
 use mcb_infrastructure::di::bootstrap::AppContext;
 
 async fn try_init_app_or_skip(config: AppConfig) -> Option<AppContext> {
@@ -46,15 +47,31 @@ fn unique_test_config() -> AppConfig {
         .as_nanos();
     let thread_id = std::thread::current().id();
     let db_path =
-        std::env::temp_dir().join(format!("mcb-errrecovery-test-{}-{:?}.db", stamp, thread_id));
+        std::env::temp_dir().join(format!("mcb-errrecovery-test-{stamp}-{thread_id:?}.db"));
     config.providers.database.configs.insert(
-        "default".to_string(),
+        "default".to_owned(),
         mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
+            provider: "sqlite".to_owned(),
             path: Some(db_path),
         },
     );
+    config.providers.embedding.cache_dir = Some(shared_fastembed_cache_dir());
     config
+}
+
+/// Persistent shared cache dir for `FastEmbed` ONNX model.
+fn shared_fastembed_cache_dir() -> std::path::PathBuf {
+    use std::sync::OnceLock;
+    static DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
+    DIR.get_or_init(|| {
+        let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
+            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
+            std::path::PathBuf::from,
+        );
+        std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
+        cache_dir
+    })
+    .clone()
 }
 
 // ============================================================================
@@ -94,8 +111,7 @@ fn test_unknown_provider_error_message(#[case] provider_kind: &str) {
         err_text.contains("Unknown")
             || err_text.contains("not found")
             || err_text.contains("nonexistent"),
-        "Error should mention the issue. Got: {}",
-        err_text
+        "Error should mention the issue. Got: {err_text}"
     );
 }
 
@@ -113,23 +129,23 @@ async fn test_search_empty_collection_returns_empty_not_error() {
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
 
-    let collection = "error_test_empty_collection";
+    let collection = unique_collection("error-empty");
 
     // Create empty collection
     vector_store
-        .create_collection(&CollectionId::from_name(collection), 384)
+        .create_collection(&CollectionId::from_name(&collection), 384)
         .await
         .expect("Create collection");
 
     // Search in empty collection
     let query_embedding = embedding
-        .embed_batch(&["test query".to_string()])
+        .embed_batch(&["test query".to_owned()])
         .await
         .expect("Embed");
 
     let results = vector_store
         .search_similar(
-            &CollectionId::from_name(collection),
+            &CollectionId::from_name(&collection),
             &query_embedding[0].vector,
             10,
             None,
@@ -200,27 +216,27 @@ async fn test_failed_search_doesnt_corrupt_state() {
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
 
-    let collection = "error_isolation_test";
+    let collection = unique_collection("error-isolation");
 
     // Create and populate collection
     vector_store
-        .create_collection(&CollectionId::from_name(collection), 384)
+        .create_collection(&CollectionId::from_name(&collection), 384)
         .await
         .expect("Create collection");
 
     let embeddings = embedding
-        .embed_batch(&["test data".to_string()])
+        .embed_batch(&["test data".to_owned()])
         .await
         .expect("Embed");
 
     let metadata = vec![{
         let mut m = std::collections::HashMap::new();
-        m.insert("content".to_string(), serde_json::json!("test"));
+        m.insert("content".to_owned(), serde_json::json!("test"));
         m
     }];
 
     vector_store
-        .insert_vectors(&CollectionId::from_name(collection), &embeddings, metadata)
+        .insert_vectors(&CollectionId::from_name(&collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -230,7 +246,7 @@ async fn test_failed_search_doesnt_corrupt_state() {
     // This might fail, but shouldn't corrupt the collection
     let _ = vector_store
         .search_similar(
-            &CollectionId::from_name(collection),
+            &CollectionId::from_name(&collection),
             &wrong_dim_vector,
             10,
             None,
@@ -239,13 +255,13 @@ async fn test_failed_search_doesnt_corrupt_state() {
 
     // Original search should still work
     let correct_query = embedding
-        .embed_batch(&["test".to_string()])
+        .embed_batch(&["test".to_owned()])
         .await
         .expect("Embed");
 
     let results = vector_store
         .search_similar(
-            &CollectionId::from_name(collection),
+            &CollectionId::from_name(&collection),
             &correct_query[0].vector,
             10,
             None,

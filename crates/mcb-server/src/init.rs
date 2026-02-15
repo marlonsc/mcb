@@ -7,7 +7,7 @@
 //!
 //! The server initialization follows a handle-based DI approach:
 //!
-//! 1. **Provider Handles** (Infrastructure): RwLock wrappers for runtime-swappable providers
+//! 1. **Provider Handles** (Infrastructure): `RwLock` wrappers for runtime-swappable providers
 //! 2. **Runtime Factory** (Application): Creates domain services with providers from handles
 //!
 //! Production providers are resolved via linkme registry using `AppConfig`,
@@ -74,7 +74,12 @@ pub async fn run(
 
     if server_mode {
         // Explicit server mode via --server flag
-        run_server_mode(config, config_path.map(|p| p.to_path_buf()), log_receiver).await
+        run_server_mode(
+            config,
+            config_path.map(std::path::Path::to_path_buf),
+            log_receiver,
+        )
+        .await
     } else {
         // Check config for operating mode
         match config.mode.mode_type {
@@ -88,7 +93,7 @@ pub async fn run(
 // Operating Modes
 // =============================================================================
 
-/// Run as server daemon (HTTP + optional stdio based on transport_mode)
+/// Run as server daemon (HTTP + optional stdio based on `transport_mode`)
 async fn run_server_mode(
     config: AppConfig,
     config_path: Option<std::path::PathBuf>,
@@ -314,7 +319,7 @@ async fn create_mcp_server(
         issue_entity: services.issue_entity_repository,
         org_entity: services.org_entity_repository,
     };
-    let server = McpServer::from_services(mcp_services, Some(execution_flow.to_string()));
+    let server = McpServer::from_services(mcp_services, Some(execution_flow.to_owned()));
 
     Ok((server, app_context))
 }
@@ -365,7 +370,7 @@ async fn run_http_transport(
     port: u16,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let http_config = HttpTransportConfig {
-        host: host.to_string(),
+        host: host.to_owned(),
         port,
         enable_cors: true,
     };
@@ -387,7 +392,7 @@ async fn run_http_transport_with_admin(
     browse_state: Option<BrowseState>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let http_config = HttpTransportConfig {
-        host: host.to_string(),
+        host: host.to_owned(),
         port,
         enable_cors: true,
     };
@@ -411,7 +416,7 @@ async fn run_hybrid_transport(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let stdio_server = server.clone();
     let http_server = Arc::new(server);
-    let http_host = host.to_string();
+    let http_host = host.to_owned();
 
     let stdio_handle = tokio::spawn(async move {
         info!("Hybrid: starting stdio transport");
@@ -459,7 +464,7 @@ async fn run_hybrid_transport_with_admin(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let stdio_server = server.clone();
     let http_server = Arc::new(server);
-    let http_host = host.to_string();
+    let http_host = host.to_owned();
 
     let stdio_handle = tokio::spawn(async move {
         info!("Hybrid: starting stdio transport");

@@ -60,7 +60,7 @@ fn test_mcp_prefix_env_vars_loaded(_auth_disabled: EnvVarGuard) {
 
     assert_eq!(
         config.providers.embedding.provider,
-        Some("test-provider".to_string()),
+        Some("test-provider".to_owned()),
         "MCP__ prefixed env vars should be loaded by Figment"
     );
 }
@@ -87,7 +87,7 @@ fn test_new_admin_key_loaded(_auth_disabled: EnvVarGuard) {
 
     assert_eq!(
         config.auth.admin.key,
-        Some("new-key-value".to_string()),
+        Some("new-key-value".to_owned()),
         "MCP__AUTH__ADMIN__KEY should be loaded by Figment"
     );
 }
@@ -108,8 +108,7 @@ fn test_jwt_secret_required_when_auth_enabled() {
     let err = result.unwrap_err().to_string();
     assert!(
         err.contains("JWT") || err.contains("secret"),
-        "Error message should mention JWT secret requirement, got: {}",
-        err
+        "Error message should mention JWT secret requirement, got: {err}"
     );
 }
 

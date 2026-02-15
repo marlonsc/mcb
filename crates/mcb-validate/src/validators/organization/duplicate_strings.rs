@@ -99,9 +99,9 @@ pub fn validate_duplicate_strings(config: &ValidationConfig) -> Result<Vec<Organ
                     }
 
                     string_occurrences
-                        .entry(string_val.to_string())
+                        .entry(string_val.to_owned())
                         .or_default()
-                        .push((path.to_path_buf(), line_num + 1));
+                        .push((path.clone(), line_num + 1));
                 }
             }
 
@@ -116,7 +116,7 @@ pub fn validate_duplicate_strings(config: &ValidationConfig) -> Result<Vec<Organ
             violations.push(OrganizationViolation::DuplicateStringLiteral {
                 value,
                 occurrences,
-                suggestion: "Consider creating a named constant".to_string(),
+                suggestion: "Consider creating a named constant".to_owned(),
                 severity: Severity::Info,
             });
         }

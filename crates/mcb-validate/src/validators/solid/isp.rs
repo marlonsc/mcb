@@ -25,10 +25,10 @@ pub fn validate_isp(
         |file, line, trait_name, method_count, max_allowed| SolidViolation::TraitTooLarge {
             file,
             line,
-            trait_name: trait_name.to_string(),
+            trait_name: trait_name.to_owned(),
             method_count,
             max_allowed,
-            suggestion: "Consider splitting into smaller, focused traits".to_string(),
+            suggestion: "Consider splitting into smaller, focused traits".to_owned(),
             severity: Severity::Warning,
         },
     )

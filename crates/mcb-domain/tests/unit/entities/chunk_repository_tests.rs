@@ -32,12 +32,12 @@ fn test_repository_stats_default() {
 #[rstest]
 fn test_code_chunk_creation() {
     let chunk = CodeChunk {
-        id: "test-chunk-1".to_string(),
-        content: "fn test() { println!(\"hello\"); }".to_string(),
-        file_path: "src/main.rs".to_string(),
+        id: "test-chunk-1".to_owned(),
+        content: "fn test() { println!(\"hello\"); }".to_owned(),
+        file_path: "src/main.rs".to_owned(),
         start_line: 1,
         end_line: 3,
-        language: "rust".to_string(),
+        language: "rust".to_owned(),
         metadata: serde_json::json!({"type": "function"}),
     };
 
@@ -70,7 +70,7 @@ fn test_repository_stats_debug() {
         avg_chunk_size_bytes: 48.76,
     };
 
-    let debug_str = format!("{:?}", stats);
+    let debug_str = format!("{stats:?}");
     assert!(debug_str.contains("RepositoryStats"));
     assert!(debug_str.contains("42"));
     assert!(debug_str.contains("2"));

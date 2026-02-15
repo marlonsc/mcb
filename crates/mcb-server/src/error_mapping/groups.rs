@@ -11,7 +11,7 @@ fn log_and_format_error(log: &str, label: &str, detail: impl std::fmt::Display) 
 
 fn log_and_static_error(log: &str, message: &str) -> String {
     tracing::error!(detail = message, "{log}");
-    message.to_string()
+    message.to_owned()
 }
 
 fn map_client_error(error: &Error) -> Option<String> {

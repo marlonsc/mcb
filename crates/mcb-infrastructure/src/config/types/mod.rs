@@ -5,7 +5,7 @@
 //! - `server` - Server transport and network configuration
 //! - `mode` - Operating mode configuration
 //! - `infrastructure` - Logging, limits, cache, metrics, resilience
-//! - `system` - Auth, event_bus, backup, sync, snapshot, daemon, operations
+//! - `system` - Auth, `event_bus`, backup, sync, snapshot, daemon, operations
 
 pub mod app;
 pub mod infrastructure;

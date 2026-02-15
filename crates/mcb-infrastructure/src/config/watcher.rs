@@ -80,6 +80,7 @@ impl ConfigWatcher {
     }
 
     /// Get the configuration file path
+    #[must_use]
     pub fn config_path(&self) -> &PathBuf {
         &self.config_path
     }
@@ -169,7 +170,7 @@ impl ConfigWatcher {
     async fn publish_config_reloaded(event_bus: &dyn EventBusProvider) {
         if let Err(e) = event_bus
             .publish_event(DomainEvent::ConfigReloaded {
-                section: "all".to_string(),
+                section: "all".to_owned(),
                 timestamp: chrono::Utc::now().timestamp(),
             })
             .await
@@ -188,6 +189,7 @@ pub struct ConfigWatcherBuilder {
 
 impl ConfigWatcherBuilder {
     /// Create a new configuration watcher builder
+    #[must_use]
     pub fn new() -> Self {
         Self {
             config_path: None,
@@ -203,6 +205,7 @@ impl ConfigWatcherBuilder {
     }
 
     /// Set the initial configuration
+    #[must_use]
     pub fn with_initial_config(mut self, config: AppConfig) -> Self {
         self.initial_config = Some(config);
         self
@@ -217,17 +220,17 @@ impl ConfigWatcherBuilder {
     /// Build the configuration watcher
     pub async fn build(self) -> Result<ConfigWatcher> {
         let config_path = self.config_path.ok_or_else(|| Error::Configuration {
-            message: "Configuration file path is required".to_string(),
+            message: "Configuration file path is required".to_owned(),
             source: None,
         })?;
 
         let initial_config = self.initial_config.ok_or_else(|| Error::Configuration {
-            message: "Initial configuration is required".to_string(),
+            message: "Initial configuration is required".to_owned(),
             source: None,
         })?;
 
         let event_bus = self.event_bus.ok_or_else(|| Error::Configuration {
-            message: "Event bus is required".to_string(),
+            message: "Event bus is required".to_owned(),
             source: None,
         })?;
 
@@ -235,7 +238,7 @@ impl ConfigWatcherBuilder {
     }
 }
 
-/// Returns default ConfigWatcherBuilder for creating config file watchers
+/// Returns default `ConfigWatcherBuilder` for creating config file watchers
 impl Default for ConfigWatcherBuilder {
     fn default() -> Self {
         Self::new()

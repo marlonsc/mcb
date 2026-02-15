@@ -114,7 +114,7 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                 match detection.method.as_str() {
                     "unwrap" => {
                         violations.push(QualityViolation::UnwrapInProduction {
-                            file: entry.absolute_path.to_path_buf(),
+                            file: entry.absolute_path.clone(),
                             line: detection.line,
                             context: detection.context,
                             severity: Severity::Warning,
@@ -122,7 +122,7 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                     }
                     "expect" => {
                         violations.push(QualityViolation::ExpectInProduction {
-                            file: entry.absolute_path.to_path_buf(),
+                            file: entry.absolute_path.clone(),
                             line: detection.line,
                             context: detection.context,
                             severity: Severity::Warning,

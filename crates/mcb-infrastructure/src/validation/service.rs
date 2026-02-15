@@ -28,6 +28,7 @@ pub struct InfraValidationService;
 
 impl InfraValidationService {
     /// Create a new validation service
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
@@ -55,7 +56,7 @@ impl ValidationServiceInterface for InfraValidationService {
 
         Ok(ValidatorRegistry::standard_validator_names()
             .iter()
-            .map(|name| (*name).to_string())
+            .map(|name| (*name).to_owned())
             .collect())
     }
 
@@ -162,7 +163,7 @@ fn run_file_validation(
     // So we run full validation and filter to the specific file
     let full_report = run_validation(&workspace_root, validators, None)?;
 
-    let file_str = file_path.to_str().unwrap_or_default().to_string();
+    let file_str = file_path.to_str().unwrap_or_default().to_owned();
     let file_violations: Vec<ViolationEntry> = full_report
         .violations
         .into_iter()
@@ -199,9 +200,8 @@ fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {
                 return None;
             }
 
-            let enabled = extract_yaml_scalar(content, "enabled")
-                .map(|value| value != "false")
-                .unwrap_or(true);
+            let enabled =
+                extract_yaml_scalar(content, "enabled").is_none_or(|value| value != "false");
             if !enabled {
                 return None;
             }
@@ -210,13 +210,13 @@ fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {
             Some(RuleInfo {
                 id,
                 category: extract_yaml_scalar(content, "category")
-                    .unwrap_or_else(|| "quality".to_string()),
+                    .unwrap_or_else(|| "quality".to_owned()),
                 severity: extract_yaml_scalar(content, "severity")
-                    .unwrap_or_else(|| "warning".to_string()),
+                    .unwrap_or_else(|| "warning".to_owned()),
                 description: extract_yaml_scalar(content, "description")
-                    .unwrap_or_else(|| "No description provided".to_string()),
+                    .unwrap_or_else(|| "No description provided".to_owned()),
                 engine: extract_yaml_scalar(content, "engine")
-                    .unwrap_or_else(|| "rusty-rules".to_string()),
+                    .unwrap_or_else(|| "rusty-rules".to_owned()),
             })
         })
         .collect();
@@ -273,7 +273,7 @@ fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<
     };
 
     Ok(ComplexityReport {
-        file: file_path.to_str().unwrap_or_default().to_string(),
+        file: file_path.to_str().unwrap_or_default().to_owned(),
         cyclomatic: aggregate.cyclomatic,
         cognitive: aggregate.cognitive,
         maintainability_index: aggregate.maintainability_index,

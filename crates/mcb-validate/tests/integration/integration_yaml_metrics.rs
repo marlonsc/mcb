@@ -17,13 +17,13 @@ mod yaml_metrics_tests {
         let config = MetricsConfig {
             cognitive_complexity: Some(MetricThresholdConfig {
                 max: 10,
-                severity: Some("error".to_string()),
-                languages: Some(vec!["rust".to_string()]),
+                severity: Some("error".to_owned()),
+                languages: Some(vec!["rust".to_owned()]),
             }),
             cyclomatic_complexity: None,
             function_length: Some(MetricThresholdConfig {
                 max: 30,
-                severity: Some("warning".to_string()),
+                severity: Some("warning".to_owned()),
                 languages: None,
             }),
             nesting_depth: Some(MetricThresholdConfig {
@@ -54,7 +54,7 @@ mod yaml_metrics_tests {
         let config = MetricsConfig {
             cognitive_complexity: Some(MetricThresholdConfig {
                 max: 3,
-                severity: Some("error".to_string()),
+                severity: Some("error".to_owned()),
                 languages: None,
             }),
             cyclomatic_complexity: None,
@@ -65,7 +65,7 @@ mod yaml_metrics_tests {
         let thresholds = MetricThresholds::from_metrics_config(&config);
         let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
-        let content = br"
+        let content = b"
 fn complex(x: i32) -> i32 {
     if x > 0 {
         if x > 10 {

@@ -19,7 +19,7 @@ async fn test_hook_processor_creation() {
 #[tokio::test]
 async fn test_post_tool_use_hook_graceful_degradation(#[case] tool_name: &str) {
     let processor = HookProcessor::new(None);
-    let context = PostToolUseContext::new(tool_name.to_string(), false);
+    let context = PostToolUseContext::new(tool_name.to_owned(), false);
 
     let result = processor.process_post_tool_use(context).await;
     assert!(result.is_err());
@@ -52,25 +52,28 @@ async fn test_post_tool_use_context_enrichment(
     #[case] with_session_id: bool,
     #[case] with_metadata: bool,
 ) {
-    let mut context = PostToolUseContext::new(tool_name.to_string(), false);
+    let mut context = PostToolUseContext::new(tool_name.to_owned(), false);
 
     let session_id_val = SessionId::from("session_123");
     if with_session_id {
         context = context.with_session_id(session_id_val);
     }
     if with_metadata {
-        context = context.with_metadata("key".to_string(), "value".to_string());
+        context = context.with_metadata("key".to_owned(), "value".to_owned());
     }
 
     assert_eq!(context.tool_name, tool_name);
     if with_session_id {
         assert_eq!(
-            context.session_id.as_ref().map(|id| id.as_str()),
+            context
+                .session_id
+                .as_ref()
+                .map(mcb_domain::SessionId::as_str),
             Some(session_id_val.as_str())
         );
     }
     if with_metadata {
-        assert_eq!(context.metadata.get("key"), Some(&"value".to_string()));
+        assert_eq!(context.metadata.get("key"), Some(&"value".to_owned()));
     }
 }
 
@@ -85,7 +88,7 @@ async fn test_session_start_context_creation() {
 #[tokio::test]
 async fn test_hook_processor_default() {
     let processor = HookProcessor::default();
-    let context = PostToolUseContext::new("test".to_string(), false);
+    let context = PostToolUseContext::new("test".to_owned(), false);
 
     let result = processor.process_post_tool_use(context).await;
     assert!(result.is_err());
@@ -93,11 +96,11 @@ async fn test_hook_processor_default() {
 
 #[tokio::test]
 async fn test_post_tool_use_error_status() {
-    let context = PostToolUseContext::new("failing_tool".to_string(), true);
+    let context = PostToolUseContext::new("failing_tool".to_owned(), true);
 
     assert_eq!(context.tool_name, "failing_tool");
 }
 
 fn create_test_context() -> PostToolUseContext {
-    PostToolUseContext::new("test_tool".to_string(), false)
+    PostToolUseContext::new("test_tool".to_owned(), false)
 }

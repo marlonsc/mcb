@@ -3,7 +3,7 @@ use std::sync::Arc;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 
 use super::common::{
     MemoryOriginOptions, build_observation_metadata, require_data_map, require_str,
@@ -12,6 +12,7 @@ use super::common::{
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handlers::helpers::tool_error;
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -36,10 +37,9 @@ pub async fn store_observation(
         match observation_type_str.parse() {
             Ok(v) => v,
             Err(_) => {
-                return Ok(CallToolResult::error(vec![Content::text(format!(
-                    "Unknown observation type: {}",
-                    observation_type_str
-                ))]));
+                return Ok(tool_error(format!(
+                    "Unknown observation type: {observation_type_str}"
+                )));
             }
         };
     let tags = str_vec(data, "tags");
@@ -80,9 +80,7 @@ pub async fn get_observations(
 ) -> Result<CallToolResult, McpError> {
     let ids = args.ids.clone().unwrap_or_default();
     if ids.is_empty() {
-        return Ok(CallToolResult::error(vec![Content::text(
-            "Missing observation ids",
-        )]));
+        return Ok(tool_error("Missing observation ids"));
     }
     match memory_service
         .get_observations_by_ids(

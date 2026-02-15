@@ -30,7 +30,7 @@ pub struct SharedCacheProvider {
 impl SharedCacheProvider {
     /// Create a new shared cache provider
     ///
-    /// Accepts any type implementing CacheProvider trait.
+    /// Accepts any type implementing `CacheProvider` trait.
     pub fn new<P: CacheProvider + 'static>(provider: P) -> Self {
         Self {
             provider: Arc::new(provider),
@@ -71,6 +71,7 @@ impl SharedCacheProvider {
         to self.provider {
             /// Get the underlying cache provider as an Arc
             #[call(clone)]
+            #[must_use]
             pub fn as_provider(&self) -> Arc<dyn CacheProvider>;
         }
     }
@@ -80,7 +81,7 @@ impl SharedCacheProvider {
         if let Some(ns) = &self.namespace {
             format!("{}:{}", ns, key.as_ref())
         } else {
-            key.as_ref().to_string()
+            key.as_ref().to_owned()
         }
     }
 }
@@ -97,7 +98,7 @@ impl SharedCacheProvider {
             Some(json) => {
                 let value: T = serde_json::from_str(&json).map_err(|e| {
                     mcb_domain::error::Error::Infrastructure {
-                        message: format!("Failed to deserialize cached value: {}", e),
+                        message: format!("Failed to deserialize cached value: {e}"),
                         source: Some(Box::new(e)),
                     }
                 })?;
@@ -115,7 +116,7 @@ impl SharedCacheProvider {
         let namespaced_key = self.namespaced_key(key);
         let json =
             serde_json::to_string(value).map_err(|e| mcb_domain::error::Error::Infrastructure {
-                message: format!("Failed to serialize value for cache: {}", e),
+                message: format!("Failed to serialize value for cache: {e}"),
                 source: Some(Box::new(e)),
             })?;
         self.provider.set_json(&namespaced_key, &json, config).await

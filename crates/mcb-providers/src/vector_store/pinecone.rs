@@ -1,6 +1,6 @@
 //! Pinecone Vector Store Provider
 //!
-//! Implements the VectorStoreProvider, VectorStoreAdmin, and VectorStoreBrowser ports
+//! Implements the `VectorStoreProvider`, `VectorStoreAdmin`, and `VectorStoreBrowser` ports
 //! using Pinecone's cloud vector database REST API.
 //!
 //! Pinecone is a managed vector database optimized for machine learning applications.
@@ -64,10 +64,11 @@ impl PineconeVectorStoreProvider {
     /// * `host` - Pinecone index host URL
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
+    #[must_use]
     pub fn new(api_key: String, host: String, timeout: Duration, http_client: Client) -> Self {
         Self {
-            api_key: api_key.trim().to_string(),
-            host: host.trim_end_matches('/').to_string(),
+            api_key: api_key.trim().to_owned(),
+            host: host.trim_end_matches('/').to_owned(),
             timeout,
             http_client,
             collections: Arc::new(DashMap::new()),
@@ -88,7 +89,7 @@ impl PineconeVectorStoreProvider {
     ) -> Result<Value> {
         let headers = vec![
             ("Api-Key", self.api_key.clone()),
-            ("Content-Type", CONTENT_TYPE_JSON.to_string()),
+            ("Content-Type", CONTENT_TYPE_JSON.to_owned()),
         ];
 
         send_json_request(JsonRequestParams {
@@ -105,9 +106,9 @@ impl PineconeVectorStoreProvider {
         .await
     }
 
-    /// Convert Pinecone match result to domain SearchResult
+    /// Convert Pinecone match result to domain `SearchResult`
     fn match_to_search_result(item: &Value, score: f64) -> SearchResult {
-        let id = item["id"].as_str().unwrap_or("").to_string();
+        let id = item["id"].as_str().unwrap_or("").to_owned();
         let metadata = item
             .get("metadata")
             .cloned()
@@ -163,11 +164,11 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
 
         let mut stats = HashMap::new();
         stats.insert(
-            "collection".to_string(),
+            "collection".to_owned(),
             serde_json::json!(collection.to_string()),
         );
         stats.insert(
-            "provider".to_string(),
+            "provider".to_owned(),
             serde_json::json!(self.provider_name()),
         );
 
@@ -177,13 +178,13 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
                     && let Some(ns) = namespaces.get(&collection_str)
                     && let Some(count) = ns.get("vectorCount")
                 {
-                    stats.insert("vectors_count".to_string(), count.clone());
+                    stats.insert("vectors_count".to_owned(), count.clone());
                 }
-                stats.insert("status".to_string(), serde_json::json!("active"));
+                stats.insert("status".to_owned(), serde_json::json!("active"));
             }
             Err(_) => {
-                stats.insert("status".to_string(), serde_json::json!("unknown"));
-                stats.insert("vectors_count".to_string(), serde_json::json!(0));
+                stats.insert("status".to_owned(), serde_json::json!("unknown"));
+                stats.insert("vectors_count".to_owned(), serde_json::json!(0));
             }
         }
 
@@ -206,8 +207,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         let name_str = name.to_string();
         if self.collections.contains_key(&name_str) {
             return Err(Error::vector_db(format!(
-                "Collection '{}' already exists",
-                name
+                "Collection '{name}' already exists"
             )));
         }
         // Pinecone uses namespaces within an index; creation is implicit on first upsert
@@ -296,7 +296,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
             .await?;
 
         let matches = response["matches"].as_array().ok_or_else(|| {
-            Error::vector_db("Invalid Pinecone response: missing matches array".to_string())
+            Error::vector_db("Invalid Pinecone response: missing matches array".to_owned())
         })?;
 
         let results = matches
@@ -396,8 +396,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         let dimensions = self
             .collections
             .get(&collection_str)
-            .map(|d| *d.value())
-            .unwrap_or(1536);
+            .map_or(1536, |d| *d.value());
 
         let zero_vector = vec![0.0f32; dimensions];
         self.search_similar(collection, &zero_vector, limit, None)
@@ -438,8 +437,7 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         let dimensions = self
             .collections
             .get(&collection_str)
-            .map(|d| *d.value())
-            .unwrap_or(1536);
+            .map_or(1536, |d| *d.value());
 
         let zero_vector = vec![0.0f32; dimensions];
 
@@ -489,11 +487,11 @@ fn pinecone_factory(
     let api_key = config
         .api_key
         .clone()
-        .ok_or_else(|| "Pinecone requires api_key".to_string())?;
+        .ok_or_else(|| "Pinecone requires api_key".to_owned())?;
     let host = config
         .uri
         .clone()
-        .ok_or_else(|| "Pinecone requires uri (index host URL)".to_string())?;
+        .ok_or_else(|| "Pinecone requires uri (index host URL)".to_owned())?;
     let http_client = create_default_client()?;
 
     Ok(Arc::new(PineconeVectorStoreProvider::new(

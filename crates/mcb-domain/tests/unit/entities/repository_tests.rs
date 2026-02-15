@@ -33,15 +33,15 @@ fn vcs_type_from_str(#[case] input: &str, #[case] expected: Result<VcsType, ()>)
 fn sample_repo() -> Repository {
     Repository {
         metadata: mcb_domain::entities::EntityMetadata {
-            id: "repo-001".to_string(),
+            id: "repo-001".to_owned(),
             created_at: 1000,
             updated_at: 1000,
         },
-        org_id: "org-001".to_string(),
-        project_id: "proj-001".to_string(),
-        name: "mcb-data-model".to_string(),
-        url: "https://github.com/org/mcb-data-model".to_string(),
-        local_path: "/home/dev/mcb-data-model".to_string(),
+        org_id: "org-001".to_owned(),
+        project_id: "proj-001".to_owned(),
+        name: "mcb-data-model".to_owned(),
+        url: "https://github.com/org/mcb-data-model".to_owned(),
+        local_path: "/home/dev/mcb-data-model".to_owned(),
         vcs_type: VcsType::Git,
     }
 }
@@ -64,12 +64,12 @@ fn repository_serialization_roundtrip(sample_repo: Repository) {
 #[fixture]
 fn sample_branch() -> Branch {
     Branch {
-        id: "br-001".to_string(),
-        repository_id: "repo-001".to_string(),
-        name: "main".to_string(),
+        id: "br-001".to_owned(),
+        repository_id: "repo-001".to_owned(),
+        name: "main".to_owned(),
         is_default: true,
-        head_commit: "abc123def456".to_string(),
-        upstream: Some("origin/main".to_string()),
+        head_commit: "abc123def456".to_owned(),
+        upstream: Some("origin/main".to_owned()),
         created_at: 1000,
     }
 }
@@ -84,11 +84,11 @@ fn branch_construction(sample_branch: Branch) {
 #[rstest]
 fn branch_without_upstream() {
     let branch = Branch {
-        id: "br-002".to_string(),
-        repository_id: "repo-001".to_string(),
-        name: "feat/local-only".to_string(),
+        id: "br-002".to_owned(),
+        repository_id: "repo-001".to_owned(),
+        name: "feat/local-only".to_owned(),
         is_default: false,
-        head_commit: "deadbeef".to_string(),
+        head_commit: "deadbeef".to_owned(),
         upstream: None,
         created_at: 2000,
     };

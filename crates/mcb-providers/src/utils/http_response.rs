@@ -35,7 +35,7 @@ impl HttpResponseUtils {
             let error_text = response
                 .text()
                 .await
-                .unwrap_or_else(|_| "Unknown error".to_string());
+                .unwrap_or_else(|_| "Unknown error".to_owned());
             let code = status.as_u16();
 
             return Err(match code {

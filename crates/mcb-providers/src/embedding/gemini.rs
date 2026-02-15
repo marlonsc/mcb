@@ -1,6 +1,6 @@
 //! Gemini Embedding Provider
 //!
-//! Implements the EmbeddingProvider port using Google's Gemini embedding API.
+//! Implements the `EmbeddingProvider` port using Google's Gemini embedding API.
 
 use std::time::Duration;
 
@@ -56,6 +56,7 @@ impl GeminiEmbeddingProvider {
     /// * `model` - Model name (e.g., "text-embedding-004")
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
+    #[must_use]
     pub fn new(
         api_key: String,
         base_url: Option<String>,
@@ -76,6 +77,7 @@ impl GeminiEmbeddingProvider {
     }
 
     /// Get the model name for API calls (remove prefix if present)
+    #[must_use]
     pub fn api_model_name(&self) -> &str {
         self.client
             .model
@@ -84,11 +86,13 @@ impl GeminiEmbeddingProvider {
     }
 
     /// Get the model name for this provider
+    #[must_use]
     pub fn model(&self) -> &str {
         &self.client.model
     }
 
     /// Get the maximum tokens supported by this provider
+    #[must_use]
     pub fn max_tokens(&self) -> usize {
         match self.api_model_name() {
             "gemini-embedding-001" => 2048,
@@ -98,11 +102,13 @@ impl GeminiEmbeddingProvider {
     }
 
     /// Get the API key for this provider
+    #[must_use]
     pub fn api_key(&self) -> &str {
         &self.client.api_key
     }
 
     /// Get the base URL for this provider
+    #[must_use]
     pub fn base_url(&self) -> String {
         self.client.base_url.clone()
     }
@@ -120,7 +126,7 @@ impl GeminiEmbeddingProvider {
         );
 
         let headers = vec![
-            ("Content-Type", CONTENT_TYPE_JSON.to_string()),
+            ("Content-Type", CONTENT_TYPE_JSON.to_owned()),
             ("x-goog-api-key", self.client.api_key.clone()),
         ];
 
@@ -156,7 +162,7 @@ impl GeminiEmbeddingProvider {
 }
 
 #[async_trait]
-/// Google Gemini implementation of the EmbeddingProvider trait.
+/// Google Gemini implementation of the `EmbeddingProvider` trait.
 impl EmbeddingProvider for GeminiEmbeddingProvider {
     /// Generates embeddings for a batch of texts.
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {

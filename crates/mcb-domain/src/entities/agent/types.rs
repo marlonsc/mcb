@@ -39,13 +39,13 @@ pub enum AgentType {
     Librarian,
     /// Metis agent - pre-planning analysis and feasibility checks
     Metis,
-    /// SisyphusJunior agent - focused task executor
+    /// `SisyphusJunior` agent - focused task executor
     SisyphusJunior,
     /// Hephaestus agent - tooling and infrastructure builder
     Hephaestus,
     /// Atlas agent - codebase mapping and navigation
     Atlas,
-    /// MultimodalLooker agent - visual analysis and media inspection
+    /// `MultimodalLooker` agent - visual analysis and media inspection
     MultimodalLooker,
 }
 

@@ -8,10 +8,10 @@ use mcb_domain::ports::providers::project_detection::ProjectDetectorConfig;
 use super::registry::PROJECT_DETECTORS;
 
 /// Detect all project types at a given path
-/// Returns multiple ProjectTypes if overlapping (e.g., Cargo.toml + package.json)
+/// Returns multiple `ProjectTypes` if overlapping (e.g., Cargo.toml + package.json)
 pub async fn detect_all_projects(path: &Path) -> Vec<ProjectType> {
     let config = ProjectDetectorConfig {
-        repo_path: path.to_str().unwrap_or_default().to_string(),
+        repo_path: path.to_str().unwrap_or_default().to_owned(),
     };
 
     let mut results = Vec::new();

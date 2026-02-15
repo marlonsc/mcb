@@ -3,14 +3,14 @@ use std::sync::Arc;
 use mcb_domain::constants::keys as schema;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use serde_json::Value;
 
 use super::common::{opt_str, optional_data_map, require_session_id_str};
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::resolve_identifier_precedence;
+use crate::handlers::helpers::{resolve_identifier_precedence, tool_error};
 use tracing::error;
 
 /// Updates an existing agent session.
@@ -121,9 +121,7 @@ pub async fn update_session(
                 }
             }
         }
-        Ok(None) => Ok(CallToolResult::error(vec![Content::text(
-            "Agent session not found",
-        )])),
+        Ok(None) => Ok(tool_error("Agent session not found")),
         Err(e) => {
             error!("Failed to update agent session (get failed): {:?}", e);
             Ok(to_contextual_tool_error(e))

@@ -7,7 +7,7 @@ use rstest::rstest;
 fn test_query_builder() {
     let query = AstQueryBuilder::new("rust", "function_item")
         .with_condition(QueryCondition::Custom {
-            name: "has_no_docstring".to_string(),
+            name: "has_no_docstring".to_owned(),
         })
         .message("Function needs documentation")
         .severity("warning")

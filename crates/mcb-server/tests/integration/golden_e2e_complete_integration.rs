@@ -1,4 +1,4 @@
-//! Included by mcb-server test binary; contract: docs/testing/GOLDEN_TESTS_CONTRACT.md.
+//! Included by mcb-server test binary; contract: `docs/testing/GOLDEN_TESTS_CONTRACT.md`.
 
 use std::path::Path;
 use std::time::Duration;
@@ -12,6 +12,7 @@ use crate::test_utils::test_fixtures::{
     GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, extract_text_content, golden_content_to_string,
     golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
 };
+use crate::test_utils::timeouts::TEST_TIMEOUT;
 
 fn index_args(action: IndexAction, path: Option<String>, collection: Option<String>) -> IndexArgs {
     IndexArgs {
@@ -29,7 +30,7 @@ fn index_args(action: IndexAction, path: Option<String>, collection: Option<Stri
 
 fn search_args(query: &str, collection: Option<String>, limit: Option<u32>) -> SearchArgs {
     SearchArgs {
-        query: query.to_string(),
+        query: query.to_owned(),
         org_id: None,
         resource: SearchResource::Code,
         collection,
@@ -70,8 +71,7 @@ async fn test_golden_e2e_complete_workflow() {
     let path = sample_codebase_path();
     assert!(
         path.exists(),
-        "sample_codebase fixture must exist: {:?}",
-        path
+        "sample_codebase fixture must exist: {path:?}"
     );
     let path_str = path.to_string_lossy().to_string();
 
@@ -82,25 +82,24 @@ async fn test_golden_e2e_complete_workflow() {
         .handle(Parameters(index_args(
             IndexAction::Clear,
             None,
-            Some(GOLDEN_COLLECTION.to_string()),
+            Some(GOLDEN_COLLECTION.to_owned()),
         )))
         .await;
-    assert!(r.is_ok(), "index clear should succeed: {:?}", r);
+    assert!(r.is_ok(), "index clear should succeed: {r:?}");
     let clear_text = extract_text_content(&r.unwrap().content);
     assert!(
         clear_text.to_lowercase().contains("clear"),
-        "clear response must mention clear/cleared: {}",
-        clear_text
+        "clear response must mention clear/cleared: {clear_text}"
     );
 
     let r = index_h
         .handle(Parameters(index_args(
             IndexAction::Status,
             None,
-            Some(GOLDEN_COLLECTION.to_string()),
+            Some(GOLDEN_COLLECTION.to_owned()),
         )))
         .await;
-    assert!(r.is_ok(), "index status should succeed: {:?}", r);
+    assert!(r.is_ok(), "index status should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
     let text = extract_text_content(&res.content);
@@ -110,41 +109,39 @@ async fn test_golden_e2e_complete_workflow() {
         .handle(Parameters(index_args(
             IndexAction::Start,
             Some(path_str),
-            Some(GOLDEN_COLLECTION.to_string()),
+            Some(GOLDEN_COLLECTION.to_owned()),
         )))
         .await;
-    assert!(r.is_ok(), "index should succeed: {:?}", r);
+    assert!(r.is_ok(), "index should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
     let text = extract_text_content(&res.content);
     assert!(
         text.contains("chunks") || text.contains("Indexing") || text.contains("files"),
-        "expected chunks/indexing in response: {}",
-        text
+        "expected chunks/indexing in response: {text}"
     );
 
     let r = search_h
         .handle(Parameters(search_args(
             "embedding provider",
-            Some(GOLDEN_COLLECTION.to_string()),
+            Some(GOLDEN_COLLECTION.to_owned()),
             Some(5),
         )))
         .await;
-    assert!(r.is_ok(), "search should succeed: {:?}", r);
+    assert!(r.is_ok(), "search should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
     let text = extract_text_content(&res.content);
     assert!(
         text.contains("Search") || text.contains("Results") || text.contains("result"),
-        "expected search result text: {}",
-        text
+        "expected search result text: {text}"
     );
 
     let r = index_h
         .handle(Parameters(index_args(
             IndexAction::Clear,
             None,
-            Some(GOLDEN_COLLECTION.to_string()),
+            Some(GOLDEN_COLLECTION.to_owned()),
         )))
         .await;
     assert!(r.is_ok());
@@ -157,12 +154,12 @@ async fn test_golden_e2e_handles_concurrent_operations() {
     let r1 = status_h.handle(Parameters(index_args(
         IndexAction::Status,
         None,
-        Some("default".to_string()),
+        Some("default".to_owned()),
     )));
     let r2 = status_h.handle(Parameters(index_args(
         IndexAction::Status,
         None,
-        Some("default".to_string()),
+        Some("default".to_owned()),
     )));
     let (a, b) = tokio::join!(r1, r2);
     assert!(a.is_ok());
@@ -177,7 +174,7 @@ async fn test_golden_e2e_respects_collection_isolation() {
         .handle(Parameters(index_args(
             IndexAction::Clear,
             None,
-            Some("collection_a".to_string()),
+            Some("collection_a".to_owned()),
         )))
         .await
         .expect("clear a");
@@ -185,7 +182,7 @@ async fn test_golden_e2e_respects_collection_isolation() {
         .handle(Parameters(index_args(
             IndexAction::Clear,
             None,
-            Some("collection_b".to_string()),
+            Some("collection_b".to_owned()),
         )))
         .await
         .expect("clear b");
@@ -200,7 +197,7 @@ async fn test_golden_e2e_handles_reindex_correctly() {
     let args = index_args(
         IndexAction::Start,
         Some(path.to_string_lossy().to_string()),
-        Some(collection.to_string()),
+        Some(collection.to_owned()),
     );
     let r1 = index_h.handle(Parameters(args.clone())).await;
     assert!(r1.is_ok());
@@ -209,8 +206,8 @@ async fn test_golden_e2e_handles_reindex_correctly() {
 }
 
 #[rstest]
-#[case(Some(GOLDEN_COLLECTION.to_string()), None)]
-#[case(Some("golden_multi_lang".to_string()), Some(vec!["rs".to_string()]))]
+#[case(Some(GOLDEN_COLLECTION.to_owned()), None)]
+#[case(Some("golden_multi_lang".to_owned()), Some(vec!["rs".to_owned()]))]
 #[tokio::test]
 async fn test_golden_index_variants(
     #[case] collection: Option<String>,
@@ -218,7 +215,7 @@ async fn test_golden_index_variants(
 ) {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
-    assert!(path.exists(), "sample_codebase must exist: {:?}", path);
+    assert!(path.exists(), "sample_codebase must exist: {path:?}");
 
     let handler = server.index_handler();
     let mut args = index_args(
@@ -238,8 +235,7 @@ async fn test_golden_index_variants(
         text.contains("Files processed")
             || text.contains("Indexing Started")
             || text.contains("started"),
-        "response: {}",
-        text
+        "response: {text}"
     );
 }
 
@@ -251,9 +247,9 @@ async fn test_golden_index_respects_ignore_patterns() {
     let mut args = index_args(
         IndexAction::Start,
         Some(path.to_string_lossy().to_string()),
-        Some("golden_ignore_test".to_string()),
+        Some("golden_ignore_test".to_owned()),
     );
-    args.ignore_patterns = Some(vec!["*_test.rs".to_string()]);
+    args.ignore_patterns = Some(vec!["*_test.rs".to_owned()]);
     let result = handler.handle(Parameters(args)).await;
     assert!(result.is_ok());
 }
@@ -273,7 +269,7 @@ async fn test_golden_mcp_index_schema_actions(
         .handle(Parameters(index_args(
             action,
             None,
-            Some("default".to_string()),
+            Some("default".to_owned()),
         )))
         .await;
     assert!(r.is_ok());
@@ -296,7 +292,7 @@ async fn test_golden_mcp_search_code_schema() {
     let r = search_h
         .handle(Parameters(search_args(
             "test",
-            Some("default".to_string()),
+            Some("default".to_owned()),
             Some(5),
         )))
         .await;
@@ -328,7 +324,7 @@ async fn test_golden_search_returns_relevant_results() {
         .handle(Parameters(index_args(
             IndexAction::Start,
             Some(path.to_string_lossy().to_string()),
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
         )))
         .await
         .expect("index");
@@ -337,7 +333,7 @@ async fn test_golden_search_returns_relevant_results() {
         .search_handler()
         .handle(Parameters(search_args(
             "embedding vector",
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
             Some(10),
         )))
         .await;
@@ -351,8 +347,7 @@ async fn test_golden_search_returns_relevant_results() {
         let has_expected = SAMPLE_CODEBASE_FILES.iter().any(|f| text.contains(f));
         assert!(
             has_expected,
-            "when results exist, at least one sample file must appear: {} (files: {:?})",
-            text, SAMPLE_CODEBASE_FILES
+            "when results exist, at least one sample file must appear: {text} (files: {SAMPLE_CODEBASE_FILES:?})"
         );
     }
 }
@@ -367,7 +362,7 @@ async fn test_golden_search_ranking_is_correct() {
         .handle(Parameters(index_args(
             IndexAction::Start,
             Some(path.to_string_lossy().to_string()),
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
         )))
         .await
         .expect("index for ranking test");
@@ -376,7 +371,7 @@ async fn test_golden_search_ranking_is_correct() {
         .search_handler()
         .handle(Parameters(search_args(
             "handler",
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
             Some(5),
         )))
         .await;
@@ -393,7 +388,7 @@ async fn test_golden_search_respects_limit_parameter() {
         .handle(Parameters(index_args(
             IndexAction::Start,
             Some(path.to_string_lossy().to_string()),
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
         )))
         .await
         .expect("index for limit test");
@@ -402,14 +397,14 @@ async fn test_golden_search_respects_limit_parameter() {
         .search_handler()
         .handle(Parameters(search_args(
             "function code",
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
             Some(2),
         )))
         .await;
     assert!(r.is_ok(), "search must succeed");
     let text = golden_content_to_string(&r.unwrap());
     let n = golden_parse_results_found(&text).unwrap_or_else(|| golden_count_result_entries(&text));
-    assert!(n <= 2, "search must respect limit: got {} results", n);
+    assert!(n <= 2, "search must respect limit: got {n} results");
 }
 
 #[tokio::test]
@@ -420,9 +415,9 @@ async fn test_golden_search_filters_by_extension() {
     let mut args = index_args(
         IndexAction::Start,
         Some(path.to_string_lossy().to_string()),
-        Some(collection.to_string()),
+        Some(collection.to_owned()),
     );
-    args.extensions = Some(vec!["rs".to_string()]);
+    args.extensions = Some(vec!["rs".to_owned()]);
     server
         .index_handler()
         .handle(Parameters(args))
@@ -433,7 +428,7 @@ async fn test_golden_search_filters_by_extension() {
         .search_handler()
         .handle(Parameters(search_args(
             "function",
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
             Some(5),
         )))
         .await;
@@ -451,7 +446,7 @@ async fn test_golden_e2e_golden_queries_setup() {
         .handle(Parameters(index_args(
             IndexAction::Clear,
             None,
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
         )))
         .await
         .expect("clear");
@@ -461,27 +456,36 @@ async fn test_golden_e2e_golden_queries_setup() {
         .handle(Parameters(index_args(
             IndexAction::Start,
             Some(path.to_string_lossy().to_string()),
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
         )))
         .await
         .expect("index");
 
-    for _ in 0..20 {
-        let r = server
-            .index_handler()
-            .handle(Parameters(index_args(
-                IndexAction::Status,
-                None,
-                Some(collection.to_string()),
-            )))
-            .await
-            .expect("status");
-        let text = extract_text_content(&r.content);
-        if text.contains("Idle") || text.contains("completed") || text.contains("Status") {
-            return;
+    let completed = tokio::time::timeout(TEST_TIMEOUT, async {
+        for _ in 0..20 {
+            let r = server
+                .index_handler()
+                .handle(Parameters(index_args(
+                    IndexAction::Status,
+                    None,
+                    Some(collection.to_owned()),
+                )))
+                .await
+                .expect("status");
+            let text = extract_text_content(&r.content);
+            if text.contains("Idle") || text.contains("completed") || text.contains("Status") {
+                return true;
+            }
+            tokio::time::sleep(Duration::from_millis(50)).await;
         }
-        tokio::time::sleep(Duration::from_millis(50)).await;
-    }
+        false
+    })
+    .await
+    .expect("index status polling timed out");
+    assert!(
+        completed,
+        "index did not reach a terminal status in polling window"
+    );
 }
 
 #[tokio::test]
@@ -495,7 +499,7 @@ async fn test_golden_e2e_golden_queries_one_query() {
         .handle(Parameters(index_args(
             IndexAction::Clear,
             None,
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
         )))
         .await
         .expect("clear");
@@ -505,7 +509,7 @@ async fn test_golden_e2e_golden_queries_one_query() {
         .handle(Parameters(index_args(
             IndexAction::Start,
             Some(path.to_string_lossy().to_string()),
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
         )))
         .await
         .expect("index");
@@ -521,7 +525,7 @@ async fn test_golden_e2e_golden_queries_one_query() {
     let r = search_h
         .handle(Parameters(search_args(
             &query.query,
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
             Some(5),
         )))
         .await;
@@ -545,7 +549,7 @@ async fn test_golden_e2e_golden_queries_all_handlers_succeed() {
         .handle(Parameters(index_args(
             IndexAction::Clear,
             None,
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
         )))
         .await
         .expect("clear");
@@ -555,7 +559,7 @@ async fn test_golden_e2e_golden_queries_all_handlers_succeed() {
         .handle(Parameters(index_args(
             IndexAction::Start,
             Some(path.to_string_lossy().to_string()),
-            Some(collection.to_string()),
+            Some(collection.to_owned()),
         )))
         .await
         .expect("index");
@@ -571,7 +575,7 @@ async fn test_golden_e2e_golden_queries_all_handlers_succeed() {
         let r = search_h
             .handle(Parameters(search_args(
                 &query.query,
-                Some(collection.to_string()),
+                Some(collection.to_owned()),
                 Some(5),
             )))
             .await;

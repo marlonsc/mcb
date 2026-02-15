@@ -1,6 +1,6 @@
 //! Qdrant Vector Store Provider
 //!
-//! Implements the VectorStoreProvider, VectorStoreAdmin, and VectorStoreBrowser ports
+//! Implements the `VectorStoreProvider`, `VectorStoreAdmin`, and `VectorStoreBrowser` ports
 //! using Qdrant's cloud and self-hosted vector database REST API.
 //!
 //! Qdrant is an open-source vector search engine with rich filtering and payload support.
@@ -61,10 +61,11 @@ impl QdrantVectorStoreProvider {
     /// Create a new Qdrant vector store provider
     ///
     /// # Arguments
-    /// * `base_url` - Qdrant server URL (e.g., "http://localhost:6333")
+    /// * `base_url` - Qdrant server URL (e.g., "<http://localhost:6333>")
     /// * `api_key` - Optional API key for Qdrant Cloud
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
+    #[must_use]
     pub fn new(
         base_url: String,
         api_key: Option<String>,
@@ -72,8 +73,8 @@ impl QdrantVectorStoreProvider {
         http_client: Client,
     ) -> Self {
         Self {
-            base_url: base_url.trim_end_matches('/').to_string(),
-            api_key: api_key.map(|k| k.trim().to_string()),
+            base_url: base_url.trim_end_matches('/').to_owned(),
+            api_key: api_key.map(|k| k.trim().to_owned()),
             timeout,
             http_client,
             collections: Arc::new(DashMap::new()),
@@ -92,7 +93,7 @@ impl QdrantVectorStoreProvider {
         path: &str,
         body: Option<Value>,
     ) -> Result<Value> {
-        let mut headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_string())];
+        let mut headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_owned())];
 
         if let Some(ref key) = self.api_key {
             headers.push(("api-key", key.clone()));
@@ -112,7 +113,7 @@ impl QdrantVectorStoreProvider {
         .await
     }
 
-    /// Convert Qdrant point result to domain SearchResult
+    /// Convert Qdrant point result to domain `SearchResult`
     fn point_to_search_result(item: &Value, score: f64) -> SearchResult {
         let id = match &item["id"] {
             Value::String(s) => s.clone(),
@@ -168,11 +169,11 @@ impl VectorStoreAdmin for QdrantVectorStoreProvider {
     async fn get_stats(&self, collection: &CollectionId) -> Result<HashMap<String, Value>> {
         let mut stats = HashMap::new();
         stats.insert(
-            "collection".to_string(),
+            "collection".to_owned(),
             serde_json::json!(collection.to_string()),
         );
         stats.insert(
-            "provider".to_string(),
+            "provider".to_owned(),
             serde_json::json!(self.provider_name()),
         );
 
@@ -187,16 +188,16 @@ impl VectorStoreAdmin for QdrantVectorStoreProvider {
             Ok(data) => {
                 if let Some(result) = data.get("result") {
                     if let Some(count) = result.get("vectors_count") {
-                        stats.insert("vectors_count".to_string(), count.clone());
+                        stats.insert("vectors_count".to_owned(), count.clone());
                     }
                     if let Some(status) = result.get("status") {
-                        stats.insert("status".to_string(), status.clone());
+                        stats.insert("status".to_owned(), status.clone());
                     }
                 }
             }
             Err(_) => {
-                stats.insert("status".to_string(), serde_json::json!("unknown"));
-                stats.insert("vectors_count".to_string(), serde_json::json!(0));
+                stats.insert("status".to_owned(), serde_json::json!("unknown"));
+                stats.insert("vectors_count".to_owned(), serde_json::json!(0));
             }
         }
 
@@ -421,7 +422,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
             .map(|arr| {
                 arr.iter()
                     .map(|item| {
-                        let name = item["name"].as_str().unwrap_or("").to_string();
+                        let name = item["name"].as_str().unwrap_or("").to_owned();
                         CollectionInfo::new(name, 0, 0, None, self.provider_name())
                     })
                     .collect()

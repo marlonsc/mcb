@@ -44,7 +44,7 @@ pub struct MemoryArgs {
     #[schemars(description = "Action: store, get, list, timeline, inject")]
     pub action: MemoryAction,
 
-    /// Resource type: observation, execution, quality_gate, error_pattern, session.
+    /// Resource type: observation, execution, `quality_gate`, `error_pattern`, session.
     #[schemars(
         description = "Resource type: observation, execution, quality_gate, error_pattern, session"
     )]

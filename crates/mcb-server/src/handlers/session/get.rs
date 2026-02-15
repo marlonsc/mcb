@@ -3,12 +3,13 @@ use std::sync::Arc;
 use mcb_domain::constants::keys as schema;
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 
 use super::common::require_session_id_str;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handlers::helpers::tool_error;
 use tracing::error;
 
 /// Retrieves an agent session by ID.
@@ -38,9 +39,7 @@ pub async fn get_session(
             schema::TOOL_CALLS_COUNT: session.tool_calls_count,
             schema::DELEGATIONS_COUNT: session.delegations_count,
         })),
-        Ok(None) => Ok(CallToolResult::error(vec![Content::text(
-            "Agent session not found",
-        )])),
+        Ok(None) => Ok(tool_error("Agent session not found")),
         Err(e) => {
             error!("Failed to get agent session: {:?}", e);
             Ok(to_contextual_tool_error(e))

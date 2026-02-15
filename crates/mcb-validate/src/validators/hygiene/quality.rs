@@ -19,7 +19,7 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
 
     let patterns = QualityPatterns {
         mock_type: compile_regex(r"\bMock[A-Za-z0-9_]+\b")?,
-        skip_message: compile_regex(r"skipping:")?,
+        skip_message: compile_regex("skipping:")?,
         todo: compile_regex(r"\btodo!\(")?,
         unimplemented: compile_regex(r"\bunimplemented!\(")?,
     };
@@ -131,10 +131,10 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
                                     for (regex, desc) in &compiled_trivial {
                                         if regex.is_match(trimmed) {
                                             violations.push(HygieneViolation::TrivialAssertion {
-                                                file: path.to_path_buf(),
+                                                file: path.clone(),
                                                 line: body_line_idx + 1,
-                                                function_name: fn_name.to_string(),
-                                                assertion: (*desc).to_string(),
+                                                function_name: fn_name.to_owned(),
+                                                assertion: (*desc).to_owned(),
                                                 severity: Severity::Warning,
                                             });
                                         }
@@ -143,16 +143,16 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
 
                                 if !has_code {
                                     violations.push(HygieneViolation::CommentOnlyTest {
-                                        file: path.to_path_buf(),
+                                        file: path.clone(),
                                         line: fn_line_idx + 1,
-                                        function_name: fn_name.to_string(),
+                                        function_name: fn_name.to_owned(),
                                         severity: Severity::Warning,
                                     });
                                 } else if !has_assertion && has_unwrap {
                                     violations.push(HygieneViolation::UnwrapOnlyAssertion {
-                                        file: path.to_path_buf(),
+                                        file: path.clone(),
                                         line: fn_line_idx + 1,
-                                        function_name: fn_name.to_string(),
+                                        function_name: fn_name.to_owned(),
                                         severity: Severity::Warning,
                                     });
                                 }
@@ -186,7 +186,7 @@ fn check_forbidden_patterns(
             violations.push(HygieneViolation::MockTypeUsage {
                 file: file.to_path_buf(),
                 line: line_no,
-                token: mat.as_str().to_string(),
+                token: mat.as_str().to_owned(),
                 severity: Severity::Error,
             });
         }
@@ -203,7 +203,7 @@ fn check_forbidden_patterns(
             violations.push(HygieneViolation::StubMacroUsage {
                 file: file.to_path_buf(),
                 line: line_no,
-                macro_name: "todo".to_string(),
+                macro_name: "todo".to_owned(),
                 severity: Severity::Error,
             });
         }
@@ -212,7 +212,7 @@ fn check_forbidden_patterns(
             violations.push(HygieneViolation::StubMacroUsage {
                 file: file.to_path_buf(),
                 line: line_no,
-                macro_name: "unimplemented".to_string(),
+                macro_name: "unimplemented".to_owned(),
                 severity: Severity::Error,
             });
         }

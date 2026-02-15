@@ -49,6 +49,7 @@ impl KissValidator {
     }
 
     /// Creates a new KISS validator with explicit configuration and rules.
+    #[must_use]
     pub fn with_config(config: ValidationConfig, rules: &KISSRulesConfig) -> Self {
         let t = thresholds();
         Self {

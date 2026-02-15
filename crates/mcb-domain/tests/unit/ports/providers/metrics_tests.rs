@@ -12,6 +12,6 @@ fn test_labels_macro() {
 
     let with_values = labels!("collection" => "test", "provider" => "ollama");
     assert_eq!(with_values.len(), 2);
-    assert_eq!(with_values.get("collection"), Some(&"test".to_string()));
-    assert_eq!(with_values.get("provider"), Some(&"ollama".to_string()));
+    assert_eq!(with_values.get("collection"), Some(&"test".to_owned()));
+    assert_eq!(with_values.get("provider"), Some(&"ollama".to_owned()));
 }

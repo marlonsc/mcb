@@ -27,7 +27,7 @@
 //! ## Ports (Interfaces)
 //!
 //! Defines contracts for external dependencies:
-//! - `ports::providers::*`: Provider interfaces (Embedding, VectorStore, Cache, etc.)
+//! - `ports::providers::*`: Provider interfaces (Embedding, `VectorStore`, Cache, etc.)
 //! - `domain_services::*`: Use case interfaces
 //!
 //! ## Dependencies

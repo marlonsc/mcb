@@ -44,7 +44,7 @@ impl RedisCacheProvider {
     ///
     /// # Arguments
     ///
-    /// * `connection_string` - Redis connection URL (e.g., "redis://localhost:6379")
+    /// * `connection_string` - Redis connection URL (e.g., "<redis://localhost:6379>")
     ///
     /// # Example
     ///
@@ -58,7 +58,7 @@ impl RedisCacheProvider {
     /// ```
     pub fn new(connection_string: &str) -> Result<Self> {
         let client = Client::open(connection_string).map_err(|e| Error::Infrastructure {
-            message: format!("Failed to create Redis client: {}", e),
+            message: format!("Failed to create Redis client: {e}"),
             source: Some(Box::new(e)),
         })?;
 
@@ -75,7 +75,7 @@ impl RedisCacheProvider {
     /// * `host` - Redis server hostname
     /// * `port` - Redis server port
     pub fn with_host_port(host: &str, port: u16) -> Result<Self> {
-        Self::new(&format!("redis://{}:{}", host, port))
+        Self::new(&format!("redis://{host}:{port}"))
     }
 
     /// Get a connection from the pool
@@ -84,7 +84,7 @@ impl RedisCacheProvider {
             .get_multiplexed_async_connection()
             .await
             .map_err(|e| Error::Infrastructure {
-                message: format!("Failed to get Redis connection: {}", e),
+                message: format!("Failed to get Redis connection: {e}"),
                 source: Some(Box::new(e)),
             })
     }
@@ -116,11 +116,13 @@ impl RedisCacheProvider {
     }
 
     /// Get the Redis server address description
+    #[must_use]
     pub fn server_address(&self) -> String {
-        "redis-server".to_string()
+        "redis-server".to_owned()
     }
 
     /// Check if the Redis connection uses TLS
+    #[must_use]
     pub fn is_tls(&self) -> bool {
         false
     }
@@ -141,7 +143,7 @@ impl CacheProvider for RedisCacheProvider {
                 Ok(None)
             }
             Err(e) => Err(Error::Infrastructure {
-                message: format!("Redis GET failed: {}", e),
+                message: format!("Redis GET failed: {e}"),
                 source: Some(Box::new(e)),
             }),
         }
@@ -159,7 +161,7 @@ impl CacheProvider for RedisCacheProvider {
         };
 
         result.map_err(|e| Error::Infrastructure {
-            message: format!("Redis SET failed: {}", e),
+            message: format!("Redis SET failed: {e}"),
             source: Some(Box::new(e)),
         })
     }
@@ -171,7 +173,7 @@ impl CacheProvider for RedisCacheProvider {
         match deleted {
             Ok(count) => Ok(count > 0),
             Err(e) => Err(Error::Infrastructure {
-                message: format!("Redis DEL failed: {}", e),
+                message: format!("Redis DEL failed: {e}"),
                 source: Some(Box::new(e)),
             }),
         }
@@ -184,7 +186,7 @@ impl CacheProvider for RedisCacheProvider {
         match exists {
             Ok(count) => Ok(count > 0),
             Err(e) => Err(Error::Infrastructure {
-                message: format!("Redis EXISTS failed: {}", e),
+                message: format!("Redis EXISTS failed: {e}"),
                 source: Some(Box::new(e)),
             }),
         }
@@ -197,7 +199,7 @@ impl CacheProvider for RedisCacheProvider {
             .query_async(&mut conn)
             .await
             .map_err(|e| Error::Infrastructure {
-                message: format!("Redis FLUSHDB failed: {}", e),
+                message: format!("Redis FLUSHDB failed: {e}"),
                 source: Some(Box::new(e)),
             })
     }
@@ -219,7 +221,7 @@ impl CacheProvider for RedisCacheProvider {
             .stats
             .read()
             .map_err(|_| Error::Infrastructure {
-                message: "Failed to read cache stats".to_string(),
+                message: "Failed to read cache stats".to_owned(),
                 source: None,
             })?
             .clone();
@@ -234,7 +236,7 @@ impl CacheProvider for RedisCacheProvider {
 
         let dbsize: redis::RedisResult<usize> = redis::cmd("DBSIZE").query_async(&mut conn).await;
         dbsize.map_err(|e| Error::Infrastructure {
-            message: format!("Redis DBSIZE failed: {}", e),
+            message: format!("Redis DBSIZE failed: {e}"),
             source: Some(Box::new(e)),
         })
     }
@@ -264,7 +266,7 @@ fn redis_cache_factory(
     config: &CacheProviderConfig,
 ) -> std::result::Result<Arc<dyn CacheProvider>, String> {
     let uri = config.uri.clone().ok_or_else(|| {
-        "Redis requires 'uri' configuration (e.g., redis://localhost:6379)".to_string()
+        "Redis requires 'uri' configuration (e.g., redis://localhost:6379)".to_owned()
     })?;
 
     let provider = RedisCacheProvider::new(&uri)

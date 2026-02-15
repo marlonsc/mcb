@@ -3,7 +3,7 @@
 //! This module provides shared test utilities for integration tests.
 //!
 //! Test Structure:
-//! - `tests/unit.rs` - Unit tests (constants, crypto, error_ext, health, logging)
+//! - `tests/unit.rs` - Unit tests (constants, crypto, `error_ext`, health, logging)
 //! - `tests/integration.rs` - Integration tests (cache, config, di, utils)
 //! - `tests/test_utils/` - Real provider factories for full-stack testing
 //!
@@ -18,6 +18,7 @@ pub mod test_utils;
 /// Shared test helper functions.
 pub mod test_helpers {
     /// Create a temporary test directory
+    #[must_use]
     pub fn temp_dir() -> tempfile::TempDir {
         tempfile::tempdir().expect("Failed to create temp directory")
     }

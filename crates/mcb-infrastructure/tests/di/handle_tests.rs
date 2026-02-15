@@ -90,6 +90,6 @@ fn test_handle_debug_impl() {
     let provider = Arc::new(SimpleProvider { val: 1 });
     let handle: Handle<dyn TestProvider> = Handle::new(provider);
 
-    let debug_str = format!("{:?}", handle);
+    let debug_str = format!("{handle:?}");
     assert!(debug_str.contains("Handle"));
 }

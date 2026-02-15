@@ -1,4 +1,4 @@
-//! Git2-based implementation of VcsProvider
+//! Git2-based implementation of `VcsProvider`
 
 use std::path::{Path, PathBuf};
 
@@ -13,7 +13,7 @@ use mcb_domain::{
 };
 use uuid::Uuid;
 
-/// Git implementation of VcsProvider using libgit2.
+/// Git implementation of `VcsProvider` using libgit2.
 ///
 /// Constructed by `mcb_infrastructure::di::vcs` module for DI registration.
 pub struct Git2Provider;
@@ -81,7 +81,7 @@ impl Git2Provider {
             let (branch, _) =
                 branch_result.map_err(|e| Error::vcs_with_source("Failed to read branch", e))?;
             if let Some(name) = branch.name().ok().flatten() {
-                names.push(name.to_string());
+                names.push(name.to_owned());
             }
         }
 
@@ -217,9 +217,9 @@ impl VcsProvider for Git2Provider {
             commits.push(VcsCommit::new(
                 format!("{}:{}", repo.id(), oid),
                 oid.to_string(),
-                commit.message().unwrap_or("").to_string(),
-                author.name().unwrap_or("Unknown").to_string(),
-                author.email().unwrap_or("").to_string(),
+                commit.message().unwrap_or("").to_owned(),
+                author.name().unwrap_or("Unknown").to_owned(),
+                author.email().unwrap_or("").to_owned(),
                 commit.time().seconds(),
                 parent_hashes,
             ));
@@ -384,8 +384,8 @@ impl VcsProvider for Git2Provider {
 
         Ok(RefDiff {
             id: Uuid::new_v4().to_string(),
-            base_ref: base_ref.to_string(),
-            head_ref: head_ref.to_string(),
+            base_ref: base_ref.to_owned(),
+            head_ref: head_ref.to_owned(),
             files,
             total_additions,
             total_deletions,

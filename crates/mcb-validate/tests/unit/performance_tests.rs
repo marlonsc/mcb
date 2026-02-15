@@ -3,9 +3,9 @@
 //! Validates `PerformanceValidator` against fixture crates with precise
 //! file + line + violation-type assertions.
 //!
-//! Codes covered: PERF001 (CloneInLoop), PERF002 (AllocationInLoop),
-//! PERF003 (ArcMutexOveruse), PERF004 (InefficientIterator),
-//! PERF005 (InefficientString).
+//! Codes covered: PERF001 (`CloneInLoop`), PERF002 (`AllocationInLoop`),
+//! PERF003 (`ArcMutexOveruse`), PERF004 (`InefficientIterator`),
+//! PERF005 (`InefficientString`).
 
 use mcb_validate::PerformanceValidator;
 
@@ -49,12 +49,12 @@ fn test_performance_full_workspace() {
 fn test_clean_performance_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
-        r#"
+        "
 /// Efficient processing without clones or allocations in loops.
 pub fn process_items(items: &[String]) -> usize {
     items.len()
 }
-"#,
+",
     );
     let validator = PerformanceValidator::new(&root);
     let violations = validator.validate_all().unwrap();

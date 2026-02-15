@@ -102,7 +102,7 @@ pub(crate) async fn send_json_request(params: JsonRequestParams<'_>) -> Result<V
 
 pub(crate) fn embedding_data_array(response_data: &Value, expected_len: usize) -> Result<&[Value]> {
     let data = response_data["data"].as_array().ok_or_else(|| {
-        Error::embedding("Invalid response format: missing data array".to_string())
+        Error::embedding("Invalid response format: missing data array".to_owned())
     })?;
 
     if data.len() != expected_len {
@@ -124,7 +124,7 @@ pub(crate) fn parse_float_array_lossy(
     let arr = response_data
         .pointer(pointer)
         .and_then(Value::as_array)
-        .ok_or_else(|| Error::embedding(missing_message.to_string()))?;
+        .ok_or_else(|| Error::embedding(missing_message.to_owned()))?;
 
     Ok(arr
         .iter()

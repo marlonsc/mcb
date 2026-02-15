@@ -132,11 +132,11 @@ pub fn validate_magic_numbers(config: &ValidationConfig) -> Result<Vec<Organizat
                     }
 
                     violations.push(OrganizationViolation::MagicNumber {
-                        file: path.to_path_buf(),
+                        file: path.clone(),
                         line: line_num + 1,
-                        value: num.to_string(),
-                        context: trimmed.to_string(),
-                        suggestion: "Consider using a named constant".to_string(),
+                        value: num.to_owned(),
+                        context: trimmed.to_owned(),
+                        suggestion: "Consider using a named constant".to_owned(),
                         severity: Severity::Info,
                     });
                 }

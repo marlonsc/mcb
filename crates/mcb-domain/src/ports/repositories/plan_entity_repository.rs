@@ -9,7 +9,7 @@ use crate::entities::plan::{Plan, PlanReview, PlanVersion};
 use crate::error::Result;
 
 #[async_trait]
-/// Defines behavior for PlanEntityRepository.
+/// Defines behavior for `PlanEntityRepository`.
 #[async_trait]
 /// Registry for plans.
 pub trait PlanRegistry: Send + Sync {

@@ -13,7 +13,7 @@ pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<Hygiene
     let [test_attr_pattern, tokio_test_attr_pattern] =
         required_patterns(["TEST001.test_attr", "TEST001.tokio_test_attr"])?
             .try_into()
-            .map_err(|_| crate::ValidationError::Config("invalid test pattern set".to_string()))?;
+            .map_err(|_| crate::ValidationError::Config("invalid test pattern set".to_owned()))?;
 
     for crate_dir in config.get_source_dirs()? {
         let src_dir = crate_dir.join("src");
@@ -42,7 +42,7 @@ pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<Hygiene
                     last_cfg_test_line = Some(line_num);
                     has_inline_module_marker = true;
                     violations.push(HygieneViolation::InlineTestModule {
-                        file: path.to_path_buf(),
+                        file: path.clone(),
                         line: line_num + 1,
                         severity: Severity::Warning,
                     });
@@ -55,7 +55,7 @@ pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<Hygiene
                     }
                     has_inline_module_marker = true;
                     violations.push(HygieneViolation::InlineTestModule {
-                        file: path.to_path_buf(),
+                        file: path.clone(),
                         line: line_num + 1,
                         severity: Severity::Warning,
                     });
@@ -66,7 +66,7 @@ pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<Hygiene
                 for (line_num, line) in lines.iter().enumerate() {
                     if test_attr_pattern.is_match(line) || tokio_test_attr_pattern.is_match(line) {
                         violations.push(HygieneViolation::InlineTestModule {
-                            file: path.to_path_buf(),
+                            file: path.clone(),
                             line: line_num + 1,
                             severity: Severity::Warning,
                         });

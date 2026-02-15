@@ -19,7 +19,7 @@ fn default_org_context_uses_bootstrap_id() {
 #[rstest]
 fn custom_org_context() {
     let org_uuid = id::deterministic("org", "org-123");
-    let ctx = OrgContext::new(OrgId::from_uuid(org_uuid), "acme".to_string());
+    let ctx = OrgContext::new(OrgId::from_uuid(org_uuid), "acme".to_owned());
     assert_eq!(ctx.org_id.to_string(), org_uuid.to_string());
     assert_eq!(ctx.org_name, "acme");
 }

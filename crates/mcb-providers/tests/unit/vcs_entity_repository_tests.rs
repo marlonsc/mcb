@@ -37,12 +37,12 @@ async fn setup_repo() -> (
 fn create_test_repository(id: &str, project_id: &str) -> Repository {
     Repository {
         metadata: mcb_domain::entities::EntityMetadata {
-            id: id.to_string(),
+            id: id.to_owned(),
             created_at: TEST_NOW,
             updated_at: TEST_NOW,
         },
-        org_id: DEFAULT_ORG_ID.to_string(),
-        project_id: project_id.to_string(),
+        org_id: DEFAULT_ORG_ID.to_owned(),
+        project_id: project_id.to_owned(),
         name: format!("repo-{id}"),
         url: format!("https://example.com/{id}.git"),
         local_path: format!("/tmp/{id}"),
@@ -52,11 +52,11 @@ fn create_test_repository(id: &str, project_id: &str) -> Repository {
 
 fn create_test_branch(id: &str, repository_id: &str, name: &str) -> Branch {
     Branch {
-        id: id.to_string(),
-        repository_id: repository_id.to_string(),
-        name: name.to_string(),
+        id: id.to_owned(),
+        repository_id: repository_id.to_owned(),
+        name: name.to_owned(),
         is_default: name == "main",
-        head_commit: "abc123".to_string(),
+        head_commit: "abc123".to_owned(),
         upstream: None,
         created_at: TEST_NOW,
     }
@@ -65,12 +65,12 @@ fn create_test_branch(id: &str, repository_id: &str, name: &str) -> Branch {
 fn create_test_worktree(id: &str, repository_id: &str, branch_id: &str) -> Worktree {
     Worktree {
         metadata: mcb_domain::entities::EntityMetadata {
-            id: id.to_string(),
+            id: id.to_owned(),
             created_at: TEST_NOW,
             updated_at: TEST_NOW,
         },
-        repository_id: repository_id.to_string(),
-        branch_id: branch_id.to_string(),
+        repository_id: repository_id.to_owned(),
+        branch_id: branch_id.to_owned(),
         path: format!("/tmp/worktree-{id}"),
         status: WorktreeStatus::Active,
         assigned_agent_id: None,
@@ -82,13 +82,13 @@ async fn seed_agent_session(executor: &dyn DatabaseExecutor) {
         .execute(
             "INSERT INTO session_summaries (id, project_id, session_id, topics, decisions, next_steps, key_files, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             &[
-                SqlParam::String("summ-1".to_string()),
-                SqlParam::String("proj-1".to_string()),
-                SqlParam::String("sid-1".to_string()),
-                SqlParam::String("[]".to_string()),
-                SqlParam::String("[]".to_string()),
-                SqlParam::String("[]".to_string()),
-                SqlParam::String("[]".to_string()),
+                SqlParam::String("summ-1".to_owned()),
+                SqlParam::String("proj-1".to_owned()),
+                SqlParam::String("sid-1".to_owned()),
+                SqlParam::String("[]".to_owned()),
+                SqlParam::String("[]".to_owned()),
+                SqlParam::String("[]".to_owned()),
+                SqlParam::String("[]".to_owned()),
                 SqlParam::I64(0),
             ],
         )
@@ -98,15 +98,15 @@ async fn seed_agent_session(executor: &dyn DatabaseExecutor) {
         .execute(
             "INSERT INTO agent_sessions (id, session_summary_id, agent_type, model, parent_session_id, started_at, ended_at, duration_ms, status, prompt_summary, result_summary, token_count, tool_calls_count, delegations_count, project_id, worktree_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             &[
-                SqlParam::String("agent-1".to_string()),
-                SqlParam::String("summ-1".to_string()),
-                SqlParam::String("sisyphus".to_string()),
-                SqlParam::String("test".to_string()),
+                SqlParam::String("agent-1".to_owned()),
+                SqlParam::String("summ-1".to_owned()),
+                SqlParam::String("sisyphus".to_owned()),
+                SqlParam::String("test".to_owned()),
                 SqlParam::Null,
                 SqlParam::I64(0),
                 SqlParam::Null,
                 SqlParam::Null,
-                SqlParam::String("active".to_string()),
+                SqlParam::String("active".to_owned()),
                 SqlParam::Null,
                 SqlParam::Null,
                 SqlParam::Null,
@@ -142,7 +142,7 @@ async fn test_repository_crud() {
     assert_eq!(list.len(), 1);
 
     let mut updated = vcs_repo.clone();
-    updated.name = "updated-name".to_string();
+    updated.name = "updated-name".to_owned();
     updated.metadata.updated_at = 2_000_000;
     repo.update_repository(&updated).await.expect("update");
 
@@ -181,7 +181,7 @@ async fn branch_and_worktree_crud(#[case] entity_kind: &str) {
         assert_eq!(list.len(), 1);
 
         let mut updated = branch.clone();
-        updated.head_commit = "def456".to_string();
+        updated.head_commit = "def456".to_owned();
         repo.update_branch(&updated).await.expect("update");
 
         let after_update = repo.get_branch("branch-1").await.expect("get");
@@ -227,9 +227,9 @@ async fn test_assignment_lifecycle() {
     seed_agent_session(executor.as_ref()).await;
 
     let assignment = AgentWorktreeAssignment {
-        id: "asgn-1".to_string(),
-        agent_session_id: "agent-1".to_string(),
-        worktree_id: "wt-1".to_string(),
+        id: "asgn-1".to_owned(),
+        agent_session_id: "agent-1".to_owned(),
+        worktree_id: "wt-1".to_owned(),
         assigned_at: 1_000_000,
         released_at: None,
     };
@@ -266,15 +266,15 @@ async fn test_org_isolation_repositories() {
     let repo = SqliteVcsEntityRepository::new(executor);
     let vcs_repo = Repository {
         metadata: mcb_domain::entities::EntityMetadata {
-            id: "repo-iso".to_string(),
+            id: "repo-iso".to_owned(),
             created_at: TEST_NOW,
             updated_at: TEST_NOW,
         },
-        org_id: "org-A".to_string(),
-        project_id: "proj-org-A".to_string(),
-        name: "Org A Repo".to_string(),
-        url: "https://example.com/a.git".to_string(),
-        local_path: "/tmp/a".to_string(),
+        org_id: "org-A".to_owned(),
+        project_id: "proj-org-A".to_owned(),
+        name: "Org A Repo".to_owned(),
+        url: "https://example.com/a.git".to_owned(),
+        local_path: "/tmp/a".to_owned(),
         vcs_type: VcsType::Git,
     };
     repo.create_repository(&vcs_repo).await.expect("create");
@@ -294,9 +294,9 @@ async fn test_project_isolation_same_org_same_local_path() {
     let (repo, _executor, _temp) = setup_repo().await;
 
     let mut repo_proj_1 = create_test_repository("repo-proj-1", "proj-1");
-    repo_proj_1.local_path = "/tmp/shared-path".to_string();
+    repo_proj_1.local_path = "/tmp/shared-path".to_owned();
     let mut repo_proj_2 = create_test_repository("repo-proj-2", "proj-2");
-    repo_proj_2.local_path = "/tmp/shared-path".to_string();
+    repo_proj_2.local_path = "/tmp/shared-path".to_owned();
 
     repo.create_repository(&repo_proj_1)
         .await

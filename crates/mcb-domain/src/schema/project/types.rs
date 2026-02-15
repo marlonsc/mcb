@@ -9,7 +9,7 @@ use super::multi_tenant;
 use super::plan_entities;
 use super::vcs_entities;
 
-/// Foreign key: (from_table.from_column) REFERENCES to_table(to_column).
+/// Foreign key: (`from_table.from_column`) REFERENCES `to_table(to_column)`.
 #[derive(Debug, Clone)]
 pub struct ForeignKeyDef {
     /// Stores the from table value.
@@ -22,7 +22,7 @@ pub struct ForeignKeyDef {
     pub to_column: String,
 }
 
-/// Composite unique constraint (e.g. UNIQUE(collection, file_path)).
+/// Composite unique constraint (e.g. UNIQUE(collection, `file_path`)).
 #[derive(Debug, Clone)]
 pub struct UniqueConstraintDef {
     /// Stores the table value.
@@ -34,7 +34,7 @@ pub struct UniqueConstraintDef {
 /// Full project schema: all tables, FTS, indexes, FKs, unique constraints.
 ///
 /// Use this for one database that serves memory, collections, and file hashes.
-/// Each backend (SQLite, PostgreSQL, MySQL) implements [`SchemaDdlGenerator`]
+/// Each backend (`SQLite`, `PostgreSQL`, `MySQL`) implements [`SchemaDdlGenerator`]
 /// to produce dialect-specific DDL from this schema.
 #[derive(Debug, Clone)]
 pub struct ProjectSchema {
@@ -51,8 +51,8 @@ pub struct ProjectSchema {
 }
 
 impl ProjectSchema {
-    /// Returns the full project schema: collections, observations, session_summaries,
-    /// file_hashes, FTS, indexes, and relationships (FKs).
+    /// Returns the full project schema: collections, observations, `session_summaries`,
+    /// `file_hashes`, FTS, indexes, and relationships (FKs).
     #[must_use]
     pub fn definition() -> Self {
         Self {
@@ -71,10 +71,10 @@ impl ProjectSchema {
 
         tables.extend(vec![
             TableDef {
-                name: "projects".to_string(),
+                name: "projects".to_owned(),
                 columns: vec![
                     ColumnDef {
-                        name: "id".to_string(),
+                        name: "id".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: true,
                         unique: false,
@@ -82,7 +82,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "org_id".to_string(),
+                        name: "org_id".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -90,7 +90,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "name".to_string(),
+                        name: "name".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -98,7 +98,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "path".to_string(),
+                        name: "path".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -106,7 +106,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "created_at".to_string(),
+                        name: "created_at".to_owned(),
                         type_: ColumnType::Integer,
                         primary_key: false,
                         unique: false,
@@ -114,7 +114,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "updated_at".to_string(),
+                        name: "updated_at".to_owned(),
                         type_: ColumnType::Integer,
                         primary_key: false,
                         unique: false,
@@ -124,10 +124,10 @@ impl ProjectSchema {
                 ],
             },
             TableDef {
-                name: "collections".to_string(),
+                name: "collections".to_owned(),
                 columns: vec![
                     ColumnDef {
-                        name: "id".to_string(),
+                        name: "id".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: true,
                         unique: false,
@@ -135,7 +135,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "project_id".to_string(),
+                        name: "project_id".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -143,7 +143,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "name".to_string(),
+                        name: "name".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -151,7 +151,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "vector_name".to_string(),
+                        name: "vector_name".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -159,7 +159,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "created_at".to_string(),
+                        name: "created_at".to_owned(),
                         type_: ColumnType::Integer,
                         primary_key: false,
                         unique: false,
@@ -177,7 +177,7 @@ impl ProjectSchema {
                     1,
                     ColumnDef {
                         // Insert after id
-                        name: "project_id".to_string(),
+                        name: "project_id".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -194,11 +194,11 @@ impl ProjectSchema {
         tables.push(
             // file_hashes (incremental indexing; collection = namespace)
             TableDef {
-                name: "file_hashes".to_string(),
+                name: "file_hashes".to_owned(),
                 // TODO(qlty): Found 66 lines of similar code in 2 locations (mass = 145)
                 columns: vec![
                     ColumnDef {
-                        name: "id".to_string(),
+                        name: "id".to_owned(),
                         type_: ColumnType::Integer,
                         primary_key: true,
                         unique: false,
@@ -206,7 +206,7 @@ impl ProjectSchema {
                         auto_increment: true,
                     },
                     ColumnDef {
-                        name: "project_id".to_string(),
+                        name: "project_id".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -214,7 +214,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "collection".to_string(),
+                        name: "collection".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -222,7 +222,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "file_path".to_string(),
+                        name: "file_path".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -230,7 +230,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "content_hash".to_string(),
+                        name: "content_hash".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -238,7 +238,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "indexed_at".to_string(),
+                        name: "indexed_at".to_owned(),
                         type_: ColumnType::Integer,
                         primary_key: false,
                         unique: false,
@@ -246,7 +246,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "deleted_at".to_string(),
+                        name: "deleted_at".to_owned(),
                         type_: ColumnType::Integer,
                         primary_key: false,
                         unique: false,
@@ -254,7 +254,7 @@ impl ProjectSchema {
                         auto_increment: false,
                     },
                     ColumnDef {
-                        name: "origin_context".to_string(),
+                        name: "origin_context".to_owned(),
                         type_: ColumnType::Text,
                         primary_key: false,
                         unique: false,
@@ -278,10 +278,10 @@ impl ProjectSchema {
     /// Returns the FTS definition.
     fn fts_def() -> Option<FtsDef> {
         Some(FtsDef {
-            virtual_table_name: "observations_fts".to_string(),
-            content_table: "observations".to_string(),
-            content_columns: vec!["content".to_string()],
-            id_column: "id".to_string(),
+            virtual_table_name: "observations_fts".to_owned(),
+            content_table: "observations".to_owned(),
+            content_columns: vec!["content".to_owned()],
+            id_column: "id".to_owned(),
         })
     }
 
@@ -289,39 +289,39 @@ impl ProjectSchema {
     fn indexes() -> Vec<IndexDef> {
         let mut indexes = vec![
             IndexDef {
-                name: "idx_projects_org".to_string(),
-                table: "projects".to_string(),
-                columns: vec!["org_id".to_string()],
+                name: "idx_projects_org".to_owned(),
+                table: "projects".to_owned(),
+                columns: vec!["org_id".to_owned()],
             },
             IndexDef {
-                name: "idx_collections_project".to_string(),
-                table: "collections".to_string(),
-                columns: vec!["project_id".to_string()],
+                name: "idx_collections_project".to_owned(),
+                table: "collections".to_owned(),
+                columns: vec!["project_id".to_owned()],
             },
             IndexDef {
-                name: "idx_obs_project".to_string(),
-                table: "observations".to_string(),
-                columns: vec!["project_id".to_string()],
+                name: "idx_obs_project".to_owned(),
+                table: "observations".to_owned(),
+                columns: vec!["project_id".to_owned()],
             },
             IndexDef {
-                name: "idx_summary_project".to_string(),
-                table: "session_summaries".to_string(),
-                columns: vec!["project_id".to_string()],
+                name: "idx_summary_project".to_owned(),
+                table: "session_summaries".to_owned(),
+                columns: vec!["project_id".to_owned()],
             },
             IndexDef {
-                name: "idx_file_hashes_project".to_string(),
-                table: "file_hashes".to_string(),
-                columns: vec!["project_id".to_string()],
+                name: "idx_file_hashes_project".to_owned(),
+                table: "file_hashes".to_owned(),
+                columns: vec!["project_id".to_owned()],
             },
             IndexDef {
-                name: "idx_file_hashes_collection".to_string(),
-                table: "file_hashes".to_string(),
-                columns: vec!["collection".to_string()],
+                name: "idx_file_hashes_collection".to_owned(),
+                table: "file_hashes".to_owned(),
+                columns: vec!["collection".to_owned()],
             },
             IndexDef {
-                name: "idx_file_hashes_deleted".to_string(),
-                table: "file_hashes".to_string(),
-                columns: vec!["deleted_at".to_string()],
+                name: "idx_file_hashes_deleted".to_owned(),
+                table: "file_hashes".to_owned(),
+                columns: vec!["deleted_at".to_owned()],
             },
         ];
 
@@ -343,28 +343,28 @@ impl ProjectSchema {
     fn foreign_keys() -> Vec<ForeignKeyDef> {
         let mut fks = vec![
             ForeignKeyDef {
-                from_table: "collections".to_string(),
-                from_column: "project_id".to_string(),
-                to_table: "projects".to_string(),
-                to_column: "id".to_string(),
+                from_table: "collections".to_owned(),
+                from_column: "project_id".to_owned(),
+                to_table: "projects".to_owned(),
+                to_column: "id".to_owned(),
             },
             ForeignKeyDef {
-                from_table: "observations".to_string(),
-                from_column: "project_id".to_string(),
-                to_table: "projects".to_string(),
-                to_column: "id".to_string(),
+                from_table: "observations".to_owned(),
+                from_column: "project_id".to_owned(),
+                to_table: "projects".to_owned(),
+                to_column: "id".to_owned(),
             },
             ForeignKeyDef {
-                from_table: "session_summaries".to_string(),
-                from_column: "project_id".to_string(),
-                to_table: "projects".to_string(),
-                to_column: "id".to_string(),
+                from_table: "session_summaries".to_owned(),
+                from_column: "project_id".to_owned(),
+                to_table: "projects".to_owned(),
+                to_column: "id".to_owned(),
             },
             ForeignKeyDef {
-                from_table: "file_hashes".to_string(),
-                from_column: "project_id".to_string(),
-                to_table: "projects".to_string(),
-                to_column: "id".to_string(),
+                from_table: "file_hashes".to_owned(),
+                from_column: "project_id".to_owned(),
+                to_table: "projects".to_owned(),
+                to_column: "id".to_owned(),
             },
         ];
         fks.extend(agent::foreign_keys());
@@ -380,19 +380,19 @@ impl ProjectSchema {
     fn unique_constraints() -> Vec<UniqueConstraintDef> {
         let mut ucs = vec![
             UniqueConstraintDef {
-                table: "projects".to_string(),
-                columns: vec!["org_id".to_string(), "name".to_string()],
+                table: "projects".to_owned(),
+                columns: vec!["org_id".to_owned(), "name".to_owned()],
             },
             UniqueConstraintDef {
-                table: "collections".to_string(),
-                columns: vec!["project_id".to_string(), "name".to_string()],
+                table: "collections".to_owned(),
+                columns: vec!["project_id".to_owned(), "name".to_owned()],
             },
             UniqueConstraintDef {
-                table: "file_hashes".to_string(),
+                table: "file_hashes".to_owned(),
                 columns: vec![
-                    "project_id".to_string(),
-                    "collection".to_string(),
-                    "file_path".to_string(),
+                    "project_id".to_owned(),
+                    "collection".to_owned(),
+                    "file_path".to_owned(),
                 ],
             },
         ];
@@ -406,7 +406,7 @@ impl ProjectSchema {
 
 /// Port for generating DDL from the full project schema.
 ///
-/// Each backend (SQLite, PostgreSQL, MySQL, etc.) implements this trait to
+/// Each backend (`SQLite`, `PostgreSQL`, `MySQL`, etc.) implements this trait to
 /// produce dialect-specific DDL for all project tables, FKs, and constraints.
 /// Use this for a single database that serves memory, collections, and file hashes.
 ///

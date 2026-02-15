@@ -13,20 +13,20 @@ fn transition_happy_paths(
     #[case] phase_id: &str,
     #[case] expected_state: &str,
 ) {
-    let mut session = WorkflowSession::new("s1".to_string(), "p1".to_string());
+    let mut session = WorkflowSession::new("s1".to_owned(), "p1".to_owned());
     if from_state == "ready" {
         session.current_state = WorkflowState::Ready {
-            context_id: context_id.to_string(),
+            context_id: context_id.to_owned(),
         };
     }
 
     let trigger = if from_state == "initializing" {
         TransitionTrigger::ContextDiscovered {
-            context_id: context_id.to_string(),
+            context_id: context_id.to_owned(),
         }
     } else {
         TransitionTrigger::StartPlanning {
-            phase_id: phase_id.to_string(),
+            phase_id: phase_id.to_owned(),
         }
     };
 
@@ -47,7 +47,7 @@ fn transition_happy_paths(
 
 #[test]
 fn terminal_state_no_transitions() {
-    let mut session = WorkflowSession::new("s1".to_string(), "p1".to_string());
+    let mut session = WorkflowSession::new("s1".to_owned(), "p1".to_owned());
     session.current_state = WorkflowState::Completed;
 
     let trigger = TransitionTrigger::EndSession;

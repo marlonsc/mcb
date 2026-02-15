@@ -21,9 +21,9 @@ fn test_vcs_repository_has_required_fields() {
     let repo = VcsRepository::new(
         RepositoryId::from_uuid(uuid),
         PathBuf::from("/tmp/repo"),
-        "main".to_string(),
-        vec!["main".to_string()],
-        Some("https://example.com".to_string()),
+        "main".to_owned(),
+        vec!["main".to_owned()],
+        Some("https://example.com".to_owned()),
     );
     assert_eq!(repo.id().to_string(), uuid.to_string());
     assert_eq!(repo.default_branch(), "main");
@@ -32,9 +32,9 @@ fn test_vcs_repository_has_required_fields() {
 #[rstest]
 fn test_vcs_branch_has_id_and_name() {
     let branch = VcsBranch::new(
-        "b1".to_string(),
-        "feature".to_string(),
-        "c1".to_string(),
+        "b1".to_owned(),
+        "feature".to_owned(),
+        "c1".to_owned(),
         false,
         None,
     );

@@ -55,7 +55,7 @@ pub(crate) fn handle_request_error_with_kind(
     match kind {
         RequestErrorKind::Embedding => {
             if error.is_timeout() {
-                Error::embedding(format!("{} {:?}", ERROR_MSG_REQUEST_TIMEOUT, timeout))
+                Error::embedding(format!("{ERROR_MSG_REQUEST_TIMEOUT} {timeout:?}"))
             } else {
                 Error::embedding(format!("HTTP request to {provider} failed: {error}"))
             }
@@ -63,13 +63,11 @@ pub(crate) fn handle_request_error_with_kind(
         RequestErrorKind::VectorDb => {
             if error.is_timeout() {
                 Error::vector_db(format!(
-                    "{} {} request timed out after {:?}",
-                    provider, operation, timeout
+                    "{provider} {operation} request timed out after {timeout:?}"
                 ))
             } else {
                 Error::vector_db(format!(
-                    "{} HTTP request for {} failed: {}",
-                    provider, operation, error
+                    "{provider} HTTP request for {operation} failed: {error}"
                 ))
             }
         }
@@ -159,7 +157,7 @@ pub(crate) fn create_http_provider_config(
     let model = config
         .model
         .clone()
-        .unwrap_or_else(|| default_model.to_string());
+        .unwrap_or_else(|| default_model.to_owned());
 
     let client = create_default_client()?;
 

@@ -67,3 +67,5 @@ mod context_resolution_tests;
 mod unified_execution_gate_tests;
 
 mod error_mapping_tests;
+
+mod tool_invariant_matrix_tests;

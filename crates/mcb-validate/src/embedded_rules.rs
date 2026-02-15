@@ -143,6 +143,7 @@ impl EmbeddedRules {
         include_str!("../rules/testing/TEST001_organization.yml");
 
     /// All embedded YAML files including templates.
+    #[must_use]
     pub fn all_yaml() -> Vec<(&'static str, &'static str)> {
         vec![
             (
@@ -417,6 +418,7 @@ impl EmbeddedRules {
     }
 
     /// Embedded YAML rule files excluding template definitions.
+    #[must_use]
     pub fn rule_yaml() -> Vec<(&'static str, &'static str)> {
         Self::all_yaml()
             .into_iter()

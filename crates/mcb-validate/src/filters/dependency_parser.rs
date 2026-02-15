@@ -33,11 +33,13 @@ pub struct CrateDependencies {
 
 impl CrateDependencies {
     /// Check if a dependency is declared
+    #[must_use]
     pub fn has_dependency(&self, name: &str) -> bool {
         self.deps.contains_key(name)
     }
 
     /// Get dependency info
+    #[must_use]
     pub fn get_dependency(&self, name: &str) -> Option<&DependencyInfo> {
         self.deps.get(name)
     }
@@ -59,6 +61,7 @@ pub struct WorkspaceDependencies {
 
 impl WorkspaceDependencies {
     /// Find dependencies for a specific file's crate
+    #[must_use]
     pub fn find_crate_deps(&self, file_path: &Path) -> Option<&CrateDependencies> {
         // Find the crate directory containing this file
         let mut current = file_path.parent()?;
@@ -97,6 +100,7 @@ pub struct CargoDependencyParser {
 
 impl CargoDependencyParser {
     /// Create a new parser for the given workspace root
+    #[must_use]
     pub fn new(workspace_root: PathBuf) -> Self {
         Self { workspace_root }
     }

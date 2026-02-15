@@ -7,7 +7,7 @@ use crate::value_objects::Embedding;
 ///
 /// Defines the business contract for AI providers that transform text into
 /// semantic embeddings. This abstraction enables the platform to work with
-/// any AI service that can understand code semantics, from enterprise OpenAI
+/// any AI service that can understand code semantics, from enterprise `OpenAI`
 /// deployments to self-hosted Ollama instances.
 ///
 /// # Default Implementations
@@ -39,7 +39,7 @@ pub trait EmbeddingProvider: Send + Sync {
     /// Get embedding for a single text (default implementation provided)
     async fn embed(&self, text: &str) -> Result<Embedding> {
         // Default: delegate to embed_batch
-        let embeddings = self.embed_batch(&[text.to_string()]).await?;
+        let embeddings = self.embed_batch(&[text.to_owned()]).await?;
         embeddings
             .into_iter()
             .next()

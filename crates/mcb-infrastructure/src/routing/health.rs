@@ -86,6 +86,7 @@ pub struct InMemoryHealthMonitor {
 
 impl InMemoryHealthMonitor {
     /// Create a new health monitor with default thresholds
+    #[must_use]
     pub fn new() -> Self {
         Self {
             health_data: DashMap::new(),
@@ -95,6 +96,7 @@ impl InMemoryHealthMonitor {
     }
 
     /// Create with custom thresholds
+    #[must_use]
     pub fn with_thresholds(degraded_threshold: u32, failure_threshold: u32) -> Self {
         Self {
             health_data: DashMap::new(),
@@ -108,7 +110,7 @@ impl InMemoryHealthMonitor {
         &self,
         provider_id: &str,
     ) -> dashmap::mapref::one::RefMut<'_, String, ProviderHealthData> {
-        self.health_data.entry(provider_id.to_string()).or_default()
+        self.health_data.entry(provider_id.to_owned()).or_default()
     }
 
     /// Calculate status based on failure count
@@ -134,8 +136,7 @@ impl HealthMonitor for InMemoryHealthMonitor {
     fn get_health(&self, provider_id: &str) -> ProviderHealthStatus {
         self.health_data
             .get(provider_id)
-            .map(|data| data.status)
-            .unwrap_or(ProviderHealthStatus::Healthy)
+            .map_or(ProviderHealthStatus::Healthy, |data| data.status)
     }
 
     fn record_success(&self, provider_id: &str) {

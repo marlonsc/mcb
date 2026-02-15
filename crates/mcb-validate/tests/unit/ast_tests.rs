@@ -18,7 +18,7 @@ impl Callback for RootKindCallback {
     type Cfg = ();
 
     fn call<T: ParserTrait>(_cfg: Self::Cfg, parser: &T) -> Self::Res {
-        parser.get_root().kind().to_string()
+        parser.get_root().kind().to_owned()
     }
 }
 

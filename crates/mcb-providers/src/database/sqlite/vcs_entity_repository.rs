@@ -1,4 +1,4 @@
-//! SQLite VCS entity repository.
+//! `SQLite` VCS entity repository.
 
 use std::sync::Arc;
 
@@ -109,7 +109,7 @@ fn row_to_worktree(row: &dyn SqlRow) -> Result<Worktree> {
     })
 }
 
-/// Converts a SQL row to an AgentWorktreeAssignment.
+/// Converts a SQL row to an `AgentWorktreeAssignment`.
 fn row_to_assignment(row: &dyn SqlRow) -> Result<AgentWorktreeAssignment> {
     Ok(AgentWorktreeAssignment {
         id: req_str(row, "id")?,
@@ -160,8 +160,8 @@ impl RepositoryRegistry for SqliteVcsEntityRepository {
         self.query_one(
             "SELECT * FROM repositories WHERE org_id = ? AND id = ?",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(id.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(id.to_owned()),
             ],
             row_to_repository,
         )
@@ -174,8 +174,8 @@ impl RepositoryRegistry for SqliteVcsEntityRepository {
         self.query_all(
             "SELECT * FROM repositories WHERE org_id = ? AND project_id = ?",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(project_id.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(project_id.to_owned()),
             ],
             row_to_repository,
         )
@@ -216,8 +216,8 @@ impl RepositoryRegistry for SqliteVcsEntityRepository {
             .execute(
                 "DELETE FROM repositories WHERE org_id = ? AND id = ?",
                 &[
-                    SqlParam::String(org_id.to_string()),
-                    SqlParam::String(id.to_string()),
+                    SqlParam::String(org_id.to_owned()),
+                    SqlParam::String(id.to_owned()),
                 ],
             )
             .await
@@ -261,7 +261,7 @@ impl BranchRegistry for SqliteVcsEntityRepository {
     async fn get_branch(&self, id: &str) -> Result<Branch> {
         self.query_one(
             "SELECT * FROM branches WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_branch,
         )
         .await?
@@ -272,7 +272,7 @@ impl BranchRegistry for SqliteVcsEntityRepository {
     async fn list_branches(&self, repository_id: &str) -> Result<Vec<Branch>> {
         self.query_all(
             "SELECT * FROM branches WHERE repository_id = ?",
-            &[SqlParam::String(repository_id.to_string())],
+            &[SqlParam::String(repository_id.to_owned())],
             row_to_branch,
         )
         .await
@@ -311,7 +311,7 @@ impl BranchRegistry for SqliteVcsEntityRepository {
         self.executor
             .execute(
                 "DELETE FROM branches WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }
@@ -355,7 +355,7 @@ impl WorktreeManager for SqliteVcsEntityRepository {
     async fn get_worktree(&self, id: &str) -> Result<Worktree> {
         self.query_one(
             "SELECT * FROM worktrees WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_worktree,
         )
         .await?
@@ -366,7 +366,7 @@ impl WorktreeManager for SqliteVcsEntityRepository {
     async fn list_worktrees(&self, repository_id: &str) -> Result<Vec<Worktree>> {
         self.query_all(
             "SELECT * FROM worktrees WHERE repository_id = ?",
-            &[SqlParam::String(repository_id.to_string())],
+            &[SqlParam::String(repository_id.to_owned())],
             row_to_worktree,
         )
         .await
@@ -406,7 +406,7 @@ impl WorktreeManager for SqliteVcsEntityRepository {
         self.executor
             .execute(
                 "DELETE FROM worktrees WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }
@@ -446,7 +446,7 @@ impl AssignmentManager for SqliteVcsEntityRepository {
     async fn get_assignment(&self, id: &str) -> Result<AgentWorktreeAssignment> {
         self.query_one(
             "SELECT * FROM agent_worktree_assignments WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_assignment,
         )
         .await?
@@ -460,13 +460,13 @@ impl AssignmentManager for SqliteVcsEntityRepository {
     ) -> Result<Vec<AgentWorktreeAssignment>> {
         self.query_all(
             "SELECT * FROM agent_worktree_assignments WHERE worktree_id = ?",
-            &[SqlParam::String(worktree_id.to_string())],
+            &[SqlParam::String(worktree_id.to_owned())],
             row_to_assignment,
         )
         .await
     }
 
-    /// Releases an assignment (sets released_at).
+    /// Releases an assignment (sets `released_at`).
     async fn release_assignment(&self, id: &str, released_at: i64) -> Result<()> {
         self.executor
             .execute(
@@ -480,7 +480,7 @@ impl AssignmentManager for SqliteVcsEntityRepository {
                         })
                         .to_string(),
                     ),
-                    SqlParam::String(id.to_string()),
+                    SqlParam::String(id.to_owned()),
                 ],
             )
             .await

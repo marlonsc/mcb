@@ -41,7 +41,7 @@ pub struct IssueEntityArgs {
     #[schemars(description = "Action: create, get, update, list, delete")]
     pub action: IssueEntityAction,
 
-    /// Resource: issue, comment, label, label_assignment
+    /// Resource: issue, comment, label, `label_assignment`
     #[schemars(description = "Resource: issue, comment, label, label_assignment")]
     pub resource: IssueEntityResource,
 

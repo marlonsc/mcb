@@ -10,14 +10,14 @@ pub fn validate_arc_mutex_overuse(
     validator: &PerformanceValidator,
 ) -> Result<Vec<PerformanceViolation>> {
     let overuse_patterns = [
-        (r"Arc<Arc<", "Nested Arc<Arc<>>", "Use single Arc instead"),
-        (r"Mutex<bool>", "Mutex<bool>", "Use AtomicBool instead"),
-        (r"Mutex<usize>", "Mutex<usize>", "Use AtomicUsize instead"),
-        (r"Mutex<u32>", "Mutex<u32>", "Use AtomicU32 instead"),
-        (r"Mutex<u64>", "Mutex<u64>", "Use AtomicU64 instead"),
-        (r"Mutex<i32>", "Mutex<i32>", "Use AtomicI32 instead"),
-        (r"Mutex<i64>", "Mutex<i64>", "Use AtomicI64 instead"),
-        (r"RwLock<bool>", "RwLock<bool>", "Use AtomicBool instead"),
+        ("Arc<Arc<", "Nested Arc<Arc<>>", "Use single Arc instead"),
+        ("Mutex<bool>", "Mutex<bool>", "Use AtomicBool instead"),
+        ("Mutex<usize>", "Mutex<usize>", "Use AtomicUsize instead"),
+        ("Mutex<u32>", "Mutex<u32>", "Use AtomicU32 instead"),
+        ("Mutex<u64>", "Mutex<u64>", "Use AtomicU64 instead"),
+        ("Mutex<i32>", "Mutex<i32>", "Use AtomicI32 instead"),
+        ("Mutex<i64>", "Mutex<i64>", "Use AtomicI64 instead"),
+        ("RwLock<bool>", "RwLock<bool>", "Use AtomicBool instead"),
     ];
 
     let compiled_patterns = compile_regex_triples(&overuse_patterns)?;
@@ -28,8 +28,8 @@ pub fn validate_arc_mutex_overuse(
         |file, line, pattern, suggestion| PerformanceViolation::ArcMutexOveruse {
             file,
             line,
-            pattern: pattern.to_string(),
-            suggestion: suggestion.to_string(),
+            pattern: pattern.to_owned(),
+            suggestion: suggestion.to_owned(),
             severity: Severity::Info,
         },
     )
@@ -70,8 +70,8 @@ pub fn validate_inefficient_iterators(
         |file, line, pattern, suggestion| PerformanceViolation::InefficientIterator {
             file,
             line,
-            pattern: pattern.to_string(),
-            suggestion: suggestion.to_string(),
+            pattern: pattern.to_owned(),
+            suggestion: suggestion.to_owned(),
             severity: Severity::Info,
         },
     )
@@ -107,8 +107,8 @@ pub fn validate_inefficient_strings(
         |file, line, pattern, suggestion| PerformanceViolation::InefficientString {
             file,
             line,
-            pattern: pattern.to_string(),
-            suggestion: suggestion.to_string(),
+            pattern: pattern.to_owned(),
+            suggestion: suggestion.to_owned(),
             severity: Severity::Info,
         },
     )

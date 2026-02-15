@@ -60,9 +60,9 @@ pub fn validate_duplicate_definitions(
                     }
 
                     definitions
-                        .entry(type_name.to_string())
+                        .entry(type_name.to_owned())
                         .or_default()
-                        .push(path.to_path_buf());
+                        .push(path.clone());
                 }
 
                 Ok(())
@@ -114,7 +114,7 @@ pub fn validate_duplicate_definitions(
                     .filter_map(|p| {
                         let parent = p.parent()?;
                         let parent_str = parent.to_str()?;
-                        Some(parent_str.to_string())
+                        Some(parent_str.to_owned())
                     })
                     .collect();
 

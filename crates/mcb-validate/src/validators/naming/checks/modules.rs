@@ -20,7 +20,7 @@ pub fn validate_module_name(path: &Path) -> Option<NamingViolation> {
     if !is_snake_case(file_name) {
         return Some(NamingViolation::BadModuleName {
             path: path.to_path_buf(),
-            expected_case: "snake_case".to_string(),
+            expected_case: "snake_case".to_owned(),
             severity: Severity::Warning,
         });
     }
@@ -32,7 +32,7 @@ pub fn validate_module_name(path: &Path) -> Option<NamingViolation> {
     {
         return Some(NamingViolation::BadModuleName {
             path: path.to_path_buf(),
-            expected_case: "snake_case".to_string(),
+            expected_case: "snake_case".to_owned(),
             severity: Severity::Warning,
         });
     }

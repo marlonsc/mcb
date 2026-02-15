@@ -29,7 +29,7 @@ pub async fn get_cache_stats(
         return Err((
             Status::ServiceUnavailable,
             Json(CacheErrorResponse {
-                error: "Cache provider not available".to_string(),
+                error: "Cache provider not available".to_owned(),
             }),
         ));
     };
@@ -41,7 +41,7 @@ pub async fn get_cache_stats(
             Err((
                 Status::InternalServerError,
                 Json(CacheErrorResponse {
-                    error: "Failed to retrieve cache statistics".to_string(),
+                    error: "Failed to retrieve cache statistics".to_owned(),
                 }),
             ))
         }

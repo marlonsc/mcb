@@ -26,8 +26,8 @@ pub use violation::NamingViolation;
 
 /// Validates naming conventions across Rust code.
 ///
-/// Checks that structs, enums, traits use CamelCase; functions and methods use snake_case;
-/// constants use SCREAMING_SNAKE_CASE; and modules/files use snake_case.
+/// Checks that structs, enums, traits use CamelCase; functions and methods use `snake_case`;
+/// constants use `SCREAMING_SNAKE_CASE`; and modules/files use `snake_case`.
 pub struct NamingValidator {
     config: ValidationConfig,
     rules: NamingRulesConfig,
@@ -42,6 +42,7 @@ impl NamingValidator {
     }
 
     /// Creates a validator with custom configuration.
+    #[must_use]
     pub fn with_config(config: ValidationConfig, rules: &NamingRulesConfig) -> Self {
         Self {
             config,
@@ -85,7 +86,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validates that function and method names follow snake_case convention.
+    /// Validates that function and method names follow `snake_case` convention.
     fn run_function_name_check(&self) -> Result<Vec<NamingViolation>> {
         let fn_pattern =
             compile_regex(r"(?:pub\s+)?(?:async\s+)?fn\s+([A-Za-z_][A-Za-z0-9_]*)\s*[<(]")?;
@@ -99,7 +100,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validates that constants and statics follow SCREAMING_SNAKE_CASE convention.
+    /// Validates that constants and statics follow `SCREAMING_SNAKE_CASE` convention.
     fn run_constant_name_check(&self) -> Result<Vec<NamingViolation>> {
         let const_pattern = compile_regex(r"(?:pub\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*:")?;
         let static_pattern = compile_regex(r"(?:pub\s+)?static\s+([A-Za-z_][A-Za-z0-9_]*)\s*:")?;
@@ -118,7 +119,7 @@ impl NamingValidator {
         Ok(violations)
     }
 
-    /// Validates that module and file names follow snake_case convention.
+    /// Validates that module and file names follow `snake_case` convention.
     fn run_module_name_check(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
         self.for_each_crate_src_rs_path(|path| {

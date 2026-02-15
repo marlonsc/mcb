@@ -4,10 +4,10 @@ use rstest::rstest;
 #[rstest]
 fn organization_construction() {
     let org = Organization {
-        id: "org-001".to_string(),
-        name: "Acme Corp".to_string(),
-        slug: "acme-corp".to_string(),
-        settings_json: "{}".to_string(),
+        id: "org-001".to_owned(),
+        name: "Acme Corp".to_owned(),
+        slug: "acme-corp".to_owned(),
+        settings_json: "{}".to_owned(),
         created_at: 1000,
         updated_at: 1000,
     };
@@ -20,10 +20,10 @@ fn organization_construction() {
 #[rstest]
 fn organization_serialization_roundtrip() {
     let org = Organization {
-        id: "org-002".to_string(),
-        name: "Test Org".to_string(),
-        slug: "test-org".to_string(),
-        settings_json: r#"{"max_projects":10}"#.to_string(),
+        id: "org-002".to_owned(),
+        name: "Test Org".to_owned(),
+        slug: "test-org".to_owned(),
+        settings_json: r#"{"max_projects":10}"#.to_owned(),
         created_at: 2000,
         updated_at: 3000,
     };

@@ -5,8 +5,9 @@ use mcb_domain::error::{Error, Result};
 use sha2::Sha256;
 
 /// Convert bytes to hex string
+#[must_use]
 pub fn bytes_to_hex(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{:02x}", b)).collect()
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
 }
 
 /// Key derivation utilities
@@ -14,6 +15,7 @@ pub struct KeyDerivation;
 
 impl KeyDerivation {
     /// Derive a key from password using PBKDF2
+    #[must_use]
     pub fn pbkdf2(password: &str, salt: &[u8], iterations: u32, key_len: usize) -> Vec<u8> {
         use pbkdf2::pbkdf2_hmac;
 
@@ -23,6 +25,7 @@ impl KeyDerivation {
     }
 
     /// Generate a random salt
+    #[must_use]
     pub fn generate_salt(length: usize) -> Vec<u8> {
         let mut salt = vec![0u8; length];
         AeadOsRng.fill_bytes(&mut salt);
@@ -71,7 +74,7 @@ impl HashUtils {
         type HmacSha256 = Hmac<Sha256>;
         let mut mac =
             <HmacSha256 as Mac>::new_from_slice(key).map_err(|e| Error::Infrastructure {
-                message: format!("HMAC initialization failed: {}", e),
+                message: format!("HMAC initialization failed: {e}"),
                 source: None,
             })?;
         mac.update(data);
@@ -79,6 +82,7 @@ impl HashUtils {
     }
 
     /// Constant-time comparison for cryptographic values
+    #[must_use]
     pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
         if a.len() != b.len() {
             return false;

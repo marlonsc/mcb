@@ -149,7 +149,7 @@ impl YamlRuleLoader {
             embedded_rules: Some(
                 rules
                     .iter()
-                    .map(|(path, content)| ((*path).to_string(), (*content).to_string()))
+                    .map(|(path, content)| ((*path).to_owned(), (*content).to_owned()))
                     .collect(),
             ),
         })
@@ -160,7 +160,7 @@ impl YamlRuleLoader {
         self.embedded_rules = Some(
             rules
                 .into_iter()
-                .map(|(path, content)| (path.to_string(), content.to_string()))
+                .map(|(path, content)| (path.to_owned(), content.to_owned()))
                 .collect(),
         );
     }
@@ -325,33 +325,33 @@ impl YamlRuleLoader {
     fn yaml_to_validated_rule(&self, value: &serde_json::Value) -> Result<ValidatedRule> {
         let obj = value
             .as_object()
-            .ok_or_else(|| crate::ValidationError::Config("Rule must be an object".to_string()))?;
+            .ok_or_else(|| crate::ValidationError::Config("Rule must be an object".to_owned()))?;
 
         let id = obj
             .get("id")
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
-                crate::ValidationError::Config("Rule must have an 'id' field".to_string())
+                crate::ValidationError::Config("Rule must have an 'id' field".to_owned())
             })?
-            .to_string();
+            .to_owned();
 
         let name = obj
             .get("name")
             .and_then(|v| v.as_str())
             .unwrap_or("Unnamed Rule")
-            .to_string();
+            .to_owned();
 
         let category = obj
             .get("category")
             .and_then(|v| v.as_str())
             .unwrap_or("quality")
-            .to_string();
+            .to_owned();
 
         let severity = obj
             .get("severity")
             .and_then(|v| v.as_str())
             .unwrap_or("warning")
-            .to_string();
+            .to_owned();
 
         let enabled = obj
             .get("enabled")
@@ -362,19 +362,19 @@ impl YamlRuleLoader {
             .get("description")
             .and_then(|v| v.as_str())
             .unwrap_or("No description provided")
-            .to_string();
+            .to_owned();
 
         let rationale = obj
             .get("rationale")
             .and_then(|v| v.as_str())
             .unwrap_or("No rationale provided")
-            .to_string();
+            .to_owned();
 
         let engine = obj
             .get("engine")
             .and_then(|v| v.as_str())
             .unwrap_or("rusty-rules")
-            .to_string();
+            .to_owned();
 
         let config = obj
             .get("config")
@@ -394,12 +394,12 @@ impl YamlRuleLoader {
                     .filter_map(|fix| {
                         if let Some(fix_obj) = fix.as_object() {
                             Some(RuleFix {
-                                fix_type: fix_obj.get("type")?.as_str()?.to_string(),
+                                fix_type: fix_obj.get("type")?.as_str()?.to_owned(),
                                 pattern: fix_obj
                                     .get("pattern")
                                     .and_then(|v| v.as_str())
                                     .map(std::string::ToString::to_string),
-                                message: fix_obj.get("message")?.as_str()?.to_string(),
+                                message: fix_obj.get("message")?.as_str()?.to_owned(),
                             })
                         } else {
                             None
@@ -435,8 +435,8 @@ impl YamlRuleLoader {
                     .filter_map(|sel| {
                         if let Some(sel_obj) = sel.as_object() {
                             Some(AstSelector {
-                                language: sel_obj.get("language")?.as_str()?.to_string(),
-                                node_type: sel_obj.get("node_type")?.as_str()?.to_string(),
+                                language: sel_obj.get("language")?.as_str()?.to_owned(),
+                                node_type: sel_obj.get("node_type")?.as_str()?.to_owned(),
                                 pattern: sel_obj
                                     .get("pattern")
                                     .and_then(|v| v.as_str())
@@ -487,6 +487,7 @@ impl YamlRuleLoader {
     }
 
     /// Get rule file path for a rule ID
+    #[must_use]
     pub fn get_rule_path(&self, rule_id: &str) -> Option<PathBuf> {
         // This would need a more sophisticated mapping
         // For now, just search in the rules directory
@@ -495,7 +496,7 @@ impl YamlRuleLoader {
                 && let Ok(content) = std::fs::read_to_string(&path)
                 && content.contains(&format!("id: {rule_id}"))
             {
-                return Some(path.to_path_buf());
+                return Some(path.clone());
             }
         }
         None

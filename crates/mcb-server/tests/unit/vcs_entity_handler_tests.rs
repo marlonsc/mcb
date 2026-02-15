@@ -49,7 +49,7 @@ async fn list_repo_count(handler: &VcsEntityHandler, project_id: &str) -> usize 
         resource: VcsEntityResource::Repository,
         id: None,
         org_id: None,
-        project_id: Some(project_id.to_string()),
+        project_id: Some(project_id.to_owned()),
         repository_id: None,
         worktree_id: None,
         data: None,
@@ -70,7 +70,7 @@ async fn list_repo_count(handler: &VcsEntityHandler, project_id: &str) -> usize 
         .unwrap_or_default();
     serde_json::from_str::<serde_json::Value>(&text)
         .ok()
-        .and_then(|v| v.as_array().map(|arr| arr.len()))
+        .and_then(|v| v.as_array().map(std::vec::Vec::len))
         .unwrap_or(0)
 }
 
@@ -84,7 +84,7 @@ async fn create_repository_conflicting_project_id_rejected_without_side_effect()
         resource: VcsEntityResource::Repository,
         id: None,
         org_id: None,
-        project_id: Some("project-a".to_string()),
+        project_id: Some("project-a".to_owned()),
         repository_id: None,
         worktree_id: None,
         data: Some(repo_payload("repo-conflict", "project-b")),
@@ -112,7 +112,7 @@ async fn update_repository_conflicting_project_id_rejected_without_side_effect()
         resource: VcsEntityResource::Repository,
         id: None,
         org_id: None,
-        project_id: Some("project-a".to_string()),
+        project_id: Some("project-a".to_owned()),
         repository_id: None,
         worktree_id: None,
         data: Some(repo_payload("repo-update-conflict", "project-b")),
@@ -134,7 +134,7 @@ async fn delete_repository_requires_project_id() {
     let delete_args = VcsEntityArgs {
         action: VcsEntityAction::Delete,
         resource: VcsEntityResource::Repository,
-        id: Some("repo-any".to_string()),
+        id: Some("repo-any".to_owned()),
         org_id: None,
         project_id: None,
         repository_id: None,

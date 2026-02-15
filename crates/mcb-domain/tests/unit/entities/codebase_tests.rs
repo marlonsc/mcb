@@ -1,6 +1,6 @@
 //! Unit tests for Codebase entities
 //!
-//! Tests the CodebaseSnapshot and FileSnapshot entities, including
+//! Tests the `CodebaseSnapshot` and `FileSnapshot` entities, including
 //! change tracking functionality.
 
 use rstest::rstest;
@@ -18,12 +18,12 @@ fn file_snapshot_creation(
     #[case] language: &str,
 ) {
     let file_snapshot = FileSnapshot {
-        id: "file-001".to_string(),
-        path: path.to_string(),
+        id: "file-001".to_owned(),
+        path: path.to_owned(),
         modified_at,
         size,
-        hash: hash.to_string(),
-        language: language.to_string(),
+        hash: hash.to_owned(),
+        language: language.to_owned(),
     };
 
     assert_eq!(file_snapshot.path, path);
@@ -40,48 +40,48 @@ fn codebase_snapshot_creation(#[case] multiple_files: bool) {
     let mut files = HashMap::new();
 
     files.insert(
-        "src/main.rs".to_string(),
+        "src/main.rs".to_owned(),
         FileSnapshot {
-            id: "file-main-2".to_string(),
-            path: "src/main.rs".to_string(),
+            id: "file-main-2".to_owned(),
+            path: "src/main.rs".to_owned(),
             modified_at: 1640995200,
             size: 1024,
-            hash: "abc123".to_string(),
-            language: "rust".to_string(),
+            hash: "abc123".to_owned(),
+            language: "rust".to_owned(),
         },
     );
 
     if multiple_files {
         files.insert(
-            "src/lib.rs".to_string(),
+            "src/lib.rs".to_owned(),
             FileSnapshot {
-                id: "file-lib".to_string(),
-                path: "src/lib.rs".to_string(),
+                id: "file-lib".to_owned(),
+                path: "src/lib.rs".to_owned(),
                 modified_at: 1641081600,
                 size: 2048,
-                hash: "def456".to_string(),
-                language: "rust".to_string(),
+                hash: "def456".to_owned(),
+                language: "rust".to_owned(),
             },
         );
 
         files.insert(
-            "Cargo.toml".to_string(),
+            "Cargo.toml".to_owned(),
             FileSnapshot {
-                id: "file-cargo".to_string(),
-                path: "Cargo.toml".to_string(),
+                id: "file-cargo".to_owned(),
+                path: "Cargo.toml".to_owned(),
                 modified_at: 1640995200,
                 size: 512,
-                hash: "toml123".to_string(),
-                language: "toml".to_string(),
+                hash: "toml123".to_owned(),
+                language: "toml".to_owned(),
             },
         );
     }
 
     let snapshot = CodebaseSnapshot {
         id: if multiple_files {
-            "multi-file-snapshot".to_string()
+            "multi-file-snapshot".to_owned()
         } else {
-            "snapshot-001".to_string()
+            "snapshot-001".to_owned()
         },
         created_at: if multiple_files {
             1641081600
@@ -89,9 +89,9 @@ fn codebase_snapshot_creation(#[case] multiple_files: bool) {
             1640995200
         },
         collection: if multiple_files {
-            "test-project".to_string()
+            "test-project".to_owned()
         } else {
-            "my-project".to_string()
+            "my-project".to_owned()
         },
         files: files.clone(),
         total_files: files.len(),

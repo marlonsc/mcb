@@ -1,4 +1,4 @@
-//! Integration tests for DeclarativeValidator and new path/regex rules.
+//! Integration tests for `DeclarativeValidator` and new path/regex rules.
 
 use mcb_validate::traits::validator::Validator;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;

@@ -1,4 +1,4 @@
-//! Unit tests for CodeChunk entity
+//! Unit tests for `CodeChunk` entity
 //!
 //! Tests the core domain entity for code chunks, ensuring proper
 //! creation, validation, and business rule enforcement.
@@ -21,12 +21,12 @@ mod tests {
         #[case] metadata: serde_json::Value,
     ) {
         let chunk = CodeChunk {
-            id: id.to_string(),
-            content: content.to_string(),
-            file_path: file_path.to_string(),
+            id: id.to_owned(),
+            content: content.to_owned(),
+            file_path: file_path.to_owned(),
             start_line,
             end_line,
-            language: language.to_string(),
+            language: language.to_owned(),
             metadata: metadata.clone(),
         };
 
@@ -43,24 +43,24 @@ mod tests {
     fn test_code_chunk_metadata_scenarios() {
         // Empty metadata
         let empty_chunk = CodeChunk {
-            id: "empty".to_string(),
-            content: "".to_string(),
-            file_path: "".to_string(),
+            id: "empty".to_owned(),
+            content: String::new(),
+            file_path: String::new(),
             start_line: 0,
             end_line: 0,
-            language: "".to_string(),
+            language: String::new(),
             metadata: json!({}),
         };
         assert!(empty_chunk.metadata.as_object().unwrap().is_empty());
 
         // Complex metadata
         let complex_chunk = CodeChunk {
-            id: "complex".to_string(),
-            content: "".to_string(),
-            file_path: "".to_string(),
+            id: "complex".to_owned(),
+            content: String::new(),
+            file_path: String::new(),
             start_line: 0,
             end_line: 0,
-            language: "".to_string(),
+            language: String::new(),
             metadata: json!({
                 "type": "class",
                 "methods": ["a", "b"]

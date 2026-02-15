@@ -6,7 +6,7 @@ use rstest::rstest;
 use crate::handlers::test_helpers::create_real_domain_services;
 
 #[rstest]
-#[case(Some("test_collection".to_string()), true)]
+#[case(Some("test_collection".to_owned()), true)]
 #[case(None, false)]
 #[tokio::test]
 async fn test_clear_index(#[case] collection: Option<String>, #[case] should_succeed: bool) {

@@ -1,6 +1,6 @@
 //! Unit tests for service lifecycle management
 //!
-//! Tests service state tracking, lifecycle operations, and the LifecycleManaged trait.
+//! Tests service state tracking, lifecycle operations, and the `LifecycleManaged` trait.
 //! Includes a test implementation to verify trait behavior.
 
 use rstest::rstest;
@@ -26,7 +26,7 @@ use rstest::*;
 #[case(PortServiceState::Stopped, "Stopped")]
 fn test_service_state_properties(#[case] state: PortServiceState, #[case] expected_debug: &str) {
     // Debug representation
-    assert!(format!("{:?}", state).contains(expected_debug));
+    assert!(format!("{state:?}").contains(expected_debug));
 
     // Clone/Copy
     assert_eq!(state, state.clone());
@@ -53,7 +53,7 @@ fn test_all_service_states_distinct() {
     for (i, state_a) in states.iter().enumerate() {
         for (j, state_b) in states.iter().enumerate() {
             if i != j {
-                assert_ne!(state_a, state_b, "States at {} and {} should differ", i, j);
+                assert_ne!(state_a, state_b, "States at {i} and {j} should differ");
             }
         }
     }
@@ -117,7 +117,7 @@ fn test_health_check_properties(
     #[case] latency_ms: Option<u64>,
 ) {
     let check = DependencyHealthCheck {
-        name: name.to_string(),
+        name: name.to_owned(),
         status,
         message: message.clone(),
         latency_ms,
@@ -154,7 +154,7 @@ struct TestService {
 impl TestService {
     fn new(name: &str, healthy: bool) -> Self {
         Self {
-            name: name.to_string(),
+            name: name.to_owned(),
             state: AtomicU32::new(Self::state_to_u32(PortServiceState::Stopped)),
             start_count: AtomicU32::new(0),
             stop_count: AtomicU32::new(0),
@@ -230,7 +230,7 @@ impl LifecycleManaged for TestService {
             DependencyHealthCheck {
                 name: self.name.clone(),
                 status: DependencyHealth::Healthy,
-                message: Some("Service is healthy".to_string()),
+                message: Some("Service is healthy".to_owned()),
                 latency_ms: Some(5),
                 last_check: now,
             }
@@ -238,7 +238,7 @@ impl LifecycleManaged for TestService {
             DependencyHealthCheck {
                 name: self.name.clone(),
                 status: DependencyHealth::Unhealthy,
-                message: Some("Service check failed".to_string()),
+                message: Some("Service check failed".to_owned()),
                 latency_ms: None,
                 last_check: now,
             }

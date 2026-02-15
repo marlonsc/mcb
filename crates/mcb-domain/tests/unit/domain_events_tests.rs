@@ -45,32 +45,32 @@ impl EventPublisher for TestEventPublisher {
 }
 
 #[rstest]
-#[case(DomainEvent::IndexRebuild { collection: Some("test-collection".to_string()) }, "IndexRebuild")]
+#[case(DomainEvent::IndexRebuild { collection: Some("test-collection".to_owned()) }, "IndexRebuild")]
 #[case(
-    DomainEvent::SyncCompleted { path: "/path/to/code".to_string(), files_changed: 42 },
+    DomainEvent::SyncCompleted { path: "/path/to/code".to_owned(), files_changed: 42 },
     "SyncCompleted"
 )]
 #[case(
-    DomainEvent::CacheInvalidate { namespace: Some("embeddings".to_string()) },
+    DomainEvent::CacheInvalidate { namespace: Some("embeddings".to_owned()) },
     "CacheInvalidate"
 )]
 #[case(
-    DomainEvent::SnapshotCreated { root_path: "/code".to_string(), file_count: 100 },
+    DomainEvent::SnapshotCreated { root_path: "/code".to_owned(), file_count: 100 },
     "SnapshotCreated"
 )]
 #[case(
-    DomainEvent::FileChangesDetected { root_path: "/code".to_string(), added: 5, modified: 10, removed: 2 },
+    DomainEvent::FileChangesDetected { root_path: "/code".to_owned(), added: 5, modified: 10, removed: 2 },
     "FileChangesDetected"
 )]
 fn domain_event_variants(#[case] event: DomainEvent, #[case] expected_debug_fragment: &str) {
-    let debug_str = format!("{:?}", event);
+    let debug_str = format!("{event:?}");
     assert!(debug_str.contains(expected_debug_fragment));
 }
 
 #[test]
 fn test_domain_event_clone() {
     let event1 = DomainEvent::SyncCompleted {
-        path: "/code".to_string(),
+        path: "/code".to_owned(),
         files_changed: 10,
     };
 
@@ -99,11 +99,11 @@ fn has_subscribers(#[case] expected_has_subscribers: bool) {
 }
 
 #[rstest]
-#[case(vec![DomainEvent::IndexRebuild { collection: Some("test".to_string()) }], 1)]
+#[case(vec![DomainEvent::IndexRebuild { collection: Some("test".to_owned()) }], 1)]
 #[case(
     vec![
-        DomainEvent::IndexRebuild { collection: Some("coll-1".to_string()) },
-        DomainEvent::SyncCompleted { path: "/path".to_string(), files_changed: 5 },
+        DomainEvent::IndexRebuild { collection: Some("coll-1".to_owned()) },
+        DomainEvent::SyncCompleted { path: "/path".to_owned(), files_changed: 5 },
         DomainEvent::CacheInvalidate { namespace: None },
     ],
     3
@@ -123,7 +123,7 @@ async fn publish_events(#[case] events: Vec<DomainEvent>, #[case] expected_len: 
     if expected_len == 1 {
         assert!(matches!(
             &published_events[0],
-            DomainEvent::IndexRebuild { collection } if collection == &Some("test".to_string())
+            DomainEvent::IndexRebuild { collection } if collection == &Some("test".to_owned())
         ));
     }
 }
@@ -139,7 +139,7 @@ fn test_event_publisher_trait_object() {
 async fn test_event_serialization() {
     // Events should be serializable (for transport/logging)
     let event = DomainEvent::FileChangesDetected {
-        root_path: "/code".to_string(),
+        root_path: "/code".to_owned(),
         added: 1,
         modified: 2,
         removed: 3,

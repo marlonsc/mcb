@@ -18,7 +18,7 @@ pub struct ServerInfo {
 impl Default for ServerInfo {
     fn default() -> Self {
         Self {
-            version: env!("CARGO_PKG_VERSION").to_string(),
+            version: env!("CARGO_PKG_VERSION").to_owned(),
             build_time: option_env!("BUILD_TIME").map(String::from),
             git_hash: option_env!("GIT_HASH").map(String::from),
         }

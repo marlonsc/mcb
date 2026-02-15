@@ -58,6 +58,6 @@ fn test_config_clone() {
 #[test]
 fn test_config_debug() {
     let config = TransportConfig::stdio();
-    let debug = format!("{:?}", config);
+    let debug = format!("{config:?}");
     assert!(debug.contains("TransportConfig"));
 }

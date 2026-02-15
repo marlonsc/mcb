@@ -1,6 +1,6 @@
 //! Resolver for database providers.
 //!
-//! Handles dynamic resolution of database providers (e.g. SQLite, Postgres)
+//! Handles dynamic resolution of database providers (e.g. `SQLite`, Postgres)
 //! based on configuration strings using the `linkme` registry.
 
 use std::path::Path;
@@ -19,11 +19,12 @@ pub struct DatabaseProviderResolver {
 
 impl DatabaseProviderResolver {
     /// Create a new resolver
+    #[must_use]
     pub fn new(config: Arc<AppConfig>) -> Self {
         Self { config }
     }
 
-    /// Resolve and connect to the database provider configured in AppConfig.
+    /// Resolve and connect to the database provider configured in `AppConfig`.
     ///
     /// Reads the provider name from `config.providers.database.provider`.
     pub async fn resolve_and_connect(&self, path: &Path) -> Result<Arc<dyn DatabaseExecutor>> {
@@ -45,6 +46,7 @@ impl DatabaseProviderResolver {
     }
 
     /// List all available database providers
+    #[must_use]
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
         mcb_domain::registry::database::list_database_providers()
     }

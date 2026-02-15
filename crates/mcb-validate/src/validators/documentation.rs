@@ -82,6 +82,7 @@ impl DocumentationViolation {
     /// Returns the severity level of this violation.
     ///
     /// Delegates to the [`Violation`] trait implementation to avoid duplication.
+    #[must_use]
     pub fn severity(&self) -> Severity {
         <Self as Violation>::severity(self)
     }
@@ -102,6 +103,7 @@ impl DocumentationValidator {
     }
 
     /// Create a validator with custom configuration for multi-directory support
+    #[must_use]
     pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }
@@ -117,7 +119,7 @@ impl DocumentationValidator {
     /// Verify module-level documentation exists
     pub fn validate_module_docs(&self) -> Result<Vec<DocumentationViolation>> {
         let mut violations = Vec::new();
-        let module_doc_pattern = compile_regex(r"^//!")?;
+        let module_doc_pattern = compile_regex("^//!")?;
 
         for_each_crate_file(
             &self.config,
@@ -141,7 +143,7 @@ impl DocumentationValidator {
 
                 if !has_module_doc {
                     violations.push(DocumentationViolation::MissingModuleDoc {
-                        file: path.to_path_buf(),
+                        file: path.clone(),
                         severity: Severity::Warning,
                     });
                 }
@@ -178,10 +180,10 @@ impl DocumentationValidator {
                         let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
                         if !self.has_doc_comment(&lines, line_num) {
                             violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: line_num + 1,
-                                item_name: name.to_string(),
-                                item_kind: "struct".to_string(),
+                                item_name: name.to_owned(),
+                                item_kind: "struct".to_owned(),
                                 severity: Severity::Warning,
                             });
                         }
@@ -192,10 +194,10 @@ impl DocumentationValidator {
                         let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
                         if !self.has_doc_comment(&lines, line_num) {
                             violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: line_num + 1,
-                                item_name: name.to_string(),
-                                item_kind: "enum".to_string(),
+                                item_name: name.to_owned(),
+                                item_kind: "enum".to_owned(),
                                 severity: Severity::Warning,
                             });
                         }
@@ -219,19 +221,19 @@ impl DocumentationValidator {
                                 let doc_section = self.get_doc_comment_section(&lines, line_num);
                                 if !example_pattern.is_match(&doc_section) {
                                     violations.push(DocumentationViolation::MissingExampleCode {
-                                        file: path.to_path_buf(),
+                                        file: path.clone(),
                                         line: line_num + 1,
-                                        item_name: name.to_string(),
+                                        item_name: name.to_owned(),
                                         severity: Severity::Info,
                                     });
                                 }
                             }
                         } else {
                             violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: line_num + 1,
-                                item_name: name.to_string(),
-                                item_kind: "trait".to_string(),
+                                item_name: name.to_owned(),
+                                item_kind: "trait".to_owned(),
                                 severity: Severity::Warning,
                             });
                         }
@@ -248,10 +250,10 @@ impl DocumentationValidator {
 
                         if !self.has_doc_comment(&lines, line_num) {
                             violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: line_num + 1,
-                                item_name: name.to_string(),
-                                item_kind: "function".to_string(),
+                                item_name: name.to_owned(),
+                                item_kind: "function".to_owned(),
                                 severity: Severity::Info,
                             });
                         }

@@ -75,7 +75,7 @@ pub fn check_async_traits(path: &Path, content: &str) -> Vec<PatternViolation> {
                     violations.push(PatternViolation::MissingAsyncTrait {
                         file: path.to_path_buf(),
                         line: line_num + 1,
-                        trait_name: trait_name.to_string(),
+                        trait_name: trait_name.to_owned(),
                         severity: Severity::Error,
                     });
                 }
@@ -85,8 +85,8 @@ pub fn check_async_traits(path: &Path, content: &str) -> Vec<PatternViolation> {
                     violations.push(PatternViolation::MissingSendSync {
                         file: path.to_path_buf(),
                         line: line_num + 1,
-                        trait_name: trait_name.to_string(),
-                        missing_bound: "Send + Sync".to_string(),
+                        trait_name: trait_name.to_owned(),
+                        missing_bound: "Send + Sync".to_owned(),
                         severity: Severity::Warning,
                     });
                 }

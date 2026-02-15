@@ -59,9 +59,9 @@ async fn test_memory_repository_store_and_get_observation(
     let obs_id = ObservationId::from_name("test-obs-1");
     let obs = Observation {
         id: obs_id.to_string(),
-        project_id: project_id.to_string(),
-        content: "content".to_string(),
-        content_hash: "hash1".to_string(),
+        project_id: project_id.to_owned(),
+        content: "content".to_owned(),
+        content_hash: "hash1".to_owned(),
         tags: vec![],
         r#type: ObservationType::Context,
         metadata: Default::default(),

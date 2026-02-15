@@ -70,7 +70,7 @@ fn enum_values(schema: &Value) -> Vec<String> {
 
     fn collect_consts(value: &Value, out: &mut Vec<String>) {
         if let Some(text) = value.get("const").and_then(Value::as_str) {
-            out.push(text.to_string());
+            out.push(text.to_owned());
         }
 
         if let Some(object) = value.as_object() {

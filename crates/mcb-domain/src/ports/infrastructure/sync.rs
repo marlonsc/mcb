@@ -43,6 +43,7 @@ pub struct SyncResult {
 
 impl SyncResult {
     /// Create a result for a skipped sync
+    #[must_use]
     pub fn skipped() -> Self {
         Self {
             performed: false,
@@ -52,6 +53,7 @@ impl SyncResult {
     }
 
     /// Create a result for a completed sync
+    #[must_use]
     pub fn completed(changed_files: Vec<String>) -> Self {
         let files_changed = changed_files.len();
         Self {

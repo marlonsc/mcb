@@ -6,16 +6,16 @@ use mcb_domain::entities::agent::{Delegation, ToolCall};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use serde_json::Value;
 
 use uuid::Uuid;
 use validator::Validate;
 
 use crate::args::{AgentAction, AgentArgs};
-use crate::error_mapping::to_contextual_tool_error;
+use crate::error_mapping::{safe_internal_error, to_contextual_tool_error};
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::resolve_org_id;
+use crate::handlers::helpers::{resolve_org_id, tool_error};
 
 /// Handler for agent tool call and delegation logging operations.
 #[derive(Clone)]
@@ -24,7 +24,7 @@ pub struct AgentHandler {
 }
 
 impl AgentHandler {
-    /// Create a new AgentHandler.
+    /// Create a new `AgentHandler`.
     pub fn new(agent_service: Arc<dyn AgentSessionServiceInterface>) -> Self {
         Self { agent_service }
     }
@@ -51,13 +51,11 @@ impl AgentHandler {
         let data = match args.data.as_object() {
             Some(data) => data,
             None => {
-                return Ok(CallToolResult::error(vec![Content::text(
-                    "Data must be a JSON object",
-                )]));
+                return Ok(tool_error("Data must be a JSON object"));
             }
         };
         let now = mcb_domain::utils::time::epoch_secs_i64()
-            .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+            .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
 
         match args.action {
             AgentAction::LogTool => {
@@ -68,14 +66,12 @@ impl AgentHandler {
                 {
                     Some(value) => value,
                     None => {
-                        return Ok(CallToolResult::error(vec![Content::text(
-                            "Missing tool_name",
-                        )]));
+                        return Ok(tool_error("Missing tool_name"));
                     }
                 };
                 let tool_call = ToolCall {
                     id: format!("tc_{}", Uuid::new_v4()),
-                    session_id: session_id.to_owned(),
+                    session_id: session_id.clone(),
                     tool_name: tool_name.clone(),
                     params_summary: data
                         .get("params_summary")
@@ -106,14 +102,12 @@ impl AgentHandler {
                 {
                     Some(value) => value,
                     None => {
-                        return Ok(CallToolResult::error(vec![Content::text(
-                            "Missing child_session_id",
-                        )]));
+                        return Ok(tool_error("Missing child_session_id"));
                     }
                 };
                 let delegation = Delegation {
                     id: format!("del_{}", Uuid::new_v4()),
-                    parent_session_id: session_id.to_owned(),
+                    parent_session_id: session_id.clone(),
                     child_session_id: child_session_id.clone(),
                     prompt: data
                         .get("prompt")

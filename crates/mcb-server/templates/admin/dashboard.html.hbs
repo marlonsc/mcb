@@ -20,12 +20,25 @@
         .sse-disconnected { background: #dc2626; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .event-log { max-height: 300px; overflow-y: auto; }
-        .event-item { border-left: 3px solid; padding: 0.5rem 1rem; margin-bottom: 0.5rem; font-size: 0.875rem; }
-        .event-indexing { border-color: #2563eb; background: #eff6ff; }
-        .event-service { border-color: #16a34a; background: #f0fdf4; }
-        .event-config { border-color: #ca8a04; background: #fefce8; }
-        .event-health { border-color: #8b5cf6; background: #f5f3ff; }
-        .event-error { border-color: #dc2626; background: #fef2f2; }
+        .event-item { border-left: 3px solid; padding: 0.5rem 1rem; margin-bottom: 0.5rem; font-size: 0.875rem; border-radius: 0.375rem; background: var(--bg-secondary); color: var(--text-primary); }
+        .event-indexing { border-color: var(--accent); }
+        .event-service { border-color: #16a34a; }
+        .event-config { border-color: #ca8a04; }
+        .event-health { border-color: #8b5cf6; }
+        .event-error { border-color: #dc2626; }
+        .event-system { border-color: var(--text-muted); }
+        .event-log-error { border-color: #ef4444; }
+        .event-log-warn { border-color: #f59e0b; }
+        .event-log-info { border-color: var(--accent); }
+        .event-log-debug { border-color: var(--text-muted); }
+        .event-log-trace { border-color: var(--border-color); }
+        .event-validation { border-color: #8b5cf6; }
+        .log-level { font-weight: 600; font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 0.25rem; }
+        .log-level-error { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .log-level-warn { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        .log-level-info { background: rgba(59, 130, 246, 0.15); color: var(--accent); }
+        .log-level-debug { background: var(--bg-tertiary); color: var(--text-secondary); }
+        .log-level-trace { background: var(--bg-tertiary); color: var(--text-muted); }
     </style>
 {{/inline}}
 
@@ -203,7 +216,8 @@
         ['IndexRebuild','IndexingStarted','IndexingProgress','IndexingCompleted',
          'SyncCompleted','CacheInvalidate','SnapshotCreated','FileChangesDetected',
          'ServiceStateChanged','ConfigReloaded','HealthCheckCompleted',
-         'MetricsSnapshot','SearchExecuted'].forEach(function(eventType) {
+         'MetricsSnapshot','SearchExecuted','LogEvent',
+         'ValidationStarted','ValidationProgress','ValidationCompleted'].forEach(function(eventType) {
             eventSource.addEventListener(eventType, function(e) {
                 handleEvent(eventType, parseJsonSafe(e.data, {}));
             });
@@ -225,6 +239,8 @@
     }
 
     function handleEvent(eventType, data) {
+        // Unwrap serde enum variant: {"EventType": {fields}} → {fields}
+        if (data[eventType]) { data = data[eventType]; }
         switch (eventType) {
             case 'ServiceStateChanged':
                 refreshServices();
@@ -262,6 +278,26 @@
             case 'CacheInvalidate':
                 addEventToLog('config', 'Cache invalidated: ' + (data.collection||'all'));
                 break;
+            case 'LogEvent':
+                var lvl = (data.level||'info').toLowerCase();
+                var tgt = data.target || '';
+                var shortTarget = tgt.split('::').slice(-2).join('::');
+                var ts = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '';
+                addLogEventToLog(lvl, (data.message||''), shortTarget, ts);
+                break;
+            case 'ValidationStarted':
+                addEventToLog('validation', 'Validation started: ' + (data.scope||data.workspace||''));
+                break;
+            case 'ValidationProgress':
+                var vTotal = toIntegerSafe(data.total, 0);
+                var vDone = toIntegerSafe(data.completed, 0);
+                var vPct = vTotal > 0 ? Math.round((vDone / vTotal) * 100) : 0;
+                addEventToLog('validation', 'Validation progress: ' + vPct + '% (' + vDone + '/' + vTotal + ')');
+                break;
+            case 'ValidationCompleted':
+                var violations = toIntegerSafe(data.violations, toIntegerSafe(data.violation_count, 0));
+                addEventToLog('validation', 'Validation completed: ' + violations + ' violation' + (violations !== 1 ? 's' : '') + ' found');
+                break;
             default:
                 addEventToLog('system', 'Event: ' + eventType);
         }
@@ -297,6 +333,21 @@
         el.innerHTML = '<span class="font-medium">' + new Date().toLocaleTimeString() + '</span><span class="ml-2">' + escapeHtml(message) + '</span>';
         log.insertBefore(el, log.firstChild);
         while (log.children.length > 50) log.removeChild(log.lastChild);
+    }
+
+    function addLogEventToLog(level, message, target, timestamp) {
+        var log = document.getElementById('event-log');
+        var empty = log.querySelector('.text-secondary');
+        if (empty) empty.remove();
+        var el = document.createElement('div');
+        el.className = 'event-item event-log-' + level;
+        var time = timestamp || new Date().toLocaleTimeString();
+        el.innerHTML = '<span class="font-medium">' + escapeHtml(time) + '</span>' +
+            '<span class="log-level log-level-' + level + ' ml-2">' + level.toUpperCase() + '</span>' +
+            (target ? '<span class="ml-2" style="font-size:0.75rem;color:var(--text-muted)">' + escapeHtml(target) + '</span>' : '') +
+            '<span class="ml-2">' + escapeHtml(message) + '</span>';
+        log.insertBefore(el, log.firstChild);
+        while (log.children.length > 100) log.removeChild(log.lastChild);
     }
 
     function clearEventLog() {

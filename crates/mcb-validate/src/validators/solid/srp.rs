@@ -26,7 +26,7 @@ pub fn validate_srp(
         for (line_num, line) in lines.iter().enumerate() {
             if let Some(cap) = struct_pattern.captures(line) {
                 let name = cap.get(1).map_or("", |m| m.as_str());
-                structs_in_file.push((name.to_string(), line_num + 1));
+                structs_in_file.push((name.to_owned(), line_num + 1));
             }
 
             if let Some(cap) = impl_pattern.captures(line) {
@@ -37,12 +37,12 @@ pub fn validate_srp(
                     violations.push(SolidViolation::TooManyResponsibilities {
                         file: path.clone(),
                         line: line_num + 1,
-                        item_type: "impl".to_string(),
-                        item_name: name.to_string(),
+                        item_type: "impl".to_owned(),
+                        item_name: name.to_owned(),
                         line_count: block_lines,
                         max_allowed: max_struct_lines,
                         suggestion: "Consider splitting into smaller, focused impl blocks"
-                            .to_string(),
+                            .to_owned(),
                         severity: Severity::Warning,
                     });
                 }
@@ -57,7 +57,7 @@ pub fn validate_srp(
                 violations.push(SolidViolation::MultipleUnrelatedStructs {
                     file: path.clone(),
                     struct_names,
-                    suggestion: "Consider splitting into separate modules".to_string(),
+                    suggestion: "Consider splitting into separate modules".to_owned(),
                     severity: Severity::Info,
                 });
             }
@@ -89,12 +89,12 @@ pub fn validate_impl_method_count(
         |file, line, type_name, method_count, max_allowed| SolidViolation::ImplTooManyMethods {
             file,
             line,
-            type_name: type_name.to_string(),
+            type_name: type_name.to_owned(),
             method_count,
             max_allowed,
             suggestion:
                 "Consider splitting into smaller, focused impl blocks or extracting to traits"
-                    .to_string(),
+                    .to_owned(),
             severity: Severity::Warning,
         },
     )

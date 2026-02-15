@@ -13,13 +13,15 @@ pub struct AstDecoder;
 
 impl AstDecoder {
     /// Convert Tree-sitter tree to unified `AstNode`
+    #[must_use]
     pub fn decode_tree(tree: &tree_sitter::Tree, source: &str) -> AstNode {
         Self::decode_node(tree.root_node(), source)
     }
 
     /// Convert Tree-sitter node to unified `AstNode`
+    #[must_use]
     pub fn decode_node(node: Node, source: &str) -> AstNode {
-        let kind = node.kind().to_string();
+        let kind = node.kind().to_owned();
         let span = Self::decode_span(node, source);
         let name = Self::extract_name(&node, source);
 
@@ -101,7 +103,7 @@ impl AstDecoder {
         for child in node.children(&mut cursor) {
             if child.kind() == "identifier" || child.kind() == "type_identifier" {
                 let text = child.utf8_text(source.as_bytes()).ok()?;
-                return Some(text.to_string());
+                return Some(text.to_owned());
             }
         }
 
@@ -120,7 +122,7 @@ impl AstDecoder {
         if node.kind().contains("string") {
             node.utf8_text(source.as_bytes()).ok().map(|s| {
                 // Remove quotes
-                s.trim_matches('"').trim_matches('\'').to_string()
+                s.trim_matches('"').trim_matches('\'').to_owned()
             })
         } else {
             None
@@ -146,24 +148,24 @@ impl AstDecoder {
         let mut metadata = HashMap::new();
 
         // Add basic node information
-        metadata.insert("node_type".to_string(), node.kind().into());
-        metadata.insert("is_named".to_string(), node.is_named().into());
-        metadata.insert("is_missing".to_string(), node.is_missing().into());
-        metadata.insert("has_error".to_string(), node.has_error().into());
+        metadata.insert("node_type".to_owned(), node.kind().into());
+        metadata.insert("is_named".to_owned(), node.is_named().into());
+        metadata.insert("is_missing".to_owned(), node.is_missing().into());
+        metadata.insert("has_error".to_owned(), node.has_error().into());
 
         // Add source text for debugging
         if let Ok(text) = node.utf8_text(source.as_bytes()) {
-            metadata.insert("source_text".to_string(), text.to_string().into());
+            metadata.insert("source_text".to_owned(), text.to_owned().into());
         }
 
         // Language-specific metadata can be added here
         match node.kind() {
             "function_item" | "function_definition" | "function_declaration" => {
-                metadata.insert("is_function".to_string(), true.into());
+                metadata.insert("is_function".to_owned(), true.into());
                 Self::extract_function_metadata(node, source, &mut metadata);
             }
             "struct_item" | "class_definition" => {
-                metadata.insert("is_type".to_string(), true.into());
+                metadata.insert("is_type".to_owned(), true.into());
             }
             _ => {}
         }
@@ -179,19 +181,19 @@ impl AstDecoder {
     ) {
         // Count parameters
         let param_count = Self::count_function_parameters(node);
-        metadata.insert("parameter_count".to_string(), param_count.into());
+        metadata.insert("parameter_count".to_owned(), param_count.into());
 
         // Check if async
         let is_async = Self::is_async_function(node);
-        metadata.insert("is_async".to_string(), is_async.into());
+        metadata.insert("is_async".to_owned(), is_async.into());
 
         // Check if has return type
         let has_return_type = Self::has_return_type(node);
-        metadata.insert("has_return_type".to_string(), has_return_type.into());
+        metadata.insert("has_return_type".to_owned(), has_return_type.into());
 
         // Count lines
         let line_count = node.end_position().row - node.start_position().row + 1;
-        metadata.insert("line_count".to_string(), line_count.into());
+        metadata.insert("line_count".to_owned(), line_count.into());
     }
 
     /// Count function parameters

@@ -105,7 +105,7 @@ pub fn apply_transition(
         (WorkflowState::Failed { .. }, TransitionTrigger::Recover) => {
             // Return to last known good executing state
             WorkflowState::Executing {
-                phase_id: "unknown".to_string(),
+                phase_id: "unknown".to_owned(),
                 task_id: None,
             }
         }
@@ -115,14 +115,13 @@ pub fn apply_transition(
 
         // Completed → (no transitions allowed)
         (WorkflowState::Completed, _) => {
-            return Err("Cannot transition from terminal state Completed".to_string());
+            return Err("Cannot transition from terminal state Completed".to_owned());
         }
 
         // Invalid transition
         (from, trigger) => {
             return Err(format!(
-                "Invalid FSM transition: {} + {} not allowed",
-                from, trigger
+                "Invalid FSM transition: {from} + {trigger} not allowed"
             ));
         }
     };

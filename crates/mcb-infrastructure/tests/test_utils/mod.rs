@@ -18,10 +18,10 @@ pub async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &s
         .execute(
             "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
             &[
-                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
-                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_NAME.to_string()),
-                SqlParam::String("default".to_string()),
-                SqlParam::String("{}".to_string()),
+                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_owned()),
+                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_NAME.to_owned()),
+                SqlParam::String("default".to_owned()),
+                SqlParam::String("{}".to_owned()),
                 SqlParam::I64(now),
                 SqlParam::I64(now),
             ],
@@ -32,10 +32,10 @@ pub async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &s
         .execute(
             "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
             &[
-                SqlParam::String(project_id.to_string()),
-                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string()),
-                SqlParam::String(project_id.to_string()),
-                SqlParam::String("/test".to_string()),
+                SqlParam::String(project_id.to_owned()),
+                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_owned()),
+                SqlParam::String(project_id.to_owned()),
+                SqlParam::String("/test".to_owned()),
                 SqlParam::I64(now),
                 SqlParam::I64(now),
             ],

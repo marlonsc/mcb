@@ -12,10 +12,10 @@ async fn test_search_code_success() {
     let handler = SearchHandler::new(services.search_service, services.memory_service);
 
     let args = SearchArgs {
-        query: "test query".to_string(),
+        query: "test query".to_owned(),
         org_id: None,
         resource: SearchResource::Code,
-        collection: Some("test".to_string()),
+        collection: Some("test".to_owned()),
         limit: Some(10),
         min_score: None,
         tags: None,
@@ -40,10 +40,10 @@ async fn test_search_code_empty_query() {
     let handler = SearchHandler::new(services.search_service, services.memory_service);
 
     let args = SearchArgs {
-        query: "".to_string(),
+        query: String::new(),
         org_id: None,
         resource: SearchResource::Code,
-        collection: Some("test".to_string()),
+        collection: Some("test".to_owned()),
         limit: Some(10),
         min_score: None,
         tags: None,

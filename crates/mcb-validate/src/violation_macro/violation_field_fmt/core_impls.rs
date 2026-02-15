@@ -16,7 +16,7 @@ impl ViolationFieldFmt for String {
 
 impl ViolationFieldFmt for &str {
     fn fmt_field(&self) -> String {
-        (*self).to_string()
+        (*self).to_owned()
     }
 }
 

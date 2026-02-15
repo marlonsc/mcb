@@ -1,4 +1,4 @@
-//! Unit tests for InstrumentedEmbeddingProvider decorator
+//! Unit tests for `InstrumentedEmbeddingProvider` decorator
 
 use rstest::*;
 use std::sync::Arc;
@@ -47,7 +47,7 @@ async fn test_instrumented_records_metrics(
     assert_eq!(metrics.get_performance_metrics().total_queries, 1);
 
     let result = provider
-        .embed_batch(&["a".to_string(), "b".to_string()])
+        .embed_batch(&["a".to_owned(), "b".to_owned()])
         .await;
     assert!(result.is_ok());
     assert_eq!(metrics.get_performance_metrics().total_queries, 2);

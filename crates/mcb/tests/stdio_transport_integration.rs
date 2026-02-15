@@ -17,7 +17,7 @@ use std::time::Duration;
 
 /// Get the path to the mcb binary.
 ///
-/// Uses CARGO_BIN_EXE_mcb which is set by cargo test when
+/// Uses `CARGO_BIN_EXE_mcb` which is set by cargo test when
 /// the binary is built as part of the test run.
 fn get_mcb_path() -> PathBuf {
     // cargo test sets this environment variable when the binary is part of the workspace
@@ -41,9 +41,8 @@ fn get_mcb_path() -> PathBuf {
         "mcb binary not found. Run `cargo build -p mcb-server` first.\n\
          Checked:\n\
          - CARGO_BIN_EXE_mcb env var\n\
-         - {}/../../target/debug/mcb\n\
-         - {}/../../target/release/mcb",
-        manifest_dir, manifest_dir
+         - {manifest_dir}/../../target/debug/mcb\n\
+         - {manifest_dir}/../../target/release/mcb"
     );
 }
 
@@ -78,7 +77,7 @@ fn spawn_mcb_stdio() -> std::process::Child {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .unwrap_or_else(|e| panic!("Failed to spawn mcb at {:?}: {}", mcb_path, e))
+        .unwrap_or_else(|e| panic!("Failed to spawn mcb at {mcb_path:?}: {e}"))
 }
 
 /// Send a JSON-RPC request and read the response
@@ -89,7 +88,7 @@ fn send_request_get_response(
 ) -> serde_json::Value {
     // Send request with newline delimiter
     let request_str = serde_json::to_string(request).unwrap();
-    writeln!(stdin, "{}", request_str).expect("Failed to write request");
+    writeln!(stdin, "{request_str}").expect("Failed to write request");
     stdin.flush().expect("Failed to flush stdin");
 
     // Read response line
@@ -97,14 +96,14 @@ fn send_request_get_response(
     match stdout.read_line(&mut response_line) {
         Ok(0) => panic!("EOF reading stdout - server likely crashed. Check stderr."),
         Ok(_) => {}
-        Err(e) => panic!("Failed to read response: {}", e),
+        Err(e) => panic!("Failed to read response: {e}"),
     }
 
     match serde_json::from_str(&response_line) {
         Ok(val) => val,
         Err(e) => {
-            eprintln!("Failed to parse JSON response: {}", response_line);
-            panic!("JSON parse error: {}", e);
+            eprintln!("Failed to parse JSON response: {response_line}");
+            panic!("JSON parse error: {e}");
         }
     }
 }
@@ -133,7 +132,7 @@ fn send_initialized_notification(stdin: &mut std::process::ChildStdin) {
         "method": "notifications/initialized"
     });
     let notification_str = serde_json::to_string(&notification).unwrap();
-    writeln!(stdin, "{}", notification_str).expect("Failed to write notification");
+    writeln!(stdin, "{notification_str}").expect("Failed to write notification");
     stdin.flush().expect("Failed to flush stdin");
 }
 
@@ -171,7 +170,7 @@ fn test_stdio_no_ansi_codes_in_output() {
     let request = create_initialize_request(1);
 
     let request_str = serde_json::to_string(&request).unwrap();
-    writeln!(stdin, "{}", request_str).expect("Failed to write request");
+    writeln!(stdin, "{request_str}").expect("Failed to write request");
     stdin.flush().expect("Failed to flush stdin");
 
     // Read response
@@ -184,15 +183,13 @@ fn test_stdio_no_ansi_codes_in_output() {
     // \x1b[ is the start of ANSI escape sequences
     assert!(
         !response_line.contains("\x1b["),
-        "ANSI escape codes found in stdout! This breaks JSON-RPC protocol.\nResponse: {:?}",
-        response_line
+        "ANSI escape codes found in stdout! This breaks JSON-RPC protocol.\nResponse: {response_line:?}"
     );
 
     // Also check for common ANSI codes
     assert!(
         !response_line.contains("\x1b"),
-        "Escape character found in stdout! Response: {:?}",
-        response_line
+        "Escape character found in stdout! Response: {response_line:?}"
     );
 
     // Kill the process and wait to avoid zombies
@@ -221,7 +218,7 @@ fn test_stdio_response_is_valid_json() {
     });
 
     let request_str = serde_json::to_string(&request).unwrap();
-    writeln!(stdin, "{}", request_str).expect("Failed to write request");
+    writeln!(stdin, "{request_str}").expect("Failed to write request");
     stdin.flush().expect("Failed to flush stdin");
 
     // Read response
@@ -416,7 +413,7 @@ fn test_stdio_logs_go_to_stderr() {
     });
 
     let request_str = serde_json::to_string(&request).unwrap();
-    writeln!(stdin, "{}", request_str).expect("Failed to write request");
+    writeln!(stdin, "{request_str}").expect("Failed to write request");
     stdin.flush().expect("Failed to flush stdin");
 
     // Read stdout response

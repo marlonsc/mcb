@@ -47,6 +47,7 @@ pub struct CacheEntryConfig {
 
 impl CacheEntryConfig {
     /// Create a new cache entry config with default TTL
+    #[must_use]
     pub fn new() -> Self {
         Self {
             ttl: Some(Duration::from_secs(DEFAULT_CACHE_TTL_SECS)),
@@ -55,12 +56,14 @@ impl CacheEntryConfig {
     }
 
     /// Set the TTL for the cache entry
+    #[must_use]
     pub fn with_ttl(mut self, ttl: Duration) -> Self {
         self.ttl = Some(ttl);
         self
     }
 
     /// Set TTL in seconds
+    #[must_use]
     pub fn with_ttl_secs(mut self, secs: u64) -> Self {
         self.ttl = Some(Duration::from_secs(secs));
         self
@@ -73,16 +76,18 @@ impl CacheEntryConfig {
     }
 
     /// Get the effective TTL, falling back to default
+    #[must_use]
     pub fn effective_ttl(&self) -> Duration {
         self.ttl
             .unwrap_or(Duration::from_secs(DEFAULT_CACHE_TTL_SECS))
     }
 
     /// Get the effective namespace, falling back to default
+    #[must_use]
     pub fn effective_namespace(&self) -> String {
         self.namespace
             .clone()
-            .unwrap_or_else(|| DEFAULT_CACHE_NAMESPACE.to_string())
+            .unwrap_or_else(|| DEFAULT_CACHE_NAMESPACE.to_owned())
     }
 }
 
@@ -120,11 +125,13 @@ pub struct CacheStats {
 
 impl CacheStats {
     /// Create empty cache statistics
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Calculate hit rate from hits and misses
+    #[must_use]
     pub fn calculate_hit_rate(&self) -> f64 {
         let total = self.hits + self.misses;
         if total > 0 {

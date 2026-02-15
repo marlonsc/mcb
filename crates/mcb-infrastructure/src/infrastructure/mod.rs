@@ -13,7 +13,7 @@
 //! ## Exception: Admin Types
 //!
 //! `AtomicPerformanceMetrics` and `DefaultIndexingOperations` are exported
-//! because mcb-server needs them for AdminState. These implement traits from
+//! because mcb-server needs them for `AdminState`. These implement traits from
 //! mcb-application but are infrastructure concerns, not external providers.
 
 // Internal modules - implementations NOT exported

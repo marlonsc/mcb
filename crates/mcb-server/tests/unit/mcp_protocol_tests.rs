@@ -11,54 +11,14 @@
 use rstest::rstest;
 extern crate mcb_providers;
 
-use std::net::TcpListener;
-use std::sync::Arc;
-
-use mcb_server::McpServer;
-use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
 use mcb_server::transport::types::{McpRequest, McpResponse};
-use rocket::local::asynchronous::Client;
 use rstest::*;
-use tempfile::TempDir;
 
-use crate::test_utils::test_fixtures::create_test_mcp_server;
-
-/// Get a random available port
-fn get_free_port() -> u16 {
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to port 0");
-    let port = listener
-        .local_addr()
-        .expect("Failed to get local address")
-        .port();
-    drop(listener);
-    port
-}
-
-struct TestContext {
-    client: Client,
-    _server: Arc<McpServer>,
-    _temp: TempDir,
-}
+use crate::test_utils::http_mcp::McpTestContext;
 
 #[fixture]
-async fn ctx() -> TestContext {
-    let port = get_free_port();
-    let (server_instance, temp) = create_test_mcp_server().await;
-    let server = Arc::new(server_instance);
-
-    let http_config = HttpTransportConfig::localhost(port);
-    let transport = HttpTransport::new(http_config, server.clone());
-
-    let rocket = transport.rocket();
-    let client = Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
-
-    TestContext {
-        client,
-        _server: server,
-        _temp: temp,
-    }
+async fn ctx() -> McpTestContext {
+    McpTestContext::new().await
 }
 
 // =============================================================================
@@ -67,10 +27,10 @@ async fn ctx() -> TestContext {
 
 #[rstest]
 #[tokio::test]
-async fn test_initialize_response(#[future] ctx: TestContext) {
+async fn test_initialize_response(#[future] ctx: McpTestContext) {
     let ctx = ctx.await;
     let request = McpRequest {
-        method: "initialize".to_string(),
+        method: "initialize".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
     };
@@ -99,19 +59,16 @@ async fn test_initialize_response(#[future] ctx: TestContext) {
 
     assert!(
         version.is_string(),
-        "protocolVersion must be a JSON string. Got: {:?}",
-        version
+        "protocolVersion must be a JSON string. Got: {version:?}"
     );
     let version_str = version.as_str().unwrap();
     assert!(
         !version_str.contains("ProtocolVersion"),
-        "protocolVersion has Debug format leak: {}",
-        version_str
+        "protocolVersion has Debug format leak: {version_str}"
     );
     assert!(
         version_str.contains("-"),
-        "protocolVersion should be date-formatted: {}",
-        version_str
+        "protocolVersion should be date-formatted: {version_str}"
     );
 
     // Check serverInfo
@@ -150,10 +107,10 @@ async fn test_initialize_response(#[future] ctx: TestContext) {
 
 #[rstest]
 #[tokio::test]
-async fn test_tools_schemas(#[future] ctx: TestContext) {
+async fn test_tools_schemas(#[future] ctx: McpTestContext) {
     let ctx = ctx.await;
     let request = McpRequest {
-        method: "tools/list".to_string(),
+        method: "tools/list".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
     };
@@ -183,15 +140,10 @@ async fn test_tools_schemas(#[future] ctx: TestContext) {
         let schema = tool.get("inputSchema").expect("Missing inputSchema");
 
         // Regression check: not null
-        assert!(
-            !schema.is_null(),
-            "Tool '{}' has null inputSchema",
-            tool_name
-        );
+        assert!(!schema.is_null(), "Tool '{tool_name}' has null inputSchema");
         assert!(
             schema.is_object(),
-            "Tool '{}' inputSchema should be object",
-            tool_name
+            "Tool '{tool_name}' inputSchema should be object"
         );
 
         let schema_type = schema.get("type").expect("Missing type in schema");
@@ -253,10 +205,10 @@ async fn test_tools_schemas(#[future] ctx: TestContext) {
 #[case("tools/list")]
 #[case("ping")]
 #[tokio::test]
-async fn test_response_has_jsonrpc_field(#[future] ctx: TestContext, #[case] method: &str) {
+async fn test_response_has_jsonrpc_field(#[future] ctx: McpTestContext, #[case] method: &str) {
     let ctx = ctx.await;
     let request = McpRequest {
-        method: method.to_string(),
+        method: method.to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
     };
@@ -274,8 +226,7 @@ async fn test_response_has_jsonrpc_field(#[future] ctx: TestContext, #[case] met
 
     assert_eq!(
         mcp_response.jsonrpc, "2.0",
-        "Response for '{}' should have jsonrpc: \"2.0\"",
-        method
+        "Response for '{method}' should have jsonrpc: \"2.0\""
     );
 }
 
@@ -284,12 +235,12 @@ async fn test_response_has_jsonrpc_field(#[future] ctx: TestContext, #[case] met
 #[case(serde_json::json!("test-id-123"))]
 #[tokio::test]
 async fn test_response_echoes_request_id(
-    #[future] ctx: TestContext,
+    #[future] ctx: McpTestContext,
     #[case] id: serde_json::Value,
 ) {
     let ctx = ctx.await;
     let request = McpRequest {
-        method: "ping".to_string(),
+        method: "ping".to_owned(),
         params: None,
         id: Some(id.clone()),
     };
@@ -310,10 +261,10 @@ async fn test_response_echoes_request_id(
 
 #[rstest]
 #[tokio::test]
-async fn test_error_response_structure(#[future] ctx: TestContext) {
+async fn test_error_response_structure(#[future] ctx: McpTestContext) {
     let ctx = ctx.await;
     let request = McpRequest {
-        method: "nonexistent/method".to_string(),
+        method: "nonexistent/method".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
     };

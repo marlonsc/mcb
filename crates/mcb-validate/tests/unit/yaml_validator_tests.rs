@@ -54,8 +54,7 @@ fn test_invalid_field_values(
     invalid_rule[field] = value.into();
     assert!(
         validator.validate_rule(&invalid_rule).is_err(),
-        "Expected error for invalid {}",
-        field
+        "Expected error for invalid {field}"
     );
 }
 

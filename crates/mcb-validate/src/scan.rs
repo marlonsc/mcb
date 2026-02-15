@@ -154,6 +154,7 @@ fn matches_language(entry: &InventoryEntry, language: Option<LanguageId>) -> boo
 
 /// Extracts a code block defined by balanced braces `{}` starting search from `start_line_idx`.
 /// Returns the lines inclusive of the start and end lines, and the index of the last line.
+#[must_use]
 pub fn extract_balanced_block<'a>(
     lines: &'a [&'a str],
     start_line_idx: usize,

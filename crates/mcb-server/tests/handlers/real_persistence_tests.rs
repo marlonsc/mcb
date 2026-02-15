@@ -1,6 +1,6 @@
 //! Real-Persistence Handler Integration Tests
 //!
-//! Tests that validate handlers against **real** providers (SQLite, EdgeVec, FastEmbed).
+//! Tests that validate handlers against **real** providers (`SQLite`, `EdgeVec`, `FastEmbed`).
 //! No mocks — every assertion verifies actual database state.
 //!
 //! ## Key Principle
@@ -18,31 +18,7 @@ use rstest::rstest;
 use serde_json::json;
 
 use crate::test_utils::test_fixtures::create_test_mcp_server;
-
-/// Extract text content from CallToolResult for assertions.
-fn extract_text(content: &[rmcp::model::Content]) -> String {
-    content
-        .iter()
-        .filter_map(|c| {
-            if let Ok(json) = serde_json::to_value(c)
-                && let Some(text) = json.get("text")
-            {
-                text.as_str().map(|s| s.to_string())
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
-fn parse_count_from_json_text(text: &str) -> usize {
-    serde_json::from_str::<serde_json::Value>(text)
-        .ok()
-        .and_then(|v| v.get("count").and_then(serde_json::Value::as_u64))
-        .map(|v| v as usize)
-        .unwrap_or(0)
-}
+use crate::test_utils::text::{extract_text, parse_count_from_json_text};
 
 async fn list_observation_count(
     memory_h: &mcb_server::handlers::MemoryHandler,
@@ -59,7 +35,7 @@ async fn list_observation_count(
         session_id: None,
         parent_session_id: None,
         tags: None,
-        query: Some(query.to_string()),
+        query: Some(query.to_owned()),
         anchor_id: None,
         depth_before: None,
         depth_after: None,
@@ -94,7 +70,7 @@ async fn test_real_memory_store_observation_persists() {
         action: MemoryAction::Store,
         org_id: None,
         resource: MemoryResource::Observation,
-        project_id: Some(project_id.to_string()),
+        project_id: Some(project_id.to_owned()),
         data: Some(json!({
             "content": "Authentication middleware uses JWT with RS256",
             "observation_type": "context",
@@ -127,8 +103,7 @@ async fn test_real_memory_store_observation_persists() {
     let text = extract_text(&resp.content);
     assert!(
         text.contains("observation_id"),
-        "Response should contain observation_id, got: {}",
-        text
+        "Response should contain observation_id, got: {text}"
     );
 
     // 2. Retrieve it back via list — proves it actually hit the database
@@ -143,7 +118,7 @@ async fn test_real_memory_store_observation_persists() {
         session_id: None,
         parent_session_id: None,
         tags: None,
-        query: Some("JWT".to_string()),
+        query: Some("JWT".to_owned()),
         anchor_id: None,
         depth_before: None,
         depth_after: None,
@@ -162,8 +137,7 @@ async fn test_real_memory_store_observation_persists() {
             || list_text.contains("jwt")
             || list_text.contains("auth")
             || list_text.contains("Authentication"),
-        "Listed observations should contain our stored content, got: {}",
-        list_text
+        "Listed observations should contain our stored content, got: {list_text}"
     );
 }
 
@@ -180,7 +154,7 @@ async fn test_real_memory_store_multiple_observations_counted() {
             action: MemoryAction::Store,
             org_id: None,
             resource: MemoryResource::Observation,
-            project_id: Some(project_id.to_string()),
+            project_id: Some(project_id.to_owned()),
             data: Some(json!({
                 "content": format!("Observation number {}", i),
                 "observation_type": "context",
@@ -205,11 +179,7 @@ async fn test_real_memory_store_multiple_observations_counted() {
         let result = memory_h.handle(Parameters(store_args)).await;
         assert!(result.is_ok());
         let resp = result.unwrap();
-        assert!(
-            !resp.is_error.unwrap_or(false),
-            "Store {} should succeed",
-            i
-        );
+        assert!(!resp.is_error.unwrap_or(false), "Store {i} should succeed");
     }
 
     // List and verify count
@@ -224,7 +194,7 @@ async fn test_real_memory_store_multiple_observations_counted() {
         session_id: None,
         parent_session_id: None,
         tags: None,
-        query: Some("Observation".to_string()),
+        query: Some("Observation".to_owned()),
         anchor_id: None,
         depth_before: None,
         depth_after: None,
@@ -245,8 +215,7 @@ async fn test_real_memory_store_multiple_observations_counted() {
         && list_text.contains("Observation number 2");
     assert!(
         has_observations || list_text.contains("\"count\": 3"),
-        "Should find all 3 observations in list. Response: {}",
-        list_text
+        "Should find all 3 observations in list. Response: {list_text}"
     );
 }
 
@@ -293,13 +262,11 @@ async fn test_real_memory_store_missing_data_returns_contextual_error() {
     // Must NOT be the old opaque "internal error"
     assert!(
         !text.contains("internal error"),
-        "Error should be contextual, not opaque. Got: {}",
-        text
+        "Error should be contextual, not opaque. Got: {text}"
     );
     assert!(
         text.contains("Missing"),
-        "Error should mention missing required field. Got: {}",
-        text
+        "Error should mention missing required field. Got: {text}"
     );
 }
 
@@ -307,9 +274,9 @@ async fn test_real_memory_store_missing_data_returns_contextual_error() {
 // Session Create — Real Persistence
 // =============================================================================
 
-/// Creates a session_summary (memory resource) and verifies it can be retrieved.
-/// Tests the full store → get round-trip on real SQLite.
-/// No observation seed needed — store_session_summary auto-creates org + project (honesty fix v0.2.1).
+/// Creates a `session_summary` (memory resource) and verifies it can be retrieved.
+/// Tests the full store → get round-trip on real `SQLite`.
+/// No observation seed needed — `store_session_summary` auto-creates org + project (honesty fix v0.2.1).
 #[tokio::test]
 async fn test_real_session_summary_store_and_retrieve() {
     let (server, _temp) = create_test_mcp_server().await;
@@ -320,7 +287,7 @@ async fn test_real_session_summary_store_and_retrieve() {
         action: MemoryAction::Store,
         org_id: None,
         resource: MemoryResource::Session,
-        project_id: Some("session-roundtrip-project".to_string()),
+        project_id: Some("session-roundtrip-project".to_owned()),
         data: Some(json!({
             "session_id": "sess-roundtrip",
             "topics": ["architecture", "testing"],
@@ -351,13 +318,11 @@ async fn test_real_session_summary_store_and_retrieve() {
     let store_text = extract_text(&store_resp.content);
     assert!(
         !store_resp.is_error.unwrap_or(false),
-        "Session summary store should succeed, got: {}",
-        store_text
+        "Session summary store should succeed, got: {store_text}"
     );
     assert!(
         store_text.contains("summary_id"),
-        "Response should contain summary_id, got: {}",
-        store_text
+        "Response should contain summary_id, got: {store_text}"
     );
 
     // 2. Retrieve via Get to verify persistence
@@ -390,8 +355,7 @@ async fn test_real_session_summary_store_and_retrieve() {
     let get_text = extract_text(&get_resp.content);
     assert!(
         get_text.contains("architecture") || get_text.contains("hexagonal"),
-        "Retrieved session summary should contain stored data, got: {}",
-        get_text
+        "Retrieved session summary should contain stored data, got: {get_text}"
     );
 }
 
@@ -399,7 +363,7 @@ async fn test_real_session_summary_store_and_retrieve() {
 // Session Create — Invalid Agent Type (contextual error)
 // =============================================================================
 
-/// Passes an invalid agent_type and verifies the error lists valid types.
+/// Passes an invalid `agent_type` and verifies the error lists valid types.
 #[tokio::test]
 async fn test_real_session_create_invalid_agent_type_contextual_error() {
     let (server, _temp) = create_test_mcp_server().await;
@@ -417,7 +381,7 @@ async fn test_real_session_create_invalid_agent_type_contextual_error() {
         })),
         worktree_id: None,
         parent_session_id: None,
-        agent_type: Some("nonexistent_agent_xyz".to_string()),
+        agent_type: Some("nonexistent_agent_xyz".to_owned()),
         status: None,
         limit: None,
     };
@@ -427,8 +391,7 @@ async fn test_real_session_create_invalid_agent_type_contextual_error() {
     let err_text = format!("{:?}", result.unwrap_err());
     assert!(
         err_text.contains("sisyphus") || err_text.contains("oracle") || err_text.contains("Valid"),
-        "Error should list valid agent types, got: {}",
-        err_text
+        "Error should list valid agent types, got: {err_text}"
     );
 }
 
@@ -443,7 +406,7 @@ async fn test_real_search_empty_project_returns_empty_not_error() {
     let search_h = server.search_handler();
 
     let search_args = SearchArgs {
-        query: "nonexistent pattern that should match nothing".to_string(),
+        query: "nonexistent pattern that should match nothing".to_owned(),
         org_id: None,
         resource: SearchResource::Memory,
         collection: None,
@@ -470,8 +433,7 @@ async fn test_real_search_empty_project_returns_empty_not_error() {
     // Should contain a count of 0 or empty results array
     assert!(
         text.contains("\"count\": 0") || text.contains("\"count\":0") || text.contains("[]"),
-        "Search on empty project should return count 0 or empty array, got: {}",
-        text
+        "Search on empty project should return count 0 or empty array, got: {text}"
     );
 }
 
@@ -488,7 +450,7 @@ async fn test_real_search_memory_enriches_origin_context_fields() {
         action: MemoryAction::Store,
         org_id: None,
         resource: MemoryResource::Observation,
-        project_id: Some(project_id.to_string()),
+        project_id: Some(project_id.to_owned()),
         data: Some(json!({
             "content": token,
             "observation_type": "context",
@@ -520,7 +482,7 @@ async fn test_real_search_memory_enriches_origin_context_fields() {
     assert!(!store_resp.is_error.unwrap_or(false));
 
     let search_args = SearchArgs {
-        query: token.to_string(),
+        query: token.to_owned(),
         org_id: None,
         resource: SearchResource::Memory,
         collection: None,
@@ -569,8 +531,8 @@ async fn test_real_search_memory_enriches_origin_context_fields() {
 // Agent Session — Full FK Chain Round-Trip
 // =============================================================================
 
-/// Full round-trip: store session_summary → create agent_session → get agent_session.
-/// Proves the entire FK chain (org → project → session_summary → agent_session) works
+/// Full round-trip: store `session_summary` → create `agent_session` → get `agent_session`.
+/// Proves the entire FK chain (org → project → `session_summary` → `agent_session`) works
 /// with auto-create, no observation seed needed.
 #[tokio::test]
 async fn test_real_agent_session_create_and_retrieve() {
@@ -583,7 +545,7 @@ async fn test_real_agent_session_create_and_retrieve() {
         action: MemoryAction::Store,
         org_id: None,
         resource: MemoryResource::Session,
-        project_id: Some("agent-roundtrip-project".to_string()),
+        project_id: Some("agent-roundtrip-project".to_owned()),
         data: Some(json!({
             "session_id": "sess-agent-roundtrip",
             "topics": ["FK chain validation"],
@@ -613,8 +575,7 @@ async fn test_real_agent_session_create_and_retrieve() {
     let summary_text = extract_text(&summary_resp.content);
     assert!(
         !summary_resp.is_error.unwrap_or(false),
-        "Session summary store should succeed, got: {}",
-        summary_text
+        "Session summary store should succeed, got: {summary_text}"
     );
 
     // Extract summary_id from response
@@ -637,7 +598,7 @@ async fn test_real_agent_session_create_and_retrieve() {
         })),
         worktree_id: None,
         parent_session_id: None,
-        agent_type: Some("sisyphus".to_string()),
+        agent_type: Some("sisyphus".to_owned()),
         status: None,
         limit: None,
     };
@@ -647,13 +608,11 @@ async fn test_real_agent_session_create_and_retrieve() {
     let create_text = extract_text(&create_resp.content);
     assert!(
         !create_resp.is_error.unwrap_or(false),
-        "Agent session create should succeed, got: {}",
-        create_text
+        "Agent session create should succeed, got: {create_text}"
     );
     assert!(
         create_text.contains("session_id"),
-        "Response should contain session_id, got: {}",
-        create_text
+        "Response should contain session_id, got: {create_text}"
     );
 
     // Extract agent session_id
@@ -684,23 +643,19 @@ async fn test_real_agent_session_create_and_retrieve() {
     let get_text = extract_text(&get_resp.content);
     assert!(
         !get_resp.is_error.unwrap_or(false),
-        "Agent session get should succeed, got: {}",
-        get_text
+        "Agent session get should succeed, got: {get_text}"
     );
     assert!(
         get_text.contains("sisyphus"),
-        "Retrieved session should contain agent_type=sisyphus, got: {}",
-        get_text
+        "Retrieved session should contain agent_type=sisyphus, got: {get_text}"
     );
     assert!(
         get_text.contains("claude-opus-4-20250514"),
-        "Retrieved session should contain model, got: {}",
-        get_text
+        "Retrieved session should contain model, got: {get_text}"
     );
     assert!(
         get_text.contains(summary_id),
-        "Retrieved session should reference original summary_id, got: {}",
-        get_text
+        "Retrieved session should reference original summary_id, got: {get_text}"
     );
 }
 
@@ -720,7 +675,7 @@ async fn test_real_agent_session_create_without_summary_id_succeeds() {
         })),
         worktree_id: None,
         parent_session_id: None,
-        agent_type: Some("sisyphus".to_string()),
+        agent_type: Some("sisyphus".to_owned()),
         status: None,
         limit: None,
     };
@@ -731,8 +686,7 @@ async fn test_real_agent_session_create_without_summary_id_succeeds() {
     let create_text = extract_text(&create_resp.content);
     assert!(
         !create_resp.is_error.unwrap_or(false),
-        "Agent session create should succeed, got: {}",
-        create_text
+        "Agent session create should succeed, got: {create_text}"
     );
 
     let create_json: serde_json::Value =
@@ -761,13 +715,11 @@ async fn test_real_agent_session_create_without_summary_id_succeeds() {
     let get_text = extract_text(&get_resp.content);
     assert!(
         !get_resp.is_error.unwrap_or(false),
-        "Agent session get should succeed, got: {}",
-        get_text
+        "Agent session get should succeed, got: {get_text}"
     );
     assert!(
         get_text.contains("\"session_summary_id\": \"auto_"),
-        "Session summary id should be auto-generated, got: {}",
-        get_text
+        "Session summary id should be auto-generated, got: {get_text}"
     );
 }
 
@@ -813,7 +765,7 @@ async fn test_real_session_list_filters_by_parent_session_id() {
         action: SessionAction::Create,
         org_id: None,
         session_id: None,
-        project_id: Some("parent-child-project".to_string()),
+        project_id: Some("parent-child-project".to_owned()),
         data: Some(json!({
             "agent_type": "sisyphus",
             "model": "claude-opus-4-20250514",
@@ -837,13 +789,13 @@ async fn test_real_session_list_filters_by_parent_session_id() {
         .get("session_id")
         .and_then(|v| v.as_str())
         .expect("parent session id")
-        .to_string();
+        .to_owned();
 
     let child_create = SessionArgs {
         action: SessionAction::Create,
         org_id: None,
         session_id: None,
-        project_id: Some("parent-child-project".to_string()),
+        project_id: Some("parent-child-project".to_owned()),
         data: Some(json!({
             "agent_type": "explore",
             "model": "claude-opus-4-20250514",
@@ -868,13 +820,13 @@ async fn test_real_session_list_filters_by_parent_session_id() {
         .get("session_id")
         .and_then(|v| v.as_str())
         .expect("child session id")
-        .to_string();
+        .to_owned();
 
     let list_args = SessionArgs {
         action: SessionAction::List,
         org_id: None,
         session_id: None,
-        project_id: Some("parent-child-project".to_string()),
+        project_id: Some("parent-child-project".to_owned()),
         data: None,
         worktree_id: None,
         parent_session_id: Some(parent_id.clone()),
@@ -911,7 +863,7 @@ async fn test_real_memory_store_conflicting_ids_rejected_without_side_effect(#[c
     let (resource, project_id, repo_id, data, expected_error) = if mode == "observation" {
         (
             MemoryResource::Observation,
-            Some("project-from-args".to_string()),
+            Some("project-from-args".to_owned()),
             None,
             json!({
                 "content": query,
@@ -924,8 +876,8 @@ async fn test_real_memory_store_conflicting_ids_rejected_without_side_effect(#[c
     } else {
         (
             MemoryResource::Execution,
-            Some("project-exec".to_string()),
-            Some("repo-from-args".to_string()),
+            Some("project-exec".to_owned()),
+            Some("repo-from-args".to_owned()),
             json!({
                 "command": query,
                 "exit_code": 0,
@@ -997,7 +949,7 @@ async fn test_real_session_create_conflicting_project_rejected_without_side_effe
         action: SessionAction::Create,
         org_id: None,
         session_id: None,
-        project_id: Some("project-from-args".to_string()),
+        project_id: Some("project-from-args".to_owned()),
         data: Some(json!({
             "agent_type": "sisyphus",
             "model": "claude-opus-4-20250514",

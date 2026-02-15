@@ -15,7 +15,7 @@ fn test_embedding_creation_and_properties(
 ) {
     let embedding = Embedding {
         vector: vector.clone(),
-        model: model.to_string(),
+        model: model.to_owned(),
         dimensions,
     };
 

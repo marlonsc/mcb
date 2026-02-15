@@ -32,6 +32,7 @@ impl Default for ExpressionEngine {
 
 impl ExpressionEngine {
     /// Create a new expression engine instance.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             cached_contexts: HashMap::new(),
@@ -43,12 +44,12 @@ impl ExpressionEngine {
         let mut ctx = HashMapContext::new();
 
         let _ = ctx.set_value(
-            "file_count".to_string(),
+            "file_count".to_owned(),
             EvalValue::Int(rule_context.file_contents.len() as i64),
         );
 
         let _ = ctx.set_value(
-            "workspace_path_len".to_string(),
+            "workspace_path_len".to_owned(),
             EvalValue::Int(
                 rule_context
                     .workspace_root
@@ -62,20 +63,20 @@ impl ExpressionEngine {
             .file_contents
             .values()
             .any(|content| content.contains(".unwrap()"));
-        let _ = ctx.set_value("has_unwrap".to_string(), EvalValue::Boolean(has_unwrap));
+        let _ = ctx.set_value("has_unwrap".to_owned(), EvalValue::Boolean(has_unwrap));
 
         let has_expect = rule_context
             .file_contents
             .values()
             .any(|content| content.contains(".expect("));
-        let _ = ctx.set_value("has_expect".to_string(), EvalValue::Boolean(has_expect));
+        let _ = ctx.set_value("has_expect".to_owned(), EvalValue::Boolean(has_expect));
 
         // Check for async patterns
         let has_async = rule_context
             .file_contents
             .values()
             .any(|content| content.contains("async fn"));
-        let _ = ctx.set_value("has_async".to_string(), EvalValue::Boolean(has_async));
+        let _ = ctx.set_value("has_async".to_owned(), EvalValue::Boolean(has_async));
 
         // Check for test patterns (supports both absolute and relative paths)
         let has_tests = rule_context.file_contents.keys().any(|path| {
@@ -84,7 +85,7 @@ impl ExpressionEngine {
                 || path.contains("_test.rs")
                 || path.contains("test_")
         });
-        let _ = ctx.set_value("has_tests".to_string(), EvalValue::Boolean(has_tests));
+        let _ = ctx.set_value("has_tests".to_owned(), EvalValue::Boolean(has_tests));
 
         ctx
     }

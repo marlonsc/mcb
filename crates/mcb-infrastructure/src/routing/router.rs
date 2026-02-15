@@ -128,17 +128,17 @@ impl ProviderRouter for DefaultProviderRouter {
 
     async fn get_stats(&self) -> HashMap<String, serde_json::Value> {
         let mut stats = HashMap::new();
-        stats.insert("provider".to_string(), serde_json::json!("default"));
+        stats.insert("provider".to_owned(), serde_json::json!("default"));
         stats.insert(
-            "embedding_providers".to_string(),
+            "embedding_providers".to_owned(),
             serde_json::json!(self.embedding_providers),
         );
         stats.insert(
-            "vector_store_providers".to_string(),
+            "vector_store_providers".to_owned(),
             serde_json::json!(self.vector_store_providers),
         );
         stats.insert(
-            "health_summary".to_string(),
+            "health_summary".to_owned(),
             serde_json::json!(self.health_monitor.get_all_health()),
         );
         stats

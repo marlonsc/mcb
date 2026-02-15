@@ -92,10 +92,10 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
                 }
 
                 violations.push(OrganizationViolation::ServerCreatingServices {
-                    file: entry.absolute_path.to_path_buf(),
+                    file: entry.absolute_path.clone(),
                     line: line_num + 1,
-                    service_name: service_name.to_string(),
-                    suggestion: "Use DI container to resolve services".to_string(),
+                    service_name: service_name.to_owned(),
+                    suggestion: "Use DI container to resolve services".to_owned(),
                     severity: Severity::Warning,
                 });
             }
@@ -106,9 +106,9 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
                 && !trimmed.contains("pub use")
             {
                 violations.push(OrganizationViolation::ApplicationImportsServer {
-                    file: entry.absolute_path.to_path_buf(),
+                    file: entry.absolute_path.clone(),
                     line: line_num + 1,
-                    import_statement: trimmed.to_string(),
+                    import_statement: trimmed.to_owned(),
                     severity: Severity::Warning,
                 });
             }

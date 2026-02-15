@@ -37,7 +37,7 @@ impl EnvVarGuard {
             env::set_var(key, value);
         }
         Self {
-            key: key.to_string(),
+            key: key.to_owned(),
         }
     }
 }
@@ -253,7 +253,7 @@ fn scan_rs_files(dir: &Path) -> Vec<PathBuf> {
     }
     for entry in walkdir::WalkDir::new(dir)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(std::result::Result::ok)
     {
         let path = entry.path();
         if path.extension().is_some_and(|ext| ext == "rs")

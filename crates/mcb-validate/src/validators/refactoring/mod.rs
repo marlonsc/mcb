@@ -44,6 +44,7 @@ impl RefactoringValidator {
     }
 
     /// Create a validator with custom configuration
+    #[must_use]
     pub fn with_config(config: ValidationConfig, rules: &RefactoringRulesConfig) -> Self {
         let generic_type_names: HashSet<String> =
             rules.generic_type_names.iter().cloned().collect();

@@ -65,6 +65,7 @@ pub enum CacheProvider {
 
 impl CacheProvider {
     /// Get the provider name as a string for registry lookup
+    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             CacheProvider::Moka => "moka",

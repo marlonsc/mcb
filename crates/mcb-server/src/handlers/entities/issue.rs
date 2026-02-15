@@ -38,7 +38,7 @@ impl IssueEntityHandler {
             {
             (IssueEntityAction::Create, IssueEntityResource::Issue) => {
                 let mut issue: ProjectIssue = require_data(args.data, "data required for create")?;
-                issue.org_id = org_id.to_string();
+                issue.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_issue(&issue).await)?;
                 ok_json(&issue)
             }
@@ -54,7 +54,7 @@ impl IssueEntityHandler {
             }
             (IssueEntityAction::Update, IssueEntityResource::Issue) => {
                 let mut issue: ProjectIssue = require_data(args.data, "data required for update")?;
-                issue.org_id = org_id.to_string();
+                issue.org_id = org_id.clone();
                 map_opaque_error(self.repo.update_issue(&issue).await)?;
                 ok_text("updated")
             }
@@ -86,7 +86,7 @@ impl IssueEntityHandler {
             }
             (IssueEntityAction::Create, IssueEntityResource::Label) => {
                 let mut label: IssueLabel = require_data(args.data, "data required")?;
-                label.org_id = org_id.to_string();
+                label.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_label(&label).await)?;
                 ok_json(&label)
             }
@@ -107,15 +107,8 @@ impl IssueEntityHandler {
             }
             (IssueEntityAction::Create, IssueEntityResource::LabelAssignment) => {
                 let assignment: IssueLabelAssignment =
-                    require_data(args.data, "data required").map_err(|e| {
-                        McpError::invalid_params(
-                            format!("failed to parse label assignment payload from request: {e}"),
-                            None,
-                        )
-                    })?;
-                map_opaque_error(self.repo.assign_label(&assignment).await).map_err(|e| {
-                    McpError::internal_error(format!("failed to assign label to issue: {e}"), None)
-                })?;
+                    require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.assign_label(&assignment).await)?;
                 ok_text("assigned")
             }
             (IssueEntityAction::Delete, IssueEntityResource::LabelAssignment) => {
@@ -127,14 +120,7 @@ impl IssueEntityHandler {
                     .label_id
                     .as_deref()
                     .ok_or_else(|| McpError::invalid_params("label_id required", None))?;
-                map_opaque_error(self.repo.unassign_label(issue_id, label_id).await).map_err(|e| {
-                    McpError::internal_error(
-                        format!(
-                            "failed to unassign label '{label_id}' from issue '{issue_id}': {e}"
-                        ),
-                        None,
-                    )
-                })?;
+                map_opaque_error(self.repo.unassign_label(issue_id, label_id).await)?;
                 ok_text("unassigned")
             }
             (IssueEntityAction::List, IssueEntityResource::LabelAssignment) => {

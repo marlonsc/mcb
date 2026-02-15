@@ -2,7 +2,7 @@
 ///
 /// This module extracts session IDs, project IDs, and other context values
 /// from the `Meta` maps attached to tool call requests, handling multiple
-/// key name conventions (snake_case, camelCase, x-prefixed).
+/// key name conventions (`snake_case`, camelCase, x-prefixed).
 use rmcp::model::Meta;
 use serde_json::Value;
 

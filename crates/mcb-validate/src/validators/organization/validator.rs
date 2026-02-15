@@ -23,6 +23,7 @@ impl OrganizationValidator {
     }
 
     /// Initializes a new organization validator with a custom configuration.
+    #[must_use]
     pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }

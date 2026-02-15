@@ -49,15 +49,15 @@ fn build_chunk_metadata(
     normalized_file_path: &str,
 ) -> HashMap<String, serde_json::Value> {
     HashMap::from([
-        ("id".to_string(), json!(chunk.id)),
+        ("id".to_owned(), json!(chunk.id)),
         (
-            METADATA_KEY_FILE_PATH.to_string(),
+            METADATA_KEY_FILE_PATH.to_owned(),
             json!(normalized_file_path),
         ),
-        ("content".to_string(), json!(chunk.content)),
-        (METADATA_KEY_START_LINE.to_string(), json!(chunk.start_line)),
-        (METADATA_KEY_END_LINE.to_string(), json!(chunk.end_line)),
-        ("language".to_string(), json!(chunk.language)),
+        ("content".to_owned(), json!(chunk.content)),
+        (METADATA_KEY_START_LINE.to_owned(), json!(chunk.start_line)),
+        (METADATA_KEY_END_LINE.to_owned(), json!(chunk.end_line)),
+        ("language".to_owned(), json!(chunk.language)),
     ])
 }
 
@@ -72,7 +72,7 @@ fn normalize_relative_file_path(raw: &str) -> Result<String> {
     let trimmed = raw.trim();
     if trimmed.is_empty() {
         return Err(mcb_domain::error::Error::invalid_argument(
-            "chunk file_path cannot be empty".to_string(),
+            "chunk file_path cannot be empty".to_owned(),
         ));
     }
 
@@ -87,7 +87,7 @@ fn normalize_relative_file_path(raw: &str) -> Result<String> {
     for component in path.components() {
         match component {
             Component::CurDir => {}
-            Component::Normal(part) => parts.push(part.to_str().unwrap_or_default().to_string()),
+            Component::Normal(part) => parts.push(part.to_str().unwrap_or_default().to_owned()),
             Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
                 return Err(mcb_domain::error::Error::invalid_argument(format!(
                     "chunk file_path must be normalized workspace-relative: '{trimmed}'"
@@ -98,7 +98,7 @@ fn normalize_relative_file_path(raw: &str) -> Result<String> {
 
     if parts.is_empty() {
         return Err(mcb_domain::error::Error::invalid_argument(
-            "chunk file_path cannot resolve to current directory".to_string(),
+            "chunk file_path cannot resolve to current directory".to_owned(),
         ));
     }
 

@@ -123,6 +123,7 @@ impl ServerConfig {
     }
 
     /// Get the server URL
+    #[must_use]
     pub fn get_base_url(&self) -> String {
         let protocol = if self.ssl.https { "https" } else { "http" };
         format!("{}://{}:{}", protocol, self.network.host, self.network.port)
@@ -136,14 +137,14 @@ impl ServerConfig {
 
         if self.ssl.ssl_cert_path.is_none() {
             return Err(Error::Configuration {
-                message: "SSL certificate path is required when HTTPS is enabled".to_string(),
+                message: "SSL certificate path is required when HTTPS is enabled".to_owned(),
                 source: None,
             });
         }
 
         if self.ssl.ssl_key_path.is_none() {
             return Err(Error::Configuration {
-                message: "SSL key path is required when HTTPS is enabled".to_string(),
+                message: "SSL key path is required when HTTPS is enabled".to_owned(),
                 source: None,
             });
         }
@@ -173,11 +174,13 @@ impl ServerConfig {
     }
 
     /// Get request timeout duration
+    #[must_use]
     pub fn request_timeout(&self) -> Duration {
         Duration::from_secs(self.timeouts.request_timeout_secs)
     }
 
     /// Get connection timeout duration
+    #[must_use]
     pub fn connection_timeout(&self) -> Duration {
         Duration::from_secs(self.timeouts.connection_timeout_secs)
     }
@@ -191,12 +194,13 @@ pub struct ServerConfigBuilder {
 
 impl ServerConfigBuilder {
     /// Create a new server config builder with defaults
+    #[must_use]
     pub fn new() -> Self {
         Self {
             config: ServerConfig {
                 transport_mode: TransportMode::default(),
                 network: ServerNetworkConfig {
-                    host: DEFAULT_SERVER_HOST.to_string(),
+                    host: DEFAULT_SERVER_HOST.to_owned(),
                     port: DEFAULT_HTTP_PORT,
                 },
                 ssl: ServerSslConfig::default(),
@@ -207,7 +211,7 @@ impl ServerConfigBuilder {
                 },
                 cors: ServerCorsConfig {
                     cors_enabled: true,
-                    cors_origins: vec![DEFAULT_CORS_ORIGIN.to_string()],
+                    cors_origins: vec![DEFAULT_CORS_ORIGIN.to_owned()],
                 },
             },
         }
@@ -220,12 +224,14 @@ impl ServerConfigBuilder {
     }
 
     /// Set the server port
+    #[must_use]
     pub fn port(mut self, port: u16) -> Self {
         self.config.network.port = port;
         self
     }
 
     /// Enable HTTPS
+    #[must_use]
     pub fn https(mut self, enabled: bool) -> Self {
         self.config.ssl.https = enabled;
         self
@@ -239,24 +245,28 @@ impl ServerConfigBuilder {
     }
 
     /// Set request timeout in seconds
+    #[must_use]
     pub fn request_timeout(mut self, seconds: u64) -> Self {
         self.config.timeouts.request_timeout_secs = seconds;
         self
     }
 
     /// Set connection timeout in seconds
+    #[must_use]
     pub fn connection_timeout(mut self, seconds: u64) -> Self {
         self.config.timeouts.connection_timeout_secs = seconds;
         self
     }
 
     /// Set maximum request body size
+    #[must_use]
     pub fn max_request_body_size(mut self, size: usize) -> Self {
         self.config.timeouts.max_request_body_size = size;
         self
     }
 
     /// Configure CORS
+    #[must_use]
     pub fn cors(mut self, enabled: bool, origins: Vec<String>) -> Self {
         self.config.cors.cors_enabled = enabled;
         self.config.cors.cors_origins = origins;
@@ -264,6 +274,7 @@ impl ServerConfigBuilder {
     }
 
     /// Build the server configuration
+    #[must_use]
     pub fn build(self) -> ServerConfig {
         self.config
     }
@@ -281,6 +292,7 @@ pub struct ServerConfigPresets;
 
 impl ServerConfigPresets {
     /// Development server configuration
+    #[must_use]
     pub fn development() -> ServerConfig {
         ServerConfigBuilder::new()
             .host("127.0.0.1")
@@ -290,12 +302,13 @@ impl ServerConfigPresets {
             .connection_timeout(10)
             .cors(
                 true,
-                vec!["http://localhost:3000".to_string(), "*".to_string()],
+                vec!["http://localhost:3000".to_owned(), "*".to_owned()],
             )
             .build()
     }
 
     /// Production server configuration
+    #[must_use]
     pub fn production() -> ServerConfig {
         ServerConfigBuilder::new()
             .host("0.0.0.0")
@@ -303,11 +316,12 @@ impl ServerConfigPresets {
             .https(true)
             .request_timeout(30)
             .connection_timeout(5)
-            .cors(true, vec!["https://yourdomain.com".to_string()])
+            .cors(true, vec!["https://yourdomain.com".to_owned()])
             .build()
     }
 
     /// Testing server configuration
+    #[must_use]
     pub fn testing() -> ServerConfig {
         ServerConfigBuilder::new()
             .host("127.0.0.1")

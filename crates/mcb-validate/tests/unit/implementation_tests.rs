@@ -44,7 +44,7 @@ fn test_implementation_full_workspace() {
 fn test_clean_implementation_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
-        r"
+        "
 /// A well-implemented function.
 pub fn compute(x: i32) -> i32 {
     x * 2 + 1

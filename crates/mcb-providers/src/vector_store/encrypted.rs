@@ -31,7 +31,7 @@ use serde_json::Value;
 
 /// Encrypted vector store provider
 ///
-/// Wraps any VectorStoreProvider implementation to provide encryption at rest.
+/// Wraps any `VectorStoreProvider` implementation to provide encryption at rest.
 /// Vectors are stored unencrypted for searchability, but metadata is encrypted
 /// using AES-256-GCM.
 ///
@@ -77,7 +77,7 @@ impl<P: VectorStoreProvider> EncryptedVectorStoreProvider<P> {
     fn encrypt_metadata(&self, meta: &HashMap<String, Value>) -> Result<HashMap<String, Value>> {
         // Serialize and encrypt sensitive metadata
         let metadata_json = serde_json::to_string(meta).map_err(|e| Error::Infrastructure {
-            message: format!("Failed to serialize metadata: {}", e),
+            message: format!("Failed to serialize metadata: {e}"),
             source: Some(Box::new(e)),
         })?;
 
@@ -85,9 +85,9 @@ impl<P: VectorStoreProvider> EncryptedVectorStoreProvider<P> {
 
         let mut processed = HashMap::new();
         processed.insert(
-            "encrypted_metadata".to_string(),
+            "encrypted_metadata".to_owned(),
             serde_json::to_value(&encrypted_data).map_err(|e| Error::Infrastructure {
-                message: format!("Failed to serialize encrypted data: {}", e),
+                message: format!("Failed to serialize encrypted data: {e}"),
                 source: Some(Box::new(e)),
             })?,
         );
@@ -95,11 +95,11 @@ impl<P: VectorStoreProvider> EncryptedVectorStoreProvider<P> {
         // Preserve unencrypted fields for filtering and SearchResult construction
         for key in ["content", "file_path", "language"] {
             if let Some(val) = meta.get(key) {
-                processed.insert(key.to_string(), val.clone());
+                processed.insert(key.to_owned(), val.clone());
             }
         }
         if let Some(val) = meta.get("start_line").or_else(|| meta.get("line_number")) {
-            processed.insert("start_line".to_string(), val.clone());
+            processed.insert("start_line".to_owned(), val.clone());
         }
 
         Ok(processed)
@@ -114,9 +114,9 @@ impl<P: VectorStoreProvider> VectorStoreAdmin for EncryptedVectorStoreProvider<P
 
     async fn get_stats(&self, collection: &CollectionId) -> Result<HashMap<String, Value>> {
         let mut stats = self.inner.get_stats(collection).await?;
-        stats.insert("encryption_enabled".to_string(), serde_json::json!(true));
+        stats.insert("encryption_enabled".to_owned(), serde_json::json!(true));
         stats.insert(
-            "encryption_algorithm".to_string(),
+            "encryption_algorithm".to_owned(),
             serde_json::json!("AES-256-GCM"),
         );
         Ok(stats)
@@ -202,10 +202,10 @@ impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvide
     }
 }
 
-/// VectorStoreBrowser implementation for encrypted provider
+/// `VectorStoreBrowser` implementation for encrypted provider
 ///
 /// Delegates all browse operations to the inner provider.
-/// Only available when the inner provider also implements VectorStoreBrowser.
+/// Only available when the inner provider also implements `VectorStoreBrowser`.
 #[async_trait]
 impl<P: VectorStoreProvider + VectorStoreBrowser> VectorStoreBrowser
     for EncryptedVectorStoreProvider<P>
@@ -246,19 +246,19 @@ pub fn decrypt_metadata(
     let encrypted_value_owned = encrypted_value.clone();
     let encrypted_data: EncryptedData =
         serde_json::from_value(encrypted_value_owned).map_err(|e| Error::Infrastructure {
-            message: format!("Failed to deserialize encrypted data: {}", e),
+            message: format!("Failed to deserialize encrypted data: {e}"),
             source: Some(Box::new(e)),
         })?;
 
     let decrypted_bytes = crypto.decrypt(&encrypted_data)?;
 
     let decrypted_str = String::from_utf8(decrypted_bytes).map_err(|e| Error::Infrastructure {
-        message: format!("Failed to decode decrypted data as UTF-8: {}", e),
+        message: format!("Failed to decode decrypted data as UTF-8: {e}"),
         source: Some(Box::new(e)),
     })?;
 
     serde_json::from_str(&decrypted_str).map_err(|e| Error::Infrastructure {
-        message: format!("Failed to parse decrypted metadata: {}", e),
+        message: format!("Failed to parse decrypted metadata: {e}"),
         source: Some(Box::new(e)),
     })
 }

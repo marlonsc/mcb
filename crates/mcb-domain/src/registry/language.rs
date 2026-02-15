@@ -34,18 +34,21 @@ impl LanguageProviderConfig {
     }
 
     /// Set the maximum chunk size in characters
+    #[must_use]
     pub fn with_max_chunk_size(mut self, size: usize) -> Self {
         self.max_chunk_size = Some(size);
         self
     }
 
     /// Set the minimum chunk size in characters
+    #[must_use]
     pub fn with_min_chunk_size(mut self, size: usize) -> Self {
         self.min_chunk_size = Some(size);
         self
     }
 
     /// Set the chunk overlap in characters
+    #[must_use]
     pub fn with_overlap(mut self, overlap: usize) -> Self {
         self.overlap = Some(overlap);
         self

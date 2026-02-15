@@ -96,6 +96,7 @@ impl VisibilityValidator {
     }
 
     /// Creates a new visibility validator with current configuration.
+    #[must_use]
     pub fn with_config(config: &VisibilityRulesConfig) -> Self {
         let internal_dirs = config.internal_dirs.clone();
         let exempted_items: HashSet<String> = config.exempted_items.iter().cloned().collect();
@@ -155,8 +156,8 @@ impl VisibilityValidator {
                         }
 
                         violations.push(VisibilityViolation::InternalHelperTooPublic {
-                            item_name: item_name.to_string(),
-                            file: path.to_path_buf(),
+                            item_name: item_name.to_owned(),
+                            file: path.clone(),
                             line: line_num + 1,
                         });
                     }
@@ -203,8 +204,8 @@ impl VisibilityValidator {
 
                 if pub_count > self.pub_count_threshold {
                     violations.push(VisibilityViolation::UtilityModuleTooPublic {
-                        module_name: file_name.trim_end_matches(".rs").to_string(),
-                        file: path.to_path_buf(),
+                        module_name: file_name.trim_end_matches(".rs").to_owned(),
+                        file: path.clone(),
                         line: 1,
                     });
                 }

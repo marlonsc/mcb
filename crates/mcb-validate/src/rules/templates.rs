@@ -23,6 +23,7 @@ impl Default for TemplateEngine {
 
 impl TemplateEngine {
     /// Create a new template engine
+    #[must_use]
     pub fn new() -> Self {
         Self {
             templates: HashMap::new(),
@@ -113,7 +114,7 @@ impl TemplateEngine {
         {
             // Use the 'name' field from template YAML if present, otherwise use filename
             let registry_name = template.get("name").and_then(|v| v.as_str()).map_or_else(
-                || template_name.to_string(),
+                || template_name.to_owned(),
                 std::string::ToString::to_string,
             );
             self.templates.insert(registry_name, template);
@@ -147,7 +148,7 @@ impl TemplateEngine {
                 .unwrap_or(false)
             {
                 let registry_name = template.get("name").and_then(|v| v.as_str()).map_or_else(
-                    || template_name.to_string(),
+                    || template_name.to_owned(),
                     std::string::ToString::to_string,
                 );
                 self.templates.insert(registry_name, template);
@@ -238,7 +239,7 @@ impl TemplateEngine {
 
     /// Substitute variables in a string
     fn substitute_string(&self, input: &str, variables: &serde_yaml::Value) -> Result<String> {
-        let mut result = input.to_string();
+        let mut result = input.to_owned();
 
         // Find all {{variable}} patterns
         // Find all {{variable}} patterns, allowing for spaces
@@ -282,11 +283,13 @@ impl TemplateEngine {
     }
 
     /// Get available templates
+    #[must_use]
     pub fn get_templates(&self) -> &HashMap<String, serde_yaml::Value> {
         &self.templates
     }
 
     /// Check if a template exists
+    #[must_use]
     pub fn has_template(&self, name: &str) -> bool {
         self.templates.contains_key(name)
     }

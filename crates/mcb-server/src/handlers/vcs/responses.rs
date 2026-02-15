@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use serde::Serialize;
 
 use crate::args::VcsArgs;
+use crate::handlers::helpers::tool_error;
 
 /// Response structure for listing repositories.
 #[derive(Serialize)]
@@ -139,11 +140,9 @@ pub fn repo_path(args: &VcsArgs) -> Result<PathBuf, CallToolResult> {
         return Ok(PathBuf::from(path));
     }
     if let Some(repo_id) = args.repo_id.as_ref() {
-        return Err(CallToolResult::error(vec![Content::text(format!(
+        return Err(tool_error(format!(
             "Repository not found: {repo_id}. Provide repo_path instead."
-        ))]));
+        )));
     }
-    Err(CallToolResult::error(vec![Content::text(
-        "Missing repo_path or repo_id",
-    )]))
+    Err(tool_error("Missing repo_path or repo_id"))
 }

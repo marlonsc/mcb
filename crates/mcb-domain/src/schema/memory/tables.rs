@@ -9,7 +9,8 @@ pub struct TableDef {
     pub columns: Vec<ColumnDef>,
 }
 
-/// Returns the table definitions (observations, session_summaries) for the memory module.
+/// Returns the table definitions (observations, `session_summaries`) for the memory module.
+#[must_use]
 pub fn tables() -> Vec<TableDef> {
     vec![
         crate::table!(

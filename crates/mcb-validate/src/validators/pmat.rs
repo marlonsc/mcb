@@ -107,6 +107,7 @@ define_violations! {
 
 impl PmatViolation {
     /// Returns the severity level of this violation.
+    #[must_use]
     pub fn severity(&self) -> Severity {
         <Self as Violation>::severity(self)
     }
@@ -140,6 +141,7 @@ impl PmatValidator {
     }
 
     /// Creates a validator with custom configuration.
+    #[must_use]
     pub fn with_config(config: ValidationConfig) -> Self {
         Self {
             config,
@@ -166,6 +168,7 @@ impl PmatValidator {
     }
 
     /// Native analyzer path is always available.
+    #[must_use]
     pub fn is_available(&self) -> bool {
         true
     }

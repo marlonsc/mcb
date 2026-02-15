@@ -20,6 +20,7 @@ impl Default for ValidatorEngine {
 
 impl ValidatorEngine {
     /// Create a new validator engine instance.
+    #[must_use]
     pub fn new() -> Self {
         Self
     }

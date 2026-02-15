@@ -1,7 +1,7 @@
-//! Generic schema for the memory model (observations, session_summaries, FTS).
+//! Generic schema for the memory model (observations, `session_summaries`, FTS).
 //!
-//! Single source of truth for the persistence shape. Each backend (SQLite,
-//! PostgreSQL, MySQL, etc.) implements [`MemorySchemaDdlGenerator`] to
+//! Single source of truth for the persistence shape. Each backend (`SQLite`,
+//! `PostgreSQL`, `MySQL`, etc.) implements [`MemorySchemaDdlGenerator`] to
 //! produce dialect-specific DDL from this model.
 //!
 //! Refactored to separate concerns (SRP).
@@ -33,7 +33,7 @@ pub struct MemorySchema {
 
 /// Port for generating DDL from the generic memory schema.
 ///
-/// Each backend (SQLite, PostgreSQL, MySQL, etc.) implements this trait to
+/// Each backend (`SQLite`, `PostgreSQL`, `MySQL`, etc.) implements this trait to
 /// produce dialect-specific DDL from this model. The same [`MemorySchema`] is the single
 /// source of truth; only the output format differs per backend.
 ///
@@ -58,16 +58,16 @@ pub trait MemorySchemaDdlGenerator: Send + Sync {
 }
 
 impl MemorySchema {
-    /// Returns the canonical memory schema (observations, session_summaries, FTS, indexes).
+    /// Returns the canonical memory schema (observations, `session_summaries`, FTS, indexes).
     #[must_use]
     pub fn definition() -> Self {
         Self {
             tables: tables(),
             fts: Some(FtsDef {
-                virtual_table_name: "observations_fts".to_string(),
-                content_table: "observations".to_string(),
-                content_columns: vec!["content".to_string()],
-                id_column: "id".to_string(),
+                virtual_table_name: "observations_fts".to_owned(),
+                content_table: "observations".to_owned(),
+                content_columns: vec!["content".to_owned()],
+                id_column: "id".to_owned(),
             }),
             indexes: indexes(),
         }

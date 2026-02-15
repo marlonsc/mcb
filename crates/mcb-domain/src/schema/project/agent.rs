@@ -4,7 +4,8 @@ use super::ForeignKeyDef;
 use crate::constants::keys;
 use crate::schema::memory::{IndexDef, TableDef};
 
-/// Returns the table definitions (agent_sessions, delegations, tool_calls, checkpoints).
+/// Returns the table definitions (`agent_sessions`, delegations, `tool_calls`, checkpoints).
+#[must_use]
 pub fn tables() -> Vec<TableDef> {
     vec![
         table!(
@@ -73,6 +74,7 @@ pub fn tables() -> Vec<TableDef> {
 }
 
 /// Returns the index definitions for agent-related tables.
+#[must_use]
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!(
@@ -115,49 +117,50 @@ pub fn indexes() -> Vec<IndexDef> {
 
 /// Returns the foreign key definitions ensuring referential integrity.
 // TODO(qlty): Found 46 lines of similar code in 2 locations (mass = 166)
+#[must_use]
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     vec![
         ForeignKeyDef {
-            from_table: "agent_sessions".to_string(),
-            from_column: "parent_session_id".to_string(),
-            to_table: "agent_sessions".to_string(),
-            to_column: "id".to_string(),
+            from_table: "agent_sessions".to_owned(),
+            from_column: "parent_session_id".to_owned(),
+            to_table: "agent_sessions".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "agent_sessions".to_string(),
-            from_column: "project_id".to_string(),
-            to_table: "projects".to_string(),
-            to_column: "id".to_string(),
+            from_table: "agent_sessions".to_owned(),
+            from_column: "project_id".to_owned(),
+            to_table: "projects".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "agent_sessions".to_string(),
-            from_column: "worktree_id".to_string(),
-            to_table: "worktrees".to_string(),
-            to_column: "id".to_string(),
+            from_table: "agent_sessions".to_owned(),
+            from_column: "worktree_id".to_owned(),
+            to_table: "worktrees".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "delegations".to_string(),
-            from_column: "parent_session_id".to_string(),
-            to_table: "agent_sessions".to_string(),
-            to_column: "id".to_string(),
+            from_table: "delegations".to_owned(),
+            from_column: "parent_session_id".to_owned(),
+            to_table: "agent_sessions".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "delegations".to_string(),
-            from_column: "child_session_id".to_string(),
-            to_table: "agent_sessions".to_string(),
-            to_column: "id".to_string(),
+            from_table: "delegations".to_owned(),
+            from_column: "child_session_id".to_owned(),
+            to_table: "agent_sessions".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "tool_calls".to_string(),
-            from_column: "session_id".to_string(),
-            to_table: "agent_sessions".to_string(),
-            to_column: "id".to_string(),
+            from_table: "tool_calls".to_owned(),
+            from_column: "session_id".to_owned(),
+            to_table: "agent_sessions".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "checkpoints".to_string(),
-            from_column: "session_id".to_string(),
-            to_table: "agent_sessions".to_string(),
-            to_column: "id".to_string(),
+            from_table: "checkpoints".to_owned(),
+            from_column: "session_id".to_owned(),
+            to_table: "agent_sessions".to_owned(),
+            to_column: "id".to_owned(),
         },
     ]
 }

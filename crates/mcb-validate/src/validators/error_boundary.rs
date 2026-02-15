@@ -65,6 +65,7 @@ impl ErrorBoundaryViolation {
     /// Returns the severity level of this violation.
     ///
     /// Delegates to the [`Violation`] trait implementation to avoid duplication.
+    #[must_use]
     pub fn severity(&self) -> Severity {
         <Self as Violation>::severity(self)
     }
@@ -82,6 +83,7 @@ impl ErrorBoundaryValidator {
     }
 
     /// Creates a validator with custom configuration
+    #[must_use]
     pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }
@@ -158,11 +160,11 @@ impl ErrorBoundaryValidator {
                         }
 
                         violations.push(ErrorBoundaryViolation::MissingErrorContext {
-                            file: path.to_path_buf(),
+                            file: path.clone(),
                             line: line_num + 1,
                             error_pattern: trimmed.chars().take(60).collect(),
                             suggestion: "Add .context() or .map_err() for better error messages"
-                                .to_string(),
+                                .to_owned(),
                             severity: Severity::Info,
                         });
                     }
@@ -181,12 +183,12 @@ impl ErrorBoundaryValidator {
 
         // Infrastructure error types that shouldn't appear in domain
         let infra_errors = [
-            (r"std::io::Error", "std::io::Error"),
-            (r"reqwest::Error", "reqwest::Error"),
-            (r"sqlx::Error", "sqlx::Error"),
-            (r"tokio::.*Error", "tokio Error"),
-            (r"hyper::Error", "hyper::Error"),
-            (r"serde_json::Error", "serde_json::Error"),
+            ("std::io::Error", "std::io::Error"),
+            ("reqwest::Error", "reqwest::Error"),
+            ("sqlx::Error", "sqlx::Error"),
+            ("tokio::.*Error", "tokio Error"),
+            ("hyper::Error", "hyper::Error"),
+            ("serde_json::Error", "serde_json::Error"),
         ];
 
         let compiled_errors = compile_regex_pairs(&infra_errors)?;
@@ -243,10 +245,10 @@ impl ErrorBoundaryValidator {
                     for (pattern, desc) in &compiled_errors {
                         if pattern.is_match(line) {
                             violations.push(ErrorBoundaryViolation::WrongLayerError {
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: line_num + 1,
                                 error_type: desc.to_string(),
-                                layer: "domain".to_string(),
+                                layer: "domain".to_owned(),
                                 severity: Severity::Warning,
                             });
                         }
@@ -330,7 +332,7 @@ impl ErrorBoundaryValidator {
                     for (pattern, desc) in &compiled_leaks {
                         if pattern.is_match(line) {
                             violations.push(ErrorBoundaryViolation::LeakedInternalError {
-                                file: path.to_path_buf(),
+                                file: path.clone(),
                                 line: line_num + 1,
                                 pattern: desc.to_string(),
                                 severity: Severity::Info,

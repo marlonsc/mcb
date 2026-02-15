@@ -55,8 +55,9 @@ impl BrowseErrorResponse {
     }
 
     /// Creates a not found error response
+    #[must_use]
     pub fn not_found(resource: &str) -> Self {
-        Self::new(format!("{} not found", resource), "NOT_FOUND")
+        Self::new(format!("{resource} not found"), "NOT_FOUND")
     }
 
     /// Creates an internal error response
@@ -162,7 +163,7 @@ pub async fn list_collection_files(
     Ok(Json(FileListResponse {
         files: file_responses,
         total,
-        collection: name.to_string(),
+        collection: name.to_owned(),
     }))
 }
 
@@ -257,7 +258,7 @@ pub async fn get_file_chunks(
     Ok(Json(ChunkListResponse {
         chunks: chunk_responses,
         file_path,
-        collection: name.to_string(),
+        collection: name.to_owned(),
         total,
     }))
 }
@@ -325,7 +326,7 @@ fn insert_into_tree(
             insert_into_tree(&mut node.children[idx], &parts[1..], file);
         } else {
             let current_path = if node.path.is_empty() {
-                name.to_string()
+                name.to_owned()
             } else {
                 format!("{}/{}", node.path, name)
             };

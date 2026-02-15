@@ -21,6 +21,7 @@ use crate::utils::http::{RequestErrorKind, handle_request_error_with_kind};
 ///
 /// # Returns
 /// Domain Error with appropriate message
+#[must_use]
 pub fn handle_vector_request_error(
     error: reqwest::Error,
     timeout: Duration,
@@ -41,6 +42,7 @@ pub fn handle_vector_request_error(
 /// This logic is shared across vector store providers (Pinecone, Qdrant, etc.)
 /// whose `list_file_paths` implementation follows the same pattern:
 /// call `list_vectors`, then aggregate results by file.
+#[must_use]
 pub fn build_file_info_from_results(
     results: Vec<mcb_domain::value_objects::SearchResult>,
 ) -> Vec<mcb_domain::value_objects::FileInfo> {

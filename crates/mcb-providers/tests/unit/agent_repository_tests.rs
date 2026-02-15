@@ -1,4 +1,4 @@
-//! Unit tests for SqliteAgentRepository
+//! Unit tests for `SqliteAgentRepository`
 //!
 //! Tests cover creation and storage of agent sessions and tool calls, verifying
 //! SQL schema integration and foreign key constraints.
@@ -41,10 +41,10 @@ async fn seed_default_org(executor: &dyn DatabaseExecutor) {
         .execute(
             "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
             &[
-                SqlParam::String(DEFAULT_ORG_ID.to_string()),
-                SqlParam::String("default".to_string()),
-                SqlParam::String("default".to_string()),
-                SqlParam::String("{}".to_string()),
+                SqlParam::String(DEFAULT_ORG_ID.to_owned()),
+                SqlParam::String("default".to_owned()),
+                SqlParam::String("default".to_owned()),
+                SqlParam::String("{}".to_owned()),
                 SqlParam::I64(0),
                 SqlParam::I64(0),
             ],
@@ -56,8 +56,8 @@ async fn seed_default_org(executor: &dyn DatabaseExecutor) {
 fn create_test_project(id: &str) -> Project {
     let now = 1000000i64;
     Project {
-        id: id.to_string(),
-        org_id: mcb_domain::constants::keys::DEFAULT_ORG_ID.to_string(),
+        id: id.to_owned(),
+        org_id: mcb_domain::constants::keys::DEFAULT_ORG_ID.to_owned(),
         name: format!("Test Project {id}"),
         path: format!("/tmp/test/{id}"),
         created_at: now,
@@ -68,9 +68,9 @@ fn create_test_project(id: &str) -> Project {
 fn create_test_session_summary(id: &str, project_id: &str) -> SessionSummary {
     let now = 1000000i64;
     SessionSummary {
-        id: id.to_string(),
-        project_id: project_id.to_string(),
-        session_id: "linked-session-id".to_string(), // Just a string for now
+        id: id.to_owned(),
+        project_id: project_id.to_owned(),
+        session_id: "linked-session-id".to_owned(), // Just a string for now
         topics: vec![],
         decisions: vec![],
         next_steps: vec![],
@@ -83,16 +83,16 @@ fn create_test_session_summary(id: &str, project_id: &str) -> SessionSummary {
 fn create_test_agent_session(id: &str, session_summary_id: &str) -> AgentSession {
     let now = 1000000i64;
     AgentSession {
-        id: id.to_string(),
-        session_summary_id: session_summary_id.to_string(),
+        id: id.to_owned(),
+        session_summary_id: session_summary_id.to_owned(),
         agent_type: mcb_domain::entities::agent::AgentType::Sisyphus,
-        model: "test-model".to_string(),
+        model: "test-model".to_owned(),
         parent_session_id: None,
         started_at: now,
         ended_at: None,
         duration_ms: None,
         status: AgentSessionStatus::Active,
-        prompt_summary: Some("Test Prompt".to_string()),
+        prompt_summary: Some("Test Prompt".to_owned()),
         result_summary: None,
         token_count: None,
         tool_calls_count: None,
@@ -105,10 +105,10 @@ fn create_test_agent_session(id: &str, session_summary_id: &str) -> AgentSession
 fn create_test_tool_call(id: &str, session_id: &str) -> ToolCall {
     let now = 1000000i64;
     ToolCall {
-        id: id.to_string(),
-        session_id: session_id.to_string(),
-        tool_name: "test_tool".to_string(),
-        params_summary: Some("{}".to_string()),
+        id: id.to_owned(),
+        session_id: session_id.to_owned(),
+        tool_name: "test_tool".to_owned(),
+        params_summary: Some("{}".to_owned()),
         success: true,
         error_message: None,
         duration_ms: Some(100),
@@ -129,13 +129,13 @@ async fn seed_worktree(
         .execute(
             "INSERT INTO repositories (id, org_id, project_id, name, url, local_path, vcs_type, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             &[
-                SqlParam::String(repository_id.to_string()),
-                SqlParam::String(DEFAULT_ORG_ID.to_string()),
-                SqlParam::String(project_id.to_string()),
+                SqlParam::String(repository_id.to_owned()),
+                SqlParam::String(DEFAULT_ORG_ID.to_owned()),
+                SqlParam::String(project_id.to_owned()),
                 SqlParam::String(format!("repo-{repository_id}")),
-                SqlParam::String("https://example.com/repo.git".to_string()),
+                SqlParam::String("https://example.com/repo.git".to_owned()),
                 SqlParam::String(format!("/tmp/{repository_id}")),
-                SqlParam::String("git".to_string()),
+                SqlParam::String("git".to_owned()),
                 SqlParam::I64(now),
                 SqlParam::I64(now),
             ],
@@ -147,11 +147,11 @@ async fn seed_worktree(
         .execute(
             "INSERT INTO branches (id, repository_id, name, is_default, head_commit, upstream, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
             &[
-                SqlParam::String(branch_id.to_string()),
-                SqlParam::String(repository_id.to_string()),
-                SqlParam::String("main".to_string()),
+                SqlParam::String(branch_id.to_owned()),
+                SqlParam::String(repository_id.to_owned()),
+                SqlParam::String("main".to_owned()),
                 SqlParam::Bool(true),
-                SqlParam::String("abc123".to_string()),
+                SqlParam::String("abc123".to_owned()),
                 SqlParam::Null,
                 SqlParam::I64(now),
             ],
@@ -163,11 +163,11 @@ async fn seed_worktree(
         .execute(
             "INSERT INTO worktrees (id, repository_id, branch_id, path, status, assigned_agent_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             &[
-                SqlParam::String(worktree_id.to_string()),
-                SqlParam::String(repository_id.to_string()),
-                SqlParam::String(branch_id.to_string()),
+                SqlParam::String(worktree_id.to_owned()),
+                SqlParam::String(repository_id.to_owned()),
+                SqlParam::String(branch_id.to_owned()),
                 SqlParam::String(format!("/tmp/worktree-{worktree_id}")),
-                SqlParam::String("active".to_string()),
+                SqlParam::String("active".to_owned()),
                 SqlParam::Null,
                 SqlParam::I64(now),
                 SqlParam::I64(now),
@@ -253,9 +253,9 @@ async fn list_sessions_by_project() {
         .expect("store summary 2");
 
     let mut session_1 = create_test_agent_session("agent-1", "sess-1");
-    session_1.project_id = Some("proj-1".to_string());
+    session_1.project_id = Some("proj-1".to_owned());
     let mut session_2 = create_test_agent_session("agent-2", "sess-2");
-    session_2.project_id = Some("proj-2".to_string());
+    session_2.project_id = Some("proj-2".to_owned());
 
     agent_repo
         .create_session(&session_1)
@@ -301,9 +301,9 @@ async fn list_sessions_by_worktree() {
         .expect("store summary 2");
 
     let mut session_1 = create_test_agent_session("agent-1", "sess-1");
-    session_1.worktree_id = Some("wt-1".to_string());
+    session_1.worktree_id = Some("wt-1".to_owned());
     let mut session_2 = create_test_agent_session("agent-2", "sess-2");
-    session_2.worktree_id = Some("wt-2".to_string());
+    session_2.worktree_id = Some("wt-2".to_owned());
 
     agent_repo
         .create_session(&session_1)

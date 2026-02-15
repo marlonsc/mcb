@@ -114,6 +114,7 @@ impl LanguageId {
     ];
 
     /// Get the canonical name of the language.
+    #[must_use]
     pub fn name(&self) -> &'static str {
         match self {
             Self::Rust => "rust",
@@ -140,6 +141,7 @@ impl LanguageId {
     }
 
     /// Convert to `rust_code_analysis::LANG`.
+    #[must_use]
     pub fn to_rca_lang(&self) -> LANG {
         match self {
             Self::Rust => LANG::Rust,
@@ -166,6 +168,7 @@ impl LanguageId {
     }
 
     /// Create from `rust_code_analysis::LANG`.
+    #[must_use]
     pub fn from_rca_lang(lang: LANG) -> Option<Self> {
         match lang {
             LANG::Rust => Some(Self::Rust),
@@ -181,6 +184,7 @@ impl LanguageId {
     }
 
     /// Common file extensions for this language.
+    #[must_use]
     pub fn extensions(&self) -> &'static [&'static str] {
         match self {
             Self::Rust => &["rs"],
@@ -207,6 +211,7 @@ impl LanguageId {
     }
 
     /// Try to create from a string name (case-insensitive).
+    #[must_use]
     pub fn from_name(name: &str) -> Option<Self> {
         let lower = name.to_ascii_lowercase();
         Self::NAME_EQUIVALENTS
@@ -215,6 +220,7 @@ impl LanguageId {
     }
 
     /// Resolve a `LanguageId` from a file extension (case-insensitive, leading dot stripped).
+    #[must_use]
     pub fn from_extension(ext: &str) -> Option<Self> {
         let normalized = ext.trim().trim_start_matches('.').to_ascii_lowercase();
         match normalized.as_str() {
@@ -242,6 +248,7 @@ impl LanguageId {
     }
 
     /// Resolve a `LanguageId` from a well-known filename (e.g. `Dockerfile`, `Makefile`).
+    #[must_use]
     pub fn from_filename(filename: &str) -> Option<Self> {
         let lower = filename.to_ascii_lowercase();
         match lower.as_str() {
@@ -253,6 +260,7 @@ impl LanguageId {
     }
 
     /// Resolve a `LanguageId` from a shebang line (e.g. `#!/usr/bin/env python3`).
+    #[must_use]
     pub fn from_shebang(first_line: &str) -> Option<Self> {
         let line = first_line.trim().to_ascii_lowercase();
         if !line.starts_with("#!") {
@@ -310,6 +318,7 @@ impl Default for LanguageDetector {
 
 impl LanguageDetector {
     /// Create a new language detector.
+    #[must_use]
     pub fn new() -> Self {
         Self { _private: () }
     }
@@ -347,11 +356,13 @@ impl LanguageDetector {
     }
 
     /// Detect language and return as string name.
+    #[must_use]
     pub fn detect_name(&self, path: &Path, content: Option<&str>) -> Option<String> {
-        self.detect(path, content).map(|id| id.name().to_string())
+        self.detect(path, content).map(|id| id.name().to_owned())
     }
 
     /// Detect language and return `LANG` enum for direct RCA usage.
+    #[must_use]
     pub fn detect_rca_lang(&self, path: &Path, content: Option<&str>) -> Option<LANG> {
         let source = content.map_or_else(
             || std::fs::read(path).unwrap_or_default(),
@@ -362,32 +373,34 @@ impl LanguageDetector {
     }
 
     /// All supported language names.
+    #[must_use]
     pub fn supported_language_names(&self) -> Vec<String> {
         vec![
-            "rust".to_string(),
-            "python".to_string(),
-            "javascript".to_string(),
-            "typescript".to_string(),
-            "go".to_string(),
-            "java".to_string(),
-            "cpp".to_string(),
-            "kotlin".to_string(),
-            "ruby".to_string(),
-            "shell".to_string(),
-            "yaml".to_string(),
-            "toml".to_string(),
-            "json".to_string(),
-            "markdown".to_string(),
-            "html".to_string(),
-            "css".to_string(),
-            "sql".to_string(),
-            "dockerfile".to_string(),
-            "makefile".to_string(),
-            "protobuf".to_string(),
+            "rust".to_owned(),
+            "python".to_owned(),
+            "javascript".to_owned(),
+            "typescript".to_owned(),
+            "go".to_owned(),
+            "java".to_owned(),
+            "cpp".to_owned(),
+            "kotlin".to_owned(),
+            "ruby".to_owned(),
+            "shell".to_owned(),
+            "yaml".to_owned(),
+            "toml".to_owned(),
+            "json".to_owned(),
+            "markdown".to_owned(),
+            "html".to_owned(),
+            "css".to_owned(),
+            "sql".to_owned(),
+            "dockerfile".to_owned(),
+            "makefile".to_owned(),
+            "protobuf".to_owned(),
         ]
     }
 
     /// Check if a file matches any of the specified language names.
+    #[must_use]
     pub fn matches_languages(
         &self,
         path: &Path,

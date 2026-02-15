@@ -136,7 +136,7 @@ fn run_full_validation_report() {
 
     for &name in validator_names {
         let root = workspace_root.clone();
-        let vname = name.to_string();
+        let vname = name.to_owned();
         let result = std::thread::Builder::new()
             .name(format!("validator-{vname}"))
             .stack_size(16 * 1024 * 1024)

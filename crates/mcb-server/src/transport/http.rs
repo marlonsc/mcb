@@ -79,6 +79,7 @@ pub struct HttpTransport {
 
 impl HttpTransport {
     /// Create a new HTTP transport
+    #[must_use]
     pub fn new(config: HttpTransportConfig, server: Arc<McpServer>) -> Self {
         Self {
             config,
@@ -90,6 +91,7 @@ impl HttpTransport {
     }
 
     /// Add admin API state for consolidated single-port operation
+    #[must_use]
     pub fn with_admin(
         mut self,
         admin_state: AdminState,
@@ -106,6 +108,7 @@ impl HttpTransport {
     ///
     /// Delegates all admin/web routes to [`admin_rocket()`] as the single source
     /// of truth, then layers MCP-specific routes on top.
+    #[must_use]
     pub fn rocket(&self) -> Rocket<Build> {
         let mut rocket = if let Some(ref admin_state) = self.admin_state {
             let auth_config = self

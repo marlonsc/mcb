@@ -36,6 +36,7 @@ pub struct AdminAuthConfig {
 
 impl AdminAuthConfig {
     /// Create a new admin auth config
+    #[must_use]
     pub fn new(enabled: bool, header_name: String, api_key: Option<String>) -> Self {
         Self {
             enabled,
@@ -45,6 +46,7 @@ impl AdminAuthConfig {
     }
 
     /// Create from infrastructure config
+    #[must_use]
     pub fn from_app_config(config: &mcb_infrastructure::config::AppConfig) -> Self {
         Self {
             enabled: config.auth.admin.enabled,
@@ -54,6 +56,7 @@ impl AdminAuthConfig {
     }
 
     /// Check if the provided key matches the configured key
+    #[must_use]
     pub fn validate_key(&self, provided_key: &str) -> bool {
         match &self.api_key {
             Some(expected) => expected == provided_key,
@@ -62,6 +65,7 @@ impl AdminAuthConfig {
     }
 
     /// Check if authentication is properly configured
+    #[must_use]
     pub fn is_configured(&self) -> bool {
         self.enabled && self.api_key.is_some()
     }
@@ -71,7 +75,7 @@ impl Default for AdminAuthConfig {
     fn default() -> Self {
         Self {
             enabled: false,
-            header_name: "X-Admin-Key".to_string(),
+            header_name: "X-Admin-Key".to_owned(),
             api_key: None,
         }
     }
@@ -88,38 +92,39 @@ pub struct AuthErrorResponse {
 
 impl AuthErrorResponse {
     /// Create error for not configured auth
+    #[must_use]
     pub fn not_configured() -> (Status, Json<Self>) {
         (
             Status::ServiceUnavailable,
             Json(Self {
                 error: "auth_not_configured",
                 message: "Admin authentication is enabled but no API key is configured. \
-                         Set MCP__AUTH__ADMIN__KEY environment variable or auth.admin.key in config."
-                    .to_string(),
+                         Set MCP__AUTH__ADMIN__KEY environment variable or auth.admin.key in config.".to_owned(),
             }),
         )
     }
 
     /// Create error for invalid key
+    #[must_use]
     pub fn invalid_key() -> (Status, Json<Self>) {
         (
             Status::Unauthorized,
             Json(Self {
                 error: "invalid_api_key",
-                message: "Invalid admin API key".to_string(),
+                message: "Invalid admin API key".to_owned(),
             }),
         )
     }
 
     /// Create error for missing key
+    #[must_use]
     pub fn missing_key(header_name: &str) -> (Status, Json<Self>) {
         (
             Status::Unauthorized,
             Json(Self {
                 error: "missing_api_key",
                 message: format!(
-                    "Admin API key required. Provide it in the '{}' header.",
-                    header_name
+                    "Admin API key required. Provide it in the '{header_name}' header."
                 ),
             }),
         )
@@ -184,6 +189,7 @@ impl<'r> FromRequest<'r> for AdminAuth {
 }
 
 /// Check if a route should bypass authentication
+#[must_use]
 pub fn is_unauthenticated_route(path: &str) -> bool {
     matches!(path, "/live" | "/ready")
 }

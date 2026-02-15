@@ -51,13 +51,13 @@ pub trait ProviderConfigManagerInterface: Send + Sync {
 
     /// Check if an embedding provider is configured
     fn has_embedding_provider(&self, name: &str) -> bool {
-        self.list_embedding_providers().contains(&name.to_string())
+        self.list_embedding_providers().contains(&name.to_owned())
     }
 
     /// Check if a vector store provider is configured
     fn has_vector_store_provider(&self, name: &str) -> bool {
         self.list_vector_store_providers()
-            .contains(&name.to_string())
+            .contains(&name.to_owned())
     }
 
     /// Get default embedding provider configuration

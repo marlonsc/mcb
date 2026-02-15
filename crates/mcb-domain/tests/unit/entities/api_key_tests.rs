@@ -4,12 +4,12 @@ use rstest::rstest;
 #[rstest]
 fn api_key_construction() {
     let key = ApiKey {
-        id: "key-001".to_string(),
-        user_id: "usr-001".to_string(),
-        org_id: "org-001".to_string(),
-        key_hash: "$argon2id$v=19$m=65536...".to_string(),
-        name: "CI pipeline".to_string(),
-        scopes_json: r#"["read:code","write:memory"]"#.to_string(),
+        id: "key-001".to_owned(),
+        user_id: "usr-001".to_owned(),
+        org_id: "org-001".to_owned(),
+        key_hash: "$argon2id$v=19$m=65536...".to_owned(),
+        name: "CI pipeline".to_owned(),
+        scopes_json: r#"["read:code","write:memory"]"#.to_owned(),
         expires_at: Some(1800000000),
         created_at: 1000,
         revoked_at: None,
@@ -25,12 +25,12 @@ fn api_key_construction() {
 #[rstest]
 fn api_key_serialization_roundtrip() {
     let key = ApiKey {
-        id: "key-002".to_string(),
-        user_id: "usr-002".to_string(),
-        org_id: "org-001".to_string(),
-        key_hash: "hash-value".to_string(),
-        name: "dev laptop".to_string(),
-        scopes_json: "[]".to_string(),
+        id: "key-002".to_owned(),
+        user_id: "usr-002".to_owned(),
+        org_id: "org-001".to_owned(),
+        key_hash: "hash-value".to_owned(),
+        name: "dev laptop".to_owned(),
+        scopes_json: "[]".to_owned(),
         expires_at: None,
         created_at: 2000,
         revoked_at: None,
@@ -45,12 +45,12 @@ fn api_key_serialization_roundtrip() {
 #[rstest]
 fn api_key_revoked() {
     let key = ApiKey {
-        id: "key-003".to_string(),
-        user_id: "usr-001".to_string(),
-        org_id: "org-001".to_string(),
-        key_hash: "hash-value".to_string(),
-        name: "old key".to_string(),
-        scopes_json: "[]".to_string(),
+        id: "key-003".to_owned(),
+        user_id: "usr-001".to_owned(),
+        org_id: "org-001".to_owned(),
+        key_hash: "hash-value".to_owned(),
+        name: "old key".to_owned(),
+        scopes_json: "[]".to_owned(),
         expires_at: None,
         created_at: 1000,
         revoked_at: Some(2000),

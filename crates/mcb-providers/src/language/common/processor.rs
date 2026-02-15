@@ -1,6 +1,6 @@
 //! Language processor trait and base implementation
 //!
-//! Defines the LanguageProcessor trait that provides a common interface
+//! Defines the `LanguageProcessor` trait that provides a common interface
 //! for language-specific chunking logic.
 
 use mcb_domain::entities::CodeChunk;
@@ -52,11 +52,13 @@ pub struct BaseProcessor {
 
 impl BaseProcessor {
     /// Create a new base processor with configuration
+    #[must_use]
     pub fn new(config: LanguageConfig) -> Self {
         Self { config }
     }
 
     /// Get the configuration
+    #[must_use]
     pub fn config(&self) -> &LanguageConfig {
         &self.config
     }
@@ -88,12 +90,12 @@ impl LanguageProcessor for BaseProcessor {
             let a_priority = a
                 .metadata
                 .get("priority")
-                .and_then(|p| p.as_i64())
+                .and_then(serde_json::Value::as_i64)
                 .unwrap_or(0);
             let b_priority = b
                 .metadata
                 .get("priority")
-                .and_then(|p| p.as_i64())
+                .and_then(serde_json::Value::as_i64)
                 .unwrap_or(0);
 
             b_priority

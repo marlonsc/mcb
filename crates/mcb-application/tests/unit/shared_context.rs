@@ -1,6 +1,6 @@
-//! Shared AppContext for test performance
+//! Shared `AppContext` for test performance
 //!
-//! Initializes the application context (including FastEmbed ONNX model) exactly
+//! Initializes the application context (including `FastEmbed` ONNX model) exactly
 //! once per test binary, then shares it across all tests that need it.
 //! This avoids the ~5-10s model load per test.
 
@@ -34,9 +34,9 @@ pub fn shared_app_context() -> &'static AppContext {
 
                 let mut config = ConfigLoader::new().load().expect("load config");
                 config.providers.database.configs.insert(
-                    "default".to_string(),
+                    "default".to_owned(),
                     mcb_infrastructure::config::DatabaseConfig {
-                        provider: "sqlite".to_string(),
+                        provider: "sqlite".to_owned(),
                         path: Some(temp_path),
                     },
                 );

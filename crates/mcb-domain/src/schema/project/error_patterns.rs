@@ -4,6 +4,7 @@ use super::ForeignKeyDef;
 use crate::schema::memory::{IndexDef, TableDef};
 
 /// Returns the table definitions.
+#[must_use]
 pub fn tables() -> Vec<TableDef> {
     vec![
         table!(
@@ -40,6 +41,7 @@ pub fn tables() -> Vec<TableDef> {
 }
 
 /// Returns the index definitions.
+#[must_use]
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!(
@@ -81,25 +83,26 @@ pub fn indexes() -> Vec<IndexDef> {
 }
 
 /// Returns the foreign key definitions.
+#[must_use]
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     vec![
         ForeignKeyDef {
-            from_table: "error_patterns".to_string(),
-            from_column: "project_id".to_string(),
-            to_table: "projects".to_string(),
-            to_column: "id".to_string(),
+            from_table: "error_patterns".to_owned(),
+            from_column: "project_id".to_owned(),
+            to_table: "projects".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "error_pattern_matches".to_string(),
-            from_column: "pattern_id".to_string(),
-            to_table: "error_patterns".to_string(),
-            to_column: "id".to_string(),
+            from_table: "error_pattern_matches".to_owned(),
+            from_column: "pattern_id".to_owned(),
+            to_table: "error_patterns".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "error_pattern_matches".to_string(),
-            from_column: "observation_id".to_string(),
-            to_table: "observations".to_string(),
-            to_column: "id".to_string(),
+            from_table: "error_pattern_matches".to_owned(),
+            from_column: "observation_id".to_owned(),
+            to_table: "observations".to_owned(),
+            to_column: "id".to_owned(),
         },
     ]
 }

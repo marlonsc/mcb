@@ -3,43 +3,17 @@
 use rstest::{fixture, rstest};
 #[path = "handlers/test_helpers.rs"]
 mod test_helpers;
+#[allow(dead_code)]
+#[path = "test_utils/mod.rs"]
+mod test_utils;
 
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource, SessionAction, SessionArgs};
 use mcb_server::handlers::{MemoryHandler, SessionHandler};
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::CallToolResult;
 use serde_json::{Value, json};
+use test_utils::invariants::assert_error_shape;
 
 use test_helpers::{create_base_memory_args, create_real_domain_services};
-
-fn error_text(result: &CallToolResult) -> String {
-    serde_json::to_value(&result.content)
-        .ok()
-        .and_then(|value| value.as_array().cloned())
-        .and_then(|items| items.first().cloned())
-        .and_then(|item| item.get("text").cloned())
-        .and_then(|text| text.as_str().map(str::to_string))
-        .unwrap_or_default()
-}
-
-fn assert_error_shape(result: &CallToolResult, expected_message: &str) {
-    assert_eq!(result.is_error, Some(true));
-
-    let content_json = serde_json::to_value(&result.content).expect("serialize content");
-    assert!(content_json.is_array(), "error content must be an array");
-    assert!(
-        content_json
-            .as_array()
-            .is_some_and(|items| items.first().and_then(|item| item.get("text")).is_some()),
-        "error content must contain a text field"
-    );
-
-    let text = error_text(result);
-    assert!(
-        text.contains(expected_message),
-        "expected '{expected_message}' in '{text}'"
-    );
-}
 
 async fn memory_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
     let (services, temp_dir) = create_real_domain_services().await?;
@@ -61,7 +35,7 @@ fn observation_store_args() -> MemoryArgs {
         MemoryResource::Observation,
         None,
         None,
-        Some("session-1".to_string()),
+        Some("session-1".to_owned()),
     )
 }
 
@@ -115,7 +89,7 @@ async fn session_create_missing_data_returns_expected_error() {
         project_id: None,
         worktree_id: None,
         parent_session_id: None,
-        agent_type: Some("explore".to_string()),
+        agent_type: Some("explore".to_owned()),
         status: None,
         limit: None,
     };

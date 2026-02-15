@@ -38,7 +38,7 @@ fn test_refactoring_full_workspace() {
 fn test_clean_refactoring_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
-        r"
+        "
 /// A unique type with no duplicates.
 pub struct UniqueType {
     /// Value field.

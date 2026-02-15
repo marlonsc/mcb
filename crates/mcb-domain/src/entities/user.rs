@@ -9,13 +9,13 @@ use serde::{Deserialize, Serialize};
 
 /// A user belongs to exactly one organization and can be a member of
 /// multiple teams. Users authenticate via API keys (Phase 1) and
-/// external IdP / OAuth in later phases.
+/// external `IdP` / OAuth in later phases.
 ///
 use super::EntityMetadata;
 
 /// A user belongs to exactly one organization and can be a member of
 /// multiple teams. Users authenticate via API keys (Phase 1) and
-/// external IdP / OAuth in later phases.
+/// external `IdP` / OAuth in later phases.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct User {
     /// Common entity metadata (id, timestamps).

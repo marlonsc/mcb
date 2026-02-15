@@ -1,8 +1,8 @@
-//! Dependency Injection System - dill IoC + Handle-based Pattern + linkme Registry
+//! Dependency Injection System - dill `IoC` + Handle-based Pattern + linkme Registry
 //!
 //! This module implements dependency injection using:
-//! - **dill Catalog**: IoC container for service resolution
-//! - **Handle-based pattern**: Runtime-swappable provider handles with RwLock
+//! - **dill Catalog**: `IoC` container for service resolution
+//! - **Handle-based pattern**: Runtime-swappable provider handles with `RwLock`
 //! - **linkme registry**: Compile-time discovery of external providers
 //!
 //! ## Architecture
@@ -18,9 +18,9 @@
 //!
 //! ## Key Principles
 //!
-//! - **IoC Container**: dill Catalog manages service lifecycle
+//! - **`IoC` Container**: dill Catalog manages service lifecycle
 //! - **Trait-based DI**: All dependencies injected as `Arc<dyn Trait>`
-//! - **Composition Root**: Services composed in catalog.rs build_catalog()
+//! - **Composition Root**: Services composed in catalog.rs `build_catalog()`
 //! - **Runtime Switching**: Providers can be changed via admin API
 //! - **Testability**: Null providers enable isolated testing
 

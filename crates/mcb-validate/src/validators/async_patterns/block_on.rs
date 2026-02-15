@@ -12,7 +12,7 @@ pub fn validate_block_on_usage(config: &ValidationConfig) -> Result<Vec<AsyncVio
     let async_fn_pattern = required_pattern("ASYNC001.async_fn")?;
     let block_on_patterns = [
         r"block_on\(",
-        r"futures::executor::block_on",
+        "futures::executor::block_on",
         r"tokio::runtime::Runtime::new\(\).*\.block_on",
         r"Runtime::new\(\).*\.block_on",
     ];
@@ -64,7 +64,7 @@ pub fn validate_block_on_usage(config: &ValidationConfig) -> Result<Vec<AsyncVio
                 for pattern in &compiled_block_on {
                     if pattern.is_match(line) {
                         violations.push(AsyncViolation::BlockOnInAsync {
-                            file: path.to_path_buf(),
+                            file: path.clone(),
                             line: line_num + 1,
                             context: trimmed.chars().take(80).collect(),
                             severity: Severity::Error,

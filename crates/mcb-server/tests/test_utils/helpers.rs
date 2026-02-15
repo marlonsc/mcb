@@ -15,7 +15,7 @@ pub fn arc_mutex_vec<T>() -> Arc<Mutex<Vec<T>>> {
     arc_mutex(Vec::new())
 }
 
-/// Creates an Arc<Mutex<HashMap<K, V>>> with an empty hashmap
+/// Creates an Arc<Mutex<`HashMap`<K, V>>> with an empty hashmap
 pub fn arc_mutex_hashmap<K, V>() -> Arc<Mutex<std::collections::HashMap<K, V>>>
 where
     K: Eq + std::hash::Hash,

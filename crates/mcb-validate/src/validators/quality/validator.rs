@@ -19,6 +19,7 @@ impl QualityValidator {
     }
 
     /// Creates a new validator instance using a provided configuration.
+    #[must_use]
     pub fn with_config(config: ValidationConfig) -> Self {
         // Load file configuration to get quality rules
         let file_config = crate::config::FileConfig::load(&config.workspace_root);

@@ -31,13 +31,13 @@ async fn test_index_codebase(
         Some(p.to_string_lossy().to_string())
     } else {
         _temp_dir_guard = None;
-        path_override.map(|s| s.to_string())
+        path_override.map(std::borrow::ToOwned::to_owned)
     };
 
     let args = IndexArgs {
         action: IndexAction::Start,
         path: path_val,
-        collection: collection.map(|s| s.to_string()),
+        collection: collection.map(std::borrow::ToOwned::to_owned),
         extensions: None,
         exclude_dirs: None,
         ignore_patterns: None,

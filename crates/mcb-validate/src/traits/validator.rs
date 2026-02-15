@@ -76,6 +76,7 @@ impl ValidatorRegistry {
     ];
 
     /// Create an empty registry
+    #[must_use]
     pub fn new() -> Self {
         Self {
             validators: Vec::new(),
@@ -95,6 +96,7 @@ impl ValidatorRegistry {
     }
 
     /// Get all registered validators
+    #[must_use]
     pub fn validators(&self) -> &[Box<dyn Validator>] {
         &self.validators
     }
@@ -256,6 +258,7 @@ impl ValidatorRegistry {
     }
 
     /// Return canonical validator names for public API consumers.
+    #[must_use]
     pub fn standard_validator_names() -> &'static [&'static str] {
         Self::STANDARD_VALIDATOR_NAMES
     }

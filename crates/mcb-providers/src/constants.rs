@@ -7,13 +7,13 @@
 // EMBEDDING API CONSTANTS
 // ============================================================================
 
-/// VoyageAI max input tokens
+/// `VoyageAI` max input tokens
 pub const VOYAGEAI_MAX_INPUT_TOKENS: usize = 16000;
 
-/// VoyageAI max output tokens
+/// `VoyageAI` max output tokens
 pub const VOYAGEAI_MAX_OUTPUT_TOKENS: usize = 16000;
 
-/// OpenAI max tokens per request
+/// `OpenAI` max tokens per request
 pub const OPENAI_MAX_TOKENS_PER_REQUEST: usize = 8191;
 
 /// Anthropic (Voyage AI) max input tokens per request
@@ -63,19 +63,19 @@ pub const ERROR_MSG_REQUEST_TIMEOUT: &str = "Request timed out after {:?}";
 // EDGEVEC VECTOR STORE CONSTANTS
 // ============================================================================
 
-/// EdgeVec HNSW M parameter (max connections per node in layers > 0)
+/// `EdgeVec` HNSW M parameter (max connections per node in layers > 0)
 pub const EDGEVEC_HNSW_M: u32 = 16;
 
-/// EdgeVec HNSW M0 parameter (max connections per node in layer 0)
+/// `EdgeVec` HNSW M0 parameter (max connections per node in layer 0)
 pub const EDGEVEC_HNSW_M0: u32 = 32;
 
-/// EdgeVec HNSW ef_construction parameter
+/// `EdgeVec` HNSW `ef_construction` parameter
 pub const EDGEVEC_HNSW_EF_CONSTRUCTION: u32 = 200;
 
-/// EdgeVec HNSW ef_search parameter
+/// `EdgeVec` HNSW `ef_search` parameter
 pub const EDGEVEC_HNSW_EF_SEARCH: u32 = 64;
 
-/// EdgeVec default dimensions (for OpenAI embeddings)
+/// `EdgeVec` default dimensions (for `OpenAI` embeddings)
 pub const EDGEVEC_DEFAULT_DIMENSIONS: usize = 1536;
 
 // ============================================================================
@@ -88,7 +88,7 @@ pub const MILVUS_FIELD_VARCHAR_MAX_LENGTH: i32 = 512;
 /// Milvus metadata varchar max length
 pub const MILVUS_METADATA_VARCHAR_MAX_LENGTH: i32 = 65535;
 
-/// Milvus IvfFlat nlist parameter
+/// Milvus `IvfFlat` nlist parameter
 pub const MILVUS_IVFFLAT_NLIST: u32 = 128;
 
 /// Milvus default port

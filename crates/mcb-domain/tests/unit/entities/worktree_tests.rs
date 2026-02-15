@@ -59,13 +59,13 @@ fn worktree_variants(
 ) {
     let wt = Worktree {
         metadata: mcb_domain::entities::EntityMetadata {
-            id: id.to_string(),
+            id: id.to_owned(),
             created_at: 1000,
             updated_at: 1000,
         },
-        repository_id: repository_id.to_string(),
-        branch_id: branch_id.to_string(),
-        path: path.to_string(),
+        repository_id: repository_id.to_owned(),
+        branch_id: branch_id.to_owned(),
+        path: path.to_owned(),
         status: status.clone(),
         assigned_agent_id: assigned_agent_id.map(str::to_string),
     };
@@ -95,9 +95,9 @@ fn assignment_variants(
     #[case] released_at: Option<i64>,
 ) {
     let assign = AgentWorktreeAssignment {
-        id: id.to_string(),
-        agent_session_id: agent_session_id.to_string(),
-        worktree_id: worktree_id.to_string(),
+        id: id.to_owned(),
+        agent_session_id: agent_session_id.to_owned(),
+        worktree_id: worktree_id.to_owned(),
         assigned_at,
         released_at,
     };

@@ -60,6 +60,7 @@ impl FilePatternMatcher {
     ///
     /// # Returns
     /// true if the path matches any of the patterns
+    #[must_use]
     pub fn matches_any(&self, path: &Path, patterns: &[String]) -> bool {
         let (includes, excludes) = Self::parse_patterns(patterns);
 
@@ -91,6 +92,7 @@ impl FilePatternMatcher {
     ///
     /// # Returns
     /// true if the file should be included (matches includes and not excludes)
+    #[must_use]
     pub fn should_include(&self, path: &Path) -> bool {
         // Must match at least one include pattern (if any includes are defined)
         let matches_include = if self.includes.is_empty() {
@@ -112,13 +114,14 @@ impl FilePatternMatcher {
     ///
     /// # Returns
     /// Tuple of (`include_patterns`, `exclude_patterns`)
+    #[must_use]
     pub fn parse_patterns(patterns: &[String]) -> (Vec<String>, Vec<String>) {
         let mut includes = Vec::new();
         let mut excludes = Vec::new();
 
         for pattern in patterns {
             if let Some(stripped) = pattern.strip_prefix('!') {
-                excludes.push(stripped.to_string());
+                excludes.push(stripped.to_owned());
             } else {
                 includes.push(pattern.clone());
             }

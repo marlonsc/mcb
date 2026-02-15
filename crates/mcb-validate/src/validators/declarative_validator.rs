@@ -20,7 +20,7 @@ use crate::traits::violation::{Severity, Violation, ViolationCategory};
 
 /// Executes embedded YAML declarative rules against the workspace.
 ///
-/// Supports metrics, lint_select, regex pattern, and AST query execution slices.
+/// Supports metrics, `lint_select`, regex pattern, and AST query execution slices.
 pub struct DeclarativeValidator {
     /// Root directory of the workspace being validated (used by lint/regex execution slices).
     workspace_root: PathBuf,
@@ -85,7 +85,7 @@ impl DeclarativeValidator {
             let prefix = if let Some(idx) = domain_str.find('-') {
                 domain_str[0..idx].to_string()
             } else {
-                domain_str.to_string()
+                domain_str.to_owned()
             };
             variables.insert(
                 serde_yaml::Value::String("project_prefix".into()),
@@ -103,7 +103,7 @@ impl DeclarativeValidator {
     ) -> Vec<PathBuf> {
         let mut files = Vec::new();
         if let Err(e) = for_each_scan_file(config, language, true, |entry, _src_dir| {
-            files.push(entry.absolute_path.to_path_buf());
+            files.push(entry.absolute_path.clone());
             Ok(())
         }) {
             warn!(error = ?e, "Failed to scan workspace for files");

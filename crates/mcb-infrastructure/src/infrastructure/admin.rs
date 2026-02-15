@@ -20,7 +20,7 @@ use mcb_domain::value_objects::{CollectionId, OperationId};
 
 /// Atomic performance metrics tracker
 ///
-/// Thread-safe implementation of PerformanceMetricsInterface using atomic operations.
+/// Thread-safe implementation of `PerformanceMetricsInterface` using atomic operations.
 /// Tracks queries, response times, cache hits, and active connections.
 pub struct AtomicPerformanceMetrics {
     /// Server start time for uptime calculation
@@ -47,6 +47,7 @@ pub struct AtomicPerformanceMetrics {
 
 impl AtomicPerformanceMetrics {
     /// Create a new performance metrics tracker
+    #[must_use]
     pub fn new() -> Self {
         Self {
             start_time: Instant::now(),
@@ -60,6 +61,7 @@ impl AtomicPerformanceMetrics {
     }
 
     /// Create as Arc for sharing
+    #[must_use]
     pub fn new_shared() -> Arc<Self> {
         Arc::new(Self::new())
     }
@@ -142,7 +144,7 @@ impl PerformanceMetricsInterface for AtomicPerformanceMetrics {
 
 /// Default indexing operations tracker
 ///
-/// Thread-safe implementation using DashMap for concurrent access.
+/// Thread-safe implementation using `DashMap` for concurrent access.
 pub struct DefaultIndexingOperations {
     /// Active indexing operations by ID
     operations: Arc<DashMap<OperationId, IndexingOperation>>,
@@ -150,6 +152,7 @@ pub struct DefaultIndexingOperations {
 
 impl DefaultIndexingOperations {
     /// Create a new indexing operations tracker
+    #[must_use]
     pub fn new() -> Self {
         Self {
             operations: Arc::new(DashMap::new()),
@@ -157,11 +160,13 @@ impl DefaultIndexingOperations {
     }
 
     /// Create as Arc for sharing
+    #[must_use]
     pub fn new_shared() -> Arc<Self> {
         Arc::new(Self::new())
     }
 
     /// Start tracking a new indexing operation (inherent impl; trait delegates here).
+    #[must_use]
     pub fn start_operation_internal(
         &self,
         collection: &CollectionId,
@@ -200,11 +205,13 @@ impl DefaultIndexingOperations {
     }
 
     /// Check if any operations are in progress
+    #[must_use]
     pub fn has_active_operations(&self) -> bool {
         !self.operations.is_empty()
     }
 
     /// Get count of active operations
+    #[must_use]
     pub fn active_count(&self) -> usize {
         self.operations.len()
     }

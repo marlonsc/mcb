@@ -3,13 +3,13 @@ use std::sync::Arc;
 use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
 use mcb_domain::value_objects::SessionId;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use serde::Deserialize;
 
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::{OriginContextInput, resolve_origin_context};
+use crate::handlers::helpers::{OriginContextInput, resolve_origin_context, tool_error};
 
 /// Payload for storing a session summary in memory.
 #[derive(Deserialize, Default)]
@@ -42,9 +42,7 @@ pub async fn store_session(
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
     if args.data.is_none() {
-        return Ok(CallToolResult::error(vec![Content::text(
-            "Missing data payload for session summary",
-        )]));
+        return Ok(tool_error("Missing data payload for session summary"));
     }
     let payload =
         serde_json::from_value::<SessionSummaryPayload>(args.data.clone().unwrap_or_default())
@@ -55,12 +53,10 @@ pub async fn store_session(
     let session_id = match session_id {
         Some(value) => value,
         None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing session_id for session summary",
-            )]));
+            return Ok(tool_error("Missing session_id for session summary"));
         }
     };
-    let session_id_str = session_id.as_str().to_owned();
+    let session_id_str = session_id.as_str().clone();
 
     let origin_context = resolve_origin_context(OriginContextInput {
         org_id: args.org_id.as_deref(),
@@ -112,9 +108,7 @@ pub async fn get_session(
     let session_id = match args.session_id.as_ref() {
         Some(value) => value,
         None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing session_id",
-            )]));
+            return Ok(tool_error("Missing session_id"));
         }
     };
     match memory_service.get_session_summary(session_id).await {
@@ -126,9 +120,7 @@ pub async fn get_session(
             "key_files": summary.key_files,
             "created_at": summary.created_at,
         })),
-        Ok(None) => Ok(CallToolResult::error(vec![Content::text(
-            "Session summary not found",
-        )])),
+        Ok(None) => Ok(tool_error("Session summary not found")),
         Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }

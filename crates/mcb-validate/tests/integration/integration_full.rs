@@ -116,7 +116,7 @@ members = [
         let root = create_test_workspace(&dir);
 
         // Create some code with potential issues
-        let code_with_unwrap = r"
+        let code_with_unwrap = "
 pub fn risky_function(data: Option<String>) -> String {
     data.unwrap()  // This should be flagged
 }
@@ -153,7 +153,7 @@ pub fn risky_function(data: Option<String>) -> String {
         };
 
         let report = GenericReport {
-            timestamp: "2026-01-19 12:00:00 UTC".to_string(),
+            timestamp: "2026-01-19 12:00:00 UTC".to_owned(),
             workspace_root: PathBuf::from("/test/workspace"),
             summary,
             violations_by_category: HashMap::new(),
@@ -315,20 +315,20 @@ impl MutableValueObject {
 
         let mut violations_by_category = HashMap::new();
         violations_by_category.insert(
-            "quality".to_string(),
+            "quality".to_owned(),
             vec![mcb_validate::generic_reporter::ViolationEntry {
-                id: "TEST001".to_string(),
-                category: "quality".to_string(),
-                severity: "warning".to_string(),
-                message: "Test violation".to_string(),
-                file: Some("test.rs".to_string()),
+                id: "TEST001".to_owned(),
+                category: "quality".to_owned(),
+                severity: "warning".to_owned(),
+                message: "Test violation".to_owned(),
+                file: Some("test.rs".to_owned()),
                 line: Some(42),
-                suggestion: Some("Fix the issue".to_string()),
+                suggestion: Some("Fix the issue".to_owned()),
             }],
         );
 
         let report = GenericReport {
-            timestamp: "2026-01-19 12:00:00 UTC".to_string(),
+            timestamp: "2026-01-19 12:00:00 UTC".to_owned(),
             workspace_root: PathBuf::from("/test"),
             summary,
             violations_by_category,
@@ -420,8 +420,8 @@ impl MutableValueObject {
             .with_exclude_pattern("target/")
             .with_exclude_pattern("**/tests/**");
 
-        assert!(config.exclude_patterns.contains(&"target/".to_string()));
-        assert!(config.exclude_patterns.contains(&"**/tests/**".to_string()));
+        assert!(config.exclude_patterns.contains(&"target/".to_owned()));
+        assert!(config.exclude_patterns.contains(&"**/tests/**".to_owned()));
     }
 
     /// Test multiple validators can run concurrently (no deadlocks)

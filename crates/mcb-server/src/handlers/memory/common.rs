@@ -8,39 +8,31 @@ use mcb_domain::{
 };
 use mcb_infrastructure::project::context_resolver::capture_vcs_context;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use serde_json::{Map, Value};
 use uuid::Uuid;
 
 use crate::args::MemoryArgs;
-use crate::handlers::helpers::{OriginPayloadFields, resolve_origin_context};
+use crate::handlers::helpers::{OriginPayloadFields, resolve_origin_context, tool_error};
 pub(super) use crate::handlers::helpers::{opt_str, require_data_map, require_str, str_vec};
 
 pub(super) fn require_i64(data: &Map<String, Value>, key: &str) -> Result<i64, CallToolResult> {
-    data.get(key).and_then(Value::as_i64).ok_or_else(|| {
-        CallToolResult::error(vec![Content::text(format!(
-            "Missing required field: {key}"
-        ))])
-    })
+    data.get(key)
+        .and_then(Value::as_i64)
+        .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
 }
 
 pub(super) fn require_i32(data: &Map<String, Value>, key: &str) -> Result<i32, CallToolResult> {
     data.get(key)
         .and_then(Value::as_i64)
         .and_then(|value| value.try_into().ok())
-        .ok_or_else(|| {
-            CallToolResult::error(vec![Content::text(format!(
-                "Missing required field: {key}"
-            ))])
-        })
+        .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
 }
 
 pub(super) fn require_bool(data: &Map<String, Value>, key: &str) -> Result<bool, CallToolResult> {
-    data.get(key).and_then(Value::as_bool).ok_or_else(|| {
-        CallToolResult::error(vec![Content::text(format!(
-            "Missing required field: {key}"
-        ))])
-    })
+    data.get(key)
+        .and_then(Value::as_bool)
+        .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
 }
 
 pub(super) struct MemoryOriginResolution {
@@ -67,7 +59,7 @@ pub(super) fn resolve_memory_origin_context(
         domain_id::correlate_id("session", &id_str)
     });
     let parent_session_hash = args.parent_session_id.clone().map(|id| {
-        let id_str = id.to_string();
+        let id_str = id.clone();
         domain_id::correlate_id("parent_session", &id_str)
     });
 

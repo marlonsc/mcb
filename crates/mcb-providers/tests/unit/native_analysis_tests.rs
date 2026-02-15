@@ -17,7 +17,7 @@ fn detects_high_complexity_functions(analyzer: NativePmatAnalyzer) {
     let file = temp.path().join("sample.rs");
     fs::write(
         &file,
-        r#"
+        "
 fn simple() { let x = 1; }
 
 fn complex(a: i32) {
@@ -26,7 +26,7 @@ fn complex(a: i32) {
     while a > 1 { break; }
     match a { 1 => (), _ => () }
 }
-"#,
+",
     )
     .expect("write sample");
 
@@ -44,14 +44,14 @@ fn detects_dead_code_functions(analyzer: NativePmatAnalyzer) {
     let file = temp.path().join("sample.rs");
     fs::write(
         &file,
-        r#"
+        "
 fn used() {}
 fn dead_fn() {}
 
 fn caller() {
     used();
 }
-"#,
+",
     )
     .expect("write sample");
 
@@ -68,7 +68,7 @@ fn computes_tdg_score_above_threshold(analyzer: NativePmatAnalyzer) {
     let file = temp.path().join("sample.rs");
     fs::write(
         &file,
-        r#"
+        "
 fn dead_a() {}
 fn dead_b() {}
 fn heavy(x: i32) {
@@ -77,7 +77,7 @@ fn heavy(x: i32) {
     if x > 2 {}
     if x > 3 {}
 }
-"#,
+",
     )
     .expect("write sample");
 

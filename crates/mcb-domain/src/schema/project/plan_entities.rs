@@ -2,6 +2,7 @@ use super::ForeignKeyDef;
 use crate::schema::memory::{IndexDef, TableDef};
 
 /// Performs the tables operation.
+#[must_use]
 pub fn tables() -> Vec<TableDef> {
     vec![
         table!(
@@ -47,6 +48,7 @@ pub fn tables() -> Vec<TableDef> {
 }
 
 /// Performs the indexes operation.
+#[must_use]
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!("idx_plans_org", "plans", ["org_id"]),
@@ -70,69 +72,71 @@ pub fn indexes() -> Vec<IndexDef> {
 }
 
 /// Performs the foreign keys operation.
+#[must_use]
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     vec![
         ForeignKeyDef {
-            from_table: "plans".to_string(),
-            from_column: "org_id".to_string(),
-            to_table: "organizations".to_string(),
-            to_column: "id".to_string(),
+            from_table: "plans".to_owned(),
+            from_column: "org_id".to_owned(),
+            to_table: "organizations".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "plans".to_string(),
-            from_column: "project_id".to_string(),
-            to_table: "projects".to_string(),
-            to_column: "id".to_string(),
+            from_table: "plans".to_owned(),
+            from_column: "project_id".to_owned(),
+            to_table: "projects".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "plans".to_string(),
-            from_column: "created_by".to_string(),
-            to_table: "users".to_string(),
-            to_column: "id".to_string(),
+            from_table: "plans".to_owned(),
+            from_column: "created_by".to_owned(),
+            to_table: "users".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "plan_versions".to_string(),
-            from_column: "org_id".to_string(),
-            to_table: "organizations".to_string(),
-            to_column: "id".to_string(),
+            from_table: "plan_versions".to_owned(),
+            from_column: "org_id".to_owned(),
+            to_table: "organizations".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "plan_versions".to_string(),
-            from_column: "plan_id".to_string(),
-            to_table: "plans".to_string(),
-            to_column: "id".to_string(),
+            from_table: "plan_versions".to_owned(),
+            from_column: "plan_id".to_owned(),
+            to_table: "plans".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "plan_versions".to_string(),
-            from_column: "created_by".to_string(),
-            to_table: "users".to_string(),
-            to_column: "id".to_string(),
+            from_table: "plan_versions".to_owned(),
+            from_column: "created_by".to_owned(),
+            to_table: "users".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "plan_reviews".to_string(),
-            from_column: "org_id".to_string(),
-            to_table: "organizations".to_string(),
-            to_column: "id".to_string(),
+            from_table: "plan_reviews".to_owned(),
+            from_column: "org_id".to_owned(),
+            to_table: "organizations".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "plan_reviews".to_string(),
-            from_column: "plan_version_id".to_string(),
-            to_table: "plan_versions".to_string(),
-            to_column: "id".to_string(),
+            from_table: "plan_reviews".to_owned(),
+            from_column: "plan_version_id".to_owned(),
+            to_table: "plan_versions".to_owned(),
+            to_column: "id".to_owned(),
         },
         ForeignKeyDef {
-            from_table: "plan_reviews".to_string(),
-            from_column: "reviewer_id".to_string(),
-            to_table: "users".to_string(),
-            to_column: "id".to_string(),
+            from_table: "plan_reviews".to_owned(),
+            from_column: "reviewer_id".to_owned(),
+            to_table: "users".to_owned(),
+            to_column: "id".to_owned(),
         },
     ]
 }
 
 /// Performs the unique constraints operation.
+#[must_use]
 pub fn unique_constraints() -> Vec<super::UniqueConstraintDef> {
     vec![super::UniqueConstraintDef {
-        table: "plan_versions".to_string(),
-        columns: vec!["plan_id".to_string(), "version_number".to_string()],
+        table: "plan_versions".to_owned(),
+        columns: vec!["plan_id".to_owned(), "version_number".to_owned()],
     }]
 }

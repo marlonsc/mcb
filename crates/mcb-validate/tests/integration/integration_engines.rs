@@ -19,7 +19,7 @@ use serde_json::json;
 /// Get the workspace root for tests (the actual project root)
 fn get_workspace_root() -> PathBuf {
     // Use CARGO_MANIFEST_DIR to find crate root, then go up to workspace root
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_owned());
     PathBuf::from(manifest_dir)
         .parent() // crates/
         .and_then(|p| p.parent()) // workspace root
@@ -34,35 +34,35 @@ fn create_test_context() -> RuleContext {
 
     let mut file_contents = HashMap::new();
     file_contents.insert(
-        "src/main.rs".to_string(),
+        "src/main.rs".to_owned(),
         r#"
 fn main() {
     let x = get_value().unwrap(); // Violation
     println!("{}", x);
 }
 "#
-        .to_string(),
+        .to_owned(),
     );
     file_contents.insert(
-        "src/lib.rs".to_string(),
-        r"
+        "src/lib.rs".to_owned(),
+        "
 pub async fn process() -> Result<(), Error> {
     let data = fetch_data().await?;
     Ok(())
 }
 "
-        .to_string(),
+        .to_owned(),
     );
     file_contents.insert(
-        "tests/test_main.rs".to_string(),
-        r"
+        "tests/test_main.rs".to_owned(),
+        "
 #[test]
 fn test_main() {
     let x = get_value().unwrap(); // OK in tests
     assert!(x >= 0); // Basic assertion to ensure test has validation
 }
 "
-        .to_string(),
+        .to_owned(),
     );
 
     RuleContext {
@@ -113,8 +113,8 @@ mod expression_engine_tests {
     fn test_custom_variables() {
         let engine = ExpressionEngine::new();
         let mut vars = HashMap::new();
-        vars.insert("threshold".to_string(), json!(100));
-        vars.insert("count".to_string(), json!(50));
+        vars.insert("threshold".to_owned(), json!(100));
+        vars.insert("count".to_owned(), json!(50));
 
         let result = engine.evaluate_with_variables("count < threshold", &vars);
         assert!(result.is_ok());
@@ -469,14 +469,14 @@ mod hybrid_engine_tests {
 
         let rules = vec![
             (
-                "EXPR001".to_string(),
+                "EXPR001".to_owned(),
                 RuleEngineType::Expression,
                 json!({
                     "expression": "file_count > 0"
                 }),
             ),
             (
-                "EXPR002".to_string(),
+                "EXPR002".to_owned(),
                 RuleEngineType::Expression,
                 json!({
                     "expression": "has_tests == true"
@@ -500,15 +500,15 @@ mod ca001_domain_independence_tests {
     fn create_domain_context() -> RuleContext {
         let mut file_contents = HashMap::new();
         file_contents.insert(
-            "crates/mcb-domain/src/lib.rs".to_string(),
-            r"
+            "crates/mcb-domain/src/lib.rs".to_owned(),
+            "
 //! Domain layer - pure business logic
 
 pub mod entities;
 pub mod ports;
 pub mod errors;
 "
-            .to_string(),
+            .to_owned(),
         );
 
         RuleContext {

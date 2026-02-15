@@ -24,7 +24,7 @@ fn extension_detection(#[case] file: &str, #[case] expected_language: &str) {
     let detector = LanguageDetector::new();
     assert_eq!(
         detector.detect_name(Path::new(file), None),
-        Some(expected_language.to_string())
+        Some(expected_language.to_owned())
     );
 }
 
@@ -80,7 +80,7 @@ fn test_content_detection() {
     let python_content = "#!/usr/bin/env python\nprint('hello')";
     assert_eq!(
         detector.detect_name(Path::new("script.py"), Some(python_content)),
-        Some("python".to_string())
+        Some("python".to_owned())
     );
 }
 
@@ -95,11 +95,11 @@ fn test_filename_detection() {
     let detector = LanguageDetector::new();
     assert_eq!(
         detector.detect_name(Path::new("Dockerfile"), None),
-        Some("dockerfile".to_string())
+        Some("dockerfile".to_owned())
     );
     assert_eq!(
         detector.detect_name(Path::new("Makefile"), None),
-        Some("makefile".to_string())
+        Some("makefile".to_owned())
     );
 }
 
@@ -110,7 +110,7 @@ fn test_shebang_detection() {
 
     assert_eq!(
         detector.detect_name(Path::new("script.unknown"), Some(shell_script)),
-        Some("shell".to_string())
+        Some("shell".to_owned())
     );
 }
 
@@ -130,10 +130,10 @@ fn test_unknown_existing_file_returns_none() {
 }
 
 #[rstest]
-#[case("main.rs", vec!["rust".to_string(), "python".to_string()], true)]
+#[case("main.rs", vec!["rust".to_owned(), "python".to_owned()], true)]
 #[case(
     "main.rs",
-    vec!["python".to_string(), "javascript".to_string()],
+    vec!["python".to_owned(), "javascript".to_owned()],
     false
 )]
 fn matches_languages(
@@ -152,25 +152,25 @@ fn matches_languages(
 fn test_supported_languages() {
     let detector = LanguageDetector::new();
     let languages = detector.supported_language_names();
-    assert!(languages.contains(&"rust".to_string()));
-    assert!(languages.contains(&"python".to_string()));
-    assert!(languages.contains(&"javascript".to_string()));
-    assert!(languages.contains(&"typescript".to_string()));
-    assert!(languages.contains(&"go".to_string()));
-    assert!(languages.contains(&"java".to_string()));
-    assert!(languages.contains(&"cpp".to_string()));
-    assert!(languages.contains(&"kotlin".to_string()));
-    assert!(languages.contains(&"ruby".to_string()));
-    assert!(languages.contains(&"shell".to_string()));
-    assert!(languages.contains(&"yaml".to_string()));
-    assert!(languages.contains(&"toml".to_string()));
-    assert!(languages.contains(&"json".to_string()));
-    assert!(languages.contains(&"markdown".to_string()));
-    assert!(languages.contains(&"html".to_string()));
-    assert!(languages.contains(&"css".to_string()));
-    assert!(languages.contains(&"sql".to_string()));
-    assert!(languages.contains(&"dockerfile".to_string()));
-    assert!(languages.contains(&"makefile".to_string()));
-    assert!(languages.contains(&"protobuf".to_string()));
+    assert!(languages.contains(&"rust".to_owned()));
+    assert!(languages.contains(&"python".to_owned()));
+    assert!(languages.contains(&"javascript".to_owned()));
+    assert!(languages.contains(&"typescript".to_owned()));
+    assert!(languages.contains(&"go".to_owned()));
+    assert!(languages.contains(&"java".to_owned()));
+    assert!(languages.contains(&"cpp".to_owned()));
+    assert!(languages.contains(&"kotlin".to_owned()));
+    assert!(languages.contains(&"ruby".to_owned()));
+    assert!(languages.contains(&"shell".to_owned()));
+    assert!(languages.contains(&"yaml".to_owned()));
+    assert!(languages.contains(&"toml".to_owned()));
+    assert!(languages.contains(&"json".to_owned()));
+    assert!(languages.contains(&"markdown".to_owned()));
+    assert!(languages.contains(&"html".to_owned()));
+    assert!(languages.contains(&"css".to_owned()));
+    assert!(languages.contains(&"sql".to_owned()));
+    assert!(languages.contains(&"dockerfile".to_owned()));
+    assert!(languages.contains(&"makefile".to_owned()));
+    assert!(languages.contains(&"protobuf".to_owned()));
     assert_eq!(languages.len(), 20);
 }

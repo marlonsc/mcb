@@ -1,7 +1,7 @@
 //! Real Provider Test Utilities
 //!
 //! Provides factory functions for creating real (not mocked) provider instances
-//! for integration testing. Uses FastEmbedProvider and EdgeVecVectorStoreProvider
+//! for integration testing. Uses `FastEmbedProvider` and `EdgeVecVectorStoreProvider`
 //! which are local implementations, not mocks.
 //!
 //! ## Key Principle
@@ -40,7 +40,7 @@ use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 use serde_json::json;
 
-/// Create a NEW AppContext (for tests that need isolated state).
+/// Create a NEW `AppContext` (for tests that need isolated state).
 pub async fn create_test_app_context() -> Result<AppContext> {
     let mut config = ConfigLoader::new().load().expect("load config");
     let temp_dir = std::env::temp_dir().join(format!(
@@ -51,9 +51,9 @@ pub async fn create_test_app_context() -> Result<AppContext> {
             .as_nanos()
     ));
     config.providers.database.configs.insert(
-        "default".to_string(),
+        "default".to_owned(),
         mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
+            provider: "sqlite".to_owned(),
             path: Some(temp_dir),
         },
     );
@@ -66,9 +66,10 @@ fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
 
     CACHE_DIR
         .get_or_init(|| {
-            let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR")
-                .map(std::path::PathBuf::from)
-                .unwrap_or_else(|| std::env::temp_dir().join("mcb-fastembed-test-cache"));
+            let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
+                || std::env::temp_dir().join("mcb-fastembed-test-cache"),
+                std::path::PathBuf::from,
+            );
             std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
             cache_dir
         })
@@ -90,11 +91,13 @@ impl FullStackTestContext {
     }
 
     /// Get embedding provider (via DI handle)
+    #[must_use]
     pub fn embedding(&self) -> Arc<dyn EmbeddingProvider> {
         self.app_context.embedding_handle().get()
     }
 
     /// Get vector store provider (via DI handle)
+    #[must_use]
     pub fn vector_store(&self) -> Arc<dyn VectorStoreProvider> {
         self.app_context.vector_store_handle().get()
     }
@@ -131,15 +134,12 @@ impl FullStackTestContext {
             .iter()
             .map(|chunk| {
                 let mut meta = HashMap::new();
-                meta.insert("id".to_string(), serde_json::json!(chunk.id));
-                meta.insert("file_path".to_string(), serde_json::json!(chunk.file_path));
-                meta.insert("content".to_string(), serde_json::json!(chunk.content));
-                meta.insert(
-                    "start_line".to_string(),
-                    serde_json::json!(chunk.start_line),
-                );
-                meta.insert("end_line".to_string(), serde_json::json!(chunk.end_line));
-                meta.insert("language".to_string(), serde_json::json!(chunk.language));
+                meta.insert("id".to_owned(), serde_json::json!(chunk.id));
+                meta.insert("file_path".to_owned(), serde_json::json!(chunk.file_path));
+                meta.insert("content".to_owned(), serde_json::json!(chunk.content));
+                meta.insert("start_line".to_owned(), serde_json::json!(chunk.start_line));
+                meta.insert("end_line".to_owned(), serde_json::json!(chunk.end_line));
+                meta.insert("language".to_owned(), serde_json::json!(chunk.language));
                 meta
             })
             .collect();
@@ -159,7 +159,7 @@ impl FullStackTestContext {
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
         // Embed query
-        let query_embeddings = self.embed_texts(&[query.to_string()]).await?;
+        let query_embeddings = self.embed_texts(&[query.to_owned()]).await?;
         let query_embedding = &query_embeddings[0];
 
         // Search vector store using search_similar
@@ -173,11 +173,12 @@ impl FullStackTestContext {
 /// Create test code chunks for integration testing
 ///
 /// Returns realistic Rust code chunks that can be indexed and searched.
+#[must_use]
 pub fn create_test_code_chunks() -> Vec<CodeChunk> {
     vec![
         CodeChunk {
-            id: "chunk_1".to_string(),
-            file_path: "src/config.rs".to_string(),
+            id: "chunk_1".to_owned(),
+            file_path: "src/config.rs".to_owned(),
             content: r#"#[derive(Debug, Clone)]
 pub struct Config {
     pub host: String,
@@ -194,15 +195,15 @@ impl Config {
         }
     }
 }"#
-            .to_string(),
+            .to_owned(),
             start_line: 1,
             end_line: 15,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: json!({"type": "struct", "name": "Config"}),
         },
         CodeChunk {
-            id: "chunk_2".to_string(),
-            file_path: "src/auth.rs".to_string(),
+            id: "chunk_2".to_owned(),
+            file_path: "src/auth.rs".to_owned(),
             // Test data: Intentional stub - sample code for testing search/indexing
             content: r#"pub async fn authenticate(token: &str) -> Result<User, AuthError> {
     let claims = verify_jwt(token)?;
@@ -214,16 +215,16 @@ pub fn verify_jwt(token: &str) -> Result<Claims, AuthError> {
     // JWT verification logic - stub for test data
     Err(AuthError::InvalidToken("Test stub".to_string()))
 }"#
-            .to_string(),
+            .to_owned(),
             start_line: 1,
             end_line: 10,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: json!({"type": "function", "name": "authenticate"}),
         },
         CodeChunk {
-            id: "chunk_3".to_string(),
-            file_path: "src/handlers.rs".to_string(),
-            content: r#"pub async fn handle_request(req: Request) -> Response {
+            id: "chunk_3".to_owned(),
+            file_path: "src/handlers.rs".to_owned(),
+            content: "pub async fn handle_request(req: Request) -> Response {
     let config = Config::new();
     let result = process_data(&req, &config).await?;
     Response::ok(result)
@@ -232,16 +233,16 @@ pub fn verify_jwt(token: &str) -> Result<Claims, AuthError> {
 async fn process_data(req: &Request, config: &Config) -> Result<Data, Error> {
     // Data processing logic
     Ok(Data::default())
-}"#
-            .to_string(),
+}"
+            .to_owned(),
             start_line: 1,
             end_line: 10,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: json!({"type": "function", "name": "handle_request"}),
         },
         CodeChunk {
-            id: "chunk_4".to_string(),
-            file_path: "src/main.rs".to_string(),
+            id: "chunk_4".to_owned(),
+            file_path: "src/main.rs".to_owned(),
             content: r#"#[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = Config::new();
@@ -253,10 +254,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }"#
-            .to_string(),
+            .to_owned(),
             start_line: 1,
             end_line: 11,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: json!({"type": "function", "name": "main"}),
         },
     ]
@@ -293,7 +294,7 @@ mod tests {
             .await
             .expect("Context should create");
 
-        let texts = vec!["test query".to_string()];
+        let texts = vec!["test query".to_owned()];
         let embeddings = ctx.embed_texts(&texts).await.expect("Should embed");
 
         assert_eq!(embeddings.len(), 1);

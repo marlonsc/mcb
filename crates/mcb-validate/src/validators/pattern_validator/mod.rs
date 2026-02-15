@@ -45,6 +45,7 @@ impl PatternValidator {
     }
 
     /// Create a validator with custom configuration for multi-directory support
+    #[must_use]
     pub fn with_config(config: ValidationConfig, rules: &PatternRulesConfig) -> Self {
         Self {
             config,
@@ -68,7 +69,7 @@ impl PatternValidator {
     pub fn validate_trait_based_di(&self) -> Result<Vec<PatternViolation>> {
         // Pattern to find Arc<SomeConcreteType> where SomeConcreteType doesn't start with "dyn"
         let arc_pattern = compile_regex(&self.rules.arc_pattern)
-            .or_else(|_| compile_regex(r"Arc<([A-Z][a-zA-Z0-9_]*)>"))?;
+            .or_else(|_| compile_regex("Arc<([A-Z][a-zA-Z0-9_]*)>"))?;
 
         // Known concrete types that are OK to use directly
         let allowed_concrete = &self.rules.allowed_concrete_types;

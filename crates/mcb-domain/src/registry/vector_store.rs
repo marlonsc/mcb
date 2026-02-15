@@ -65,6 +65,7 @@ impl VectorStoreProviderConfig {
     }
 
     /// Set the dimensions
+    #[must_use]
     pub fn with_dimensions(mut self, dimensions: usize) -> Self {
         self.dimensions = Some(dimensions);
         self

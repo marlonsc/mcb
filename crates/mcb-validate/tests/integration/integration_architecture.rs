@@ -33,12 +33,12 @@ mod architecture_integration_tests {
 
     fn mcb_naming_config() -> NamingRulesConfig {
         NamingRulesConfig {
-            domain_crate: "mcb-domain".to_string(),
-            application_crate: "mcb-application".to_string(),
-            providers_crate: "mcb-providers".to_string(),
-            infrastructure_crate: "mcb-infrastructure".to_string(),
-            server_crate: "mcb-server".to_string(),
-            validate_crate: "mcb-validate".to_string(),
+            domain_crate: "mcb-domain".to_owned(),
+            application_crate: "mcb-application".to_owned(),
+            providers_crate: "mcb-providers".to_owned(),
+            infrastructure_crate: "mcb-infrastructure".to_owned(),
+            server_crate: "mcb-server".to_owned(),
+            validate_crate: "mcb-validate".to_owned(),
 
             enabled: true,
         }
@@ -90,7 +90,7 @@ mod architecture_integration_tests {
         let root = create_workspace_structure(&dir);
 
         // Create clean domain entity with identity
-        let entity_code = r"
+        let entity_code = "
 use uuid::Uuid;
 
 pub struct User {
@@ -112,7 +112,7 @@ impl User {
         write_file(&root, "crates/mcb-domain/src/entities/user.rs", entity_code);
 
         // Create clean value object (immutable)
-        let vo_code = r"
+        let vo_code = "
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Email(String);
 
@@ -205,7 +205,7 @@ impl SearchHandler {
         let root = create_workspace_structure(&dir);
 
         // Create entity without id field (violation)
-        let entity_code = r"
+        let entity_code = "
 pub struct Product {
     pub name: String,
     pub price: f64,
@@ -252,7 +252,7 @@ impl Product {
         let root = create_workspace_structure(&dir);
 
         // Create value object with mutable method (violation)
-        let vo_code = r"
+        let vo_code = "
 pub struct Money {
     amount: f64,
     currency: String,
@@ -312,7 +312,7 @@ impl Money {
         let root = create_workspace_structure(&dir);
 
         // Create server file importing provider directly (violation)
-        let server_code = r"
+        let server_code = "
 // Wrong: importing directly from providers
 use mcb_providers::embedding::OllamaEmbeddingProvider;
 use mcb_providers::vector_store::MilvusVectorStore;
@@ -366,8 +366,8 @@ impl Server {
         let violation = CleanArchitectureViolation::HandlerCreatesService {
             file: PathBuf::from("src/handlers/search.rs"),
             line: 42,
-            service_name: "SearchService".to_string(),
-            context: "SearchService::new()".to_string(),
+            service_name: "SearchService".to_owned(),
+            context: "SearchService::new()".to_owned(),
             severity: Severity::Warning,
         };
 
@@ -402,7 +402,7 @@ impl Server {
         CleanArchitectureViolation::DomainContainsImplementation {
             file: PathBuf::new(),
             line: 1,
-            impl_type: "struct".to_string(),
+            impl_type: "struct".to_owned(),
             severity: Severity::Warning,
         },
         "CA001"
@@ -411,7 +411,7 @@ impl Server {
         CleanArchitectureViolation::HandlerCreatesService {
             file: PathBuf::new(),
             line: 1,
-            service_name: "Svc".to_string(),
+            service_name: "Svc".to_owned(),
             context: String::new(),
             severity: Severity::Warning,
         },
@@ -421,8 +421,8 @@ impl Server {
         CleanArchitectureViolation::PortMissingComponentDerive {
             file: PathBuf::new(),
             line: 1,
-            struct_name: "Port".to_string(),
-            trait_name: "Trait".to_string(),
+            struct_name: "Port".to_owned(),
+            trait_name: "Trait".to_owned(),
             severity: Severity::Warning,
         },
         "CA003"
@@ -431,7 +431,7 @@ impl Server {
         CleanArchitectureViolation::EntityMissingIdentity {
             file: PathBuf::new(),
             line: 1,
-            entity_name: "Entity".to_string(),
+            entity_name: "Entity".to_owned(),
             severity: Severity::Warning,
         },
         "CA004"
@@ -440,8 +440,8 @@ impl Server {
         CleanArchitectureViolation::ValueObjectMutable {
             file: PathBuf::new(),
             line: 1,
-            vo_name: "VO".to_string(),
-            method_name: "set".to_string(),
+            vo_name: "VO".to_owned(),
+            method_name: "set".to_owned(),
             severity: Severity::Warning,
         },
         "CA005"
@@ -450,7 +450,7 @@ impl Server {
         CleanArchitectureViolation::ServerImportsProviderDirectly {
             file: PathBuf::new(),
             line: 1,
-            import_path: "mcb_providers::x".to_string(),
+            import_path: "mcb_providers::x".to_owned(),
             severity: Severity::Warning,
         },
         "CA006"

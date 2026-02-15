@@ -88,11 +88,11 @@ pub fn template_dir() -> String {
         let path = std::path::Path::new(candidate);
         if path.exists() && path.is_dir() {
             tracing::debug!(template_dir = %candidate, "Resolved template directory");
-            return (*candidate).to_string();
+            return (*candidate).to_owned();
         }
     }
     tracing::info!("No template directory found on disk, embedded templates will be used");
-    "templates".to_string()
+    "templates".to_owned()
 }
 
 /// Create the admin web UI rocket instance
@@ -109,6 +109,7 @@ pub fn template_dir() -> String {
 /// - GET `/ui/browse/tree` - Browse tree view page (Wave 3)
 /// - GET `/ui/lov/<entity_slug>` - LOV endpoint for FK dropdown selects
 /// - GET `/favicon.ico` - Favicon
+#[must_use]
 pub fn web_rocket() -> Rocket<Build> {
     let figment = rocket::Config::figment().merge(("template_dir", template_dir()));
 

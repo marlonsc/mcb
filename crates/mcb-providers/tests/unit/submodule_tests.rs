@@ -25,13 +25,13 @@ async fn test_collect_submodules_empty_repo() {
 #[case("project-x", "project-x/libs-tree-sitter")]
 fn submodule_info_collection_name(#[case] collection: &str, #[case] expected: &str) {
     let info = SubmoduleInfo {
-        id: "parent-repo:libs/tree-sitter".to_string(),
-        path: "libs/tree-sitter".to_string(),
-        url: "https://github.com/tree-sitter/tree-sitter".to_string(),
-        commit_hash: "abc123".to_string(),
-        parent_repo_id: "parent-repo".to_string(),
+        id: "parent-repo:libs/tree-sitter".to_owned(),
+        path: "libs/tree-sitter".to_owned(),
+        url: "https://github.com/tree-sitter/tree-sitter".to_owned(),
+        commit_hash: "abc123".to_owned(),
+        parent_repo_id: "parent-repo".to_owned(),
         depth: 1,
-        name: "tree-sitter".to_string(),
+        name: "tree-sitter".to_owned(),
         is_initialized: true,
     };
 

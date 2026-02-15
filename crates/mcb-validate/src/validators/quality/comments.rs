@@ -36,7 +36,7 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                     let message = cap.get(2).map_or("", |m| m.as_str()).trim();
 
                     violations.push(QualityViolation::TodoComment {
-                        file: entry.absolute_path.to_path_buf(),
+                        file: entry.absolute_path.clone(),
                         line: line_num + 1,
                         content: format!("{}: {}", todo_type.to_uppercase(), message),
                         severity: Severity::Info,

@@ -1,12 +1,12 @@
-//! SQLite Database Provider
+//! `SQLite` Database Provider
 //!
 //! # Overview
-//! The `SqliteDatabaseProvider` acts as the factory and lifecycle manager for SQLite connections.
+//! The `SqliteDatabaseProvider` acts as the factory and lifecycle manager for `SQLite` connections.
 //! It is responsible for initializing the database file, applying the schema (DDL), and
 //! creating repository instances backed by a shared `DatabaseExecutor`.
 //!
 //! # Responsibilities
-//! - **Connection Management**: Pooling and configuring SQLite connections (WAL mode, etc.).
+//! - **Connection Management**: Pooling and configuring `SQLite` connections (WAL mode, etc.).
 //! - **Schema Migration**: Applying DDL at startup and verifying schema integrity.
 //! - **Factory Methods**: Creating `MemoryRepository`, `AgentRepository`, etc. from a path or executor.
 //! - **Recovery**: Automatically backing up and recreating Corrupt/Incompatible databases.
@@ -29,7 +29,7 @@ use mcb_domain::registry::database::{
     DATABASE_PROVIDERS, DatabaseProviderConfig, DatabaseProviderEntry,
 };
 
-/// SQLite database provider implementation.
+/// `SQLite` database provider implementation.
 ///
 /// Implements `DatabaseProvider` port to serve as the entry point for infrastructure composition.
 pub struct SqliteDatabaseProvider;
@@ -63,7 +63,7 @@ pub async fn create_memory_repository(path: PathBuf) -> Result<Arc<dyn MemoryRep
     Ok(repo)
 }
 
-/// Create a file-backed agent repository sharing the same SQLite project schema database.
+/// Create a file-backed agent repository sharing the same `SQLite` project schema database.
 #[tracing::instrument(skip_all)]
 pub async fn create_agent_repository(path: PathBuf) -> Result<Arc<dyn AgentRepository>> {
     let (_, executor) = create_memory_repository_with_executor(path).await?;

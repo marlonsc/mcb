@@ -18,7 +18,11 @@ pub fn validate_bypass_boundaries(
 
     for boundary in &file_config.rules.dependency.bypass_boundaries {
         let scan_root = validator.config.workspace_root.join(&boundary.scan_root);
-        let allowed: Vec<&str> = boundary.allowed_files.iter().map(|s| s.as_str()).collect();
+        let allowed: Vec<&str> = boundary
+            .allowed_files
+            .iter()
+            .map(std::string::String::as_str)
+            .collect();
         let violation_id = boundary.violation_id.clone();
         let pattern = boundary.pattern.clone();
 
@@ -91,9 +95,9 @@ where
                 }
                 if line.contains(pattern) {
                     out.push(make_violation(
-                        path.to_path_buf(),
+                        path.clone(),
                         line_num + 1,
-                        trimmed.to_string(),
+                        trimmed.to_owned(),
                     ));
                 }
             }

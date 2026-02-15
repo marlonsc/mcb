@@ -17,7 +17,7 @@ use crate::value_objects::OperationId;
 // Job Types & Status
 // ============================================================================
 
-/// Unique identifier for a job (wraps OperationId for domain consistency)
+/// Unique identifier for a job (wraps `OperationId` for domain consistency)
 pub type JobId = OperationId;
 
 /// The type of work a job performs
@@ -54,11 +54,13 @@ pub enum JobStatus {
 
 impl JobStatus {
     /// Returns `true` if the job is in a terminal state
+    #[must_use]
     pub fn is_terminal(&self) -> bool {
         matches!(self, Self::Completed | Self::Failed(_) | Self::Cancelled)
     }
 
     /// Returns `true` if the job is actively running
+    #[must_use]
     pub fn is_active(&self) -> bool {
         matches!(self, Self::Queued | Self::Running)
     }

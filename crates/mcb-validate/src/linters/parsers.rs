@@ -40,6 +40,7 @@ pub async fn run_linter_command(
 ///   }
 /// ]
 /// ```
+#[must_use]
 pub fn parse_ruff_output(output: &str) -> Vec<LintViolation> {
     let mut violations = Vec::new();
 
@@ -53,7 +54,7 @@ pub fn parse_ruff_output(output: &str) -> Vec<LintViolation> {
                 column: ruff_violation.location.column,
                 message: ruff_violation.message,
                 severity: map_ruff_severity(&ruff_violation.code),
-                category: "quality".to_string(),
+                category: "quality".to_owned(),
             });
         }
     }
@@ -80,6 +81,7 @@ pub fn parse_ruff_output(output: &str) -> Vec<LintViolation> {
 ///   }
 /// }
 /// ```
+#[must_use]
 pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
     let mut violations = Vec::new();
 
@@ -136,7 +138,7 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
                 } else {
                     "correctness"
                 }
-                .to_string(),
+                .to_owned(),
             });
         }
     }
@@ -145,6 +147,7 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
 }
 
 /// Find project root from files (simplified)
+#[must_use]
 pub fn find_project_root(files: &[&Path]) -> Option<std::path::PathBuf> {
     // Simple heuristic: go up until we find Cargo.toml
     if let Some(first_file) = files.first() {
@@ -160,19 +163,21 @@ pub fn find_project_root(files: &[&Path]) -> Option<std::path::PathBuf> {
 }
 
 /// Map Ruff severity
+#[must_use]
 pub fn map_ruff_severity(code: &str) -> String {
     match code.chars().next() {
-        Some('F' | 'E') => "error".to_string(), // Pyflakes / pycodestyle errors
-        Some('W') => "warning".to_string(),     // pycodestyle warnings
-        Some(_) | None => "info".to_string(),
+        Some('F' | 'E') => "error".to_owned(), // Pyflakes / pycodestyle errors
+        Some('W') => "warning".to_owned(),     // pycodestyle warnings
+        Some(_) | None => "info".to_owned(),
     }
 }
 
 /// Map Clippy level
+#[must_use]
 pub fn map_clippy_level(level: &str) -> String {
     match level {
-        "error" => "error".to_string(),
-        "warning" => "warning".to_string(),
-        _ => "info".to_string(), // note, help, and others
+        "error" => "error".to_owned(),
+        "warning" => "warning".to_owned(),
+        _ => "info".to_owned(), // note, help, and others
     }
 }

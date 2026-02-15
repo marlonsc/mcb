@@ -35,6 +35,7 @@ impl SolidValidator {
     }
 
     /// Create a validator with custom configuration for multi-directory support
+    #[must_use]
     pub fn with_config(config: ValidationConfig) -> Self {
         let t = thresholds();
         Self {

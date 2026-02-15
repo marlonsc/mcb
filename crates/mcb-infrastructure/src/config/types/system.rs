@@ -1,7 +1,7 @@
 //! System configuration types
 //!
 //! configuration for system concerns:
-//! auth, event_bus, backup, sync, snapshot, daemon, and operations.
+//! auth, `event_bus`, backup, sync, snapshot, daemon, and operations.
 
 use std::path::PathBuf;
 
@@ -83,7 +83,7 @@ pub struct AuthConfig {
 // EventBus Configuration
 // ============================================================================
 
-/// EventBus provider types
+/// `EventBus` provider types
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum EventBusProvider {
@@ -94,11 +94,11 @@ pub enum EventBusProvider {
     Nats,
 }
 
-/// EventBus configuration
+/// `EventBus` configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EventBusConfig {
-    /// EventBus provider to use
+    /// `EventBus` provider to use
     pub provider: EventBusProvider,
     /// Buffer capacity for in-process event bus
     pub capacity: usize,
@@ -114,24 +114,26 @@ pub struct EventBusConfig {
 
 impl EventBusConfig {
     /// Creates default in-process event bus configuration.
+    #[must_use]
     pub fn tokio() -> Self {
         Self {
             provider: EventBusProvider::Tokio,
             capacity: EVENTS_TOKIO_DEFAULT_CAPACITY,
             nats_url: None,
-            nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_string()),
+            nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_owned()),
             connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
             max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
         }
     }
 
     /// Creates in-process event bus configuration with custom queue capacity.
+    #[must_use]
     pub fn tokio_with_capacity(capacity: usize) -> Self {
         Self {
             provider: EventBusProvider::Tokio,
             capacity,
             nats_url: None,
-            nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_string()),
+            nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_owned()),
             connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
             max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
         }
@@ -143,7 +145,7 @@ impl EventBusConfig {
             provider: EventBusProvider::Nats,
             capacity: EVENTS_TOKIO_DEFAULT_CAPACITY,
             nats_url: Some(url.into()),
-            nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_string()),
+            nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_owned()),
             connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
             max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
         }

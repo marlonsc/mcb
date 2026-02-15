@@ -1,4 +1,4 @@
-//! SQLite Agent Repository
+//! `SQLite` Agent Repository
 //!
 //! # Overview
 //! The `SqliteAgentRepository` manages the persistence of agent sessions and their related artifacts
@@ -43,7 +43,7 @@ impl SqliteAgentRepository {
 }
 
 #[async_trait]
-/// Persistent agent session repository using SQLite.
+/// Persistent agent session repository using `SQLite`.
 impl AgentSessionRepository for SqliteAgentRepository {
     /// Creates a new agent session.
     async fn create_session(&self, session: &AgentSession) -> Result<()> {
@@ -99,7 +99,7 @@ impl AgentSessionRepository for SqliteAgentRepository {
 
         self.executor
             .execute(
-                r"
+                "
                 INSERT INTO agent_sessions (
                     id,
                     session_summary_id,
@@ -181,7 +181,7 @@ impl AgentSessionRepository for SqliteAgentRepository {
 
         self.executor
             .execute(
-                r"
+                "
                 UPDATE agent_sessions
                 SET session_summary_id = ?,
                     agent_type = ?,
@@ -282,7 +282,7 @@ impl AgentSessionRepository for SqliteAgentRepository {
 }
 
 #[async_trait]
-/// Persistent agent event repository using SQLite.
+/// Persistent agent event repository using `SQLite`.
 impl AgentEventRepository for SqliteAgentRepository {
     /// Stores a delegation record.
     async fn store_delegation(&self, delegation: &Delegation) -> Result<()> {
@@ -309,7 +309,7 @@ impl AgentEventRepository for SqliteAgentRepository {
 
         self.executor
             .execute(
-                r"
+                "
                 INSERT INTO delegations (
                     id,
                     parent_session_id,
@@ -352,7 +352,7 @@ impl AgentEventRepository for SqliteAgentRepository {
 
         self.executor
             .execute(
-                r"
+                "
                 INSERT INTO tool_calls (
                     id,
                     session_id,
@@ -374,7 +374,7 @@ impl AgentEventRepository for SqliteAgentRepository {
 }
 
 #[async_trait]
-/// Persistent agent checkpoint repository using SQLite.
+/// Persistent agent checkpoint repository using `SQLite`.
 impl AgentCheckpointRepository for SqliteAgentRepository {
     /// Stores a session checkpoint.
     async fn store_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
@@ -394,7 +394,7 @@ impl AgentCheckpointRepository for SqliteAgentRepository {
 
         self.executor
             .execute(
-                r"
+                "
                 INSERT INTO checkpoints (
                     id,
                     session_id,
@@ -444,7 +444,7 @@ impl AgentCheckpointRepository for SqliteAgentRepository {
 
         self.executor
             .execute(
-                r"
+                "
                 UPDATE checkpoints
                 SET session_id = ?,
                     checkpoint_type = ?,

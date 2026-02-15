@@ -17,7 +17,7 @@ pub fn validate_mutex_types(config: &ValidationConfig) -> Result<Vec<AsyncViolat
             "Use tokio::sync::Mutex for async code",
         ),
         (
-            r"std::sync::Mutex<",
+            "std::sync::Mutex<",
             "std::sync::Mutex type",
             "Use tokio::sync::Mutex for async code",
         ),
@@ -27,7 +27,7 @@ pub fn validate_mutex_types(config: &ValidationConfig) -> Result<Vec<AsyncViolat
             "Use tokio::sync::RwLock for async code",
         ),
         (
-            r"std::sync::RwLock<",
+            "std::sync::RwLock<",
             "std::sync::RwLock type",
             "Use tokio::sync::RwLock for async code",
         ),
@@ -72,7 +72,7 @@ pub fn validate_mutex_types(config: &ValidationConfig) -> Result<Vec<AsyncViolat
             for (pattern, desc, sugg) in &compiled_mutex {
                 if pattern.is_match(line) {
                     violations.push(AsyncViolation::WrongMutexType {
-                        file: path.to_path_buf(),
+                        file: path.clone(),
                         line: line_num + 1,
                         mutex_type: desc.to_string(),
                         suggestion: sugg.to_string(),

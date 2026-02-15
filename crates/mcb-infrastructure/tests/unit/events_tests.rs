@@ -36,7 +36,7 @@ fn event_bus_initial_subscriber_state(#[case] use_default: bool) {
 #[rstest]
 fn test_event_bus_debug() {
     let bus = TokioEventBusProvider::new();
-    let debug = format!("{:?}", bus);
+    let debug = format!("{bus:?}");
     assert!(debug.contains("TokioEventBusProvider"));
 }
 
@@ -44,7 +44,7 @@ fn test_event_bus_debug() {
 async fn test_publish_event_no_subscribers() {
     let bus = TokioEventBusProvider::new();
     let event = DomainEvent::IndexingStarted {
-        collection: "test".to_string(),
+        collection: "test".to_owned(),
         total_files: 5,
     };
     let result = bus.publish_event(event).await;

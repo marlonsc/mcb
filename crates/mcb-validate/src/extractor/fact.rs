@@ -69,6 +69,7 @@ impl Fact {
     ///
     /// The `id` is derived from the optional `parent_id` and `name`:
     /// `"{parent_id}::{name}"` when a parent is present, otherwise just `name`.
+    #[must_use]
     pub fn new(
         name: String,
         fact_type: FactType,
@@ -76,7 +77,7 @@ impl Fact {
         parent_id: Option<String>,
     ) -> Self {
         let id = if let Some(parent) = &parent_id {
-            format!("{}::{}", parent, name)
+            format!("{parent}::{name}")
         } else {
             name.clone()
         };
@@ -94,6 +95,6 @@ impl Fact {
 
     /// Attach a key-value attribute to this fact.
     pub fn add_attribute(&mut self, key: &str, value: String) {
-        self.attributes.insert(key.to_string(), value);
+        self.attributes.insert(key.to_owned(), value);
     }
 }

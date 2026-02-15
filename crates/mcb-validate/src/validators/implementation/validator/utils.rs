@@ -50,7 +50,7 @@ pub fn track_fn_name(fn_pattern: Option<&Regex>, trimmed: &str, name: &mut Strin
     {
         *name = cap
             .get(1)
-            .map(|m| m.as_str().to_string())
+            .map(|m| m.as_str().to_owned())
             .unwrap_or_default();
     }
 }
@@ -102,7 +102,7 @@ pub fn extract_functions(fn_pattern: Option<&Regex>, lines: &[(usize, &str)]) ->
         {
             let fn_name = cap
                 .get(1)
-                .map(|m| m.as_str().to_string())
+                .map(|m| m.as_str().to_owned())
                 .unwrap_or_default();
             let fn_start = orig_idx + 1; // 1-based
 
@@ -129,7 +129,7 @@ pub fn extract_functions(fn_pattern: Option<&Regex>, lines: &[(usize, &str)]) ->
 
             let body: Vec<String> = lines[i..=fn_end_idx]
                 .iter()
-                .map(|(_, l)| l.trim().to_string())
+                .map(|(_, l)| l.trim().to_owned())
                 .filter(|l| !l.is_empty() && !l.starts_with("//"))
                 .collect();
 
@@ -175,7 +175,7 @@ pub fn extract_functions_with_body(
         {
             *current_struct = cap
                 .get(1)
-                .map(|m| m.as_str().to_string())
+                .map(|m| m.as_str().to_owned())
                 .unwrap_or_default();
         }
 
@@ -184,7 +184,7 @@ pub fn extract_functions_with_body(
         {
             current_fn_name = cap
                 .get(1)
-                .map(|m| m.as_str().to_string())
+                .map(|m| m.as_str().to_owned())
                 .unwrap_or_default();
             fn_start_line = orig_idx + 1; // 1-based
             fn_body_lines.clear();
@@ -200,7 +200,7 @@ pub fn extract_functions_with_body(
             brace_depth += opens - closes;
 
             if !trimmed.is_empty() && !trimmed.starts_with("#[") {
-                fn_body_lines.push(trimmed.to_string());
+                fn_body_lines.push(trimmed.to_owned());
             }
 
             if brace_depth <= 0 && opens > 0 {

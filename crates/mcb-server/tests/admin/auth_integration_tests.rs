@@ -1,14 +1,14 @@
 //! Real Auth Integration Tests
 //!
 //! These tests verify that authentication ACTUALLY WORKS with a real Rocket server.
-//! Unlike the unit tests in auth_test.rs, these tests:
+//! Unlike the unit tests in `auth_test.rs`, these tests:
 //!
 //! 1. Start a real Rocket server with authentication ENABLED
 //! 2. Make HTTP requests WITH and WITHOUT the API key
 //! 3. Verify correct HTTP status codes (401 for unauthorized, 200 for authorized)
 //! 4. Validate the response body contains correct error messages and data
 //!
-//! This ensures the AdminAuth guard works correctly in production.
+//! This ensures the `AdminAuth` guard works correctly in production.
 
 use std::sync::Arc;
 
@@ -17,6 +17,8 @@ use mcb_domain::value_objects::CollectionId;
 use mcb_server::admin::{auth::AdminAuthConfig, routes::admin_rocket};
 use rocket::http::{Header, Status};
 use rocket::local::asynchronous::Client;
+
+use crate::test_utils::timeouts::TEST_TIMEOUT;
 
 use super::harness::{
     AdminTestHarness, TEST_API_KEY, TEST_AUTH_HEADER, create_auth_config, create_auth_config_no_key,
@@ -113,8 +115,7 @@ async fn test_metrics_with_correct_key_returns_200() {
         .expect("cache_hit_rate is number");
     assert!(
         (cache_hit_rate - 0.333).abs() < 0.01,
-        "Cache hit rate should be ~33.3%, got {}",
-        cache_hit_rate
+        "Cache hit rate should be ~33.3%, got {cache_hit_rate}"
     );
 
     // Verify average response time is approximately (100+200+50)/3 = 116.67ms
@@ -123,8 +124,7 @@ async fn test_metrics_with_correct_key_returns_200() {
         .expect("avg response time");
     assert!(
         (avg_response_time - 116.67).abs() < 1.0,
-        "Average response time should be ~116.67ms, got {}",
-        avg_response_time
+        "Average response time should be ~116.67ms, got {avg_response_time}"
     );
 }
 
@@ -192,8 +192,7 @@ async fn test_extended_health_with_correct_key_returns_200() {
     let status = json["status"].as_str().expect("status is string");
     assert!(
         status == "healthy" || status == "degraded",
-        "Status should be 'healthy' or 'degraded', got '{}'",
-        status
+        "Status should be 'healthy' or 'degraded', got '{status}'"
     );
 
     // Verify dependencies array has expected structure
@@ -226,7 +225,7 @@ async fn test_shutdown_without_key_returns_401() {
     let response = client
         .post("/shutdown")
         .header(rocket::http::ContentType::JSON)
-        .body(r#"{}"#)
+        .body("{}")
         .dispatch()
         .await;
 
@@ -323,10 +322,13 @@ async fn test_live_public_no_auth_required() {
 async fn test_ready_public_no_auth_required() {
     let state = AdminTestHarness::new().build_state();
     let auth_config = Arc::new(create_auth_config());
-    tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-    let client = Client::tracked(admin_rocket(state, auth_config, None))
-        .await
-        .expect("valid rocket instance");
+    let client = tokio::time::timeout(TEST_TIMEOUT, async {
+        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+        Client::tracked(admin_rocket(state, auth_config, None)).await
+    })
+    .await
+    .expect("ready probe setup timed out")
+    .expect("valid rocket instance");
 
     let response = client.get("/ready").dispatch().await;
 
@@ -357,7 +359,7 @@ async fn test_jobs_public_no_auth_required() {
         .start_operation(&CollectionId::from_name("test-collection"), 100);
     harness
         .indexing()
-        .update_progress(&op_id, Some("src/main.rs".to_string()), 25);
+        .update_progress(&op_id, Some("src/main.rs".to_owned()), 25);
     let (client, _, _) = harness.build_client().await;
 
     let response = client.get("/jobs").dispatch().await;
@@ -421,8 +423,8 @@ async fn test_custom_header_name() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth_config(AdminAuthConfig {
             enabled: true,
-            header_name: "X-Custom-Auth".to_string(),
-            api_key: Some("custom-key".to_string()),
+            header_name: "X-Custom-Auth".to_owned(),
+            api_key: Some("custom-key".to_owned()),
         })
         .build_client()
         .await;

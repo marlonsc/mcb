@@ -20,7 +20,7 @@ pub struct CollectionInfo {
 }
 
 impl CollectionInfo {
-    /// Create a new CollectionInfo instance
+    /// Create a new `CollectionInfo` instance
     pub fn new(
         name: impl Into<String>,
         vector_count: u64,
