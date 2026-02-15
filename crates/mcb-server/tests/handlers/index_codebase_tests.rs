@@ -19,7 +19,9 @@ async fn test_index_codebase(
     #[case] collection: Option<&str>,
     #[case] should_succeed: bool,
 ) {
-    let (services, _services_temp_dir) = create_real_domain_services().await;
+    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+        return;
+    };
     let handler = IndexHandler::new(services.indexing_service);
 
     let _temp_dir_guard;

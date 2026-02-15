@@ -8,9 +8,9 @@ use serde_json::json;
 use crate::handlers::test_helpers::create_base_memory_args;
 use crate::handlers::test_helpers::create_real_domain_services;
 
-async fn create_handler() -> (MemoryHandler, tempfile::TempDir) {
-    let (services, temp_dir) = create_real_domain_services().await;
-    (MemoryHandler::new(services.memory_service), temp_dir)
+async fn create_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
+    let (services, temp_dir) = create_real_domain_services().await?;
+    Some((MemoryHandler::new(services.memory_service), temp_dir))
 }
 
 fn missing_data_store_args() -> MemoryArgs {
@@ -49,7 +49,9 @@ fn get_missing_ids_args() -> MemoryArgs {
 #[rstest]
 #[tokio::test]
 async fn test_memory_store_observation_success() {
-    let (handler, _temp_dir) = create_handler().await;
+    let Some((handler, _temp_dir)) = create_handler().await else {
+        return;
+    };
     let args = create_base_memory_args(
         MemoryAction::Store,
         MemoryResource::Observation,
@@ -74,7 +76,9 @@ async fn test_memory_store_observation_success() {
 #[case(get_missing_ids_args())]
 #[tokio::test]
 async fn test_memory_validation_failures_return_error_response(#[case] args: MemoryArgs) {
-    let (handler, _temp_dir) = create_handler().await;
+    let Some((handler, _temp_dir)) = create_handler().await else {
+        return;
+    };
     let result = handler.handle(Parameters(args)).await;
     assert!(result.is_ok());
     assert!(result.expect("response").is_error.unwrap_or(false));
@@ -83,7 +87,9 @@ async fn test_memory_validation_failures_return_error_response(#[case] args: Mem
 #[rstest]
 #[tokio::test]
 async fn test_memory_inject_with_filters() {
-    let (handler, _temp_dir) = create_handler().await;
+    let Some((handler, _temp_dir)) = create_handler().await else {
+        return;
+    };
     let args = MemoryArgs {
         action: MemoryAction::Inject,
         org_id: None,

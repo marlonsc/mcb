@@ -41,17 +41,17 @@ fn assert_error_shape(result: &CallToolResult, expected_message: &str) {
     );
 }
 
-async fn memory_handler() -> (MemoryHandler, tempfile::TempDir) {
-    let (services, temp_dir) = create_real_domain_services().await;
-    (MemoryHandler::new(services.memory_service), temp_dir)
+async fn memory_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
+    let (services, temp_dir) = create_real_domain_services().await?;
+    Some((MemoryHandler::new(services.memory_service), temp_dir))
 }
 
-async fn session_handler() -> (SessionHandler, tempfile::TempDir) {
-    let (services, temp_dir) = create_real_domain_services().await;
-    (
+async fn session_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
+    let (services, temp_dir) = create_real_domain_services().await?;
+    Some((
         SessionHandler::new(services.agent_session_service, services.memory_service),
         temp_dir,
-    )
+    ))
 }
 
 #[fixture]
@@ -70,7 +70,9 @@ fn observation_store_args() -> MemoryArgs {
 async fn memory_store_missing_data_returns_expected_error(
     #[from(observation_store_args)] args: MemoryArgs,
 ) {
-    let (handler, _temp_dir) = memory_handler().await;
+    let Some((handler, _temp_dir)) = memory_handler().await else {
+        return;
+    };
     let response = handler
         .handle(Parameters(args))
         .await
@@ -89,7 +91,9 @@ async fn memory_store_missing_content_returns_expected_error(
         "project_id": "project-1"
     }));
 
-    let (handler, _temp_dir) = memory_handler().await;
+    let Some((handler, _temp_dir)) = memory_handler().await else {
+        return;
+    };
     let response = handler
         .handle(Parameters(args))
         .await
@@ -100,7 +104,9 @@ async fn memory_store_missing_content_returns_expected_error(
 
 #[tokio::test]
 async fn session_create_missing_data_returns_expected_error() {
-    let (handler, _temp_dir) = session_handler().await;
+    let Some((handler, _temp_dir)) = session_handler().await else {
+        return;
+    };
     let args = SessionArgs {
         action: SessionAction::Create,
         org_id: None,

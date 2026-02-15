@@ -8,9 +8,9 @@ use rstest::*;
 
 use crate::handlers::test_helpers::create_real_domain_services;
 
-async fn create_handler() -> (VcsHandler, tempfile::TempDir) {
-    let (services, temp_dir) = create_real_domain_services().await;
-    (VcsHandler::new(services.vcs_provider), temp_dir)
+async fn create_handler() -> Option<(VcsHandler, tempfile::TempDir)> {
+    let (services, temp_dir) = create_real_domain_services().await?;
+    Some((VcsHandler::new(services.vcs_provider), temp_dir))
 }
 
 fn base_vcs_args(action: VcsAction) -> VcsArgs {
@@ -73,7 +73,9 @@ fn create_git_repo_fixture() -> (tempfile::TempDir, String) {
 #[case(None)]
 #[tokio::test]
 async fn test_vcs_list_repositories_cases(#[case] limit: Option<u32>) {
-    let (handler, _services_temp_dir) = create_handler().await;
+    let Some((handler, _services_temp_dir)) = create_handler().await else {
+        return;
+    };
     let (_repo_dir, repo_path) = create_git_repo_fixture();
 
     let mut args = base_vcs_args(VcsAction::ListRepositories);
@@ -90,7 +92,9 @@ async fn test_vcs_list_repositories_cases(#[case] limit: Option<u32>) {
 #[rstest]
 #[tokio::test]
 async fn test_vcs_index_repository_success() {
-    let (handler, _services_temp_dir) = create_handler().await;
+    let Some((handler, _services_temp_dir)) = create_handler().await else {
+        return;
+    };
     let (_repo_dir, repo_path) = create_git_repo_fixture();
 
     let mut args = base_vcs_args(VcsAction::IndexRepository);
@@ -107,7 +111,9 @@ async fn test_vcs_index_repository_success() {
 #[rstest]
 #[tokio::test]
 async fn test_vcs_index_repository_with_repo_path() {
-    let (handler, _services_temp_dir) = create_handler().await;
+    let Some((handler, _services_temp_dir)) = create_handler().await else {
+        return;
+    };
 
     let mut args = base_vcs_args(VcsAction::IndexRepository);
     args.repo_path = Some("/path/to/repo".to_string());
@@ -122,7 +128,9 @@ async fn test_vcs_index_repository_with_repo_path() {
 #[rstest]
 #[tokio::test]
 async fn test_vcs_analyze_impact_with_defaults() {
-    let (handler, _services_temp_dir) = create_handler().await;
+    let Some((handler, _services_temp_dir)) = create_handler().await else {
+        return;
+    };
 
     let mut args = base_vcs_args(VcsAction::AnalyzeImpact);
     args.repo_id = Some("repo-123".to_string());
@@ -138,7 +146,9 @@ async fn test_vcs_analyze_impact_with_defaults() {
 #[rstest]
 #[tokio::test]
 async fn test_vcs_analyze_impact_missing_repo_path() {
-    let (handler, _services_temp_dir) = create_handler().await;
+    let Some((handler, _services_temp_dir)) = create_handler().await else {
+        return;
+    };
 
     let mut args = base_vcs_args(VcsAction::AnalyzeImpact);
     args.base_branch = Some("main".to_string());

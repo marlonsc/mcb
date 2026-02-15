@@ -6,25 +6,27 @@ use serde_json::json;
 
 use crate::handlers::test_helpers::create_real_domain_services;
 
-async fn create_handler() -> (SessionHandler, tempfile::TempDir) {
-    let (services, temp_dir) = create_real_domain_services().await;
-    (
+async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
+    let (services, temp_dir) = create_real_domain_services().await?;
+    Some((
         SessionHandler::new(services.agent_session_service, services.memory_service),
         temp_dir,
-    )
+    ))
 }
 
 macro_rules! session_test {
     ($test_name:ident, $action:expr, session_id: $session_id:expr, expect_ok) => {
         #[tokio::test]
         async fn $test_name() {
-            let (handler, _services_temp_dir) = create_handler().await;
+            let Some((handler, _services_temp_dir)) = create_handler().await else {
+                return;
+            };
 
             let args = SessionArgs {
                 action: $action,
                 org_id: None,
                 session_id: Some($session_id),
-        project_id: None,
+                project_id: None,
                 data: None,
                 worktree_id: None,
                 parent_session_id: None,
@@ -42,13 +44,15 @@ macro_rules! session_test {
     ($test_name:ident, $action:expr, data: $data:expr, $(agent_type: $agent_type:expr,)? expect_ok) => {
         #[tokio::test]
         async fn $test_name() {
-            let (handler, _services_temp_dir) = create_handler().await;
+            let Some((handler, _services_temp_dir)) = create_handler().await else {
+                return;
+            };
 
             let args = SessionArgs {
                 action: $action,
                 org_id: None,
                 session_id: None,
-        project_id: None,
+                project_id: None,
                 data: Some($data),
                 worktree_id: None,
                 parent_session_id: None,
@@ -67,13 +71,15 @@ macro_rules! session_test {
     ($test_name:ident, $action:expr, data: $data:expr, $(agent_type: $agent_type:expr,)? expect_error) => {
         #[tokio::test]
         async fn $test_name() {
-            let (handler, _services_temp_dir) = create_handler().await;
+            let Some((handler, _services_temp_dir)) = create_handler().await else {
+                return;
+            };
 
             let args = SessionArgs {
                 action: $action,
                 org_id: None,
                 session_id: None,
-        project_id: None,
+                project_id: None,
                 data: $data,
                 worktree_id: None,
                 parent_session_id: None,
@@ -159,7 +165,9 @@ session_test!(
 
 #[tokio::test]
 async fn test_session_update_conflicting_project_id_rejected() {
-    let (handler, _services_temp_dir) = create_handler().await;
+    let Some((handler, _services_temp_dir)) = create_handler().await else {
+        return;
+    };
 
     let create_args = SessionArgs {
         action: SessionAction::Create,

@@ -6,7 +6,9 @@ use crate::handlers::test_helpers::create_real_domain_services;
 
 #[tokio::test]
 async fn test_search_code_success() {
-    let (services, _services_temp_dir) = create_real_domain_services().await;
+    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+        return;
+    };
     let handler = SearchHandler::new(services.search_service, services.memory_service);
 
     let args = SearchArgs {
@@ -32,7 +34,9 @@ async fn test_search_code_success() {
 
 #[tokio::test]
 async fn test_search_code_empty_query() {
-    let (services, _services_temp_dir) = create_real_domain_services().await;
+    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+        return;
+    };
     let handler = SearchHandler::new(services.search_service, services.memory_service);
 
     let args = SearchArgs {

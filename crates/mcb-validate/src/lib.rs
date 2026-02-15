@@ -17,8 +17,8 @@
 //! ```
 //! use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
 //!
-//! let config = ValidationConfig::new("/workspace")
-//!     .with_additional_path("../extra-src")
+//! let tmp = tempfile::tempdir().unwrap();
+//! let config = ValidationConfig::new(tmp.path())
 //!     .with_exclude_pattern("target/");
 //!
 //! let registry = ValidatorRegistry::standard_for(&config.workspace_root);

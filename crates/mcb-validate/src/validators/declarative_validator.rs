@@ -256,6 +256,23 @@ impl DeclarativeValidator {
                 continue;
             }
 
+            let mut ignore_compiled: Vec<Regex> = Vec::new();
+            if let Some(ignore_arr) = rule
+                .config
+                .get("ignore_patterns")
+                .and_then(|v| v.as_array())
+            {
+                for v in ignore_arr {
+                    if let Some(pat) = v.as_str() {
+                        if let Ok(rx) = Regex::new(pat) {
+                            ignore_compiled.push(rx);
+                        } else {
+                            warn!(rule_id = %rule.id, "Invalid ignore pattern regex");
+                        }
+                    }
+                }
+            }
+
             for file in files {
                 let content = match std::fs::read_to_string(file) {
                     Ok(c) => c,
@@ -270,6 +287,11 @@ impl DeclarativeValidator {
                 };
 
                 for (line_num, line) in content.lines().enumerate() {
+                    // Check ignore patterns
+                    if ignore_compiled.iter().any(|irx| irx.is_match(line)) {
+                        continue;
+                    }
+
                     for (_name, rx) in &compiled {
                         if rx.is_match(line) {
                             violations.push(Box::new(PatternMatchViolation {

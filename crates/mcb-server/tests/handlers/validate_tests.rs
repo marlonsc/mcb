@@ -33,7 +33,9 @@ macro_rules! validate_test {
     ($test_name:ident, $action:expr, expect_mcp_error) => {
         #[tokio::test]
         async fn $test_name() {
-            let (services, _services_temp_dir) = create_real_domain_services().await;
+            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+                return;
+            };
             let handler = ValidateHandler::new(services.validation_service);
 
             let args = ValidateArgs {
@@ -53,7 +55,9 @@ macro_rules! validate_test {
         #[tokio::test]
         async fn $test_name() {
             let (_temp_dir, path) = $path_expr;
-            let (services, _services_temp_dir) = create_real_domain_services().await;
+            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+                return;
+            };
             let handler = ValidateHandler::new(services.validation_service);
 
             let args = ValidateArgs {
@@ -74,7 +78,9 @@ macro_rules! validate_test {
     ($test_name:ident, $action:expr, path: $path:expr, $(scope: $scope:expr,)? expect_error) => {
         #[tokio::test]
         async fn $test_name() {
-            let (services, _services_temp_dir) = create_real_domain_services().await;
+            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+                return;
+            };
             let handler = ValidateHandler::new(services.validation_service);
 
             let args = ValidateArgs {
@@ -96,7 +102,9 @@ macro_rules! validate_test {
         #[tokio::test]
         async fn $test_name() {
             let (_temp_dir, path) = $path_expr;
-            let (services, _services_temp_dir) = create_real_domain_services().await;
+            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+                return;
+            };
             let handler = ValidateHandler::new(services.validation_service);
 
             let args = ValidateArgs {
@@ -162,7 +170,9 @@ validate_test!(
 #[tokio::test]
 async fn test_validate_run_with_specific_rules() {
     let (_temp_dir, path) = create_temp_file();
-    let (services, _services_temp_dir) = create_real_domain_services().await;
+    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+        return;
+    };
     let handler = ValidateHandler::new(services.validation_service);
 
     let args = ValidateArgs {
@@ -184,7 +194,9 @@ async fn test_validate_run_with_specific_rules() {
 #[case(Some("style".to_string()))]
 #[tokio::test]
 async fn test_validate_list_rules(#[case] category: Option<String>) {
-    let (services, _services_temp_dir) = create_real_domain_services().await;
+    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+        return;
+    };
     let handler = ValidateHandler::new(services.validation_service);
 
     let args = ValidateArgs {

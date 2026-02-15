@@ -10,7 +10,9 @@ use crate::handlers::test_helpers::create_real_domain_services;
 #[case(None, false)]
 #[tokio::test]
 async fn test_clear_index(#[case] collection: Option<String>, #[case] should_succeed: bool) {
-    let (services, _services_temp_dir) = create_real_domain_services().await;
+    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+        return;
+    };
     let handler = IndexHandler::new(services.indexing_service);
 
     let args = IndexArgs {

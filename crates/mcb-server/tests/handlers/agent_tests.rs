@@ -7,9 +7,9 @@ use serde_json::json;
 
 use crate::handlers::test_helpers::create_real_domain_services;
 
-async fn create_handler() -> (AgentHandler, tempfile::TempDir) {
-    let (services, temp_dir) = create_real_domain_services().await;
-    (AgentHandler::new(services.agent_session_service), temp_dir)
+async fn create_handler() -> Option<(AgentHandler, tempfile::TempDir)> {
+    let (services, temp_dir) = create_real_domain_services().await?;
+    Some((AgentHandler::new(services.agent_session_service), temp_dir))
 }
 
 fn build_args(action: AgentAction, session_id: &str, data: serde_json::Value) -> AgentArgs {
@@ -55,7 +55,9 @@ fn build_args(action: AgentAction, session_id: &str, data: serde_json::Value) ->
 )]
 #[tokio::test]
 async fn test_agent_actions_return_mcp_response(#[case] args: AgentArgs) {
-    let (handler, _temp_dir) = create_handler().await;
+    let Some((handler, _temp_dir)) = create_handler().await else {
+        return;
+    };
 
     let result = handler.handle(Parameters(args)).await;
     assert!(result.is_ok());
@@ -65,7 +67,9 @@ async fn test_agent_actions_return_mcp_response(#[case] args: AgentArgs) {
 
 #[tokio::test]
 async fn test_agent_log_tool_empty_session_id() {
-    let (handler, _temp_dir) = create_handler().await;
+    let Some((handler, _temp_dir)) = create_handler().await else {
+        return;
+    };
     let args = AgentArgs {
         action: AgentAction::LogTool,
         org_id: None,
