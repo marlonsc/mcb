@@ -1,5 +1,4 @@
 import json
-import os
 
 report_path = "/home/marlonsc/mcb/reports/mcb-validate-internal-report.json"
 

@@ -112,7 +112,8 @@ pub use validators::documentation::{DocumentationValidator, DocumentationViolati
 pub use engines::{HybridRuleEngine, RuleEngineType};
 pub use validators::error_boundary::{ErrorBoundaryValidator, ErrorBoundaryViolation};
 // Re-export new DRY violation system
-pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary, ViolationEntry};
+pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary};
+pub use mcb_domain::ports::services::validation::ViolationEntry;
 pub use validators::implementation::{ImplementationQualityValidator, ImplementationViolation};
 pub use validators::kiss::{KissValidator, KissViolation};
 pub use validators::layer_flow::{LayerFlowValidator, LayerFlowViolation};

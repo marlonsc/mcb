@@ -103,6 +103,9 @@ check_adr_numbering() {
 	local adr_files
 	adr_files=$(find "$ADR_DIR" -maxdepth 1 -name '[0-9][0-9][0-9]-*.md' | sort 2>/dev/null)
 
+	local start_warnings
+	start_warnings=$(get_warnings)
+
 	local expected_num=1
 	for adr_file in $adr_files; do
 		local filename
@@ -117,7 +120,7 @@ check_adr_numbering() {
 		((expected_num++))
 	done
 
-	if [[ $warnings -eq 0 ]]; then
+	if [[ $(get_warnings) -eq $start_warnings ]]; then
 		log_success "ADR numbering is consistent"
 	else
 		log_warning "ADR numbering validation completed with warnings"
@@ -156,35 +159,6 @@ extract_links() {
 	grep -oE '\[.*?\]\(([^)]+)\)' "$file" 2>/dev/null | sed -E 's/.*?\(([^)]+)\)/\1/' | grep '^docs/' || true
 }
 
-check_adr_references() {
-	log_info "Checking ADR references in documentation..."
-
-	local adr_files
-	adr_files=$(find "$ADR_DIR" -maxdepth 1 -name '[0-9][0-9][0-9]-*.md' 2>/dev/null)
-	local arch_doc="$PROJECT_ROOT/docs/architecture/ARCHITECTURE.md"
-
-	if [[ -f "$arch_doc" ]]; then
-		for adr_file in $adr_files; do
-			local adr_num
-			adr_num=$(basename "$adr_file" | grep -oE '^[0-9]+' | sed 's/^0*//')
-			if [[ -n "$adr_num" ]] && ! grep -q "ADR.* $adr_num\|ADR-0*$adr_num\|ADR 0*$adr_num" "$arch_doc"; then
-				log_warning "ADR $adr_num not referenced in architecture documentation"
-				inc_warnings
-			fi
-		done
-	fi
-
-	log_success "ADR reference check completed"
-}
-
-# =============================================================================
-# Link Validation Functions
-# =============================================================================
-
-extract_links() {
-	local file="$1"
-	grep -o '\[.*\](\([^)]*\))' "$file" 2>/dev/null | sed 's/.*(\([^)]*\))/\1/' | grep '^docs/' || true
-}
 
 validate_link() {
 	local link="$1"

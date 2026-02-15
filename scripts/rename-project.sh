@@ -347,6 +347,15 @@ validate_changes() {
 	fi
 }
 
+
+check_git_clean() {
+	if ! git diff-index --quiet HEAD --; then
+		log_error "Git working directory is not clean. Please commit or stash changes before running."
+		return 1
+	fi
+	return 0
+}
+
 main() {
 	# Track if a mode was explicitly specified
 	local mode_specified=false
@@ -392,7 +401,15 @@ main() {
 	# Change to project root
 	cd "$PROJECT_ROOT"
 
+    # Safety check: Ensure git is clean before applying changes
+    if ! $DRY_RUN; then
+        if ! check_git_clean; then
+            exit 1
+        fi
+    fi
+
 	log_info "MCP Context Browser → MCB Rename Script"
+
 	log_info "Project root: $PROJECT_ROOT"
 	log_info "Mode: $(if $DRY_RUN; then echo 'DRY RUN'; else echo 'APPLY CHANGES'; fi)"
 	log_info "Backup: $(if $BACKUP; then echo 'enabled'; else echo 'disabled'; fi)"
@@ -400,6 +417,13 @@ main() {
 	if $DRY_RUN; then
 		log_warn "DRY RUN MODE - No changes will be made"
 	else
+		echo -e "${RED}╔════════════════════════════════════════════════════════════╗${NC}"
+		echo -e "${RED}║                   DANGER ZONE                      ║${NC}"
+		echo -e "${RED}╠════════════════════════════════════════════════════════════╣${NC}"
+		echo -e "${RED}║ You are about to rename the project across the codebase.   ║${NC}"
+		echo -e "${RED}║ This is a destructive operation.                           ║${NC}"
+		echo -e "${RED}╚════════════════════════════════════════════════════════════╝${NC}"
+		echo
 		log_warn "APPLY MODE - Changes will be made to files"
 		if ! $BACKUP; then
 			log_error "BACKUP DISABLED - This could be dangerous!"

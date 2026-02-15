@@ -43,35 +43,16 @@ pub struct GenericSummary {
     pub passed: bool,
 }
 
-/// Serializable violation entry.
-///
-/// Serializable violation entry.
-#[derive(Debug, Clone, Serialize)]
-pub struct ViolationEntry {
-    /// Unique violation ID
-    pub id: String,
-    /// Category
-    pub category: String,
-    /// Severity
-    pub severity: String,
-    /// File path (if applicable)
-    pub file: Option<PathBuf>,
-    /// Line number (if applicable)
-    pub line: Option<usize>,
-    /// Human-readable message
-    pub message: String,
-    /// Suggested fix (if applicable)
-    pub suggestion: Option<String>,
-}
+pub use mcb_domain::ports::services::validation::ViolationEntry;
 
-impl ViolationEntry {
-    /// Create from a Violation trait object
-    pub fn from_violation(v: &dyn Violation) -> Self {
-        Self {
+impl GenericReporter {
+    /// Create a domain violation entry from a violation trait object
+    pub fn create_entry(v: &dyn Violation) -> ViolationEntry {
+        ViolationEntry {
             id: v.id().to_string(),
             category: v.category().to_string(),
             severity: v.severity().to_string(),
-            file: v.file().cloned(),
+            file: v.file().map(|p| p.display().to_string()),
             line: v.line(),
             message: v.message(),
             suggestion: v.suggestion(),
@@ -108,7 +89,7 @@ impl GenericReporter {
 
         for v in violations {
             let category_name = v.category().to_string();
-            let entry = ViolationEntry::from_violation(v.as_ref());
+            let entry = Self::create_entry(v.as_ref());
 
             by_category
                 .entry(category_name.clone())
@@ -190,9 +171,9 @@ impl GenericReporter {
 
                 for v in violations {
                     let location = match (&v.file, v.line) {
-                        (Some(f), Some(l)) => format!("{}:{}", f.display(), l),
-                        (Some(f), None) => f.display().to_string(),
-                        _ => "unknown".to_string(),
+                        (Some(f), Some(l)) => format!("{}:{}", f, l),
+                        (Some(f), None) => f.to_string(),
+                        (None, _) => "unknown".to_string(),
                     };
 
                     let _ = writeln!(

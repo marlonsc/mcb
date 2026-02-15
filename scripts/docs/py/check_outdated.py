@@ -7,17 +7,20 @@ import sys
 import argparse
 
 
-def main():
-    """Main entry point for outdated documentation check.
+import utils
 
-    # Code Smells
-    TODO(qlty): Function with high complexity (count = 48).
-    """
+
+def main():
+    """Main entry point for outdated documentation check."""
     parser = argparse.ArgumentParser(description="Check outdated content in docs.")
     parser.add_argument("--root", default=".", help="Project root directory")
     args = parser.parse_args()
 
+    # Use project root from args if provided, otherwise detect
     project_root = os.path.abspath(args.root)
+    if args.root == ".":
+        project_root = utils.get_project_root()
+
     docs_dir = os.path.join(project_root, "docs")
 
     if not os.path.exists(docs_dir):
@@ -49,44 +52,37 @@ def main():
         )
 
     checked = 0
-    for root, dirs, files in os.walk(docs_dir):
-        if "fixtures" in root or "archive" in root or ".git" in root:
+    md_files = utils.find_md_files(
+        docs_dir, exclude_dirs={".git", "fixtures", "archive"}
+    )
+
+    for filepath in md_files:
+        rel_filepath = os.path.relpath(filepath, project_root)
+        checked += 1
+
+        try:
+            with open(filepath, "r", encoding="utf-8") as fh:
+                lines = fh.readlines()
+        except Exception as e:
+            print(f"Error reading {rel_filepath}: {e}")
             continue
 
-        for f in files:
-            if not f.endswith(".md"):
+        for i, line in enumerate(lines, 1):
+            # Skip whitespace, comments, code blocks start/end
+            if (
+                not line.strip()
+                or line.strip().startswith("<!--")
+                or line.strip().startswith("```")
+            ):
                 continue
 
-            filepath = os.path.join(root, f)
-            rel_filepath = os.path.relpath(filepath, project_root)
-            checked += 1
-
-            try:
-                with open(filepath, "r", encoding="utf-8") as fh:
-                    lines = fh.readlines()
-            except Exception as e:
-                print(f"Error reading {rel_filepath}: {e}")
-                continue
-
-            for i, line in enumerate(lines, 1):
-                # Skip whitespace, comments, code blocks start/end
-                if (
-                    not line.strip()
-                    or line.strip().startswith("<!--")
-                    or line.strip().startswith("```")
-                ):
-                    continue
-
-                # Check line content
-                for pattern, desc in OUTDATED_PATTERNS:
-                    # Use ignore case if pattern is lowercase
-                    # TODO(qlty): Deeply nested control flow (level = 5).
-                    flags = re.IGNORECASE if pattern.islower() else 0
-                    if re.search(pattern, line, flags):
-                        # TODO(qlty): Deeply nested control flow (level = 5).
-                        if not is_suppressed(line):
-                            # TODO(qlty): Deeply nested control flow (level = 5).
-                            issues.append((rel_filepath, i, desc, line.strip()[:80]))
+            # Check line content
+            for pattern, desc in OUTDATED_PATTERNS:
+                # Use ignore case if pattern is lowercase
+                flags = re.IGNORECASE if pattern.islower() else 0
+                if re.search(pattern, line, flags):
+                    if not is_suppressed(line):
+                        issues.append((rel_filepath, i, desc, line.strip()[:80]))
 
     print(f"Checked {checked} files for outdated content.")
 

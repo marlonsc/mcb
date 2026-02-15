@@ -5,5 +5,10 @@
 
 /// Git-based project and VCS context resolution.
 pub mod context_resolver;
+/// Service implementation details.
 mod service;
+/// Workspace structure exploration and crate discovery utilities.
+pub mod workspace;
+
 pub use service::ProjectService;
+pub use workspace::WorkspaceExplorer;

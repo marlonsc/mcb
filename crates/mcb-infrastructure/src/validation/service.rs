@@ -132,15 +132,6 @@ fn convert_report(
             };
             severity_level <= min_severity
         })
-        .map(|v| ViolationEntry {
-            id: v.id,
-            category: v.category,
-            severity: v.severity,
-            file: v.file.map(|p| p.to_str().unwrap_or_default().to_string()),
-            line: v.line,
-            message: v.message,
-            suggestion: v.suggestion,
-        })
         .collect();
 
     let errors = violations.iter().filter(|v| v.severity == "ERROR").count();

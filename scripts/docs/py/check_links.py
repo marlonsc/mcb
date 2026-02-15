@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 import os
-import re
 import sys
 import argparse
 
 
-def main():
-    """Main entry point for checking broken internal links in documentation.
+import utils
 
-    # Code Smells
-    TODO(qlty): Function with high complexity (count = 37).
-    """
+
+def main():
+    """Main entry point for checking broken internal links in documentation."""
     parser = argparse.ArgumentParser(description="Check broken internal links in docs.")
     parser.add_argument("--root", default=".", help="Project root directory")
     args = parser.parse_args()
 
+    # Use project root from args if provided, otherwise detect
     project_root = os.path.abspath(args.root)
+    if args.root == ".":
+        project_root = utils.get_project_root()
+
     docs_dir = os.path.join(project_root, "docs")
 
     if not os.path.exists(docs_dir):
@@ -26,61 +28,47 @@ def main():
     checked_files = 0
     checked_links = 0
 
-    for root, dirs, files in os.walk(docs_dir):
-        # Exclude hidden dirs and fixtures
-        if ".git" in root or "fixtures" in root:
+    md_files = utils.find_md_files(docs_dir)
+
+    for filepath in md_files:
+        rel_filepath = os.path.relpath(filepath, project_root)
+        checked_files += 1
+
+        try:
+            with open(filepath, "r", encoding="utf-8") as fh:
+                content = fh.read()
+        except Exception as e:
+            print(f"Error reading {rel_filepath}: {e}")
             continue
 
-        for f in files:
-            if not f.endswith(".md"):
+        links = utils.extract_links(content)
+
+        for text, link in links:
+            checked_links += 1
+            if (
+                link.startswith("http")
+                or link.startswith("mailto:")
+                or link.startswith("ftp:")
+            ):
                 continue
 
-            filepath = os.path.join(root, f)
-            rel_filepath = os.path.relpath(filepath, project_root)
-            checked_files += 1
+            # Resolve target path
+            if link.startswith("/"):
+                # Absolute from project root (rarely used in MD but valid in some contexts)
+                target = os.path.join(project_root, link.lstrip("/"))
+            else:
+                # Relative to current file
+                target = os.path.normpath(os.path.join(os.path.dirname(filepath), link))
 
-            try:
-                with open(filepath, "r", encoding="utf-8") as fh:
-                    content = fh.read()
-            except Exception as e:
-                print(f"Error reading {rel_filepath}: {e}")
-                continue
-
-            # Strip HTML comments to avoid false positives in templates
-            content = re.sub(r"<!--.*?-->", "", content, flags=re.DOTALL)
-
-            # Find links [text](url)
-            # Regex captures: 1=text, 2=url (without anchor)
-            links = re.findall(r"\[([^\]]*)\]\(([^)#\s]+)(?:#[^)]*)?\)", content)
-
-            for text, link in links:
-                checked_links += 1
-                if (
-                    link.startswith("http")
-                    or link.startswith("mailto:")
-                    or link.startswith("ftp:")
-                ):
-                    continue
-
-                # Resolve target path
-                if link.startswith("/"):
-                    # Absolute from project root (rarely used in MD but valid in some contexts)
-                    target = os.path.join(project_root, link.lstrip("/"))
-                else:
-                    # Relative to current file
-                    target = os.path.normpath(
-                        os.path.join(os.path.dirname(filepath), link)
+            if not os.path.exists(target):
+                broken.append(
+                    (
+                        rel_filepath,
+                        text,
+                        link,
+                        os.path.relpath(target, project_root),
                     )
-
-                if not os.path.exists(target):
-                    broken.append(
-                        (
-                            rel_filepath,
-                            text,
-                            link,
-                            os.path.relpath(target, project_root),
-                        )
-                    )
+                )
 
     print(f"Checked {checked_files} files, {checked_links} internal links.")
 

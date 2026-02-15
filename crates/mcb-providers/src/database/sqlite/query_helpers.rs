@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::sync::Arc;
 
 use mcb_domain::error::{Error, Result};
@@ -39,4 +40,62 @@ where
         );
     }
     Ok(result)
+}
+
+/// Helper to execute an INSERT statement and return the ID.
+#[allow(dead_code)]
+pub async fn insert(
+    executor: &Arc<dyn DatabaseExecutor>,
+    sql: &str,
+    params: &[SqlParam],
+) -> Result<i64> {
+    executor.execute(sql, params).await?;
+    // SQLite-specific: get last inserted rowid
+    // We alias it to 'id' so we can look it up by name as required by SqlRow trait.
+    let row = executor
+        .query_one("SELECT last_insert_rowid() as id", &[])
+        .await?;
+    if let Some(r) = row {
+        Ok(r.try_get_i64("id")?.unwrap_or(0))
+    } else {
+        Ok(0)
+    }
+}
+
+/// Helper to execute an UPDATE statement.
+#[allow(dead_code)]
+pub async fn update(
+    executor: &Arc<dyn DatabaseExecutor>,
+    sql: &str,
+    params: &[SqlParam],
+) -> Result<()> {
+    executor.execute(sql, params).await
+}
+
+/// Helper to execute a DELETE statement.
+#[allow(dead_code)]
+pub async fn delete(
+    executor: &Arc<dyn DatabaseExecutor>,
+    sql: &str,
+    params: &[SqlParam],
+) -> Result<()> {
+    executor.execute(sql, params).await
+}
+
+/// Helper to execute an UPSERT (INSERT OR REPLACE) statement.
+#[allow(dead_code)]
+pub async fn upsert(
+    executor: &Arc<dyn DatabaseExecutor>,
+    sql: &str,
+    params: &[SqlParam],
+) -> Result<i64> {
+    executor.execute(sql, params).await?;
+    let row = executor
+        .query_one("SELECT last_insert_rowid() as id", &[])
+        .await?;
+    if let Some(r) = row {
+        Ok(r.try_get_i64("id")?.unwrap_or(0))
+    } else {
+        Ok(0)
+    }
 }

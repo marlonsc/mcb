@@ -319,7 +319,7 @@ impl MutableValueObject {
                 category: "quality".to_string(),
                 severity: "warning".to_string(),
                 message: "Test violation".to_string(),
-                file: Some(PathBuf::from("test.rs")),
+                file: Some("test.rs".to_string()),
                 line: Some(42),
                 suggestion: Some("Fix the issue".to_string()),
             }],
