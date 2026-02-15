@@ -1,8 +1,4 @@
-//! Anthropic Embedding Provider
-//!
-//! Implements the EmbeddingProvider port using Anthropic's Voyage embedding API.
-//! Anthropic partners with Voyage AI for embeddings, accessible via the Anthropic API.
-//! Supports voyage-3, voyage-3-lite, and voyage-code-3 models.
+//! Anthropic embedding provider backed by Voyage models.
 
 use std::time::Duration;
 

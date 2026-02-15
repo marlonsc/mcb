@@ -78,7 +78,7 @@ impl PlanEntityHandler {
                 })?;
                 plan.org_id = org_id.to_string();
                 map_opaque_error(self.repo.update_plan(&plan).await).map_err(|e| {
-                    McpError::internal_error(format!("failed to update plan '{}': {e}", plan.id), None)
+                    McpError::internal_error(format!("failed to update plan '{}': {e}", plan.metadata.id), None)
                 })?;
                 ok_text("updated")
             }

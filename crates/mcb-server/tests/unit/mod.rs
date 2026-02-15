@@ -63,3 +63,5 @@ mod collections_utils_tests;
 mod context_resolution_tests;
 
 mod unified_execution_gate_tests;
+
+mod error_mapping_tests;

@@ -15,14 +15,14 @@ use serde::{Deserialize, Serialize};
 // Repository
 // ---------------------------------------------------------------------------
 
+use super::EntityMetadata;
+
 /// A tracked VCS repository belonging to a project within an organization.
-///
-/// # Code Smells
-/// TODO(qlty): Found 20 lines of similar code with `crates/mcb-domain/src/entities/plan.rs`.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Repository {
-    /// Unique identifier (UUID).
-    pub id: String,
+    /// Common entity metadata (id, timestamps).
+    #[serde(flatten)]
+    pub metadata: EntityMetadata,
     /// Organization that owns this repository.
     pub org_id: String,
     /// Project this repository belongs to.
@@ -35,11 +35,9 @@ pub struct Repository {
     pub local_path: String,
     /// Version control system type.
     pub vcs_type: VcsType,
-    /// Timestamp when the repository was first tracked (Unix epoch).
-    pub created_at: i64,
-    /// Timestamp of last metadata update (Unix epoch).
-    pub updated_at: i64,
 }
+
+impl_base_entity!(Repository);
 
 /// Type of version control system.
 #[derive(

@@ -4,8 +4,8 @@ import subprocess  # nosec B404
 import sys
 from pathlib import Path
 
-from .model import SarifIssue
-from .parser import parse_sarif_file
+from qlty.model import SarifIssue
+from qlty.parser import parse_sarif_file
 
 
 def run_qlty_check(

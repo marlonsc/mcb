@@ -31,15 +31,17 @@ fn row_to_plan(row: &dyn SqlRow) -> Result<Plan> {
         .map_err(|e| Error::memory(format!("Invalid plan status: {e}")))?;
 
     Ok(Plan {
-        id: req_str(row, "id")?,
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: req_str(row, "id")?,
+            created_at: req_i64(row, "created_at")?,
+            updated_at: req_i64(row, "updated_at")?,
+        },
         org_id: req_str(row, "org_id")?,
         project_id: req_str(row, "project_id")?,
         title: req_str(row, "title")?,
         description: req_str(row, "description")?,
         status,
         created_by: req_str(row, "created_by")?,
-        created_at: req_i64(row, "created_at")?,
-        updated_at: req_i64(row, "updated_at")?,
     })
 }
 
@@ -83,15 +85,15 @@ impl PlanRegistry for SqlitePlanEntityRepository {
             .execute(
                 "INSERT INTO plans (id, org_id, project_id, title, description, status, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 &[
-                    SqlParam::String(plan.id.clone()),
+                    SqlParam::String(plan.metadata.id.clone()),
                     SqlParam::String(plan.org_id.clone()),
                     SqlParam::String(plan.project_id.clone()),
                     SqlParam::String(plan.title.clone()),
                     SqlParam::String(plan.description.clone()),
                     SqlParam::String(plan.status.to_string()),
                     SqlParam::String(plan.created_by.clone()),
-                    SqlParam::I64(plan.created_at),
-                    SqlParam::I64(plan.updated_at),
+                    SqlParam::I64(plan.metadata.created_at),
+                    SqlParam::I64(plan.metadata.updated_at),
                 ],
             )
             .await
@@ -136,9 +138,9 @@ impl PlanRegistry for SqlitePlanEntityRepository {
                     SqlParam::String(plan.title.clone()),
                     SqlParam::String(plan.description.clone()),
                     SqlParam::String(plan.status.to_string()),
-                    SqlParam::I64(plan.updated_at),
+                    SqlParam::I64(plan.metadata.updated_at),
                     SqlParam::String(plan.org_id.clone()),
-                    SqlParam::String(plan.id.clone()),
+                    SqlParam::String(plan.metadata.id.clone()),
                 ],
             )
             .await

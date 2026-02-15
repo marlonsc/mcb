@@ -90,3 +90,6 @@ mod context_resolution_tests;
 
 #[path = "unit/unified_execution_gate_tests.rs"]
 mod unified_execution_gate_tests;
+
+#[path = "unit/error_mapping_tests.rs"]
+mod error_mapping_tests;

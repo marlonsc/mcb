@@ -36,15 +36,17 @@ async fn setup_repo() -> (
 
 fn create_test_repository(id: &str, project_id: &str) -> Repository {
     Repository {
-        id: id.to_string(),
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: id.to_string(),
+            created_at: TEST_NOW,
+            updated_at: TEST_NOW,
+        },
         org_id: DEFAULT_ORG_ID.to_string(),
         project_id: project_id.to_string(),
         name: format!("repo-{id}"),
         url: format!("https://example.com/{id}.git"),
         local_path: format!("/tmp/{id}"),
         vcs_type: VcsType::Git,
-        created_at: TEST_NOW,
-        updated_at: TEST_NOW,
     }
 }
 
@@ -62,14 +64,16 @@ fn create_test_branch(id: &str, repository_id: &str, name: &str) -> Branch {
 
 fn create_test_worktree(id: &str, repository_id: &str, branch_id: &str) -> Worktree {
     Worktree {
-        id: id.to_string(),
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: id.to_string(),
+            created_at: TEST_NOW,
+            updated_at: TEST_NOW,
+        },
         repository_id: repository_id.to_string(),
         branch_id: branch_id.to_string(),
         path: format!("/tmp/worktree-{id}"),
         status: WorktreeStatus::Active,
         assigned_agent_id: None,
-        created_at: TEST_NOW,
-        updated_at: TEST_NOW,
     }
 }
 
@@ -128,7 +132,7 @@ async fn test_repository_crud() {
         .await
         .expect("get");
     let r = retrieved;
-    assert_eq!(r.id, "repo-1");
+    assert_eq!(r.metadata.id, "repo-1");
     assert_eq!(r.name, "repo-repo-1");
 
     let list = repo
@@ -139,7 +143,7 @@ async fn test_repository_crud() {
 
     let mut updated = vcs_repo.clone();
     updated.name = "updated-name".to_string();
-    updated.updated_at = 2_000_000;
+    updated.metadata.updated_at = 2_000_000;
     repo.update_repository(&updated).await.expect("update");
 
     let after_update = repo
@@ -199,7 +203,7 @@ async fn branch_and_worktree_crud(#[case] entity_kind: &str) {
 
     let mut updated = wt.clone();
     updated.status = WorktreeStatus::InUse;
-    updated.updated_at = 2_000_000;
+    updated.metadata.updated_at = 2_000_000;
     repo.update_worktree(&updated).await.expect("update");
 
     let after_update = repo.get_worktree("wt-1").await.expect("get");
@@ -261,15 +265,17 @@ async fn test_org_isolation_repositories() {
 
     let repo = SqliteVcsEntityRepository::new(executor);
     let vcs_repo = Repository {
-        id: "repo-iso".to_string(),
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: "repo-iso".to_string(),
+            created_at: TEST_NOW,
+            updated_at: TEST_NOW,
+        },
         org_id: "org-A".to_string(),
         project_id: "proj-org-A".to_string(),
         name: "Org A Repo".to_string(),
         url: "https://example.com/a.git".to_string(),
         local_path: "/tmp/a".to_string(),
         vcs_type: VcsType::Git,
-        created_at: TEST_NOW,
-        updated_at: TEST_NOW,
     };
     repo.create_repository(&vcs_repo).await.expect("create");
 
@@ -310,8 +316,8 @@ async fn test_project_isolation_same_org_same_local_path() {
 
     assert_eq!(list_proj_1.len(), 1);
     assert_eq!(list_proj_2.len(), 1);
-    assert_eq!(list_proj_1[0].id, "repo-proj-1");
-    assert_eq!(list_proj_2[0].id, "repo-proj-2");
+    assert_eq!(list_proj_1[0].metadata.id, "repo-proj-1");
+    assert_eq!(list_proj_2[0].metadata.id, "repo-proj-2");
     assert_eq!(list_proj_1[0].local_path, "/tmp/shared-path");
     assert_eq!(list_proj_2[0].local_path, "/tmp/shared-path");
 }
@@ -351,9 +357,9 @@ async fn list_entities_filter_by_repository(#[case] entity_kind: &str) {
 
     let list_1 = repo.list_worktrees("repo-1").await.expect("list");
     assert_eq!(list_1.len(), 1);
-    assert_eq!(list_1[0].id, "wt-1");
+    assert_eq!(list_1[0].metadata.id, "wt-1");
 
     let list_2 = repo.list_worktrees("repo-2").await.expect("list");
     assert_eq!(list_2.len(), 1);
-    assert_eq!(list_2[0].id, "wt-2");
+    assert_eq!(list_2[0].metadata.id, "wt-2");
 }

@@ -13,7 +13,47 @@
 //! | [`FileSnapshot`] | Entity representing a file's state for change tracking |
 //! | [`ProjectType`] | Detected project type with metadata (Cargo, npm, Python, Go, Maven) |
 //! | [`SubmoduleInfo`] | VCS submodule information with parent linking |
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
+/// Common metadata for domain entities.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+pub struct EntityMetadata {
+    /// Unique identifier (UUID).
+    pub id: String,
+    /// Creation timestamp (Unix epoch).
+    pub created_at: i64,
+    /// Last update timestamp (Unix epoch).
+    pub updated_at: i64,
+}
+
+/// Trait for entities that have standard metadata.
+pub trait BaseEntity {
+    /// Returns the entity's unique identifier.
+    fn id(&self) -> &str;
+    /// Returns the creation timestamp.
+    fn created_at(&self) -> i64;
+    /// Returns the last update timestamp.
+    fn updated_at(&self) -> i64;
+}
+
+/// Macro to implement BaseEntity for structs using EntityMetadata
+#[macro_export]
+macro_rules! impl_base_entity {
+    ($t:ty) => {
+        impl $crate::entities::BaseEntity for $t {
+            fn id(&self) -> &str {
+                &self.metadata.id
+            }
+            fn created_at(&self) -> i64 {
+                self.metadata.created_at
+            }
+            fn updated_at(&self) -> i64 {
+                self.metadata.updated_at
+            }
+        }
+    };
+}
 /// Agent session tracking entities
 pub mod agent;
 /// API key entities for authentication

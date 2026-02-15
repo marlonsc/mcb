@@ -6,7 +6,6 @@ use std::path::PathBuf;
 use mcb_domain::value_objects::{EmbeddingConfig, ProjectSettings, VectorStoreConfig};
 use serde::{Deserialize, Serialize};
 
-// Re-export all config types from modules
 pub use super::infrastructure::{
     CacheProvider, CacheSystemConfig, LimitsConfig, LoggingConfig, MetricsConfig, ResilienceConfig,
 };
@@ -19,7 +18,6 @@ pub use super::system::{
     AdminApiKeyConfig, ApiKeyConfig, AuthConfig, BackupConfig, DaemonConfig, EventBusConfig,
     EventBusProvider, JwtConfig, OperationsConfig, PasswordAlgorithm, SnapshotConfig, SyncConfig,
 };
-
 /// Embedding configuration container
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

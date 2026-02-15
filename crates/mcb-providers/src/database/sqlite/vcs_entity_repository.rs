@@ -61,15 +61,17 @@ fn row_to_repository(row: &dyn SqlRow) -> Result<Repository> {
         .map_err(|e| Error::memory(format!("Invalid vcs_type: {e}")))?;
 
     Ok(Repository {
-        id: req_str(row, "id")?,
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: req_str(row, "id")?,
+            created_at: req_i64(row, "created_at")?,
+            updated_at: req_i64(row, "updated_at")?,
+        },
         org_id: req_str(row, "org_id")?,
         project_id: req_str(row, "project_id")?,
         name: req_str(row, "name")?,
         url: req_str(row, "url")?,
         local_path: req_str(row, "local_path")?,
         vcs_type,
-        created_at: req_i64(row, "created_at")?,
-        updated_at: req_i64(row, "updated_at")?,
     })
 }
 
@@ -94,14 +96,16 @@ fn row_to_worktree(row: &dyn SqlRow) -> Result<Worktree> {
         .map_err(|e| Error::memory(format!("Invalid worktree status: {e}")))?;
 
     Ok(Worktree {
-        id: req_str(row, "id")?,
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: req_str(row, "id")?,
+            created_at: req_i64(row, "created_at")?,
+            updated_at: req_i64(row, "updated_at")?,
+        },
         repository_id: req_str(row, "repository_id")?,
         branch_id: req_str(row, "branch_id")?,
         path: req_str(row, "path")?,
         status,
         assigned_agent_id: row.try_get_string("assigned_agent_id")?,
-        created_at: req_i64(row, "created_at")?,
-        updated_at: req_i64(row, "updated_at")?,
     })
 }
 
@@ -127,7 +131,7 @@ impl RepositoryRegistry for SqliteVcsEntityRepository {
             .execute(
                 "INSERT INTO repositories (id, org_id, project_id, name, url, local_path, vcs_type, origin_context, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 &[
-                    SqlParam::String(repo.id.clone()),
+                    SqlParam::String(repo.metadata.id.clone()),
                     SqlParam::String(repo.org_id.clone()),
                     SqlParam::String(repo.project_id.clone()),
                     SqlParam::String(repo.name.clone()),
@@ -138,14 +142,14 @@ impl RepositoryRegistry for SqliteVcsEntityRepository {
                         json!({
                             "org_id": repo.org_id.clone(),
                             "project_id": repo.project_id.clone(),
-                            "repo_id": repo.id.clone(),
+                            "repo_id": repo.metadata.id.clone(),
                             "repo_path": repo.local_path.clone(),
-                            "timestamp": repo.created_at,
+                            "timestamp": repo.metadata.created_at,
                         })
                         .to_string(),
                     ),
-                    SqlParam::I64(repo.created_at),
-                    SqlParam::I64(repo.updated_at),
+                    SqlParam::I64(repo.metadata.created_at),
+                    SqlParam::I64(repo.metadata.updated_at),
                 ],
             )
             .await
@@ -192,15 +196,15 @@ impl RepositoryRegistry for SqliteVcsEntityRepository {
                         json!({
                             "org_id": repo.org_id.clone(),
                             "project_id": repo.project_id.clone(),
-                            "repo_id": repo.id.clone(),
+                            "repo_id": repo.metadata.id.clone(),
                             "repo_path": repo.local_path.clone(),
-                            "timestamp": repo.updated_at,
+                            "timestamp": repo.metadata.updated_at,
                         })
                         .to_string(),
                     ),
-                    SqlParam::I64(repo.updated_at),
+                    SqlParam::I64(repo.metadata.updated_at),
                     SqlParam::String(repo.org_id.clone()),
-                    SqlParam::String(repo.id.clone()),
+                    SqlParam::String(repo.metadata.id.clone()),
                 ],
             )
             .await
@@ -322,7 +326,7 @@ impl WorktreeManager for SqliteVcsEntityRepository {
             .execute(
                 "INSERT INTO worktrees (id, repository_id, branch_id, path, status, assigned_agent_id, origin_context, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 &[
-                    SqlParam::String(wt.id.clone()),
+                    SqlParam::String(wt.metadata.id.clone()),
                     SqlParam::String(wt.repository_id.clone()),
                     SqlParam::String(wt.branch_id.clone()),
                     SqlParam::String(wt.path.clone()),
@@ -334,14 +338,14 @@ impl WorktreeManager for SqliteVcsEntityRepository {
                     SqlParam::String(
                         json!({
                             "repository_id": wt.repository_id.clone(),
-                            "worktree_id": wt.id.clone(),
+                            "worktree_id": wt.metadata.id.clone(),
                             "file_path": wt.path.clone(),
-                            "timestamp": wt.created_at,
+                            "timestamp": wt.metadata.created_at,
                         })
                         .to_string(),
                     ),
-                    SqlParam::I64(wt.created_at),
-                    SqlParam::I64(wt.updated_at),
+                    SqlParam::I64(wt.metadata.created_at),
+                    SqlParam::I64(wt.metadata.updated_at),
                 ],
             )
             .await
@@ -384,14 +388,14 @@ impl WorktreeManager for SqliteVcsEntityRepository {
                     SqlParam::String(
                         json!({
                             "repository_id": wt.repository_id.clone(),
-                            "worktree_id": wt.id.clone(),
+                            "worktree_id": wt.metadata.id.clone(),
                             "file_path": wt.path.clone(),
-                            "timestamp": wt.updated_at,
+                            "timestamp": wt.metadata.updated_at,
                         })
                         .to_string(),
                     ),
-                    SqlParam::I64(wt.updated_at),
-                    SqlParam::String(wt.id.clone()),
+                    SqlParam::I64(wt.metadata.updated_at),
+                    SqlParam::String(wt.metadata.id.clone()),
                 ],
             )
             .await

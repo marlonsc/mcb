@@ -36,17 +36,19 @@ fn entity_construction(#[case] entity: &str) {
     match entity {
         "plan" => {
             let plan = Plan {
-                id: "plan-001".to_string(),
+                metadata: mcb_domain::entities::EntityMetadata {
+                    id: "plan-001".to_string(),
+                    created_at: 1000,
+                    updated_at: 1000,
+                },
                 org_id: "org-001".to_string(),
                 project_id: "proj-001".to_string(),
                 title: "Migration plan".to_string(),
                 description: "Migrate schema and data".to_string(),
                 status: PlanStatus::Draft,
                 created_by: "user-001".to_string(),
-                created_at: 1000,
-                updated_at: 1000,
             };
-            assert_eq!(plan.id, "plan-001");
+            assert_eq!(plan.metadata.id, "plan-001");
             assert_eq!(plan.org_id, "org-001");
             assert_eq!(plan.project_id, "proj-001");
             assert_eq!(plan.status, PlanStatus::Draft);
@@ -92,22 +94,24 @@ fn entity_serialization_roundtrip(#[case] entity: &str) {
     match entity {
         "plan" => {
             let plan = Plan {
-                id: "plan-002".to_string(),
+                metadata: mcb_domain::entities::EntityMetadata {
+                    id: "plan-002".to_string(),
+                    created_at: 2000,
+                    updated_at: 3000,
+                },
                 org_id: "org-001".to_string(),
                 project_id: "proj-001".to_string(),
                 title: "Execution plan".to_string(),
                 description: "Execute rollout".to_string(),
                 status: PlanStatus::Active,
                 created_by: "user-001".to_string(),
-                created_at: 2000,
-                updated_at: 3000,
             };
 
             let json = serde_json::to_string(&plan).expect("serialize");
             let deserialized: Plan = serde_json::from_str(&json).expect("deserialize");
-            assert_eq!(deserialized.id, "plan-002");
+            assert_eq!(deserialized.metadata.id, "plan-002");
             assert_eq!(deserialized.title, "Execution plan");
-            assert_eq!(deserialized.updated_at, 3000);
+            assert_eq!(deserialized.metadata.updated_at, 3000);
         }
         "version" => {
             let version = PlanVersion {

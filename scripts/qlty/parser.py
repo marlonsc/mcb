@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from .model import SarifIssue, Severity
+from qlty.model import SarifIssue, Severity
 
 
 def parse_sarif_file(path: Path) -> list[SarifIssue]:

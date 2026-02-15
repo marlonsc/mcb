@@ -118,7 +118,7 @@ impl VcsEntityHandler {
                 .ok_or_else(|| {
                     McpError::invalid_params("project_id required for repository update", None)
                 })?;
-                let existing = map_opaque_error(self.repo.get_repository(&org_id, &repo.id).await)?;
+                let existing = map_opaque_error(self.repo.get_repository(&org_id, &repo.metadata.id).await)?;
                 if existing.project_id != repo.project_id {
                     return Err(McpError::invalid_params(
                         format!(

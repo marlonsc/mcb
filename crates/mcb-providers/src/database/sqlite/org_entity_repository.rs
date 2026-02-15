@@ -41,7 +41,11 @@ fn row_to_org(row: &dyn SqlRow) -> Result<Organization> {
 /// Converts a SQL row to a User.
 fn row_to_user(row: &dyn SqlRow) -> Result<User> {
     Ok(User {
-        id: req_str(row, "id")?,
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: req_str(row, "id")?,
+            created_at: req_i64(row, "created_at")?,
+            updated_at: req_i64(row, "updated_at")?,
+        },
         org_id: req_str(row, "org_id")?,
         email: req_str(row, "email")?,
         display_name: req_str(row, "display_name")?,
@@ -49,8 +53,6 @@ fn row_to_user(row: &dyn SqlRow) -> Result<User> {
             .parse::<UserRole>()
             .map_err(|e| Error::memory(format!("Invalid user role: {e}")))?,
         api_key_hash: opt_str(row, "api_key_hash")?,
-        created_at: req_i64(row, "created_at")?,
-        updated_at: req_i64(row, "updated_at")?,
     })
 }
 
@@ -182,14 +184,14 @@ impl UserRegistry for SqliteOrgEntityRepository {
             .execute(
                 "INSERT INTO users (id, org_id, email, display_name, role, api_key_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 &[
-                    SqlParam::String(user.id.clone()),
+                    SqlParam::String(user.metadata.id.clone()),
                     SqlParam::String(user.org_id.clone()),
                     SqlParam::String(user.email.clone()),
                     SqlParam::String(user.display_name.clone()),
                     SqlParam::String(user.role.as_str().to_owned()),
                     opt_str_param(&user.api_key_hash),
-                    SqlParam::I64(user.created_at),
-                    SqlParam::I64(user.updated_at),
+                    SqlParam::I64(user.metadata.created_at),
+                    SqlParam::I64(user.metadata.updated_at),
                 ],
             )
             .await
@@ -245,8 +247,8 @@ impl UserRegistry for SqliteOrgEntityRepository {
                     SqlParam::String(user.display_name.clone()),
                     SqlParam::String(user.role.as_str().to_owned()),
                     opt_str_param(&user.api_key_hash),
-                    SqlParam::I64(user.updated_at),
-                    SqlParam::String(user.id.clone()),
+                    SqlParam::I64(user.metadata.updated_at),
+                    SqlParam::String(user.metadata.id.clone()),
                 ],
             )
             .await

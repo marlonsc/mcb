@@ -22,14 +22,16 @@ pub fn create_test_project(id: &str) -> Project {
 /// Creates a test `User` with default values.
 pub fn create_test_user() -> User {
     User {
-        id: Uuid::new_v4().to_string(),
+        metadata: crate::entities::EntityMetadata {
+            id: Uuid::new_v4().to_string(),
+            created_at: 0,
+            updated_at: 0,
+        },
         org_id: "test-org".to_string(),
         email: "test@example.com".to_string(),
         display_name: "Test User".to_string(),
         role: crate::entities::user::UserRole::Member,
         api_key_hash: None,
-        created_at: 0,
-        updated_at: 0,
     }
 }
 

@@ -12,14 +12,14 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::EntityMetadata;
+
 /// A plan definition owned by an organization and project.
-///
-/// # Code Smells
-/// TODO(qlty): Found 20 lines of similar code with `crates/mcb-domain/src/entities/repository.rs`.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Plan {
-    /// Unique identifier (UUID).
-    pub id: String,
+    /// Common entity metadata (id, timestamps).
+    #[serde(flatten)]
+    pub metadata: EntityMetadata,
     /// Organization that owns this plan.
     pub org_id: String,
     /// Project this plan belongs to.
@@ -32,11 +32,9 @@ pub struct Plan {
     pub status: PlanStatus,
     /// User that created the plan.
     pub created_by: String,
-    /// Creation timestamp (Unix epoch).
-    pub created_at: i64,
-    /// Last update timestamp (Unix epoch).
-    pub updated_at: i64,
 }
+
+impl_base_entity!(Plan);
 
 /// Lifecycle status for a plan.
 #[derive(

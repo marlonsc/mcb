@@ -1,6 +1,4 @@
 //! Validate command - runs architecture validation
-// TODO(REF003): Missing test file for crates/mcb/src/cli/validate.rs.
-// Expected: crates/mcb/tests/validate_test.rs
 
 use std::path::PathBuf;
 
@@ -40,9 +38,13 @@ pub struct ValidateArgs {
 
 /// Validation result for exit code determination
 pub struct ValidationResult {
+    /// Number of error violations found
     pub errors: usize,
+    /// Number of warning violations found
     pub warnings: usize,
+    /// Number of info violations found
     pub infos: usize,
+    /// Whether strict mode was enabled
     pub strict_mode: bool,
 }
 

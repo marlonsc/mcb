@@ -36,14 +36,16 @@ fn create_test_org(id: &str, name: &str, slug: &str) -> Organization {
 
 fn create_test_user(id: &str, org_id: &str, email: &str) -> User {
     User {
-        id: id.to_string(),
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: id.to_string(),
+            created_at: TEST_NOW,
+            updated_at: TEST_NOW,
+        },
         org_id: org_id.to_string(),
         email: email.to_string(),
         display_name: format!("User {id}"),
         role: UserRole::Member,
         api_key_hash: None,
-        created_at: TEST_NOW,
-        updated_at: TEST_NOW,
     }
 }
 
@@ -115,7 +117,7 @@ async fn test_user_crud() {
     let mut updated = user.clone();
     updated.display_name = "Updated User".to_string();
     updated.role = UserRole::Admin;
-    updated.updated_at = 2_000_000;
+    updated.metadata.updated_at = 2_000_000;
     repo.update_user(&updated).await.expect("update");
 
     let after_update = repo.get_user("user-1").await.expect("get");
@@ -139,7 +141,7 @@ async fn test_get_user_by_email() {
         .get_user_by_email(DEFAULT_ORG_ID, "alice@example.com")
         .await
         .expect("get by email");
-    assert_eq!(found.id, "user-1");
+    assert_eq!(found.metadata.id, "user-1");
 
     assert_not_found(
         repo.get_user_by_email(DEFAULT_ORG_ID, "nobody@example.com")

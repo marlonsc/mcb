@@ -12,12 +12,14 @@ use serde::{Deserialize, Serialize};
 
 /// A git worktree checkout associated with a repository and branch.
 ///
-/// # Code Smells
-/// TODO(qlty): Found 18 lines of similar code with `crates/mcb-domain/src/entities/user.rs`.
+use super::EntityMetadata;
+
+/// A git worktree checkout associated with a repository and branch.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Worktree {
-    /// Unique identifier (UUID).
-    pub id: String,
+    /// Common entity metadata (id, timestamps).
+    #[serde(flatten)]
+    pub metadata: EntityMetadata,
     /// Repository this worktree belongs to.
     pub repository_id: String,
     /// Branch checked out in this worktree.
@@ -28,11 +30,9 @@ pub struct Worktree {
     pub status: WorktreeStatus,
     /// Agent session currently assigned to this worktree (if any).
     pub assigned_agent_id: Option<String>,
-    /// Timestamp when the worktree was created (Unix epoch).
-    pub created_at: i64,
-    /// Timestamp of last status change (Unix epoch).
-    pub updated_at: i64,
 }
+
+impl_base_entity!(Worktree);
 
 /// Lifecycle status of a worktree.
 #[derive(

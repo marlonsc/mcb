@@ -3,8 +3,8 @@
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
-from .model import SarifIssue, Severity
-from .strategies import get_strategy
+from qlty.model import SarifIssue, Severity
+from qlty.strategies import get_strategy
 
 
 @dataclass

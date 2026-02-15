@@ -1,5 +1,3 @@
-//! Tests for MCP/domain error mapping helpers.
-
 use mcb_domain::error::Error;
 use mcb_server::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use rstest::rstest;
@@ -21,7 +19,6 @@ fn test_to_opaque_mcp_error(#[case] err: Error, #[case] expected_message: &str) 
     },
     "Database error: db fail"
 )]
-#[test]
 fn test_to_contextual_tool_error(#[case] err: Error, #[case] expected: &str) {
     let result = to_contextual_tool_error(err);
     assert!(result.is_error.unwrap_or(false));

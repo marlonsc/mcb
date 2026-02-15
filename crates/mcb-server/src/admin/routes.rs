@@ -8,15 +8,21 @@ use crate::templates::Template;
 use rocket::{Build, Rocket, routes};
 
 use super::auth::AdminAuthConfig;
+use super::browse::{
+    list_browse_issues, list_browse_organizations, list_browse_plans, list_browse_projects,
+    list_browse_repositories,
+};
 use super::browse_handlers::{
     BrowseState, get_collection_tree, get_file_chunks, list_collection_files, list_collections,
 };
+use super::cache::get_cache_stats;
 use super::config_handlers::{get_config, reload_config, update_config_section};
-use super::handlers::{
-    AdminState, extended_health_check, get_cache_stats, get_jobs_status, get_metrics, health_check,
-    list_browse_issues, list_browse_organizations, list_browse_plans, list_browse_projects,
-    list_browse_repositories, liveness_check, readiness_check, shutdown,
+use super::control::shutdown;
+use super::handlers::AdminState;
+use super::health::{
+    extended_health_check, get_metrics, health_check, liveness_check, readiness_check,
 };
+use super::jobs::get_jobs_status;
 use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,
 };

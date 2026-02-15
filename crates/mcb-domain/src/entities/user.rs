@@ -11,12 +11,16 @@ use serde::{Deserialize, Serialize};
 /// multiple teams. Users authenticate via API keys (Phase 1) and
 /// external IdP / OAuth in later phases.
 ///
-/// # Code Smells
-/// TODO(qlty): Found 18 lines of similar code with `crates/mcb-domain/src/entities/worktree.rs`.
+use super::EntityMetadata;
+
+/// A user belongs to exactly one organization and can be a member of
+/// multiple teams. Users authenticate via API keys (Phase 1) and
+/// external IdP / OAuth in later phases.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct User {
-    /// Unique identifier (UUID).
-    pub id: String,
+    /// Common entity metadata (id, timestamps).
+    #[serde(flatten)]
+    pub metadata: EntityMetadata,
     /// Organization this user belongs to (tenant isolation).
     pub org_id: String,
     /// Email address (unique within an org).
@@ -27,11 +31,9 @@ pub struct User {
     pub role: UserRole,
     /// Bcrypt/Argon2 hash of the user's primary API key (nullable — set on first key creation).
     pub api_key_hash: Option<String>,
-    /// Timestamp when the user was created (Unix epoch).
-    pub created_at: i64,
-    /// Timestamp when the user was last updated (Unix epoch).
-    pub updated_at: i64,
 }
+
+impl_base_entity!(User);
 
 /// Role a user holds within an organization.
 #[derive(

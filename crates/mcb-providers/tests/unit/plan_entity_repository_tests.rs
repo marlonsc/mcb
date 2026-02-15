@@ -26,15 +26,17 @@ async fn setup_repo() -> (
 
 fn create_test_plan(id: &str) -> Plan {
     Plan {
-        id: id.to_string(),
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: id.to_string(),
+            created_at: TEST_NOW,
+            updated_at: TEST_NOW,
+        },
         org_id: DEFAULT_ORG_ID.to_string(),
         project_id: "proj-1".to_string(),
         title: format!("Plan {id}"),
         description: format!("Description for plan {id}"),
         status: PlanStatus::Draft,
         created_by: "user-1".to_string(),
-        created_at: TEST_NOW,
-        updated_at: TEST_NOW,
     }
 }
 
@@ -82,7 +84,7 @@ async fn test_plan_crud() {
 
     let mut updated = plan.clone();
     updated.status = PlanStatus::Active;
-    updated.updated_at = 2_000_000;
+    updated.metadata.updated_at = 2_000_000;
     repo.update_plan(&updated).await.expect("update");
 
     let after_update = repo.get_plan(DEFAULT_ORG_ID, "plan-1").await.expect("get");
@@ -150,15 +152,17 @@ async fn org_isolation_plans(#[case] org_id: &str, #[case] should_find: bool) {
 
     let repo = SqlitePlanEntityRepository::new(executor);
     let plan = Plan {
-        id: "plan-iso".to_string(),
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: "plan-iso".to_string(),
+            created_at: TEST_NOW,
+            updated_at: TEST_NOW,
+        },
         org_id: "org-A".to_string(),
         project_id: "proj-org-A".to_string(),
         title: "Org A Plan".to_string(),
         description: "belongs to A".to_string(),
         status: PlanStatus::Draft,
         created_by: "user-org-A".to_string(),
-        created_at: TEST_NOW,
-        updated_at: TEST_NOW,
     };
     repo.create_plan(&plan).await.expect("create");
 
@@ -201,7 +205,7 @@ async fn test_plan_versioning_flow() {
 
     let mut updated_plan = plan.clone();
     updated_plan.status = PlanStatus::Active;
-    updated_plan.updated_at = 2_000_000;
+    updated_plan.metadata.updated_at = 2_000_000;
     repo.update_plan(&updated_plan).await.expect("update plan");
 
     let final_plan = repo

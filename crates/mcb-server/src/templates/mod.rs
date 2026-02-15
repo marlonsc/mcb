@@ -6,6 +6,7 @@
 //! in debug mode.
 
 mod context;
+mod context_macro;
 pub(crate) mod embedded;
 pub(crate) mod engine;
 mod fairing;

@@ -4,10 +4,10 @@ import argparse
 import sys
 from pathlib import Path
 
-from .model import Severity, SarifIssue
-from .parser import parse_sarif_file
-from .runner import run_qlty_check, run_qlty_smells
-from .report import analyze_issues
+from qlty.model import Severity, SarifIssue
+from qlty.parser import parse_sarif_file
+from qlty.runner import run_qlty_check, run_qlty_smells
+from qlty.report import analyze_issues
 
 
 def _load_checks_from_file(

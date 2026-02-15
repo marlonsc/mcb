@@ -8,29 +8,10 @@ use std::path::Path;
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
-/// Programming language identifier
-///
-/// A string-based identifier for programming languages that allows dynamic
-/// extension without modifying the domain layer. Language support is determined
-/// by the application and infrastructure layers.
+/// Programming language identifier.
 pub type Language = String;
 
-/// Supported programming languages with type-safe enumeration
-///
-/// This enum provides compile-time safety for language identification.
-/// It maps 1:1 with RCA (rust-code-analysis) LANG enum for metrics support.
-///
-/// # Example
-///
-/// ```
-/// use mcb_domain::value_objects::SupportedLanguage;
-///
-/// let lang = SupportedLanguage::from_extension("rs");
-/// assert_eq!(lang, Some(SupportedLanguage::Rust));
-///
-/// let display = SupportedLanguage::Rust.as_str();
-/// assert_eq!(display, "rust");
-/// ```
+/// Supported programming languages with compile-time safety.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Display)]
 #[serde(rename_all = "lowercase")]
 pub enum SupportedLanguage {
@@ -98,11 +79,7 @@ impl SupportedLanguage {
             "php" | "phtml" => Some(Self::Php),
             "swift" => Some(Self::Swift),
             "kt" | "kts" => Some(Self::Kotlin),
-            // Intentional: return None for unsupported extensions (not an error)
-            other => {
-                let _ = other; // Acknowledge all extensions are considered
-                None
-            }
+            _ => None,
         }
     }
 
@@ -185,29 +162,14 @@ impl_from_str!(SupportedLanguage, "Unsupported language: {}", {
     "kt" => SupportedLanguage::Kotlin,
 });
 
-/// System operation type identifier
-///
-/// A string-based identifier for operation types used in metrics and rate limiting.
-/// Allows dynamic extension of operation types without domain changes.
+/// System operation type identifier.
 pub type OperationType = String;
 
-/// Embedding provider identifier
-///
-/// A string-based identifier for embedding providers that allows dynamic
-/// extension without modifying the domain layer. Provider capabilities
-/// are determined by the application and infrastructure layers.
+/// Embedding provider identifier.
 pub type EmbeddingProviderKind = String;
 
-/// Vector store provider identifier
-///
-/// A string-based identifier for vector store providers that allows dynamic
-/// extension without modifying the domain layer. Provider capabilities
-/// are determined by the application and infrastructure layers.
+/// Vector store provider identifier.
 pub type VectorStoreProviderKind = String;
 
-/// Cache provider identifier
-///
-/// A string-based identifier for cache providers that allows dynamic
-/// extension without modifying the domain layer. Provider capabilities
-/// are determined by the application and infrastructure layers.
+/// Cache provider identifier.
 pub type CacheProviderKind = String;
