@@ -1,3 +1,4 @@
+schema: "rule/v2"
 id: ORG017
 name: Handler Location
 category: organization
@@ -5,6 +6,8 @@ severity: warning
 description: Handlers (struct *Handler) must be defined in server/handlers, admin, or tools.
 rationale: Handlers should be organized by their function within the server layer.
 engine: regex
+rule:
+  type: regex_scan
 config:
   patterns:
     handler_struct: '(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*Handler)'

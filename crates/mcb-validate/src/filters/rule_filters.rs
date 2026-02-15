@@ -68,6 +68,7 @@ impl RuleFilters {
 
 /// Executor for rule filters
 pub struct RuleFilterExecutor {
+    workspace_root: std::path::PathBuf,
     language_detector: LanguageDetector,
     dependency_parser: CargoDependencyParser,
     file_matcher: FilePatternMatcher,
@@ -77,6 +78,7 @@ impl RuleFilterExecutor {
     /// Create a new filter executor
     pub fn new(workspace_root: std::path::PathBuf) -> Self {
         Self {
+            workspace_root: workspace_root.clone(),
             language_detector: LanguageDetector::new(),
             dependency_parser: CargoDependencyParser::new(workspace_root),
             file_matcher: FilePatternMatcher::default(),
@@ -132,10 +134,18 @@ impl RuleFilterExecutor {
         }
 
         // Check file pattern filter
-        if let Some(patterns) = &filters.file_patterns
-            && !self.file_matcher.matches_any(file_path, patterns)
-        {
-            return Ok(false);
+        if let Some(patterns) = &filters.file_patterns {
+            let rel_path = file_path
+                .strip_prefix(&self.workspace_root)
+                .unwrap_or(file_path);
+
+            if !self.file_matcher.matches_any(rel_path, patterns) {
+                // If relative path didn't match, check absolute path as fallback
+                // This covers cases where patterns might be absolute or files outside workspace
+                if rel_path == file_path || !self.file_matcher.matches_any(file_path, patterns) {
+                    return Ok(false);
+                }
+            }
         }
 
         Ok(true)

@@ -1,3 +1,4 @@
+schema: "rule/v2"
 id: ORG022
 name: Scattered Configuration
 category: organization
@@ -5,6 +6,8 @@ severity: info
 description: Configuration files should be centralized in the config/ directory.
 rationale: Centralized configuration simplifies management and reduces errors.
 engine: path
+rule:
+  type: file_location
 filters:
   file_patterns:
     - "**/*config*.rs"

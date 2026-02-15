@@ -3,7 +3,7 @@
 use mcb_validate::traits::validator::Validator;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;
 use std::fs;
-use std::path::PathBuf;
+
 use tempfile::TempDir;
 
 #[test]

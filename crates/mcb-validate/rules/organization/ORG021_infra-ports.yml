@@ -1,3 +1,4 @@
+schema: "rule/v2"
 id: ORG021
 name: Infrastructure Ports
 category: organization
@@ -5,6 +6,8 @@ severity: error
 description: Port definitions (interfaces) belong in the domain layer, not in the infrastructure layer.
 rationale: Infrastructure layer should implement domain ports, not define them.
 engine: path
+rule:
+  type: file_location
 filters:
   file_patterns:
     - "crates/mcb-infrastructure/src/**/ports/**/*.rs"

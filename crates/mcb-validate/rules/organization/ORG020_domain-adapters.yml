@@ -1,3 +1,4 @@
+schema: "rule/v2"
 id: ORG020
 name: Domain Adapters
 category: organization
@@ -5,6 +6,8 @@ severity: error
 description: Adapters belong in the infrastructure layer, not in the domain layer.
 rationale: Domain layer should be pure and free of infrastructure concerns.
 engine: path
+rule:
+  type: file_location
 filters:
   file_patterns:
     - "crates/mcb-domain/src/**/adapters/**/*.rs"

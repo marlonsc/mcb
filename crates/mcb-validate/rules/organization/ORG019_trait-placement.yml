@@ -1,3 +1,4 @@
+schema: "rule/v2"
 id: ORG019
 name: Trait Definition Placement
 category: organization
@@ -5,6 +6,8 @@ severity: warning
 description: Public traits named *Provider, *Service, *Repository, or *Interface must be defined in the domain layer (ports), unless they are implementation details.
 rationale: Core domain abstractions should be centralized in domain/ports.
 engine: regex
+rule:
+  type: regex_scan
 config:
   patterns:
     domain_trait: 'pub\s+trait\s+([A-Z][a-zA-Z0-9_]*(?:Provider|Service|Repository|Interface))'
