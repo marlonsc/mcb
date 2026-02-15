@@ -1,4 +1,8 @@
-//! User entity — a human or service account within an organization.
+//! User Domain Entity
+//!
+//! This module defines the `User` entity, representing a human or service account
+//! within an organization. It handles identity, role management, and authentication
+//! metadata for tenant isolation.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -6,10 +10,17 @@ use serde::{Deserialize, Serialize};
 /// A user belongs to exactly one organization and can be a member of
 /// multiple teams. Users authenticate via API keys (Phase 1) and
 /// external IdP / OAuth in later phases.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+///
+use super::EntityMetadata;
+
+/// A user belongs to exactly one organization and can be a member of
+/// multiple teams. Users authenticate via API keys (Phase 1) and
+/// external IdP / OAuth in later phases.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct User {
-    /// Unique identifier (UUID).
-    pub id: String,
+    /// Common entity metadata (id, timestamps).
+    #[serde(flatten)]
+    pub metadata: EntityMetadata,
     /// Organization this user belongs to (tenant isolation).
     pub org_id: String,
     /// Email address (unique within an org).
@@ -20,16 +31,28 @@ pub struct User {
     pub role: UserRole,
     /// Bcrypt/Argon2 hash of the user's primary API key (nullable — set on first key creation).
     pub api_key_hash: Option<String>,
-    /// Timestamp when the user was created (Unix epoch).
-    pub created_at: i64,
-    /// Timestamp when the user was last updated (Unix epoch).
-    pub updated_at: i64,
 }
 
+impl_base_entity!(User);
+
 /// Role a user holds within an organization.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum UserRole {
     /// Full administrative access.
+    #[default]
     Admin,
     /// Standard member with read/write access.
     Member,
@@ -42,26 +65,7 @@ pub enum UserRole {
 impl UserRole {
     /// Returns the string representation of the user role.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Admin => "admin",
-            Self::Member => "member",
-            Self::Viewer => "viewer",
-            Self::Service => "service",
-        }
-    }
-}
-
-impl std::str::FromStr for UserRole {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "admin" => Ok(Self::Admin),
-            "member" => Ok(Self::Member),
-            "viewer" => Ok(Self::Viewer),
-            "service" => Ok(Self::Service),
-            _ => Err(format!("Unknown user role: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }

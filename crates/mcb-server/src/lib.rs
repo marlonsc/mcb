@@ -37,7 +37,7 @@
 //! The most important types for users:
 //!
 //! | Type | Description |
-//! |------|-------------|
+//! | ------ | ------------- |
 //! | [`McpServer`] | Main server struct |
 //! | [`McpServerBuilder`] | Builder for server configuration |
 //!
@@ -55,21 +55,25 @@
 // Documentation configuration for docs.rs
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+#[macro_use]
+extern crate rocket;
+
 pub mod admin;
 pub mod args;
 pub mod auth;
 pub mod builder;
 pub mod constants;
+pub(crate) mod context_resolution;
 /// Error mapping helpers for MCP-safe responses.
 pub mod error_mapping;
 pub mod formatter;
-/// Shared helper functions for tool handlers.
-pub mod handler_helpers;
 pub mod handlers;
 pub mod hooks;
 pub mod init;
 pub mod mcp_server;
 pub mod session;
+/// Internal template engine (Handlebars-only, forked from Rocket contrib).
+pub mod templates;
 pub mod tools;
 pub mod transport;
 /// Shared utility functions.

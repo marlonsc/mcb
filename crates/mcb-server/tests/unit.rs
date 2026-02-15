@@ -6,6 +6,10 @@
 #[path = "test_utils/mod.rs"]
 mod test_utils;
 
+// Search-specific fixtures (only used by unit tests, not integration)
+#[path = "test_utils/search_fixtures.rs"]
+mod search_fixtures;
+
 #[path = "unit/args_tests.rs"]
 mod args_tests;
 
@@ -15,14 +19,14 @@ mod builder_tests;
 #[path = "unit/formatter_tests.rs"]
 mod formatter_tests;
 
+#[path = "unit/fairing_tests.rs"]
+mod fairing_tests;
+
 #[path = "unit/mcp_error_handling_tests.rs"]
 mod mcp_error_handling_tests;
 
 #[path = "unit/browse_handlers_tests.rs"]
 mod browse_handlers_tests;
-
-// #[path = "unit/browse_service_tests.rs"]
-// mod browse_service_tests;
 
 #[path = "unit/highlight_service_tests.rs"]
 mod highlight_service_tests;
@@ -30,13 +34,11 @@ mod highlight_service_tests;
 #[path = "unit/mcp_protocol_tests.rs"]
 mod mcp_protocol_tests;
 
-// #[path = "unit/vcs_registry_tests.rs"]
-// mod vcs_registry_tests; // Missing file
+#[path = "unit/mcp_contract_tests.rs"]
+mod mcp_contract_tests;
+
 #[path = "unit/fixtures_smoke.rs"]
 mod fixtures_smoke;
-
-// #[path = "unit/vcs_repository_registry_test.rs"]
-// mod vcs_repository_registry_test; // Missing file
 
 #[path = "unit/processor_tests.rs"]
 mod processor_tests;
@@ -64,3 +66,30 @@ mod json_tests;
 
 #[path = "unit/init_tests.rs"]
 mod init_tests;
+
+#[path = "unit/project_handler_tests.rs"]
+mod project_handler_tests;
+
+#[path = "unit/issue_entity_handler_tests.rs"]
+mod issue_entity_handler_tests;
+
+#[path = "unit/org_entity_handler_tests.rs"]
+mod org_entity_handler_tests;
+
+#[path = "unit/plan_entity_handler_tests.rs"]
+mod plan_entity_handler_tests;
+
+#[path = "unit/vcs_entity_handler_tests.rs"]
+mod vcs_entity_handler_tests;
+
+#[path = "unit/collections_utils_tests.rs"]
+mod collections_utils_tests;
+
+#[path = "unit/context_resolution_tests.rs"]
+mod context_resolution_tests;
+
+#[path = "unit/unified_execution_gate_tests.rs"]
+mod unified_execution_gate_tests;
+
+#[path = "unit/error_mapping_tests.rs"]
+mod error_mapping_tests;

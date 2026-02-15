@@ -6,8 +6,8 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use serde_yaml;
-use walkdir::WalkDir;
 
+use super::utils::collect_yaml_files;
 use crate::Result;
 
 /// Template engine for YAML rules with inheritance and substitution
@@ -37,9 +37,8 @@ impl TemplateEngine {
             return Ok(()); // No templates directory, that's fine
         }
 
-        for entry in WalkDir::new(&templates_dir).follow_links(false) {
-            let entry = entry.map_err(|e| crate::ValidationError::Io(e.into()))?;
-            let path = entry.path();
+        for path in collect_yaml_files(&templates_dir)? {
+            let path = path.as_path();
 
             if path.extension().and_then(|ext| ext.to_str()) == Some("yml") {
                 let template_name =
@@ -56,28 +55,69 @@ impl TemplateEngine {
                     .await
                     .map_err(crate::ValidationError::Io)?;
 
-                let template: serde_yaml::Value =
-                    serde_yaml::from_str(&content).map_err(|e| crate::ValidationError::Parse {
-                        file: path.to_path_buf(),
-                        message: format!("Template parse error: {e}"),
-                    })?;
-
-                // Verify this is actually a template
-                if template
-                    .get("_base")
-                    .and_then(serde_yaml::Value::as_bool)
-                    .unwrap_or(false)
-                {
-                    // Use the 'name' field from template YAML if present, otherwise use filename
-                    let registry_name = template.get("name").and_then(|v| v.as_str()).map_or_else(
-                        || template_name.to_string(),
-                        std::string::ToString::to_string,
-                    );
-                    self.templates.insert(registry_name, template);
-                }
+                self.parse_and_add_template(path, &content, template_name)?;
             }
         }
 
+        Ok(())
+    }
+
+    /// Load all templates from the templates directory (Synchronous version)
+    pub fn load_templates_sync(&mut self, rules_dir: &Path) -> Result<()> {
+        let templates_dir = rules_dir.join("templates");
+
+        if !templates_dir.exists() {
+            return Ok(());
+        }
+
+        for path in collect_yaml_files(&templates_dir)? {
+            let path = path.as_path();
+
+            if path.extension().and_then(|ext| ext.to_str()) == Some("yml") {
+                let template_name =
+                    path.file_stem()
+                        .and_then(|name| name.to_str())
+                        .ok_or_else(|| {
+                            crate::ValidationError::Config(format!(
+                                "Invalid template filename: {}",
+                                path.display()
+                            ))
+                        })?;
+
+                let content = std::fs::read_to_string(path).map_err(crate::ValidationError::Io)?;
+
+                self.parse_and_add_template(path, &content, template_name)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn parse_and_add_template(
+        &mut self,
+        path: &Path,
+        content: &str,
+        template_name: &str,
+    ) -> Result<()> {
+        let template: serde_yaml::Value =
+            serde_yaml::from_str(content).map_err(|e| crate::ValidationError::Parse {
+                file: path.to_path_buf(),
+                message: format!("Template parse error: {e}"),
+            })?;
+
+        // Verify this is actually a template
+        if template
+            .get("_base")
+            .and_then(serde_yaml::Value::as_bool)
+            .unwrap_or(false)
+        {
+            // Use the 'name' field from template YAML if present, otherwise use filename
+            let registry_name = template.get("name").and_then(|v| v.as_str()).map_or_else(
+                || template_name.to_string(),
+                std::string::ToString::to_string,
+            );
+            self.templates.insert(registry_name, template);
+        }
         Ok(())
     }
 
@@ -201,13 +241,15 @@ impl TemplateEngine {
         let mut result = input.to_string();
 
         // Find all {{variable}} patterns
-        let var_pattern = regex::Regex::new(r"\{\{(\w+)\}\}")
+        // Find all {{variable}} patterns, allowing for spaces
+        let var_pattern = regex::Regex::new(r"\{\{\s*(\w+)\s*\}\}")
             .map_err(|e| crate::ValidationError::Config(format!("Regex error: {e}")))?;
 
         for capture in var_pattern.captures_iter(input) {
             if let Some(var_name) = capture.get(1) {
+                let full_match = capture.get(0).unwrap().as_str();
                 let var_value = self.get_variable_value(variables, var_name.as_str())?;
-                result = result.replace(&format!("{{{{{}}}}}", var_name.as_str()), &var_value);
+                result = result.replace(full_match, &var_value);
             }
         }
 
@@ -247,107 +289,5 @@ impl TemplateEngine {
     /// Check if a template exists
     pub fn has_template(&self, name: &str) -> bool {
         self.templates.contains_key(name)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use tempfile::TempDir;
-
-    use super::*;
-
-    #[tokio::test]
-    async fn test_load_templates() {
-        let temp_dir = TempDir::new().unwrap();
-        let rules_dir = temp_dir.path().join("rules");
-        let templates_dir = rules_dir.join("templates");
-        std::fs::create_dir_all(&templates_dir).unwrap();
-
-        // Create a template
-        let template_content = r#"
-_base: true
-name: "test_template"
-category: "architecture"
-severity: "error"
-config:
-  crate_name: "{{crate_name}}"
-"#;
-
-        std::fs::write(templates_dir.join("test-template.yml"), template_content).unwrap();
-
-        let mut engine = TemplateEngine::new();
-        engine.load_templates(&rules_dir).await.unwrap();
-
-        // Template is registered using the 'name' field from YAML, not filename
-        assert!(engine.has_template("test_template"));
-    }
-
-    #[test]
-    fn test_apply_template() {
-        let mut engine = TemplateEngine::new();
-
-        // Add a template
-        let template: serde_yaml::Value = serde_yaml::from_str(
-            r#"
-_base: true
-name: "test_template"
-category: "architecture"
-severity: "error"
-config:
-  crate_name: "{{crate_name}}"
-"#,
-        )
-        .unwrap();
-
-        engine
-            .templates
-            .insert("test_template".to_string(), template);
-
-        // Create a rule that uses the template
-        let rule: serde_yaml::Value = serde_yaml::from_str(
-            r#"
-_template: "test_template"
-id: "TEST001"
-config:
-  crate_name: "my-crate"
-"#,
-        )
-        .unwrap();
-
-        let result = engine.apply_template("test_template", &rule).unwrap();
-
-        // Check that template was applied and variables substituted
-        assert_eq!(
-            result.get("category").unwrap().as_str().unwrap(),
-            "architecture"
-        );
-        assert_eq!(result.get("severity").unwrap().as_str().unwrap(), "error");
-        assert_eq!(result.get("id").unwrap().as_str().unwrap(), "TEST001");
-
-        let config = result.get("config").unwrap();
-        assert_eq!(
-            config.get("crate_name").unwrap().as_str().unwrap(),
-            "my-crate"
-        );
-    }
-
-    #[test]
-    fn test_variable_substitution() {
-        let engine = TemplateEngine::new();
-
-        let variables: serde_yaml::Value = serde_yaml::from_str(
-            r#"
-crate_name: "test-crate"
-forbidden_prefixes:
-  - "mcb-"
-  - "forbidden-"
-"#,
-        )
-        .unwrap();
-
-        let test_string = "{{crate_name}} should not use {{forbidden_prefixes}}".to_string();
-        let result = engine.substitute_string(&test_string, &variables).unwrap();
-
-        assert_eq!(result, "test-crate should not use mcb-,forbidden-");
     }
 }

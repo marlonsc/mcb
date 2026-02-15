@@ -1,8 +1,12 @@
-//! Persisted VCS repository and branch entities for multi-tenant CRUD.
+//! Repository Domain Entities
 //!
-//! These are the *persisted* counterparts of the read-only [`VcsRepository`]
-//! and [`VcsBranch`] models used by the VCS provider.  They carry `org_id`
-//! and timestamps for row-level tenant isolation.
+//! This module defines entities for tracking and managing Version Control System (VCS)
+//! repositories. It facilitates multi-tenant environment support by associating
+//! repositories with Organizations and Projects.
+//!
+//! # Core Entities
+//! - [`Repository`]: A persisted record of a remote or local VCS repository (Git, Hg, SVN).
+//! - [`Branch`]: A specific line of development within a repository.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -11,68 +15,65 @@ use serde::{Deserialize, Serialize};
 // Repository
 // ---------------------------------------------------------------------------
 
+use super::EntityMetadata;
+
 /// A tracked VCS repository belonging to a project within an organization.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Repository {
-    /// Unique identifier (UUID).
-    pub id: String,
+    /// Common entity metadata (id, timestamps).
+    #[serde(flatten)]
+    pub metadata: EntityMetadata,
     /// Organization that owns this repository.
     pub org_id: String,
     /// Project this repository belongs to.
     pub project_id: String,
     /// Human-readable display name (e.g. "mcb-data-model-v2").
     pub name: String,
-    /// Remote URL (e.g. "https://github.com/org/repo").
+    /// Remote URL (e.g. `https://github.com/org/repo`).
     pub url: String,
     /// Local filesystem path where the repo is cloned.
     pub local_path: String,
     /// Version control system type.
     pub vcs_type: VcsType,
-    /// Timestamp when the repository was first tracked (Unix epoch).
-    pub created_at: i64,
-    /// Timestamp of last metadata update (Unix epoch).
-    pub updated_at: i64,
 }
 
+impl_base_entity!(Repository);
+
 /// Type of version control system.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::Display,
+    strum_macros::AsRefStr,
+    strum_macros::EnumString,
+)]
 #[serde(rename_all = "snake_case")]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
 pub enum VcsType {
     /// Git repository.
+    #[strum(serialize = "git")]
     Git,
     /// Mercurial repository.
+    #[strum(serialize = "mercurial", serialize = "hg")]
     Mercurial,
     /// Subversion repository.
+    #[strum(serialize = "svn", serialize = "subversion")]
     Svn,
 }
 
 impl VcsType {
     /// Returns the string representation.
-    #[must_use]
-    pub fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &str {
         match self {
             Self::Git => "git",
             Self::Mercurial => "mercurial",
             Self::Svn => "svn",
-        }
-    }
-}
-
-impl std::fmt::Display for VcsType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
-
-impl std::str::FromStr for VcsType {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "git" => Ok(Self::Git),
-            "mercurial" | "hg" => Ok(Self::Mercurial),
-            "svn" | "subversion" => Ok(Self::Svn),
-            _ => Err(format!("Unknown VCS type: {s}")),
         }
     }
 }

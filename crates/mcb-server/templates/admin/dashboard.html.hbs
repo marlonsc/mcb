@@ -69,7 +69,7 @@
                 <h3 class="font-semibold">{{title}}</h3>
                 <span class="badge badge-blue">{{group}}</span>
             </div>
-            <p class="text-sm text-secondary mt-2">{{summary}}</p>
+            <p class="text-sm text-secondary mt-2">{{field_count}} visible {{pluralize field_count "field" "fields"}}</p>
             <p class="text-sm mt-2"><strong>{{record_count}}</strong> records indexed</p>
             <a class="btn btn-primary btn-sm mt-3" href="/ui/entities/{{slug}}">Manage</a>
         </div>
@@ -86,9 +86,9 @@
         <div class="flex items-start justify-between gap-4 pb-3 border-b" style="border-color: var(--border-color, #e5e7eb)">
             <div>
                 <p class="font-medium">{{entity_title}}</p>
-                <p class="text-sm text-secondary">{{detail}}</p>
+                <p class="text-sm text-secondary">{{record_count}} {{pluralize record_count "record" "records"}} currently indexed</p>
             </div>
-            <span class="text-xs text-secondary whitespace-nowrap">{{timestamp}}</span>
+            <span class="text-xs text-secondary whitespace-nowrap">{{timestamp timestamp}}</span>
         </div>
         {{/each}}
     </div>

@@ -1,0 +1,22 @@
+[logging]
+level = "WARN"
+
+[mode]
+type = "standalone"
+
+[server]
+transport_mode = "stdio"
+
+[server.network]
+host = "127.0.0.1"
+port = 18080
+
+[providers.embedding.configs.default]
+provider = "fastembed"
+model = "AllMiniLML6V2"
+
+[providers.vector_store.configs.default]
+provider = "edgevec"
+
+[system.infrastructure.cache]
+enabled = false

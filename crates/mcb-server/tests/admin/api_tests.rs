@@ -67,7 +67,7 @@ async fn test_jobs_endpoint_with_operations() {
     let harness = AdminTestHarness::new();
     let op_id = harness
         .indexing()
-        .start_operation(&CollectionId::new("test-collection"), 50);
+        .start_operation(&CollectionId::from_name("test-collection"), 50);
     harness
         .indexing()
         .update_progress(&op_id, Some("src/main.rs".to_string()), 10);
@@ -88,7 +88,10 @@ async fn test_jobs_endpoint_with_operations() {
     assert_eq!(ops.len(), 1);
 
     let op = &ops[0];
-    assert_eq!(op["label"], "test-collection");
+    assert_eq!(
+        op["label"],
+        CollectionId::from_name("test-collection").to_string()
+    );
     assert_eq!(op["current_item"], "src/main.rs");
     assert_eq!(op["processed_items"], 10);
     assert_eq!(op["total_items"], 50);

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 use crate::entities::observation::{Observation, ObservationType};
 
@@ -14,6 +15,7 @@ pub struct MemorySearchResult {
 }
 
 /// Index entry for a memory observation used in search operations.
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemorySearchIndex {
     /// Unique identifier for the index entry.
@@ -38,6 +40,7 @@ pub struct MemorySearchIndex {
 }
 
 /// Filter criteria for querying memory observations.
+#[skip_serializing_none]
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub struct MemoryFilter {
     /// Filter by specific observation identifier.
@@ -51,6 +54,8 @@ pub struct MemoryFilter {
     pub r#type: Option<ObservationType>,
     /// Filter by session identifier.
     pub session_id: Option<String>,
+    /// Filter by parent session identifier.
+    pub parent_session_id: Option<String>,
     /// Filter by repository identifier.
     pub repo_id: Option<String>,
     /// Filter by time range (start_ms, end_ms).
@@ -66,12 +71,84 @@ impl std::fmt::Debug for MemoryFilter {
         f.debug_struct("MemoryFilter")
             .field("id", &self.id)
             .field("tags", &self.tags)
-            .field("observation_type", &self.r#type)
-            .field("session_id", &self.session_id.as_ref().map(|_| "REDACTED"))
+            .field(crate::schema::memory::COL_OBSERVATION_TYPE, &self.r#type)
+            .field(
+                "session_id_present",
+                &if self.session_id.is_some() {
+                    "REDACTED"
+                } else {
+                    "NONE"
+                },
+            )
+            .field(
+                "parent_session_id_present",
+                &if self.parent_session_id.is_some() {
+                    "REDACTED"
+                } else {
+                    "NONE"
+                },
+            )
             .field("repo_id", &self.repo_id)
             .field("time_range", &self.time_range)
             .field("branch", &self.branch)
             .field("commit", &self.commit)
             .finish()
+    }
+}
+
+impl MemoryFilter {
+    /// Returns true when the observation satisfies all populated filter fields.
+    #[must_use]
+    pub fn matches(&self, obs: &Observation) -> bool {
+        if self
+            .project_id
+            .as_ref()
+            .is_some_and(|id| obs.project_id != *id)
+        {
+            return false;
+        }
+        if self
+            .session_id
+            .as_ref()
+            .is_some_and(|id| obs.metadata.session_id.as_ref() != Some(id))
+        {
+            return false;
+        }
+        if self.parent_session_id.as_ref().is_some_and(|id| {
+            obs.metadata
+                .origin_context
+                .as_ref()
+                .and_then(|ctx| ctx.parent_session_id.as_ref())
+                != Some(id)
+        }) {
+            return false;
+        }
+        if self
+            .repo_id
+            .as_ref()
+            .is_some_and(|id| obs.metadata.repo_id.as_ref() != Some(id))
+        {
+            return false;
+        }
+        if self.r#type.as_ref().is_some_and(|t| &obs.r#type != t) {
+            return false;
+        }
+        if self
+            .time_range
+            .as_ref()
+            .is_some_and(|(start, end)| obs.created_at < *start || obs.created_at > *end)
+        {
+            return false;
+        }
+        if self
+            .branch
+            .as_ref()
+            .is_some_and(|b| obs.metadata.branch.as_ref() != Some(b))
+        {
+            return false;
+        }
+        self.commit
+            .as_ref()
+            .is_none_or(|c| obs.metadata.commit.as_ref() == Some(c))
     }
 }

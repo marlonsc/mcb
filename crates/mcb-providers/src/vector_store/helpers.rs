@@ -7,6 +7,8 @@ use std::time::Duration;
 
 use mcb_domain::error::Error;
 
+use crate::utils::http::{RequestErrorKind, handle_request_error_with_kind};
+
 /// Handle HTTP request errors for vector store operations
 ///
 /// Converts reqwest errors into domain errors with proper timeout detection.
@@ -25,60 +27,16 @@ pub fn handle_vector_request_error(
     provider: &str,
     operation: &str,
 ) -> Error {
-    if error.is_timeout() {
-        Error::vector_db(format!(
-            "{} {} request timed out after {:?}",
-            provider, operation, timeout
-        ))
-    } else {
-        Error::vector_db(format!(
-            "{} HTTP request for {} failed: {}",
-            provider, operation, error
-        ))
-    }
+    handle_request_error_with_kind(
+        error,
+        timeout,
+        provider,
+        operation,
+        RequestErrorKind::VectorDb,
+    )
 }
 
-/// Parse vector from JSON response
-///
-/// Extracts a vector array from a JSON value at the specified field.
-///
-/// # Arguments
-/// * `item` - JSON value containing the vector
-/// * `field` - Field name to extract
-///
-/// # Returns
-/// Parsed vector or None if field is missing/invalid
-pub fn parse_vector_from_json(item: &serde_json::Value, field: &str) -> Option<Vec<f32>> {
-    item[field].as_array().map(|arr| {
-        arr.iter()
-            .filter_map(|v| v.as_f64().map(|n| n as f32))
-            .collect()
-    })
-}
-
-/// Parse score from JSON response with fallback
-///
-/// Extracts a score value from JSON, handling different field names.
-///
-/// # Arguments
-/// * `item` - JSON value containing the score
-/// * `primary_field` - Primary field name to check
-/// * `fallback_field` - Fallback field name if primary is missing
-///
-/// # Returns
-/// Score as f64, or 0.0 if not found
-pub fn parse_score_from_json(
-    item: &serde_json::Value,
-    primary_field: &str,
-    fallback_field: &str,
-) -> f64 {
-    item[primary_field]
-        .as_f64()
-        .or_else(|| item[fallback_field].as_f64())
-        .unwrap_or(0.0)
-}
-
-/// Build a list of [`FileInfo`] from search results by grouping on `file_path`.
+/// Build a list of `FileInfo` from search results by grouping on `file_path`.
 ///
 /// This logic is shared across vector store providers (Pinecone, Qdrant, etc.)
 /// whose `list_file_paths` implementation follows the same pattern:

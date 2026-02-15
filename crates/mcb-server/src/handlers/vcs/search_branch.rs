@@ -7,7 +7,7 @@ use rmcp::model::{CallToolResult, Content};
 
 use super::responses::{BranchSearchMatch, BranchSearchResponse, repo_path};
 use crate::args::VcsArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Searches for a query string within a branch.
@@ -24,10 +24,6 @@ pub async fn search_branch(
             )]));
         }
     };
-    let branch = args
-        .target_branch
-        .clone()
-        .unwrap_or_else(|| "main".to_string());
     let path = match repo_path(args) {
         Ok(p) => p,
         Err(error_result) => return Ok(error_result),
@@ -35,13 +31,17 @@ pub async fn search_branch(
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,
         Err(e) => {
-            return Ok(to_opaque_tool_error(e));
+            return Ok(to_contextual_tool_error(e));
         }
     };
+    let branch = args
+        .target_branch
+        .clone()
+        .unwrap_or_else(|| repo.default_branch().to_string());
     let files = match vcs_provider.list_files(&repo, &branch).await {
         Ok(files) => files,
         Err(e) => {
-            return Ok(to_opaque_tool_error(e));
+            return Ok(to_contextual_tool_error(e));
         }
     };
     let limit = args.limit.unwrap_or(20) as usize;
@@ -54,7 +54,7 @@ pub async fn search_branch(
             for (index, line) in content.lines().enumerate() {
                 if line.to_lowercase().contains(&query.to_lowercase()) {
                     matches.push(BranchSearchMatch {
-                        path: file_path.to_string_lossy().to_string(),
+                        path: file_path.to_str().unwrap_or_default().to_string(),
                         line: index + 1,
                         snippet: line.trim().to_string(),
                     });

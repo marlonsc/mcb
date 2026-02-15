@@ -6,43 +6,27 @@ use mcb_domain::entities::{
 };
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use mcb_domain::ports::repositories::OrgEntityRepository;
+use mcb_domain::ports::repositories::org_entity_repository::{
+    ApiKeyRegistry, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
+};
 
+use super::query_helpers;
+use super::row_helpers::{opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_str};
+
+/// SQLite-backed repository for organization, user, team, and API key entities.
 pub struct SqliteOrgEntityRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }
 
 impl SqliteOrgEntityRepository {
+    /// Creates a new repository using the provided database executor.
+    // TODO(qlty): Found 31 lines of similar code in 3 locations (mass = 216)
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
-
-    async fn query_one<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Option<T>>
-    where
-        F: FnOnce(&dyn SqlRow) -> Result<T>,
-    {
-        match self.executor.query_one(sql, params).await? {
-            Some(r) => Ok(Some(convert(r.as_ref())?)),
-            None => Ok(None),
-        }
-    }
-
-    async fn query_all<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Vec<T>>
-    where
-        F: Fn(&dyn SqlRow) -> Result<T>,
-    {
-        let rows = self.executor.query_all(sql, params).await?;
-        let mut result = Vec::with_capacity(rows.len());
-        for row in rows {
-            result.push(
-                convert(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode org entity", e))?,
-            );
-        }
-        Ok(result)
-    }
 }
 
+/// Converts a SQL row to an Organization.
 fn row_to_org(row: &dyn SqlRow) -> Result<Organization> {
     Ok(Organization {
         id: req_str(row, "id")?,
@@ -54,9 +38,14 @@ fn row_to_org(row: &dyn SqlRow) -> Result<Organization> {
     })
 }
 
+/// Converts a SQL row to a User.
 fn row_to_user(row: &dyn SqlRow) -> Result<User> {
     Ok(User {
-        id: req_str(row, "id")?,
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: req_str(row, "id")?,
+            created_at: req_i64(row, "created_at")?,
+            updated_at: req_i64(row, "updated_at")?,
+        },
         org_id: req_str(row, "org_id")?,
         email: req_str(row, "email")?,
         display_name: req_str(row, "display_name")?,
@@ -64,11 +53,10 @@ fn row_to_user(row: &dyn SqlRow) -> Result<User> {
             .parse::<UserRole>()
             .map_err(|e| Error::memory(format!("Invalid user role: {e}")))?,
         api_key_hash: opt_str(row, "api_key_hash")?,
-        created_at: req_i64(row, "created_at")?,
-        updated_at: req_i64(row, "updated_at")?,
     })
 }
 
+/// Converts a SQL row to a Team.
 fn row_to_team(row: &dyn SqlRow) -> Result<Team> {
     Ok(Team {
         id: req_str(row, "id")?,
@@ -78,10 +66,21 @@ fn row_to_team(row: &dyn SqlRow) -> Result<Team> {
     })
 }
 
+use mcb_domain::utils::id;
+use mcb_domain::value_objects::ids::TeamMemberId;
+
+// ...
+
+/// Converts a SQL row to a TeamMember.
 fn row_to_team_member(row: &dyn SqlRow) -> Result<TeamMember> {
+    let team_id = req_str(row, "team_id")?;
+    let user_id = req_str(row, "user_id")?;
+    let id_uuid = id::deterministic("team_member", &format!("{}:{}", team_id, user_id));
+
     Ok(TeamMember {
-        team_id: req_str(row, "team_id")?,
-        user_id: req_str(row, "user_id")?,
+        id: TeamMemberId::from_uuid(id_uuid),
+        team_id,
+        user_id,
         role: req_str(row, "role")?
             .parse::<TeamMemberRole>()
             .map_err(|e| Error::memory(format!("Invalid team member role: {e}")))?,
@@ -89,6 +88,7 @@ fn row_to_team_member(row: &dyn SqlRow) -> Result<TeamMember> {
     })
 }
 
+/// Converts a SQL row to an ApiKey.
 fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
     Ok(ApiKey {
         id: req_str(row, "id")?,
@@ -103,40 +103,11 @@ fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
     })
 }
 
-fn req_str(row: &dyn SqlRow, col: &str) -> Result<String> {
-    row.try_get_string(col)?
-        .ok_or_else(|| Error::memory(format!("Missing {col}")))
-}
-
-fn req_i64(row: &dyn SqlRow, col: &str) -> Result<i64> {
-    row.try_get_i64(col)?
-        .ok_or_else(|| Error::memory(format!("Missing {col}")))
-}
-
-fn opt_str(row: &dyn SqlRow, col: &str) -> Result<Option<String>> {
-    row.try_get_string(col)
-}
-
-fn opt_i64(row: &dyn SqlRow, col: &str) -> Result<Option<i64>> {
-    row.try_get_i64(col)
-}
-
-fn opt_str_param(value: &Option<String>) -> SqlParam {
-    match value {
-        Some(v) => SqlParam::String(v.clone()),
-        None => SqlParam::Null,
-    }
-}
-
-fn opt_i64_param(value: Option<i64>) -> SqlParam {
-    match value {
-        Some(v) => SqlParam::I64(v),
-        None => SqlParam::Null,
-    }
-}
-
 #[async_trait]
-impl OrgEntityRepository for SqliteOrgEntityRepository {
+/// Persistent organization registry using SQLite.
+impl OrgRegistry for SqliteOrgEntityRepository {
+    /// Creates a new organization.
+    // TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)
     async fn create_org(&self, org: &Organization) -> Result<()> {
         self.executor
             .execute(
@@ -153,21 +124,31 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Retrieves an organization by ID.
     async fn get_org(&self, id: &str) -> Result<Organization> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM organizations WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_org,
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("Organization {id}")))
     }
 
+    /// Lists all organizations.
     async fn list_orgs(&self) -> Result<Vec<Organization>> {
-        self.query_all("SELECT * FROM organizations", &[], row_to_org)
-            .await
+        query_helpers::query_all(
+            &self.executor,
+            "SELECT * FROM organizations",
+            &[],
+            row_to_org,
+            "org entity",
+        )
+        .await
     }
 
+    /// Updates an existing organization.
     async fn update_org(&self, org: &Organization) -> Result<()> {
         self.executor
             .execute(
@@ -183,49 +164,59 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Deletes an organization.
     async fn delete_org(&self, id: &str) -> Result<()> {
         self.executor
             .execute(
                 "DELETE FROM organizations WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }
+}
 
+#[async_trait]
+/// Persistent user registry using SQLite.
+impl UserRegistry for SqliteOrgEntityRepository {
+    /// Creates a new user.
     async fn create_user(&self, user: &User) -> Result<()> {
         self.executor
             .execute(
                 "INSERT INTO users (id, org_id, email, display_name, role, api_key_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 &[
-                    SqlParam::String(user.id.clone()),
+                    SqlParam::String(user.metadata.id.clone()),
                     SqlParam::String(user.org_id.clone()),
                     SqlParam::String(user.email.clone()),
                     SqlParam::String(user.display_name.clone()),
-                    SqlParam::String(user.role.as_str().to_string()),
+                    SqlParam::String(user.role.as_str().to_owned()),
                     opt_str_param(&user.api_key_hash),
-                    SqlParam::I64(user.created_at),
-                    SqlParam::I64(user.updated_at),
+                    SqlParam::I64(user.metadata.created_at),
+                    SqlParam::I64(user.metadata.updated_at),
                 ],
             )
             .await
     }
 
+    /// Retrieves a user by ID.
     async fn get_user(&self, id: &str) -> Result<User> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM users WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_user,
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("User {id}")))
     }
 
+    /// Retrieves a user by email within an organization.
     async fn get_user_by_email(&self, org_id: &str, email: &str) -> Result<User> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM users WHERE org_id = ? AND email = ?",
             &[
-                SqlParam::String(org_id.to_string()),
-                SqlParam::String(email.to_string()),
+                SqlParam::String(org_id.to_owned()),
+                SqlParam::String(email.to_owned()),
             ],
             row_to_user,
         )
@@ -233,15 +224,19 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
         .ok_or_else(|| Error::not_found(format!("User {email}")))
     }
 
+    /// Lists users in an organization.
     async fn list_users(&self, org_id: &str) -> Result<Vec<User>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM users WHERE org_id = ?",
-            &[SqlParam::String(org_id.to_string())],
+            &[SqlParam::String(org_id.to_owned())],
             row_to_user,
+            "org entity",
         )
         .await
     }
 
+    /// Updates an existing user.
     async fn update_user(&self, user: &User) -> Result<()> {
         self.executor
             .execute(
@@ -250,24 +245,30 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
                     SqlParam::String(user.org_id.clone()),
                     SqlParam::String(user.email.clone()),
                     SqlParam::String(user.display_name.clone()),
-                    SqlParam::String(user.role.as_str().to_string()),
+                    SqlParam::String(user.role.as_str().to_owned()),
                     opt_str_param(&user.api_key_hash),
-                    SqlParam::I64(user.updated_at),
-                    SqlParam::String(user.id.clone()),
+                    SqlParam::I64(user.metadata.updated_at),
+                    SqlParam::String(user.metadata.id.clone()),
                 ],
             )
             .await
     }
 
+    /// Deletes a user.
     async fn delete_user(&self, id: &str) -> Result<()> {
         self.executor
             .execute(
                 "DELETE FROM users WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }
+}
 
+#[async_trait]
+/// Persistent team registry using SQLite.
+impl TeamRegistry for SqliteOrgEntityRepository {
+    /// Creates a new team.
     async fn create_team(&self, team: &Team) -> Result<()> {
         self.executor
             .execute(
@@ -282,34 +283,45 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Retrieves a team by ID.
     async fn get_team(&self, id: &str) -> Result<Team> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM teams WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_team,
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("Team {id}")))
     }
 
+    /// Lists teams in an organization.
     async fn list_teams(&self, org_id: &str) -> Result<Vec<Team>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM teams WHERE org_id = ?",
-            &[SqlParam::String(org_id.to_string())],
+            &[SqlParam::String(org_id.to_owned())],
             row_to_team,
+            "org entity",
         )
         .await
     }
 
+    /// Deletes a team.
     async fn delete_team(&self, id: &str) -> Result<()> {
         self.executor
             .execute(
                 "DELETE FROM teams WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }
+}
 
+#[async_trait]
+/// Persistent team member manager using SQLite.
+impl TeamMemberManager for SqliteOrgEntityRepository {
+    /// Adds a member to a team.
     async fn add_team_member(&self, member: &TeamMember) -> Result<()> {
         self.executor
             .execute(
@@ -317,34 +329,43 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
                 &[
                     SqlParam::String(member.team_id.clone()),
                     SqlParam::String(member.user_id.clone()),
-                    SqlParam::String(member.role.as_str().to_string()),
+                    SqlParam::String(member.role.as_str().to_owned()),
                     SqlParam::I64(member.joined_at),
                 ],
             )
             .await
     }
 
+    /// Removes a member from a team.
     async fn remove_team_member(&self, team_id: &str, user_id: &str) -> Result<()> {
         self.executor
             .execute(
                 "DELETE FROM team_members WHERE team_id = ? AND user_id = ?",
                 &[
-                    SqlParam::String(team_id.to_string()),
-                    SqlParam::String(user_id.to_string()),
+                    SqlParam::String(team_id.to_owned()),
+                    SqlParam::String(user_id.to_owned()),
                 ],
             )
             .await
     }
 
+    /// Lists members of a team.
     async fn list_team_members(&self, team_id: &str) -> Result<Vec<TeamMember>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM team_members WHERE team_id = ?",
-            &[SqlParam::String(team_id.to_string())],
+            &[SqlParam::String(team_id.to_owned())],
             row_to_team_member,
+            "org entity",
         )
         .await
     }
+}
 
+#[async_trait]
+/// Persistent API key registry using SQLite.
+impl ApiKeyRegistry for SqliteOrgEntityRepository {
+    /// Creates a new API key.
     async fn create_api_key(&self, key: &ApiKey) -> Result<()> {
         self.executor
             .execute(
@@ -364,39 +385,46 @@ impl OrgEntityRepository for SqliteOrgEntityRepository {
             .await
     }
 
+    /// Retrieves an API key by ID.
     async fn get_api_key(&self, id: &str) -> Result<ApiKey> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM api_keys WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            &[SqlParam::String(id.to_owned())],
             row_to_api_key,
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("ApiKey {id}")))
     }
 
+    /// Lists API keys for an organization.
     async fn list_api_keys(&self, org_id: &str) -> Result<Vec<ApiKey>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM api_keys WHERE org_id = ?",
-            &[SqlParam::String(org_id.to_string())],
+            &[SqlParam::String(org_id.to_owned())],
             row_to_api_key,
+            "org entity",
         )
         .await
     }
 
+    /// Revokes an API key.
     async fn revoke_api_key(&self, id: &str, revoked_at: i64) -> Result<()> {
         self.executor
             .execute(
                 "UPDATE api_keys SET revoked_at = ? WHERE id = ?",
-                &[SqlParam::I64(revoked_at), SqlParam::String(id.to_string())],
+                &[SqlParam::I64(revoked_at), SqlParam::String(id.to_owned())],
             )
             .await
     }
 
+    /// Deletes an API key.
     async fn delete_api_key(&self, id: &str) -> Result<()> {
         self.executor
             .execute(
                 "DELETE FROM api_keys WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
+                &[SqlParam::String(id.to_owned())],
             )
             .await
     }

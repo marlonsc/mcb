@@ -1,9 +1,9 @@
-use std::fmt;
-
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 /// Tree node for hierarchical file navigation
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Display)]
+#[display("{}", self.to_ansi())]
 pub struct FileTreeNode {
     /// Display name of the node (file or directory name)
     pub name: String,
@@ -155,10 +155,4 @@ fn html_escape(text: &str) -> String {
         .replace('>', "&gt;")
         .replace('"', "&quot;")
         .replace('\'', "&#39;")
-}
-
-impl fmt::Display for FileTreeNode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.to_ansi())
-    }
 }

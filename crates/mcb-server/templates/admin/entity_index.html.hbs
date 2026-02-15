@@ -14,8 +14,8 @@
         <div class="stat-value">{{group_count}}</div>
     </div>
     <div class="card">
-        <div class="stat-label">Generated From</div>
-        <div class="stat-value text-sm">JsonSchema</div>
+        <div class="stat-label">Total Records</div>
+        <div class="stat-value">{{total_records}}</div>
     </div>
 </div>
 
@@ -26,6 +26,7 @@
                 <th>Entity</th>
                 <th>Group</th>
                 <th>Visible Fields</th>
+                <th>Records</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -35,6 +36,7 @@
                 <td class="font-medium">{{title}}</td>
                 <td><span class="badge badge-blue">{{group}}</span></td>
                 <td>{{field_count}}</td>
+                <td>{{record_count}}</td>
                 <td>
                     <a class="btn btn-primary btn-sm" href="/ui/entities/{{slug}}">Open</a>
                 </td>

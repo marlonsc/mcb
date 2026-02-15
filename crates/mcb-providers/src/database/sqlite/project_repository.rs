@@ -1,16 +1,29 @@
-//! SQLite project repository implementation.
+//! SQLite Project Repository
+//!
+//! # Overview
+//! The `SqliteProjectRepository` handles the persistence of project entities, which represent
+//! distinct codebases or modules within an organization. It supports hierarchical organization
+//! via `org_id` and tracks project metadata like paths and update timestamps.
+//!
+//! # Responsibilities
+//! - **Project Registry**: Storing the definition of all projects in the system.
+//! - **Lookup Logic**: Finding projects by ID, name, or file path.
+//! - **CRUD Operations**: Creating, updating, and deleting project records.
 
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::Project;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
+use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::ProjectRepository;
 
-use super::row_convert;
+use super::{query_helpers, row_convert};
 
-/// SQLite-based project repository using the database executor port.
+/// SQLite-based implementation of the `ProjectRepository`.
+///
+/// Implements standard CRUD for the `projects` table.
+/// Provides efficient lookups by `path` and `name` to support project detection and resolution logic.
 pub struct SqliteProjectRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }
@@ -20,28 +33,13 @@ impl SqliteProjectRepository {
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
-
-    /// Helper: Query single row and convert to optional entity
-    async fn query_one_and_convert<T, F>(
-        &self,
-        sql: &str,
-        params: &[SqlParam],
-        convert_fn: F,
-        _entity_name: &str,
-    ) -> Result<Option<T>>
-    where
-        F: FnOnce(&dyn SqlRow) -> Result<T>,
-    {
-        let row = self.executor.query_one(sql, params).await?;
-        match row {
-            Some(r) => Ok(Some(convert_fn(r.as_ref())?)),
-            None => Ok(None),
-        }
-    }
 }
 
 #[async_trait]
+/// Persistent project repository using SQLite.
 impl ProjectRepository for SqliteProjectRepository {
+    /// Creates a new project.
+    // TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)
     async fn create(&self, project: &Project) -> Result<()> {
         self.executor
             .execute(
@@ -58,48 +56,53 @@ impl ProjectRepository for SqliteProjectRepository {
             .await
     }
 
+    /// Retrieves a project by ID.
     async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Project> {
-        self.query_one_and_convert(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND id = ? LIMIT 1",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(id.to_string()),
             ],
             row_convert::row_to_project,
-            "project",
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("Project {id}")))
     }
 
+    /// Retrieves a project by name.
     async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Project> {
-        self.query_one_and_convert(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND name = ? LIMIT 1",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(name.to_string()),
             ],
             row_convert::row_to_project,
-            "project",
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("Project {name}")))
     }
 
+    /// Retrieves a project by path.
     async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Project> {
-        self.query_one_and_convert(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND path = ? LIMIT 1",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(path.to_string()),
             ],
             row_convert::row_to_project,
-            "project",
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("Project {path}")))
     }
 
+    /// Lists all projects in an organization.
+    // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 97)
     async fn list(&self, org_id: &str) -> Result<Vec<Project>> {
         let rows = self
             .executor
@@ -118,6 +121,7 @@ impl ProjectRepository for SqliteProjectRepository {
         Ok(projects)
     }
 
+    /// Updates an existing project.
     async fn update(&self, project: &Project) -> Result<()> {
         self.executor
             .execute(
@@ -133,6 +137,7 @@ impl ProjectRepository for SqliteProjectRepository {
             .await
     }
 
+    /// Deletes a project.
     async fn delete(&self, org_id: &str, id: &str) -> Result<()> {
         self.executor
             .execute(

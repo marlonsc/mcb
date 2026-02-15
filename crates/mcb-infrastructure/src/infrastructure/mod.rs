@@ -19,7 +19,6 @@
 // Internal modules - implementations NOT exported
 // pub(crate) mod events;
 pub(crate) mod lifecycle;
-pub(crate) mod prometheus_metrics;
 
 // Admin module - partially exported for mcb-server
 pub mod admin;
@@ -28,7 +27,5 @@ pub mod admin;
 // Admin types - exported for mcb-server AdminState
 pub use admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 pub use lifecycle::{ServiceInfo, ServiceManager, ServiceManagerError};
-// Prometheus metrics - exported for /metrics endpoint
-pub use prometheus_metrics::{PrometheusPerformanceMetrics, export_metrics};
 // Event bus - exported for DI bootstrap and testing
 // pub use events::TokioBroadcastEventBus;

@@ -4,6 +4,7 @@
 //! file + line + violation-type assertions.
 
 use mcb_validate::OrganizationValidator;
+use mcb_validate::{OrganizationViolation, Severity, Violation};
 
 use crate::test_constants::*;
 use crate::test_utils::*;
@@ -84,4 +85,18 @@ pub fn retry(attempts: u32) -> bool {
         &violations,
         "Clean organized code should produce no violations",
     );
+}
+
+#[test]
+fn test_organization_violation_severity_is_non_recursive() {
+    let violation = OrganizationViolation::MagicNumber {
+        file: std::path::PathBuf::from("dummy.rs"),
+        line: 1,
+        value: "99999".to_string(),
+        context: "let n = 99999;".to_string(),
+        suggestion: "Use constant".to_string(),
+        severity: Severity::Info,
+    };
+
+    assert_eq!(Violation::severity(&violation), Severity::Info);
 }

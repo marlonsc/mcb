@@ -38,8 +38,8 @@ async fn test_full_admin_stack_integration() {
         cache_hit_rate
     );
 
-    let op1 = indexing.start_operation(&CollectionId::new("project-alpha"), 100);
-    let _op2 = indexing.start_operation(&CollectionId::new("project-beta"), 200);
+    let op1 = indexing.start_operation(&CollectionId::from_name("project-alpha"), 100);
+    let _op2 = indexing.start_operation(&CollectionId::from_name("project-beta"), 200);
     indexing.update_progress(&op1, Some("src/main.rs".to_string()), 25);
 
     // 6. Verify jobs endpoint shows operations
@@ -56,10 +56,12 @@ async fn test_full_admin_stack_integration() {
     let ops = json["jobs"].as_array().unwrap();
     assert_eq!(ops.len(), 2);
 
+    let expected_alpha_label = CollectionId::from_name("project-alpha").to_string();
+
     // Find the project-alpha operation
     let alpha_op = ops
         .iter()
-        .find(|op| op["label"] == "project-alpha")
+        .find(|op| op["label"].as_str() == Some(expected_alpha_label.as_str()))
         .expect("Should find project-alpha operation");
     assert_eq!(alpha_op["processed_items"], 25);
     assert_eq!(alpha_op["total_items"], 100);
@@ -139,9 +141,9 @@ async fn test_metrics_accumulation_integration() {
 async fn test_indexing_lifecycle_integration() {
     let (client, _, indexing) = AdminTestHarness::new().build_client().await;
 
-    let op1 = indexing.start_operation(&CollectionId::new("repo-1"), 50);
-    let op2 = indexing.start_operation(&CollectionId::new("repo-2"), 100);
-    let op3 = indexing.start_operation(&CollectionId::new("repo-3"), 150);
+    let op1 = indexing.start_operation(&CollectionId::from_name("repo-1"), 50);
+    let op2 = indexing.start_operation(&CollectionId::from_name("repo-2"), 100);
+    let op3 = indexing.start_operation(&CollectionId::from_name("repo-3"), 150);
 
     let response = client.get("/jobs").dispatch().await;
 

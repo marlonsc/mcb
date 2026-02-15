@@ -82,7 +82,10 @@ technologies, patterns, or approaches chosen.}
 
 {Links to related documents, issues, or discussions}
 
-- [Issue/PR Link](URL)
-- [Related ADR](relative/path/to/adr.md)
-- [External Documentation](URL)
-- [RFC/Discussion](URL)
+<!--
+Example reference formats (replace with actual URLs/paths):
+- [Issue/PR Link](https://github.com/org/repo/issues/NNN)
+- [Related ADR](NNN-adr-title.md)
+- [External Documentation](https://example.com/docs)
+- [RFC/Discussion](https://github.com/org/repo/discussions/NNN)
+-->

@@ -155,7 +155,15 @@ fn validate_severity(severity: &str) -> std::result::Result<(), ValidationErrors
 }
 
 fn validate_engine(engine: &str) -> std::result::Result<(), ValidationErrors> {
-    let valid_engines = ["rust-rule-engine", "rusty-rules"];
+    let valid_engines = [
+        "rust-rule-engine",
+        "rete",
+        "grl",
+        "rusty-rules",
+        "json-dsl",
+        "expression",
+        "evalexpr",
+    ];
 
     if valid_engines.contains(&engine) {
         Ok(())

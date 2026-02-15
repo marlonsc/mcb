@@ -19,10 +19,11 @@ use crate::McpServer;
 /// // let server = McpServer::new(context_service, config)?;
 /// // server.serve_stdio().await?;  // Blocks until shutdown
 /// ```
-#[allow(async_fn_in_trait)]
 pub trait StdioServerExt {
     /// Serve the MCP server over stdio transport
-    async fn serve_stdio(self) -> Result<(), Box<dyn std::error::Error>>;
+    fn serve_stdio(
+        self,
+    ) -> impl std::future::Future<Output = Result<(), Box<dyn std::error::Error>>> + Send;
 }
 
 impl StdioServerExt for McpServer {

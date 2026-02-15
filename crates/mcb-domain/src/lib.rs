@@ -2,12 +2,11 @@
 //!
 //! Core business logic and domain types for semantic code analysis.
 //! Contains only pure domain entities, value objects, and business rules.
-#![allow(missing_docs)]
 //!
 //! ## Architecture
 //!
 //! | Component | Description |
-//! |-----------|-------------|
+//! | ----------- | ------------- |
 //! | [`entities`] | Core business entities with identity |
 //! | [`value_objects`] | Immutable value objects |
 //! | [`ports`] | External provider port interfaces |
@@ -63,17 +62,18 @@ pub mod repositories;
 /// Generic schema definitions for persistence (backend-agnostic model)
 pub mod schema;
 #[cfg(any(test, feature = "test-utils"))]
+/// Test-only configuration helpers for external service endpoints.
 pub mod test_services_config;
+#[cfg(any(test, feature = "test-utils"))]
+/// Shared test fixtures and utilities.
+pub mod test_utils;
 /// Common utilities
 pub mod utils;
 /// Immutable value objects
 pub mod value_objects;
 
-#[cfg(test)]
-mod config_tests;
-
 // Re-export commonly used types for convenience
-pub use constants::*;
+pub use constants::values::*;
 pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};

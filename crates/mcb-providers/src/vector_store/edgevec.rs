@@ -18,7 +18,6 @@ use crate::constants::{
     EDGEVEC_DEFAULT_DIMENSIONS, EDGEVEC_HNSW_EF_CONSTRUCTION, EDGEVEC_HNSW_EF_SEARCH,
     EDGEVEC_HNSW_M, EDGEVEC_HNSW_M0,
 };
-use crate::utils::JsonExt;
 
 /// EdgeVec vector store configuration
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -210,7 +209,7 @@ enum EdgeVecMessage {
 /// EdgeVec vector store provider implementation using Actor pattern
 pub struct EdgeVecVectorStoreProvider {
     sender: mpsc::Sender<EdgeVecMessage>,
-    collection: CollectionId,
+    _collection: CollectionId,
 }
 
 impl EdgeVecVectorStoreProvider {
@@ -224,17 +223,29 @@ impl EdgeVecVectorStoreProvider {
             actor.run().await;
         });
 
+        let generated_collection =
+            CollectionId::from_name(&format!("edgevec-{}", uuid::Uuid::new_v4()));
+
         Ok(Self {
             sender: tx,
-            collection: CollectionId::new("default"),
+            _collection: generated_collection,
         })
     }
 
     /// Create a new EdgeVec provider with custom collection
     pub fn with_collection(config: EdgeVecConfig, collection: CollectionId) -> Result<Self> {
-        let mut provider = Self::new(config)?;
-        provider.collection = collection;
-        Ok(provider)
+        let (tx, rx) = mpsc::channel(100);
+        let config_clone = config.clone();
+
+        let actor = EdgeVecActor::new(rx, config_clone)?;
+        tokio::spawn(async move {
+            actor.run().await;
+        });
+
+        Ok(Self {
+            sender: tx,
+            _collection: collection,
+        })
     }
 }
 
@@ -573,14 +584,27 @@ impl EdgeVecActor {
                     let meta = meta_val.as_object().cloned().unwrap_or_default();
                     final_results.push(SearchResult {
                         id: id.clone(),
-                        file_path: meta.string_or("file_path", "unknown"),
+                        file_path: meta
+                            .get("file_path")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or("unknown")
+                            .to_owned(),
                         start_line: meta
-                            .opt_u64("start_line")
-                            .or_else(|| meta.opt_u64("line_number"))
+                            .get("start_line")
+                            .and_then(|value| value.as_u64())
+                            .or_else(|| meta.get("line_number").and_then(|value| value.as_u64()))
                             .unwrap_or(0) as u32,
-                        content: meta.string_or("content", ""),
+                        content: meta
+                            .get("content")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or("")
+                            .to_owned(),
                         score: 1.0,
-                        language: meta.string_or("language", "unknown"),
+                        language: meta
+                            .get("language")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or("unknown")
+                            .to_owned(),
                     });
                 }
             }
@@ -595,14 +619,27 @@ impl EdgeVecActor {
                 let meta = meta_val.as_object().cloned().unwrap_or_default();
                 final_results.push(SearchResult {
                     id: ext_id.clone(),
-                    file_path: meta.string_or("file_path", "unknown"),
+                    file_path: meta
+                        .get("file_path")
+                        .and_then(|value| value.as_str())
+                        .unwrap_or("unknown")
+                        .to_owned(),
                     start_line: meta
-                        .opt_u64("start_line")
-                        .or_else(|| meta.opt_u64("line_number"))
+                        .get("start_line")
+                        .and_then(|value| value.as_u64())
+                        .or_else(|| meta.get("line_number").and_then(|value| value.as_u64()))
                         .unwrap_or(0) as u32,
-                    content: meta.string_or("content", ""),
+                    content: meta
+                        .get("content")
+                        .and_then(|value| value.as_str())
+                        .unwrap_or("")
+                        .to_owned(),
                     score: 1.0,
-                    language: meta.string_or("language", "unknown"),
+                    language: meta
+                        .get("language")
+                        .and_then(|value| value.as_str())
+                        .unwrap_or("unknown")
+                        .to_owned(),
                 });
             }
         }
@@ -637,16 +674,31 @@ impl EdgeVecActor {
                         {
                             let meta = meta_val.as_object().cloned().unwrap_or_default();
                             let start_line = meta
-                                .opt_u64("start_line")
-                                .or_else(|| meta.opt_u64("line_number"))
+                                .get("start_line")
+                                .and_then(|value| value.as_u64())
+                                .or_else(|| {
+                                    meta.get("line_number").and_then(|value| value.as_u64())
+                                })
                                 .unwrap_or(0) as u32;
                             final_results.push(SearchResult {
                                 id: ext_id,
-                                file_path: meta.string_or("file_path", "unknown"),
+                                file_path: meta
+                                    .get("file_path")
+                                    .and_then(|value| value.as_str())
+                                    .unwrap_or("unknown")
+                                    .to_owned(),
                                 start_line,
-                                content: meta.string_or("content", ""),
+                                content: meta
+                                    .get("content")
+                                    .and_then(|value| value.as_str())
+                                    .unwrap_or("")
+                                    .to_owned(),
                                 score: res.distance as f64,
-                                language: meta.string_or("language", "unknown"),
+                                language: meta
+                                    .get("language")
+                                    .and_then(|value| value.as_str())
+                                    .unwrap_or("unknown")
+                                    .to_owned(),
                             });
                         }
                     }
@@ -708,13 +760,7 @@ impl EdgeVecActor {
                     .collect();
                 let file_count = file_paths.len() as u64;
 
-                CollectionInfo::new(
-                    CollectionId::new(name),
-                    vector_count,
-                    file_count,
-                    None,
-                    "edgevec",
-                )
+                CollectionInfo::new(name, vector_count, file_count, None, "edgevec")
             })
             .collect()
     }
@@ -758,26 +804,37 @@ impl EdgeVecActor {
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
         let mut results = Vec::new();
+        // Normalize to forward slashes for cross-platform path matching
+        let normalized_query = file_path.replace('\\', "/");
         if let Some(collection_metadata) = self.metadata_store.get(collection) {
             for (ext_id, meta_val) in collection_metadata.iter() {
                 if let Some(meta) = meta_val.as_object()
                     && meta
                         .get("file_path")
                         .and_then(|v| v.as_str())
-                        .is_some_and(|p| p == file_path)
+                        .is_some_and(|p| p.replace('\\', "/") == normalized_query)
                 {
                     let start_line = meta
-                        .opt_u64("start_line")
-                        .or_else(|| meta.opt_u64("line_number"))
+                        .get("start_line")
+                        .and_then(|value| value.as_u64())
+                        .or_else(|| meta.get("line_number").and_then(|value| value.as_u64()))
                         .unwrap_or(0) as u32;
 
                     results.push(SearchResult {
                         id: ext_id.clone(),
                         file_path: file_path.to_string(),
                         start_line,
-                        content: meta.string_or("content", ""),
+                        content: meta
+                            .get("content")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or("")
+                            .to_owned(),
                         score: 1.0,
-                        language: meta.string_or("language", "unknown"),
+                        language: meta
+                            .get("language")
+                            .and_then(|value| value.as_str())
+                            .unwrap_or("unknown")
+                            .to_owned(),
                     });
                 }
             }
@@ -900,12 +957,18 @@ fn edgevec_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
     let dimensions = config.dimensions.unwrap_or(384);
+    let collection_name = config.collection.clone().ok_or_else(|| {
+        "EdgeVec provider requires a collection name in vector_store config".to_string()
+    })?;
     let edgevec_config = EdgeVecConfig {
         dimensions,
         ..Default::default()
     };
-    let provider = EdgeVecVectorStoreProvider::new(edgevec_config)
-        .map_err(|e| format!("Failed to create EdgeVec provider: {e}"))?;
+    let provider = EdgeVecVectorStoreProvider::with_collection(
+        edgevec_config,
+        CollectionId::from_name(&collection_name),
+    )
+    .map_err(|e| format!("Failed to create EdgeVec provider: {e}"))?;
     Ok(Arc::new(provider))
 }
 

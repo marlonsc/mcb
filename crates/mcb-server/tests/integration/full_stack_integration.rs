@@ -20,15 +20,22 @@ use std::sync::Arc;
 
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 use mcb_infrastructure::di::bootstrap::init_app;
+use rstest::rstest;
 use serde_json::json;
 
 fn test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let db_path = temp_dir.path().join("test.db");
-    let mut config = AppConfig::default();
-    config.auth.user_db_path = Some(db_path);
+    let mut config = ConfigLoader::new().load().expect("load config");
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(db_path),
+        },
+    );
     (config, temp_dir)
 }
 
@@ -63,6 +70,24 @@ async fn main() {
             metadata: json!({"type": "function", "name": "main"}),
         },
     ]
+}
+
+async fn assert_embedding_batch_shape(
+    embedding: &Arc<dyn mcb_domain::ports::providers::EmbeddingProvider>,
+    texts: &[String],
+) {
+    let embeddings = embedding
+        .embed_batch(texts)
+        .await
+        .expect("Embedding should work");
+
+    assert_eq!(embeddings.len(), texts.len());
+    let expected_dim = embedding.dimensions();
+    for emb in embeddings {
+        assert_eq!(emb.dimensions, expected_dim);
+        assert_eq!(emb.vector.len(), expected_dim);
+        assert_eq!(emb.model, "AllMiniLML6V2");
+    }
 }
 
 // ============================================================================
@@ -107,49 +132,17 @@ async fn test_init_app_creates_working_context() {
     );
 }
 
+#[rstest]
+#[case(vec!["authentication middleware".to_string(), "database connection pool".to_string()])]
+#[case(vec!["first text".to_string()])]
+#[case(vec!["second text".to_string(), "third text".to_string()])]
 #[tokio::test]
-async fn test_embedding_generates_real_vectors() {
+async fn test_embedding_generates_real_vectors(#[case] texts: Vec<String>) {
     let (config, _temp) = test_config();
     let ctx = init_app(config).await.expect("init_app should succeed");
 
     let embedding = ctx.embedding_handle().get();
-
-    // Generate embeddings for test texts
-    let texts = vec![
-        "authentication middleware".to_string(),
-        "database connection pool".to_string(),
-    ];
-
-    let embeddings = embedding
-        .embed_batch(&texts)
-        .await
-        .expect("Embedding should work");
-
-    // Validate real embedding generation
-    assert_eq!(
-        embeddings.len(),
-        2,
-        "Should generate embedding for each text"
-    );
-
-    for (i, emb) in embeddings.iter().enumerate() {
-        assert_eq!(
-            emb.dimensions, 384,
-            "Embedding {} should have 384 dimensions",
-            i
-        );
-        assert_eq!(
-            emb.vector.len(),
-            384,
-            "Embedding {} vector should have 384 elements",
-            i
-        );
-        assert_eq!(
-            emb.model, "AllMiniLML6V2",
-            "Embedding should have model name for index {}",
-            i
-        );
-    }
+    assert_embedding_batch_shape(&embedding, &texts).await;
 }
 
 #[tokio::test]
@@ -165,7 +158,7 @@ async fn test_full_index_and_search_flow() {
 
     // Step 1: Create collection
     vector_store
-        .create_collection(&CollectionId::new(collection), 384)
+        .create_collection(&CollectionId::from_name(collection), 384)
         .await
         .expect("Collection creation should succeed");
 
@@ -193,7 +186,7 @@ async fn test_full_index_and_search_flow() {
 
     // Step 4: Insert into vector store
     let ids = vector_store
-        .insert_vectors(&CollectionId::new(collection), &embeddings, metadata)
+        .insert_vectors(&CollectionId::from_name(collection), &embeddings, metadata)
         .await
         .expect("Insert should succeed");
 
@@ -208,7 +201,7 @@ async fn test_full_index_and_search_flow() {
     let query_vector = &query_embeddings[0].vector;
 
     let results = vector_store
-        .search_similar(&CollectionId::new(collection), query_vector, 5, None)
+        .search_similar(&CollectionId::from_name(collection), query_vector, 5, None)
         .await
         .expect("Search should succeed");
 
@@ -259,11 +252,11 @@ async fn test_multiple_collections_isolated() {
     let collection_b = "isolation_test_b";
 
     vector_store
-        .create_collection(&CollectionId::new(collection_a), 384)
+        .create_collection(&CollectionId::from_name(collection_a), 384)
         .await
         .expect("Create collection A");
     vector_store
-        .create_collection(&CollectionId::new(collection_b), 384)
+        .create_collection(&CollectionId::from_name(collection_b), 384)
         .await
         .expect("Create collection B");
 
@@ -283,7 +276,11 @@ async fn test_multiple_collections_isolated() {
         .collect();
 
     vector_store
-        .insert_vectors(&CollectionId::new(collection_a), &embeddings, metadata)
+        .insert_vectors(
+            &CollectionId::from_name(collection_a),
+            &embeddings,
+            metadata,
+        )
         .await
         .expect("Insert into A");
 
@@ -295,7 +292,7 @@ async fn test_multiple_collections_isolated() {
 
     let results_a = vector_store
         .search_similar(
-            &CollectionId::new(collection_a),
+            &CollectionId::from_name(collection_a),
             &query_emb[0].vector,
             10,
             None,
@@ -305,7 +302,7 @@ async fn test_multiple_collections_isolated() {
 
     let results_b = vector_store
         .search_similar(
-            &CollectionId::new(collection_b),
+            &CollectionId::from_name(collection_b),
             &query_emb[0].vector,
             10,
             None,
@@ -319,32 +316,4 @@ async fn test_multiple_collections_isolated() {
         results_b.is_empty(),
         "Collection B should be empty (isolated)"
     );
-}
-
-#[tokio::test]
-async fn test_embedding_dimensions_consistent() {
-    let (config, _temp) = test_config();
-    let ctx = init_app(config).await.expect("init_app should succeed");
-
-    let embedding = ctx.embedding_handle().get();
-
-    // Generate multiple batches
-    let batch1 = embedding
-        .embed_batch(&["first text".to_string()])
-        .await
-        .expect("Batch 1");
-    let batch2 = embedding
-        .embed_batch(&["second text".to_string(), "third text".to_string()])
-        .await
-        .expect("Batch 2");
-
-    // All should have consistent dimensions
-    let expected_dim = embedding.dimensions();
-
-    assert_eq!(batch1[0].dimensions, expected_dim);
-    assert_eq!(batch1[0].vector.len(), expected_dim);
-    assert_eq!(batch2[0].dimensions, expected_dim);
-    assert_eq!(batch2[0].vector.len(), expected_dim);
-    assert_eq!(batch2[1].dimensions, expected_dim);
-    assert_eq!(batch2[1].vector.len(), expected_dim);
 }

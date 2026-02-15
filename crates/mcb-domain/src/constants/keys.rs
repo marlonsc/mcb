@@ -24,9 +24,6 @@ pub const NAME: &str = "name";
 /// Column/Field name for "created_at"
 pub const CREATED_AT: &str = "created_at";
 
-/// Column/Field name for "updated_at"
-pub const UPDATED_AT: &str = "updated_at";
-
 /// Column/Field name for "status"
 pub const STATUS: &str = "status";
 
@@ -38,9 +35,6 @@ pub const AGENT_TYPE: &str = "agent_type";
 
 /// Column/Field name for "parent_session_id"
 pub const PARENT_SESSION_ID: &str = "parent_session_id";
-
-/// Column/Field name for "child_session_id"
-pub const CHILD_SESSION_ID: &str = "child_session_id";
 
 /// Column/Field name for "started_at"
 pub const STARTED_AT: &str = "started_at";
@@ -62,6 +56,12 @@ pub const PROJECT_ID: &str = "project_id";
 
 /// Worktree ID column key.
 pub const WORKTREE_ID: &str = "worktree_id";
+
+/// Repository ID column key.
+pub const REPO_ID: &str = "repo_id";
+
+/// Repository path column key.
+pub const REPO_PATH: &str = "repo_path";
 
 // Metadata keys for code chunks
 /// Metadata key for "start_line"

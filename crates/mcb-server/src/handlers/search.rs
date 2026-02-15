@@ -4,17 +4,19 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use mcb_domain::entities::memory::MemoryFilter;
+use mcb_domain::error::Error;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::ports::services::SearchServiceInterface;
-use mcb_domain::value_objects::OrgContext;
+use mcb_domain::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 use validator::Validate;
 
 use crate::args::{SearchArgs, SearchResource};
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::handlers::helpers::resolve_org_id;
 use crate::utils::collections::normalize_collection_name;
 
 /// Handler for code and memory search MCP tool operations.
@@ -43,26 +45,29 @@ impl SearchHandler {
         Parameters(args): Parameters<SearchArgs>,
     ) -> Result<CallToolResult, McpError> {
         if let Err(e) = args.validate() {
-            return Ok(to_opaque_tool_error(e));
+            return Ok(to_contextual_tool_error(Error::invalid_argument(
+                e.to_string(),
+            )));
         }
 
-        let org_ctx = OrgContext::default();
-        let _org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
+        let _org_id = resolve_org_id(args.org_id.as_deref());
 
         let query = args.query.trim();
         if query.is_empty() {
-            return Ok(CallToolResult::error(vec![Content::text(
+            return Ok(to_contextual_tool_error(Error::invalid_argument(
                 "Query cannot be empty",
-            )]));
+            )));
         }
 
         match args.resource {
             SearchResource::Code => {
-                let collection_name = args.collection.as_deref().unwrap_or("default");
+                let collection_name = args.collection.as_deref().ok_or_else(|| {
+                    McpError::invalid_params("collection parameter is required", None)
+                })?;
                 let collection_id = match normalize_collection_name(collection_name) {
                     Ok(id) => id,
-                    Err(e) => {
-                        return Ok(to_opaque_tool_error(e));
+                    Err(reason) => {
+                        return Ok(to_contextual_tool_error(Error::invalid_argument(reason)));
                     }
                 };
                 let timer = Instant::now();
@@ -78,7 +83,7 @@ impl SearchHandler {
                         timer.elapsed(),
                         limit,
                     ),
-                    Err(e) => Ok(to_opaque_tool_error(e)),
+                    Err(e) => Ok(to_contextual_tool_error(e)),
                 }
             }
             SearchResource::Memory | SearchResource::Context => {
@@ -89,13 +94,11 @@ impl SearchHandler {
                     } else {
                         None
                     },
-                    session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
-                    repo_id: None,
-                    time_range: None,
-                    branch: None,
-                    commit: None,
-                    id: None,
-                    project_id: None,
+                    session_id: args.session_id.map(|id| {
+                        let id_str = id.to_string();
+                        domain_id::correlate_id("session", &id_str)
+                    }),
+                    ..Default::default()
                 };
                 let limit = args.limit.unwrap_or(10) as usize;
                 match self
@@ -109,11 +112,17 @@ impl SearchHandler {
                             .map(|r| {
                                 serde_json::json!({
                                     "observation_id": r.observation.id,
+                                    "project_id": r.observation.project_id,
                                     "content": r.observation.content,
                                     "observation_type": r.observation.r#type.as_str(),
                                     "tags": r.observation.tags,
                                     "similarity_score": r.similarity_score,
-                                    "session_id": r.observation.metadata.session_id,
+                                    "session_id": r.observation.metadata.session_id.clone(),
+                                    "repo_id": r.observation.metadata.repo_id.clone(),
+                                    "file_path": r.observation.metadata.file_path,
+                                    "branch": r.observation.metadata.branch,
+                                    "commit": r.observation.metadata.commit,
+                                    "origin_context": r.observation.metadata.origin_context,
                                 })
                             })
                             .collect();
@@ -128,7 +137,7 @@ impl SearchHandler {
                         .map_err(fmt_err)?;
                         Ok(response)
                     }
-                    Err(e) => Ok(to_opaque_tool_error(e)),
+                    Err(e) => Ok(to_contextual_tool_error(e)),
                 }
             }
         }

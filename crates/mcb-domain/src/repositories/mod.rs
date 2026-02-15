@@ -7,7 +7,7 @@
 //! ## Repositories
 //!
 //! | Repository | Description |
-//! |------------|-------------|
+//! | ------------ | ------------- |
 //! | ChunkRepository | Persistence operations for code chunks |
 //! | SearchRepository | Query operations for semantic search |
 

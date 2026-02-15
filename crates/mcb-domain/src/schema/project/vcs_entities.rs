@@ -1,6 +1,9 @@
+//! VCS schema entities (repositories, branches, worktrees).
+
 use super::ForeignKeyDef;
 use crate::schema::memory::{IndexDef, TableDef};
 
+/// Returns the table definitions (repositories, branches, worktrees).
 pub fn tables() -> Vec<TableDef> {
     vec![
         table!(
@@ -13,6 +16,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("url", Text),
                 crate::col!("local_path", Text),
                 crate::col!("vcs_type", Text),
+                crate::col!("origin_context", Text, nullable),
                 crate::col!("created_at", Integer),
                 crate::col!("updated_at", Integer),
             ]
@@ -26,6 +30,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("is_default", Integer),
                 crate::col!("head_commit", Text),
                 crate::col!("upstream", Text, nullable),
+                crate::col!("origin_context", Text, nullable),
                 crate::col!("created_at", Integer),
             ]
         ),
@@ -38,6 +43,7 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("path", Text),
                 crate::col!("status", Text),
                 crate::col!("assigned_agent_id", Text, nullable),
+                crate::col!("origin_context", Text, nullable),
                 crate::col!("created_at", Integer),
                 crate::col!("updated_at", Integer),
             ]
@@ -50,11 +56,13 @@ pub fn tables() -> Vec<TableDef> {
                 crate::col!("worktree_id", Text),
                 crate::col!("assigned_at", Integer),
                 crate::col!("released_at", Integer, nullable),
+                crate::col!("origin_context", Text, nullable),
             ]
         ),
     ]
 }
 
+/// Returns the index definitions for VCS tables.
 pub fn indexes() -> Vec<IndexDef> {
     vec![
         index!("idx_repositories_org", "repositories", ["org_id"]),
@@ -76,6 +84,8 @@ pub fn indexes() -> Vec<IndexDef> {
     ]
 }
 
+/// Returns the foreign key definitions.
+// TODO(qlty): Found 46 lines of similar code in 2 locations (mass = 166)
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     vec![
         ForeignKeyDef {
@@ -123,6 +133,8 @@ pub fn foreign_keys() -> Vec<ForeignKeyDef> {
     ]
 }
 
+/// Returns the unique constraint definitions.
+// TODO(qlty): Found 16 lines of similar code in 2 locations (mass = 56)
 pub fn unique_constraints() -> Vec<super::UniqueConstraintDef> {
     vec![
         super::UniqueConstraintDef {

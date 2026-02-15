@@ -6,7 +6,7 @@
 //! ## Available Providers
 //!
 //! | Provider | Type | Status |
-//! |----------|------|--------|
+//! | ---------- | ------ | -------- |
 //! | OllamaEmbeddingProvider | Local | Complete |
 //! | OpenAIEmbeddingProvider | Cloud | Complete |
 //! | VoyageAIEmbeddingProvider | Cloud | Complete |

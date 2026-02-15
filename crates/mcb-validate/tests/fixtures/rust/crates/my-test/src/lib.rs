@@ -359,7 +359,7 @@ pub fn handle_message(msg_type: &str) {
 }
 
 // ───────────────────────────────────────────────────
-// Inline tests — tests_org violation
+// Inline tests — hygiene violation
 // ───────────────────────────────────────────────────
 
 /// BUG(TestOrg): Inline test module — should be in separate test file.

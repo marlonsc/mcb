@@ -1,6 +1,15 @@
-//! SQLite agent repository using the domain port [`DatabaseExecutor`].
+//! SQLite Agent Repository
 //!
-//! Implements [`AgentRepository`] via [`DatabaseExecutor`]; no direct sqlx in this module.
+//! # Overview
+//! The `SqliteAgentRepository` manages the persistence of agent sessions and their related artifacts
+//! (tool calls, delegations, checkpoints). It enables long-running, stateful agent interactions
+//! by reliably storing execution history in a relational database.
+//!
+//! # Responsibilities
+//! - **Session Management**: CRUD operations for `AgentSession` entities.
+//! - **Audit Trail**: Recording all tool calls and delegations for debugging and analysis.
+//! - **State Recovery**: Managing `Checkpoint` storage to allow sessions to resume or rollback.
+//! - **Querying**: Filtering sessions by project, status, or hierarchy.
 
 use std::sync::Arc;
 
@@ -8,13 +17,20 @@ use async_trait::async_trait;
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, Delegation, ToolCall};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::agent_repository::{AgentRepository, AgentSessionQuery};
+use mcb_domain::ports::repositories::agent_repository::{
+    AgentCheckpointRepository, AgentEventRepository, AgentSessionQuery, AgentSessionRepository,
+};
 use mcb_domain::utils::mask_id;
 use tracing::debug;
 
+use super::query_helpers;
 use super::row_convert;
 
-/// SQLite-based agent repository using the database executor port.
+/// SQLite-based implementation of the `AgentRepository`.
+///
+/// Implements data access patterns for agent sessions, delegations, tool calls, and checkpoints.
+/// Ensures referential integrity for project/organization links and handles JSON serialization
+/// for complex session state artifacts.
 pub struct SqliteAgentRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }
@@ -27,12 +43,26 @@ impl SqliteAgentRepository {
 }
 
 #[async_trait]
-impl AgentRepository for SqliteAgentRepository {
+/// Persistent agent session repository using SQLite.
+impl AgentSessionRepository for SqliteAgentRepository {
+    /// Creates a new agent session.
     async fn create_session(&self, session: &AgentSession) -> Result<()> {
+        if let Some(project_id) = &session.project_id {
+            super::ensure_parent::ensure_org_and_project(
+                self.executor.as_ref(),
+                project_id,
+                session.started_at,
+            )
+            .await?;
+        } else {
+            super::ensure_parent::ensure_org_exists(self.executor.as_ref(), session.started_at)
+                .await?;
+        }
+
         let params = [
             SqlParam::String(session.id.clone()),
             SqlParam::String(session.session_summary_id.clone()),
-            SqlParam::String(session.agent_type.as_str().to_string()),
+            SqlParam::String(session.agent_type.as_str().to_owned()),
             SqlParam::String(session.model.clone()),
             session
                 .parent_session_id
@@ -41,7 +71,7 @@ impl AgentRepository for SqliteAgentRepository {
             SqlParam::I64(session.started_at),
             session.ended_at.map_or(SqlParam::Null, SqlParam::I64),
             session.duration_ms.map_or(SqlParam::Null, SqlParam::I64),
-            SqlParam::String(session.status.as_str().to_string()),
+            SqlParam::String(session.status.as_str().to_owned()),
             session
                 .prompt_summary
                 .as_ref()
@@ -97,28 +127,23 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(())
     }
 
+    /// Retrieves a session by ID.
+    // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 91)
     async fn get_session(&self, id: &str) -> Result<Option<AgentSession>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM agent_sessions WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(
-                row_convert::row_to_agent_session(r.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode agent session row", e))?,
-            )),
-            None => Ok(None),
-        }
+        query_helpers::query_one(
+            &self.executor,
+            "SELECT * FROM agent_sessions WHERE id = ?",
+            &[SqlParam::String(id.to_owned())],
+            row_convert::row_to_agent_session,
+        )
+        .await
     }
 
+    /// Updates an existing session.
     async fn update_session(&self, session: &AgentSession) -> Result<()> {
         let params = [
             SqlParam::String(session.session_summary_id.clone()),
-            SqlParam::String(session.agent_type.as_str().to_string()),
+            SqlParam::String(session.agent_type.as_str().to_owned()),
             SqlParam::String(session.model.clone()),
             session
                 .parent_session_id
@@ -127,7 +152,7 @@ impl AgentRepository for SqliteAgentRepository {
             SqlParam::I64(session.started_at),
             session.ended_at.map_or(SqlParam::Null, SqlParam::I64),
             session.duration_ms.map_or(SqlParam::Null, SqlParam::I64),
-            SqlParam::String(session.status.as_str().to_string()),
+            SqlParam::String(session.status.as_str().to_owned()),
             session
                 .prompt_summary
                 .as_ref()
@@ -183,6 +208,7 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(())
     }
 
+    /// Lists sessions matching the query criteria.
     async fn list_sessions(&self, query: AgentSessionQuery) -> Result<Vec<AgentSession>> {
         let mut sql = String::from("SELECT * FROM agent_sessions WHERE 1=1");
         let mut params: Vec<SqlParam> = Vec::new();
@@ -197,11 +223,11 @@ impl AgentRepository for SqliteAgentRepository {
         }
         if let Some(agent_type) = &query.agent_type {
             sql.push_str(" AND agent_type = ?");
-            params.push(SqlParam::String(agent_type.as_str().to_string()));
+            params.push(SqlParam::String(agent_type.as_str().to_owned()));
         }
         if let Some(status) = &query.status {
             sql.push_str(" AND status = ?");
-            params.push(SqlParam::String(status.as_str().to_string()));
+            params.push(SqlParam::String(status.as_str().to_owned()));
         }
         if let Some(project_id) = &query.project_id {
             sql.push_str(" AND project_id = ?");
@@ -218,55 +244,47 @@ impl AgentRepository for SqliteAgentRepository {
             params.push(SqlParam::I64(limit as i64));
         }
 
-        let rows = self.executor.query_all(&sql, &params).await?;
-        let mut sessions = Vec::with_capacity(rows.len());
-        for row in rows {
-            sessions.push(
-                row_convert::row_to_agent_session(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode agent session row", e))?,
-            );
-        }
-        Ok(sessions)
+        query_helpers::query_all(
+            &self.executor,
+            &sql,
+            &params,
+            row_convert::row_to_agent_session,
+            "agent session",
+        )
+        .await
     }
 
+    /// Lists sessions for a specific project.
+    // TODO(qlty): Found 18 lines of similar code in 3 locations (mass = 97)
     async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>> {
-        let rows = self
-            .executor
-            .query_all(
-                "SELECT * FROM agent_sessions WHERE project_id = ? ORDER BY started_at DESC",
-                &[SqlParam::String(project_id.to_string())],
-            )
-            .await?;
-
-        let mut sessions = Vec::with_capacity(rows.len());
-        for row in rows {
-            sessions.push(
-                row_convert::row_to_agent_session(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode agent session row", e))?,
-            );
-        }
-        Ok(sessions)
+        query_helpers::query_all(
+            &self.executor,
+            "SELECT * FROM agent_sessions WHERE project_id = ? ORDER BY started_at DESC",
+            &[SqlParam::String(project_id.to_owned())],
+            row_convert::row_to_agent_session,
+            "agent session",
+        )
+        .await
     }
 
+    /// Lists sessions for a specific worktree.
+    // TODO(qlty): Found 18 lines of similar code in 3 locations (mass = 97)
     async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>> {
-        let rows = self
-            .executor
-            .query_all(
-                "SELECT * FROM agent_sessions WHERE worktree_id = ? ORDER BY started_at DESC",
-                &[SqlParam::String(worktree_id.to_string())],
-            )
-            .await?;
-
-        let mut sessions = Vec::with_capacity(rows.len());
-        for row in rows {
-            sessions.push(
-                row_convert::row_to_agent_session(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode agent session row", e))?,
-            );
-        }
-        Ok(sessions)
+        query_helpers::query_all(
+            &self.executor,
+            "SELECT * FROM agent_sessions WHERE worktree_id = ? ORDER BY started_at DESC",
+            &[SqlParam::String(worktree_id.to_owned())],
+            row_convert::row_to_agent_session,
+            "agent session",
+        )
+        .await
     }
+}
 
+#[async_trait]
+/// Persistent agent event repository using SQLite.
+impl AgentEventRepository for SqliteAgentRepository {
+    /// Stores a delegation record.
     async fn store_delegation(&self, delegation: &Delegation) -> Result<()> {
         let params = [
             SqlParam::String(delegation.id.clone()),
@@ -313,6 +331,7 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(())
     }
 
+    /// Stores a tool call record.
     async fn store_tool_call(&self, tool_call: &ToolCall) -> Result<()> {
         let params = [
             SqlParam::String(tool_call.id.clone()),
@@ -352,7 +371,12 @@ impl AgentRepository for SqliteAgentRepository {
         debug!("Stored tool call: {}", tool_call.id);
         Ok(())
     }
+}
 
+#[async_trait]
+/// Persistent agent checkpoint repository using SQLite.
+impl AgentCheckpointRepository for SqliteAgentRepository {
+    /// Stores a session checkpoint.
     async fn store_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
         let snapshot_json = serde_json::to_string(&checkpoint.snapshot_data)
             .map_err(|e| Error::memory_with_source("serialize checkpoint snapshot", e))?;
@@ -360,7 +384,7 @@ impl AgentRepository for SqliteAgentRepository {
         let params = [
             SqlParam::String(checkpoint.id.clone()),
             SqlParam::String(checkpoint.session_id.clone()),
-            SqlParam::String(checkpoint.checkpoint_type.as_str().to_string()),
+            SqlParam::String(checkpoint.checkpoint_type.as_str().to_owned()),
             SqlParam::String(checkpoint.description.clone()),
             SqlParam::String(snapshot_json),
             SqlParam::I64(checkpoint.created_at),
@@ -390,31 +414,26 @@ impl AgentRepository for SqliteAgentRepository {
         Ok(())
     }
 
+    /// Retrieves a checkpoint by ID.
+    // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 91)
     async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>> {
-        let row = self
-            .executor
-            .query_one(
-                "SELECT * FROM checkpoints WHERE id = ?",
-                &[SqlParam::String(id.to_string())],
-            )
-            .await?;
-
-        match row {
-            Some(r) => Ok(Some(
-                row_convert::row_to_checkpoint(r.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode checkpoint row", e))?,
-            )),
-            None => Ok(None),
-        }
+        query_helpers::query_one(
+            &self.executor,
+            "SELECT * FROM checkpoints WHERE id = ?",
+            &[SqlParam::String(id.to_owned())],
+            row_convert::row_to_checkpoint,
+        )
+        .await
     }
 
+    /// Updates an existing checkpoint.
     async fn update_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
         let snapshot_json = serde_json::to_string(&checkpoint.snapshot_data)
             .map_err(|e| Error::memory_with_source("serialize checkpoint snapshot", e))?;
 
         let params = [
             SqlParam::String(checkpoint.session_id.clone()),
-            SqlParam::String(checkpoint.checkpoint_type.as_str().to_string()),
+            SqlParam::String(checkpoint.checkpoint_type.as_str().to_owned()),
             SqlParam::String(checkpoint.description.clone()),
             SqlParam::String(snapshot_json),
             SqlParam::I64(checkpoint.created_at),

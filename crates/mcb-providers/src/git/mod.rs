@@ -5,10 +5,20 @@
 //! - Project type detection (Cargo, npm, Python, Go, Maven)
 //! - Submodule discovery and recursive traversal
 
-mod git2_provider;
+use std::sync::Arc;
+
+use mcb_domain::ports::providers::VcsProvider;
+
+pub mod git2_provider;
 pub mod project_detection;
 pub mod submodule;
 
 pub use git2_provider::Git2Provider;
 pub use project_detection::{PROJECT_DETECTORS, detect_all_projects};
 pub use submodule::{SubmoduleProvider, collect_submodules, collect_submodules_with_depth};
+
+/// Builds the default VCS provider implementation.
+#[must_use]
+pub fn default_vcs_provider() -> Arc<dyn VcsProvider> {
+    Arc::new(git2_provider::Git2Provider::new())
+}

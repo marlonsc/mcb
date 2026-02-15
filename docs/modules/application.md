@@ -21,7 +21,6 @@ The application module implements use-case services and decorators following Cle
 - `indexing_service.rs` - Codebase indexing and processing
 - `memory_service.rs` - Observation/memory use cases
 - `search_service.rs` - Query processing and ranking
-- `validation_service.rs` - Validation orchestration
 
 ### Decorators (`decorators/`)
 
@@ -46,7 +45,6 @@ crates/mcb-application/src/
 │   ├── indexing_service.rs
 │   ├── memory_service.rs
 │   ├── search_service.rs
-│   ├── validation_service.rs
 │   └── mod.rs
 └── lib.rs
 ```
@@ -59,7 +57,6 @@ pub use use_cases::context_service::ContextServiceImpl;
 pub use use_cases::indexing_service::IndexingServiceImpl;
 pub use use_cases::memory_service::MemoryServiceImpl;
 pub use use_cases::search_service::SearchServiceImpl;
-pub use use_cases::validation_service::ValidationServiceImpl;
 ```
 
 ## Testing
@@ -68,4 +65,4 @@ Application tests are located in `crates/mcb-application/tests/`.
 
 ---
 
-### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)
+### Updated 2026-02-14 - Removed stale validation_service.rs reference; reflects current crate structure (v0.2.1)

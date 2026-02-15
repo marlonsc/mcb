@@ -1,7 +1,11 @@
 //! Search Service Use Case
 //!
-//! Application service for semantic search operations.
-//! Orchestrates search functionality using context service for semantic understanding.
+//! # Overview
+//! The `SearchService` executes semantic search queries against indexed codebases.
+//! It applies business logic like result ranking and post-filtering (e.g., by file type or language)
+//! to refine the raw results from the `ContextService`.
+//! This separation allows the search logic to evolve (e.g., hybrid search, re-ranking) without
+//! complicating the core context management.
 
 use std::sync::Arc;
 
@@ -9,7 +13,10 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::services::{ContextServiceInterface, SearchFilters, SearchServiceInterface};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
 
-/// Search service implementation - delegates to context service
+/// Implementation of the `SearchServiceInterface`.
+///
+/// Orchestrates vector similarity search via `ContextService` and applies application-level
+/// filtering logic.
 pub struct SearchServiceImpl {
     context_service: Arc<dyn ContextServiceInterface>,
 }
@@ -20,7 +27,12 @@ impl SearchServiceImpl {
         Self { context_service }
     }
 
-    /// Apply filters to search results
+    /// Apply filters to search results in-memory after retrieval.
+    ///
+    /// # Design Note
+    /// Filters are applied in-memory after over-fetching (`limit * 2`) from the vector store.
+    /// For large-scale deployments, push filters down to the vector store level via
+    /// `ContextServiceInterface::search_similar` metadata filters parameter.
     fn apply_filters(
         results: Vec<SearchResult>,
         filters: Option<&SearchFilters>,

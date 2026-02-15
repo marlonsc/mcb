@@ -5,4 +5,5 @@
 mod cache;
 mod config;
 mod di;
+mod shared_context;
 mod utils;

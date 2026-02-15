@@ -6,9 +6,8 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
 use crate::args::SessionArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use tracing::error;
 
 /// Lists agent sessions based on filters.
 #[tracing::instrument(skip_all)]
@@ -18,7 +17,7 @@ pub async fn list_sessions(
 ) -> Result<CallToolResult, McpError> {
     let query = AgentSessionQuery {
         session_summary_id: None,
-        parent_session_id: None,
+        parent_session_id: args.parent_session_id.clone(),
         agent_type: args
             .agent_type
             .as_ref()
@@ -26,6 +25,7 @@ pub async fn list_sessions(
         status: args
             .status
             .as_ref()
+            .filter(|value| !value.is_empty())
             .map(|value| value.parse())
             .transpose()
             .map_err(|_| McpError::invalid_params("Invalid status", None))?,
@@ -40,6 +40,7 @@ pub async fn list_sessions(
                 .map(|session| {
                     serde_json::json!({
                         "id": session.id,
+                        "parent_session_id": session.parent_session_id,
                         "agent_type": session.agent_type.as_str(),
                         "status": session.status.as_str(),
                         "started_at": session.started_at,
@@ -52,9 +53,6 @@ pub async fn list_sessions(
                 "count": items.len(),
             }))
         }
-        Err(e) => {
-            error!("Failed to list agent sessions: {:?}", e);
-            Ok(to_opaque_tool_error(e))
-        }
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }

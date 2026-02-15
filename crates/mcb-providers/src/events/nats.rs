@@ -202,7 +202,7 @@ impl EventBusProvider for NatsEventBusProvider {
                                 // Skip bad messages and continue
                                 Some((
                                     DomainEvent::MetricsSnapshot {
-                                        timestamp: chrono::Utc::now(),
+                                        timestamp: chrono::Utc::now().timestamp(),
                                     },
                                     (sub, count),
                                 ))

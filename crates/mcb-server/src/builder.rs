@@ -208,7 +208,7 @@ impl McpServerBuilder {
             org_entity: org_entity_repository,
         };
 
-        Ok(McpServer::new(services))
+        Ok(McpServer::new(services, None))
     }
 }
 

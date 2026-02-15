@@ -1,4 +1,5 @@
-use mcb_server::utils::json::*;
+use mcb_server::utils::json::json_map;
+use rstest::rstest;
 use serde_json::json;
 
 #[test]
@@ -12,30 +13,45 @@ fn test_json_map() {
 fn test_get_str() {
     let val = json!({"key": "value"});
     let map = val.as_object().unwrap();
-    assert_eq!(get_str(map, "key"), Some("value".to_string()));
-    assert_eq!(get_str(map, "missing"), None);
+    assert_eq!(
+        map.get("key").and_then(|value| value.as_str()),
+        Some("value")
+    );
+    assert_eq!(map.get("missing").and_then(|value| value.as_str()), None);
 }
 
-#[test]
-fn test_get_i64() {
-    let val = json!({"key": 42});
-    let map = val.as_object().unwrap();
-    assert_eq!(get_i64(map, "key"), Some(42));
+#[rstest]
+#[case(json!({"key": 42}), Some(42))]
+#[case(json!({"missing": 10}), None)]
+fn test_get_i64(#[case] value: serde_json::Value, #[case] expected: Option<i64>) {
+    let map = value.as_object().unwrap();
+    assert_eq!(map.get("key").and_then(|entry| entry.as_i64()), expected);
 }
 
-#[test]
-fn test_get_bool() {
-    let val = json!({"key": true});
-    let map = val.as_object().unwrap();
-    assert_eq!(get_bool(map, "key"), Some(true));
+#[rstest]
+#[case(json!({"key": true}), Some(true))]
+#[case(json!({"missing": false}), None)]
+fn test_get_bool(#[case] value: serde_json::Value, #[case] expected: Option<bool>) {
+    let map = value.as_object().unwrap();
+    assert_eq!(map.get("key").and_then(|entry| entry.as_bool()), expected);
 }
 
 #[test]
 fn test_get_string_list() {
     let val = json!({"key": ["a", "b", "c"]});
     let map = val.as_object().unwrap();
+    let values = map
+        .get("key")
+        .and_then(|entry| entry.as_array())
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(|item| item.as_str().map(str::to_owned))
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
     assert_eq!(
-        get_string_list(map, "key"),
+        values,
         vec!["a".to_string(), "b".to_string(), "c".to_string()]
     );
 }

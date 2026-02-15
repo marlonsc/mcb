@@ -12,15 +12,15 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::constants::CONTENT_TYPE_JSON;
-use crate::utils::{HttpResponseUtils, JsonExt};
-use crate::vector_store::helpers::handle_vector_request_error;
+use crate::provider_utils::{JsonRequestParams, send_json_request};
+use crate::utils::http::RequestErrorKind;
 
 /// Qdrant vector store provider
 ///
@@ -92,26 +92,24 @@ impl QdrantVectorStoreProvider {
         path: &str,
         body: Option<Value>,
     ) -> Result<Value> {
-        let mut builder = self
-            .http_client
-            .request(method, self.api_url(path))
-            .header("Content-Type", CONTENT_TYPE_JSON)
-            .timeout(self.timeout);
+        let mut headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_string())];
 
         if let Some(ref key) = self.api_key {
-            builder = builder.header("api-key", key);
+            headers.push(("api-key", key.clone()));
         }
 
-        if let Some(payload) = body {
-            builder = builder.json(&payload);
-        }
-
-        let response = builder
-            .send()
-            .await
-            .map_err(|e| handle_vector_request_error(e, self.timeout, "Qdrant", path))?;
-
-        HttpResponseUtils::check_and_parse(response, "Qdrant").await
+        send_json_request(JsonRequestParams {
+            client: &self.http_client,
+            method,
+            url: self.api_url(path),
+            timeout: self.timeout,
+            provider: "Qdrant",
+            operation: path,
+            kind: RequestErrorKind::VectorDb,
+            headers: &headers,
+            body: body.as_ref(),
+        })
+        .await
     }
 
     /// Convert Qdrant point result to domain SearchResult
@@ -129,14 +127,27 @@ impl QdrantVectorStoreProvider {
 
         SearchResult {
             id,
-            file_path: payload.string_or("file_path", ""),
+            file_path: payload
+                .get("file_path")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_owned(),
             start_line: payload
-                .opt_u64("start_line")
-                .or_else(|| payload.opt_u64("line_number"))
+                .get("start_line")
+                .and_then(Value::as_u64)
+                .or_else(|| payload.get("line_number").and_then(Value::as_u64))
                 .unwrap_or(0) as u32,
-            content: payload.string_or("content", ""),
+            content: payload
+                .get("content")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_owned(),
             score,
-            language: payload.string_or("language", "unknown"),
+            language: payload
+                .get("language")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown")
+                .to_owned(),
         }
     }
 }
@@ -145,11 +156,7 @@ impl QdrantVectorStoreProvider {
 impl VectorStoreAdmin for QdrantVectorStoreProvider {
     async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
         let response = self
-            .request(
-                reqwest::Method::GET,
-                &format!("/collections/{}", name.as_str()),
-                None,
-            )
+            .request(reqwest::Method::GET, &format!("/collections/{name}"), None)
             .await;
 
         match response {
@@ -162,7 +169,7 @@ impl VectorStoreAdmin for QdrantVectorStoreProvider {
         let mut stats = HashMap::new();
         stats.insert(
             "collection".to_string(),
-            serde_json::json!(collection.as_str()),
+            serde_json::json!(collection.to_string()),
         );
         stats.insert(
             "provider".to_string(),
@@ -172,7 +179,7 @@ impl VectorStoreAdmin for QdrantVectorStoreProvider {
         match self
             .request(
                 reqwest::Method::GET,
-                &format!("/collections/{}", collection.as_str()),
+                &format!("/collections/{collection}"),
                 None,
             )
             .await
@@ -218,7 +225,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
 
         self.request(
             reqwest::Method::PUT,
-            &format!("/collections/{}", name.as_str()),
+            &format!("/collections/{name}"),
             Some(payload),
         )
         .await?;
@@ -230,12 +237,12 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
     async fn delete_collection(&self, name: &CollectionId) -> Result<()> {
         self.request(
             reqwest::Method::DELETE,
-            &format!("/collections/{}", name.as_str()),
+            &format!("/collections/{name}"),
             None,
         )
         .await?;
 
-        self.collections.remove(name.as_str());
+        self.collections.remove(&name.to_string());
         Ok(())
     }
 
@@ -268,7 +275,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
 
         self.request(
             reqwest::Method::PUT,
-            &format!("/collections/{}/points", collection.as_str()),
+            &format!("/collections/{collection}/points"),
             Some(payload),
         )
         .await?;
@@ -298,7 +305,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         let response = self
             .request(
                 reqwest::Method::POST,
-                &format!("/collections/{}/points/search", collection.as_str()),
+                &format!("/collections/{collection}/points/search"),
                 Some(payload),
             )
             .await?;
@@ -329,7 +336,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
 
         self.request(
             reqwest::Method::POST,
-            &format!("/collections/{}/points/delete", collection.as_str()),
+            &format!("/collections/{collection}/points/delete"),
             Some(payload),
         )
         .await?;
@@ -354,7 +361,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         let response = self
             .request(
                 reqwest::Method::POST,
-                &format!("/collections/{}/points", collection.as_str()),
+                &format!("/collections/{collection}/points"),
                 Some(payload),
             )
             .await?;
@@ -384,7 +391,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         let response = self
             .request(
                 reqwest::Method::POST,
-                &format!("/collections/{}/points/scroll", collection.as_str()),
+                &format!("/collections/{collection}/points/scroll"),
                 Some(payload),
             )
             .await?;
@@ -415,13 +422,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
                 arr.iter()
                     .map(|item| {
                         let name = item["name"].as_str().unwrap_or("").to_string();
-                        CollectionInfo::new(
-                            CollectionId::new(name),
-                            0,
-                            0,
-                            None,
-                            self.provider_name(),
-                        )
+                        CollectionInfo::new(name, 0, 0, None, self.provider_name())
                     })
                     .collect()
             })
@@ -458,7 +459,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
         let response = self
             .request(
                 reqwest::Method::POST,
-                &format!("/collections/{}/points/scroll", collection.as_str()),
+                &format!("/collections/{collection}/points/scroll"),
                 Some(payload),
             )
             .await?;

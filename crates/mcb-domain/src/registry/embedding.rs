@@ -38,7 +38,7 @@ impl EmbeddingProviderConfig {
         }
     }
 
-    /// Set the model
+    /// Set the model name
     pub fn with_model(mut self, model: impl Into<String>) -> Self {
         self.model = Some(model.into());
         self
@@ -50,19 +50,19 @@ impl EmbeddingProviderConfig {
         self
     }
 
-    /// Set the base URL
+    /// Set the base URL for the API
     pub fn with_base_url(mut self, base_url: impl Into<String>) -> Self {
         self.base_url = Some(base_url.into());
         self
     }
 
-    /// Set the dimensions
+    /// Set the embedding dimensions
     pub fn with_dimensions(mut self, dimensions: usize) -> Self {
         self.dimensions = Some(dimensions);
         self
     }
 
-    /// Set the cache directory for local providers (FastEmbed)
+    /// Set the cache directory
     pub fn with_cache_dir(mut self, cache_dir: impl Into<PathBuf>) -> Self {
         self.cache_dir = Some(cache_dir.into());
         self

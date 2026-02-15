@@ -1,0 +1,33 @@
+# =============================================================================
+# Pre-commit Configuration
+# =============================================================================
+# Uses local Makefile validation to ensure consistency with CI.
+# =============================================================================
+
+repos:
+  - repo: local
+    hooks:
+      - id: lint
+        name: Rust Lint (Makefile)
+        description: Runs 'make lint' to check for errors/warnings
+        entry: make lint MCB_CI=1
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      - id: fmt
+        name: Rust Format (Makefile)
+        description: Runs 'cargo fmt --check'
+        entry: cargo fmt -- --check
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-added-large-files

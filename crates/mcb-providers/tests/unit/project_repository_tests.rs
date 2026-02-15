@@ -1,3 +1,4 @@
+use rstest::rstest;
 use std::sync::Arc;
 
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
@@ -62,23 +63,15 @@ fn create_test_project(id: &str, name: &str, path: &str) -> Project {
     }
 }
 
+#[rstest]
+#[case("proj-1", "Test Project", "/test/path")]
+#[case("proj-2", "Project 2", "/path/2")]
 #[tokio::test]
-async fn test_create_project() {
-    let (repo, _project, _temp) = setup_with_project("proj-1", "Test Project", "/test/path").await;
-
-    let retrieved = repo
-        .get_by_id(DEFAULT_ORG_ID, "proj-1")
-        .await
-        .expect("Failed to get project");
-    assert_eq!(retrieved.name, "Test Project");
-}
-
-#[tokio::test]
-async fn test_get_project_by_id() {
-    let (repo, project, _temp) = setup_with_project("proj-2", "Project 2", "/path/2").await;
+async fn get_project_by_id(#[case] id: &str, #[case] name: &str, #[case] path: &str) {
+    let (repo, project, _temp) = setup_with_project(id, name, path).await;
 
     let p = repo
-        .get_by_id(DEFAULT_ORG_ID, "proj-2")
+        .get_by_id(DEFAULT_ORG_ID, id)
         .await
         .expect("Failed to get project");
     assert_eq!(p.id, project.id);
@@ -98,26 +91,29 @@ async fn test_get_project_by_id_not_found() {
     );
 }
 
+#[rstest]
+#[case("name", "proj-3", "Unique Name", "/path/3", "Unique Name")]
+#[case("path", "proj-4", "Project 4", "/unique/path", "/unique/path")]
 #[tokio::test]
-async fn test_get_project_by_name() {
-    let (repo, _project, _temp) = setup_with_project("proj-3", "Unique Name", "/path/3").await;
+async fn get_project_by_unique_fields(
+    #[case] lookup_kind: &str,
+    #[case] expected_id: &str,
+    #[case] name: &str,
+    #[case] path: &str,
+    #[case] lookup_value: &str,
+) {
+    let (repo, _project, _temp) = setup_with_project(expected_id, name, path).await;
 
-    let retrieved = repo
-        .get_by_name(DEFAULT_ORG_ID, "Unique Name")
-        .await
-        .expect("Failed to get project by name");
-    assert_eq!(retrieved.id, "proj-3");
-}
-
-#[tokio::test]
-async fn test_get_project_by_path() {
-    let (repo, _project, _temp) = setup_with_project("proj-4", "Project 4", "/unique/path").await;
-
-    let retrieved = repo
-        .get_by_path(DEFAULT_ORG_ID, "/unique/path")
-        .await
-        .expect("Failed to get project by path");
-    assert_eq!(retrieved.id, "proj-4");
+    let retrieved = if lookup_kind == "name" {
+        repo.get_by_name(DEFAULT_ORG_ID, lookup_value)
+            .await
+            .expect("Failed to get project by name")
+    } else {
+        repo.get_by_path(DEFAULT_ORG_ID, lookup_value)
+            .await
+            .expect("Failed to get project by path")
+    };
+    assert_eq!(retrieved.id, expected_id);
 }
 
 #[tokio::test]

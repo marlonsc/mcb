@@ -37,9 +37,9 @@ In the [watch mode](#watch-mode) (after launching `rustlings`), you can enter `l
 
 The list allows you to…
 
--   See the status of all exercises (done or pending)
--   `c`: Continue at another exercise (temporarily skip some exercises or go back to a previous one)
--   `r`: Reset status and file of the selected exercise (you need to *reload/reopen* its file in your editor afterwards)
+- See the status of all exercises (done or pending)
+- `c`: Continue at another exercise (temporarily skip some exercises or go back to a previous one)
+- `r`: Reset status and file of the selected exercise (you need to *reload/reopen* its file in your editor afterwards)
 
 See the footer of the list for all possible keys.
 

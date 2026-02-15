@@ -7,13 +7,13 @@
 //! ## Domain Events
 //!
 //! | Event | Description |
-//! |-------|-------------|
+//! | ------- | ------------- |
 //! | [`DomainEvent`] | Base trait for all domain events |
 //! | [`EventPublisher`] | Interface for publishing domain events |
 //! | [`ServiceState`] | Service lifecycle states |
 
 /// Domain event definitions and publisher interface
-pub mod domain_events;
+mod domain_events;
 
 // Re-export domain event types
 pub use domain_events::{DomainEvent, EventPublisher, ServiceState};

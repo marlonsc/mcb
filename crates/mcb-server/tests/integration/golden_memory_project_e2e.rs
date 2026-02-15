@@ -34,11 +34,12 @@ async fn test_golden_memory_store_with_default_project() {
     let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
 
-    // Store observation with non-existent project (should auto-create default)
+    // Store observation with a test project
     let store_args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::Store,
+        org_id: None,
         resource: MemoryResource::Observation,
+        project_id: Some("golden-test-project".to_string()),
         data: Some(json!({
             "content": "This is a test observation",
             "observation_type": "context",
@@ -48,9 +49,9 @@ async fn test_golden_memory_store_with_default_project() {
             }
         })),
         ids: None,
-        project_id: Some("project-auto-create".to_string()),
         repo_id: None,
         session_id: None,
+        parent_session_id: None,
         tags: None,
         query: None,
         anchor_id: None,
@@ -77,14 +78,15 @@ async fn test_golden_memory_list_empty_graceful() {
 
     // List memories for a project with no data
     let list_args = MemoryArgs {
-        org_id: None,
         action: MemoryAction::List,
+        org_id: None,
         resource: MemoryResource::Observation,
+        project_id: None,
         data: None,
         ids: None,
-        project_id: Some("project-empty".to_string()),
         repo_id: None,
         session_id: None,
+        parent_session_id: None,
         tags: None,
         query: Some("missingterm".to_string()),
         anchor_id: None,
@@ -122,9 +124,10 @@ async fn test_golden_context_search_basic() {
     // 1. Store context observations
     let _ = memory_h
         .handle(Parameters(MemoryArgs {
-            org_id: None,
             action: MemoryAction::Store,
+            org_id: None,
             resource: MemoryResource::Observation,
+            project_id: Some(project_id.to_string()),
             data: Some(json!({
                 "content": "The reactor core temperature is critical.",
                 "observation_type": "context",
@@ -132,9 +135,9 @@ async fn test_golden_context_search_basic() {
                 "metadata": { "session_id": "s1" }
             })),
             ids: None,
-            project_id: Some(project_id.to_string()),
             repo_id: None,
             session_id: None,
+            parent_session_id: None,
             tags: None,
             query: None,
             anchor_id: None,
@@ -149,8 +152,8 @@ async fn test_golden_context_search_basic() {
 
     // 2. Search using Context resource
     let search_args = SearchArgs {
-        org_id: None,
         query: "reactor temperature".to_string(),
+        org_id: None,
         resource: SearchResource::Context,
         collection: None,
         extensions: None,

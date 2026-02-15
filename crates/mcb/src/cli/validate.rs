@@ -38,9 +38,13 @@ pub struct ValidateArgs {
 
 /// Validation result for exit code determination
 pub struct ValidationResult {
+    /// Number of error violations found
     pub errors: usize,
+    /// Number of warning violations found
     pub warnings: usize,
+    /// Number of info violations found
     pub infos: usize,
+    /// Whether strict mode was enabled
     pub strict_mode: bool,
 }
 
@@ -163,11 +167,7 @@ impl ValidateArgs {
     }
 
     fn print_single_violation(&self, violation: &mcb_validate::ViolationEntry) {
-        let file_display = violation
-            .file
-            .as_ref()
-            .map(|p| p.display().to_string())
-            .unwrap_or_else(|| "-".to_string());
+        let file_display = violation.file.as_deref().unwrap_or("-");
         let line = violation.line.unwrap_or(0);
 
         println!(

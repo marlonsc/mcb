@@ -36,9 +36,9 @@ async fn test_validation_agent_sql_storage_flow() {
     // Verify LogTool handles repo errors gracefully (proving handler execution)
     let result = agent_h
         .handle(Parameters(AgentArgs {
-            org_id: None,
             action: AgentAction::LogTool,
-            session_id: mcb_domain::value_objects::SessionId::new("missing-session"),
+            org_id: None,
+            session_id: mcb_domain::value_objects::SessionId::from_name("missing-session"),
             data: json!({
                 "tool_name": "test",
                 "success": true,
@@ -52,7 +52,7 @@ async fn test_validation_agent_sql_storage_flow() {
     let resp = result.unwrap();
     let text = extract_text(&resp.content);
     assert!(
-        text.contains("Failed to store tool call"),
+        text.contains("Memory storage error"),
         "Should handle SQL error gracefully. Got: {}",
         text
     );
@@ -67,17 +67,19 @@ async fn test_validation_session_create_schema_fallback() {
     // Try creating session with agent_type inside data (MISSING from top-level args)
     let result = session_h
         .handle(Parameters(SessionArgs {
-            org_id: None,
             action: SessionAction::Create,
+            org_id: None,
             agent_type: None, // MISSING
             data: Some(json!({
                 "session_summary_id": "summ-1",
                 "model": "test-model",
-                "agent_type": "sisyphus" // FALLBACK
+                "agent_type": "sisyphus", // FALLBACK
+                "project_id": "test-project"
             })),
-            project_id: None,
             worktree_id: None,
+            parent_session_id: None,
             session_id: None,
+            project_id: Some("test-project".to_string()),
             limit: None,
             status: None,
         }))
@@ -102,17 +104,18 @@ async fn test_validation_memory_observation_enum_error() {
 
     let result = memory_h
         .handle(Parameters(MemoryArgs {
-            org_id: None,
             action: MemoryAction::Store,
+            org_id: None,
             resource: MemoryResource::Observation,
+            project_id: None,
             data: Some(json!({
                 "content": "test",
                 "observation_type": "INVALID_TYPE"
             })),
             ids: None,
-            project_id: Some("p1".to_string()),
             repo_id: None,
             session_id: None,
+            parent_session_id: None,
             tags: None,
             query: None,
             anchor_id: None,
@@ -130,7 +133,7 @@ async fn test_validation_memory_observation_enum_error() {
     assert!(resp.is_error.unwrap_or(false));
     let text = extract_text(&resp.content);
     assert!(
-        text.contains("Valid types: code, decision"),
+        text.contains("Unknown observation type:"),
         "Error message validation failed: {}",
         text
     );

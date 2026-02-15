@@ -8,9 +8,10 @@
 //! stdio-to-HTTP bridge for Claude Code integration.
 
 use std::io::{self, BufRead, Write};
+use std::path::Path;
 use std::time::Duration;
 
-use mcb_domain::value_objects::ids::SessionId;
+use mcb_domain::utils::mask_id;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
@@ -23,8 +24,11 @@ pub struct McpClientConfig {
     /// Server URL (e.g., "http://127.0.0.1:8080")
     pub server_url: String,
 
-    /// Session ID for this client connection
-    pub session_id: SessionId,
+    /// Local client instance identifier for log correlation.
+    pub client_instance_id: String,
+
+    /// Public non-sensitive session identifier for local introspection/tests.
+    pub public_session_id: String,
 
     /// Request timeout
     pub timeout: Duration,
@@ -33,37 +37,32 @@ pub struct McpClientConfig {
 /// HTTP client transport
 ///
 /// Bridges stdio (for Claude Code) to HTTP (for MCB server).
-/// Each request is forwarded to the server with a session ID header.
+/// Each request is forwarded to the server over JSON-RPC.
 pub struct HttpClientTransport {
     config: McpClientConfig,
     client: reqwest::Client,
 }
 
 impl HttpClientTransport {
-    /// Create a new HTTP client transport
+    /// Create a new HTTP client transport with explicit session source values.
     ///
-    /// # Arguments
-    ///
-    /// * `server_url` - URL of the MCB server (e.g., "http://127.0.0.1:8080")
-    /// * `session_prefix` - Optional prefix for session ID generation
-    /// * `timeout` - Request timeout duration
-    ///
-    /// # Errors
-    ///
-    /// Returns error if the HTTP client cannot be created.
-    pub fn new(
+    /// Used by tests to validate session source precedence without mutating process env.
+    pub fn new_with_session_source(
         server_url: String,
         session_prefix: Option<String>,
         timeout: Duration,
+        session_id_override: Option<String>,
+        session_file_override: Option<String>,
     ) -> Result<Self, Box<dyn std::error::Error>> {
-        let session_id = match session_prefix {
-            Some(prefix) => SessionId::new(format!("{}_{}", prefix, Uuid::new_v4())),
-            None => SessionId::new(Uuid::new_v4().to_string()),
-        };
+        Self::require_secure_transport(&server_url)?;
+
+        let public_session_id = Self::generate_session_id(session_prefix.clone());
+        Self::initialize_session_state(session_prefix, session_id_override, session_file_override)?;
 
         let config = McpClientConfig {
             server_url,
-            session_id,
+            client_instance_id: Uuid::new_v4().to_string(),
+            public_session_id,
             timeout,
         };
 
@@ -73,6 +72,93 @@ impl HttpClientTransport {
             .map_err(|e| format!("Failed to create HTTP client: {e}"))?;
 
         Ok(Self { config, client })
+    }
+
+    fn initialize_session_state(
+        session_prefix: Option<String>,
+        session_id_override: Option<String>,
+        session_file_override: Option<String>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if session_id_override
+            .and_then(Self::normalize_env_value)
+            .is_some()
+        {
+            return Ok(());
+        }
+
+        if let Some(session_file) = session_file_override.and_then(Self::normalize_env_value) {
+            let path = Path::new(&session_file);
+
+            if path.exists() {
+                let existing = std::fs::read_to_string(path)?;
+                if Self::normalize_env_value(existing).is_some() {
+                    return Ok(());
+                }
+            }
+
+            let generated = Self::generate_session_id(session_prefix);
+            if let Some(parent) = path.parent()
+                && !parent.as_os_str().is_empty()
+            {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(path, format!("{}\n", generated))?;
+            return Ok(());
+        }
+
+        Ok(())
+    }
+
+    fn generate_session_id(session_prefix: Option<String>) -> String {
+        match session_prefix {
+            Some(prefix) => format!("{}_{}", prefix, Uuid::new_v4()),
+            None => Uuid::new_v4().to_string(),
+        }
+    }
+
+    /// Reject cleartext HTTP for non-loopback hosts.
+    ///
+    /// HTTPS is always accepted. Plain HTTP is only permitted when the host is
+    /// a loopback address (`127.0.0.1`, `localhost`, `[::1]`), since the
+    /// traffic never leaves the local machine. Any other combination is
+    /// rejected to prevent cleartext transmission of sensitive data.
+    fn require_secure_transport(url: &str) -> Result<(), String> {
+        let lower = url.to_ascii_lowercase();
+
+        if lower.starts_with("https://") {
+            return Ok(());
+        }
+
+        if let Some(after_scheme) = lower.strip_prefix("http://") {
+            let host = if after_scheme.starts_with('[') {
+                match after_scheme.find(']') {
+                    Some(end) => &after_scheme[..=end],
+                    None => after_scheme,
+                }
+            } else {
+                after_scheme.split([':', '/']).next().unwrap_or("")
+            };
+
+            return match host {
+                "127.0.0.1" | "localhost" | "[::1]" => Ok(()),
+                _ => Err(format!(
+                    "Cleartext HTTP is only allowed for loopback addresses \
+                     (127.0.0.1, localhost, [::1]). \
+                     Use HTTPS for remote host: {host}"
+                )),
+            };
+        }
+
+        Err(format!("Unsupported URL scheme in: {url}"))
+    }
+
+    fn normalize_env_value(value: impl AsRef<str>) -> Option<String> {
+        let normalized = value.as_ref().trim();
+        if normalized.is_empty() {
+            None
+        } else {
+            Some(normalized.to_string())
+        }
     }
 
     /// Run the client transport
@@ -86,7 +172,7 @@ impl HttpClientTransport {
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         info!(
             server_url = %self.config.server_url,
-            session_id = %self.config.session_id,
+            client_instance_id = %mask_id(&self.config.client_instance_id),
             "MCB client transport started"
         );
 
@@ -111,13 +197,13 @@ impl HttpClientTransport {
                 continue;
             }
 
-            debug!(request = %line, "Received request from stdin");
+            debug!(request_len = line.len(), "Received request from stdin");
 
             // Parse the request
             let request: McpRequest = match serde_json::from_str(&line) {
                 Ok(req) => req,
                 Err(e) => {
-                    warn!(error = %e, line = %line, "Failed to parse request");
+                    warn!(error = %e, request_len = line.len(), "Failed to parse request");
                     let error_response = Self::create_parse_error(e);
                     Self::write_response(&mut stdout, &error_response)?;
                     continue;
@@ -140,18 +226,11 @@ impl HttpClientTransport {
         debug!(
             url = %url,
             method = %request.method,
-            session_id = %self.config.session_id,
+            client_instance_id = %mask_id(&self.config.client_instance_id),
             "Sending request to server"
         );
 
-        let response = self
-            .client
-            .post(&url)
-            .header("Content-Type", "application/json")
-            .header("X-Session-Id", self.config.session_id.as_str())
-            .json(request)
-            .send()
-            .await?;
+        let response = post_mcp_request(&self.client, &url, request).await?;
 
         let status = response.status();
         debug!(status = %status, "Received response from server");
@@ -163,14 +242,14 @@ impl HttpClientTransport {
         response.json::<McpResponse>().await
     }
 
-    /// Get the session ID for this client
-    pub fn session_id(&self) -> &str {
-        self.config.session_id.as_str()
-    }
-
     /// Get the server URL
     pub fn server_url(&self) -> &str {
         &self.config.server_url
+    }
+
+    /// Get the local public session identifier.
+    pub fn session_id(&self) -> &str {
+        &self.config.public_session_id
     }
 
     /// Forward a request to the server, handling errors
@@ -220,5 +299,125 @@ impl HttpClientTransport {
         writeln!(stdout, "{}", response_json)?;
         stdout.flush()?;
         Ok(())
+    }
+}
+
+async fn post_mcp_request(
+    client: &reqwest::Client,
+    url: &str,
+    request: &McpRequest,
+) -> Result<reqwest::Response, reqwest::Error> {
+    client
+        .post(url)
+        .header("Content-Type", "application/json")
+        .header("X-Execution-Flow", "client-hybrid")
+        .json(request)
+        .send()
+        .await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::HttpClientTransport;
+    use std::fs;
+    use std::time::Duration;
+
+    #[test]
+    fn session_id_override_takes_precedence_over_file() {
+        let temp_dir = tempfile::tempdir().expect("create temp dir");
+        let session_file = temp_dir.path().join("session.id");
+
+        let client = HttpClientTransport::new_with_session_source(
+            "http://127.0.0.1:18080".to_string(),
+            Some("prefix".to_string()),
+            Duration::from_secs(10),
+            Some("explicit-session-id".to_string()),
+            Some(session_file.to_str().unwrap().to_string()),
+        )
+        .expect("create client");
+
+        drop(client);
+        assert!(!session_file.exists());
+    }
+
+    #[test]
+    fn session_id_persists_via_session_file() {
+        let temp_dir = tempfile::tempdir().expect("create temp dir");
+        let session_file = temp_dir.path().join("session.id");
+        let session_file_str = session_file.to_str().unwrap().to_string();
+
+        let first = HttpClientTransport::new_with_session_source(
+            "http://127.0.0.1:18080".to_string(),
+            Some("persist".to_string()),
+            Duration::from_secs(10),
+            None,
+            Some(session_file_str.clone()),
+        )
+        .expect("create first client");
+        drop(first);
+
+        let first_session = fs::read_to_string(&session_file).expect("read first session file");
+
+        let second = HttpClientTransport::new_with_session_source(
+            "http://127.0.0.1:18080".to_string(),
+            Some("persist".to_string()),
+            Duration::from_secs(10),
+            None,
+            Some(session_file_str),
+        )
+        .expect("create second client");
+        drop(second);
+
+        let second_session = fs::read_to_string(&session_file).expect("read second session file");
+
+        assert!(!first_session.trim().is_empty());
+        assert_eq!(first_session, second_session);
+    }
+
+    #[test]
+    fn secure_transport_allows_loopback_http() {
+        for url in [
+            "http://127.0.0.1:8080",
+            "http://localhost:3000",
+            "http://[::1]:9090",
+        ] {
+            assert!(
+                HttpClientTransport::require_secure_transport(url).is_ok(),
+                "should allow loopback URL: {url}"
+            );
+        }
+    }
+
+    #[test]
+    fn secure_transport_allows_https() {
+        for url in [
+            "https://api.example.com",
+            "https://10.0.0.1:443",
+            "https://remote-server:8443/path",
+        ] {
+            assert!(
+                HttpClientTransport::require_secure_transport(url).is_ok(),
+                "should allow HTTPS URL: {url}"
+            );
+        }
+    }
+
+    #[test]
+    fn secure_transport_rejects_remote_http() {
+        for url in [
+            "http://api.example.com",
+            "http://10.0.0.1:8080",
+            "http://192.168.1.1:3000",
+        ] {
+            assert!(
+                HttpClientTransport::require_secure_transport(url).is_err(),
+                "should reject remote HTTP URL: {url}"
+            );
+        }
+    }
+
+    #[test]
+    fn secure_transport_rejects_unknown_scheme() {
+        assert!(HttpClientTransport::require_secure_transport("ftp://files.example.com").is_err());
     }
 }

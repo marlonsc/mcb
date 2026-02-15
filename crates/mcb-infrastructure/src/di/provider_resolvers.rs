@@ -48,16 +48,19 @@ impl EmbeddingProviderResolver {
         if let Some(ref provider_name) = self.config.providers.embedding.provider {
             let mut registry_config = EmbeddingProviderConfig::new(provider_name);
             if let Some(ref model) = self.config.providers.embedding.model {
-                registry_config = registry_config.with_model(model);
+                registry_config.model = Some(model.clone());
             }
             if let Some(ref base_url) = self.config.providers.embedding.base_url {
-                registry_config = registry_config.with_base_url(base_url);
+                registry_config.base_url = Some(base_url.clone());
             }
             if let Some(ref api_key) = self.config.providers.embedding.api_key {
-                registry_config = registry_config.with_api_key(api_key);
+                registry_config.api_key = Some(api_key.clone());
             }
             if let Some(dimensions) = self.config.providers.embedding.dimensions {
-                registry_config = registry_config.with_dimensions(dimensions);
+                registry_config.dimensions = Some(dimensions);
+            }
+            if let Some(ref cache_dir) = self.config.providers.embedding.cache_dir {
+                registry_config.cache_dir = Some(cache_dir.clone());
             }
             return resolve_embedding_provider(&registry_config);
         }
@@ -129,13 +132,13 @@ impl VectorStoreProviderResolver {
         if let Some(ref provider_name) = self.config.providers.vector_store.provider {
             let mut registry_config = VectorStoreProviderConfig::new(provider_name);
             if let Some(ref address) = self.config.providers.vector_store.address {
-                registry_config = registry_config.with_uri(address);
+                registry_config.uri = Some(address.clone());
             }
             if let Some(dimensions) = self.config.providers.vector_store.dimensions {
-                registry_config = registry_config.with_dimensions(dimensions);
+                registry_config.dimensions = Some(dimensions);
             }
             if let Some(ref collection) = self.config.providers.vector_store.collection {
-                registry_config = registry_config.with_collection(collection);
+                registry_config.collection = Some(collection.clone());
             }
             return resolve_vector_store_provider(&registry_config);
         }
@@ -293,7 +296,7 @@ impl std::fmt::Debug for LanguageProviderResolver {
 // ============================================================================
 
 /// Convert domain EmbeddingConfig to registry EmbeddingProviderConfig
-fn embedding_config_to_registry(config: &EmbeddingConfig) -> EmbeddingProviderConfig {
+pub(crate) fn embedding_config_to_registry(config: &EmbeddingConfig) -> EmbeddingProviderConfig {
     EmbeddingProviderConfig {
         provider: config.provider.to_string(),
         model: Some(config.model.clone()),
@@ -306,7 +309,9 @@ fn embedding_config_to_registry(config: &EmbeddingConfig) -> EmbeddingProviderCo
 }
 
 /// Convert domain VectorStoreConfig to registry VectorStoreProviderConfig
-fn vector_store_config_to_registry(config: &VectorStoreConfig) -> VectorStoreProviderConfig {
+pub(crate) fn vector_store_config_to_registry(
+    config: &VectorStoreConfig,
+) -> VectorStoreProviderConfig {
     VectorStoreProviderConfig {
         provider: config.provider.to_string(),
         uri: config.address.clone(),

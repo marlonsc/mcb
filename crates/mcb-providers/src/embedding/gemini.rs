@@ -5,14 +5,17 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use mcb_domain::error::{Error, Result};
+use mcb_domain::constants::embedding::EMBEDDING_DIMENSION_GEMINI;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
+use mcb_domain::error::Result;
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
-use crate::constants::{CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_GEMINI};
-use crate::embedding::helpers::constructor;
-use crate::utils::{HttpResponseUtils, handle_request_error};
+use super::helpers::HttpEmbeddingClient;
+
+use crate::provider_utils::{JsonRequestParams, parse_float_array_lossy, send_json_request};
+use crate::utils::http::RequestErrorKind;
 
 /// Gemini embedding provider
 ///
@@ -41,11 +44,7 @@ use crate::utils::{HttpResponseUtils, handle_request_error};
 /// }
 /// ```
 pub struct GeminiEmbeddingProvider {
-    api_key: String,
-    base_url: Option<String>,
-    model: String,
-    timeout: Duration,
-    http_client: Client,
+    client: HttpEmbeddingClient,
 }
 
 impl GeminiEmbeddingProvider {
@@ -64,33 +63,29 @@ impl GeminiEmbeddingProvider {
         timeout: Duration,
         http_client: Client,
     ) -> Self {
-        let api_key = constructor::validate_api_key(&api_key);
-        let base_url = constructor::validate_url(base_url);
         Self {
-            api_key,
-            base_url,
-            model,
-            timeout,
-            http_client,
+            client: HttpEmbeddingClient::new(
+                api_key,
+                base_url,
+                "https://generativelanguage.googleapis.com",
+                model,
+                timeout,
+                http_client,
+            ),
         }
-    }
-
-    /// Get the effective base URL
-    fn effective_base_url(&self) -> String {
-        constructor::get_effective_url(
-            self.base_url.as_deref(),
-            "https://generativelanguage.googleapis.com",
-        )
     }
 
     /// Get the model name for API calls (remove prefix if present)
     pub fn api_model_name(&self) -> &str {
-        self.model.strip_prefix("models/").unwrap_or(&self.model)
+        self.client
+            .model
+            .strip_prefix("models/")
+            .unwrap_or(&self.client.model)
     }
 
     /// Get the model name for this provider
     pub fn model(&self) -> &str {
-        &self.model
+        &self.client.model
     }
 
     /// Get the maximum tokens supported by this provider
@@ -104,12 +99,12 @@ impl GeminiEmbeddingProvider {
 
     /// Get the API key for this provider
     pub fn api_key(&self) -> &str {
-        &self.api_key
+        &self.client.api_key
     }
 
     /// Get the base URL for this provider
     pub fn base_url(&self) -> String {
-        self.effective_base_url()
+        self.client.base_url.clone()
     }
 
     /// Fetch embedding for a single text
@@ -120,46 +115,50 @@ impl GeminiEmbeddingProvider {
 
         let url = format!(
             "{}/v1beta/models/{}:embedContent",
-            self.effective_base_url(),
+            self.client.base_url,
             self.api_model_name()
         );
 
-        let response = self
-            .http_client
-            .post(&url)
-            .header("Content-Type", CONTENT_TYPE_JSON)
-            .header("x-goog-api-key", &self.api_key)
-            .timeout(self.timeout)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| handle_request_error(e, self.timeout, "Gemini"))?;
+        let headers = vec![
+            ("Content-Type", CONTENT_TYPE_JSON.to_string()),
+            ("x-goog-api-key", self.client.api_key.clone()),
+        ];
 
-        HttpResponseUtils::check_and_parse(response, "Gemini").await
+        send_json_request(JsonRequestParams {
+            client: &self.client.client,
+            method: reqwest::Method::POST,
+            url,
+            timeout: self.client.timeout,
+            provider: "Gemini",
+            operation: "embedContent",
+            kind: RequestErrorKind::Embedding,
+            headers: &headers,
+            body: Some(&payload),
+        })
+        .await
     }
 
     /// Parse embedding from response data
     fn parse_embedding(&self, response_data: &serde_json::Value) -> Result<Embedding> {
-        let embedding_vec = response_data["embedding"]["values"]
-            .as_array()
-            .ok_or_else(|| {
-                Error::embedding("Invalid response format: missing embedding values".to_string())
-            })?
-            .iter()
-            .map(|v| v.as_f64().unwrap_or(0.0) as f32)
-            .collect::<Vec<f32>>();
+        let embedding_vec = parse_float_array_lossy(
+            response_data,
+            "/embedding/values",
+            "Invalid response format: missing embedding values",
+        )?;
 
         let dimensions = embedding_vec.len();
         Ok(Embedding {
             vector: embedding_vec,
-            model: self.model.clone(),
+            model: self.client.model.clone(),
             dimensions,
         })
     }
 }
 
 #[async_trait]
+/// Google Gemini implementation of the EmbeddingProvider trait.
 impl EmbeddingProvider for GeminiEmbeddingProvider {
+    /// Generates embeddings for a batch of texts.
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
         if texts.is_empty() {
             return Ok(Vec::new());
@@ -175,6 +174,7 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
         Ok(results)
     }
 
+    /// Returns the embedding dimensions for the configured model.
     fn dimensions(&self) -> usize {
         match self.api_model_name() {
             "gemini-embedding-001" => EMBEDDING_DIMENSION_GEMINI,
@@ -183,6 +183,7 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
         }
     }
 
+    /// Returns the provider name ("gemini").
     fn provider_name(&self) -> &str {
         "gemini"
     }

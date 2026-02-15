@@ -44,7 +44,7 @@ fn unique_temp_path(name: &str) -> PathBuf {
 }
 
 fn config_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/tests.toml")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/smoke-test.toml")
 }
 
 fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
@@ -53,9 +53,9 @@ fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
         .arg("--server")
         .arg("--config")
         .arg(config_path())
-        .env("MCP__SERVER__TRANSPORT_MODE", "http")
-        .env("MCP__AUTH__USER_DB_PATH", db_path)
-        .env("RUST_LOG", "info") // Ensure we get logs
+        .env("MCP__SERVER__TRANSPORT_MODE", "hybrid")
+        .env("MCP__PROVIDERS__DATABASE__CONFIGS__DEFAULT__PATH", db_path)
+        .env("RUST_LOG", "info")
         .stderr(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()

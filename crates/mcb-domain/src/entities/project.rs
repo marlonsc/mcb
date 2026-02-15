@@ -1,10 +1,21 @@
-//! Project entities for repository management and detection.
+//! Project Domain Entities
+//!
+//! # Overview
+//! This module defines the core entities covering Project Management and Issue Tracking.
+//! It includes the `Project` root entity, as well as `ProjectIssue`, `ProjectPhase`,
+//! and related enums (`IssueType`, `IssueStatus`).
+//!
+//! # Key Concepts
+//! - **Project**: A distinct codebase or module (e.g., a Rust crate, an NPM package).
+//! - **Issue**: A unit of work (Task, Bug, Feature) tracked within a project.
+//! - **Phase**: A milestone or stage in the project roadmap.
+//! - **Dependency**: Directed relationships between issues (Blocks, RelatesTo).
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Registered project in MCB - serves as root entity linking collections, observations, and file hashes.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Project {
     /// Unique identifier for the project.
     pub id: String,
@@ -116,7 +127,18 @@ pub struct DetectedProject {
 // ============================================================================
 
 /// Represents the execution state of a project phase.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
 pub enum PhaseStatus {
     /// Indicates the phase is scheduled but hasn't started.
     Planned,
@@ -133,34 +155,25 @@ pub enum PhaseStatus {
 impl PhaseStatus {
     /// Returns the string representation of the phase status.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Planned => "planned",
-            Self::InProgress => "in_progress",
-            Self::Blocked => "blocked",
-            Self::Completed => "completed",
-            Self::Skipped => "skipped",
-        }
-    }
-}
-
-impl std::str::FromStr for PhaseStatus {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "planned" => Ok(Self::Planned),
-            "in_progress" => Ok(Self::InProgress),
-            "blocked" => Ok(Self::Blocked),
-            "completed" => Ok(Self::Completed),
-            "skipped" => Ok(Self::Skipped),
-            _ => Err(format!("Unknown phase status: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }
 
 /// Classifies the nature of a project issue.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
 pub enum IssueType {
     /// Represents a unit of work to be performed.
     Task,
@@ -177,34 +190,25 @@ pub enum IssueType {
 impl IssueType {
     /// Returns the string representation of the issue type.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Task => "task",
-            Self::Bug => "bug",
-            Self::Feature => "feature",
-            Self::Enhancement => "enhancement",
-            Self::Documentation => "documentation",
-        }
-    }
-}
-
-impl std::str::FromStr for IssueType {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "task" => Ok(Self::Task),
-            "bug" => Ok(Self::Bug),
-            "feature" => Ok(Self::Feature),
-            "enhancement" => Ok(Self::Enhancement),
-            "documentation" => Ok(Self::Documentation),
-            _ => Err(format!("Unknown issue type: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }
 
 /// Tracks the lifecycle state of an issue.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
 pub enum IssueStatus {
     /// Indicates the issue is new and awaiting action.
     Open,
@@ -221,34 +225,24 @@ pub enum IssueStatus {
 impl IssueStatus {
     /// Returns the string representation of the issue status.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Open => "open",
-            Self::InProgress => "in_progress",
-            Self::Blocked => "blocked",
-            Self::Resolved => "resolved",
-            Self::Closed => "closed",
-        }
-    }
-}
-
-impl std::str::FromStr for IssueStatus {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "open" => Ok(Self::Open),
-            "in_progress" => Ok(Self::InProgress),
-            "blocked" => Ok(Self::Blocked),
-            "resolved" => Ok(Self::Resolved),
-            "closed" => Ok(Self::Closed),
-            _ => Err(format!("Unknown issue status: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }
 
 /// Defines the relationship between two project issues.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
 pub enum DependencyType {
     /// Indicates the source issue prevents the target issue from starting.
     Blocks,
@@ -263,27 +257,8 @@ pub enum DependencyType {
 impl DependencyType {
     /// Returns the string representation of the dependency type.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Blocks => "blocks",
-            Self::RelatesTo => "relates_to",
-            Self::DuplicateOf => "duplicate_of",
-            Self::ParentOf => "parent_of",
-        }
-    }
-}
-
-impl std::str::FromStr for DependencyType {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "blocks" => Ok(Self::Blocks),
-            "relates_to" => Ok(Self::RelatesTo),
-            "duplicate_of" => Ok(Self::DuplicateOf),
-            "parent_of" => Ok(Self::ParentOf),
-            _ => Err(format!("Unknown dependency type: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }
 
@@ -339,7 +314,11 @@ pub struct ProjectIssue {
     /// User identifier of the person assigned to this issue.
     #[serde(default)]
     pub assignee: Option<String>,
-    /// Set of tags or categories associated with the issue.
+    /// Denormalized label names for fast read access (inline JSON).
+    ///
+    /// The normalized source of truth is `IssueLabel` + `IssueLabelAssignment`
+    /// (relational). This field is a read-optimized cache; writes go through
+    /// the label assignment API which keeps both in sync.
     pub labels: Vec<String>,
     /// Estimated effort in minutes.
     #[serde(default)]

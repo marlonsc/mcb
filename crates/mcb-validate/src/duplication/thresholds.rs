@@ -3,6 +3,7 @@
 //! Defines duplication types (clone categories) and configurable thresholds
 //! for the duplication detection system.
 
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 /// Clone type classification following established taxonomy
@@ -11,15 +12,19 @@ use serde::{Deserialize, Serialize};
 /// - Type 2 (Renamed): Code with renamed identifiers
 /// - Type 3 (Gapped): Near-miss clones with small modifications
 /// - Type 4 (Semantic): Functionally equivalent code (future)
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Display)]
 pub enum DuplicationType {
     /// Type 1: Exact copy-paste (100% identical)
+    #[display("Exact Clone")]
     ExactClone,
     /// Type 2: Renamed identifiers only
+    #[display("Renamed Clone")]
     RenamedClone,
     /// Type 3: Near-miss with small modifications
+    #[display("Gapped Clone")]
     GappedClone,
     /// Type 4: Functionally similar (future implementation)
+    #[display("Semantic Clone")]
     SemanticClone,
 }
 
@@ -55,14 +60,7 @@ impl DuplicationType {
     }
 }
 
-impl std::fmt::Display for DuplicationType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.name())
-    }
-}
-
 /// Configuration thresholds for duplication detection
-#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DuplicationThresholds {
     /// Minimum number of lines for a clone to be reported
@@ -149,59 +147,5 @@ impl DuplicationThresholds {
     pub fn meets_threshold(&self, similarity: f64, dup_type: DuplicationType) -> bool {
         let type_min = dup_type.min_similarity();
         similarity >= self.similarity_threshold.max(type_min)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_duplication_type_rule_ids() {
-        assert_eq!(DuplicationType::ExactClone.rule_id(), "DUP001");
-        assert_eq!(DuplicationType::RenamedClone.rule_id(), "DUP002");
-        assert_eq!(DuplicationType::GappedClone.rule_id(), "DUP003");
-        assert_eq!(DuplicationType::SemanticClone.rule_id(), "DUP004");
-    }
-
-    #[test]
-    fn test_default_thresholds() {
-        let thresholds = DuplicationThresholds::default();
-        assert_eq!(thresholds.min_lines, 6);
-        assert_eq!(thresholds.min_tokens, 50);
-        assert!(thresholds.detect_exact);
-        assert!(thresholds.detect_renamed);
-        assert!(thresholds.detect_gapped);
-        assert!(!thresholds.detect_semantic);
-    }
-
-    #[test]
-    fn test_strict_thresholds() {
-        let thresholds = DuplicationThresholds::strict();
-        assert_eq!(thresholds.min_lines, 4);
-        assert!(
-            (thresholds.similarity_threshold - 0.90).abs() < f64::EPSILON,
-            "similarity_threshold should be 0.90"
-        );
-    }
-
-    #[test]
-    fn test_meets_threshold() {
-        let thresholds = DuplicationThresholds::default();
-
-        // Exact clone requires 1.0 similarity
-        assert!(thresholds.meets_threshold(1.0, DuplicationType::ExactClone));
-        assert!(!thresholds.meets_threshold(0.99, DuplicationType::ExactClone));
-
-        // Gapped clone with default 0.80 threshold
-        assert!(thresholds.meets_threshold(0.85, DuplicationType::GappedClone));
-        assert!(!thresholds.meets_threshold(0.75, DuplicationType::GappedClone));
-    }
-
-    #[test]
-    fn test_should_detect() {
-        let thresholds = DuplicationThresholds::default();
-        assert!(thresholds.should_detect(DuplicationType::ExactClone));
-        assert!(!thresholds.should_detect(DuplicationType::SemanticClone));
     }
 }

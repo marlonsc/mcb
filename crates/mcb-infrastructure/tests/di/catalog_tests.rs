@@ -4,16 +4,18 @@
 //! These tests verify that the IoC container initializes correctly
 //! with all required providers and services.
 
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::di::catalog::build_catalog;
+use serial_test::serial;
 
 // Force linkme registration by linking mcb_providers crate
 extern crate mcb_providers;
 
 /// Test that catalog builds successfully with default config
 #[tokio::test]
+#[serial]
 async fn test_catalog_builds_with_default_config() {
-    let config = AppConfig::default();
+    let config = ConfigLoader::new().load().expect("load config");
     let result = build_catalog(config).await;
 
     assert!(result.is_ok(), "Catalog build failed: {:?}", result.err());
@@ -21,8 +23,9 @@ async fn test_catalog_builds_with_default_config() {
 
 /// Test that catalog builds with custom embedding provider config
 #[tokio::test]
+#[serial]
 async fn test_catalog_builds_with_custom_embedding_config() {
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     config.providers.embedding.provider = Some("fastembed".to_string());
 
     let result = build_catalog(config).await;
@@ -36,8 +39,9 @@ async fn test_catalog_builds_with_custom_embedding_config() {
 
 /// Test that catalog builds with custom vector store config
 #[tokio::test]
+#[serial]
 async fn test_catalog_builds_with_custom_vector_store_config() {
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     config.providers.vector_store.provider = Some("edgevec".to_string());
 
     let result = build_catalog(config).await;
@@ -51,10 +55,11 @@ async fn test_catalog_builds_with_custom_vector_store_config() {
 
 /// Test that catalog builds with custom cache config
 #[tokio::test]
+#[serial]
 async fn test_catalog_builds_with_custom_cache_config() {
     use mcb_infrastructure::config::types::CacheProvider;
 
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     config.system.infrastructure.cache.provider = CacheProvider::Moka;
 
     let result = build_catalog(config).await;

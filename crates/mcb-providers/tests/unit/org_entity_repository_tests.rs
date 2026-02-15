@@ -1,66 +1,64 @@
+use rstest::rstest;
 use std::sync::Arc;
 
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::{
     ApiKey, Organization, Team, TeamMember, TeamMemberRole, User, UserRole,
 };
-use mcb_domain::error::Error;
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
-use mcb_domain::ports::repositories::OrgEntityRepository;
-use mcb_providers::database::{SqliteOrgEntityRepository, create_memory_repository_with_executor};
+use mcb_domain::ports::repositories::org_entity_repository::{
+    ApiKeyRegistry, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
+};
+use mcb_providers::database::SqliteOrgEntityRepository;
+
+use super::entity_test_utils::{TEST_NOW, assert_not_found, setup_executor};
 
 async fn setup_repo() -> (
     SqliteOrgEntityRepository,
     Arc<dyn DatabaseExecutor>,
     tempfile::TempDir,
 ) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let db_path = temp_dir.path().join("test.db");
-    let (_mem_repo, executor) = create_memory_repository_with_executor(db_path)
-        .await
-        .expect("create executor");
+    let (executor, temp_dir) = setup_executor().await;
     let repo = SqliteOrgEntityRepository::new(Arc::clone(&executor));
     (repo, executor, temp_dir)
 }
 
 fn create_test_org(id: &str, name: &str, slug: &str) -> Organization {
-    let now = 1_000_000_i64;
     Organization {
         id: id.to_string(),
         name: name.to_string(),
         slug: slug.to_string(),
         settings_json: "{}".to_string(),
-        created_at: now,
-        updated_at: now,
+        created_at: TEST_NOW,
+        updated_at: TEST_NOW,
     }
 }
 
 fn create_test_user(id: &str, org_id: &str, email: &str) -> User {
-    let now = 1_000_000_i64;
     User {
-        id: id.to_string(),
+        metadata: mcb_domain::entities::EntityMetadata {
+            id: id.to_string(),
+            created_at: TEST_NOW,
+            updated_at: TEST_NOW,
+        },
         org_id: org_id.to_string(),
         email: email.to_string(),
         display_name: format!("User {id}"),
         role: UserRole::Member,
         api_key_hash: None,
-        created_at: now,
-        updated_at: now,
     }
 }
 
 fn create_test_team(id: &str, org_id: &str, name: &str) -> Team {
-    let now = 1_000_000_i64;
     Team {
         id: id.to_string(),
         org_id: org_id.to_string(),
         name: name.to_string(),
-        created_at: now,
+        created_at: TEST_NOW,
     }
 }
 
 fn create_test_api_key(id: &str, user_id: &str, org_id: &str, name: &str) -> ApiKey {
-    let now = 1_000_000_i64;
     ApiKey {
         id: id.to_string(),
         user_id: user_id.to_string(),
@@ -69,13 +67,9 @@ fn create_test_api_key(id: &str, user_id: &str, org_id: &str, name: &str) -> Api
         name: name.to_string(),
         scopes_json: "[]".to_string(),
         expires_at: None,
-        created_at: now,
+        created_at: TEST_NOW,
         revoked_at: None,
     }
-}
-
-fn assert_not_found<T>(result: mcb_domain::error::Result<T>) {
-    assert!(matches!(result, Err(Error::NotFound { .. })));
 }
 
 #[tokio::test]
@@ -123,7 +117,7 @@ async fn test_user_crud() {
     let mut updated = user.clone();
     updated.display_name = "Updated User".to_string();
     updated.role = UserRole::Admin;
-    updated.updated_at = 2_000_000;
+    updated.metadata.updated_at = 2_000_000;
     repo.update_user(&updated).await.expect("update");
 
     let after_update = repo.get_user("user-1").await.expect("get");
@@ -147,7 +141,7 @@ async fn test_get_user_by_email() {
         .get_user_by_email(DEFAULT_ORG_ID, "alice@example.com")
         .await
         .expect("get by email");
-    assert_eq!(found.id, "user-1");
+    assert_eq!(found.metadata.id, "user-1");
 
     assert_not_found(
         repo.get_user_by_email(DEFAULT_ORG_ID, "nobody@example.com")
@@ -175,18 +169,22 @@ async fn test_team_and_members() {
     let teams = repo.list_teams(DEFAULT_ORG_ID).await.expect("list teams");
     assert_eq!(teams.len(), 1);
 
-    let now = 1_000_000_i64;
+    use mcb_domain::utils::id;
+    use mcb_domain::value_objects::ids::TeamMemberId;
+
     let m1 = TeamMember {
+        id: TeamMemberId::from_uuid(id::deterministic("team_member", "team-1:user-1")),
         team_id: "team-1".to_string(),
         user_id: "user-1".to_string(),
         role: TeamMemberRole::Lead,
-        joined_at: now,
+        joined_at: TEST_NOW,
     };
     let m2 = TeamMember {
+        id: TeamMemberId::from_uuid(id::deterministic("team_member", "team-1:user-2")),
         team_id: "team-1".to_string(),
         user_id: "user-2".to_string(),
         role: TeamMemberRole::Member,
-        joined_at: now,
+        joined_at: TEST_NOW,
     };
     repo.add_team_member(&m1).await.expect("add m1");
     repo.add_team_member(&m2).await.expect("add m2");
@@ -240,8 +238,11 @@ async fn test_api_key_lifecycle() {
     assert_not_found(repo.get_api_key("key-1").await);
 }
 
+#[rstest]
+#[case("org-A", 1)]
+#[case("org-B", 0)]
 #[tokio::test]
-async fn test_org_isolation_users() {
+async fn org_isolation_users(#[case] org_id: &str, #[case] expected_count: usize) {
     let (repo, _executor, _temp) = setup_repo().await;
     let org_a = create_test_org("org-A", "Org A", "org-a");
     let org_b = create_test_org("org-B", "Org B", "org-b");
@@ -251,11 +252,8 @@ async fn test_org_isolation_users() {
     let user = create_test_user("user-1", "org-A", "alice@a.com");
     repo.create_user(&user).await.expect("create user");
 
-    let users_a = repo.list_users("org-A").await.expect("list org-A");
-    assert_eq!(users_a.len(), 1);
-
-    let users_b = repo.list_users("org-B").await.expect("list org-B");
-    assert!(users_b.is_empty());
+    let users = repo.list_users(org_id).await.expect("list users");
+    assert_eq!(users.len(), expected_count);
 }
 
 #[tokio::test]

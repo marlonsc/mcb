@@ -1,9 +1,13 @@
 //!
 //! Core MCP protocol server that orchestrates semantic code search operations.
 //! Follows Clean Architecture principles with dependency injection.
+//!
+//! # Code Smells
 
+use std::path::Path;
 use std::sync::Arc;
 
+use mcb_domain::constants::keys as schema;
 use mcb_domain::ports::providers::VcsProvider;
 use mcb_domain::ports::repositories::{
     IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
@@ -17,17 +21,19 @@ use mcb_domain::ports::services::{
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
 use rmcp::model::{
-    CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
-    ServerCapabilities, ServerInfo,
+    CallToolRequestParams, CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams,
+    ProtocolVersion, ServerCapabilities, ServerInfo,
 };
 
 use crate::handlers::{
-    AgentHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
+    AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
     PlanEntityHandler, ProjectHandler, SearchHandler, SessionHandler, ValidateHandler,
     VcsEntityHandler, VcsHandler,
 };
 use crate::hooks::HookProcessor;
-use crate::tools::{ToolHandlers, create_tool_list, route_tool_call};
+use crate::tools::{ToolExecutionContext, ToolHandlers, create_tool_list, route_tool_call};
+
+use crate::context_resolution::{resolve_context_bool, resolve_context_value};
 
 /// Core MCP server implementation
 ///
@@ -40,9 +46,13 @@ pub struct McpServer {
     services: McpServices,
     /// Tool handlers for MCP protocol
     handlers: ToolHandlers,
+    execution_flow: Option<String>,
 }
 
 /// Domain services container (keeps struct field count manageable)
+///
+/// # Code Smells
+/// TODO(qlty): Found 28 lines of similar code in `mcb-infrastructure/src/di/modules/domain_services.rs`.
 #[derive(Clone)]
 pub struct McpServices {
     /// Indexing service
@@ -73,10 +83,158 @@ pub struct McpServices {
     pub org_entity: Arc<dyn OrgEntityRepository>,
 }
 
+macro_rules! mcp_server_entity_repo_getter {
+    ($name:ident, $ty:ty, $field:ident, $doc:literal) => {
+        #[doc = $doc]
+        pub fn $name(&self) -> Arc<$ty> {
+            Arc::clone(&self.services.$field)
+        }
+    };
+}
+
 impl McpServer {
+    /// Builds the execution context for a tool call.
+    ///
+    async fn build_execution_context(
+        &self,
+        request: &CallToolRequestParams,
+        context: &rmcp::service::RequestContext<rmcp::RoleServer>,
+    ) -> ToolExecutionContext {
+        let request_meta = request.meta.as_ref();
+        let context_meta = &context.meta;
+
+        let session_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &["session_id", "sessionId", "x-session-id", "x_session_id"],
+        );
+        let parent_session_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[
+                schema::PARENT_SESSION_ID,
+                "parentSessionId",
+                "x-parent-session-id",
+                "x_parent_session_id",
+            ],
+        );
+        let project_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[
+                schema::PROJECT_ID,
+                "projectId",
+                "x-project-id",
+                "x_project_id",
+            ],
+        );
+        let worktree_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[
+                schema::WORKTREE_ID,
+                "worktreeId",
+                "x-worktree-id",
+                "x_worktree_id",
+            ],
+        );
+
+        let mut repo_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[schema::REPO_ID, "repoId", "x-repo-id", "x_repo_id"],
+        );
+        let mut repo_path = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[schema::REPO_PATH, "repoPath", "x-repo-path", "x_repo_path"],
+        );
+        let operator_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[
+                "operator_id",
+                "operatorId",
+                "x-operator-id",
+                "x_operator_id",
+            ],
+        )
+        .or_else(|| std::env::var("USER").ok());
+        let machine_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &["machine_id", "machineId", "x-machine-id", "x_machine_id"],
+        )
+        .or_else(|| std::env::var("HOSTNAME").ok());
+        let agent_program = resolve_context_value(
+            request_meta,
+            context_meta,
+            &[
+                "agent_program",
+                "agentProgram",
+                "ide",
+                "x-agent-program",
+                "x_agent_program",
+            ],
+        );
+        let model_id = resolve_context_value(
+            request_meta,
+            context_meta,
+            &["model_id", "model", "modelId", "x-model-id", "x_model_id"],
+        );
+        let delegated = resolve_context_bool(
+            request_meta,
+            context_meta,
+            &["delegated", "is_delegated", "isDelegated", "x-delegated"],
+        )
+        .or(Some(parent_session_id.is_some()));
+
+        if let Some(path_str) = repo_path.clone()
+            && let Ok(repo) = self
+                .services
+                .vcs
+                .open_repository(Path::new(&path_str))
+                .await
+        {
+            repo_path = Some(repo.path().to_str().unwrap_or_default().to_string());
+            if repo_id.is_none() {
+                repo_id = Some(self.services.vcs.repository_id(&repo).into_string());
+            }
+        }
+
+        let timestamp = mcb_domain::utils::time::epoch_secs_i64().ok();
+        let execution_flow = self.execution_flow.clone();
+
+        ToolExecutionContext {
+            session_id,
+            parent_session_id,
+            project_id,
+            worktree_id,
+            repo_id,
+            repo_path,
+            operator_id,
+            machine_id,
+            agent_program,
+            model_id,
+            delegated,
+            timestamp,
+            execution_flow,
+        }
+    }
+
     /// Create a new MCP server with injected dependencies
-    pub fn new(services: McpServices) -> Self {
+    pub fn new(services: McpServices, execution_flow: Option<String>) -> Self {
         let hook_processor = HookProcessor::new(Some(services.memory.clone()));
+        let vcs_entity_handler = Arc::new(VcsEntityHandler::new(services.vcs_entity.clone()));
+        let plan_entity_handler = Arc::new(PlanEntityHandler::new(services.plan_entity.clone()));
+        let issue_entity_handler = Arc::new(IssueEntityHandler::new(services.issue_entity.clone()));
+        let org_entity_handler = Arc::new(OrgEntityHandler::new(services.org_entity.clone()));
+        let entity_handler = Arc::new(EntityHandler::new(
+            Arc::clone(&vcs_entity_handler),
+            Arc::clone(&plan_entity_handler),
+            Arc::clone(&issue_entity_handler),
+            Arc::clone(&org_entity_handler),
+        ));
 
         let handlers = ToolHandlers {
             index: Arc::new(IndexHandler::new(services.indexing.clone())),
@@ -93,20 +251,25 @@ impl McpServer {
             agent: Arc::new(AgentHandler::new(services.agent_session.clone())),
             project: Arc::new(ProjectHandler::new(services.project_workflow.clone())),
             vcs: Arc::new(VcsHandler::new(services.vcs.clone())),
-            vcs_entity: Arc::new(VcsEntityHandler::new(services.vcs_entity.clone())),
-            plan_entity: Arc::new(PlanEntityHandler::new(services.plan_entity.clone())),
-            issue_entity: Arc::new(IssueEntityHandler::new(services.issue_entity.clone())),
-            org_entity: Arc::new(OrgEntityHandler::new(services.org_entity.clone())),
+            vcs_entity: vcs_entity_handler,
+            plan_entity: plan_entity_handler,
+            issue_entity: issue_entity_handler,
+            org_entity: org_entity_handler,
+            entity: entity_handler,
             hook_processor: Arc::new(hook_processor),
         };
 
-        Self { services, handlers }
+        Self {
+            services,
+            handlers,
+            execution_flow,
+        }
     }
 
     /// Create a new MCP server from domain services
     /// This is the preferred constructor that uses the DI container
-    pub fn from_services(services: McpServices) -> Self {
-        Self::new(services)
+    pub fn from_services(services: McpServices, execution_flow: Option<String>) -> Self {
+        Self::new(services, execution_flow)
     }
 
     /// Access to indexing service
@@ -154,25 +317,33 @@ impl McpServer {
         Arc::clone(&self.services.project_workflow)
     }
 
-    /// Access to VCS entity repository.
-    pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
-        Arc::clone(&self.services.vcs_entity)
-    }
+    mcp_server_entity_repo_getter!(
+        vcs_entity_repository,
+        dyn VcsEntityRepository,
+        vcs_entity,
+        "Access to VCS entity repository."
+    );
 
-    /// Access to plan entity repository.
-    pub fn plan_entity_repository(&self) -> Arc<dyn PlanEntityRepository> {
-        Arc::clone(&self.services.plan_entity)
-    }
+    mcp_server_entity_repo_getter!(
+        plan_entity_repository,
+        dyn PlanEntityRepository,
+        plan_entity,
+        "Access to plan entity repository."
+    );
 
-    /// Access to issue entity repository.
-    pub fn issue_entity_repository(&self) -> Arc<dyn IssueEntityRepository> {
-        Arc::clone(&self.services.issue_entity)
-    }
+    mcp_server_entity_repo_getter!(
+        issue_entity_repository,
+        dyn IssueEntityRepository,
+        issue_entity,
+        "Access to issue entity repository."
+    );
 
-    /// Access to organization entity repository.
-    pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
-        Arc::clone(&self.services.org_entity)
-    }
+    mcp_server_entity_repo_getter!(
+        org_entity_repository,
+        dyn OrgEntityRepository,
+        org_entity,
+        "Access to organization entity repository."
+    );
 
     /// Access to index handler (for HTTP transport)
     pub fn index_handler(&self) -> Arc<IndexHandler> {
@@ -209,6 +380,11 @@ impl McpServer {
         Arc::clone(&self.handlers.vcs)
     }
 
+    /// Access to unified entity handler (for HTTP transport)
+    pub fn entity_handler(&self) -> Arc<EntityHandler> {
+        Arc::clone(&self.handlers.entity)
+    }
+
     /// Access to project handler (for HTTP transport)
     pub fn project_handler(&self) -> Arc<ProjectHandler> {
         Arc::clone(&self.handlers.project)
@@ -238,6 +414,11 @@ impl McpServer {
     pub fn hook_processor(&self) -> Arc<HookProcessor> {
         Arc::clone(&self.handlers.hook_processor)
     }
+
+    /// Clone the complete tool handlers set for unified internal execution.
+    pub fn tool_handlers(&self) -> ToolHandlers {
+        self.handlers.clone()
+    }
 }
 
 impl ServerHandler for McpServer {
@@ -263,10 +444,7 @@ tools:
 - agent: Agent activity logging
 - project: Project workflow management
 - vcs: Repository operations
-- vcs_entity: VCS entity CRUD (repositories, branches, worktrees, assignments)
-- plan_entity: Plan entity CRUD (plans, versions, reviews)
-- issue_entity: Issue entity CRUD (issues, comments, labels, label assignments)
-- org_entity: Org entity CRUD (organizations, users, teams, team members, api keys)
+- entity: Unified entity CRUD (vcs/plan/issue/org resources)
 "#
                 .to_string(),
             ),
@@ -290,9 +468,12 @@ tools:
     /// Call a tool
     async fn call_tool(
         &self,
-        request: rmcp::model::CallToolRequestParams,
-        _context: rmcp::service::RequestContext<rmcp::RoleServer>,
+        mut request: rmcp::model::CallToolRequestParams,
+        context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        route_tool_call(request, &self.handlers).await
+        let execution_context = self.build_execution_context(&request, &context).await;
+        execution_context.apply_to_request_if_missing(&mut request);
+
+        route_tool_call(request, &self.handlers, execution_context).await
     }
 }

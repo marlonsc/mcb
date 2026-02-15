@@ -2,6 +2,11 @@
 //!
 //! Language-specific chunk sizes and node extraction rule defaults.
 
+use mcb_domain::constants::lang::{
+    LANG_C, LANG_CPP, LANG_CSHARP, LANG_GO, LANG_JAVA, LANG_JAVASCRIPT, LANG_KOTLIN, LANG_PHP,
+    LANG_PYTHON, LANG_RUBY, LANG_RUST, LANG_SWIFT, LANG_TYPESCRIPT,
+};
+
 // ============================================================================
 // Default Chunk Size
 // ============================================================================
@@ -67,52 +72,6 @@ pub const NODE_EXTRACTION_MAX_DEPTH: usize = 3;
 
 /// Node extraction rule default priority
 pub const NODE_EXTRACTION_DEFAULT_PRIORITY: i32 = 5;
-
-// ============================================================================
-// Language Identifiers (String constants for extensibility)
-// ============================================================================
-
-/// Rust language identifier
-pub const LANG_RUST: &str = "rust";
-
-/// Python language identifier
-pub const LANG_PYTHON: &str = "python";
-
-/// JavaScript language identifier
-pub const LANG_JAVASCRIPT: &str = "javascript";
-
-/// TypeScript language identifier
-pub const LANG_TYPESCRIPT: &str = "typescript";
-
-/// Go language identifier
-pub const LANG_GO: &str = "go";
-
-/// Java language identifier
-pub const LANG_JAVA: &str = "java";
-
-/// C language identifier
-pub const LANG_C: &str = "c";
-
-/// C++ language identifier
-pub const LANG_CPP: &str = "cpp";
-
-/// C# language identifier
-pub const LANG_CSHARP: &str = "csharp";
-
-/// Ruby language identifier
-pub const LANG_RUBY: &str = "ruby";
-
-/// PHP language identifier
-pub const LANG_PHP: &str = "php";
-
-/// Swift language identifier
-pub const LANG_SWIFT: &str = "swift";
-
-/// Kotlin language identifier
-pub const LANG_KOTLIN: &str = "kotlin";
-
-/// Unknown/unsupported language identifier
-pub const LANG_UNKNOWN: &str = "unknown";
 
 // ============================================================================
 // Tree-Sitter Node Types

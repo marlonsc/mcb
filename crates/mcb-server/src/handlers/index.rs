@@ -12,6 +12,7 @@ use rmcp::model::CallToolResult;
 use validator::Validate;
 
 use crate::args::{IndexAction, IndexArgs};
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::collections::normalize_collection_name;
 
@@ -27,37 +28,30 @@ impl IndexHandler {
         Self { indexing_service }
     }
 
-    fn validate_request(args: &IndexArgs) -> Result<(PathBuf, CollectionId), CallToolResult> {
-        let missing_path_err = || {
-            CallToolResult::error(vec![rmcp::model::Content::text(
-                "Missing required parameter: path",
-            )])
-        };
-        let path_str = args.path.as_ref().ok_or_else(missing_path_err)?;
+    fn validate_request(args: &IndexArgs) -> Result<(PathBuf, CollectionId), McpError> {
+        let path_str = args
+            .path
+            .as_ref()
+            .ok_or_else(|| McpError::invalid_params("Missing required parameter: path", None))?;
         let path = PathBuf::from(path_str);
         if !path.exists() {
-            return Err(ResponseFormatter::format_indexing_error(
+            return Err(McpError::invalid_params(
                 "Specified path does not exist",
-                &path,
+                None,
             ));
         }
         if !path.is_dir() {
-            return Err(ResponseFormatter::format_indexing_error(
+            return Err(McpError::invalid_params(
                 "Specified path is not a directory",
-                &path,
+                None,
             ));
         }
-        let collection_name = args.collection.as_deref().unwrap_or("default");
-        let collection_id = match normalize_collection_name(collection_name) {
-            Ok(id) => id,
-            Err(e) => {
-                let _ = e;
-                return Err(ResponseFormatter::format_indexing_error(
-                    &format!("Failed to map collection name '{}'", collection_name),
-                    &path,
-                ));
-            }
-        };
+        let collection_name = args
+            .collection
+            .as_deref()
+            .ok_or_else(|| McpError::invalid_params("collection parameter is required", None))?;
+        let collection_id = normalize_collection_name(collection_name)
+            .map_err(|reason| McpError::invalid_params(reason, None))?;
         Ok((path, collection_id))
     }
 
@@ -71,11 +65,8 @@ impl IndexHandler {
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
         match args.action {
-            IndexAction::Start => {
-                let (path, collection_id) = match Self::validate_request(&args) {
-                    Ok(value) => value,
-                    Err(error_result) => return Ok(error_result),
-                };
+            IndexAction::Start | IndexAction::GitIndex => {
+                let (path, collection_id) = Self::validate_request(&args)?;
                 let timer = Instant::now();
                 match self
                     .indexing_service
@@ -87,13 +78,7 @@ impl IndexHandler {
                         &path,
                         timer.elapsed(),
                     )),
-                    Err(e) => {
-                        let _ = e;
-                        Ok(ResponseFormatter::format_indexing_error(
-                            "Indexing failed",
-                            &path,
-                        ))
-                    }
+                    Err(e) => Ok(to_contextual_tool_error(e)),
                 }
             }
             IndexAction::Status => {
@@ -101,32 +86,41 @@ impl IndexHandler {
                 Ok(ResponseFormatter::format_indexing_status(&status))
             }
             IndexAction::Clear => {
-                let collection_name = args.collection.as_deref().unwrap_or("default");
+                let error_path = args
+                    .path
+                    .as_ref()
+                    .map(PathBuf::from)
+                    .or_else(|| std::env::current_dir().ok())
+                    .ok_or_else(|| {
+                        McpError::invalid_params(
+                            "path parameter is required (working directory unavailable)",
+                            None,
+                        )
+                    })?;
+                let collection_name = args.collection.as_deref().ok_or_else(|| {
+                    McpError::invalid_params("collection parameter is required", None)
+                })?;
                 let milvus_collection = match normalize_collection_name(collection_name) {
                     Ok(id) => id,
-                    Err(e) => {
-                        let _ = e;
-                        return Ok(ResponseFormatter::format_indexing_error(
-                            &format!("Failed to map collection name '{}'", collection_name),
-                            &PathBuf::from("."),
-                        ));
+                    Err(reason) => {
+                        return Err(McpError::invalid_params(reason, None));
                     }
                 };
+                let milvus_collection_str = milvus_collection.to_string();
                 match self
                     .indexing_service
                     .clear_collection(&milvus_collection)
                     .await
                 {
                     Ok(()) => Ok(ResponseFormatter::format_clear_index(
-                        milvus_collection.as_str(),
+                        &milvus_collection_str,
                     )),
                     Err(e) => Ok(ResponseFormatter::format_indexing_error(
                         &format!(
                             "Failed to clear collection {}: {}",
-                            milvus_collection.as_str(),
-                            e
+                            milvus_collection_str, e
                         ),
-                        &PathBuf::from("."),
+                        &error_path,
                     )),
                 }
             }

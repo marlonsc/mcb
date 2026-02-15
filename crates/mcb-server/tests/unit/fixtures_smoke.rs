@@ -1,6 +1,3 @@
-//! Ensures test_fixtures and mock_services symbols are used when building the unit test binary,
-//! so they are not reported as dead code. Integration tests use them; this keeps unit build clean.
-
 use crate::test_utils::test_fixtures::{
     GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, create_temp_codebase, create_test_indexing_result,
     extract_text_content, golden_content_to_string, golden_count_result_entries,

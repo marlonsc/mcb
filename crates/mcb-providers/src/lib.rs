@@ -3,13 +3,11 @@
 //! This crate contains all user-selectable provider implementations following
 //! Clean Architecture principles. Each provider implements a port (trait)
 //! defined in `mcb-domain`.
-#![allow(missing_docs)]
-#![allow(unsafe_code)]
 //!
 //! ## Provider Categories
 //!
 //! | Category | Port | Implementations |
-//! |----------|------|-----------------|
+//! | ---------- | ------ | ----------------- |
 //! | Embedding | `EmbeddingProvider` | OpenAI, Ollama, VoyageAI, Gemini, FastEmbed |
 //! | Vector Store | `VectorStoreProvider` | EdgeVec, Encrypted, Milvus, Pinecone, Qdrant |
 //! | Cache | `CacheProvider` | Moka, Redis |
@@ -38,18 +36,19 @@
 
 // Re-export mcb-domain types commonly used with providers
 pub use mcb_domain::error::{Error, Result};
+pub use mcb_domain::ports::providers::CryptoProvider;
 pub use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider, VcsProvider,
-    VectorStoreProvider,
+    CacheProvider, ComplexityAnalyzer, DeadCodeDetector, EmbeddingProvider, HybridSearchProvider,
+    LanguageChunkingProvider, TdgScorer, VcsProvider, VectorStoreProvider,
 };
-// Re-export CryptoProvider from domain (for encrypted vector store)
-pub use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
 
 /// Provider-specific constants
 pub mod constants;
 
 /// Shared utilities for provider implementations
 pub mod utils;
+
+pub(crate) mod provider_utils;
 
 /// Embedding provider implementations
 ///
@@ -65,6 +64,9 @@ pub mod vector_store;
 ///
 /// Implements `CacheProvider` trait for caching backends.
 pub mod cache;
+
+/// Native PMAT-style analysis provider implementations.
+pub mod analysis;
 
 /// Event publisher implementations (simple EventPublisher trait)
 ///
@@ -103,8 +105,3 @@ pub mod git;
 ///
 /// Implements state machine transitions and session management
 pub mod workflow;
-
-/// Storage provider implementations
-///
-/// Implements repository ports for storage backends (FileHash).
-pub mod storage;

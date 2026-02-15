@@ -14,6 +14,8 @@ use mcb_domain::{
 use uuid::Uuid;
 
 /// Git implementation of VcsProvider using libgit2.
+///
+/// Constructed by `mcb_infrastructure::di::vcs` module for DI registration.
 pub struct Git2Provider;
 
 impl Git2Provider {
@@ -52,11 +54,15 @@ impl Git2Provider {
         Ok(first_oid.to_string())
     }
 
-    fn get_default_branch(repo: &Repository) -> String {
+    fn get_default_branch(repo: &Repository) -> Result<String> {
         repo.head()
             .ok()
             .and_then(|head| head.shorthand().map(String::from))
-            .unwrap_or_else(|| "main".to_string())
+            .ok_or_else(|| {
+                Error::vcs(
+                    "Cannot determine default branch: repository has no HEAD (possibly empty/uninitialized)",
+                )
+            })
     }
 
     fn get_remote_url(repo: &Repository) -> Option<String> {
@@ -94,8 +100,9 @@ impl VcsProvider for Git2Provider {
     async fn open_repository(&self, path: &Path) -> Result<VcsRepository> {
         let repo = Self::open_repo(path)?;
 
-        let id = RepositoryId::new(Self::get_root_commit_hash(&repo)?);
-        let default_branch = Self::get_default_branch(&repo);
+        let root_hash = Self::get_root_commit_hash(&repo)?;
+        let id = RepositoryId::from_name(&root_hash);
+        let default_branch = Self::get_default_branch(&repo)?;
         let branches = Self::list_branch_names(&repo)?;
         let remote_url = Self::get_remote_url(&repo);
 
@@ -109,7 +116,7 @@ impl VcsProvider for Git2Provider {
     }
 
     fn repository_id(&self, repo: &VcsRepository) -> RepositoryId {
-        repo.id().clone()
+        *repo.id()
     }
 
     async fn list_branches(&self, repo: &VcsRepository) -> Result<Vec<VcsBranch>> {
@@ -276,7 +283,8 @@ impl VcsProvider for Git2Provider {
             .peel_to_tree()
             .map_err(|e| Error::vcs_with_source("Failed to get branch tree", e))?;
 
-        let path_str = path.to_string_lossy();
+        let path_str = mcb_domain::utils::path::path_to_utf8_string(path)
+            .map_err(|e| Error::vcs_with_source("non-UTF-8 path", e))?;
         let entry = tree.get_path(path).map_err(|e| {
             Error::vcs_with_source(format!("File not found in branch: {path_str}"), e)
         })?;

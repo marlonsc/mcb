@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::vcs_context::VcsContext;
+use mcb_infrastructure::project::context_resolver::capture_vcs_context;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use tracing::error;
 
+use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
 
@@ -16,20 +16,10 @@ pub async fn inject_context(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let filter = MemoryFilter {
-        id: None,
-        project_id: args.project_id.clone(),
-        tags: None,
-        r#type: None,
-        session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
-        repo_id: args.repo_id.clone(),
-        time_range: None,
-        branch: None,
-        commit: None,
-    };
+    let filter = build_memory_filter(args, None, None);
     let limit = args.limit.unwrap_or(10) as usize;
     let max_tokens = args.max_tokens.unwrap_or(2000);
-    let vcs_context = VcsContext::capture();
+    let vcs_context = capture_vcs_context();
     match memory_service
         .search_memories("", Some(filter), limit)
         .await
@@ -62,8 +52,8 @@ pub async fn inject_context(
                 }
             }))
         }
-        Err(e) => {
-            error!(error = %e, "Failed to inject context");
+        Err(_e) => {
+            error!("Failed to inject context");
             Ok(rmcp::model::CallToolResult::error(vec![
                 rmcp::model::Content::text("Failed to inject context"),
             ]))

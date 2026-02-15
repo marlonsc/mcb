@@ -5,7 +5,7 @@
 //! ## Available Providers
 //!
 //! | Provider | Type | Description |
-//! |----------|------|-------------|
+//! | ---------- | ------ | ------------- |
 //! | TokioEventBusProvider | In-Process | Tokio broadcast channels |
 //! | NatsEventBusProvider | Distributed | NATS for multi-process systems |
 //!

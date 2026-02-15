@@ -5,12 +5,11 @@
 
 use async_trait::async_trait;
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
+use mcb_domain::constants::embedding::EMBEDDING_DIMENSION_FASTEMBED_DEFAULT;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use tokio::sync::{mpsc, oneshot};
-
-use crate::constants::EMBEDDING_DIMENSION_FASTEMBED_DEFAULT;
 
 /// Messages for the FastEmbed actor
 enum FastEmbedMessage {
@@ -179,7 +178,6 @@ impl FastEmbedActor {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
@@ -216,12 +214,10 @@ fn fastembed_factory(
 
     let model = parse_embedding_model(&model_name);
 
-    // Use configured cache dir or default to ~/.cache/mcb/fastembed
-    let cache_dir = config.cache_dir.clone().unwrap_or_else(|| {
-        dirs::cache_dir()
-            .map(|p| p.join("mcb").join("fastembed"))
-            .unwrap_or_else(|| PathBuf::from("/tmp/mcb/fastembed"))
-    });
+    let cache_dir = config
+        .cache_dir
+        .clone()
+        .ok_or_else(|| "FastEmbed provider requires cache_dir in config".to_string())?;
 
     let init_options = InitOptions::new(model)
         .with_show_download_progress(true)

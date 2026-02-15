@@ -8,7 +8,7 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{IndexResult, repo_path};
 use crate::args::VcsArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Indexes a repository for search.
@@ -24,7 +24,7 @@ pub async fn index_repository(
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,
         Err(e) => {
-            return Ok(to_opaque_tool_error(e));
+            return Ok(to_contextual_tool_error(e));
         }
     };
 
@@ -47,7 +47,7 @@ pub async fn index_repository(
             }
             Err(e) => {
                 let _ = branch;
-                return Ok(to_opaque_tool_error(e));
+                return Ok(to_contextual_tool_error(e));
             }
         }
     }
@@ -67,7 +67,7 @@ pub async fn index_repository(
     };
     let result = IndexResult {
         repository_id: repo.id().to_string(),
-        path: repo.path().to_string_lossy().to_string(),
+        path: repo.path().to_str().unwrap_or_default().to_string(),
         default_branch: repo.default_branch().to_string(),
         branches_found: branches.clone(),
         total_files,
@@ -92,7 +92,9 @@ fn filter_files_by_patterns(files: &[PathBuf], patterns: &[String]) -> Vec<PathB
 
 /// Check if a file should be ignored based on patterns
 fn should_ignore_file(file: &Path, patterns: &[String]) -> bool {
-    let file_str = file.to_string_lossy();
+    let Some(file_str) = file.to_str() else {
+        return false;
+    };
 
     for pattern in patterns {
         // Handle directory patterns (ending with /)

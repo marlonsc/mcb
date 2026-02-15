@@ -2,11 +2,12 @@
 
 #![cfg(feature = "hybrid-search")]
 
+use mcb_domain::constants::search::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::ports::providers::HybridSearchProvider;
 use mcb_domain::value_objects::SearchResult;
-use mcb_providers::constants::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
 use mcb_providers::hybrid_search::{BM25Params, BM25Scorer, HybridSearchEngine};
+use rstest::rstest;
 
 // ============================================================================
 // Test Helpers
@@ -39,15 +40,14 @@ fn create_test_search_result(file_path: &str, start_line: u32, score: f64) -> Se
 // BM25 Scorer Tests
 // ============================================================================
 
-#[test]
-fn test_tokenize() {
-    let tokens = BM25Scorer::tokenize("fn hello_world() { println!(\"Hello, World!\"); }");
-    // Underscores split tokens for better code search matching
-    assert!(tokens.contains(&"hello".to_string()));
-    assert!(tokens.contains(&"world".to_string()));
-    assert!(tokens.contains(&"println".to_string()));
-    // Short tokens should be filtered (len <= 2)
-    assert!(!tokens.contains(&"fn".to_string())); // len = 2, filtered by BM25_TOKEN_MIN_LENGTH
+#[rstest]
+#[case("fn hello_world() { println!(\"Hello, World!\"); }", "hello", true)]
+#[case("fn hello_world() { println!(\"Hello, World!\"); }", "world", true)]
+#[case("fn hello_world() { println!(\"Hello, World!\"); }", "println", true)]
+#[case("fn hello_world() { println!(\"Hello, World!\"); }", "fn", false)]
+fn tokenize(#[case] input: &str, #[case] token: &str, #[case] should_contain: bool) {
+    let tokens = BM25Scorer::tokenize(input);
+    assert_eq!(tokens.contains(&token.to_string()), should_contain);
 }
 
 #[test]
@@ -65,46 +65,42 @@ fn test_bm25_scorer_creation() {
     assert!(scorer.avg_doc_len() > 0.0);
 }
 
-#[test]
-fn test_bm25_scoring() {
-    // Use content with clearly distinct keywords that match as separate tokens
-    let chunks = vec![
-        create_test_chunk(
-            "authenticate the user and validate their credentials with proper authentication",
-            "auth.rs",
-            1,
-        ),
-        create_test_chunk(
-            "validate the password using hash function for security",
-            "auth.rs",
-            10,
-        ),
-        create_test_chunk(
-            "process the data and compress it for storage optimization",
-            "data.rs",
-            1,
-        ),
-    ];
+#[rstest]
+#[case("single")]
+#[case("batch")]
+fn bm25_relevant_chunk_ranks_higher(#[case] mode: &str) {
+    if mode == "single" {
+        let chunks = vec![
+            create_test_chunk(
+                "authenticate the user and validate their credentials with proper authentication",
+                "auth.rs",
+                1,
+            ),
+            create_test_chunk(
+                "validate the password using hash function for security",
+                "auth.rs",
+                10,
+            ),
+            create_test_chunk(
+                "process the data and compress it for storage optimization",
+                "data.rs",
+                1,
+            ),
+        ];
 
-    let scorer = BM25Scorer::new(&chunks, BM25Params::default());
+        let scorer = BM25Scorer::new(&chunks, BM25Params::default());
+        let score_auth = scorer.score(&chunks[0], "authenticate user validate");
+        let score_data = scorer.score(&chunks[2], "authenticate user validate");
 
-    // Query with terms that appear in first chunk
-    let score_auth = scorer.score(&chunks[0], "authenticate user validate");
-    let score_data = scorer.score(&chunks[2], "authenticate user validate");
+        assert!(
+            score_auth > score_data,
+            "Auth chunk should score higher than data chunk (auth={}, data={})",
+            score_auth,
+            score_data
+        );
+        return;
+    }
 
-    // Auth chunk should score highest (contains "authenticate", "user", "validate")
-    // Data chunk has none of these terms
-    assert!(
-        score_auth > score_data,
-        "Auth chunk should score higher than data chunk (auth={}, data={})",
-        score_auth,
-        score_data
-    );
-}
-
-#[test]
-fn test_bm25_batch_scoring() {
-    // Use content with clearly distinct keywords
     let chunks = vec![
         create_test_chunk(
             "search through the codebase and find matching patterns",
@@ -120,12 +116,9 @@ fn test_bm25_batch_scoring() {
 
     let scorer = BM25Scorer::new(&chunks, BM25Params::default());
     let chunk_refs: Vec<&CodeChunk> = chunks.iter().collect();
-
-    // Query for "search codebase" - first chunk has these terms
     let scores = scorer.score_batch(&chunk_refs, "search codebase");
 
     assert_eq!(scores.len(), 2);
-    // First chunk contains "search" and "codebase", second has neither
     assert!(
         scores[0] > scores[1],
         "First chunk should score higher (search={}, index={})",
@@ -138,15 +131,24 @@ fn test_bm25_batch_scoring() {
 // Hybrid Search Engine Tests
 // ============================================================================
 
+#[rstest]
+#[case("bm25")]
+#[case("semantic")]
 #[tokio::test]
-async fn test_hybrid_search_engine_creation() {
+async fn hybrid_search_engine_creation(#[case] weight_kind: &str) {
     let engine = HybridSearchEngine::new();
-    assert!((engine.bm25_weight() - HYBRID_SEARCH_BM25_WEIGHT).abs() < f32::EPSILON);
-    assert!((engine.semantic_weight() - HYBRID_SEARCH_SEMANTIC_WEIGHT).abs() < f32::EPSILON);
+    if weight_kind == "bm25" {
+        assert!((engine.bm25_weight() - HYBRID_SEARCH_BM25_WEIGHT).abs() < f64::EPSILON);
+    } else {
+        assert!((engine.semantic_weight() - HYBRID_SEARCH_SEMANTIC_WEIGHT).abs() < f64::EPSILON);
+    }
 }
 
+#[rstest]
+#[case(false, 1)]
+#[case(true, 0)]
 #[tokio::test]
-async fn test_index_chunks() {
+async fn index_and_clear_collection(#[case] should_clear: bool, #[case] expected_count: i32) {
     let engine = HybridSearchEngine::new();
 
     let chunks = vec![
@@ -155,9 +157,15 @@ async fn test_index_chunks() {
     ];
 
     engine.index_chunks("test", &chunks).await.unwrap();
+    if should_clear {
+        engine.clear_collection("test").await.unwrap();
+    }
 
     let stats = engine.get_stats().await;
-    assert_eq!(stats.get("collection_count"), Some(&serde_json::json!(1)));
+    assert_eq!(
+        stats.get("collection_count"),
+        Some(&serde_json::json!(expected_count))
+    );
 }
 
 #[tokio::test]
@@ -205,24 +213,11 @@ async fn test_hybrid_search() {
     );
 }
 
+#[rstest]
+#[case(10)]
+#[case(1)]
 #[tokio::test]
-async fn test_clear_collection() {
-    let engine = HybridSearchEngine::new();
-
-    let chunks = vec![create_test_chunk("fn test() {}", "test.rs", 1)];
-    engine.index_chunks("test", &chunks).await.unwrap();
-
-    let stats = engine.get_stats().await;
-    assert_eq!(stats.get("collection_count"), Some(&serde_json::json!(1)));
-
-    engine.clear_collection("test").await.unwrap();
-
-    let stats = engine.get_stats().await;
-    assert_eq!(stats.get("collection_count"), Some(&serde_json::json!(0)));
-}
-
-#[tokio::test]
-async fn test_search_without_index() {
+async fn search_without_index(#[case] limit: usize) {
     let engine = HybridSearchEngine::new();
 
     // Search without indexing should return semantic results as-is
@@ -232,10 +227,10 @@ async fn test_search_without_index() {
     ];
 
     let results = engine
-        .search("nonexistent", "query", semantic_results.clone(), 10)
+        .search("nonexistent", "query", semantic_results.clone(), limit)
         .await
         .unwrap();
 
-    assert_eq!(results.len(), 2);
+    assert_eq!(results.len(), semantic_results.len().min(limit));
     assert_eq!(results[0].file_path, "a.rs");
 }

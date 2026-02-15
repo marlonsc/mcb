@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 
-use crate::violation_trait::Severity;
+use crate::traits::violation::Severity;
 
 /// Types of metrics we can measure
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -212,62 +212,5 @@ impl MetricThresholds {
         }
 
         thresholds
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_default_thresholds() {
-        let thresholds = MetricThresholds::default();
-
-        let cc = thresholds.get(MetricType::CognitiveComplexity).unwrap();
-        assert_eq!(cc.max_value, 15);
-
-        let fl = thresholds.get(MetricType::FunctionLength).unwrap();
-        assert_eq!(fl.max_value, 50);
-
-        let nd = thresholds.get(MetricType::NestingDepth).unwrap();
-        assert_eq!(nd.max_value, 4);
-    }
-
-    #[test]
-    fn test_custom_thresholds() {
-        let thresholds = MetricThresholds::new()
-            .with_threshold(MetricType::CognitiveComplexity, 10, Severity::Error)
-            .with_threshold(MetricType::FunctionLength, 30, Severity::Warning);
-
-        let cc = thresholds.get(MetricType::CognitiveComplexity).unwrap();
-        assert_eq!(cc.max_value, 10);
-        assert_eq!(cc.severity, Severity::Error);
-
-        let fl = thresholds.get(MetricType::FunctionLength).unwrap();
-        assert_eq!(fl.max_value, 30);
-        assert_eq!(fl.severity, Severity::Warning);
-    }
-
-    #[test]
-    fn test_from_yaml() {
-        let yaml = serde_json::json!({
-            "cognitive_complexity": {
-                "max": 20,
-                "severity": "error"
-            },
-            "function_length": {
-                "max": 100
-            }
-        });
-
-        let thresholds = MetricThresholds::from_yaml(&yaml);
-
-        let cc = thresholds.get(MetricType::CognitiveComplexity).unwrap();
-        assert_eq!(cc.max_value, 20);
-        assert_eq!(cc.severity, Severity::Error);
-
-        let fl = thresholds.get(MetricType::FunctionLength).unwrap();
-        assert_eq!(fl.max_value, 100);
-        assert_eq!(fl.severity, Severity::Warning); // Default
     }
 }

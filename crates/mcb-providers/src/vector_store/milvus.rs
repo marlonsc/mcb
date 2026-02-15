@@ -2,6 +2,11 @@
 //!
 //! High-performance cloud vector database using Milvus.
 //! Supports production-scale vector storage with automatic indexing and distributed search.
+//!
+//! # Architecture Violation (REF003)
+//! Missing corresponding test file in `tests/` directory.
+//!
+// TODO(QUAL005): Pending (REF003): Create test file `crates/mcb-providers/tests/milvus_test.rs`.
 
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -13,18 +18,26 @@ use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInf
 use milvus::client::Client;
 use milvus::data::FieldColumn;
 use milvus::proto::schema::DataType;
-use milvus::schema::{CollectionSchemaBuilder, FieldSchema};
+use milvus::schema::{CollectionSchema, CollectionSchemaBuilder, FieldSchema};
 use milvus::value::{Value, ValueVec};
 
 use crate::constants::{
     MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_IVFFLAT_NLIST,
     MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE,
 };
-use crate::utils::JsonExt;
+use crate::provider_utils::{RetryConfig, retry_with_backoff};
 
 /// Milvus vector store provider implementation
 pub struct MilvusVectorStoreProvider {
     client: Client,
+}
+
+struct InsertPayload {
+    expected_dims: usize,
+    vectors_flat: Vec<f32>,
+    file_paths: Vec<String>,
+    start_lines: Vec<i64>,
+    contents: Vec<String>,
 }
 
 impl MilvusVectorStoreProvider {
@@ -79,8 +92,9 @@ impl MilvusVectorStoreProvider {
 #[async_trait]
 impl VectorStoreAdmin for MilvusVectorStoreProvider {
     async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
+        let name_str = name.to_string();
         Self::map_milvus_error(
-            self.client.has_collection(name.as_str()).await,
+            self.client.has_collection(&name_str).await,
             "check collection",
         )
     }
@@ -91,7 +105,7 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
     ) -> Result<HashMap<String, serde_json::Value>> {
         let stats = self
             .client
-            .get_collection_stats(collection.as_str())
+            .get_collection_stats(&collection.to_string())
             .await
             .map_err(|e| {
                 Error::vector_db(format!(
@@ -115,42 +129,25 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
     }
 
     async fn flush(&self, collection: &CollectionId) -> Result<()> {
-        // Retry flush with backoff to handle rate limiting
-        let mut last_error = None;
-        for attempt in 0..3 {
-            match self
-                .client
-                .flush_collections(vec![collection.as_str()])
-                .await
-            {
-                Ok(_) => return Ok(()),
-                Err(e) => {
-                    let err_str = e.to_string();
-                    if err_str.contains("RateLimit") || err_str.contains("rate limit") {
-                        tracing::debug!("Flush attempt {} rate limited, retrying...", attempt + 1);
-                        last_error = Some(e);
-                        tokio::time::sleep(std::time::Duration::from_millis(
-                            1000 * (attempt + 1) as u64,
-                        ))
-                        .await;
-                        continue;
-                    }
-                    return Err(Error::vector_db(format!(
-                        "Failed to flush collection: {}",
-                        e
-                    )));
-                }
+        let name_str = collection.to_string();
+        let result = retry_with_backoff(
+            RetryConfig::new(3, std::time::Duration::from_millis(1000)),
+            |_| self.client.flush_collections(vec![&name_str]),
+            |e| {
+                let err_str = e.to_string();
+                err_str.contains("RateLimit") || err_str.contains("rate limit")
+            },
+        )
+        .await;
+
+        result.map(|_| ()).map_err(|e| {
+            let err_str = e.to_string();
+            if err_str.contains("RateLimit") || err_str.contains("rate limit") {
+                Error::vector_db(format!("Failed to flush collection after retries: {}", e))
+            } else {
+                Error::vector_db(format!("Failed to flush collection: {}", e))
             }
-        }
-
-        if let Some(e) = last_error {
-            return Err(Error::vector_db(format!(
-                "Failed to flush collection after retries: {}",
-                e
-            )));
-        }
-
-        Ok(())
+        })
     }
 
     fn provider_name(&self) -> &str {
@@ -181,7 +178,8 @@ impl MilvusVectorStoreProvider {
 
     /// Load collection with graceful error handling
     async fn load_collection_safe(&self, collection: &CollectionId) -> Result<()> {
-        if let Err(e) = self.client.load_collection(collection.as_str(), None).await {
+        let name_str = collection.to_string();
+        if let Err(e) = self.client.load_collection(&name_str, None).await {
             let err_str = e.to_string();
             if err_str.contains("CollectionNotExists")
                 || err_str.contains("collection not found")
@@ -212,6 +210,7 @@ impl MilvusVectorStoreProvider {
         limit: usize,
     ) -> Result<Vec<milvus::collection::SearchResult<'_>>> {
         use milvus::query::SearchOptions;
+        let name_str = collection.to_string();
 
         let search_options = SearchOptions::new()
             .limit(limit)
@@ -225,7 +224,7 @@ impl MilvusVectorStoreProvider {
 
         self.client
             .search(
-                collection.as_str(),
+                &name_str,
                 vec![Value::FloatArray(Cow::Borrowed(query_vector))],
                 Some(search_options),
             )
@@ -240,107 +239,372 @@ impl MilvusVectorStoreProvider {
             })
     }
 
-    /// Convert Milvus search results to our SearchResult format
-    fn convert_search_results(
-        search_results: &[milvus::collection::SearchResult<'_>],
-    ) -> Vec<SearchResult> {
-        let mut results = Vec::new();
+    fn value_to_id_string(value: Option<Value<'_>>) -> String {
+        match value {
+            Some(Value::Long(id)) => id.to_string(),
+            Some(Value::String(id)) => id.to_string(),
+            _ => "unknown".to_string(),
+        }
+    }
 
-        for search_result in search_results {
-            let scores = &search_result.score;
-            let ids = &search_result.id;
+    fn extract_string_field(fields: &[FieldColumn], name: &str, index: usize) -> String {
+        fields
+            .iter()
+            .find(|column| column.name == name)
+            .and_then(|column| column.get(index))
+            .and_then(|value| match value {
+                Value::String(text) => Some(text.to_string()),
+                _ => None,
+            })
+            .unwrap_or_else(|| {
+                if name == "content" {
+                    String::new()
+                } else {
+                    "unknown".to_string()
+                }
+            })
+    }
 
-            for (i, id_val) in ids.iter().enumerate() {
-                // For L2 metric, Milvus returns SQUARED distance (lower = more similar)
-                // First take sqrt to get actual Euclidean distance, then convert to similarity
-                // Formula: score = 1 / (1 + sqrt(distance²))
-                // This maps: dist²=0 → 1.0, dist²=1 → 0.5, dist²=100 → 0.09
-                let distance_squared = scores.get(i).copied().unwrap_or(0.0);
-                let distance = distance_squared.sqrt();
-                let score = 1.0 / (1.0 + distance);
+    fn extract_long_field(fields: &[FieldColumn], name: &str, index: usize) -> i64 {
+        fields
+            .iter()
+            .find(|column| column.name == name)
+            .and_then(|column| column.get(index))
+            .and_then(|value| match value {
+                Value::Long(number) => Some(number),
+                _ => None,
+            })
+            .unwrap_or(0)
+    }
 
-                let id_str = match id_val {
-                    Value::Long(id) => id.to_string(),
-                    Value::String(id) => id.to_string(),
-                    _ => "unknown".to_string(),
-                };
+    fn build_collection_schema(name: &CollectionId, dimensions: usize) -> Result<CollectionSchema> {
+        CollectionSchemaBuilder::new(&name.to_string(), &format!("Collection for {}", name))
+            .add_field(FieldSchema::new_primary_int64(
+                "id",
+                "primary key field",
+                true,
+            ))
+            .add_field(FieldSchema::new_float_vector(
+                "vector",
+                "feature field",
+                dimensions as i64,
+            ))
+            .add_field(FieldSchema::new_varchar(
+                "file_path",
+                "file path",
+                MILVUS_FIELD_VARCHAR_MAX_LENGTH,
+            ))
+            .add_field(FieldSchema::new_int64("start_line", "start line"))
+            .add_field(FieldSchema::new_varchar(
+                "content",
+                "content",
+                MILVUS_METADATA_VARCHAR_MAX_LENGTH,
+            ))
+            .build()
+            .map_err(|e| Error::vector_db(format!("Failed to create schema: {}", e)))
+    }
 
-                let file_path = search_result
-                    .field
-                    .iter()
-                    .find(|c| c.name == "file_path")
-                    .and_then(|col| col.get(i))
-                    .map(|v| match v {
-                        Value::String(s) => s.to_string(),
-                        _ => "unknown".to_string(),
-                    })
-                    .unwrap_or_else(|| "unknown".to_string());
+    async fn create_vector_index_with_retry(&self, name: &CollectionId) -> Result<()> {
+        use milvus::index::{IndexParams, IndexType, MetricType};
+        let name_str = name.to_string();
 
-                let start_line = search_result
-                    .field
-                    .iter()
-                    .find(|c| c.name == "start_line" || c.name == "line_number")
-                    .and_then(|col| col.get(i))
-                    .map(|v| match v {
-                        Value::Long(n) => n as u32,
-                        _ => 0,
-                    })
-                    .unwrap_or(0);
+        let index_result = retry_with_backoff(
+            RetryConfig::new(3, std::time::Duration::from_millis(500)),
+            |_| async {
+                let index_params = IndexParams::new(
+                    "vector_index".to_string(),
+                    IndexType::IvfFlat,
+                    MetricType::L2,
+                    HashMap::from([("nlist".to_string(), MILVUS_IVFFLAT_NLIST.to_string())]),
+                );
+                self.client
+                    .create_index(&name_str, "vector", index_params)
+                    .await
+            },
+            |e| {
+                let err_str = e.to_string();
+                err_str.contains("CollectionNotExists") || err_str.contains("collection not found")
+            },
+        )
+        .await;
 
-                let content = search_result
-                    .field
-                    .iter()
-                    .find(|c| c.name == "content")
-                    .and_then(|col| col.get(i))
-                    .map(|v| match v {
-                        Value::String(s) => s.to_string(),
-                        _ => "".to_string(),
-                    })
-                    .unwrap_or_default();
+        if let Err(e) = index_result {
+            let err_str = e.to_string();
+            if err_str.contains("CollectionNotExists") || err_str.contains("collection not found") {
+                return Err(Error::vector_db(format!(
+                    "Failed to create index after retries: {}",
+                    e
+                )));
+            }
+            return Err(Error::vector_db(format!("Failed to create index: {}", e)));
+        }
 
-                results.push(SearchResult {
-                    id: id_str,
-                    file_path,
-                    start_line,
-                    content,
-                    score: score as f64,
-                    language: "unknown".to_string(),
-                });
+        Ok(())
+    }
+
+    fn validate_insert_input(vectors: &[Embedding], metadata_len: usize) -> Result<usize> {
+        if vectors.is_empty() {
+            return Err(Error::vector_db(
+                "No vectors provided for insertion".to_string(),
+            ));
+        }
+
+        if vectors.len() != metadata_len {
+            return Err(Error::vector_db(format!(
+                "Vectors ({}) and metadata ({}) arrays must have the same length",
+                vectors.len(),
+                metadata_len
+            )));
+        }
+
+        let expected_dims = vectors[0].dimensions;
+        for (i, vector) in vectors.iter().enumerate() {
+            if vector.dimensions != expected_dims {
+                return Err(Error::vector_db(format!(
+                    "Vector at index {} has dimensions {} but expected {}",
+                    i, vector.dimensions, expected_dims
+                )));
             }
         }
 
-        results
+        Ok(expected_dims)
+    }
+
+    fn prepare_insert_data(
+        vectors: &[Embedding],
+        metadata: &[HashMap<String, serde_json::Value>],
+        expected_dims: usize,
+    ) -> InsertPayload {
+        let capacity = vectors.len();
+        let mut payload = InsertPayload {
+            expected_dims,
+            vectors_flat: Vec::with_capacity(capacity * expected_dims),
+            file_paths: Vec::with_capacity(capacity),
+            start_lines: Vec::with_capacity(capacity),
+            contents: Vec::with_capacity(capacity),
+        };
+
+        for (embedding, meta) in vectors.iter().zip(metadata.iter()) {
+            payload.vectors_flat.extend_from_slice(&embedding.vector);
+            payload.file_paths.push(
+                meta.get("file_path")
+                    .and_then(|value| value.as_str())
+                    .unwrap_or("unknown")
+                    .to_owned(),
+            );
+            payload.start_lines.push(
+                meta.get("start_line")
+                    .and_then(|value| value.as_i64())
+                    .or_else(|| meta.get("line_number").and_then(|value| value.as_i64()))
+                    .unwrap_or(0),
+            );
+            payload.contents.push(
+                meta.get("content")
+                    .and_then(|value| value.as_str())
+                    .unwrap_or("")
+                    .to_owned(),
+            );
+        }
+
+        payload
+    }
+
+    fn build_field_column(
+        name: &str,
+        dtype: DataType,
+        value: ValueVec,
+        max_length: i32,
+    ) -> FieldColumn {
+        FieldColumn {
+            name: name.to_string(),
+            dtype,
+            value,
+            dim: 1,
+            max_length,
+            is_dynamic: false,
+        }
+    }
+
+    fn build_insert_columns(payload: InsertPayload) -> Vec<FieldColumn> {
+        let vector_column = FieldColumn {
+            name: "vector".to_string(),
+            dtype: DataType::FloatVector,
+            value: ValueVec::Float(payload.vectors_flat),
+            dim: payload.expected_dims as i64,
+            max_length: 0,
+            is_dynamic: false,
+        };
+
+        vec![
+            vector_column,
+            Self::build_field_column(
+                "file_path",
+                DataType::VarChar,
+                ValueVec::String(payload.file_paths),
+                MILVUS_FIELD_VARCHAR_MAX_LENGTH,
+            ),
+            Self::build_field_column(
+                "start_line",
+                DataType::Int64,
+                ValueVec::Long(payload.start_lines),
+                0,
+            ),
+            Self::build_field_column(
+                "content",
+                DataType::VarChar,
+                ValueVec::String(payload.contents),
+                MILVUS_METADATA_VARCHAR_MAX_LENGTH,
+            ),
+        ]
+    }
+
+    fn parse_milvus_ids(result: &milvus::proto::milvus::MutationResult) -> Vec<String> {
+        match &result.i_ds {
+            Some(ids) => match &ids.id_field {
+                Some(milvus::proto::schema::i_ds::IdField::IntId(int_ids)) => int_ids
+                    .data
+                    .iter()
+                    .map(std::string::ToString::to_string)
+                    .collect(),
+                Some(milvus::proto::schema::i_ds::IdField::StrId(str_ids)) => str_ids.data.clone(),
+                None => Vec::new(),
+            },
+            None => Vec::new(),
+        }
+    }
+
+    fn convert_search_results(
+        search_results: &[milvus::collection::SearchResult<'_>],
+    ) -> Vec<SearchResult> {
+        search_results
+            .iter()
+            .flat_map(|search_result| {
+                search_result
+                    .id
+                    .iter()
+                    .enumerate()
+                    .map(|(index, id_value)| {
+                        let distance_squared =
+                            search_result.score.get(index).copied().unwrap_or(0.0);
+                        let score = 1.0 / (1.0 + distance_squared.sqrt());
+                        let fields = &search_result.field;
+                        let start_line = Self::extract_long_field(fields, "start_line", index)
+                            .max(Self::extract_long_field(fields, "line_number", index))
+                            as u32;
+
+                        SearchResult {
+                            id: Self::value_to_id_string(Some(id_value.clone())),
+                            file_path: Self::extract_string_field(fields, "file_path", index),
+                            start_line,
+                            content: Self::extract_string_field(fields, "content", index),
+                            score: score as f64,
+                            language: "unknown".to_string(),
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect()
+    }
+
+    fn query_row_count(query_results: &[FieldColumn]) -> usize {
+        query_results.first().map_or(0, FieldColumn::len)
+    }
+
+    fn convert_query_results(
+        query_results: &[FieldColumn],
+        file_path_override: Option<&str>,
+    ) -> Vec<SearchResult> {
+        (0..Self::query_row_count(query_results))
+            .map(|index| {
+                let file_path = file_path_override
+                    .map(std::string::ToString::to_string)
+                    .unwrap_or_else(|| {
+                        Self::extract_string_field(query_results, "file_path", index)
+                    });
+                let start_line = Self::extract_long_field(query_results, "start_line", index).max(
+                    Self::extract_long_field(query_results, "line_number", index),
+                ) as u32;
+
+                SearchResult {
+                    id: Self::value_to_id_string(
+                        query_results
+                            .iter()
+                            .find(|column| column.name == "id")
+                            .and_then(|column| column.get(index)),
+                    ),
+                    file_path,
+                    start_line,
+                    content: Self::extract_string_field(query_results, "content", index),
+                    score: 1.0,
+                    language: "unknown".to_string(),
+                }
+            })
+            .collect()
+    }
+
+    async fn fetch_list_vectors_batch(
+        &self,
+        collection: &CollectionId,
+        offset: i64,
+        remaining: usize,
+        current_total: usize,
+    ) -> Result<Option<Vec<FieldColumn>>> {
+        use milvus::query::QueryOptions;
+
+        let batch_limit = remaining.min(MILVUS_QUERY_BATCH_SIZE) as i64;
+        let query_options = QueryOptions::new()
+            .limit(batch_limit)
+            .offset(offset)
+            .output_fields(vec![
+                "id".to_string(),
+                "file_path".to_string(),
+                "start_line".to_string(),
+                "content".to_string(),
+            ]);
+
+        match self
+            .client
+            .query(collection.to_string(), "id >= 0", &query_options)
+            .await
+        {
+            Ok(results) => Ok(Some(results)),
+            Err(e) => {
+                let err_str = e.to_string();
+                if err_str.contains("message length too large") {
+                    tracing::warn!(
+                        offset = offset,
+                        results = current_total,
+                        "hit gRPC message size limit, returning partial results"
+                    );
+                    return Ok(None);
+                }
+                Err(Error::vector_db(format!("Failed to list vectors: {}", e)))
+            }
+        }
+    }
+
+    fn convert_to_file_infos(query_results: &[FieldColumn], limit: usize) -> Vec<FileInfo> {
+        let mut file_counts: HashMap<String, u32> = HashMap::new();
+
+        for index in 0..Self::query_row_count(query_results) {
+            let path = Self::extract_string_field(query_results, "file_path", index);
+            if path != "unknown" {
+                *file_counts.entry(path).or_insert(0) += 1;
+            }
+        }
+
+        file_counts
+            .into_iter()
+            .take(limit)
+            .map(|(path, chunk_count)| FileInfo::new(path, chunk_count, "unknown", None))
+            .collect()
     }
 }
 
 #[async_trait]
 impl VectorStoreProvider for MilvusVectorStoreProvider {
     async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
-        let schema =
-            CollectionSchemaBuilder::new(name.as_str(), &format!("Collection for {}", name))
-                .add_field(FieldSchema::new_primary_int64(
-                    "id",
-                    "primary key field",
-                    true, // Use auto_id
-                ))
-                .add_field(FieldSchema::new_float_vector(
-                    "vector",
-                    "feature field",
-                    dimensions as i64,
-                ))
-                .add_field(FieldSchema::new_varchar(
-                    "file_path",
-                    "file path",
-                    MILVUS_FIELD_VARCHAR_MAX_LENGTH,
-                ))
-                .add_field(FieldSchema::new_int64("start_line", "start line"))
-                .add_field(FieldSchema::new_varchar(
-                    "content",
-                    "content",
-                    MILVUS_METADATA_VARCHAR_MAX_LENGTH,
-                ))
-                .build()
-                .map_err(|e| Error::vector_db(format!("Failed to create schema: {}", e)))?;
+        let schema = Self::build_collection_schema(name, dimensions)?;
 
         Self::map_milvus_error(
             self.client.create_collection(schema, None).await,
@@ -350,61 +614,15 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         // Wait for Milvus to sync collection metadata
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
 
-        // Create index on the vector field for efficient search
-        use milvus::index::{IndexParams, IndexType, MetricType};
-
-        // Retry index creation with backoff to handle eventual consistency
-        let mut last_error = None;
-        for attempt in 0..3 {
-            let index_params = IndexParams::new(
-                "vector_index".to_string(),
-                IndexType::IvfFlat,
-                MetricType::L2,
-                HashMap::from([("nlist".to_string(), MILVUS_IVFFLAT_NLIST.to_string())]),
-            );
-            match self
-                .client
-                .create_index(name.as_str(), "vector", index_params)
-                .await
-            {
-                Ok(()) => {
-                    last_error = None;
-                    break;
-                }
-                Err(e) => {
-                    let err_str = e.to_string();
-                    if err_str.contains("CollectionNotExists")
-                        || err_str.contains("collection not found")
-                    {
-                        tracing::debug!(
-                            "Index creation attempt {} failed (collection not ready), retrying...",
-                            attempt + 1
-                        );
-                        last_error = Some(e);
-                        tokio::time::sleep(std::time::Duration::from_millis(
-                            500 * (attempt + 1) as u64,
-                        ))
-                        .await;
-                        continue;
-                    }
-                    return Err(Error::vector_db(format!("Failed to create index: {}", e)));
-                }
-            }
-        }
-
-        if let Some(e) = last_error {
-            return Err(Error::vector_db(format!(
-                "Failed to create index after retries: {}",
-                e
-            )));
-        }
+        self.create_vector_index_with_retry(name).await?;
 
         Ok(())
     }
 
     async fn delete_collection(&self, name: &CollectionId) -> Result<()> {
+        let name_str = name.to_string();
         Self::map_milvus_error(
-            self.client.drop_collection(name.as_str()).await,
+            self.client.drop_collection(&name_str).await,
             "delete collection",
         )?;
         Ok(())
@@ -416,112 +634,17 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         vectors: &[Embedding],
         metadata: Vec<HashMap<String, serde_json::Value>>,
     ) -> Result<Vec<String>> {
-        if vectors.is_empty() {
-            return Err(Error::vector_db(
-                "No vectors provided for insertion".to_string(),
-            ));
-        }
-
-        if vectors.len() != metadata.len() {
-            return Err(Error::vector_db(format!(
-                "Vectors ({}) and metadata ({}) arrays must have the same length",
-                vectors.len(),
-                metadata.len()
-            )));
-        }
-
-        // Validate all vectors have the same dimensions
-        let expected_dims = vectors[0].dimensions;
-        for (i, vector) in vectors.iter().enumerate() {
-            if vector.dimensions != expected_dims {
-                return Err(Error::vector_db(format!(
-                    "Vector at index {} has dimensions {} but expected {}",
-                    i, vector.dimensions, expected_dims
-                )));
-            }
-        }
-
-        // Prepare data for insertion
-        let capacity = vectors.len();
-        let mut vectors_flat = Vec::with_capacity(capacity * expected_dims);
-        let mut file_paths = Vec::with_capacity(capacity);
-        let mut start_lines = Vec::with_capacity(capacity);
-        let mut contents = Vec::with_capacity(capacity);
-
-        for (embedding, meta) in vectors.iter().zip(metadata.iter()) {
-            vectors_flat.extend_from_slice(&embedding.vector);
-
-            let file_path = meta.string_or("file_path", "unknown");
-            let start_line = meta
-                .opt_i64("start_line")
-                .or_else(|| meta.opt_i64("line_number"))
-                .unwrap_or(0);
-            let content = meta.string_or("content", "");
-
-            file_paths.push(file_path);
-            start_lines.push(start_line);
-            contents.push(content);
-        }
-
-        // With auto_id: true, we don't provide the "id" column
-        let vector_column = FieldColumn {
-            name: "vector".to_string(),
-            dtype: DataType::FloatVector,
-            value: ValueVec::Float(vectors_flat),
-            dim: expected_dims as i64,
-            max_length: 0,
-            is_dynamic: false,
-        };
-        let file_path_column = FieldColumn {
-            name: "file_path".to_string(),
-            dtype: DataType::VarChar,
-            value: ValueVec::String(file_paths),
-            dim: 1,
-            max_length: MILVUS_FIELD_VARCHAR_MAX_LENGTH,
-            is_dynamic: false,
-        };
-        let start_line_column = FieldColumn {
-            name: "start_line".to_string(),
-            dtype: DataType::Int64,
-            value: ValueVec::Long(start_lines),
-            dim: 1,
-            max_length: 0,
-            is_dynamic: false,
-        };
-        let content_column = FieldColumn {
-            name: "content".to_string(),
-            dtype: DataType::VarChar,
-            value: ValueVec::String(contents),
-            dim: 1,
-            max_length: MILVUS_METADATA_VARCHAR_MAX_LENGTH,
-            is_dynamic: false,
-        };
-
-        let columns = vec![
-            vector_column,
-            file_path_column,
-            start_line_column,
-            content_column,
-        ];
+        let expected_dims = Self::validate_insert_input(vectors, metadata.len())?;
+        let payload = Self::prepare_insert_data(vectors, &metadata, expected_dims);
+        let columns = Self::build_insert_columns(payload);
+        let name_str = collection.to_string();
 
         let res = Self::map_milvus_error(
-            self.client.insert(collection.as_str(), columns, None).await,
+            self.client.insert(&name_str, columns, None).await,
             "insert vectors",
         )?;
 
-        // Return IDs as strings from the result
-        let ids = match res.i_ds {
-            Some(ids) => match ids.id_field {
-                Some(milvus::proto::schema::i_ds::IdField::IntId(int_ids)) => {
-                    int_ids.data.iter().map(|id| id.to_string()).collect()
-                }
-                Some(milvus::proto::schema::i_ds::IdField::StrId(str_ids)) => str_ids.data,
-                None => Vec::new(),
-            },
-            None => Vec::new(),
-        };
-
-        Ok(ids)
+        Ok(Self::parse_milvus_ids(&res))
     }
 
     async fn search_similar(
@@ -556,9 +679,10 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         }
 
         let options = DeleteOptions::with_ids(ValueVec::Long(id_numbers));
+        let name_str = collection.to_string();
 
         Self::map_milvus_error(
-            self.client.delete(collection.as_str(), &options).await,
+            self.client.delete(&name_str, &options).await,
             "delete vectors",
         )?;
 
@@ -573,10 +697,11 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         if ids.is_empty() {
             return Ok(Vec::new());
         }
+        let name_str = collection.to_string();
 
         // Ensure collection is loaded
         self.client
-            .load_collection(collection.as_str(), None)
+            .load_collection(&name_str, None)
             .await
             .map_err(|e| {
                 Error::vector_db(format!("Failed to load collection '{}': {}", collection, e))
@@ -595,77 +720,11 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         ]);
 
         let query_results = Self::map_milvus_error(
-            self.client
-                .query(collection.as_str(), &expr, &query_options)
-                .await,
+            self.client.query(&name_str, &expr, &query_options).await,
             "query by IDs",
         )?;
 
-        // Convert results to our format
-        let mut results = Vec::new();
-
-        // Map columns by name
-        let mut columns_map = HashMap::new();
-        for column in &query_results {
-            columns_map.insert(column.name.as_str(), column);
-        }
-
-        let row_count = if let Some(col) = query_results.first() {
-            col.len()
-        } else {
-            0
-        };
-
-        for i in 0..row_count {
-            let id_str = columns_map
-                .get("id")
-                .and_then(|col| col.get(i))
-                .map(|v| match v {
-                    Value::Long(id) => id.to_string(),
-                    Value::String(id) => id.to_string(),
-                    _ => "unknown".to_string(),
-                })
-                .unwrap_or_else(|| "unknown".to_string());
-
-            let file_path = columns_map
-                .get("file_path")
-                .and_then(|col| col.get(i))
-                .map(|v| match v {
-                    Value::String(s) => s.to_string(),
-                    _ => "unknown".to_string(),
-                })
-                .unwrap_or_else(|| "unknown".to_string());
-
-            let start_line = columns_map
-                .get("start_line")
-                .or_else(|| columns_map.get("line_number"))
-                .and_then(|col| col.get(i))
-                .map(|v| match v {
-                    Value::Long(n) => n as u32,
-                    _ => 0,
-                })
-                .unwrap_or(0);
-
-            let content = columns_map
-                .get("content")
-                .and_then(|col| col.get(i))
-                .map(|v| match v {
-                    Value::String(s) => s.to_string(),
-                    _ => "".to_string(),
-                })
-                .unwrap_or_default();
-
-            results.push(SearchResult {
-                id: id_str,
-                file_path,
-                start_line,
-                content,
-                score: 1.0,
-                language: "unknown".to_string(),
-            });
-        }
-
-        Ok(results)
+        Ok(Self::convert_query_results(&query_results, None))
     }
 
     async fn list_vectors(
@@ -676,21 +735,18 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         if limit == 0 {
             return Ok(Vec::new());
         }
+        let name_str = collection.to_string();
 
         // Ensure collection is loaded
         self.client
-            .load_collection(collection.as_str(), None)
+            .load_collection(&name_str, None)
             .await
             .map_err(|e| {
                 Error::vector_db(format!("Failed to load collection '{}': {}", collection, e))
             })?;
 
-        // Use pagination to avoid gRPC message size limits (4MB default)
         let mut all_results = Vec::new();
         let mut offset = 0i64;
-
-        let expr = "id >= 0".to_string();
-        use milvus::query::QueryOptions;
 
         loop {
             let remaining = limit.saturating_sub(all_results.len());
@@ -698,105 +754,23 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                 break;
             }
 
-            let batch_limit = remaining.min(MILVUS_QUERY_BATCH_SIZE) as i64;
-            let query_options = QueryOptions::new()
-                .limit(batch_limit)
-                .offset(offset)
-                .output_fields(vec![
-                    "id".to_string(),
-                    "file_path".to_string(),
-                    "start_line".to_string(),
-                    "content".to_string(),
-                ]);
-
-            let query_results = match self
-                .client
-                .query(collection.as_str(), &expr, &query_options)
-                .await
-            {
-                Ok(results) => results,
-                Err(e) => {
-                    let err_str = e.to_string();
-                    // If we hit message size limit even with smaller batch, log and break
-                    if err_str.contains("message length too large") {
-                        tracing::warn!(
-                            "Hit gRPC message size limit at offset {}, returning {} results",
-                            offset,
-                            all_results.len()
-                        );
-                        break;
-                    }
-                    return Err(Error::vector_db(format!("Failed to list vectors: {}", e)));
-                }
+            let Some(query_results) = self
+                .fetch_list_vectors_batch(collection, offset, remaining, all_results.len())
+                .await?
+            else {
+                break;
             };
 
-            let row_count = if let Some(col) = query_results.first() {
-                col.len()
-            } else {
-                0
-            };
-
-            // No more results
+            let row_count = Self::query_row_count(&query_results);
             if row_count == 0 {
                 break;
             }
 
-            for i in 0..row_count {
-                let id_str = query_results
-                    .iter()
-                    .find(|c| c.name == "id")
-                    .and_then(|col| col.get(i))
-                    .map(|v| match v {
-                        Value::Long(id) => id.to_string(),
-                        Value::String(id) => id.to_string(),
-                        _ => "unknown".to_string(),
-                    })
-                    .unwrap_or_else(|| "unknown".to_string());
-
-                let file_path = query_results
-                    .iter()
-                    .find(|c| c.name == "file_path")
-                    .and_then(|col| col.get(i))
-                    .map(|v| match v {
-                        Value::String(s) => s.to_string(),
-                        _ => "unknown".to_string(),
-                    })
-                    .unwrap_or_else(|| "unknown".to_string());
-
-                let start_line = query_results
-                    .iter()
-                    .find(|c| c.name == "start_line" || c.name == "line_number")
-                    .and_then(|col| col.get(i))
-                    .map(|v| match v {
-                        Value::Long(n) => n as u32,
-                        _ => 0,
-                    })
-                    .unwrap_or(0);
-
-                let content = query_results
-                    .iter()
-                    .find(|c| c.name == "content")
-                    .and_then(|col| col.get(i))
-                    .map(|v| match v {
-                        Value::String(s) => s.to_string(),
-                        _ => "".to_string(),
-                    })
-                    .unwrap_or_default();
-
-                all_results.push(SearchResult {
-                    id: id_str,
-                    file_path,
-                    start_line,
-                    content,
-                    score: 1.0,
-                    language: "unknown".to_string(),
-                });
-            }
+            all_results.extend(Self::convert_query_results(&query_results, None));
 
             offset += row_count as i64;
 
-            // If we got fewer results than requested, we've reached the end
-            if row_count < batch_limit as usize {
+            if row_count < remaining.min(MILVUS_QUERY_BATCH_SIZE) {
                 break;
             }
         }
@@ -814,7 +788,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let mut collections = Vec::new();
 
         for name in collection_names {
-            let collection_id = CollectionId::new(name);
+            let collection_id = CollectionId::from_name(&name);
             // Get stats for each collection
             let stats = self.get_stats(&collection_id).await.unwrap_or_default();
             let vector_count = stats
@@ -825,7 +799,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
             // For now, we don't have a quick way to count unique files without querying all data
             // In a future optimization, we could cache this or use Milvus aggregation
             collections.push(CollectionInfo::new(
-                collection_id,
+                name,
                 vector_count,
                 0, // file_count will be populated when listing files
                 None,
@@ -844,9 +818,10 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         if limit == 0 {
             return Ok(Vec::new());
         }
+        let name_str = collection.to_string();
 
         // Ensure collection is loaded
-        if let Err(e) = self.client.load_collection(collection.as_str(), None).await {
+        if let Err(e) = self.client.load_collection(&name_str, None).await {
             let err_str = e.to_string();
             if err_str.contains("CollectionNotExists")
                 || err_str.contains("collection not found")
@@ -860,7 +835,6 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
             )));
         }
 
-        // Query all file_path values and aggregate
         use milvus::query::QueryOptions;
 
         let expr = "id >= 0".to_string();
@@ -868,38 +842,15 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
             .limit(crate::constants::MILVUS_DEFAULT_QUERY_LIMIT)
             .output_fields(vec!["file_path".to_string()]);
 
-        let query_results = match self
-            .client
-            .query(collection.as_str(), &expr, &query_options)
-            .await
-        {
+        let query_results = match self.client.query(&name_str, &expr, &query_options).await {
             Ok(results) => results,
             Err(e) => {
-                tracing::warn!("Failed to query file paths: {}", e);
+                tracing::warn!(error = %e, "failed to query file paths");
                 return Ok(Vec::new());
             }
         };
 
-        // Aggregate file paths
-        let mut file_counts: HashMap<String, u32> = HashMap::new();
-
-        for column in &query_results {
-            if column.name == "file_path" {
-                for i in 0..column.len() {
-                    if let Some(Value::String(path)) = column.get(i) {
-                        *file_counts.entry(path.to_string()).or_insert(0) += 1;
-                    }
-                }
-            }
-        }
-
-        let files: Vec<FileInfo> = file_counts
-            .into_iter()
-            .take(limit)
-            .map(|(path, chunk_count)| FileInfo::new(path, chunk_count, "unknown", None))
-            .collect();
-
-        Ok(files)
+        Ok(Self::convert_to_file_infos(&query_results, limit))
     }
 
     async fn get_chunks_by_file(
@@ -907,8 +858,9 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         collection: &CollectionId,
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
+        let name_str = collection.to_string();
         // Ensure collection is loaded
-        if let Err(e) = self.client.load_collection(collection.as_str(), None).await {
+        if let Err(e) = self.client.load_collection(&name_str, None).await {
             let err_str = e.to_string();
             if err_str.contains("CollectionNotExists")
                 || err_str.contains("collection not found")
@@ -935,72 +887,15 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
                 "content".to_string(),
             ]);
 
-        let query_results = match self
-            .client
-            .query(collection.as_str(), &expr, &query_options)
-            .await
-        {
+        let query_results = match self.client.query(&name_str, &expr, &query_options).await {
             Ok(results) => results,
             Err(e) => {
-                tracing::warn!("Failed to query chunks by file: {}", e);
+                tracing::warn!(error = %e, "failed to query chunks by file");
                 return Ok(Vec::new());
             }
         };
 
-        // Map columns by name
-        let mut columns_map = HashMap::new();
-        for column in &query_results {
-            columns_map.insert(column.name.as_str(), column);
-        }
-
-        let row_count = if let Some(col) = query_results.first() {
-            col.len()
-        } else {
-            0
-        };
-
-        let mut results = Vec::new();
-
-        for i in 0..row_count {
-            let id_str = columns_map
-                .get("id")
-                .and_then(|col| col.get(i))
-                .map(|v| match v {
-                    Value::Long(id) => id.to_string(),
-                    Value::String(id) => id.to_string(),
-                    _ => "unknown".to_string(),
-                })
-                .unwrap_or_else(|| "unknown".to_string());
-
-            let start_line = columns_map
-                .get("start_line")
-                .and_then(|col| col.get(i))
-                .map(|v| match v {
-                    Value::Long(n) => n as u32,
-                    _ => 0,
-                })
-                .unwrap_or(0);
-
-            let content = columns_map
-                .get("content")
-                .and_then(|col| col.get(i))
-                .map(|v| match v {
-                    Value::String(s) => s.to_string(),
-                    _ => "".to_string(),
-                })
-                .unwrap_or_default();
-
-            results.push(SearchResult {
-                id: id_str,
-                file_path: file_path.to_string(),
-                start_line,
-                content,
-                score: 1.0,
-                language: "unknown".to_string(),
-            });
-        }
-
-        // Sort by start_line
+        let mut results = Self::convert_query_results(&query_results, Some(file_path));
         results.sort_by_key(|r| r.start_line);
 
         Ok(results)

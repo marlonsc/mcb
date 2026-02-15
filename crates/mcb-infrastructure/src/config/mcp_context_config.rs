@@ -12,6 +12,8 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
+const EMBEDDED_APP_DEFAULTS: &str = include_str!("../../../../config/default.toml");
+
 /// Configuration errors that can occur during MCP context setup.
 #[derive(Debug, Error)]
 pub enum ConfigError {
@@ -32,7 +34,6 @@ pub enum ConfigError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GitConfig {
     /// Branches to index (e.g., ["main", "develop"])
-    #[serde(default = "default_branches")]
     pub branches: Vec<String>,
 
     /// Number of commits to index per branch
@@ -48,10 +49,6 @@ pub struct GitConfig {
     pub include_submodules: bool,
 }
 
-fn default_branches() -> Vec<String> {
-    vec!["main".to_string(), "HEAD".to_string()]
-}
-
 fn default_depth() -> usize {
     50
 }
@@ -63,13 +60,27 @@ fn default_include_submodules() -> bool {
 /// Default Git configuration: main/HEAD branches, depth 50, submodules included.
 impl Default for GitConfig {
     fn default() -> Self {
-        Self {
-            branches: default_branches(),
-            depth: default_depth(),
-            ignore_patterns: Vec::new(),
-            include_submodules: default_include_submodules(),
-        }
+        embedded_mcp_context_defaults().git
     }
+}
+
+#[derive(Debug, Deserialize)]
+struct EmbeddedDefaultsToml {
+    mcp_context: EmbeddedMcpContext,
+}
+
+#[derive(Debug, Deserialize)]
+struct EmbeddedMcpContext {
+    git: GitConfig,
+}
+
+fn embedded_mcp_context_defaults() -> McpContextConfig {
+    toml::from_str::<EmbeddedDefaultsToml>(EMBEDDED_APP_DEFAULTS)
+        .map(|parsed| McpContextConfig {
+            git: parsed.mcp_context.git,
+            custom: HashMap::new(),
+        })
+        .unwrap_or_else(|e| panic!("Failed to load embedded mcp_context defaults: {e}"))
 }
 
 /// Root MCP Context configuration
@@ -91,7 +102,7 @@ impl McpContextConfig {
         let config_path = path.join(".mcp-context.toml");
 
         if !config_path.exists() {
-            return Ok(Self::default());
+            return Ok(embedded_mcp_context_defaults());
         }
 
         let content = fs::read_to_string(&config_path)?;
@@ -102,6 +113,6 @@ impl McpContextConfig {
 
     /// Load configuration, returning default if file not found
     pub fn load_from_path_or_default(path: &Path) -> Self {
-        Self::load_from_path(path).unwrap_or_default()
+        Self::load_from_path(path).unwrap_or_else(|_| embedded_mcp_context_defaults())
     }
 }

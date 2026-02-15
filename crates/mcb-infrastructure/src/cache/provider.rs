@@ -9,6 +9,7 @@
 use std::fmt;
 use std::sync::Arc;
 
+use delegate::delegate;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{CacheEntryConfig, CacheProvider, CacheStats};
 
@@ -66,9 +67,12 @@ impl SharedCacheProvider {
         self.namespace = None;
     }
 
-    /// Get the underlying cache provider as an Arc
-    pub fn as_provider(&self) -> Arc<dyn CacheProvider> {
-        self.provider.clone()
+    delegate! {
+        to self.provider {
+            /// Get the underlying cache provider as an Arc
+            #[call(clone)]
+            pub fn as_provider(&self) -> Arc<dyn CacheProvider>;
+        }
     }
 
     /// Get a namespaced key
@@ -135,26 +139,16 @@ impl SharedCacheProvider {
         self.provider.exists(&namespaced_key).await
     }
 
-    /// Clear all values from the cache
-    pub async fn clear(&self) -> Result<()> {
-        self.provider.clear().await
-    }
+    delegate! {
+        to self.provider {
+            /// Clear all values from the cache
+            pub async fn clear(&self) -> Result<()>;
 
-    /// Get cache statistics
-    pub async fn stats(&self) -> Result<CacheStats> {
-        self.provider.stats().await
-    }
+            /// Get cache statistics
+            pub async fn stats(&self) -> Result<CacheStats>;
 
-    /// Get the cache size
-    pub async fn size(&self) -> Result<usize> {
-        self.provider.size().await
-    }
-
-    /// Create a namespaced view of this cache provider
-    pub fn namespaced<S: Into<String>>(&self, namespace: S) -> NamespacedCacheProvider {
-        NamespacedCacheProvider {
-            provider: Arc::clone(&self.provider),
-            namespace: namespace.into(),
+            /// Get the cache size
+            pub async fn size(&self) -> Result<usize>;
         }
     }
 }
@@ -164,67 +158,5 @@ impl fmt::Debug for SharedCacheProvider {
         f.debug_struct("SharedCacheProvider")
             .field("namespace", &self.namespace)
             .finish()
-    }
-}
-
-/// Namespaced cache provider view
-///
-/// Provides access to a cache provider within a specific namespace.
-#[derive(Clone)]
-pub struct NamespacedCacheProvider {
-    provider: Arc<dyn CacheProvider>,
-    namespace: String,
-}
-
-impl NamespacedCacheProvider {
-    /// Get a typed value from the cache within this namespace
-    pub async fn get<T>(&self, key: &str) -> Result<Option<T>>
-    where
-        T: serde::de::DeserializeOwned + Send,
-    {
-        let namespaced_key = format!("{}:{}", self.namespace, key);
-        match self.provider.get_json(&namespaced_key).await? {
-            Some(json) => {
-                let value: T = serde_json::from_str(&json).map_err(|e| {
-                    mcb_domain::error::Error::Infrastructure {
-                        message: format!("Failed to deserialize cached value: {}", e),
-                        source: Some(Box::new(e)),
-                    }
-                })?;
-                Ok(Some(value))
-            }
-            None => Ok(None),
-        }
-    }
-
-    /// Set a typed value in the cache within this namespace
-    pub async fn set<T>(&self, key: &str, value: &T, config: CacheEntryConfig) -> Result<()>
-    where
-        T: serde::Serialize + Send + Sync,
-    {
-        let namespaced_key = format!("{}:{}", self.namespace, key);
-        let json =
-            serde_json::to_string(value).map_err(|e| mcb_domain::error::Error::Infrastructure {
-                message: format!("Failed to serialize value for cache: {}", e),
-                source: Some(Box::new(e)),
-            })?;
-        self.provider.set_json(&namespaced_key, &json, config).await
-    }
-
-    /// Delete a value from the cache within this namespace
-    pub async fn delete(&self, key: &str) -> Result<bool> {
-        let namespaced_key = format!("{}:{}", self.namespace, key);
-        self.provider.delete(&namespaced_key).await
-    }
-
-    /// Check if a key exists in the cache within this namespace
-    pub async fn exists(&self, key: &str) -> Result<bool> {
-        let namespaced_key = format!("{}:{}", self.namespace, key);
-        self.provider.exists(&namespaced_key).await
-    }
-
-    /// Get the inner cache provider for DI injection
-    pub fn inner(&self) -> Arc<dyn CacheProvider> {
-        self.provider.clone()
     }
 }

@@ -123,12 +123,6 @@ Do NOT suggest style changes already handled by rustfmt (formatting, whitespace)
 """
 
 # ===========================================================================
-# /improve — Self-Reflection
-# ===========================================================================
-[pr_code_suggestions.self_reflect_on_suggestions]
-enabled = true
-
-# ===========================================================================
 # Auto Best Practices — Learning from PR history
 # ===========================================================================
 [auto_best_practices]

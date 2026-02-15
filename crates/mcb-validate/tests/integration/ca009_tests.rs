@@ -31,8 +31,7 @@ fn test_ca009_infrastructure_imports_application() {
             infrastructure_crate: "mcb-infrastructure".to_string(),
             server_crate: "mcb-server".to_string(),
             validate_crate: "mcb-validate".to_string(),
-            language_support_crate: "mcb-language-support".to_string(),
-            ast_utils_crate: "mcb-ast-utils".to_string(),
+
             enabled: true,
         },
     );

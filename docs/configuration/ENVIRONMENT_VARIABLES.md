@@ -3,8 +3,8 @@
 
 Complete reference for all environment variables supported by Memory Context Browser.
 
-**Version**: 0.2.0
-**Last Updated**: 2026-01-28
+**Version**: 0.2.1
+**Last Updated**: 2026-02-14
 
 See also [CONFIGURATION.md](../CONFIGURATION.md) for Figment-based config (ADR-025) and `MCP__` env pattern.
 

@@ -5,16 +5,16 @@
 //! configuration lifecycle.
 
 pub mod loader;
-pub mod mcp_context_config;
+mod mcp_context_config;
 pub mod paths;
 pub mod types;
 pub mod watcher;
 
 // Re-export main configuration types
 pub use types::{
-    AppConfig, AuthConfig, CacheProvider, CacheSystemConfig, LoggingConfig, ServerConfig,
-    ServerConfigBuilder, ServerConfigPresets, ServerCorsConfig, ServerNetworkConfig,
-    ServerSslConfig, ServerTimeoutConfig, TransportMode,
+    AppConfig, AuthConfig, CacheProvider, CacheSystemConfig, DatabaseConfig,
+    DatabaseConfigContainer, LoggingConfig, ServerConfig, ServerConfigBuilder, ServerConfigPresets,
+    ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig, TransportMode,
 };
 
 pub use loader::ConfigLoader;

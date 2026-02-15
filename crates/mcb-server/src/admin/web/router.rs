@@ -4,17 +4,18 @@
 
 use std::sync::Arc;
 
+use crate::templates::Template;
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use rocket::{Build, Rocket, routes};
-use rocket_dyn_templates::Template;
 
 use super::entity_handlers;
 use super::handlers;
+use super::lov_handlers;
 use crate::admin::handlers::AdminState;
 
 /// Minimal no-op event bus for the standalone web UI Rocket instance.
@@ -52,7 +53,7 @@ fn default_admin_state() -> AdminState {
         metrics: Arc::new(AtomicPerformanceMetrics::new()),
         indexing: Arc::new(DefaultIndexingOperations::new()),
         config_watcher: None,
-        current_config: AppConfig::default(),
+        current_config: ConfigLoader::new().load().expect("load config"),
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: 30,
@@ -64,16 +65,25 @@ fn default_admin_state() -> AdminState {
         plan_entity: None,
         issue_entity: None,
         org_entity: None,
+        tool_handlers: None,
     }
 }
 
-/// Returns the path to the Handlebars templates directory.
+/// Returns the path to the templates directory (Handlebars).
 ///
 /// Searches multiple candidate locations to support both workspace-level
 /// execution (cargo test from root) and crate-level execution.
+/// Falls back to `"templates"` when no directory is found on disk;
+/// the embedded template fallback in `Context::initialize` handles
+/// the case where this path does not exist at runtime.
 #[must_use]
 pub fn template_dir() -> String {
-    let candidates = ["crates/mcb-server/templates", "templates"];
+    const MANIFEST_TEMPLATE_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/templates");
+    let candidates = [
+        MANIFEST_TEMPLATE_DIR,
+        "crates/mcb-server/templates",
+        "templates",
+    ];
     for candidate in &candidates {
         let path = std::path::Path::new(candidate);
         if path.exists() && path.is_dir() {
@@ -81,7 +91,7 @@ pub fn template_dir() -> String {
             return (*candidate).to_string();
         }
     }
-    tracing::warn!("No template directory found, using default 'templates'");
+    tracing::info!("No template directory found on disk, embedded templates will be used");
     "templates".to_string()
 }
 
@@ -97,13 +107,18 @@ pub fn template_dir() -> String {
 /// - GET `/ui/browse/<collection>` - Browse collection files page
 /// - GET `/ui/browse/<collection>/file` - Browse file chunks page
 /// - GET `/ui/browse/tree` - Browse tree view page (Wave 3)
+/// - GET `/ui/lov/<entity_slug>` - LOV endpoint for FK dropdown selects
 /// - GET `/favicon.ico` - Favicon
 pub fn web_rocket() -> Rocket<Build> {
     let figment = rocket::Config::figment().merge(("template_dir", template_dir()));
 
     rocket::custom(figment)
         .manage(default_admin_state())
-        .attach(Template::fairing())
+        .attach(Template::custom(
+            |engines: &mut crate::templates::Engines| {
+                crate::admin::web::helpers::register_helpers(&mut engines.handlebars);
+            },
+        ))
         .mount(
             "/",
             routes![
@@ -128,6 +143,8 @@ pub fn web_rocket() -> Rocket<Build> {
                 entity_handlers::entities_create,
                 entity_handlers::entities_update,
                 entity_handlers::entities_delete,
+                entity_handlers::entities_bulk_delete,
+                lov_handlers::lov_endpoint,
             ],
         )
 }

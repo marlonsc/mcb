@@ -220,3 +220,15 @@ fn index_to_sqlite_ddl(idx: &IndexDef) -> String {
         idx.name, idx.table, cols
     )
 }
+
+/// Generate `ALTER TABLE ... ADD COLUMN` SQL for a single column.
+///
+/// SQLite `ADD COLUMN` requires the column to either be nullable or have a default.
+/// Since our schema evolution only adds nullable columns, this is safe.
+pub(crate) fn alter_table_add_column_sqlite(
+    table: &str,
+    col: &mcb_domain::schema::ColumnDef,
+) -> String {
+    let ty = column_type_sqlite(&col.type_);
+    format!("ALTER TABLE {table} ADD COLUMN {} {ty}", col.name)
+}

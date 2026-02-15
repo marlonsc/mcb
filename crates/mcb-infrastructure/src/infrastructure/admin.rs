@@ -13,7 +13,6 @@ use mcb_domain::ports::admin::{
     PerformanceMetricsInterface,
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
-use uuid::Uuid;
 
 // ============================================================================
 // Performance Metrics - Real Implementation
@@ -168,17 +167,17 @@ impl DefaultIndexingOperations {
         collection: &CollectionId,
         total_files: usize,
     ) -> OperationId {
-        let id = OperationId::new(Uuid::new_v4().to_string());
+        let id = OperationId::new();
         let operation = IndexingOperation {
-            id: id.clone(),
-            collection: collection.clone(),
+            id,
+            collection: *collection,
             current_file: None,
             status: mcb_domain::ports::admin::IndexingOperationStatus::Starting,
             total_files,
             processed_files: 0,
             started_at: chrono::Utc::now().timestamp(),
         };
-        self.operations.insert(id.clone(), operation);
+        self.operations.insert(id, operation);
         id
     }
 
@@ -221,7 +220,7 @@ impl IndexingOperationsInterface for DefaultIndexingOperations {
     fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
         self.operations
             .iter()
-            .map(|entry| (entry.key().clone(), entry.value().clone()))
+            .map(|entry| (*entry.key(), entry.value().clone()))
             .collect()
     }
 

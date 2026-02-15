@@ -32,9 +32,15 @@ use crate::value_objects::{EmbeddingConfig, VectorStoreConfig};
 #[async_trait::async_trait]
 pub trait ProviderConfigManagerInterface: Send + Sync {
     /// Get embedding provider configuration by name
+    ///
+    /// # Errors
+    /// Returns an error if the provider is not found or configuration is invalid.
     fn get_embedding_config(&self, name: &str) -> Result<&EmbeddingConfig>;
 
     /// Get vector store provider configuration by name
+    ///
+    /// # Errors
+    /// Returns an error if the provider is not found or configuration is invalid.
     fn get_vector_store_config(&self, name: &str) -> Result<&VectorStoreConfig>;
 
     /// List all embedding provider names

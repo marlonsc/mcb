@@ -20,6 +20,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use async_trait::async_trait;
+use delegate::delegate;
 use mcb_domain::error::Result;
 use mcb_domain::ports::admin::PerformanceMetricsInterface;
 use mcb_domain::ports::providers::EmbeddingProvider;
@@ -87,13 +88,11 @@ impl EmbeddingProvider for InstrumentedEmbeddingProvider {
         result
     }
 
-    fn dimensions(&self) -> usize {
-        self.inner.dimensions()
-    }
-
-    fn provider_name(&self) -> &str {
-        // Return inner provider name for transparency
-        self.inner.provider_name()
+    delegate! {
+        to self.inner {
+            fn dimensions(&self) -> usize;
+            fn provider_name(&self) -> &str;
+        }
     }
 }
 

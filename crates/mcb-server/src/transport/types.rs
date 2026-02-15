@@ -3,6 +3,7 @@
 //! Common types used across transport implementations for MCP protocol messages.
 
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 /// MCP request payload (JSON-RPC format)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,16 +17,15 @@ pub struct McpRequest {
 }
 
 /// MCP response payload (JSON-RPC format)
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpResponse {
     /// JSON-RPC version
     #[serde(default = "default_jsonrpc")]
     pub jsonrpc: String,
     /// Response result (if successful)
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<serde_json::Value>,
     /// Error (if failed)
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<McpError>,
     /// Request ID
     pub id: Option<serde_json::Value>,

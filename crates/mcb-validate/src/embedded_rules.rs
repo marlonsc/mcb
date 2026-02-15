@@ -35,10 +35,6 @@ impl EmbeddedRules {
         include_str!("../rules/clean-architecture/CA013_mcb-boundaries.yml");
     const RULES_CLEAN_ARCHITECTURE_CA014_VALIDATE_BOUNDARIES_YML: &'static str =
         include_str!("../rules/clean-architecture/CA014_validate-boundaries.yml");
-    const RULES_CLEAN_ARCHITECTURE_CA015_LANGUAGE_SUPPORT_BOUNDARIES_YML: &'static str =
-        include_str!("../rules/clean-architecture/CA015_language-support-boundaries.yml");
-    const RULES_CLEAN_ARCHITECTURE_CA016_AST_UTILS_BOUNDARIES_YML: &'static str =
-        include_str!("../rules/clean-architecture/CA016_ast-utils-boundaries.yml");
     const RULES_CLEAN_ARCHITECTURE_CA017_DI_PATTERNS_YML: &'static str =
         include_str!("../rules/clean-architecture/CA017_di-patterns.yml");
     const RULES_CLEAN_ARCHITECTURE_LAYER001_LAYER_FLOW_RULES_YML: &'static str =
@@ -99,6 +95,22 @@ impl EmbeddedRules {
         include_str!("../rules/migration/ROCKET003_rocket-route-organization.yml");
     const RULES_ORGANIZATION_ORG001_STRUCTURE_YML: &'static str =
         include_str!("../rules/organization/ORG001_structure.yml");
+    const RULES_ORGANIZATION_ORG015_ADAPTER_LOCATION_YML: &'static str =
+        include_str!("../rules/organization/ORG015_adapter-location.yml");
+    const RULES_ORGANIZATION_ORG017_HANDLER_LOCATION_YML: &'static str =
+        include_str!("../rules/organization/ORG017_handler-location.yml");
+    const RULES_ORGANIZATION_ORG018_PORT_LOCATION_YML: &'static str =
+        include_str!("../rules/organization/ORG018_port-location.yml");
+    const RULES_ORGANIZATION_ORG019_TRAIT_PLACEMENT_YML: &'static str =
+        include_str!("../rules/organization/ORG019_trait-placement.yml");
+    const RULES_ORGANIZATION_ORG020_DOMAIN_ADAPTERS_YML: &'static str =
+        include_str!("../rules/organization/ORG020_domain-adapters.yml");
+    const RULES_ORGANIZATION_ORG021_INFRA_PORTS_YML: &'static str =
+        include_str!("../rules/organization/ORG021_infra-ports.yml");
+    const RULES_ORGANIZATION_ORG022_SCATTERED_CONFIG_YML: &'static str =
+        include_str!("../rules/organization/ORG022_scattered-config.yml");
+    const RULES_ORGANIZATION_ORG023_NESTED_ERRORS_YML: &'static str =
+        include_str!("../rules/organization/ORG023_nested-errors.yml");
     const RULES_ORGANIZATION_VIS001_VISIBILITY_CONFIG_YML: &'static str =
         include_str!("../rules/organization/VIS001_visibility-config.yml");
     const RULES_PERFORMANCE_ASYNC001_PATTERNS_YML: &'static str =
@@ -188,14 +200,6 @@ impl EmbeddedRules {
             (
                 "rules/clean-architecture/CA014_validate-boundaries.yml",
                 Self::RULES_CLEAN_ARCHITECTURE_CA014_VALIDATE_BOUNDARIES_YML,
-            ),
-            (
-                "rules/clean-architecture/CA015_language-support-boundaries.yml",
-                Self::RULES_CLEAN_ARCHITECTURE_CA015_LANGUAGE_SUPPORT_BOUNDARIES_YML,
-            ),
-            (
-                "rules/clean-architecture/CA016_ast-utils-boundaries.yml",
-                Self::RULES_CLEAN_ARCHITECTURE_CA016_AST_UTILS_BOUNDARIES_YML,
             ),
             (
                 "rules/clean-architecture/CA017_di-patterns.yml",
@@ -316,6 +320,38 @@ impl EmbeddedRules {
             (
                 "rules/organization/ORG001_structure.yml",
                 Self::RULES_ORGANIZATION_ORG001_STRUCTURE_YML,
+            ),
+            (
+                "rules/organization/ORG015_adapter-location.yml",
+                Self::RULES_ORGANIZATION_ORG015_ADAPTER_LOCATION_YML,
+            ),
+            (
+                "rules/organization/ORG017_handler-location.yml",
+                Self::RULES_ORGANIZATION_ORG017_HANDLER_LOCATION_YML,
+            ),
+            (
+                "rules/organization/ORG018_port-location.yml",
+                Self::RULES_ORGANIZATION_ORG018_PORT_LOCATION_YML,
+            ),
+            (
+                "rules/organization/ORG019_trait-placement.yml",
+                Self::RULES_ORGANIZATION_ORG019_TRAIT_PLACEMENT_YML,
+            ),
+            (
+                "rules/organization/ORG020_domain-adapters.yml",
+                Self::RULES_ORGANIZATION_ORG020_DOMAIN_ADAPTERS_YML,
+            ),
+            (
+                "rules/organization/ORG021_infra-ports.yml",
+                Self::RULES_ORGANIZATION_ORG021_INFRA_PORTS_YML,
+            ),
+            (
+                "rules/organization/ORG022_scattered-config.yml",
+                Self::RULES_ORGANIZATION_ORG022_SCATTERED_CONFIG_YML,
+            ),
+            (
+                "rules/organization/ORG023_nested-errors.yml",
+                Self::RULES_ORGANIZATION_ORG023_NESTED_ERRORS_YML,
             ),
             (
                 "rules/organization/VIS001_visibility-config.yml",

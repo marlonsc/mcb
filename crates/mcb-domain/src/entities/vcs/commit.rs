@@ -1,3 +1,9 @@
+//! VCS Commit Entity
+//!
+//! This module defines the `VcsCommit` entity, representing a single commit
+//! within a Version Control System. It captures essential metadata such as
+//! hash, message, author information, and parentage.
+
 use serde::{Deserialize, Serialize};
 
 /// VcsCommit entity.
@@ -12,66 +18,11 @@ pub struct VcsCommit {
     parent_hashes: Vec<String>,
 }
 
-/// Builder for VcsCommit.
-#[derive(Debug, Clone, Default)]
-pub struct CommitBuilder {
-    id: String,
-    hash: String,
-    message: String,
-    author: String,
-    author_email: String,
-    timestamp: i64,
-    parent_hashes: Vec<String>,
-}
-
-impl CommitBuilder {
-    pub fn new(id: impl Into<String>, hash: impl Into<String>) -> Self {
-        Self {
-            id: id.into(),
-            hash: hash.into(),
-            ..Default::default()
-        }
-    }
-
-    pub fn message(mut self, message: impl Into<String>) -> Self {
-        self.message = message.into();
-        self
-    }
-
-    pub fn author(mut self, author: impl Into<String>, email: impl Into<String>) -> Self {
-        self.author = author.into();
-        self.author_email = email.into();
-        self
-    }
-
-    pub fn timestamp(mut self, timestamp: i64) -> Self {
-        self.timestamp = timestamp;
-        self
-    }
-
-    pub fn parents(mut self, parents: Vec<String>) -> Self {
-        self.parent_hashes = parents;
-        self
-    }
-
-    pub fn build(self) -> VcsCommit {
-        VcsCommit {
-            id: self.id,
-            hash: self.hash,
-            message: self.message,
-            author: self.author,
-            author_email: self.author_email,
-            timestamp: self.timestamp,
-            parent_hashes: self.parent_hashes,
-        }
-    }
-}
-
 impl VcsCommit {
-    pub fn builder(id: impl Into<String>, hash: impl Into<String>) -> CommitBuilder {
-        CommitBuilder::new(id, hash)
-    }
-
+    /// Creates a new `VcsCommit` instance.
+    ///
+    /// # Parameters
+    /// TODO(qlty): Function with many parameters (count = 7).
     pub fn new(
         id: String,
         hash: String,
@@ -92,30 +43,37 @@ impl VcsCommit {
         }
     }
 
+    /// Performs the id operation.
     pub fn id(&self) -> &str {
         &self.id
     }
 
+    /// Performs the hash operation.
     pub fn hash(&self) -> &str {
         &self.hash
     }
 
+    /// Performs the message operation.
     pub fn message(&self) -> &str {
         &self.message
     }
 
+    /// Performs the author operation.
     pub fn author(&self) -> &str {
         &self.author
     }
 
+    /// Performs the author email operation.
     pub fn author_email(&self) -> &str {
         &self.author_email
     }
 
+    /// Performs the timestamp operation.
     pub fn timestamp(&self) -> i64 {
         self.timestamp
     }
 
+    /// Performs the parent hashes operation.
     pub fn parent_hashes(&self) -> &[String] {
         &self.parent_hashes
     }

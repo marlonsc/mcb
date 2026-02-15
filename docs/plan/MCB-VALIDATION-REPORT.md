@@ -11,7 +11,7 @@
 ## Executive Summary
 
 | Tool | Status | Working Actions | Broken Actions |
-|------|--------|-----------------|----------------|
+| ------ | -------- | ----------------- | ---------------- |
 | `mcp_mcb_index` | ✅ **WORKING** | start, status, clear | - |
 | `mcp_mcb_search` | ✅ **WORKING** | code, memory | - |
 | `mcp_mcb_validate` | ⚠️ **PARTIAL** | list_rules, analyze | run (scope enum) |
@@ -32,7 +32,7 @@
 All Actions work correctly.
 
 | Action | Status | Evidence |
-|--------|--------|----------|
+| -------- | -------- | ---------- |
 | `status` | ✅ | Returns `{"status": "idle"}` |
 | `start` | ✅ | Returns `{"status": "completed", "files_processed": N, "chunks_created": M}` |
 | `clear` | ✅ | Returns `{"success": true, "collection": "name"}` |
@@ -52,7 +52,7 @@ mcp_mcb_index(action="clear", collection="name")
 Code search works perfectly. Memory search returns empty (expected if no memories stored).
 
 | Action | Status | Evidence |
-|--------|--------|----------|
+| -------- | -------- | ---------- |
 | `resource=code` | ✅ | Returns ranked results with file paths, content, scores |
 | `resource=memory` | ✅ | Returns empty array (no memories stored - expected) |
 | Error handling | ✅ | "Collection not found" for nonexistent collections |
@@ -71,7 +71,7 @@ mcp_mcb_search(query="session", resource="memory", limit=3)
 list_rules and analyze work. run action has scope enum parsing issue.
 
 | Action | Status | Evidence |
-|--------|--------|----------|
+| -------- | -------- | ---------- |
 | `list_rules` | ✅ | Returns 12 validators: clean_architecture, SOLID, quality, organization, kiss, naming, documentation, performance, async_patterns, dependencies, patterns, tests |
 | `analyze` | ✅ | Returns complexity metrics: cyclomatic, cognitive, maintainability_index, sloc, functions breakdown |
 | `run` | ❌ | Scope enum not parsed: `JSON Parse error: Unexpected identifier "file"` |
@@ -100,7 +100,7 @@ mcp_mcb_validate(action="run", path="/path", scope="file")
 Repository listing and indexing work. Search/compare/analyze fail with "Repository not found".
 
 | Action | Status | Evidence |
-|--------|--------|----------|
+| -------- | -------- | ---------- |
 | `list_repositories` | ✅ | Returns array of all indexed repositories |
 | `index_repository` | ✅ | Returns `{repository_id, path, default_branch, branches_found, total_files, commits_indexed}` |
 | `search_branch` | ❌ | `Repository not found: opencode` |
@@ -131,7 +131,7 @@ mcp_mcb_vcs(action="analyze_impact", repo_id="name", target_branch="main")
 List works. All other Actions fail.
 
 | Action | Status | Evidence |
-|--------|--------|----------|
+| -------- | -------- | ---------- |
 | `list` | ✅ | Returns `{"sessions": [], "count": 0}` |
 | `create` | ❌ | `Missing agent_type for create` |
 | `get` | ⚠️ | `Session not found` (expected for nonexistent) |
@@ -161,7 +161,7 @@ mcp_mcb_session(action="create", data={"agent_type": "test", "project_id": "open
 All Actions fail.
 
 | Action | Status | Evidence |
-|--------|--------|----------|
+| -------- | -------- | ---------- |
 | `store` (observation) | ❌ | `Missing data payload for observation store` |
 | `store` (error_pattern) | ❌ | `ErrorPattern store not implemented yet` |
 | `list` | ❌ | `SQL query_all failed: Failed to fetch from memory_observations: ...` |
@@ -198,7 +198,7 @@ mcp_mcb_memory(action="timeline", resource="observation", depth_before=5, depth_
 All Actions return "Project workflow not yet implemented".
 
 | Action | Status | Evidence |
-|--------|--------|----------|
+| -------- | -------- | ---------- |
 | `list` (phase) | ❌ | `Project workflow not yet implemented` |
 | `list` (issue) | ❌ | `Project workflow not yet implemented` |
 | `list` (decision) | ❌ | `Project workflow not yet implemented` |
@@ -215,7 +215,7 @@ All Actions return "Project workflow not yet implemented".
 All Actions fail with data parsing error.
 
 | Action | Status | Evidence |
-|--------|--------|----------|
+| -------- | -------- | ---------- |
 | `log_tool` | ❌ | `Data must be a JSON object` |
 | `log_delegation` | ❌ | `Data must be a JSON object` |
 

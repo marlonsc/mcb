@@ -77,6 +77,8 @@ fn cargo_factory(
     Ok(Arc::new(CargoDetector::new(config)))
 }
 
+// linkme distributed_slice uses #[link_section] internally
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(PROJECT_DETECTORS)]
 static CARGO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "cargo",

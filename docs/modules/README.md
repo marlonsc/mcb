@@ -25,4 +25,4 @@ This index links all module-level documentation pages.
 - [sync.md](./sync.md)
 - [validate.md](./validate.md)
 
-## Updated 2026-02-12
+## Updated 2026-02-14

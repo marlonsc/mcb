@@ -1,6 +1,14 @@
-//! Agent domain entities
+//! Agent Domain Module
 //!
-//! Includes agent sessions, checkpoints, and tool call history.
+//! # Overview
+//! This module defines the entities and logic for autonomous agents.
+//! It covers the execution lifecycle, state management, and hierarchical delegation.
+//!
+//! # Core Entities
+//! - [`AgentSession`]: The primary execution context for an agent task.
+//! - [`Checkpoint`]: A snapshot of the session state for recovery or rollback.
+//! - [`ToolCall`]: A record of an action performed by the agent.
+//! - [`Delegation`]: A sub-task assigned to another agent or process.
 
 mod checkpoint;
 mod delegation;

@@ -18,10 +18,15 @@ pub struct Team {
     pub created_at: i64,
 }
 
+use crate::value_objects::ids::TeamMemberId;
+
 /// A membership link between a user and a team, with a role describing
 /// the user's authority within that team.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 pub struct TeamMember {
+    /// Unique identifier for the membership (composite of team_id:user_id).
+    #[serde(default)]
+    pub id: TeamMemberId,
     /// Team the user belongs to.
     pub team_id: String,
     /// User who is a member.
@@ -33,7 +38,19 @@ pub struct TeamMember {
 }
 
 /// Role a user holds within a specific team.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum TeamMemberRole {
     /// Team lead with management capabilities.
     Lead,
@@ -44,22 +61,7 @@ pub enum TeamMemberRole {
 impl TeamMemberRole {
     /// Returns the string representation of the team member role.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Lead => "lead",
-            Self::Member => "member",
-        }
-    }
-}
-
-impl std::str::FromStr for TeamMemberRole {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "lead" => Ok(Self::Lead),
-            "member" => Ok(Self::Member),
-            _ => Err(format!("Unknown team member role: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }

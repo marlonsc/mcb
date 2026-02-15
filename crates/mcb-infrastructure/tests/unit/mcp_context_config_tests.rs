@@ -1,8 +1,9 @@
 //! Unit tests for MCP context config (GitConfig, McpContextConfig).
 
 use mcb_infrastructure::config::{GitConfig, McpContextConfig};
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn test_default_git_config() {
     let config = GitConfig::default();
     assert_eq!(config.branches, vec!["main", "HEAD"]);
@@ -11,7 +12,7 @@ fn test_default_git_config() {
     assert!(config.include_submodules);
 }
 
-#[test]
+#[rstest]
 fn test_parse_git_config_from_toml() {
     let toml_str = r#"
 [git]

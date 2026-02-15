@@ -1,3 +1,4 @@
+//! Provides search domain definitions.
 use async_trait::async_trait;
 
 use crate::error::Result;

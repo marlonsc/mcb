@@ -42,10 +42,13 @@ pub trait SqlRow: Send + Sync {
 /// Port for executing SQL (infrastructure capability).
 #[async_trait]
 pub trait DatabaseExecutor: Send + Sync {
+    /// Performs the execute operation.
     async fn execute(&self, sql: &str, params: &[SqlParam]) -> Result<()>;
 
+    /// Performs the query one operation.
     async fn query_one(&self, sql: &str, params: &[SqlParam]) -> Result<Option<Arc<dyn SqlRow>>>;
 
+    /// Performs the query all operation.
     async fn query_all(&self, sql: &str, params: &[SqlParam]) -> Result<Vec<Arc<dyn SqlRow>>>;
 
     /// Cast to Any to allow downcasting to concrete type (e.g. SqlitePool) for internal use
@@ -55,5 +58,6 @@ pub trait DatabaseExecutor: Send + Sync {
 /// Provider factory for database connections with schema initialization.
 #[async_trait]
 pub trait DatabaseProvider: Send + Sync {
+    /// Performs the connect operation.
     async fn connect(&self, path: &std::path::Path) -> Result<Arc<dyn DatabaseExecutor>>;
 }

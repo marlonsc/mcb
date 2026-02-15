@@ -7,7 +7,7 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{ImpactFile, ImpactResponse, ImpactSummary, repo_path};
 use crate::args::VcsArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Analyzes the impact of changes between branches.
@@ -20,24 +20,24 @@ pub async fn analyze_impact(
         Ok(p) => p,
         Err(error_result) => return Ok(error_result),
     };
+    let repo = match vcs_provider.open_repository(Path::new(&path)).await {
+        Ok(repo) => repo,
+        Err(e) => {
+            return Ok(to_contextual_tool_error(e));
+        }
+    };
     let base_ref = args
         .base_branch
         .clone()
-        .unwrap_or_else(|| "main".to_string());
+        .unwrap_or_else(|| repo.default_branch().to_string());
     let head_ref = args
         .target_branch
         .clone()
         .unwrap_or_else(|| "HEAD".to_string());
-    let repo = match vcs_provider.open_repository(Path::new(&path)).await {
-        Ok(repo) => repo,
-        Err(e) => {
-            return Ok(to_opaque_tool_error(e));
-        }
-    };
     let diff = match vcs_provider.diff_refs(&repo, &base_ref, &head_ref).await {
         Ok(diff) => diff,
         Err(e) => {
-            return Ok(to_opaque_tool_error(e));
+            return Ok(to_contextual_tool_error(e));
         }
     };
     let mut added = 0;
@@ -52,7 +52,7 @@ pub async fn analyze_impact(
             _ => modified += 1,
         }
         impacted_files.push(ImpactFile {
-            path: file.path.to_string_lossy().to_string(),
+            path: file.path.to_str().unwrap_or_default().to_string(),
             status: status.clone(),
             impact: file.additions + file.deletions,
         });

@@ -58,6 +58,8 @@ impl SubmoduleProvider {
         .map_err(|e| Error::internal(format!("Submodule collection task panicked: {e}")))?
     }
 
+    /// Synchronously collects submodules using git2 (thread-blocking).
+    // TODO(qlty): Function with high complexity (count = 33): collect_submodules_sync
     fn collect_submodules_sync(
         repo_path: &Path,
         parent_repo_id: &str,
@@ -98,7 +100,7 @@ impl SubmoduleProvider {
             };
 
             for submodule in submodules {
-                let path = submodule.path().to_string_lossy().to_string();
+                let path = submodule.path().to_str().unwrap_or_default().to_string();
 
                 // Check for circular references
                 let unique_key = format!("{parent_id}:{path}");

@@ -14,7 +14,7 @@
 //! ## Available Processors
 //!
 //! | Processor | Language | Status |
-//! |-----------|----------|--------|
+//! | ----------- | ---------- | -------- |
 //! | RustProcessor | Rust | Complete |
 //! | PythonProcessor | Python | Complete |
 //! | JavaScriptProcessor | JavaScript/TypeScript | Complete |

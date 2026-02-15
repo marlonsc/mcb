@@ -1,7 +1,15 @@
 //! Validation Service Implementation
 //!
-//! Implements `ValidationServiceInterface` using mcb-validate for
-//! architecture validation.
+//! # Overview
+//! The `InfraValidationService` adapts the `mcb-validate` toolkit into the domain's
+//! `ValidationServiceInterface` port. It serves as the bridge between the core domain's
+//! need for quality assurance and the infrastructure-level tools that perform analysis.
+//!
+//! # Responsibilities
+//! - **Workspace Validation**: Running suite of validators against the entire project.
+//! - **File Analysis**: Targeted validation and complexity analysis for individual files.
+//! - **Rule Discovery**: Exposing available validation rules and their metadata.
+//! - **Complexity Metrics**: Calculating cyclomatic and cognitive complexity scores.
 
 use std::path::Path;
 
@@ -12,7 +20,10 @@ use mcb_domain::ports::services::{
     ViolationEntry,
 };
 
-/// Infrastructure validation service using mcb-validate
+/// Infrastructure validation service using mcb-validate.
+///
+/// A stateless adapter that orchestrates the `mcb-validate` library to perform
+/// architectural compliance checks, code quality analysis, and rule enforcement.
 pub struct InfraValidationService;
 
 impl InfraValidationService {
@@ -121,15 +132,6 @@ fn convert_report(
             };
             severity_level <= min_severity
         })
-        .map(|v| ViolationEntry {
-            id: v.id,
-            category: v.category,
-            severity: v.severity,
-            file: v.file.map(|p| p.to_string_lossy().to_string()),
-            line: v.line,
-            message: v.message,
-            suggestion: v.suggestion,
-        })
         .collect();
 
     let errors = violations.iter().filter(|v| v.severity == "ERROR").count();
@@ -153,14 +155,14 @@ fn run_file_validation(
 ) -> Result<ValidationReport> {
     // For single file validation, we need to find the workspace root
     // and run validation scoped to that file
-    let workspace_root = find_workspace_root(file_path)
+    let workspace_root = mcb_validate::find_workspace_root_from(file_path)
         .unwrap_or_else(|| file_path.parent().unwrap_or(file_path).to_path_buf());
 
     // Run standard validation - mcb-validate doesn't have single-file mode yet
     // So we run full validation and filter to the specific file
     let full_report = run_validation(&workspace_root, validators, None)?;
 
-    let file_str = file_path.to_string_lossy().to_string();
+    let file_str = file_path.to_str().unwrap_or_default().to_string();
     let file_violations: Vec<ViolationEntry> = full_report
         .violations
         .into_iter()
@@ -188,44 +190,34 @@ fn run_file_validation(
     })
 }
 
-fn find_workspace_root(start: &Path) -> Option<std::path::PathBuf> {
-    let mut current = if start.is_file() {
-        start.parent()?.to_path_buf()
-    } else {
-        start.to_path_buf()
-    };
-
-    loop {
-        let cargo_toml = current.join("Cargo.toml");
-        if cargo_toml.exists()
-            && let Ok(content) = std::fs::read_to_string(&cargo_toml)
-            && content.contains("[workspace]")
-        {
-            return Some(current);
-        }
-        if !current.pop() {
-            return None;
-        }
-    }
-}
-
 fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {
-    let embedded = mcb_validate::EmbeddedRules::all_yaml();
-    let mut loader = mcb_validate::YamlRuleLoader::from_embedded(&embedded)
-        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-    let validated = loader
-        .load_embedded_rules()
-        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-
-    let all_rules: Vec<RuleInfo> = validated
+    let all_rules: Vec<RuleInfo> = mcb_validate::EmbeddedRules::all_yaml()
         .into_iter()
-        .filter(|r| r.enabled)
-        .map(|r| RuleInfo {
-            id: r.id,
-            category: r.category,
-            severity: r.severity,
-            description: r.description,
-            engine: r.engine,
+        .filter(|(path, _)| path.ends_with(".yml") && !path.contains("/templates/"))
+        .filter_map(|(_, content)| {
+            if extract_yaml_scalar(content, "_base").as_deref() == Some("true") {
+                return None;
+            }
+
+            let enabled = extract_yaml_scalar(content, "enabled")
+                .map(|value| value != "false")
+                .unwrap_or(true);
+            if !enabled {
+                return None;
+            }
+
+            let id = extract_yaml_scalar(content, "id")?;
+            Some(RuleInfo {
+                id,
+                category: extract_yaml_scalar(content, "category")
+                    .unwrap_or_else(|| "quality".to_string()),
+                severity: extract_yaml_scalar(content, "severity")
+                    .unwrap_or_else(|| "warning".to_string()),
+                description: extract_yaml_scalar(content, "description")
+                    .unwrap_or_else(|| "No description provided".to_string()),
+                engine: extract_yaml_scalar(content, "engine")
+                    .unwrap_or_else(|| "rusty-rules".to_string()),
+            })
         })
         .collect();
 
@@ -236,6 +228,17 @@ fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {
             .collect())
     } else {
         Ok(all_rules)
+    }
+}
+
+fn extract_yaml_scalar(content: &str, key: &str) -> Option<String> {
+    let mapping: serde_yaml::Value = serde_yaml::from_str(content).ok()?;
+    let value = mapping.get(key)?;
+    match value {
+        serde_yaml::Value::String(s) => Some(s.clone()),
+        serde_yaml::Value::Bool(b) => Some(b.to_string()),
+        serde_yaml::Value::Number(n) => Some(n.to_string()),
+        _ => None,
     }
 }
 
@@ -270,7 +273,7 @@ fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<
     };
 
     Ok(ComplexityReport {
-        file: file_path.to_string_lossy().to_string(),
+        file: file_path.to_str().unwrap_or_default().to_string(),
         cyclomatic: aggregate.cyclomatic,
         cognitive: aggregate.cognitive,
         maintainability_index: aggregate.maintainability_index,

@@ -1,61 +1,18 @@
 //! PHP language processor for AST-based code chunking.
 
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
-
 use crate::language::common::{
-    BaseProcessor, CHUNK_SIZE_PHP, LanguageConfig, LanguageProcessor, NodeExtractionRule,
-    TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DEFINITION, TS_NODE_METHOD_DECLARATION,
+    CHUNK_SIZE_PHP, TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DEFINITION,
+    TS_NODE_METHOD_DECLARATION,
 };
 
-/// PHP language processor.
-pub struct PhpProcessor {
-    processor: BaseProcessor,
-}
-
-impl Default for PhpProcessor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl PhpProcessor {
-    /// Create a new PHP language processor
-    pub fn new() -> Self {
-        let config = LanguageConfig::new(tree_sitter_php::LANGUAGE_PHP.into())
-            .with_rules(vec![NodeExtractionRule {
-                node_types: vec![
-                    TS_NODE_FUNCTION_DEFINITION.to_string(),
-                    TS_NODE_METHOD_DECLARATION.to_string(),
-                    TS_NODE_CLASS_DECLARATION.to_string(),
-                ],
-                min_length: 30,
-                min_lines: 2,
-                max_depth: 2,
-                priority: 5,
-                include_context: true,
-            }])
-            .with_chunk_size(CHUNK_SIZE_PHP);
-
-        Self {
-            processor: BaseProcessor::new(config),
-        }
-    }
-}
-
-impl LanguageProcessor for PhpProcessor {
-    fn config(&self) -> &LanguageConfig {
-        self.processor.config()
-    }
-
-    fn extract_chunks_with_tree_sitter(
-        &self,
-        tree: &tree_sitter::Tree,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-}
+crate::impl_simple_language_processor!(
+    PhpProcessor,
+    language = tree_sitter_php::LANGUAGE_PHP.into(),
+    chunk_size = CHUNK_SIZE_PHP,
+    max_depth = 2,
+    nodes = [
+        TS_NODE_FUNCTION_DEFINITION,
+        TS_NODE_METHOD_DECLARATION,
+        TS_NODE_CLASS_DECLARATION
+    ]
+);

@@ -11,7 +11,7 @@ use serde_json::Value;
 
 use crate::Result;
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
-use crate::violation_trait::{Severity, ViolationCategory};
+use crate::traits::violation::{Severity, ViolationCategory};
 
 /// Wrapper for evalexpr engine
 ///
@@ -39,7 +39,6 @@ impl ExpressionEngine {
     }
 
     /// Build context from rule context for expression evaluation
-    #[allow(clippy::unused_self, clippy::cast_possible_wrap)]
     fn build_eval_context(&self, rule_context: &RuleContext) -> HashMapContext {
         let mut ctx = HashMapContext::new();
 
@@ -50,7 +49,12 @@ impl ExpressionEngine {
 
         let _ = ctx.set_value(
             "workspace_path_len".to_string(),
-            EvalValue::Int(rule_context.workspace_root.to_string_lossy().len() as i64),
+            EvalValue::Int(
+                rule_context
+                    .workspace_root
+                    .to_str()
+                    .map_or(0_i64, |s| s.len() as i64),
+            ),
         );
 
         // Check for common patterns in files

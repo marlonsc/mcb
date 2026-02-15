@@ -5,7 +5,7 @@
 //! ## Available Providers
 //!
 //! | Provider | Type | Description |
-//! |----------|------|-------------|
+//! | ---------- | ------ | ------------- |
 //! | EdgeVecVectorStoreProvider | Embedded | High-performance HNSW vector store (local) |
 //! | EncryptedVectorStoreProvider | Secure | AES-256-GCM encryption wrapper |
 //! | MilvusVectorStoreProvider | Cloud | Production-scale cloud vector database |

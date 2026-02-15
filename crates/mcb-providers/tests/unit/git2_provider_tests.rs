@@ -1,5 +1,6 @@
 //! Unit tests for Git2 VCS provider.
 
+use rstest::rstest;
 use std::error::Error;
 use std::path::Path;
 use std::process::{Command, Stdio};
@@ -41,31 +42,29 @@ async fn create_test_repo() -> TestResult<TempDir> {
     Ok(dir)
 }
 
-#[test]
-fn test_git2_provider_constructs() {
+#[rstest]
+#[case(false)]
+#[case(true)]
+fn git2_provider_basics(#[case] check_object_safety: bool) {
     let provider = Git2Provider::new();
     assert!(
         !std::any::type_name::<Git2Provider>().is_empty(),
         "Git2Provider type exists"
     );
-    let _ = provider;
-}
-
-#[test]
-fn test_git2_provider_is_object_safe() {
-    fn _assert_object_safe(_: &dyn VcsProvider) {}
-    let provider = Git2Provider::new();
-    _assert_object_safe(&provider);
-    let _erased: &dyn VcsProvider = &provider;
-    assert_eq!(
-        std::mem::size_of::<&dyn VcsProvider>(),
-        2 * std::mem::size_of::<usize>(),
-        "trait object reference should be a fat pointer"
-    );
+    if check_object_safety {
+        fn _assert_object_safe(_: &dyn VcsProvider) {}
+        _assert_object_safe(&provider);
+        let _erased: &dyn VcsProvider = &provider;
+        assert_eq!(
+            std::mem::size_of::<&dyn VcsProvider>(),
+            2 * std::mem::size_of::<usize>(),
+            "trait object reference should be a fat pointer"
+        );
+    }
 }
 
 #[tokio::test]
-async fn test_open_repository() -> TestResult<()> {
+async fn open_repository() -> TestResult<()> {
     let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
 
@@ -75,17 +74,18 @@ async fn test_open_repository() -> TestResult<()> {
     Ok(())
 }
 
+#[rstest]
+#[case("/nonexistent/path")]
+#[case("/this/definitely/does/not/exist")]
 #[tokio::test]
-async fn test_open_repository_not_found() {
+async fn open_repository_not_found(#[case] repo_path: &str) {
     let provider = Git2Provider::new();
-    let result = provider
-        .open_repository(Path::new("/nonexistent/path"))
-        .await;
+    let result = provider.open_repository(Path::new(repo_path)).await;
     assert!(result.is_err());
 }
 
 #[tokio::test]
-async fn test_repository_id_stable() -> TestResult<()> {
+async fn repository_id_stable() -> TestResult<()> {
     let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
 
@@ -99,88 +99,78 @@ async fn test_repository_id_stable() -> TestResult<()> {
     Ok(())
 }
 
+#[rstest]
+#[case("branches")]
+#[case("files")]
 #[tokio::test]
-async fn test_list_branches() -> TestResult<()> {
+async fn list_repository_entities(#[case] entity_kind: &str) -> TestResult<()> {
     let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
     let repo = provider.open_repository(dir.path()).await?;
 
-    let branches = provider.list_branches(&repo).await?;
-    assert!(!branches.is_empty());
-    assert!(branches.iter().any(|b| b.is_default()));
+    if entity_kind == "branches" {
+        let branches = provider.list_branches(&repo).await?;
+        assert!(!branches.is_empty());
+        assert!(branches.iter().any(|b| b.is_default()));
+    } else {
+        let files = provider.list_files(&repo, repo.default_branch()).await?;
+        assert!(files.iter().any(|f| f.to_string_lossy() == "README.md"));
+    }
     Ok(())
 }
 
+#[rstest]
+#[case(None, 1)]
+#[case(Some(1), 1)]
 #[tokio::test]
-async fn test_commit_history() -> TestResult<()> {
+async fn commit_history_variants(
+    #[case] limit: Option<usize>,
+    #[case] expected_min_len: usize,
+) -> TestResult<()> {
     let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
     let repo = provider.open_repository(dir.path()).await?;
 
     let commits = provider
-        .commit_history(&repo, repo.default_branch(), None)
+        .commit_history(&repo, repo.default_branch(), limit)
         .await?;
 
-    assert!(!commits.is_empty());
+    assert!(commits.len() >= expected_min_len);
+    if let Some(limit) = limit {
+        assert_eq!(commits.len(), limit);
+    }
     assert!(commits[0].message().contains("Initial commit"));
     Ok(())
 }
 
+#[rstest]
+#[case("README.md", true)]
+#[case("nonexistent.txt", false)]
 #[tokio::test]
-async fn test_commit_history_with_limit() -> TestResult<()> {
-    let dir = create_test_repo().await?;
-    let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await?;
-
-    let commits = provider
-        .commit_history(&repo, repo.default_branch(), Some(1))
-        .await?;
-
-    assert_eq!(commits.len(), 1);
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_list_files() -> TestResult<()> {
-    let dir = create_test_repo().await?;
-    let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await?;
-
-    let files = provider.list_files(&repo, repo.default_branch()).await?;
-    assert!(files.iter().any(|f| f.to_string_lossy() == "README.md"));
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_read_file() -> TestResult<()> {
+async fn read_file_variants(
+    #[case] file_name: &str,
+    #[case] should_succeed: bool,
+) -> TestResult<()> {
     let dir = create_test_repo().await?;
     let provider = Git2Provider::new();
     let repo = provider.open_repository(dir.path()).await?;
 
     let content = provider
-        .read_file(&repo, repo.default_branch(), Path::new("README.md"))
-        .await?;
-
-    assert!(content.contains("# Test Repo"));
-    Ok(())
-}
-
-#[tokio::test]
-async fn test_read_file_not_found() -> TestResult<()> {
-    let dir = create_test_repo().await?;
-    let provider = Git2Provider::new();
-    let repo = provider.open_repository(dir.path()).await?;
-
-    let result = provider
-        .read_file(&repo, repo.default_branch(), Path::new("nonexistent.txt"))
+        .read_file(&repo, repo.default_branch(), Path::new(file_name))
         .await;
 
-    assert!(result.is_err());
+    if should_succeed {
+        let content = content?;
+        assert!(content.contains("# Test Repo"));
+        return Ok(());
+    }
+
+    assert!(content.is_err());
     Ok(())
 }
 
 #[tokio::test]
-async fn test_diff_refs() -> TestResult<()> {
+async fn diff_refs() -> TestResult<()> {
     let dir = create_test_repo().await?;
 
     tokio_write(dir.path().join("new_file.txt"), "New content\n").await?;

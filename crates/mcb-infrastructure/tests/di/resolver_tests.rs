@@ -3,7 +3,7 @@
 //! Tests the provider resolution system that bridges configuration and provider instances.
 
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::di::resolver::*;
 
 #[test]
@@ -28,7 +28,7 @@ fn test_provider_selection_pattern() {
     // 3. Services use providers through traits (no concrete knowledge)
 
     // Test that we can create AppConfig with different providers
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
 
     // Add OpenAI embedding provider configuration
     config.providers.embedding.configs.insert(

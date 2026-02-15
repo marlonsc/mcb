@@ -1,3 +1,4 @@
+//! Provides indexing domain definitions.
 use std::path::Path;
 
 use async_trait::async_trait;

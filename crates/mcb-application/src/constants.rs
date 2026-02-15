@@ -25,8 +25,5 @@ pub const MEMORY_COLLECTION_NAME: &str = "memories";
 /// Directories to skip during codebase indexing
 pub const SKIP_DIRS: &[&str] = &[".git", "node_modules", "target", "__pycache__"];
 
-/// Supported file extensions for indexing
-pub const SUPPORTED_EXTENSIONS: &[&str] = &["rs", "py", "js", "ts", "java", "cpp", "c", "go"];
-
 /// Publish progress event every N files
 pub const PROGRESS_UPDATE_INTERVAL: usize = 10;

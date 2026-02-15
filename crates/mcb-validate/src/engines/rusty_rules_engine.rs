@@ -9,8 +9,10 @@ use serde_json::Value;
 
 use super::hybrid_engine::{RuleContext, RuleEngine};
 use crate::Result;
+use crate::ValidationConfig;
 use crate::engines::hybrid_engine::RuleViolation;
-use crate::violation_trait::{Severity, ViolationCategory};
+use crate::run_context::ValidationRunContext;
+use crate::traits::violation::{Severity, ViolationCategory};
 
 /// Wrapper for rusty-rules engine
 pub struct RustyRulesEngineWrapper {
@@ -200,45 +202,68 @@ impl RustyRulesEngineWrapper {
     fn has_forbidden_dependency(&self, pattern: &str, context: &RuleContext) -> bool {
         // Check Cargo.toml files for forbidden dependencies
         use glob::Pattern;
-        use walkdir::WalkDir;
 
         let cargo_pattern = Pattern::new("**/Cargo.toml").unwrap();
         let trimmed_pattern = pattern.trim_matches('"');
         let pattern_prefix = trimmed_pattern.trim_end_matches('*');
 
-        for entry in WalkDir::new(&context.workspace_root).into_iter().flatten() {
-            let path = entry.path();
-            if cargo_pattern.matches_path(path)
-                && let Ok(content) = std::fs::read_to_string(path)
-            {
-                // Try to parse as TOML and check dependencies section
-                if let Ok(toml_value) = content.parse::<toml::Value>() {
-                    if let Some(dependencies) = toml_value.get("dependencies")
-                        && let Some(deps_table) = dependencies.as_table()
-                    {
-                        for dep_name in deps_table.keys() {
-                            if dep_name.starts_with(pattern_prefix) {
-                                return true;
-                            }
-                        }
-                    }
-                } else {
-                    // Fallback to simple pattern matching
-                    for line in content.lines() {
-                        let line = line.trim();
-                        if line.contains('=') {
-                            let dep_name = line.split('=').next().unwrap().trim();
-                            if dep_name.starts_with(pattern_prefix) {
-                                return true;
-                            }
-                        }
-                    }
+        if let Ok(run_context) =
+            ValidationRunContext::active_or_build(&ValidationConfig::new(&context.workspace_root))
+        {
+            for entry in run_context.file_inventory() {
+                let path = &entry.absolute_path;
+                if !cargo_pattern.matches_path(path) {
+                    continue;
                 }
+
+                if let Ok(content) = run_context.read_cached(path)
+                    && dependency_matches(content.as_ref(), pattern_prefix)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        for (path, content) in &context.file_contents {
+            if cargo_pattern.matches_path(std::path::Path::new(path.as_str()))
+                && dependency_matches(content, pattern_prefix)
+            {
+                return true;
             }
         }
 
         false
     }
+}
+
+fn dependency_matches(content: &str, pattern_prefix: &str) -> bool {
+    // Try to parse as TOML and check dependencies section
+    if let Ok(toml_value) = content.parse::<toml::Value>() {
+        if let Some(dependencies) = toml_value.get("dependencies")
+            && let Some(deps_table) = dependencies.as_table()
+        {
+            for dep_name in deps_table.keys() {
+                if dep_name.starts_with(pattern_prefix) {
+                    return true;
+                }
+            }
+        }
+    } else {
+        // Fallback to simple pattern matching
+        for line in content.lines() {
+            let line = line.trim();
+            if line.contains('=') {
+                let dep_name = line.split('=').next().unwrap_or_default().trim();
+                if dep_name.starts_with(pattern_prefix) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    false
 }
 
 #[async_trait]
@@ -386,7 +411,7 @@ impl RustyRulesEngineWrapper {
 
         if condition == "exceeds_limit" {
             // Check files that match the pattern
-            let max_lines = 500; // Hardcoded for now, could be configurable
+            let max_lines = crate::constants::DEFAULT_MAX_FILE_LINES;
 
             for (file_path, content) in &context.file_contents {
                 if file_path.ends_with(pattern) {

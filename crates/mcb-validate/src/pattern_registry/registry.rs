@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
-use walkdir::WalkDir;
+use tracing::{error, warn};
 
 use crate::Result;
 use crate::rules::templates::TemplateEngine;
@@ -34,22 +34,12 @@ impl PatternRegistry {
     ) -> Result<Self> {
         let mut registry = Self::new();
 
-        for entry in WalkDir::new(rules_dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-            .filter(|e| {
-                e.path()
-                    .extension()
-                    .is_some_and(|ext| ext == "yml" || ext == "yaml")
-            })
-            .filter(|e| !is_template_path(e.path()))
-        {
-            if let Err(e) = registry.load_rule_file(entry.path(), naming_config, project_prefix) {
-                eprintln!(
-                    "Warning: Failed to load patterns/config from {}: {}",
-                    entry.path().display(),
-                    e
+        for path in collect_rule_files(rules_dir) {
+            if let Err(e) = registry.load_rule_file(&path, naming_config, project_prefix) {
+                warn!(
+                    path = %path.display(),
+                    error = %e,
+                    "Failed to load patterns/config"
                 );
             }
         }
@@ -79,15 +69,13 @@ impl PatternRegistry {
         );
 
         // Map each layer key to (crate_name, module_name) from NamingRulesConfig
-        let crates: [(&str, &str); 8] = [
+        let crates: [(&str, &str); 6] = [
             ("domain", &naming_config.domain_crate),
             ("application", &naming_config.application_crate),
             ("providers", &naming_config.providers_crate),
             ("infrastructure", &naming_config.infrastructure_crate),
             ("server", &naming_config.server_crate),
             ("validate", &naming_config.validate_crate),
-            ("language_support", &naming_config.language_support_crate),
-            ("ast_utils", &naming_config.ast_utils_crate),
         ];
 
         for (key, crate_name) in crates {
@@ -105,10 +93,10 @@ impl PatternRegistry {
         let engine = TemplateEngine::new();
         let variables_value = serde_yaml::Value::Mapping(variables);
         if let Err(e) = engine.substitute_variables(&mut yaml, &variables_value) {
-            eprintln!(
-                "Warning: Failed to substitute variables in {}: {}",
-                path.display(),
-                e
+            warn!(
+                path = %path.display(),
+                error = %e,
+                "Failed to substitute variables"
             );
         }
 
@@ -230,16 +218,65 @@ impl Default for PatternRegistry {
     }
 }
 
-/// Get the default rules directory
+fn collect_rule_files(rules_dir: &Path) -> Vec<PathBuf> {
+    let mut files = Vec::new();
+    let mut stack = vec![rules_dir.to_path_buf()];
+
+    while let Some(dir) = stack.pop() {
+        let Ok(entries) = std::fs::read_dir(&dir) else {
+            continue;
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let Ok(file_type) = entry.file_type() else {
+                continue;
+            };
+
+            if file_type.is_dir() {
+                stack.push(path);
+                continue;
+            }
+
+            if file_type.is_file()
+                && path
+                    .extension()
+                    .is_some_and(|ext| ext == "yml" || ext == "yaml")
+                && !is_template_path(&path)
+            {
+                files.push(path);
+            }
+        }
+    }
+
+    files
+}
+
+/// Get the default rules directory.
+///
+/// Resolution order (all workspace-relative unless overridden via env):
+/// 1. `MCB_RULES_DIR` environment variable (explicit override)
+/// 2. `CARGO_MANIFEST_DIR/rules` (building mcb-validate directly)
+/// 3. Workspace root `crates/mcb-validate/rules` (used as dependency)
+/// 4. CWD-relative `crates/mcb-validate/rules` (running from workspace root)
+/// 5. CWD-relative `rules/` fallback
 pub fn default_rules_dir() -> PathBuf {
-    // 1. Try CARGO_MANIFEST_DIR (works when building mcb-validate directly)
+    // 1. Explicit override via environment variable
+    if let Ok(rules_dir) = std::env::var("MCB_RULES_DIR") {
+        let path = PathBuf::from(rules_dir);
+        if path.exists() {
+            return path;
+        }
+    }
+
+    // 2. Try CARGO_MANIFEST_DIR (works when building mcb-validate directly)
     if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
         let rules_dir = PathBuf::from(&manifest_dir).join("rules");
         if rules_dir.exists() {
             return rules_dir;
         }
 
-        // 2. When used as dependency, CARGO_MANIFEST_DIR points to consumer crate
+        // 3. When used as dependency, CARGO_MANIFEST_DIR points to consumer crate
         // Try to find mcb-validate/rules relative to workspace root
         if let Some(workspace_root) = PathBuf::from(&manifest_dir)
             .ancestors()
@@ -252,27 +289,13 @@ pub fn default_rules_dir() -> PathBuf {
         }
     }
 
-    // 3. Try relative to current directory (works when running from workspace root)
+    // 4. Try relative to current directory (works when running from workspace root)
     let cwd_rules = PathBuf::from("crates/mcb-validate/rules");
     if cwd_rules.exists() {
         return cwd_rules;
     }
 
-    // 4. Check ~/.local/share/mcb/rules (make install target)
-    if let Some(home) = std::env::var_os("HOME") {
-        let xdg_rules = PathBuf::from(home).join(".local/share/mcb/rules");
-        if xdg_rules.exists() {
-            return xdg_rules;
-        }
-    }
-
-    // 5. Try /usr/share/mcb/rules (system-wide)
-    let system_rules = PathBuf::from("/usr/share/mcb/rules");
-    if system_rules.exists() {
-        return system_rules;
-    }
-
-    // 6. Fallback
+    // 5. Fallback to CWD-relative rules/
     PathBuf::from("rules")
 }
 
@@ -285,67 +308,8 @@ pub static PATTERNS: std::sync::LazyLock<PatternRegistry> = std::sync::LazyLock:
     let project_prefix = &file_config.general.project_prefix;
     PatternRegistry::load_from_rules(&rules_dir, naming_config, project_prefix).unwrap_or_else(
         |e| {
-            eprintln!("Error: Failed to load pattern registry: {e}");
+            error!(error = %e, "Failed to load pattern registry");
             PatternRegistry::new()
         },
     )
 });
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_empty_registry() {
-        let registry = PatternRegistry::new();
-        assert!(registry.is_empty());
-        assert_eq!(registry.len(), 0);
-    }
-
-    #[test]
-    fn test_register_pattern() {
-        let mut registry = PatternRegistry::new();
-        registry
-            .register_pattern("test.pattern", r"\w+")
-            .expect("Should register");
-
-        assert!(registry.contains("test.pattern"));
-        assert!(registry.get("test.pattern").is_some());
-    }
-
-    #[test]
-    fn test_invalid_pattern() {
-        let mut registry = PatternRegistry::new();
-        let result = registry.register_pattern("test.invalid", r"[invalid");
-
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_pattern_matching() {
-        let mut registry = PatternRegistry::new();
-        registry
-            .register_pattern("test.fn_decl", r"fn\s+(\w+)")
-            .expect("Should register");
-
-        let pattern = registry.get("test.fn_decl").expect("Should exist");
-        assert!(pattern.is_match("fn test_function()"));
-        assert!(!pattern.is_match("let x = 1"));
-    }
-
-    #[test]
-    fn test_load_from_rules_dir() {
-        let rules_dir = default_rules_dir();
-        if rules_dir.exists() {
-            let file_config = crate::config::FileConfig::load(".");
-            let registry = PatternRegistry::load_from_rules(
-                &rules_dir,
-                &file_config.rules.naming,
-                &file_config.general.project_prefix,
-            )
-            .expect("Should load rules");
-            // May or may not have patterns depending on YAML content
-            println!("Loaded {} patterns from rules", registry.len());
-        }
-    }
-}

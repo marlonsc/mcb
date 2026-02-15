@@ -18,7 +18,7 @@
 //! MCB supports three operating modes:
 //!
 //! | Mode | Trigger | Description |
-//! |------|---------|-------------|
+//! | ------ | --------- | ------------- |
 //! | **Server** | `--server` flag | HTTP daemon accepting client connections |
 //! | **Standalone** | Config `mode.type = "standalone"` | Local providers, stdio transport |
 //! | **Client** | Config `mode.type = "client"` | Connects to remote server via HTTP |
@@ -70,15 +70,15 @@ pub async fn run(
     server_mode: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let config = load_config(config_path)?;
-    mcb_infrastructure::logging::init_logging(config.logging.clone())?;
+    let log_receiver = mcb_infrastructure::logging::init_logging(config.logging.clone())?;
 
     if server_mode {
         // Explicit server mode via --server flag
-        run_server_mode(config, config_path.map(|p| p.to_path_buf())).await
+        run_server_mode(config, config_path.map(|p| p.to_path_buf()), log_receiver).await
     } else {
         // Check config for operating mode
         match config.mode.mode_type {
-            OperatingMode::Standalone => run_standalone(config).await,
+            OperatingMode::Standalone => run_standalone(config, log_receiver).await,
             OperatingMode::Client => run_client(config).await,
         }
     }
@@ -92,6 +92,7 @@ pub async fn run(
 async fn run_server_mode(
     config: AppConfig,
     config_path: Option<std::path::PathBuf>,
+    log_receiver: Option<mcb_infrastructure::logging::LogEventReceiver>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(
         transport_mode = ?config.server.transport_mode,
@@ -104,10 +105,16 @@ async fn run_server_mode(
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let (server, app_context) = create_mcp_server(config.clone()).await?;
+    let (server, app_context) = create_mcp_server(config.clone(), "server").await?;
     info!("MCP server initialized successfully");
 
     let event_bus = app_context.event_bus();
+
+    // Connect log event channel to the event bus for SSE streaming
+    if let Some(receiver) = log_receiver {
+        mcb_infrastructure::logging::spawn_log_forwarder(receiver, event_bus.clone());
+        info!("Log event forwarder connected to event bus");
+    }
 
     // Create admin state for consolidated single-port operation
     // Initialize ConfigWatcher for hot-reload support
@@ -128,7 +135,7 @@ async fn run_server_mode(
     let service_manager =
         mcb_infrastructure::infrastructure::ServiceManager::new(app_context.event_bus());
 
-    // Register services from AppContext
+    // Register services from AppContext (Arc clone is O(1) — atomic refcount increment)
     for service in &app_context.lifecycle_services {
         service_manager.register(service.clone());
     }
@@ -149,6 +156,7 @@ async fn run_server_mode(
         plan_entity: Some(server.plan_entity_repository()),
         issue_entity: Some(server.issue_entity_repository()),
         org_entity: Some(server.org_entity_repository()),
+        tool_handlers: Some(server.tool_handlers()),
     };
 
     let browse_state = BrowseState {
@@ -201,7 +209,10 @@ async fn run_server_mode(
 /// This is the default mode when no `--server` flag is provided and
 /// `config.mode.type = "standalone"`. MCB runs with local providers
 /// and communicates via stdio (for Claude Code integration).
-async fn run_standalone(config: AppConfig) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_standalone(
+    config: AppConfig,
+    log_receiver: Option<mcb_infrastructure::logging::LogEventReceiver>,
+) -> Result<(), Box<dyn std::error::Error>> {
     info!(
         transport_mode = ?config.server.transport_mode,
         "Starting MCB standalone mode"
@@ -211,8 +222,13 @@ async fn run_standalone(config: AppConfig) -> Result<(), Box<dyn std::error::Err
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let (server, _app_context) = create_mcp_server(config).await?;
+    let (server, app_context) = create_mcp_server(config, "standalone").await?;
     info!("MCP server initialized successfully");
+
+    // Connect log event channel to the event bus for SSE streaming
+    if let Some(receiver) = log_receiver {
+        mcb_infrastructure::logging::spawn_log_forwarder(receiver, app_context.event_bus());
+    }
 
     start_transport(server, transport_mode, &http_host, http_port).await
 }
@@ -235,10 +251,23 @@ async fn run_client(config: AppConfig) -> Result<(), Box<dyn std::error::Error>>
 
     use crate::transport::http_client::HttpClientTransport;
 
-    let client = HttpClientTransport::new(
+    let cfg_session_id = config
+        .mode
+        .session_id
+        .clone()
+        .filter(|v| !v.trim().is_empty());
+    let cfg_session_file = config
+        .mode
+        .session_file
+        .clone()
+        .filter(|v| !v.trim().is_empty());
+
+    let client = HttpClientTransport::new_with_session_source(
         server_url.clone(),
         session_prefix.map(String::from),
         std::time::Duration::from_secs(config.mode.timeout_secs),
+        cfg_session_id,
+        cfg_session_file,
     )?;
 
     client.run().await
@@ -264,12 +293,10 @@ fn load_config(config_path: Option<&Path>) -> Result<AppConfig, Box<dyn std::err
 /// Create and configure the MCP server with all services
 async fn create_mcp_server(
     config: AppConfig,
+    execution_flow: &str,
 ) -> Result<(McpServer, mcb_infrastructure::di::bootstrap::AppContext), Box<dyn std::error::Error>>
 {
-    // Create AppContext with resolved providers
     let app_context = mcb_infrastructure::di::bootstrap::init_app(config.clone()).await?;
-
-    // Build domain services from AppContext
     let services = app_context.build_domain_services().await?;
 
     let mcp_services = crate::mcp_server::McpServices {
@@ -287,7 +314,7 @@ async fn create_mcp_server(
         issue_entity: services.issue_entity_repository,
         org_entity: services.org_entity_repository,
     };
-    let server = McpServer::from_services(mcp_services);
+    let server = McpServer::from_services(mcp_services, Some(execution_flow.to_string()));
 
     Ok((server, app_context))
 }

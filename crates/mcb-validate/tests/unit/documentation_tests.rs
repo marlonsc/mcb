@@ -7,6 +7,7 @@
 //! is used (skips line check).
 
 use mcb_validate::DocumentationValidator;
+use rstest::*;
 
 use crate::test_constants::*;
 use crate::test_utils::*;
@@ -15,7 +16,7 @@ use crate::test_utils::*;
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[test]
+#[rstest]
 fn test_documentation_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
@@ -45,7 +46,7 @@ fn test_documentation_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[test]
+#[rstest]
 fn test_well_documented_code_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,

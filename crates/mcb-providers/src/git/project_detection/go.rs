@@ -37,7 +37,10 @@ impl GoDetector {
 }
 
 #[async_trait]
+/// Go project detector implementation.
 impl ProjectDetector for GoDetector {
+    /// Detects a Go project by analyzing `go.mod`.
+    // TODO(qlty): Function with high complexity (count = 19): detect
     async fn detect(&self, path: &Path) -> Result<Option<ProjectType>> {
         let gomod_path = path.join("go.mod");
         if !gomod_path.exists() {
@@ -63,14 +66,14 @@ impl ProjectDetector for GoDetector {
             if let Some(caps) = self.module_re.captures(line) {
                 module = caps
                     .get(1)
-                    .map(|m| m.as_str().to_string())
+                    .map(|m| m.as_str().to_owned())
                     .unwrap_or_default();
             }
 
             if let Some(caps) = self.go_version_re.captures(line) {
                 go_version = caps
                     .get(1)
-                    .map(|m| m.as_str().to_string())
+                    .map(|m| m.as_str().to_owned())
                     .unwrap_or_default();
             }
 
@@ -88,7 +91,7 @@ impl ProjectDetector for GoDetector {
                 && let Some(caps) = self.require_re.captures(line)
                 && let Some(dep) = caps.get(1)
             {
-                dependencies.push(dep.as_str().to_string());
+                dependencies.push(dep.as_str().to_owned());
             }
 
             // Single-line require
@@ -97,7 +100,7 @@ impl ProjectDetector for GoDetector {
                 && let Some(caps) = self.require_re.captures(&line["require ".len()..])
                 && let Some(dep) = caps.get(1)
             {
-                dependencies.push(dep.as_str().to_string());
+                dependencies.push(dep.as_str().to_owned());
             }
         }
 
@@ -112,15 +115,18 @@ impl ProjectDetector for GoDetector {
         }))
     }
 
+    /// Returns the list of files that identify a Go project.
     fn marker_files(&self) -> &[&str] {
         &["go.mod"]
     }
 
+    /// Returns the detector name ("go").
     fn detector_name(&self) -> &str {
         "go"
     }
 }
 
+/// Factory function for creating Go detector instances.
 fn go_factory(
     config: &ProjectDetectorConfig,
 ) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
@@ -131,6 +137,8 @@ fn go_factory(
         })
 }
 
+// linkme distributed_slice uses #[link_section] internally
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(PROJECT_DETECTORS)]
 static GO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "go",

@@ -2,7 +2,7 @@
 #[macro_export]
 macro_rules! mk_validators {
     ($root:expr; $( $validator:path ),+ $(,)?) => {{
-        let mut registry = $crate::validator_trait::ValidatorRegistry::new();
+        let mut registry = $crate::traits::validator::ValidatorRegistry::new();
         $(
             registry = registry.with_validator(Box::new(<$validator>::new($root)));
         )+

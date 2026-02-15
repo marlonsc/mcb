@@ -62,3 +62,4 @@ rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+uuid = { workspace = true, features = ["v4"] }

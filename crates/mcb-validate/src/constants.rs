@@ -13,17 +13,15 @@ pub const DEFAULT_COMPLEXITY_THRESHOLD: u32 = 15;
 /// Default TDG score threshold (0-100, higher is worse)
 pub const DEFAULT_TDG_THRESHOLD: u32 = 50;
 
+/// Default max lines per file before triggering a size violation.
+pub const DEFAULT_MAX_FILE_LINES: usize = 500;
+
 // ============================================================================
 // VALIDATION ALLOW-LISTS
 // ============================================================================
 
 /// Utility types that are intentionally duplicated to avoid cross-crate dependencies
-pub const UTILITY_TYPES: &[&str] = &[
-    "JsonExt",
-    "HttpResponseUtils",
-    "CacheStats",
-    "TimedOperation",
-];
+pub const UTILITY_TYPES: &[&str] = &["HttpResponseUtils", "CacheStats", "TimedOperation"];
 
 /// Generic type names expected to appear in multiple places
 pub const GENERIC_TYPE_NAMES: &[&str] = &[

@@ -19,13 +19,12 @@ use mcb_domain::ports::repositories::{
 use mcb_domain::ports::services::ProjectDetectorService;
 
 use mcb_providers::database::{
-    SqliteMemoryRepository, create_agent_repository_from_executor,
-    create_project_repository_from_executor,
+    SqliteFileHashConfig, SqliteFileHashRepository, SqliteMemoryRepository,
+    create_agent_repository_from_executor, create_project_repository_from_executor,
 };
-use mcb_providers::storage::{SqliteFileHashConfig, SqliteFileHashRepository};
 use tracing::info;
 
-use crate::config::AppConfig;
+use crate::config::{AppConfig, ConfigLoader};
 use crate::crypto::CryptoService;
 use crate::di::admin::{
     CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface, EmbeddingAdminService,
@@ -104,6 +103,15 @@ pub struct AppContext {
     // ========================================================================
     highlight_service: Arc<dyn HighlightServiceInterface>,
     crypto_service: Arc<dyn CryptoProvider>,
+}
+
+macro_rules! app_context_entity_repo_getter {
+    ($name:ident, $ty:ty, $field:ident, $doc:literal) => {
+        #[doc = $doc]
+        pub fn $name(&self) -> Arc<$ty> {
+            self.$field.clone()
+        }
+    };
 }
 
 impl AppContext {
@@ -212,25 +220,33 @@ impl AppContext {
         self.project_service.clone()
     }
 
-    /// Get VCS entity repository
-    pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
-        self.vcs_entity_repository.clone()
-    }
+    app_context_entity_repo_getter!(
+        vcs_entity_repository,
+        dyn VcsEntityRepository,
+        vcs_entity_repository,
+        "Get VCS entity repository"
+    );
 
-    /// Get plan entity repository
-    pub fn plan_entity_repository(&self) -> Arc<dyn PlanEntityRepository> {
-        self.plan_entity_repository.clone()
-    }
+    app_context_entity_repo_getter!(
+        plan_entity_repository,
+        dyn PlanEntityRepository,
+        plan_entity_repository,
+        "Get plan entity repository"
+    );
 
-    /// Get issue entity repository
-    pub fn issue_entity_repository(&self) -> Arc<dyn IssueEntityRepository> {
-        self.issue_entity_repository.clone()
-    }
+    app_context_entity_repo_getter!(
+        issue_entity_repository,
+        dyn IssueEntityRepository,
+        issue_entity_repository,
+        "Get issue entity repository"
+    );
 
-    /// Get org entity repository
-    pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
-        self.org_entity_repository.clone()
-    }
+    app_context_entity_repo_getter!(
+        org_entity_repository,
+        dyn OrgEntityRepository,
+        org_entity_repository,
+        "Get org entity repository"
+    );
 
     /// Get file hash repository
     pub fn file_hash_repository(&self) -> Arc<dyn FileHashRepository> {
@@ -265,11 +281,16 @@ impl AppContext {
 
         let project_id = std::env::current_dir()
             .ok()
-            .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()))
-            .unwrap_or_else(|| "default".to_string());
+            .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(String::from))
+            .ok_or_else(|| {
+                mcb_domain::error::Error::config(
+                    "cannot determine project ID from current directory",
+                )
+            })?;
 
         let memory_repository = self.memory_repository();
         let agent_repository = self.agent_repository();
+        let file_hash_repository = self.file_hash_repository();
         let vcs_provider = self.vcs_provider();
         let project_service = self.project_service();
 
@@ -285,6 +306,7 @@ impl AppContext {
             event_bus,
             memory_repository,
             agent_repository,
+            file_hash_repository,
             vcs_provider,
             project_service,
             project_repository: self.project_repository(),
@@ -411,14 +433,16 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     // Create Domain Services & Repositories
     // ========================================================================
 
-    // Use configured path or fallback to default
-    let memory_db_path = config.auth.user_db_path.clone().unwrap_or_else(|| {
-        dirs::data_local_dir()
-            .or_else(|| std::env::current_dir().ok())
-            .unwrap_or_else(|| std::path::PathBuf::from("."))
-            .join(".mcb")
-            .join("memory.db")
-    });
+    let db_config = config.providers.database.configs.get("default").ok_or_else(|| {
+        mcb_domain::error::Error::config(
+            "providers.database.configs.default is required; set path in config/default.toml under [providers.database.configs.default]",
+        )
+    })?;
+    let memory_db_path = db_config.path.clone().ok_or_else(|| {
+        mcb_domain::error::Error::config(
+            "providers.database.configs.default.path is required; set the database file path in config/default.toml",
+        )
+    })?;
 
     let db_resolver = DatabaseProviderResolver::new(config.clone());
     let db_executor = db_resolver
@@ -432,9 +456,21 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         Arc::new(SqliteMemoryRepository::new(Arc::clone(&db_executor)));
     let agent_repository = create_agent_repository_from_executor(Arc::clone(&db_executor));
     let project_repository = create_project_repository_from_executor(Arc::clone(&db_executor));
-    let file_hash_repository: Arc<dyn FileHashRepository> = Arc::new(
-        SqliteFileHashRepository::new(Arc::clone(&db_executor), SqliteFileHashConfig::default()),
-    );
+    let project_id = std::env::current_dir()
+        .ok()
+        .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(String::from))
+        .ok_or_else(|| {
+            mcb_domain::error::Error::config(
+                "cannot determine project ID from current directory; \
+                 ensure MCB is launched from a named directory",
+            )
+        })?;
+    let file_hash_repository: Arc<dyn FileHashRepository> =
+        Arc::new(SqliteFileHashRepository::new(
+            Arc::clone(&db_executor),
+            SqliteFileHashConfig::default(),
+            project_id,
+        ));
 
     let vcs_provider = crate::di::vcs::default_vcs_provider();
     let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new());
@@ -499,11 +535,9 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 
 /// Initialize application for testing
 pub async fn init_test_app() -> Result<AppContext> {
-    let config = AppConfig::default();
+    let config = ConfigLoader::new().load().expect("load config");
     init_app(config).await
 }
-
-pub type DiContainer = AppContext;
 
 /// Create a test DI container with default configuration
 pub async fn create_test_container() -> Result<AppContext> {

@@ -13,12 +13,6 @@ pub struct JavaScriptProcessor {
     processor: BaseProcessor,
 }
 
-impl Default for JavaScriptProcessor {
-    fn default() -> Self {
-        Self::new(false)
-    }
-}
-
 impl JavaScriptProcessor {
     /// Create a new JavaScript/TypeScript language processor
     pub fn new(is_typescript: bool) -> Self {
@@ -49,6 +43,12 @@ impl JavaScriptProcessor {
         Self {
             processor: BaseProcessor::new(config),
         }
+    }
+}
+
+impl Default for JavaScriptProcessor {
+    fn default() -> Self {
+        Self::new(false)
     }
 }
 

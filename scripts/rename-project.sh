@@ -316,14 +316,24 @@ validate_changes() {
 	fi
 
 	((total_checks++))
-	# TODO: Fix conditional - currently checks same file twice (impossible)
-	# Should check: old file gone AND new file exists
-	# Example: [[ ! -f "systemd/mcb.service" ]] && [[ -f "systemd/NEW_NAME.service" ]]
-	if [[ ! -f "systemd/mcb.service" ]] && [[ -f "systemd/NEW_NAME.service" ]]; then
+	local old_service="systemd/mcb.service"
+	local target_binary="${CHANGE_PATTERNS["mcb"]}"
+	local target_service="systemd/${target_binary}.service"
+
+	if [[ "$target_binary" == "NEW_NAME" ]]; then
+		log_error "Systemd service file validation skipped: update NEW_NAME placeholder first"
+	elif [[ "$old_service" == "$target_service" ]]; then
+		if [[ -f "$target_service" ]]; then
+			log_success "Systemd service file already uses target name"
+			((checks_passed++))
+		else
+			log_error "Systemd service file missing: $target_service"
+		fi
+	elif [[ ! -f "$old_service" ]] && [[ -f "$target_service" ]]; then
 		log_success "Systemd service file renamed correctly"
 		((checks_passed++))
 	else
-		log_error "Systemd service file not renamed correctly (update NEW_NAME placeholder)"
+		log_error "Systemd service file not renamed correctly ($old_service -> $target_service)"
 	fi
 
 	log_info "Validation: $checks_passed/$total_checks checks passed"
@@ -335,6 +345,15 @@ validate_changes() {
 		log_error "Some validation checks failed!"
 		return 1
 	fi
+}
+
+
+check_git_clean() {
+	if ! git diff-index --quiet HEAD --; then
+		log_error "Git working directory is not clean. Please commit or stash changes before running."
+		return 1
+	fi
+	return 0
 }
 
 main() {
@@ -382,7 +401,15 @@ main() {
 	# Change to project root
 	cd "$PROJECT_ROOT"
 
+    # Safety check: Ensure git is clean before applying changes
+    if ! $DRY_RUN; then
+        if ! check_git_clean; then
+            exit 1
+        fi
+    fi
+
 	log_info "MCP Context Browser → MCB Rename Script"
+
 	log_info "Project root: $PROJECT_ROOT"
 	log_info "Mode: $(if $DRY_RUN; then echo 'DRY RUN'; else echo 'APPLY CHANGES'; fi)"
 	log_info "Backup: $(if $BACKUP; then echo 'enabled'; else echo 'disabled'; fi)"
@@ -390,6 +417,13 @@ main() {
 	if $DRY_RUN; then
 		log_warn "DRY RUN MODE - No changes will be made"
 	else
+		echo -e "${RED}╔════════════════════════════════════════════════════════════╗${NC}"
+		echo -e "${RED}║                   DANGER ZONE                      ║${NC}"
+		echo -e "${RED}╠════════════════════════════════════════════════════════════╣${NC}"
+		echo -e "${RED}║ You are about to rename the project across the codebase.   ║${NC}"
+		echo -e "${RED}║ This is a destructive operation.                           ║${NC}"
+		echo -e "${RED}╚════════════════════════════════════════════════════════════╝${NC}"
+		echo
 		log_warn "APPLY MODE - Changes will be made to files"
 		if ! $BACKUP; then
 			log_error "BACKUP DISABLED - This could be dangerous!"

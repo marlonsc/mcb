@@ -3,66 +3,58 @@
 //! Uses shared constants for severity levels, rule codes, and file extensions.
 
 use mcb_validate::linters::*;
+use rstest::rstest;
 
 use crate::test_constants::*;
 
-#[test]
-fn test_linter_engine_creation() {
+#[rstest]
+fn linter_engine_creation() {
     let engine = LinterEngine::new();
     assert!(!engine.enabled_linters().is_empty());
 }
 
-#[test]
-fn test_ruff_severity_mapping() {
-    assert_eq!(
-        mcb_validate::linters::parsers::map_ruff_severity(RUFF_CODE_ERROR),
-        SEVERITY_ERROR
-    );
-    assert_eq!(
-        mcb_validate::linters::parsers::map_ruff_severity(RUFF_CODE_WARNING),
-        SEVERITY_WARNING
-    );
-    assert_eq!(
-        mcb_validate::linters::parsers::map_ruff_severity(RUFF_CODE_INFO),
-        SEVERITY_INFO
-    );
+#[rstest]
+#[case("ruff", RUFF_CODE_ERROR, SEVERITY_ERROR)]
+#[case("ruff", RUFF_CODE_WARNING, SEVERITY_WARNING)]
+#[case("ruff", RUFF_CODE_INFO, SEVERITY_INFO)]
+#[case("clippy", SEVERITY_ERROR, SEVERITY_ERROR)]
+#[case("clippy", SEVERITY_WARNING, SEVERITY_WARNING)]
+#[case("clippy", CLIPPY_LEVEL_NOTE, SEVERITY_INFO)]
+fn linter_level_mapping(#[case] linter: &str, #[case] input_level: &str, #[case] expected: &str) {
+    let actual = if linter == "ruff" {
+        mcb_validate::linters::parsers::map_ruff_severity(input_level)
+    } else {
+        mcb_validate::linters::parsers::map_clippy_level(input_level)
+    };
+    assert_eq!(actual, expected);
 }
 
-#[test]
-fn test_clippy_level_mapping() {
-    assert_eq!(
-        mcb_validate::linters::parsers::map_clippy_level(SEVERITY_ERROR),
-        SEVERITY_ERROR
-    );
-    assert_eq!(
-        mcb_validate::linters::parsers::map_clippy_level(SEVERITY_WARNING),
-        SEVERITY_WARNING
-    );
-    assert_eq!(
-        mcb_validate::linters::parsers::map_clippy_level(CLIPPY_LEVEL_NOTE),
-        SEVERITY_INFO
-    );
-}
-
+#[rstest]
 #[tokio::test]
-async fn test_linter_engine_execution() {
+async fn linter_engine_execution() {
     let engine = LinterEngine::new();
 
     let result = engine.check_files(&[]).await;
     assert!(result.is_ok());
 }
 
-#[test]
-fn test_linter_type_supported_extension() {
-    assert_eq!(LinterType::Ruff.supported_extension(), RUFF_EXTENSION);
-    assert_eq!(LinterType::Clippy.supported_extension(), CLIPPY_EXTENSION);
+#[rstest]
+#[case(LinterType::Ruff, RUFF_EXTENSION)]
+#[case(LinterType::Clippy, CLIPPY_EXTENSION)]
+fn linter_type_supported_extension(#[case] linter: LinterType, #[case] expected: &str) {
+    assert_eq!(linter.supported_extension(), expected);
 }
 
-#[test]
-fn test_linter_type_matches_extension() {
-    assert!(LinterType::Ruff.matches_extension(Some(RUFF_EXTENSION)));
-    assert!(!LinterType::Ruff.matches_extension(Some(CLIPPY_EXTENSION)));
-    assert!(LinterType::Clippy.matches_extension(Some(CLIPPY_EXTENSION)));
-    assert!(!LinterType::Clippy.matches_extension(Some(RUFF_EXTENSION)));
-    assert!(!LinterType::Ruff.matches_extension(None));
+#[rstest]
+#[case(LinterType::Ruff, Some(RUFF_EXTENSION), true)]
+#[case(LinterType::Ruff, Some(CLIPPY_EXTENSION), false)]
+#[case(LinterType::Clippy, Some(CLIPPY_EXTENSION), true)]
+#[case(LinterType::Clippy, Some(RUFF_EXTENSION), false)]
+#[case(LinterType::Ruff, None, false)]
+fn linter_type_matches_extension(
+    #[case] linter: LinterType,
+    #[case] extension: Option<&str>,
+    #[case] expected: bool,
+) {
+    assert_eq!(linter.matches_extension(extension), expected);
 }

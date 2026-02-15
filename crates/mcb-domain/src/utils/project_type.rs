@@ -10,14 +10,3 @@ pub fn project_name(project: &ProjectType) -> &str {
         ProjectType::Maven { artifact_id, .. } => artifact_id,
     }
 }
-
-/// Helper to get the normalized type label for the project.
-pub fn project_type_name(project: &ProjectType) -> &'static str {
-    match project {
-        ProjectType::Cargo { .. } => "cargo",
-        ProjectType::Npm { .. } => "npm",
-        ProjectType::Python { .. } => "python",
-        ProjectType::Go { .. } => "go",
-        ProjectType::Maven { .. } => "maven",
-    }
-}

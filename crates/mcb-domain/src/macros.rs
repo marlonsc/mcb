@@ -39,6 +39,7 @@ macro_rules! impl_registry {
         }
 
         #[linkme::distributed_slice]
+        /// Stores the static value static value.
         pub static $slice: [$entry] = [..];
 
         /// Resolve provider by name from registry

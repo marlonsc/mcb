@@ -3,13 +3,13 @@
 
 Thank you for your interest in contributing! This guide covers everything you need for MCB development.
 
-**Last updated:**2026-02-12 |**Version:** v0.2.1
+**Last updated:** 2026-02-14 | **Version:** v0.2.1
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Rust 1.89+**: Install from [rustup.rs](https://rustup.rs/)
+- **Rust 1.92+**: Install from [rustup.rs](https://rustup.rs/)
 - **Git**: Version control system
 
 ### Setup Development Environment
@@ -18,7 +18,7 @@ Thank you for your interest in contributing! This guide covers everything you ne
 git clone https://github.com/marlonsc/mcb.git
 cd mcb
 make build
-make test       # 10,000+ test functions
+make test       # 1700+ tests across 9 crates
 make check      # Full quality pipeline
 ```
 

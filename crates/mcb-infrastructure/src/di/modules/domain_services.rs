@@ -8,6 +8,9 @@
 //! Services are created via `DomainServicesFactory::create_services()` at runtime
 //! using constructor injection, because they require runtime configuration
 //! (embedding provider, vector store, cache).
+//!
+//! # Code Smells
+//! TODO(qlty): Found 28 lines of similar code with `mcb-server/src/mcp_server.rs`.
 
 use std::sync::Arc;
 
@@ -22,8 +25,8 @@ use mcb_domain::ports::providers::{
     EmbeddingProvider, LanguageChunkingProvider, VcsProvider, VectorStoreProvider,
 };
 use mcb_domain::ports::repositories::{
-    AgentRepository, IssueEntityRepository, MemoryRepository, OrgEntityRepository,
-    PlanEntityRepository, ProjectRepository, VcsEntityRepository,
+    AgentRepository, FileHashRepository, IssueEntityRepository, MemoryRepository,
+    OrgEntityRepository, PlanEntityRepository, ProjectRepository, VcsEntityRepository,
 };
 use mcb_domain::ports::services::{
     AgentSessionServiceInterface, ContextServiceInterface, IndexingServiceInterface,
@@ -38,11 +41,14 @@ use mcb_domain::ports::providers::CryptoProvider;
 // Use infrastructure validation service
 use crate::validation::InfraValidationService;
 
-/// Domain services container
+/// Domain services container.
 ///
 /// Holds all assembled domain service implementations for use throughout the application.
 /// This container is created by `DomainServicesFactory` and provides access to all
 /// domain-level services that depend on infrastructure components.
+///
+/// # Code Smells
+/// TODO(qlty): Found 28 lines of similar code with `mcb-server/src/mcp_server.rs`.
 #[derive(Clone)]
 pub struct DomainServicesContainer {
     /// Service for managing context and semantic search operations
@@ -117,6 +123,8 @@ pub struct ServiceDependencies {
     pub memory_repository: Arc<dyn MemoryRepository>,
     /// Repository for agent session data
     pub agent_repository: Arc<dyn AgentRepository>,
+    /// Repository for file hash persistence (incremental indexing metadata)
+    pub file_hash_repository: Arc<dyn FileHashRepository>,
     /// Version control system provider
     pub vcs_provider: Arc<dyn VcsProvider>,
     /// Service for project detection and management
@@ -165,11 +173,13 @@ impl DomainServicesFactory {
             Arc::new(SearchServiceImpl::new(Arc::clone(&context_service)));
 
         let indexing_service: Arc<dyn IndexingServiceInterface> =
-            Arc::new(IndexingServiceImpl::new(
+            Arc::new(IndexingServiceImpl::new_with_file_hash_repository(
                 Arc::clone(&context_service),
                 deps.language_chunker,
                 deps.indexing_ops,
                 deps.event_bus,
+                deps.file_hash_repository,
+                deps.config.mcp.indexing.supported_extensions.clone(),
             ));
 
         let validation_service: Arc<dyn ValidationServiceInterface> =
@@ -210,13 +220,19 @@ impl DomainServicesFactory {
         let event_bus = app_context.event_bus();
         let language_chunker = app_context.language_handle().get();
         let context_service = Self::create_context_service(app_context).await?;
+        let file_hash_repository = app_context.file_hash_repository();
+        let supported_extensions = app_context.config.mcp.indexing.supported_extensions.clone();
 
-        Ok(Arc::new(IndexingServiceImpl::new(
-            context_service,
-            language_chunker,
-            indexing_ops,
-            event_bus,
-        )))
+        Ok(Arc::new(
+            IndexingServiceImpl::new_with_file_hash_repository(
+                context_service,
+                language_chunker,
+                indexing_ops,
+                event_bus,
+                file_hash_repository,
+                supported_extensions,
+            ),
+        ))
     }
 
     /// Create context service from app context

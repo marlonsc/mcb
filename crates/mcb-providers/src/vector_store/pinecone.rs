@@ -12,15 +12,15 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::constants::CONTENT_TYPE_JSON;
-use crate::utils::{HttpResponseUtils, JsonExt};
-use crate::vector_store::helpers::handle_vector_request_error;
+use crate::provider_utils::{JsonRequestParams, send_json_request};
+use crate::utils::http::RequestErrorKind;
 
 /// Pinecone vector store provider
 ///
@@ -86,23 +86,23 @@ impl PineconeVectorStoreProvider {
         path: &str,
         body: Option<Value>,
     ) -> Result<Value> {
-        let mut builder = self
-            .http_client
-            .request(method, self.api_url(path))
-            .header("Api-Key", &self.api_key)
-            .header("Content-Type", CONTENT_TYPE_JSON)
-            .timeout(self.timeout);
+        let headers = vec![
+            ("Api-Key", self.api_key.clone()),
+            ("Content-Type", CONTENT_TYPE_JSON.to_string()),
+        ];
 
-        if let Some(payload) = body {
-            builder = builder.json(&payload);
-        }
-
-        let response = builder
-            .send()
-            .await
-            .map_err(|e| handle_vector_request_error(e, self.timeout, "Pinecone", path))?;
-
-        HttpResponseUtils::check_and_parse(response, "Pinecone").await
+        send_json_request(JsonRequestParams {
+            client: &self.http_client,
+            method,
+            url: self.api_url(path),
+            timeout: self.timeout,
+            provider: "Pinecone",
+            operation: path,
+            kind: RequestErrorKind::VectorDb,
+            headers: &headers,
+            body: body.as_ref(),
+        })
+        .await
     }
 
     /// Convert Pinecone match result to domain SearchResult
@@ -115,14 +115,27 @@ impl PineconeVectorStoreProvider {
 
         SearchResult {
             id,
-            file_path: metadata.string_or("file_path", ""),
+            file_path: metadata
+                .get("file_path")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_owned(),
             start_line: metadata
-                .opt_u64("start_line")
-                .or_else(|| metadata.opt_u64("line_number"))
+                .get("start_line")
+                .and_then(Value::as_u64)
+                .or_else(|| metadata.get("line_number").and_then(Value::as_u64))
                 .unwrap_or(0) as u32,
-            content: metadata.string_or("content", ""),
+            content: metadata
+                .get("content")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .to_owned(),
             score,
-            language: metadata.string_or("language", "unknown"),
+            language: metadata
+                .get("language")
+                .and_then(Value::as_str)
+                .unwrap_or("unknown")
+                .to_owned(),
         }
     }
 }
@@ -130,10 +143,12 @@ impl PineconeVectorStoreProvider {
 #[async_trait]
 impl VectorStoreAdmin for PineconeVectorStoreProvider {
     async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
-        Ok(self.collections.contains_key(name.as_str()))
+        let name_str = name.to_string();
+        Ok(self.collections.contains_key(&name_str))
     }
 
     async fn get_stats(&self, collection: &CollectionId) -> Result<HashMap<String, Value>> {
+        let collection_str = collection.to_string();
         let payload = serde_json::json!({
             "filter": {},
         });
@@ -149,7 +164,7 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
         let mut stats = HashMap::new();
         stats.insert(
             "collection".to_string(),
-            serde_json::json!(collection.as_str()),
+            serde_json::json!(collection.to_string()),
         );
         stats.insert(
             "provider".to_string(),
@@ -159,7 +174,7 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
         match response {
             Ok(data) => {
                 if let Some(namespaces) = data.get("namespaces")
-                    && let Some(ns) = namespaces.get(collection.as_str())
+                    && let Some(ns) = namespaces.get(&collection_str)
                     && let Some(count) = ns.get("vectorCount")
                 {
                     stats.insert("vectors_count".to_string(), count.clone());
@@ -188,27 +203,29 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
 #[async_trait]
 impl VectorStoreProvider for PineconeVectorStoreProvider {
     async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
-        if self.collections.contains_key(name.as_str()) {
+        let name_str = name.to_string();
+        if self.collections.contains_key(&name_str) {
             return Err(Error::vector_db(format!(
                 "Collection '{}' already exists",
                 name
             )));
         }
         // Pinecone uses namespaces within an index; creation is implicit on first upsert
-        self.collections.insert(name.to_string(), dimensions);
+        self.collections.insert(name_str, dimensions);
         Ok(())
     }
 
     async fn delete_collection(&self, name: &CollectionId) -> Result<()> {
+        let name_str = name.to_string();
         let payload = serde_json::json!({
             "deleteAll": true,
-            "namespace": name.as_str()
+            "namespace": name_str
         });
 
         self.request(reqwest::Method::POST, "/vectors/delete", Some(payload))
             .await?;
 
-        self.collections.remove(name.as_str());
+        self.collections.remove(&name.to_string());
         Ok(())
     }
 
@@ -221,6 +238,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         if vectors.is_empty() {
             return Ok(Vec::new());
         }
+        let collection_str = collection.to_string();
 
         let mut ids = Vec::with_capacity(vectors.len());
         let mut pinecone_vectors = Vec::with_capacity(vectors.len());
@@ -239,7 +257,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
             if pinecone_vectors.len() >= batch_size || i == vectors.len() - 1 {
                 let payload = serde_json::json!({
                     "vectors": pinecone_vectors,
-                    "namespace": collection.as_str()
+                    "namespace": collection_str
                 });
 
                 self.request(reqwest::Method::POST, "/vectors/upsert", Some(payload))
@@ -259,10 +277,11 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         limit: usize,
         filter: Option<&str>,
     ) -> Result<Vec<SearchResult>> {
+        let collection_str = collection.to_string();
         let mut payload = serde_json::json!({
             "vector": query_vector,
             "topK": limit,
-            "namespace": collection.as_str(),
+            "namespace": collection_str,
             "includeMetadata": true
         });
 
@@ -295,10 +314,11 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         if ids.is_empty() {
             return Ok(());
         }
+        let collection_str = collection.to_string();
 
         let payload = serde_json::json!({
             "ids": ids,
-            "namespace": collection.as_str()
+            "namespace": collection_str
         });
 
         self.request(reqwest::Method::POST, "/vectors/delete", Some(payload))
@@ -315,10 +335,11 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         if ids.is_empty() {
             return Ok(Vec::new());
         }
+        let collection_str = collection.to_string();
 
         let payload = serde_json::json!({
             "ids": ids,
-            "namespace": collection.as_str()
+            "namespace": collection_str
         });
 
         let response = self
@@ -336,11 +357,26 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
                             .unwrap_or(serde_json::json!({}));
                         SearchResult {
                             id: id.clone(),
-                            file_path: metadata.string_or("file_path", ""),
-                            start_line: metadata.opt_u64("start_line").unwrap_or(0) as u32,
-                            content: metadata.string_or("content", ""),
+                            file_path: metadata
+                                .get("file_path")
+                                .and_then(Value::as_str)
+                                .unwrap_or("")
+                                .to_owned(),
+                            start_line: metadata
+                                .get("start_line")
+                                .and_then(Value::as_u64)
+                                .unwrap_or(0) as u32,
+                            content: metadata
+                                .get("content")
+                                .and_then(Value::as_str)
+                                .unwrap_or("")
+                                .to_owned(),
                             score: 1.0,
-                            language: metadata.string_or("language", "unknown"),
+                            language: metadata
+                                .get("language")
+                                .and_then(Value::as_str)
+                                .unwrap_or("unknown")
+                                .to_owned(),
                         }
                     })
                     .collect()
@@ -356,9 +392,10 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
         // Pinecone doesn't support listing; use zero vector search as workaround
+        let collection_str = collection.to_string();
         let dimensions = self
             .collections
-            .get(collection.as_str())
+            .get(&collection_str)
             .map(|d| *d.value())
             .unwrap_or(1536);
 
@@ -374,15 +411,7 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         let collections: Vec<CollectionInfo> = self
             .collections
             .iter()
-            .map(|entry| {
-                CollectionInfo::new(
-                    CollectionId::new(entry.key().clone()),
-                    0,
-                    0,
-                    None,
-                    self.provider_name(),
-                )
-            })
+            .map(|entry| CollectionInfo::new(entry.key(), 0, 0, None, self.provider_name()))
             .collect();
         Ok(collections)
     }
@@ -405,9 +434,10 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
             "file_path": { "$eq": file_path }
         });
 
+        let collection_str = collection.to_string();
         let dimensions = self
             .collections
-            .get(collection.as_str())
+            .get(&collection_str)
             .map(|d| *d.value())
             .unwrap_or(1536);
 
@@ -416,7 +446,7 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         let payload = serde_json::json!({
             "vector": zero_vector,
             "topK": 100,
-            "namespace": collection.as_str(),
+            "namespace": collection_str,
             "includeMetadata": true,
             "filter": filter
         });

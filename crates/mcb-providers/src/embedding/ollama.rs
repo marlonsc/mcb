@@ -6,18 +6,21 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+use mcb_domain::constants::embedding::{
+    EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
+    EMBEDDING_DIMENSION_OLLAMA_MINILM, EMBEDDING_DIMENSION_OLLAMA_MXBAI,
+    EMBEDDING_DIMENSION_OLLAMA_NOMIC,
+};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
-use crate::constants::{
-    CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
-    EMBEDDING_DIMENSION_OLLAMA_MINILM, EMBEDDING_DIMENSION_OLLAMA_MXBAI,
-    EMBEDDING_DIMENSION_OLLAMA_NOMIC,
-};
+use super::helpers::HttpEmbeddingClient;
 /// Error message for request timeouts
-use crate::utils::HttpResponseUtils;
+use crate::provider_utils::{JsonRequestParams, parse_float_array_lossy, send_json_request};
+use crate::utils::http::RequestErrorKind;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
 /// Ollama embedding provider
 ///
@@ -45,10 +48,7 @@ use crate::utils::HttpResponseUtils;
 /// }
 /// ```
 pub struct OllamaEmbeddingProvider {
-    base_url: String,
-    model: String,
-    timeout: Duration,
-    http_client: Client,
+    client: HttpEmbeddingClient,
 }
 
 impl OllamaEmbeddingProvider {
@@ -61,21 +61,25 @@ impl OllamaEmbeddingProvider {
     /// * `http_client` - Reqwest HTTP client for making API requests
     pub fn new(base_url: String, model: String, timeout: Duration, http_client: Client) -> Self {
         Self {
-            base_url,
-            model,
-            timeout,
-            http_client,
+            client: HttpEmbeddingClient::new(
+                "".to_string(), // No API key for Ollama
+                Some(base_url),
+                "http://localhost:11434",
+                model,
+                timeout,
+                http_client,
+            ),
         }
     }
 
     /// Get the model name for this provider
     pub fn model(&self) -> &str {
-        &self.model
+        &self.client.model
     }
 
     /// Get the maximum tokens supported by this provider
     pub fn max_tokens(&self) -> usize {
-        match self.model.as_str() {
+        match self.client.model.as_str() {
             "nomic-embed-text" => 8192,
             "all-minilm" => 512,
             "mxbai-embed-large" => 512,
@@ -87,52 +91,52 @@ impl OllamaEmbeddingProvider {
     /// Fetch embedding for a single text
     async fn fetch_single_embedding(&self, text: &str) -> Result<serde_json::Value> {
         let payload = serde_json::json!({
-            "model": self.model,
+            "model": self.client.model,
             "prompt": text,
             "stream": false
         });
 
-        let response = self
-            .http_client
-            .post(format!(
-                "{}/api/embeddings",
-                self.base_url.trim_end_matches('/')
-            ))
-            .header("Content-Type", CONTENT_TYPE_JSON)
-            .timeout(self.timeout)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| {
-                if e.is_timeout() {
-                    Error::embedding(format!(
-                        "{} {:?}",
-                        crate::constants::ERROR_MSG_REQUEST_TIMEOUT,
-                        self.timeout
-                    ))
-                } else {
-                    Error::embedding(format!("HTTP request failed: {}", e))
-                }
-            })?;
+        let headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_string())];
 
-        HttpResponseUtils::check_and_parse(response, "Ollama").await
+        send_json_request(JsonRequestParams {
+            client: &self.client.client,
+            method: reqwest::Method::POST,
+            url: format!(
+                "{}/api/embeddings",
+                self.client.base_url.trim_end_matches('/')
+            ),
+            timeout: self.client.timeout,
+            provider: "Ollama",
+            operation: "embeddings",
+            kind: RequestErrorKind::Embedding,
+            headers: &headers,
+            body: Some(&payload),
+        })
+        .await
+        .map_err(|e| {
+            if let Error::Embedding { message, .. } = &e
+                && message.contains("HTTP request to Ollama failed")
+            {
+                return Error::embedding(
+                    message.replace("HTTP request to Ollama failed", "HTTP request failed"),
+                );
+            }
+            e
+        })
     }
 
     /// Parse embedding from response data
     fn parse_embedding(&self, response_data: &serde_json::Value) -> Result<Embedding> {
-        let embedding_vec = response_data["embedding"]
-            .as_array()
-            .ok_or_else(|| {
-                Error::embedding("Invalid response format: missing embedding array".to_string())
-            })?
-            .iter()
-            .map(|v| v.as_f64().unwrap_or(0.0) as f32)
-            .collect::<Vec<f32>>();
+        let embedding_vec = parse_float_array_lossy(
+            response_data,
+            "/embedding",
+            "Invalid response format: missing embedding array",
+        )?;
 
         let dimensions = embedding_vec.len();
         Ok(Embedding {
             vector: embedding_vec,
-            model: self.model.clone(),
+            model: self.client.model.clone(),
             dimensions,
         })
     }
@@ -156,7 +160,7 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
     }
 
     fn dimensions(&self) -> usize {
-        match self.model.as_str() {
+        match self.client.model.as_str() {
             "nomic-embed-text" => EMBEDDING_DIMENSION_OLLAMA_NOMIC,
             "all-minilm" => EMBEDDING_DIMENSION_OLLAMA_MINILM,
             "mxbai-embed-large" => EMBEDDING_DIMENSION_OLLAMA_MXBAI,

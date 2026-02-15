@@ -68,7 +68,7 @@ classify:
 ### Output Variables
 
 | Variable | Type | Purpose |
-|----------|------|---------|
+| ---------- | ------ | --------- |
 | `is_draft` | boolean | True if PR is in draft state |
 | `is_bot` | boolean | True if PR author user type is 'Bot' |
 | `is_fork` | boolean | True if PR is from a forked repository |
@@ -78,7 +78,7 @@ classify:
 ### Examples
 
 | PR State | is_draft | is_bot | run_full | run_simplified | Policy |
-|----------|----------|--------|----------|----------------|--------|
+| ---------- | ---------- | -------- | ---------- | ---------------- | -------- |
 | Draft PR (human) | true | false | false | false | Draft |
 | Draft PR (bot) | true | true | false | false | Draft |
 | Ready PR (human) | false | false | true | false | Ready |
@@ -92,7 +92,7 @@ classify:
 ### Policy Matrix
 
 | Job | Draft | Bot | Ready | Condition |
-|-----|-------|-----|-------|-----------|
+| ----- | ------- | ----- | ------- | ----------- |
 | **classify** | ✅ | ✅ | ✅ | Always runs |
 | **changes** | ✅ | ✅ | ✅ | Always runs |
 | **lint** | ❌ | ✅ | ✅ | `run_full == true OR run_simplified == true` |
@@ -678,7 +678,7 @@ auto-merge-dependabot:
 ### Job Execution Summary
 
 | Job | Draft | Bot | Ready | Why Draft Skips | Why Bot Skips Some |
-|-----|-------|-----|-------|-----------------|---------------------|
+| ----- | ------- | ----- | ------- | ----------------- | --------------------- |
 | classify | ✅ | ✅ | ✅ | Always needed | Always needed |
 | changes | ✅ | ✅ | ✅ | Path filtering | Path filtering |
 | lint | ❌ | ✅ | ✅ | WIP code, fast iteration | Run for bots |
@@ -695,7 +695,7 @@ auto-merge-dependabot:
 ### Time Comparison
 
 | Metric | Draft | Bot | Ready |
-|--------|-------|-----|-------|
+| -------- | ------- | ----- | ------- |
 | **Time to Gate** | ~30 seconds | ~3-5 minutes | ~5-10 minutes |
 | **Total CI Time** | ~30 seconds | ~3-5 minutes | ~15-20 minutes* |
 | **Jobs Executed** | 2 | 6 | 13 |
@@ -709,7 +709,7 @@ auto-merge-dependabot:
 Based on GitHub Actions runner minutes:
 
 | PR Type | Runner Minutes | Monthly (est.) | Annual (est.) |
-|---------|----------------|----------------|---------------|
+| --------- | ---------------- | ---------------- | --------------- |
 | **Draft** (50/month) | 0.5 min/PR | 25 min | 300 min |
 | **Bot** (20/month) | 4 min/PR | 80 min | 960 min |
 | **Ready** (30/month) | 15 min/PR | 450 min | 5400 min |

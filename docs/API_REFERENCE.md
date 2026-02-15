@@ -94,52 +94,63 @@ Interface for vector storage and retrieval.
 
 ## Services
 
-### ContextService
+### ContextServiceImpl
 
 ```rust
-pub struct ContextService {
+pub struct ContextServiceImpl {
     embedding_provider: Arc<dyn EmbeddingProvider>,
     vector_store_provider: Arc<dyn VectorStoreProvider>,
 }
-
-impl ContextService {
-    pub async fn embed_text(&self, text: &str) -> Result<Embedding>;
-    pub async fn store_chunks(&self, collection: &str, chunks: &[CodeChunk]) -> Result<()>;
-    pub async fn search_similar(&self, collection: &str, query: &str, limit: usize) -> Result<Vec<SearchResult>>;
-}
 ```
 
-Orchestrates embedding generation and vector operations.
+Implements `ContextServiceInterface`. Orchestrates embedding generation, vector storage, and semantic search operations. Dependencies injected via dill IoC (ADR-029).
 
-### IndexingService
+### IndexingServiceImpl
 
 ```rust
-pub struct IndexingService {
-    context_service: Arc<ContextService>,
-}
-
-impl IndexingService {
-    pub fn new(context_service: Arc<ContextService>) -> Self;
-    pub async fn index_directory(&self, path: &Path, collection: &str) -> Result<usize>;
+pub struct IndexingServiceImpl {
+    context_service: Arc<dyn ContextServiceInterface>,
+    chunking_provider: Arc<dyn LanguageChunkingProvider>,
+    file_hash_repo: Arc<dyn FileHashRepository>,
+    event_bus: Arc<dyn EventBusProvider>,
 }
 ```
 
-Handles codebase indexing and chunking.
+Implements `IndexingServiceInterface`. Handles file discovery, language-aware chunking, incremental indexing via hash tracking, and event publishing.
 
-### SearchService
+### SearchServiceImpl
 
 ```rust
-pub struct SearchService {
-    context_service: Arc<ContextService>,
+pub struct SearchServiceImpl {
+    context_service: Arc<dyn ContextServiceInterface>,
 }
 
-impl SearchService {
-    pub fn new(context_service: Arc<ContextService>) -> Self;
-    pub async fn search(&self, collection: &str, query: &str, limit: usize) -> Result<Vec<SearchResult>>;
+impl SearchServiceImpl {
+    pub fn new(context_service: Arc<dyn ContextServiceInterface>) -> Self;
 }
 ```
 
-Provides semantic search capabilities.
+Implements `SearchServiceInterface`. Executes semantic search with application-level filtering and result ranking.
+
+### AgentSessionServiceImpl
+
+```rust
+pub struct AgentSessionServiceImpl {
+    agent_repo: Arc<dyn AgentRepository>,
+}
+```
+
+Implements `AgentSessionServiceInterface`. Manages agent session lifecycle, tool logging, and delegation tracking.
+
+### MemoryServiceImpl
+
+```rust
+pub struct MemoryServiceImpl {
+    memory_repo: Arc<dyn MemoryRepository>,
+}
+```
+
+Implements `MemoryServiceInterface`. Manages observation storage, retrieval, timeline, and context injection.
 
 ## Utilities
 
@@ -198,4 +209,4 @@ Intelligent provider routing with resilience.
 
 ---
 
-### Auto-generated API reference
+### Updated 2026-02-14 - Reflects DI-based service constructors and port/adapter pattern (v0.2.1)

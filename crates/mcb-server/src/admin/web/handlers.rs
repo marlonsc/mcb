@@ -2,18 +2,17 @@
 //!
 //! HTTP handlers for the admin web interface.
 
+use crate::context;
+use crate::templates::Template;
 use rocket::State;
 use rocket::get;
 use rocket::http::ContentType;
-use rocket_dyn_templates::{Template, context};
 use serde::Serialize;
 
 use crate::admin::AdminRegistry;
 use crate::admin::crud_adapter::resolve_adapter;
 use crate::admin::handlers::AdminState;
-use crate::admin::web::view_model::{
-    DashboardEntityCard, format_timestamp, nav_groups, pluralize, truncate_text,
-};
+use crate::admin::web::view_model::{DashboardEntityCard, nav_groups};
 
 // Static assets remain as compile-time embeds (not Handlebars templates)
 const SHARED_JS: &str = include_str!("templates/shared.js");
@@ -158,19 +157,25 @@ pub fn browse_tree_page() -> Template {
 #[derive(Debug, Clone, Serialize)]
 struct RecentActivityItem {
     entity_title: String,
-    detail: String,
-    timestamp: String,
+    record_count: usize,
+    timestamp: i64,
 }
 
 async fn render_dashboard_template(title: &str, state: Option<&State<AdminState>>) -> Template {
     let mut cards = Vec::<DashboardEntityCard>::new();
     let mut recent_activity = Vec::<RecentActivityItem>::new();
-    let timestamp = format_timestamp(chrono::Utc::now().timestamp());
+    let now_ts = chrono::Utc::now().timestamp();
     let mut total_records = 0usize;
 
     for entity in AdminRegistry::all() {
         let record_count = match state.and_then(|s| resolve_adapter(entity.slug, s.inner())) {
-            Some(adapter) => adapter.list_all().await.map(|rows| rows.len()).unwrap_or(0),
+            Some(adapter) => match adapter.list_all().await {
+                Ok(rows) => rows.len(),
+                Err(e) => {
+                    tracing::warn!(entity = entity.slug, error = %e, "list_all failed");
+                    0
+                }
+            },
             None => 0,
         };
         total_records += record_count;
@@ -182,25 +187,13 @@ async fn render_dashboard_template(title: &str, state: Option<&State<AdminState>
             group: entity.group.to_string(),
             field_count,
             record_count,
-            summary: format!(
-                "{} visible {}",
-                field_count,
-                pluralize(field_count, "field", "fields")
-            ),
         });
 
         if record_count > 0 {
             recent_activity.push(RecentActivityItem {
                 entity_title: entity.title.to_string(),
-                detail: truncate_text(
-                    &format!(
-                        "{} {} currently indexed",
-                        record_count,
-                        pluralize(record_count, "record", "records")
-                    ),
-                    64,
-                ),
-                timestamp: timestamp.clone(),
+                record_count,
+                timestamp: now_ts,
             });
         }
     }

@@ -8,7 +8,6 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
 
 use crate::Result;
 
@@ -128,23 +127,48 @@ impl CargoDependencyParser {
             crates.push(self.workspace_root.clone());
         }
 
-        for entry in WalkDir::new(&self.workspace_root)
-            .follow_links(false)
-            .follow_links(false)
-            .max_depth(3)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-        {
-            let path = entry.path();
-            if path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml")
-                && let Some(parent) = path.parent()
-                && parent != self.workspace_root
-            {
-                crates.push(parent.to_path_buf());
-            }
-        }
+        Self::collect_cargo_dirs(
+            &self.workspace_root,
+            &self.workspace_root,
+            0,
+            3,
+            &mut crates,
+        );
 
         crates
+    }
+
+    fn collect_cargo_dirs(
+        root: &Path,
+        current: &Path,
+        depth: usize,
+        max_depth: usize,
+        crates: &mut Vec<PathBuf>,
+    ) {
+        if depth > max_depth {
+            return;
+        }
+
+        let Ok(entries) = fs::read_dir(current) else {
+            return;
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                if path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml")
+                    && let Some(parent) = path.parent()
+                    && parent != root
+                {
+                    crates.push(parent.to_path_buf());
+                }
+                continue;
+            }
+
+            if path.is_dir() {
+                Self::collect_cargo_dirs(root, &path, depth + 1, max_depth, crates);
+            }
+        }
     }
 
     /// Parse a single Cargo.toml file
@@ -234,147 +258,5 @@ impl CargoDependencyParser {
                 features: Vec::new(),
             },
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::fs;
-
-    use tempfile::TempDir;
-
-    use super::*;
-
-    #[test]
-    fn test_parse_simple_dependency() {
-        let temp_dir = TempDir::new().unwrap();
-        let cargo_toml = temp_dir.path().join("Cargo.toml");
-
-        let content = r#"
-[package]
-name = "test"
-version = "0.1.0"
-
-[dependencies]
-serde = "1.0"
-tokio = { version = "1.0", features = ["full"] }
-"#;
-
-        fs::write(&cargo_toml, content).unwrap();
-
-        let parser = CargoDependencyParser::new(temp_dir.path().to_path_buf());
-        let deps = parser.parse_cargo_toml(&cargo_toml).unwrap();
-
-        assert!(deps.has_dependency("serde"));
-        assert!(deps.has_dependency("tokio"));
-
-        let serde_info = deps.get_dependency("serde").unwrap();
-        assert!(serde_info.declared);
-        assert_eq!(serde_info.version, Some("1.0".to_string()));
-        assert!(serde_info.features.is_empty());
-
-        let tokio_info = deps.get_dependency("tokio").unwrap();
-        assert!(tokio_info.declared);
-        assert_eq!(tokio_info.version, Some("1.0".to_string()));
-        assert_eq!(tokio_info.features, vec!["full".to_string()]);
-    }
-
-    #[test]
-    fn test_dev_dependencies() {
-        let temp_dir = TempDir::new().unwrap();
-        let cargo_toml = temp_dir.path().join("Cargo.toml");
-
-        let content = r#"
-[package]
-name = "test"
-version = "0.1.0"
-
-[dependencies]
-serde = "1.0"
-
-[dev-dependencies]
-tempfile = "3.0"
-"#;
-
-        fs::write(&cargo_toml, content).unwrap();
-
-        let parser = CargoDependencyParser::new(temp_dir.path().to_path_buf());
-        let deps = parser.parse_cargo_toml(&cargo_toml).unwrap();
-
-        // Regular dependency should be declared
-        assert!(deps.has_dependency("serde"));
-        assert!(deps.get_dependency("serde").unwrap().declared);
-
-        // Dev dependency should also be tracked (for validation purposes)
-        assert!(deps.has_dependency("tempfile"));
-        // Note: dev dependencies are marked as declared for validation purposes
-        assert!(deps.get_dependency("tempfile").unwrap().declared);
-    }
-
-    #[test]
-    fn test_workspace_dependencies() {
-        let temp_dir = TempDir::new().unwrap();
-
-        // Create workspace Cargo.toml
-        let workspace_cargo = temp_dir.path().join("Cargo.toml");
-        fs::write(
-            &workspace_cargo,
-            r#"
-[workspace]
-members = ["crate1", "crate2"]
-"#,
-        )
-        .unwrap();
-
-        // Create crate1
-        let crate1_dir = temp_dir.path().join("crate1");
-        fs::create_dir(&crate1_dir).unwrap();
-        let crate1_cargo = crate1_dir.join("Cargo.toml");
-        fs::write(
-            &crate1_cargo,
-            r#"
-[package]
-name = "crate1"
-version = "0.1.0"
-
-[dependencies]
-serde = "1.0"
-"#,
-        )
-        .unwrap();
-
-        // Create crate2
-        let crate2_dir = temp_dir.path().join("crate2");
-        fs::create_dir(&crate2_dir).unwrap();
-        let crate2_cargo = crate2_dir.join("Cargo.toml");
-        fs::write(
-            &crate2_cargo,
-            r#"
-[package]
-name = "crate2"
-version = "0.1.0"
-
-[dependencies]
-tokio = "1.0"
-"#,
-        )
-        .unwrap();
-
-        let parser = CargoDependencyParser::new(temp_dir.path().to_path_buf());
-        let workspace_deps = parser.parse_workspace_deps().unwrap();
-
-        // Check crate1 dependencies
-        let crate1_deps = workspace_deps
-            .find_crate_deps(&crate1_dir.join("src/main.rs"))
-            .unwrap();
-        assert!(crate1_deps.has_dependency("serde"));
-        assert!(!crate1_deps.has_dependency("tokio"));
-
-        // Check crate2 dependencies
-        let crate2_deps = workspace_deps
-            .find_crate_deps(&crate2_dir.join("src/main.rs"))
-            .unwrap();
-        assert!(crate2_deps.has_dependency("tokio"));
-        assert!(!crate2_deps.has_dependency("serde"));
     }
 }

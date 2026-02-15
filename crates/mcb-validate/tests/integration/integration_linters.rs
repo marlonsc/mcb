@@ -6,6 +6,7 @@
 //! - `LintViolation` structs are properly populated
 //! - `lint_select` codes are correctly categorized
 
+use rstest::rstest;
 use std::path::PathBuf;
 
 use mcb_validate::linters::{LintViolation, LinterEngine, LinterType, YamlRuleExecutor};
@@ -55,11 +56,7 @@ fn get_default_substitution_variables() -> serde_yaml::Value {
         "server_module": "mcb_server",
         "providers_module": "mcb_providers",
         "validate_crate": "mcb-validate",
-        "validate_module": "mcb_validate",
-        "language_support_crate": "mcb-language-support",
-        "language_support_module": "mcb_language_support",
-        "ast_utils_crate": "mcb-ast-utils",
-        "ast_utils_module": "mcb_ast_utils"
+        "validate_module": "mcb_validate"
     });
     serde_yaml::to_value(json).unwrap()
 }
@@ -73,16 +70,12 @@ fn test_linter_engine_creation() {
     // Engine was created successfully (no panic)
 }
 
-#[test]
-fn test_linter_engine_with_specific_linters() {
-    let _engine = LinterEngine::with_linters(vec![LinterType::Ruff]);
-    // Engine was created with Ruff only (no panic)
-
-    let _engine = LinterEngine::with_linters(vec![LinterType::Clippy]);
-    // Engine was created with Clippy only (no panic)
-
-    let _engine = LinterEngine::with_linters(vec![LinterType::Ruff, LinterType::Clippy]);
-    // Engine was created with both linters (no panic)
+#[rstest]
+#[case(vec![LinterType::Ruff])]
+#[case(vec![LinterType::Clippy])]
+#[case(vec![LinterType::Ruff, LinterType::Clippy])]
+fn linter_engine_with_specific_linters(#[case] linters: Vec<LinterType>) {
+    let _engine = LinterEngine::with_linters(linters);
 }
 
 #[test]
@@ -92,10 +85,11 @@ fn test_linter_type_equality() {
     assert_ne!(LinterType::Ruff, LinterType::Clippy);
 }
 
-#[test]
-fn test_linter_type_commands() {
-    assert_eq!(LinterType::Ruff.command(), "ruff");
-    assert_eq!(LinterType::Clippy.command(), "cargo");
+#[rstest]
+#[case(LinterType::Ruff, "ruff")]
+#[case(LinterType::Clippy, "cargo")]
+fn linter_type_commands(#[case] linter: LinterType, #[case] command: &str) {
+    assert_eq!(linter.command(), command);
 }
 
 // ==================== JSON Parsing Tests ====================
@@ -136,30 +130,14 @@ fn test_ruff_json_array_parsing() {
     assert_eq!(violations[1].line, 10);
 }
 
-#[test]
-fn test_ruff_json_lines_fallback() {
-    // Legacy JSON lines format (fallback)
-    let json_output = r#"{"code": "W291", "message": "Trailing whitespace", "filename": "foo.py", "location": {"row": 5, "column": 10}}"#;
-
-    let violations = LinterType::Ruff.parse_output(json_output);
-
-    assert_eq!(violations.len(), 1);
-    assert_eq!(violations[0].rule, "W291");
-    assert_eq!(violations[0].file, "foo.py");
-}
-
-#[test]
-fn test_ruff_empty_output() {
-    let violations = LinterType::Ruff.parse_output("[]");
+#[rstest]
+#[case("[]")]
+#[case("")]
+fn ruff_empty_output(#[case] output: &str) {
+    let violations = LinterType::Ruff.parse_output(output);
     assert!(
         violations.is_empty(),
-        "Empty array should yield no violations"
-    );
-
-    let violations = LinterType::Ruff.parse_output("");
-    assert!(
-        violations.is_empty(),
-        "Empty string should yield no violations"
+        "Empty output should yield no violations"
     );
 }
 
@@ -208,27 +186,17 @@ fn test_clippy_requires_primary_span() {
 
 // ==================== Severity Mapping Tests ====================
 
-#[test]
-fn test_ruff_severity_mapping() {
-    // F-codes are errors (Pyflakes)
-    let json = r#"[{"code": "F401", "message": "unused", "filename": "t.py", "location": {"row": 1, "column": 1}}]"#;
-    let violations = LinterType::Ruff.parse_output(json);
-    assert_eq!(violations[0].severity, "error");
-
-    // E-codes are errors (pycodestyle)
-    let json = r#"[{"code": "E501", "message": "line too long", "filename": "t.py", "location": {"row": 1, "column": 1}}]"#;
-    let violations = LinterType::Ruff.parse_output(json);
-    assert_eq!(violations[0].severity, "error");
-
-    // W-codes are warnings
-    let json = r#"[{"code": "W291", "message": "trailing whitespace", "filename": "t.py", "location": {"row": 1, "column": 1}}]"#;
-    let violations = LinterType::Ruff.parse_output(json);
-    assert_eq!(violations[0].severity, "warning");
-
-    // I-codes are info (isort)
-    let json = r#"[{"code": "I001", "message": "unsorted imports", "filename": "t.py", "location": {"row": 1, "column": 1}}]"#;
-    let violations = LinterType::Ruff.parse_output(json);
-    assert_eq!(violations[0].severity, "info");
+#[rstest]
+#[case("F401", "error")]
+#[case("E501", "error")]
+#[case("W291", "warning")]
+#[case("I001", "info")]
+fn ruff_severity_mapping(#[case] code: &str, #[case] expected_severity: &str) {
+    let json = format!(
+        "[{{\"code\": \"{code}\", \"message\": \"msg\", \"filename\": \"t.py\", \"location\": {{\"row\": 1, \"column\": 1}}}}]"
+    );
+    let violations = LinterType::Ruff.parse_output(&json);
+    assert_eq!(violations[0].severity, expected_severity);
 }
 
 // ==================== Async Execution Tests ====================
@@ -550,6 +518,7 @@ fn create_test_rule(
         selectors: Vec::new(),
         ast_query: None,
         metrics: None,
+        filters: None,
     }
 }
 

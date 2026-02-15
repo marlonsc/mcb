@@ -4,8 +4,9 @@ use std::io;
 
 use mcb_domain::error::{Error, Result};
 use mcb_infrastructure::error_ext::{ErrorContext, infra};
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn test_error_context_extension() {
     let io_error = io::Error::new(io::ErrorKind::NotFound, "file not found");
 
@@ -20,7 +21,7 @@ fn test_error_context_extension() {
     }
 }
 
-#[test]
+#[rstest]
 fn test_infra_error_creation() {
     let error = infra::infrastructure_error_msg("test error message");
 

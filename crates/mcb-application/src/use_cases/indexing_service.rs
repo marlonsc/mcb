@@ -1,32 +1,47 @@
 //! Indexing Service Use Case
 //!
-//! Application service for code indexing and ingestion operations.
-//! Orchestrates file discovery, chunking, and storage of code embeddings.
-//! Supports async background indexing with event publishing.
+//! # Overview
+//! The `IndexingService` manages the ingestion and processing of code assets into the semantic
+//! context system. It handles the full lifecycle from file discovery to vector storage, ensuring
+//! that the system's understanding of the codebase remains up-to-date.
+//!
+//! # Responsibilities
+//! - **File Discovery**: Recursively scanning workspace directories while respecting ignore patterns.
+//! - **Language-Aware Chunking**: Splitting code files into semantic chunks using AST-based strategies.
+//! - **Incremental Indexing**: Optimizing ingestion by only processing changed files (via hash tracking).
+//! - **Async Processing**: Executing long-running indexing tasks in the background to maintain responsiveness.
+//! - **Event Publishing**: Notifying the system of indexing progress and completion.
+//!
+//! # Architecture
+//! Implements `IndexingServiceInterface` and acts as a coordinator between:
+//! - `LanguageChunkingProvider`: For parsing and splitting code.
+//! - `ContextService`: For embedding and storing chunks.
+//! - `FileHashRepository`: For change detection.
+//! - `EventBusProvider`: For system-wide notifications.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
 
-use mcb_domain::entities::CodeChunk;
+use ignore::WalkBuilder;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::admin::IndexingOperationsInterface;
 use mcb_domain::ports::infrastructure::EventBusProvider;
 use mcb_domain::ports::providers::LanguageChunkingProvider;
+use mcb_domain::ports::repositories::FileHashRepository;
 use mcb_domain::ports::services::{
     ContextServiceInterface, IndexingResult, IndexingServiceInterface,
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
-use tracing::{debug, info, warn};
+use tracing::{error, info, warn};
 
-use crate::constants::{PROGRESS_UPDATE_INTERVAL, SKIP_DIRS, SUPPORTED_EXTENSIONS};
+use crate::constants::{PROGRESS_UPDATE_INTERVAL, SKIP_DIRS};
 
-/// Accumulator for indexing progress and errors
+/// Accumulator for indexing progress and operational metrics.
 ///
-/// Note: Fields are used via `into_result()` method. The struct is WIP
-/// for async background indexing support.
-// Fields used during file discovery error recording, not dead code
+/// Tracks the state of an active indexing operation, including success counts,
+/// skipped files, and encountered errors for final reporting.
 struct IndexingProgress {
     files_processed: usize,
     chunks_created: usize,
@@ -76,31 +91,68 @@ impl IndexingProgress {
     }
 }
 
-/// Indexing service implementation - orchestrates file discovery and chunking
+/// Indexing service implementation - orchestrates file discovery and chunking.
 ///
-/// Supports async background indexing with progress tracking and event publishing.
+/// Supports async background indexing with granular progress tracking, event publishing,
+/// and incremental updates via file hash verification.
 #[derive(Clone)]
 pub struct IndexingServiceImpl {
     context_service: Arc<dyn ContextServiceInterface>,
     language_chunker: Arc<dyn LanguageChunkingProvider>,
     indexing_ops: Arc<dyn IndexingOperationsInterface>,
     event_bus: Arc<dyn EventBusProvider>,
+    file_hash_repository: Option<Arc<dyn FileHashRepository>>,
+    supported_extensions: Vec<String>,
 }
 
 impl IndexingServiceImpl {
+    fn workspace_relative_path(file_path: &Path, workspace_root: &Path) -> Result<String> {
+        mcb_domain::utils::path::workspace_relative_path(file_path, workspace_root)
+    }
+
     /// Create new indexing service with injected dependencies
     pub fn new(
         context_service: Arc<dyn ContextServiceInterface>,
         language_chunker: Arc<dyn LanguageChunkingProvider>,
         indexing_ops: Arc<dyn IndexingOperationsInterface>,
         event_bus: Arc<dyn EventBusProvider>,
+        supported_extensions: Vec<String>,
     ) -> Self {
         Self {
             context_service,
             language_chunker,
             indexing_ops,
             event_bus,
+            file_hash_repository: None,
+            supported_extensions: Self::normalize_supported_extensions(supported_extensions),
         }
+    }
+
+    /// Create a new indexing service with file hash persistence enabled.
+    pub fn new_with_file_hash_repository(
+        context_service: Arc<dyn ContextServiceInterface>,
+        language_chunker: Arc<dyn LanguageChunkingProvider>,
+        indexing_ops: Arc<dyn IndexingOperationsInterface>,
+        event_bus: Arc<dyn EventBusProvider>,
+        file_hash_repository: Arc<dyn FileHashRepository>,
+        supported_extensions: Vec<String>,
+    ) -> Self {
+        Self {
+            context_service,
+            language_chunker,
+            indexing_ops,
+            event_bus,
+            file_hash_repository: Some(file_hash_repository),
+            supported_extensions: Self::normalize_supported_extensions(supported_extensions),
+        }
+    }
+
+    fn normalize_supported_extensions(extensions: Vec<String>) -> Vec<String> {
+        extensions
+            .into_iter()
+            .map(|ext| ext.trim().trim_start_matches('.').to_ascii_lowercase())
+            .filter(|ext| !ext.is_empty())
+            .collect()
     }
 
     /// Discover files recursively from a path
@@ -109,61 +161,50 @@ impl IndexingServiceImpl {
         path: &Path,
         progress: &mut IndexingProgress,
     ) -> Vec<std::path::PathBuf> {
-        use tokio::fs;
-
         let mut files = Vec::new();
-        let mut dirs_to_visit = vec![path.to_path_buf()];
-
-        while let Some(dir_path) = dirs_to_visit.pop() {
-            let mut entries = match fs::read_dir(&dir_path).await {
-                Ok(entries) => entries,
-                Err(e) => {
-                    progress.record_error("Failed to read directory", &dir_path, e);
-                    continue;
+        let walker = WalkBuilder::new(path)
+            .hidden(false)
+            .filter_entry(|entry| {
+                if !entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
+                    return true;
                 }
-            };
 
-            while let Ok(Some(entry)) = entries.next_entry().await {
-                let entry_path = entry.path();
-                if entry_path.is_dir() {
-                    if Self::should_visit_dir(&entry_path) {
-                        dirs_to_visit.push(entry_path);
+                entry
+                    .file_name()
+                    .to_str()
+                    .map(|name| !SKIP_DIRS.contains(&name))
+                    .unwrap_or(true)
+            })
+            .build();
+
+        for entry_result in walker {
+            match entry_result {
+                Ok(entry) => {
+                    if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false)
+                        && self.is_supported_file(entry.path())
+                    {
+                        files.push(entry.path().to_path_buf());
                     }
-                } else if Self::is_supported_file(&entry_path) {
-                    files.push(entry_path);
+                }
+                Err(e) => {
+                    progress.record_error("Failed to read directory entry", path, e);
                 }
             }
         }
+
         files
     }
 
-    /// Check if directory should be visited during indexing
-    fn should_visit_dir(path: &Path) -> bool {
-        path.file_name()
-            .and_then(|name| name.to_str())
-            .map(|name| !SKIP_DIRS.contains(&name))
-            .unwrap_or(true)
-    }
-
     /// Check if file has a supported extension
-    fn is_supported_file(path: &Path) -> bool {
+    fn is_supported_file(&self, path: &Path) -> bool {
         path.extension()
             .and_then(|ext| ext.to_str())
-            .map(|ext| SUPPORTED_EXTENSIONS.contains(&ext.to_lowercase().as_str()))
+            .map(|ext| {
+                self.supported_extensions
+                    .iter()
+                    .any(|supported| supported == &ext.to_ascii_lowercase())
+            })
             .unwrap_or(false)
-    }
-
-    /// Chunk file content using intelligent AST-based chunking
-    ///
-    /// Reserved for future background task integration with `IndexingProgress`.
-    /// Currently unused but retained for planned incremental indexing feature.
-    #[allow(
-        dead_code,
-        reason = "Reserved for IndexingProgress integration in background tasks"
-    )]
-    fn chunk_file_content(&self, content: &str, path: &Path) -> Vec<CodeChunk> {
-        self.language_chunker
-            .chunk(content, &path.to_string_lossy())
     }
 }
 
@@ -206,13 +247,14 @@ impl IndexingServiceInterface for IndexingServiceImpl {
         // Clone service for the background task
         // IndexingServiceImpl is cheap to clone (Arc-based)
         let service = self.clone();
-        let collection_id = collection.clone();
-        let op_id = operation_id.clone();
+        let collection_id = *collection;
+        let op_id = operation_id;
+        let workspace_root = path.to_path_buf();
 
-        // Spawn background task - explicitly drop handle since we don't await it
-        // (fire-and-forget pattern for async indexing)
+        // Fire-and-forget: caller gets operation_id immediately, polling for completion.
+        // Sync execution path available via run_indexing_task() directly in tests.
         let _handle = tokio::spawn(async move {
-            Self::run_indexing_task(service, files, collection_id, op_id).await;
+            Self::run_indexing_task(service, files, workspace_root, collection_id, op_id).await;
         });
 
         // Return immediately with operation_id
@@ -251,10 +293,14 @@ impl IndexingServiceInterface for IndexingServiceImpl {
 }
 
 impl IndexingServiceImpl {
-    /// Background task that performs the actual indexing work
+    /// Background task that performs the actual indexing work.
+    ///
+    /// # Code Smells
+    /// TODO(qlty): Function with high complexity (count = 27).
     async fn run_indexing_task(
         service: IndexingServiceImpl,
         files: Vec<PathBuf>,
+        workspace_root: PathBuf,
         collection: CollectionId,
         operation_id: OperationId,
     ) {
@@ -262,16 +308,22 @@ impl IndexingServiceImpl {
         let total = files.len();
         let mut chunks_created = 0usize;
         let mut files_processed = 0usize;
+        let mut failed_files: Vec<String> = Vec::new();
 
         for (i, file_path) in files.iter().enumerate() {
-            // Update progress tracker
-            service.indexing_ops.update_progress(
-                &operation_id,
-                Some(file_path.display().to_string()),
-                i,
-            );
+            let relative_path = match Self::workspace_relative_path(file_path, &workspace_root) {
+                Ok(path) => path,
+                Err(e) => {
+                    warn!(file = %file_path.display(), error = %e, "Skipping file outside workspace root");
+                    failed_files.push(file_path.display().to_string());
+                    continue;
+                }
+            };
 
-            // Publish progress event periodically
+            service
+                .indexing_ops
+                .update_progress(&operation_id, Some(relative_path.clone()), i);
+
             if i % PROGRESS_UPDATE_INTERVAL == 0
                 && let Err(e) = service
                     .event_bus
@@ -279,50 +331,100 @@ impl IndexingServiceImpl {
                         collection: collection.to_string(),
                         processed: i,
                         total,
-                        current_file: Some(file_path.display().to_string()),
+                        current_file: Some(relative_path.clone()),
                     })
                     .await
             {
-                debug!("Failed to publish progress event: {}", e);
+                warn!("Failed to publish progress event: {}", e);
             }
 
-            // Read and process file
             let content = match tokio::fs::read_to_string(&file_path).await {
                 Ok(c) => c,
                 Err(e) => {
-                    debug!("Failed to read file {}: {}", file_path.display(), e);
+                    warn!(file = %file_path.display(), error = %e, "Failed to read file during indexing");
+                    failed_files.push(file_path.display().to_string());
                     continue;
                 }
             };
 
-            let chunks = service
-                .language_chunker
-                .chunk(&content, &file_path.to_string_lossy());
+            let mut computed_hash: Option<String> = None;
+            if let Some(file_hash_repository) = &service.file_hash_repository {
+                match file_hash_repository.compute_hash(file_path.as_path()) {
+                    Ok(hash) => {
+                        match file_hash_repository
+                            .has_changed(&collection.to_string(), &relative_path, &hash)
+                            .await
+                        {
+                            Ok(false) => {
+                                continue;
+                            }
+                            Ok(true) => {
+                                computed_hash = Some(hash);
+                            }
+                            Err(e) => {
+                                warn!(
+                                    file = %file_path.display(),
+                                    error = %e,
+                                    "Failed to check file hash delta"
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        warn!(
+                            file = %file_path.display(),
+                            error = %e,
+                            "Failed to compute file hash"
+                        );
+                    }
+                }
+            }
+
+            let chunks = service.language_chunker.chunk(&content, &relative_path);
             if let Err(e) = service
                 .context_service
                 .store_chunks(&collection, &chunks)
                 .await
             {
-                debug!("Failed to store chunks for {}: {}", file_path.display(), e);
+                error!(file = %file_path.display(), error = %e, "Failed to store chunks — vector store or embedding provider may be unreachable");
+                failed_files.push(file_path.display().to_string());
                 continue;
+            }
+
+            if let (Some(file_hash_repository), Some(hash)) =
+                (&service.file_hash_repository, computed_hash.as_deref())
+                && let Err(e) = file_hash_repository
+                    .upsert_hash(&collection.to_string(), &relative_path, hash)
+                    .await
+            {
+                warn!(
+                    file = %file_path.display(),
+                    error = %e,
+                    "Failed to persist file hash metadata"
+                );
             }
 
             files_processed += 1;
             chunks_created += chunks.len();
         }
 
-        // Update final progress
         service
             .indexing_ops
             .update_progress(&operation_id, None, total);
 
-        // Complete and remove operation
         service.indexing_ops.complete_operation(&operation_id);
 
         let duration_ms = start.elapsed().as_millis() as u64;
+        let error_count = failed_files.len();
+        let files_skipped = total.saturating_sub(files_processed);
 
-        let result = IndexingProgress::with_counts(files_processed, chunks_created, 0, vec![])
-            .into_result(Some(operation_id), "completed");
+        let result = IndexingProgress::with_counts(
+            files_processed,
+            chunks_created,
+            files_skipped,
+            failed_files.clone(),
+        )
+        .into_result(Some(operation_id), "completed");
 
         if let Err(e) = service
             .event_bus
@@ -336,9 +438,49 @@ impl IndexingServiceImpl {
             warn!("Failed to publish IndexingCompleted event: {}", e);
         }
 
-        info!(
-            "Indexing completed: {} files, {} chunks in {}ms",
-            result.files_processed, result.chunks_created, duration_ms
-        );
+        if error_count > 0 {
+            error!(
+                files_processed = files_processed,
+                chunks_created = chunks_created,
+                errors = error_count,
+                duration_ms = duration_ms,
+                "Indexing completed with errors"
+            );
+        } else {
+            info!(
+                files_processed = files_processed,
+                chunks_created = chunks_created,
+                duration_ms = duration_ms,
+                "Indexing completed successfully"
+            );
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::IndexingServiceImpl;
+    use std::path::Path;
+
+    #[test]
+    fn workspace_relative_path_normalizes_within_workspace() {
+        let workspace = Path::new("/repo");
+        let file = Path::new("/repo/src/main.rs");
+
+        let relative =
+            IndexingServiceImpl::workspace_relative_path(file, workspace).expect("relative path");
+
+        assert_eq!(relative, "src/main.rs");
+    }
+
+    #[test]
+    fn workspace_relative_path_rejects_outside_workspace() {
+        let workspace = Path::new("/repo");
+        let file = Path::new("/other/main.rs");
+
+        let err = IndexingServiceImpl::workspace_relative_path(file, workspace)
+            .expect_err("outside path must fail");
+
+        assert!(err.to_string().contains("is not under root"));
     }
 }

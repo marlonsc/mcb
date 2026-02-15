@@ -235,7 +235,7 @@ jobs:
   audit:
     name: Security Audit
     timeout-minutes: 10
-    needs: [changes]
+    needs: [changes, classify]
     if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && needs.classify.outputs.run_full == 'true'
     runs-on: ubuntu-latest
     steps:

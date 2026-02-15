@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::ObservationMetadata;
 use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::vcs_context::VcsContext;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
-use uuid::Uuid;
 
-use super::helpers::MemoryHelpers;
+use super::common::{
+    MemoryOriginOptions, build_observation_metadata, require_data_map, require_str,
+    resolve_memory_origin_context, str_vec,
+};
 use crate::args::MemoryArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
 /// Stores a new semantic observation with the provided content, type, and tags.
@@ -19,58 +19,56 @@ pub async fn store_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match MemoryHelpers::json_map(&args.data) {
-        Some(data) => data,
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing data payload for observation store",
-            )]));
-        }
-    };
-    let content = match MemoryHelpers::get_required_str(data, "content") {
-        Ok(v) => v,
+    let data = match require_data_map(&args.data, "Missing data payload for observation store") {
+        Ok(data) => data,
         Err(error_result) => return Ok(error_result),
     };
-    let observation_type_str = match MemoryHelpers::get_required_str(data, "observation_type") {
-        Ok(v) => v,
+    let content = match require_str(data, "content") {
+        Ok(value) => value,
         Err(error_result) => return Ok(error_result),
     };
-    let observation_type = match MemoryHelpers::parse_observation_type(&observation_type_str) {
-        Ok(v) => v,
+    // Consider using mcb_domain::schema::memory::COL_OBSERVATION_TYPE instead.
+    let observation_type_str: String = match require_str(data, "observation_type") {
+        Ok(value) => value,
         Err(error_result) => return Ok(error_result),
     };
-    let tags = MemoryHelpers::get_string_list(data, "tags");
-    let project_id = args
-        .project_id
-        .clone()
-        .or_else(|| MemoryHelpers::get_str(data, "project_id"))
-        .ok_or_else(|| {
-            McpError::invalid_params("project_id is required for storing observation", None)
-        })?;
+    let observation_type: mcb_domain::entities::memory::ObservationType =
+        match observation_type_str.parse() {
+            Ok(v) => v,
+            Err(_) => {
+                return Ok(CallToolResult::error(vec![Content::text(format!(
+                    "Unknown observation type: {}",
+                    observation_type_str
+                ))]));
+            }
+        };
+    let tags = str_vec(data, "tags");
+    let origin = resolve_memory_origin_context(
+        args,
+        data,
+        MemoryOriginOptions {
+            execution_from_args: None,
+            execution_from_data: None,
+            file_path_payload: data.get("file_path").and_then(|v| v.as_str()),
+            timestamp: None,
+        },
+    )?;
 
-    let vcs_context = VcsContext::capture();
-    let metadata = ObservationMetadata {
-        id: Uuid::new_v4().to_string(),
-        session_id: MemoryHelpers::get_str(data, "session_id")
-            .or_else(|| args.session_id.as_ref().map(|id| id.as_str().to_string())),
-        repo_id: MemoryHelpers::get_str(data, "repo_id")
-            .or_else(|| args.repo_id.clone())
-            .or_else(|| vcs_context.repo_id.clone()),
-        file_path: MemoryHelpers::get_str(data, "file_path"),
-        branch: MemoryHelpers::get_str(data, "branch").or_else(|| vcs_context.branch.clone()),
-        commit: MemoryHelpers::get_str(data, "commit").or_else(|| vcs_context.commit.clone()),
-        execution: None,
-        quality_gate: None,
-    };
+    let metadata = build_observation_metadata(
+        origin.canonical_session_id,
+        origin.origin_context,
+        None,
+        None,
+    );
     match memory_service
-        .store_observation(project_id, content, observation_type, tags, metadata)
+        .store_observation(origin.project_id, content, observation_type, tags, metadata)
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({
             "observation_id": observation_id,
             "deduplicated": deduplicated,
         })),
-        Err(e) => Ok(to_opaque_tool_error(e)),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }
 
@@ -89,7 +87,7 @@ pub async fn get_observations(
     match memory_service
         .get_observations_by_ids(
             &ids.iter()
-                .map(|id| ObservationId::new(id.clone()))
+                .map(|id| ObservationId::from_string(id))
                 .collect::<Vec<_>>(),
         )
         .await
@@ -117,6 +115,6 @@ pub async fn get_observations(
                 "observations": observations,
             }))
         }
-        Err(e) => Ok(to_opaque_tool_error(e)),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }

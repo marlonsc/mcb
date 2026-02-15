@@ -24,7 +24,7 @@ use crate::value_objects::search::SearchResult;
 ///     // Semantic search using embedding vector
 ///     let query_vec = vec![0.1f32; 384];
 ///     let results = repo.semantic_search("my-project", &query_vec, 10, None).await?;
-///     
+///
 ///     for result in results {
 ///         println!("{}: score={:.3}", result.file_path, result.score);
 ///     }

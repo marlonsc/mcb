@@ -48,7 +48,7 @@ pub type DomainEventStream = Pin<Box<dyn Stream<Item = DomainEvent> + Send + Syn
 /// ## Methods
 ///
 /// | Method | Purpose |
-/// |--------|---------|
+/// | -------- | --------- |
 /// | `publish_event` | Publish a typed `DomainEvent` |
 /// | `subscribe_events` | Get a stream of `DomainEvent` for real-time updates |
 /// | `publish` | Low-level: publish raw bytes to a topic |

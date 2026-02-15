@@ -18,9 +18,6 @@ pub mod crypto;
 /// Database connection and operation constants.
 pub mod db;
 
-/// Vector embedding provider and dimension constants.
-pub mod embedding;
-
 /// Event system and messaging constants.
 pub mod events;
 

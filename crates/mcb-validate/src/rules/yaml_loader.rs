@@ -6,11 +6,12 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 use serde_yaml;
-use walkdir::WalkDir;
 
 use super::templates::TemplateEngine;
+use super::utils::collect_yaml_files;
 use super::yaml_validator::YamlRuleValidator;
 use crate::Result;
+use crate::filters::rule_filters::RuleFilters;
 
 /// Loaded and validated YAML rule
 #[derive(Debug, Clone)]
@@ -47,6 +48,8 @@ pub struct ValidatedRule {
     pub ast_query: Option<String>,
     /// Metrics configuration for schema v3 rules (Phase 4)
     pub metrics: Option<MetricsConfig>,
+    /// Optional filters to restrict rule applicability by language, dependency, or file pattern.
+    pub filters: Option<RuleFilters>,
 }
 
 /// Metrics configuration for rule/v3 rules
@@ -152,6 +155,16 @@ impl YamlRuleLoader {
         })
     }
 
+    /// Set embedded rules for the loader.
+    pub fn set_embedded_rules(&mut self, rules: Vec<(&str, &str)>) {
+        self.embedded_rules = Some(
+            rules
+                .into_iter()
+                .map(|(path, content)| (path.to_string(), content.to_string()))
+                .collect(),
+        );
+    }
+
     /// Load all rules from embedded entries without filesystem access.
     pub fn load_embedded_rules(&mut self) -> Result<Vec<ValidatedRule>> {
         let mut rules = Vec::new();
@@ -163,6 +176,30 @@ impl YamlRuleLoader {
             for (path, content) in embedded_rules {
                 if path.ends_with(".yml") && !path.contains("/templates/") {
                     let loaded_rules = self.load_rule_from_str(Path::new(path), content)?;
+                    rules.extend(loaded_rules);
+                }
+            }
+        }
+
+        Ok(rules)
+    }
+
+    /// Synchronous variant of [`Self::load_all_rules`].
+    pub fn load_all_rules_sync(&mut self) -> Result<Vec<ValidatedRule>> {
+        let mut rules = Vec::new();
+
+        if self.embedded_rules.is_some() {
+            rules.extend(self.load_embedded_rules()?);
+        }
+
+        if self.rules_dir.exists() {
+            self.template_engine.load_templates_sync(&self.rules_dir)?;
+
+            for path in collect_yaml_files(&self.rules_dir)? {
+                if self.is_rule_file(&path) {
+                    let content =
+                        std::fs::read_to_string(&path).map_err(crate::ValidationError::Io)?;
+                    let loaded_rules = self.load_rule_from_str(&path, &content)?;
                     rules.extend(loaded_rules);
                 }
             }
@@ -185,12 +222,9 @@ impl YamlRuleLoader {
         self.template_engine.load_templates(&self.rules_dir).await?;
 
         // Load rule files
-        for entry in WalkDir::new(&self.rules_dir).follow_links(false) {
-            let entry = entry.map_err(|e| crate::ValidationError::Io(std::io::Error::other(e)))?;
-            let path = entry.path();
-
-            if self.is_rule_file(path) {
-                let loaded_rules = self.load_rule_file(path).await?;
+        for path in collect_yaml_files(&self.rules_dir)? {
+            if self.is_rule_file(&path) {
+                let loaded_rules = self.load_rule_file(&path).await?;
                 rules.extend(loaded_rules);
             }
         }
@@ -284,11 +318,10 @@ impl YamlRuleLoader {
     /// Check if a file is a rule file
     fn is_rule_file(&self, path: &Path) -> bool {
         path.extension().and_then(|ext| ext.to_str()) == Some("yml")
-            && !path.to_string_lossy().contains("/templates/")
+            && !path.to_str().is_some_and(|s| s.contains("/templates/"))
     }
 
     /// Convert YAML/JSON value to `ValidatedRule`
-    #[allow(clippy::too_many_lines)]
     fn yaml_to_validated_rule(&self, value: &serde_json::Value) -> Result<ValidatedRule> {
         let obj = value
             .as_object()
@@ -428,6 +461,10 @@ impl YamlRuleLoader {
             .get("metrics")
             .and_then(|v| serde_json::from_value::<MetricsConfig>(v.clone()).ok());
 
+        let filters = obj
+            .get("filters")
+            .and_then(|v| serde_json::from_value::<RuleFilters>(v.clone()).ok());
+
         Ok(ValidatedRule {
             id,
             name,
@@ -445,6 +482,7 @@ impl YamlRuleLoader {
             selectors,
             ast_query,
             metrics,
+            filters,
         })
     }
 
@@ -452,10 +490,9 @@ impl YamlRuleLoader {
     pub fn get_rule_path(&self, rule_id: &str) -> Option<PathBuf> {
         // This would need a more sophisticated mapping
         // For now, just search in the rules directory
-        for entry in WalkDir::new(&self.rules_dir).into_iter().flatten() {
-            let path = entry.path();
-            if self.is_rule_file(path)
-                && let Ok(content) = std::fs::read_to_string(path)
+        for path in collect_yaml_files(&self.rules_dir).ok()? {
+            if self.is_rule_file(&path)
+                && let Ok(content) = std::fs::read_to_string(&path)
                 && content.contains(&format!("id: {rule_id}"))
             {
                 return Some(path.to_path_buf());

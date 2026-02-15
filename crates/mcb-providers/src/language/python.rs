@@ -1,60 +1,11 @@
 //! Python language processor for AST-based code chunking.
 
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
+use crate::language::common::{CHUNK_SIZE_PYTHON, TS_NODE_FUNCTION_DEFINITION};
 
-use crate::language::common::{
-    BaseProcessor, CHUNK_SIZE_PYTHON, LanguageConfig, LanguageProcessor, NodeExtractionRule,
-    TS_NODE_FUNCTION_DEFINITION,
-};
-
-/// Python language processor with function and class extraction.
-pub struct PythonProcessor {
-    processor: BaseProcessor,
-}
-
-impl Default for PythonProcessor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl PythonProcessor {
-    /// Create a new Python language processor
-    pub fn new() -> Self {
-        let config = LanguageConfig::new(tree_sitter_python::LANGUAGE.into())
-            .with_rules(vec![NodeExtractionRule {
-                node_types: vec![
-                    TS_NODE_FUNCTION_DEFINITION.to_string(),
-                    "class_definition".to_string(),
-                ],
-                min_length: 30,
-                min_lines: 2,
-                max_depth: 2,
-                priority: 5,
-                include_context: true,
-            }])
-            .with_chunk_size(CHUNK_SIZE_PYTHON);
-
-        Self {
-            processor: BaseProcessor::new(config),
-        }
-    }
-}
-
-impl LanguageProcessor for PythonProcessor {
-    fn config(&self) -> &LanguageConfig {
-        self.processor.config()
-    }
-
-    fn extract_chunks_with_tree_sitter(
-        &self,
-        tree: &tree_sitter::Tree,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-}
+crate::impl_simple_language_processor!(
+    PythonProcessor,
+    language = tree_sitter_python::LANGUAGE.into(),
+    chunk_size = CHUNK_SIZE_PYTHON,
+    max_depth = 2,
+    nodes = [TS_NODE_FUNCTION_DEFINITION, "class_definition"]
+);

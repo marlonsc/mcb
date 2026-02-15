@@ -2,23 +2,37 @@ use mcb_domain::schema::{
     MemorySchema, MemorySchemaDdlGenerator, ProjectSchema, SchemaDdlGenerator,
 };
 use mcb_providers::database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
+use rstest::rstest;
+use rstest::*;
 
-#[test]
-fn test_sqlite_memory_ddl_generator_produces_statements() {
-    let generator = SqliteMemoryDdlGenerator;
-    let schema = MemorySchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
-    assert!(!ddl.is_empty());
-    assert!(ddl.iter().any(|s| s.contains("CREATE TABLE")));
-    assert!(ddl.iter().any(|s| s.contains("fts5")));
-}
-
-#[test]
-fn test_sqlite_project_schema_ddl_includes_all_entities() {
+#[fixture]
+fn project_ddl() -> Vec<String> {
     let generator = SqliteSchemaDdlGenerator;
     let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+    generator.generate_ddl(&schema)
+}
+
+#[rstest]
+#[case("memory")]
+#[case("project")]
+fn sqlite_ddl_generators_produce_statements(#[case] schema_kind: &str) {
+    let ddl: Vec<String> = if schema_kind == "memory" {
+        let generator = SqliteMemoryDdlGenerator;
+        let schema = MemorySchema::definition();
+        generator.generate_ddl(&schema)
+    } else {
+        let generator = SqliteSchemaDdlGenerator;
+        let schema = ProjectSchema::definition();
+        generator.generate_ddl(&schema)
+    };
+
     assert!(!ddl.is_empty());
+    assert!(ddl.iter().any(|s| s.contains("CREATE TABLE")));
+    if schema_kind == "memory" {
+        assert!(ddl.iter().any(|s| s.contains("fts5")));
+        return;
+    }
+
     assert!(
         ddl.iter()
             .any(|s| s.contains("CREATE TABLE") && s.contains("collections"))
@@ -33,11 +47,9 @@ fn test_sqlite_project_schema_ddl_includes_all_entities() {
     assert!(ddl.iter().any(|s| s.contains("AUTOINCREMENT")));
 }
 
-#[test]
-fn test_project_schema_has_27_create_table_statements() {
-    let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+#[rstest]
+fn project_schema_has_27_create_table_statements(project_ddl: Vec<String>) {
+    let ddl = project_ddl;
     let create_count = ddl.iter().filter(|s| s.starts_with("CREATE TABLE")).count();
     assert_eq!(
         create_count, 27,
@@ -45,11 +57,9 @@ fn test_project_schema_has_27_create_table_statements() {
     );
 }
 
-#[test]
-fn test_project_schema_contains_all_multi_tenant_tables() {
-    let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+#[rstest]
+fn project_schema_contains_all_multi_tenant_tables(project_ddl: Vec<String>) {
+    let ddl = project_ddl;
     let joined = ddl.join("\n");
 
     let expected_tables = [
@@ -88,11 +98,9 @@ fn test_project_schema_contains_all_multi_tenant_tables() {
     }
 }
 
-#[test]
-fn test_project_schema_contains_all_fk_references() {
-    let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+#[rstest]
+fn project_schema_contains_all_fk_references(project_ddl: Vec<String>) {
+    let ddl = project_ddl;
 
     let expected_fks = [
         // Core project FKs
@@ -109,7 +117,6 @@ fn test_project_schema_contains_all_fk_references() {
         ("api_keys", "REFERENCES organizations(id)"),
         ("projects", "REFERENCES organizations(id)"),
         // Agent FKs
-        ("agent_sessions", "REFERENCES session_summaries(id)"),
         ("agent_sessions", "REFERENCES agent_sessions(id)"),
         ("agent_sessions", "REFERENCES projects(id)"),
         ("agent_sessions", "REFERENCES worktrees(id)"),
@@ -124,8 +131,10 @@ fn test_project_schema_contains_all_fk_references() {
         ("plans", "REFERENCES organizations(id)"),
         ("plans", "REFERENCES projects(id)"),
         ("plans", "REFERENCES users(id)"),
+        ("plan_versions", "REFERENCES organizations(id)"),
         ("plan_versions", "REFERENCES plans(id)"),
         ("plan_versions", "REFERENCES users(id)"),
+        ("plan_reviews", "REFERENCES organizations(id)"),
         ("plan_reviews", "REFERENCES plan_versions(id)"),
         ("plan_reviews", "REFERENCES users(id)"),
         // Issue entity FKs
@@ -167,17 +176,15 @@ fn test_project_schema_contains_all_fk_references() {
     let schema_def = ProjectSchema::definition();
     assert_eq!(
         schema_def.foreign_keys.len(),
-        46,
-        "Expected 46 total FK definitions, got {}",
+        47,
+        "Expected 47 total FK definitions, got {}",
         schema_def.foreign_keys.len()
     );
 }
 
-#[test]
-fn test_project_schema_contains_all_indexes() {
-    let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+#[rstest]
+fn project_schema_contains_all_indexes(project_ddl: Vec<String>) {
+    let ddl = project_ddl;
     let joined = ddl.join("\n");
 
     let expected_indexes = [
@@ -243,8 +250,10 @@ fn test_project_schema_contains_all_indexes() {
         "idx_plans_org",
         "idx_plans_project",
         "idx_plans_status",
+        "idx_plan_versions_org",
         "idx_plan_versions_plan",
         "idx_plan_versions_created_by",
+        "idx_plan_reviews_org",
         "idx_plan_reviews_version",
         "idx_plan_reviews_reviewer",
         // VCS entity indexes
@@ -274,11 +283,9 @@ fn test_project_schema_contains_all_indexes() {
     }
 }
 
-#[test]
-fn test_project_schema_contains_unique_constraints() {
-    let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    let ddl: Vec<String> = generator.generate_ddl(&schema);
+#[rstest]
+fn project_schema_contains_unique_constraints(project_ddl: Vec<String>) {
+    let ddl = project_ddl;
     let joined = ddl.join("\n");
 
     let expected_uniques = [

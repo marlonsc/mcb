@@ -1,0 +1,33 @@
+---
+description: MCB project rules for Cursor AI
+globs: ["**/*.rs", "**/*.toml", "**/*.md"]
+alwaysApply: true
+---
+
+# MCB — Cursor AI Rules
+
+All project rules, architecture, conventions, and commands are defined in
+[`CLAUDE.md`](../../CLAUDE.md) at the repository root. Read it fully before making changes.
+
+## Quick Reference
+
+- **Build**: `make build` | **Test**: `make test` | **Lint**: `make lint` | **Validate**: `make validate`
+- **Full gate**: `make check` (fmt + lint + test + validate)
+- **Architecture**: Clean Architecture — dependencies flow inward only (`server -> infra -> app -> domain`)
+- **Error handling**: `thiserror` constructors (`Error::vcs("msg")`), no `unwrap()` in production
+- **DI**: linkme (compile-time) + dill (runtime) + Handle pattern (hot-swap)
+- **Lints**: `unsafe_code = "deny"`, `dead_code = "deny"`, `unused_imports = "deny"`
+
+## Change Philosophy
+
+- Minimum viable change — surgical edits, maximum reuse of existing patterns and macros
+- Never bypass problems, hardcode values, remove functionality, or hide errors
+- Fix all warnings and clippy issues; leave tests passing after every cycle
+- Source files should stay under ~200 lines; split into submodules when growing
+
+## Key Docs
+
+- [`CLAUDE.md`](../../CLAUDE.md) — complete rules (single source of truth)
+- [`AGENTS.md`](../../AGENTS.md) — agent configuration index
+- [`docs/architecture/ARCHITECTURE.md`](../../docs/architecture/ARCHITECTURE.md) — architecture details
+- [`docs/developer/CONTRIBUTING.md`](../../docs/developer/CONTRIBUTING.md) — contributor guide

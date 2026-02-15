@@ -23,7 +23,19 @@ pub struct Organization {
 }
 
 /// Status of an organization in its lifecycle.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum OrgStatus {
     /// Organization is active and operational.
     Active,
@@ -36,24 +48,7 @@ pub enum OrgStatus {
 impl OrgStatus {
     /// Returns the string representation of the organization status.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Active => "active",
-            Self::Suspended => "suspended",
-            Self::Archived => "archived",
-        }
-    }
-}
-
-impl std::str::FromStr for OrgStatus {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "active" => Ok(Self::Active),
-            "suspended" => Ok(Self::Suspended),
-            "archived" => Ok(Self::Archived),
-            _ => Err(format!("Unknown org status: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }

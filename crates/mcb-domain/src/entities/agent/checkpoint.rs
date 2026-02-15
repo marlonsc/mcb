@@ -1,9 +1,10 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::types::CheckpointType;
 
 /// Represents a saved state of an agent session that can be restored.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Checkpoint {
     /// Unique identifier for the checkpoint.
     pub id: String,

@@ -16,8 +16,9 @@ pub mod system;
 // Re-export main types from app (which already re-exports from sub-modules)
 pub use app::{
     AdminApiKeyConfig, ApiKeyConfig, AppConfig, AuthConfig, BackupConfig, CacheProvider,
-    CacheSystemConfig, DaemonConfig, DataConfig, EmbeddingConfigContainer, EventBusConfig,
-    EventBusProvider, InfrastructureConfig, JwtConfig, LimitsConfig, LoggingConfig, ModeConfig,
+    CacheSystemConfig, DaemonConfig, DataConfig, DatabaseConfig, DatabaseConfigContainer,
+    EmbeddingConfigContainer, EventBusConfig, EventBusProvider, IndexingConfig,
+    InfrastructureConfig, JwtConfig, LimitsConfig, LoggingConfig, McpConfig, ModeConfig,
     OperatingMode, OperationsConfig, OperationsDaemonConfig, PasswordAlgorithm, ProvidersConfig,
     ResilienceConfig, ServerConfig, ServerConfigBuilder, ServerConfigPresets, ServerCorsConfig,
     ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig, SnapshotConfig, SyncConfig,

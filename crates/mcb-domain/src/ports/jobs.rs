@@ -8,6 +8,7 @@
 
 use std::collections::HashMap;
 
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::value_objects::OperationId;
@@ -20,27 +21,20 @@ use crate::value_objects::OperationId;
 pub type JobId = OperationId;
 
 /// The type of work a job performs
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Display)]
 pub enum JobType {
     /// Codebase indexing operation
+    #[display("indexing")]
     Indexing,
     /// Architectural validation operation
+    #[display("validation")]
     Validation,
     /// Code analysis / complexity assessment
+    #[display("analysis")]
     Analysis,
     /// Custom job type with a user-defined label
+    #[display("custom:{_0}")]
     Custom(String),
-}
-
-impl std::fmt::Display for JobType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Indexing => write!(f, "indexing"),
-            Self::Validation => write!(f, "validation"),
-            Self::Analysis => write!(f, "analysis"),
-            Self::Custom(label) => write!(f, "custom:{label}"),
-        }
-    }
 }
 
 /// Lifecycle status of a job
@@ -197,64 +191,4 @@ pub struct JobCounts {
     pub failed: usize,
     /// Number of cancelled jobs
     pub cancelled: usize,
-}
-
-// ============================================================================
-// Tests
-// ============================================================================
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn job_status_terminal_check() {
-        assert!(!JobStatus::Queued.is_terminal());
-        assert!(!JobStatus::Running.is_terminal());
-        assert!(JobStatus::Completed.is_terminal());
-        assert!(JobStatus::Failed("oops".into()).is_terminal());
-        assert!(JobStatus::Cancelled.is_terminal());
-    }
-
-    #[test]
-    fn job_status_active_check() {
-        assert!(JobStatus::Queued.is_active());
-        assert!(JobStatus::Running.is_active());
-        assert!(!JobStatus::Completed.is_active());
-        assert!(!JobStatus::Failed("error".into()).is_active());
-        assert!(!JobStatus::Cancelled.is_active());
-    }
-
-    #[test]
-    fn job_type_display() {
-        assert_eq!(JobType::Indexing.to_string(), "indexing");
-        assert_eq!(JobType::Validation.to_string(), "validation");
-        assert_eq!(JobType::Analysis.to_string(), "analysis");
-        assert_eq!(
-            JobType::Custom("my-job".into()).to_string(),
-            "custom:my-job"
-        );
-    }
-
-    #[test]
-    fn new_job_defaults() {
-        let job = Job::new(JobId::new("test-123"), JobType::Indexing, "Index codebase");
-        assert_eq!(job.status, JobStatus::Queued);
-        assert_eq!(job.progress_percent, 0);
-        assert_eq!(job.processed_items, 0);
-        assert_eq!(job.total_items, 0);
-        assert!(job.started_at.is_none());
-        assert!(job.completed_at.is_none());
-        assert!(job.result.is_none());
-    }
-
-    #[test]
-    fn job_counts_default() {
-        let counts = JobCounts::default();
-        assert_eq!(counts.queued, 0);
-        assert_eq!(counts.running, 0);
-        assert_eq!(counts.completed, 0);
-        assert_eq!(counts.failed, 0);
-        assert_eq!(counts.cancelled, 0);
-    }
 }

@@ -49,14 +49,6 @@ mod golden_e2e_complete_integration;
 #[path = "integration/golden_memory_project_e2e.rs"]
 mod golden_memory_project_e2e;
 
-// Golden highlight service tests (Phase 8b)
-// #[path = "integration/golden_highlight_service_e2e.rs"]
-// mod golden_highlight_service_e2e; // Missing file
-
-// Highlight service wiring integration tests
-// #[path = "integration/highlight_integration.rs"]
-// mod highlight_integration;
-
 // Hook processor integration tests
 #[path = "integration/hooks_integration.rs"]
 mod hooks_integration;
@@ -77,13 +69,3 @@ mod gap_fixes_e2e;
 // CRITICAL: Tests admin_rocket() production config, not just isolated web_rocket()
 #[path = "integration/golden_admin_web_e2e.rs"]
 mod golden_admin_web_e2e;
-
-// Golden tests have been moved or removed
-// #[path = "../../../tests/golden/test_end_to_end.rs"]
-// mod golden_test_end_to_end;
-// #[path = "../../../tests/golden/test_index_repository.rs"]
-// mod golden_test_index_repository;
-// #[path = "../../../tests/golden/test_mcp_schemas.rs"]
-// mod golden_test_mcp_schemas;
-// #[path = "../../../tests/golden/test_search_validation.rs"]
-// mod golden_test_search_validation;

@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::ports::services::MemoryServiceInterface;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
+use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
-use crate::error_mapping::{to_opaque_mcp_error, to_opaque_tool_error};
+use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
 
 /// Lists semantic memories based on the provided search query and filters.
@@ -16,17 +16,7 @@ pub async fn list_observations(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let filter = MemoryFilter {
-        id: None,
-        project_id: args.project_id.clone(),
-        tags: args.tags.clone(),
-        r#type: None,
-        session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
-        repo_id: args.repo_id.clone(),
-        time_range: None,
-        branch: None,
-        commit: None,
-    };
+    let filter = build_memory_filter(args, None, args.tags.clone());
     let limit = args.limit.unwrap_or(10) as usize;
     let query = args.query.clone().unwrap_or_default();
     match memory_service
@@ -57,10 +47,7 @@ pub async fn list_observations(
                 "hint": "Use memory action=timeline or memory action=get for details",
             }))
         }
-        Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-            "Failed to list memories: {}",
-            e
-        ))])),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }
 
@@ -90,22 +77,12 @@ pub async fn get_timeline(
             "Missing anchor_id or query for timeline",
         )]));
     };
-    let filter = MemoryFilter {
-        id: None,
-        project_id: args.project_id.clone(),
-        tags: None,
-        r#type: None,
-        session_id: args.session_id.as_ref().map(|id| id.as_str().to_string()),
-        repo_id: args.repo_id.clone(),
-        time_range: None,
-        branch: None,
-        commit: None,
-    };
+    let filter = build_memory_filter(args, None, None);
     let depth_before = args.depth_before.unwrap_or(5);
     let depth_after = args.depth_after.unwrap_or(5);
     match memory_service
         .get_timeline(
-            &ObservationId::new(&anchor_id),
+            &ObservationId::from_string(&anchor_id),
             depth_before,
             depth_after,
             Some(filter),
@@ -130,6 +107,6 @@ pub async fn get_timeline(
                 "timeline": items,
             }))
         }
-        Err(e) => Ok(to_opaque_tool_error(e)),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }

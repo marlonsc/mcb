@@ -8,6 +8,7 @@
 //! - Rules with "condition"/"action" -> Rusty Rules engine (JSON DSL)
 //! - Default fallback -> Rusty Rules engine
 
+use derive_more::Display;
 use serde_json::Value;
 
 use crate::Result;
@@ -17,30 +18,22 @@ use crate::engines::rete_engine::ReteEngine;
 use crate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
 
 /// Engine type determined by router
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
 pub enum RoutedEngine {
     /// RETE engine for GRL rules with when/then
+    #[display("RETE")]
     Rete,
     /// Expression engine for simple boolean expressions
+    #[display("Expression")]
     Expression,
     /// Rusty Rules engine for JSON DSL rules
+    #[display("RustyRules")]
     RustyRules,
-}
-
-impl std::fmt::Display for RoutedEngine {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Rete => write!(f, "RETE"),
-            Self::Expression => write!(f, "Expression"),
-            Self::RustyRules => write!(f, "RustyRules"),
-        }
-    }
 }
 
 /// Rule Engine Router
 ///
 /// Analyzes rule definitions and routes them to the appropriate engine.
-#[allow(clippy::struct_field_names)]
 pub struct RuleEngineRouter {
     /// Engine for processing complex rules using RETE algorithm
     rete_engine: ReteEngine,
@@ -126,14 +119,24 @@ impl RuleEngineRouter {
         false
     }
 
-    /// Route and execute rule
+    /// Route and execute rule (auto-detects engine from rule content)
     pub async fn execute(
         &self,
         rule_definition: &Value,
         context: &RuleContext,
     ) -> Result<Vec<RuleViolation>> {
         let engine = self.detect_engine(rule_definition);
+        self.execute_with_engine(engine, rule_definition, context)
+            .await
+    }
 
+    /// Execute rule with a specific engine (bypasses auto-detection)
+    pub async fn execute_with_engine(
+        &self,
+        engine: RoutedEngine,
+        rule_definition: &Value,
+        context: &RuleContext,
+    ) -> Result<Vec<RuleViolation>> {
         match engine {
             RoutedEngine::Rete => self.execute_with_rete(rule_definition, context).await,
             RoutedEngine::Expression => {

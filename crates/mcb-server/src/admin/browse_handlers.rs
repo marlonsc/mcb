@@ -6,7 +6,7 @@
 //! ## Endpoints
 //!
 //! | Path | Method | Description |
-//! |------|--------|-------------|
+//! | ------ | -------- | ------------- |
 //! | `/collections` | GET | List all indexed collections |
 //! | `/collections/:name/files` | GET | List files in a collection |
 //! | `/collections/:name/files/*path/chunks` | GET | Get chunks for a file |
@@ -89,7 +89,7 @@ pub async fn list_collections(
     let collection_responses: Vec<CollectionInfoResponse> = collections
         .into_iter()
         .map(|c| CollectionInfoResponse {
-            name: c.id.into_string(),
+            name: c.name,
             vector_count: c.vector_count,
             file_count: c.file_count,
             last_indexed: c.last_indexed,
@@ -126,7 +126,7 @@ pub async fn list_collection_files(
 ) -> Result<Json<FileListResponse>, (Status, Json<BrowseErrorResponse>)> {
     tracing::info!("list_collection_files called");
     let limit = limit.unwrap_or(100);
-    let collection = CollectionId::new(name);
+    let collection = CollectionId::from_string(name);
 
     let files = state
         .browser
@@ -188,8 +188,8 @@ pub async fn get_file_chunks(
     path: std::path::PathBuf,
 ) -> Result<Json<ChunkListResponse>, (Status, Json<BrowseErrorResponse>)> {
     tracing::info!("get_file_chunks called");
-    let file_path = path.to_string_lossy().to_string();
-    let collection_id = CollectionId::new(name);
+    let file_path = path.to_str().unwrap_or_default().replace('\\', "/");
+    let collection_id = CollectionId::from_string(name);
 
     let chunks = state
         .browser
@@ -224,7 +224,7 @@ pub async fn get_file_chunks(
         {
             Ok(h) => {
                 let html =
-                    mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(&h);
+                    mcb_infrastructure::services::highlight_renderer::HtmlRenderer::render(&h);
                 (html, c.content, c.language)
             }
             Err(_) => {
@@ -234,8 +234,9 @@ pub async fn get_file_chunks(
                     vec![],
                     c.language,
                 );
-                let html =
-                    mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(&fallback);
+                let html = mcb_infrastructure::services::highlight_renderer::HtmlRenderer::render(
+                    &fallback,
+                );
                 (html, fallback.original, fallback.language)
             }
         };
@@ -272,7 +273,7 @@ pub async fn get_collection_tree(
     name: &str,
 ) -> Result<Json<FileTreeNode>, (Status, Json<BrowseErrorResponse>)> {
     tracing::info!("get_collection_tree called");
-    let collection_id = CollectionId::new(name);
+    let collection_id = CollectionId::from_string(name);
     let files = state
         .browser
         .list_file_paths(&collection_id, LIST_FILE_PATHS_LIMIT)

@@ -6,6 +6,7 @@ use mcb_server::args::ValidateArgs;
 use mcb_server::args::VcsAction;
 use mcb_server::args::VcsArgs;
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use std::fs;
 use std::process::Command;
 
@@ -59,6 +60,47 @@ async fn test_gap1_validate_list_rules_returns_populated_list() {
 }
 
 #[tokio::test]
+async fn test_gap1_validate_list_rules_by_category_filter() {
+    let (server, _temp) = create_test_mcp_server().await;
+    let validate_h = server.validate_handler();
+
+    let result = validate_h
+        .handle(Parameters(ValidateArgs {
+            action: ValidateAction::ListRules,
+            path: None,
+            category: Some("quality".to_string()),
+            scope: None,
+            rules: None,
+        }))
+        .await;
+
+    assert!(result.is_ok());
+    let resp = result.unwrap();
+    assert!(!resp.is_error.unwrap_or(false));
+
+    let content_json = serde_json::to_value(&resp.content[0]).unwrap();
+    let text = content_json
+        .get("text")
+        .expect("Content missing text field")
+        .as_str()
+        .expect("Text field not a string");
+
+    let json_val: serde_json::Value = serde_json::from_str(text).unwrap();
+    let rules = json_val
+        .get("rules")
+        .and_then(|v| v.as_array())
+        .expect("Rules array should be present");
+
+    assert!(!rules.is_empty(), "Filtered rules should not be empty");
+    for rule in rules {
+        assert_eq!(
+            rule.get("category").and_then(|v| v.as_str()),
+            Some("quality")
+        );
+    }
+}
+
+#[tokio::test]
 async fn test_gap2_vcs_list_repositories_discovers_repos() {
     let (server, temp_dir) = create_test_mcp_server().await;
     let vcs_h = server.vcs_handler();
@@ -91,8 +133,8 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
 
     let result = vcs_h
         .handle(Parameters(VcsArgs {
-            org_id: None,
             action: VcsAction::ListRepositories,
+            org_id: None,
             repo_id: None,
             repo_path: Some(temp_dir.path().to_string_lossy().to_string()),
             base_branch: None,
@@ -140,28 +182,44 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
     );
 }
 
+#[rstest]
+#[case(None, true)]
+#[case(Some("".to_string()), true)]
+#[case(Some("not_a_real_status".to_string()), false)]
 #[tokio::test]
-async fn test_gap3_session_list_works_without_agent_type() {
+async fn test_gap3_session_list_status_handling(
+    #[case] status: Option<String>,
+    #[case] should_succeed: bool,
+) {
     let (server, _temp) = create_test_mcp_server().await;
     let session_h = server.session_handler();
 
     let result = session_h
         .handle(Parameters(SessionArgs {
-            org_id: None,
             action: SessionAction::List,
+            org_id: None,
             session_id: None,
-            agent_type: None, // Omitted, should be allowed now
-            data: None,
             project_id: None,
+            agent_type: None,
+            data: None,
             worktree_id: None,
-            status: None,
+            parent_session_id: None,
+            status,
             limit: Some(3),
         }))
         .await;
 
+    if !should_succeed {
+        assert!(
+            result.is_err(),
+            "Invalid status should return invalid_params"
+        );
+        return;
+    }
+
     assert!(
         result.is_ok(),
-        "Session list should succeed without agent_type"
+        "Session list should accept optional/empty status"
     );
     let resp = result.unwrap();
     assert!(!resp.is_error.unwrap_or(false));
@@ -172,10 +230,7 @@ async fn test_gap3_session_list_works_without_agent_type() {
         .expect("Content missing text field")
         .as_str()
         .expect("Text field not a string");
-
     let json_val: serde_json::Value = serde_json::from_str(text).unwrap();
-    println!("Session Response JSON: {}", json_val);
-
     assert!(json_val.get("sessions").is_some());
     assert!(json_val.get("count").is_some());
 }

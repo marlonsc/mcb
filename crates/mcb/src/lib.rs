@@ -15,8 +15,8 @@
 //!
 //! ## Example
 //!
-//! ```ignore
-//! use mcb::domain::CodeChunk;
+//! ```rust
+//! use mcb::entities::CodeChunk;
 //!
 //! // Domain types are available through the mcb facade
 //! let chunk = CodeChunk {
@@ -40,6 +40,9 @@
 //! - `infrastructure` - External concerns (config, logging, HTTP)
 //! - `adapters` - Repository implementations and external integrations
 //! - `server` - MCP protocol server and API endpoints
+
+// CLI module
+pub mod cli;
 
 /// Domain layer - core business logic and types
 ///

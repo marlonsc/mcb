@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 /// Represents the status of a quality gate check.
 ///
@@ -7,11 +8,26 @@ use serde::{Deserialize, Serialize};
 /// - `Failed`: The check completed but did not meet required criteria
 /// - `Warning`: The check completed with non-critical issues
 /// - `Skipped`: The check was not executed
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum QualityGateStatus {
+    /// Represents the Passed variant.
     Passed,
+    /// Represents the Failed variant.
     Failed,
+    /// Represents the Warning variant.
     Warning,
+    /// Represents the Skipped variant.
     Skipped,
 }
 
@@ -20,27 +36,8 @@ impl QualityGateStatus {
     ///
     /// Returns a static string slice representing the status value.
     #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Passed => "passed",
-            Self::Failed => "failed",
-            Self::Warning => "warning",
-            Self::Skipped => "skipped",
-        }
-    }
-}
-
-impl std::str::FromStr for QualityGateStatus {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "passed" => Ok(Self::Passed),
-            "failed" => Ok(Self::Failed),
-            "warning" => Ok(Self::Warning),
-            "skipped" => Ok(Self::Skipped),
-            _ => Err(format!("Unknown quality gate status: {s}")),
-        }
+    pub fn as_str(&self) -> &str {
+        self.as_ref()
     }
 }
 
@@ -48,6 +45,7 @@ impl std::str::FromStr for QualityGateStatus {
 ///
 /// Contains the outcome and metadata of a single quality gate check, including
 /// the gate name, status, optional message, and timing information.
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityGateResult {
     /// Unique identifier for this quality gate result.
@@ -59,6 +57,7 @@ pub struct QualityGateResult {
     pub status: QualityGateStatus,
     /// Optional message providing additional details about the result.
     pub message: Option<String>,
+    /// Stores the timestamp value.
     pub timestamp: i64,
     /// Optional identifier linking this result to a specific execution context.
     pub execution_id: Option<String>,

@@ -35,9 +35,14 @@ pub struct IssueLabel {
     pub created_at: i64,
 }
 
+use crate::value_objects::ids::IssueLabelAssignmentId;
+
 /// Junction entity assigning labels to issues.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 pub struct IssueLabelAssignment {
+    /// Unique identifier for the assignment (composite of issue_id:label_id).
+    #[serde(default)]
+    pub id: IssueLabelAssignmentId,
     /// Issue identifier.
     pub issue_id: String,
     /// Label identifier.

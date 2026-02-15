@@ -4,17 +4,21 @@
 //! and system settings. These configurations define how the system
 //! interacts with external services.
 
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 use crate::value_objects::types::{
     CacheProviderKind, EmbeddingProviderKind, VectorStoreProviderKind,
 };
 
+const REDACTED: &str = "REDACTED";
+
 /// Value Object: Embedding Provider Configuration
 ///
 /// Configuration for connecting to and using embedding providers.
 /// Defines which provider to use and how to authenticate with it.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct EmbeddingConfig {
     /// Provider name (openai, ollama, fastembed, etc.)
     pub provider: EmbeddingProviderKind,
@@ -30,11 +34,24 @@ pub struct EmbeddingConfig {
     pub max_tokens: Option<usize>,
 }
 
+impl fmt::Debug for EmbeddingConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("EmbeddingConfig")
+            .field("provider", &self.provider)
+            .field("model", &self.model)
+            .field("api_key", &self.api_key.as_ref().map(|_| REDACTED))
+            .field("base_url", &self.base_url)
+            .field("dimensions", &self.dimensions)
+            .field("max_tokens", &self.max_tokens)
+            .finish()
+    }
+}
+
 /// Value Object: Vector Store Configuration
 ///
 /// Configuration for connecting to vector storage backends.
 /// Defines which storage system to use and connection parameters.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct VectorStoreConfig {
     /// Provider name (edgevec, milvus, qdrant, pinecone)
     pub provider: VectorStoreProviderKind,
@@ -50,11 +67,24 @@ pub struct VectorStoreConfig {
     pub timeout_secs: Option<u64>,
 }
 
+impl fmt::Debug for VectorStoreConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("VectorStoreConfig")
+            .field("provider", &self.provider)
+            .field("address", &self.address)
+            .field("token", &self.token.as_ref().map(|_| REDACTED))
+            .field("collection", &self.collection)
+            .field("dimensions", &self.dimensions)
+            .field("timeout_secs", &self.timeout_secs)
+            .finish()
+    }
+}
+
 /// Value Object: Cache Configuration
 ///
 /// Configuration for cache backend providers.
 /// Defines which cache provider to use and connection parameters.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct CacheConfig {
     /// Provider name (moka, redis, null)
     pub provider: CacheProviderKind,
@@ -68,6 +98,19 @@ pub struct CacheConfig {
     pub max_size: Option<usize>,
     /// Default TTL in seconds
     pub ttl_secs: Option<u64>,
+}
+
+impl fmt::Debug for CacheConfig {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CacheConfig")
+            .field("provider", &self.provider)
+            .field("address", &self.address)
+            .field("password", &self.password.as_ref().map(|_| REDACTED))
+            .field("database", &self.database)
+            .field("max_size", &self.max_size)
+            .field("ttl_secs", &self.ttl_secs)
+            .finish()
+    }
 }
 
 /// Value Object: Synchronization Batch

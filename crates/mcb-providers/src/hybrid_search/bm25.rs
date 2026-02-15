@@ -16,9 +16,10 @@
 
 use std::collections::{HashMap, HashSet};
 
+use mcb_domain::constants::search::{
+    BM25_TOKEN_MIN_LENGTH, HYBRID_SEARCH_BM25_B, HYBRID_SEARCH_BM25_K1,
+};
 use mcb_domain::entities::CodeChunk;
-
-use crate::constants::{BM25_TOKEN_MIN_LENGTH, HYBRID_SEARCH_BM25_B, HYBRID_SEARCH_BM25_K1};
 
 /// BM25 parameters for tuning the algorithm
 #[derive(Debug, Clone)]
@@ -26,11 +27,11 @@ pub struct BM25Params {
     /// k1 parameter (term frequency saturation)
     /// Higher values increase the importance of term frequency
     /// Typical range: 1.2 to 2.0
-    pub k1: f32,
+    pub k1: f64,
     /// b parameter (document length normalization)
     /// 0.0 = no normalization, 1.0 = full normalization
     /// Typical value: 0.75
-    pub b: f32,
+    pub b: f64,
 }
 
 impl Default for BM25Params {
@@ -53,7 +54,7 @@ pub struct BM25Scorer {
     /// Total number of documents
     total_docs: usize,
     /// Average document length (in tokens)
-    avg_doc_len: f32,
+    avg_doc_len: f64,
     /// BM25 parameters
     params: BM25Params,
 }
@@ -70,7 +71,7 @@ impl BM25Scorer {
         // Calculate document frequencies and total length
         for doc in documents {
             let tokens = Self::tokenize(&doc.content);
-            let doc_length = tokens.len() as f32;
+            let doc_length = tokens.len() as f64;
             total_length += doc_length;
 
             // Count unique terms in this document
@@ -81,7 +82,7 @@ impl BM25Scorer {
         }
 
         let avg_doc_len = if total_docs > 0 {
-            total_length / total_docs as f32
+            total_length / total_docs as f64
         } else {
             0.0
         };
@@ -95,7 +96,7 @@ impl BM25Scorer {
     }
 
     /// Score a document against a query using BM25
-    pub fn score(&self, document: &CodeChunk, query: &str) -> f32 {
+    pub fn score(&self, document: &CodeChunk, query: &str) -> f64 {
         let query_terms = Self::tokenize(query);
         self.score_with_tokens(document, &query_terms)
     }
@@ -104,9 +105,9 @@ impl BM25Scorer {
     ///
     /// This method avoids re-tokenizing the query for each document, improving performance
     /// when scoring multiple documents against the same query.
-    pub fn score_with_tokens(&self, document: &CodeChunk, query_terms: &[String]) -> f32 {
+    pub fn score_with_tokens(&self, document: &CodeChunk, query_terms: &[String]) -> f64 {
         let doc_terms = Self::tokenize(&document.content);
-        let doc_length = doc_terms.len() as f32;
+        let doc_length = doc_terms.len() as f64;
 
         // Early return for empty documents
         if doc_length == 0.0 || self.avg_doc_len == 0.0 {
@@ -123,15 +124,15 @@ impl BM25Scorer {
 
         // Calculate BM25 score for each query term
         for query_term in query_terms {
-            let tf = doc_term_freq.get(query_term.as_str()).copied().unwrap_or(0) as f32;
-            let df = self.document_freq.get(query_term).copied().unwrap_or(0) as f32;
+            let tf = doc_term_freq.get(query_term.as_str()).copied().unwrap_or(0) as f64;
+            let df = self.document_freq.get(query_term).copied().unwrap_or(0) as f64;
 
             if df > 0.0 && tf > 0.0 {
                 // IDF calculation using Lucene/Elasticsearch variant that ensures positive IDF
                 // This avoids zero/negative IDF when terms appear in half or more documents
                 let idf = if self.total_docs > 1 {
                     // Lucene BM25 IDF: ln(1 + (N - n + 0.5) / (n + 0.5))
-                    (1.0 + (self.total_docs as f32 - df + 0.5) / (df + 0.5)).ln()
+                    (1.0 + (self.total_docs as f64 - df + 0.5) / (df + 0.5)).ln()
                 } else {
                     // Simplified IDF for single document (always positive)
                     1.0
@@ -155,7 +156,7 @@ impl BM25Scorer {
     ///
     /// This is more efficient than calling `score()` for each document because
     /// the query is tokenized only once.
-    pub fn score_batch(&self, documents: &[&CodeChunk], query: &str) -> Vec<f32> {
+    pub fn score_batch(&self, documents: &[&CodeChunk], query: &str) -> Vec<f64> {
         let query_terms = Self::tokenize(query);
         documents
             .iter()
@@ -187,7 +188,7 @@ impl BM25Scorer {
     }
 
     /// Get the average document length
-    pub fn avg_doc_len(&self) -> f32 {
+    pub fn avg_doc_len(&self) -> f64 {
         self.avg_doc_len
     }
 

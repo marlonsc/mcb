@@ -30,26 +30,19 @@ extern crate mcb_providers;
 
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::sync::OnceLock;
 
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 use serde_json::json;
 
-/// Create a test AppContext with real local providers
-///
-/// Uses FastEmbedProvider and EdgeVecVectorStoreProvider (depending on config).
-/// These are real local implementations, not mocks.
-///
-/// # Important
-///
-/// The `extern crate mcb_providers` at the top of this module forces linkme
-/// to register all providers. Without it, the registry would be empty.
+/// Create a NEW AppContext (for tests that need isolated state).
 pub async fn create_test_app_context() -> Result<AppContext> {
-    let mut config = AppConfig::default();
+    let mut config = ConfigLoader::new().load().expect("load config");
     let temp_dir = std::env::temp_dir().join(format!(
         "mcb-test-ctx-{}.db",
         std::time::SystemTime::now()
@@ -57,8 +50,29 @@ pub async fn create_test_app_context() -> Result<AppContext> {
             .unwrap()
             .as_nanos()
     ));
-    config.auth.user_db_path = Some(temp_dir);
+    config.providers.database.configs.insert(
+        "default".to_string(),
+        mcb_infrastructure::config::DatabaseConfig {
+            provider: "sqlite".to_string(),
+            path: Some(temp_dir),
+        },
+    );
+    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
     init_app(config).await
+}
+
+fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
+    static CACHE_DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
+
+    CACHE_DIR
+        .get_or_init(|| {
+            let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR")
+                .map(std::path::PathBuf::from)
+                .unwrap_or_else(|| std::env::temp_dir().join("mcb-fastembed-test-cache"));
+            std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
+            cache_dir
+        })
+        .clone()
 }
 
 /// Context for full-stack integration tests
@@ -92,7 +106,7 @@ impl FullStackTestContext {
 
     /// Create collection in vector store
     pub async fn create_collection(&self, name: &str, dimensions: usize) -> Result<()> {
-        let collection_id = CollectionId::new(name);
+        let collection_id = CollectionId::from_name(name);
         self.vector_store()
             .create_collection(&collection_id, dimensions)
             .await
@@ -131,7 +145,7 @@ impl FullStackTestContext {
             .collect();
 
         // Insert into vector store - returns Vec<String> of IDs
-        let collection_id = CollectionId::new(collection);
+        let collection_id = CollectionId::from_name(collection);
         self.vector_store()
             .insert_vectors(&collection_id, &embeddings, metadata)
             .await
@@ -149,7 +163,7 @@ impl FullStackTestContext {
         let query_embedding = &query_embeddings[0];
 
         // Search vector store using search_similar
-        let collection_id = CollectionId::new(collection);
+        let collection_id = CollectionId::from_name(collection);
         self.vector_store()
             .search_similar(&collection_id, &query_embedding.vector, limit, None)
             .await

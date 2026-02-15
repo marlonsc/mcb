@@ -6,7 +6,7 @@
 //! - **Crate creation**:  `create_test_crate`, `create_test_crate_with_file`, etc.
 //! - **Fixture loading**: `copy_fixture_crate`, `setup_fixture_workspace`
 //! - **DRY helpers**:     `with_fixture_crate`, `with_inline_crate`, `with_fixture_workspace`
-//! - **Assertions**:      `assert_no_violations`, `assert_min_violations`,
+//! - **Assertions**:      `assert_no_violations`,
 //!   `assert_has_violation_matching`, `assert_no_violation_from_file`
 #![allow(dead_code)]
 
@@ -14,13 +14,18 @@ use std::fs;
 
 use tempfile::TempDir;
 
+use crate::test_constants::{
+    CARGO_TOML_TEMPLATE, CONFIG_FILE_NAME, CRATE_LAYER_MAPPINGS, CRATES_DIR, DEFAULT_VERSION,
+    GRL_SIMPLE_RULE, LIB_RS, PROJECT_PREFIX, TEST_WORKSPACE_PATH, WORKSPACE_CARGO_TOML,
+};
+
 // ---------------------------------------------------------------------------
 // Crate creation utilities (for inline / generated code)
 // ---------------------------------------------------------------------------
 
 /// Create a minimal crate structure for testing
 pub fn create_test_crate(temp: &TempDir, name: &str, content: &str) {
-    create_test_crate_with_file(temp, name, "lib.rs", content);
+    create_test_crate_with_file(temp, name, LIB_RS, content);
 }
 
 /// Create a crate structure with a specific file name
@@ -28,68 +33,26 @@ pub fn create_test_crate_with_file(temp: &TempDir, name: &str, file_name: &str, 
     // Create workspace Cargo.toml if it doesn't exist
     let workspace_cargo = temp.path().join("Cargo.toml");
     if !workspace_cargo.exists() {
-        fs::write(
-            &workspace_cargo,
-            r#"[workspace]
-members = ["crates/*"]
-"#,
-        )
-        .unwrap();
+        fs::write(&workspace_cargo, WORKSPACE_CARGO_TOML).unwrap();
     }
 
     // Create crate structure
-    let crate_dir = temp.path().join("crates").join(name).join("src");
+    let crate_dir = temp.path().join(CRATES_DIR).join(name).join("src");
     fs::create_dir_all(&crate_dir).unwrap();
     fs::write(crate_dir.join(file_name), content).unwrap();
 
-    let cargo_dir = temp.path().join("crates").join(name);
+    let cargo_dir = temp.path().join(CRATES_DIR).join(name);
     fs::write(
         cargo_dir.join("Cargo.toml"),
         format!(
             r#"[package]
 name = "{name}"
-version = "0.1.1"
-"#
+version = "{}"
+"#,
+            DEFAULT_VERSION
         ),
     )
     .unwrap();
-}
-
-/// Create a crate with an additional file (not just lib.rs)
-pub fn create_test_crate_with_extra_file(
-    temp: &TempDir,
-    name: &str,
-    lib_content: &str,
-    extra_file: &str,
-    extra_content: &str,
-) {
-    create_test_crate(temp, name, lib_content);
-
-    let crate_dir = temp.path().join("crates").join(name).join("src");
-    fs::write(crate_dir.join(extra_file), extra_content).unwrap();
-}
-
-/// Create a crate structure with tests directory
-pub fn create_test_crate_with_tests(
-    temp: &TempDir,
-    name: &str,
-    lib_content: &str,
-    test_content: &str,
-) {
-    create_test_crate(temp, name, lib_content);
-
-    let tests_dir = temp.path().join("crates").join(name).join("tests");
-    fs::create_dir_all(&tests_dir).unwrap();
-    fs::write(tests_dir.join("integration_test.rs"), test_content).unwrap();
-}
-
-/// Create a file at a specific path within the temp directory
-pub fn create_file_at_path(temp: &TempDir, relative_path: &str, content: &str) {
-    let full_path = temp.path().join(relative_path);
-    if let Some(parent) = full_path.parent() {
-        fs::create_dir_all(parent).unwrap();
-    }
-    fs::write(full_path, content).unwrap();
 }
 
 /// Get the workspace root for integration tests
@@ -102,69 +65,6 @@ pub fn get_workspace_root() -> std::path::PathBuf {
         .to_path_buf()
 }
 
-/// Ensure temp directory has workspace structure
-pub fn ensure_workspace_structure(temp: &TempDir) {
-    let workspace_cargo = temp.path().join("Cargo.toml");
-    if !workspace_cargo.exists() {
-        fs::write(
-            &workspace_cargo,
-            r#"[workspace]
-members = ["crates/*"]
-"#,
-        )
-        .unwrap();
-    }
-
-    let crates_dir = temp.path().join("crates");
-    if !crates_dir.exists() {
-        fs::create_dir_all(&crates_dir).unwrap();
-    }
-}
-
-/// Create a constants.rs file in a test crate (for testing exemptions)
-pub fn create_constants_file(temp: &TempDir, name: &str, content: &str) {
-    let crate_dir = temp.path().join("crates").join(name).join("src");
-    fs::create_dir_all(&crate_dir).unwrap();
-    fs::write(crate_dir.join("constants.rs"), content).unwrap();
-
-    // Ensure Cargo.toml exists
-    let cargo_path = temp.path().join("crates").join(name).join("Cargo.toml");
-    if !cargo_path.exists() {
-        fs::write(
-            cargo_path,
-            format!(
-                r#"[package]
-name = "{name}"
-version = "0.1.1"
-"#
-            ),
-        )
-        .unwrap();
-    }
-}
-
-/// Create a null.rs file in a test crate (for testing null provider exemptions)
-pub fn create_null_provider_file(temp: &TempDir, name: &str, content: &str) {
-    let crate_dir = temp.path().join("crates").join(name).join("src");
-    fs::create_dir_all(&crate_dir).unwrap();
-    fs::write(crate_dir.join("null.rs"), content).unwrap();
-
-    // Ensure Cargo.toml exists
-    let cargo_path = temp.path().join("crates").join(name).join("Cargo.toml");
-    if !cargo_path.exists() {
-        fs::write(
-            cargo_path,
-            format!(
-                r#"[package]
-name = "{name}"
-version = "0.1.1"
-"#
-            ),
-        )
-        .unwrap();
-    }
-}
-
 // ---------------------------------------------------------------------------
 // Assertion helpers
 // ---------------------------------------------------------------------------
@@ -175,39 +75,6 @@ pub fn assert_no_violations<V: std::fmt::Debug>(violations: &[V], context: &str)
         violations.is_empty(),
         "{}: expected no violations, got {} - {:?}",
         context,
-        violations.len(),
-        violations
-    );
-}
-
-/// Assert that violations list has expected count
-pub fn assert_violation_count<V: std::fmt::Debug>(
-    violations: &[V],
-    expected: usize,
-    context: &str,
-) {
-    assert_eq!(
-        violations.len(),
-        expected,
-        "{}: expected {} violations, got {} - {:?}",
-        context,
-        expected,
-        violations.len(),
-        violations
-    );
-}
-
-/// Assert that violations list has at least a minimum count
-pub fn assert_min_violations<V: std::fmt::Debug>(
-    violations: &[V],
-    min_expected: usize,
-    context: &str,
-) {
-    assert!(
-        violations.len() >= min_expected,
-        "{}: expected at least {} violations, got {} - {:?}",
-        context,
-        min_expected,
         violations.len(),
         violations
     );
@@ -257,41 +124,6 @@ pub fn assert_no_violation_from_file<V: std::fmt::Debug>(violations: &[V], file_
             "{file_name} should be exempt from this check: {v:?}"
         );
     }
-}
-
-/// Asserts that a specific violation exists matching file suffix, line, and message substring.
-///
-/// The `file_suffix` is checked with `ends_with()` so you can use relative paths
-/// like `"my-test/src/lib.rs"` without knowing the temp dir prefix.
-///
-/// # Example
-/// ```rust,ignore
-/// assert_violation_at(
-///     &violations,
-///     "my-test/src/lib.rs", 17,
-///     "unwrap",
-/// );
-/// ```
-pub fn assert_violation_at<V: std::fmt::Debug>(
-    violations: &[V],
-    file_suffix: &str,
-    line: usize,
-    msg_contains: &str,
-) {
-    let debug_strs: Vec<String> = violations.iter().map(|v| format!("{v:?}")).collect();
-    let found = debug_strs.iter().any(|d| {
-        d.contains(file_suffix)
-            && (line == 0 || d.contains(&format!("line: {line}")))
-            && d.contains(msg_contains)
-    });
-    assert!(
-        found,
-        "Expected violation at {}:{} containing {:?}, but not found.\nActual violations:\n{}",
-        file_suffix,
-        line,
-        msg_contains,
-        debug_strs.join("\n")
-    );
 }
 
 /// Asserts that the violations list matches the expected set **exactly**.
@@ -379,81 +211,6 @@ pub fn fixtures_dir() -> std::path::PathBuf {
         .join("rust")
 }
 
-/// Loads a fixture `.rs` file by name from `tests/fixtures/rust/`.
-///
-/// Panics if the fixture file does not exist.
-pub fn load_fixture(name: &str) -> String {
-    let path = fixtures_dir().join(name);
-    fs::read_to_string(&path).unwrap_or_else(|e| {
-        panic!(
-            "Failed to load fixture '{}' from {}: {}",
-            name,
-            path.display(),
-            e
-        )
-    })
-}
-
-/// Sets up a temp workspace with a fixture file placed at the correct
-/// crate path expected by validators.
-///
-/// - `crate_name`: name of the crate directory (e.g. `"my-domain"`)
-/// - `src_path`: relative path under `src/` (e.g. `"domain/services/agent.rs"`)
-/// - `fixture_name`: name of the `.rs` file in `tests/fixtures/rust/`
-///
-/// Also copies the crate `Cargo.toml` from fixtures if available, otherwise
-/// generates a minimal one.
-pub fn setup_fixture_crate(temp: &TempDir, crate_name: &str, src_path: &str, fixture_name: &str) {
-    let content = load_fixture(fixture_name);
-
-    // Workspace Cargo.toml
-    let workspace_cargo = temp.path().join("Cargo.toml");
-    if !workspace_cargo.exists() {
-        let fixture_workspace = fixtures_dir().join("Cargo.toml");
-        if fixture_workspace.exists() {
-            fs::copy(&fixture_workspace, &workspace_cargo).unwrap();
-        } else {
-            fs::write(&workspace_cargo, "[workspace]\nmembers = [\"crates/*\"]\n").unwrap();
-        }
-    }
-
-    // Config file
-    let config_dest = temp.path().join("mcb-validate.toml");
-    if !config_dest.exists() {
-        let fixture_config = fixtures_dir().join("mcb-validate.toml");
-        if fixture_config.exists() {
-            fs::copy(&fixture_config, &config_dest).unwrap();
-        }
-    }
-
-    // Crate Cargo.toml
-    let crate_dir = temp.path().join("crates").join(crate_name);
-    fs::create_dir_all(&crate_dir).unwrap();
-    let cargo_dest = crate_dir.join("Cargo.toml");
-    if !cargo_dest.exists() {
-        let fixture_cargo = fixtures_dir()
-            .join("crates")
-            .join(crate_name)
-            .join("Cargo.toml");
-        if fixture_cargo.exists() {
-            fs::copy(&fixture_cargo, &cargo_dest).unwrap();
-        } else {
-            fs::write(
-                &cargo_dest,
-                format!("[package]\nname = \"{crate_name}\"\nversion = \"0.1.0\"\n"),
-            )
-            .unwrap();
-        }
-    }
-
-    // Source file at expected path
-    let file_path = crate_dir.join("src").join(src_path);
-    if let Some(parent) = file_path.parent() {
-        fs::create_dir_all(parent).unwrap();
-    }
-    fs::write(&file_path, content).unwrap();
-}
-
 /// Copies an entire fixture crate directory into the temp workspace.
 ///
 /// This recursively copies `tests/fixtures/rust/crates/{crate_name}/` into
@@ -470,21 +227,21 @@ pub fn copy_fixture_crate(temp: &TempDir, crate_name: &str) {
         if fixture_workspace.exists() {
             fs::copy(&fixture_workspace, &workspace_cargo).unwrap();
         } else {
-            fs::write(&workspace_cargo, "[workspace]\nmembers = [\"crates/*\"]\n").unwrap();
+            fs::write(&workspace_cargo, WORKSPACE_CARGO_TOML).unwrap();
         }
     }
 
     // Config file
-    let config_dest = temp.path().join("mcb-validate.toml");
+    let config_dest = temp.path().join(CONFIG_FILE_NAME);
     if !config_dest.exists() {
-        let fixture_config = fixtures_dir().join("mcb-validate.toml");
+        let fixture_config = fixtures_dir().join(CONFIG_FILE_NAME);
         if fixture_config.exists() {
             fs::copy(&fixture_config, &config_dest).unwrap();
         }
     }
 
-    let src = fixtures_dir().join("crates").join(crate_name);
-    let dst = temp.path().join("crates").join(crate_name);
+    let src = fixtures_dir().join(CRATES_DIR).join(crate_name);
+    let dst = temp.path().join(CRATES_DIR).join(crate_name);
 
     assert!(
         src.exists(),
@@ -596,11 +353,9 @@ pub fn create_rule_context() -> mcb_validate::engines::RuleContext {
     use std::collections::HashMap;
     use std::path::PathBuf;
 
-    const WORKSPACE_PATH: &str = "/test/workspace";
-
     mcb_validate::engines::RuleContext {
-        workspace_root: PathBuf::from(WORKSPACE_PATH),
-        config: mcb_validate::ValidationConfig::new(WORKSPACE_PATH),
+        workspace_root: PathBuf::from(TEST_WORKSPACE_PATH),
+        config: mcb_validate::ValidationConfig::new(TEST_WORKSPACE_PATH),
         ast_data: HashMap::new(),
         cargo_data: HashMap::new(),
         file_contents: HashMap::new(),
@@ -642,22 +397,6 @@ pub fn create_rule_context_with_files(
 /// let loader = YamlRuleLoader::with_variables(rules_dir, Some(vars)).unwrap();
 /// ```
 pub fn build_yaml_variables() -> serde_yaml::Value {
-    const PROJECT_PREFIX: &str = "my";
-    const CRATE_LAYER_MAPPINGS: &[(&str, &str, &str)] = &[
-        ("domain", "my-domain", "my_domain"),
-        ("application", "my-application", "my_application"),
-        ("providers", "my-providers", "my_providers"),
-        ("infrastructure", "my-infrastructure", "my_infrastructure"),
-        ("server", "my-server", "my_server"),
-        ("validate", "my-validate", "my_validate"),
-        (
-            "language_support",
-            "my-language-support",
-            "my_language_support",
-        ),
-        ("ast_utils", "my-ast-utils", "my_ast_utils"),
-    ];
-
     let mut variables = serde_yaml::Mapping::new();
     variables.insert(
         serde_yaml::Value::String("project_prefix".to_string()),
@@ -685,16 +424,10 @@ pub fn build_yaml_variables() -> serde_yaml::Value {
 /// let grl = build_grl_rule("TestRule", "Facts.x == true", "Facts.y = true");
 /// ```
 pub fn build_grl_rule(name: &str, condition: &str, action: &str) -> String {
-    format!(
-        r#"
-rule "{name}" salience 10 {{
-    when
-        {condition}
-    then
-        {action};
-}}
-"#
-    )
+    GRL_SIMPLE_RULE
+        .replace("{name}", name)
+        .replace("{condition}", condition)
+        .replace("{action}", action)
 }
 
 /// Parses a GRL string and returns a populated `KnowledgeBase`.
@@ -746,15 +479,6 @@ pub fn create_facts(entries: &[(&str, rust_rule_engine::Value)]) -> rust_rule_en
 /// ]);
 /// ```
 pub fn cargo_toml_with_deps(crate_name: &str, deps: &[(&str, &str)]) -> String {
-    const CARGO_TOML_TEMPLATE: &str = r#"[package]
-name = "{crate_name}"
-version = "{version}"
-
-[dependencies]
-{deps}
-"#;
-    const DEFAULT_VERSION: &str = "0.1.0";
-
     let deps_str: Vec<String> = deps
         .iter()
         .map(|(name, version)| format!("{name} = \"{version}\""))

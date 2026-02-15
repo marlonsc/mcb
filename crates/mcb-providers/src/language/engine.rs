@@ -111,7 +111,9 @@ impl IntelligentChunker {
                 }
                 Err(e) => {
                     tracing::warn!(
-                        "Tree-sitter parse failed for {file_name}: {e}, using generic chunking"
+                        file = %file_name,
+                        error = %e,
+                        "tree-sitter parse failed, using generic chunking"
                     );
                 }
             }
@@ -201,7 +203,8 @@ impl CodeChunker for IntelligentChunker {
             .await
             .map_err(|e| Error::io(e.to_string()))?;
 
-        let file_name = file_path.to_string_lossy().to_string();
+        let file_name = mcb_domain::utils::path::path_to_utf8_string(file_path)
+            .map_err(|e| Error::io(e.to_string()))?;
         let ext = file_path.extension().and_then(|e| e.to_str()).unwrap_or("");
         let language = language_from_extension(ext);
 

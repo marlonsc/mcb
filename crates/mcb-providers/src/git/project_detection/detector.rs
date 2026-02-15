@@ -11,7 +11,7 @@ use super::registry::PROJECT_DETECTORS;
 /// Returns multiple ProjectTypes if overlapping (e.g., Cargo.toml + package.json)
 pub async fn detect_all_projects(path: &Path) -> Vec<ProjectType> {
     let config = ProjectDetectorConfig {
-        repo_path: path.to_string_lossy().to_string(),
+        repo_path: path.to_str().unwrap_or_default().to_string(),
     };
 
     let mut results = Vec::new();

@@ -1,23 +1,22 @@
 use mcb_server::tools::registry::create_tool_list;
+use rstest::rstest;
 
-#[test]
-fn test_tool_definitions_create_valid_tools() {
+#[rstest]
+#[case("index")]
+#[case("search")]
+#[case("validate")]
+#[case("memory")]
+#[case("session")]
+#[case("agent")]
+#[case("project")]
+#[case("vcs")]
+#[case("entity")]
+fn test_tool_definitions_create_valid_tools(#[case] expected_name: &str) {
     let tools = create_tool_list().expect("should create tool list");
-    assert_eq!(tools.len(), 12);
+    assert_eq!(tools.len(), 9);
 
     let names: Vec<_> = tools.iter().map(|t| t.name.as_ref()).collect();
-    assert!(names.contains(&"index"));
-    assert!(names.contains(&"search"));
-    assert!(names.contains(&"validate"));
-    assert!(names.contains(&"memory"));
-    assert!(names.contains(&"session"));
-    assert!(names.contains(&"agent"));
-    assert!(names.contains(&"project"));
-    assert!(names.contains(&"vcs"));
-    assert!(names.contains(&"vcs_entity"));
-    assert!(names.contains(&"plan_entity"));
-    assert!(names.contains(&"issue_entity"));
-    assert!(names.contains(&"org_entity"));
+    assert!(names.contains(&expected_name));
 }
 
 #[test]

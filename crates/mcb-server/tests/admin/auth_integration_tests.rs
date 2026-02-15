@@ -354,7 +354,7 @@ async fn test_jobs_public_no_auth_required() {
     let harness = AdminTestHarness::new().with_auth(TEST_API_KEY);
     let op_id = harness
         .indexing()
-        .start_operation(&CollectionId::new("test-collection"), 100);
+        .start_operation(&CollectionId::from_name("test-collection"), 100);
     harness
         .indexing()
         .update_progress(&op_id, Some("src/main.rs".to_string()), 25);
@@ -380,7 +380,11 @@ async fn test_jobs_public_no_auth_required() {
     assert_eq!(ops.len(), 1, "Should have exactly 1 operation");
 
     let op = &ops[0];
-    assert_eq!(op["label"], "test-collection", "Collection should match");
+    assert_eq!(
+        op["label"],
+        CollectionId::from_name("test-collection").to_string(),
+        "Collection should match"
+    );
     assert_eq!(
         op["current_item"], "src/main.rs",
         "Current file should match"

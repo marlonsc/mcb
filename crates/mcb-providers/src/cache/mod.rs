@@ -5,7 +5,7 @@
 //! ## Available Providers
 //!
 //! | Provider | Type | Description |
-//! |----------|------|-------------|
+//! | ---------- | ------ | ------------- |
 //! | MokaCacheProvider | Local | In-memory cache (high performance) |
 //! | RedisCacheProvider | Distributed | Redis-backed for multi-instance |
 //!
