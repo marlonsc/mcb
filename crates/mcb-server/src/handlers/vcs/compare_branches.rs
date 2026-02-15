@@ -20,20 +20,20 @@ pub async fn compare_branches(
         Ok(p) => p,
         Err(error_result) => return Ok(error_result),
     };
-    let base = args
-        .base_branch
-        .clone()
-        .unwrap_or_else(|| "main".to_string());
-    let head = args
-        .target_branch
-        .clone()
-        .unwrap_or_else(|| "HEAD".to_string());
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,
         Err(e) => {
             return Ok(to_contextual_tool_error(e));
         }
     };
+    let base = args
+        .base_branch
+        .clone()
+        .unwrap_or_else(|| repo.default_branch().to_string());
+    let head = args
+        .target_branch
+        .clone()
+        .unwrap_or_else(|| "HEAD".to_string());
     let diff = match vcs_provider.diff_refs(&repo, &base, &head).await {
         Ok(diff) => diff,
         Err(e) => {

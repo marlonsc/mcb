@@ -1,8 +1,7 @@
 //! Shared file-scanning helpers for validators.
 //!
-//! Provides both generic language-aware scan functions and backward-compatible
-//! Rust-only wrappers. All filtering uses `InventoryEntry::detected_language`
-//! from the single-pass file inventory — no extension-based hardcoding.
+//! Provides generic language-aware scan functions. All filtering uses
+//! `InventoryEntry::detected_language` from the single-pass file inventory.
 
 use std::path::Path;
 
@@ -140,55 +139,6 @@ where
     }
 
     Ok(())
-}
-
-// ---------------------------------------------------------------------------
-// Rust-specific wrappers
-// ---------------------------------------------------------------------------
-
-/// Iterate over `.rs` files in each crate's `src` directory.
-///
-/// # Errors
-/// Returns an error if directory traversal fails or file access is denied.
-pub fn for_each_crate_rs_path<F>(config: &ValidationConfig, mut f: F) -> Result<()>
-where
-    F: FnMut(&Path, &Path, &str) -> Result<()>,
-{
-    for_each_crate_file(
-        config,
-        Some(LanguageId::Rust),
-        |entry, src_dir, crate_name| f(&entry.absolute_path, src_dir, crate_name),
-    )
-}
-
-/// Iterate over `.rs` files in configured scan directories.
-///
-/// # Errors
-/// Returns an error if directory traversal fails.
-pub fn for_each_scan_rs_path<F>(
-    config: &ValidationConfig,
-    skip_validate_crate: bool,
-    mut f: F,
-) -> Result<()>
-where
-    F: FnMut(&Path, &Path) -> Result<()>,
-{
-    for_each_scan_file(
-        config,
-        Some(LanguageId::Rust),
-        skip_validate_crate,
-        |entry, src_dir| f(&entry.absolute_path, src_dir),
-    )
-}
-
-/// Iterate over `.rs` files under a specific root directory.
-pub fn for_each_rs_under_root<F>(config: &ValidationConfig, root: &Path, mut f: F) -> Result<()>
-where
-    F: FnMut(&Path) -> Result<()>,
-{
-    for_each_file_under_root(config, root, Some(LanguageId::Rust), |entry| {
-        f(&entry.absolute_path)
-    })
 }
 
 // ---------------------------------------------------------------------------

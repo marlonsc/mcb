@@ -54,11 +54,15 @@ impl Git2Provider {
         Ok(first_oid.to_string())
     }
 
-    fn get_default_branch(repo: &Repository) -> String {
+    fn get_default_branch(repo: &Repository) -> Result<String> {
         repo.head()
             .ok()
             .and_then(|head| head.shorthand().map(String::from))
-            .unwrap_or_else(|| "main".to_string())
+            .ok_or_else(|| {
+                Error::vcs(
+                    "Cannot determine default branch: repository has no HEAD (possibly empty/uninitialized)",
+                )
+            })
     }
 
     fn get_remote_url(repo: &Repository) -> Option<String> {
@@ -98,7 +102,7 @@ impl VcsProvider for Git2Provider {
 
         let root_hash = Self::get_root_commit_hash(&repo)?;
         let id = RepositoryId::from_name(&root_hash);
-        let default_branch = Self::get_default_branch(&repo);
+        let default_branch = Self::get_default_branch(&repo)?;
         let branches = Self::list_branch_names(&repo)?;
         let remote_url = Self::get_remote_url(&repo);
 

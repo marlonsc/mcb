@@ -11,9 +11,6 @@ use crate::error::Result;
 
 #[async_trait]
 /// Defines behavior for IssueEntityRepository.
-// TODO(architecture): Consider splitting into smaller interfaces (ISP).
-// Current interface combines Issue, Comment, and Label management.
-// TODO(PORT003): Port IssueEntityRepository has 16 methods (>10) - Consider splitting into smaller interfaces (ISP)
 #[async_trait]
 /// Registry for issues.
 pub trait IssueRegistry: Send + Sync {

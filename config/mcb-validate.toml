@@ -61,6 +61,7 @@ magic_number_allowlist = [
     60,
 ]
 strict_directory_structure = true
+server_exempt_files = []
 
 # ==============================================================================
 # SOLID Principles Rules
@@ -144,6 +145,7 @@ validate_crate = ""
 [rules.kiss]
 enabled = true
 excluded_crates = []
+skip_file_patterns = []
 
 # ==============================================================================
 # Refactoring Rules

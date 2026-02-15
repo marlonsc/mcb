@@ -6,13 +6,17 @@ use typed_builder::TypedBuilder;
 ///
 /// Tracks the "who, what, where, and when" of an action within the system.
 /// Used for audit trails, debugging, and correlating events across sessions.
+///
+/// Each `OriginContext` carries a unique `id` (UUID v4) to ensure that
+/// distinct origin records can be correlated even when other fields overlap.
 #[skip_serializing_none]
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, TypedBuilder)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, TypedBuilder)]
 #[builder(field_defaults(default, setter(into)))]
-// TODO(architecture): Add id: Uuid or similar identity field to entity.
-// Currently relies on specific fields for identification which may not be unique.
-// TODO(CA004): Entity OriginContext missing id/uuid field - Add id: Uuid or similar identity field to entity
 pub struct OriginContext {
+    /// Unique identity for this origin context (UUID v4, auto-generated on creation).
+    #[builder(default_code = "uuid::Uuid::new_v4().to_string()")]
+    #[serde(default = "crate::entities::memory::origin_context::generate_id")]
+    pub id: String,
     /// The ID of the organization.
     pub org_id: Option<String>,
     /// The ID of the project.
@@ -55,4 +59,36 @@ pub struct OriginContext {
     pub commit: Option<String>,
     /// Timestamp of the observation/action.
     pub timestamp: Option<i64>,
+}
+
+pub(crate) fn generate_id() -> String {
+    uuid::Uuid::new_v4().to_string()
+}
+
+impl Default for OriginContext {
+    fn default() -> Self {
+        Self {
+            id: generate_id(),
+            org_id: None,
+            project_id: None,
+            session_id: None,
+            session_id_correlation: None,
+            parent_session_id: None,
+            parent_session_id_correlation: None,
+            execution_id: None,
+            tool_name: None,
+            repo_id: None,
+            repo_path: None,
+            operator_id: None,
+            machine_id: None,
+            agent_program: None,
+            model_id: None,
+            delegated: None,
+            worktree_id: None,
+            file_path: None,
+            branch: None,
+            commit: None,
+            timestamp: None,
+        }
+    }
 }

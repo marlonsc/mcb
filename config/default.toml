@@ -40,6 +40,7 @@ path = ""
 
 [providers.embedding]
 provider = "fastembed"
+cache_dir = "./.cache/mcb/fastembed"
 
 [providers.embedding.configs.default]
 provider = "fastembed"
@@ -48,10 +49,21 @@ dimensions = 384
 
 [providers.vector_store]
 provider = "edgevec"
+collection = "default"
 
 [providers.vector_store.configs.default]
 provider = "edgevec"
 dimensions = 384
+collection = "default"
+
+[mcp.indexing]
+supported_extensions = ["rs", "py", "js", "ts", "java", "cpp", "c", "go"]
+
+[mcp_context.git]
+branches = ["main", "HEAD"]
+depth = 50
+ignore_patterns = []
+include_submodules = true
 
 [logging]
 level = "info"

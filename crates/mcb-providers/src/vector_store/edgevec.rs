@@ -11,7 +11,6 @@ use dashmap::DashMap;
 use edgevec::hnsw::VectorId;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use tokio::sync::{mpsc, oneshot};
 
@@ -210,7 +209,7 @@ enum EdgeVecMessage {
 /// EdgeVec vector store provider implementation using Actor pattern
 pub struct EdgeVecVectorStoreProvider {
     sender: mpsc::Sender<EdgeVecMessage>,
-    collection: CollectionId,
+    _collection: CollectionId,
 }
 
 impl EdgeVecVectorStoreProvider {
@@ -224,17 +223,29 @@ impl EdgeVecVectorStoreProvider {
             actor.run().await;
         });
 
+        let generated_collection =
+            CollectionId::from_name(&format!("edgevec-{}", uuid::Uuid::new_v4()));
+
         Ok(Self {
             sender: tx,
-            collection: CollectionId::from_uuid(id::deterministic("collection", "default")),
+            _collection: generated_collection,
         })
     }
 
     /// Create a new EdgeVec provider with custom collection
     pub fn with_collection(config: EdgeVecConfig, collection: CollectionId) -> Result<Self> {
-        let mut provider = Self::new(config)?;
-        provider.collection = collection;
-        Ok(provider)
+        let (tx, rx) = mpsc::channel(100);
+        let config_clone = config.clone();
+
+        let actor = EdgeVecActor::new(rx, config_clone)?;
+        tokio::spawn(async move {
+            actor.run().await;
+        });
+
+        Ok(Self {
+            sender: tx,
+            _collection: collection,
+        })
     }
 }
 
@@ -944,12 +955,18 @@ fn edgevec_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
     let dimensions = config.dimensions.unwrap_or(384);
+    let collection_name = config.collection.clone().ok_or_else(|| {
+        "EdgeVec provider requires a collection name in vector_store config".to_string()
+    })?;
     let edgevec_config = EdgeVecConfig {
         dimensions,
         ..Default::default()
     };
-    let provider = EdgeVecVectorStoreProvider::new(edgevec_config)
-        .map_err(|e| format!("Failed to create EdgeVec provider: {e}"))?;
+    let provider = EdgeVecVectorStoreProvider::with_collection(
+        edgevec_config,
+        CollectionId::from_name(&collection_name),
+    )
+    .map_err(|e| format!("Failed to create EdgeVec provider: {e}"))?;
     Ok(Arc::new(provider))
 }
 

@@ -27,9 +27,12 @@ impl SearchServiceImpl {
         Self { context_service }
     }
 
-    /// Apply filters to search results
-    // TODO(architecture): Push filters down to repository/vector store level for efficiency.
-    // In-memory filtering after over-fetching (limit * 2) is simpler but scales poorly.
+    /// Apply filters to search results in-memory after retrieval.
+    ///
+    /// # Design Note
+    /// Filters are applied in-memory after over-fetching (`limit * 2`) from the vector store.
+    /// For large-scale deployments, push filters down to the vector store level via
+    /// `ContextServiceInterface::search_similar` metadata filters parameter.
     fn apply_filters(
         results: Vec<SearchResult>,
         filters: Option<&SearchFilters>,

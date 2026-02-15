@@ -1,0 +1,19 @@
+id: ORG022
+name: Scattered Configuration
+category: organization
+severity: info
+description: Configuration files should be centralized in the config/ directory.
+rationale: Centralized configuration simplifies management and reduces errors.
+engine: path
+filters:
+  file_patterns:
+    - "**/*config*.rs"
+  skip:
+    file_patterns:
+      - "**/mod.rs"
+      - "**/lib.rs"
+      - "**/handlers/**"
+      - "**/admin/**"
+      - "**/config/**"
+      - "**/config.rs" # config.rs at root is allowed
+      - "**/tests/**"

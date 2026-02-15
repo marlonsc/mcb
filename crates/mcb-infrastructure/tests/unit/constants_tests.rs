@@ -83,20 +83,6 @@ fn test_embedding_dimension_common_values() {
 // ============================================================================
 
 #[rstest]
-#[case(CACHE_DEFAULT_TTL_SECS, 60, 86400)]
-fn test_cache_ttl_range(#[case] value: u64, #[case] min: u64, #[case] max: u64) {
-    assert!(value >= min);
-    assert!(value <= max);
-}
-
-#[rstest]
-#[case(CACHE_DEFAULT_SIZE_LIMIT, 1024 * 1024, 1024 * 1024 * 1024)]
-fn test_cache_size_range(#[case] value: usize, #[case] min: usize, #[case] max: usize) {
-    assert!(value >= min);
-    assert!(value <= max);
-}
-
-#[rstest]
 fn test_cache_namespace_separator() {
     assert_eq!(CACHE_NAMESPACE_SEPARATOR.len(), 1);
 }

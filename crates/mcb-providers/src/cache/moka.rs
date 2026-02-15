@@ -24,15 +24,12 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheProvider, CacheStats};
 use moka::future::Cache;
 
-use crate::constants::CACHE_DEFAULT_SIZE_LIMIT;
-
 /// Moka-based in-memory cache provider
 ///
 /// Uses the Moka crate for high-performance concurrent caching.
 /// Supports configurable capacity and TTL.
 ///
 /// Created at runtime via factory pattern.
-/// For testing, use `MokaCacheProvider::new()` (local in-memory).
 #[derive(Clone)]
 pub struct MokaCacheProvider {
     cache: Cache<String, CachedValue>,
@@ -45,16 +42,10 @@ struct CachedValue {
     expires_at: Option<Instant>,
 }
 
-impl Default for MokaCacheProvider {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl MokaCacheProvider {
-    /// Create a new Moka cache provider with default settings
-    pub fn new() -> Self {
-        Self::with_capacity(CACHE_DEFAULT_SIZE_LIMIT)
+    /// Creates a provider with the configured cache capacity.
+    pub fn new(max_size: usize) -> Self {
+        Self::with_capacity(max_size)
     }
 
     /// Create a new Moka cache provider with specified capacity
@@ -190,11 +181,10 @@ use mcb_domain::registry::cache::{CACHE_PROVIDERS, CacheProviderConfig, CachePro
 fn moka_cache_factory(
     config: &CacheProviderConfig,
 ) -> std::result::Result<Arc<dyn CacheProvider>, String> {
-    let provider = if let Some(max_size) = config.max_size {
-        MokaCacheProvider::with_capacity(max_size)
-    } else {
-        MokaCacheProvider::new()
-    };
+    let max_size = config
+        .max_size
+        .ok_or_else(|| "Moka cache provider requires max_size in config".to_string())?;
+    let provider = MokaCacheProvider::new(max_size);
     Ok(Arc::new(provider))
 }
 

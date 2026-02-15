@@ -11,9 +11,6 @@ use crate::error::Result;
 
 #[async_trait]
 /// Defines behavior for VcsEntityRepository.
-// TODO(architecture): Consider splitting into smaller interfaces (ISP).
-// Current interface combines Repository, Branch, Worktree, and Assignment management.
-// TODO(PORT003): Port VcsEntityRepository has 19 methods (>10) - Consider splitting into smaller interfaces (ISP)
 #[async_trait]
 /// Registry for VCS repositories.
 pub trait RepositoryRegistry: Send + Sync {

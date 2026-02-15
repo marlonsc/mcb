@@ -91,6 +91,9 @@ impl IndexHandler {
                 Ok(ResponseFormatter::format_indexing_status(&status))
             }
             IndexAction::Clear => {
+                let error_path = args.path.as_ref().map(PathBuf::from).unwrap_or_else(|| {
+                    std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"))
+                });
                 let collection_name = args.collection.as_deref().ok_or_else(|| {
                     McpError::invalid_params("collection parameter is required", None)
                 })?;
@@ -114,7 +117,7 @@ impl IndexHandler {
                             "Failed to clear collection {}: {}",
                             milvus_collection_str, e
                         ),
-                        &PathBuf::from("."),
+                        &error_path,
                     )),
                 }
             }

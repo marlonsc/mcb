@@ -128,4 +128,14 @@ impl KissValidator {
             .iter()
             .any(|excluded| path_str.contains(excluded))
     }
+
+    pub(super) fn should_skip_file(&self, path: &std::path::Path) -> bool {
+        let Some(path_str) = path.to_str() else {
+            return false;
+        };
+        self.rules
+            .skip_file_patterns
+            .iter()
+            .any(|pattern| path_str.ends_with(pattern))
+    }
 }

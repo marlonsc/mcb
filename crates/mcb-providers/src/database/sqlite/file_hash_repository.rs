@@ -306,8 +306,7 @@ impl FileHashRepository for SqliteFileHashRepository {
         Ok(count)
     }
 
-    // TODO(architecture): Extract hash computation to a separate service or utility port.
-    // Delegated to domain utility to avoid mixing IO logic directly in DB repo body.
+    /// Computes file content hash by delegating to the domain utility.
     fn compute_hash(&self, path: &Path) -> Result<String> {
         mcb_domain::utils::id::compute_file_hash(path)
     }

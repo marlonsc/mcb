@@ -109,10 +109,7 @@ impl KissValidator {
                     return Ok(());
                 }
 
-                let Some(path_str) = path.to_str() else {
-                    return Ok(());
-                };
-                if path_str.ends_with("/admin/api.rs") {
+                if self.should_skip_file(path) {
                     return Ok(());
                 }
 
@@ -329,17 +326,7 @@ impl KissValidator {
                     return Ok(());
                 }
 
-                let Some(path_str) = path.to_str() else {
-                    return Ok(());
-                };
-                if path_str.ends_with("/di/bootstrap.rs")
-                    || path_str.ends_with("/di/catalog.rs")
-                    || path_str.ends_with("/di/resolver.rs")
-                {
-                    return Ok(());
-                }
-
-                if path_str.ends_with("/health.rs") {
+                if self.should_skip_file(path) {
                     return Ok(());
                 }
 

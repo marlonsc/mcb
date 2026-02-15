@@ -90,7 +90,7 @@ impl FileConfig {
         self.general
             .workspace_root
             .clone()
-            .unwrap_or_else(|| PathBuf::from("."))
+            .unwrap_or_else(|| panic!("workspace_root must be set by FileConfig::load"))
     }
 
     /// Check if a validator is enabled
@@ -266,6 +266,10 @@ pub struct OrganizationRulesConfig {
 
     /// Strict directory structure enforcement
     pub strict_directory_structure: bool,
+
+    /// Server file names exempt from strict handler placement checks
+    #[serde(default)]
+    pub server_exempt_files: Vec<String>,
 }
 
 /// SOLID principles rules configuration
@@ -405,6 +409,10 @@ pub struct KISSRulesConfig {
 
     /// Crates excluded from KISS checks
     pub excluded_crates: Vec<String>,
+
+    /// File path suffix patterns to skip for KISS checks
+    #[serde(default)]
+    pub skip_file_patterns: Vec<String>,
 }
 
 /// Refactoring rules configuration

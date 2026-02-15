@@ -95,3 +95,60 @@ impl std::fmt::Debug for MemoryFilter {
             .finish()
     }
 }
+
+impl MemoryFilter {
+    /// Returns true when the observation satisfies all populated filter fields.
+    #[must_use]
+    pub fn matches(&self, obs: &Observation) -> bool {
+        if self
+            .project_id
+            .as_ref()
+            .is_some_and(|id| obs.project_id != *id)
+        {
+            return false;
+        }
+        if self
+            .session_id
+            .as_ref()
+            .is_some_and(|id| obs.metadata.session_id.as_ref() != Some(id))
+        {
+            return false;
+        }
+        if self.parent_session_id.as_ref().is_some_and(|id| {
+            obs.metadata
+                .origin_context
+                .as_ref()
+                .and_then(|ctx| ctx.parent_session_id.as_ref())
+                != Some(id)
+        }) {
+            return false;
+        }
+        if self
+            .repo_id
+            .as_ref()
+            .is_some_and(|id| obs.metadata.repo_id.as_ref() != Some(id))
+        {
+            return false;
+        }
+        if self.r#type.as_ref().is_some_and(|t| &obs.r#type != t) {
+            return false;
+        }
+        if self
+            .time_range
+            .as_ref()
+            .is_some_and(|(start, end)| obs.created_at < *start || obs.created_at > *end)
+        {
+            return false;
+        }
+        if self
+            .branch
+            .as_ref()
+            .is_some_and(|b| obs.metadata.branch.as_ref() != Some(b))
+        {
+            return false;
+        }
+        self.commit
+            .as_ref()
+            .is_none_or(|c| obs.metadata.commit.as_ref() == Some(c))
+    }
+}

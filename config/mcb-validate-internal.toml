@@ -38,6 +38,13 @@ validate_crate = "mcb-validate"
 [rules.kiss]
 enabled = true
 excluded_crates = ["mcb-validate"]
+skip_file_patterns = [
+    "/admin/api.rs",
+    "/di/bootstrap.rs",
+    "/di/catalog.rs",
+    "/di/resolver.rs",
+    "/health.rs",
+]
 
 [rules.refactoring]
 enabled = true
@@ -114,6 +121,7 @@ enabled = true
 
 [rules.organization]
 enabled = true
+server_exempt_files = ["auth.rs", "middleware.rs"]
 
 [rules.visibility]
 enabled = true

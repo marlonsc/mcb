@@ -93,7 +93,17 @@ impl RuleFilterExecutor {
     ///
     /// # Returns
     /// true if the rule should execute on this file
-    pub async fn should_execute_rule(
+    /// Check if a rule should execute on a given file
+    ///
+    /// # Arguments
+    /// * `filters` - Filter configuration for the rule
+    /// * `file_path` - Path to the file being checked
+    /// * `file_content` - Optional content of the file (for language detection)
+    /// * `workspace_deps` - Workspace dependency information
+    ///
+    /// # Returns
+    /// true if the rule should execute on this file
+    pub fn should_execute_rule(
         &self,
         filters: &RuleFilters,
         file_path: &Path,

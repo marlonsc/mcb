@@ -36,8 +36,6 @@ pub struct CreateSessionSummaryInput {
 /// Provides observation storage and retrieval with semantic search capabilities.
 /// Supports session-based memory organization and content deduplication.
 #[async_trait]
-// TODO(architecture): Consider splitting into smaller interfaces (ISP).
-// Current interface combines Observation, ErrorPattern, and SessionSummary management.
 pub trait MemoryServiceInterface: Send + Sync {
     /// Store an observation with optional embedding for semantic search.
     ///

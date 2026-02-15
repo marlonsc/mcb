@@ -80,7 +80,7 @@ crate::define_violations! {
             threshold: u32,
             severity: Severity,
         },
-        /// PMAT tooling unavailable (kept for compatibility).
+        /// PMAT tooling unavailable.
         #[violation(
             id = "PMAT004",
             severity = Info,

@@ -4,7 +4,9 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
-use crate::{Result, ValidationError};
+use crate::filters::LanguageId;
+use crate::scan::for_each_scan_file;
+use crate::{Result, ValidationConfig, ValidationError};
 
 /// Result of a cyclomatic complexity analysis.
 #[derive(Debug, Clone)]
@@ -66,30 +68,14 @@ pub struct NativePmatAnalyzer;
 
 impl NativePmatAnalyzer {
     fn load_rust_files(workspace_root: &Path) -> Result<Vec<(PathBuf, String)>> {
+        let config = ValidationConfig::new(workspace_root.to_path_buf());
         let mut files = Vec::new();
-        Self::collect_rust_files(workspace_root, &mut files)?;
+        for_each_scan_file(&config, Some(LanguageId::Rust), false, |entry, _src_dir| {
+            let content = fs::read_to_string(&entry.absolute_path)?;
+            files.push((entry.absolute_path.clone(), content));
+            Ok(())
+        })?;
         Ok(files)
-    }
-
-    fn collect_rust_files(dir: &Path, files: &mut Vec<(PathBuf, String)>) -> Result<()> {
-        for entry in fs::read_dir(dir)? {
-            let entry = entry?;
-            let path = entry.path();
-            if path.is_dir() {
-                if path.to_str().is_some_and(|s| s.contains("/target/")) {
-                    continue;
-                }
-                Self::collect_rust_files(&path, files)?;
-                continue;
-            }
-
-            if path.is_file() && path.extension().is_some_and(|ext| ext == "rs") {
-                let content = fs::read_to_string(&path)?;
-                files.push((path, content));
-            }
-        }
-
-        Ok(())
     }
 
     fn collect_functions(files: &[(PathBuf, String)]) -> Result<Vec<FunctionRecord>> {

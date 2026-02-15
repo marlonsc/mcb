@@ -17,12 +17,12 @@ pub mod system;
 pub use app::{
     AdminApiKeyConfig, ApiKeyConfig, AppConfig, AuthConfig, BackupConfig, CacheProvider,
     CacheSystemConfig, DaemonConfig, DataConfig, DatabaseConfig, DatabaseConfigContainer,
-    EmbeddingConfigContainer, EventBusConfig, EventBusProvider, InfrastructureConfig, JwtConfig,
-    LimitsConfig, LoggingConfig, ModeConfig, OperatingMode, OperationsConfig,
-    OperationsDaemonConfig, PasswordAlgorithm, ProvidersConfig, ResilienceConfig, ServerConfig,
-    ServerConfigBuilder, ServerConfigPresets, ServerCorsConfig, ServerNetworkConfig,
-    ServerSslConfig, ServerTimeoutConfig, SnapshotConfig, SyncConfig, SystemConfig, TransportMode,
-    VectorStoreConfigContainer,
+    EmbeddingConfigContainer, EventBusConfig, EventBusProvider, IndexingConfig,
+    InfrastructureConfig, JwtConfig, LimitsConfig, LoggingConfig, McpConfig, ModeConfig,
+    OperatingMode, OperationsConfig, OperationsDaemonConfig, PasswordAlgorithm, ProvidersConfig,
+    ResilienceConfig, ServerConfig, ServerConfigBuilder, ServerConfigPresets, ServerCorsConfig,
+    ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig, SnapshotConfig, SyncConfig,
+    SystemConfig, TransportMode, VectorStoreConfigContainer,
 };
 // Also re-export MetricsConfig which is only in infrastructure
 pub use infrastructure::MetricsConfig;

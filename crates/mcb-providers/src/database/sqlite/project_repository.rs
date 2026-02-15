@@ -15,10 +15,10 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::entities::project::Project;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
+use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::ProjectRepository;
 
-use super::row_convert;
+use super::{query_helpers, row_convert};
 
 /// SQLite-based implementation of the `ProjectRepository`.
 ///
@@ -32,26 +32,6 @@ impl SqliteProjectRepository {
     /// Create a repository that uses the given executor.
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
-    }
-
-    /// Helper: Query single row and convert to optional entity
-    // TODO(architecture): Abstract this helper into a shared Trait or utility for all repositories.
-    // Repeating this pattern across repositories leads to code duplication.
-    async fn query_one_and_convert<T, F>(
-        &self,
-        sql: &str,
-        params: &[SqlParam],
-        convert_fn: F,
-        _entity_name: &str,
-    ) -> Result<Option<T>>
-    where
-        F: FnOnce(&dyn SqlRow) -> Result<T>,
-    {
-        let row = self.executor.query_one(sql, params).await?;
-        match row {
-            Some(r) => Ok(Some(convert_fn(r.as_ref())?)),
-            None => Ok(None),
-        }
     }
 }
 
@@ -78,14 +58,14 @@ impl ProjectRepository for SqliteProjectRepository {
 
     /// Retrieves a project by ID.
     async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Project> {
-        self.query_one_and_convert(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND id = ? LIMIT 1",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(id.to_string()),
             ],
             row_convert::row_to_project,
-            "project",
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("Project {id}")))
@@ -93,14 +73,14 @@ impl ProjectRepository for SqliteProjectRepository {
 
     /// Retrieves a project by name.
     async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Project> {
-        self.query_one_and_convert(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND name = ? LIMIT 1",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(name.to_string()),
             ],
             row_convert::row_to_project,
-            "project",
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("Project {name}")))
@@ -108,14 +88,14 @@ impl ProjectRepository for SqliteProjectRepository {
 
     /// Retrieves a project by path.
     async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Project> {
-        self.query_one_and_convert(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND path = ? LIMIT 1",
             &[
                 SqlParam::String(org_id.to_string()),
                 SqlParam::String(path.to_string()),
             ],
             row_convert::row_to_project,
-            "project",
         )
         .await?
         .ok_or_else(|| Error::not_found(format!("Project {path}")))

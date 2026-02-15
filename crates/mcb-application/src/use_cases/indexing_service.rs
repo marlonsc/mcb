@@ -23,6 +23,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
 
+use ignore::WalkBuilder;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::admin::IndexingOperationsInterface;
@@ -35,7 +36,7 @@ use mcb_domain::ports::services::{
 use mcb_domain::value_objects::{CollectionId, OperationId};
 use tracing::{error, info, warn};
 
-use crate::constants::{PROGRESS_UPDATE_INTERVAL, SKIP_DIRS, SUPPORTED_EXTENSIONS};
+use crate::constants::{PROGRESS_UPDATE_INTERVAL, SKIP_DIRS};
 
 /// Accumulator for indexing progress and operational metrics.
 ///
@@ -101,6 +102,7 @@ pub struct IndexingServiceImpl {
     indexing_ops: Arc<dyn IndexingOperationsInterface>,
     event_bus: Arc<dyn EventBusProvider>,
     file_hash_repository: Option<Arc<dyn FileHashRepository>>,
+    supported_extensions: Vec<String>,
 }
 
 impl IndexingServiceImpl {
@@ -114,6 +116,7 @@ impl IndexingServiceImpl {
         language_chunker: Arc<dyn LanguageChunkingProvider>,
         indexing_ops: Arc<dyn IndexingOperationsInterface>,
         event_bus: Arc<dyn EventBusProvider>,
+        supported_extensions: Vec<String>,
     ) -> Self {
         Self {
             context_service,
@@ -121,6 +124,7 @@ impl IndexingServiceImpl {
             indexing_ops,
             event_bus,
             file_hash_repository: None,
+            supported_extensions: Self::normalize_supported_extensions(supported_extensions),
         }
     }
 
@@ -131,6 +135,7 @@ impl IndexingServiceImpl {
         indexing_ops: Arc<dyn IndexingOperationsInterface>,
         event_bus: Arc<dyn EventBusProvider>,
         file_hash_repository: Arc<dyn FileHashRepository>,
+        supported_extensions: Vec<String>,
     ) -> Self {
         Self {
             context_service,
@@ -138,7 +143,16 @@ impl IndexingServiceImpl {
             indexing_ops,
             event_bus,
             file_hash_repository: Some(file_hash_repository),
+            supported_extensions: Self::normalize_supported_extensions(supported_extensions),
         }
+    }
+
+    fn normalize_supported_extensions(extensions: Vec<String>) -> Vec<String> {
+        extensions
+            .into_iter()
+            .map(|ext| ext.trim().trim_start_matches('.').to_ascii_lowercase())
+            .filter(|ext| !ext.is_empty())
+            .collect()
     }
 
     /// Discover files recursively from a path
@@ -147,51 +161,49 @@ impl IndexingServiceImpl {
         path: &Path,
         progress: &mut IndexingProgress,
     ) -> Vec<std::path::PathBuf> {
-        use tokio::fs;
-
-        // TODO(architecture): Implement proper .gitignore support (use 'ignore' crate or similar).
-        // Current implementation only respects hardcoded SKIP_DIRS and ignores gitignore files.
         let mut files = Vec::new();
-        let mut dirs_to_visit = vec![path.to_path_buf()];
-
-        while let Some(dir_path) = dirs_to_visit.pop() {
-            let mut entries = match fs::read_dir(&dir_path).await {
-                Ok(entries) => entries,
-                Err(e) => {
-                    progress.record_error("Failed to read directory", &dir_path, e);
-                    continue;
+        let walker = WalkBuilder::new(path)
+            .hidden(false)
+            .filter_entry(|entry| {
+                if !entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false) {
+                    return true;
                 }
-            };
 
-            while let Ok(Some(entry)) = entries.next_entry().await {
-                let entry_path = entry.path();
-                if entry_path.is_dir() {
-                    if Self::should_visit_dir(&entry_path) {
-                        dirs_to_visit.push(entry_path);
+                entry
+                    .file_name()
+                    .to_str()
+                    .map(|name| !SKIP_DIRS.contains(&name))
+                    .unwrap_or(true)
+            })
+            .build();
+
+        for entry_result in walker {
+            match entry_result {
+                Ok(entry) => {
+                    if entry.file_type().map(|ft| ft.is_file()).unwrap_or(false)
+                        && self.is_supported_file(entry.path())
+                    {
+                        files.push(entry.path().to_path_buf());
                     }
-                } else if Self::is_supported_file(&entry_path) {
-                    files.push(entry_path);
+                }
+                Err(e) => {
+                    progress.record_error("Failed to read directory entry", path, e);
                 }
             }
         }
+
         files
     }
 
-    /// Check if directory should be visited during indexing
-    fn should_visit_dir(path: &Path) -> bool {
-        path.file_name()
-            .and_then(|name| name.to_str())
-            .map(|name| !SKIP_DIRS.contains(&name))
-            .unwrap_or(true)
-    }
-
     /// Check if file has a supported extension
-    // TODO(architecture): Externalize supported extensions configuration.
-    // Hardcoding extensions limits flexibility and plugin support.
-    fn is_supported_file(path: &Path) -> bool {
+    fn is_supported_file(&self, path: &Path) -> bool {
         path.extension()
             .and_then(|ext| ext.to_str())
-            .map(|ext| SUPPORTED_EXTENSIONS.contains(&ext.to_lowercase().as_str()))
+            .map(|ext| {
+                self.supported_extensions
+                    .iter()
+                    .any(|supported| supported == &ext.to_ascii_lowercase())
+            })
             .unwrap_or(false)
     }
 }
@@ -239,10 +251,8 @@ impl IndexingServiceInterface for IndexingServiceImpl {
         let op_id = operation_id;
         let workspace_root = path.to_path_buf();
 
-        // Spawn background task - explicitly drop handle since we don't await it
-        // (fire-and-forget pattern for async indexing)
-        // TODO(architecture): Consider Strategy pattern for Async vs Sync execution.
-        // Hardcoding fire-and-forget complicates testing and flow control.
+        // Fire-and-forget: caller gets operation_id immediately, polling for completion.
+        // Sync execution path available via run_indexing_task() directly in tests.
         let _handle = tokio::spawn(async move {
             Self::run_indexing_task(service, files, workspace_root, collection_id, op_id).await;
         });

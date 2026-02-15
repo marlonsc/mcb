@@ -1,0 +1,29 @@
+id: ORG015
+name: Adapter Implementation Location
+category: organization
+severity: warning
+description: Adapter-like implementations (impl Provider/Repository for X) must be defined in infrastructure/adapters, di, crypto, cache, or other designated infrastructure directories.
+rationale: Infrastructure implementations should be organized by their function or tech context, not scattered.
+engine: regex
+config:
+  patterns:
+    adapter_impl: 'impl\s+(?:async\s+)?([A-Z][a-zA-Z0-9_]*(?:Provider|Repository))\s+for\s+([A-Z][a-zA-Z0-9_]*)'
+filters:
+  file_patterns:
+    - "crates/mcb-infrastructure/src/**/*.rs"
+  skip:
+    file_patterns:
+      - "**/adapters/**"
+      - "**/di/**"
+      - "**/crypto/**"
+      - "**/cache/**"
+      - "**/health/**"
+      - "**/events/**"
+      - "**/sync/**"
+      - "**/config/**"
+      - "**/infrastructure/**"
+      - "**factory**"
+      - "**bootstrap**"
+      - "**/mod.rs"
+      - "**/lib.rs"
+      - "**/tests/**"

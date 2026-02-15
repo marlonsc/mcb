@@ -104,9 +104,6 @@ pub enum MetricsError {
 /// ```
 /// ```
 #[async_trait]
-// TODO(architecture): Consider splitting into smaller interfaces (ISP).
-// Current interface mixes core primitives with domain-specific convenience methods.
-// TODO(PORT003): Port MetricsProvider has 13 methods (>10) - Consider splitting into smaller interfaces (ISP)
 pub trait MetricsProvider: Send + Sync {
     /// Provider name for identification
     fn name(&self) -> &str;

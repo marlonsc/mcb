@@ -42,7 +42,6 @@ impl CleanArchitectureValidator {
     /// Run all architecture validations (returns typed violations)
     pub fn validate_all(&self) -> Result<Vec<CleanArchitectureViolation>> {
         // Validation is fully driven by declarative rules (YAML) loaded by DeclarativeValidator.
-        // This validator is kept for backward compatibility and potential future rust-specific logic.
         Ok(Vec::new())
     }
 }
@@ -57,7 +56,6 @@ impl crate::traits::validator::Validator for CleanArchitectureValidator {
     }
 
     fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
-        // Logic delegated to DeclarativeValidator (YAML rules)
         Ok(Vec::new())
     }
 }

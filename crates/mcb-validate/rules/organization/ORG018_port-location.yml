@@ -1,0 +1,21 @@
+id: ORG018
+name: Port Trait Location
+category: organization
+severity: warning
+description: Port traits (Provider, Service, Repository, Interface) must be defined in domain/ports, domain_services, or repositories.
+rationale: Enforcing strict directory structure improves maintainability and discoverability of core domain components.
+engine: regex
+config:
+  patterns:
+    port_trait: '(?:pub\s+)?trait\s+([A-Z][a-zA-Z0-9_]*(?:Provider|Service|Repository|Interface))\s*:'
+filters:
+  file_patterns:
+    - "crates/mcb-domain/src/**/*.rs"
+  skip:
+    file_patterns:
+      - "**/ports/**"
+      - "**/domain_services/**"
+      - "**/repositories/**"
+      - "**/mod.rs"
+      - "**/lib.rs"
+      - "**/tests/**"

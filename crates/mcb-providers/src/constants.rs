@@ -81,12 +81,6 @@ pub const OLLAMA_DEFAULT_PORT: u16 = 11434;
 // CACHE PROVIDER CONSTANTS
 // ============================================================================
 
-/// Default cache TTL in seconds (1 hour)
-pub const CACHE_DEFAULT_TTL_SECS: u64 = 3600;
-
-/// Default cache size limit in bytes (100MB)
-pub const CACHE_DEFAULT_SIZE_LIMIT: usize = 100 * 1024 * 1024;
-
 /// Redis connection pool size
 pub const REDIS_POOL_SIZE: usize = 10;
 

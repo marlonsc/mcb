@@ -80,94 +80,6 @@ impl MemoryServiceImpl {
             vector_store,
         }
     }
-
-    /// Evaluates whether an observation matches the provided memory filter.
-    ///
-    /// # Code Smells
-    /// TODO(qlty): Function with many returns (count = 7).
-    fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
-        // TODO(architecture): Move filtering logic to domain entity (MemoryFilter::matches).
-        // This logic currently resides in the service layer but operates entirely on domain data,
-        // suggesting it belongs in the domain model itself.
-        if !Self::check_project(obs, filter) {
-            return false;
-        }
-        if !Self::check_session(obs, filter) {
-            return false;
-        }
-        if !Self::check_parent_session(obs, filter) {
-            return false;
-        }
-        if !Self::check_repo(obs, filter) {
-            return false;
-        }
-        if !Self::check_type(obs, filter) {
-            return false;
-        }
-        if !Self::check_time(obs, filter) {
-            return false;
-        }
-        if !Self::check_branch(obs, filter) {
-            return false;
-        }
-        Self::check_commit(obs, filter)
-    }
-
-    fn check_project(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .project_id
-            .as_ref()
-            .is_none_or(|id| obs.project_id == *id)
-    }
-
-    fn check_session(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .session_id
-            .as_ref()
-            .is_none_or(|id| obs.metadata.session_id.as_ref() == Some(id))
-    }
-
-    fn check_repo(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .repo_id
-            .as_ref()
-            .is_none_or(|id| obs.metadata.repo_id.as_ref() == Some(id))
-    }
-
-    fn check_parent_session(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter.parent_session_id.as_ref().is_none_or(|id| {
-            obs.metadata
-                .origin_context
-                .as_ref()
-                .and_then(|ctx| ctx.parent_session_id.as_ref())
-                == Some(id)
-        })
-    }
-
-    fn check_type(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter.r#type.as_ref().is_none_or(|t| &obs.r#type == t)
-    }
-
-    fn check_time(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .time_range
-            .as_ref()
-            .is_none_or(|(start, end)| obs.created_at >= *start && obs.created_at <= *end)
-    }
-
-    fn check_branch(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .branch
-            .as_ref()
-            .is_none_or(|b| obs.metadata.branch.as_ref() == Some(b))
-    }
-
-    fn check_commit(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .commit
-            .as_ref()
-            .is_none_or(|c| obs.metadata.commit.as_ref() == Some(c))
-    }
 }
 
 impl MemoryServiceImpl {
@@ -322,7 +234,7 @@ impl MemoryServiceImpl {
         let mut results = Vec::new();
         for (id, rrf_score) in ranked {
             if let Some(obs) = obs_map.get(&id) {
-                if !Self::matches_filter(obs, filter) {
+                if !filter.matches(obs) {
                     continue;
                 }
                 let max_possible_rrf = 2.0 / (RRF_K + 1.0);

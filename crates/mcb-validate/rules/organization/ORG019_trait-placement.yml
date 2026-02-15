@@ -1,0 +1,26 @@
+id: ORG019
+name: Trait Definition Placement
+category: organization
+severity: warning
+description: Public traits named *Provider, *Service, *Repository, or *Interface must be defined in the domain layer (ports), unless they are implementation details.
+rationale: Core domain abstractions should be centralized in domain/ports.
+engine: regex
+config:
+  patterns:
+    domain_trait: 'pub\s+trait\s+([A-Z][a-zA-Z0-9_]*(?:Provider|Service|Repository|Interface))'
+  ignore_patterns:
+    - 'pub\s+trait\s+[A-Z][A-Za-z0-9_]*(?:Ext|Factory|Builder|Helper|Internal|Impl|Adapter|Handler|Listener|Callback|Module|Component)\b'
+    - 'pub\s+trait\s+(?:CacheProvider|HttpClientProvider|ConfigProvider|LogProvider|MetricsProvider|TracingProvider|StorageProvider)\b'
+    - 'pub\s+trait\s+(?:Debug|Clone|Default|Display|Error|From|Into|AsRef|Deref|Iterator|Send|Sync|Sized|Copy|Eq|PartialEq|Ord|PartialOrd|Hash|Serialize|Deserialize)\b'
+filters:
+  file_patterns:
+    - "crates/mcb-infrastructure/**/*.rs"
+    - "crates/mcb-application/**/*.rs"
+    - "crates/mcb-server/**/*.rs"
+  skip:
+    file_patterns:
+      - "**/ports/**"
+      - "**/di/**"
+      - "**/tests/**"
+      - "**/mod.rs"
+      - "**/lib.rs"

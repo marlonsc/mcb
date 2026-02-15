@@ -5,7 +5,7 @@ use mcb_domain::utils::vcs_context::VcsContext;
 use mcb_domain::value_objects::project_context::{ProjectContext, parse_owner_repo};
 
 static VCS_CONTEXT: OnceLock<VcsContext> = OnceLock::new();
-static PROJECT_CONTEXT: OnceLock<ProjectContext> = OnceLock::new();
+static PROJECT_CONTEXT: OnceLock<Option<ProjectContext>> = OnceLock::new();
 
 /// Capture VCS context (branch, commit, repo) from the git environment. Cached after first call.
 #[must_use]
@@ -47,39 +47,39 @@ pub fn capture_vcs_context() -> VcsContext {
 }
 
 /// Resolve project identity from the current git repository. Cached after first call.
+///
+/// Returns `None` when the project cannot be detected from git context
+/// (no remote origin, no toplevel directory). Callers must handle the
+/// absence explicitly — falling back to a hardcoded identifier is a
+/// security violation (project isolation depends on accurate identity).
 #[must_use]
-pub fn resolve_project_context() -> ProjectContext {
+pub fn resolve_project_context() -> Option<ProjectContext> {
     PROJECT_CONTEXT.get_or_init(detect_project_context).clone()
 }
 
-fn detect_project_context() -> ProjectContext {
+fn detect_project_context() -> Option<ProjectContext> {
     let superproject_id = detect_superproject();
     let is_submodule = superproject_id.is_some();
 
     if let Some((project_id, project_name)) = project_context_from_git_remote() {
-        return ProjectContext {
+        return Some(ProjectContext {
             project_id,
             project_name,
             is_submodule,
             superproject_id,
-        };
+        });
     }
 
     if let Some((project_id, project_name)) = project_context_from_git_toplevel() {
-        return ProjectContext {
+        return Some(ProjectContext {
             project_id,
             project_name,
             is_submodule,
             superproject_id,
-        };
+        });
     }
 
-    ProjectContext {
-        project_id: "default".to_string(),
-        project_name: "default".to_string(),
-        is_submodule,
-        superproject_id,
-    }
+    None
 }
 
 fn project_context_from_git_remote() -> Option<(String, String)> {

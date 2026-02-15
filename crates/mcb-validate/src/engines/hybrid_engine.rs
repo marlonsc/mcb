@@ -333,7 +333,7 @@ impl HybridRuleEngine {
 
         let start_time = std::time::Instant::now();
 
-        let stub_rule = ValidatedRule {
+        let lint_adapter_rule = ValidatedRule {
             id: rule_id.to_string(),
             name: String::new(),
             category: String::new(),
@@ -361,7 +361,8 @@ impl HybridRuleEngine {
         let file_refs: Vec<&std::path::Path> =
             files.iter().map(std::path::PathBuf::as_path).collect();
 
-        let lint_violations = YamlRuleExecutor::execute_rule(&stub_rule, &file_refs).await?;
+        let lint_violations =
+            YamlRuleExecutor::execute_rule(&lint_adapter_rule, &file_refs).await?;
 
         let violations: Vec<RuleViolation> = lint_violations
             .into_iter()

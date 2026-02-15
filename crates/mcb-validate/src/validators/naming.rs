@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use crate::config::NamingRulesConfig;
+use crate::filters::LanguageId;
 use crate::run_context::ValidationRunContext;
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
@@ -616,10 +617,7 @@ impl NamingValidator {
 
             for entry in context.file_inventory() {
                 if entry.absolute_path.starts_with(&src_dir)
-                    && entry
-                        .absolute_path
-                        .extension()
-                        .is_some_and(|ext| ext == "rs")
+                    && entry.detected_language == Some(LanguageId::Rust)
                 {
                     f(&entry.absolute_path)?;
                 }

@@ -24,10 +24,6 @@ pub async fn search_branch(
             )]));
         }
     };
-    let branch = args
-        .target_branch
-        .clone()
-        .unwrap_or_else(|| "main".to_string());
     let path = match repo_path(args) {
         Ok(p) => p,
         Err(error_result) => return Ok(error_result),
@@ -38,6 +34,10 @@ pub async fn search_branch(
             return Ok(to_contextual_tool_error(e));
         }
     };
+    let branch = args
+        .target_branch
+        .clone()
+        .unwrap_or_else(|| repo.default_branch().to_string());
     let files = match vcs_provider.list_files(&repo, &branch).await {
         Ok(files) => files,
         Err(e) => {

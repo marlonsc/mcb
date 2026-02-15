@@ -194,8 +194,7 @@ impl ContextServiceInterface for ContextServiceImpl {
         query: &str,
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
-        // TODO(architecture): Extend interface to support filters (push-down optimization).
-        // Currently filters are applied in-memory by the caller (SearchService), which is inefficient.
+        // Design: filters applied in-memory by SearchService. Push-down via metadata param when scaling.
         let query_embedding = self.embedding_provider.embed(query).await?;
         self.vector_store_provider
             .search_similar(collection, &query_embedding.vector, limit, None)

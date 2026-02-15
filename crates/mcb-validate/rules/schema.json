@@ -82,9 +82,11 @@
       "enum": [
         "rust-rule-engine",
         "rusty-rules",
-        "ast"
+        "ast",
+        "regex",
+        "path"
       ],
-      "description": "Which rule engine to use for execution"
+      "description": "Which rule engine to use for execution. 'regex' for config.patterns scanning, 'path' for file-location rules."
     },
     "selectors": {
       "type": "array",

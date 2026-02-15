@@ -179,6 +179,7 @@ impl DomainServicesFactory {
                 deps.indexing_ops,
                 deps.event_bus,
                 deps.file_hash_repository,
+                deps.config.mcp.indexing.supported_extensions.clone(),
             ));
 
         let validation_service: Arc<dyn ValidationServiceInterface> =
@@ -220,6 +221,7 @@ impl DomainServicesFactory {
         let language_chunker = app_context.language_handle().get();
         let context_service = Self::create_context_service(app_context).await?;
         let file_hash_repository = app_context.file_hash_repository();
+        let supported_extensions = app_context.config.mcp.indexing.supported_extensions.clone();
 
         Ok(Arc::new(
             IndexingServiceImpl::new_with_file_hash_repository(
@@ -228,6 +230,7 @@ impl DomainServicesFactory {
                 indexing_ops,
                 event_bus,
                 file_hash_repository,
+                supported_extensions,
             ),
         ))
     }

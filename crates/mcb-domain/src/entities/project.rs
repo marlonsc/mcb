@@ -314,9 +314,11 @@ pub struct ProjectIssue {
     /// User identifier of the person assigned to this issue.
     #[serde(default)]
     pub assignee: Option<String>,
-    /// Set of tags or categories associated with the issue.
-    // TODO(architecture): Clarify relationship between ProjectIssue.labels (JSON) and IssueLabel entity (relational).
-    // The existence of both suggests potential data duplication or split source of truth.
+    /// Denormalized label names for fast read access (inline JSON).
+    ///
+    /// The normalized source of truth is `IssueLabel` + `IssueLabelAssignment`
+    /// (relational). This field is a read-optimized cache; writes go through
+    /// the label assignment API which keeps both in sync.
     pub labels: Vec<String>,
     /// Estimated effort in minutes.
     #[serde(default)]

@@ -10,9 +10,6 @@ use crate::error::Result;
 
 #[async_trait]
 /// Defines behavior for PlanEntityRepository.
-// TODO(architecture): Consider splitting into smaller interfaces (ISP).
-// Current interface combines Plan, PlanVersion, and PlanReview management.
-// TODO(PORT003): Port PlanEntityRepository has 11 methods (>10) - Consider splitting into smaller interfaces (ISP)
 #[async_trait]
 /// Registry for plans.
 pub trait PlanRegistry: Send + Sync {

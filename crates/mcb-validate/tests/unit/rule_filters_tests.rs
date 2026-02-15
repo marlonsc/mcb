@@ -19,8 +19,8 @@ fn empty_workspace_deps() -> WorkspaceDependencies {
 #[case(None, "main.rs", true)]
 #[case(Some("rust"), "main.rs", true)]
 #[case(Some("rust"), "script.py", false)]
-#[tokio::test]
-async fn language_filter(
+#[test]
+fn language_filter(
     #[case] language: Option<&str>,
     #[case] file: &str,
     #[case] expected: bool,
@@ -40,13 +40,12 @@ async fn language_filter(
 
     let actual = executor
         .should_execute_rule(&filters, Path::new(file), None, &empty_workspace_deps)
-        .await
         .unwrap();
     assert_eq!(actual, expected);
 }
 
-#[tokio::test]
-async fn test_dependency_filter() {
+#[test]
+fn test_dependency_filter() {
     let temp_dir = TempDir::new().unwrap();
 
     let cargo_toml = temp_dir.path().join("Cargo.toml");
@@ -83,7 +82,6 @@ serde = "1.0"
                 None,
                 &workspace_deps
             )
-            .await
             .unwrap()
     );
 
@@ -104,13 +102,12 @@ serde = "1.0"
                 None,
                 &workspace_deps
             )
-            .await
             .unwrap()
     );
 }
 
-#[tokio::test]
-async fn test_file_pattern_filter() {
+#[test]
+fn test_file_pattern_filter() {
     let temp_dir = TempDir::new().unwrap();
     let executor = RuleFilterExecutor::new(temp_dir.path().to_path_buf());
 
@@ -130,7 +127,6 @@ async fn test_file_pattern_filter() {
     assert!(
         executor
             .should_execute_rule(&filters, Path::new("src/main.rs"), None, &workspace_deps)
-            .await
             .unwrap()
     );
 
@@ -142,20 +138,18 @@ async fn test_file_pattern_filter() {
                 None,
                 &workspace_deps
             )
-            .await
             .unwrap()
     );
 
     assert!(
         !executor
             .should_execute_rule(&filters, Path::new("lib.py"), None, &workspace_deps)
-            .await
             .unwrap()
     );
 }
 
-#[tokio::test]
-async fn test_combined_filters() {
+#[test]
+fn test_combined_filters() {
     let temp_dir = TempDir::new().unwrap();
 
     let cargo_toml = temp_dir.path().join("Cargo.toml");
@@ -192,7 +186,6 @@ serde = "1.0"
                 None,
                 &workspace_deps
             )
-            .await
             .unwrap()
     );
 
@@ -204,7 +197,6 @@ serde = "1.0"
                 None,
                 &workspace_deps
             )
-            .await
             .unwrap()
     );
 
@@ -225,7 +217,6 @@ serde = "1.0"
                 None,
                 &workspace_deps
             )
-            .await
             .unwrap()
     );
 }
