@@ -12,9 +12,9 @@ use crate::filters::LanguageId;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 
+use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_file_under_root;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
@@ -284,7 +284,7 @@ impl DependencyValidator {
     /// Validate no forbidden use statements in source code
     pub fn validate_use_statements(&self) -> Result<Vec<DependencyViolation>> {
         let mut violations = Vec::new();
-        let use_pattern = Regex::new(r"use\s+(mcb_[a-z_]+)").unwrap();
+        let use_pattern = compile_regex(r"use\s+(mcb_[a-z_]+)")?;
 
         for (crate_name, allowed) in &self.allowed_deps {
             let crate_src = self

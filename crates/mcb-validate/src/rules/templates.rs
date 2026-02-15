@@ -54,28 +54,69 @@ impl TemplateEngine {
                     .await
                     .map_err(crate::ValidationError::Io)?;
 
-                let template: serde_yaml::Value =
-                    serde_yaml::from_str(&content).map_err(|e| crate::ValidationError::Parse {
-                        file: path.to_path_buf(),
-                        message: format!("Template parse error: {e}"),
-                    })?;
-
-                // Verify this is actually a template
-                if template
-                    .get("_base")
-                    .and_then(serde_yaml::Value::as_bool)
-                    .unwrap_or(false)
-                {
-                    // Use the 'name' field from template YAML if present, otherwise use filename
-                    let registry_name = template.get("name").and_then(|v| v.as_str()).map_or_else(
-                        || template_name.to_string(),
-                        std::string::ToString::to_string,
-                    );
-                    self.templates.insert(registry_name, template);
-                }
+                self.parse_and_add_template(path, &content, template_name)?;
             }
         }
 
+        Ok(())
+    }
+
+    /// Load all templates from the templates directory (Synchronous version)
+    pub fn load_templates_sync(&mut self, rules_dir: &Path) -> Result<()> {
+        let templates_dir = rules_dir.join("templates");
+
+        if !templates_dir.exists() {
+            return Ok(());
+        }
+
+        for path in collect_yaml_files(&templates_dir)? {
+            let path = path.as_path();
+
+            if path.extension().and_then(|ext| ext.to_str()) == Some("yml") {
+                let template_name =
+                    path.file_stem()
+                        .and_then(|name| name.to_str())
+                        .ok_or_else(|| {
+                            crate::ValidationError::Config(format!(
+                                "Invalid template filename: {}",
+                                path.display()
+                            ))
+                        })?;
+
+                let content = std::fs::read_to_string(path).map_err(crate::ValidationError::Io)?;
+
+                self.parse_and_add_template(path, &content, template_name)?;
+            }
+        }
+
+        Ok(())
+    }
+
+    fn parse_and_add_template(
+        &mut self,
+        path: &Path,
+        content: &str,
+        template_name: &str,
+    ) -> Result<()> {
+        let template: serde_yaml::Value =
+            serde_yaml::from_str(content).map_err(|e| crate::ValidationError::Parse {
+                file: path.to_path_buf(),
+                message: format!("Template parse error: {e}"),
+            })?;
+
+        // Verify this is actually a template
+        if template
+            .get("_base")
+            .and_then(serde_yaml::Value::as_bool)
+            .unwrap_or(false)
+        {
+            // Use the 'name' field from template YAML if present, otherwise use filename
+            let registry_name = template.get("name").and_then(|v| v.as_str()).map_or_else(
+                || template_name.to_string(),
+                std::string::ToString::to_string,
+            );
+            self.templates.insert(registry_name, template);
+        }
         Ok(())
     }
 
@@ -199,13 +240,15 @@ impl TemplateEngine {
         let mut result = input.to_string();
 
         // Find all {{variable}} patterns
-        let var_pattern = regex::Regex::new(r"\{\{(\w+)\}\}")
+        // Find all {{variable}} patterns, allowing for spaces
+        let var_pattern = regex::Regex::new(r"\{\{\s*(\w+)\s*\}\}")
             .map_err(|e| crate::ValidationError::Config(format!("Regex error: {e}")))?;
 
         for capture in var_pattern.captures_iter(input) {
             if let Some(var_name) = capture.get(1) {
+                let full_match = capture.get(0).unwrap().as_str();
                 let var_value = self.get_variable_value(variables, var_name.as_str())?;
-                result = result.replace(&format!("{{{{{}}}}}", var_name.as_str()), &var_value);
+                result = result.replace(full_match, &var_value);
             }
         }
 

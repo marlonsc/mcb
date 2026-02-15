@@ -12,9 +12,10 @@ use regex::Regex;
 
 use crate::config::TestQualityRulesConfig;
 use crate::filters::LanguageId;
+use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::traits::violation::ViolationCategory;
-use crate::{Result, Severity, ValidationConfig, ValidationError};
+use crate::{Result, Severity, ValidationConfig};
 
 crate::define_violations! {
     dynamic_severity,
@@ -143,14 +144,12 @@ impl TestQualityValidator {
         let mut violations = Vec::new();
 
         // Regex patterns
-        let _ignore_pattern = Regex::new(r"#\[ignore\]").map_err(ValidationError::InvalidRegex)?;
-        let test_pattern =
-            Regex::new(r"#\[test\]|#\[tokio::test\]").map_err(ValidationError::InvalidRegex)?;
-        let fn_pattern = Regex::new(r"fn\s+(\w+)").map_err(ValidationError::InvalidRegex)?;
-        let empty_body_pattern = Regex::new(r"\{\s*\}").map_err(ValidationError::InvalidRegex)?;
-        let stub_assert_pattern = Regex::new(r"assert!\(true\)|assert_eq!\(true,\s*true\)")
-            .map_err(ValidationError::InvalidRegex)?;
-        let _doc_comment_pattern = Regex::new(r"^\s*///").map_err(ValidationError::InvalidRegex)?;
+        let _ignore_pattern = compile_regex(r"#\[ignore\]")?;
+        let test_pattern = compile_regex(r"#\[test\]|#\[tokio::test\]")?;
+        let fn_pattern = compile_regex(r"fn\s+(\w+)")?;
+        let empty_body_pattern = compile_regex(r"\{\s*\}")?;
+        let stub_assert_pattern = compile_regex(r"assert!\(true\)|assert_eq!\(true,\s*true\)")?;
+        let _doc_comment_pattern = compile_regex(r"^\s*///")?;
 
         for_each_scan_file(
             &self.config,

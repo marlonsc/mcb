@@ -1,16 +1,15 @@
-use regex::Regex;
-
 use super::{QualityValidator, QualityViolation};
 use crate::constants::{
     PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
 };
 use crate::filters::LanguageId;
+use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
 
 /// Scans for pending task comments matching `PENDING_LABEL_*` constants.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
-    let todo_pattern = Regex::new(&format!(
+    let todo_pattern = compile_regex(&format!(
         r"(?i)({PENDING_LABEL_TODO}|{PENDING_LABEL_FIXME}|{PENDING_LABEL_XXX}|{PENDING_LABEL_HACK}):?\s*(.*)"
     ))?;
 

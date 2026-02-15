@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use crate::filters::LanguageId;
+use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
@@ -105,11 +106,11 @@ impl ConfigQualityValidator {
         let mut violations = Vec::new();
 
         // Regex patterns
-        let namespace_pattern = Regex::new(r#"namespace:\s*"([^"]+)".to_string\(\)"#).unwrap();
+        let namespace_pattern = compile_regex(r#"namespace:\s*"([^"]+)".to_string\(\)"#)?;
         let client_name_pattern =
-            Regex::new(r#"client_name:\s*Some\("([^"]+)".to_string\(\)\)"#).unwrap();
-        let header_pattern = Regex::new(r#"header:\s*"([^"]+)".to_string\(\)"#).unwrap();
-        let default_impl_pattern = Regex::new(r"impl\s+Default\s+for\s+(\w+)").unwrap();
+            compile_regex(r#"client_name:\s*Some\("([^"]+)".to_string\(\)\)"#)?;
+        let header_pattern = compile_regex(r#"header:\s*"([^"]+)".to_string\(\)"#)?;
+        let default_impl_pattern = compile_regex(r"impl\s+Default\s+for\s+(\w+)")?;
 
         for_each_scan_file(
             &self.config,

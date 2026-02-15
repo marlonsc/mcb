@@ -1,5 +1,7 @@
 //! Domain layer constants
 
+/// Embedding dimension constants for each provider and model family.
+pub mod embedding;
 /// HTTP constants
 pub mod http;
 pub mod keys;

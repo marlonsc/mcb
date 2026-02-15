@@ -154,6 +154,16 @@ impl YamlRuleLoader {
         })
     }
 
+    /// Set embedded rules for the loader.
+    pub fn set_embedded_rules(&mut self, rules: Vec<(&str, &str)>) {
+        self.embedded_rules = Some(
+            rules
+                .into_iter()
+                .map(|(path, content)| (path.to_string(), content.to_string()))
+                .collect(),
+        );
+    }
+
     /// Load all rules from embedded entries without filesystem access.
     pub fn load_embedded_rules(&mut self) -> Result<Vec<ValidatedRule>> {
         let mut rules = Vec::new();
@@ -165,6 +175,30 @@ impl YamlRuleLoader {
             for (path, content) in embedded_rules {
                 if path.ends_with(".yml") && !path.contains("/templates/") {
                     let loaded_rules = self.load_rule_from_str(Path::new(path), content)?;
+                    rules.extend(loaded_rules);
+                }
+            }
+        }
+
+        Ok(rules)
+    }
+
+    /// Synchronous variant of [`Self::load_all_rules`].
+    pub fn load_all_rules_sync(&mut self) -> Result<Vec<ValidatedRule>> {
+        let mut rules = Vec::new();
+
+        if self.embedded_rules.is_some() {
+            rules.extend(self.load_embedded_rules()?);
+        }
+
+        if self.rules_dir.exists() {
+            self.template_engine.load_templates_sync(&self.rules_dir)?;
+
+            for path in collect_yaml_files(&self.rules_dir)? {
+                if self.is_rule_file(&path) {
+                    let content =
+                        std::fs::read_to_string(&path).map_err(crate::ValidationError::Io)?;
+                    let loaded_rules = self.load_rule_from_str(&path, &content)?;
                     rules.extend(loaded_rules);
                 }
             }

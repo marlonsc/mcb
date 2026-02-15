@@ -7,9 +7,10 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
+use mcb_providers::constants::EVENTS_TOKIO_DEFAULT_CAPACITY;
+
 use crate::constants::events::{
-    DEFAULT_NATS_CLIENT_NAME, EVENT_BUS_CONNECTION_TIMEOUT_MS, EVENT_BUS_DEFAULT_CAPACITY,
-    EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
+    DEFAULT_NATS_CLIENT_NAME, EVENT_BUS_CONNECTION_TIMEOUT_MS, EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
 };
 
 // ============================================================================
@@ -116,7 +117,7 @@ impl EventBusConfig {
     pub fn tokio() -> Self {
         Self {
             provider: EventBusProvider::Tokio,
-            capacity: EVENT_BUS_DEFAULT_CAPACITY,
+            capacity: EVENTS_TOKIO_DEFAULT_CAPACITY,
             nats_url: None,
             nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_string()),
             connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
@@ -140,7 +141,7 @@ impl EventBusConfig {
     pub fn nats(url: impl Into<String>) -> Self {
         Self {
             provider: EventBusProvider::Nats,
-            capacity: EVENT_BUS_DEFAULT_CAPACITY,
+            capacity: EVENTS_TOKIO_DEFAULT_CAPACITY,
             nats_url: Some(url.into()),
             nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_string()),
             connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,

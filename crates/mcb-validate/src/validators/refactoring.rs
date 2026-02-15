@@ -12,9 +12,8 @@ use crate::filters::LanguageId;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
-use regex::Regex;
-
 use crate::config::RefactoringRulesConfig;
+use crate::pattern_registry::compile_regex;
 use crate::scan::{for_each_file_under_root, for_each_scan_file};
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
@@ -178,9 +177,9 @@ impl RefactoringValidator {
     /// Check for same type defined in multiple locations
     pub fn validate_duplicate_definitions(&self) -> Result<Vec<RefactoringViolation>> {
         let mut violations = Vec::new();
-        let definition_pattern =
-            Regex::new(r"(?:pub\s+)?(?:struct|trait|enum)\s+([A-Z][a-zA-Z0-9_]*)(?:\s*<|\s*\{|\s*;|\s*\(|\s+where)")
-                .unwrap();
+        let definition_pattern = compile_regex(
+            r"(?:pub\s+)?(?:struct|trait|enum)\s+([A-Z][a-zA-Z0-9_]*)(?:\s*<|\s*\{|\s*;|\s*\(|\s+where)",
+        )?;
 
         // Map: type_name -> Vec<file_path>
         let mut definitions: HashMap<String, Vec<PathBuf>> = HashMap::new();
@@ -472,7 +471,7 @@ impl RefactoringValidator {
     /// Check for mod declarations that reference non-existent files
     pub fn validate_mod_declarations(&self) -> Result<Vec<RefactoringViolation>> {
         let mut violations = Vec::new();
-        let mod_pattern = Regex::new(r"(?:pub\s+)?mod\s+([a-z_][a-z0-9_]*)(?:\s*;)").unwrap();
+        let mod_pattern = compile_regex(r"(?:pub\s+)?mod\s+([a-z_][a-z0-9_]*)(?:\s*;)")?;
 
         for src_dir in self.config.get_scan_dirs()? {
             if self.should_skip_crate(&src_dir) {

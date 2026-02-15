@@ -6,17 +6,17 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+use mcb_domain::constants::embedding::{
+    EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
+    EMBEDDING_DIMENSION_OLLAMA_MINILM, EMBEDDING_DIMENSION_OLLAMA_MXBAI,
+    EMBEDDING_DIMENSION_OLLAMA_NOMIC,
+};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use super::helpers::HttpEmbeddingClient;
-use crate::constants::{
-    EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
-    EMBEDDING_DIMENSION_OLLAMA_MINILM, EMBEDDING_DIMENSION_OLLAMA_MXBAI,
-    EMBEDDING_DIMENSION_OLLAMA_NOMIC,
-};
 /// Error message for request timeouts
 use crate::provider_utils::{JsonRequestParams, parse_float_array_lossy, send_json_request};
 use crate::utils::http::RequestErrorKind;

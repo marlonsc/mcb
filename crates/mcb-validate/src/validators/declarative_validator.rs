@@ -34,12 +34,14 @@ impl DeclarativeValidator {
         }
     }
 
-    fn load_embedded_rules(&self) -> Result<Vec<ValidatedRule>> {
+    fn load_rules(&self) -> Result<Vec<ValidatedRule>> {
         let variables = Self::build_substitution_variables(&self.workspace_root);
-        let embedded = EmbeddedRules::all_yaml();
-        let mut loader = YamlRuleLoader::from_embedded_with_variables(&embedded, Some(variables))?;
-        let rules = loader.load_embedded_rules()?;
-        Ok(rules)
+        let file_config = FileConfig::load(&self.workspace_root);
+        let rules_path = self.workspace_root.join(&file_config.general.rules_path);
+
+        let mut loader = YamlRuleLoader::with_variables(rules_path, Some(variables))?;
+        loader.set_embedded_rules(EmbeddedRules::all_yaml());
+        Ok(loader.load_all_rules_sync()?)
     }
 
     fn build_substitution_variables(workspace_root: &PathBuf) -> serde_yaml::Value {
@@ -47,6 +49,15 @@ impl DeclarativeValidator {
         let variables_val = serde_yaml::to_value(&file_config.rules.naming)
             .unwrap_or(serde_yaml::Value::Mapping(serde_yaml::Mapping::new()));
         let mut variables = variables_val.as_mapping().cloned().unwrap_or_default();
+
+        // Inject Clean Architecture paths
+        let ca_val = serde_yaml::to_value(&file_config.rules.clean_architecture)
+            .unwrap_or(serde_yaml::Value::Mapping(serde_yaml::Mapping::new()));
+        if let Some(ca_map) = ca_val.as_mapping() {
+            for (k, v) in ca_map {
+                variables.insert(k.clone(), v.clone());
+            }
+        }
 
         let crates = [
             "domain",
@@ -228,6 +239,16 @@ impl DeclarativeValidator {
             return Vec::new();
         }
 
+        let filter_executor =
+            crate::filters::rule_filters::RuleFilterExecutor::new(self.workspace_root.clone());
+        let workspace_deps = match filter_executor.parse_workspace_dependencies() {
+            Ok(deps) => deps,
+            Err(e) => {
+                warn!(error = %e, "Failed to parse workspace dependencies for regex rules");
+                return Vec::new();
+            }
+        };
+
         let mut violations: Vec<Box<dyn Violation>> = Vec::new();
 
         for rule in &regex_rules {
@@ -274,6 +295,16 @@ impl DeclarativeValidator {
             }
 
             for file in files {
+                // Check filters
+                if let Some(filters) = &rule.filters {
+                    let res = filter_executor
+                        .should_execute_rule(filters, file, None, &workspace_deps)
+                        .unwrap_or(false);
+                    if !res {
+                        continue;
+                    }
+                }
+
                 let content = match std::fs::read_to_string(file) {
                     Ok(c) => c,
                     Err(e) => {
@@ -345,7 +376,7 @@ impl Validator for DeclarativeValidator {
     }
 
     fn validate(&self, config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {
-        let rules = self.load_embedded_rules()?;
+        let rules = self.load_rules()?;
         let files = self.collect_files(config, Some(LanguageId::Rust));
 
         let mut violations = Vec::new();
@@ -392,24 +423,26 @@ impl DeclarativeValidator {
 
         for rule in &path_rules {
             for file in files {
-                if let Some(filters) = &rule.filters
-                    && filter_executor
+                if let Some(filters) = &rule.filters {
+                    let should_exec = filter_executor
                         .should_execute_rule(filters, file, None, &workspace_deps)
-                        .unwrap_or(false)
-                {
-                    violations.push(Box::new(PatternMatchViolation {
-                        rule_id: rule.id.clone(),
-                        file_path: file.clone(),
-                        line: 0,
-                        message: rule.message.clone().unwrap_or_else(|| {
-                            format!(
-                                "[{}] File placement violation: {}",
-                                rule.id, rule.description
-                            )
-                        }),
-                        severity: parse_severity(&rule.severity),
-                        category: parse_category(&rule.category),
-                    }));
+                        .unwrap_or(false);
+
+                    if should_exec {
+                        violations.push(Box::new(PatternMatchViolation {
+                            rule_id: rule.id.clone(),
+                            file_path: file.clone(),
+                            line: 0,
+                            message: rule.message.clone().unwrap_or_else(|| {
+                                format!(
+                                    "[{}] File placement violation: {}",
+                                    rule.id, rule.description
+                                )
+                            }),
+                            severity: parse_severity(&rule.severity),
+                            category: parse_category(&rule.category),
+                        }));
+                    }
                 }
             }
         }

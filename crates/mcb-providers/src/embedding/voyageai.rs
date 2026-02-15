@@ -6,16 +6,16 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+use mcb_domain::constants::embedding::{
+    EMBEDDING_DIMENSION_VOYAGEAI_CODE, EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
+};
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use super::helpers::{HttpEmbeddingClient, process_batch};
-use crate::constants::{
-    EMBEDDING_DIMENSION_VOYAGEAI_CODE, EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
-    VOYAGEAI_MAX_INPUT_TOKENS,
-};
+use crate::constants::VOYAGEAI_MAX_INPUT_TOKENS;
 use crate::provider_utils::{JsonRequestParams, send_json_request};
 use crate::utils::http::{RequestErrorKind, create_http_provider_config, parse_embedding_vector};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;

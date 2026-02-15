@@ -6,15 +6,15 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
+use mcb_domain::constants::embedding::{
+    EMBEDDING_DIMENSION_OPENAI_ADA, EMBEDDING_DIMENSION_OPENAI_LARGE,
+    EMBEDDING_DIMENSION_OPENAI_SMALL,
+};
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
-use crate::constants::{
-    EMBEDDING_DIMENSION_OPENAI_ADA, EMBEDDING_DIMENSION_OPENAI_LARGE,
-    EMBEDDING_DIMENSION_OPENAI_SMALL,
-};
 use crate::provider_utils::{JsonRequestParams, send_json_request};
 use crate::utils::http::RequestErrorKind;
 use crate::utils::parse_embedding_vector;

@@ -3,7 +3,7 @@
 
 [general]
 workspace_root = "."
-rules_path = "crates/mcb-validate/rules"
+rules_path = ".mcb/rules"
 project_prefix = "mcb"
 internal_dep_prefix = "mcb-"
 skip_dir_patterns = ["/fixtures/"]
@@ -15,7 +15,11 @@ enabled = true
 [rules.architecture.layer_boundaries]
 application_internal_deps = ["mcb-domain"]
 providers_internal_deps = ["mcb-domain", "mcb-application"]
-infrastructure_internal_deps = ["mcb-domain", "mcb-application", "mcb-providers"]
+infrastructure_internal_deps = [
+    "mcb-domain",
+    "mcb-application",
+    "mcb-providers",
+]
 server_internal_deps = ["mcb-domain", "mcb-application", "mcb-infrastructure"]
 
 [rules.naming]
@@ -99,7 +103,10 @@ excluded_crates = []
 [rules.quality]
 enabled = true
 max_file_lines = 800
-excluded_paths = ["mcb-providers/src/vector_store/", "mcb-providers/src/embedding/"]
+excluded_paths = [
+    "mcb-providers/src/vector_store/",
+    "mcb-providers/src/embedding/",
+]
 
 [rules.clean_architecture]
 enabled = true
@@ -125,7 +132,13 @@ server_exempt_files = ["auth.rs", "middleware.rs"]
 
 [rules.visibility]
 enabled = true
-scan_crates = ["mcb-domain", "mcb-application", "mcb-providers", "mcb-infrastructure", "mcb-server"]
+scan_crates = [
+    "mcb-domain",
+    "mcb-application",
+    "mcb-providers",
+    "mcb-infrastructure",
+    "mcb-server",
+]
 
 [rules.layer_flow]
 enabled = true
@@ -153,19 +166,19 @@ allowed_files = ["crates/mcb/src/cli/validate.rs"]
 
 [validators]
 architecture = true
-naming = true
-kiss = true
-refactoring = true
-performance = true
-patterns = true
-test_quality = true
-implementation = true
-dependency = true
-quality = true
-organization = true
 clean_architecture = true
-solid = true
+dependency = true
 documentation = true
-visibility = true
+implementation = true
+kiss = true
 layer_flow = true
+naming = true
+organization = true
+patterns = true
+performance = true
 port_adapter = true
+quality = true
+refactoring = true
+solid = true
+test_quality = true
+visibility = true

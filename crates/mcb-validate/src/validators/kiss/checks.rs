@@ -1,6 +1,6 @@
 use crate::filters::LanguageId;
-use regex::Regex;
 
+use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::thresholds::thresholds;
 use crate::{Result, Severity};
@@ -11,7 +11,7 @@ impl KissValidator {
     /// Detects structs with too many fields, excluding DI containers and config types.
     pub fn validate_struct_fields(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let struct_pattern = match Regex::new(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{") {
+        let struct_pattern = match compile_regex(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{") {
             Ok(regex) => regex,
             Err(_) => return Ok(violations),
         };
@@ -92,7 +92,7 @@ impl KissValidator {
     /// Detects functions with too many parameters.
     pub fn validate_function_params(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let fn_pattern = match Regex::new(
+        let fn_pattern = match compile_regex(
             r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*(?:<[^>]*>)?\s*\(([^)]*)\)",
         ) {
             Ok(regex) => regex,
@@ -179,11 +179,11 @@ impl KissValidator {
     pub fn validate_builder_complexity(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let builder_pattern =
-            match Regex::new(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*Builder)\s*") {
+            match compile_regex(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*Builder)\s*") {
                 Ok(regex) => regex,
                 Err(_) => return Ok(violations),
             };
-        let option_pattern = match Regex::new(r"Option<") {
+        let option_pattern = match compile_regex(r"Option<") {
             Ok(regex) => regex,
             Err(_) => return Ok(violations),
         };
@@ -229,7 +229,7 @@ impl KissValidator {
     /// Detects code blocks with excessive nesting depth.
     pub fn validate_nesting_depth(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let control_flow_pattern = match Regex::new(r"\b(if|match|for|while|loop)\b") {
+        let control_flow_pattern = match compile_regex(r"\b(if|match|for|while|loop)\b") {
             Ok(regex) => regex,
             Err(_) => return Ok(violations),
         };
@@ -311,7 +311,7 @@ impl KissValidator {
     /// Detects functions that exceed the maximum allowed line count.
     pub fn validate_function_length(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let fn_pattern = match Regex::new(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)") {
+        let fn_pattern = match compile_regex(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)") {
             Ok(regex) => regex,
             Err(_) => return Ok(violations),
         };

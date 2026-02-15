@@ -7,12 +7,31 @@
 
 use crate::filters::LanguageId;
 use std::path::PathBuf;
+use std::sync::OnceLock;
 
 use regex::Regex;
 
+use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_crate_file;
 use crate::traits::violation::{Violation, ViolationCategory};
-use crate::{Result, Severity, ValidationConfig, ValidationError};
+use crate::{Result, Severity, ValidationConfig};
+
+static DOC_COMMENT_PATTERN: OnceLock<Regex> = OnceLock::new();
+static DOC_COMMENT_CAPTURE_PATTERN: OnceLock<Regex> = OnceLock::new();
+static ATTR_PATTERN: OnceLock<Regex> = OnceLock::new();
+
+fn doc_comment_pattern() -> &'static Regex {
+    DOC_COMMENT_PATTERN.get_or_init(|| compile_regex(r"^\s*///").expect("valid regex literal"))
+}
+
+fn doc_comment_capture_pattern() -> &'static Regex {
+    DOC_COMMENT_CAPTURE_PATTERN
+        .get_or_init(|| compile_regex(r"^\s*///(.*)").expect("valid regex literal"))
+}
+
+fn attr_pattern() -> &'static Regex {
+    ATTR_PATTERN.get_or_init(|| compile_regex(r"^\s*#\[").expect("valid regex literal"))
+}
 
 crate::define_violations! {
     dynamic_severity,
@@ -98,7 +117,7 @@ impl DocumentationValidator {
     /// Verify module-level documentation exists
     pub fn validate_module_docs(&self) -> Result<Vec<DocumentationViolation>> {
         let mut violations = Vec::new();
-        let module_doc_pattern = Regex::new(r"^//!").map_err(ValidationError::InvalidRegex)?;
+        let module_doc_pattern = compile_regex(r"^//!")?;
 
         for_each_crate_file(
             &self.config,
@@ -139,16 +158,11 @@ impl DocumentationValidator {
         let mut violations = Vec::new();
 
         // Patterns for public items
-        let pub_struct_pattern = Regex::new(r"pub\s+struct\s+([A-Z][a-zA-Z0-9_]*)")
-            .map_err(ValidationError::InvalidRegex)?;
-        let pub_enum_pattern = Regex::new(r"pub\s+enum\s+([A-Z][a-zA-Z0-9_]*)")
-            .map_err(ValidationError::InvalidRegex)?;
-        let pub_trait_pattern = Regex::new(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)")
-            .map_err(ValidationError::InvalidRegex)?;
-        let pub_fn_pattern = Regex::new(r"pub\s+(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)")
-            .map_err(ValidationError::InvalidRegex)?;
-        let _doc_comment_pattern = Regex::new(r"^\s*///").map_err(ValidationError::InvalidRegex)?;
-        let example_pattern = Regex::new(r"#\s*Example").unwrap();
+        let pub_struct_pattern = compile_regex(r"pub\s+struct\s+([A-Z][a-zA-Z0-9_]*)")?;
+        let pub_enum_pattern = compile_regex(r"pub\s+enum\s+([A-Z][a-zA-Z0-9_]*)")?;
+        let pub_trait_pattern = compile_regex(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)")?;
+        let pub_fn_pattern = compile_regex(r"pub\s+(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)")?;
+        let example_pattern = compile_regex(r"#\s*Example")?;
 
         for_each_crate_file(
             &self.config,
@@ -256,9 +270,6 @@ impl DocumentationValidator {
     /// Looks backwards from the item line to find a `///` doc comment,
     /// skipping attributes and empty lines.
     fn has_doc_comment(&self, lines: &[&str], item_line: usize) -> bool {
-        let doc_pattern = Regex::new(r"^\s*///").unwrap();
-        let attr_pattern = Regex::new(r"^\s*#\[").unwrap();
-
         if item_line == 0 {
             return false;
         }
@@ -278,7 +289,7 @@ impl DocumentationValidator {
             }
 
             // Skip attributes
-            if attr_pattern.is_match(lines[i]) {
+            if attr_pattern().is_match(lines[i]) {
                 if i == 0 {
                     return false;
                 }
@@ -287,7 +298,7 @@ impl DocumentationValidator {
             }
 
             // Check for doc comment
-            return doc_pattern.is_match(lines[i]);
+            return doc_comment_pattern().is_match(lines[i]);
         }
     }
 
@@ -296,9 +307,6 @@ impl DocumentationValidator {
     /// Collects all consecutive `///` lines above the item, skipping attributes,
     /// and returns them as a single string for analysis.
     fn get_doc_comment_section(&self, lines: &[&str], item_line: usize) -> String {
-        let doc_pattern = Regex::new(r"^\s*///(.*)").unwrap();
-        let attr_pattern = Regex::new(r"^\s*#\[").unwrap();
-
         if item_line == 0 {
             return String::new();
         }
@@ -310,7 +318,7 @@ impl DocumentationValidator {
             let line = lines[i];
 
             // Skip attributes
-            if attr_pattern.is_match(line) {
+            if attr_pattern().is_match(line) {
                 if i == 0 {
                     break;
                 }
@@ -319,7 +327,7 @@ impl DocumentationValidator {
             }
 
             // Collect doc comment
-            if let Some(cap) = doc_pattern.captures(line) {
+            if let Some(cap) = doc_comment_capture_pattern().captures(line) {
                 let content = cap.get(1).map_or("", |m| m.as_str());
                 doc_lines.push(content);
             } else if !line.trim().is_empty() {

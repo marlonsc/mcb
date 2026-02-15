@@ -15,6 +15,7 @@ use super::language_detector::LanguageDetector;
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ApplicabilityFilter {
     /// Glob patterns matching file names or paths.
+    #[serde(alias = "files")]
     pub file_patterns: Option<Vec<String>>,
     /// Glob patterns matching directory names or paths.
     pub directory_patterns: Option<Vec<String>>,
@@ -144,6 +145,72 @@ impl RuleFilterExecutor {
                 // This covers cases where patterns might be absolute or files outside workspace
                 if rel_path == file_path || !self.file_matcher.matches_any(file_path, patterns) {
                     return Ok(false);
+                }
+            }
+
+            // Check skip filter (highest precedence for exclusion)
+            if let Some(skip) = &filters.skip {
+                if let Some(patterns) = &skip.file_patterns {
+                    let rel_path = file_path
+                        .strip_prefix(&self.workspace_root)
+                        .unwrap_or(file_path);
+                    if self.file_matcher.matches_any(rel_path, patterns)
+                        || (rel_path != file_path
+                            && self.file_matcher.matches_any(file_path, patterns))
+                    {
+                        return Ok(false);
+                    }
+                }
+                if let Some(patterns) = &skip.directory_patterns {
+                    // Directory matching logic could be added here if needed,
+                    // but file_matcher matches against path strings anyway
+                    let rel_path = file_path
+                        .strip_prefix(&self.workspace_root)
+                        .unwrap_or(file_path);
+                    if self.file_matcher.matches_any(rel_path, patterns) {
+                        return Ok(false);
+                    }
+                }
+            }
+
+            // Check deny filter
+            if let Some(deny) = &filters.deny {
+                let mut denied = false;
+                if let Some(patterns) = &deny.file_patterns {
+                    let rel_path = file_path
+                        .strip_prefix(&self.workspace_root)
+                        .unwrap_or(file_path);
+                    if self.file_matcher.matches_any(rel_path, patterns)
+                        || (rel_path != file_path
+                            && self.file_matcher.matches_any(file_path, patterns))
+                    {
+                        denied = true;
+                    }
+                }
+
+                if denied {
+                    // Check allow filter (overrides deny)
+                    let allowed = if let Some(allow) = &filters.allow {
+                        let mut is_allowed = false;
+                        if let Some(patterns) = &allow.file_patterns {
+                            let rel_path = file_path
+                                .strip_prefix(&self.workspace_root)
+                                .unwrap_or(file_path);
+                            if self.file_matcher.matches_any(rel_path, patterns)
+                                || (rel_path != file_path
+                                    && self.file_matcher.matches_any(file_path, patterns))
+                            {
+                                is_allowed = true;
+                            }
+                        }
+                        is_allowed
+                    } else {
+                        false
+                    };
+
+                    if !allowed {
+                        return Ok(false);
+                    }
                 }
             }
         }

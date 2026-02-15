@@ -187,10 +187,17 @@ pub struct ValidationConfig {
 }
 
 impl ValidationConfig {
-    /// Create a new validation config for the given workspace root
+    /// Create a new validation config for the given workspace root.
+    ///
+    /// The workspace root is canonicalized so that all downstream path
+    /// comparisons (inventory `starts_with`, `strip_prefix`, etc.) work
+    /// correctly on platforms where temp-dir symlinks differ from the
+    /// canonical form (macOS `/tmp` → `/private/tmp`, Windows `\\?\`).
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
+        let raw: PathBuf = workspace_root.into();
+        let canonical = std::fs::canonicalize(&raw).unwrap_or(raw);
         Self {
-            workspace_root: workspace_root.into(),
+            workspace_root: canonical,
             additional_src_paths: Vec::new(),
             exclude_patterns: Vec::new(),
         }

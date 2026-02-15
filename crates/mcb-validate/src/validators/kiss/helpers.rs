@@ -1,13 +1,14 @@
 use regex::Regex;
 
 use super::KissValidator;
+use crate::pattern_registry::compile_regex;
 
 impl KissValidator {
     pub(super) fn count_struct_fields(&self, lines: &[&str], start_line: usize) -> usize {
         let mut brace_depth = 0;
         let mut in_struct = false;
         let mut field_count = 0;
-        let field_pattern = match Regex::new(r"^\s*(?:pub\s+)?[a-z_][a-z0-9_]*\s*:") {
+        let field_pattern = match compile_regex(r"^\s*(?:pub\s+)?[a-z_][a-z0-9_]*\s*:") {
             Ok(regex) => regex,
             Err(_) => return 0,
         };

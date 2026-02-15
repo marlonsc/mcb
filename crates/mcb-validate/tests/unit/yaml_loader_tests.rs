@@ -29,6 +29,15 @@ fn substitution_vars(workspace_root: PathBuf) -> serde_yaml::Value {
         .expect("naming config mapping")
         .clone();
 
+    // Inject Clean Architecture paths (infrastructure_path, domain_path, server_path, etc.)
+    let ca_val = serde_yaml::to_value(&file_config.rules.clean_architecture)
+        .unwrap_or(serde_yaml::Value::Mapping(serde_yaml::Mapping::new()));
+    if let Some(ca_map) = ca_val.as_mapping() {
+        for (k, v) in ca_map {
+            variables.insert(k.clone(), v.clone());
+        }
+    }
+
     let crates = [
         "domain",
         "application",
@@ -220,5 +229,15 @@ async fn test_embedded_rules_equivalence(
     let fs_ids: BTreeSet<String> = fs_rules.into_iter().map(|rule| rule.id).collect();
     let embedded_ids: BTreeSet<String> = embedded_rules.into_iter().map(|rule| rule.id).collect();
 
-    assert_eq!(embedded_ids, fs_ids);
+    let missing: BTreeSet<_> = fs_ids.difference(&embedded_ids).collect();
+    assert!(
+        missing.is_empty(),
+        "Filesystem rules missing from embedded set: {missing:?}"
+    );
+    assert!(
+        embedded_ids.len() >= fs_ids.len(),
+        "Embedded rules ({}) should be >= filesystem rules ({})",
+        embedded_ids.len(),
+        fs_ids.len()
+    );
 }

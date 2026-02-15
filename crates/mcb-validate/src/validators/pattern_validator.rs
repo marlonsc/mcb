@@ -23,6 +23,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
 
 use crate::config::PatternRulesConfig;
+use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
@@ -305,9 +306,8 @@ impl PatternValidator {
 
         // Pattern to find Arc<SomeConcreteType> where SomeConcreteType doesn't start with "dyn"
         // Pattern to find Arc<SomeConcreteType> where SomeConcreteType doesn't start with "dyn"
-        let arc_pattern = Regex::new(&self.rules.arc_pattern)
-            .or_else(|_| Regex::new(r"Arc<([A-Z][a-zA-Z0-9_]*)>"))
-            .map_err(crate::ValidationError::InvalidRegex)?;
+        let arc_pattern = compile_regex(&self.rules.arc_pattern)
+            .or_else(|_| compile_regex(r"Arc<([A-Z][a-zA-Z0-9_]*)>"))?;
 
         // Known concrete types that are OK to use directly
         let allowed_concrete = &self.rules.allowed_concrete_types;
