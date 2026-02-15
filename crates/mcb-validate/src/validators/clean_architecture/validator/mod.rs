@@ -55,7 +55,7 @@ impl crate::traits::validator::Validator for CleanArchitectureValidator {
         "Validates Clean Architecture compliance: layer boundaries, DI patterns, entity identity, value object immutability (Delegated to DeclarativeValidator)"
     }
 
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
+    fn validate(&self, _config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
         Ok(Vec::new())
     }
 }

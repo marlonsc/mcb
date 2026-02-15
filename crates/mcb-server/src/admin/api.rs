@@ -25,7 +25,39 @@ use rocket::config::{Config as RocketConfig, LogLevel};
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::BrowseState;
 use super::handlers::AdminState;
-use super::routes::admin_rocket;
+
+fn load_current_config() -> mcb_infrastructure::config::AppConfig {
+    ConfigLoader::new()
+        .load()
+        .unwrap_or_else(|e| panic!("Failed to load config: {e}"))
+}
+
+fn build_admin_state(
+    metrics: Arc<dyn PerformanceMetricsInterface>,
+    indexing: Arc<dyn IndexingOperationsInterface>,
+    event_bus: Arc<dyn EventBusProvider>,
+    config_watcher: Option<Arc<ConfigWatcher>>,
+    config_path: Option<PathBuf>,
+) -> AdminState {
+    AdminState {
+        metrics,
+        indexing,
+        config_watcher,
+        current_config: load_current_config(),
+        config_path,
+        shutdown_coordinator: None,
+        shutdown_timeout_secs: 30,
+        event_bus,
+        service_manager: None,
+        cache: None,
+        project_workflow: None,
+        vcs_entity: None,
+        plan_entity: None,
+        issue_entity: None,
+        org_entity: None,
+        tool_handlers: None,
+    }
+}
 
 /// Admin API server configuration
 #[derive(Debug, Clone)]
@@ -77,10 +109,10 @@ impl AdminApiConfig {
 
 /// Admin API server
 pub struct AdminApi {
-    config: AdminApiConfig,
-    state: AdminState,
-    auth_config: Arc<AdminAuthConfig>,
-    browse_state: Option<BrowseState>,
+    pub(super) config: AdminApiConfig,
+    pub(super) state: AdminState,
+    pub(super) auth_config: Arc<AdminAuthConfig>,
+    pub(super) browse_state: Option<BrowseState>,
 }
 
 impl AdminApi {
@@ -93,26 +125,7 @@ impl AdminApi {
     ) -> Self {
         Self {
             config,
-            state: AdminState {
-                metrics,
-                indexing,
-                config_watcher: None,
-                current_config: mcb_infrastructure::config::ConfigLoader::new()
-                    .load()
-                    .unwrap_or_else(|e| panic!("Failed to load config: {e}")),
-                config_path: None,
-                shutdown_coordinator: None,
-                shutdown_timeout_secs: 30,
-                event_bus,
-                service_manager: None,
-                cache: None,
-                project_workflow: None,
-                vcs_entity: None,
-                plan_entity: None,
-                issue_entity: None,
-                org_entity: None,
-                tool_handlers: None,
-            },
+            state: build_admin_state(metrics, indexing, event_bus, None, None),
             auth_config: Arc::new(AdminAuthConfig::default()),
             browse_state: None,
         }
@@ -128,26 +141,7 @@ impl AdminApi {
     ) -> Self {
         Self {
             config,
-            state: AdminState {
-                metrics,
-                indexing,
-                config_watcher: None,
-                current_config: mcb_infrastructure::config::ConfigLoader::new()
-                    .load()
-                    .unwrap_or_else(|e| panic!("Failed to load config: {e}")),
-                config_path: None,
-                shutdown_coordinator: None,
-                shutdown_timeout_secs: 30,
-                event_bus,
-                service_manager: None,
-                cache: None,
-                project_workflow: None,
-                vcs_entity: None,
-                plan_entity: None,
-                issue_entity: None,
-                org_entity: None,
-                tool_handlers: None,
-            },
+            state: build_admin_state(metrics, indexing, event_bus, None, None),
             auth_config: Arc::new(auth_config),
             browse_state: None,
         }
@@ -165,26 +159,13 @@ impl AdminApi {
     ) -> Self {
         Self {
             config,
-            state: AdminState {
+            state: build_admin_state(
                 metrics,
                 indexing,
-                config_watcher: Some(config_watcher),
-                current_config: mcb_infrastructure::config::ConfigLoader::new()
-                    .load()
-                    .unwrap_or_else(|e| panic!("Failed to load config: {e}")),
-                config_path: Some(config_path),
-                shutdown_coordinator: None,
-                shutdown_timeout_secs: 30,
                 event_bus,
-                service_manager: None,
-                cache: None,
-                project_workflow: None,
-                vcs_entity: None,
-                plan_entity: None,
-                issue_entity: None,
-                org_entity: None,
-                tool_handlers: None,
-            },
+                Some(config_watcher),
+                Some(config_path),
+            ),
             auth_config: Arc::new(auth_config),
             browse_state: None,
         }
@@ -197,73 +178,5 @@ impl AdminApi {
     pub fn with_browse_state(mut self, browse_state: BrowseState) -> Self {
         self.browse_state = Some(browse_state);
         self
-    }
-
-    /// Start the admin API server
-    ///
-    /// Returns a handle that can be used to gracefully shutdown the server.
-    pub async fn start(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let rocket_config = self.config.rocket_config();
-
-        tracing::info!(
-            "Admin API server listening on {}:{}",
-            rocket_config.address,
-            rocket_config.port
-        );
-
-        let rocket =
-            admin_rocket(self.state, self.auth_config, self.browse_state).configure(rocket_config);
-
-        rocket.launch().await.map_err(|e| {
-            Box::new(std::io::Error::other(format!(
-                "Rocket launch failed: {}",
-                e
-            ))) as Box<dyn std::error::Error + Send + Sync>
-        })?;
-
-        Ok(())
-    }
-
-    /// Start the admin API server with graceful shutdown
-    ///
-    /// Note: Rocket handles graceful shutdown internally via Ctrl+C or SIGTERM.
-    pub async fn start_with_shutdown(
-        self,
-        shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let rocket_config = self.config.rocket_config();
-
-        tracing::info!(
-            "Admin API server listening on {}:{}",
-            rocket_config.address,
-            rocket_config.port
-        );
-
-        let rocket = admin_rocket(self.state, self.auth_config, self.browse_state)
-            .configure(rocket_config)
-            .ignite()
-            .await
-            .map_err(|e| {
-                Box::new(std::io::Error::other(format!(
-                    "Rocket ignite failed: {}",
-                    e
-                ))) as Box<dyn std::error::Error + Send + Sync>
-            })?;
-
-        // Spawn a task to handle the external shutdown signal
-        let shutdown_handle = rocket.shutdown();
-        tokio::spawn(async move {
-            shutdown_signal.await;
-            shutdown_handle.notify();
-        });
-
-        rocket.launch().await.map_err(|e| {
-            Box::new(std::io::Error::other(format!(
-                "Rocket launch failed: {}",
-                e
-            ))) as Box<dyn std::error::Error + Send + Sync>
-        })?;
-
-        Ok(())
     }
 }

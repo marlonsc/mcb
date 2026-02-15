@@ -13,7 +13,7 @@ use crate::scan::for_each_scan_file;
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
 
-crate::define_violations! {
+define_violations! {
     dynamic_severity,
     ViolationCategory::ErrorBoundary,
     pub enum ErrorBoundaryViolation {

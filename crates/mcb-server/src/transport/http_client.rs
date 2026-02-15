@@ -54,6 +54,8 @@ impl HttpClientTransport {
         session_id_override: Option<String>,
         session_file_override: Option<String>,
     ) -> Result<Self, Box<dyn std::error::Error>> {
+        Self::require_secure_transport(&server_url)?;
+
         let public_session_id = Self::generate_session_id(session_prefix.clone());
         Self::initialize_session_state(session_prefix, session_id_override, session_file_override)?;
 
@@ -112,6 +114,42 @@ impl HttpClientTransport {
             Some(prefix) => format!("{}_{}", prefix, Uuid::new_v4()),
             None => Uuid::new_v4().to_string(),
         }
+    }
+
+    /// Reject cleartext HTTP for non-loopback hosts.
+    ///
+    /// HTTPS is always accepted. Plain HTTP is only permitted when the host is
+    /// a loopback address (`127.0.0.1`, `localhost`, `[::1]`), since the
+    /// traffic never leaves the local machine. Any other combination is
+    /// rejected to prevent cleartext transmission of sensitive data.
+    fn require_secure_transport(url: &str) -> Result<(), String> {
+        let lower = url.to_ascii_lowercase();
+
+        if lower.starts_with("https://") {
+            return Ok(());
+        }
+
+        if let Some(after_scheme) = lower.strip_prefix("http://") {
+            let host = if after_scheme.starts_with('[') {
+                match after_scheme.find(']') {
+                    Some(end) => &after_scheme[..=end],
+                    None => after_scheme,
+                }
+            } else {
+                after_scheme.split([':', '/']).next().unwrap_or("")
+            };
+
+            return match host {
+                "127.0.0.1" | "localhost" | "[::1]" => Ok(()),
+                _ => Err(format!(
+                    "Cleartext HTTP is only allowed for loopback addresses \
+                     (127.0.0.1, localhost, [::1]). \
+                     Use HTTPS for remote host: {host}"
+                )),
+            };
+        }
+
+        Err(format!("Unsupported URL scheme in: {url}"))
     }
 
     fn normalize_env_value(value: impl AsRef<str>) -> Option<String> {
@@ -334,5 +372,52 @@ mod tests {
 
         assert!(!first_session.trim().is_empty());
         assert_eq!(first_session, second_session);
+    }
+
+    #[test]
+    fn secure_transport_allows_loopback_http() {
+        for url in [
+            "http://127.0.0.1:8080",
+            "http://localhost:3000",
+            "http://[::1]:9090",
+        ] {
+            assert!(
+                HttpClientTransport::require_secure_transport(url).is_ok(),
+                "should allow loopback URL: {url}"
+            );
+        }
+    }
+
+    #[test]
+    fn secure_transport_allows_https() {
+        for url in [
+            "https://api.example.com",
+            "https://10.0.0.1:443",
+            "https://remote-server:8443/path",
+        ] {
+            assert!(
+                HttpClientTransport::require_secure_transport(url).is_ok(),
+                "should allow HTTPS URL: {url}"
+            );
+        }
+    }
+
+    #[test]
+    fn secure_transport_rejects_remote_http() {
+        for url in [
+            "http://api.example.com",
+            "http://10.0.0.1:8080",
+            "http://192.168.1.1:3000",
+        ] {
+            assert!(
+                HttpClientTransport::require_secure_transport(url).is_err(),
+                "should reject remote HTTP URL: {url}"
+            );
+        }
+    }
+
+    #[test]
+    fn secure_transport_rejects_unknown_scheme() {
+        assert!(HttpClientTransport::require_secure_transport("ftp://files.example.com").is_err());
     }
 }

@@ -5,12 +5,12 @@ fn format_error(label: &str, detail: impl std::fmt::Display) -> String {
 }
 
 fn log_and_format_error(log: &str, label: &str, detail: impl std::fmt::Display) -> String {
-    tracing::error!("{log}");
+    tracing::error!(category = label, detail = %detail, "{log}");
     format_error(label, detail)
 }
 
 fn log_and_static_error(log: &str, message: &str) -> String {
-    tracing::error!("{log}");
+    tracing::error!(detail = message, "{log}");
     message.to_string()
 }
 

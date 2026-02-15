@@ -17,7 +17,7 @@ use crate::scan::for_each_scan_file;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
 
-crate::define_violations! {
+define_violations! {
     dynamic_severity,
     ViolationCategory::Testing,
     pub enum TestQualityViolation {
@@ -108,7 +108,7 @@ impl crate::traits::validator::Validator for TestQualityValidator {
     fn validate(
         &self,
         _config: &crate::ValidationConfig,
-    ) -> anyhow::Result<Vec<Box<dyn crate::traits::violation::Violation>>> {
+    ) -> crate::Result<Vec<Box<dyn crate::traits::violation::Violation>>> {
         let violations = self.validate()?;
         Ok(violations
             .into_iter()

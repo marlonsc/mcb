@@ -3,10 +3,11 @@
 //! Provides template inheritance and variable substitution for DRY rule definitions.
 
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use serde_yaml;
 
+use super::utils::collect_yaml_files;
 use crate::Result;
 
 /// Template engine for YAML rules with inheritance and substitution
@@ -289,28 +290,4 @@ impl TemplateEngine {
     pub fn has_template(&self, name: &str) -> bool {
         self.templates.contains_key(name)
     }
-}
-
-fn collect_yaml_files(root: &Path) -> Result<Vec<PathBuf>> {
-    let mut files = Vec::new();
-    let mut stack = vec![root.to_path_buf()];
-
-    while let Some(dir) = stack.pop() {
-        for entry in std::fs::read_dir(&dir).map_err(crate::ValidationError::Io)? {
-            let entry = entry.map_err(crate::ValidationError::Io)?;
-            let path = entry.path();
-            let file_type = entry.file_type().map_err(crate::ValidationError::Io)?;
-
-            if file_type.is_dir() {
-                stack.push(path);
-                continue;
-            }
-
-            if file_type.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some("yml") {
-                files.push(path);
-            }
-        }
-    }
-
-    Ok(files)
 }

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use crate::Severity;
 use crate::traits::violation::ViolationCategory;
 
-crate::define_violations! {
+define_violations! {
     ViolationCategory::Organization,
     pub enum OrganizationViolation {
         /// Indicates a magic number usage that should be replaced with a named constant.
@@ -178,8 +178,8 @@ crate::define_violations! {
             severity: Severity,
             // no file/line mapping in macro for vectors of tuples easily,
             // but we can rely on manual or default implementation if macro supports it.
-            // Actually, crate::define_violations! automatically implements `file()` and `line()` via helpers.
-            // The helpers `crate::define_violations!(@get_file ...)` check for `file: PathBuf`.
+            // Actually, define_violations! automatically implements `file()` and `line()` via helpers.
+            // The helpers `define_violations!(@get_file ...)` check for `file: PathBuf`.
             // DualLayerDefinition has no `file` field, so it will return None. Correct.
         },
 

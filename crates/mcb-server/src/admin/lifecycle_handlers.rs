@@ -16,52 +16,52 @@
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get, post};
-use serde::Serialize;
 use serde_json::json;
-use serde_with::skip_serializing_none;
 
 use super::auth::AdminAuth;
 use super::handlers::AdminState;
+pub use super::lifecycle_models::{
+    ServiceActionResponse, ServiceErrorResponse, ServiceInfoResponse, ServiceListResponse,
+    ServicesHealthResponse,
+};
 
-/// Response for service list endpoint
-#[derive(Serialize)]
-pub struct ServiceListResponse {
-    /// Number of registered services
-    pub count: usize,
-    /// List of services with their states
-    pub services: Vec<ServiceInfoResponse>,
+fn service_manager_unavailable(
+    include_list_defaults: bool,
+) -> (Status, Json<ServiceErrorResponse>) {
+    (
+        Status::ServiceUnavailable,
+        Json(ServiceErrorResponse {
+            error: "Service manager not available".to_string(),
+            service: None,
+            count: include_list_defaults.then_some(0),
+            services: include_list_defaults.then_some(vec![]),
+        }),
+    )
 }
 
-/// Individual service info in the list
-#[derive(Serialize)]
-pub struct ServiceInfoResponse {
-    /// Service name
-    pub name: String,
-    /// Current state as string
-    pub state: String,
+fn service_action_success(action: &str, name: &str) -> (Status, Json<ServiceActionResponse>) {
+    (
+        Status::Ok,
+        Json(ServiceActionResponse {
+            status: action.to_string(),
+            service: name.to_string(),
+        }),
+    )
 }
 
-/// Service error response
-#[skip_serializing_none]
-#[derive(Serialize)]
-pub struct ServiceErrorResponse {
-    /// Error message describing what went wrong
-    pub error: String,
-    /// Name of the service involved in the error (optional)
-    pub service: Option<String>,
-    /// Number of services (optional, used in list responses)
-    pub count: Option<usize>,
-    /// List of services (optional, used in list responses)
-    pub services: Option<Vec<ServiceInfoResponse>>,
-}
-
-/// Service action response
-#[derive(Serialize)]
-pub struct ServiceActionResponse {
-    /// Status of the action (e.g., "started", "stopped", "restarted")
-    pub status: String,
-    /// Name of the service that was acted upon
-    pub service: String,
+fn service_action_error(
+    name: &str,
+    error: impl std::fmt::Display,
+) -> (Status, Json<ServiceErrorResponse>) {
+    (
+        Status::BadRequest,
+        Json(ServiceErrorResponse {
+            error: error.to_string(),
+            service: Some(name.to_string()),
+            count: None,
+            services: None,
+        }),
+    )
 }
 
 /// List all registered services and their states (protected)
@@ -78,15 +78,7 @@ pub fn list_services(
 ) -> Result<Json<ServiceListResponse>, (Status, Json<ServiceErrorResponse>)> {
     tracing::info!("list_services called");
     let Some(service_manager) = &state.service_manager else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(ServiceErrorResponse {
-                error: "Service manager not available".to_string(),
-                service: None,
-                count: Some(0),
-                services: Some(vec![]),
-            }),
-        ));
+        return Err(service_manager_unavailable(true));
     };
 
     let services: Vec<ServiceInfoResponse> = service_manager
@@ -119,34 +111,12 @@ pub async fn start_service(
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
     tracing::info!("start_service called");
     let Some(service_manager) = &state.service_manager else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(ServiceErrorResponse {
-                error: "Service manager not available".to_string(),
-                service: None,
-                count: None,
-                services: None,
-            }),
-        ));
+        return Err(service_manager_unavailable(false));
     };
 
     match service_manager.start(name).await {
-        Ok(()) => Ok((
-            Status::Ok,
-            Json(ServiceActionResponse {
-                status: "started".to_string(),
-                service: name.to_string(),
-            }),
-        )),
-        Err(e) => Err((
-            Status::BadRequest,
-            Json(ServiceErrorResponse {
-                error: e.to_string(),
-                service: Some(name.to_string()),
-                count: None,
-                services: None,
-            }),
-        )),
+        Ok(()) => Ok(service_action_success("started", name)),
+        Err(e) => Err(service_action_error(name, e)),
     }
 }
 
@@ -165,34 +135,12 @@ pub async fn stop_service(
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
     tracing::info!("stop_service called");
     let Some(service_manager) = &state.service_manager else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(ServiceErrorResponse {
-                error: "Service manager not available".to_string(),
-                service: None,
-                count: None,
-                services: None,
-            }),
-        ));
+        return Err(service_manager_unavailable(false));
     };
 
     match service_manager.stop(name).await {
-        Ok(()) => Ok((
-            Status::Ok,
-            Json(ServiceActionResponse {
-                status: "stopped".to_string(),
-                service: name.to_string(),
-            }),
-        )),
-        Err(e) => Err((
-            Status::BadRequest,
-            Json(ServiceErrorResponse {
-                error: e.to_string(),
-                service: Some(name.to_string()),
-                count: None,
-                services: None,
-            }),
-        )),
+        Ok(()) => Ok(service_action_success("stopped", name)),
+        Err(e) => Err(service_action_error(name, e)),
     }
 }
 
@@ -211,44 +159,13 @@ pub async fn restart_service(
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
     tracing::info!("restart_service called");
     let Some(service_manager) = &state.service_manager else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(ServiceErrorResponse {
-                error: "Service manager not available".to_string(),
-                service: None,
-                count: None,
-                services: None,
-            }),
-        ));
+        return Err(service_manager_unavailable(false));
     };
 
     match service_manager.restart(name).await {
-        Ok(()) => Ok((
-            Status::Ok,
-            Json(ServiceActionResponse {
-                status: "restarted".to_string(),
-                service: name.to_string(),
-            }),
-        )),
-        Err(e) => Err((
-            Status::BadRequest,
-            Json(ServiceErrorResponse {
-                error: e.to_string(),
-                service: Some(name.to_string()),
-                count: None,
-                services: None,
-            }),
-        )),
+        Ok(()) => Ok(service_action_success("restarted", name)),
+        Err(e) => Err(service_action_error(name, e)),
     }
-}
-
-/// Services health response
-#[derive(Serialize)]
-pub struct ServicesHealthResponse {
-    /// Number of services checked
-    pub count: usize,
-    /// Health check results for each service
-    pub checks: Vec<serde_json::Value>,
 }
 
 /// Get health check for all services (protected)
@@ -265,15 +182,7 @@ pub async fn services_health(
 ) -> Result<Json<ServicesHealthResponse>, (Status, Json<ServiceErrorResponse>)> {
     tracing::info!("services_health called");
     let Some(service_manager) = &state.service_manager else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(ServiceErrorResponse {
-                error: "Service manager not available".to_string(),
-                service: None,
-                count: None,
-                services: None,
-            }),
-        ));
+        return Err(service_manager_unavailable(false));
     };
 
     let checks = service_manager.health_check_all().await;

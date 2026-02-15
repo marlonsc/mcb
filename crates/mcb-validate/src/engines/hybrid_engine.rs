@@ -413,7 +413,11 @@ impl Clone for HybridRuleEngine {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```rust,no_run
+/// use async_trait::async_trait;
+/// use mcb_validate::engines::hybrid_engine::{RuleEngine, RuleContext, RuleViolation};
+/// use mcb_validate::Result;
+///
 /// struct MyRuleEngine;
 ///
 /// #[async_trait]
@@ -423,7 +427,6 @@ impl Clone for HybridRuleEngine {
 ///         rule_definition: &serde_json::Value,
 ///         context: &RuleContext,
 ///     ) -> Result<Vec<RuleViolation>> {
-///         // Implementation logic
 ///         Ok(vec![])
 ///     }
 /// }

@@ -6,6 +6,9 @@ use mcb_domain::error::Error;
 use mcb_domain::ports::providers::{
     ComplexityAnalyzer, ComplexityFinding, DeadCodeDetector, DeadCodeFinding, TdgFinding, TdgScorer,
 };
+use mcb_domain::utils::analysis::{
+    FunctionRecord, compute_complexity_score, count_symbol_occurrences, is_exempt_symbol,
+};
 use regex::Regex;
 use walkdir::WalkDir;
 
@@ -64,24 +67,7 @@ impl NativePmatAnalyzer {
         Ok(records)
     }
 
-    /// Counts occurrences of symbols across files.
-    fn all_symbol_occurrences(
-        files: &[(PathBuf, String)],
-        symbols: &[String],
-    ) -> Result<HashMap<String, usize>> {
-        let mut map = HashMap::new();
-        for symbol in symbols {
-            let escaped = regex::escape(symbol);
-            let re = Regex::new(&format!(r"\b{escaped}\b"))
-                .map_err(|e| Error::invalid_argument(format!("invalid symbol regex: {e}")))?;
-            let count = files
-                .iter()
-                .map(|(_, content)| re.find_iter(content).count())
-                .sum();
-            map.insert(symbol.clone(), count);
-        }
-        Ok(map)
-    }
+    // No longer needed: all_symbol_occurrences
 }
 
 /// Implementation of ComplexityAnalyzer.
@@ -113,7 +99,8 @@ impl DeadCodeDetector for NativePmatAnalyzer {
         let files = Self::load_rust_files(workspace_root)?;
         let functions = Self::collect_functions(&files)?;
         let names: Vec<String> = functions.iter().map(|f| f.name.clone()).collect();
-        let occurrences = Self::all_symbol_occurrences(&files, &names)?;
+        let contents: Vec<String> = files.iter().map(|(_, c)| c.clone()).collect();
+        let occurrences = count_symbol_occurrences(&contents, &names)?;
 
         let findings = functions
             .into_iter()
@@ -170,53 +157,4 @@ impl TdgScorer for NativePmatAnalyzer {
 
         Ok(findings)
     }
-}
-
-/// Record of a discovered function.
-#[derive(Debug, Clone)]
-struct FunctionRecord {
-    file: PathBuf,
-    name: String,
-    line: usize,
-    complexity: u32,
-}
-
-/// Computes cyclomatic complexity using control flow keyword counting.
-fn compute_complexity_score(content: &str, start_pos: usize) -> Result<u32> {
-    let body = extract_function_body(content, start_pos).unwrap_or_default();
-    let re = Regex::new(r"\b(if|for|while|loop|match)\b|&&|\|\|")
-        .map_err(|e| Error::invalid_argument(format!("invalid complexity regex: {e}")))?;
-    let count = re.find_iter(&body).count() as u32;
-    Ok(1 + count)
-}
-
-/// Extracts the function body by balancing braces.
-// TODO(qlty): Found 23 lines of similar code in 2 locations (mass = 109)
-fn extract_function_body(content: &str, start_pos: usize) -> Option<String> {
-    let after_start = &content[start_pos..];
-    let brace_index = after_start.find('{')?;
-    let body_start = start_pos + brace_index;
-
-    let bytes = content.as_bytes();
-    let mut depth = 0_i32;
-    let mut i = body_start;
-    while i < bytes.len() {
-        match bytes[i] {
-            b'{' => depth += 1,
-            b'}' => {
-                depth -= 1;
-                if depth == 0 {
-                    return Some(content[body_start..=i].to_string());
-                }
-            }
-            _ => {}
-        }
-        i += 1;
-    }
-    None
-}
-
-/// Checks if a symbol should be exempt from dead code detection (e.g. main, tests).
-fn is_exempt_symbol(name: &str) -> bool {
-    matches!(name, "main") || name.starts_with("test_")
 }

@@ -17,7 +17,7 @@ pub fn to_opaque_mcp_error(e: Error) -> McpError {
             McpError::invalid_params(e.to_string(), None)
         }
         _ => {
-            tracing::error!("operation failed");
+            tracing::error!(error = %e, "operation failed");
             McpError::internal_error("internal server error", None)
         }
     }
@@ -34,7 +34,7 @@ pub fn to_opaque_mcp_error(e: Error) -> McpError {
 pub fn to_contextual_tool_error(e: impl Into<Error>) -> CallToolResult {
     let error: Error = e.into();
     let message = groups::map_error_message(&error).unwrap_or_else(|| {
-        tracing::error!("unmapped error variant: {error}");
+        tracing::error!(error = %error, "unmapped error variant");
         "Internal error".to_string()
     });
     CallToolResult::error(vec![Content::text(message)])

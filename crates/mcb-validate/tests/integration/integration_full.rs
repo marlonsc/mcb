@@ -74,7 +74,8 @@ members = [
 
         let config = ValidationConfig::new(&root);
 
-        assert_eq!(config.workspace_root, root);
+        let canonical_root = std::fs::canonicalize(&root).unwrap_or(root);
+        assert_eq!(config.workspace_root, canonical_root);
         // exclude_patterns starts empty
         assert!(config.exclude_patterns.is_empty());
     }

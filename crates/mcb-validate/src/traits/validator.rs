@@ -3,12 +3,13 @@
 //! Provides a unified interface for all validators and a registry
 //! for managing and running validators.
 
-use anyhow::Result;
 use std::sync::Arc;
 
 use tracing::{info, warn};
 
+use crate::Result;
 use crate::ValidationConfig;
+use crate::ValidationError;
 use crate::filters::LanguageId;
 use crate::run_context::ValidationRunContext;
 use crate::traits::violation::Violation;
@@ -103,7 +104,7 @@ impl ValidatorRegistry {
         let context = Arc::new(ValidationRunContext::build(config)?);
         ValidationRunContext::with_active(context, || {
             let Some(active) = ValidationRunContext::active() else {
-                return Err(anyhow::anyhow!("validation run context must be active"));
+                return Err(ValidationError::ContextNotActive);
             };
             let mut all_violations = Vec::new();
 
@@ -178,16 +179,15 @@ impl ValidatorRegistry {
 
         if !unknown.is_empty() {
             let available_list = available.into_iter().collect::<Vec<_>>().join(", ");
-            return Err(anyhow::anyhow!(
-                "Unknown validator(s): {}. Available validators: {}",
-                unknown.join(", "),
-                available_list
-            ));
+            return Err(ValidationError::UnknownValidator {
+                names: unknown.join(", "),
+                available: available_list,
+            });
         }
 
         ValidationRunContext::with_active(context, || {
             let Some(active) = ValidationRunContext::active() else {
-                return Err(anyhow::anyhow!("validation run context must be active"));
+                return Err(ValidationError::ContextNotActive);
             };
             let mut all_violations = Vec::new();
 

@@ -17,6 +17,7 @@
 //! | `ValidationCompleted` | Validation operation completed |
 //! | `HealthCheckCompleted` | Health check cycle completed |
 //! | `MetricsSnapshot` | Periodic metrics snapshot |
+//! | `LogEvent` | Server log event (warn/error by default) |
 //!
 //! ## Usage
 //!
@@ -111,5 +112,6 @@ pub fn get_event_name(event: &DomainEvent) -> &'static str {
         DomainEvent::ValidationStarted { .. } => "ValidationStarted",
         DomainEvent::ValidationProgress { .. } => "ValidationProgress",
         DomainEvent::ValidationCompleted { .. } => "ValidationCompleted",
+        DomainEvent::LogEvent { .. } => "LogEvent",
     }
 }

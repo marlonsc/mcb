@@ -70,11 +70,11 @@ pub async fn run(
     server_mode: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let config = load_config(config_path)?;
-    mcb_infrastructure::logging::init_logging(config.logging.clone())?;
+    let log_receiver = mcb_infrastructure::logging::init_logging(config.logging.clone())?;
 
     if server_mode {
         // Explicit server mode via --server flag
-        run_server_mode(config, config_path.map(|p| p.to_path_buf())).await
+        run_server_mode(config, config_path.map(|p| p.to_path_buf()), log_receiver).await
     } else {
         // Check config for operating mode
         match config.mode.mode_type {
@@ -92,6 +92,7 @@ pub async fn run(
 async fn run_server_mode(
     config: AppConfig,
     config_path: Option<std::path::PathBuf>,
+    log_receiver: Option<mcb_infrastructure::logging::LogEventReceiver>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(
         transport_mode = ?config.server.transport_mode,
@@ -108,6 +109,12 @@ async fn run_server_mode(
     info!("MCP server initialized successfully");
 
     let event_bus = app_context.event_bus();
+
+    // Connect log event channel to the event bus for SSE streaming
+    if let Some(receiver) = log_receiver {
+        mcb_infrastructure::logging::spawn_log_forwarder(receiver, event_bus.clone());
+        info!("Log event forwarder connected to event bus");
+    }
 
     // Create admin state for consolidated single-port operation
     // Initialize ConfigWatcher for hot-reload support

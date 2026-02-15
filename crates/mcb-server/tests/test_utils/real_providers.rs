@@ -2,6 +2,12 @@
 //!
 //! Provides factory functions for creating real local providers (InMemory, FastEmbed, Moka)
 //! for use in tests that should verify real behavior instead of mocking.
+//!
+//! Uses a process-wide shared `AppContext` to avoid re-loading the ONNX model
+//! (~5-10s) per test.
+
+// Force linkme registration of all providers
+extern crate mcb_providers;
 
 use std::sync::Arc;
 use std::sync::OnceLock;
@@ -9,56 +15,42 @@ use std::sync::OnceLock;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 use mcb_infrastructure::config::ConfigLoader;
-use mcb_infrastructure::di::bootstrap::init_app;
+use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 
-fn unique_test_path(prefix: &str) -> std::path::PathBuf {
-    std::env::temp_dir().join(format!(
-        "{}-{}",
-        prefix,
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .expect("clock before unix epoch")
-            .as_nanos()
-    ))
-}
+/// Process-wide shared AppContext for tests that need real providers.
+///
+/// Initializes the ONNX model exactly once, then reuses across all tests.
+/// The runtime is intentionally leaked so actor tasks survive across tests.
+fn shared_app_context() -> &'static AppContext {
+    static CTX: OnceLock<AppContext> = OnceLock::new();
 
-/// Create a real EdgeVec vector store provider for testing
-///
-/// Local HNSW vector store suitable for tests that need actual vector storage and search.
-pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> {
-    let mut config = ConfigLoader::new().load().expect("load config");
-    config.providers.database.configs.insert(
-        "default".to_string(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
-            path: Some(unique_test_path("mcb-server-test-db")),
-        },
-    );
-    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-    let ctx = init_app(config).await?;
-    Ok(ctx.vector_store_handle().get())
-}
+    CTX.get_or_init(|| {
+        std::thread::spawn(|| {
+            let rt = tokio::runtime::Runtime::new().expect("create init runtime");
+            let ctx = rt.block_on(async {
+                let temp_dir = tempfile::tempdir().expect("create temp dir");
+                let temp_path = temp_dir.path().join("mcb-server-shared-test.db");
+                std::mem::forget(temp_dir);
 
-/// Create a real FastEmbed provider for testing
-///
-/// This is a real implementation that uses ONNX models for local embedding generation.
-/// Note: First call will download the model (~100MB), subsequent calls reuse cached model.
-///
-/// # Returns
-/// - `Ok(Arc<dyn EmbeddingProvider>)` - Ready-to-use FastEmbed provider
-/// - `Err` - If model initialization fails (e.g., network issues, disk space)
-pub async fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvider>> {
-    let mut config = ConfigLoader::new().load().expect("load config");
-    config.providers.database.configs.insert(
-        "default".to_string(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
-            path: Some(unique_test_path("mcb-server-test-db")),
-        },
-    );
-    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-    let ctx = init_app(config).await?;
-    Ok(ctx.embedding_handle().get())
+                let mut config = ConfigLoader::new().load().expect("load config");
+                config.providers.database.configs.insert(
+                    "default".to_string(),
+                    mcb_infrastructure::config::DatabaseConfig {
+                        provider: "sqlite".to_string(),
+                        path: Some(temp_path),
+                    },
+                );
+                config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
+                init_app(config)
+                    .await
+                    .expect("shared init_app should succeed")
+            });
+            std::mem::forget(rt);
+            ctx
+        })
+        .join()
+        .expect("init thread panicked")
+    })
 }
 
 fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
@@ -75,9 +67,19 @@ fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
         .clone()
 }
 
-/// Create a real FastEmbed provider with a specific model
+/// Get the real EdgeVec vector store provider from the shared context.
+pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> {
+    Ok(shared_app_context().vector_store_handle().get())
+}
+
+/// Get the real FastEmbed provider from the shared context.
 ///
-/// Allows testing with different embedding models.
+/// The ONNX model is loaded once on first access and reused across all tests.
+pub async fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvider>> {
+    Ok(shared_app_context().embedding_handle().get())
+}
+
+/// Get a real FastEmbed provider (model parameter is accepted for API compat).
 pub async fn create_real_embedding_provider_with_model(
     model: fastembed::EmbeddingModel,
 ) -> Result<Arc<dyn EmbeddingProvider>> {

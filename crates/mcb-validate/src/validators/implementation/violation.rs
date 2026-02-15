@@ -12,7 +12,7 @@ use std::path::PathBuf;
 use crate::Severity;
 use crate::traits::violation::{Violation, ViolationCategory};
 
-crate::define_violations! {
+define_violations! {
     dynamic_severity,
     ViolationCategory::Implementation,
     pub enum ImplementationViolation {

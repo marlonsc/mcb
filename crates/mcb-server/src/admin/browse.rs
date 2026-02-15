@@ -2,114 +2,17 @@
 //!
 //! Provides endpoints for browsing projects, repositories, plans, issues, and organizations.
 
-use rmcp::model::{CallToolRequestParams, Content};
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get};
-use serde::Serialize;
-use serde::de::DeserializeOwned;
 
 use crate::admin::auth::AdminAuth;
+use crate::admin::browse_models::{
+    IssuesBrowseResponse, OrganizationsBrowseResponse, PlansBrowseResponse, ProjectsBrowseResponse,
+    RepositoriesBrowseResponse,
+};
+use crate::admin::browse_runtime::execute_tool_json;
 use crate::admin::handlers::{AdminState, CacheErrorResponse};
-use crate::tools::{ToolExecutionContext, route_tool_call};
-
-fn extract_text_content(content: &[Content]) -> String {
-    content
-        .iter()
-        .filter_map(|entry| {
-            serde_json::to_value(entry).ok().and_then(|value| {
-                value
-                    .get("text")
-                    .and_then(|text| text.as_str())
-                    .map(str::to_string)
-            })
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
-async fn execute_tool_json<T: DeserializeOwned>(
-    state: &AdminState,
-    tool_name: &str,
-    args: serde_json::Value,
-) -> Result<T, String> {
-    let handlers = state
-        .tool_handlers
-        .as_ref()
-        .ok_or_else(|| "Unified execution handlers are not available".to_string())?;
-
-    let arguments = args
-        .as_object()
-        .cloned()
-        .ok_or_else(|| format!("{tool_name} arguments must be a JSON object"))?;
-
-    let request = CallToolRequestParams {
-        name: tool_name.to_string().into(),
-        arguments: Some(arguments),
-        task: None,
-        meta: None,
-    };
-
-    let result = route_tool_call(request, handlers, ToolExecutionContext::default())
-        .await
-        .map_err(|e| e.message.to_string())?;
-
-    let text = extract_text_content(&result.content);
-    if result.is_error.unwrap_or(false) {
-        return Err(if text.is_empty() {
-            format!("{tool_name} execution failed")
-        } else {
-            text
-        });
-    }
-
-    serde_json::from_str(&text).map_err(|e| format!("Failed to parse {tool_name} output JSON: {e}"))
-}
-
-/// Projects list response for browse entity navigation
-#[derive(Serialize)]
-pub struct ProjectsBrowseResponse {
-    /// List of projects
-    pub projects: Vec<mcb_domain::entities::project::Project>,
-    /// Total number of projects
-    pub total: usize,
-}
-
-/// Response payload for the repositories browse endpoint.
-#[derive(Serialize)]
-pub struct RepositoriesBrowseResponse {
-    /// List of repositories.
-    pub repositories: Vec<mcb_domain::entities::repository::Repository>,
-    /// Total number of repositories.
-    pub total: usize,
-}
-
-/// Response payload for the plans browse endpoint.
-#[derive(Serialize)]
-pub struct PlansBrowseResponse {
-    /// List of plans.
-    pub plans: Vec<mcb_domain::entities::plan::Plan>,
-    /// Total number of plans.
-    pub total: usize,
-}
-
-/// Response payload for the issues browse endpoint.
-#[derive(Serialize)]
-pub struct IssuesBrowseResponse {
-    /// List of issues.
-    pub issues: Vec<mcb_domain::entities::project::ProjectIssue>,
-    /// Total number of issues.
-    pub total: usize,
-}
-
-/// Response payload for the organizations browse endpoint.
-#[derive(Serialize)]
-pub struct OrganizationsBrowseResponse {
-    /// List of organizations.
-    pub organizations: Vec<mcb_domain::entities::organization::Organization>,
-    /// Total number of organizations.
-    pub total: usize,
-}
 
 /// List workflow projects for browse entity graph
 #[get("/projects")]

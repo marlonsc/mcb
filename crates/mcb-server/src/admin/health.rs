@@ -10,21 +10,10 @@ use mcb_domain::value_objects::OperationId;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get};
-use serde::Serialize;
 
 use crate::admin::auth::AdminAuth;
 use crate::admin::handlers::AdminState;
-
-/// Health check response for admin API
-#[derive(Serialize)]
-pub struct AdminHealthResponse {
-    /// Server status
-    pub status: &'static str,
-    /// Server uptime in seconds
-    pub uptime_seconds: u64,
-    /// Number of active indexing operations
-    pub active_indexing_operations: usize,
-}
+use crate::admin::models::{AdminHealthResponse, LivenessResponse, ReadinessResponse};
 
 /// Health check endpoint
 #[get("/health")]
@@ -38,15 +27,6 @@ pub fn health_check(state: &State<AdminState>) -> Json<AdminHealthResponse> {
         uptime_seconds: metrics.uptime_seconds,
         active_indexing_operations: operations.len(),
     })
-}
-
-/// Readiness response
-#[derive(Serialize)]
-pub struct ReadinessResponse {
-    /// Whether the server is ready to accept requests
-    pub ready: bool,
-    /// Server uptime in seconds
-    pub uptime_seconds: u64,
 }
 
 /// Readiness check endpoint (for k8s/docker health checks)
@@ -73,15 +53,6 @@ pub fn readiness_check(state: &State<AdminState>) -> (Status, Json<ReadinessResp
             }),
         )
     }
-}
-
-/// Liveness response
-#[derive(Serialize)]
-pub struct LivenessResponse {
-    /// Whether the server process is alive and responding
-    pub alive: bool,
-    /// Server uptime in seconds
-    pub uptime_seconds: u64,
 }
 
 /// Liveness check endpoint (for k8s/docker health checks)

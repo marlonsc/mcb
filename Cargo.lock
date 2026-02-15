@@ -3500,7 +3500,6 @@ dependencies = [
 name = "mcb-validate"
 version = "0.2.1-dev"
 dependencies = [
- "anyhow",
  "async-trait",
  "cargo_metadata",
  "chrono",

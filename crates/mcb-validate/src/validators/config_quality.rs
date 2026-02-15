@@ -16,7 +16,7 @@ use crate::scan::for_each_scan_file;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
 
-crate::define_violations! {
+define_violations! {
     dynamic_severity,
     ViolationCategory::Configuration,
     pub enum ConfigQualityViolation {

@@ -10,7 +10,7 @@ use crate::config::LayerFlowRulesConfig;
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 
-crate::define_violations! {
+define_violations! {
     ViolationCategory::Architecture,
     pub enum LayerFlowViolation {
         /// Dependency detected that violates the allowed layer flow.
@@ -168,7 +168,7 @@ impl crate::traits::validator::Validator for LayerFlowValidator {
         "Validates Clean Architecture layer dependency rules"
     }
 
-    fn validate(&self, config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
+    fn validate(&self, config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
         let violations = self.validate(config)?;
         Ok(violations
             .into_iter()

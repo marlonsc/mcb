@@ -26,7 +26,7 @@ exports/
 Thumbs.db
 
 # ---------------------------------------------------------------------------
-# AI / Agent / Planning data (never version-controlled)
+# AI / Agent — runtime data (never version-controlled)
 # ---------------------------------------------------------------------------
 context/
 docs/context/
@@ -36,26 +36,17 @@ docs/contexts/
 .beads/
 .oc-memory/
 .sisyphus/
-.aider*
 .agent/
-.codex/
-.cursor/
-# .gemini/ — UN-IGNORED: contains Gemini Code Assist config (config.yaml, styleguide.md)
-.opencode/
-.arbor/
 openspec/
 thoughts/
 oracle/
 .oracle/
 **/oracle/
 **/.oracle/
-AGENTS.md
 GEMINI.md
-arbor-graph.json
 .check_*
 .test_*
 .mcp.json
-opencode.jsonc
 
 # Session artifacts (auto-generated)
 CONTINUATION_*.md
@@ -64,6 +55,49 @@ CONTINUATION_*.md
 # GitHub AI prompts/skills (local only)
 .github/prompts/
 .github/skills/
+
+# ---------------------------------------------------------------------------
+# AI / Agent — tool-specific runtime exclusions
+# ---------------------------------------------------------------------------
+
+# Aider: ignore runtime data, keep .aider.conf.yml
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.*
+
+# Cursor: ignore runtime data, keep .cursor/rules/
+.cursor/*
+!.cursor/rules/
+
+# OpenCode: ignore runtime (node_modules, bun.lock), no config to track
+.opencode/
+
+# Codex: ignore runtime cache
+.codex/
+
+# Continue.dev: ignore runtime data, keep .continue/rules/
+.continue/*
+!.continue/rules/
+
+# Arbor: ignore cache/runtime, keep config.json
+.arbor/cache/
+arbor-graph.json
+
+# ---------------------------------------------------------------------------
+# AI / Agent — tracked config files (DO NOT add these to ignore)
+# ---------------------------------------------------------------------------
+# AGENTS.md          — agent configuration index
+# CLAUDE.md          — single source of truth
+# CONVENTIONS.md     — Aider conventions pointer
+# codex.md           — Codex pointer
+# .clinerules        — Cline pointer
+# .windsurfrules     — Windsurf pointer
+# .aider.conf.yml    — Aider config
+# .cursor/rules/     — Cursor rules
+# .continue/rules/   — Continue.dev rules
+# .gemini/           — Gemini Code Assist (config.yaml + styleguide.md)
+# .github/copilot-instructions.md — GitHub Copilot
+# .arbor/config.json — Arbor config
 
 # ---------------------------------------------------------------------------
 # Reports, analysis output, temporary scripts (NEVER commit these)

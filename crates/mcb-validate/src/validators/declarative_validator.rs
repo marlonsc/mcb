@@ -2,11 +2,11 @@
 
 use std::path::{Path, PathBuf};
 
-use anyhow::Result;
 use derive_more::Display;
 use regex::Regex;
 use tracing::warn;
 
+use crate::Result;
 use crate::ValidationConfig;
 use crate::config::FileConfig;
 use crate::embedded_rules::EmbeddedRules;
@@ -41,7 +41,7 @@ impl DeclarativeValidator {
 
         let mut loader = YamlRuleLoader::with_variables(rules_path, Some(variables))?;
         loader.set_embedded_rules(EmbeddedRules::all_yaml());
-        Ok(loader.load_all_rules_sync()?)
+        loader.load_all_rules_sync()
     }
 
     fn build_substitution_variables(workspace_root: &PathBuf) -> serde_yaml::Value {
@@ -375,7 +375,7 @@ impl Validator for DeclarativeValidator {
         true
     }
 
-    fn validate(&self, config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {
+    fn validate(&self, config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
         let rules = self.load_rules()?;
         let files = self.collect_files(config, Some(LanguageId::Rust));
 

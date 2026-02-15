@@ -16,7 +16,7 @@ use super::browse_handlers::{
     BrowseState, get_collection_tree, get_file_chunks, list_collection_files, list_collections,
 };
 use super::cache::get_cache_stats;
-use super::config_handlers::{get_config, reload_config, update_config_section};
+use super::config::handlers::{get_config, reload_config, update_config_section};
 use super::control::shutdown;
 use super::handlers::AdminState;
 use super::health::{

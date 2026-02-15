@@ -38,6 +38,7 @@ pub mod thresholds;
 pub mod traits;
 
 #[macro_use]
+/// Violation definition macros.
 pub mod violation_macro;
 
 pub mod generic_reporter;
@@ -332,6 +333,31 @@ pub enum ValidationError {
     /// Pattern not found
     #[error("Pattern not found: {0}")]
     PatternNotFound(String),
+
+    /// Validation run context must be active
+    #[error("Validation run context must be active")]
+    ContextNotActive,
+
+    /// Unknown validator name requested
+    #[error("Unknown validator(s): {names}. Available: {available}")]
+    UnknownValidator {
+        /// Validator names that were not found
+        names: String,
+        /// Available validator names
+        available: String,
+    },
+
+    /// Validator execution failed
+    #[error("Validator '{name}' failed: {message}")]
+    ValidatorFailed {
+        /// Validator name
+        name: String,
+        /// Failure description
+        message: String,
+        /// Original error
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
 }
 
 /// Severity level for violations

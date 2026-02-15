@@ -1,0 +1,19 @@
+# Aider configuration for local Ollama with Llama 3.2 3B
+# Model name matches exactly: ollama list output
+
+# Use Ollama's Llama 3.2 3B via litellm ollama_chat provider
+model: ollama_chat/hf.co/unsloth/Llama-3.2-3B-Instruct-GGUF:latest
+
+# Disable auto-commits for safety
+auto-commits: false
+
+# Don't show model warnings (Ollama models aren't in aider's known list)
+show-model-warnings: false
+
+# Don't check model settings compatibility
+check-model-accepts-settings: false
+
+# Project conventions (auto-loaded as read-only context)
+read:
+  - CONVENTIONS.md
+  - CLAUDE.md

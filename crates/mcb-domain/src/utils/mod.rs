@@ -3,6 +3,8 @@
 //! **Policy**: See [`UTILITIES_POLICY.md`](./UTILITIES_POLICY.md) for naming, strictness,
 //! and no-wrapper rules before adding code here.
 
+/// Complexity and analysis utilities.
+pub mod analysis;
 /// ID generation, deterministic correlation (UUID v5), content hashing, and masking.
 pub mod id;
 /// Canonical path utilities — strict, no fallbacks.

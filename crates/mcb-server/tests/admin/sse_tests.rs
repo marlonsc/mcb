@@ -84,6 +84,15 @@ use rstest::rstest;
     },
     "FileChangesDetected"
 )]
+#[case(
+    DomainEvent::LogEvent {
+        level: "WARN".to_string(),
+        message: "test warning".to_string(),
+        target: "mcb_server::test".to_string(),
+        timestamp: 1700000000000,
+    },
+    "LogEvent"
+)]
 #[test]
 fn test_get_event_name_variants(#[case] event: DomainEvent, #[case] expected: &str) {
     assert_eq!(get_event_name(&event), expected);

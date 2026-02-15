@@ -1,7 +1,7 @@
 use crate::{Severity, traits::violation::ViolationCategory};
 use std::path::PathBuf;
 
-crate::define_violations! {
+define_violations! {
     dynamic_severity,
     ViolationCategory::Quality,
     pub enum QualityViolation {

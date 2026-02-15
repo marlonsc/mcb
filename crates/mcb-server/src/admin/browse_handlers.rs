@@ -188,7 +188,7 @@ pub async fn get_file_chunks(
     path: std::path::PathBuf,
 ) -> Result<Json<ChunkListResponse>, (Status, Json<BrowseErrorResponse>)> {
     tracing::info!("get_file_chunks called");
-    let file_path = path.to_str().unwrap_or_default().to_string();
+    let file_path = path.to_str().unwrap_or_default().replace('\\', "/");
     let collection_id = CollectionId::from_string(name);
 
     let chunks = state

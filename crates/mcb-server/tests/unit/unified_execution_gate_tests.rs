@@ -6,7 +6,7 @@ use rstest::rstest;
 #[case("http_transport")]
 fn route_calls_are_routed_via_unified_dispatch(#[case] source_key: &str) {
     let source = match source_key {
-        "crud_adapter" => include_str!("../../src/admin/crud_adapter.rs"),
+        "crud_adapter" => include_str!("../../src/admin/crud_adapter/unified.rs"),
         "mcp_server" => include_str!("../../src/mcp_server.rs"),
         "http_transport" => include_str!("../../src/transport/http.rs"),
         _ => panic!("unknown source"),
@@ -25,7 +25,7 @@ fn admin_web_handlers_do_not_call_repositories_directly() {
 
 #[test]
 fn admin_crud_adapter_avoids_direct_repository_access() {
-    let crud_adapter = include_str!("../../src/admin/crud_adapter.rs");
+    let crud_adapter = include_str!("../../src/admin/crud_adapter/unified.rs");
     assert!(crud_adapter.contains("project_id is required for repository create"));
     assert!(crud_adapter.contains("project_id is required for repository update"));
     assert!(!crud_adapter.contains("vcs_entity_repository"));

@@ -13,7 +13,7 @@ use crate::scan::for_each_file_under_root;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, ValidationConfig};
 
-crate::define_violations! {
+define_violations! {
     ViolationCategory::Architecture,
     pub enum PortAdapterViolation {
         /// Adapter lacks a corresponding port implementation
@@ -252,7 +252,7 @@ impl crate::traits::validator::Validator for PortAdapterValidator {
     fn validate(
         &self,
         config: &ValidationConfig,
-    ) -> anyhow::Result<Vec<Box<dyn crate::traits::violation::Violation>>> {
+    ) -> crate::Result<Vec<Box<dyn crate::traits::violation::Violation>>> {
         let violations = self.validate(config)?;
         Ok(violations
             .into_iter()

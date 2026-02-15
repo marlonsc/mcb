@@ -232,25 +232,63 @@ async fn apply_schema(pool: &sqlx::SqlitePool) -> Result<()> {
         })?;
     }
 
-    verify_project_schema(pool).await?;
+    migrate_and_verify_schema(pool).await?;
     Ok(())
 }
 
-async fn verify_project_schema(pool: &sqlx::SqlitePool) -> Result<()> {
+/// Migrate missing columns via `ALTER TABLE ADD COLUMN`, then verify all
+/// tables match the expected schema.  This prevents data loss on schema
+/// evolution — without it, existing databases would be backed-up and
+/// recreated from scratch whenever a new nullable column is introduced.
+async fn migrate_and_verify_schema(pool: &sqlx::SqlitePool) -> Result<()> {
+    use mcb_domain::error::Error;
+
     let schema = ProjectSchema::definition();
-    for table_def in schema.tables {
-        let required_cols: Vec<&str> = table_def.columns.iter().map(|c| c.name.as_str()).collect();
-        verify_table_columns(pool, &table_def.name, &required_cols).await?;
+    for table_def in &schema.tables {
+        let present = get_existing_columns(pool, &table_def.name).await?;
+        if present.is_empty() {
+            return Err(Error::memory(format!(
+                "legacy/incompatible schema detected: missing table '{}'",
+                table_def.name
+            )));
+        }
+
+        for col in &table_def.columns {
+            if present.contains(&col.name) {
+                continue;
+            }
+            // Primary-key or NOT-NULL-without-default columns cannot be added
+            // via ALTER TABLE in SQLite — those indicate a fundamentally
+            // incompatible schema that requires a full recreate.
+            if col.primary_key || col.not_null {
+                return Err(Error::memory(format!(
+                    "legacy/incompatible schema detected: table '{}' missing non-nullable column '{}'",
+                    table_def.name, col.name
+                )));
+            }
+            let alter_sql = super::ddl::alter_table_add_column_sqlite(&table_def.name, col);
+            tracing::info!(
+                table = %table_def.name,
+                column = %col.name,
+                "Migrating schema: adding missing column"
+            );
+            sqlx::query(&alter_sql).execute(pool).await.map_err(|e| {
+                Error::memory_with_source(
+                    format!(
+                        "migrate schema: ALTER TABLE {} ADD COLUMN {}",
+                        table_def.name, col.name
+                    ),
+                    e,
+                )
+            })?;
+        }
     }
 
     Ok(())
 }
 
-async fn verify_table_columns(
-    pool: &sqlx::SqlitePool,
-    table: &str,
-    required: &[&str],
-) -> Result<()> {
+/// Read the set of column names currently present in a table.
+async fn get_existing_columns(pool: &sqlx::SqlitePool, table: &str) -> Result<HashSet<String>> {
     use mcb_domain::error::Error;
     use sqlx::Row;
 
@@ -260,29 +298,8 @@ async fn verify_table_columns(
         .await
         .map_err(|e| Error::memory_with_source(format!("read schema for table {table}"), e))?;
 
-    if rows.is_empty() {
-        return Err(Error::memory(format!(
-            "legacy/incompatible schema detected: missing table '{table}'"
-        )));
-    }
-
-    let present: HashSet<String> = rows
+    Ok(rows
         .iter()
         .filter_map(|row| row.try_get::<String, _>("name").ok())
-        .collect();
-
-    let missing: Vec<&str> = required
-        .iter()
-        .copied()
-        .filter(|column| !present.contains(*column))
-        .collect();
-
-    if !missing.is_empty() {
-        return Err(Error::memory(format!(
-            "legacy/incompatible schema detected: table '{table}' missing required columns [{}]",
-            missing.join(", ")
-        )));
-    }
-
-    Ok(())
+        .collect())
 }

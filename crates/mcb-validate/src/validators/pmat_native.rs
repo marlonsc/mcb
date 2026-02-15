@@ -6,61 +6,12 @@ use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, ValidationConfig};
-
-/// Result of a cyclomatic complexity analysis.
-#[derive(Debug, Clone)]
-pub struct ComplexityFinding {
-    /// Path to the file containing the function.
-    pub file: PathBuf,
-    /// Name of the function.
-    pub function: String,
-    /// Computed complexity score.
-    pub complexity: u32,
-}
-
-/// Result of a dead code analysis.
-#[derive(Debug, Clone)]
-pub struct DeadCodeFinding {
-    /// Path to the file containing the item.
-    pub file: PathBuf,
-    /// Line number where the item is defined.
-    pub line: usize,
-    /// Type of the item (e.g., "function").
-    pub item_type: String,
-    /// Name of the item.
-    pub name: String,
-}
-
-/// Result of a Technical Debt Graph (TDG) analysis.
-#[derive(Debug, Clone)]
-pub struct TdgFinding {
-    /// Path to the file.
-    pub file: PathBuf,
-    /// Computed TDG score.
-    pub score: u32,
-}
-
-/// Trait for analyzing code complexity.
-pub trait ComplexityAnalyzer: Send + Sync {
-    /// Analyzes complexity of all functions in the workspace.
-    fn analyze_complexity(
-        &self,
-        workspace_root: &Path,
-        threshold: u32,
-    ) -> Result<Vec<ComplexityFinding>>;
-}
-
-/// Trait for detecting potentially dead (unused) code.
-pub trait DeadCodeDetector: Send + Sync {
-    /// Detects functions that appear to be unused across the workspace.
-    fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<DeadCodeFinding>>;
-}
-
-/// Trait for scoring technical debt.
-pub trait TdgScorer: Send + Sync {
-    /// Computes a technical debt score for files in the workspace.
-    fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<TdgFinding>>;
-}
+use mcb_domain::ports::providers::{
+    ComplexityAnalyzer, ComplexityFinding, DeadCodeDetector, DeadCodeFinding, TdgFinding, TdgScorer,
+};
+use mcb_domain::utils::analysis::{
+    FunctionRecord, compute_complexity_score, count_symbol_occurrences, is_exempt_symbol,
+};
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct NativePmatAnalyzer;
@@ -90,7 +41,9 @@ impl NativePmatAnalyzer {
                 let name = name_match.as_str().to_string();
                 let fn_start = name_match.start();
                 let line = content[..fn_start].bytes().filter(|b| *b == b'\n').count() + 1;
-                let complexity = compute_complexity_score(content, fn_start)?;
+                // Use domain analysis util
+                let complexity = compute_complexity_score(content, fn_start)
+                    .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
                 records.push(FunctionRecord {
                     file: file.clone(),
                     name,
@@ -101,23 +54,6 @@ impl NativePmatAnalyzer {
         }
         Ok(records)
     }
-
-    fn all_symbol_occurrences(
-        files: &[(PathBuf, String)],
-        symbols: &[String],
-    ) -> Result<HashMap<String, usize>> {
-        let mut map = HashMap::new();
-        for symbol in symbols {
-            let escaped = regex::escape(symbol);
-            let re = compile_regex(&format!(r"\b{escaped}\b"))?;
-            let count = files
-                .iter()
-                .map(|(_, content)| re.find_iter(content).count())
-                .sum();
-            map.insert(symbol.clone(), count);
-        }
-        Ok(map)
-    }
 }
 
 impl ComplexityAnalyzer for NativePmatAnalyzer {
@@ -125,9 +61,11 @@ impl ComplexityAnalyzer for NativePmatAnalyzer {
         &self,
         workspace_root: &Path,
         threshold: u32,
-    ) -> Result<Vec<ComplexityFinding>> {
-        let files = Self::load_rust_files(workspace_root)?;
-        let functions = Self::collect_functions(&files)?;
+    ) -> std::result::Result<Vec<ComplexityFinding>, mcb_domain::error::Error> {
+        let files = Self::load_rust_files(workspace_root)
+            .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
+        let functions = Self::collect_functions(&files)
+            .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
         Ok(functions
             .into_iter()
             .filter(|f| f.complexity > threshold)
@@ -141,11 +79,18 @@ impl ComplexityAnalyzer for NativePmatAnalyzer {
 }
 
 impl DeadCodeDetector for NativePmatAnalyzer {
-    fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<DeadCodeFinding>> {
-        let files = Self::load_rust_files(workspace_root)?;
-        let functions = Self::collect_functions(&files)?;
+    fn detect_dead_code(
+        &self,
+        workspace_root: &Path,
+    ) -> std::result::Result<Vec<DeadCodeFinding>, mcb_domain::error::Error> {
+        let files = Self::load_rust_files(workspace_root)
+            .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
+        let functions = Self::collect_functions(&files)
+            .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
         let names: Vec<String> = functions.iter().map(|f| f.name.clone()).collect();
-        let occurrences = Self::all_symbol_occurrences(&files, &names)?;
+        let contents: Vec<String> = files.iter().map(|(_, c)| c.clone()).collect();
+        // Use domain analysis util
+        let occurrences = count_symbol_occurrences(&contents, &names)?;
 
         Ok(functions
             .into_iter()
@@ -162,9 +107,15 @@ impl DeadCodeDetector for NativePmatAnalyzer {
 }
 
 impl TdgScorer for NativePmatAnalyzer {
-    fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<TdgFinding>> {
-        let files = Self::load_rust_files(workspace_root)?;
-        let functions = Self::collect_functions(&files)?;
+    fn score_tdg(
+        &self,
+        workspace_root: &Path,
+        threshold: u32,
+    ) -> std::result::Result<Vec<TdgFinding>, mcb_domain::error::Error> {
+        let files = Self::load_rust_files(workspace_root)
+            .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
+        let functions = Self::collect_functions(&files)
+            .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
 
         let mut complexity_by_file: HashMap<PathBuf, u32> = HashMap::new();
         for function in functions {
@@ -180,7 +131,10 @@ impl TdgScorer for NativePmatAnalyzer {
 
         let mut findings = Vec::new();
         for (path, content) in files {
-            let sloc = content.lines().filter(|l| !l.trim().is_empty()).count() as u32;
+            let sloc = content
+                .lines()
+                .filter(|l: &&str| !l.trim().is_empty())
+                .count() as u32;
             let complexity = complexity_by_file.get(&path).copied().unwrap_or(1);
             let dead = dead_by_file.get(&path).copied().unwrap_or(0);
 
@@ -198,46 +152,4 @@ impl TdgScorer for NativePmatAnalyzer {
 
         Ok(findings)
     }
-}
-
-#[derive(Debug, Clone)]
-struct FunctionRecord {
-    file: PathBuf,
-    name: String,
-    line: usize,
-    complexity: u32,
-}
-
-fn compute_complexity_score(content: &str, start_pos: usize) -> Result<u32> {
-    let body = extract_function_body(content, start_pos).unwrap_or_default();
-    let re = compile_regex(r"\b(if|for|while|loop|match)\b|&&|\|\|")?;
-    Ok(1 + re.find_iter(&body).count() as u32)
-}
-
-fn extract_function_body(content: &str, start_pos: usize) -> Option<String> {
-    let after_start = &content[start_pos..];
-    let brace_index = after_start.find('{')?;
-    let body_start = start_pos + brace_index;
-    let bytes = content.as_bytes();
-
-    let mut depth = 0_i32;
-    let mut i = body_start;
-    while i < bytes.len() {
-        match bytes[i] {
-            b'{' => depth += 1,
-            b'}' => {
-                depth -= 1;
-                if depth == 0 {
-                    return Some(content[body_start..=i].to_string());
-                }
-            }
-            _ => {}
-        }
-        i += 1;
-    }
-    None
-}
-
-fn is_exempt_symbol(name: &str) -> bool {
-    matches!(name, "main") || name.starts_with("test_")
 }

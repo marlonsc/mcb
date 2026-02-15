@@ -18,12 +18,12 @@ use std::path::PathBuf;
 
 use crate::constants::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 use crate::traits::violation::{Violation, ViolationCategory};
-use crate::validators::pmat_native::{
-    ComplexityAnalyzer, DeadCodeDetector, NativePmatAnalyzer, TdgScorer,
-};
+use mcb_domain::ports::providers::{ComplexityAnalyzer, DeadCodeDetector, TdgScorer};
+
+use crate::validators::pmat_native::NativePmatAnalyzer;
 use crate::{Result, Severity, ValidationConfig};
 
-crate::define_violations! {
+define_violations! {
     dynamic_severity,
     ViolationCategory::Pmat,
     pub enum PmatViolation {
@@ -253,15 +253,11 @@ impl crate::traits::validator::Validator for PmatValidator {
         "Native PMAT-style analysis for cyclomatic complexity, dead code detection, and TDG scoring"
     }
 
-    fn validate(&self, _config: &ValidationConfig) -> anyhow::Result<Vec<Box<dyn Violation>>> {
+    fn validate(&self, _config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
         let violations = self.validate_all()?;
         Ok(violations
             .into_iter()
             .map(|v| Box::new(v) as Box<dyn Violation>)
             .collect())
-    }
-
-    fn enabled_by_default(&self) -> bool {
-        true
     }
 }

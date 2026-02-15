@@ -4,7 +4,7 @@
 //! files and extract [`Fact`]s for modules, imports, structs, and functions.
 
 use super::fact::{Fact, FactType, Location};
-use anyhow::Result;
+use crate::Result;
 use rust_code_analysis::{Node, ParserTrait, RustParser};
 use std::fs;
 use std::path::Path;

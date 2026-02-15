@@ -197,6 +197,19 @@ pub enum DomainEvent {
         /// Duration in milliseconds
         duration_ms: u64,
     },
+
+    // === Logging Events ===
+    /// Log event captured from tracing for real-time streaming via SSE
+    LogEvent {
+        /// Log level (TRACE, DEBUG, INFO, WARN, ERROR)
+        level: String,
+        /// Log message
+        message: String,
+        /// Module/target path (e.g., "mcb_server::handlers::index")
+        target: String,
+        /// Timestamp (Unix epoch milliseconds)
+        timestamp: i64,
+    },
 }
 
 /// Domain Port for Publishing System Events

@@ -33,7 +33,7 @@ fn attr_pattern() -> &'static Regex {
     ATTR_PATTERN.get_or_init(|| compile_regex(r"^\s*#\[").expect("valid regex literal"))
 }
 
-crate::define_violations! {
+define_violations! {
     dynamic_severity,
     ViolationCategory::Documentation,
     pub enum DocumentationViolation {

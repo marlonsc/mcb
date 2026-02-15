@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::Severity;
 use crate::traits::violation::ViolationCategory;
 
-crate::define_violations! {
+define_violations! {
     ViolationCategory::Testing,
     pub enum HygieneViolation {
         /// Inline test module found in src/

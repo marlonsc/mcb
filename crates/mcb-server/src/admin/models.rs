@@ -65,6 +65,35 @@ impl AdminActionResponse {
     }
 }
 
+/// Health check response for admin API.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdminHealthResponse {
+    /// Server status.
+    pub status: &'static str,
+    /// Server uptime in seconds.
+    pub uptime_seconds: u64,
+    /// Number of active indexing operations.
+    pub active_indexing_operations: usize,
+}
+
+/// Readiness probe response.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReadinessResponse {
+    /// Whether the server is ready to accept requests.
+    pub ready: bool,
+    /// Server uptime in seconds.
+    pub uptime_seconds: u64,
+}
+
+/// Liveness probe response.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LivenessResponse {
+    /// Whether the server process is alive and responding.
+    pub alive: bool,
+    /// Server uptime in seconds.
+    pub uptime_seconds: u64,
+}
+
 // ============================================================================
 // Browse API Models
 // ============================================================================
