@@ -1,12 +1,27 @@
 //! Test fixtures for mcb-server tests
 //!
 //! Provides factory functions for creating test data and temporary directories.
+//!
+//! Uses a process-wide shared `AppContext` to avoid re-loading the ONNX model
+//! (~5-10s) per test.  Each call to [`create_test_mcp_server`] gets an isolated
+//! SQLite database backed by its own `TempDir`.
 
 use std::path::{Path, PathBuf};
+use std::sync::{Arc, OnceLock};
 
+use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_domain::ports::services::IndexingResult;
+use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
 use mcb_infrastructure::config::ConfigLoader;
-use mcb_infrastructure::di::bootstrap::init_app;
+use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
+use mcb_infrastructure::di::modules::domain_services::{
+    DomainServicesFactory, ServiceDependencies,
+};
+use mcb_providers::database::{
+    SqliteFileHashConfig, SqliteFileHashRepository, SqliteIssueEntityRepository,
+    SqliteMemoryRepository, SqliteOrgEntityRepository, SqlitePlanEntityRepository,
+    SqliteProjectRepository, SqliteVcsEntityRepository, create_agent_repository_from_executor,
+};
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use tempfile::TempDir;
@@ -136,33 +151,135 @@ pub fn create_test_indexing_result(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Shared AppContext (process-wide, ONNX model loaded once)
+// ---------------------------------------------------------------------------
+
+/// Process-wide shared `AppContext`.
+///
+/// Loads the ONNX embedding model exactly once and reuses it across all tests.
+/// The Tokio runtime is intentionally leaked so background tasks (event bus,
+/// etc.) survive for the process lifetime.
+fn shared_app_context() -> &'static AppContext {
+    static CTX: OnceLock<AppContext> = OnceLock::new();
+
+    CTX.get_or_init(|| {
+        std::thread::spawn(|| {
+            let rt = tokio::runtime::Runtime::new().expect("create init runtime");
+            let ctx = rt.block_on(async {
+                let temp_dir = tempfile::tempdir().expect("create temp dir");
+                let temp_path = temp_dir.path().join("mcb-fixtures-shared.db");
+                std::mem::forget(temp_dir);
+
+                let mut config = ConfigLoader::new().load().expect("load config");
+                config.providers.database.configs.insert(
+                    "default".to_string(),
+                    mcb_infrastructure::config::DatabaseConfig {
+                        provider: "sqlite".to_string(),
+                        path: Some(temp_path),
+                    },
+                );
+                config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
+                init_app(config)
+                    .await
+                    .expect("shared init_app should succeed")
+            });
+            std::mem::forget(rt);
+            ctx
+        })
+        .join()
+        .expect("init thread panicked")
+    })
+}
+
+/// Persistent shared cache dir for FastEmbed ONNX model.
+///
+/// Avoids re-downloading the model on every test invocation by using a
+/// process-wide directory outside the per-test temp dirs.
+fn shared_fastembed_test_cache_dir() -> PathBuf {
+    static DIR: OnceLock<PathBuf> = OnceLock::new();
+    DIR.get_or_init(|| {
+        let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| std::env::temp_dir().join("mcb-fastembed-test-cache"));
+        std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
+        cache_dir
+    })
+    .clone()
+}
+
+// ---------------------------------------------------------------------------
+// create_test_mcp_server
+// ---------------------------------------------------------------------------
+
 /// Create an MCP server with default providers (SQLite, EdgeVec, FastEmbed, Tokio)
 ///
-/// This uses the default AppConfig and initializes real providers,
-/// suitable for all tests unless specific mocks are required.
+/// Reuses the process-wide [`shared_app_context`] so the ONNX embedding model
+/// is loaded only once, but gives each call an **isolated SQLite database**
+/// backed by its own `TempDir`.
 ///
-/// Returns (server, temp_dir) - temp_dir must be kept alive by caller.
+/// Returns `(server, temp_dir)` -- `temp_dir` must be kept alive by the caller.
 pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
-    // Create temp dir for SQLite DB and other files
+    let ctx = shared_app_context();
+
+    // Fresh temp dir and database for this test
     let temp_dir = tempfile::tempdir().expect("create temp dir");
     let db_path = temp_dir.path().join("test.db");
 
-    let mut config = ConfigLoader::new().load().expect("load config");
-    // Configure SQLite path to use temp dir
-    config.providers.database.configs.insert(
-        "default".to_string(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
-            path: Some(db_path.clone()),
-        },
-    );
-
-    let ctx = init_app(config).await.expect("Failed to init app");
-
-    let services = ctx
-        .build_domain_services()
+    let db_provider = resolve_database_provider(&DatabaseProviderConfig::new("sqlite"))
+        .expect("resolve sqlite provider");
+    let db_executor = db_provider
+        .connect(&db_path)
         .await
-        .expect("Failed to create services");
+        .expect("connect fresh test database");
+
+    let project_id = "test-project".to_string();
+
+    // Fresh repositories backed by the isolated database
+    let memory_repository = Arc::new(SqliteMemoryRepository::new(Arc::clone(&db_executor)));
+    let agent_repository = create_agent_repository_from_executor(Arc::clone(&db_executor));
+    let project_repository: Arc<dyn ProjectRepository> =
+        Arc::new(SqliteProjectRepository::new(Arc::clone(&db_executor)));
+    let file_hash_repository = Arc::new(SqliteFileHashRepository::new(
+        Arc::clone(&db_executor),
+        SqliteFileHashConfig::default(),
+        project_id.clone(),
+    ));
+    let vcs_entity_repository = Arc::new(SqliteVcsEntityRepository::new(Arc::clone(&db_executor)));
+    let plan_entity_repository =
+        Arc::new(SqlitePlanEntityRepository::new(Arc::clone(&db_executor)));
+    let issue_entity_repository =
+        Arc::new(SqliteIssueEntityRepository::new(Arc::clone(&db_executor)));
+    let org_entity_repository = Arc::new(SqliteOrgEntityRepository::new(Arc::clone(&db_executor)));
+
+    // Reuse shared providers (embedding, vector store, cache, language)
+    let deps = ServiceDependencies {
+        project_id,
+        cache: mcb_infrastructure::cache::provider::SharedCacheProvider::from_arc(
+            ctx.cache_handle().get(),
+        ),
+        crypto: ctx.crypto_service(),
+        config: (*ctx.config).clone(),
+        embedding_provider: ctx.embedding_handle().get(),
+        vector_store_provider: ctx.vector_store_handle().get(),
+        language_chunker: ctx.language_handle().get(),
+        indexing_ops: ctx.indexing(),
+        event_bus: ctx.event_bus(),
+        memory_repository,
+        agent_repository,
+        file_hash_repository,
+        vcs_provider: ctx.vcs_provider(),
+        project_service: ctx.project_service(),
+        project_repository,
+        vcs_entity_repository,
+        plan_entity_repository,
+        issue_entity_repository,
+        org_entity_repository,
+    };
+
+    let services = DomainServicesFactory::create_services(deps)
+        .await
+        .expect("build domain services");
 
     let server = McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)

@@ -10,6 +10,8 @@ mod test_utils;
 #[path = "../test_utils/search_fixtures.rs"]
 mod search_fixtures;
 
+mod shared_context;
+
 mod args_tests;
 
 mod builder_tests;

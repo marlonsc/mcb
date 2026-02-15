@@ -1,27 +1,16 @@
-use mcb_infrastructure::config::ConfigLoader;
-use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_server::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
 use mcb_server::handlers::entities::VcsEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-async fn create_handler() -> (VcsEntityHandler, tempfile::TempDir) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let mut config = ConfigLoader::new().load().expect("load config");
-    config.providers.database.configs.insert(
-        "default".to_string(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
-            path: Some(temp_dir.path().join("test.db")),
-        },
-    );
-    let ctx = init_app(config).await.expect("init app context");
-    (VcsEntityHandler::new(ctx.vcs_entity_repository()), temp_dir)
+fn create_handler() -> VcsEntityHandler {
+    let ctx = crate::shared_context::shared_app_context();
+    VcsEntityHandler::new(ctx.vcs_entity_repository())
 }
 
 #[tokio::test]
 async fn list_repositories_requires_project_id() {
-    let (handler, _temp_dir) = create_handler().await;
+    let handler = create_handler();
     let args = VcsEntityArgs {
         action: VcsEntityAction::List,
         resource: VcsEntityResource::Repository,
@@ -87,7 +76,7 @@ async fn list_repo_count(handler: &VcsEntityHandler, project_id: &str) -> usize 
 
 #[tokio::test]
 async fn create_repository_conflicting_project_id_rejected_without_side_effect() {
-    let (handler, _temp_dir) = create_handler().await;
+    let handler = create_handler();
     let before_count = list_repo_count(&handler, "project-a").await;
 
     let create_args = VcsEntityArgs {
@@ -114,7 +103,7 @@ async fn create_repository_conflicting_project_id_rejected_without_side_effect()
 
 #[tokio::test]
 async fn update_repository_conflicting_project_id_rejected_without_side_effect() {
-    let (handler, _temp_dir) = create_handler().await;
+    let handler = create_handler();
 
     let before_count = list_repo_count(&handler, "project-a").await;
 
@@ -140,7 +129,7 @@ async fn update_repository_conflicting_project_id_rejected_without_side_effect()
 
 #[tokio::test]
 async fn delete_repository_requires_project_id() {
-    let (handler, _temp_dir) = create_handler().await;
+    let handler = create_handler();
 
     let delete_args = VcsEntityArgs {
         action: VcsEntityAction::Delete,

@@ -287,36 +287,22 @@ fn extract_text_content(content: &[rmcp::model::Content]) -> String {
 }
 
 mod handler_error_tests {
-    use mcb_infrastructure::config::ConfigLoader;
-    use mcb_infrastructure::di::bootstrap::init_app;
     use mcb_server::args::{IndexAction, IndexArgs};
     use mcb_server::handlers::IndexHandler;
     use rmcp::handler::server::wrapper::Parameters;
 
-    // Using tokio::test instead of rstest here because rstest async support requires some boilerplate
-    // and we only have one test case for now. But keeping it cleaner.
-
-    async fn create_handler() -> (IndexHandler, tempfile::TempDir) {
-        let temp_dir = tempfile::tempdir().expect("create temp dir");
-        let mut config = ConfigLoader::new().load().expect("load config");
-        config.providers.database.configs.insert(
-            "default".to_string(),
-            mcb_infrastructure::config::DatabaseConfig {
-                provider: "sqlite".to_string(),
-                path: Some(temp_dir.path().join("test.db")),
-            },
-        );
-        let ctx = init_app(config).await.expect("init app context");
+    async fn create_handler() -> IndexHandler {
+        let ctx = crate::shared_context::shared_app_context();
         let services = ctx
             .build_domain_services()
             .await
             .expect("build domain services");
-        (IndexHandler::new(services.indexing_service), temp_dir)
+        IndexHandler::new(services.indexing_service)
     }
 
     #[tokio::test]
     async fn test_handler_service_error_handling() {
-        let (handler, _services_temp_dir) = create_handler().await;
+        let handler = create_handler().await;
 
         let args = IndexArgs {
             action: IndexAction::Start,

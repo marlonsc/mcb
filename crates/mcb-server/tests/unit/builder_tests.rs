@@ -1,31 +1,16 @@
-use mcb_infrastructure::config::ConfigLoader;
-use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_server::builder::{BuilderError, McpServerBuilder};
 
-async fn create_real_services() -> (
-    mcb_infrastructure::di::modules::domain_services::DomainServicesContainer,
-    tempfile::TempDir,
-) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let mut config = ConfigLoader::new().load().expect("load config");
-    config.providers.database.configs.insert(
-        "default".to_string(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
-            path: Some(temp_dir.path().join("test.db")),
-        },
-    );
-    let ctx = init_app(config).await.expect("init app context");
-    let services = ctx
-        .build_domain_services()
+async fn create_real_services()
+-> mcb_infrastructure::di::modules::domain_services::DomainServicesContainer {
+    let ctx = crate::shared_context::shared_app_context();
+    ctx.build_domain_services()
         .await
-        .expect("build domain services");
-    (services, temp_dir)
+        .expect("build domain services")
 }
 
 #[tokio::test]
 async fn test_builder_all_services_provided() {
-    let (services, _temp_dir) = create_real_services().await;
+    let services = create_real_services().await;
 
     let result = McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
@@ -48,7 +33,7 @@ async fn test_builder_all_services_provided() {
 
 #[tokio::test]
 async fn test_builder_missing_indexing_service() {
-    let (services, _temp_dir) = create_real_services().await;
+    let services = create_real_services().await;
 
     let result = McpServerBuilder::new()
         .with_context_service(services.context_service)
@@ -68,7 +53,7 @@ async fn test_builder_missing_indexing_service() {
 
 #[tokio::test]
 async fn test_builder_missing_vcs_provider() {
-    let (services, _temp_dir) = create_real_services().await;
+    let services = create_real_services().await;
 
     let result = McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)

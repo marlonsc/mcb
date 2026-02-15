@@ -1,29 +1,15 @@
-use mcb_infrastructure::config::ConfigLoader;
-use mcb_infrastructure::di::bootstrap::init_app;
 use mcb_server::args::{PlanEntityAction, PlanEntityArgs, PlanEntityResource};
 use mcb_server::handlers::entities::PlanEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-async fn create_handler() -> (PlanEntityHandler, tempfile::TempDir) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let mut config = ConfigLoader::new().load().expect("load config");
-    config.providers.database.configs.insert(
-        "default".to_string(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_string(),
-            path: Some(temp_dir.path().join("test.db")),
-        },
-    );
-    let ctx = init_app(config).await.expect("init app context");
-    (
-        PlanEntityHandler::new(ctx.plan_entity_repository()),
-        temp_dir,
-    )
+fn create_handler() -> PlanEntityHandler {
+    let ctx = crate::shared_context::shared_app_context();
+    PlanEntityHandler::new(ctx.plan_entity_repository())
 }
 
 #[tokio::test]
 async fn list_plan_versions_requires_plan_id() {
-    let (handler, _temp_dir) = create_handler().await;
+    let handler = create_handler();
     let args = PlanEntityArgs {
         action: PlanEntityAction::List,
         resource: PlanEntityResource::Version,
