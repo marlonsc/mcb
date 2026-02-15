@@ -9,7 +9,7 @@ use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
 use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::tool_error;
+use crate::utils::mcp::tool_error;
 
 /// Lists semantic memories based on the provided search query and filters.
 #[tracing::instrument(skip_all)]

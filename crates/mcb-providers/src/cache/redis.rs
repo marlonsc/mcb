@@ -56,6 +56,10 @@ impl RedisCacheProvider {
     /// # Ok(())
     /// # }
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the Redis client cannot be created from the connection string.
     pub fn new(connection_string: &str) -> Result<Self> {
         let client = Client::open(connection_string).map_err(|e| Error::Infrastructure {
             message: format!("Failed to create Redis client: {e}"),
@@ -74,6 +78,10 @@ impl RedisCacheProvider {
     ///
     /// * `host` - Redis server hostname
     /// * `port` - Redis server port
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the Redis client cannot be created.
     pub fn with_host_port(host: &str, port: u16) -> Result<Self> {
         Self::new(&format!("redis://{host}:{port}"))
     }

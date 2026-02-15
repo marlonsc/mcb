@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::{ExecutionMetadata, ObservationType};
+use mcb_domain::entities::memory::{ExecutionMetadata, MemorySearchResult, ObservationType};
 use mcb_domain::ports::services::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
@@ -9,13 +9,13 @@ use tracing::error;
 use uuid::Uuid;
 
 use super::common::{
-    MemoryOriginOptions, build_observation_metadata, opt_str, require_bool, require_data_map,
-    require_i32, require_i64, require_str, resolve_memory_origin_context, search_memories_as_json,
-    str_vec,
+    MemoryOriginOptions, SearchMemoriesJsonSpec, build_observation_metadata, opt_str, require_bool,
+    require_data_map, require_i32, require_i64, require_str, resolve_memory_origin_context,
+    search_memories_as_json, str_vec,
 };
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::tool_error;
+use crate::utils::mcp::tool_error;
 
 /// Validated execution data extracted from JSON payload
 struct ValidatedExecutionData {
@@ -161,25 +161,27 @@ pub async fn get_executions(
     search_memories_as_json(
         memory_service,
         args,
-        "execution",
-        ObservationType::Execution,
-        "executions",
-        |result| {
-            let execution = result.observation.metadata.execution.as_ref()?;
-            Some(serde_json::json!({
-                "observation_id": result.observation.id,
-                "command": execution.command,
-                "exit_code": execution.exit_code,
-                "duration_ms": execution.duration_ms,
-                "success": execution.success,
-                "execution_type": execution.execution_type.as_str(),
-                "coverage": execution.coverage,
-                "files_affected": execution.files_affected,
-                "output_summary": execution.output_summary,
-                "warnings_count": execution.warnings_count,
-                "errors_count": execution.errors_count,
-                "created_at": result.observation.created_at,
-            }))
+        SearchMemoriesJsonSpec {
+            query: "execution",
+            obs_type: ObservationType::Execution,
+            result_key: "executions",
+            mapper: |result: &MemorySearchResult| {
+                let execution = result.observation.metadata.execution.as_ref()?;
+                Some(serde_json::json!({
+                    "observation_id": result.observation.id,
+                    "command": execution.command,
+                    "exit_code": execution.exit_code,
+                    "duration_ms": execution.duration_ms,
+                    "success": execution.success,
+                    "execution_type": execution.execution_type.as_str(),
+                    "coverage": execution.coverage,
+                    "files_affected": execution.files_affected,
+                    "output_summary": execution.output_summary,
+                    "warnings_count": execution.warnings_count,
+                    "errors_count": execution.errors_count,
+                    "created_at": result.observation.created_at,
+                }))
+            },
         },
     )
     .await

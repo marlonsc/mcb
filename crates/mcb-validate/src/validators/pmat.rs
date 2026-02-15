@@ -174,6 +174,10 @@ impl PmatValidator {
     }
 
     /// Runs all PMAT validations and returns detected violations.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any analysis step fails.
     pub fn validate_all(&self) -> Result<Vec<PmatViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_complexity()?);
@@ -183,6 +187,10 @@ impl PmatValidator {
     }
 
     /// Runs cyclomatic complexity analysis using native analyzer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the complexity analyzer fails.
     pub fn validate_complexity(&self) -> Result<Vec<PmatViolation>> {
         let findings = self
             .complexity_analyzer
@@ -206,6 +214,10 @@ impl PmatValidator {
     }
 
     /// Runs dead code analysis using native analyzer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the dead code detector fails.
     pub fn validate_dead_code(&self) -> Result<Vec<PmatViolation>> {
         let findings = self
             .dead_code_detector
@@ -225,6 +237,10 @@ impl PmatValidator {
     }
 
     /// Runs Technical Debt Gradient analysis using native analyzer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the TDG scorer fails.
     pub fn validate_tdg(&self) -> Result<Vec<PmatViolation>> {
         let findings = self
             .tdg_scorer

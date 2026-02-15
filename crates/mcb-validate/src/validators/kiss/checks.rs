@@ -1,3 +1,4 @@
+use crate::constants::common::TEST_FUNCTION_PREFIX;
 use crate::filters::LanguageId;
 
 use crate::pattern_registry::compile_regex;
@@ -5,10 +6,37 @@ use crate::scan::for_each_scan_file;
 use crate::thresholds::thresholds;
 use crate::{Result, Severity};
 
+use super::constants::{DI_CONTAINER_CONTAINS, DI_CONTAINER_SUFFIXES, NESTING_PROXIMITY_THRESHOLD};
 use super::{KissValidator, KissViolation};
 
 impl KissValidator {
+    fn update_test_module_tracking(
+        trimmed: &str,
+        line: &str,
+        in_test_module: &mut bool,
+        test_brace_depth: &mut i32,
+        brace_depth: &mut i32,
+    ) {
+        if trimmed.contains("#[cfg(test)]") {
+            *in_test_module = true;
+            *test_brace_depth = *brace_depth;
+        }
+
+        let open_c = line.chars().filter(|c| *c == '{').count();
+        let close_c = line.chars().filter(|c| *c == '}').count();
+        *brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
+        *brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
+
+        if *in_test_module && *brace_depth < *test_brace_depth {
+            *in_test_module = false;
+        }
+    }
+
     /// Detects structs with too many fields, excluding DI containers and config types.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_struct_fields(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let struct_pattern = match compile_regex(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{") {
@@ -35,32 +63,25 @@ impl KissValidator {
 
                 for (line_num, line) in lines.iter().enumerate() {
                     let trimmed = line.trim();
-
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        test_brace_depth = brace_depth;
-                    }
-
-                    let open_c = line.chars().filter(|c| *c == '{').count();
-                    let close_c = line.chars().filter(|c| *c == '}').count();
-                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
-                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
-
-                    if in_test_module && brace_depth < test_brace_depth {
-                        in_test_module = false;
-                    }
+                    Self::update_test_module_tracking(
+                        trimmed,
+                        line,
+                        &mut in_test_module,
+                        &mut test_brace_depth,
+                        &mut brace_depth,
+                    );
                     if in_test_module {
                         continue;
                     }
 
                     if let Some(cap) = struct_pattern.captures(line) {
                         let struct_name = cap.get(1).map_or("", |m| m.as_str());
-                        let is_di_container = struct_name.ends_with("Context")
-                            || struct_name.ends_with("Container")
-                            || struct_name.ends_with("Components")
-                            || struct_name.contains("Config")
-                            || struct_name.contains("Settings")
-                            || struct_name.ends_with("State");
+                        let is_di_container = DI_CONTAINER_SUFFIXES
+                            .iter()
+                            .any(|s| struct_name.ends_with(s))
+                            || DI_CONTAINER_CONTAINS
+                                .iter()
+                                .any(|s| struct_name.contains(s));
 
                         let max_fields = if is_di_container {
                             thresholds().max_di_container_fields
@@ -68,7 +89,7 @@ impl KissValidator {
                             self.max_struct_fields
                         };
 
-                        let field_count = self.count_struct_fields(&lines, line_num);
+                        let field_count = Self::count_struct_fields(&lines, line_num);
 
                         if field_count > max_fields {
                             violations.push(KissViolation::StructTooManyFields {
@@ -90,6 +111,10 @@ impl KissValidator {
     }
 
     /// Detects functions with too many parameters.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_function_params(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let fn_pattern = match compile_regex(
@@ -122,20 +147,13 @@ impl KissValidator {
 
                 for (line_num, line) in lines.iter().enumerate() {
                     let trimmed = line.trim();
-
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        test_brace_depth = brace_depth;
-                    }
-
-                    let open_c = line.chars().filter(|c| *c == '{').count();
-                    let close_c = line.chars().filter(|c| *c == '}').count();
-                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
-                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
-
-                    if in_test_module && brace_depth < test_brace_depth {
-                        in_test_module = false;
-                    }
+                    Self::update_test_module_tracking(
+                        trimmed,
+                        line,
+                        &mut in_test_module,
+                        &mut test_brace_depth,
+                        &mut brace_depth,
+                    );
                     if in_test_module {
                         continue;
                     }
@@ -154,7 +172,7 @@ impl KissValidator {
                     if let Some(cap) = fn_pattern.captures(&full_line) {
                         let fn_name = cap.get(1).map_or("", |m| m.as_str());
                         let params = cap.get(2).map_or("", |m| m.as_str());
-                        let param_count = self.count_function_params(params);
+                        let param_count = Self::count_function_params(params);
 
                         if param_count > self.max_function_params {
                             violations.push(KissViolation::FunctionTooManyParams {
@@ -176,6 +194,10 @@ impl KissValidator {
     }
 
     /// Detects builder structs with too many optional fields.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_builder_complexity(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let builder_pattern =
@@ -205,7 +227,7 @@ impl KissValidator {
                     if let Some(cap) = builder_pattern.captures(line) {
                         let builder_name = cap.get(1).map_or("", |m| m.as_str());
                         let optional_count =
-                            self.count_optional_fields(&lines, line_num, &option_pattern);
+                            Self::count_optional_fields(&lines, line_num, &option_pattern);
 
                         if optional_count > self.max_builder_fields {
                             violations.push(KissViolation::BuilderTooComplex {
@@ -227,6 +249,10 @@ impl KissValidator {
     }
 
     /// Detects code blocks with excessive nesting depth.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_nesting_depth(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let control_flow_pattern = match compile_regex(r"\b(if|match|for|while|loop)\b") {
@@ -271,8 +297,9 @@ impl KissValidator {
                         nesting_depth += 1;
 
                         if nesting_depth > self.max_nesting_depth {
-                            let nearby_reported =
-                                reported_lines.iter().any(|&l| l.abs_diff(line_num) < 5);
+                            let nearby_reported = reported_lines
+                                .iter()
+                                .any(|&l| l.abs_diff(line_num) < NESTING_PROXIMITY_THRESHOLD);
 
                             if !nearby_reported {
                                 violations.push(KissViolation::DeepNesting {
@@ -309,6 +336,10 @@ impl KissValidator {
     }
 
     /// Detects functions that exceed the maximum allowed line count.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_function_length(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
         let fn_pattern = match compile_regex(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)") {
@@ -339,20 +370,13 @@ impl KissValidator {
 
                 for (line_num, line) in lines.iter().enumerate() {
                     let trimmed = line.trim();
-
-                    if trimmed.contains("#[cfg(test)]") {
-                        in_test_module = true;
-                        test_brace_depth = brace_depth;
-                    }
-
-                    let open_c = line.chars().filter(|c| *c == '{').count();
-                    let close_c = line.chars().filter(|c| *c == '}').count();
-                    brace_depth += i32::try_from(open_c).unwrap_or(i32::MAX);
-                    brace_depth -= i32::try_from(close_c).unwrap_or(i32::MAX);
-
-                    if in_test_module && brace_depth < test_brace_depth {
-                        in_test_module = false;
-                    }
+                    Self::update_test_module_tracking(
+                        trimmed,
+                        line,
+                        &mut in_test_module,
+                        &mut test_brace_depth,
+                        &mut brace_depth,
+                    );
                     if in_test_module {
                         continue;
                     }
@@ -360,15 +384,15 @@ impl KissValidator {
                     if let Some(cap) = fn_pattern.captures(line) {
                         let fn_name = cap.get(1).map_or("", |m| m.as_str());
 
-                        if fn_name.starts_with("test_") {
+                        if fn_name.starts_with(TEST_FUNCTION_PREFIX) {
                             continue;
                         }
 
-                        if self.is_trait_fn_declaration(&lines, line_num) {
+                        if Self::is_trait_fn_declaration(&lines, line_num) {
                             continue;
                         }
 
-                        let line_count = self.count_function_lines(&lines, line_num);
+                        let line_count = Self::count_function_lines(&lines, line_num);
 
                         if line_count > self.max_function_lines {
                             violations.push(KissViolation::FunctionTooLong {

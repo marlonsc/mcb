@@ -109,6 +109,10 @@ impl RuleFilterExecutor {
     ///
     /// # Returns
     /// true if the rule should execute on this file
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if filter evaluation encounters a configuration issue.
     pub fn should_execute_rule(
         &self,
         filters: &RuleFilters,
@@ -116,12 +120,10 @@ impl RuleFilterExecutor {
         file_content: Option<&str>,
         workspace_deps: &WorkspaceDependencies,
     ) -> crate::Result<bool> {
-        // If no filters are defined, rule always executes
         if filters.is_empty() {
             return Ok(true);
         }
 
-        // Check language filter
         if let Some(languages) = &filters.languages
             && !self
                 .language_detector
@@ -130,95 +132,61 @@ impl RuleFilterExecutor {
             return Ok(false);
         }
 
-        // Check dependency filter
         if let Some(required_deps) = &filters.dependencies
             && !self.check_dependencies(required_deps, file_path, workspace_deps)
         {
             return Ok(false);
         }
 
-        // Check file pattern filter
-        if let Some(patterns) = &filters.file_patterns {
-            let rel_path = file_path
-                .strip_prefix(&self.workspace_root)
-                .unwrap_or(file_path);
+        if let Some(patterns) = &filters.file_patterns
+            && !self.matches_patterns_with_fallback(file_path, patterns)
+        {
+            return Ok(false);
+        }
 
-            if !self.file_matcher.matches_any(rel_path, patterns) {
-                // If relative path didn't match, check absolute path as fallback
-                // This covers cases where patterns might be absolute or files outside workspace
-                if rel_path == file_path || !self.file_matcher.matches_any(file_path, patterns) {
-                    return Ok(false);
-                }
-            }
+        if let Some(skip) = &filters.skip
+            && self.matches_filter(file_path, skip)
+        {
+            return Ok(false);
+        }
 
-            // Check skip filter (highest precedence for exclusion)
-            if let Some(skip) = &filters.skip {
-                if let Some(patterns) = &skip.file_patterns {
-                    let rel_path = file_path
-                        .strip_prefix(&self.workspace_root)
-                        .unwrap_or(file_path);
-                    if self.file_matcher.matches_any(rel_path, patterns)
-                        || (rel_path != file_path
-                            && self.file_matcher.matches_any(file_path, patterns))
-                    {
-                        return Ok(false);
-                    }
-                }
-                if let Some(patterns) = &skip.directory_patterns {
-                    // Directory matching logic could be added here if needed,
-                    // but file_matcher matches against path strings anyway
-                    let rel_path = file_path
-                        .strip_prefix(&self.workspace_root)
-                        .unwrap_or(file_path);
-                    if self.file_matcher.matches_any(rel_path, patterns) {
-                        return Ok(false);
-                    }
-                }
-            }
-
-            // Check deny filter
-            if let Some(deny) = &filters.deny {
-                let mut denied = false;
-                if let Some(patterns) = &deny.file_patterns {
-                    let rel_path = file_path
-                        .strip_prefix(&self.workspace_root)
-                        .unwrap_or(file_path);
-                    if self.file_matcher.matches_any(rel_path, patterns)
-                        || (rel_path != file_path
-                            && self.file_matcher.matches_any(file_path, patterns))
-                    {
-                        denied = true;
-                    }
-                }
-
-                if denied {
-                    // Check allow filter (overrides deny)
-                    let allowed = if let Some(allow) = &filters.allow {
-                        let mut is_allowed = false;
-                        if let Some(patterns) = &allow.file_patterns {
-                            let rel_path = file_path
-                                .strip_prefix(&self.workspace_root)
-                                .unwrap_or(file_path);
-                            if self.file_matcher.matches_any(rel_path, patterns)
-                                || (rel_path != file_path
-                                    && self.file_matcher.matches_any(file_path, patterns))
-                            {
-                                is_allowed = true;
-                            }
-                        }
-                        is_allowed
-                    } else {
-                        false
-                    };
-
-                    if !allowed {
-                        return Ok(false);
-                    }
-                }
+        if let Some(deny) = &filters.deny
+            && self.matches_filter(file_path, deny)
+        {
+            let allowed = filters
+                .allow
+                .as_ref()
+                .is_some_and(|allow| self.matches_filter(file_path, allow));
+            if !allowed {
+                return Ok(false);
             }
         }
 
         Ok(true)
+    }
+
+    fn relative_path<'a>(&'a self, file_path: &'a Path) -> &'a Path {
+        file_path
+            .strip_prefix(&self.workspace_root)
+            .unwrap_or(file_path)
+    }
+
+    fn matches_patterns_with_fallback(&self, file_path: &Path, patterns: &[String]) -> bool {
+        let rel_path = self.relative_path(file_path);
+        self.file_matcher.matches_any(rel_path, patterns)
+            || (rel_path != file_path && self.file_matcher.matches_any(file_path, patterns))
+    }
+
+    fn matches_filter(&self, file_path: &Path, filter: &ApplicabilityFilter) -> bool {
+        let file_match = filter
+            .file_patterns
+            .as_ref()
+            .is_some_and(|patterns| self.matches_patterns_with_fallback(file_path, patterns));
+        let dir_match = filter.directory_patterns.as_ref().is_some_and(|patterns| {
+            self.file_matcher
+                .matches_any(self.relative_path(file_path), patterns)
+        });
+        file_match || dir_match
     }
 
     /// Check if required dependencies are present in the file's crate
@@ -239,11 +207,19 @@ impl RuleFilterExecutor {
     }
 
     /// Parse workspace dependencies (can be cached)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Cargo.toml parsing fails.
     pub fn parse_workspace_dependencies(&self) -> crate::Result<WorkspaceDependencies> {
         self.dependency_parser.parse_workspace_deps()
     }
 
     /// Create a file matcher for specific patterns
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any glob pattern is invalid.
     pub fn create_file_matcher(&self, patterns: &[String]) -> crate::Result<FilePatternMatcher> {
         FilePatternMatcher::from_mixed_patterns(patterns)
             .map_err(|e| crate::ValidationError::Config(format!("Invalid file pattern: {e}")))

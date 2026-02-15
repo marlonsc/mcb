@@ -1,3 +1,5 @@
+/// Constants for organization validators.
+pub mod constants;
 /// Domain layer purity checks.
 pub mod domain_purity;
 /// Duplicate string detection checks.

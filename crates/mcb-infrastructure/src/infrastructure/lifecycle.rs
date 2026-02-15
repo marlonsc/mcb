@@ -153,8 +153,9 @@ impl ServiceManager {
 
     /// Start a specific service.
     ///
-    /// # Code Smells
-    /// TODO(qlty): Found 18 lines of similar code with `stop` and `restart`.
+    /// # Errors
+    ///
+    /// Returns an error if the service is not found or fails to start.
     pub async fn start(&self, name: &str) -> Result<(), ServiceManagerError> {
         let service = self
             .services
@@ -175,6 +176,10 @@ impl ServiceManager {
     }
 
     /// Stop a specific service
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service is not found or fails to stop.
     pub async fn stop(&self, name: &str) -> Result<(), ServiceManagerError> {
         let service = self
             .services
@@ -195,6 +200,10 @@ impl ServiceManager {
     }
 
     /// Restart a specific service
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service is not found or fails to restart.
     pub async fn restart(&self, name: &str) -> Result<(), ServiceManagerError> {
         let service = self
             .services

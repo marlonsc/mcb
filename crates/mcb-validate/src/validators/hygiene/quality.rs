@@ -14,6 +14,10 @@ struct QualityPatterns {
 }
 
 /// Validates test quality by checking for trivial assertions, unwrap-only tests, and comment-only tests.
+///
+/// # Errors
+///
+/// Returns an error if regex compilation, directory enumeration, or file reading fails.
 pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneViolation>> {
     let mut violations = Vec::new();
 

@@ -1,4 +1,5 @@
 use super::{QualityValidator, QualityViolation};
+use crate::constants::common::TEST_PATH_PATTERNS;
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
@@ -18,9 +19,7 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                 .extension()
                 .is_none_or(|ext| ext != "rs")
                 || validator.config.should_exclude(&entry.absolute_path)
-                || path_str.is_some_and(|s| s.contains("/tests/"))
-                || path_str.is_some_and(|s| s.contains("/target/"))
-                || path_str.is_some_and(|s| s.ends_with("_test.rs"))
+                || path_str.is_some_and(|s| TEST_PATH_PATTERNS.iter().any(|p| s.contains(p)))
                 || !entry.absolute_path.exists()
             {
                 return Ok(());

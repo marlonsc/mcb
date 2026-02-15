@@ -11,7 +11,7 @@ use validator::Validate;
 
 use super::{create, get, list, summarize, update};
 use crate::args::{SessionAction, SessionArgs};
-use crate::handlers::helpers::resolve_org_id;
+use crate::utils::mcp::resolve_org_id;
 
 /// Handler for agent session MCP tool operations.
 ///

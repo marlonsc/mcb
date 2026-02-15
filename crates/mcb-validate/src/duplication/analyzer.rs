@@ -39,6 +39,10 @@ impl DuplicationAnalyzer {
     }
 
     /// Analyze files for code duplication
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file reading or analysis fails.
     pub fn analyze_files(&self, paths: &[PathBuf]) -> Result<Vec<DuplicationViolation>, String> {
         let mut fingerprinter = TokenFingerprinter::new(self.thresholds.min_tokens);
 

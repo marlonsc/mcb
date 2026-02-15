@@ -1,5 +1,6 @@
 //! Unified entity CRUD handler implementation.
 
+use std::future::Future;
 use std::sync::Arc;
 
 use rmcp::handler::server::wrapper::Parameters;
@@ -66,116 +67,106 @@ impl EntityHandler {
         }
     }
 
-    async fn route_vcs(&self, args: EntityArgs) -> Result<CallToolResult, McpError> {
-        let action = map_vcs_action(args.action).map_err(|e| {
-            McpError::internal_error(
-                format!("failed to map entity action to vcs action: {e}"),
-                None,
-            )
-        })?;
-        let resource = map_vcs_resource(args.resource).map_err(|e| {
-            McpError::internal_error(
-                format!("failed to map entity resource to vcs resource: {e}"),
-                None,
-            )
-        })?;
+    define_route_method!(
+        route_vcs,
+        vcs,
+        VcsEntityArgs,
+        map_vcs_action,
+        map_vcs_resource,
+        |args, action, resource| VcsEntityArgs {
+            action,
+            resource,
+            id: args.id,
+            org_id: args.org_id,
+            project_id: args.project_id,
+            repository_id: args.repository_id,
+            worktree_id: args.worktree_id,
+            data: args.data,
+        }
+    );
 
-        self.vcs
-            .handle(Parameters(VcsEntityArgs {
-                action,
-                resource,
-                id: args.id,
-                org_id: args.org_id,
-                project_id: args.project_id,
-                repository_id: args.repository_id,
-                worktree_id: args.worktree_id,
-                data: args.data,
-            }))
-            .await
-    }
+    define_route_method!(
+        route_plan,
+        plan,
+        PlanEntityArgs,
+        map_standard_action_to_plan,
+        map_plan_resource,
+        |args, action, resource| PlanEntityArgs {
+            action,
+            resource,
+            id: args.id,
+            org_id: args.org_id,
+            project_id: args.project_id,
+            plan_id: args.plan_id,
+            plan_version_id: args.plan_version_id,
+            data: args.data,
+        }
+    );
 
-    async fn route_plan(&self, args: EntityArgs) -> Result<CallToolResult, McpError> {
-        let action = map_standard_action_to_plan(args.action).map_err(|e| {
-            McpError::internal_error(
-                format!("failed to map entity action to plan action: {e}"),
-                None,
-            )
-        })?;
-        let resource = map_plan_resource(args.resource).map_err(|e| {
-            McpError::internal_error(
-                format!("failed to map entity resource to plan resource: {e}"),
-                None,
-            )
-        })?;
+    define_route_method!(
+        route_issue,
+        issue,
+        IssueEntityArgs,
+        map_standard_action_to_issue,
+        map_issue_resource,
+        |args, action, resource| IssueEntityArgs {
+            action,
+            resource,
+            id: args.id,
+            org_id: args.org_id,
+            project_id: args.project_id,
+            issue_id: args.issue_id,
+            label_id: args.label_id,
+            data: args.data,
+        }
+    );
 
-        self.plan
-            .handle(Parameters(PlanEntityArgs {
-                action,
-                resource,
-                id: args.id,
-                org_id: args.org_id,
-                project_id: args.project_id,
-                plan_id: args.plan_id,
-                plan_version_id: args.plan_version_id,
-                data: args.data,
-            }))
-            .await
-    }
+    define_route_method!(
+        route_org,
+        org,
+        OrgEntityArgs,
+        map_standard_action_to_org,
+        map_org_resource,
+        |args, action, resource| OrgEntityArgs {
+            action,
+            resource,
+            id: args.id,
+            org_id: args.org_id,
+            team_id: args.team_id,
+            user_id: args.user_id,
+            email: args.email,
+            data: args.data,
+        }
+    );
 
-    async fn route_issue(&self, args: EntityArgs) -> Result<CallToolResult, McpError> {
-        let action = map_standard_action_to_issue(args.action).map_err(|e| {
-            McpError::internal_error(
-                format!("failed to map entity action to issue action: {e}"),
-                None,
-            )
-        })?;
-        let resource = map_issue_resource(args.resource).map_err(|e| {
-            McpError::internal_error(
-                format!("failed to map entity resource to issue resource: {e}"),
-                None,
-            )
-        })?;
-
-        self.issue
-            .handle(Parameters(IssueEntityArgs {
-                action,
-                resource,
-                id: args.id,
-                org_id: args.org_id,
-                project_id: args.project_id,
-                issue_id: args.issue_id,
-                label_id: args.label_id,
-                data: args.data,
-            }))
-            .await
-    }
-
-    async fn route_org(&self, args: EntityArgs) -> Result<CallToolResult, McpError> {
-        let action = map_standard_action_to_org(args.action).map_err(|e| {
-            McpError::internal_error(
-                format!("failed to map entity action to org action: {e}"),
-                None,
-            )
-        })?;
-        let resource = map_org_resource(args.resource).map_err(|e| {
-            McpError::internal_error(
-                format!("failed to map entity resource to org resource: {e}"),
-                None,
-            )
-        })?;
-
-        self.org
-            .handle(Parameters(OrgEntityArgs {
-                action,
-                resource,
-                id: args.id,
-                org_id: args.org_id,
-                team_id: args.team_id,
-                user_id: args.user_id,
-                email: args.email,
-                data: args.data,
-            }))
-            .await
+    async fn route_entity<
+        RawAction,
+        RawResource,
+        RoutedArgs,
+        MapAction,
+        MapResource,
+        BuildArgs,
+        HandleFn,
+        HandleFuture,
+    >(
+        &self,
+        args: EntityArgs,
+        map_action: MapAction,
+        map_resource: MapResource,
+        build_args: BuildArgs,
+        handle: HandleFn,
+    ) -> Result<CallToolResult, McpError>
+    where
+        MapAction: FnOnce(EntityAction) -> Result<RawAction, McpError>,
+        MapResource: FnOnce(EntityResource) -> Result<RawResource, McpError>,
+        BuildArgs: FnOnce(EntityArgs, RawAction, RawResource) -> RoutedArgs,
+        HandleFn: FnOnce(RoutedArgs) -> HandleFuture,
+        HandleFuture: Future<Output = Result<CallToolResult, McpError>>,
+    {
+        let action = map_action(args.action)?;
+        let resource = map_resource(args.resource)?;
+        let routed_args = build_args(args, action, resource);
+        handle(routed_args).await
     }
 }
 

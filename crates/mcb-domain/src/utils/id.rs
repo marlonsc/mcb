@@ -46,6 +46,10 @@ pub fn mask_id(id: &str) -> String {
 }
 
 /// Compute SHA-256 hash of a file's content.
+///
+/// # Errors
+///
+/// Returns an error if the file cannot be opened or read.
 pub fn compute_file_hash(path: &Path) -> Result<String> {
     let file =
         File::open(path).map_err(|e| Error::io(format!("Failed to open file {path:?}: {e}")))?;

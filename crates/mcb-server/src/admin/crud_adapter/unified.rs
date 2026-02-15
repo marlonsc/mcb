@@ -15,7 +15,7 @@ use super::adapter::EntityCrudAdapter;
 use super::mapper::{
     apply_parent_scope, base_entity_args, build_entity_arguments, extract_project_id,
 };
-use super::utils::extract_text_content;
+use crate::utils::text::extract_text_content;
 
 /// Routes CRUD operations for any entity type through the unified tool dispatch.
 #[derive(Clone)]

@@ -6,6 +6,10 @@ use crate::{Result, Severity, ValidationConfig};
 use super::violation::HygieneViolation;
 
 /// Verifies that no inline test declarations exist in src/ directories.
+///
+/// # Errors
+///
+/// Returns an error if pattern loading, directory enumeration, or file reading fails.
 pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<HygieneViolation>> {
     let mut violations = Vec::new();
     let cfg_test_pattern = required_pattern("TEST001.cfg_test")?;

@@ -203,10 +203,12 @@ impl McpServerBuilder {
             project: project_service,
             project_workflow: project_repository,
             vcs: vcs_provider,
-            vcs_entity: vcs_entity_repository,
-            plan_entity: plan_entity_repository,
-            issue_entity: issue_entity_repository,
-            org_entity: org_entity_repository,
+            entities: crate::mcp_server::McpEntityRepositories {
+                vcs: vcs_entity_repository,
+                plan: plan_entity_repository,
+                issue: issue_entity_repository,
+                org: org_entity_repository,
+            },
         };
 
         Ok(McpServer::new(services, None))

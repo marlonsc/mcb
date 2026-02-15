@@ -16,6 +16,10 @@ pub struct RuffLinter;
 
 impl RuffLinter {
     /// Check multiple files using Ruff
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the Ruff command fails.
     pub async fn check_files(files: &[&Path]) -> Result<Vec<LintViolation>> {
         let linter = LinterType::Ruff;
         let output = run_linter_command(linter, files).await?;
@@ -23,6 +27,10 @@ impl RuffLinter {
     }
 
     /// Check a single file using Ruff
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the Ruff command fails.
     pub async fn check_file(file: &Path) -> Result<Vec<LintViolation>> {
         Self::check_files(&[file]).await
     }
@@ -33,6 +41,10 @@ pub struct ClippyLinter;
 
 impl ClippyLinter {
     /// Check project with default Clippy lints
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the Clippy command fails.
     pub async fn check_project(project_root: &Path) -> Result<Vec<LintViolation>> {
         Self::check_project_with_lints(project_root, &[]).await
     }
@@ -41,6 +53,10 @@ impl ClippyLinter {
     ///
     /// This is used by `YamlRuleExecutor` to enable specific lints from `lint_select`.
     /// For example, `clippy::unwrap_used` is "allow" by default and needs `-W` to enable.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the Clippy command fails to execute.
     pub async fn check_project_with_lints(
         project_root: &Path,
         lint_codes: &[String],

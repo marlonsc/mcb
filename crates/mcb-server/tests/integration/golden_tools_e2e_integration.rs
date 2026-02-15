@@ -6,7 +6,8 @@ use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
-use crate::test_utils::test_fixtures::{GOLDEN_COLLECTION, extract_text_content};
+use crate::test_utils::test_fixtures::GOLDEN_COLLECTION;
+use crate::test_utils::text::extract_text;
 
 fn sample_codebase_path() -> std::path::PathBuf {
     crate::test_utils::test_fixtures::sample_codebase_path()
@@ -45,7 +46,7 @@ async fn test_golden_e2e_complete_workflow() {
     let r = index_h.handle(Parameters(clear_args)).await;
     assert!(r.is_ok(), "index clear should succeed");
     let resp = r.unwrap();
-    let text = extract_text_content(&resp.content);
+    let text = extract_text(&resp.content);
     assert!(
         text.contains("cleared") || text.contains("Cleared"),
         "{}",
@@ -66,7 +67,7 @@ async fn test_golden_e2e_complete_workflow() {
     };
     let r = index_h.handle(Parameters(status_args)).await;
     assert!(r.is_ok());
-    let text = extract_text_content(&r.unwrap().content);
+    let text = extract_text(&r.unwrap().content);
     assert!(
         text.contains("Indexing Status") || text.contains("Status"),
         "{}",
@@ -89,7 +90,7 @@ async fn test_golden_e2e_complete_workflow() {
     assert!(r.is_ok(), "index should succeed");
     let resp = r.unwrap();
     assert!(!resp.is_error.unwrap_or(false));
-    let text = extract_text_content(&resp.content);
+    let text = extract_text(&resp.content);
     assert!(
         text.contains("Files processed")
             || text.contains("Chunks created")
@@ -116,7 +117,7 @@ async fn test_golden_e2e_complete_workflow() {
     let r = search_h.handle(Parameters(search_args)).await;
     assert!(r.is_ok());
     let resp = r.unwrap();
-    let text = extract_text_content(&resp.content);
+    let text = extract_text(&resp.content);
     assert!(
         text.contains("Search") || text.contains("Results") || text.contains("results"),
         "{}",
@@ -169,7 +170,7 @@ async fn test_golden_index_variants(
     let response = result.unwrap();
     assert!(!response.is_error.unwrap_or(false));
 
-    let text = extract_text_content(&response.content);
+    let text = extract_text(&response.content);
     assert!(
         text.contains("Files processed")
             || text.contains("Indexing Started")

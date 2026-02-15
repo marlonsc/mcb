@@ -27,31 +27,25 @@ fn json_sort_key(v: &Value) -> String {
     }
 }
 
-/// Apply in-memory filtering, sorting, and pagination to a pre-fetched record list.
-#[must_use]
-pub fn apply_filter_pipeline(
-    mut records: Vec<Value>,
-    params: &FilterParams,
-    valid_sort_fields: &HashSet<String>,
-) -> FilteredResult {
-    // Search
-    if let Some(ref q) = params.search
-        && !q.is_empty()
-    {
-        let q_lower = q.to_lowercase();
-        records.retain(|rec| {
-            if let Value::Object(map) = rec {
-                map.values().any(|v| match v {
-                    Value::String(s) => s.to_lowercase().contains(&q_lower),
-                    _ => v.to_string().to_lowercase().contains(&q_lower),
-                })
-            } else {
-                false
-            }
-        });
-    }
+fn apply_search_filter(records: &mut Vec<Value>, search: Option<&str>) {
+    let Some(query) = search.filter(|value| !value.is_empty()) else {
+        return;
+    };
 
-    // Date-range filter — parse ISO strings to epoch for comparison
+    let query_lower = query.to_lowercase();
+    records.retain(|rec| {
+        if let Value::Object(map) = rec {
+            map.values().any(|v| match v {
+                Value::String(s) => s.to_lowercase().contains(&query_lower),
+                _ => v.to_string().to_lowercase().contains(&query_lower),
+            })
+        } else {
+            false
+        }
+    });
+}
+
+fn parse_date_range(params: &FilterParams) -> (Option<i64>, Option<i64>) {
     let epoch_from = params.date_from.as_deref().and_then(|s| {
         if s.is_empty() {
             None
@@ -66,45 +60,56 @@ pub fn apply_filter_pipeline(
             parse_iso_date_to_epoch_end(s)
         }
     });
+    (epoch_from, epoch_to)
+}
 
-    if epoch_from.is_some() || epoch_to.is_some() {
-        records.retain(|rec| {
-            if let Value::Object(map) = rec {
-                let mut has_any_ts = false;
-                let in_range = map
-                    .iter()
-                    .filter(|(k, _)| k.ends_with("_at"))
-                    .filter_map(|(_, v)| match v {
-                        Value::Number(n) => n.as_i64(),
-                        _ => None,
-                    })
-                    .any(|ts| {
-                        has_any_ts = true;
-                        let after = epoch_from.is_none_or(|from| ts >= from);
-                        let before = epoch_to.is_none_or(|to| ts <= to);
-                        after && before
-                    });
-                in_range || !has_any_ts
-            } else {
-                true
-            }
-        });
+fn record_matches_date_range(rec: &Value, epoch_from: Option<i64>, epoch_to: Option<i64>) -> bool {
+    if let Value::Object(map) = rec {
+        let mut has_any_ts = false;
+        let in_range = map
+            .iter()
+            .filter(|(k, _)| k.ends_with("_at"))
+            .filter_map(|(_, v)| match v {
+                Value::Number(n) => n.as_i64(),
+                _ => None,
+            })
+            .any(|ts| {
+                has_any_ts = true;
+                let after = epoch_from.is_none_or(|from| ts >= from);
+                let before = epoch_to.is_none_or(|to| ts <= to);
+                after && before
+            });
+        in_range || !has_any_ts
+    } else {
+        true
+    }
+}
+
+fn apply_date_filter(records: &mut Vec<Value>, epoch_from: Option<i64>, epoch_to: Option<i64>) {
+    if epoch_from.is_none() && epoch_to.is_none() {
+        return;
+    }
+    records.retain(|rec| record_matches_date_range(rec, epoch_from, epoch_to));
+}
+
+fn apply_sort(records: &mut [Value], params: &FilterParams, valid_sort_fields: &HashSet<String>) {
+    let Some(field) = params.sort_field.as_ref() else {
+        return;
+    };
+    if !valid_sort_fields.contains(field.as_str()) {
+        return;
     }
 
-    // Sort
-    if let Some(ref field) = params.sort_field
-        && valid_sort_fields.contains(field.as_str())
-    {
-        let desc = matches!(params.sort_order, Some(SortOrder::Desc));
-        records.sort_by(|a, b| {
-            let va = a.get(field).map(json_sort_key);
-            let vb = b.get(field).map(json_sort_key);
-            let cmp = va.cmp(&vb);
-            if desc { cmp.reverse() } else { cmp }
-        });
-    }
+    let desc = matches!(params.sort_order, Some(SortOrder::Desc));
+    records.sort_by(|a, b| {
+        let va = a.get(field).map(json_sort_key);
+        let vb = b.get(field).map(json_sort_key);
+        let cmp = va.cmp(&vb);
+        if desc { cmp.reverse() } else { cmp }
+    });
+}
 
-    // Paginate
+fn paginate(records: Vec<Value>, params: &FilterParams) -> FilteredResult {
     let total_count = records.len();
     let per_page = if params.per_page == 0 {
         20
@@ -132,4 +137,18 @@ pub fn apply_filter_pipeline(
         per_page,
         total_pages,
     }
+}
+
+/// Apply in-memory filtering, sorting, and pagination to a pre-fetched record list.
+#[must_use]
+pub fn apply_filter_pipeline(
+    mut records: Vec<Value>,
+    params: &FilterParams,
+    valid_sort_fields: &HashSet<String>,
+) -> FilteredResult {
+    apply_search_filter(&mut records, params.search.as_deref());
+    let (epoch_from, epoch_to) = parse_date_range(params);
+    apply_date_filter(&mut records, epoch_from, epoch_to);
+    apply_sort(&mut records, params, valid_sort_fields);
+    paginate(records, params)
 }

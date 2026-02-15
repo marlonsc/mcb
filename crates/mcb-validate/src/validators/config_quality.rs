@@ -103,6 +103,10 @@ impl ConfigQualityValidator {
     }
 
     /// Validate configuration quality across all config files
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if regex compilation or file scanning fails.
     pub fn validate(&self) -> Result<Vec<ConfigQualityViolation>> {
         let mut violations = Vec::new();
 

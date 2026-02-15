@@ -184,9 +184,11 @@ async fn run_server_mode(
                 server,
                 &http_host,
                 http_port,
-                admin_state,
-                auth_config,
-                Some(browse_state),
+                AdminTransportContext {
+                    admin_state,
+                    auth_config,
+                    browse_state: Some(browse_state),
+                },
             )
             .await
         }
@@ -200,9 +202,11 @@ async fn run_server_mode(
                 server,
                 &http_host,
                 http_port,
-                admin_state,
-                auth_config,
-                Some(browse_state),
+                AdminTransportContext {
+                    admin_state,
+                    auth_config,
+                    browse_state: Some(browse_state),
+                },
             )
             .await
         }
@@ -314,10 +318,12 @@ async fn create_mcp_server(
         project: services.project_service,
         project_workflow: services.project_repository,
         vcs: services.vcs_provider,
-        vcs_entity: services.vcs_entity_repository,
-        plan_entity: services.plan_entity_repository,
-        issue_entity: services.issue_entity_repository,
-        org_entity: services.org_entity_repository,
+        entities: crate::mcp_server::McpEntityRepositories {
+            vcs: services.vcs_entity_repository,
+            plan: services.plan_entity_repository,
+            issue: services.issue_entity_repository,
+            org: services.org_entity_repository,
+        },
     };
     let server = McpServer::from_services(mcp_services, Some(execution_flow.to_owned()));
 
@@ -382,20 +388,30 @@ async fn run_http_transport(
         .map_err(|e| -> Box<dyn std::error::Error> { e })
 }
 
+struct AdminTransportContext {
+    admin_state: AdminState,
+    auth_config: Arc<AdminAuthConfig>,
+    browse_state: Option<BrowseState>,
+}
+
 /// Run HTTP transport with consolidated MCP + Admin endpoints
 async fn run_http_transport_with_admin(
     server: McpServer,
     host: &str,
     port: u16,
-    admin_state: AdminState,
-    auth_config: std::sync::Arc<AdminAuthConfig>,
-    browse_state: Option<BrowseState>,
+    admin_context: AdminTransportContext,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let http_config = HttpTransportConfig {
         host: host.to_owned(),
         port,
         enable_cors: true,
     };
+
+    let AdminTransportContext {
+        admin_state,
+        auth_config,
+        browse_state,
+    } = admin_context;
 
     let http_transport = HttpTransport::new(http_config, Arc::new(server)).with_admin(
         admin_state,
@@ -458,13 +474,16 @@ async fn run_hybrid_transport_with_admin(
     server: McpServer,
     host: &str,
     port: u16,
-    admin_state: AdminState,
-    auth_config: std::sync::Arc<AdminAuthConfig>,
-    browse_state: Option<BrowseState>,
+    admin_context: AdminTransportContext,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let stdio_server = server.clone();
     let http_server = Arc::new(server);
     let http_host = host.to_owned();
+    let AdminTransportContext {
+        admin_state,
+        auth_config,
+        browse_state,
+    } = admin_context;
 
     let stdio_handle = tokio::spawn(async move {
         info!("Hybrid: starting stdio transport");

@@ -13,12 +13,11 @@ use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use crate::constants::ANTHROPIC_MAX_INPUT_TOKENS;
-use crate::provider_utils::{JsonRequestParams, send_json_request};
-use crate::utils::http::RequestErrorKind;
-use crate::utils::parse_embedding_vector;
+use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
+use crate::utils::http::{
+    JsonRequestParams, RequestErrorKind, parse_embedding_vector, send_json_request,
+};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
-
-use super::helpers::{HttpEmbeddingClient, process_batch};
 
 /// Anthropic embedding provider
 ///
@@ -70,7 +69,7 @@ impl AnthropicEmbeddingProvider {
     ) -> Self {
         Self {
             client: HttpEmbeddingClient::new(
-                api_key,
+                &api_key,
                 base_url,
                 "https://api.voyageai.com/v1",
                 model,
@@ -153,7 +152,6 @@ impl EmbeddingProvider for AnthropicEmbeddingProvider {
     /// Returns the embedding dimensions for the configured model.
     fn dimensions(&self) -> usize {
         match self.client.model.as_str() {
-            "voyage-3" => EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT,
             "voyage-3-lite" => EMBEDDING_DIMENSION_ANTHROPIC_LITE,
             "voyage-code-3" => EMBEDDING_DIMENSION_ANTHROPIC_CODE,
             _ => EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT,

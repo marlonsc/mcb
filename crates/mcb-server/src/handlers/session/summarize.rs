@@ -4,11 +4,11 @@ use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterf
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
-use super::common::{optional_data_map, str_vec};
+use super::common::{json_map, str_vec};
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::{OriginPayloadFields, resolve_origin_context, tool_error};
+use crate::utils::mcp::{OriginPayloadFields, resolve_origin_context, tool_error};
 
 /// Creates or retrieves a session summary.
 #[tracing::instrument(skip_all)]
@@ -22,7 +22,7 @@ pub async fn summarize_session(
             return Ok(tool_error("Missing session_id"));
         }
     };
-    if let Some(data) = optional_data_map(&args.data) {
+    if let Some(data) = json_map(&args.data) {
         let session_id_str = session_id.to_string();
         let topics = str_vec(data, "topics");
         let decisions = str_vec(data, "decisions");

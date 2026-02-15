@@ -45,10 +45,12 @@ pub use mcb_domain::ports::providers::{
 /// Provider-specific constants
 pub mod constants;
 
+/// Common macros for providers layer
+#[macro_use]
+pub mod macros;
+
 /// Shared utilities for provider implementations
 pub mod utils;
-
-pub(crate) mod provider_utils;
 
 /// Embedding provider implementations
 ///

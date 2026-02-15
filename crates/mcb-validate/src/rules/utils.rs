@@ -3,6 +3,10 @@ use std::path::{Path, PathBuf};
 use crate::Result;
 
 /// Collect all YAML files recursively from a directory
+///
+/// # Errors
+///
+/// Returns an error if directory traversal fails.
 pub fn collect_yaml_files(root: &Path) -> Result<Vec<PathBuf>> {
     if !root.exists() {
         return Ok(Vec::new());

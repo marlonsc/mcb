@@ -52,50 +52,59 @@ pub fn epoch_nanos_u128() -> Result<u128, Error> {
 mod tests {
     use super::*;
 
+    type TestResult = Result<(), Box<dyn std::error::Error>>;
+
     #[test]
-    fn epoch_secs_i64_returns_positive() {
-        let ts = epoch_secs_i64().unwrap();
+    fn epoch_secs_i64_returns_positive() -> TestResult {
+        let ts = epoch_secs_i64()?;
         assert!(ts > 0, "timestamp should be positive, got {ts}");
+        Ok(())
     }
 
     #[test]
-    fn epoch_secs_u64_returns_positive() {
-        let ts = epoch_secs_u64().unwrap();
+    fn epoch_secs_u64_returns_positive() -> TestResult {
+        let ts = epoch_secs_u64()?;
         assert!(ts > 0, "timestamp should be positive, got {ts}");
+        Ok(())
     }
 
     #[test]
-    fn epoch_nanos_u128_returns_positive() {
-        let nanos = epoch_nanos_u128().unwrap();
+    fn epoch_nanos_u128_returns_positive() -> TestResult {
+        let nanos = epoch_nanos_u128()?;
         assert!(nanos > 0, "nanos should be positive, got {nanos}");
+        Ok(())
     }
 
     #[test]
-    fn epoch_secs_i64_monotonic() {
-        let a = epoch_secs_i64().unwrap();
-        let b = epoch_secs_i64().unwrap();
+    fn epoch_secs_i64_monotonic() -> TestResult {
+        let a = epoch_secs_i64()?;
+        let b = epoch_secs_i64()?;
         assert!(b >= a, "expected monotonic: {b} >= {a}");
+        Ok(())
     }
 
     #[test]
-    fn epoch_secs_u64_monotonic() {
-        let a = epoch_secs_u64().unwrap();
-        let b = epoch_secs_u64().unwrap();
+    fn epoch_secs_u64_monotonic() -> TestResult {
+        let a = epoch_secs_u64()?;
+        let b = epoch_secs_u64()?;
         assert!(b >= a, "expected monotonic: {b} >= {a}");
+        Ok(())
     }
 
     #[test]
-    fn epoch_nanos_u128_monotonic() {
-        let a = epoch_nanos_u128().unwrap();
-        let b = epoch_nanos_u128().unwrap();
+    fn epoch_nanos_u128_monotonic() -> TestResult {
+        let a = epoch_nanos_u128()?;
+        let b = epoch_nanos_u128()?;
         assert!(b >= a, "expected monotonic: {b} >= {a}");
+        Ok(())
     }
 
     #[test]
-    fn epoch_secs_i64_reasonable_range() {
-        let ts = epoch_secs_i64().unwrap();
+    fn epoch_secs_i64_reasonable_range() -> TestResult {
+        let ts = epoch_secs_i64()?;
         // Should be after 2020-01-01 (1577836800) and before 2100-01-01 (4102444800)
         assert!(ts > 1_577_836_800, "timestamp too old: {ts}");
         assert!(ts < 4_102_444_800, "timestamp too far in future: {ts}");
+        Ok(())
     }
 }

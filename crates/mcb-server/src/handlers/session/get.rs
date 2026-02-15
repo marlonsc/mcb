@@ -9,7 +9,7 @@ use super::common::require_session_id_str;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::tool_error;
+use crate::utils::mcp::tool_error;
 use tracing::error;
 
 /// Retrieves an agent session by ID.

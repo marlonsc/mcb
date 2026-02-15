@@ -69,6 +69,10 @@ pub struct HashUtils;
 
 impl HashUtils {
     /// Compute HMAC-SHA256
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if HMAC initialization fails due to invalid key length.
     pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Result<Vec<u8>> {
         use hmac::{Hmac, Mac};
         type HmacSha256 = Hmac<Sha256>;

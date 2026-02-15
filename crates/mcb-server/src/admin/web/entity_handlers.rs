@@ -1,6 +1,5 @@
 //! Entity CRUD handlers — schema-driven Handlebars template rendering.
 
-use crate::context;
 use crate::templates::Template;
 use rocket::State;
 use rocket::form::Form;
@@ -9,11 +8,11 @@ use rocket::response::{Redirect, status};
 
 use std::collections::HashSet;
 
+use crate::admin::AdminRegistry;
 use crate::admin::crud_adapter::resolve_adapter;
 use crate::admin::handlers::AdminState;
 use crate::admin::web::filter::FilterParams;
 use crate::admin::web::view_model::nav_groups;
-use crate::admin::{AdminRegistry, registry::AdminFieldMeta};
 
 fn find_or_404(
     slug: &str,
@@ -75,9 +74,16 @@ pub async fn entities_list(
 ) -> Result<Template, status::Custom<String>> {
     let entity = find_or_404(slug)?;
 
-    let fields: Vec<AdminFieldMeta> = entity.fields().into_iter().filter(|f| !f.hidden).collect();
-    let field_names: Vec<String> = fields.iter().map(|f| f.name.clone()).collect();
-    let valid_sort_fields: HashSet<String> = field_names.iter().cloned().collect();
+    let fields = entity
+        .fields()
+        .into_iter()
+        .filter(|field| !field.hidden)
+        .collect::<Vec<_>>();
+    let field_names = fields
+        .iter()
+        .map(|field| field.name.clone())
+        .collect::<Vec<_>>();
+    let valid_sort_fields = field_names.iter().cloned().collect::<HashSet<_>>();
 
     let result = match state.and_then(|s| resolve_adapter(slug, s.inner())) {
         Some(adapter) => adapter
@@ -119,11 +125,11 @@ pub async fn entities_list(
 pub fn entities_new_form(slug: &str) -> Result<Template, status::Custom<String>> {
     let entity = find_or_404(slug)?;
 
-    let fields: Vec<AdminFieldMeta> = entity
+    let fields = entity
         .fields()
         .into_iter()
         .filter(|field| !field.hidden)
-        .collect();
+        .collect::<Vec<_>>();
 
     Ok(Template::render(
         "admin/entity_form",
@@ -148,7 +154,11 @@ pub async fn entities_detail(
     state: Option<&State<AdminState>>,
 ) -> Result<Template, status::Custom<String>> {
     let entity = find_or_404(slug)?;
-    let fields: Vec<AdminFieldMeta> = entity.fields().into_iter().filter(|f| !f.hidden).collect();
+    let fields = entity
+        .fields()
+        .into_iter()
+        .filter(|field| !field.hidden)
+        .collect::<Vec<_>>();
 
     let (record, has_record) = match state.and_then(|s| resolve_adapter(slug, s.inner())) {
         Some(adapter) => match adapter.get_by_id(id).await {
@@ -182,7 +192,11 @@ pub async fn entities_edit_form(
     state: Option<&State<AdminState>>,
 ) -> Result<Template, status::Custom<String>> {
     let entity = find_or_404(slug)?;
-    let fields: Vec<AdminFieldMeta> = entity.fields().into_iter().filter(|f| !f.hidden).collect();
+    let fields = entity
+        .fields()
+        .into_iter()
+        .filter(|field| !field.hidden)
+        .collect::<Vec<_>>();
 
     let record = match state.and_then(|s| resolve_adapter(slug, s.inner())) {
         Some(adapter) => adapter
@@ -216,7 +230,11 @@ pub async fn entities_delete_confirm(
     state: Option<&State<AdminState>>,
 ) -> Result<Template, status::Custom<String>> {
     let entity = find_or_404(slug)?;
-    let fields: Vec<AdminFieldMeta> = entity.fields().into_iter().filter(|f| !f.hidden).collect();
+    let fields = entity
+        .fields()
+        .into_iter()
+        .filter(|field| !field.hidden)
+        .collect::<Vec<_>>();
 
     let (record, has_record) = match state.and_then(|s| resolve_adapter(slug, s.inner())) {
         Some(adapter) => match adapter.get_by_id(id).await {
@@ -299,11 +317,11 @@ pub async fn entities_bulk_delete(
     find_or_404(slug)?;
 
     let ids_raw = form.get("ids").map_or("", std::string::String::as_str);
-    let ids: Vec<&str> = ids_raw
+    let ids = ids_raw
         .split(',')
         .map(str::trim)
         .filter(|s| !s.is_empty())
-        .collect();
+        .collect::<Vec<_>>();
 
     if let Some(adapter) = state.and_then(|s| resolve_adapter(slug, s.inner())) {
         let total = ids.len();

@@ -30,12 +30,27 @@ pub enum SqlParam {
 /// depending on the driver.
 pub trait SqlRow: Send + Sync {
     /// Try to get a string by column name.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the column does not exist or the value cannot be
+    /// decoded as a string.
     fn try_get_string(&self, name: &str) -> Result<Option<String>>;
 
     /// Try to get an i64 by column name.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the column does not exist or the value cannot be
+    /// decoded as an i64.
     fn try_get_i64(&self, name: &str) -> Result<Option<i64>>;
 
     /// Try to get an f64 by column name (e.g. FTS rank).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the column does not exist or the value cannot be
+    /// decoded as an f64.
     fn try_get_f64(&self, name: &str) -> Result<Option<f64>>;
 }
 

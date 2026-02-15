@@ -1,7 +1,9 @@
 use std::path::Path;
 
 use super::super::violation::NamingViolation;
+use crate::constants::common::STANDARD_SKIP_FILES;
 use crate::traits::violation::Severity;
+use crate::validators::naming::constants::*;
 
 pub fn validate_ca_naming(
     path: &Path,
@@ -14,16 +16,16 @@ pub fn validate_ca_naming(
     let path_str = path.to_str()?;
 
     // Skip standard files
-    if file_name == "lib" || file_name == "mod" || file_name == "main" || file_name == "build" {
+    if STANDARD_SKIP_FILES.contains(&file_name) {
         return None;
     }
 
     // Domain crate: port traits should be in ports/
     if crate_name == domain_crate {
         // Files with "provider" in name should be in ports/providers/
-        if file_name.contains("provider")
-            && !path_str.contains("/ports/providers/")
-            && !path_str.contains("/ports/")
+        if file_name.contains(CA_DOMAIN_PROVIDER_KEYWORD)
+            && !path_str.contains(CA_PORTS_PROVIDERS_DIR)
+            && !path_str.contains(CA_PORTS_DIR)
         {
             return Some(NamingViolation::BadCaNaming {
                 path: path.to_path_buf(),
@@ -35,9 +37,9 @@ pub fn validate_ca_naming(
         }
 
         // Files with "repository" in name should be in repositories/
-        if file_name.contains("repository")
-            && !path_str.contains("/repositories/")
-            && !path_str.contains("/adapters/repository/")
+        if file_name.contains(CA_DOMAIN_REPOSITORY_KEYWORD)
+            && !path_str.contains(CA_REPOSITORIES_DIR)
+            && !path_str.contains(CA_ADAPTERS_REPOSITORY_DIR)
         {
             return Some(NamingViolation::BadCaNaming {
                 path: path.to_path_buf(),
@@ -52,8 +54,9 @@ pub fn validate_ca_naming(
     // Infrastructure crate: adapters should be in adapters/
     if crate_name == infrastructure_crate {
         // Implementation files should be in adapters/
-        if (file_name.ends_with("_impl") || file_name.contains("adapter"))
-            && !path_str.contains("/adapters/")
+        if (file_name.ends_with(CA_INFRA_IMPL_SUFFIX)
+            || file_name.contains(CA_INFRA_ADAPTER_KEYWORD))
+            && !path_str.contains(CA_ADAPTERS_DIR)
         {
             return Some(NamingViolation::BadCaNaming {
                 path: path.to_path_buf(),
@@ -65,7 +68,7 @@ pub fn validate_ca_naming(
         }
 
         // DI modules should be in di/
-        if file_name.contains("module") && !path_str.contains("/di/") {
+        if file_name.contains(CA_MODULE_KEYWORD) && !path_str.contains(CA_DI_DIR) {
             return Some(NamingViolation::BadCaNaming {
                 path: path.to_path_buf(),
                 detected_type: "DI Module".to_owned(),
@@ -79,10 +82,8 @@ pub fn validate_ca_naming(
     // Server crate: handlers should be in handlers/ or admin/
     if crate_name == server_crate {
         // Allow handlers in handlers/, admin/, or tools/ directories
-        let in_allowed_handler_dir = path_str.contains("/handlers/")
-            || path_str.contains("/admin/")
-            || path_str.contains("/tools/");
-        if file_name.contains("handler") && !in_allowed_handler_dir {
+        let in_allowed_handler_dir = CA_HANDLER_DIRS.iter().any(|d| path_str.contains(d));
+        if file_name.contains(CA_HANDLER_KEYWORD) && !in_allowed_handler_dir {
             return Some(NamingViolation::BadCaNaming {
                 path: path.to_path_buf(),
                 detected_type: "Handler".to_owned(),

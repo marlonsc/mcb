@@ -33,53 +33,43 @@ impl ProviderInfo {
     }
 }
 
-/// Interface for embedding provider admin operations
-#[async_trait::async_trait]
-pub trait EmbeddingAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available embedding providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Get current provider name
-    fn current_provider(&self) -> String;
-    /// Switch to a different embedding provider
-    fn switch_provider(&self, config: EmbeddingProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
-}
+provider_admin_interface!(
+    /// Interface for embedding provider admin operations.
+    trait EmbeddingAdminInterface,
+    config = EmbeddingProviderConfig,
+    list_doc = "List all available embedding providers.",
+    extra = {
+        /// Get current provider name.
+        fn current_provider(&self) -> String;
+    }
+);
 
-/// Interface for vector store provider admin operations
-#[async_trait::async_trait]
-pub trait VectorStoreAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available vector store providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Switch to a different vector store provider
-    fn switch_provider(&self, config: VectorStoreProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
-}
+provider_admin_interface!(
+    /// Interface for vector store provider admin operations.
+    trait VectorStoreAdminInterface,
+    config = VectorStoreProviderConfig,
+    list_doc = "List all available vector store providers.",
+    extra = {}
+);
 
-/// Interface for cache provider admin operations
-#[async_trait::async_trait]
-pub trait CacheAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available cache providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Get current provider name
-    fn current_provider(&self) -> String;
-    /// Switch to a different cache provider
-    fn switch_provider(&self, config: CacheProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
-}
+provider_admin_interface!(
+    /// Interface for cache provider admin operations.
+    trait CacheAdminInterface,
+    config = CacheProviderConfig,
+    list_doc = "List all available cache providers.",
+    extra = {
+        /// Get current provider name.
+        fn current_provider(&self) -> String;
+    }
+);
 
-/// Interface for language provider admin operations
-#[async_trait::async_trait]
-pub trait LanguageAdminInterface: Send + Sync + std::fmt::Debug {
-    /// List all available language providers
-    fn list_providers(&self) -> Vec<ProviderInfo>;
-    /// Switch to a different language provider
-    fn switch_provider(&self, config: LanguageProviderConfig) -> Result<(), String>;
-    /// Reload provider from current application config
-    fn reload_from_config(&self) -> Result<(), String>;
-}
+provider_admin_interface!(
+    /// Interface for language provider admin operations.
+    trait LanguageAdminInterface,
+    config = LanguageProviderConfig,
+    list_doc = "List all available language providers.",
+    extra = {}
+);
 
 // ============================================================================
 // Performance Metrics Types
@@ -347,7 +337,7 @@ pub trait LifecycleManaged: Send + Sync {
             },
             message: None,
             latency_ms: None,
-            last_check: crate::utils::time::epoch_secs_u64().unwrap_or(0),
+            last_check: crate::utils::time::epoch_secs_u64().unwrap_or_default(),
         }
     }
 }

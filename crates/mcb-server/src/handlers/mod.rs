@@ -2,9 +2,7 @@
 
 pub mod agent;
 pub mod entities;
-pub mod helpers;
 pub mod index;
-pub mod macros;
 pub mod memory;
 pub mod project;
 pub mod search;

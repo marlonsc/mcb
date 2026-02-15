@@ -116,6 +116,10 @@ impl VisibilityValidator {
     }
 
     /// Validates visibility rules for the given configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or regex compilation fails.
     pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<VisibilityViolation>> {
         if !self.enabled {
             return Ok(Vec::new());

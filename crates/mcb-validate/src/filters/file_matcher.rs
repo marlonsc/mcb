@@ -32,6 +32,10 @@ impl FilePatternMatcher {
     /// # Arguments
     /// * `include_patterns` - Patterns that files must match (e.g., ["src/**/*.rs", "tests/**/*.rs"])
     /// * `exclude_patterns` - Patterns that files must NOT match (e.g. `["**/target/**", "**/*_test.rs"]`)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any glob pattern is invalid.
     pub fn new(
         include_patterns: &[String],
         exclude_patterns: &[String],
@@ -131,6 +135,10 @@ impl FilePatternMatcher {
     }
 
     /// Create matcher from mixed patterns
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any glob pattern is invalid.
     pub fn from_mixed_patterns(patterns: &[String]) -> Result<Self, globset::Error> {
         let (includes, excludes) = Self::parse_patterns(patterns);
         Self::new(&includes, &excludes)

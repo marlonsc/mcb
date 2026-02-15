@@ -18,6 +18,10 @@ pub struct FunctionRecord {
 /// Computes cyclomatic complexity using control flow keyword counting.
 ///
 /// Returns 1 + count of branching constructs (if, for, while, loop, match, &&, ||).
+///
+/// # Errors
+///
+/// Returns an error if the internal complexity regex fails to compile.
 pub fn compute_complexity_score(content: &str, start_pos: usize) -> Result<u32> {
     let body = extract_function_body(content, start_pos).unwrap_or_default();
     let re = Regex::new(r"\b(if|for|while|loop|match)\b|&&|\|\|")
@@ -63,6 +67,10 @@ pub fn is_exempt_symbol(name: &str) -> bool {
 /// Counts occurrences of symbols across a set of file contents.
 ///
 /// Returns a map of symbol -> count.
+///
+/// # Errors
+///
+/// Returns an error if a symbol produces an invalid regex pattern.
 pub fn count_symbol_occurrences(
     file_contents: &[String],
     symbols: &[String],

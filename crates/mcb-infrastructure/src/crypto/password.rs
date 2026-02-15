@@ -23,6 +23,10 @@ impl PasswordService {
     }
 
     /// Hash a password using Argon2
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the Argon2 hashing operation fails.
     pub fn hash_password(&self, password: &str) -> Result<String> {
         let salt = SaltString::generate(&mut ArgonOsRng);
 
@@ -38,6 +42,10 @@ impl PasswordService {
     }
 
     /// Verify a password against its hash
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the hash format is invalid.
     pub fn verify_password(&self, password: &str, hash: &str) -> Result<bool> {
         let parsed_hash = PasswordHash::new(hash).map_err(|e| Error::Authentication {
             message: format!("Invalid password hash format: {e}"),

@@ -40,6 +40,7 @@ impl VectorStoreProviderConfig {
     }
 
     /// Enable encryption
+    #[must_use]
     pub fn with_encryption(mut self, key: impl Into<String>) -> Self {
         self.encrypted = Some(true);
         self.encryption_key = Some(key.into());
@@ -47,18 +48,21 @@ impl VectorStoreProviderConfig {
     }
 
     /// Add extra configuration
+    #[must_use]
     pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.extra.insert(key.into(), value.into());
         self
     }
 
     /// Set the URI
+    #[must_use]
     pub fn with_uri(mut self, uri: impl Into<String>) -> Self {
         self.uri = Some(uri.into());
         self
     }
 
     /// Set the collection name
+    #[must_use]
     pub fn with_collection(mut self, collection: impl Into<String>) -> Self {
         self.collection = Some(collection.into());
         self
@@ -72,6 +76,7 @@ impl VectorStoreProviderConfig {
     }
 
     /// Set the API key
+    #[must_use]
     pub fn with_api_key(mut self, api_key: impl Into<String>) -> Self {
         self.api_key = Some(api_key.into());
         self

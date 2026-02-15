@@ -58,32 +58,53 @@ impl AgentSessionServiceImpl {
 #[async_trait]
 #[async_trait]
 impl AgentSessionManager for AgentSessionServiceImpl {
+    /// # Errors
+    ///
+    /// Returns an error if the repository fails to persist the session.
     async fn create_session(&self, session: AgentSession) -> Result<String> {
         let id = session.id.clone();
         self.repository.create_session(&session).await?;
         Ok(id)
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
     async fn get_session(&self, id: &str) -> Result<Option<AgentSession>> {
         self.repository.get_session(id).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository fails to update the session.
     async fn update_session(&self, session: AgentSession) -> Result<()> {
         self.repository.update_session(&session).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
     async fn list_sessions(&self, query: AgentSessionQuery) -> Result<Vec<AgentSession>> {
         self.repository.list_sessions(query).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
     async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>> {
         self.repository.list_sessions_by_project(project_id).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
     async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>> {
         self.repository.list_sessions_by_worktree(worktree_id).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the session lookup or update fails.
     async fn end_session(
         &self,
         id: &str,
@@ -105,12 +126,18 @@ impl AgentSessionManager for AgentSessionServiceImpl {
 
 #[async_trait]
 impl DelegationTracker for AgentSessionServiceImpl {
+    /// # Errors
+    ///
+    /// Returns an error if the repository fails to persist the delegation.
     async fn store_delegation(&self, delegation: Delegation) -> Result<String> {
         let id = delegation.id.clone();
         self.repository.store_delegation(&delegation).await?;
         Ok(id)
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository fails to persist the tool call.
     async fn store_tool_call(&self, tool_call: ToolCall) -> Result<String> {
         let id = tool_call.id.clone();
         self.repository.store_tool_call(&tool_call).await?;
@@ -120,16 +147,25 @@ impl DelegationTracker for AgentSessionServiceImpl {
 
 #[async_trait]
 impl CheckpointManager for AgentSessionServiceImpl {
+    /// # Errors
+    ///
+    /// Returns an error if the repository fails to persist the checkpoint.
     async fn store_checkpoint(&self, checkpoint: Checkpoint) -> Result<String> {
         let id = checkpoint.id.clone();
         self.repository.store_checkpoint(&checkpoint).await?;
         Ok(id)
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
     async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>> {
         self.repository.get_checkpoint(id).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the checkpoint lookup or update fails.
     async fn restore_checkpoint(&self, id: &str) -> Result<()> {
         let checkpoint = self.repository.get_checkpoint(id).await?;
         if let Some(mut checkpoint) = checkpoint {

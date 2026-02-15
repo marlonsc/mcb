@@ -78,37 +78,45 @@ pub fn strict_canonicalize(path: &Path) -> Result<PathBuf, Error> {
 mod tests {
     use super::*;
 
+    type TestResult = Result<(), Box<dyn std::error::Error>>;
+
     #[test]
-    fn workspace_relative_happy_path() {
+    fn workspace_relative_happy_path() -> TestResult {
         let root = Path::new("/home/user/project");
         let file = Path::new("/home/user/project/src/main.rs");
-        assert_eq!(workspace_relative_path(file, root).unwrap(), "src/main.rs");
+        assert_eq!(workspace_relative_path(file, root)?, "src/main.rs");
+        Ok(())
     }
 
     #[test]
-    fn workspace_relative_nested() {
+    fn workspace_relative_nested() -> TestResult {
         let root = Path::new("/a/b");
         let file = Path::new("/a/b/c/d/e.rs");
-        assert_eq!(workspace_relative_path(file, root).unwrap(), "c/d/e.rs");
+        assert_eq!(workspace_relative_path(file, root)?, "c/d/e.rs");
+        Ok(())
     }
 
     #[test]
     fn workspace_relative_outside_root_returns_error() {
         let root = Path::new("/home/user/project");
         let file = Path::new("/other/place/file.rs");
-        let err = workspace_relative_path(file, root).unwrap_err();
-        assert!(
-            err.to_string().contains("is not under root"),
-            "unexpected error: {err}"
-        );
+        let result = workspace_relative_path(file, root);
+        assert!(result.is_err(), "expected error for path outside root");
+        if let Err(err) = result {
+            assert!(
+                err.to_string().contains("is not under root"),
+                "unexpected error: {err}"
+            );
+        }
     }
 
     #[test]
-    fn strict_strip_prefix_same_path() {
+    fn strict_strip_prefix_same_path() -> TestResult {
         let root = Path::new("/a/b");
         let path = Path::new("/a/b");
-        let result = strict_strip_prefix(path, root).unwrap();
+        let result = strict_strip_prefix(path, root)?;
         assert_eq!(result, PathBuf::from(""));
+        Ok(())
     }
 
     #[test]
@@ -119,28 +127,33 @@ mod tests {
     }
 
     #[test]
-    fn path_to_utf8_string_forward_slashes() {
+    fn path_to_utf8_string_forward_slashes() -> TestResult {
         // On Unix the backslash is a valid filename char, but we still replace it
         let p = Path::new("src/main.rs");
-        assert_eq!(path_to_utf8_string(p).unwrap(), "src/main.rs");
+        assert_eq!(path_to_utf8_string(p)?, "src/main.rs");
+        Ok(())
     }
 
     #[test]
     fn strict_canonicalize_nonexistent_path_returns_error() {
         let bad = Path::new("/this/path/definitely/does/not/exist/xyz123");
-        let err = strict_canonicalize(bad).unwrap_err();
-        assert!(
-            err.to_string().contains("failed to canonicalize"),
-            "unexpected error: {err}"
-        );
+        let result = strict_canonicalize(bad);
+        assert!(result.is_err(), "expected error for nonexistent path");
+        if let Err(err) = result {
+            assert!(
+                err.to_string().contains("failed to canonicalize"),
+                "unexpected error: {err}"
+            );
+        }
     }
 
     #[cfg(target_os = "linux")]
     #[test]
-    fn strict_canonicalize_real_path_succeeds() {
+    fn strict_canonicalize_real_path_succeeds() -> TestResult {
         // /tmp always exists on Linux
-        let result = strict_canonicalize(Path::new("/tmp")).unwrap();
+        let result = strict_canonicalize(Path::new("/tmp"))?;
         // Canonicalized /tmp might resolve symlinks, but should succeed
         assert!(result.exists());
+        Ok(())
     }
 }

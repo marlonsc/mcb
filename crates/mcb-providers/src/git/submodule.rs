@@ -33,6 +33,10 @@ impl SubmoduleProvider {
     /// - Inaccessible submodule URLs - skipped, parent indexing continues
     /// - Detached HEAD - uses `head_id()` for commit hash
     /// - Circular references - tracked via visited set
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the repository cannot be opened or submodule traversal fails.
     pub async fn collect_submodules(
         &self,
         repo_path: &Path,
@@ -196,6 +200,10 @@ impl SubmoduleProvider {
 }
 
 /// Convenience function for collecting submodules with default config
+///
+/// # Errors
+///
+/// Returns an error if submodule discovery fails.
 pub async fn collect_submodules(
     repo_path: &Path,
     parent_repo_id: &str,
@@ -206,6 +214,10 @@ pub async fn collect_submodules(
 }
 
 /// Convenience function with custom depth
+///
+/// # Errors
+///
+/// Returns an error if submodule discovery fails.
 pub async fn collect_submodules_with_depth(
     repo_path: &Path,
     parent_repo_id: &str,

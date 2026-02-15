@@ -275,7 +275,7 @@ fn create_test_vector_store() -> EdgeVecVectorStoreProvider {
         dimensions: 384,
         ..Default::default()
     };
-    EdgeVecVectorStoreProvider::new(config).expect("Failed to create test vector store")
+    EdgeVecVectorStoreProvider::new(&config).expect("Failed to create test vector store")
 }
 
 /// Helper to create metadata for a code chunk

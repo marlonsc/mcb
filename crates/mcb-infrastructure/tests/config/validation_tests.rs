@@ -109,9 +109,10 @@ fn test_cache_config_ttl_when_enabled() {
         provider: CacheProvider::Redis,
         default_ttl_secs: default_cache.default_ttl_secs,
         max_size: default_cache.max_size,
-        redis_url: Some(mcb_domain::test_services_config::required_test_service_url(
-            "redis_url",
-        )),
+        redis_url: Some(
+            mcb_domain::test_services_config::required_test_service_url("redis_url")
+                .expect("redis_url required in test config"),
+        ),
         redis_pool_size: 16,
         namespace: default_cache.namespace.clone(),
     };

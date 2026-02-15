@@ -36,6 +36,7 @@ impl CacheProviderConfig {
     }
 
     /// Set the connection URI (for distributed caches)
+    #[must_use]
     pub fn with_uri(mut self, uri: impl Into<String>) -> Self {
         self.uri = Some(uri.into());
         self
@@ -56,12 +57,14 @@ impl CacheProviderConfig {
     }
 
     /// Set the namespace prefix for keys
+    #[must_use]
     pub fn with_namespace(mut self, namespace: impl Into<String>) -> Self {
         self.namespace = Some(namespace.into());
         self
     }
 
     /// Add extra configuration
+    #[must_use]
     pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.extra.insert(key.into(), value.into());
         self

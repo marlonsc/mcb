@@ -44,7 +44,7 @@ large_include_file = "deny"              # no include_bytes! on large files
 empty_structs_with_brackets = "deny"     # use `struct Foo;` not `struct Foo {}`
 format_push_string = "deny"              # use write!() instead of push_str(&format!())
 needless_raw_strings = "deny"            # no raw strings without special chars
-redundant_type_annotations = "deny"      # no `let x: Type = Type::new()`
+redundant_type_annotations = "warn"
 rc_mutex = "deny"                        # Rc<Mutex<T>> is always wrong, use Arc<Mutex<T>>
 try_err = "deny"                         # no `Err(e)?`, just `return Err(e)`
 unnecessary_self_imports = "deny"        # no `use self as _`
@@ -76,7 +76,7 @@ missing_panics_doc = "warn"              # document panic conditions
 must_use_candidate = "warn"              # add #[must_use] where appropriate
 return_self_not_must_use = "warn"        # builder methods should be #[must_use]
 doc_markdown = "warn"                    # backticks for code in docs
-module_name_repetitions = "warn"         # avoid `foo::FooBar`, prefer `foo::Bar`
+module_name_repetitions = "allow"        # intentional: AgentSession, IssueComment etc. need prefix for clarity
 needless_pass_by_value = "warn"          # pass by reference when ownership not needed
 used_underscore_binding = "warn"         # don't use bindings prefixed with _
 

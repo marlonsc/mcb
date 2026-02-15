@@ -7,6 +7,9 @@ use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
 
 use super::RefactoringValidator;
+use super::constants::{
+    CRATE_PATH_DELIMITER, MIGRATION_TYPE_SUFFIXES, REFACTORING_SKIP_PATTERNS, TYPE_DEFINITION_REGEX,
+};
 use super::violation::RefactoringViolation;
 
 /// Check for same type defined in multiple locations
@@ -14,9 +17,7 @@ pub fn validate_duplicate_definitions(
     validator: &RefactoringValidator,
 ) -> Result<Vec<RefactoringViolation>> {
     let mut violations = Vec::new();
-    let definition_pattern = compile_regex(
-        r"(?:pub\s+)?(?:struct|trait|enum)\s+([A-Z][a-zA-Z0-9_]*)(?:\s*<|\s*\{|\s*;|\s*\(|\s+where)",
-    )?;
+    let definition_pattern = compile_regex(TYPE_DEFINITION_REGEX)?;
 
     // Map: type_name -> Vec<file_path>
     let mut definitions: HashMap<String, Vec<PathBuf>> = HashMap::new();
@@ -41,10 +42,9 @@ pub fn validate_duplicate_definitions(
                 };
 
                 // Skip test files and archived directories
-                if path_str.contains("/tests/")
-                    || path_str.contains("_test.rs")
-                    || path_str.contains(".archived")
-                    || path_str.contains(".bak")
+                if REFACTORING_SKIP_PATTERNS
+                    .iter()
+                    .any(|p| path_str.contains(p))
                 {
                     return Ok(());
                 }
@@ -78,7 +78,7 @@ pub fn validate_duplicate_definitions(
                 .iter()
                 .filter_map(|p| {
                     p.to_str()?
-                        .split("/crates/")
+                        .split(CRATE_PATH_DELIMITER)
                         .nth(1)
                         .and_then(|s| s.split('/').next())
                         .map(std::string::ToString::to_string)
@@ -164,19 +164,7 @@ fn categorize_duplicate_severity(
 
     // Check for patterns that suggest migration in progress
     // Types ending with Provider, Processor, etc. between known pairs
-    let migration_type_patterns = [
-        "Provider",
-        "Processor",
-        "Handler",
-        "Service",
-        "Repository",
-        "Adapter",
-        "Factory",
-        "Publisher",
-        "Subscriber",
-    ];
-
-    if migration_type_patterns
+    if MIGRATION_TYPE_SUFFIXES
         .iter()
         .any(|p| type_name.ends_with(p))
     {

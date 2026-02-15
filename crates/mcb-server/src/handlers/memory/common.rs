@@ -13,8 +13,8 @@ use serde_json::{Map, Value};
 use uuid::Uuid;
 
 use crate::args::MemoryArgs;
-use crate::handlers::helpers::{OriginPayloadFields, resolve_origin_context, tool_error};
-pub(super) use crate::handlers::helpers::{opt_str, require_data_map, require_str, str_vec};
+use crate::utils::mcp::{OriginPayloadFields, resolve_origin_context, tool_error};
+pub(super) use crate::utils::mcp::{opt_str, require_data_map, require_str, str_vec};
 
 pub(super) fn require_i64(data: &Map<String, Value>, key: &str) -> Result<i64, CallToolResult> {
     data.get(key)
@@ -39,6 +39,13 @@ pub(super) struct MemoryOriginResolution {
     pub project_id: String,
     pub canonical_session_id: Option<String>,
     pub origin_context: mcb_domain::entities::memory::OriginContext,
+}
+
+pub(super) struct SearchMemoriesJsonSpec<F> {
+    pub query: &'static str,
+    pub obs_type: ObservationType,
+    pub result_key: &'static str,
+    pub mapper: F,
 }
 
 pub(super) struct MemoryOriginOptions<'a> {
@@ -122,24 +129,24 @@ pub(super) fn build_observation_metadata(
     }
 }
 
-pub(super) async fn search_memories_as_json(
+pub(super) async fn search_memories_as_json<F>(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
-    query: &'static str,
-    obs_type: ObservationType,
-    result_key: &'static str,
-    mapper: impl Fn(&MemorySearchResult) -> Option<Value>,
-) -> Result<CallToolResult, McpError> {
-    let filter = build_memory_filter(args, Some(obs_type), None);
+    spec: SearchMemoriesJsonSpec<F>,
+) -> Result<CallToolResult, McpError>
+where
+    F: Fn(&MemorySearchResult) -> Option<Value>,
+{
+    let filter = build_memory_filter(args, Some(spec.obs_type), None);
 
     let limit = args.limit.unwrap_or(10) as usize;
     let fetch_limit = limit * 5;
     match memory_service
-        .search_memories(query, Some(filter), fetch_limit)
+        .search_memories(spec.query, Some(filter), fetch_limit)
         .await
     {
         Ok(results) => {
-            let mut items: Vec<_> = results.iter().filter_map(mapper).collect();
+            let mut items: Vec<_> = results.iter().filter_map(spec.mapper).collect();
             items.sort_by(|a, b| {
                 b.get("created_at")
                     .and_then(Value::as_i64)
@@ -148,7 +155,7 @@ pub(super) async fn search_memories_as_json(
             items.truncate(limit);
             crate::formatter::ResponseFormatter::json_success(&serde_json::json!({
                 "count": items.len(),
-                result_key: items,
+                spec.result_key: items,
             }))
         }
         Err(e) => Ok(crate::error_mapping::to_contextual_tool_error(e)),

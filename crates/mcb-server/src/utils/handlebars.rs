@@ -52,7 +52,7 @@ impl HelperDef for TimestampHelper {
 /// | < 3 600 s          | "N minutes ago"   |
 /// | < 86 400 s         | "N hours ago"     |
 /// | < 604 800 s        | "N days ago"      |
-/// | ≥ 604 800 s        | full date string  |
+/// | >= 604 800 s       | full date string  |
 #[derive(Clone, Copy)]
 struct RelativeTimeHelper;
 
@@ -98,7 +98,7 @@ impl HelperDef for RelativeTimeHelper {
     }
 }
 
-/// Pretty-prints a JSON value wrapped in `<pre><code>…</code></pre>`.
+/// Pretty-prints a JSON value wrapped in `<pre><code>...</code></pre>`.
 ///
 /// Usage: `{{{json_pretty data}}}`  (triple-stache to avoid double-escaping)
 ///
@@ -133,7 +133,7 @@ impl HelperDef for JsonPrettyHelper {
     }
 }
 
-/// Truncates a string to `N` characters (default 8), appending `"…"` when
+/// Truncates a string to `N` characters (default 8), appending `"..."` when
 /// shortened.  Unicode-safe via `.chars().take(n)`.
 ///
 /// Usage: `{{truncate_id id}}` or `{{truncate_id id 12}}`
@@ -197,7 +197,7 @@ impl HelperDef for PluralizeHelper {
 
 /// Renders a generic badge: `<span class="badge badge-{color}">{label}</span>`.
 ///
-/// Usage: `{{{badge label "green"}}}` — colour defaults to `"gray"`.
+/// Usage: `{{{badge label "green"}}}` -- colour defaults to `"gray"`.
 #[derive(Clone, Copy)]
 struct BadgeHelper;
 
@@ -266,7 +266,7 @@ impl HelperDef for StatusBadgeHelper {
     }
 }
 
-/// Maps a numeric priority (0–4) to a coloured `P0`–`P4` badge.
+/// Maps a numeric priority (0-4) to a coloured `P0`-`P4` badge.
 ///
 /// Usage: `{{{priority_badge priority}}}`
 ///
@@ -306,7 +306,7 @@ impl HelperDef for PriorityBadgeHelper {
     }
 }
 
-/// Truncates text to a maximum length, appending `"…"` when shortened.
+/// Truncates text to a maximum length, appending `"..."` when shortened.
 ///
 /// Usage: `{{truncate_text text 60}}`
 #[derive(Clone, Copy)]

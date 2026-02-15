@@ -22,6 +22,10 @@ pub struct CryptoService {
 
 impl CryptoService {
     /// Create a new crypto service with the provided master key
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the master key size is not exactly 32 bytes.
     pub fn new(master_key: Vec<u8>) -> Result<Self> {
         if master_key.len() != AES_GCM_KEY_SIZE {
             return Err(Error::Configuration {
@@ -46,6 +50,10 @@ impl CryptoService {
     }
 
     /// Encrypt data using AES-GCM
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the AES-GCM encryption operation fails.
     pub fn encrypt(&self, plaintext: &[u8]) -> Result<EncryptedData> {
         let key = Key::<Aes256Gcm>::from_slice(&self.master_key);
         let cipher = Aes256Gcm::new(key);
@@ -62,6 +70,10 @@ impl CryptoService {
     }
 
     /// Decrypt data using AES-GCM
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the AES-GCM decryption operation fails.
     pub fn decrypt(&self, encrypted_data: &EncryptedData) -> Result<Vec<u8>> {
         let key = Key::<Aes256Gcm>::from_slice(&self.master_key);
         let cipher = Aes256Gcm::new(key);

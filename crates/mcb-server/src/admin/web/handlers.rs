@@ -2,7 +2,6 @@
 //!
 //! HTTP handlers for the admin web interface.
 
-use crate::context;
 use crate::templates::Template;
 use rocket::State;
 use rocket::get;

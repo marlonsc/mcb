@@ -232,24 +232,11 @@ fn unique_test_config() -> AppConfig {
             path: Some(db_path),
         },
     );
-    config.providers.embedding.cache_dir = Some(shared_fastembed_cache_dir());
+    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
     config
 }
 
-/// Persistent shared cache dir for `FastEmbed` ONNX model.
-fn shared_fastembed_cache_dir() -> std::path::PathBuf {
-    use std::sync::OnceLock;
-    static DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
-    DIR.get_or_init(|| {
-        let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
-            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
-            std::path::PathBuf::from,
-        );
-        std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
-        cache_dir
-    })
-    .clone()
-}
+use crate::test_utils::test_fixtures::shared_fastembed_test_cache_dir;
 
 // ============================================================================
 // Real Provider Tests (using FastEmbed + EdgeVec)

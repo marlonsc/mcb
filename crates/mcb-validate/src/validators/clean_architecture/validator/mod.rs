@@ -41,6 +41,10 @@ impl CleanArchitectureValidator {
     }
 
     /// Run all architecture validations (returns typed violations)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the validation process fails.
     pub fn validate_all(&self) -> Result<Vec<CleanArchitectureViolation>> {
         // Validation is fully driven by declarative rules (YAML) loaded by DeclarativeValidator.
         Ok(Vec::new())

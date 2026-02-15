@@ -5,6 +5,10 @@ use crate::{Result, Severity, ValidationConfig};
 use super::violation::HygieneViolation;
 
 /// Checks test file naming conventions and directory structure compliance.
+///
+/// # Errors
+///
+/// Returns an error if directory enumeration or file scanning fails.
 pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViolation>> {
     let mut violations = Vec::new();
 

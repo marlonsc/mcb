@@ -26,6 +26,10 @@ impl ValidatorEngine {
     }
 
     /// Validate rule definition structure
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the rule definition structure is invalid.
     pub fn validate_rule_definition(&self, rule_definition: &Value) -> Result<()> {
         // Convert JSON to a validatable structure
         let rule_config: RuleConfigValidation = serde_json::from_value(rule_definition.clone())

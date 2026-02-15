@@ -2,8 +2,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use super::macros::{tool_enum, tool_schema};
-
 tool_enum! {
 /// Actions available for version control system operations
 pub enum VcsAction {

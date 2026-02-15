@@ -1,3 +1,5 @@
+use super::constants::WRONG_MUTEX_PATTERNS;
+use crate::constants::common::{COMMENT_PREFIX, TEST_PATH_PATTERNS};
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regex_triples, required_pattern};
 use crate::scan::for_each_scan_file;
@@ -10,34 +12,14 @@ pub fn validate_mutex_types(config: &ValidationConfig) -> Result<Vec<AsyncViolat
     let mut violations = Vec::new();
 
     let async_indicator = required_pattern("ASYNC001.async_indicator")?;
-    let std_mutex_patterns = [
-        (
-            r"use\s+std::sync::Mutex",
-            "std::sync::Mutex import",
-            "Use tokio::sync::Mutex for async code",
-        ),
-        (
-            "std::sync::Mutex<",
-            "std::sync::Mutex type",
-            "Use tokio::sync::Mutex for async code",
-        ),
-        (
-            r"use\s+std::sync::RwLock",
-            "std::sync::RwLock import",
-            "Use tokio::sync::RwLock for async code",
-        ),
-        (
-            "std::sync::RwLock<",
-            "std::sync::RwLock type",
-            "Use tokio::sync::RwLock for async code",
-        ),
-    ];
-
-    let compiled_mutex = compile_regex_triples(&std_mutex_patterns)?;
+    let compiled_mutex = compile_regex_triples(WRONG_MUTEX_PATTERNS)?;
 
     for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, _src_dir| {
         let path = &entry.absolute_path;
-        if path.to_str().is_some_and(|s| s.contains("/tests/")) {
+        if path
+            .to_str()
+            .is_some_and(|s| TEST_PATH_PATTERNS.iter().any(|p| s.contains(p)))
+        {
             return Ok(());
         }
 
@@ -54,7 +36,7 @@ pub fn validate_mutex_types(config: &ValidationConfig) -> Result<Vec<AsyncViolat
             let trimmed = line.trim();
 
             // Skip comments
-            if trimmed.starts_with("//") {
+            if trimmed.starts_with(COMMENT_PREFIX) {
                 continue;
             }
 

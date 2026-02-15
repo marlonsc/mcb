@@ -77,6 +77,9 @@ impl SearchServiceImpl {
 
 #[async_trait::async_trait]
 impl SearchServiceInterface for SearchServiceImpl {
+    /// # Errors
+    ///
+    /// Returns an error if the context service search fails.
     async fn search(
         &self,
         collection: &CollectionId,
@@ -88,6 +91,9 @@ impl SearchServiceInterface for SearchServiceImpl {
             .await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the context service search fails.
     async fn search_with_filters(
         &self,
         collection: &CollectionId,

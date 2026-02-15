@@ -208,6 +208,9 @@ impl IndexingServiceImpl {
 
 #[async_trait::async_trait]
 impl IndexingServiceInterface for IndexingServiceImpl {
+    /// # Errors
+    ///
+    /// Returns an error if collection initialization fails.
     async fn index_codebase(
         &self,
         path: &Path,
@@ -285,6 +288,9 @@ impl IndexingServiceInterface for IndexingServiceImpl {
         }
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the context service fails to clear the collection.
     async fn clear_collection(&self, collection: &CollectionId) -> Result<()> {
         self.context_service.clear_collection(collection).await
     }

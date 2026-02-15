@@ -83,6 +83,10 @@ impl RustyRulesEngineWrapper {
     }
 
     /// Parse rule definition from JSON
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the rule definition cannot be parsed.
     pub fn parse_rule_definition(&mut self, rule_id: String, definition: &Value) -> Result<()> {
         let rule = self.parse_rule_from_json(definition)?;
         self.rule_definitions.insert(rule_id, rule);

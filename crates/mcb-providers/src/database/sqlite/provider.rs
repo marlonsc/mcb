@@ -57,6 +57,10 @@ impl DatabaseProvider for SqliteDatabaseProvider {
 }
 
 /// Create a file-backed memory repository: connect, apply [`ProjectSchema`] DDL, return repository.
+///
+/// # Errors
+///
+/// Returns an error if the database connection or schema initialization fails.
 #[tracing::instrument(skip_all)]
 pub async fn create_memory_repository(path: PathBuf) -> Result<Arc<dyn MemoryRepository>> {
     let (repo, _) = create_memory_repository_with_executor(path).await?;
@@ -64,6 +68,10 @@ pub async fn create_memory_repository(path: PathBuf) -> Result<Arc<dyn MemoryRep
 }
 
 /// Create a file-backed agent repository sharing the same `SQLite` project schema database.
+///
+/// # Errors
+///
+/// Returns an error if the database connection or schema initialization fails.
 #[tracing::instrument(skip_all)]
 pub async fn create_agent_repository(path: PathBuf) -> Result<Arc<dyn AgentRepository>> {
     let (_, executor) = create_memory_repository_with_executor(path).await?;
@@ -71,6 +79,10 @@ pub async fn create_agent_repository(path: PathBuf) -> Result<Arc<dyn AgentRepos
 }
 
 /// Create file-backed memory repository and executor (same DB) for use with agent repository.
+///
+/// # Errors
+///
+/// Returns an error if the database connection or schema initialization fails.
 #[tracing::instrument(skip_all)]
 pub async fn create_memory_repository_with_executor(
     path: PathBuf,
@@ -89,6 +101,10 @@ pub fn create_agent_repository_from_executor(
 }
 
 /// Create a file-backed project repository: connect, apply [`ProjectSchema`] DDL, return repository.
+///
+/// # Errors
+///
+/// Returns an error if the database connection or schema initialization fails.
 #[tracing::instrument(skip_all)]
 pub async fn create_project_repository(path: PathBuf) -> Result<Arc<dyn ProjectRepository>> {
     let pool = connect_and_init(path).await?;

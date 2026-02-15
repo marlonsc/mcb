@@ -2,13 +2,15 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
+use super::constants::PANIC_REGEX;
 use super::{QualityValidator, QualityViolation};
+use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX};
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
 
 static PANIC_PATTERN: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"panic!\s*\(").expect("valid regex literal"));
+    LazyLock::new(|| Regex::new(PANIC_REGEX).expect("valid regex literal"));
 
 /// Scans production code for usage of the `panic!()` macro.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
@@ -34,11 +36,11 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                 let trimmed = line.trim();
 
                 // Skip comments
-                if trimmed.starts_with("//") {
+                if trimmed.starts_with(COMMENT_PREFIX) {
                     continue;
                 }
 
-                if trimmed.contains("#[cfg(test)]") {
+                if trimmed.contains(CFG_TEST_MARKER) {
                     in_test_module = true;
                     continue;
                 }

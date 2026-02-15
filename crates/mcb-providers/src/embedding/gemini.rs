@@ -12,10 +12,8 @@ use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
-use super::helpers::HttpEmbeddingClient;
-
-use crate::provider_utils::{JsonRequestParams, parse_float_array_lossy, send_json_request};
-use crate::utils::http::RequestErrorKind;
+use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
 
 /// Gemini embedding provider
 ///
@@ -66,7 +64,7 @@ impl GeminiEmbeddingProvider {
     ) -> Self {
         Self {
             client: HttpEmbeddingClient::new(
-                api_key,
+                &api_key,
                 base_url,
                 "https://generativelanguage.googleapis.com",
                 model,
@@ -95,8 +93,6 @@ impl GeminiEmbeddingProvider {
     #[must_use]
     pub fn max_tokens(&self) -> usize {
         match self.api_model_name() {
-            "gemini-embedding-001" => 2048,
-            "text-embedding-004" => 2048,
             _ => 2048,
         }
     }
@@ -183,8 +179,6 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
     /// Returns the embedding dimensions for the configured model.
     fn dimensions(&self) -> usize {
         match self.api_model_name() {
-            "gemini-embedding-001" => EMBEDDING_DIMENSION_GEMINI,
-            "text-embedding-004" => EMBEDDING_DIMENSION_GEMINI,
             _ => EMBEDDING_DIMENSION_GEMINI,
         }
     }

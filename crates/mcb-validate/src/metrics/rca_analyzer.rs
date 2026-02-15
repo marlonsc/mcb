@@ -97,6 +97,10 @@ impl RcaAnalyzer {
     }
 
     /// Analyze a file and return all function metrics
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be read or its language is unsupported.
     pub fn analyze_file(&self, path: &Path) -> Result<Vec<RcaFunctionMetrics>> {
         let lang = self.detect_language(path).ok_or_else(|| {
             ValidationError::Config(format!("Unsupported language for file: {}", path.display()))
@@ -113,6 +117,10 @@ impl RcaAnalyzer {
     }
 
     /// Analyze code content directly
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if code analysis fails for the given language.
     pub fn analyze_code(
         &self,
         code: &[u8],
@@ -168,6 +176,10 @@ impl RcaAnalyzer {
     }
 
     /// Analyze file and return violations based on thresholds
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file analysis fails.
     pub fn find_violations(&self, path: &Path) -> Result<Vec<MetricViolation>> {
         let functions = self.analyze_file(path)?;
         let mut violations = Vec::new();
@@ -224,6 +236,10 @@ impl RcaAnalyzer {
     }
 
     /// Get file-level metrics (aggregated)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be read or analyzed.
     pub fn analyze_file_aggregate(&self, path: &Path) -> Result<RcaMetrics> {
         let lang = self.detect_language(path).ok_or_else(|| {
             ValidationError::Config(format!("Unsupported language for file: {}", path.display()))

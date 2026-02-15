@@ -25,41 +25,69 @@ use mcb_domain::error::{Error, Result};
 /// ```
 pub trait ErrorContext<T> {
     /// Add context to a Result, converting the error to our domain Error type
+    ///
+    /// # Errors
+    ///
+    /// Returns an `Infrastructure` error wrapping the original error with the given context.
     fn context<C>(self, context: C) -> Result<T>
     where
         C: fmt::Display + Send + Sync + 'static;
 
     /// Add context with lazy evaluation for expensive context creation
+    ///
+    /// # Errors
+    ///
+    /// Returns an `Infrastructure` error wrapping the original error with lazily-evaluated context.
     fn with_context<C, F>(self, f: F) -> Result<T>
     where
         C: fmt::Display + Send + Sync + 'static,
         F: FnOnce() -> C;
 
     /// Add context for I/O operations
+    ///
+    /// # Errors
+    ///
+    /// Returns an `Io` error wrapping the original error with the given context.
     fn io_context<C>(self, context: C) -> Result<T>
     where
         C: fmt::Display + Send + Sync + 'static,
         Self: Sized;
 
     /// Add context for configuration operations
+    ///
+    /// # Errors
+    ///
+    /// Returns a `Configuration` error wrapping the original error with the given context.
     fn config_context<C>(self, context: C) -> Result<T>
     where
         C: fmt::Display + Send + Sync + 'static,
         Self: Sized;
 
     /// Add context for authentication operations
+    ///
+    /// # Errors
+    ///
+    /// Returns an `Authentication` error wrapping the original error with the given context.
     fn auth_context<C>(self, context: C) -> Result<T>
     where
         C: fmt::Display + Send + Sync + 'static,
         Self: Sized;
 
     /// Add context for network operations
+    ///
+    /// # Errors
+    ///
+    /// Returns a `Network` error wrapping the original error with the given context.
     fn network_context<C>(self, context: C) -> Result<T>
     where
         C: fmt::Display + Send + Sync + 'static,
         Self: Sized;
 
     /// Add context for database operations
+    ///
+    /// # Errors
+    ///
+    /// Returns a `Database` error wrapping the original error with the given context.
     fn db_context<C>(self, context: C) -> Result<T>
     where
         C: fmt::Display + Send + Sync + 'static,
@@ -159,6 +187,10 @@ where
 }
 
 /// Convert standard library errors to domain results with context
+///
+/// # Errors
+///
+/// Returns an `Infrastructure` domain error if the input result is an error.
 pub fn to_domain_result<T, E>(result: std::result::Result<T, E>, context: &str) -> Result<T>
 where
     E: std::error::Error + Send + Sync + 'static,

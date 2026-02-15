@@ -25,6 +25,10 @@ pub type LogEventReceiver = tokio::sync::mpsc::UnboundedReceiver<mcb_domain::eve
 ///
 /// Returns `Some(LogEventReceiver)` when event bus forwarding is configured,
 /// allowing the caller to connect it to the event bus after DI initialization.
+///
+/// # Errors
+///
+/// Returns an error if the log level is invalid or tracing subscriber initialization fails.
 pub fn init_logging(config: LoggingConfig) -> Result<Option<LogEventReceiver>> {
     let level = parse_log_level(&config.level)?;
     let filter = create_log_filter(&config.level);
@@ -218,6 +222,10 @@ fn init_text_logging(
 }
 
 /// Parse log level string to tracing Level
+///
+/// # Errors
+///
+/// Returns an error if the level string is not a recognized log level.
 pub fn parse_log_level(level: &str) -> Result<Level> {
     match level.to_lowercase().as_str() {
         "trace" => Ok(Level::TRACE),

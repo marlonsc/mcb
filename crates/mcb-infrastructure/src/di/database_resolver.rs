@@ -27,6 +27,10 @@ impl DatabaseProviderResolver {
     /// Resolve and connect to the database provider configured in `AppConfig`.
     ///
     /// Reads the provider name from `config.providers.database.provider`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the provider resolution or database connection fails.
     pub async fn resolve_and_connect(&self, path: &Path) -> Result<Arc<dyn DatabaseExecutor>> {
         let provider_name = self.config.providers.database.provider.as_str();
 
@@ -37,6 +41,10 @@ impl DatabaseProviderResolver {
     }
 
     /// Resolve a provider from specific configuration
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database provider cannot be resolved.
     pub fn resolve_from_override(
         &self,
         config: &DatabaseProviderConfig,

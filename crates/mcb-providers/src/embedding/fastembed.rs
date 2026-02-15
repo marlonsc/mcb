@@ -40,17 +40,29 @@ pub struct FastEmbedProvider {
 
 impl FastEmbedProvider {
     /// Create a new `FastEmbed` provider with the default model (`AllMiniLML6V2`)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the ONNX model fails to initialize.
     pub fn new() -> Result<Self> {
-        Self::with_model(EmbeddingModel::AllMiniLML6V2)
+        Self::with_model(&EmbeddingModel::AllMiniLML6V2)
     }
 
     /// Create a new `FastEmbed` provider with a specific model
-    pub fn with_model(model: EmbeddingModel) -> Result<Self> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the ONNX model fails to initialize.
+    pub fn with_model(model: &EmbeddingModel) -> Result<Self> {
         let init_options = InitOptions::new(model.clone()).with_show_download_progress(true);
         Self::with_options(init_options)
     }
 
     /// Create a new `FastEmbed` provider with custom initialization options
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the ONNX model fails to initialize with the given options.
     pub fn with_options(init_options: InitOptions) -> Result<Self> {
         let model_name = format!("{:?}", init_options.model_name);
         let text_embedding = TextEmbedding::try_new(init_options)

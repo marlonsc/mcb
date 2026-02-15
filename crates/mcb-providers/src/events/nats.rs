@@ -77,6 +77,10 @@ impl NatsEventBusProvider {
     ///
     /// * `url` - NATS server URL
     /// * `subject` - Subject for publishing events
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if connection to the NATS server fails.
     pub async fn with_subject(url: &str, subject: &str) -> Result<Self> {
         info!("Connecting to NATS server at {}", url);
 
@@ -103,6 +107,10 @@ impl NatsEventBusProvider {
     /// * `url` - NATS server URL
     /// * `subject` - Subject for publishing events
     /// * `client_name` - Optional client name for server-side identification
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the NATS connection fails.
     pub async fn with_options(url: &str, subject: &str, client_name: Option<&str>) -> Result<Self> {
         info!("Connecting to NATS server at {} with options", url);
 
@@ -130,6 +138,10 @@ impl NatsEventBusProvider {
     }
 
     /// Create as Arc for sharing
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the NATS connection fails.
     pub async fn new_shared(url: &str) -> Result<Arc<Self>> {
         Ok(Arc::new(Self::new(url).await?))
     }

@@ -235,6 +235,10 @@ impl<P: VectorStoreProvider + VectorStoreBrowser> VectorStoreBrowser
 }
 
 /// Decrypts metadata payloads stored under `encrypted_metadata`.
+///
+/// # Errors
+///
+/// Returns an error if decryption or deserialization of the metadata fails.
 pub fn decrypt_metadata(
     crypto: &dyn CryptoProvider,
     metadata: &HashMap<String, Value>,

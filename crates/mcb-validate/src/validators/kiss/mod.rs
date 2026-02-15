@@ -14,6 +14,7 @@ use crate::thresholds::thresholds;
 use crate::{Result, ValidationConfig};
 
 mod checks;
+pub mod constants;
 mod helpers;
 mod violations;
 
@@ -78,6 +79,10 @@ impl KissValidator {
     }
 
     /// Runs all KISS validations and returns detected violations.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any sub-validation encounters a file system or parsing error.
     pub fn validate_all(&self) -> Result<Vec<KissViolation>> {
         if !self.rules.enabled {
             return Ok(Vec::new());

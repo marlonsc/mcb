@@ -39,29 +39,7 @@ pub fn sample_codebase_path() -> PathBuf {
 
 /// Extract text content from `CallToolResult` for assertions (joined by space).
 pub fn golden_content_to_string(res: &rmcp::model::CallToolResult) -> String {
-    extract_text_content_with_sep(&res.content, " ")
-}
-
-/// Extract text content from Content slice, joining with newline.
-///
-/// Shared helper used by golden integration tests and tools e2e tests.
-pub fn extract_text_content(content: &[rmcp::model::Content]) -> String {
-    extract_text_content_with_sep(content, "\n")
-}
-
-/// Internal helper: extract text from Content with a configurable separator.
-fn extract_text_content_with_sep(content: &[rmcp::model::Content], sep: &str) -> String {
-    content
-        .iter()
-        .filter_map(|c| {
-            if let Ok(v) = serde_json::to_value(c) {
-                v.get("text").and_then(|t| t.as_str()).map(String::from)
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>()
-        .join(sep)
+    super::text::extract_text_with_sep(&res.content, " ")
 }
 
 /// Parse "**Results found:** N" from search response text.
@@ -158,8 +136,6 @@ pub fn create_test_indexing_result(
 /// Process-wide shared `AppContext`.
 ///
 /// Loads the ONNX embedding model exactly once and reuses it across all tests.
-/// The Tokio runtime is intentionally leaked so background tasks (event bus,
-/// etc.) survive for the process lifetime.
 pub fn try_shared_app_context() -> Option<&'static AppContext> {
     static CTX: OnceLock<Option<AppContext>> = OnceLock::new();
 
@@ -168,8 +144,8 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
             let rt = tokio::runtime::Runtime::new().expect("create init runtime");
             let result = rt.block_on(async {
                 let temp_dir = tempfile::tempdir().expect("create temp dir");
-                let temp_path = temp_dir.path().join("mcb-fixtures-shared.db");
-                std::mem::forget(temp_dir);
+                let temp_root = temp_dir.keep();
+                let temp_path = temp_root.join("mcb-fixtures-shared.db");
 
                 let mut config = ConfigLoader::new().load().expect("load config");
                 config.providers.database.configs.insert(
@@ -182,7 +158,6 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                 config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
                 init_app(config).await
             });
-            std::mem::forget(rt);
             match result {
                 Ok(ctx) => Some(ctx),
                 Err(e) => {

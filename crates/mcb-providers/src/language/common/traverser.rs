@@ -86,7 +86,7 @@ impl<'a> AstTraverser<'a> {
                     rule,
                     chunk_index: chunks.len(),
                 };
-                if let Some(chunk) = self.try_extract_chunk(node, ctx) {
+                if let Some(chunk) = self.try_extract_chunk(node, &ctx) {
                     chunks.push(chunk);
                     if chunks.len() >= self.max_chunks {
                         return;
@@ -162,7 +162,7 @@ impl<'a> AstTraverser<'a> {
     fn try_extract_chunk(
         &self,
         node: tree_sitter::Node,
-        ctx: ExtractionContext,
+        ctx: &ExtractionContext,
     ) -> Option<CodeChunk> {
         let (code, context) = if ctx.rule.include_context {
             Self::extract_node_with_context(node, ctx.content, 3)

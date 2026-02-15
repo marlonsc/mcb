@@ -6,8 +6,6 @@
 pub(crate) mod validation;
 pub(crate) use validation::{validate_collection_name, validate_file_path};
 
-pub(crate) mod macros;
-
 /// Consolidated argument types (legacy, re-exports from split modules).
 pub mod consolidated;
 

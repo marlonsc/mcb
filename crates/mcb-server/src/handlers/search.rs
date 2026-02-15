@@ -13,11 +13,13 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
 use validator::Validate;
 
+use crate::error_mapping::safe_internal_error;
+
 use crate::args::{SearchArgs, SearchResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::resolve_org_id;
 use crate::utils::collections::normalize_collection_name;
+use crate::utils::mcp::resolve_org_id;
 
 /// Handler for code and memory search MCP tool operations.
 #[derive(Clone)]
@@ -126,15 +128,12 @@ impl SearchHandler {
                                 })
                             })
                             .collect();
-                        let fmt_err = |_e: McpError| {
-                            McpError::internal_error("failed to format memory search results", None)
-                        };
                         let response = ResponseFormatter::json_success(&serde_json::json!({
                             "query": query,
                             "count": results.len(),
                             "results": results,
                         }))
-                        .map_err(fmt_err)?;
+                        .map_err(|e| safe_internal_error("format memory search results", &e))?;
                         Ok(response)
                     }
                     Err(e) => Ok(to_contextual_tool_error(e)),

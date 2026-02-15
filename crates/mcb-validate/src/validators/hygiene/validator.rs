@@ -38,6 +38,10 @@ impl HygieneValidator {
     }
 
     /// Runs all test organization validations and returns violations found.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any sub-validation encounters a file system or parsing error.
     pub fn validate_all(&self) -> Result<Vec<HygieneViolation>> {
         let mut violations = Vec::new();
         violations.extend(super::inline_tests::validate_no_inline_tests(&self.config)?);

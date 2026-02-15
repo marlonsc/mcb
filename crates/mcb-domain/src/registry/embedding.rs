@@ -39,18 +39,21 @@ impl EmbeddingProviderConfig {
     }
 
     /// Set the model name
+    #[must_use]
     pub fn with_model(mut self, model: impl Into<String>) -> Self {
         self.model = Some(model.into());
         self
     }
 
     /// Set the API key
+    #[must_use]
     pub fn with_api_key(mut self, api_key: impl Into<String>) -> Self {
         self.api_key = Some(api_key.into());
         self
     }
 
     /// Set the base URL for the API
+    #[must_use]
     pub fn with_base_url(mut self, base_url: impl Into<String>) -> Self {
         self.base_url = Some(base_url.into());
         self
@@ -64,12 +67,14 @@ impl EmbeddingProviderConfig {
     }
 
     /// Set the cache directory
+    #[must_use]
     pub fn with_cache_dir(mut self, cache_dir: impl Into<PathBuf>) -> Self {
         self.cache_dir = Some(cache_dir.into());
         self
     }
 
     /// Add extra configuration
+    #[must_use]
     pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.extra.insert(key.into(), value.into());
         self

@@ -89,6 +89,10 @@ impl SharedCacheProvider {
 // Cache Operations Methods
 impl SharedCacheProvider {
     /// Get a typed value from the cache
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the cache lookup or deserialization fails.
     pub async fn get<T>(&self, key: &str) -> Result<Option<T>>
     where
         T: serde::de::DeserializeOwned + Send,
@@ -109,6 +113,10 @@ impl SharedCacheProvider {
     }
 
     /// Set a typed value in the cache
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if serialization or cache storage fails.
     pub async fn set<T>(&self, key: &str, value: &T, config: CacheEntryConfig) -> Result<()>
     where
         T: serde::Serialize + Send + Sync,
@@ -123,18 +131,30 @@ impl SharedCacheProvider {
     }
 
     /// Set a JSON value in the cache
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the cache write operation fails.
     pub async fn set_json(&self, key: &str, value: &str, config: CacheEntryConfig) -> Result<()> {
         let namespaced_key = self.namespaced_key(key);
         self.provider.set_json(&namespaced_key, value, config).await
     }
 
     /// Delete a value from the cache
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the cache deletion operation fails.
     pub async fn delete(&self, key: &str) -> Result<bool> {
         let namespaced_key = self.namespaced_key(key);
         self.provider.delete(&namespaced_key).await
     }
 
     /// Check if a key exists in the cache
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the cache lookup fails.
     pub async fn exists(&self, key: &str) -> Result<bool> {
         let namespaced_key = self.namespaced_key(key);
         self.provider.exists(&namespaced_key).await
@@ -143,12 +163,24 @@ impl SharedCacheProvider {
     delegate! {
         to self.provider {
             /// Clear all values from the cache
+            ///
+            /// # Errors
+            ///
+            /// Returns an error if the cache cannot be cleared.
             pub async fn clear(&self) -> Result<()>;
 
             /// Get cache statistics
+            ///
+            /// # Errors
+            ///
+            /// Returns an error if cache statistics cannot be retrieved.
             pub async fn stats(&self) -> Result<CacheStats>;
 
             /// Get the cache size
+            ///
+            /// # Errors
+            ///
+            /// Returns an error if the cache size cannot be determined.
             pub async fn size(&self) -> Result<usize>;
         }
     }

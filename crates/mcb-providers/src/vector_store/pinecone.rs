@@ -19,8 +19,7 @@ use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInf
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::provider_utils::{JsonRequestParams, send_json_request};
-use crate::utils::http::RequestErrorKind;
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
 
 /// Pinecone vector store provider
 ///
@@ -39,8 +38,8 @@ use crate::utils::http::RequestErrorKind;
 ///         .timeout(Duration::from_secs(30))
 ///         .build()?;
 ///     let provider = PineconeVectorStoreProvider::new(
-///         "your-api-key".to_string(),
-///         "https://your-index-abcdef.svc.aped-1234.pinecone.io".to_string(),
+///         "your-api-key",
+///         "https://your-index-abcdef.svc.aped-1234.pinecone.io",
 ///         Duration::from_secs(30),
 ///         client,
 ///     );
@@ -65,7 +64,7 @@ impl PineconeVectorStoreProvider {
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
     #[must_use]
-    pub fn new(api_key: String, host: String, timeout: Duration, http_client: Client) -> Self {
+    pub fn new(api_key: &str, host: &str, timeout: Duration, http_client: Client) -> Self {
         Self {
             api_key: api_key.trim().to_owned(),
             host: host.trim_end_matches('/').to_owned(),
@@ -421,7 +420,9 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         limit: usize,
     ) -> Result<Vec<FileInfo>> {
         let results = self.list_vectors(collection, limit).await?;
-        Ok(super::helpers::build_file_info_from_results(results))
+        Ok(crate::utils::vector_store::build_file_info_from_results(
+            results,
+        ))
     }
 
     async fn get_chunks_by_file(
@@ -495,8 +496,8 @@ fn pinecone_factory(
     let http_client = create_default_client()?;
 
     Ok(Arc::new(PineconeVectorStoreProvider::new(
-        api_key,
-        host,
+        &api_key,
+        &host,
         DEFAULT_HTTP_TIMEOUT,
         http_client,
     )))

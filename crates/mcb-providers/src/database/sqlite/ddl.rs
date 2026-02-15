@@ -62,14 +62,10 @@ impl SchemaDdlGenerator for SqliteSchemaDdlGenerator {
 
 fn column_type_sqlite(ty: &ColumnType) -> &'static str {
     match ty {
-        ColumnType::Text => "TEXT",
-        ColumnType::Integer => "INTEGER",
+        ColumnType::Text | ColumnType::Json | ColumnType::Uuid => "TEXT",
+        ColumnType::Integer | ColumnType::Boolean | ColumnType::Timestamp => "INTEGER",
         ColumnType::Real => "REAL",
-        ColumnType::Boolean => "INTEGER",
         ColumnType::Blob => "BLOB",
-        ColumnType::Json => "TEXT",
-        ColumnType::Uuid => "TEXT",
-        ColumnType::Timestamp => "INTEGER",
     }
 }
 
@@ -110,7 +106,8 @@ fn table_to_sqlite_ddl_with_fk(
                 s.push_str(" NOT NULL");
             }
             if let Some(fk) = foreign_keys.iter().find(|fk| fk.from_column == c.name) {
-                s.push_str(&format!(" REFERENCES {}({})", fk.to_table, fk.to_column));
+                use std::fmt::Write;
+                let _ = write!(s, " REFERENCES {}({})", fk.to_table, fk.to_column);
             }
             s
         })

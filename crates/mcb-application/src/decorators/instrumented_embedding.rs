@@ -65,6 +65,9 @@ impl InstrumentedEmbeddingProvider {
 
 #[async_trait]
 impl EmbeddingProvider for InstrumentedEmbeddingProvider {
+    /// # Errors
+    ///
+    /// Returns an error if the underlying embedding provider fails.
     async fn embed(&self, text: &str) -> Result<Embedding> {
         let start = Instant::now();
         let result = self.inner.embed(text).await;
@@ -77,6 +80,9 @@ impl EmbeddingProvider for InstrumentedEmbeddingProvider {
         result
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the underlying embedding provider fails.
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
         let start = Instant::now();
         let result = self.inner.embed_batch(texts).await;

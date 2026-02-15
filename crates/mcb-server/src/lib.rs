@@ -58,6 +58,10 @@
 #[macro_use]
 extern crate rocket;
 
+/// Common macros for the server layer
+#[macro_use]
+mod macros;
+
 pub mod admin;
 pub mod args;
 pub mod auth;

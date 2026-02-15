@@ -18,7 +18,8 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::repositories::ProjectRepository;
 
-use super::{query_helpers, row_convert};
+use super::row_convert;
+use crate::utils::sqlite::query as query_helpers;
 
 /// SQLite-based implementation of the `ProjectRepository`.
 ///

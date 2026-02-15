@@ -44,6 +44,10 @@ impl EmbeddingProviderResolver {
     }
 
     /// Resolve provider from current application config
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if no embedding provider is configured or resolution fails.
     pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn EmbeddingProvider>> {
         // First, check direct config (flat env vars like MCP__PROVIDERS__EMBEDDING__PROVIDER)
         if let Some(ref provider_name) = self.config.providers.embedding.provider {
@@ -90,6 +94,10 @@ impl EmbeddingProviderResolver {
     }
 
     /// Resolve provider from override config (for admin API)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the embedding provider cannot be resolved.
     pub fn resolve_from_override(
         &self,
         override_config: &EmbeddingProviderConfig,
@@ -130,6 +138,10 @@ impl VectorStoreProviderResolver {
     }
 
     /// Resolve provider from current application config
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if no matching vector store provider is found in the registry.
     pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn VectorStoreProvider>> {
         // First, check direct config (flat env vars like MCP__PROVIDERS__VECTOR_STORE__PROVIDER)
         if let Some(ref provider_name) = self.config.providers.vector_store.provider {
@@ -170,6 +182,10 @@ impl VectorStoreProviderResolver {
     }
 
     /// Resolve provider from override config (for admin API)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the vector store provider cannot be resolved.
     pub fn resolve_from_override(
         &self,
         override_config: &VectorStoreProviderConfig,
@@ -210,6 +226,10 @@ impl CacheProviderResolver {
     }
 
     /// Resolve provider from current application config
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if no matching cache provider is found in the registry.
     pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn CacheProvider>> {
         let cache_provider_name = match &self.config.system.infrastructure.cache.provider {
             crate::config::CacheProvider::Moka => "moka",
@@ -229,6 +249,10 @@ impl CacheProviderResolver {
     }
 
     /// Resolve provider from override config (for admin API)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the cache provider cannot be resolved.
     pub fn resolve_from_override(
         &self,
         override_config: &CacheProviderConfig,
@@ -269,6 +293,10 @@ impl LanguageProviderResolver {
     }
 
     /// Resolve provider from current application config
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the language provider cannot be resolved.
     pub fn resolve_from_config(
         &self,
     ) -> mcb_domain::error::Result<Arc<dyn LanguageChunkingProvider>> {
@@ -279,6 +307,10 @@ impl LanguageProviderResolver {
     }
 
     /// Resolve provider from override config (for admin API)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the language provider cannot be resolved.
     pub fn resolve_from_override(
         &self,
         override_config: &LanguageProviderConfig,

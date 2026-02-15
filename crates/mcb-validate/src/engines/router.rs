@@ -122,6 +122,10 @@ impl RuleEngineRouter {
     }
 
     /// Route and execute rule (auto-detects engine from rule content)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if engine detection or rule execution fails.
     pub async fn execute(
         &self,
         rule_definition: &Value,
@@ -133,6 +137,10 @@ impl RuleEngineRouter {
     }
 
     /// Execute rule with a specific engine (bypasses auto-detection)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the specified engine fails to execute the rule.
     pub async fn execute_with_engine(
         &self,
         engine: RoutedEngine,
@@ -192,6 +200,10 @@ impl RuleEngineRouter {
     }
 
     /// Check if a rule is valid for routing
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the rule definition is invalid for the detected engine.
     pub fn validate_rule(&self, rule_definition: &Value) -> Result<()> {
         let engine = self.detect_engine(rule_definition);
 

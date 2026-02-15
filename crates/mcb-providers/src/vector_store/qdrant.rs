@@ -19,8 +19,7 @@ use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInf
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::provider_utils::{JsonRequestParams, send_json_request};
-use crate::utils::http::RequestErrorKind;
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
 
 /// Qdrant vector store provider
 ///
@@ -40,7 +39,7 @@ use crate::utils::http::RequestErrorKind;
 ///         .timeout(Duration::from_secs(30))
 ///         .build()?;
 ///     let provider = QdrantVectorStoreProvider::new(
-///         "http://localhost:6333".to_string(),
+///         "http://localhost:6333",
 ///         None,
 ///         Duration::from_secs(30),
 ///         client,
@@ -67,7 +66,7 @@ impl QdrantVectorStoreProvider {
     /// * `http_client` - Reqwest HTTP client for making API requests
     #[must_use]
     pub fn new(
-        base_url: String,
+        base_url: &str,
         api_key: Option<String>,
         timeout: Duration,
         http_client: Client,
@@ -118,7 +117,7 @@ impl QdrantVectorStoreProvider {
         let id = match &item["id"] {
             Value::String(s) => s.clone(),
             Value::Number(n) => n.to_string(),
-            _ => String::new(),
+            Value::Null | Value::Bool(_) | Value::Array(_) | Value::Object(_) => String::new(),
         };
 
         let payload = item
@@ -438,7 +437,9 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
         limit: usize,
     ) -> Result<Vec<FileInfo>> {
         let results = self.list_vectors(collection, limit).await?;
-        Ok(super::helpers::build_file_info_from_results(results))
+        Ok(crate::utils::vector_store::build_file_info_from_results(
+            results,
+        ))
     }
 
     async fn get_chunks_by_file(
@@ -503,7 +504,7 @@ fn qdrant_factory(
     let http_client = create_default_client()?;
 
     Ok(Arc::new(QdrantVectorStoreProvider::new(
-        base_url,
+        &base_url,
         api_key,
         DEFAULT_HTTP_TIMEOUT,
         http_client,

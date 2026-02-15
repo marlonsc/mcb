@@ -113,11 +113,19 @@ pub struct YamlRuleLoader {
 
 impl YamlRuleLoader {
     /// Create a new YAML rule loader
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the YAML schema validator cannot be initialized.
     pub fn new(rules_dir: PathBuf) -> Result<Self> {
         Self::with_variables(rules_dir, None)
     }
 
     /// Create a new YAML rule loader with variables
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the YAML schema validator cannot be initialized.
     pub fn with_variables(
         rules_dir: PathBuf,
         variables: Option<serde_yaml::Value>,
@@ -132,11 +140,19 @@ impl YamlRuleLoader {
     }
 
     /// Create a YAML loader backed by embedded `(path, content)` entries.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the YAML schema validator cannot be initialized.
     pub fn from_embedded(rules: &[(&str, &str)]) -> Result<Self> {
         Self::from_embedded_with_variables(rules, None)
     }
 
     /// Create a YAML loader backed by embedded entries with substitution variables.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the YAML schema validator cannot be initialized.
     pub fn from_embedded_with_variables(
         rules: &[(&str, &str)],
         variables: Option<serde_yaml::Value>,
@@ -166,6 +182,10 @@ impl YamlRuleLoader {
     }
 
     /// Load all rules from embedded entries without filesystem access.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if template loading or rule parsing fails.
     pub fn load_embedded_rules(&mut self) -> Result<Vec<ValidatedRule>> {
         let mut rules = Vec::new();
 
@@ -185,6 +205,10 @@ impl YamlRuleLoader {
     }
 
     /// Synchronous variant of [`Self::load_all_rules`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if template loading, file reading, or rule parsing fails.
     pub fn load_all_rules_sync(&mut self) -> Result<Vec<ValidatedRule>> {
         let mut rules = Vec::new();
 
@@ -209,6 +233,10 @@ impl YamlRuleLoader {
     }
 
     /// Load all rules from the rules directory
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if template loading, file reading, or rule parsing fails.
     pub async fn load_all_rules(&mut self) -> Result<Vec<ValidatedRule>> {
         if let Some(embedded_rules) = &self.embedded_rules
             && !embedded_rules.is_empty()
@@ -233,6 +261,10 @@ impl YamlRuleLoader {
     }
 
     /// Load rules from a specific file
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be read or YAML parsing fails.
     pub async fn load_rule_file(&self, path: &Path) -> Result<Vec<ValidatedRule>> {
         let content = tokio::fs::read_to_string(path)
             .await

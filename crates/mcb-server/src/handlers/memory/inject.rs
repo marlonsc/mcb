@@ -9,6 +9,7 @@ use tracing::error;
 use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
+use crate::utils::mcp::tool_error;
 
 /// Injects semantic memory context into the MCP tool result based on the provided filter.
 #[tracing::instrument(skip_all)]
@@ -54,9 +55,7 @@ pub async fn inject_context(
         }
         Err(_e) => {
             error!("Failed to inject context");
-            Ok(rmcp::model::CallToolResult::error(vec![
-                rmcp::model::Content::text("Failed to inject context"),
-            ]))
+            Ok(tool_error("Failed to inject context"))
         }
     }
 }

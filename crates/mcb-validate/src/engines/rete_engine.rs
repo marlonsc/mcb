@@ -37,6 +37,10 @@ impl ReteEngine {
     }
 
     /// Load GRL rules into the knowledge base
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if GRL parsing or rule loading fails.
     pub fn load_grl(&mut self, grl_code: &str) -> Result<()> {
         let rules = GRLParser::parse_rules(grl_code)
             .map_err(|e| crate::ValidationError::Config(format!("Failed to parse GRL: {e}")))?;
@@ -140,6 +144,10 @@ impl ReteEngine {
     }
 
     /// Execute GRL rules against context and return violations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if rule loading or fact building fails.
     pub async fn execute_grl(
         &mut self,
         grl_code: &str,

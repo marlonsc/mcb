@@ -16,10 +16,8 @@ use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
-use super::helpers::HttpEmbeddingClient;
-/// Error message for request timeouts
-use crate::provider_utils::{JsonRequestParams, parse_float_array_lossy, send_json_request};
-use crate::utils::http::RequestErrorKind;
+use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
 /// Ollama embedding provider
@@ -63,7 +61,7 @@ impl OllamaEmbeddingProvider {
     pub fn new(base_url: String, model: String, timeout: Duration, http_client: Client) -> Self {
         Self {
             client: HttpEmbeddingClient::new(
-                String::new(), // No API key for Ollama
+                "", // No API key for Ollama
                 Some(base_url),
                 "http://localhost:11434",
                 model,
@@ -83,10 +81,7 @@ impl OllamaEmbeddingProvider {
     #[must_use]
     pub fn max_tokens(&self) -> usize {
         match self.client.model.as_str() {
-            "nomic-embed-text" => 8192,
-            "all-minilm" => 512,
-            "mxbai-embed-large" => 512,
-            "snowflake-arctic-embed" => 512,
+            "all-minilm" | "mxbai-embed-large" | "snowflake-arctic-embed" => 512,
             _ => 8192,
         }
     }

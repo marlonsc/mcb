@@ -8,28 +8,22 @@ use super::utils::{
 };
 use crate::Result;
 use crate::traits::violation::Severity;
+use crate::validators::implementation::constants::{
+    HARDCODED_RETURN_PATTERNS, STUB_SKIP_FILE_KEYWORDS,
+};
 
 /// Detect hardcoded return values
 pub fn validate_hardcoded_returns(
     files: &[(PathBuf, String)],
     fn_pattern: &Regex,
 ) -> Result<Vec<ImplementationViolation>> {
-    let hardcoded_pattern_ids = [
-        ("IMPL001.return_true", "true"),
-        ("IMPL001.return_false", "false"),
-        ("IMPL001.return_zero", "0"),
-        ("IMPL001.return_one", "1"),
-        ("IMPL001.return_empty_string", "empty string"),
-        ("IMPL001.return_hardcoded_string", "hardcoded string"),
-    ];
-
-    let compiled = compile_pattern_pairs(&hardcoded_pattern_ids)?;
+    let compiled = compile_pattern_pairs(HARDCODED_RETURN_PATTERNS)?;
     let mut violations = Vec::new();
 
     for (file_path, content) in files {
         // Skip null/fake provider files
         let fname = file_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if fname.contains("null") || fname.contains("fake") || fname == "constants.rs" {
+        if STUB_SKIP_FILE_KEYWORDS.iter().any(|k| fname.contains(k)) {
             continue;
         }
 

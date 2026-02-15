@@ -52,18 +52,21 @@ impl ProviderContext {
     }
 
     /// Set the operation type
+    #[must_use]
     pub fn with_operation(mut self, operation: impl Into<String>) -> Self {
         self.operation_type = operation.into();
         self
     }
 
     /// Add a preferred provider
+    #[must_use]
     pub fn prefer(mut self, provider: impl Into<String>) -> Self {
         self.preferred_providers.push(provider.into());
         self
     }
 
     /// Exclude a provider
+    #[must_use]
     pub fn exclude(mut self, provider: impl Into<String>) -> Self {
         self.excluded_providers.push(provider.into());
         self

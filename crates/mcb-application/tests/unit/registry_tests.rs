@@ -15,48 +15,7 @@ use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
-use std::path::PathBuf;
-use std::sync::OnceLock;
-
-fn find_test_config_path() -> Option<PathBuf> {
-    let mut candidates = Vec::new();
-
-    if let Ok(current_dir) = std::env::current_dir() {
-        for dir in current_dir.ancestors() {
-            candidates.push(dir.join("config").join("tests.toml"));
-        }
-    }
-
-    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    for dir in manifest_dir.ancestors() {
-        candidates.push(dir.join("config").join("tests.toml"));
-    }
-
-    candidates.into_iter().find(|path| path.exists())
-}
-
-fn test_services_table() -> Option<&'static toml::value::Table> {
-    static TEST_SERVICES: OnceLock<Option<toml::value::Table>> = OnceLock::new();
-
-    TEST_SERVICES
-        .get_or_init(|| {
-            let config_path = find_test_config_path()?;
-            let content = std::fs::read_to_string(config_path).ok()?;
-            let value = toml::from_str::<toml::Value>(&content).ok()?;
-            value.get("test_services")?.as_table().cloned()
-        })
-        .as_ref()
-}
-
-fn test_service_url(key: &str) -> String {
-    test_services_table()
-        .and_then(|services| services.get(key))
-        .and_then(|value| value.as_str())
-        .map_or_else(
-            || panic!("missing test_services.{key} in config/tests.toml"),
-            str::to_string,
-        )
-}
+use mcb_domain::test_services_config;
 
 // ============================================================================
 // Embedding Registry Tests - Real Provider Resolution
@@ -106,7 +65,7 @@ mod embedding_registry_tests {
     #[tokio::test]
     async fn test_resolve_fastembed_provider() {
         let config = EmbeddingProviderConfig::new("fastembed")
-            .with_cache_dir(std::env::temp_dir().join("mcb-test-fastembed-cache"));
+            .with_cache_dir(crate::shared_context::shared_fastembed_test_cache_dir());
 
         let result = resolve_embedding_provider(&config);
 
@@ -134,14 +93,11 @@ mod embedding_registry_tests {
         assert!(result.is_err(), "Should fail for unknown provider");
 
         // Error message should be helpful
-        match result {
-            Err(err) => {
-                assert!(
-                    err.to_string().contains("Unknown provider"),
-                    "Error should describe the issue: {err}"
-                );
-            }
-            Ok(_) => panic!("Expected error for unknown provider"),
+        if let Err(err) = result {
+            assert!(
+                err.to_string().contains("Unknown provider"),
+                "Error should describe the issue: {err}"
+            );
         }
     }
 
@@ -170,10 +126,8 @@ mod vector_store_registry_tests {
 
     #[rstest]
     fn test_config_builder() {
-        let milvus_uri = test_service_url("milvus_address");
-        let strict_milvus_uri =
-            mcb_domain::test_services_config::required_test_service_url("milvus_address");
-        assert_eq!(milvus_uri, strict_milvus_uri);
+        let milvus_uri = test_services_config::required_test_service_url("milvus_address")
+            .expect("milvus_address required in test config");
         let config = VectorStoreProviderConfig::new("milvus")
             .with_uri(&milvus_uri)
             .with_collection("embeddings")
@@ -239,10 +193,8 @@ mod cache_registry_tests {
 
     #[rstest]
     fn test_config_builder() {
-        let redis_uri = test_service_url("redis_url");
-        let strict_redis_uri =
-            mcb_domain::test_services_config::required_test_service_url("redis_url");
-        assert_eq!(redis_uri, strict_redis_uri);
+        let redis_uri = test_services_config::required_test_service_url("redis_url")
+            .expect("redis_url required in test config");
         let config = CacheProviderConfig::new("redis")
             .with_uri(&redis_uri)
             .with_max_size(10000)
@@ -382,7 +334,7 @@ mod integration_tests {
     async fn test_local_providers_available_for_testing() {
         let embedding = resolve_embedding_provider(
             &EmbeddingProviderConfig::new("fastembed")
-                .with_cache_dir(std::env::temp_dir().join("mcb-test-fastembed-cache")),
+                .with_cache_dir(crate::shared_context::shared_fastembed_test_cache_dir()),
         );
         let cache = resolve_cache_provider(&CacheProviderConfig::new("moka").with_max_size(1000));
 

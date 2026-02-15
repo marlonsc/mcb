@@ -2,8 +2,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use super::macros::{tool_enum, tool_schema};
-
 mod issue;
 mod org;
 mod plan;

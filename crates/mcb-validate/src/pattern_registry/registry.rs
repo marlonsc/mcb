@@ -28,6 +28,10 @@ impl PatternRegistry {
     }
 
     /// Load patterns from all YAML rules in a directory, using config for template variables
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if rule file enumeration fails.
     pub fn load_from_rules(
         rules_dir: &Path,
         naming_config: &crate::config::NamingRulesConfig,
@@ -156,6 +160,10 @@ impl PatternRegistry {
     }
 
     /// Register a pattern with the given ID
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the regex pattern is invalid.
     pub fn register_pattern(&mut self, id: &str, pattern: &str) -> Result<()> {
         let regex = Regex::new(pattern).map_err(|e| {
             crate::ValidationError::Config(format!("Invalid regex pattern '{id}': {e}"))

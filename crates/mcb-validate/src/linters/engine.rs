@@ -46,6 +46,10 @@ impl LinterEngine {
     }
 
     /// Execute all enabled linters against the provided files
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the linter execution fails.
     pub async fn check_files(&self, files: &[&Path]) -> Result<Vec<LintViolation>> {
         let mut all_violations = Vec::new();
 

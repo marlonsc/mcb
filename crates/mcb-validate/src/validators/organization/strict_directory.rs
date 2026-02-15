@@ -7,6 +7,10 @@ use crate::{Result, ValidationConfig};
 /// - Port traits are located in `domain/ports/`.
 /// - Adapter implementations are located in `infrastructure/adapters/`.
 /// - Handlers are located in `server/handlers/`.
+///
+/// # Errors
+///
+/// Returns an error if directory scanning fails.
 pub fn validate_strict_directory(_config: &ValidationConfig) -> Result<Vec<OrganizationViolation>> {
     // Logic moved to declarative rules:
     // - ORG018: Port Trait Location

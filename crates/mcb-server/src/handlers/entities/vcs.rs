@@ -10,8 +10,8 @@ use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
 use crate::error_mapping::safe_internal_error;
-use crate::handlers::helpers::{
-    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_identifier_precedence,
+use crate::utils::mcp::{
+    map_opaque_error, ok_json, ok_text, require_data, require_id, require_resolved_identifier,
     resolve_org_id,
 };
 
@@ -59,14 +59,12 @@ impl VcsEntityHandler {
                     McpError::invalid_params("project_id required for repository create", None)
                 })?;
                 let mut repo: Repository = require_data(args.data, "data required for create")?;
-                repo.project_id = resolve_identifier_precedence(
+                repo.project_id = require_resolved_identifier(
                     "project_id",
                     Some(project_id),
                     Some(repo.project_id.as_str()),
-                )?
-                .ok_or_else(|| {
-                    McpError::invalid_params("project_id required for repository create", None)
-                })?;
+                    "project_id required for repository create",
+                )?;
                 repo.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_repository(&repo).await)?;
                 ok_json(&repo)
@@ -98,14 +96,12 @@ impl VcsEntityHandler {
                     McpError::invalid_params("project_id required for repository update", None)
                 })?;
                 let mut repo: Repository = require_data(args.data, "data required for update")?;
-                repo.project_id = resolve_identifier_precedence(
+                repo.project_id = require_resolved_identifier(
                     "project_id",
                     Some(project_id),
                     Some(repo.project_id.as_str()),
-                )?
-                .ok_or_else(|| {
-                    McpError::invalid_params("project_id required for repository update", None)
-                })?;
+                    "project_id required for repository update",
+                )?;
                 let existing = map_opaque_error(self.repo.get_repository(&org_id, &repo.metadata.id).await)?;
                 if existing.project_id != repo.project_id {
                     return Err(McpError::invalid_params(

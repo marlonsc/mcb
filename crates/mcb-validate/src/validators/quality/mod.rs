@@ -1,4 +1,5 @@
 mod comments;
+pub mod constants;
 mod dead_code;
 mod metrics;
 mod panic;

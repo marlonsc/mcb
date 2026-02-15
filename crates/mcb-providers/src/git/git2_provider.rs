@@ -347,7 +347,6 @@ impl VcsProvider for Git2Provider {
                 let status = match delta.status() {
                     git2::Delta::Added => DiffStatus::Added,
                     git2::Delta::Deleted => DiffStatus::Deleted,
-                    git2::Delta::Modified => DiffStatus::Modified,
                     git2::Delta::Renamed => DiffStatus::Renamed,
                     _ => DiffStatus::Modified,
                 };

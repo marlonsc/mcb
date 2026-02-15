@@ -11,6 +11,7 @@
 //! - Arc/Mutex overuse
 //! - Inefficient iterator patterns
 
+pub mod constants;
 mod loop_checks;
 mod loops;
 mod pattern_checks;
@@ -51,6 +52,10 @@ impl PerformanceValidator {
     }
 
     /// Run all performance validations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning, reading, or regex compilation fails.
     pub fn validate_all(&self) -> Result<Vec<PerformanceViolation>> {
         if !self.rules.enabled {
             return Ok(Vec::new());

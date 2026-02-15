@@ -65,6 +65,10 @@ impl DependencyValidator {
     }
 
     /// Run all dependency validations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any dependency check fails.
     pub fn validate_all(&self) -> Result<Vec<DependencyViolation>> {
         let mut violations = Vec::new();
         violations.extend(validate_cargo_dependencies(self)?);
@@ -75,21 +79,37 @@ impl DependencyValidator {
     }
 
     /// Validate Cargo.toml dependencies match Clean Architecture rules
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Cargo.toml parsing fails.
     pub fn validate_cargo_dependencies(&self) -> Result<Vec<DependencyViolation>> {
         validate_cargo_dependencies(self)
     }
 
     /// Validate no forbidden use statements in source code
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if source file scanning fails.
     pub fn validate_use_statements(&self) -> Result<Vec<DependencyViolation>> {
         validate_use_statements(self)
     }
 
     /// Detect circular dependencies using topological sort
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if dependency graph construction fails.
     pub fn detect_circular_dependencies(&self) -> Result<Vec<DependencyViolation>> {
         detect_circular_dependencies(self)
     }
 
     /// Validate anti-bypass boundaries from config.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if boundary configuration parsing fails.
     pub fn validate_bypass_boundaries(&self) -> Result<Vec<DependencyViolation>> {
         validate_bypass_boundaries(self)
     }

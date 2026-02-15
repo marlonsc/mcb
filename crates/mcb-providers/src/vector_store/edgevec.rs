@@ -214,7 +214,11 @@ pub struct EdgeVecVectorStoreProvider {
 
 impl EdgeVecVectorStoreProvider {
     /// Create a new `EdgeVec` vector store provider
-    pub fn new(config: EdgeVecConfig) -> Result<Self> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the `EdgeVec` actor fails to initialize.
+    pub fn new(config: &EdgeVecConfig) -> Result<Self> {
         let (tx, rx) = mpsc::channel(100);
         let config_clone = config.clone();
 
@@ -233,7 +237,11 @@ impl EdgeVecVectorStoreProvider {
     }
 
     /// Create a new `EdgeVec` provider with custom collection
-    pub fn with_collection(config: EdgeVecConfig, collection: CollectionId) -> Result<Self> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the `EdgeVec` actor fails to initialize.
+    pub fn with_collection(config: &EdgeVecConfig, collection: CollectionId) -> Result<Self> {
         let (tx, rx) = mpsc::channel(100);
         let config_clone = config.clone();
 
@@ -514,8 +522,8 @@ impl EdgeVecActor {
         Ok(())
     }
 
-    fn handle_delete_collection(&mut self, name: String) -> Result<()> {
-        if let Some((_, collection_metadata)) = self.metadata_store.remove(&name) {
+    fn handle_delete_collection(&mut self, name: &str) -> Result<()> {
+        if let Some((_, collection_metadata)) = self.metadata_store.remove(name) {
             for external_id in collection_metadata.keys() {
                 if let Some(vector_id) = self.id_map.remove(external_id) {
                     let _ = self.index.soft_delete(vector_id.1);
@@ -537,12 +545,15 @@ impl EdgeVecActor {
 impl EdgeVecActor {
     fn handle_insert_vectors(
         &mut self,
-        collection: String,
+        collection: &str,
         vectors: Vec<Embedding>,
         metadata: Vec<HashMap<String, serde_json::Value>>,
     ) -> Result<Vec<String>> {
         let mut ids = Vec::with_capacity(vectors.len());
-        let mut collection_metadata = self.metadata_store.entry(collection.clone()).or_default();
+        let mut collection_metadata = self
+            .metadata_store
+            .entry(collection.to_owned())
+            .or_default();
 
         for (vector, meta) in vectors.into_iter().zip(metadata.into_iter()) {
             let external_id = format!("{}_{}", collection, uuid::Uuid::new_v4());
@@ -862,7 +873,7 @@ impl EdgeVecActor {
                 let _ = tx.send(self.handle_create_collection(name));
             }
             CoreMessage::DeleteCollection { name, tx } => {
-                let _ = tx.send(self.handle_delete_collection(name));
+                let _ = tx.send(self.handle_delete_collection(&name));
             }
             CoreMessage::InsertVectors {
                 collection,
@@ -870,7 +881,7 @@ impl EdgeVecActor {
                 metadata,
                 tx,
             } => {
-                let _ = tx.send(self.handle_insert_vectors(collection, vectors, metadata));
+                let _ = tx.send(self.handle_insert_vectors(&collection, vectors, metadata));
             }
             CoreMessage::SearchSimilar {
                 collection,
@@ -961,7 +972,7 @@ fn edgevec_factory(
         ..Default::default()
     };
     let provider = EdgeVecVectorStoreProvider::with_collection(
-        edgevec_config,
+        &edgevec_config,
         CollectionId::from_name(&collection_name),
     )
     .map_err(|e| format!("Failed to create EdgeVec provider: {e}"))?;

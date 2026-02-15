@@ -38,6 +38,10 @@ impl QualityValidator {
     }
 
     /// Executes all configured quality checks and returns any violations found.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any sub-validation encounters a file system or parsing error.
     pub fn validate_all(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
         violations.extend(unwrap::validate(self)?);

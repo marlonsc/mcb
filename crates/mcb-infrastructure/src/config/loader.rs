@@ -40,12 +40,14 @@ impl ConfigLoader {
     }
 
     /// Set the configuration file path
+    #[must_use]
     pub fn with_config_path<P: AsRef<Path>>(mut self, path: P) -> Self {
         self.config_path = Some(path.as_ref().to_path_buf());
         self
     }
 
     /// Set the environment variable prefix
+    #[must_use]
     pub fn with_env_prefix<S: Into<String>>(mut self, prefix: S) -> Self {
         self.env_prefix = prefix.into();
         self
@@ -57,6 +59,11 @@ impl ConfigLoader {
     /// 1. Default TOML configuration file (`config/default.toml`) (required)
     /// 2. Optional TOML override file (`--config`) (if provided)
     /// 3. Environment variables with `MCP__` prefix (e.g., `MCP__SERVER__NETWORK__PORT`)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the default config file is missing, extraction fails,
+    /// or validation detects invalid values.
     pub fn load(&self) -> Result<AppConfig> {
         let default_path = Self::find_defaults_file_path().ok_or_else(|| {
             Error::ConfigMissing(
@@ -113,11 +120,19 @@ impl ConfigLoader {
     }
 
     /// Reload configuration (useful for hot-reloading)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if configuration loading fails.
     pub fn reload(&self) -> Result<AppConfig> {
         self.load()
     }
 
     /// Save configuration to file
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if serialization or file writing fails.
     pub fn save_to_file<P: AsRef<Path>>(&self, config: &AppConfig, path: P) -> Result<()> {
         let toml_string =
             toml::to_string_pretty(config).context("Failed to serialize config to TOML")?;

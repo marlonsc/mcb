@@ -9,9 +9,10 @@ use rstest::rstest;
 use serde::Deserialize;
 
 use crate::test_utils::test_fixtures::{
-    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, extract_text_content, golden_content_to_string,
+    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, golden_content_to_string,
     golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
 };
+use crate::test_utils::text::extract_text;
 use crate::test_utils::timeouts::TEST_TIMEOUT;
 
 fn index_args(action: IndexAction, path: Option<String>, collection: Option<String>) -> IndexArgs {
@@ -86,7 +87,7 @@ async fn test_golden_e2e_complete_workflow() {
         )))
         .await;
     assert!(r.is_ok(), "index clear should succeed: {r:?}");
-    let clear_text = extract_text_content(&r.unwrap().content);
+    let clear_text = extract_text(&r.unwrap().content);
     assert!(
         clear_text.to_lowercase().contains("clear"),
         "clear response must mention clear/cleared: {clear_text}"
@@ -102,7 +103,7 @@ async fn test_golden_e2e_complete_workflow() {
     assert!(r.is_ok(), "index status should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text_content(&res.content);
+    let text = extract_text(&res.content);
     assert!(text.contains("Indexing Status") || text.contains("Idle") || text.contains("indexing"));
 
     let r = index_h
@@ -115,7 +116,7 @@ async fn test_golden_e2e_complete_workflow() {
     assert!(r.is_ok(), "index should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text_content(&res.content);
+    let text = extract_text(&res.content);
     assert!(
         text.contains("chunks") || text.contains("Indexing") || text.contains("files"),
         "expected chunks/indexing in response: {text}"
@@ -131,7 +132,7 @@ async fn test_golden_e2e_complete_workflow() {
     assert!(r.is_ok(), "search should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text_content(&res.content);
+    let text = extract_text(&res.content);
     assert!(
         text.contains("Search") || text.contains("Results") || text.contains("result"),
         "expected search result text: {text}"
@@ -230,7 +231,7 @@ async fn test_golden_index_variants(
     let response = result.unwrap();
     assert!(!response.is_error.unwrap_or(false));
 
-    let text = extract_text_content(&response.content);
+    let text = extract_text(&response.content);
     assert!(
         text.contains("Files processed")
             || text.contains("Indexing Started")
@@ -276,7 +277,7 @@ async fn test_golden_mcp_index_schema_actions(
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
     if assert_status_text {
-        let text = extract_text_content(&res.content);
+        let text = extract_text(&res.content);
         assert!(
             text.contains("Status") || text.contains("indexing") || text.contains("Idle"),
             "{}",
@@ -472,7 +473,7 @@ async fn test_golden_e2e_golden_queries_setup() {
                 )))
                 .await
                 .expect("status");
-            let text = extract_text_content(&r.content);
+            let text = extract_text(&r.content);
             if text.contains("Idle") || text.contains("completed") || text.contains("Status") {
                 return true;
             }

@@ -100,9 +100,9 @@ impl std::fmt::Debug for ResolvedProviders {
 /// # Arguments
 /// * `config` - Application configuration containing provider names
 ///
-/// # Returns
-/// * `Ok(ResolvedProviders)` - All providers successfully resolved
-/// * `Err(Error)` - Provider not found or creation failed
+/// # Errors
+///
+/// Returns an error if any provider cannot be found or instantiated from config.
 pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
     // Get embedding config: prefer direct config (env vars), fallback to named config
     let embedding_config = if config.providers.embedding.provider.is_some() {

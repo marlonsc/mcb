@@ -15,12 +15,11 @@ use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
-use crate::provider_utils::{JsonRequestParams, send_json_request};
-use crate::utils::http::RequestErrorKind;
-use crate::utils::parse_embedding_vector;
+use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
+use crate::utils::http::{
+    JsonRequestParams, RequestErrorKind, parse_embedding_vector, send_json_request,
+};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
-
-use super::helpers::{HttpEmbeddingClient, process_batch};
 
 /// `OpenAI` embedding provider
 ///
@@ -71,7 +70,7 @@ impl OpenAIEmbeddingProvider {
     ) -> Self {
         Self {
             client: HttpEmbeddingClient::new(
-                api_key,
+                &api_key,
                 base_url,
                 "https://api.openai.com/v1",
                 model,
@@ -97,10 +96,7 @@ impl OpenAIEmbeddingProvider {
     #[must_use]
     pub fn max_tokens(&self) -> usize {
         match self.client.model.as_str() {
-            "text-embedding-3-small" => 8192,
-            "text-embedding-3-large" => 8192,
-            "text-embedding-ada-002" => 8192,
-            _ => 8192, // Default fallback
+            _ => 8192,
         }
     }
 
@@ -156,7 +152,6 @@ impl EmbeddingProvider for OpenAIEmbeddingProvider {
 
     fn dimensions(&self) -> usize {
         match self.client.model.as_str() {
-            "text-embedding-3-small" => EMBEDDING_DIMENSION_OPENAI_SMALL,
             "text-embedding-3-large" => EMBEDDING_DIMENSION_OPENAI_LARGE,
             "text-embedding-ada-002" => EMBEDDING_DIMENSION_OPENAI_ADA,
             _ => EMBEDDING_DIMENSION_OPENAI_SMALL,

@@ -50,6 +50,10 @@ impl ImplementationQualityValidator {
     }
 
     /// Run all implementation quality validations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or pattern compilation fails.
     pub fn validate_all(&self) -> Result<Vec<ImplementationViolation>> {
         let mut files = Vec::new();
         for_each_scan_file(

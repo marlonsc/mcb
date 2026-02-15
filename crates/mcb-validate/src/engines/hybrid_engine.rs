@@ -194,6 +194,10 @@ impl HybridRuleEngine {
     }
 
     /// Execute a rule using the appropriate engine
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the selected engine fails to execute the rule.
     pub async fn execute_rule(
         &self,
         _rule_id: &str,
@@ -234,6 +238,10 @@ impl HybridRuleEngine {
     ///
     /// Uses the router to analyze the rule definition and select
     /// the most appropriate engine.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if rule routing or execution fails.
     pub async fn execute_auto(
         &self,
         rule_definition: &serde_json::Value,
@@ -258,6 +266,10 @@ impl HybridRuleEngine {
     }
 
     /// Execute multiple rules in parallel
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if batch execution encounters a fatal failure.
     pub async fn execute_rules_batch(
         &self,
         rules: Vec<(String, RuleEngineType, serde_json::Value)>,
@@ -297,6 +309,10 @@ impl HybridRuleEngine {
     }
 
     /// Validate rule definition using validator/garde
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the rule definition fails validation.
     pub fn validate_rule_definition(&self, rule_definition: &serde_json::Value) -> Result<()> {
         self.validator_engine
             .validate_rule_definition(rule_definition)
@@ -322,6 +338,10 @@ impl HybridRuleEngine {
     ///
     /// Delegates to `YamlRuleExecutor` for linter detection and execution,
     /// then converts `LintViolation`s to [`RuleViolation`]s.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if linter execution or violation conversion fails.
     pub async fn execute_lint_rule(
         &self,
         rule_id: &str,

@@ -3,6 +3,9 @@
 //! Centralized constants for architecture validation, refactoring checks,
 //! dependency rules, and engine configuration.
 
+/// Common patterns shared across multiple validators
+pub mod common;
+
 // ============================================================================
 // PMAT INTEGRATION
 // ============================================================================

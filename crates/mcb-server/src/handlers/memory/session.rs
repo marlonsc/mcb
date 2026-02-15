@@ -9,7 +9,7 @@ use serde::Deserialize;
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::{OriginContextInput, resolve_origin_context, tool_error};
+use crate::utils::mcp::{OriginContextInput, resolve_origin_context, tool_error};
 
 /// Payload for storing a session summary in memory.
 #[derive(Deserialize, Default)]

@@ -96,11 +96,7 @@ impl DeclarativeValidator {
         serde_yaml::Value::Mapping(variables)
     }
 
-    fn collect_files(
-        &self,
-        config: &ValidationConfig,
-        language: Option<LanguageId>,
-    ) -> Vec<PathBuf> {
+    fn collect_files(config: &ValidationConfig, language: Option<LanguageId>) -> Vec<PathBuf> {
         let mut files = Vec::new();
         if let Err(e) = for_each_scan_file(config, language, true, |entry, _src_dir| {
             files.push(entry.absolute_path.clone());
@@ -112,7 +108,6 @@ impl DeclarativeValidator {
     }
 
     fn validate_metrics_rules(
-        &self,
         rules: &[ValidatedRule],
         files: &[PathBuf],
     ) -> Vec<Box<dyn Violation>> {
@@ -159,7 +154,6 @@ impl DeclarativeValidator {
 
     // Rust-only: non-Rust lint selectors (e.g. Ruff) receive no matching files.
     fn validate_lint_select_rules(
-        &self,
         rules: &[ValidatedRule],
         files: &[PathBuf],
     ) -> Vec<Box<dyn Violation>> {
@@ -179,20 +173,28 @@ impl DeclarativeValidator {
         // call `block_on` or `block_in_place` inside the caller's
         // async context (which panics on both single- and multi-threaded
         // tokio runtimes).
-        let run_on_dedicated =
-            |fut: std::pin::Pin<Box<dyn std::future::Future<Output = _> + Send>>| -> _ {
-                std::thread::scope(|s| {
-                    s.spawn(|| {
-                        let rt = tokio::runtime::Builder::new_current_thread()
+        let run_on_dedicated = |fut: std::pin::Pin<
+            Box<
+                dyn std::future::Future<Output = crate::Result<Vec<crate::linters::LintViolation>>>
+                    + Send,
+            >,
+        >| {
+            std::thread::scope(|scope| {
+                scope
+                    .spawn(|| {
+                        let runtime = tokio::runtime::Builder::new_current_thread()
                             .enable_all()
                             .build()
-                            .expect("failed to build lint runtime");
-                        rt.block_on(fut)
+                            .map_err(|error| format!("failed to build lint runtime: {error}"))?;
+                        runtime
+                            .block_on(fut)
+                            .map_err(|error| format!("lint execution failed: {error}"))
                     })
                     .join()
-                    .expect("lint thread panicked")
-                })
-            };
+                    .map_err(|_| "lint thread panicked".to_owned())
+                    .and_then(std::convert::identity)
+            })
+        };
 
         for rule in &lint_rules {
             match run_on_dedicated(Box::pin(YamlRuleExecutor::execute_rule(rule, &file_refs))) {
@@ -202,10 +204,10 @@ impl DeclarativeValidator {
                         Box::new(v) as Box<dyn Violation>
                     }));
                 }
-                Err(e) => {
+                Err(error) => {
                     warn!(
                         rule_id = %rule.id,
-                        error = ?e,
+                        error = %error,
                         "Lint rule execution failed"
                     );
                 }
@@ -345,7 +347,7 @@ impl DeclarativeValidator {
         violations
     }
 
-    fn validate_ast_rules(&self, rules: &[ValidatedRule]) -> Vec<Box<dyn Violation>> {
+    fn validate_ast_rules(rules: &[ValidatedRule]) -> Vec<Box<dyn Violation>> {
         let ast_rules: Vec<&ValidatedRule> = rules
             .iter()
             .filter(|r| r.enabled && (r.ast_query.is_some() || !r.selectors.is_empty()))
@@ -377,14 +379,14 @@ impl Validator for DeclarativeValidator {
 
     fn validate(&self, config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
         let rules = self.load_rules()?;
-        let files = self.collect_files(config, Some(LanguageId::Rust));
+        let files = Self::collect_files(config, Some(LanguageId::Rust));
 
         let mut violations = Vec::new();
-        violations.extend(self.validate_metrics_rules(&rules, &files));
-        violations.extend(self.validate_lint_select_rules(&rules, &files));
+        violations.extend(Self::validate_metrics_rules(&rules, &files));
+        violations.extend(Self::validate_lint_select_rules(&rules, &files));
         violations.extend(self.validate_regex_rules(&rules, &files));
         violations.extend(self.validate_path_rules(&rules, &files));
-        violations.extend(self.validate_ast_rules(&rules));
+        violations.extend(Self::validate_ast_rules(&rules));
         Ok(violations)
     }
 }
@@ -498,7 +500,6 @@ fn parse_severity(s: &str) -> Severity {
 fn parse_category(s: &str) -> ViolationCategory {
     match s.to_lowercase().as_str() {
         "architecture" | "clean-architecture" => ViolationCategory::Architecture,
-        "quality" => ViolationCategory::Quality,
         "performance" => ViolationCategory::Performance,
         "testing" => ViolationCategory::Testing,
         "documentation" => ViolationCategory::Documentation,
@@ -507,6 +508,7 @@ fn parse_category(s: &str) -> ViolationCategory {
         "solid" => ViolationCategory::Solid,
         "implementation" => ViolationCategory::Implementation,
         "refactoring" => ViolationCategory::Refactoring,
+        "quality" => ViolationCategory::Quality,
         _ => ViolationCategory::Quality,
     }
 }

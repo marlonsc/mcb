@@ -52,7 +52,9 @@ impl DependencyGraph {
 
         // Second pass: Add edges
         for fact in facts {
-            let source_idx = *self.node_map.get(&fact.id).unwrap();
+            let Some(source_idx) = self.node_map.get(&fact.id).copied() else {
+                continue;
+            };
 
             // Add "Contains" edges (Parent -> Child)
             if let Some(parent_id) = &fact.parent_id
@@ -101,8 +103,9 @@ impl DependencyGraph {
                 cycles.push(scc.iter().map(|idx| self.graph[*idx].id.clone()).collect());
             } else if scc.len() == 1 {
                 // Check for self-loop
-                let idx = scc[0];
-                if self.graph.contains_edge(idx, idx) {
+                if let Some(idx) = scc.first().copied()
+                    && self.graph.contains_edge(idx, idx)
+                {
                     cycles.push(vec![self.graph[idx].id.clone()]);
                 }
             }
@@ -141,14 +144,16 @@ impl DependencyGraph {
             // Traverse: s_idx (Module/File) -> Contains -> Child (Import) -> DependsOn -> t_idx (Module)
             let children = self.graph.neighbors_directed(*s_idx, Direction::Outgoing);
             for child_idx in children {
-                let edge = self.graph.find_edge(*s_idx, child_idx).unwrap();
-                if self.graph[edge] == EdgeType::Contains {
+                if let Some(edge) = self.graph.find_edge(*s_idx, child_idx)
+                    && self.graph[edge] == EdgeType::Contains
+                {
                     let dependencies = self
                         .graph
                         .neighbors_directed(child_idx, Direction::Outgoing);
                     for dep_idx in dependencies {
-                        let dep_edge = self.graph.find_edge(child_idx, dep_idx).unwrap();
-                        if self.graph[dep_edge] == EdgeType::DependsOn {
+                        if let Some(dep_edge) = self.graph.find_edge(child_idx, dep_idx)
+                            && self.graph[dep_edge] == EdgeType::DependsOn
+                        {
                             // Check if dep_idx is in target_nodes
                             if target_nodes.contains(&dep_idx) {
                                 violations.push((

@@ -11,6 +11,9 @@
 //! Run unit tests: `cargo test -p mcb-infrastructure --test unit`
 //! Run integration: `cargo test -p mcb-infrastructure --test integration`
 
+// Shared AppContext for test performance (avoids repeated ONNX model loads)
+mod shared_context;
+
 // Real provider test utilities for full-stack integration testing
 pub mod test_utils;
 

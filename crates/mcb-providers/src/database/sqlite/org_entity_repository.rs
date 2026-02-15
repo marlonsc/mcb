@@ -10,8 +10,8 @@ use mcb_domain::ports::repositories::org_entity_repository::{
     ApiKeyRegistry, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
 };
 
-use super::query_helpers;
-use super::row_helpers::{opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_str};
+use crate::utils::sqlite::query as query_helpers;
+use crate::utils::sqlite::row::{opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_str};
 
 /// SQLite-backed repository for organization, user, team, and API key entities.
 pub struct SqliteOrgEntityRepository {

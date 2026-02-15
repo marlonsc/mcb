@@ -7,6 +7,10 @@ use std::path::Path;
 use super::types::{ClippyOutput, LintViolation, RuffViolation};
 
 /// Execute linter command
+///
+/// # Errors
+///
+/// Returns an error if the linter process fails to spawn or execute.
 pub async fn run_linter_command(
     linter: crate::linters::types::LinterType,
     files: &[&Path],

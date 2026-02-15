@@ -1,19 +1,19 @@
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::{ObservationType, QualityGateResult};
+use mcb_domain::entities::memory::{MemorySearchResult, ObservationType, QualityGateResult};
 use mcb_domain::ports::services::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Value;
 
 use super::common::{
-    MemoryOriginOptions, build_observation_metadata, opt_str, require_data_map, require_str,
-    resolve_memory_origin_context, search_memories_as_json,
+    MemoryOriginOptions, SearchMemoriesJsonSpec, build_observation_metadata, opt_str,
+    require_data_map, require_str, resolve_memory_origin_context, search_memories_as_json,
 };
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::tool_error;
+use crate::utils::mcp::tool_error;
 use uuid::Uuid;
 
 /// Stores a quality gate result as a semantic observation.
@@ -22,15 +22,16 @@ pub async fn store_quality_gate(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match require_data_map(&args.data, "Missing data payload for quality gate store") {
-        Ok(data) => data,
-        Err(error_result) => return Ok(error_result),
-    };
-    let gate_name = match require_str(data, "gate_name") {
+    let data: &serde_json::Map<String, Value> =
+        match require_data_map(&args.data, "Missing data payload for quality gate store") {
+            Ok(data) => data,
+            Err(error_result) => return Ok(error_result),
+        };
+    let gate_name: String = match require_str(data, "gate_name") {
         Ok(value) => value,
         Err(error_result) => return Ok(error_result),
     };
-    let status_str = match require_str(data, "status") {
+    let status_str: String = match require_str(data, "status") {
         Ok(value) => value,
         Err(error_result) => return Ok(error_result),
     };
@@ -106,20 +107,22 @@ pub async fn get_quality_gates(
     search_memories_as_json(
         memory_service,
         args,
-        "quality gate",
-        ObservationType::QualityGate,
-        "quality_gates",
-        |result| {
-            let gate = result.observation.metadata.quality_gate.as_ref()?;
-            Some(serde_json::json!({
-                "observation_id": result.observation.id,
-                "gate_name": gate.gate_name,
-                "status": gate.status.as_str(),
-                "message": gate.message,
-                "timestamp": gate.timestamp,
-                "execution_id": gate.execution_id,
-                "created_at": result.observation.created_at,
-            }))
+        SearchMemoriesJsonSpec {
+            query: "quality gate",
+            obs_type: ObservationType::QualityGate,
+            result_key: "quality_gates",
+            mapper: |result: &MemorySearchResult| {
+                let gate = result.observation.metadata.quality_gate.as_ref()?;
+                Some(serde_json::json!({
+                    "observation_id": result.observation.id,
+                    "gate_name": gate.gate_name,
+                    "status": gate.status.as_str(),
+                    "message": gate.message,
+                    "timestamp": gate.timestamp,
+                    "execution_id": gate.execution_id,
+                    "created_at": result.observation.created_at,
+                }))
+            },
         },
     )
     .await

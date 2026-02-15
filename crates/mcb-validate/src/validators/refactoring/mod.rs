@@ -8,6 +8,7 @@
 //! - Deleted module references
 //! - Dead code from refactoring
 
+pub mod constants;
 mod duplicates;
 mod modules;
 mod tests;
@@ -76,6 +77,10 @@ impl RefactoringValidator {
     }
 
     /// Run all refactoring validations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning, reading, or regex compilation fails.
     pub fn validate_all(&self) -> Result<Vec<RefactoringViolation>> {
         if !self.rules.enabled {
             return Ok(Vec::new());

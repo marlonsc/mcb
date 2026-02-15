@@ -6,6 +6,10 @@ use regex::Regex;
 use std::path::PathBuf;
 
 /// Generic helper: iterate over all Rust files in crate source directories
+///
+/// # Errors
+///
+/// Returns an error if directory enumeration or file reading fails.
 pub fn for_each_rust_file<F>(config: &ValidationConfig, mut visitor: F) -> Result<()>
 where
     F: FnMut(PathBuf, Vec<&str>) -> Result<()>,
@@ -28,6 +32,10 @@ where
 }
 
 /// Helper: Scan declaration blocks and count methods
+///
+/// # Errors
+///
+/// Returns an error if file traversal fails.
 pub fn scan_decl_blocks<F, V>(
     config: &ValidationConfig,
     decl_pattern: &Regex,
@@ -116,6 +124,10 @@ pub fn count_matches_in_block(lines: &[&str], start_line: usize, pattern: &Regex
 }
 
 /// Count match arms in a match statement
+///
+/// # Errors
+///
+/// Returns an error if the required pattern cannot be loaded.
 pub fn count_match_arms(lines: &[&str], start_line: usize) -> Result<usize> {
     let arrow_pattern = required_pattern("SOLID003.match_arrow")?;
 

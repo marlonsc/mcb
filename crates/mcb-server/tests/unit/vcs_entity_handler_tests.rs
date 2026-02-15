@@ -3,6 +3,8 @@ use mcb_server::handlers::entities::VcsEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
+use crate::test_utils::text::extract_text;
+
 fn create_handler() -> VcsEntityHandler {
     let ctx = crate::shared_context::shared_app_context();
     VcsEntityHandler::new(ctx.vcs_entity_repository())
@@ -59,15 +61,7 @@ async fn list_repo_count(handler: &VcsEntityHandler, project_id: &str) -> usize 
         .await
         .expect("list")
         .content;
-    let text = serde_json::to_value(&content)
-        .ok()
-        .and_then(|v| {
-            v.get(0)
-                .and_then(|x| x.get("text"))
-                .and_then(|x| x.as_str())
-                .map(str::to_string)
-        })
-        .unwrap_or_default();
+    let text = extract_text(&content);
     serde_json::from_str::<serde_json::Value>(&text)
         .ok()
         .and_then(|v| v.as_array().map(std::vec::Vec::len))

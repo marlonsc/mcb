@@ -25,7 +25,7 @@ use crate::constants::{
     MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_IVFFLAT_NLIST,
     MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE,
 };
-use crate::provider_utils::{RetryConfig, retry_with_backoff};
+use crate::utils::retry::{RetryConfig, retry_with_backoff};
 
 /// Milvus vector store provider implementation
 pub struct MilvusVectorStoreProvider {
@@ -55,6 +55,10 @@ impl MilvusVectorStoreProvider {
     /// * `address` - Milvus server address (e.g., "<http://localhost:19530>")
     /// * `token` - Optional authentication token
     /// * `timeout_secs` - Connection timeout in seconds (default: 10)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the connection to Milvus server fails.
     pub async fn new(
         address: String,
         _token: Option<String>,
@@ -247,7 +251,20 @@ impl MilvusVectorStoreProvider {
             .and_then(|column| column.get(index))
             .and_then(|value| match value {
                 Value::String(text) => Some(text.to_string()),
-                _ => None,
+                Value::None
+                | Value::Bool(_)
+                | Value::Int8(_)
+                | Value::Int16(_)
+                | Value::Int32(_)
+                | Value::Long(_)
+                | Value::Float(_)
+                | Value::Double(_)
+                | Value::FloatArray(_)
+                | Value::Binary(_)
+                | Value::Json(_)
+                | Value::Array(_)
+                | Value::StructArray(_)
+                | Value::VectorArray(_) => None,
             })
             .unwrap_or_else(|| {
                 if name == "content" {
@@ -265,7 +282,20 @@ impl MilvusVectorStoreProvider {
             .and_then(|column| column.get(index))
             .and_then(|value| match value {
                 Value::Long(number) => Some(number),
-                _ => None,
+                Value::None
+                | Value::Bool(_)
+                | Value::Int8(_)
+                | Value::Int16(_)
+                | Value::Int32(_)
+                | Value::Float(_)
+                | Value::Double(_)
+                | Value::FloatArray(_)
+                | Value::Binary(_)
+                | Value::String(_)
+                | Value::Json(_)
+                | Value::Array(_)
+                | Value::StructArray(_)
+                | Value::VectorArray(_) => None,
             })
             .unwrap_or(0)
     }

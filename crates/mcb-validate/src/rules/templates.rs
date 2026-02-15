@@ -31,6 +31,10 @@ impl TemplateEngine {
     }
 
     /// Load all templates from the templates directory
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if template files cannot be read or parsed.
     pub async fn load_templates(&mut self, rules_dir: &Path) -> Result<()> {
         let templates_dir = rules_dir.join("templates");
 
@@ -64,6 +68,10 @@ impl TemplateEngine {
     }
 
     /// Load all templates from the templates directory (Synchronous version)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if template files cannot be read or parsed.
     pub fn load_templates_sync(&mut self, rules_dir: &Path) -> Result<()> {
         let templates_dir = rules_dir.join("templates");
 
@@ -123,6 +131,10 @@ impl TemplateEngine {
     }
 
     /// Load templates from embedded `(path, content)` entries.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if template parsing fails.
     pub fn load_templates_from_embedded(&mut self, entries: &[(String, String)]) -> Result<()> {
         for (path, content) in entries {
             if !path.ends_with(".yml") || !path.contains("/templates/") {
@@ -159,6 +171,10 @@ impl TemplateEngine {
     }
 
     /// Apply a template to a rule definition
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the template is not found or variable substitution fails.
     pub fn apply_template(
         &self,
         template_name: &str,
@@ -190,6 +206,10 @@ impl TemplateEngine {
     }
 
     /// Extend a rule with another rule (inheritance)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the base rule cannot be resolved.
     pub fn extend_rule(
         &self,
         _extends_name: &str,
@@ -213,6 +233,10 @@ impl TemplateEngine {
     }
 
     /// Substitute variables in the form {{`variable_name`}}
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a referenced variable is not found.
     pub fn substitute_variables(
         &self,
         value: &mut serde_yaml::Value,

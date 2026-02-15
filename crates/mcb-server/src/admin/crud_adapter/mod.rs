@@ -3,7 +3,6 @@
 pub mod adapter;
 pub mod mapper;
 pub mod unified;
-pub mod utils;
 
 pub use adapter::EntityCrudAdapter;
 

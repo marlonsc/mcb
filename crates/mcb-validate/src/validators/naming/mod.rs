@@ -15,6 +15,7 @@ use crate::run_context::ValidationRunContext;
 use crate::{Result, ValidationConfig};
 
 mod checks;
+pub mod constants;
 mod utils;
 mod violation;
 
@@ -51,6 +52,10 @@ impl NamingValidator {
     }
 
     /// Runs all naming validations and returns collected violations.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if regex compilation, directory enumeration, or file reading fails.
     pub fn validate_all(&self) -> Result<Vec<NamingViolation>> {
         if !self.rules.enabled {
             return Ok(Vec::new());

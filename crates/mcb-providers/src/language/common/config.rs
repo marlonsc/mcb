@@ -148,6 +148,7 @@ impl NodeExtractionRuleBuilder {
     }
 
     /// Add a single node type
+    #[must_use]
     pub fn with_node_type(mut self, node_type: impl Into<String>) -> Self {
         self.node_types.push(node_type.into());
         self

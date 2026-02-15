@@ -3,6 +3,7 @@ use std::path::Path;
 use super::super::utils::is_snake_case;
 use super::super::violation::NamingViolation;
 use crate::traits::violation::Severity;
+use crate::validators::naming::constants::{MODULE_FILE_NAME, MODULE_SPECIAL_FILES};
 
 pub fn validate_module_name(path: &Path) -> Option<NamingViolation> {
     let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
@@ -12,7 +13,7 @@ pub fn validate_module_name(path: &Path) -> Option<NamingViolation> {
         .and_then(|n| n.to_str());
 
     // Skip special files
-    if file_name == "lib" || file_name == "main" || file_name == "build" {
+    if MODULE_SPECIAL_FILES.contains(&file_name) {
         return None;
     }
 
@@ -26,7 +27,7 @@ pub fn validate_module_name(path: &Path) -> Option<NamingViolation> {
     }
 
     // Check directory name (if mod.rs)
-    if file_name == "mod"
+    if file_name == MODULE_FILE_NAME
         && let Some(dir_name) = parent_name
         && !is_snake_case(dir_name)
     {

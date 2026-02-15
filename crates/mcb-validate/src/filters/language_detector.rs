@@ -151,19 +151,19 @@ impl LanguageId {
             Self::Java => LANG::Java,
             Self::Cpp => LANG::Cpp,
             Self::Kotlin => LANG::Kotlin,
-            Self::Go => LANG::Preproc,
-            Self::Ruby => LANG::Preproc,
-            Self::Shell => LANG::Preproc,
-            Self::Yaml => LANG::Preproc,
-            Self::Toml => LANG::Preproc,
-            Self::Json => LANG::Preproc,
-            Self::Markdown => LANG::Preproc,
-            Self::Html => LANG::Preproc,
-            Self::Css => LANG::Preproc,
-            Self::Sql => LANG::Preproc,
-            Self::Dockerfile => LANG::Preproc,
-            Self::Makefile => LANG::Preproc,
-            Self::Protobuf => LANG::Preproc,
+            Self::Go
+            | Self::Ruby
+            | Self::Shell
+            | Self::Yaml
+            | Self::Toml
+            | Self::Json
+            | Self::Markdown
+            | Self::Html
+            | Self::Css
+            | Self::Sql
+            | Self::Dockerfile
+            | Self::Makefile
+            | Self::Protobuf => LANG::Preproc,
         }
     }
 

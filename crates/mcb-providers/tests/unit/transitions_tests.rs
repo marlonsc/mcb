@@ -30,7 +30,7 @@ fn transition_happy_paths(
         }
     };
 
-    let new_state = apply_transition(&mut session, trigger).expect("transition failed");
+    let new_state = apply_transition(&mut session, &trigger).expect("transition failed");
 
     if expected_state == "ready" {
         match new_state {
@@ -51,7 +51,7 @@ fn terminal_state_no_transitions() {
     session.current_state = WorkflowState::Completed;
 
     let trigger = TransitionTrigger::EndSession;
-    let result = apply_transition(&mut session, trigger);
+    let result = apply_transition(&mut session, &trigger);
 
     assert!(result.is_err());
 }

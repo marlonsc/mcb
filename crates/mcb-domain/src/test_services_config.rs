@@ -21,26 +21,17 @@ pub fn find_test_config_path() -> Option<PathBuf> {
 }
 
 /// Returns the cached `[test_services]` table from `config/tests.toml`.
+///
+/// Returns `None` if the config file is missing, unreadable, or malformed.
 pub fn test_services_table() -> Option<&'static toml::value::Table> {
     static TEST_SERVICES: OnceLock<Option<toml::value::Table>> = OnceLock::new();
 
     TEST_SERVICES
         .get_or_init(|| {
-            let config_path = find_test_config_path().expect(
-                "CRITICAL: config/tests.toml not found! Integration tests require this configuration.",
-            );
-            let content = std::fs::read_to_string(&config_path)
-                .unwrap_or_else(|e| panic!("Failed to read config file at {config_path:?}: {e}"));
-            let value = toml::from_str::<toml::Value>(&content).unwrap_or_else(|e| {
-                panic!("Failed to parse TOML from {config_path:?}: {e}")
-            });
-
-            match value.get("test_services") {
-                Some(v) => Some(v.as_table().unwrap_or_else(|| {
-                    panic!("'test_services' in {config_path:?} must be a table")
-                }).clone()),
-                None => panic!("Missing [test_services] table in {config_path:?}"),
-            }
+            let config_path = find_test_config_path()?;
+            let content = std::fs::read_to_string(&config_path).ok()?;
+            let value = toml::from_str::<toml::Value>(&content).ok()?;
+            value.get("test_services")?.as_table().cloned()
         })
         .as_ref()
 }
@@ -53,9 +44,11 @@ pub fn test_service_url(key: &str) -> Option<String> {
         .map(str::to_string)
 }
 
-/// Returns a required service URL from `[test_services]`, panicking if missing.
-#[must_use]
-pub fn required_test_service_url(key: &str) -> String {
-    test_service_url(key)
-        .unwrap_or_else(|| panic!("missing test_services.{key} in config/tests.toml"))
+/// Returns a required service URL from `[test_services]`.
+///
+/// # Errors
+///
+/// Returns an error if the key is not found in `config/tests.toml` under `[test_services]`.
+pub fn required_test_service_url(key: &str) -> Result<String, String> {
+    test_service_url(key).ok_or_else(|| format!("missing test_services.{key} in config/tests.toml"))
 }

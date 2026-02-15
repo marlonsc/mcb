@@ -8,8 +8,9 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
-use crate::handlers::helpers::{
-    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
+use crate::utils::mcp::{
+    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_identifier_precedence,
+    resolve_org_id,
 };
 
 /// Handler for the consolidated `org_entity` MCP tool.
@@ -36,7 +37,18 @@ impl OrgEntityHandler {
             resource = args.resource,
             {
             (OrgEntityAction::Create, OrgEntityResource::Org) => {
+                let payload_org_id = args
+                    .data
+                    .as_ref()
+                    .and_then(|value| value.get("org_id"))
+                    .and_then(serde_json::Value::as_str)
+                    .map(str::to_owned);
                 let org: Organization = require_data(args.data, "data required for create")?;
+                let _resolved_org_id = resolve_identifier_precedence(
+                    "org_id",
+                    args.org_id.as_deref(),
+                    payload_org_id.as_deref(),
+                )?;
                 map_opaque_error(self.repo.create_org(&org).await)?;
                 ok_json(&org)
             }

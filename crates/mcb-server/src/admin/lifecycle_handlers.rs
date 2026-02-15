@@ -64,6 +64,43 @@ fn service_action_error(
     )
 }
 
+enum ServiceAction {
+    Start,
+    Stop,
+    Restart,
+}
+
+impl ServiceAction {
+    fn label(&self) -> &'static str {
+        match self {
+            Self::Start => "started",
+            Self::Stop => "stopped",
+            Self::Restart => "restarted",
+        }
+    }
+}
+
+async fn execute_service_action(
+    state: &State<AdminState>,
+    name: &str,
+    action: ServiceAction,
+) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
+    let Some(service_manager) = &state.service_manager else {
+        return Err(service_manager_unavailable(false));
+    };
+
+    let result = match action {
+        ServiceAction::Start => service_manager.start(name).await,
+        ServiceAction::Stop => service_manager.stop(name).await,
+        ServiceAction::Restart => service_manager.restart(name).await,
+    };
+
+    match result {
+        Ok(()) => Ok(service_action_success(action.label(), name)),
+        Err(error) => Err(service_action_error(name, error)),
+    }
+}
+
 /// List all registered services and their states (protected)
 ///
 /// GET /admin/services
@@ -81,14 +118,14 @@ pub fn list_services(
         return Err(service_manager_unavailable(true));
     };
 
-    let services: Vec<ServiceInfoResponse> = service_manager
+    let services = service_manager
         .list()
         .into_iter()
         .map(|info| ServiceInfoResponse {
             name: info.name,
             state: format!("{:?}", info.state),
         })
-        .collect();
+        .collect::<Vec<_>>();
 
     Ok(Json(ServiceListResponse {
         count: services.len(),
@@ -110,14 +147,7 @@ pub async fn start_service(
     name: &str,
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
     tracing::info!("start_service called");
-    let Some(service_manager) = &state.service_manager else {
-        return Err(service_manager_unavailable(false));
-    };
-
-    match service_manager.start(name).await {
-        Ok(()) => Ok(service_action_success("started", name)),
-        Err(e) => Err(service_action_error(name, e)),
-    }
+    execute_service_action(state, name, ServiceAction::Start).await
 }
 
 /// Stop a specific service (protected)
@@ -134,14 +164,7 @@ pub async fn stop_service(
     name: &str,
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
     tracing::info!("stop_service called");
-    let Some(service_manager) = &state.service_manager else {
-        return Err(service_manager_unavailable(false));
-    };
-
-    match service_manager.stop(name).await {
-        Ok(()) => Ok(service_action_success("stopped", name)),
-        Err(e) => Err(service_action_error(name, e)),
-    }
+    execute_service_action(state, name, ServiceAction::Stop).await
 }
 
 /// Restart a specific service (protected)
@@ -158,14 +181,7 @@ pub async fn restart_service(
     name: &str,
 ) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
     tracing::info!("restart_service called");
-    let Some(service_manager) = &state.service_manager else {
-        return Err(service_manager_unavailable(false));
-    };
-
-    match service_manager.restart(name).await {
-        Ok(()) => Ok(service_action_success("restarted", name)),
-        Err(e) => Err(service_action_error(name, e)),
-    }
+    execute_service_action(state, name, ServiceAction::Restart).await
 }
 
 /// Get health check for all services (protected)
@@ -186,10 +202,10 @@ pub async fn services_health(
     };
 
     let checks = service_manager.health_check_all().await;
-    let checks_json: Vec<serde_json::Value> = checks
+    let checks_json = checks
         .iter()
         .map(|c| serde_json::to_value(c).unwrap_or(json!({})))
-        .collect();
+        .collect::<Vec<_>>();
 
     Ok(Json(ServicesHealthResponse {
         count: checks.len(),

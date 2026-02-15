@@ -109,6 +109,10 @@ use std::time::Duration;
 
 impl ServerConfig {
     /// Parse server address from configuration
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the host address cannot be parsed.
     pub fn parse_address(&self) -> Result<SocketAddr> {
         let ip: IpAddr = self
             .network
@@ -130,6 +134,10 @@ impl ServerConfig {
     }
 
     /// Validate SSL configuration
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if HTTPS is enabled but certificate or key paths are missing.
     pub fn validate_ssl(&self) -> Result<()> {
         if !self.ssl.https {
             return Ok(());
@@ -218,6 +226,7 @@ impl ServerConfigBuilder {
     }
 
     /// Set the server host
+    #[must_use]
     pub fn host<S: Into<String>>(mut self, host: S) -> Self {
         self.config.network.host = host.into();
         self
@@ -238,6 +247,7 @@ impl ServerConfigBuilder {
     }
 
     /// Set SSL certificate and key paths
+    #[must_use]
     pub fn ssl_paths<P: Into<PathBuf>>(mut self, cert_path: P, key_path: P) -> Self {
         self.config.ssl.ssl_cert_path = Some(cert_path.into());
         self.config.ssl.ssl_key_path = Some(key_path.into());

@@ -97,6 +97,10 @@ impl PortAdapterValidator {
     }
 
     /// Validates port/adapter compliance for the given configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or regex compilation fails.
     pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<PortAdapterViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.check_port_trait_sizes(config)?);

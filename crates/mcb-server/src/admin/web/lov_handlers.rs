@@ -36,14 +36,44 @@ fn display_field(entity: &AdminEntityMeta) -> String {
     let fields = entity.fields();
     fields
         .iter()
-        .find(|f| {
-            f.name != "id"
-                && !f.hidden
-                && !f.is_timestamp
-                && !f.is_foreign_key
-                && f.input_type == "text"
-        })
+        .find(|f| is_display_field_candidate(f))
         .map_or_else(|| "id".to_owned(), |f| f.name.clone())
+}
+
+fn is_display_field_candidate(field: &crate::admin::registry::AdminFieldMeta) -> bool {
+    if field.name == "id" || field.hidden || field.is_timestamp || field.is_foreign_key {
+        return false;
+    }
+    field.input_type == "text"
+}
+
+fn value_as_lov_string(value: &Value) -> String {
+    match value {
+        Value::String(s) => s.clone(),
+        _ => value.to_string().trim_matches('"').to_owned(),
+    }
+}
+
+fn object_id(obj: &serde_json::Map<String, Value>) -> Option<String> {
+    obj.get("id").map(value_as_lov_string)
+}
+
+fn map_lov_item(rec: &Value, label_field: &str) -> Option<LovItem> {
+    let obj = rec.as_object()?;
+    let id = object_id(obj)?;
+    let label = obj
+        .get(label_field)
+        .map(value_as_lov_string)
+        .unwrap_or_else(|| id.clone());
+    Some(LovItem { id, label })
+}
+
+fn record_matches_parent_id(obj: &serde_json::Map<String, Value>, parent_id_lower: &str) -> bool {
+    obj.iter().any(|(key, value)| {
+        key.ends_with("_id")
+            && key != "id"
+            && value_as_lov_string(value).to_lowercase() == parent_id_lower
+    })
 }
 
 /// LOV endpoint — returns `[{id, label}]` JSON for FK dropdown population.
@@ -68,8 +98,11 @@ pub async fn lov_endpoint(
         status::Custom(Status::NotFound, format!("Unknown entity: {entity_slug}"))
     })?;
 
-    let adapter = match state.and_then(|s| resolve_adapter(entity_slug, s.inner())) {
-        Some(a) => a,
+    let Some(admin_state) = state else {
+        return Ok(Json(Vec::new()));
+    };
+    let adapter = match resolve_adapter(entity_slug, admin_state.inner()) {
+        Some(adapter) => adapter,
         None => return Ok(Json(Vec::new())),
     };
 
@@ -78,50 +111,19 @@ pub async fn lov_endpoint(
 
     let mut items: Vec<LovItem> = records
         .iter()
-        .filter_map(|rec| {
-            let obj = rec.as_object()?;
-
-            let id = match obj.get("id") {
-                Some(Value::String(s)) => s.clone(),
-                Some(v) => v.to_string().trim_matches('"').to_owned(),
-                None => return None,
-            };
-
-            let label = match obj.get(&label_field) {
-                Some(Value::String(s)) => s.clone(),
-                Some(v) => v.to_string().trim_matches('"').to_owned(),
-                None => id.clone(),
-            };
-
-            Some(LovItem { id, label })
-        })
+        .filter_map(|rec| map_lov_item(rec, &label_field))
         .collect();
 
     if let Some(pid) = parent_id.filter(|p| !p.is_empty()) {
         let pid_lower = pid.to_lowercase();
-        let matching_ids: std::collections::HashSet<String> = records
+        let matching_ids = records
             .iter()
             .filter_map(|rec| {
                 let obj = rec.as_object()?;
-                let has_match = obj.iter().any(|(k, v)| {
-                    k.ends_with("_id")
-                        && k != "id"
-                        && match v {
-                            Value::String(s) => s.to_lowercase() == pid_lower,
-                            _ => v.to_string().trim_matches('"').to_lowercase() == pid_lower,
-                        }
-                });
-                if has_match {
-                    match obj.get("id") {
-                        Some(Value::String(s)) => Some(s.clone()),
-                        Some(v) => Some(v.to_string().trim_matches('"').to_owned()),
-                        None => None,
-                    }
-                } else {
-                    None
-                }
+                let has_match = record_matches_parent_id(obj, &pid_lower);
+                if has_match { object_id(obj) } else { None }
             })
-            .collect();
+            .collect::<std::collections::HashSet<_>>();
         items.retain(|item| matching_ids.contains(&item.id));
     }
 

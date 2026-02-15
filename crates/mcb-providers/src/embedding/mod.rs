@@ -31,7 +31,6 @@
 pub mod anthropic;
 pub mod fastembed;
 pub mod gemini;
-pub(crate) mod helpers;
 pub mod ollama;
 pub mod openai;
 pub mod voyageai;

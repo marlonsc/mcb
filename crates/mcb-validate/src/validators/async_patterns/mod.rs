@@ -8,6 +8,7 @@
 
 mod block_on;
 mod blocking;
+pub mod constants;
 mod mutex;
 mod spawn;
 mod violation;
@@ -40,6 +41,10 @@ impl AsyncPatternValidator {
     }
 
     /// Run all async validations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any validation check fails.
     pub fn validate_all(&self) -> Result<Vec<AsyncViolation>> {
         let mut violations = Vec::new();
         violations.extend(validate_blocking_in_async(&self.config)?);

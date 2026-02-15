@@ -24,6 +24,7 @@ use mcb_server::transport::http_client::HttpClientTransport;
 use mcb_server::transport::types::{McpRequest, McpResponse};
 
 use crate::test_utils::http_mcp::get_free_port;
+use crate::test_utils::timeouts::TEST_TIMEOUT;
 
 fn create_test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
@@ -36,24 +37,11 @@ fn create_test_config() -> (AppConfig, tempfile::TempDir) {
             path: Some(db_path),
         },
     );
-    config.providers.embedding.cache_dir = Some(shared_fastembed_cache_dir());
+    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
     (config, temp_dir)
 }
 
-/// Persistent shared cache dir for `FastEmbed` ONNX model.
-fn shared_fastembed_cache_dir() -> std::path::PathBuf {
-    use std::sync::OnceLock;
-    static DIR: OnceLock<std::path::PathBuf> = OnceLock::new();
-    DIR.get_or_init(|| {
-        let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
-            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
-            std::path::PathBuf::from,
-        );
-        std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
-        cache_dir
-    })
-    .clone()
-}
+use crate::test_utils::test_fixtures::shared_fastembed_test_cache_dir;
 
 /// Create test configuration for client mode
 fn create_client_config(server_port: u16) -> ModeConfig {
@@ -243,7 +231,7 @@ fn test_http_transport_config_localhost() {
 fn test_http_transport_config_socket_addr() {
     let port = get_free_port();
     let config = HttpTransportConfig::localhost(port);
-    let addr = config.socket_addr();
+    let addr = config.socket_addr().expect("valid socket addr");
     let loaded = ConfigLoader::new().load().expect("load config");
 
     assert_eq!(addr.port(), port);
@@ -270,7 +258,7 @@ fn test_http_client_session_id_with_prefix() {
     let client = HttpClientTransport::new_with_session_source(
         format!("http://127.0.0.1:{port}"),
         Some("test-prefix".to_owned()),
-        Duration::from_secs(30),
+        TEST_TIMEOUT,
         None,
         None,
     )
@@ -285,7 +273,7 @@ fn test_http_client_session_id_without_prefix() {
     let client = HttpClientTransport::new_with_session_source(
         format!("http://127.0.0.1:{port}"),
         None,
-        Duration::from_secs(30),
+        TEST_TIMEOUT,
         None,
         None,
     )
@@ -303,7 +291,7 @@ fn test_http_client_server_url() {
     let client = HttpClientTransport::new_with_session_source(
         expected_url.clone(),
         None,
-        Duration::from_secs(30),
+        TEST_TIMEOUT,
         None,
         None,
     )

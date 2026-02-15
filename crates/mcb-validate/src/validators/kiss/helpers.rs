@@ -1,27 +1,28 @@
 use regex::Regex;
 
 use super::KissValidator;
+use super::constants::SELF_PARAM_VARIANTS;
 use crate::pattern_registry::compile_regex;
 
 impl KissValidator {
-    pub(super) fn count_struct_fields(&self, lines: &[&str], start_line: usize) -> usize {
-        let mut brace_depth = 0;
-        let mut in_struct = false;
-        let mut field_count = 0;
-        let field_pattern = match compile_regex(r"^\s*(?:pub\s+)?[a-z_][a-z0-9_]*\s*:") {
-            Ok(regex) => regex,
-            Err(_) => return 0,
-        };
+    fn count_block_matches(
+        lines: &[&str],
+        start_line: usize,
+        predicate: impl Fn(&str) -> bool,
+    ) -> usize {
+        let mut brace_depth = 0usize;
+        let mut in_block = false;
+        let mut count = 0;
 
         for line in &lines[start_line..] {
             if line.contains('{') {
-                in_struct = true;
+                in_block = true;
             }
-            if in_struct {
-                brace_depth += line.chars().filter(|c| *c == '{').count();
-                brace_depth -= line.chars().filter(|c| *c == '}').count();
-                if brace_depth >= 1 && field_pattern.is_match(line) {
-                    field_count += 1;
+            if in_block {
+                brace_depth += line.chars().filter(|ch| *ch == '{').count();
+                brace_depth -= line.chars().filter(|ch| *ch == '}').count();
+                if brace_depth >= 1 && predicate(line) {
+                    count += 1;
                 }
                 if brace_depth == 0 {
                     break;
@@ -29,10 +30,19 @@ impl KissValidator {
             }
         }
 
-        field_count
+        count
     }
 
-    pub(super) fn count_function_params(&self, params: &str) -> usize {
+    pub(super) fn count_struct_fields(lines: &[&str], start_line: usize) -> usize {
+        let field_pattern = match compile_regex(r"^\s*(?:pub\s+)?[a-z_][a-z0-9_]*\s*:") {
+            Ok(regex) => regex,
+            Err(_) => return 0,
+        };
+
+        Self::count_block_matches(lines, start_line, |line| field_pattern.is_match(line))
+    }
+
+    pub(super) fn count_function_params(params: &str) -> usize {
         if params.trim().is_empty() {
             return 0;
         }
@@ -42,11 +52,7 @@ impl KissValidator {
 
         for part in parts {
             let trimmed = part.trim();
-            if !trimmed.is_empty()
-                && !trimmed.starts_with("&self")
-                && !trimmed.starts_with("self")
-                && !trimmed.starts_with("&mut self")
-            {
+            if !trimmed.is_empty() && !SELF_PARAM_VARIANTS.iter().any(|s| trimmed.starts_with(s)) {
                 count += 1;
             }
         }
@@ -55,35 +61,14 @@ impl KissValidator {
     }
 
     pub(super) fn count_optional_fields(
-        &self,
         lines: &[&str],
         start_line: usize,
         option_pattern: &Regex,
     ) -> usize {
-        let mut brace_depth = 0;
-        let mut in_struct = false;
-        let mut optional_count = 0;
-
-        for line in &lines[start_line..] {
-            if line.contains('{') {
-                in_struct = true;
-            }
-            if in_struct {
-                brace_depth += line.chars().filter(|c| *c == '{').count();
-                brace_depth -= line.chars().filter(|c| *c == '}').count();
-                if brace_depth >= 1 && option_pattern.is_match(line) {
-                    optional_count += 1;
-                }
-                if brace_depth == 0 {
-                    break;
-                }
-            }
-        }
-
-        optional_count
+        Self::count_block_matches(lines, start_line, |line| option_pattern.is_match(line))
     }
 
-    pub(super) fn is_trait_fn_declaration(&self, lines: &[&str], start_line: usize) -> bool {
+    pub(super) fn is_trait_fn_declaration(lines: &[&str], start_line: usize) -> bool {
         for line in &lines[start_line..] {
             if line.contains('{') {
                 return false;
@@ -98,26 +83,8 @@ impl KissValidator {
         false
     }
 
-    pub(super) fn count_function_lines(&self, lines: &[&str], start_line: usize) -> usize {
-        let mut brace_depth = 0;
-        let mut in_fn = false;
-        let mut line_count = 0;
-
-        for line in &lines[start_line..] {
-            if line.contains('{') {
-                in_fn = true;
-            }
-            if in_fn {
-                brace_depth += line.chars().filter(|c| *c == '{').count();
-                brace_depth -= line.chars().filter(|c| *c == '}').count();
-                line_count += 1;
-                if brace_depth == 0 {
-                    break;
-                }
-            }
-        }
-
-        line_count
+    pub(super) fn count_function_lines(lines: &[&str], start_line: usize) -> usize {
+        Self::count_block_matches(lines, start_line, |_| true)
     }
 
     pub(super) fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {

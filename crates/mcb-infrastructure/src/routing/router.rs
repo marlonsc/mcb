@@ -82,8 +82,9 @@ impl DefaultProviderRouter {
             let is_better = match (health, best_health) {
                 (ProviderHealthStatus::Healthy, _) => best_health != ProviderHealthStatus::Healthy,
                 (ProviderHealthStatus::Degraded, ProviderHealthStatus::Unhealthy) => true,
-                (ProviderHealthStatus::Degraded, _) => best_provider.is_none(),
-                (ProviderHealthStatus::Unhealthy, _) => best_provider.is_none(),
+                (ProviderHealthStatus::Degraded | ProviderHealthStatus::Unhealthy, _) => {
+                    best_provider.is_none()
+                }
             };
 
             if is_better {

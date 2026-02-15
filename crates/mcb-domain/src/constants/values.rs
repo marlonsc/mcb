@@ -15,3 +15,10 @@ pub const INDEXING_CHUNK_MIN_LINES: usize = 2;
 
 /// Maximum number of chunks extracted from a single file
 pub const INDEXING_CHUNKS_MAX_PER_FILE: usize = 50;
+
+// ============================================================================
+// COMMON DEFAULTS
+// ============================================================================
+
+/// Default language identifier when language cannot be determined
+pub const DEFAULT_LANGUAGE: &str = "unknown";

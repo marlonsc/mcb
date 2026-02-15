@@ -48,9 +48,10 @@ fn test_provider_selection_pattern() {
         "default".to_owned(),
         VectorStoreConfig {
             provider: "milvus".to_owned(),
-            address: Some(mcb_domain::test_services_config::required_test_service_url(
-                "milvus_address",
-            )),
+            address: Some(
+                mcb_domain::test_services_config::required_test_service_url("milvus_address")
+                    .expect("milvus_address required in test config"),
+            ),
             token: Some("user:password".to_owned()),
             collection: Some("test_collection".to_owned()),
             dimensions: Some(384),

@@ -62,24 +62,24 @@
 
     <div x-show="open"
          x-cloak
-         style="position: absolute; z-index: 50; width: 100%; max-height: 12rem; overflow-y: auto; border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.375rem; background: var(--bg-primary, #ffffff); box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 0.125rem;">
+         style="position: absolute; z-index: 50; width: 100%; max-height: 12rem; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 0.375rem; background: var(--bg-primary); box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 0.125rem;">
 
         <template x-if="loading">
-            <div style="padding: 0.5rem 0.75rem; color: var(--text-muted, #9ca3af); font-size: 0.875rem;">Loading...</div>
+            <div style="padding: 0.5rem 0.75rem; color: var(--text-muted); font-size: 0.875rem;">Loading...</div>
         </template>
 
         <template x-if="!loading && options.length === 0">
-            <div style="padding: 0.5rem 0.75rem; color: var(--text-muted, #9ca3af); font-size: 0.875rem;">No results found</div>
+            <div style="padding: 0.5rem 0.75rem; color: var(--text-muted); font-size: 0.875rem;">No results found</div>
         </template>
 
         <template x-if="!loading && options.length > 0">
             <div>
                 <template x-for="opt in options" :key="opt.id">
                     <div @click="selectOption(opt.id, opt.label)"
-                         style="padding: 0.5rem 0.75rem; cursor: pointer; font-size: 0.875rem; color: var(--text-primary, #111827);"
-                         @mouseenter="$el.style.background = 'var(--bg-secondary, #f9fafb)'"
+                         style="padding: 0.5rem 0.75rem; cursor: pointer; font-size: 0.875rem; color: var(--text-primary);"
+                         @mouseenter="$el.style.background = 'var(--bg-secondary)'"
                          @mouseleave="$el.style.background = 'transparent'"
-                         :style="opt.id === selected ? 'background: var(--bg-secondary, #f9fafb); font-weight: 600;' : ''">
+                         :style="opt.id === selected ? 'background: var(--bg-secondary); font-weight: 600;' : ''">
                         <span x-text="opt.label"></span>
                     </div>
                 </template>

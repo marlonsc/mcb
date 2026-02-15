@@ -5,6 +5,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use crate::handlers::test_helpers::create_real_domain_services;
+use crate::test_utils::text::extract_text;
 
 async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
     let (services, temp_dir) = create_real_domain_services().await?;
@@ -192,15 +193,7 @@ async fn test_session_update_conflicting_project_id_rejected() {
         .expect("create session must succeed");
     assert!(!create_result.is_error.unwrap_or(false));
 
-    let created_text = serde_json::to_value(&create_result.content)
-        .ok()
-        .and_then(|v| {
-            v.get(0)
-                .and_then(|x| x.get("text"))
-                .and_then(|x| x.as_str())
-                .map(str::to_string)
-        })
-        .expect("create response text");
+    let created_text = extract_text(&create_result.content);
     let created_json: serde_json::Value =
         serde_json::from_str(&created_text).expect("create response json");
     let session_id = created_json

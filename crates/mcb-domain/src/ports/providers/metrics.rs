@@ -226,16 +226,3 @@ fn labels_from<const N: usize>(pairs: [(&str, &str); N]) -> MetricLabels {
         .map(|(k, v)| (k.to_owned(), v.to_owned()))
         .collect()
 }
-
-/// Macro for creating labels inline
-#[macro_export]
-macro_rules! labels {
-    () => {
-        std::collections::HashMap::new()
-    };
-    ($($key:expr => $value:expr),+ $(,)?) => {{
-        let mut map = std::collections::HashMap::new();
-        $(map.insert($key.to_string(), $value.to_string());)+
-        map
-    }};
-}

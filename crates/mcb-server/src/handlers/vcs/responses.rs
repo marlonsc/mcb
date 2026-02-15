@@ -4,7 +4,7 @@ use rmcp::model::CallToolResult;
 use serde::Serialize;
 
 use crate::args::VcsArgs;
-use crate::handlers::helpers::tool_error;
+use crate::utils::mcp::tool_error;
 
 /// Response structure for listing repositories.
 #[derive(Serialize)]

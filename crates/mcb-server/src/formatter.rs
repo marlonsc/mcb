@@ -4,6 +4,7 @@
 //! user-friendly way. It handles the presentation of search results, indexing status,
 //! and error messages.
 
+use std::fmt::Write;
 use std::path::Path;
 use std::time::Duration;
 
@@ -115,12 +116,13 @@ fn build_search_response_message(
     limit: usize,
 ) -> String {
     let mut message = "🔍 **Semantic Code Search Results**\n\n".to_owned();
-    message.push_str(&format!("**Query:** \"{query}\" \n"));
-    message.push_str(&format!(
+    let _ = write!(message, "**Query:** \"{query}\" \n");
+    let _ = write!(
+        message,
         "**Search completed in:** {:.2}s\n",
         duration.as_secs_f64()
-    ));
-    message.push_str(&format!("**Results found:** {}\n\n", results.len()));
+    );
+    let _ = write!(message, "**Results found:** {}\n\n", results.len());
 
     if results.is_empty() {
         append_empty_search_response(&mut message);
@@ -153,32 +155,34 @@ fn append_search_results(
     message.push_str("📊 **Search Results:**\n\n");
 
     for (i, result) in results.iter().enumerate() {
-        message.push_str(&format!(
+        let _ = write!(
+            message,
             "**{}.** 📁 `{}` (line {})\n",
             i + 1,
             result.file_path,
             result.start_line
-        ));
+        );
 
         append_code_preview(message, result);
-        message.push_str(&format!("🎯 **Relevance Score:** {:.3}\n\n", result.score));
+        let _ = write!(message, "🎯 **Relevance Score:** {:.3}\n\n", result.score);
     }
 
     if results.len() == limit {
-        message.push_str(&format!(
+        let _ = write!(
+            message,
             "💡 **Showing top {limit} results.** For more results, try:\n"
-        ));
+        );
         message.push_str("• More specific search terms\n");
         message.push_str("• Different query formulations\n");
         message.push_str("• Breaking complex queries into simpler ones\n");
     }
 
     if duration.as_millis() > 1000 {
-        message.push_str(&format!(
-            "\n⚠️ **Performance Note:** Search took {:.2}s. \
-            Consider using more specific queries for faster results.\n",
+        let _ = write!(
+            message,
+            "\n⚠️ **Performance Note:** Search took {:.2}s. Consider using more specific queries for faster results.\n",
             duration.as_secs_f64()
-        ));
+        );
     }
 }
 
@@ -203,9 +207,9 @@ fn append_code_preview(message: &mut String, result: &SearchResult) {
     let lang_hint = get_language_hint(file_ext, &result.language);
 
     if lang_hint.is_empty() {
-        message.push_str(&format!("```\n{preview_lines}\n```\n"));
+        let _ = write!(message, "```\n{preview_lines}\n```\n");
     } else {
-        message.push_str(&format!("``` {lang_hint}\n{preview_lines}\n```\n"));
+        let _ = write!(message, "``` {lang_hint}\n{preview_lines}\n```\n");
     }
 }
 
@@ -263,12 +267,13 @@ fn build_indexing_success_message(
     );
 
     if !result.errors.is_empty() {
-        message.push_str(&format!(
+        let _ = write!(
+            message,
             "\n⚠️ **Errors encountered:** {}\n",
             result.errors.len()
-        ));
+        );
         for error in &result.errors {
-            message.push_str(&format!("• {error}\n"));
+            let _ = write!(message, "• {error}\n");
         }
     } else {
         message.push_str("\n🎯 **Next Steps:**\n");
@@ -322,21 +327,23 @@ fn build_indexing_status_message(status: &IndexingStatus) -> String {
 
     if status.is_indexing {
         message.push_str("🔄 **Indexing Status: In Progress**\n");
-        message.push_str(&format!("Progress: {:.1}%\n", status.progress * 100.0));
+        let _ = write!(message, "Progress: {:.1}%\n", status.progress * 100.0);
         if let Some(current_file) = &status.current_file {
-            message.push_str(&format!("Current file: `{current_file}`\n"));
+            let _ = write!(message, "Current file: `{current_file}`\n");
         }
-        message.push_str(&format!(
+        let _ = write!(
+            message,
             "Files processed: {}/{}\n",
             status.processed_files, status.total_files
-        ));
+        );
     } else {
         message.push_str("📋 **Indexing Status: Idle**\n");
         if status.total_files > 0 {
-            message.push_str(&format!(
+            let _ = write!(
+                message,
                 "Last run processed {}/{} files\n",
                 status.processed_files, status.total_files
-            ));
+            );
         } else {
             message.push_str("No indexing operation is currently running.\n");
         }

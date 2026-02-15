@@ -24,9 +24,9 @@
         align-items: center;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         background: ${
-          toast.type === 'success' ? '#059669' :
-          toast.type === 'error'   ? '#dc2626' :
-          'var(--accent, #3b82f6)'
+          toast.type === 'success' ? 'var(--color-success)' :
+          toast.type === 'error'   ? 'var(--color-error)' :
+          'var(--accent)'
         };
       `"
     >

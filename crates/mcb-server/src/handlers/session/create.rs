@@ -12,7 +12,7 @@ use super::common::{parse_agent_type, require_data_map, require_str};
 use crate::args::SessionArgs;
 use crate::error_mapping::{safe_internal_error, to_contextual_tool_error};
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::{
+use crate::utils::mcp::{
     OriginContextInput, resolve_identifier_precedence, resolve_origin_context, tool_error,
 };
 

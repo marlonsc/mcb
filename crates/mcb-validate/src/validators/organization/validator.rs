@@ -29,6 +29,10 @@ impl OrganizationValidator {
     }
 
     /// Executes all organization validation checks and returns the aggregated violations.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any sub-validation encounters a file system or parsing error.
     pub fn validate_all(&self) -> Result<Vec<OrganizationViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_magic_numbers()?);
@@ -45,36 +49,64 @@ impl OrganizationValidator {
     }
 
     /// Scans for numeric literals that should be extracted as named constants.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_magic_numbers(&self) -> Result<Vec<OrganizationViolation>> {
         validate_magic_numbers(&self.config)
     }
 
     /// Scans for string literals duplicated across multiple files that should be centralized.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_duplicate_strings(&self) -> Result<Vec<OrganizationViolation>> {
         validate_duplicate_strings(&self.config)
     }
 
     /// Verifies that files are located in the correct directories based on their architectural role.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_file_placement(&self) -> Result<Vec<OrganizationViolation>> {
         validate_file_placement(&self.config)
     }
 
     /// Verifies that trait definitions are located in the appropriate ports directory.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_trait_placement(&self) -> Result<Vec<OrganizationViolation>> {
         validate_trait_placement(&self.config)
     }
 
     /// Checks for violations of Clean Architecture layer boundaries.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_layer_violations(&self) -> Result<Vec<OrganizationViolation>> {
         validate_layer_violations(&self.config)
     }
 
     /// Enforces strict directory placement rules for specific component types.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if directory scanning fails.
     pub fn validate_strict_directory(&self) -> Result<Vec<OrganizationViolation>> {
         validate_strict_directory(&self.config)
     }
 
     /// Verifies that the domain layer contains only trait definitions and data structures.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_domain_traits_only(&self) -> Result<Vec<OrganizationViolation>> {
         validate_domain_traits_only(&self.config)
     }

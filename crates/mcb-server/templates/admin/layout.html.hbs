@@ -10,57 +10,57 @@
     <link rel="stylesheet" href="/ui/theme.css">
     <script src="/ui/shared.js"></script>
     <style>
-        .card { background: var(--card-bg, white); border-radius: 0.5rem; box-shadow: 0 1px 3px var(--card-shadow, rgba(0,0,0,0.1)); padding: 1.5rem; }
-        .card:hover { box-shadow: 0 4px 6px var(--card-shadow, rgba(0,0,0,0.15)); }
+        .card { background: var(--card-bg); border-radius: 0.5rem; box-shadow: 0 1px 3px var(--card-shadow); padding: 1.5rem; }
+        .card:hover { box-shadow: 0 4px 6px var(--card-shadow); }
         .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; transition: background-color 0.2s; cursor: pointer; text-decoration: none; display: inline-block; border: none; }
-        .btn-primary { background: var(--accent, #2563eb); color: white; }
-        .btn-primary:hover { background: var(--accent-hover, #1d4ed8); }
-        .btn-secondary { background: var(--bg-tertiary, #f3f4f6); color: var(--text-primary, #111827); }
-        .btn-secondary:hover { background: var(--bg-secondary, #f9fafb); }
-        .btn-danger { background: #dc2626; color: white; }
-        .btn-danger:hover { background: #b91c1c; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-secondary { background: var(--bg-tertiary); color: var(--text-primary); }
+        .btn-secondary:hover { background: var(--bg-secondary); }
+        .btn-danger { background: var(--color-error); color: white; }
+        .btn-danger:hover { background: var(--color-error-hover); }
         .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }
         .stat-value { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); }
         .stat-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color, #e5e7eb); }
-        td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color, #e5e7eb); }
-        tr:hover td { background: var(--bg-secondary, #f9fafb); }
+        th { text-align: left; font-size: 0.75rem; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); }
+        td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); }
+        tr:hover td { background: var(--bg-secondary); }
         label { display: block; margin-bottom: 0.375rem; font-weight: 600; font-size: 0.875rem; color: var(--text-primary); }
         input, textarea, select {
             width: 100%; box-sizing: border-box;
-            border: 1px solid var(--border-color, #e5e7eb);
+            border: 1px solid var(--border-color);
             border-radius: 0.375rem; padding: 0.625rem 0.75rem; margin-bottom: 1rem;
-            background: var(--bg-primary, #ffffff); color: var(--text-primary, #111827);
+            background: var(--bg-primary); color: var(--text-primary);
             font-size: 0.875rem;
         }
         input:focus, textarea:focus, select:focus {
-            outline: none; border-color: var(--accent, #3b82f6);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--color-info-bg);
         }
         input[readonly], textarea[readonly], select[disabled] {
-            background: var(--bg-tertiary, #f3f4f6); cursor: not-allowed; opacity: 0.7;
+            background: var(--bg-tertiary); cursor: not-allowed; opacity: 0.7;
         }
         .breadcrumb { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 1rem; }
         .breadcrumb a { color: var(--accent); text-decoration: none; }
         .breadcrumb a:hover { text-decoration: underline; }
         .breadcrumb .separator { color: var(--text-muted); }
         .badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
-        .badge-blue { background: #dbeafe; color: #1e40af; }
-        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-blue { background: var(--badge-blue-bg); color: var(--badge-blue-text); }
+        .badge-green { background: var(--badge-green-bg); color: var(--badge-green-text); }
         .badge-gray { background: var(--bg-tertiary); color: var(--text-secondary); }
-        .badge-red { background: #fee2e2; color: #991b1b; }
-        .badge-orange { background: #ffedd5; color: #9a3412; }
-        .badge-yellow { background: #fef9c3; color: #854d0e; }
-        .badge-purple { background: #f3e8ff; color: #6b21a8; }
+        .badge-red { background: var(--badge-red-bg); color: var(--badge-red-text); }
+        .badge-orange { background: var(--badge-orange-bg); color: var(--badge-orange-text); }
+        .badge-yellow { background: var(--badge-yellow-bg); color: var(--badge-yellow-text); }
+        .badge-purple { background: var(--badge-purple-bg); color: var(--badge-purple-text); }
     </style>
     {{#> head_extra}}{{/head_extra}}
 </head>
 <body class="bg-primary text-primary min-h-screen">
     <div id="app-shell" class="min-h-screen" data-current-page="{{current_page}}">
         <div class="flex min-h-screen">
-            <aside class="w-72 border-r" style="border-color: var(--border-color, #e5e7eb); background: var(--bg-secondary, #f9fafb);">
-                <div class="px-6 py-5 border-b" style="border-color: var(--border-color, #e5e7eb);">
+            <aside class="w-72 border-r" style="border-color: var(--border-color); background: var(--bg-secondary);">
+                <div class="px-6 py-5 border-b" style="border-color: var(--border-color);">
                     <p class="text-xs uppercase tracking-wider text-secondary">Admin</p>
                     <h1 class="text-lg font-semibold mt-1">Memory Context Browser</h1>
                 </div>
@@ -119,13 +119,13 @@
             links.forEach(function (link) {
                 var isActive = link.getAttribute('data-page') === current;
                 if (isActive) {
-                    link.style.background = 'var(--accent, #2563eb)';
-                    link.style.color = '#ffffff';
+                    link.style.background = 'var(--accent)';
+                    link.style.color = 'var(--nav-text)';
                     link.style.fontWeight = '600';
                     var group = link.closest('.nav-group');
                     if (group) activeGroup = group;
                 } else {
-                    link.style.color = 'var(--text-primary, #111827)';
+                    link.style.color = 'var(--text-primary)';
                 }
             });
             shell.querySelectorAll('.nav-group').forEach(function (group) {

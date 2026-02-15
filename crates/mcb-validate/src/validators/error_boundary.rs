@@ -89,6 +89,10 @@ impl ErrorBoundaryValidator {
     }
 
     /// Runs all error boundary validations and returns detected violations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_all(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_error_context()?);
@@ -98,6 +102,10 @@ impl ErrorBoundaryValidator {
     }
 
     /// Detects error propagation without context (missing `.context()` or `.map_err()`)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if regex compilation or source file reading fails.
     pub fn validate_error_context(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 
@@ -178,6 +186,10 @@ impl ErrorBoundaryValidator {
     }
 
     /// Detects infrastructure error types used in domain layer (layer boundary violation)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if regex compilation or source file reading fails.
     pub fn validate_layer_error_types(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 
@@ -263,6 +275,10 @@ impl ErrorBoundaryValidator {
     }
 
     /// Detects internal error details leaked to API responses (information disclosure)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if regex compilation or source file reading fails.
     pub fn validate_leaked_errors(&self) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 

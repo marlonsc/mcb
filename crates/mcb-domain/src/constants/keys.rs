@@ -88,3 +88,22 @@ pub const DEFAULT_ORG_ID: &str = "00000000-0000-0000-0000-000000000001";
 
 /// Default organization name.
 pub const DEFAULT_ORG_NAME: &str = "default";
+
+// Metadata keys for vector/observation storage
+/// Metadata key for "content"
+pub const METADATA_KEY_CONTENT: &str = "content";
+
+/// Metadata key for "type"
+pub const METADATA_KEY_TYPE: &str = "type";
+
+/// Metadata key for "tags"
+pub const METADATA_KEY_TAGS: &str = "tags";
+
+/// Metadata key for "language"
+pub const METADATA_KEY_LANGUAGE: &str = "language";
+
+/// Metadata key for "`session_id`" (observation context)
+pub const METADATA_KEY_SESSION_ID: &str = "session_id";
+
+/// Metadata key for "`line_number`"
+pub const METADATA_KEY_LINE_NUMBER: &str = "line_number";

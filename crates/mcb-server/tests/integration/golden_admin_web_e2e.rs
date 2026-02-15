@@ -8,6 +8,8 @@
 //! because web routes were only mounted in `web_rocket()` but NOT in `admin_rocket()`
 //! which is what the production server actually uses.
 
+#![cfg(test)]
+
 use crate::admin::harness::AdminTestHarness;
 use rocket::http::Status;
 

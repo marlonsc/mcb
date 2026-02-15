@@ -1,4 +1,4 @@
-//! Utility functions for CRUD adapter.
+//! Utility functions for text extraction and processing.
 
 use rmcp::model::Content;
 

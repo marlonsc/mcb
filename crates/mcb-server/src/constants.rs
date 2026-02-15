@@ -55,19 +55,4 @@ pub const VALID_SECTIONS: &[&str] = &[
 // HIGHLIGHT SERVICE
 // ============================================================================
 
-/// Tree-sitter highlight capture names (order must match `HighlightConfiguration`)
-pub const HIGHLIGHT_NAMES: [&str; 13] = [
-    "keyword",
-    "function",
-    "string",
-    "comment",
-    "type",
-    "variable",
-    "constant",
-    "operator",
-    "attribute",
-    "number",
-    "punctuation",
-    "property",
-    "tag",
-];
+// HIGHLIGHT_NAMES lives in mcb_infrastructure::constants::highlight (Single Source of Truth)

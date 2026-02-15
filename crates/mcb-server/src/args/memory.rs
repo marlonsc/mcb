@@ -3,8 +3,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use super::macros::{tool_enum, tool_schema};
-
 tool_enum! {
 /// Actions available for the memory tool.
 pub enum MemoryAction {

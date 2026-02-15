@@ -4,6 +4,8 @@ use mcb_server::error_mapping::{
 };
 use rstest::rstest;
 
+use crate::test_utils::text::extract_text;
+
 #[rstest]
 #[case(Error::NotFound { resource: "test".to_owned() }, "Not found: test")]
 #[case(Error::Internal { message: "secret".to_owned() }, "internal server error")]
@@ -24,11 +26,7 @@ fn test_to_opaque_mcp_error(#[case] err: Error, #[case] expected_message: &str) 
 fn test_to_contextual_tool_error(#[case] err: Error, #[case] expected: &str) {
     let result = to_contextual_tool_error(err);
     assert!(result.is_error.unwrap_or(false));
-    let content_json = serde_json::to_value(&result.content[0]).expect("serialize content");
-    let text = content_json
-        .get("text")
-        .and_then(|value| value.as_str())
-        .expect("text content");
+    let text = extract_text(&result.content);
     assert_eq!(text, expected);
 }
 

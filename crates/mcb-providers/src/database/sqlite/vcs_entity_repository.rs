@@ -12,7 +12,7 @@ use mcb_domain::ports::repositories::vcs_entity_repository::{
 };
 use serde_json::json;
 
-use super::row_helpers::{req_i64, req_str};
+use crate::utils::sqlite::row::{req_i64, req_str};
 
 /// SQLite-backed repository for VCS repositories, branches, worktrees, and assignments.
 pub struct SqliteVcsEntityRepository {

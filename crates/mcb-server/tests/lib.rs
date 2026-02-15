@@ -11,9 +11,4 @@
 //! Run integration: `cargo test -p mcb-server --test integration`
 
 /// Shared test utilities
-pub mod test_helpers {
-    use std::time::Duration;
-
-    /// Default timeout for async tests
-    pub const TEST_TIMEOUT: Duration = Duration::from_secs(30);
-}
+pub mod test_helpers {}

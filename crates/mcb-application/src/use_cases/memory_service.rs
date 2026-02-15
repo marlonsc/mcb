@@ -252,7 +252,7 @@ impl MemoryServiceImpl {
 }
 
 impl MemoryServiceImpl {
-    fn build_memory_index(&self, results: Vec<MemorySearchResult>) -> Vec<MemorySearchIndex> {
+    fn build_memory_index(results: Vec<MemorySearchResult>) -> Vec<MemorySearchIndex> {
         results
             .into_iter()
             .map(|r| {
@@ -345,12 +345,15 @@ impl MemoryServiceImpl {
         limit: usize,
     ) -> Result<Vec<MemorySearchIndex>> {
         let results = self.search_memories_impl(query, filter, limit).await?;
-        Ok(self.build_memory_index(results))
+        Ok(Self::build_memory_index(results))
     }
 }
 
 #[async_trait::async_trait]
 impl MemoryServiceInterface for MemoryServiceImpl {
+    /// # Errors
+    ///
+    /// Returns an error if embedding generation, vector storage, or repository persistence fails.
     async fn store_observation(
         &self,
         project_id: String,
@@ -367,6 +370,9 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         Ok((obs_id, new))
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if serialization or observation storage fails.
     async fn store_error_pattern(&self, pattern: ErrorPattern) -> Result<String> {
         let content = serde_json::to_string(&pattern)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
@@ -389,6 +395,9 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         Ok(id.to_string())
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the memory search fails.
     async fn search_error_patterns(
         &self,
         query: &str,
@@ -412,6 +421,9 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         Ok(patterns)
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the hybrid search (FTS or vector) fails.
     async fn search_memories(
         &self,
         query: &str,
@@ -421,22 +433,37 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         self.search_memories_impl(query, filter, limit).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
     async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
         self.repository.get_session_summary(session_id).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository fails to persist the summary.
     async fn create_session_summary(&self, input: CreateSessionSummaryInput) -> Result<String> {
         self.create_session_summary_impl(input).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
         self.repository.get_observation(id).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the embedding provider fails.
     async fn embed_content(&self, content: &str) -> Result<Embedding> {
         self.embed_content_impl(content).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository timeline query fails.
     async fn get_timeline(
         &self,
         anchor_id: &ObservationId,
@@ -448,10 +475,16 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             .await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
     async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
         self.get_observations_by_ids_impl(ids).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the hybrid search fails.
     async fn memory_search(
         &self,
         query: &str,
@@ -461,6 +494,9 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         self.memory_search_impl(query, filter, limit).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository fails to delete the observation.
     async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
         self.repository.delete_observation(id).await
     }

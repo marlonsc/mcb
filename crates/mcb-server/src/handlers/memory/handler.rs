@@ -13,8 +13,8 @@ use super::{execution, inject, list_timeline, observation, quality_gate, session
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::{resolve_identifier_precedence, resolve_org_id, tool_error};
 use crate::utils::json;
+use crate::utils::mcp::{resolve_identifier_precedence, resolve_org_id, tool_error};
 
 /// Handler for memory-related MCP tool operations.
 ///
@@ -64,8 +64,8 @@ impl MemoryHandler {
             MemoryResource::QualityGate => {
                 quality_gate::store_quality_gate(&self.memory_service, args).await
             }
-            MemoryResource::ErrorPattern => self.handle_store_error_pattern(args).await,
             MemoryResource::Session => session::store_session(&self.memory_service, args).await,
+            MemoryResource::ErrorPattern => self.handle_store_error_pattern(args).await,
         }
     }
 
@@ -80,8 +80,8 @@ impl MemoryHandler {
             MemoryResource::QualityGate => {
                 quality_gate::get_quality_gates(&self.memory_service, args).await
             }
-            MemoryResource::ErrorPattern => self.handle_get_error_pattern(args).await,
             MemoryResource::Session => session::get_session(&self.memory_service, args).await,
+            MemoryResource::ErrorPattern => self.handle_get_error_pattern(args).await,
         }
     }
 

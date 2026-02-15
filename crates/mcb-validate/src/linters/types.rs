@@ -49,7 +49,6 @@ impl LintViolation {
     fn parsed_category(&self) -> ViolationCategory {
         match self.category.to_ascii_lowercase().as_str() {
             "architecture" | "clean-architecture" => ViolationCategory::Architecture,
-            "quality" | "duplication" | "metrics" => ViolationCategory::Quality,
             "organization" => ViolationCategory::Organization,
             "solid" => ViolationCategory::Solid,
             "di" => ViolationCategory::DependencyInjection,
@@ -65,7 +64,7 @@ impl LintViolation {
             "error_boundary" => ViolationCategory::ErrorBoundary,
             "implementation" => ViolationCategory::Implementation,
             "pmat" => ViolationCategory::Pmat,
-            _ => ViolationCategory::Quality,
+            "quality" | "duplication" | "metrics" | _ => ViolationCategory::Quality,
         }
     }
 }

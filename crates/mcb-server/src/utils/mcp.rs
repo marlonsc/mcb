@@ -10,6 +10,7 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::{Map, Value};
 
+use super::json::json_map;
 use crate::error_mapping::safe_internal_error;
 
 /// Returns the required `id` parameter or an MCP invalid params error.
@@ -21,7 +22,7 @@ pub fn require_id(id: &Option<String>) -> Result<String, McpError> {
 /// Serializes a value into pretty JSON and wraps it in a successful MCP tool result.
 pub fn ok_json<T: Serialize>(val: &T) -> Result<CallToolResult, McpError> {
     let json = serde_json::to_string_pretty(val)
-        .map_err(|_| McpError::internal_error("serialization failed", None))?;
+        .map_err(|e| safe_internal_error("json serialization", &e))?;
     Ok(CallToolResult::success(vec![Content::text(json)]))
 }
 
@@ -78,6 +79,19 @@ pub fn resolve_identifier_precedence(
     }
 
     Ok(args_normalized.or(payload_normalized))
+}
+
+/// Resolve and require an identifier from args/payload precedence.
+///
+/// Returns an invalid-params error with `required_message` when both values are absent.
+pub fn require_resolved_identifier(
+    field: &str,
+    args_value: Option<&str>,
+    payload_value: Option<&str>,
+    required_message: &'static str,
+) -> Result<String, McpError> {
+    resolve_identifier_precedence(field, args_value, payload_value)?
+        .ok_or_else(|| McpError::invalid_params(required_message, None))
 }
 
 /// Input parameters for resolving an `OriginContext`.
@@ -373,17 +387,12 @@ pub fn map_opaque_error<T>(result: Result<T, Error>) -> Result<T, McpError> {
     result.map_err(crate::error_mapping::to_opaque_mcp_error)
 }
 
-/// Extracts a JSON object from an optional Value.
-pub fn optional_data_map(data: &Option<Value>) -> Option<&Map<String, Value>> {
-    data.as_ref().and_then(Value::as_object)
-}
-
 /// Requires a JSON object from an optional Value, returning an error if missing.
 pub fn require_data_map<'a>(
     data: &'a Option<Value>,
     missing_message: &'static str,
 ) -> Result<&'a Map<String, Value>, CallToolResult> {
-    optional_data_map(data).ok_or_else(|| tool_error(missing_message))
+    json_map(data).ok_or_else(|| tool_error(missing_message))
 }
 
 /// Requires a string value from a JSON object, returning an error if missing.

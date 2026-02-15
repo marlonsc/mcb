@@ -20,6 +20,9 @@ impl RustExtractor {
     /// - `Import` facts for every `use` declaration.
     /// - `Struct` facts for every `struct` item.
     /// - `Function` facts for every `fn` item.
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be read or parsed.
     pub fn extract_facts(&self, path: &Path) -> Result<Vec<Fact>> {
         let code = fs::read(path)?;
         // Use RustParser which is a public type alias for Parser<RustCode>

@@ -29,8 +29,8 @@ use mcb_domain::utils::mask_id;
 use mcb_domain::value_objects::ids::{ObservationId, SessionId};
 use tracing::debug;
 
-use super::query_helpers;
 use super::row_convert;
+use crate::utils::sqlite::query as query_helpers;
 
 /// Serializes the complex JSON fields of a `SessionSummary` for database storage.
 fn serialize_summary_fields(

@@ -40,6 +40,10 @@ pub trait FileHashRepository: Send + Sync {
     /// Clear all records for a collection
     async fn clear_collection(&self, collection: &str) -> Result<u64>;
 
-    /// Compute hash for a local file (helper method)
+    /// Compute hash for a local file (helper method).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be opened or read.
     fn compute_hash(&self, path: &Path) -> Result<String>;
 }

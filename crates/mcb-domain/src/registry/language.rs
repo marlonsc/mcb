@@ -55,6 +55,7 @@ impl LanguageProviderConfig {
     }
 
     /// Add extra configuration
+    #[must_use]
     pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.extra.insert(key.into(), value.into());
         self

@@ -25,11 +25,14 @@ impl HtmlRenderer {
 
             let class = Self::category_to_css_class(span.category);
             let text = &highlighted.original[span.start..span.end];
-            html.push_str(&format!(
-                "<span class=\"{}\">{}</span>",
-                class,
-                Self::html_escape(text)
-            ));
+            {
+                use std::fmt::Write;
+                let _ = write!(
+                    html,
+                    "<span class=\"{class}\">{}</span>",
+                    Self::html_escape(text)
+                );
+            }
 
             last_end = span.end;
         }

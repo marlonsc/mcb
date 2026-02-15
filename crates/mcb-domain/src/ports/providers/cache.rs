@@ -70,6 +70,7 @@ impl CacheEntryConfig {
     }
 
     /// Set the namespace for the cache entry
+    #[must_use]
     pub fn with_namespace<S: Into<String>>(mut self, namespace: S) -> Self {
         self.namespace = Some(namespace.into());
         self

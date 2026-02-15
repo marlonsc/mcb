@@ -80,7 +80,7 @@ pub fn admin_rocket(
         .manage(auth_config)
         .attach(Template::custom(
             |engines: &mut crate::templates::Engines| {
-                crate::admin::web::helpers::register_helpers(&mut engines.handlebars);
+                crate::utils::handlebars::register_helpers(&mut engines.handlebars);
             },
         ));
 

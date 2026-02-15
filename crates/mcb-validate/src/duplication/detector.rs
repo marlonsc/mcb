@@ -71,8 +71,8 @@ impl CloneDetector {
 
         // For now, use a simplified similarity calculation based on token count
         // In a full implementation, this would use AST node comparison
-        let similarity = self.calculate_similarity(m);
-        let clone_type = self.classify_clone_type(similarity);
+        let similarity = Self::calculate_similarity(m);
+        let clone_type = Self::classify_clone_type(similarity);
 
         if self.thresholds.should_detect(clone_type) {
             Some(CloneCandidate {
@@ -95,14 +95,14 @@ impl CloneDetector {
     ///
     /// In a full implementation, this would compare AST structures.
     /// For now, we use the fingerprint match as evidence of exact match.
-    fn calculate_similarity(&self, _m: &FingerprintMatch) -> f64 {
+    fn calculate_similarity(_m: &FingerprintMatch) -> f64 {
         // Fingerprint matches are exact token sequence matches
         // so they have 100% similarity at the token level
         1.0
     }
 
     /// Classify the type of clone based on similarity
-    fn classify_clone_type(&self, similarity: f64) -> DuplicationType {
+    fn classify_clone_type(similarity: f64) -> DuplicationType {
         if similarity >= 1.0 {
             DuplicationType::ExactClone
         } else if similarity >= 0.95 {
@@ -159,7 +159,7 @@ impl CloneDetector {
 
             // Check if this overlaps with any already selected candidate
             for existing in &result {
-                if self.candidates_overlap(candidate, existing) {
+                if Self::candidates_overlap(candidate, existing) {
                     is_duplicate = true;
                     break;
                 }
@@ -171,7 +171,7 @@ impl CloneDetector {
 
                 // Mark overlapping candidates as used
                 for (j, other) in candidates.iter().enumerate() {
-                    if !used[j] && self.candidates_overlap(candidate, other) {
+                    if !used[j] && Self::candidates_overlap(candidate, other) {
                         used[j] = true;
                     }
                 }
@@ -182,7 +182,7 @@ impl CloneDetector {
     }
 
     /// Check if two candidates overlap (same files and overlapping lines)
-    fn candidates_overlap(&self, a: &CloneCandidate, b: &CloneCandidate) -> bool {
+    fn candidates_overlap(a: &CloneCandidate, b: &CloneCandidate) -> bool {
         // Check first location overlap
         let overlap1 = a.file1 == b.file1
             && Self::lines_overlap(a.start_line1, a.end_line1, b.start_line1, b.end_line1);
@@ -234,7 +234,11 @@ pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
 
                 while let Some(&next) = chars.peek() {
                     if next.is_alphanumeric() || next == '_' {
-                        word.push(chars.next().unwrap());
+                        if let Some(next_char) = chars.next() {
+                            word.push(next_char);
+                        } else {
+                            break;
+                        }
                     } else {
                         break;
                     }
@@ -261,7 +265,11 @@ pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
 
                 while let Some(&next) = chars.peek() {
                     if next.is_ascii_digit() || next == '.' || next == '_' {
-                        number.push(chars.next().unwrap());
+                        if let Some(next_char) = chars.next() {
+                            number.push(next_char);
+                        } else {
+                            break;
+                        }
                     } else {
                         break;
                     }

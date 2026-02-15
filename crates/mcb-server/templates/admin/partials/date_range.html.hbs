@@ -52,8 +52,8 @@ style="margin-bottom: 0.75rem;">
 
     <button type="button"
             @click="expanded = !expanded"
-            style="background: none; border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.8125rem; cursor: pointer; color: var(--text-secondary, #4b5563); display: inline-flex; align-items: center; gap: 0.375rem;"
-            :style="(dateFrom || dateTo) ? 'border-color: var(--accent, #3b82f6); color: var(--accent, #3b82f6);' : ''">
+            style="background: none; border: 1px solid var(--border-color); border-radius: 0.375rem; padding: 0.375rem 0.75rem; font-size: 0.8125rem; cursor: pointer; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 0.375rem;"
+            :style="(dateFrom || dateTo) ? 'border-color: var(--accent); color: var(--accent);' : ''">
         <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
         </svg>
@@ -61,16 +61,16 @@ style="margin-bottom: 0.75rem;">
     </button>
 
     <div x-show="expanded" x-cloak
-         style="margin-top: 0.5rem; padding: 0.75rem; border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.375rem; background: var(--bg-primary, #ffffff);">
+         style="margin-top: 0.5rem; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.375rem; background: var(--bg-primary);">
 
         <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-            <label style="font-size: 0.8125rem; color: var(--text-secondary, #4b5563);">From:</label>
+            <label style="font-size: 0.8125rem; color: var(--text-secondary);">From:</label>
             <input type="date" x-model="dateFrom"
-                   style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.25rem; background: var(--bg-primary); color: var(--text-primary);">
+                   style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; border: 1px solid var(--border-color); border-radius: 0.25rem; background: var(--bg-primary); color: var(--text-primary);">
 
-            <label style="font-size: 0.8125rem; color: var(--text-secondary, #4b5563);">To:</label>
+            <label style="font-size: 0.8125rem; color: var(--text-secondary);">To:</label>
             <input type="date" x-model="dateTo"
-                   style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.25rem; background: var(--bg-primary); color: var(--text-primary);">
+                   style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; border: 1px solid var(--border-color); border-radius: 0.25rem; background: var(--bg-primary); color: var(--text-primary);">
 
             <button type="button" @click="applyRange()"
                     class="btn btn-primary btn-sm"
@@ -78,21 +78,21 @@ style="margin-bottom: 0.75rem;">
 
             <template x-if="dateFrom || dateTo">
                 <button type="button" @click="clearRange()"
-                        style="background: none; border: none; cursor: pointer; font-size: 0.8125rem; color: var(--text-muted, #9ca3af);"
+                        style="background: none; border: none; cursor: pointer; font-size: 0.8125rem; color: var(--text-muted);"
                         @mouseenter="$el.style.color='var(--text-primary)'"
-                        @mouseleave="$el.style.color='var(--text-muted, #9ca3af)'">&times; Clear</button>
+                        @mouseleave="$el.style.color='var(--text-muted)'">&times; Clear</button>
             </template>
         </div>
 
         <div style="margin-top: 0.5rem; display: flex; gap: 0.375rem;">
             <button type="button" @click="setPreset('today')"
-                    style="background: var(--bg-secondary, #f9fafb); border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.25rem; padding: 0.1875rem 0.5rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary, #4b5563);">Today</button>
+                    style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.25rem; padding: 0.1875rem 0.5rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary);">Today</button>
             <button type="button" @click="setPreset('7d')"
-                    style="background: var(--bg-secondary, #f9fafb); border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.25rem; padding: 0.1875rem 0.5rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary, #4b5563);">Last 7 days</button>
+                    style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.25rem; padding: 0.1875rem 0.5rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary);">Last 7 days</button>
             <button type="button" @click="setPreset('30d')"
-                    style="background: var(--bg-secondary, #f9fafb); border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.25rem; padding: 0.1875rem 0.5rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary, #4b5563);">Last 30 days</button>
+                    style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.25rem; padding: 0.1875rem 0.5rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary);">Last 30 days</button>
             <button type="button" @click="setPreset('all')"
-                    style="background: var(--bg-secondary, #f9fafb); border: 1px solid var(--border-color, #e5e7eb); border-radius: 0.25rem; padding: 0.1875rem 0.5rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary, #4b5563);">All time</button>
+                    style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.25rem; padding: 0.1875rem 0.5rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary);">All time</button>
         </div>
     </div>
 </div>

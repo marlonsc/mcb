@@ -1,3 +1,4 @@
+use super::constants::{CLONE_REGEX, CONTEXT_TRUNCATION_LENGTH, LOOP_ALLOCATION_PATTERNS};
 use crate::pattern_registry::{compile_regex, compile_regexes};
 use crate::{Result, Severity};
 
@@ -9,7 +10,7 @@ use super::violation::PerformanceViolation;
 pub fn validate_clone_in_loops(
     validator: &PerformanceValidator,
 ) -> Result<Vec<PerformanceViolation>> {
-    let clone_pattern = compile_regex(r"\.clone\(\)")?;
+    let clone_pattern = compile_regex(CLONE_REGEX)?;
     scan_files_with_patterns_in_loops(validator, &[clone_pattern], |file, line_num, line| {
         let trimmed = line.trim();
         if trimmed.starts_with("fn ") || trimmed.starts_with("pub fn ") {
@@ -27,7 +28,11 @@ pub fn validate_clone_in_loops(
         Some(PerformanceViolation::CloneInLoop {
             file,
             line: line_num,
-            context: line.trim().chars().take(80).collect(),
+            context: line
+                .trim()
+                .chars()
+                .take(CONTEXT_TRUNCATION_LENGTH)
+                .collect(),
             suggestion: "Consider borrowing or moving instead of cloning".to_owned(),
             severity: Severity::Warning,
         })
@@ -38,16 +43,7 @@ pub fn validate_clone_in_loops(
 pub fn validate_allocation_in_loops(
     validator: &PerformanceValidator,
 ) -> Result<Vec<PerformanceViolation>> {
-    let allocation_patterns = [
-        r"Vec::new\(\)",
-        r"Vec::with_capacity\(",
-        r"String::new\(\)",
-        r"String::with_capacity\(",
-        r"HashMap::new\(\)",
-        r"HashSet::new\(\)",
-    ];
-
-    let compiled_patterns = compile_regexes(allocation_patterns)?;
+    let compiled_patterns = compile_regexes(LOOP_ALLOCATION_PATTERNS.iter().copied())?;
 
     scan_files_with_patterns_in_loops(validator, &compiled_patterns, |file, line_num, line| {
         let allocation_type = if line.contains("Vec::") {

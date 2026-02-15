@@ -99,6 +99,10 @@ pub struct McpContextConfig {
 impl McpContextConfig {
     /// Load configuration from .mcp-context.toml file in given directory
     /// Returns default config if file not found (non-fatal)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file exists but cannot be read or parsed.
     pub fn load_from_path(path: &Path) -> Result<Self, ConfigError> {
         let config_path = path.join(".mcp-context.toml");
 

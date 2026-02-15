@@ -2,8 +2,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::args::macros::{tool_enum, tool_schema};
-
 tool_enum! {
 /// CRUD actions for organization-related entity resources.
 pub enum OrgEntityAction {

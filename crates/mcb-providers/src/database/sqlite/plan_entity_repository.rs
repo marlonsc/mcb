@@ -8,8 +8,8 @@ use mcb_domain::ports::repositories::plan_entity_repository::{
     PlanRegistry, PlanReviewRegistry, PlanVersionRegistry,
 };
 
-use super::query_helpers;
-use super::row_helpers::{req_i64, req_str};
+use crate::utils::sqlite::query as query_helpers;
+use crate::utils::sqlite::row::{req_i64, req_str};
 
 /// SQLite-backed repository for plan, version, and review entities.
 pub struct SqlitePlanEntityRepository {

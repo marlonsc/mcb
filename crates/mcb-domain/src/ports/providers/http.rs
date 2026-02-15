@@ -43,7 +43,12 @@ pub trait HttpClientProvider: Send + Sync {
     /// Get the configuration
     fn config(&self) -> &HttpClientConfig;
 
-    /// Create a new client with custom timeout for specific operations
+    /// Create a new client with custom timeout for specific operations.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the HTTP client cannot be constructed with the
+    /// given timeout configuration.
     fn client_with_timeout(
         &self,
         timeout: Duration,

@@ -24,6 +24,9 @@ impl YamlRuleExecutor {
     ///
     /// # Returns
     /// Violations that match the rule's `lint_select` codes
+    /// # Errors
+    ///
+    /// Returns an error if the linter execution fails.
     pub async fn execute_rule(rule: &ValidatedRule, files: &[&Path]) -> Result<Vec<LintViolation>> {
         // Skip if no lint_select codes
         if rule.lint_select.is_empty() {
@@ -64,6 +67,10 @@ impl YamlRuleExecutor {
     }
 
     /// Execute a rule against a directory (scans for appropriate files)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file collection or linter execution fails.
     pub async fn execute_rule_on_dir(
         rule: &ValidatedRule,
         dir: &Path,

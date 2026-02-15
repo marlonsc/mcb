@@ -4,6 +4,10 @@ use crate::run_context::ValidationRunContext;
 use crate::{Result, Severity, ValidationConfig};
 
 /// Validates that tests are properly organized in subdirectories (unit/, integration/, e2e/).
+///
+/// # Errors
+///
+/// Returns an error if directory scanning or file reading fails.
 pub fn validate_test_directory_structure(
     config: &ValidationConfig,
 ) -> Result<Vec<HygieneViolation>> {

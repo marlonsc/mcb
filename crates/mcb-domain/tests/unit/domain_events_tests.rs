@@ -62,6 +62,10 @@ impl EventPublisher for TestEventPublisher {
     DomainEvent::FileChangesDetected { root_path: "/code".to_owned(), added: 5, modified: 10, removed: 2 },
     "FileChangesDetected"
 )]
+#[case(
+    DomainEvent::LogEvent { level: "WARN".to_owned(), message: "test warning".to_owned(), target: "mcb_server::test".to_owned(), timestamp: 1700000000000 },
+    "LogEvent"
+)]
 fn domain_event_variants(#[case] event: DomainEvent, #[case] expected_debug_fragment: &str) {
     let debug_str = format!("{event:?}");
     assert!(debug_str.contains(expected_debug_fragment));

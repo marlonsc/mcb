@@ -5,12 +5,20 @@
 //! - Module-level documentation (//!)
 //! - Example code blocks for traits
 
+pub mod constants;
+
 use crate::filters::LanguageId;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
 use regex::Regex;
 
+use self::constants::{
+    ATTR_REGEX, DI_MODULES_PATH, DOC_COMMENT_CAPTURE_REGEX, DOC_COMMENT_REGEX,
+    EXAMPLE_SECTION_REGEX, ITEM_KIND_ENUM, ITEM_KIND_FUNCTION, ITEM_KIND_STRUCT, ITEM_KIND_TRAIT,
+    MODULE_DOC_REGEX, MODULE_FILE_NAMES, PORTS_PATH, PUB_ENUM_REGEX, PUB_FN_REGEX,
+    PUB_STRUCT_REGEX, PUB_TRAIT_REGEX,
+};
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_crate_file;
 use crate::traits::violation::{Violation, ViolationCategory};
@@ -21,16 +29,17 @@ static DOC_COMMENT_CAPTURE_PATTERN: OnceLock<Regex> = OnceLock::new();
 static ATTR_PATTERN: OnceLock<Regex> = OnceLock::new();
 
 fn doc_comment_pattern() -> &'static Regex {
-    DOC_COMMENT_PATTERN.get_or_init(|| compile_regex(r"^\s*///").expect("valid regex literal"))
+    DOC_COMMENT_PATTERN
+        .get_or_init(|| compile_regex(DOC_COMMENT_REGEX).expect("valid regex literal"))
 }
 
 fn doc_comment_capture_pattern() -> &'static Regex {
     DOC_COMMENT_CAPTURE_PATTERN
-        .get_or_init(|| compile_regex(r"^\s*///(.*)").expect("valid regex literal"))
+        .get_or_init(|| compile_regex(DOC_COMMENT_CAPTURE_REGEX).expect("valid regex literal"))
 }
 
 fn attr_pattern() -> &'static Regex {
-    ATTR_PATTERN.get_or_init(|| compile_regex(r"^\s*#\[").expect("valid regex literal"))
+    ATTR_PATTERN.get_or_init(|| compile_regex(ATTR_REGEX).expect("valid regex literal"))
 }
 
 define_violations! {
@@ -109,6 +118,10 @@ impl DocumentationValidator {
     }
 
     /// Run all documentation validations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_all(&self) -> Result<Vec<DocumentationViolation>> {
         let mut violations = Vec::new();
         violations.extend(self.validate_module_docs()?);
@@ -117,9 +130,13 @@ impl DocumentationValidator {
     }
 
     /// Verify module-level documentation exists
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if regex compilation or file scanning fails.
     pub fn validate_module_docs(&self) -> Result<Vec<DocumentationViolation>> {
         let mut violations = Vec::new();
-        let module_doc_pattern = compile_regex("^//!")?;
+        let module_doc_pattern = compile_regex(MODULE_DOC_REGEX)?;
 
         for_each_crate_file(
             &self.config,
@@ -129,8 +146,8 @@ impl DocumentationValidator {
                 let content = std::fs::read_to_string(path)?;
                 let file_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
 
-                // Only check lib.rs, mod.rs, and main module files
-                if file_name != "lib.rs" && file_name != "mod.rs" {
+                // Only check module files that require documentation
+                if !MODULE_FILE_NAMES.contains(&file_name) {
                     return Ok(());
                 }
 
@@ -156,15 +173,19 @@ impl DocumentationValidator {
     }
 
     /// Verify all pub items have rustdoc
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if regex compilation or file scanning fails.
     pub fn validate_pub_item_docs(&self) -> Result<Vec<DocumentationViolation>> {
         let mut violations = Vec::new();
 
         // Patterns for public items
-        let pub_struct_pattern = compile_regex(r"pub\s+struct\s+([A-Z][a-zA-Z0-9_]*)")?;
-        let pub_enum_pattern = compile_regex(r"pub\s+enum\s+([A-Z][a-zA-Z0-9_]*)")?;
-        let pub_trait_pattern = compile_regex(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)")?;
-        let pub_fn_pattern = compile_regex(r"pub\s+(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)")?;
-        let example_pattern = compile_regex(r"#\s*Example")?;
+        let pub_struct_pattern = compile_regex(PUB_STRUCT_REGEX)?;
+        let pub_enum_pattern = compile_regex(PUB_ENUM_REGEX)?;
+        let pub_trait_pattern = compile_regex(PUB_TRAIT_REGEX)?;
+        let pub_fn_pattern = compile_regex(PUB_FN_REGEX)?;
+        let example_pattern = compile_regex(EXAMPLE_SECTION_REGEX)?;
 
         for_each_crate_file(
             &self.config,
@@ -183,7 +204,7 @@ impl DocumentationValidator {
                                 file: path.clone(),
                                 line: line_num + 1,
                                 item_name: name.to_owned(),
-                                item_kind: "struct".to_owned(),
+                                item_kind: ITEM_KIND_STRUCT.to_owned(),
                                 severity: Severity::Warning,
                             });
                         }
@@ -197,7 +218,7 @@ impl DocumentationValidator {
                                 file: path.clone(),
                                 line: line_num + 1,
                                 item_name: name.to_owned(),
-                                item_kind: "enum".to_owned(),
+                                item_kind: ITEM_KIND_ENUM.to_owned(),
                                 severity: Severity::Warning,
                             });
                         }
@@ -215,7 +236,7 @@ impl DocumentationValidator {
                             // Skip DI module traits and port traits - they are interface definitions
                             // that don't need examples (they define contracts for DI injection)
                             let is_di_or_port_trait =
-                                path_str.contains("/di/modules/") || path_str.contains("/ports/");
+                                path_str.contains(DI_MODULES_PATH) || path_str.contains(PORTS_PATH);
 
                             if !is_di_or_port_trait {
                                 let doc_section = self.get_doc_comment_section(&lines, line_num);
@@ -233,7 +254,7 @@ impl DocumentationValidator {
                                 file: path.clone(),
                                 line: line_num + 1,
                                 item_name: name.to_owned(),
-                                item_kind: "trait".to_owned(),
+                                item_kind: ITEM_KIND_TRAIT.to_owned(),
                                 severity: Severity::Warning,
                             });
                         }
@@ -253,7 +274,7 @@ impl DocumentationValidator {
                                 file: path.clone(),
                                 line: line_num + 1,
                                 item_name: name.to_owned(),
-                                item_kind: "function".to_owned(),
+                                item_kind: ITEM_KIND_FUNCTION.to_owned(),
                                 severity: Severity::Info,
                             });
                         }

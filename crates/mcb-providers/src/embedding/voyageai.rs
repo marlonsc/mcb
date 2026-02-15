@@ -14,9 +14,9 @@ use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
-use super::helpers::{HttpEmbeddingClient, process_batch};
 use crate::constants::VOYAGEAI_MAX_INPUT_TOKENS;
-use crate::provider_utils::{JsonRequestParams, send_json_request};
+use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
+use crate::utils::http::{JsonRequestParams, send_json_request};
 use crate::utils::http::{RequestErrorKind, create_http_provider_config, parse_embedding_vector};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
@@ -66,7 +66,7 @@ impl VoyageAIEmbeddingProvider {
     ) -> Self {
         Self {
             client: HttpEmbeddingClient::new(
-                api_key,
+                &api_key,
                 base_url,
                 "https://api.voyageai.com/v1",
                 model,

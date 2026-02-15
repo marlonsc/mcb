@@ -102,8 +102,7 @@ impl MavenDetector {
                     }
                     current_path.pop();
                 }
-                Ok(Event::Eof) => break,
-                Err(_) => break,
+                Ok(Event::Eof) | Err(_) => break,
                 Ok(_) => continue,
             }
         }

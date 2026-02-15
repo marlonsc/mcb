@@ -120,7 +120,7 @@ pub fn web_rocket() -> Rocket<Build> {
         .manage(default_admin_state())
         .attach(Template::custom(
             |engines: &mut crate::templates::Engines| {
-                crate::admin::web::helpers::register_helpers(&mut engines.handlebars);
+                crate::utils::handlebars::register_helpers(&mut engines.handlebars);
             },
         ))
         .mount(

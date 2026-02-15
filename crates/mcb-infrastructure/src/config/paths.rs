@@ -16,6 +16,10 @@ pub const COLLECTION_MAPPING_FILENAME: &str = "collection_mapping.json";
 pub const COLLECTION_MAPPING_LOCK_FILENAME: &str = "collection_mapping.lock";
 
 /// Returns the main configuration directory for mcb (e.g., ~/.config/mcb)
+///
+/// # Errors
+///
+/// Returns an error if the system config directory cannot be determined.
 pub fn config_dir() -> Result<PathBuf> {
     let config_dir =
         dirs::config_dir().ok_or_else(|| Error::config("Unable to determine config directory"))?;

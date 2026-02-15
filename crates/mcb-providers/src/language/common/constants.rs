@@ -74,26 +74,9 @@ pub const NODE_EXTRACTION_MAX_DEPTH: usize = 3;
 pub const NODE_EXTRACTION_DEFAULT_PRIORITY: i32 = 5;
 
 // ============================================================================
-// Tree-Sitter Node Types
+// Tree-Sitter Node Types -- re-exported from mcb-domain (Single Source of Truth)
 // ============================================================================
-
-/// Function declaration node type (for C-like languages)
-pub const TS_NODE_FUNCTION_DECLARATION: &str = "function_declaration";
-
-/// Function definition node type (for Python, etc.)
-pub const TS_NODE_FUNCTION_DEFINITION: &str = "function_definition";
-
-/// Method declaration node type (for OOP languages)
-pub const TS_NODE_METHOD_DECLARATION: &str = "method_declaration";
-
-/// Class declaration node type
-pub const TS_NODE_CLASS_DECLARATION: &str = "class_declaration";
-
-/// Interface declaration node type
-pub const AST_NODE_INTERFACE_DECLARATION: &str = "interface_declaration";
-
-/// Struct specifier node type (C/C++)
-pub const AST_NODE_STRUCT_SPECIFIER: &str = "struct_specifier";
+pub use mcb_domain::constants::ast::*;
 
 // ============================================================================
 // Extension and chunk size mapping tables

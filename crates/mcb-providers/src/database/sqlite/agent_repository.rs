@@ -23,8 +23,8 @@ use mcb_domain::ports::repositories::agent_repository::{
 use mcb_domain::utils::mask_id;
 use tracing::debug;
 
-use super::query_helpers;
 use super::row_convert;
+use crate::utils::sqlite::query as query_helpers;
 
 /// SQLite-based implementation of the `AgentRepository`.
 ///

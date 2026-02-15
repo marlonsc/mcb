@@ -117,7 +117,7 @@ async fn test_provider_factories_return_working_providers() {
     // Test that factory functions create working providers, not just return Ok
 
     let embedding_config = EmbeddingProviderConfig::new("fastembed")
-        .with_cache_dir(std::env::temp_dir().join("mcb-test-fastembed-cache"));
+        .with_cache_dir(crate::shared_context::shared_fastembed_test_cache_dir());
     match resolve_embedding_provider(&embedding_config) {
         Ok(embedding) => {
             assert_eq!(embedding.dimensions(), 384);

@@ -91,6 +91,10 @@ impl ExpressionEngine {
     }
 
     /// Evaluate a simple expression
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the expression evaluation fails.
     pub fn evaluate_expression(&self, expression: &str, context: &RuleContext) -> Result<bool> {
         let eval_ctx = self.build_eval_context(context);
 
@@ -103,6 +107,10 @@ impl ExpressionEngine {
     }
 
     /// Evaluate with custom variables
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the expression evaluation fails.
     pub fn evaluate_with_variables(
         &self,
         expression: &str,
@@ -150,6 +158,10 @@ impl ExpressionEngine {
     }
 
     /// Execute expression-based rule and generate violations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if expression evaluation fails.
     pub async fn execute_expression_rule(
         &self,
         rule_id: &str,

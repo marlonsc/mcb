@@ -78,6 +78,10 @@ impl LayerFlowValidator {
     }
 
     /// Validates the layer flow constraints for the given configuration.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Cargo.toml reading or dependency analysis fails.
     pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<LayerFlowViolation>> {
         let mut violations = Vec::new();
         // Forbidden imports are now handled by DeclarativeValidator rules (CA009-CA014)

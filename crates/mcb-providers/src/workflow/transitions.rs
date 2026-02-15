@@ -10,11 +10,15 @@ type Result<T> = std::result::Result<T, String>;
 /// Apply a transition trigger to a workflow session, validating FSM rules.
 ///
 /// Returns the target state if transition is valid, error otherwise.
+///
+/// # Errors
+///
+/// Returns an error string if the transition is not valid from the current state.
 pub fn apply_transition(
     session: &mut WorkflowSession,
-    trigger: TransitionTrigger,
+    trigger: &TransitionTrigger,
 ) -> Result<WorkflowState> {
-    let new_state = match (&session.current_state, &trigger) {
+    let new_state = match (&session.current_state, trigger) {
         // Initializing → Ready (must have context)
         (WorkflowState::Initializing, TransitionTrigger::ContextDiscovered { context_id }) => {
             WorkflowState::Ready {
@@ -22,23 +26,20 @@ pub fn apply_transition(
             }
         }
 
-        // Ready → Planning
-        (WorkflowState::Ready { .. }, TransitionTrigger::StartPlanning { phase_id }) => {
+        // Ready | PhaseComplete → Planning
+        (WorkflowState::Ready { .. }, TransitionTrigger::StartPlanning { phase_id })
+        | (WorkflowState::PhaseComplete { .. }, TransitionTrigger::StartPlanning { phase_id }) => {
             WorkflowState::Planning {
                 phase_id: phase_id.clone(),
             }
         }
 
-        // Ready → Executing (skip planning)
-        (WorkflowState::Ready { .. }, TransitionTrigger::StartExecution { phase_id }) => {
-            WorkflowState::Executing {
-                phase_id: phase_id.clone(),
-                task_id: None,
-            }
-        }
-
-        // Planning → Executing
-        (WorkflowState::Planning { phase_id }, TransitionTrigger::StartExecution { .. }) => {
+        // Ready → Executing (skip planning) | Planning → Executing |
+        // Executing → Executing (complete task) | Verifying → Executing (verification failed)
+        (WorkflowState::Ready { .. }, TransitionTrigger::StartExecution { phase_id })
+        | (WorkflowState::Planning { phase_id }, TransitionTrigger::StartExecution { .. })
+        | (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::CompleteTask { .. })
+        | (WorkflowState::Verifying { phase_id }, TransitionTrigger::VerificationFailed { .. }) => {
             WorkflowState::Executing {
                 phase_id: phase_id.clone(),
                 task_id: None,
@@ -53,14 +54,6 @@ pub fn apply_transition(
             }
         }
 
-        // Executing → Executing (complete task, clear task_id)
-        (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::CompleteTask { .. }) => {
-            WorkflowState::Executing {
-                phase_id: phase_id.clone(),
-                task_id: None,
-            }
-        }
-
         // Executing → Verifying
         (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::StartVerification) => {
             WorkflowState::Verifying {
@@ -71,21 +64,6 @@ pub fn apply_transition(
         // Verifying → PhaseComplete (verification passed)
         (WorkflowState::Verifying { phase_id }, TransitionTrigger::VerificationPassed) => {
             WorkflowState::PhaseComplete {
-                phase_id: phase_id.clone(),
-            }
-        }
-
-        // Verifying → Executing (verification failed, retry)
-        (WorkflowState::Verifying { phase_id }, TransitionTrigger::VerificationFailed { .. }) => {
-            WorkflowState::Executing {
-                phase_id: phase_id.clone(),
-                task_id: None,
-            }
-        }
-
-        // PhaseComplete → Planning (start next phase)
-        (WorkflowState::PhaseComplete { .. }, TransitionTrigger::StartPlanning { phase_id }) => {
-            WorkflowState::Planning {
                 phase_id: phase_id.clone(),
             }
         }

@@ -37,23 +37,6 @@ pub trait BaseEntity {
     fn updated_at(&self) -> i64;
 }
 
-/// Macro to implement `BaseEntity` for structs using `EntityMetadata`
-#[macro_export]
-macro_rules! impl_base_entity {
-    ($t:ty) => {
-        impl $crate::entities::BaseEntity for $t {
-            fn id(&self) -> &str {
-                &self.metadata.id
-            }
-            fn created_at(&self) -> i64 {
-                self.metadata.created_at
-            }
-            fn updated_at(&self) -> i64 {
-                self.metadata.updated_at
-            }
-        }
-    };
-}
 /// Agent session tracking entities
 pub mod agent;
 /// API key entities for authentication

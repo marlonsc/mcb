@@ -20,6 +20,10 @@ pub trait Validator: Send + Sync {
     fn name(&self) -> &'static str;
 
     /// Run validation and return violations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the validation process fails.
     fn validate(&self, config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>>;
 
     /// Whether this validator is enabled by default
@@ -102,6 +106,10 @@ impl ValidatorRegistry {
     }
 
     /// Run all enabled validators
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the validation context cannot be built.
     pub fn validate_all(&self, config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {
         let context = Arc::new(ValidationRunContext::build(config)?);
         ValidationRunContext::with_active(context, || {
@@ -160,6 +168,10 @@ impl ValidatorRegistry {
     }
 
     /// Run specific validators by name
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the validation context cannot be built.
     pub fn validate_named(
         &self,
         config: &ValidationConfig,

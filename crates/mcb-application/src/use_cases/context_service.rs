@@ -130,6 +130,10 @@ impl ContextServiceImpl {
     }
 
     /// Check if collection exists in vector store
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the vector store query fails.
     async fn collection_exists(&self, collection: &CollectionId) -> Result<bool> {
         self.vector_store_provider
             .collection_exists(collection)
@@ -137,6 +141,10 @@ impl ContextServiceImpl {
     }
 
     /// Set a cache value with default config
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the cache write fails.
     async fn cache_set(&self, key: &str, value: &str) -> Result<()> {
         self.cache
             .set_json(key, value, CacheEntryConfig::default())
@@ -146,6 +154,9 @@ impl ContextServiceImpl {
 
 #[async_trait::async_trait]
 impl ContextServiceInterface for ContextServiceImpl {
+    /// # Errors
+    ///
+    /// Returns an error if the collection creation or cache initialization fails.
     async fn initialize(&self, collection: &CollectionId) -> Result<()> {
         let name = collection.to_string();
         // Create collection if it doesn't exist
@@ -161,6 +172,9 @@ impl ContextServiceInterface for ContextServiceImpl {
             .await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if embedding generation, vector insertion, or cache update fails.
     async fn store_chunks(&self, collection: &CollectionId, chunks: &[CodeChunk]) -> Result<()> {
         let name = collection.to_string();
         let mut texts = Vec::with_capacity(chunks.len());
@@ -188,6 +202,9 @@ impl ContextServiceInterface for ContextServiceImpl {
         .await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if embedding generation or vector search fails.
     async fn search_similar(
         &self,
         collection: &CollectionId,
@@ -201,10 +218,16 @@ impl ContextServiceInterface for ContextServiceImpl {
             .await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the embedding provider fails.
     async fn embed_text(&self, text: &str) -> Result<Embedding> {
         self.embedding_provider.embed(text).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the vector store deletion or cache cleanup fails.
     async fn clear_collection(&self, collection: &CollectionId) -> Result<()> {
         let name = collection.to_string();
         // Delete collection from vector store if it exists
@@ -222,6 +245,9 @@ impl ContextServiceInterface for ContextServiceImpl {
         Ok(())
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if listing collections or retrieving stats fails.
     async fn get_stats(&self) -> Result<(i64, i64)> {
         let collections = self.vector_store_provider.list_collections().await?;
         let collection_count = collections.len() as i64;

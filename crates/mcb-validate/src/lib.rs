@@ -37,13 +37,14 @@ pub mod thresholds;
 /// Core traits for the validation system
 pub mod traits;
 
+/// Common macros for validation layer
 #[macro_use]
-/// Violation definition macros.
+pub mod macros;
+
+/// Violation runtime types (field formatting, file path extraction).
 pub mod violation_macro;
 
 pub mod generic_reporter;
-/// Declarative registration macros used by validator composition.
-pub mod macros;
 pub mod reporter;
 pub mod run_context;
 /// Validator implementations
@@ -235,6 +236,10 @@ impl ValidationConfig {
     /// Get all source directories to validate
     ///
     /// Returns crates/ subdirectories plus any additional paths.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the crates directory cannot be read.
     pub fn get_source_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut dirs = Vec::new();
 
@@ -283,6 +288,10 @@ impl ValidationConfig {
     /// Get actual source directories to scan for Rust files
     ///
     /// For crate directories (containing `src/` subdirectory), returns `<dir>/src/`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if source directory enumeration fails.
     pub fn get_scan_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut scan_dirs = Vec::new();
 

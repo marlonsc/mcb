@@ -1,5 +1,7 @@
 //! Domain layer constants
 
+/// AST and tree-sitter node type constants.
+pub mod ast;
 /// Embedding dimension constants for each provider and model family.
 pub mod embedding;
 /// HTTP constants

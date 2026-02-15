@@ -15,7 +15,7 @@ use validator::Validate;
 use crate::args::{AgentAction, AgentArgs};
 use crate::error_mapping::{safe_internal_error, to_contextual_tool_error};
 use crate::formatter::ResponseFormatter;
-use crate::handlers::helpers::{resolve_org_id, tool_error};
+use crate::utils::mcp::{resolve_org_id, tool_error};
 
 /// Handler for agent tool call and delegation logging operations.
 #[derive(Clone)]

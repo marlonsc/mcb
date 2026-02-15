@@ -35,6 +35,10 @@ use crate::infrastructure::{
 use mcb_providers::events::TokioEventBusProvider;
 
 /// Build the dill Catalog with all application services
+///
+/// # Errors
+///
+/// Returns an error if provider resolution or service initialization fails.
 pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     info!("Building dill Catalog");
 
@@ -44,10 +48,10 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     // Create Resolvers
     // ========================================================================
 
-    let embedding_resolver = Arc::new(EmbeddingProviderResolver::new(config.clone()));
-    let vector_store_resolver = Arc::new(VectorStoreProviderResolver::new(config.clone()));
-    let cache_resolver = Arc::new(CacheProviderResolver::new(config.clone()));
-    let language_resolver = Arc::new(LanguageProviderResolver::new(config.clone()));
+    let embedding_resolver = Arc::new(EmbeddingProviderResolver::new(Arc::clone(&config)));
+    let vector_store_resolver = Arc::new(VectorStoreProviderResolver::new(Arc::clone(&config)));
+    let cache_resolver = Arc::new(CacheProviderResolver::new(Arc::clone(&config)));
+    let language_resolver = Arc::new(LanguageProviderResolver::new(Arc::clone(&config)));
 
     // ========================================================================
     // Resolve initial providers from config
@@ -74,12 +78,14 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     // Create Handles
     // ========================================================================
 
-    let embedding_handle = Arc::new(EmbeddingProviderHandle::new(embedding_provider.clone()));
-    let vector_store_handle = Arc::new(VectorStoreProviderHandle::new(
-        vector_store_provider.clone(),
-    ));
-    let cache_handle = Arc::new(CacheProviderHandle::new(cache_provider.clone()));
-    let language_handle = Arc::new(LanguageProviderHandle::new(language_provider.clone()));
+    let embedding_handle = Arc::new(EmbeddingProviderHandle::new(Arc::clone(
+        &embedding_provider,
+    )));
+    let vector_store_handle = Arc::new(VectorStoreProviderHandle::new(Arc::clone(
+        &vector_store_provider,
+    )));
+    let cache_handle = Arc::new(CacheProviderHandle::new(Arc::clone(&cache_provider)));
+    let language_handle = Arc::new(LanguageProviderHandle::new(Arc::clone(&language_provider)));
 
     // ========================================================================
     // Create Admin Services
@@ -87,24 +93,24 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 
     let embedding_admin: Arc<dyn EmbeddingAdminInterface> = Arc::new(EmbeddingAdminService::new(
         "Embedding Service",
-        embedding_resolver.clone(),
-        embedding_handle.clone(),
+        Arc::clone(&embedding_resolver),
+        Arc::clone(&embedding_handle),
     ));
     let vector_store_admin: Arc<dyn VectorStoreAdminInterface> =
         Arc::new(VectorStoreAdminService::new(
             "Vector Store Service",
-            vector_store_resolver.clone(),
-            vector_store_handle.clone(),
+            Arc::clone(&vector_store_resolver),
+            Arc::clone(&vector_store_handle),
         ));
     let cache_admin: Arc<dyn CacheAdminInterface> = Arc::new(CacheAdminService::new(
         "Cache Service",
-        cache_resolver.clone(),
-        cache_handle.clone(),
+        Arc::clone(&cache_resolver),
+        Arc::clone(&cache_handle),
     ));
     let language_admin: Arc<dyn LanguageAdminInterface> = Arc::new(LanguageAdminService::new(
         "Language Service",
-        language_resolver.clone(),
-        language_handle.clone(),
+        Arc::clone(&language_resolver),
+        Arc::clone(&language_handle),
     ));
 
     // ========================================================================

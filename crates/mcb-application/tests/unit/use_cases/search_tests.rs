@@ -252,7 +252,7 @@ async fn test_full_search_flow(
         .await
         .expect("store");
 
-    let search_service = SearchServiceImpl::new(svc.clone());
+    let search_service = SearchServiceImpl::new(Arc::clone(&svc));
     let results = search_service
         .search(&col_id, "request handler", 5)
         .await

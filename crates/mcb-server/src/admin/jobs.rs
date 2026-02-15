@@ -28,7 +28,7 @@ pub fn get_jobs_status(state: &State<AdminState>) -> Json<JobsStatusResponse> {
     tracing::info!("get_jobs_status called");
     let operations = state.indexing.get_operations();
 
-    let jobs: Vec<Job> = operations
+    let jobs = operations
         .values()
         .map(|op| {
             let progress = if op.total_files > 0 {
@@ -51,7 +51,7 @@ pub fn get_jobs_status(state: &State<AdminState>) -> Json<JobsStatusResponse> {
                 result: None,
             }
         })
-        .collect();
+        .collect::<Vec<_>>();
 
     let running = jobs.len();
     Json(JobsStatusResponse {

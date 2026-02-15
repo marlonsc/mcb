@@ -102,7 +102,7 @@ impl IntelligentChunker {
         language: &Language,
     ) -> Vec<CodeChunk> {
         if let Some(processor) = LANGUAGE_PROCESSORS.get(language) {
-            match self.parse_with_tree_sitter(content, processor.get_language()) {
+            match Self::parse_with_tree_sitter(content, &processor.get_language()) {
                 Ok(tree) => {
                     let chunks = processor
                         .extract_chunks_with_tree_sitter(&tree, content, file_name, language);
@@ -120,7 +120,7 @@ impl IntelligentChunker {
             }
         }
 
-        self.chunk_generic(content, file_name, language)
+        Self::chunk_generic(content, file_name, language)
     }
 
     /// Chunk code asynchronously (offloads to blocking thread)
@@ -139,7 +139,7 @@ impl IntelligentChunker {
     }
 
     /// Generic chunking for unsupported languages
-    fn chunk_generic(&self, content: &str, file_name: &str, language: &Language) -> Vec<CodeChunk> {
+    fn chunk_generic(content: &str, file_name: &str, language: &Language) -> Vec<CodeChunk> {
         let lines: Vec<&str> = content.lines().collect();
         let mut chunks = Vec::new();
         let chunk_size = CHUNK_SIZE_GENERIC;
@@ -176,13 +176,12 @@ impl IntelligentChunker {
 
     /// Parse code with tree-sitter
     fn parse_with_tree_sitter(
-        &self,
         content: &str,
-        language: tree_sitter::Language,
+        language: &tree_sitter::Language,
     ) -> Result<tree_sitter::Tree> {
         let mut parser = tree_sitter::Parser::new();
         parser
-            .set_language(&language)
+            .set_language(language)
             .map_err(|e| Error::internal(format!("Failed to set tree-sitter language: {e:?}")))?;
 
         let tree = parser

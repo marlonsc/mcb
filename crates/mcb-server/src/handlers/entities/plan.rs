@@ -8,8 +8,9 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{PlanEntityAction, PlanEntityArgs, PlanEntityResource};
-use crate::handlers::helpers::{
-    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
+use crate::utils::mcp::{
+    map_opaque_error, ok_json, ok_text, require_data, require_id, require_resolved_identifier,
+    resolve_org_id,
 };
 
 /// Handler for the consolidated `plan_entity` MCP tool.
@@ -41,6 +42,12 @@ impl PlanEntityHandler {
             {
             (PlanEntityAction::Create, PlanEntityResource::Plan) => {
                 let mut plan: Plan = require_data(args.data, "data required for create")?;
+                plan.project_id = require_resolved_identifier(
+                    "project_id",
+                    args.project_id.as_deref(),
+                    Some(plan.project_id.as_str()),
+                    "project_id required for plan create",
+                )?;
                 plan.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_plan(&plan).await)?;
                 ok_json(&plan)

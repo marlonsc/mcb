@@ -21,9 +21,9 @@ use mcb_domain::ports::repositories::issue_entity_repository::{
 };
 use std::sync::Arc;
 
-use super::query_helpers;
 use super::row_convert;
-use super::row_helpers::{opt_i64_param, opt_str_param};
+use crate::utils::sqlite::query as query_helpers;
+use crate::utils::sqlite::row::{opt_i64_param, opt_str_param};
 
 /// SQLite-based implementation of `IssueEntityRepository`.
 ///

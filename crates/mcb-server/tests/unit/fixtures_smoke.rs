@@ -1,8 +1,9 @@
 use crate::test_utils::test_fixtures::{
     GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, create_temp_codebase, create_test_indexing_result,
-    extract_text_content, golden_content_to_string, golden_count_result_entries,
-    golden_parse_results_found, sample_codebase_path,
+    golden_content_to_string, golden_count_result_entries, golden_parse_results_found,
+    sample_codebase_path,
 };
+use crate::test_utils::text::extract_text;
 
 #[test]
 fn test_fixtures_referenced() {
@@ -17,7 +18,7 @@ fn test_fixtures_referenced() {
     assert_eq!(golden_count_result_entries("📁 foo\n📁 bar"), 2);
 
     let _ = golden_content_to_string as fn(&rmcp::model::CallToolResult) -> String;
-    let _ = extract_text_content as fn(&[rmcp::model::Content]) -> String;
+    let _ = extract_text as fn(&[rmcp::model::Content]) -> String;
 
     let (_temp, path) = create_temp_codebase();
     assert!(path.exists());

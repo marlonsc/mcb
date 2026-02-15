@@ -121,6 +121,24 @@ pub struct AdminApi {
     pub(super) browse_state: Option<BrowseState>,
 }
 
+/// Core service dependencies needed by `AdminApi` builders.
+pub struct AdminApiServices {
+    /// Metrics service used by admin endpoints.
+    pub metrics: Arc<dyn PerformanceMetricsInterface>,
+    /// Indexing operations used by admin indexing endpoints.
+    pub indexing: Arc<dyn IndexingOperationsInterface>,
+    /// Event bus used for lifecycle and integration events.
+    pub event_bus: Arc<dyn EventBusProvider>,
+}
+
+/// Configuration watcher wiring for admin config endpoints.
+pub struct AdminConfigWatcherConfig {
+    /// Shared config watcher instance.
+    pub watcher: Arc<ConfigWatcher>,
+    /// Path to the loaded configuration file.
+    pub config_path: PathBuf,
+}
+
 impl AdminApi {
     /// Create a new admin API server
     pub fn new(
@@ -156,21 +174,18 @@ impl AdminApi {
     /// Create a new admin API server with configuration watcher support
     pub fn with_config_watcher(
         config: AdminApiConfig,
-        metrics: Arc<dyn PerformanceMetricsInterface>,
-        indexing: Arc<dyn IndexingOperationsInterface>,
-        config_watcher: Arc<ConfigWatcher>,
-        config_path: PathBuf,
-        event_bus: Arc<dyn EventBusProvider>,
+        services: AdminApiServices,
+        watcher_config: AdminConfigWatcherConfig,
         auth_config: AdminAuthConfig,
     ) -> Self {
         Self {
             config,
             state: build_admin_state(
-                metrics,
-                indexing,
-                event_bus,
-                Some(config_watcher),
-                Some(config_path),
+                services.metrics,
+                services.indexing,
+                services.event_bus,
+                Some(watcher_config.watcher),
+                Some(watcher_config.config_path),
             ),
             auth_config: Arc::new(auth_config),
             browse_state: None,

@@ -40,7 +40,7 @@ fn test_format_indexing_error(
         "is_error mismatch"
     );
 
-    let text = extract_text_content(&response.content);
+    let text = extract_text(&response.content);
     for content in expected_content {
         assert!(
             text.contains(content),
@@ -101,7 +101,7 @@ fn test_format_indexing_success(
         "is_error mismatch"
     );
 
-    let text = extract_text_content(&response.content);
+    let text = extract_text(&response.content);
     for content in expected_content {
         assert!(
             text.contains(content),
@@ -169,7 +169,7 @@ fn test_format_search_response(
         "is_error mismatch"
     );
 
-    let text = extract_text_content(&response.content);
+    let text = extract_text(&response.content);
     for content in expected_content {
         assert!(
             text.contains(content),
@@ -218,7 +218,7 @@ fn test_format_indexing_status(
         "is_error mismatch"
     );
 
-    let text = extract_text_content(&response.content);
+    let text = extract_text(&response.content);
     for content in expected_content {
         assert!(
             text.contains(content),
@@ -246,7 +246,7 @@ fn test_format_clear_index(
         "is_error mismatch"
     );
 
-    let text = extract_text_content(&response.content);
+    let text = extract_text(&response.content);
     for content in expected_content {
         assert!(
             text.contains(content),
@@ -259,7 +259,7 @@ fn test_format_clear_index(
 // HELPER FUNCTIONS
 // =============================================================================
 
-use crate::test_utils::text::extract_text as extract_text_content;
+use crate::test_utils::text::extract_text;
 
 mod handler_error_tests {
     use mcb_server::args::{IndexAction, IndexArgs};

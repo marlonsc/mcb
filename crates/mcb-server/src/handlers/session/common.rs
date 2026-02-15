@@ -2,10 +2,9 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
 use crate::args::SessionArgs;
-use crate::handlers::helpers::tool_error;
-pub(super) use crate::handlers::helpers::{
-    opt_str, optional_data_map, require_data_map, require_str, str_vec,
-};
+pub(super) use crate::utils::json::json_map;
+use crate::utils::mcp::tool_error;
+pub(super) use crate::utils::mcp::{opt_str, require_data_map, require_str, str_vec};
 use mcb_domain::value_objects::ids::SessionId;
 
 pub(super) fn require_session_id(args: &SessionArgs) -> Result<&SessionId, CallToolResult> {

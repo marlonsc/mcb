@@ -1,29 +1,29 @@
+use super::constants::{
+    APPLICATION_LAYER_PATH, ARC_NEW_SERVICE_REGEX, INFRASTRUCTURE_LAYER_PATH, SERVER_IMPORT_REGEX,
+    SERVER_LAYER_PATH, SERVICE_CREATION_BYPASS_FILES,
+};
 use super::violation::OrganizationViolation;
+use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX};
 use crate::filters::LanguageId;
+use crate::pattern_registry::compile_regex;
 use crate::scan::{for_each_scan_file, is_test_path};
 use crate::{Result, Severity, ValidationConfig};
-use regex::Regex;
-use std::sync::OnceLock;
-
-static ARC_NEW_SERVICE_PATTERN: OnceLock<Regex> = OnceLock::new();
-static SERVER_IMPORT_PATTERN: OnceLock<Regex> = OnceLock::new();
 
 /// Checks for violations of Clean Architecture layer boundaries.
 ///
 /// Detects issues such as:
 /// - Server layer code directly instantiating services (bypassing DI).
 /// - Application layer code importing from the server layer (dependency inversion violation).
+///
+/// # Errors
+///
+/// Returns an error if file scanning or reading fails.
 pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<OrganizationViolation>> {
     let mut violations = Vec::new();
 
     // Patterns for detecting layer violations
-    let arc_new_service_pattern = ARC_NEW_SERVICE_PATTERN.get_or_init(|| {
-        Regex::new(r"Arc::new\s*\(\s*([A-Z][a-zA-Z0-9_]*(?:Service|Provider|Repository))::new")
-            .expect("Invalid arc_new_service regex")
-    });
-    let server_import_pattern = SERVER_IMPORT_PATTERN.get_or_init(|| {
-        Regex::new(r"use\s+(?:crate::|super::)*server::").expect("Invalid server_import regex")
-    });
+    let arc_new_service_pattern = compile_regex(ARC_NEW_SERVICE_REGEX)?;
+    let server_import_pattern = compile_regex(SERVER_IMPORT_REGEX)?;
 
     for_each_scan_file(config, Some(LanguageId::Rust), true, |entry, _src_dir| {
         let Some(path_str) = entry.absolute_path.to_str() else {
@@ -36,9 +36,9 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
         }
 
         // Determine current layer
-        let is_server_layer = path_str.contains("/server/");
-        let is_application_layer = path_str.contains("/application/");
-        let is_infrastructure_layer = path_str.contains("/infrastructure/");
+        let is_server_layer = path_str.contains(SERVER_LAYER_PATH);
+        let is_application_layer = path_str.contains(APPLICATION_LAYER_PATH);
+        let is_infrastructure_layer = path_str.contains(INFRASTRUCTURE_LAYER_PATH);
 
         let content = std::fs::read_to_string(&entry.absolute_path)?;
         let lines: Vec<&str> = content.lines().collect();
@@ -52,7 +52,7 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
             let trimmed = line.trim();
 
             // Track test module boundaries
-            if trimmed.contains("#[cfg(test)]") {
+            if trimmed.contains(CFG_TEST_MARKER) {
                 in_test_module = true;
                 test_brace_depth = brace_depth;
             }
@@ -70,7 +70,7 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
             }
 
             // Skip comments
-            if trimmed.starts_with("//") {
+            if trimmed.starts_with(COMMENT_PREFIX) {
                 continue;
             }
 
@@ -84,9 +84,9 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
                     .file_name()
                     .and_then(|n| n.to_str())
                     .unwrap_or("");
-                if file_name.contains("builder")
-                    || file_name.contains("factory")
-                    || file_name.contains("bootstrap")
+                if SERVICE_CREATION_BYPASS_FILES
+                    .iter()
+                    .any(|f| file_name.contains(f))
                 {
                     continue;
                 }

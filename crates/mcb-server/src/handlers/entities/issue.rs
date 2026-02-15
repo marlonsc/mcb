@@ -9,8 +9,9 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{IssueEntityAction, IssueEntityArgs, IssueEntityResource};
-use crate::handlers::helpers::{
-    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
+use crate::utils::mcp::{
+    map_opaque_error, ok_json, ok_text, require_data, require_id, require_resolved_identifier,
+    resolve_org_id,
 };
 
 /// Handler for the consolidated `issue_entity` MCP tool.
@@ -38,6 +39,12 @@ impl IssueEntityHandler {
             {
             (IssueEntityAction::Create, IssueEntityResource::Issue) => {
                 let mut issue: ProjectIssue = require_data(args.data, "data required for create")?;
+                issue.project_id = require_resolved_identifier(
+                    "project_id",
+                    args.project_id.as_deref(),
+                    Some(issue.project_id.as_str()),
+                    "project_id required for issue create",
+                )?;
                 issue.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_issue(&issue).await)?;
                 ok_json(&issue)

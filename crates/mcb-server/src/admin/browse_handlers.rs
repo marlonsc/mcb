@@ -87,7 +87,7 @@ pub async fn list_collections(
         )
     })?;
 
-    let collection_responses: Vec<CollectionInfoResponse> = collections
+    let collection_responses = collections
         .into_iter()
         .map(|c| CollectionInfoResponse {
             name: c.name,
@@ -96,7 +96,7 @@ pub async fn list_collections(
             last_indexed: c.last_indexed,
             provider: c.provider,
         })
-        .collect();
+        .collect::<Vec<_>>();
 
     let total = collection_responses.len();
     Ok(Json(CollectionListResponse {
@@ -149,7 +149,7 @@ pub async fn list_collection_files(
             }
         })?;
 
-    let file_responses: Vec<FileInfoResponse> = files
+    let file_responses = files
         .into_iter()
         .map(|f| FileInfoResponse {
             path: f.path,
@@ -157,7 +157,7 @@ pub async fn list_collection_files(
             language: f.language,
             size_bytes: f.size_bytes,
         })
-        .collect();
+        .collect::<Vec<_>>();
 
     let total = file_responses.len();
     Ok(Json(FileListResponse {
@@ -297,7 +297,7 @@ pub async fn get_collection_tree(
     let mut root = FileTreeNode::directory(name, "");
 
     for file in files {
-        let parts: Vec<&str> = file.path.split('/').collect();
+        let parts = file.path.split('/').collect::<Vec<_>>();
         insert_into_tree(&mut root, &parts, &file);
     }
 

@@ -161,6 +161,10 @@ impl Callback for TestRangeCallback {
 }
 
 /// Detect unwrap/expect in file content
+///
+/// # Errors
+///
+/// Returns an error if the language cannot be determined from the filename.
 pub fn detect_in_content(content: &str, filename: &str) -> Result<Vec<UnwrapDetection>> {
     let path = Path::new(filename);
     let source = content.as_bytes().to_vec();
@@ -183,6 +187,10 @@ pub fn detect_in_content(content: &str, filename: &str) -> Result<Vec<UnwrapDete
 }
 
 /// Detect unwrap/expect in file
+///
+/// # Errors
+///
+/// Returns an error if the file cannot be read or its language is unsupported.
 pub fn detect_in_file(path: &Path) -> Result<Vec<UnwrapDetection>> {
     let content = std::fs::read_to_string(path)?;
     let file_name = path
@@ -198,11 +206,19 @@ pub struct UnwrapDetector;
 
 impl UnwrapDetector {
     /// Create a new unwrap detector
+    ///
+    /// # Errors
+    ///
+    /// This constructor is infallible but returns `Result` for API consistency.
     pub fn new() -> Result<Self> {
         Ok(Self)
     }
 
     /// Detect unwrap/expect calls in Rust source code
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the language cannot be determined from the filename.
     pub fn detect_in_content(
         &mut self,
         content: &str,
@@ -212,6 +228,10 @@ impl UnwrapDetector {
     }
 
     /// Detect unwrap/expect calls in a file
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be read or its language is unsupported.
     pub fn detect_in_file(&mut self, path: &Path) -> Result<Vec<UnwrapDetection>> {
         detect_in_file(path)
     }

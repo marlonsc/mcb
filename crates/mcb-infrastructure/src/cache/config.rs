@@ -29,6 +29,10 @@ impl CacheKey {
     }
 
     /// Validate cache key format
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the key is empty, too long, or contains invalid characters.
     pub fn validate_key(key: &str) -> Result<()> {
         if key.is_empty() {
             return Err(Error::Configuration {

@@ -29,6 +29,10 @@ pub struct ConfigWatcher {
 
 impl ConfigWatcher {
     /// Create a new configuration watcher
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file watcher cannot be created.
     pub async fn new(
         config_path: PathBuf,
         initial_config: AppConfig,
@@ -66,6 +70,10 @@ impl ConfigWatcher {
     }
 
     /// Manually trigger a configuration reload
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the configuration file cannot be loaded.
     pub async fn reload(&self) -> Result<AppConfig> {
         let new_config = self.loader.load()?;
 
@@ -199,6 +207,7 @@ impl ConfigWatcherBuilder {
     }
 
     /// Set the configuration file path
+    #[must_use]
     pub fn with_config_path<P: AsRef<std::path::Path>>(mut self, path: P) -> Self {
         self.config_path = Some(path.as_ref().to_path_buf());
         self
@@ -212,12 +221,17 @@ impl ConfigWatcherBuilder {
     }
 
     /// Set the event bus provider used for config notifications
+    #[must_use]
     pub fn with_event_bus(mut self, event_bus: Arc<dyn EventBusProvider>) -> Self {
         self.event_bus = Some(event_bus);
         self
     }
 
     /// Build the configuration watcher
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if required fields are missing or watcher initialization fails.
     pub async fn build(self) -> Result<ConfigWatcher> {
         let config_path = self.config_path.ok_or_else(|| Error::Configuration {
             message: "Configuration file path is required".to_owned(),
@@ -254,6 +268,10 @@ impl ConfigWatcherUtils {
     /// Before calling this, check if watching is enabled via
     /// `config.system.data.sync.watching_enabled`. This method
     /// assumes the caller has already verified watching should proceed.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file watcher cannot be initialized.
     pub async fn watch_config_file(
         config_path: PathBuf,
         initial_config: AppConfig,

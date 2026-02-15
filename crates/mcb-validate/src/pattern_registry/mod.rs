@@ -38,6 +38,10 @@ where
 }
 
 /// Compiles a list of regex patterns paired with descriptions.
+///
+/// # Errors
+///
+/// Returns an error if any regex pattern fails to compile.
 pub fn compile_regex_pairs<'a>(patterns: &[(&str, &'a str)]) -> Result<Vec<(Regex, &'a str)>> {
     patterns
         .iter()

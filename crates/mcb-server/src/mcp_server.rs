@@ -49,10 +49,20 @@ pub struct McpServer {
     execution_flow: Option<String>,
 }
 
+/// Entity repositories used by MCP entity handlers.
+#[derive(Clone)]
+pub struct McpEntityRepositories {
+    /// VCS entity repository (repos, branches, worktrees)
+    pub vcs: Arc<dyn VcsEntityRepository>,
+    /// Plan entity repository (plans, versions, reviews)
+    pub plan: Arc<dyn PlanEntityRepository>,
+    /// Issue entity repository (issues, comments, labels, assignments)
+    pub issue: Arc<dyn IssueEntityRepository>,
+    /// Org entity repository (orgs, users, teams, members, api keys)
+    pub org: Arc<dyn OrgEntityRepository>,
+}
+
 /// Domain services container (keeps struct field count manageable)
-///
-/// # Code Smells
-/// TODO(qlty): Found 28 lines of similar code in `mcb-infrastructure/src/di/modules/domain_services.rs`.
 #[derive(Clone)]
 pub struct McpServices {
     /// Indexing service
@@ -73,23 +83,8 @@ pub struct McpServices {
     pub project_workflow: Arc<dyn ProjectRepository>,
     /// VCS provider
     pub vcs: Arc<dyn VcsProvider>,
-    /// VCS entity repository (repos, branches, worktrees)
-    pub vcs_entity: Arc<dyn VcsEntityRepository>,
-    /// Plan entity repository (plans, versions, reviews)
-    pub plan_entity: Arc<dyn PlanEntityRepository>,
-    /// Issue entity repository (issues, comments, labels, assignments)
-    pub issue_entity: Arc<dyn IssueEntityRepository>,
-    /// Org entity repository (orgs, users, teams, members, api keys)
-    pub org_entity: Arc<dyn OrgEntityRepository>,
-}
-
-macro_rules! mcp_server_entity_repo_getter {
-    ($name:ident, $ty:ty, $field:ident, $doc:literal) => {
-        #[doc = $doc]
-        pub fn $name(&self) -> Arc<$ty> {
-            Arc::clone(&self.services.$field)
-        }
-    };
+    /// Entity repositories shared by CRUD handlers.
+    pub entities: McpEntityRepositories,
 }
 
 impl McpServer {
@@ -226,10 +221,11 @@ impl McpServer {
     #[must_use]
     pub fn new(services: McpServices, execution_flow: Option<String>) -> Self {
         let hook_processor = HookProcessor::new(Some(services.memory.clone()));
-        let vcs_entity_handler = Arc::new(VcsEntityHandler::new(services.vcs_entity.clone()));
-        let plan_entity_handler = Arc::new(PlanEntityHandler::new(services.plan_entity.clone()));
-        let issue_entity_handler = Arc::new(IssueEntityHandler::new(services.issue_entity.clone()));
-        let org_entity_handler = Arc::new(OrgEntityHandler::new(services.org_entity.clone()));
+        let vcs_entity_handler = Arc::new(VcsEntityHandler::new(services.entities.vcs.clone()));
+        let plan_entity_handler = Arc::new(PlanEntityHandler::new(services.entities.plan.clone()));
+        let issue_entity_handler =
+            Arc::new(IssueEntityHandler::new(services.entities.issue.clone()));
+        let org_entity_handler = Arc::new(OrgEntityHandler::new(services.entities.org.clone()));
         let entity_handler = Arc::new(EntityHandler::new(
             Arc::clone(&vcs_entity_handler),
             Arc::clone(&plan_entity_handler),
@@ -328,33 +324,29 @@ impl McpServer {
         Arc::clone(&self.services.project_workflow)
     }
 
-    mcp_server_entity_repo_getter!(
-        vcs_entity_repository,
-        dyn VcsEntityRepository,
-        vcs_entity,
-        "Access to VCS entity repository."
-    );
+    /// Access to VCS entity repository.
+    #[must_use]
+    pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
+        Arc::clone(&self.services.entities.vcs)
+    }
 
-    mcp_server_entity_repo_getter!(
-        plan_entity_repository,
-        dyn PlanEntityRepository,
-        plan_entity,
-        "Access to plan entity repository."
-    );
+    /// Access to plan entity repository.
+    #[must_use]
+    pub fn plan_entity_repository(&self) -> Arc<dyn PlanEntityRepository> {
+        Arc::clone(&self.services.entities.plan)
+    }
 
-    mcp_server_entity_repo_getter!(
-        issue_entity_repository,
-        dyn IssueEntityRepository,
-        issue_entity,
-        "Access to issue entity repository."
-    );
+    /// Access to issue entity repository.
+    #[must_use]
+    pub fn issue_entity_repository(&self) -> Arc<dyn IssueEntityRepository> {
+        Arc::clone(&self.services.entities.issue)
+    }
 
-    mcp_server_entity_repo_getter!(
-        org_entity_repository,
-        dyn OrgEntityRepository,
-        org_entity,
-        "Access to organization entity repository."
-    );
+    /// Access to organization entity repository.
+    #[must_use]
+    pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
+        Arc::clone(&self.services.entities.org)
+    }
 
     /// Access to index handler (for HTTP transport)
     #[must_use]

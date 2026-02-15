@@ -61,10 +61,11 @@ impl TransportConfig {
 
     /// Create hybrid transport config (both stdio and HTTP)
     #[must_use]
+    #[allow(clippy::expect_used)]
     pub fn hybrid(http_port: u16) -> Self {
         let config = ConfigLoader::new()
             .load()
-            .expect("TransportConfig::hybrid requires loadable configuration file");
+            .expect("startup: configuration file must be loadable");
         Self {
             mode: TransportMode::Hybrid,
             http_port: Some(http_port),

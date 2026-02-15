@@ -61,13 +61,12 @@ impl SqliteFileHashRepository {
     }
 
     /// Get current Unix timestamp
-    fn now() -> i64 {
+    fn now() -> Result<i64> {
         mcb_domain::utils::time::epoch_secs_i64()
-            .unwrap_or_else(|e| panic!("system clock failure: {e}"))
     }
 
     async fn ensure_project_exists(&self) -> Result<()> {
-        let now = Self::now();
+        let now = Self::now()?;
         crate::database::sqlite::ensure_parent::ensure_org_and_project(
             self.executor.as_ref(),
             &self.project_id,
@@ -144,7 +143,7 @@ impl FileHashRepository for SqliteFileHashRepository {
 
     async fn upsert_hash(&self, collection: &str, file_path: &str, hash: &str) -> Result<()> {
         self.ensure_project_exists().await?;
-        let now = Self::now();
+        let now = Self::now()?;
 
         self.executor
             .execute(
@@ -198,7 +197,7 @@ impl FileHashRepository for SqliteFileHashRepository {
     }
 
     async fn mark_deleted(&self, collection: &str, file_path: &str) -> Result<()> {
-        let now = Self::now();
+        let now = Self::now()?;
 
         self.executor
             .execute(
@@ -230,7 +229,7 @@ impl FileHashRepository for SqliteFileHashRepository {
     }
 
     async fn cleanup_tombstones(&self) -> Result<u64> {
-        let cutoff = Self::now() - self.config.tombstone_ttl_seconds;
+        let cutoff = Self::now()? - self.config.tombstone_ttl_seconds;
 
         let delete_params = &[SqlParam::I64(cutoff)];
         let count = self
@@ -250,7 +249,7 @@ impl FileHashRepository for SqliteFileHashRepository {
     }
 
     async fn cleanup_tombstones_with_ttl(&self, ttl: std::time::Duration) -> Result<u64> {
-        let cutoff = Self::now() - ttl.as_secs() as i64;
+        let cutoff = Self::now()? - ttl.as_secs() as i64;
 
         let delete_params = &[SqlParam::I64(cutoff)];
         let count = self

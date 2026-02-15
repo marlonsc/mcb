@@ -106,6 +106,10 @@ impl CargoDependencyParser {
     }
 
     /// Parse dependencies for the entire workspace
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if Cargo.toml files cannot be read or parsed.
     pub fn parse_workspace_deps(&self) -> Result<WorkspaceDependencies> {
         let mut deps = HashMap::new();
 

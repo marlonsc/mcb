@@ -45,6 +45,10 @@ fn assert_pattern() -> &'static Regex {
 }
 
 /// Verifies that test functions follow the `test_*` naming pattern.
+///
+/// # Errors
+///
+/// Returns an error if source directory enumeration or file reading fails.
 pub fn validate_test_function_naming(config: &ValidationConfig) -> Result<Vec<HygieneViolation>> {
     let mut violations = Vec::new();
 

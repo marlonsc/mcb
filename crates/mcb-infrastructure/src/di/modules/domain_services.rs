@@ -213,6 +213,10 @@ impl DomainServicesFactory {
     }
 
     /// Create indexing service from app context
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if service dependency resolution fails.
     pub async fn create_indexing_service(
         app_context: &AppContext,
     ) -> Result<Arc<dyn IndexingServiceInterface>> {
@@ -236,6 +240,10 @@ impl DomainServicesFactory {
     }
 
     /// Create context service from app context
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if provider handle resolution fails.
     pub async fn create_context_service(
         app_context: &AppContext,
     ) -> Result<Arc<dyn ContextServiceInterface>> {
@@ -251,6 +259,10 @@ impl DomainServicesFactory {
     }
 
     /// Create search service from app context
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if context service creation fails.
     pub async fn create_search_service(
         app_context: &AppContext,
     ) -> Result<Arc<dyn SearchServiceInterface>> {

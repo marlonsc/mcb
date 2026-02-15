@@ -54,6 +54,10 @@ impl PatternValidator {
     }
 
     /// Run all pattern validations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any sub-validation encounters a file system or parsing error.
     pub fn validate_all(&self) -> Result<Vec<PatternViolation>> {
         if !self.rules.enabled {
             return Ok(Vec::new());
@@ -66,6 +70,10 @@ impl PatternValidator {
     }
 
     /// Verify `Arc<dyn Trait>` pattern instead of `Arc<ConcreteType>`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if regex compilation or file scanning fails.
     pub fn validate_trait_based_di(&self) -> Result<Vec<PatternViolation>> {
         // Pattern to find Arc<SomeConcreteType> where SomeConcreteType doesn't start with "dyn"
         let arc_pattern = compile_regex(&self.rules.arc_pattern)
@@ -89,11 +97,19 @@ impl PatternValidator {
     }
 
     /// Check async traits have #[`async_trait`] and Send + Sync bounds.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_async_traits(&self) -> Result<Vec<PatternViolation>> {
         self.scan_rust_files(async_check::check_async_traits)
     }
 
     /// Verify consistent error type usage.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or reading fails.
     pub fn validate_result_types(&self) -> Result<Vec<PatternViolation>> {
         self.scan_rust_files_with_filter(
             |src_dir| self.should_skip_result_check(src_dir),

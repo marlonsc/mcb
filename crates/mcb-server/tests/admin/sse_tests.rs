@@ -93,6 +93,56 @@ use rstest::rstest;
     },
     "LogEvent"
 )]
+#[case(
+    DomainEvent::IndexRebuild {
+        collection: Some("test-collection".to_owned()),
+    },
+    "IndexRebuild"
+)]
+#[case(
+    DomainEvent::SyncCompleted {
+        path: "/project".to_owned(),
+        files_changed: 10,
+    },
+    "SyncCompleted"
+)]
+#[case(
+    DomainEvent::SnapshotCreated {
+        root_path: "/project".to_owned(),
+        file_count: 42,
+    },
+    "SnapshotCreated"
+)]
+#[case(
+    DomainEvent::ValidationStarted {
+        operation_id: "op-1".to_owned(),
+        workspace: "/project".to_owned(),
+        validators: vec!["naming".to_owned()],
+        total_files: 50,
+    },
+    "ValidationStarted"
+)]
+#[case(
+    DomainEvent::ValidationProgress {
+        operation_id: "op-1".to_owned(),
+        processed: 25,
+        total: 50,
+        current_file: Some("lib.rs".to_owned()),
+    },
+    "ValidationProgress"
+)]
+#[case(
+    DomainEvent::ValidationCompleted {
+        operation_id: "op-1".to_owned(),
+        workspace: "/project".to_owned(),
+        total_violations: 3,
+        errors: 1,
+        warnings: 2,
+        passed: false,
+        duration_ms: 500,
+    },
+    "ValidationCompleted"
+)]
 #[test]
 fn test_get_event_name_variants(#[case] event: DomainEvent, #[case] expected: &str) {
     assert_eq!(get_event_name(&event), expected);

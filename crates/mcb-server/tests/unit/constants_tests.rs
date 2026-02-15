@@ -19,5 +19,8 @@ fn test_valid_sections_contains_expected() {
 
 #[test]
 fn test_highlight_names_length() {
-    assert_eq!(HIGHLIGHT_NAMES.len(), 13);
+    assert_eq!(
+        mcb_infrastructure::constants::highlight::HIGHLIGHT_NAMES.len(),
+        13
+    );
 }

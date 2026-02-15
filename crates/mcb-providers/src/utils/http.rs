@@ -7,15 +7,20 @@ use std::time::Duration;
 
 use mcb_domain::error::Error;
 use reqwest::Client;
+use serde_json::Value;
 
+use super::http_response::HttpResponseUtils;
 use crate::constants::ERROR_MSG_REQUEST_TIMEOUT;
 
 /// Default timeout for HTTP requests (30 seconds)
 pub(crate) const DEFAULT_HTTP_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[derive(Debug, Clone, Copy)]
+/// Classification used to map HTTP request failures to domain errors.
 pub(crate) enum RequestErrorKind {
+    /// Embedding provider request.
     Embedding,
+    /// Vector database provider request.
     VectorDb,
 }
 
@@ -33,7 +38,7 @@ pub(crate) enum RequestErrorKind {
 ///
 /// let client = create_client(30)?;
 /// ```
-pub(crate) fn create_client(timeout_secs: u64) -> Result<Client, String> {
+pub(crate) fn create_client(timeout_secs: u64) -> std::result::Result<Client, String> {
     Client::builder()
         .timeout(Duration::from_secs(timeout_secs))
         .build()
@@ -41,12 +46,12 @@ pub(crate) fn create_client(timeout_secs: u64) -> Result<Client, String> {
 }
 
 /// Create an HTTP client with the default 30-second timeout
-pub(crate) fn create_default_client() -> Result<Client, String> {
+pub(crate) fn create_default_client() -> std::result::Result<Client, String> {
     create_client(30)
 }
 
 pub(crate) fn handle_request_error_with_kind(
-    error: reqwest::Error,
+    error: &reqwest::Error,
     timeout: Duration,
     provider: &str,
     operation: &str,
@@ -146,7 +151,7 @@ pub(crate) fn create_http_provider_config(
     config: &mcb_domain::registry::embedding::EmbeddingProviderConfig,
     provider_name: &str,
     default_model: &str,
-) -> Result<HttpProviderConfig, String> {
+) -> std::result::Result<HttpProviderConfig, String> {
     let api_key = config
         .api_key
         .clone()
@@ -168,4 +173,56 @@ pub(crate) fn create_http_provider_config(
         timeout: DEFAULT_HTTP_TIMEOUT,
         client,
     })
+}
+
+/// Parameters for [`send_json_request`].
+pub(crate) struct JsonRequestParams<'a> {
+    /// HTTP client to use.
+    pub client: &'a Client,
+    /// HTTP method (GET, POST, etc.).
+    pub method: reqwest::Method,
+    /// Target URL.
+    pub url: String,
+    /// Request timeout.
+    pub timeout: Duration,
+    /// Provider name for error messages.
+    pub provider: &'a str,
+    /// Operation name for error messages.
+    pub operation: &'a str,
+    /// Error classification kind.
+    pub kind: RequestErrorKind,
+    /// Additional headers.
+    pub headers: &'a [(&'a str, String)],
+    /// Optional JSON body.
+    pub body: Option<&'a Value>,
+}
+
+/// Send a JSON request with configurable parameters.
+pub(crate) async fn send_json_request(
+    params: JsonRequestParams<'_>,
+) -> mcb_domain::error::Result<Value> {
+    let mut builder = params
+        .client
+        .request(params.method, params.url)
+        .timeout(params.timeout);
+
+    for (key, value) in params.headers {
+        builder = builder.header(*key, value);
+    }
+
+    if let Some(payload) = params.body {
+        builder = builder.json(payload);
+    }
+
+    let response = builder.send().await.map_err(|e| {
+        handle_request_error_with_kind(
+            &e,
+            params.timeout,
+            params.provider,
+            params.operation,
+            params.kind,
+        )
+    })?;
+
+    HttpResponseUtils::check_and_parse(response, params.provider).await
 }

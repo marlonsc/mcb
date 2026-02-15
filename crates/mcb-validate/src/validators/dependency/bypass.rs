@@ -32,19 +32,13 @@ pub fn validate_bypass_boundaries(
             |rel| !allowed.iter().any(|a| rel == Path::new(a)),
             &pattern,
             |file, line, context| match violation_id.as_str() {
-                "DEP004" => DependencyViolation::AdminBypassImport {
-                    file,
-                    line,
-                    context,
-                    severity: Severity::Error,
-                },
                 "DEP005" => DependencyViolation::CliBypassPath {
                     file,
                     line,
                     context,
                     severity: Severity::Error,
                 },
-                _ => DependencyViolation::AdminBypassImport {
+                "DEP004" | _ => DependencyViolation::AdminBypassImport {
                     file,
                     line,
                     context,

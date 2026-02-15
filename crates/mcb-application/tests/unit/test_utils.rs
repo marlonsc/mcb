@@ -30,24 +30,45 @@ impl TestCacheProvider {
 
 #[async_trait]
 impl CacheProvider for TestCacheProvider {
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn get_json(&self, _key: &str) -> Result<Option<String>> {
         Ok(None)
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn set_json(&self, _key: &str, _value: &str, _config: CacheEntryConfig) -> Result<()> {
         Ok(())
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn delete(&self, _key: &str) -> Result<bool> {
         Ok(true)
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn exists(&self, _key: &str) -> Result<bool> {
         Ok(false)
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn clear(&self) -> Result<()> {
         Ok(())
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn stats(&self) -> Result<CacheStats> {
         Ok(CacheStats::default())
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn size(&self) -> Result<usize> {
         Ok(0)
     }
@@ -72,6 +93,9 @@ impl TestEmbeddingProvider {
 
 #[async_trait]
 impl EmbeddingProvider for TestEmbeddingProvider {
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
         let embeddings = texts
             .iter()
@@ -122,12 +146,21 @@ impl TestVectorStoreProvider {
 
 #[async_trait]
 impl VectorStoreAdmin for TestVectorStoreProvider {
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn collection_exists(&self, _name: &CollectionId) -> Result<bool> {
         Ok(true)
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn get_stats(&self, _collection: &CollectionId) -> Result<HashMap<String, Value>> {
         Ok(HashMap::new())
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn flush(&self, _collection: &CollectionId) -> Result<()> {
         Ok(())
     }
@@ -138,9 +171,15 @@ impl VectorStoreAdmin for TestVectorStoreProvider {
 
 #[async_trait]
 impl VectorStoreBrowser for TestVectorStoreProvider {
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
         Ok(vec![])
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn list_file_paths(
         &self,
         _collection: &CollectionId,
@@ -148,6 +187,9 @@ impl VectorStoreBrowser for TestVectorStoreProvider {
     ) -> Result<Vec<FileInfo>> {
         Ok(vec![])
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn get_chunks_by_file(
         &self,
         _collection: &CollectionId,
@@ -159,14 +201,23 @@ impl VectorStoreBrowser for TestVectorStoreProvider {
 
 #[async_trait]
 impl VectorStoreProvider for TestVectorStoreProvider {
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn create_collection(&self, _name: &CollectionId, _dimensions: usize) -> Result<()> {
         Ok(())
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn delete_collection(&self, name: &CollectionId) -> Result<()> {
         let mut store = self.storage.lock().await;
         store.remove(name.as_str());
         Ok(())
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn insert_vectors(
         &self,
         collection: &CollectionId,
@@ -181,6 +232,9 @@ impl VectorStoreProvider for TestVectorStoreProvider {
         let ids = (0..vectors.len()).map(|_| "mock-id".to_string()).collect();
         Ok(ids)
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn search_similar(
         &self,
         collection: &CollectionId,
@@ -218,9 +272,15 @@ impl VectorStoreProvider for TestVectorStoreProvider {
         }
         Ok(vec![])
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn delete_vectors(&self, _collection: &CollectionId, _ids: &[String]) -> Result<()> {
         Ok(())
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn get_vectors_by_ids(
         &self,
         _collection: &CollectionId,
@@ -228,6 +288,9 @@ impl VectorStoreProvider for TestVectorStoreProvider {
     ) -> Result<Vec<SearchResult>> {
         Ok(vec![])
     }
+    /// # Errors
+    ///
+    /// Returns an error if the operation fails.
     async fn list_vectors(
         &self,
         _collection: &CollectionId,

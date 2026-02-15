@@ -63,31 +63,55 @@ impl SolidValidator {
     }
 
     /// SRP: Check for structs/impls that are too large
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_srp(&self) -> Result<Vec<SolidViolation>> {
         srp::validate_srp(&self.config, self.max_struct_lines)
     }
 
     /// OCP: Check for excessive match statements
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_ocp(&self) -> Result<Vec<SolidViolation>> {
         ocp::validate_ocp(&self.config, self.max_match_arms)
     }
 
     /// OCP: Check for string-based type dispatch
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_string_dispatch(&self) -> Result<Vec<SolidViolation>> {
         ocp::validate_string_dispatch(&self.config)
     }
 
     /// ISP: Check for traits with too many methods
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_isp(&self) -> Result<Vec<SolidViolation>> {
         isp::validate_isp(&self.config, self.max_trait_methods)
     }
 
     /// LSP: Check for partial trait implementations (panic!/todo! in trait methods).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_lsp(&self) -> Result<Vec<SolidViolation>> {
         lsp::validate_lsp(&self.config)
     }
 
     /// SRP: Check for impl blocks with too many methods
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file scanning or regex compilation fails.
     pub fn validate_impl_method_count(&self) -> Result<Vec<SolidViolation>> {
         srp::validate_impl_method_count(&self.config, self.max_impl_methods)
     }
