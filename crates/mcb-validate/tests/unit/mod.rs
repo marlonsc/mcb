@@ -114,3 +114,6 @@ mod display_parity_tests;
 
 #[path = "field_selection_tests.rs"]
 mod field_selection_tests;
+
+#[path = "declarative_validator_tests.rs"]
+mod declarative_validator_tests;
