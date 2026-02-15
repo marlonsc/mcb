@@ -38,6 +38,8 @@
 // Clippy allows for complex patterns in infrastructure code
 
 // Core infrastructure modules
+#[macro_use]
+pub(crate) mod macros;
 pub mod cache;
 pub mod config;
 pub mod constants;

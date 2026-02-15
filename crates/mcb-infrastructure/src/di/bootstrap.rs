@@ -105,190 +105,181 @@ pub struct AppContext {
     crypto_service: Arc<dyn CryptoProvider>,
 }
 
-macro_rules! app_context_entity_repo_getter {
-    ($name:ident, $ty:ty, $field:ident, $doc:literal) => {
-        #[doc = $doc]
-        pub fn $name(&self) -> Arc<$ty> {
-            self.$field.clone()
-        }
-    };
-}
-
 impl AppContext {
     /// Get embedding provider handle
     #[must_use]
     pub fn embedding_handle(&self) -> Arc<EmbeddingProviderHandle> {
-        self.embedding_handle.clone()
+        Arc::clone(&self.embedding_handle)
     }
 
     /// Get vector store provider handle
     #[must_use]
     pub fn vector_store_handle(&self) -> Arc<VectorStoreProviderHandle> {
-        self.vector_store_handle.clone()
+        Arc::clone(&self.vector_store_handle)
     }
 
     /// Get cache provider handle
     #[must_use]
     pub fn cache_handle(&self) -> Arc<CacheProviderHandle> {
-        self.cache_handle.clone()
+        Arc::clone(&self.cache_handle)
     }
 
     /// Get language provider handle
     #[must_use]
     pub fn language_handle(&self) -> Arc<LanguageProviderHandle> {
-        self.language_handle.clone()
+        Arc::clone(&self.language_handle)
     }
 
     /// Get embedding provider resolver
     #[must_use]
     pub fn embedding_resolver(&self) -> Arc<EmbeddingProviderResolver> {
-        self.embedding_resolver.clone()
+        Arc::clone(&self.embedding_resolver)
     }
 
     /// Get vector store provider resolver
     #[must_use]
     pub fn vector_store_resolver(&self) -> Arc<VectorStoreProviderResolver> {
-        self.vector_store_resolver.clone()
+        Arc::clone(&self.vector_store_resolver)
     }
 
     /// Get cache provider resolver
     #[must_use]
     pub fn cache_resolver(&self) -> Arc<CacheProviderResolver> {
-        self.cache_resolver.clone()
+        Arc::clone(&self.cache_resolver)
     }
 
     /// Get language provider resolver
     #[must_use]
     pub fn language_resolver(&self) -> Arc<LanguageProviderResolver> {
-        self.language_resolver.clone()
+        Arc::clone(&self.language_resolver)
     }
 
     /// Get embedding admin service
     #[must_use]
     pub fn embedding_admin(&self) -> Arc<dyn EmbeddingAdminInterface> {
-        self.embedding_admin.clone()
+        Arc::clone(&self.embedding_admin)
     }
 
     /// Get vector store admin service
     #[must_use]
     pub fn vector_store_admin(&self) -> Arc<dyn VectorStoreAdminInterface> {
-        self.vector_store_admin.clone()
+        Arc::clone(&self.vector_store_admin)
     }
 
     /// Get cache admin service
     #[must_use]
     pub fn cache_admin(&self) -> Arc<dyn CacheAdminInterface> {
-        self.cache_admin.clone()
+        Arc::clone(&self.cache_admin)
     }
 
     /// Get language admin service
     #[must_use]
     pub fn language_admin(&self) -> Arc<dyn LanguageAdminInterface> {
-        self.language_admin.clone()
+        Arc::clone(&self.language_admin)
     }
 
     /// Get event bus
     #[must_use]
     pub fn event_bus(&self) -> Arc<dyn EventBusProvider> {
-        self.event_bus.clone()
+        Arc::clone(&self.event_bus)
     }
 
     /// Get shutdown coordinator
     #[must_use]
     pub fn shutdown(&self) -> Arc<dyn ShutdownCoordinator> {
-        self.shutdown_coordinator.clone()
+        Arc::clone(&self.shutdown_coordinator)
     }
 
     /// Get performance metrics
     #[must_use]
     pub fn performance(&self) -> Arc<dyn PerformanceMetricsInterface> {
-        self.performance_metrics.clone()
+        Arc::clone(&self.performance_metrics)
     }
 
     /// Get indexing operations
     #[must_use]
     pub fn indexing(&self) -> Arc<dyn IndexingOperationsInterface> {
-        self.indexing_operations.clone()
+        Arc::clone(&self.indexing_operations)
     }
 
     /// Get memory repository
     #[must_use]
     pub fn memory_repository(&self) -> Arc<dyn MemoryRepository> {
-        self.memory_repository.clone()
+        Arc::clone(&self.memory_repository)
     }
 
     /// Get agent repository
     #[must_use]
     pub fn agent_repository(&self) -> Arc<dyn AgentRepository> {
-        self.agent_repository.clone()
+        Arc::clone(&self.agent_repository)
     }
 
     /// Get project repository
     #[must_use]
     pub fn project_repository(&self) -> Arc<dyn ProjectRepository> {
-        self.project_repository.clone()
+        Arc::clone(&self.project_repository)
     }
 
     /// Get VCS provider
     #[must_use]
     pub fn vcs_provider(&self) -> Arc<dyn VcsProvider> {
-        self.vcs_provider.clone()
+        Arc::clone(&self.vcs_provider)
     }
 
     /// Get project service
     #[must_use]
     pub fn project_service(&self) -> Arc<dyn ProjectDetectorService> {
-        self.project_service.clone()
+        Arc::clone(&self.project_service)
     }
 
-    app_context_entity_repo_getter!(
-        vcs_entity_repository,
-        dyn VcsEntityRepository,
-        vcs_entity_repository,
-        "Get VCS entity repository"
-    );
+    /// Get VCS entity repository
+    #[must_use]
+    pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
+        Arc::clone(&self.vcs_entity_repository)
+    }
 
-    app_context_entity_repo_getter!(
-        plan_entity_repository,
-        dyn PlanEntityRepository,
-        plan_entity_repository,
-        "Get plan entity repository"
-    );
+    /// Get plan entity repository
+    #[must_use]
+    pub fn plan_entity_repository(&self) -> Arc<dyn PlanEntityRepository> {
+        Arc::clone(&self.plan_entity_repository)
+    }
 
-    app_context_entity_repo_getter!(
-        issue_entity_repository,
-        dyn IssueEntityRepository,
-        issue_entity_repository,
-        "Get issue entity repository"
-    );
+    /// Get issue entity repository
+    #[must_use]
+    pub fn issue_entity_repository(&self) -> Arc<dyn IssueEntityRepository> {
+        Arc::clone(&self.issue_entity_repository)
+    }
 
-    app_context_entity_repo_getter!(
-        org_entity_repository,
-        dyn OrgEntityRepository,
-        org_entity_repository,
-        "Get org entity repository"
-    );
+    /// Get org entity repository
+    #[must_use]
+    pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
+        Arc::clone(&self.org_entity_repository)
+    }
 
     /// Get file hash repository
     #[must_use]
     pub fn file_hash_repository(&self) -> Arc<dyn FileHashRepository> {
-        self.file_hash_repository.clone()
+        Arc::clone(&self.file_hash_repository)
     }
 
     /// Get highlight service
     #[must_use]
     pub fn highlight_service(&self) -> Arc<dyn HighlightServiceInterface> {
-        self.highlight_service.clone()
+        Arc::clone(&self.highlight_service)
     }
 
     /// Get crypto service
     #[must_use]
     pub fn crypto_service(&self) -> Arc<dyn CryptoProvider> {
-        self.crypto_service.clone()
+        Arc::clone(&self.crypto_service)
     }
 
     /// Build domain services for the server layer
     /// This method creates all domain services needed by `McpServer`
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any domain service fails to initialize.
     pub async fn build_domain_services(
         &self,
     ) -> Result<crate::di::modules::domain_services::DomainServicesContainer> {
@@ -356,6 +347,10 @@ impl std::fmt::Debug for AppContext {
 }
 
 /// Initialize application context with provider handles and infrastructure services
+///
+/// # Errors
+///
+/// Returns an error if provider resolution, database connection, or service initialization fails.
 pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     info!("Initializing application context with provider handles");
 
@@ -365,10 +360,10 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     // Create Resolvers
     // ========================================================================
 
-    let embedding_resolver = Arc::new(EmbeddingProviderResolver::new(config.clone()));
-    let vector_store_resolver = Arc::new(VectorStoreProviderResolver::new(config.clone()));
-    let cache_resolver = Arc::new(CacheProviderResolver::new(config.clone()));
-    let language_resolver = Arc::new(LanguageProviderResolver::new(config.clone()));
+    let embedding_resolver = Arc::new(EmbeddingProviderResolver::new(Arc::clone(&config)));
+    let vector_store_resolver = Arc::new(VectorStoreProviderResolver::new(Arc::clone(&config)));
+    let cache_resolver = Arc::new(CacheProviderResolver::new(Arc::clone(&config)));
+    let language_resolver = Arc::new(LanguageProviderResolver::new(Arc::clone(&config)));
 
     // ========================================================================
     // Resolve initial providers from config
@@ -405,31 +400,35 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 
     let embedding_admin_svc = Arc::new(EmbeddingAdminService::new(
         "Embedding Service",
-        embedding_resolver.clone(),
-        embedding_handle.clone(),
+        Arc::clone(&embedding_resolver),
+        Arc::clone(&embedding_handle),
     ));
-    let embedding_admin: Arc<dyn EmbeddingAdminInterface> = embedding_admin_svc.clone();
+    let embedding_admin: Arc<dyn EmbeddingAdminInterface> =
+        Arc::clone(&embedding_admin_svc) as Arc<dyn EmbeddingAdminInterface>;
 
     let vector_store_admin_svc = Arc::new(VectorStoreAdminService::new(
         "Vector Store Service",
-        vector_store_resolver.clone(),
-        vector_store_handle.clone(),
+        Arc::clone(&vector_store_resolver),
+        Arc::clone(&vector_store_handle),
     ));
-    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> = vector_store_admin_svc.clone();
+    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> =
+        Arc::clone(&vector_store_admin_svc) as Arc<dyn VectorStoreAdminInterface>;
 
     let cache_admin_svc = Arc::new(CacheAdminService::new(
         "Cache Service",
-        cache_resolver.clone(),
-        cache_handle.clone(),
+        Arc::clone(&cache_resolver),
+        Arc::clone(&cache_handle),
     ));
-    let cache_admin: Arc<dyn CacheAdminInterface> = cache_admin_svc.clone();
+    let cache_admin: Arc<dyn CacheAdminInterface> =
+        Arc::clone(&cache_admin_svc) as Arc<dyn CacheAdminInterface>;
 
     let language_admin_svc = Arc::new(LanguageAdminService::new(
         "Language Service",
-        language_resolver.clone(),
-        language_handle.clone(),
+        Arc::clone(&language_resolver),
+        Arc::clone(&language_handle),
     ));
-    let language_admin: Arc<dyn LanguageAdminInterface> = language_admin_svc.clone();
+    let language_admin: Arc<dyn LanguageAdminInterface> =
+        Arc::clone(&language_admin_svc) as Arc<dyn LanguageAdminInterface>;
 
     // Collect lifecycle managed services
     let lifecycle_services: Vec<Arc<dyn LifecycleManaged>> = vec![
@@ -468,7 +467,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         )
     })?;
 
-    let db_resolver = DatabaseProviderResolver::new(config.clone());
+    let db_resolver = DatabaseProviderResolver::new(Arc::clone(&config));
     let db_executor = db_resolver
         .resolve_and_connect(memory_db_path.as_path())
         .await
@@ -558,12 +557,20 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 }
 
 /// Initialize application for testing
+///
+/// # Errors
+///
+/// Returns an error if application initialization fails.
 pub async fn init_test_app() -> Result<AppContext> {
     let config = ConfigLoader::new().load().expect("load config");
     init_app(config).await
 }
 
 /// Create a test DI container with default configuration
+///
+/// # Errors
+///
+/// Returns an error if test application initialization fails.
 pub async fn create_test_container() -> Result<AppContext> {
     init_test_app().await
 }

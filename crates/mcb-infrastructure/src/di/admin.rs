@@ -58,8 +58,16 @@ use super::provider_resolvers::{
 /// ```
 pub trait ProviderResolver<P: ?Sized + Send + Sync, C>: Send + Sync {
     /// Resolve provider from current application config
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the provider cannot be resolved from config.
     fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<P>>;
     /// Resolve provider from override config (for admin API)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the provider cannot be resolved from the override config.
     fn resolve_from_override(&self, config: &C) -> mcb_domain::error::Result<Arc<P>>;
     /// List available providers
     fn list_available(&self) -> Vec<(&'static str, &'static str)>;
@@ -68,27 +76,6 @@ pub trait ProviderResolver<P: ?Sized + Send + Sync, C>: Send + Sync {
 // ============================================================================
 // Resolver Trait Implementations
 // ============================================================================
-
-macro_rules! impl_provider_resolver {
-    ($resolver:ty, $provider:ty, $config:ty) => {
-        impl ProviderResolver<$provider, $config> for $resolver {
-            fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<$provider>> {
-                <$resolver>::resolve_from_config(self)
-            }
-
-            fn resolve_from_override(
-                &self,
-                config: &$config,
-            ) -> mcb_domain::error::Result<Arc<$provider>> {
-                <$resolver>::resolve_from_override(self, config)
-            }
-
-            fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-                <$resolver>::list_available(self)
-            }
-        }
-    };
-}
 
 impl_provider_resolver!(
     EmbeddingProviderResolver,
@@ -166,9 +153,9 @@ where
     /// # Arguments
     /// * `config` - Configuration for the new provider
     ///
-    /// # Returns
-    /// * `Ok(())` - Provider switched successfully
-    /// * `Err(String)` - Failed to switch (provider not found, config invalid, etc.)
+    /// # Errors
+    ///
+    /// Returns an error string if the provider cannot be resolved from the given config.
     pub fn switch_provider(&self, config: &C) -> Result<(), String> {
         let new_provider = self
             .resolver
@@ -179,6 +166,10 @@ where
     }
 
     /// Reload provider from current application config
+    ///
+    /// # Errors
+    ///
+    /// Returns an error string if provider resolution fails.
     pub fn reload_from_config(&self) -> Result<(), String> {
         let provider = self
             .resolver
@@ -259,43 +250,6 @@ pub type LanguageAdminService =
 // ============================================================================
 // Trait Implementations for Specific Admin Services
 // ============================================================================
-
-macro_rules! impl_admin_interface {
-    ($service:ty, $trait:ty, $config:ty) => {
-        impl $trait for $service {
-            fn list_providers(&self) -> Vec<ProviderInfo> {
-                AdminService::list_providers(self)
-            }
-
-            fn switch_provider(&self, config: $config) -> Result<(), String> {
-                AdminService::switch_provider(self, &config)
-            }
-
-            fn reload_from_config(&self) -> Result<(), String> {
-                AdminService::reload_from_config(self)
-            }
-        }
-    };
-    ($service:ty, $trait:ty, $config:ty, with_current_provider) => {
-        impl $trait for $service {
-            fn list_providers(&self) -> Vec<ProviderInfo> {
-                AdminService::list_providers(self)
-            }
-
-            fn current_provider(&self) -> String {
-                self.handle.provider_name()
-            }
-
-            fn switch_provider(&self, config: $config) -> Result<(), String> {
-                AdminService::switch_provider(self, &config)
-            }
-
-            fn reload_from_config(&self) -> Result<(), String> {
-                AdminService::reload_from_config(self)
-            }
-        }
-    };
-}
 
 impl_admin_interface!(
     EmbeddingAdminService,
