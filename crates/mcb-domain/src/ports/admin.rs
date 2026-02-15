@@ -341,12 +341,13 @@ pub trait LifecycleManaged: Send + Sync {
             status: match self.state() {
                 PortServiceState::Running => DependencyHealth::Healthy,
                 PortServiceState::Starting => DependencyHealth::Unknown,
-                _ => DependencyHealth::Unhealthy,
+                PortServiceState::Stopping | PortServiceState::Stopped => {
+                    DependencyHealth::Unhealthy
+                }
             },
             message: None,
             latency_ms: None,
-            last_check: crate::utils::time::epoch_secs_u64()
-                .unwrap_or_else(|e| panic!("system clock failure: {e}")),
+            last_check: crate::utils::time::epoch_secs_u64().unwrap_or(0),
         }
     }
 }

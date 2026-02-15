@@ -14,10 +14,11 @@ pub struct HttpTransportConfig {
 }
 
 impl Default for HttpTransportConfig {
+    #[allow(clippy::expect_used)]
     fn default() -> Self {
         let config = ConfigLoader::new()
             .load()
-            .expect("HttpTransportConfig::default requires loadable configuration file");
+            .expect("startup: configuration file must be loadable");
         Self {
             host: config.server.network.host,
             port: config.server.network.port,
@@ -29,10 +30,11 @@ impl Default for HttpTransportConfig {
 impl HttpTransportConfig {
     /// Build a config bound to the configured host with a custom port.
     #[must_use]
+    #[allow(clippy::expect_used)]
     pub fn localhost(port: u16) -> Self {
         let config = ConfigLoader::new()
             .load()
-            .expect("HttpTransportConfig::localhost requires loadable configuration file");
+            .expect("startup: configuration file must be loadable");
         Self {
             host: config.server.network.host,
             port,
@@ -41,10 +43,10 @@ impl HttpTransportConfig {
     }
 
     /// Resolve the configured host and port into a [`SocketAddr`].
-    #[must_use]
-    pub fn socket_addr(&self) -> SocketAddr {
-        format!("{}:{}", self.host, self.port)
-            .parse()
-            .expect("Invalid host/port in configuration")
+    ///
+    /// # Errors
+    /// Returns an error if the host/port combination is not a valid socket address.
+    pub fn socket_addr(&self) -> Result<SocketAddr, std::net::AddrParseError> {
+        format!("{}:{}", self.host, self.port).parse()
     }
 }

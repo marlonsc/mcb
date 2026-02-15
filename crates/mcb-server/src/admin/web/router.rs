@@ -53,7 +53,10 @@ fn default_admin_state() -> AdminState {
         metrics: Arc::new(AtomicPerformanceMetrics::new()),
         indexing: Arc::new(DefaultIndexingOperations::new()),
         config_watcher: None,
-        current_config: ConfigLoader::new().load().expect("load config"),
+        #[allow(clippy::expect_used)]
+        current_config: ConfigLoader::new()
+            .load()
+            .expect("startup: configuration file must be loadable"),
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: 30,

@@ -10,7 +10,6 @@
 use rstest::rstest;
 extern crate mcb_providers;
 
-use std::net::TcpListener;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -24,16 +23,7 @@ use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
 use mcb_server::transport::http_client::HttpClientTransport;
 use mcb_server::transport::types::{McpRequest, McpResponse};
 
-/// Get a random available port by binding to port 0 and extracting the assigned port
-fn get_free_port() -> u16 {
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to port 0");
-    let port = listener
-        .local_addr()
-        .expect("Failed to get local address")
-        .port();
-    drop(listener);
-    port
-}
+use crate::test_utils::http_mcp::get_free_port;
 
 fn create_test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
@@ -193,7 +183,7 @@ fn test_session_cleanup() {
     let manager = SessionManager::new();
 
     // Create a session
-    manager.get_or_create("old-session");
+    let _ = manager.get_or_create("old-session");
     assert_eq!(manager.session_count(), 1);
 
     // Cleanup with 0 duration should remove all sessions
@@ -205,11 +195,11 @@ fn test_session_cleanup() {
 fn test_session_removal() {
     let manager = SessionManager::new();
 
-    manager.get_or_create("to-remove");
+    let _ = manager.get_or_create("to-remove");
     assert!(manager.get("to-remove").is_some());
     assert_eq!(manager.session_count(), 1);
 
-    manager.remove("to-remove");
+    let _ = manager.remove("to-remove");
     assert!(manager.get("to-remove").is_none());
     assert_eq!(manager.session_count(), 0);
 }

@@ -21,10 +21,11 @@ pub struct TransportConfig {
 
 /// Returns default `TransportConfig` with Stdio mode and no HTTP configuration
 impl Default for TransportConfig {
+    #[allow(clippy::expect_used)]
     fn default() -> Self {
         let config = ConfigLoader::new()
             .load()
-            .expect("TransportConfig::default requires loadable configuration file");
+            .expect("startup: configuration file must be loadable");
         Self {
             mode: config.server.transport_mode,
             http_port: Some(config.server.network.port),
@@ -46,10 +47,11 @@ impl TransportConfig {
 
     /// Create HTTP-only transport config
     #[must_use]
+    #[allow(clippy::expect_used)]
     pub fn http(port: u16) -> Self {
         let config = ConfigLoader::new()
             .load()
-            .expect("TransportConfig::http requires loadable configuration file");
+            .expect("startup: configuration file must be loadable");
         Self {
             mode: TransportMode::Http,
             http_port: Some(port),

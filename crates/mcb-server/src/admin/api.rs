@@ -27,9 +27,10 @@ use super::browse_handlers::BrowseState;
 use super::handlers::AdminState;
 
 fn load_current_config() -> mcb_infrastructure::config::AppConfig {
+    #[allow(clippy::expect_used)]
     ConfigLoader::new()
         .load()
-        .unwrap_or_else(|e| panic!("Failed to load config: {e}"))
+        .expect("startup: configuration file must be loadable")
 }
 
 fn build_admin_state(
@@ -69,10 +70,11 @@ pub struct AdminApiConfig {
 }
 
 impl Default for AdminApiConfig {
+    #[allow(clippy::expect_used)]
     fn default() -> Self {
         let config = ConfigLoader::new()
             .load()
-            .expect("AdminApiConfig::default requires loadable configuration file");
+            .expect("startup: configuration file must be loadable");
         Self {
             host: config.server.network.host,
             port: config.server.network.port,
@@ -83,10 +85,11 @@ impl Default for AdminApiConfig {
 impl AdminApiConfig {
     /// Create config for localhost with specified port
     #[must_use]
+    #[allow(clippy::expect_used)]
     pub fn localhost(port: u16) -> Self {
         let config = ConfigLoader::new()
             .load()
-            .expect("AdminApiConfig::localhost requires loadable configuration file");
+            .expect("startup: configuration file must be loadable");
         Self {
             host: config.server.network.host,
             port,
@@ -96,10 +99,11 @@ impl AdminApiConfig {
     /// Get the Rocket configuration
     #[must_use]
     pub fn rocket_config(&self) -> RocketConfig {
+        #[allow(clippy::expect_used)]
         let address: IpAddr = self
             .host
             .parse()
-            .expect("Invalid admin host in configuration");
+            .expect("startup: admin host must be a valid IP address");
         RocketConfig {
             address,
             port: self.port,

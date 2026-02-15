@@ -11,22 +11,7 @@ use mcb_server::args::{
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-// Helper to extract text from response content
-fn extract_text(content: &[rmcp::model::Content]) -> String {
-    content
-        .iter()
-        .filter_map(|c| {
-            if let Ok(json) = serde_json::to_value(c)
-                && let Some(text) = json.get("text")
-            {
-                text.as_str().map(std::borrow::ToOwned::to_owned)
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-}
+use crate::test_utils::text::extract_text;
 
 #[tokio::test]
 async fn test_validation_agent_sql_storage_flow() {

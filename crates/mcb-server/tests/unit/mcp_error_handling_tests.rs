@@ -259,22 +259,7 @@ fn test_format_clear_index(
 // HELPER FUNCTIONS
 // =============================================================================
 
-/// Extract text content from `CallToolResult` content vector
-fn extract_text_content(content: &[rmcp::model::Content]) -> String {
-    content
-        .iter()
-        .filter_map(|c| {
-            // Content can be serialized to JSON and we can extract text from there
-            if let Ok(json) = serde_json::to_value(c)
-                && let Some(text) = json.get("text")
-            {
-                return text.as_str().map(std::borrow::ToOwned::to_owned);
-            }
-            None
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-}
+use crate::test_utils::text::extract_text as extract_text_content;
 
 mod handler_error_tests {
     use mcb_server::args::{IndexAction, IndexArgs};

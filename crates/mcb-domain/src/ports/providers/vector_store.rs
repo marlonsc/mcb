@@ -70,13 +70,9 @@ pub trait VectorStoreAdmin: Send + Sync {
 
     /// Health check for the provider (default implementation)
     async fn health_check(&self) -> Result<()> {
-        // Default implementation - try a simple operation
-        self.collection_exists(
-            &"00000000-0000-0000-0000-000000000000"
-                .parse::<CollectionId>()
-                .expect("health check UUID must be valid"),
-        )
-        .await?;
+        // Default implementation - try a simple operation with a deterministic UUID
+        let health_check_id = CollectionId::from_name("__health_check__");
+        self.collection_exists(&health_check_id).await?;
         Ok(())
     }
 }

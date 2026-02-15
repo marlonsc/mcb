@@ -138,7 +138,7 @@ impl HttpTransport {
 
     /// Start the HTTP transport server
     pub async fn start(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let addr = self.config.socket_addr();
+        let addr = self.config.socket_addr()?;
         info!("HTTP transport listening on {}", addr);
 
         let figment = rocket::Config::figment()

@@ -24,7 +24,7 @@ fn test_http_config_localhost_variants(#[case] offset: u16) {
     assert_eq!(config.port, override_port);
     assert!(config.enable_cors);
 
-    let addr = config.socket_addr();
+    let addr = config.socket_addr().expect("valid socket addr");
     assert_eq!(addr.port(), override_port);
     assert_eq!(addr.ip().to_string(), loaded.server.network.host);
 }
