@@ -106,9 +106,12 @@ async fn test_validate_detects_inline_tests_in_src_via_registry_path() {
         report.violations.iter().any(|v| {
             v.id == "TEST001"
                 && v.file.as_deref().is_some_and(|f| {
-                    // Normalize path separators for cross-platform compatibility
-                    // (Windows uses backslashes and may add \\?\ prefix).
-                    f.replace('\\', "/").ends_with("crates/foo/src/lib.rs")
+                    // Use Path components for cross-platform compatibility
+                    let suffix = PathBuf::from("crates")
+                        .join("foo")
+                        .join("src")
+                        .join("lib.rs");
+                    PathBuf::from(f).ends_with(suffix)
                 })
         }),
         "violations={:?}",

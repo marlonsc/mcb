@@ -3,7 +3,7 @@
 
 [general]
 workspace_root = "."
-rules_path = ".mcb/rules"
+rules_path = "crates/mcb-validate/rules"
 project_prefix = "mcb"
 internal_dep_prefix = "mcb-"
 skip_dir_patterns = ["/fixtures/"]

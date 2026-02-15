@@ -19,6 +19,9 @@ use crate::error::Result;
 /// Default TTL for cache entries (5 minutes)
 pub const DEFAULT_CACHE_TTL_SECS: u64 = 300;
 
+/// Default cache namespace when none is specified.
+pub const DEFAULT_CACHE_NAMESPACE: &str = "default";
+
 /// Cache Entry Configuration
 ///
 /// Configures how a cache entry should be stored, including TTL
@@ -79,7 +82,7 @@ impl CacheEntryConfig {
     pub fn effective_namespace(&self) -> String {
         self.namespace
             .clone()
-            .unwrap_or_else(|| "default".to_string())
+            .unwrap_or_else(|| DEFAULT_CACHE_NAMESPACE.to_string())
     }
 }
 
