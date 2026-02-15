@@ -47,10 +47,7 @@ pub async fn list_observations(
                 "hint": "Use memory action=timeline or memory action=get for details",
             }))
         }
-        Err(e) => Ok(CallToolResult::error(vec![Content::text(format!(
-            "Failed to list memories: {}",
-            e
-        ))])),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }
 

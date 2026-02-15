@@ -7,6 +7,7 @@ use rmcp::model::CallToolResult;
 
 use super::responses::ListRepositoriesResponse;
 use crate::args::VcsArgs;
+use crate::error_mapping::to_opaque_mcp_error;
 use crate::formatter::ResponseFormatter;
 
 /// Lists all available repositories discovered by the VCS provider.
@@ -28,10 +29,10 @@ pub async fn list_repositories(
             )
         })?;
 
-    let discovered_repos = vcs_provider.list_repositories(&root).await.map_err(|e| {
-        tracing::error!(error = %e, "failed to list repositories");
-        McpError::internal_error("internal server error", None)
-    })?;
+    let discovered_repos = vcs_provider
+        .list_repositories(&root)
+        .await
+        .map_err(to_opaque_mcp_error)?;
 
     let repositories: Vec<String> = discovered_repos
         .iter()

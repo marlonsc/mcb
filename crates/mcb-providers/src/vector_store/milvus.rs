@@ -572,9 +572,9 @@ impl MilvusVectorStoreProvider {
                 let err_str = e.to_string();
                 if err_str.contains("message length too large") {
                     tracing::warn!(
-                        "Hit gRPC message size limit at offset {}, returning {} results",
-                        offset,
-                        current_total
+                        offset = offset,
+                        results = current_total,
+                        "hit gRPC message size limit, returning partial results"
                     );
                     return Ok(None);
                 }
@@ -845,7 +845,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let query_results = match self.client.query(&name_str, &expr, &query_options).await {
             Ok(results) => results,
             Err(e) => {
-                tracing::warn!("Failed to query file paths: {}", e);
+                tracing::warn!(error = %e, "failed to query file paths");
                 return Ok(Vec::new());
             }
         };
@@ -890,7 +890,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let query_results = match self.client.query(&name_str, &expr, &query_options).await {
             Ok(results) => results,
             Err(e) => {
-                tracing::warn!("Failed to query chunks by file: {}", e);
+                tracing::warn!(error = %e, "failed to query chunks by file");
                 return Ok(Vec::new());
             }
         };

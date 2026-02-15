@@ -15,7 +15,6 @@ use crate::formatter::ResponseFormatter;
 use crate::handlers::helpers::{
     OriginContextInput, resolve_identifier_precedence, resolve_origin_context,
 };
-use tracing::error;
 
 /// Payload for creating an agent session from JSON data.
 #[derive(Deserialize, Default)]
@@ -124,9 +123,6 @@ pub async fn create_session(
             "agent_type": agent_type.as_str(),
             "status": "active",
         })),
-        Err(e) => {
-            error!("Failed to create agent session: {:?}", e);
-            Ok(to_contextual_tool_error(e))
-        }
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }

@@ -12,6 +12,7 @@ use rmcp::model::CallToolResult;
 use validator::Validate;
 
 use crate::args::{IndexAction, IndexArgs};
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::collections::normalize_collection_name;
 
@@ -77,13 +78,7 @@ impl IndexHandler {
                         &path,
                         timer.elapsed(),
                     )),
-                    Err(e) => {
-                        tracing::warn!(error = %e, path = ?path, "indexing failed");
-                        Ok(ResponseFormatter::format_indexing_error(
-                            "Indexing failed",
-                            &path,
-                        ))
-                    }
+                    Err(e) => Ok(to_contextual_tool_error(e)),
                 }
             }
             IndexAction::Status => {

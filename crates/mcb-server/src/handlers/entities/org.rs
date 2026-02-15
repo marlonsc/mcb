@@ -24,6 +24,7 @@ impl OrgEntityHandler {
     }
 
     /// Route an incoming `org_entity` tool call to the appropriate CRUD operation.
+    #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
         Parameters(args): Parameters<OrgEntityArgs>,

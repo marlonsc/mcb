@@ -78,7 +78,7 @@ pub async fn run(
     } else {
         // Check config for operating mode
         match config.mode.mode_type {
-            OperatingMode::Standalone => run_standalone(config).await,
+            OperatingMode::Standalone => run_standalone(config, log_receiver).await,
             OperatingMode::Client => run_client(config).await,
         }
     }
@@ -209,7 +209,10 @@ async fn run_server_mode(
 /// This is the default mode when no `--server` flag is provided and
 /// `config.mode.type = "standalone"`. MCB runs with local providers
 /// and communicates via stdio (for Claude Code integration).
-async fn run_standalone(config: AppConfig) -> Result<(), Box<dyn std::error::Error>> {
+async fn run_standalone(
+    config: AppConfig,
+    log_receiver: Option<mcb_infrastructure::logging::LogEventReceiver>,
+) -> Result<(), Box<dyn std::error::Error>> {
     info!(
         transport_mode = ?config.server.transport_mode,
         "Starting MCB standalone mode"
@@ -219,8 +222,13 @@ async fn run_standalone(config: AppConfig) -> Result<(), Box<dyn std::error::Err
     let http_host = config.server.network.host.clone();
     let http_port = config.server.network.port;
 
-    let (server, _app_context) = create_mcp_server(config, "standalone").await?;
+    let (server, app_context) = create_mcp_server(config, "standalone").await?;
     info!("MCP server initialized successfully");
+
+    // Connect log event channel to the event bus for SSE streaming
+    if let Some(receiver) = log_receiver {
+        mcb_infrastructure::logging::spawn_log_forwarder(receiver, app_context.event_bus());
+    }
 
     start_transport(server, transport_mode, &http_host, http_port).await
 }

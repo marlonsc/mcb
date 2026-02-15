@@ -37,6 +37,7 @@ impl EntityHandler {
     }
 
     /// Route an `entity` tool call to the matching legacy entity handler.
+    #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
         Parameters(args): Parameters<EntityArgs>,

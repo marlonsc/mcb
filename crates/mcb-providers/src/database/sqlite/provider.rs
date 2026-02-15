@@ -57,18 +57,21 @@ impl DatabaseProvider for SqliteDatabaseProvider {
 }
 
 /// Create a file-backed memory repository: connect, apply [`ProjectSchema`] DDL, return repository.
+#[tracing::instrument(skip_all)]
 pub async fn create_memory_repository(path: PathBuf) -> Result<Arc<dyn MemoryRepository>> {
     let (repo, _) = create_memory_repository_with_executor(path).await?;
     Ok(repo)
 }
 
 /// Create a file-backed agent repository sharing the same SQLite project schema database.
+#[tracing::instrument(skip_all)]
 pub async fn create_agent_repository(path: PathBuf) -> Result<Arc<dyn AgentRepository>> {
     let (_, executor) = create_memory_repository_with_executor(path).await?;
     Ok(create_agent_repository_from_executor(executor))
 }
 
 /// Create file-backed memory repository and executor (same DB) for use with agent repository.
+#[tracing::instrument(skip_all)]
 pub async fn create_memory_repository_with_executor(
     path: PathBuf,
 ) -> Result<(Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>)> {
@@ -86,6 +89,7 @@ pub fn create_agent_repository_from_executor(
 }
 
 /// Create a file-backed project repository: connect, apply [`ProjectSchema`] DDL, return repository.
+#[tracing::instrument(skip_all)]
 pub async fn create_project_repository(path: PathBuf) -> Result<Arc<dyn ProjectRepository>> {
     let pool = connect_and_init(path).await?;
     let executor: Arc<dyn DatabaseExecutor> = Arc::new(SqliteExecutor::new(pool));
@@ -101,7 +105,7 @@ pub fn create_project_repository_from_executor(
 
 async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
     use mcb_domain::error::Error;
-    tracing::info!("Connecting to SQLite database at: {}", path.display());
+    tracing::info!(path = %path.display(), "connecting to SQLite database");
 
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)
@@ -125,8 +129,8 @@ async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
             configure_pragmas(&fresh_pool).await?;
             apply_schema(&fresh_pool).await?;
             tracing::info!(
-                "Memory database recreated at {} (old data backed up)",
-                path.display()
+                path = %path.display(),
+                "memory database recreated (old data backed up)"
             );
             Ok(fresh_pool)
         }
@@ -155,7 +159,7 @@ async fn try_connect_and_init(path: &std::path::Path, db_url: &str) -> Result<sq
 
     match apply_schema(&pool).await {
         Ok(()) => {
-            tracing::info!("Memory database initialized at {}", path.display());
+            tracing::info!(path = %path.display(), "memory database initialized");
             Ok(pool)
         }
         Err(schema_err) => {

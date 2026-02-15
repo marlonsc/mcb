@@ -185,18 +185,18 @@ impl ConfigLoader {
                             return Some(settings);
                         }
                         Err(e) => {
-                            eprintln!(
-                                "Failed to parse project settings at {}: {}",
-                                path.display(),
-                                e
+                            tracing::warn!(
+                                path = %path.display(),
+                                error = %e,
+                                "Failed to parse project settings"
                             );
                         }
                     },
                     Err(e) => {
-                        eprintln!(
-                            "Failed to read project settings at {}: {}",
-                            path.display(),
-                            e
+                        tracing::warn!(
+                            path = %path.display(),
+                            error = %e,
+                            "Failed to read project settings"
                         );
                     }
                 }

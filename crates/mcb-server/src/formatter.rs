@@ -26,11 +26,7 @@ impl ResponseFormatter {
         limit: usize,
     ) -> Result<CallToolResult, McpError> {
         let message = build_search_response_message(query, results, duration, limit);
-        tracing::info!(
-            "Search completed: found {} results in {:?}",
-            results.len(),
-            duration
-        );
+        tracing::info!(results = results.len(), ?duration, "search completed");
         Ok(CallToolResult::success(vec![Content::text(message)]))
     }
 
@@ -42,9 +38,9 @@ impl ResponseFormatter {
     ) -> CallToolResult {
         let message = build_indexing_success_message(result, path, duration);
         tracing::info!(
-            "Indexing completed successfully: {} chunks in {:?}",
-            result.chunks_created,
-            duration
+            chunks = result.chunks_created,
+            ?duration,
+            "indexing completed"
         );
         CallToolResult::success(vec![Content::text(message)])
     }
@@ -52,7 +48,7 @@ impl ResponseFormatter {
     /// Format indexing error response
     pub fn format_indexing_error(error: &str, path: &Path) -> CallToolResult {
         let message = build_indexing_error_message(error, path);
-        tracing::error!("Indexing failed for path {}: {}", path.display(), error);
+        tracing::error!(path = %path.display(), error = %error, "indexing failed");
         CallToolResult::error(vec![Content::text(message)])
     }
 
@@ -88,9 +84,9 @@ impl ResponseFormatter {
     ) -> CallToolResult {
         let message = build_validation_message(report, path, duration);
         tracing::info!(
-            "Validation completed: {} violations in {:?}",
-            report.total_violations,
-            duration
+            violations = report.total_violations,
+            ?duration,
+            "validation completed"
         );
         if report.passed {
             CallToolResult::success(vec![Content::text(message)])
@@ -102,7 +98,7 @@ impl ResponseFormatter {
     /// Format validation error response
     pub fn format_validation_error(error: &str, path: &Path) -> CallToolResult {
         let message = build_validation_error_message(error, path);
-        tracing::error!("Validation failed for path {}: {}", path.display(), error);
+        tracing::error!(path = %path.display(), error = %error, "validation failed");
         CallToolResult::error(vec![Content::text(message)])
     }
 }

@@ -26,13 +26,7 @@ pub struct LoggingConfig {
     /// Maximum number of rotated files to keep
     pub max_files: usize,
     /// Minimum log level forwarded to event bus SSE (trace, debug, info, warn, error)
-    #[serde(default = "default_event_bus_level")]
     pub event_bus_level: String,
-}
-
-/// Default event bus level: only warn and above
-fn default_event_bus_level() -> String {
-    "warn".to_string()
 }
 
 // ============================================================================

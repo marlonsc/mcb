@@ -66,13 +66,7 @@ impl ValidateHandler {
                             &path,
                             timer.elapsed(),
                         )),
-                        Err(e) => {
-                            let _ = e;
-                            Ok(ResponseFormatter::format_validation_error(
-                                &format!("Validation failed for file {}", path.display()),
-                                &path,
-                            ))
-                        }
+                        Err(e) => Ok(to_contextual_tool_error(e)),
                     },
                     ValidateScope::Project => match self
                         .validation_service
@@ -84,13 +78,7 @@ impl ValidateHandler {
                             &path,
                             timer.elapsed(),
                         )),
-                        Err(e) => {
-                            let _ = e;
-                            Ok(ResponseFormatter::format_validation_error(
-                                &format!("Project validation failed for {}", path.display()),
-                                &path,
-                            ))
-                        }
+                        Err(e) => Ok(to_contextual_tool_error(e)),
                     },
                 }
             }

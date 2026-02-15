@@ -13,6 +13,7 @@ use uuid::Uuid;
 use validator::Validate;
 
 use crate::args::{AgentAction, AgentArgs};
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::handlers::helpers::resolve_org_id;
 
@@ -94,9 +95,7 @@ impl AgentHandler {
                         "session_id": session_id,
                         "tool_name": tool_name,
                     })),
-                    Err(_) => Ok(CallToolResult::error(vec![Content::text(
-                        "Failed to store tool call",
-                    )])),
+                    Err(e) => Ok(to_contextual_tool_error(e)),
                 }
             }
             AgentAction::LogDelegation => {
@@ -140,9 +139,7 @@ impl AgentHandler {
                         "parent_session_id": session_id,
                         "child_session_id": child_session_id,
                     })),
-                    Err(_) => Ok(CallToolResult::error(vec![Content::text(
-                        "Failed to store delegation",
-                    )])),
+                    Err(e) => Ok(to_contextual_tool_error(e)),
                 }
             }
         }

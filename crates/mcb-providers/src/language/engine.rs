@@ -111,7 +111,9 @@ impl IntelligentChunker {
                 }
                 Err(e) => {
                     tracing::warn!(
-                        "Tree-sitter parse failed for {file_name}: {e}, using generic chunking"
+                        file = %file_name,
+                        error = %e,
+                        "tree-sitter parse failed, using generic chunking"
                     );
                 }
             }

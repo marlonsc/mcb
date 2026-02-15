@@ -11,4 +11,5 @@ pub mod violation_field_fmt;
 
 pub use extract_file_path::ExtractFilePath;
 
+#[macro_use]
 mod define_violations;
