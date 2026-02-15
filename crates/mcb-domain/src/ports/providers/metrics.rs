@@ -102,7 +102,6 @@ pub enum MetricsError {
 /// # Ok(())
 /// # }
 /// ```
-/// ```
 #[async_trait]
 pub trait MetricsProvider: Send + Sync {
     /// Provider name for identification

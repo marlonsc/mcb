@@ -4,9 +4,6 @@
 //! anti-patterns in Rust code. It focuses on identifying clone abuse, unnecessary
 //! allocations in loops, and suboptimal synchronization patterns.
 //!
-//! # Code Smells
-//! TODO(qlty): High total complexity (count = 130).
-//! TODO(mcb-validate): File too large (641 lines). Consider extracting pattern definitions.
 //!
 //! Detects performance anti-patterns that PMAT and Clippy might miss:
 //! - Clone abuse (redundant clones, clones in loops)

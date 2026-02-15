@@ -252,16 +252,31 @@ fn collect_rule_files(rules_dir: &Path) -> Vec<PathBuf> {
     files
 }
 
-/// Get the default rules directory
+/// Get the default rules directory.
+///
+/// Resolution order (all workspace-relative unless overridden via env):
+/// 1. `MCB_RULES_DIR` environment variable (explicit override)
+/// 2. `CARGO_MANIFEST_DIR/rules` (building mcb-validate directly)
+/// 3. Workspace root `crates/mcb-validate/rules` (used as dependency)
+/// 4. CWD-relative `crates/mcb-validate/rules` (running from workspace root)
+/// 5. CWD-relative `rules/` fallback
 pub fn default_rules_dir() -> PathBuf {
-    // 1. Try CARGO_MANIFEST_DIR (works when building mcb-validate directly)
+    // 1. Explicit override via environment variable
+    if let Ok(rules_dir) = std::env::var("MCB_RULES_DIR") {
+        let path = PathBuf::from(rules_dir);
+        if path.exists() {
+            return path;
+        }
+    }
+
+    // 2. Try CARGO_MANIFEST_DIR (works when building mcb-validate directly)
     if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
         let rules_dir = PathBuf::from(&manifest_dir).join("rules");
         if rules_dir.exists() {
             return rules_dir;
         }
 
-        // 2. When used as dependency, CARGO_MANIFEST_DIR points to consumer crate
+        // 3. When used as dependency, CARGO_MANIFEST_DIR points to consumer crate
         // Try to find mcb-validate/rules relative to workspace root
         if let Some(workspace_root) = PathBuf::from(&manifest_dir)
             .ancestors()
@@ -274,27 +289,13 @@ pub fn default_rules_dir() -> PathBuf {
         }
     }
 
-    // 3. Try relative to current directory (works when running from workspace root)
+    // 4. Try relative to current directory (works when running from workspace root)
     let cwd_rules = PathBuf::from("crates/mcb-validate/rules");
     if cwd_rules.exists() {
         return cwd_rules;
     }
 
-    // 4. Check ~/.local/share/mcb/rules (make install target)
-    if let Some(home) = std::env::var_os("HOME") {
-        let xdg_rules = PathBuf::from(home).join(".local/share/mcb/rules");
-        if xdg_rules.exists() {
-            return xdg_rules;
-        }
-    }
-
-    // 5. Try /usr/share/mcb/rules (system-wide)
-    let system_rules = PathBuf::from("/usr/share/mcb/rules");
-    if system_rules.exists() {
-        return system_rules;
-    }
-
-    // 6. Fallback
+    // 5. Fallback to CWD-relative rules/
     PathBuf::from("rules")
 }
 

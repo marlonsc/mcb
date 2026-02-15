@@ -26,7 +26,7 @@
 
 /// Extract the primary file path from a collection element (PathBuf or tuple).
 pub trait ExtractFilePath {
-    /// Returns a reference to the [`PathBuf`] component of this element.
+    /// Returns a reference to the [`std::path::PathBuf`] component of this element.
     fn extract_file_path(&self) -> &std::path::PathBuf;
 }
 

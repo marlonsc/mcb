@@ -105,14 +105,11 @@ impl ConfigQualityValidator {
         let mut violations = Vec::new();
 
         // Regex patterns
-        let _hardcoded_string_pattern = Regex::new(r#":\s*"([^"]+)".to_string\(\)"#).unwrap();
         let namespace_pattern = Regex::new(r#"namespace:\s*"([^"]+)".to_string\(\)"#).unwrap();
         let client_name_pattern =
             Regex::new(r#"client_name:\s*Some\("([^"]+)".to_string\(\)\)"#).unwrap();
         let header_pattern = Regex::new(r#"header:\s*"([^"]+)".to_string\(\)"#).unwrap();
         let default_impl_pattern = Regex::new(r"impl\s+Default\s+for\s+(\w+)").unwrap();
-        let _struct_pattern = Regex::new(r"pub\s+struct\s+(\w+)").unwrap();
-        let _field_pattern = Regex::new(r"pub\s+(\w+):\s+").unwrap();
 
         for_each_scan_file(
             &self.config,
