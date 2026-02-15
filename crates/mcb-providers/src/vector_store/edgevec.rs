@@ -804,13 +804,15 @@ impl EdgeVecActor {
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
         let mut results = Vec::new();
+        // Normalize to forward slashes for cross-platform path matching
+        let normalized_query = file_path.replace('\\', "/");
         if let Some(collection_metadata) = self.metadata_store.get(collection) {
             for (ext_id, meta_val) in collection_metadata.iter() {
                 if let Some(meta) = meta_val.as_object()
                     && meta
                         .get("file_path")
                         .and_then(|v| v.as_str())
-                        .is_some_and(|p| p == file_path)
+                        .is_some_and(|p| p.replace('\\', "/") == normalized_query)
                 {
                     let start_line = meta
                         .get("start_line")

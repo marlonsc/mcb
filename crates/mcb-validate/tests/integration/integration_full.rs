@@ -70,12 +70,13 @@ members = [
     #[test]
     fn test_validation_config() {
         let dir = TempDir::new().unwrap();
-        let root = create_test_workspace(&dir);
+        let raw_root = create_test_workspace(&dir);
+        // Canonicalize once to handle macOS /var → /private/var symlinks
+        let root = std::fs::canonicalize(&raw_root).unwrap_or(raw_root);
 
         let config = ValidationConfig::new(&root);
 
-        let canonical_root = std::fs::canonicalize(&root).unwrap_or(root);
-        assert_eq!(config.workspace_root, canonical_root);
+        assert_eq!(config.workspace_root, root);
         // exclude_patterns starts empty
         assert!(config.exclude_patterns.is_empty());
     }

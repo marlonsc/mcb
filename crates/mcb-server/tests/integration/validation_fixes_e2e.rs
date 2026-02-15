@@ -52,7 +52,7 @@ async fn test_validation_agent_sql_storage_flow() {
     let resp = result.unwrap();
     let text = extract_text(&resp.content);
     assert!(
-        text.contains("Failed to store tool call"),
+        text.contains("Memory storage error"),
         "Should handle SQL error gracefully. Got: {}",
         text
     );
