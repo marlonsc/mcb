@@ -106,7 +106,7 @@ impl DeclarativeValidator {
             files.push(entry.absolute_path.to_path_buf());
             Ok(())
         }) {
-            warn!(error = %e, "Failed to scan workspace for files");
+            warn!(error = ?e, "Failed to scan workspace for files");
         }
         files
     }
@@ -146,7 +146,7 @@ impl DeclarativeValidator {
                         warn!(
                             rule_id = %rule.id,
                             file = %file.display(),
-                            error = %e,
+                            error = ?e,
                             "Metrics analysis failed"
                         );
                     }
@@ -205,7 +205,7 @@ impl DeclarativeValidator {
                 Err(e) => {
                     warn!(
                         rule_id = %rule.id,
-                        error = %e,
+                        error = ?e,
                         "Lint rule execution failed"
                     );
                 }
@@ -244,7 +244,7 @@ impl DeclarativeValidator {
         let workspace_deps = match filter_executor.parse_workspace_dependencies() {
             Ok(deps) => deps,
             Err(e) => {
-                warn!(error = %e, "Failed to parse workspace dependencies for regex rules");
+                warn!(error = ?e, "Failed to parse workspace dependencies for regex rules");
                 return Vec::new();
             }
         };
@@ -265,7 +265,7 @@ impl DeclarativeValidator {
                             warn!(
                                 rule_id = %rule.id,
                                 pattern_name = %name,
-                                error = %e,
+                                error = ?e,
                                 "Malformed regex pattern in rule"
                             );
                         }
@@ -310,7 +310,7 @@ impl DeclarativeValidator {
                     Err(e) => {
                         warn!(
                             file = %file.display(),
-                            error = %e,
+                            error = ?e,
                             "Failed to read file for regex validation"
                         );
                         continue;
@@ -414,7 +414,7 @@ impl DeclarativeValidator {
         let workspace_deps = match filter_executor.parse_workspace_dependencies() {
             Ok(deps) => deps,
             Err(e) => {
-                warn!(error = %e, "Failed to parse workspace dependencies for path rules");
+                warn!(error = ?e, "Failed to parse workspace dependencies for path rules");
                 return Vec::new();
             }
         };
