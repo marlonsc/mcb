@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use regex::Regex;
 
 use crate::Result;
+use crate::constants::common::COMMENT_PREFIX;
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
 
@@ -40,7 +41,7 @@ where
             for (line_num, line) in content.lines().enumerate() {
                 let trimmed = line.trim();
 
-                if trimmed.starts_with("//") {
+                if trimmed.starts_with(COMMENT_PREFIX) {
                     continue;
                 }
 
@@ -103,7 +104,7 @@ where
             for (line_num, line) in content.lines().enumerate() {
                 let trimmed = line.trim();
 
-                if trimmed.starts_with("//") {
+                if trimmed.starts_with(COMMENT_PREFIX) {
                     continue;
                 }
 

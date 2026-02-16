@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
 use super::super::violation::ImplementationViolation;
-use super::utils::{required_patterns, source_lines};
 use crate::Result;
 use crate::traits::violation::Severity;
+use crate::utils::source::{required_patterns, source_lines};
 
 pub fn validate_empty_catch_alls(
     files: &[(PathBuf, String)],

@@ -40,7 +40,7 @@ impl ExpressionEngine {
     }
 
     /// Build context from rule context for expression evaluation
-    fn build_eval_context(&self, rule_context: &RuleContext) -> HashMapContext {
+    fn build_eval_context(rule_context: &RuleContext) -> HashMapContext {
         let mut ctx = HashMapContext::new();
 
         let _ = ctx.set_value(
@@ -96,7 +96,7 @@ impl ExpressionEngine {
     ///
     /// Returns an error if the expression evaluation fails.
     pub fn evaluate_expression(&self, expression: &str, context: &RuleContext) -> Result<bool> {
-        let eval_ctx = self.build_eval_context(context);
+        let eval_ctx = Self::build_eval_context(context);
 
         match evalexpr::eval_boolean_with_context(expression, &eval_ctx) {
             Ok(result) => Ok(result),

@@ -18,19 +18,17 @@ use std::sync::Arc;
 
 use mcb_domain::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use rocket::config::{Config as RocketConfig, LogLevel};
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::BrowseState;
 use super::handlers::AdminState;
+use crate::constants::limits::DEFAULT_SHUTDOWN_TIMEOUT_SECS;
+use crate::utils::config::load_startup_config_or_panic;
 
 fn load_current_config() -> mcb_infrastructure::config::AppConfig {
-    #[allow(clippy::expect_used)]
-    ConfigLoader::new()
-        .load()
-        .expect("startup: configuration file must be loadable")
+    load_startup_config_or_panic()
 }
 
 fn build_admin_state(
@@ -47,7 +45,7 @@ fn build_admin_state(
         current_config: load_current_config(),
         config_path,
         shutdown_coordinator: None,
-        shutdown_timeout_secs: 30,
+        shutdown_timeout_secs: DEFAULT_SHUTDOWN_TIMEOUT_SECS,
         event_bus,
         service_manager: None,
         cache: None,
@@ -70,11 +68,8 @@ pub struct AdminApiConfig {
 }
 
 impl Default for AdminApiConfig {
-    #[allow(clippy::expect_used)]
     fn default() -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("startup: configuration file must be loadable");
+        let config = load_startup_config_or_panic();
         Self {
             host: config.server.network.host,
             port: config.server.network.port,
@@ -85,11 +80,8 @@ impl Default for AdminApiConfig {
 impl AdminApiConfig {
     /// Create config for localhost with specified port
     #[must_use]
-    #[allow(clippy::expect_used)]
     pub fn localhost(port: u16) -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("startup: configuration file must be loadable");
+        let config = load_startup_config_or_panic();
         Self {
             host: config.server.network.host,
             port,
@@ -99,11 +91,10 @@ impl AdminApiConfig {
     /// Get the Rocket configuration
     #[must_use]
     pub fn rocket_config(&self) -> RocketConfig {
-        #[allow(clippy::expect_used)]
-        let address: IpAddr = self
-            .host
-            .parse()
-            .expect("startup: admin host must be a valid IP address");
+        let address: IpAddr = match self.host.parse() {
+            Ok(address) => address,
+            Err(error) => panic!("startup: admin host must be a valid IP address: {error}"),
+        };
         RocketConfig {
             address,
             port: self.port,

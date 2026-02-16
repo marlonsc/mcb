@@ -62,24 +62,24 @@ impl RuleEngineRouter {
 
     /// Detect which engine should handle the rule
     #[must_use]
-    pub fn detect_engine(&self, rule_definition: &Value) -> RoutedEngine {
+    pub fn detect_engine(rule_definition: &Value) -> RoutedEngine {
         // Check for explicit engine specification
         if let Some(engine) = rule_definition.get("engine").and_then(|v| v.as_str()) {
             return match engine {
                 "rete" | "rust-rule-engine" | "grl" => RoutedEngine::Rete,
                 "expression" | "evalexpr" => RoutedEngine::Expression,
                 "rusty-rules" | "json-dsl" => RoutedEngine::RustyRules,
-                _ => self.detect_by_content(rule_definition),
+                _ => Self::detect_by_content(rule_definition),
             };
         }
 
-        self.detect_by_content(rule_definition)
+        Self::detect_by_content(rule_definition)
     }
 
     /// Detect engine based on rule content
-    fn detect_by_content(&self, rule_definition: &Value) -> RoutedEngine {
+    fn detect_by_content(rule_definition: &Value) -> RoutedEngine {
         // Check for GRL syntax (when/then keywords)
-        if self.has_grl_syntax(rule_definition) {
+        if Self::has_grl_syntax(rule_definition) {
             return RoutedEngine::Rete;
         }
 
@@ -98,7 +98,7 @@ impl RuleEngineRouter {
     }
 
     /// Check if rule contains GRL syntax (when/then)
-    fn has_grl_syntax(&self, rule_definition: &Value) -> bool {
+    fn has_grl_syntax(rule_definition: &Value) -> bool {
         // Check "rule" or "grl" field for when/then keywords
         if let Some(rule_str) = rule_definition
             .get("rule")
@@ -131,7 +131,7 @@ impl RuleEngineRouter {
         rule_definition: &Value,
         context: &RuleContext,
     ) -> Result<Vec<RuleViolation>> {
-        let engine = self.detect_engine(rule_definition);
+        let engine = Self::detect_engine(rule_definition);
         self.execute_with_engine(engine, rule_definition, context)
             .await
     }
@@ -195,8 +195,8 @@ impl RuleEngineRouter {
 
     /// Get the engine type for a rule (for logging/debugging)
     #[must_use]
-    pub fn get_engine_type(&self, rule_definition: &Value) -> String {
-        self.detect_engine(rule_definition).to_string()
+    pub fn get_engine_type(rule_definition: &Value) -> String {
+        Self::detect_engine(rule_definition).to_string()
     }
 
     /// Check if a rule is valid for routing
@@ -204,8 +204,8 @@ impl RuleEngineRouter {
     /// # Errors
     ///
     /// Returns an error if the rule definition is invalid for the detected engine.
-    pub fn validate_rule(&self, rule_definition: &Value) -> Result<()> {
-        let engine = self.detect_engine(rule_definition);
+    pub fn validate_rule(rule_definition: &Value) -> Result<()> {
+        let engine = Self::detect_engine(rule_definition);
 
         match engine {
             RoutedEngine::Rete => {

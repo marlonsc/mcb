@@ -145,9 +145,9 @@ impl ValidationRunContext {
         Ok(value)
     }
 
-    pub fn with_active<T>(context: Arc<Self>, f: impl FnOnce() -> T) -> T {
+    pub fn with_active<T>(context: &Arc<Self>, f: impl FnOnce() -> T) -> T {
         ACTIVE_RUN_CONTEXT.with(|slot| {
-            let previous = slot.replace(Some(Arc::clone(&context)));
+            let previous = slot.replace(Some(Arc::clone(context)));
             let output = f();
             slot.replace(previous);
             output
@@ -296,8 +296,7 @@ fn should_ignore(path: &str, ignore_patterns: &[String]) -> bool {
 }
 
 fn build_trace_id() -> String {
-    let nanos = mcb_domain::utils::time::epoch_nanos_u128()
-        .unwrap_or_else(|e| panic!("system clock failure: {e}"));
+    let nanos = mcb_domain::utils::time::epoch_nanos_u128().unwrap_or(0);
     format!("validate-run-{nanos}")
 }
 

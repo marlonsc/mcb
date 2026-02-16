@@ -7,7 +7,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use tempfile::TempDir;
 
-use crate::handlers::test_helpers::create_real_domain_services;
+use crate::handlers::utils::create_real_domain_services;
 
 fn create_temp_file() -> (TempDir, PathBuf) {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");

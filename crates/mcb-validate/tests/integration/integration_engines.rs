@@ -294,12 +294,8 @@ mod router_tests {
         }),
         RoutedEngine::RustyRules
     )]
-    fn detect_engine(
-        router: RuleEngineRouter,
-        #[case] rule: serde_json::Value,
-        #[case] expected: RoutedEngine,
-    ) {
-        assert_eq!(router.detect_engine(&rule), expected);
+    fn detect_engine(#[case] rule: serde_json::Value, #[case] expected: RoutedEngine) {
+        assert_eq!(RuleEngineRouter::detect_engine(&rule), expected);
     }
 
     #[rstest]
@@ -331,12 +327,8 @@ mod router_tests {
         }),
         false
     )]
-    fn validate_rule(
-        router: RuleEngineRouter,
-        #[case] rule: serde_json::Value,
-        #[case] expected_ok: bool,
-    ) {
-        assert_eq!(router.validate_rule(&rule).is_ok(), expected_ok);
+    fn validate_rule(#[case] rule: serde_json::Value, #[case] expected_ok: bool) {
+        assert_eq!(RuleEngineRouter::validate_rule(&rule).is_ok(), expected_ok);
     }
 
     #[rstest]

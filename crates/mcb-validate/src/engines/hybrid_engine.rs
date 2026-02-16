@@ -262,7 +262,7 @@ impl HybridRuleEngine {
     /// Get the engine type that would be used for a rule
     #[must_use]
     pub fn detect_engine(&self, rule_definition: &serde_json::Value) -> String {
-        self.router.get_engine_type(rule_definition)
+        RuleEngineRouter::get_engine_type(rule_definition)
     }
 
     /// Execute multiple rules in parallel

@@ -16,6 +16,7 @@ use validator::Validate;
 use crate::error_mapping::safe_internal_error;
 
 use crate::args::{SearchArgs, SearchResource};
+use crate::constants::limits::DEFAULT_SEARCH_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::collections::normalize_collection_name;
@@ -73,7 +74,7 @@ impl SearchHandler {
                     }
                 };
                 let timer = Instant::now();
-                let limit = args.limit.unwrap_or(10) as usize;
+                let limit = args.limit.unwrap_or(DEFAULT_SEARCH_LIMIT as u32) as usize;
                 match self
                     .search_service
                     .search(&collection_id, query, limit)
@@ -102,7 +103,7 @@ impl SearchHandler {
                     }),
                     ..Default::default()
                 };
-                let limit = args.limit.unwrap_or(10) as usize;
+                let limit = args.limit.unwrap_or(DEFAULT_SEARCH_LIMIT as u32) as usize;
                 match self
                     .memory_service
                     .search_memories(query, Some(filter), limit)

@@ -2,11 +2,6 @@
 //!
 //! High-performance cloud vector database using Milvus.
 //! Supports production-scale vector storage with automatic indexing and distributed search.
-//!
-//! # Architecture Violation (REF003)
-//! Missing corresponding test file in `tests/` directory.
-//!
-// TODO(QUAL005): Pending (REF003): Create test file `crates/mcb-providers/tests/milvus_test.rs`.
 
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -22,8 +17,10 @@ use milvus::schema::{CollectionSchema, CollectionSchemaBuilder, FieldSchema};
 use milvus::value::{Value, ValueVec};
 
 use crate::constants::{
-    MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_IVFFLAT_NLIST,
-    MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE,
+    MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_DISTANCE_METRIC, MILVUS_FIELD_VARCHAR_MAX_LENGTH,
+    MILVUS_FLUSH_RETRY_BACKOFF_MS, MILVUS_FLUSH_RETRY_COUNT, MILVUS_INDEX_RETRY_BACKOFF_MS,
+    MILVUS_IVFFLAT_NLIST, MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE,
+    MILVUS_VECTOR_INDEX_NAME,
 };
 use crate::utils::retry::{RetryConfig, retry_with_backoff};
 
@@ -130,7 +127,10 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
     async fn flush(&self, collection: &CollectionId) -> Result<()> {
         let name_str = collection.to_string();
         let result = retry_with_backoff(
-            RetryConfig::new(3, std::time::Duration::from_millis(1000)),
+            RetryConfig::new(
+                MILVUS_FLUSH_RETRY_COUNT,
+                std::time::Duration::from_millis(MILVUS_FLUSH_RETRY_BACKOFF_MS),
+            ),
             |_| self.client.flush_collections(vec![&name_str]),
             |e| {
                 let err_str = e.to_string();
@@ -217,7 +217,7 @@ impl MilvusVectorStoreProvider {
                 "start_line".to_owned(),
                 "content".to_owned(),
             ])
-            .add_param("metric_type", "L2");
+            .add_param("metric_type", MILVUS_DISTANCE_METRIC);
 
         self.client
             .search(
@@ -332,10 +332,13 @@ impl MilvusVectorStoreProvider {
         let name_str = name.to_string();
 
         let index_result = retry_with_backoff(
-            RetryConfig::new(3, std::time::Duration::from_millis(500)),
+            RetryConfig::new(
+                MILVUS_FLUSH_RETRY_COUNT,
+                std::time::Duration::from_millis(MILVUS_INDEX_RETRY_BACKOFF_MS),
+            ),
             |_| async {
                 let index_params = IndexParams::new(
-                    "vector_index".to_owned(),
+                    MILVUS_VECTOR_INDEX_NAME.to_owned(),
                     IndexType::IvfFlat,
                     MetricType::L2,
                     HashMap::from([("nlist".to_owned(), MILVUS_IVFFLAT_NLIST.to_string())]),
@@ -925,37 +928,28 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use std::sync::Arc;
+crate::register_vector_store_provider!(
+    milvus_factory,
+    config,
+    MILVUS_PROVIDER,
+    "milvus",
+    "Milvus distributed vector database",
+    {
+        let uri = config.uri.clone().ok_or_else(|| {
+            format!(
+                "Milvus requires 'uri' configuration (e.g., http://localhost:{})",
+                crate::constants::MILVUS_DEFAULT_PORT
+            )
+        })?;
+        let token = config.api_key.clone();
 
-use mcb_domain::registry::vector_store::{
-    VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
-};
+        // Create Milvus client synchronously using block_on
+        let provider = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current()
+                .block_on(async { MilvusVectorStoreProvider::new(uri, token, None).await })
+        })
+        .map_err(|e| format!("Failed to create Milvus provider: {e}"))?;
 
-/// Factory function for creating Milvus vector store provider instances.
-fn milvus_factory(
-    config: &VectorStoreProviderConfig,
-) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
-    let uri = config.uri.clone().ok_or_else(|| {
-        format!(
-            "Milvus requires 'uri' configuration (e.g., http://localhost:{})",
-            crate::constants::MILVUS_DEFAULT_PORT
-        )
-    })?;
-    let token = config.api_key.clone();
-
-    // Create Milvus client synchronously using block_on
-    let provider = tokio::task::block_in_place(|| {
-        tokio::runtime::Handle::current()
-            .block_on(async { MilvusVectorStoreProvider::new(uri, token, None).await })
-    })
-    .map_err(|e| format!("Failed to create Milvus provider: {e}"))?;
-
-    Ok(Arc::new(provider))
-}
-
-#[linkme::distributed_slice(VECTOR_STORE_PROVIDERS)]
-static MILVUS_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {
-    name: "milvus",
-    description: "Milvus distributed vector database",
-    factory: milvus_factory,
-};
+        Ok(std::sync::Arc::new(provider))
+    }
+);

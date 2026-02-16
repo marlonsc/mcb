@@ -3,9 +3,10 @@ use std::path::PathBuf;
 use regex::{Match, Regex};
 
 use super::super::violation::ImplementationViolation;
-use super::utils::{extract_functions_with_body, non_test_lines, required_pattern};
 use crate::Result;
+use crate::pattern_registry::required_pattern;
 use crate::traits::violation::Severity;
+use crate::utils::source::{extract_functions_with_body, non_test_lines};
 
 pub fn validate_pass_through_wrappers(
     files: &[(PathBuf, String)],

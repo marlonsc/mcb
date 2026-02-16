@@ -15,6 +15,8 @@
 //! - **Single Instance**: Use `MokaCacheProvider` for high performance
 //! - **Multi Instance**: Use `RedisCacheProvider` for distributed caching
 
+/// Macros for cache provider implementation
+pub mod macros;
 pub mod moka;
 pub mod redis;
 

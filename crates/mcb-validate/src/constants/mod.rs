@@ -1,177 +1,55 @@
 //! Validation constants
 //!
-//! Centralized constants for architecture validation, refactoring checks,
-//! dependency rules, and engine configuration.
+//! Organized by semantic domain:
+//!
+//! - [`common`] — Cross-cutting code patterns (comments, test paths, declarations)
+//! - [`architecture`] — Architecture layer path fragments
+//! - [`labels`] — Pending-task and stub detection labels
+//! - [`allowlists`] — Validation skip-lists and generic names
+//! - [`duplication`] — Clone detection fingerprinting keywords
 
-/// Common patterns shared across multiple validators
+/// Cross-cutting code patterns shared across multiple validators.
 pub mod common;
 
+/// Architecture layer path fragments.
+pub mod architecture;
+
+/// Pending-task and stub detection labels.
+pub mod labels;
+
+/// Validation skip-lists and generic names.
+pub mod allowlists;
+
+/// Clone detection fingerprinting keywords.
+pub mod duplication;
+
 // ============================================================================
-// PMAT INTEGRATION
+// Re-exports for backward compatibility
 // ============================================================================
 
-/// Default cyclomatic complexity threshold
+// Labels (used by quality/comments.rs, implementation/stubs.rs, test_quality.rs)
+pub use labels::{
+    PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
+    REPORT_TEST_PENDING_LABEL, STUB_PANIC_LABEL,
+};
+
+// Allowlists
+pub use allowlists::{
+    GENERIC_TYPE_NAMES, REFACTORING_SKIP_DIR_PATTERNS, REFACTORING_SKIP_FILES, UTILITY_TYPES,
+};
+
+// Duplication (used by duplication/detector.rs)
+pub use duplication::DUPLICATION_KEYWORDS;
+
+// ============================================================================
+// PMAT Integration (top-level, no sub-module needed)
+// ============================================================================
+
+/// Default cyclomatic complexity threshold.
 pub const DEFAULT_COMPLEXITY_THRESHOLD: u32 = 15;
 
-/// Default TDG score threshold (0-100, higher is worse)
+/// Default TDG score threshold (0-100, higher is worse).
 pub const DEFAULT_TDG_THRESHOLD: u32 = 50;
 
 /// Default max lines per file before triggering a size violation.
 pub const DEFAULT_MAX_FILE_LINES: usize = 500;
-
-// ============================================================================
-// VALIDATION ALLOW-LISTS
-// ============================================================================
-
-/// Utility types that are intentionally duplicated to avoid cross-crate dependencies
-pub const UTILITY_TYPES: &[&str] = &["HttpResponseUtils", "CacheStats", "TimedOperation"];
-
-/// Generic type names expected to appear in multiple places
-pub const GENERIC_TYPE_NAMES: &[&str] = &[
-    "Error",
-    "Result",
-    "Config",
-    "Builder",
-    "Context",
-    "State",
-    "Options",
-    "Params",
-    "Settings",
-    "Message",
-    "Request",
-    "Response",
-    "CacheConfig",
-];
-
-/// File names to skip for test completeness checks
-pub const REFACTORING_SKIP_FILES: &[&str] = &[
-    "mod",
-    "lib",
-    "main",
-    "constants",
-    "thresholds",
-    "error",
-    "types",
-];
-
-/// Directory patterns to skip for test completeness checks (tested via integration)
-pub const REFACTORING_SKIP_DIR_PATTERNS: &[&str] = &["/di/", "/config/", "/models/", "/ports/"];
-
-// ============================================================================
-// RETE ENGINE
-// ============================================================================
-
-// ============================================================================
-// QUALITY / TEST QUALITY / IMPLEMENTATION (pending/stub labels)
-//
-// Labels are built via `concat!()` to prevent the source file itself from
-// triggering ripgrep-based lint rules for task-comment patterns.
-// ============================================================================
-
-/// Label for pending task comments (first priority)
-pub const PENDING_LABEL_TODO: &str = concat!("TO", "DO");
-
-/// Label for fix-needed comments
-pub const PENDING_LABEL_FIXME: &str = concat!("FI", "XME");
-
-/// Label for attention-needed comments
-pub const PENDING_LABEL_XXX: &str = concat!("X", "XX");
-
-/// Label for workaround/shortcut comments
-pub const PENDING_LABEL_HACK: &str = concat!("HA", "CK");
-
-/// Label for panic-stub detection (unimplemented placeholders)
-pub const STUB_PANIC_LABEL: &str = concat!("panic(", "TO", "DO)");
-
-/// Label used in reporter tests (identical to pending-task label)
-pub const REPORT_TEST_PENDING_LABEL: &str = concat!("TO", "DO");
-
-// ============================================================================
-// DUPLICATION (clone detection)
-// ============================================================================
-
-/// Common keywords to ignore when fingerprinting (multi-language)
-pub const DUPLICATION_KEYWORDS: &[&str] = &[
-    "fn",
-    "let",
-    "mut",
-    "const",
-    "static",
-    "struct",
-    "enum",
-    "impl",
-    "trait",
-    "pub",
-    "mod",
-    "use",
-    "crate",
-    "self",
-    "super",
-    "where",
-    "async",
-    "await",
-    "move",
-    "ref",
-    "match",
-    "if",
-    "else",
-    "loop",
-    "while",
-    "for",
-    "in",
-    "break",
-    "continue",
-    "return",
-    "type",
-    "as",
-    "dyn",
-    "unsafe",
-    "extern",
-    "def",
-    "class",
-    "import",
-    "from",
-    "with",
-    "try",
-    "except",
-    "finally",
-    "raise",
-    "pass",
-    "yield",
-    "lambda",
-    "global",
-    "nonlocal",
-    "assert",
-    "del",
-    "True",
-    "False",
-    "None",
-    "and",
-    "or",
-    "not",
-    "is",
-    "function",
-    "var",
-    "extends",
-    "implements",
-    "interface",
-    "namespace",
-    "module",
-    "export",
-    "default",
-    "new",
-    "delete",
-    "typeof",
-    "instanceof",
-    "this",
-    "null",
-    "undefined",
-    "true",
-    "false",
-    "void",
-    "throw",
-    "catch",
-    "debugger",
-    "switch",
-    "case",
-];

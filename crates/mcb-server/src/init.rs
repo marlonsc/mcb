@@ -45,6 +45,7 @@ use crate::McpServer;
 use crate::admin::auth::AdminAuthConfig;
 use crate::admin::browse_handlers::BrowseState;
 use crate::admin::handlers::AdminState;
+use crate::constants::limits::DEFAULT_SHUTDOWN_TIMEOUT_SECS;
 use crate::transport::http::{HttpTransport, HttpTransportConfig};
 use crate::transport::stdio::StdioServerExt;
 
@@ -152,7 +153,7 @@ async fn run_server_mode(
         current_config: config.clone(),
         config_path,
         shutdown_coordinator: Some(app_context.shutdown()),
-        shutdown_timeout_secs: 30,
+        shutdown_timeout_secs: DEFAULT_SHUTDOWN_TIMEOUT_SECS,
         event_bus,
         service_manager: Some(std::sync::Arc::new(service_manager)),
         cache: Some(app_context.cache_handle().get()),

@@ -3,9 +3,9 @@ use std::path::PathBuf;
 use regex::Regex;
 
 use super::super::violation::ImplementationViolation;
-use super::utils::{extract_functions_with_body, non_test_lines, required_patterns};
 use crate::Result;
 use crate::traits::violation::Severity;
+use crate::utils::source::{extract_functions_with_body, non_test_lines, required_patterns};
 
 pub fn validate_log_only_methods(
     files: &[(PathBuf, String)],

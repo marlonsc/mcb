@@ -20,6 +20,7 @@
 
 pub mod edgevec;
 pub mod encrypted;
+mod macros;
 pub mod milvus;
 pub mod pinecone;
 pub mod qdrant;

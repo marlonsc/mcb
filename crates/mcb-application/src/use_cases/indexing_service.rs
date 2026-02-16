@@ -36,7 +36,9 @@ use mcb_domain::ports::services::{
 use mcb_domain::value_objects::{CollectionId, OperationId};
 use tracing::{error, info, warn};
 
-use crate::constants::{PROGRESS_UPDATE_INTERVAL, SKIP_DIRS};
+use crate::constants::{
+    INDEXING_STATUS_COMPLETED, INDEXING_STATUS_STARTED, PROGRESS_UPDATE_INTERVAL, SKIP_DIRS,
+};
 
 /// Accumulator for indexing progress and operational metrics.
 ///
@@ -265,7 +267,7 @@ impl IndexingServiceInterface for IndexingServiceImpl {
             files_skipped: 0,
             errors: vec![],
             operation_id: Some(operation_id),
-            status: "started".to_owned(),
+            status: INDEXING_STATUS_STARTED.to_owned(),
         })
     }
 
@@ -428,7 +430,7 @@ impl IndexingServiceImpl {
             files_skipped,
             failed_files.clone(),
         )
-        .into_result(Some(operation_id), "completed");
+        .into_result(Some(operation_id), INDEXING_STATUS_COMPLETED);
 
         if let Err(e) = service
             .event_bus

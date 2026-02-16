@@ -31,7 +31,7 @@ pub struct SqliteFileHashConfig {
 impl Default for SqliteFileHashConfig {
     fn default() -> Self {
         Self {
-            tombstone_ttl_seconds: 30 * 24 * 60 * 60,
+            tombstone_ttl_seconds: crate::constants::FILE_HASH_TOMBSTONE_TTL_SECS,
         }
     }
 }

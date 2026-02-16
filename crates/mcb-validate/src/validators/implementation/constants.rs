@@ -1,6 +1,6 @@
 //! Constants for implementation quality validators.
 
-/// Hardcoded return pattern IDs and descriptions: (pattern_id, description).
+/// Hardcoded return pattern IDs and descriptions: (`pattern_id`, description).
 pub const HARDCODED_RETURN_PATTERNS: &[(&str, &str)] = &[
     ("IMPL001.return_true", "true"),
     ("IMPL001.return_false", "false"),

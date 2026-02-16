@@ -133,7 +133,7 @@ impl RuleFilterExecutor {
         }
 
         if let Some(required_deps) = &filters.dependencies
-            && !self.check_dependencies(required_deps, file_path, workspace_deps)
+            && !Self::check_dependencies(required_deps, file_path, workspace_deps)
         {
             return Ok(false);
         }
@@ -191,7 +191,6 @@ impl RuleFilterExecutor {
 
     /// Check if required dependencies are present in the file's crate
     fn check_dependencies(
-        &self,
         required_deps: &[String],
         file_path: &Path,
         workspace_deps: &WorkspaceDependencies,

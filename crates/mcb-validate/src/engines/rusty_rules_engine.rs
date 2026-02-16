@@ -88,12 +88,12 @@ impl RustyRulesEngineWrapper {
     ///
     /// Returns an error if the rule definition cannot be parsed.
     pub fn parse_rule_definition(&mut self, rule_id: String, definition: &Value) -> Result<()> {
-        let rule = self.parse_rule_from_json(definition)?;
+        let rule = Self::parse_rule_from_json(definition)?;
         self.rule_definitions.insert(rule_id, rule);
         Ok(())
     }
 
-    fn parse_rule_from_json(&self, definition: &Value) -> Result<RustyRule> {
+    fn parse_rule_from_json(definition: &Value) -> Result<RustyRule> {
         // Parse rule type
         let rule_type = definition
             .get("type")
@@ -110,7 +110,7 @@ impl RustyRulesEngineWrapper {
 
         // Parse action
         let action = if let Some(action_json) = definition.get("action") {
-            self.parse_action(action_json)
+            Self::parse_action(action_json)
         } else {
             Action::Violation {
                 message: "Rule violation".to_owned(),
@@ -180,7 +180,7 @@ impl RustyRulesEngineWrapper {
         })
     }
 
-    fn parse_action(&self, action_json: &Value) -> Action {
+    fn parse_action(action_json: &Value) -> Action {
         if let Some(violation) = action_json.get("violation") {
             let message = violation
                 .get("message")
@@ -204,11 +204,13 @@ impl RustyRulesEngineWrapper {
         Action::Custom("Custom action".to_owned())
     }
 
-    fn has_forbidden_dependency(&self, pattern: &str, context: &RuleContext) -> bool {
+    fn has_forbidden_dependency(pattern: &str, context: &RuleContext) -> bool {
         // Check Cargo.toml files for forbidden dependencies
         use glob::Pattern;
 
-        let cargo_pattern = Pattern::new("**/Cargo.toml").unwrap();
+        let Ok(cargo_pattern) = Pattern::new("**/Cargo.toml") else {
+            return false;
+        };
         let trimmed_pattern = pattern.trim_matches('"');
         let pattern_prefix = trimmed_pattern.trim_end_matches('*');
 
@@ -317,7 +319,7 @@ impl RustyRulesEngineWrapper {
             .unwrap_or("not_exists");
 
         if let Some(forbidden_pattern) = rule_definition.get("pattern").and_then(|v| v.as_str()) {
-            let has_forbidden = self.has_forbidden_dependency(forbidden_pattern, context);
+            let has_forbidden = Self::has_forbidden_dependency(forbidden_pattern, context);
 
             match condition {
                 "not_exists" => {

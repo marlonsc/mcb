@@ -138,25 +138,25 @@ impl ConfigQualityValidator {
                 let content = std::fs::read_to_string(&entry.absolute_path)?;
                 let lines: Vec<&str> = content.lines().collect();
 
-                self.check_hardcoded_namespaces(
+                Self::check_hardcoded_namespaces(
                     &entry.absolute_path,
                     &lines,
                     &namespace_pattern,
                     &mut violations,
                 );
-                self.check_hardcoded_client_names(
+                Self::check_hardcoded_client_names(
                     &entry.absolute_path,
                     &lines,
                     &client_name_pattern,
                     &mut violations,
                 );
-                self.check_hardcoded_headers(
+                Self::check_hardcoded_headers(
                     &entry.absolute_path,
                     &lines,
                     &header_pattern,
                     &mut violations,
                 );
-                self.check_undocumented_defaults(
+                Self::check_undocumented_defaults(
                     &entry.absolute_path,
                     &lines,
                     &default_impl_pattern,
@@ -171,7 +171,6 @@ impl ConfigQualityValidator {
     }
 
     fn check_hardcoded_namespaces(
-        &self,
         file: &Path,
         lines: &[&str],
         namespace_pattern: &Regex,
@@ -183,7 +182,7 @@ impl ConfigQualityValidator {
             {
                 let namespace_str = namespace.as_str();
                 // Skip if it's already using a constant or documented default
-                if !self.is_documented_or_constant(lines, i) {
+                if !Self::is_documented_or_constant(lines, i) {
                     violations.push(ConfigQualityViolation::HardcodedNamespace {
                         file: file.to_path_buf(),
                         line: i + 1,
@@ -196,7 +195,6 @@ impl ConfigQualityValidator {
     }
 
     fn check_hardcoded_client_names(
-        &self,
         file: &Path,
         lines: &[&str],
         client_name_pattern: &Regex,
@@ -208,7 +206,7 @@ impl ConfigQualityValidator {
             {
                 let client_name_str = client_name.as_str();
                 // This is actually acceptable as a default - skip if properly documented
-                if !self.is_documented_or_constant(lines, i) {
+                if !Self::is_documented_or_constant(lines, i) {
                     violations.push(ConfigQualityViolation::HardcodedConfigString {
                         file: file.to_path_buf(),
                         line: i + 1,
@@ -222,7 +220,6 @@ impl ConfigQualityValidator {
     }
 
     fn check_hardcoded_headers(
-        &self,
         file: &Path,
         lines: &[&str],
         header_pattern: &Regex,
@@ -236,7 +233,7 @@ impl ConfigQualityValidator {
                 // Skip if it's a well-known constant like API_KEY_HEADER
                 if header_str.starts_with("X-")
                     && !line.contains("API_KEY_HEADER")
-                    && !self.is_documented_or_constant(lines, i)
+                    && !Self::is_documented_or_constant(lines, i)
                 {
                     violations.push(ConfigQualityViolation::HardcodedConfigString {
                         file: file.to_path_buf(),
@@ -251,7 +248,6 @@ impl ConfigQualityValidator {
     }
 
     fn check_undocumented_defaults(
-        &self,
         file: &Path,
         lines: &[&str],
         default_impl_pattern: &Regex,
@@ -279,7 +275,7 @@ impl ConfigQualityValidator {
         }
     }
 
-    fn is_documented_or_constant(&self, lines: &[&str], line_idx: usize) -> bool {
+    fn is_documented_or_constant(lines: &[&str], line_idx: usize) -> bool {
         // Check for documentation comment or constant usage
         if line_idx > 0 {
             let prev_line = lines[line_idx - 1];

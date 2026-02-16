@@ -13,6 +13,16 @@ use std::path::Path;
 pub struct RustExtractor;
 
 impl RustExtractor {
+    fn location_for(path: &Path, node: &Node<'_>) -> Location {
+        Location {
+            file_path: path.to_path_buf(),
+            start_line: node.start_row() + 1,
+            end_line: node.end_row() + 1,
+            start_column: node.start_position().1 + 1,
+            end_column: node.end_position().1 + 1,
+        }
+    }
+
     /// Parse a Rust file at `path` and return all extracted [`Fact`]s.
     ///
     /// Currently extracts:
@@ -45,13 +55,7 @@ impl RustExtractor {
         facts.push(Fact::new(
             module_name.clone(),
             FactType::Module,
-            Location {
-                file_path: path.to_path_buf(),
-                start_line: root.start_row() + 1,
-                end_line: root.end_row() + 1,
-                start_column: root.start_position().1 + 1,
-                end_column: root.end_position().1 + 1,
-            },
+            Self::location_for(path, &root),
             None,
         ));
 
@@ -83,13 +87,7 @@ impl RustExtractor {
                 facts.push(Fact::new(
                     import_path.to_owned(),
                     FactType::Import,
-                    Location {
-                        file_path: path.to_path_buf(),
-                        start_line: import.start_row() + 1,
-                        end_line: import.end_row() + 1,
-                        start_column: import.start_position().1 + 1,
-                        end_column: import.end_position().1 + 1,
-                    },
+                    Self::location_for(path, &import),
                     Some(module_id.clone()),
                 ));
             }
@@ -104,13 +102,7 @@ impl RustExtractor {
                 facts.push(Fact::new(
                     name.to_owned(),
                     FactType::Struct,
-                    Location {
-                        file_path: path.to_path_buf(),
-                        start_line: st.start_row() + 1,
-                        end_line: st.end_row() + 1,
-                        start_column: st.start_position().1 + 1,
-                        end_column: st.end_position().1 + 1,
-                    },
+                    Self::location_for(path, &st),
                     Some(module_id.clone()),
                 ));
             }
@@ -125,13 +117,7 @@ impl RustExtractor {
                 facts.push(Fact::new(
                     name.to_owned(),
                     FactType::Function,
-                    Location {
-                        file_path: path.to_path_buf(),
-                        start_line: func.start_row() + 1,
-                        end_line: func.end_row() + 1,
-                        start_column: func.start_position().1 + 1,
-                        end_column: func.end_position().1 + 1,
-                    },
+                    Self::location_for(path, &func),
                     Some(module_id.clone()),
                 ));
             }

@@ -19,85 +19,31 @@ use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
 use crate::utils::http::{
     JsonRequestParams, RequestErrorKind, parse_embedding_vector, send_json_request,
 };
+use crate::{
+    define_http_embedding_provider, impl_embedding_provider_trait, impl_http_provider_base,
+    register_http_provider,
+};
+
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
-/// `OpenAI` embedding provider
-///
-/// Implements the `EmbeddingProvider` domain port using `OpenAI`'s embedding API.
-/// Receives HTTP client via constructor injection.
-///
-/// ## Example
-///
-/// ```rust,no_run
-/// use mcb_providers::embedding::OpenAIEmbeddingProvider;
-/// use reqwest::Client;
-/// use std::time::Duration;
-///
-/// fn example() -> Result<(), Box<dyn std::error::Error>> {
-///     let client = Client::builder()
-///         .timeout(Duration::from_secs(30))
-///         .build()?;
-///     let provider = OpenAIEmbeddingProvider::new(
-///         "sk-your-api-key".to_string(),
-///         None,
-///         "text-embedding-3-small".to_string(),
-///         Duration::from_secs(30),
-///         client,
-///     );
-///     Ok(())
-/// }
-/// ```
-pub struct OpenAIEmbeddingProvider {
-    client: HttpEmbeddingClient,
-}
+define_http_embedding_provider!(
+    /// `OpenAI` embedding provider
+    ///
+    /// Implements the `EmbeddingProvider` domain port using `OpenAI`'s embedding API.
+    /// Receives HTTP client via constructor injection.
+    OpenAIEmbeddingProvider
+);
+
+impl_http_provider_base!(
+    OpenAIEmbeddingProvider,
+    crate::constants::OPENAI_API_BASE_URL
+);
 
 impl OpenAIEmbeddingProvider {
-    /// Create a new `OpenAI` embedding provider
-    ///
-    /// # Arguments
-    /// * `api_key` - `OpenAI` API key
-    /// * `base_url` - Optional custom base URL (defaults to `OpenAI` API)
-    /// * `model` - Model name (e.g., "text-embedding-3-small")
-    /// * `timeout` - Request timeout duration
-    /// * `http_client` - Reqwest HTTP client for making API requests
-    #[must_use]
-    pub fn new(
-        api_key: String,
-        base_url: Option<String>,
-        model: String,
-        timeout: Duration,
-        http_client: Client,
-    ) -> Self {
-        Self {
-            client: HttpEmbeddingClient::new(
-                &api_key,
-                base_url,
-                "https://api.openai.com/v1",
-                model,
-                timeout,
-                http_client,
-            ),
-        }
-    }
-
-    /// Get the base URL for this provider
-    #[must_use]
-    pub fn base_url(&self) -> &str {
-        &self.client.base_url
-    }
-
-    /// Get the model name
-    #[must_use]
-    pub fn model(&self) -> &str {
-        &self.client.model
-    }
-
     /// Get the maximum tokens for this model
     #[must_use]
     pub fn max_tokens(&self) -> usize {
-        match self.client.model.as_str() {
-            _ => 8192,
-        }
+        crate::constants::OPENAI_MAX_TOKENS_PER_REQUEST
     }
 
     /// Send embedding request and get response data
@@ -139,29 +85,15 @@ impl OpenAIEmbeddingProvider {
     }
 }
 
-#[async_trait]
-/// `OpenAI` implementation of the `EmbeddingProvider` trait.
-impl EmbeddingProvider for OpenAIEmbeddingProvider {
-    /// Generates embeddings for a batch of texts.
-    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
-        process_batch(texts, self.fetch_embeddings(texts), |i, item| {
-            self.parse_embedding(i, item)
-        })
-        .await
+impl_embedding_provider_trait!(
+    OpenAIEmbeddingProvider,
+    "openai",
+    |model: &str| match model {
+        "text-embedding-3-large" => EMBEDDING_DIMENSION_OPENAI_LARGE,
+        "text-embedding-ada-002" => EMBEDDING_DIMENSION_OPENAI_ADA,
+        _ => EMBEDDING_DIMENSION_OPENAI_SMALL,
     }
-
-    fn dimensions(&self) -> usize {
-        match self.client.model.as_str() {
-            "text-embedding-3-large" => EMBEDDING_DIMENSION_OPENAI_LARGE,
-            "text-embedding-ada-002" => EMBEDDING_DIMENSION_OPENAI_ADA,
-            _ => EMBEDDING_DIMENSION_OPENAI_SMALL,
-        }
-    }
-
-    fn provider_name(&self) -> &str {
-        "openai"
-    }
-}
+);
 
 // ============================================================================
 // Auto-registration via linkme distributed slice
@@ -174,26 +106,12 @@ use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
 
-/// Factory function for creating `OpenAI` embedding provider instances.
-fn openai_factory(
-    config: &EmbeddingProviderConfig,
-) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use crate::utils::http::create_http_provider_config;
-
-    let cfg = create_http_provider_config(config, "OpenAI", "text-embedding-3-small")?;
-
-    Ok(Arc::new(OpenAIEmbeddingProvider::new(
-        cfg.api_key,
-        cfg.base_url,
-        cfg.model,
-        cfg.timeout,
-        cfg.client,
-    )))
-}
-
-#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-static OPENAI_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-    name: "openai",
-    description: "OpenAI embedding provider (text-embedding-3-small/large, ada-002)",
-    factory: openai_factory,
-};
+register_http_provider!(
+    OpenAIEmbeddingProvider,
+    openai_factory,
+    OPENAI_PROVIDER,
+    "openai",
+    "OpenAI embedding provider (text-embedding-3-small/large, ada-002)",
+    "OpenAI",
+    "text-embedding-3-small"
+);

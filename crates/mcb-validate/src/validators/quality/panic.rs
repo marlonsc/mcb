@@ -1,20 +1,15 @@
-use std::sync::LazyLock;
-
-use regex::Regex;
-
 use super::constants::PANIC_REGEX;
 use super::{QualityValidator, QualityViolation};
 use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX};
 use crate::filters::LanguageId;
+use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
-
-static PANIC_PATTERN: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(PANIC_REGEX).expect("valid regex literal"));
 
 /// Scans production code for usage of the `panic!()` macro.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
     let mut violations = Vec::new();
+    let panic_pattern = compile_regex(PANIC_REGEX)?;
 
     for_each_scan_file(
         &validator.config,
@@ -50,7 +45,7 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                 }
 
                 // Check for panic!
-                if PANIC_PATTERN.is_match(line) {
+                if panic_pattern.is_match(line) {
                     violations.push(QualityViolation::PanicInProduction {
                         file: entry.absolute_path.clone(),
                         line: line_num + 1,

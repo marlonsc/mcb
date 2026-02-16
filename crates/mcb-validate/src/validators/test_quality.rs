@@ -168,7 +168,7 @@ impl TestQualityValidator {
                 let content = std::fs::read_to_string(&entry.absolute_path)?;
                 let lines: Vec<&str> = content.lines().collect();
 
-                self.check_ignored_tests(
+                Self::check_ignored_tests(
                     &entry.absolute_path,
                     &lines,
                     &test_pattern,
@@ -181,7 +181,7 @@ impl TestQualityValidator {
                     &fn_pattern,
                     &mut violations,
                 );
-                self.check_empty_test_bodies(
+                Self::check_empty_test_bodies(
                     &entry.absolute_path,
                     &lines,
                     &test_pattern,
@@ -189,7 +189,7 @@ impl TestQualityValidator {
                     &empty_body_pattern,
                     &mut violations,
                 );
-                self.check_stub_assertions(
+                Self::check_stub_assertions(
                     &entry.absolute_path,
                     &lines,
                     &test_pattern,
@@ -205,7 +205,6 @@ impl TestQualityValidator {
     }
 
     fn check_ignored_tests(
-        &self,
         file: &Path,
         lines: &[&str],
         test_pattern: &Regex,
@@ -275,7 +274,6 @@ impl TestQualityValidator {
     }
 
     fn check_empty_test_bodies(
-        &self,
         file: &Path,
         lines: &[&str],
         test_pattern: &Regex,
@@ -312,7 +310,6 @@ impl TestQualityValidator {
     }
 
     fn check_stub_assertions(
-        &self,
         file: &Path,
         lines: &[&str],
         test_pattern: &Regex,
@@ -363,7 +360,10 @@ impl TestQualityValidator {
 
     fn find_function_name(lines: &[&str], start_idx: usize, fn_pattern: &Regex) -> Option<String> {
         // Look backwards for function name
-        for i in (0..=start_idx).rev().take(10) {
+        for i in (0..=start_idx)
+            .rev()
+            .take(crate::constants::common::FUNCTION_NAME_SEARCH_LINES)
+        {
             if let Some(captures) = fn_pattern.captures(lines[i])
                 && let Some(name) = captures.get(1)
             {

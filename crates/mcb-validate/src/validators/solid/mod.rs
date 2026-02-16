@@ -1,12 +1,10 @@
 //! SOLID principles validation module
 
+pub mod constants;
 mod isp;
 mod lsp;
 mod ocp;
 mod srp;
-/// Utility helpers for SOLID validation analysis.
-/// Validation utilities
-pub mod utils;
 mod validator;
 mod violation;
 

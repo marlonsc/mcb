@@ -2,9 +2,9 @@ use std::path::Path;
 
 use regex::Regex;
 
-use super::super::utils::is_camel_case;
 use super::super::violation::NamingViolation;
 use crate::traits::violation::Severity;
+use crate::utils::naming::is_camel_case;
 
 pub fn validate_type_names(
     path: &Path,

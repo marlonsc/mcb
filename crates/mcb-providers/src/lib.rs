@@ -46,9 +46,6 @@ pub use mcb_domain::ports::providers::{
 pub mod constants;
 
 /// Common macros for providers layer
-#[macro_use]
-pub mod macros;
-
 /// Shared utilities for provider implementations
 pub mod utils;
 
@@ -98,11 +95,13 @@ pub mod database;
 
 pub use database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
 
+/// Project type detection providers
+pub mod project_detection;
+
 /// Git-related providers for repository operations
 ///
-/// Provides project type detection (Cargo, npm, Python, Go, Maven) and
-/// submodule discovery with recursive traversal.
-pub mod git;
+/// Provides submodule discovery with recursive traversal.
+pub mod vcs;
 /// Workflow FSM provider for ADR-034
 ///
 /// Implements state machine transitions and session management

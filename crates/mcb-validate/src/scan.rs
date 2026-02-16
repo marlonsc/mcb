@@ -5,6 +5,7 @@
 
 use std::path::Path;
 
+use crate::constants::common::MAX_BLOCK_SEARCH_OFFSET;
 use crate::filters::LanguageId;
 use crate::run_context::{InventoryEntry, ValidationRunContext};
 use crate::{Result, ValidationConfig};
@@ -184,7 +185,7 @@ pub fn extract_balanced_block<'a>(
                 let block_lines = lines[start_line_idx..=current_idx].to_vec();
                 return Some((block_lines, current_idx));
             }
-        } else if offset > 20 {
+        } else if offset > MAX_BLOCK_SEARCH_OFFSET {
             return None;
         }
     }

@@ -1,8 +1,9 @@
+use super::constants::MAX_UNRELATED_STRUCTS_PER_FILE;
 use crate::Result;
 use crate::Severity;
 use crate::ValidationConfig;
 use crate::pattern_registry::required_pattern;
-use crate::validators::solid::utils::{
+use crate::utils::source::{
     count_block_lines, count_matches_in_block, for_each_rust_file, scan_decl_blocks,
     structs_seem_related,
 };
@@ -49,7 +50,7 @@ pub fn validate_srp(
             }
         }
 
-        if structs_in_file.len() > 5 {
+        if structs_in_file.len() > MAX_UNRELATED_STRUCTS_PER_FILE {
             let struct_names: Vec<String> =
                 structs_in_file.iter().map(|(n, _)| n.clone()).collect();
 
@@ -72,7 +73,6 @@ pub fn validate_srp(
 ///
 /// # Errors
 /// Returns an error if pattern compilation fails.
-#[allow(dead_code)]
 pub fn validate_impl_method_count(
     config: &ValidationConfig,
     max_impl_methods: usize,

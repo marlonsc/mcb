@@ -86,13 +86,13 @@ impl PatternValidator {
         let provider_traits = &self.rules.provider_trait_suffixes;
 
         self.scan_rust_files(|path, content| {
-            di::check_arc_usage(
+            Ok(di::check_arc_usage(
                 path,
                 content,
                 &arc_pattern,
                 allowed_concrete,
                 provider_traits,
-            )
+            ))
         })
     }
 
@@ -141,7 +141,7 @@ impl PatternValidator {
 
     fn scan_rust_files<F>(&self, visitor: F) -> Result<Vec<PatternViolation>>
     where
-        F: FnMut(&std::path::Path, &str) -> Vec<PatternViolation>,
+        F: FnMut(&std::path::Path, &str) -> Result<Vec<PatternViolation>>,
     {
         self.scan_rust_files_with_filter(|_| false, visitor)
     }
@@ -152,7 +152,7 @@ impl PatternValidator {
         mut visitor: F,
     ) -> Result<Vec<PatternViolation>>
     where
-        F: FnMut(&std::path::Path, &str) -> Vec<PatternViolation>,
+        F: FnMut(&std::path::Path, &str) -> Result<Vec<PatternViolation>>,
     {
         let mut violations = Vec::new();
         for src_dir in self.config.get_scan_dirs()? {
@@ -171,7 +171,7 @@ impl PatternValidator {
 
                     let path = &entry.absolute_path;
                     let content = std::fs::read_to_string(path)?;
-                    violations.extend(visitor(path, &content));
+                    violations.extend(visitor(path, &content)?);
                     Ok(())
                 },
             )?;

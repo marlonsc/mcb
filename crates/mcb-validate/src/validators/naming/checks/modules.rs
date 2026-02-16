@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use super::super::utils::is_snake_case;
 use super::super::violation::NamingViolation;
 use crate::traits::violation::Severity;
+use crate::utils::naming::is_snake_case;
 use crate::validators::naming::constants::{MODULE_FILE_NAME, MODULE_SPECIAL_FILES};
 
 pub fn validate_module_name(path: &Path) -> Option<NamingViolation> {

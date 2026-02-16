@@ -10,6 +10,6 @@ mod memory_tests;
 mod real_persistence_tests;
 mod search_code_tests;
 mod session_tests;
-mod test_helpers;
+mod utils;
 mod validate_tests;
 mod vcs_tests;

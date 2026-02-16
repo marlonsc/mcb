@@ -3,7 +3,7 @@ use super::constants::{
     SERVER_LAYER_PATH, SERVICE_CREATION_BYPASS_FILES,
 };
 use super::violation::OrganizationViolation;
-use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX};
+use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX, PUB_USE_PREFIX};
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::{for_each_scan_file, is_test_path};
@@ -103,7 +103,7 @@ pub fn validate_layer_violations(config: &ValidationConfig) -> Result<Vec<Organi
             // Check: Application layer importing from server
             if (is_application_layer || is_infrastructure_layer)
                 && server_import_pattern.is_match(line)
-                && !trimmed.contains("pub use")
+                && !trimmed.contains(PUB_USE_PREFIX)
             {
                 violations.push(OrganizationViolation::ApplicationImportsServer {
                     file: entry.absolute_path.clone(),

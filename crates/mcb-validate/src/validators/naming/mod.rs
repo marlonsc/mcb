@@ -16,7 +16,6 @@ use crate::{Result, ValidationConfig};
 
 mod checks;
 pub mod constants;
-mod utils;
 mod violation;
 
 use checks::{

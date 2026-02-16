@@ -2,9 +2,9 @@ use std::path::Path;
 
 use regex::Regex;
 
-use super::super::utils::is_snake_case;
 use super::super::violation::NamingViolation;
 use crate::traits::violation::Severity;
+use crate::utils::naming::is_snake_case;
 
 pub fn validate_function_names(
     path: &Path,

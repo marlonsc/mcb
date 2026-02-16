@@ -15,7 +15,7 @@ use crate::{Result, ValidationConfig};
 
 mod checks;
 pub mod constants;
-mod helpers;
+mod counting;
 mod violations;
 
 pub use self::violations::KissViolation;

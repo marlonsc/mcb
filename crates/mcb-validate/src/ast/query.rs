@@ -129,7 +129,7 @@ impl AstQuery {
 
         // Check all conditions
         for condition in &self.conditions {
-            if !self.check_condition(condition, node) {
+            if !Self::check_condition(condition, node) {
                 return false;
             }
         }
@@ -138,7 +138,7 @@ impl AstQuery {
     }
 
     /// Check individual condition
-    fn check_condition(&self, condition: &QueryCondition, node: &AstNode) -> bool {
+    fn check_condition(condition: &QueryCondition, node: &AstNode) -> bool {
         match condition {
             QueryCondition::HasField { field, value } => node
                 .metadata
@@ -159,14 +159,14 @@ impl AstQuery {
             QueryCondition::MetadataEquals { key, value } => {
                 node.metadata.get(key).is_some_and(|v| v == value)
             }
-            QueryCondition::Custom { name } => self.check_custom_condition(name, node),
+            QueryCondition::Custom { name } => Self::check_custom_condition(name, node),
         }
     }
 
     /// Check custom conditions
-    fn check_custom_condition(&self, name: &str, node: &AstNode) -> bool {
+    fn check_custom_condition(name: &str, node: &AstNode) -> bool {
         match name {
-            "has_no_docstring" => self.has_no_docstring(node),
+            "has_no_docstring" => Self::has_no_docstring(node),
             "is_async" => node
                 .metadata
                 .get("is_async")
@@ -186,7 +186,7 @@ impl AstQuery {
     }
 
     /// Check if function has docstring/documentation
-    fn has_no_docstring(&self, node: &AstNode) -> bool {
+    fn has_no_docstring(node: &AstNode) -> bool {
         // Look for documentation comments before the function
         // This is a simplified check - real implementation would
         // need to check source code around the node

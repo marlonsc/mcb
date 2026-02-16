@@ -1,3 +1,4 @@
+use crate::constants::common::{COMMENT_PREFIX, CONTEXT_PREVIEW_LENGTH};
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_scan_file;
@@ -82,7 +83,7 @@ pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncVio
                     violations.push(AsyncViolation::UnawaitedSpawn {
                         file: path.clone(),
                         line: line_num + 1,
-                        context: trimmed.chars().take(80).collect(),
+                        context: trimmed.chars().take(CONTEXT_PREVIEW_LENGTH).collect(),
                         severity: Severity::Info,
                     });
                 }

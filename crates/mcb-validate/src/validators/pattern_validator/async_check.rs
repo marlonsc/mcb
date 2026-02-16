@@ -1,36 +1,20 @@
 use std::path::Path;
-use std::sync::OnceLock;
-
-use regex::Regex;
 
 use super::violation::PatternViolation;
+use crate::constants::common::ATTR_SEARCH_LINES;
+use crate::pattern_registry::compile_regex;
 use crate::traits::violation::Severity;
 
-static TRAIT_PATTERN: OnceLock<Regex> = OnceLock::new();
-static ASYNC_FN_PATTERN: OnceLock<Regex> = OnceLock::new();
-static SEND_SYNC_PATTERN: OnceLock<Regex> = OnceLock::new();
-static ASYNC_TRAIT_ATTR: OnceLock<Regex> = OnceLock::new();
-static ALLOW_ASYNC_FN_TRAIT: OnceLock<Regex> = OnceLock::new();
-
 /// Checks for async trait usage in a single file.
-pub fn check_async_traits(path: &Path, content: &str) -> Vec<PatternViolation> {
+pub fn check_async_traits(path: &Path, content: &str) -> crate::Result<Vec<PatternViolation>> {
     let mut violations = Vec::new();
     let lines: Vec<&str> = content.lines().collect();
 
-    let trait_pattern = TRAIT_PATTERN.get_or_init(|| {
-        Regex::new(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)").expect("Invalid trait pattern")
-    });
-    let async_fn_pattern = ASYNC_FN_PATTERN
-        .get_or_init(|| Regex::new(r"async\s+fn\s+").expect("Invalid async fn pattern"));
-    let send_sync_pattern = SEND_SYNC_PATTERN
-        .get_or_init(|| Regex::new(r":\s*.*Send\s*\+\s*Sync").expect("Invalid send sync pattern"));
-    let async_trait_attr = ASYNC_TRAIT_ATTR.get_or_init(|| {
-        Regex::new(r"#\[(async_trait::)?async_trait\]").expect("Invalid async trait attr pattern")
-    });
-    let allow_async_fn_trait = ALLOW_ASYNC_FN_TRAIT.get_or_init(|| {
-        Regex::new(r"#\[allow\(async_fn_in_trait\)\]")
-            .expect("Invalid allow async fn trait pattern")
-    });
+    let trait_pattern = compile_regex(r"pub\s+trait\s+([A-Z][a-zA-Z0-9_]*)")?;
+    let async_fn_pattern = compile_regex(r"async\s+fn\s+")?;
+    let send_sync_pattern = compile_regex(r":\s*.*Send\s*\+\s*Sync")?;
+    let async_trait_attr = compile_regex(r"#\[(async_trait::)?async_trait\]")?;
+    let allow_async_fn_trait = compile_regex(r"#\[allow\(async_fn_in_trait\)\]")?;
 
     for (line_num, line) in lines.iter().enumerate() {
         // Find trait definitions
@@ -51,21 +35,22 @@ pub fn check_async_traits(path: &Path, content: &str) -> Vec<PatternViolation> {
             }
 
             if has_async_methods {
-                let has_async_trait_attr =
-                    if line_num > 0 {
-                        lines[..line_num].iter().rev().take(5).any(|l| {
-                            async_trait_attr.is_match(l) || allow_async_fn_trait.is_match(l)
-                        })
-                    } else {
-                        false
-                    };
+                let has_async_trait_attr = if line_num > 0 {
+                    lines[..line_num]
+                        .iter()
+                        .rev()
+                        .take(ATTR_SEARCH_LINES)
+                        .any(|l| async_trait_attr.is_match(l) || allow_async_fn_trait.is_match(l))
+                } else {
+                    false
+                };
 
                 // Check if using native async trait support
                 let uses_native_async = if line_num > 0 {
                     lines[..line_num]
                         .iter()
                         .rev()
-                        .take(5)
+                        .take(ATTR_SEARCH_LINES)
                         .any(|l| allow_async_fn_trait.is_match(l))
                 } else {
                     false
@@ -93,5 +78,5 @@ pub fn check_async_traits(path: &Path, content: &str) -> Vec<PatternViolation> {
             }
         }
     }
-    violations
+    Ok(violations)
 }

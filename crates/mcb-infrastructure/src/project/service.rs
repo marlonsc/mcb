@@ -14,7 +14,7 @@ use std::path::Path;
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::ports::services::project::ProjectDetectorService;
-use mcb_providers::git::detect_all_projects;
+use mcb_providers::project_detection::detect_all_projects;
 
 /// Infrastructure service for project detection and scanning.
 ///

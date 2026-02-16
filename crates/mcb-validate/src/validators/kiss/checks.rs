@@ -1,4 +1,4 @@
-use crate::constants::common::TEST_FUNCTION_PREFIX;
+use crate::constants::common::{SHORT_PREVIEW_LENGTH, TEST_FUNCTION_PREFIX};
 use crate::filters::LanguageId;
 
 use crate::pattern_registry::compile_regex;
@@ -307,7 +307,7 @@ impl KissValidator {
                                     line: line_num + 1,
                                     nesting_level: nesting_depth,
                                     max_allowed: self.max_nesting_depth,
-                                    context: trimmed.chars().take(60).collect(),
+                                    context: trimmed.chars().take(SHORT_PREVIEW_LENGTH).collect(),
                                     severity: Severity::Warning,
                                 });
                                 reported_lines.insert(line_num);

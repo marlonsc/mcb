@@ -64,7 +64,7 @@ impl LintViolation {
             "error_boundary" => ViolationCategory::ErrorBoundary,
             "implementation" => ViolationCategory::Implementation,
             "pmat" => ViolationCategory::Pmat,
-            "quality" | "duplication" | "metrics" | _ => ViolationCategory::Quality,
+            _ => ViolationCategory::Quality,
         }
     }
 }

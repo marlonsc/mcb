@@ -1,13 +1,16 @@
 use super::constants::{
     COMMENT_SEARCH_RADIUS, IGNORE_HINT_KEYWORDS, LOCK_POISONING_STRINGS, SAFETY_COMMENT_MARKERS,
 };
-use super::utils::has_ignore_hint;
 use super::{QualityValidator, QualityViolation};
 use crate::ast::UnwrapDetector;
 use crate::constants::common::TEST_PATH_PATTERNS;
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
+
+fn has_ignore_hint(line: &str, violation_type: &str) -> bool {
+    line.contains(&format!("mcb-validate-ignore: {violation_type}"))
+}
 
 fn should_skip_source_file(path: &std::path::Path) -> bool {
     let Some(path_str) = path.to_str() else {

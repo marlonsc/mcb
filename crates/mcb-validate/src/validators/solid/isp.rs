@@ -2,7 +2,7 @@ use crate::Result;
 use crate::Severity;
 use crate::ValidationConfig;
 use crate::pattern_registry::required_pattern;
-use crate::validators::solid::utils::{count_matches_in_block, scan_decl_blocks};
+use crate::utils::source::{count_matches_in_block, scan_decl_blocks};
 use crate::validators::solid::violation::SolidViolation;
 
 /// ISP: Check for traits with too many methods

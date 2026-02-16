@@ -10,6 +10,11 @@ use handlebars::{
 };
 use serde_json::Value;
 
+use crate::constants::display::{
+    DEFAULT_ID_TRUNCATE_LENGTH, DEFAULT_TEXT_TRUNCATE_LENGTH, SECS_PER_DAY, SECS_PER_HOUR,
+    SECS_PER_MINUTE, SECS_PER_WEEK,
+};
+
 /// Formats a Unix-epoch timestamp as `YYYY-MM-DD HH:MM:SS UTC`.
 ///
 /// Usage: `{{timestamp ts}}`
@@ -75,16 +80,16 @@ impl HelperDef for RelativeTimeHelper {
         let now = Utc::now().timestamp();
         let delta = now.saturating_sub(val);
 
-        let text = if delta < 60 {
+        let text = if delta < SECS_PER_MINUTE {
             "just now".to_owned()
-        } else if delta < 3_600 {
-            let mins = delta / 60;
+        } else if delta < SECS_PER_HOUR {
+            let mins = delta / SECS_PER_MINUTE;
             format!("{mins} minute{} ago", if mins == 1 { "" } else { "s" })
-        } else if delta < 86_400 {
-            let hours = delta / 3_600;
+        } else if delta < SECS_PER_DAY {
+            let hours = delta / SECS_PER_HOUR;
             format!("{hours} hour{} ago", if hours == 1 { "" } else { "s" })
-        } else if delta < 604_800 {
-            let days = delta / 86_400;
+        } else if delta < SECS_PER_WEEK {
+            let days = delta / SECS_PER_DAY;
             format!("{days} day{} ago", if days == 1 { "" } else { "s" })
         } else {
             DateTime::<Utc>::from_timestamp(val, 0).map_or_else(
@@ -151,7 +156,10 @@ impl HelperDef for TruncateIdHelper {
     ) -> HelperResult {
         let input = h.param(0).and_then(|p| p.value().as_str()).unwrap_or("");
 
-        let max_len = h.param(1).and_then(|p| p.value().as_i64()).unwrap_or(8) as usize;
+        let max_len = h
+            .param(1)
+            .and_then(|p| p.value().as_i64())
+            .unwrap_or(DEFAULT_ID_TRUNCATE_LENGTH as i64) as usize;
 
         let char_count = input.chars().count();
         if char_count <= max_len {
@@ -329,7 +337,10 @@ impl HelperDef for TruncateTextHelper {
             })
             .unwrap_or_default();
 
-        let max_len = h.param(1).and_then(|p| p.value().as_i64()).unwrap_or(80) as usize;
+        let max_len = h
+            .param(1)
+            .and_then(|p| p.value().as_i64())
+            .unwrap_or(DEFAULT_TEXT_TRUNCATE_LENGTH as i64) as usize;
 
         let char_count = input.chars().count();
         if char_count <= max_len {

@@ -7,15 +7,6 @@
 //! - High-performance concurrent cache
 //! - Configurable capacity and TTL
 //! - Automatic eviction of expired entries
-//!
-//! ## Example
-//!
-//! ```no_run
-//! use mcb_providers::cache::MokaCacheProvider;
-//! use std::time::Duration;
-//!
-//! let provider = MokaCacheProvider::with_config(1000, Duration::from_secs(300));
-//! ```
 
 use std::time::{Duration, Instant};
 
@@ -177,24 +168,17 @@ impl std::fmt::Debug for MokaCacheProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use std::sync::Arc;
-
-use mcb_domain::registry::cache::{CACHE_PROVIDERS, CacheProviderConfig, CacheProviderEntry};
-
-/// Factory function for creating Moka cache provider instances.
-fn moka_cache_factory(
-    config: &CacheProviderConfig,
-) -> std::result::Result<Arc<dyn CacheProvider>, String> {
-    let max_size = config
-        .max_size
-        .ok_or_else(|| "Moka cache provider requires max_size in config".to_owned())?;
-    let provider = MokaCacheProvider::new(max_size);
-    Ok(Arc::new(provider))
-}
-
-#[linkme::distributed_slice(CACHE_PROVIDERS)]
-static MOKA_PROVIDER: CacheProviderEntry = CacheProviderEntry {
-    name: "moka",
-    description: "Moka high-performance in-memory cache",
-    factory: moka_cache_factory,
-};
+crate::register_cache_provider!(
+    moka_cache_factory,
+    config,
+    MOKA_PROVIDER,
+    "moka",
+    "Moka high-performance in-memory cache",
+    {
+        let max_size = config
+            .max_size
+            .ok_or_else(|| "Moka cache provider requires max_size in config".to_owned())?;
+        let provider = MokaCacheProvider::new(max_size);
+        Ok(std::sync::Arc::new(provider))
+    }
+);

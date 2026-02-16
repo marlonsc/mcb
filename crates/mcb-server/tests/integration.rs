@@ -9,10 +9,10 @@ mod test_utils;
 mod tools;
 
 // Integration helpers - service detection and skip macros
-#[path = "integration/helpers.rs"]
-mod helpers;
+#[path = "integration/utils.rs"]
+mod utils;
 
-pub use helpers::{
+pub use utils::{
     check_service_available, is_ci, is_milvus_available, is_ollama_available,
     is_postgres_available, is_redis_available,
 };

@@ -104,10 +104,10 @@ impl DuplicationAnalyzer {
         }
 
         let extension = path.extension().and_then(|e| e.to_str()).unwrap_or("");
-        self.extension_to_language_fallback(extension).to_owned()
+        Self::extension_to_language_fallback(extension).to_owned()
     }
 
-    fn extension_to_language_fallback(&self, extension: &str) -> &str {
+    fn extension_to_language_fallback(extension: &str) -> &str {
         match extension {
             "go" => "go",
             "c" | "h" => "c",

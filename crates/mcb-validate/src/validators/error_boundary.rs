@@ -5,6 +5,7 @@
 //! - Context preservation across layers
 //! - Error type placement (right layer)
 
+use crate::constants::common::{COMMENT_PREFIX, SHORT_PREVIEW_LENGTH};
 use crate::filters::LanguageId;
 use std::path::PathBuf;
 
@@ -145,7 +146,7 @@ impl ErrorBoundaryValidator {
                     let trimmed = line.trim();
 
                     // Skip comments
-                    if trimmed.starts_with("//") {
+                    if trimmed.starts_with(COMMENT_PREFIX) {
                         continue;
                     }
 
@@ -170,7 +171,7 @@ impl ErrorBoundaryValidator {
                         violations.push(ErrorBoundaryViolation::MissingErrorContext {
                             file: path.clone(),
                             line: line_num + 1,
-                            error_pattern: trimmed.chars().take(60).collect(),
+                            error_pattern: trimmed.chars().take(SHORT_PREVIEW_LENGTH).collect(),
                             suggestion: "Add .context() or .map_err() for better error messages"
                                 .to_owned(),
                             severity: Severity::Info,
@@ -239,7 +240,7 @@ impl ErrorBoundaryValidator {
                     let trimmed = line.trim();
 
                     // Skip comments
-                    if trimmed.starts_with("//") {
+                    if trimmed.starts_with(COMMENT_PREFIX) {
                         continue;
                     }
 
@@ -330,7 +331,7 @@ impl ErrorBoundaryValidator {
                     let trimmed = line.trim();
 
                     // Skip comments
-                    if trimmed.starts_with("//") {
+                    if trimmed.starts_with(COMMENT_PREFIX) {
                         continue;
                     }
 

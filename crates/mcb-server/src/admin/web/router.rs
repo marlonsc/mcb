@@ -9,7 +9,6 @@ use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
-use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use rocket::{Build, Rocket, routes};
 
@@ -17,6 +16,8 @@ use super::entity_handlers;
 use super::handlers;
 use super::lov_handlers;
 use crate::admin::handlers::AdminState;
+use crate::constants::limits::DEFAULT_SHUTDOWN_TIMEOUT_SECS;
+use crate::utils::config::load_startup_config_or_panic;
 
 /// Minimal no-op event bus for the standalone web UI Rocket instance.
 ///
@@ -53,13 +54,10 @@ fn default_admin_state() -> AdminState {
         metrics: Arc::new(AtomicPerformanceMetrics::new()),
         indexing: Arc::new(DefaultIndexingOperations::new()),
         config_watcher: None,
-        #[allow(clippy::expect_used)]
-        current_config: ConfigLoader::new()
-            .load()
-            .expect("startup: configuration file must be loadable"),
+        current_config: load_startup_config_or_panic(),
         config_path: None,
         shutdown_coordinator: None,
-        shutdown_timeout_secs: 30,
+        shutdown_timeout_secs: DEFAULT_SHUTDOWN_TIMEOUT_SECS,
         event_bus: Arc::new(NullEventBus),
         service_manager: None,
         cache: None,

@@ -85,4 +85,4 @@ pub const LOOP_ALLOCATION_PATTERNS: &[&str] = &[
 ];
 
 /// Maximum characters of context to include in clone-in-loop violations.
-pub const CONTEXT_TRUNCATION_LENGTH: usize = 80;
+pub use crate::constants::common::CONTEXT_PREVIEW_LENGTH as CONTEXT_TRUNCATION_LENGTH;

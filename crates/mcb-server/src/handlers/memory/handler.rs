@@ -11,6 +11,7 @@ use validator::Validate;
 
 use super::{execution, inject, list_timeline, observation, quality_gate, session};
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
+use crate::constants::limits::DEFAULT_MEMORY_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::json;
@@ -54,34 +55,51 @@ impl MemoryHandler {
     }
 
     async fn handle_store(&self, args: &MemoryArgs) -> Result<CallToolResult, McpError> {
-        match args.resource {
-            MemoryResource::Observation => {
-                observation::store_observation(&self.memory_service, args).await
-            }
-            MemoryResource::Execution => {
-                execution::store_execution(&self.memory_service, args).await
-            }
-            MemoryResource::QualityGate => {
-                quality_gate::store_quality_gate(&self.memory_service, args).await
-            }
-            MemoryResource::Session => session::store_session(&self.memory_service, args).await,
-            MemoryResource::ErrorPattern => self.handle_store_error_pattern(args).await,
-        }
+        self.dispatch_resource(args, MemoryResourceAction::Store)
+            .await
     }
 
     async fn handle_get(&self, args: &MemoryArgs) -> Result<CallToolResult, McpError> {
-        match args.resource {
-            MemoryResource::Observation => {
+        self.dispatch_resource(args, MemoryResourceAction::Get)
+            .await
+    }
+
+    async fn dispatch_resource(
+        &self,
+        args: &MemoryArgs,
+        action: MemoryResourceAction,
+    ) -> Result<CallToolResult, McpError> {
+        match (action, args.resource) {
+            (MemoryResourceAction::Store, MemoryResource::Observation) => {
+                observation::store_observation(&self.memory_service, args).await
+            }
+            (MemoryResourceAction::Store, MemoryResource::Execution) => {
+                execution::store_execution(&self.memory_service, args).await
+            }
+            (MemoryResourceAction::Store, MemoryResource::QualityGate) => {
+                quality_gate::store_quality_gate(&self.memory_service, args).await
+            }
+            (MemoryResourceAction::Store, MemoryResource::Session) => {
+                session::store_session(&self.memory_service, args).await
+            }
+            (MemoryResourceAction::Store, MemoryResource::ErrorPattern) => {
+                self.handle_store_error_pattern(args).await
+            }
+            (MemoryResourceAction::Get, MemoryResource::Observation) => {
                 observation::get_observations(&self.memory_service, args).await
             }
-            MemoryResource::Execution => {
+            (MemoryResourceAction::Get, MemoryResource::Execution) => {
                 execution::get_executions(&self.memory_service, args).await
             }
-            MemoryResource::QualityGate => {
+            (MemoryResourceAction::Get, MemoryResource::QualityGate) => {
                 quality_gate::get_quality_gates(&self.memory_service, args).await
             }
-            MemoryResource::Session => session::get_session(&self.memory_service, args).await,
-            MemoryResource::ErrorPattern => self.handle_get_error_pattern(args).await,
+            (MemoryResourceAction::Get, MemoryResource::Session) => {
+                session::get_session(&self.memory_service, args).await
+            }
+            (MemoryResourceAction::Get, MemoryResource::ErrorPattern) => {
+                self.handle_get_error_pattern(args).await
+            }
         }
     }
 
@@ -136,7 +154,7 @@ impl MemoryHandler {
         })?;
 
         let query = args.query.clone().unwrap_or_default();
-        let limit = args.limit.unwrap_or(10) as usize;
+        let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIMIT as u32) as usize;
 
         match self
             .memory_service
@@ -169,4 +187,10 @@ impl MemoryHandler {
     async fn handle_inject(&self, args: &MemoryArgs) -> Result<CallToolResult, McpError> {
         inject::inject_context(&self.memory_service, args).await
     }
+}
+
+#[derive(Clone, Copy)]
+enum MemoryResourceAction {
+    Store,
+    Get,
 }

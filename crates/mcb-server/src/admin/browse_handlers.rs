@@ -21,6 +21,8 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get};
 
+use crate::constants::limits::DEFAULT_BROWSE_FILES_LIMIT;
+
 use super::auth::AdminAuth;
 use super::models::{
     ChunkDetailResponse, ChunkListResponse, CollectionInfoResponse, CollectionListResponse,
@@ -126,7 +128,7 @@ pub async fn list_collection_files(
     limit: Option<usize>,
 ) -> Result<Json<FileListResponse>, (Status, Json<BrowseErrorResponse>)> {
     tracing::info!("list_collection_files called");
-    let limit = limit.unwrap_or(100);
+    let limit = limit.unwrap_or(DEFAULT_BROWSE_FILES_LIMIT);
     let collection = CollectionId::from_string(name);
 
     let files = state

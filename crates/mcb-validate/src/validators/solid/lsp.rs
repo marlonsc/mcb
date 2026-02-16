@@ -2,7 +2,7 @@ use crate::Result;
 use crate::Severity;
 use crate::ValidationConfig;
 use crate::pattern_registry::required_pattern;
-use crate::validators::solid::utils::for_each_rust_file;
+use crate::utils::source::for_each_rust_file;
 use crate::validators::solid::violation::SolidViolation;
 
 /// LSP: Check for partial trait implementations (panic!/todo! in trait methods).

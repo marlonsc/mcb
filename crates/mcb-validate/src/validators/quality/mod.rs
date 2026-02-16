@@ -4,7 +4,6 @@ mod dead_code;
 mod metrics;
 mod panic;
 mod unwrap;
-mod utils;
 mod validator;
 mod violations;
 

@@ -81,6 +81,9 @@ pub mod metrics;
 // === Duplication Detection (Phase 5 - Clone Detection) ===
 pub mod duplication;
 
+// === Centralized Utilities ===
+pub mod utils;
+
 // === New Validators (using new system) ===
 // Moved to validators module
 

@@ -3,17 +3,16 @@ mod empty;
 mod hardcoded;
 mod logging;
 mod stubs;
-mod utils;
 mod wrappers;
 
 use std::path::{Path, PathBuf};
 
+use crate::pattern_registry::required_pattern;
 use catch_all::validate_empty_catch_alls;
 use empty::validate_empty_methods;
 use hardcoded::validate_hardcoded_returns;
 use logging::validate_log_only_methods;
 use stubs::validate_stub_macros;
-use utils::required_pattern;
 use wrappers::validate_pass_through_wrappers;
 
 use crate::config::ImplementationRulesConfig;

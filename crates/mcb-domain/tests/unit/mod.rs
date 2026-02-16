@@ -2,10 +2,11 @@
 //!
 //! Run with: `cargo test -p mcb-domain --test unit`
 
-mod constants_tests;
-mod domain_events_tests;
-mod entities;
-mod error_tests;
-mod ports;
-mod utils_tests;
-mod value_objects;
+pub mod constants;
+pub mod entities;
+pub mod error;
+pub mod events;
+pub mod ports;
+pub mod repositories;
+pub mod utils;
+pub mod value_objects;

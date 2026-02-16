@@ -13,84 +13,32 @@ use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use crate::constants::ANTHROPIC_MAX_INPUT_TOKENS;
+use crate::{
+    define_http_embedding_provider, impl_embedding_provider_trait, impl_http_provider_base,
+    register_http_provider,
+};
+
 use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
 use crate::utils::http::{
     JsonRequestParams, RequestErrorKind, parse_embedding_vector, send_json_request,
 };
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
-/// Anthropic embedding provider
-///
-/// Implements the `EmbeddingProvider` domain port using Anthropic's embedding API.
-/// Uses Voyage AI models accessed through the Anthropic API endpoint.
-/// Receives HTTP client via constructor injection.
-///
-/// ## Example
-///
-/// ```rust,no_run
-/// use mcb_providers::embedding::AnthropicEmbeddingProvider;
-/// use reqwest::Client;
-/// use std::time::Duration;
-///
-/// fn example() -> Result<(), Box<dyn std::error::Error>> {
-///     let client = Client::builder()
-///         .timeout(Duration::from_secs(30))
-///         .build()?;
-///     let provider = AnthropicEmbeddingProvider::new(
-///         "your-api-key".to_string(),
-///         None,
-///         "voyage-3".to_string(),
-///         Duration::from_secs(30),
-///         client,
-///     );
-///     Ok(())
-/// }
-/// ```
-pub struct AnthropicEmbeddingProvider {
-    client: HttpEmbeddingClient,
-}
+define_http_embedding_provider!(
+    /// Anthropic embedding provider
+    ///
+    /// Implements the `EmbeddingProvider` domain port using Anthropic's embedding API.
+    /// Uses Voyage AI models accessed through the Anthropic API endpoint.
+    /// Receives HTTP client via constructor injection.
+    AnthropicEmbeddingProvider
+);
+
+impl_http_provider_base!(
+    AnthropicEmbeddingProvider,
+    crate::constants::VOYAGEAI_API_BASE_URL
+);
 
 impl AnthropicEmbeddingProvider {
-    /// Create a new Anthropic embedding provider
-    ///
-    /// # Arguments
-    /// * `api_key` - Anthropic API key
-    /// * `base_url` - Optional custom base URL (defaults to Anthropic API)
-    /// * `model` - Model name (e.g., "voyage-3", "voyage-code-3")
-    /// * `timeout` - Request timeout duration
-    /// * `http_client` - Reqwest HTTP client for making API requests
-    #[must_use]
-    pub fn new(
-        api_key: String,
-        base_url: Option<String>,
-        model: String,
-        timeout: Duration,
-        http_client: Client,
-    ) -> Self {
-        Self {
-            client: HttpEmbeddingClient::new(
-                &api_key,
-                base_url,
-                "https://api.voyageai.com/v1",
-                model,
-                timeout,
-                http_client,
-            ),
-        }
-    }
-
-    /// Get the base URL for this provider
-    #[must_use]
-    pub fn base_url(&self) -> &str {
-        &self.client.base_url
-    }
-
-    /// Get the model name
-    #[must_use]
-    pub fn model(&self) -> &str {
-        &self.client.model
-    }
-
     /// Get the maximum tokens for this model
     #[must_use]
     pub fn max_tokens(&self) -> usize {
@@ -138,31 +86,15 @@ impl AnthropicEmbeddingProvider {
     }
 }
 
-#[async_trait]
-/// Implementation of `EmbeddingProvider` using Anthropic/Voyage.
-impl EmbeddingProvider for AnthropicEmbeddingProvider {
-    /// Generates embeddings for a batch of texts.
-    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
-        process_batch(texts, self.fetch_embeddings(texts), |i, item| {
-            self.parse_embedding(i, item)
-        })
-        .await
+impl_embedding_provider_trait!(
+    AnthropicEmbeddingProvider,
+    "anthropic",
+    |model: &str| match model {
+        "voyage-3-lite" => EMBEDDING_DIMENSION_ANTHROPIC_LITE,
+        "voyage-code-3" => EMBEDDING_DIMENSION_ANTHROPIC_CODE,
+        _ => EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT,
     }
-
-    /// Returns the embedding dimensions for the configured model.
-    fn dimensions(&self) -> usize {
-        match self.client.model.as_str() {
-            "voyage-3-lite" => EMBEDDING_DIMENSION_ANTHROPIC_LITE,
-            "voyage-code-3" => EMBEDDING_DIMENSION_ANTHROPIC_CODE,
-            _ => EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT,
-        }
-    }
-
-    /// Returns the provider name ("anthropic").
-    fn provider_name(&self) -> &str {
-        "anthropic"
-    }
-}
+);
 
 // ============================================================================
 // Auto-registration via linkme distributed slice
@@ -175,26 +107,12 @@ use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
 
-/// Factory function for creating Anthropic embedding provider instances.
-fn anthropic_factory(
-    config: &EmbeddingProviderConfig,
-) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use crate::utils::http::create_http_provider_config;
-
-    let cfg = create_http_provider_config(config, "Anthropic", "voyage-3")?;
-
-    Ok(Arc::new(AnthropicEmbeddingProvider::new(
-        cfg.api_key,
-        cfg.base_url,
-        cfg.model,
-        cfg.timeout,
-        cfg.client,
-    )))
-}
-
-#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-static ANTHROPIC_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-    name: "anthropic",
-    description: "Anthropic embedding provider (voyage-3, voyage-3-lite, voyage-code-3)",
-    factory: anthropic_factory,
-};
+register_http_provider!(
+    AnthropicEmbeddingProvider,
+    anthropic_factory,
+    ANTHROPIC_PROVIDER,
+    "anthropic",
+    "Anthropic embedding provider (voyage-3, voyage-3-lite, voyage-code-3)",
+    "Anthropic",
+    "voyage-3"
+);

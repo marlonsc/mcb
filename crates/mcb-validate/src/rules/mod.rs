@@ -3,8 +3,6 @@
 //! Provides declarative rule definitions and registry management.
 
 pub mod templates;
-/// Shared utility functions for rules.
-pub mod utils;
 pub mod yaml_loader;
 pub mod yaml_validator;
 

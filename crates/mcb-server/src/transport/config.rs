@@ -2,8 +2,9 @@
 //!
 //! Configuration types and utilities for MCP server transports.
 
-use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::{ServerConfig, TransportMode};
+
+use crate::utils::config::load_startup_config_or_panic;
 
 /// Transport configuration for MCP server
 ///
@@ -21,11 +22,8 @@ pub struct TransportConfig {
 
 /// Returns default `TransportConfig` with Stdio mode and no HTTP configuration
 impl Default for TransportConfig {
-    #[allow(clippy::expect_used)]
     fn default() -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("startup: configuration file must be loadable");
+        let config = load_startup_config_or_panic();
         Self {
             mode: config.server.transport_mode,
             http_port: Some(config.server.network.port),
@@ -47,11 +45,8 @@ impl TransportConfig {
 
     /// Create HTTP-only transport config
     #[must_use]
-    #[allow(clippy::expect_used)]
     pub fn http(port: u16) -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("startup: configuration file must be loadable");
+        let config = load_startup_config_or_panic();
         Self {
             mode: TransportMode::Http,
             http_port: Some(port),
@@ -61,11 +56,8 @@ impl TransportConfig {
 
     /// Create hybrid transport config (both stdio and HTTP)
     #[must_use]
-    #[allow(clippy::expect_used)]
     pub fn hybrid(http_port: u16) -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("startup: configuration file must be loadable");
+        let config = load_startup_config_or_panic();
         Self {
             mode: TransportMode::Hybrid,
             http_port: Some(http_port),

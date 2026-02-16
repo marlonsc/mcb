@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use mcb_infrastructure::config::ConfigLoader;
+use crate::utils::config::load_startup_config_or_panic;
 
 /// Configuration for the HTTP transport layer.
 #[derive(Debug, Clone)]
@@ -14,11 +14,8 @@ pub struct HttpTransportConfig {
 }
 
 impl Default for HttpTransportConfig {
-    #[allow(clippy::expect_used)]
     fn default() -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("startup: configuration file must be loadable");
+        let config = load_startup_config_or_panic();
         Self {
             host: config.server.network.host,
             port: config.server.network.port,
@@ -30,11 +27,8 @@ impl Default for HttpTransportConfig {
 impl HttpTransportConfig {
     /// Build a config bound to the configured host with a custom port.
     #[must_use]
-    #[allow(clippy::expect_used)]
     pub fn localhost(port: u16) -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("startup: configuration file must be loadable");
+        let config = load_startup_config_or_panic();
         Self {
             host: config.server.network.host,
             port,

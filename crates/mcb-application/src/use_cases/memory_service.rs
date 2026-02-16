@@ -39,6 +39,10 @@ use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionI
 use std::str::FromStr;
 use uuid::Uuid;
 
+use mcb_domain::constants::keys::{
+    METADATA_KEY_CONTENT, METADATA_KEY_SESSION_ID, METADATA_KEY_TAGS, METADATA_KEY_TYPE,
+};
+
 use crate::constants::{
     HYBRID_SEARCH_MULTIPLIER, MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH, RRF_K,
 };
@@ -107,14 +111,14 @@ impl MemoryServiceImpl {
 
         let mut vector_metadata = HashMap::new();
         vector_metadata.insert(
-            "content".to_owned(),
+            METADATA_KEY_CONTENT.to_owned(),
             serde_json::Value::String(content.clone()),
         );
         vector_metadata.insert(
-            "type".to_owned(),
+            METADATA_KEY_TYPE.to_owned(),
             serde_json::Value::String(r#type.as_str().to_owned()),
         );
-        vector_metadata.insert("tags".to_owned(), serde_json::json!(tags));
+        vector_metadata.insert(METADATA_KEY_TAGS.to_owned(), serde_json::json!(tags));
         vector_metadata.insert(
             "project_id".to_owned(),
             serde_json::Value::String(project_id.clone()),
@@ -122,7 +126,7 @@ impl MemoryServiceImpl {
 
         if let Some(session_id) = &metadata.session_id {
             vector_metadata.insert(
-                "session_id".to_owned(),
+                METADATA_KEY_SESSION_ID.to_owned(),
                 serde_json::Value::String(session_id.clone()),
             );
         }

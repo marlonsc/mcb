@@ -2,7 +2,7 @@ use mcb_server::args::{SearchArgs, SearchResource};
 use mcb_server::handlers::SearchHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-use crate::handlers::test_helpers::create_real_domain_services;
+use crate::handlers::utils::create_real_domain_services;
 
 #[tokio::test]
 async fn test_search_code_success() {

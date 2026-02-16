@@ -11,4 +11,4 @@
 //! Run integration: `cargo test -p mcb-server --test integration`
 
 /// Shared test utilities
-pub mod test_helpers {}
+pub mod utils {}

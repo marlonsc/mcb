@@ -1,25 +1,17 @@
-use std::sync::LazyLock;
-
-use regex::Regex;
-
 use super::{QualityValidator, QualityViolation};
 use crate::filters::LanguageId;
+use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
-
-static DEAD_CODE_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(r"#\[allow\([^\)]*dead_code[^\)]*\)\]").expect("valid regex literal")
-});
-static STRUCT_PATTERN: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"pub\s+struct\s+(\w+)").expect("valid regex literal"));
-static FN_PATTERN: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?:pub\s+)?fn\s+(\w+)").expect("valid regex literal"));
-static FIELD_PATTERN: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?:pub\s+)?(\w+):\s+").expect("valid regex literal"));
+use regex::Regex;
 
 /// Scans for and reports usage of `allow(dead_code)` attributes.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
     let mut violations = Vec::new();
+    let dead_code_pattern = compile_regex(r"#\[allow\([^\)]*dead_code[^\)]*\)\]")?;
+    let struct_pattern = compile_regex(r"pub\s+struct\s+(\w+)")?;
+    let fn_pattern = compile_regex(r"(?:pub\s+)?fn\s+(\w+)")?;
+    let field_pattern = compile_regex(r"(?:pub\s+)?(\w+):\s+")?;
 
     for_each_scan_file(
         &validator.config,
@@ -43,13 +35,13 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
             let lines: Vec<&str> = content.lines().collect();
 
             for (i, line) in lines.iter().enumerate() {
-                if DEAD_CODE_PATTERN.is_match(line) {
+                if dead_code_pattern.is_match(line) {
                     let item_name = find_dead_code_item(
                         &lines,
                         i,
-                        &STRUCT_PATTERN,
-                        &FN_PATTERN,
-                        &FIELD_PATTERN,
+                        &struct_pattern,
+                        &fn_pattern,
+                        &field_pattern,
                     )
                     .unwrap_or_else(|| "allow(dead_code)".to_owned());
                     violations.push(QualityViolation::DeadCodeAllowNotPermitted {

@@ -3,9 +3,9 @@ use std::path::PathBuf;
 use regex::Regex;
 
 use super::super::violation::ImplementationViolation;
-use super::utils::{compile_pattern_pairs, source_lines, track_fn_name};
 use crate::Result;
 use crate::traits::violation::Severity;
+use crate::utils::source::{compile_pattern_pairs, source_lines, track_fn_name};
 
 pub fn validate_stub_macros(
     files: &[(PathBuf, String)],

@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use super::super::utils::get_suffix;
 use super::super::violation::NamingViolation;
 use crate::traits::violation::Severity;
+use crate::utils::naming::get_suffix;
 
 pub fn validate_file_suffix(
     path: &Path,

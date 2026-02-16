@@ -20,34 +20,15 @@ use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
-/// Ollama embedding provider
-///
-/// Implements the `EmbeddingProvider` domain port using Ollama's local embedding API.
-/// Receives HTTP client via constructor injection.
-///
-/// ## Example
-///
-/// ```rust,no_run
-/// use mcb_providers::embedding::OllamaEmbeddingProvider;
-/// use reqwest::Client;
-/// use std::time::Duration;
-///
-/// fn example() -> Result<(), Box<dyn std::error::Error>> {
-///     let client = Client::builder()
-///         .timeout(Duration::from_secs(30))
-///         .build()?;
-///     let provider = OllamaEmbeddingProvider::new(
-///         "http://localhost:11434".to_string(),
-///         "nomic-embed-text".to_string(),
-///         Duration::from_secs(30),
-///         client,
-///     );
-///     Ok(())
-/// }
-/// ```
-pub struct OllamaEmbeddingProvider {
-    client: HttpEmbeddingClient,
-}
+use crate::define_http_embedding_provider;
+
+define_http_embedding_provider!(
+    /// Ollama embedding provider
+    ///
+    /// Implements the `EmbeddingProvider` domain port using Ollama's local embedding API.
+    /// Receives HTTP client via constructor injection.
+    OllamaEmbeddingProvider
+);
 
 impl OllamaEmbeddingProvider {
     /// Create a new Ollama embedding provider
@@ -63,7 +44,7 @@ impl OllamaEmbeddingProvider {
             client: HttpEmbeddingClient::new(
                 "", // No API key for Ollama
                 Some(base_url),
-                "http://localhost:11434",
+                crate::constants::OLLAMA_DEFAULT_BASE_URL,
                 model,
                 timeout,
                 http_client,
@@ -81,8 +62,10 @@ impl OllamaEmbeddingProvider {
     #[must_use]
     pub fn max_tokens(&self) -> usize {
         match self.client.model.as_str() {
-            "all-minilm" | "mxbai-embed-large" | "snowflake-arctic-embed" => 512,
-            _ => 8192,
+            "all-minilm" | "mxbai-embed-large" | "snowflake-arctic-embed" => {
+                crate::constants::OLLAMA_MAX_TOKENS_LIMITED
+            }
+            _ => crate::constants::OLLAMA_MAX_TOKENS_DEFAULT,
         }
     }
 
@@ -196,7 +179,7 @@ fn ollama_factory(
     let model = config
         .model
         .clone()
-        .unwrap_or_else(|| "nomic-embed-text".to_owned());
+        .unwrap_or_else(|| crate::constants::OLLAMA_DEFAULT_MODEL.to_owned());
     let http_client = create_default_client()?;
 
     Ok(Arc::new(OllamaEmbeddingProvider::new(

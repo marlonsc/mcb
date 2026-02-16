@@ -31,6 +31,8 @@
 pub mod anthropic;
 pub mod fastembed;
 pub mod gemini;
+/// Macros for embedding provider implementation
+pub mod macros;
 pub mod ollama;
 pub mod openai;
 pub mod voyageai;

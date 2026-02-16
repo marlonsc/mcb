@@ -61,7 +61,7 @@ impl ReteEngine {
     /// facts to be set with `facts.set("Facts.has_internal_dependencies", ...)`.
     ///
     /// Requires `cargo_metadata` to succeed. Fails fast if unavailable.
-    fn build_facts(&self, context: &RuleContext) -> Result<Facts> {
+    fn build_facts(context: &RuleContext) -> Result<Facts> {
         let facts = Facts::new();
 
         // Load file configuration to get internal_dep_prefix
@@ -157,7 +157,7 @@ impl ReteEngine {
         self.load_grl(grl_code)?;
 
         // Build facts from context
-        let facts = self.build_facts(context)?;
+        let facts = Self::build_facts(context)?;
 
         // Initialize violation markers in facts (rules will set these when triggered)
         // Use Facts. prefix for GRL compatibility

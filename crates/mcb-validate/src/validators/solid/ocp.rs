@@ -1,10 +1,10 @@
+use super::constants::MIN_STRING_MATCH_ARMS_FOR_DISPATCH;
 use crate::Result;
 use crate::Severity;
 use crate::ValidationConfig;
+use crate::constants::common::SHORT_PREVIEW_LENGTH;
 use crate::pattern_registry::required_pattern;
-use crate::validators::solid::utils::{
-    count_match_arms, count_matches_in_block, for_each_rust_file,
-};
+use crate::utils::source::{count_match_arms, count_matches_in_block, for_each_rust_file};
 use crate::validators::solid::violation::SolidViolation;
 
 /// OCP: Check for excessive match statements
@@ -60,11 +60,11 @@ pub fn validate_string_dispatch(config: &ValidationConfig) -> Result<Vec<SolidVi
             if string_match_pattern.is_match(line) {
                 let string_arm_count = count_matches_in_block(&lines, line_num, string_arm_pattern);
 
-                if string_arm_count >= 3 {
+                if string_arm_count >= MIN_STRING_MATCH_ARMS_FOR_DISPATCH {
                     violations.push(SolidViolation::StringBasedDispatch {
                         file: path.clone(),
                         line: line_num + 1,
-                        match_expression: trimmed.chars().take(60).collect(),
+                        match_expression: trimmed.chars().take(SHORT_PREVIEW_LENGTH).collect(),
                         suggestion: "Consider using enum types with FromStr or a registry pattern"
                             .to_owned(),
                         severity: Severity::Info,

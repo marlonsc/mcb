@@ -1,3 +1,4 @@
+use crate::constants::common::CONTEXT_PREVIEW_LENGTH;
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regexes, required_pattern};
 use crate::scan::for_each_scan_file;
@@ -66,7 +67,7 @@ pub fn validate_block_on_usage(config: &ValidationConfig) -> Result<Vec<AsyncVio
                         violations.push(AsyncViolation::BlockOnInAsync {
                             file: path.clone(),
                             line: line_num + 1,
-                            context: trimmed.chars().take(80).collect(),
+                            context: trimmed.chars().take(CONTEXT_PREVIEW_LENGTH).collect(),
                             severity: Severity::Error,
                         });
                     }

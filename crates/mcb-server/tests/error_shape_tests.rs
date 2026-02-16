@@ -1,11 +1,11 @@
 //! Error shape tests for MCP handler error responses.
 
 use rstest::{fixture, rstest};
-#[path = "handlers/test_helpers.rs"]
-mod test_helpers;
 #[allow(dead_code)]
 #[path = "test_utils/mod.rs"]
 mod test_utils;
+#[path = "handlers/utils.rs"]
+mod utils;
 
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource, SessionAction, SessionArgs};
 use mcb_server::handlers::{MemoryHandler, SessionHandler};
@@ -13,7 +13,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::{Value, json};
 use test_utils::invariants::assert_error_shape;
 
-use test_helpers::{create_base_memory_args, create_real_domain_services};
+use utils::{create_base_memory_args, create_real_domain_services};
 
 async fn memory_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
     let (services, temp_dir) = create_real_domain_services().await?;

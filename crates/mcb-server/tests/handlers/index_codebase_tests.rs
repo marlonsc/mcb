@@ -3,7 +3,7 @@ use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
-use crate::handlers::test_helpers::create_real_domain_services;
+use crate::handlers::utils::create_real_domain_services;
 use crate::test_utils::test_fixtures::create_temp_codebase;
 
 #[rstest]

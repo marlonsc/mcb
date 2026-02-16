@@ -14,9 +14,7 @@ use serde_json::Value;
 use crate::admin::crud_adapter::resolve_adapter;
 use crate::admin::handlers::AdminState;
 use crate::admin::registry::{AdminEntityMeta, AdminRegistry};
-
-/// Maximum number of LOV items returned per request.
-const LOV_LIMIT: usize = 50;
+use crate::constants::limits::DEFAULT_LOV_LIMIT;
 
 /// A single item in a List-of-Values response.
 #[derive(Debug, Clone, Serialize)]
@@ -132,7 +130,7 @@ pub async fn lov_endpoint(
         items.retain(|item| item.label.to_lowercase().contains(&q_lower));
     }
 
-    items.truncate(LOV_LIMIT);
+    items.truncate(DEFAULT_LOV_LIMIT);
 
     Ok(Json(items))
 }

@@ -27,3 +27,9 @@ pub const SKIP_DIRS: &[&str] = &[".git", "node_modules", "target", "__pycache__"
 
 /// Publish progress event every N files
 pub const PROGRESS_UPDATE_INTERVAL: usize = 10;
+
+/// Indexing status: started
+pub const INDEXING_STATUS_STARTED: &str = "started";
+
+/// Indexing status: completed
+pub const INDEXING_STATUS_COMPLETED: &str = "completed";

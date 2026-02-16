@@ -508,7 +508,6 @@ fn parse_category(s: &str) -> ViolationCategory {
         "solid" => ViolationCategory::Solid,
         "implementation" => ViolationCategory::Implementation,
         "refactoring" => ViolationCategory::Refactoring,
-        "quality" => ViolationCategory::Quality,
         _ => ViolationCategory::Quality,
     }
 }

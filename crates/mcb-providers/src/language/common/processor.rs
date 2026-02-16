@@ -8,6 +8,7 @@ use mcb_domain::value_objects::Language;
 
 use super::config::LanguageConfig;
 use super::traverser::AstTraverser;
+use crate::constants::{LANGUAGE_MAX_CHUNKS_PER_FILE, LANGUAGE_PRIORITY_THRESHOLD};
 
 /// Trait for language-specific processing
 ///
@@ -80,8 +81,8 @@ impl LanguageProcessor for BaseProcessor {
         let mut cursor = tree.walk();
 
         if cursor.goto_first_child() {
-            let traverser =
-                AstTraverser::new(&self.config().extraction_rules, language).with_max_chunks(75);
+            let traverser = AstTraverser::new(&self.config().extraction_rules, language)
+                .with_max_chunks(LANGUAGE_MAX_CHUNKS_PER_FILE);
             traverser.traverse_and_extract(&mut cursor, content, file_name, 0, &mut chunks);
         }
 
@@ -104,8 +105,8 @@ impl LanguageProcessor for BaseProcessor {
         });
 
         // Keep only top priority chunks if we have too many
-        if chunks.len() > 50 {
-            chunks.truncate(50);
+        if chunks.len() > LANGUAGE_PRIORITY_THRESHOLD {
+            chunks.truncate(LANGUAGE_PRIORITY_THRESHOLD);
         }
 
         chunks

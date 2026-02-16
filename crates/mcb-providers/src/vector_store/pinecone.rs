@@ -25,25 +25,6 @@ use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request}
 ///
 /// Implements the vector store domain ports using Pinecone's cloud REST API.
 /// Supports index management, vector upsert, search, and metadata filtering.
-///
-/// ## Example
-///
-/// ```rust,no_run
-/// use mcb_providers::vector_store::PineconeVectorStoreProvider;
-/// use reqwest::Client;
-/// use std::time::Duration;
-///
-/// fn example() -> Result<(), Box<dyn std::error::Error>> {
-///     let client = Client::builder()
-///         .timeout(Duration::from_secs(30))
-///         .build()?;
-///     let provider = PineconeVectorStoreProvider::new(
-///         "your-api-key",
-///         "https://your-index-abcdef.svc.aped-1234.pinecone.io",
-///         Duration::from_secs(30),
-///         client,
-///     );
-///     Ok(())
 /// }
 /// ```
 pub struct PineconeVectorStoreProvider {
@@ -241,7 +222,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
 
         let mut ids = Vec::with_capacity(vectors.len());
         let mut pinecone_vectors = Vec::with_capacity(vectors.len());
-        let batch_size = 100;
+        let batch_size = crate::constants::PINECONE_UPSERT_BATCH_SIZE;
 
         for (i, (embedding, meta)) in vectors.iter().zip(metadata.iter()).enumerate() {
             let id = format!("vec_{}", uuid::Uuid::new_v4());

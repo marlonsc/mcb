@@ -147,8 +147,10 @@ impl FilePatternMatcher {
 
 impl Default for FilePatternMatcher {
     /// Returns a matcher that includes all paths and excludes none.
-    /// `new(&[], &[])` cannot fail (empty lists build successfully).
     fn default() -> Self {
-        Self::new(&[], &[]).unwrap()
+        Self {
+            includes: GlobSet::empty(),
+            excludes: GlobSet::empty(),
+        }
     }
 }

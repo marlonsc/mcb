@@ -1,3 +1,4 @@
+use crate::constants::common::COMMENT_PREFIX;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_file_under_root;
@@ -36,7 +37,7 @@ pub fn validate_use_statements(
                 for (line_num, line) in content.lines().enumerate() {
                     // Skip comments
                     let trimmed = line.trim();
-                    if trimmed.starts_with("//") || trimmed.starts_with("/*") {
+                    if trimmed.starts_with(COMMENT_PREFIX) || trimmed.starts_with("/*") {
                         continue;
                     }
 

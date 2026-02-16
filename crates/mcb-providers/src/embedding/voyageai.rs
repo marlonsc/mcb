@@ -16,72 +16,29 @@ use reqwest::Client;
 
 use crate::constants::VOYAGEAI_MAX_INPUT_TOKENS;
 use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
+use crate::{
+    define_http_embedding_provider, impl_embedding_provider_trait, impl_http_provider_base,
+    register_http_provider,
+};
+
 use crate::utils::http::{JsonRequestParams, send_json_request};
-use crate::utils::http::{RequestErrorKind, create_http_provider_config, parse_embedding_vector};
+use crate::utils::http::{RequestErrorKind, parse_embedding_vector};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
-/// `VoyageAI` embedding provider
-///
-/// Implements the `EmbeddingProvider` domain port using `VoyageAI`'s embedding API.
-/// Receives HTTP client via constructor injection.
-///
-/// ## Example
-///
-/// ```rust,no_run
-/// use mcb_providers::embedding::VoyageAIEmbeddingProvider;
-/// use reqwest::Client;
-/// use std::time::Duration;
-///
-/// fn example() {
-///     let client = Client::new();
-///     let provider = VoyageAIEmbeddingProvider::new(
-///         "voyage-your-api-key".to_string(),
-///         None,
-///         "voyage-code-3".to_string(),
-///         Duration::from_secs(30),
-///         client,
-///     );
-/// }
-/// ```
-pub struct VoyageAIEmbeddingProvider {
-    client: HttpEmbeddingClient,
-}
+define_http_embedding_provider!(
+    /// `VoyageAI` embedding provider
+    ///
+    /// Implements the `EmbeddingProvider` domain port using `VoyageAI`'s embedding API.
+    /// Receives HTTP client via constructor injection.
+    VoyageAIEmbeddingProvider
+);
+
+impl_http_provider_base!(
+    VoyageAIEmbeddingProvider,
+    crate::constants::VOYAGEAI_API_BASE_URL
+);
 
 impl VoyageAIEmbeddingProvider {
-    /// Create a new `VoyageAI` embedding provider
-    ///
-    /// # Arguments
-    /// * `api_key` - `VoyageAI` API key
-    /// * `base_url` - Optional custom base URL (defaults to `VoyageAI` API)
-    /// * `model` - Model name (e.g., "voyage-code-3")
-    /// * `timeout` - Request timeout duration
-    /// * `http_client` - Reqwest HTTP client for making API requests
-    #[must_use]
-    pub fn new(
-        api_key: String,
-        base_url: Option<String>,
-        model: String,
-        timeout: Duration,
-        http_client: Client,
-    ) -> Self {
-        Self {
-            client: HttpEmbeddingClient::new(
-                &api_key,
-                base_url,
-                "https://api.voyageai.com/v1",
-                model,
-                timeout,
-                http_client,
-            ),
-        }
-    }
-
-    /// Get the model name for this provider
-    #[must_use]
-    pub fn model(&self) -> &str {
-        &self.client.model
-    }
-
     /// Get the maximum tokens supported by this provider
     #[must_use]
     pub fn max_tokens(&self) -> usize {
@@ -93,12 +50,6 @@ impl VoyageAIEmbeddingProvider {
     #[must_use]
     pub fn api_key(&self) -> &str {
         &self.client.api_key
-    }
-
-    /// Get the base URL for this provider
-    #[must_use]
-    pub fn base_url(&self) -> String {
-        self.client.base_url.clone()
     }
 
     /// Send embedding request and get response data
@@ -139,30 +90,14 @@ impl VoyageAIEmbeddingProvider {
     }
 }
 
-#[async_trait]
-/// `VoyageAI` implementation of the `EmbeddingProvider` trait.
-impl EmbeddingProvider for VoyageAIEmbeddingProvider {
-    /// Generates embeddings for a batch of texts.
-    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
-        process_batch(texts, self.fetch_embeddings(texts), |i, item| {
-            self.parse_embedding(i, item)
-        })
-        .await
+impl_embedding_provider_trait!(
+    VoyageAIEmbeddingProvider,
+    "voyageai",
+    |model: &str| match model {
+        "voyage-code-3" => EMBEDDING_DIMENSION_VOYAGEAI_CODE,
+        _ => EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
     }
-
-    /// Returns the embedding dimensions for the configured model.
-    fn dimensions(&self) -> usize {
-        match self.client.model.as_str() {
-            "voyage-code-3" => EMBEDDING_DIMENSION_VOYAGEAI_CODE,
-            _ => EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
-        }
-    }
-
-    /// Returns the provider name ("voyageai").
-    fn provider_name(&self) -> &str {
-        "voyageai"
-    }
-}
+);
 
 // ============================================================================
 // Auto-registration via linkme distributed slice
@@ -175,24 +110,12 @@ use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
 
-/// Factory function for creating `VoyageAI` embedding provider instances.
-fn voyageai_factory(
-    config: &EmbeddingProviderConfig,
-) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    let cfg = create_http_provider_config(config, "VoyageAI", "voyage-code-3")?;
-
-    Ok(Arc::new(VoyageAIEmbeddingProvider::new(
-        cfg.api_key,
-        cfg.base_url,
-        cfg.model,
-        cfg.timeout,
-        cfg.client,
-    )))
-}
-
-#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-static VOYAGEAI_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-    name: "voyageai",
-    description: "VoyageAI embedding provider (voyage-code-3, etc.)",
-    factory: voyageai_factory,
-};
+register_http_provider!(
+    VoyageAIEmbeddingProvider,
+    voyageai_factory,
+    VOYAGEAI_PROVIDER,
+    "voyageai",
+    "VoyageAI embedding provider (voyage-code-3, etc.)",
+    "VoyageAI",
+    "voyage-code-3"
+);

@@ -1,3 +1,4 @@
+use crate::constants::common::{COMMENT_PREFIX, FN_PREFIX};
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regex, compile_regex_pairs};
 use crate::scan::for_each_file_under_root;
@@ -109,12 +110,12 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
                                     let trimmed = body_line.trim();
 
                                     // Ignore comments and empty lines
-                                    if trimmed.is_empty() || trimmed.starts_with("//") {
+                                    if trimmed.is_empty() || trimmed.starts_with(COMMENT_PREFIX) {
                                         continue;
                                     }
 
                                     // Ignore function signature and braces
-                                    if trimmed.starts_with("fn ")
+                                    if trimmed.starts_with(FN_PREFIX)
                                         || trimmed == "}"
                                         || trimmed == "{"
                                     {

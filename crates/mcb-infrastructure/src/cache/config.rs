@@ -6,6 +6,9 @@
 
 use mcb_domain::error::{Error, Result};
 
+/// Maximum allowed length for cache keys.
+const CACHE_KEY_MAX_LENGTH: usize = 250;
+
 /// Cache key utilities
 pub struct CacheKey;
 
@@ -41,9 +44,9 @@ impl CacheKey {
             });
         }
 
-        if key.len() > 250 {
+        if key.len() > CACHE_KEY_MAX_LENGTH {
             return Err(Error::Configuration {
-                message: "Cache key too long (max 250 characters)".to_owned(),
+                message: format!("Cache key too long (max {CACHE_KEY_MAX_LENGTH} characters)"),
                 source: None,
             });
         }
@@ -73,7 +76,7 @@ impl CacheKey {
                     c
                 }
             })
-            .take(250)
+            .take(CACHE_KEY_MAX_LENGTH)
             .collect()
     }
 }

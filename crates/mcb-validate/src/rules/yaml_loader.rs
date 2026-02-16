@@ -8,10 +8,10 @@ use serde::{Deserialize, Serialize};
 use serde_yaml;
 
 use super::templates::TemplateEngine;
-use super::utils::collect_yaml_files;
 use super::yaml_validator::YamlRuleValidator;
 use crate::Result;
 use crate::filters::rule_filters::RuleFilters;
+use crate::utils::fs::collect_yaml_files;
 
 /// Loaded and validated YAML rule
 #[derive(Debug, Clone)]
@@ -220,7 +220,7 @@ impl YamlRuleLoader {
             self.template_engine.load_templates_sync(&self.rules_dir)?;
 
             for path in collect_yaml_files(&self.rules_dir)? {
-                if self.is_rule_file(&path) {
+                if Self::is_rule_file(&path) {
                     let content =
                         std::fs::read_to_string(&path).map_err(crate::ValidationError::Io)?;
                     let loaded_rules = self.load_rule_from_str(&path, &content)?;
@@ -251,7 +251,7 @@ impl YamlRuleLoader {
 
         // Load rule files
         for path in collect_yaml_files(&self.rules_dir)? {
-            if self.is_rule_file(&path) {
+            if Self::is_rule_file(&path) {
                 let loaded_rules = self.load_rule_file(&path).await?;
                 rules.extend(loaded_rules);
             }
@@ -342,19 +342,19 @@ impl YamlRuleLoader {
         self.validator.validate_rule(&json_value)?;
 
         // Convert to validated rule
-        let validated_rule = self.yaml_to_validated_rule(&json_value)?;
+        let validated_rule = Self::yaml_to_validated_rule(&json_value)?;
 
         Ok(vec![validated_rule])
     }
 
     /// Check if a file is a rule file
-    fn is_rule_file(&self, path: &Path) -> bool {
+    fn is_rule_file(path: &Path) -> bool {
         path.extension().and_then(|ext| ext.to_str()) == Some("yml")
             && !path.to_str().is_some_and(|s| s.contains("/templates/"))
     }
 
     /// Convert YAML/JSON value to `ValidatedRule`
-    fn yaml_to_validated_rule(&self, value: &serde_json::Value) -> Result<ValidatedRule> {
+    fn yaml_to_validated_rule(value: &serde_json::Value) -> Result<ValidatedRule> {
         let obj = value
             .as_object()
             .ok_or_else(|| crate::ValidationError::Config("Rule must be an object".to_owned()))?;
@@ -524,7 +524,7 @@ impl YamlRuleLoader {
         // This would need a more sophisticated mapping
         // For now, just search in the rules directory
         for path in collect_yaml_files(&self.rules_dir).ok()? {
-            if self.is_rule_file(&path)
+            if Self::is_rule_file(&path)
                 && let Ok(content) = std::fs::read_to_string(&path)
                 && content.contains(&format!("id: {rule_id}"))
             {

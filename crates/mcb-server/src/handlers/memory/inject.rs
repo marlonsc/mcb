@@ -8,6 +8,9 @@ use tracing::error;
 
 use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
+use crate::constants::limits::{
+    CHARS_PER_TOKEN_ESTIMATE, DEFAULT_MAX_CONTEXT_TOKENS, DEFAULT_MEMORY_LIMIT,
+};
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
 
@@ -18,8 +21,8 @@ pub async fn inject_context(
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
     let filter = build_memory_filter(args, None, None);
-    let limit = args.limit.unwrap_or(10) as usize;
-    let max_tokens = args.max_tokens.unwrap_or(2000);
+    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIMIT as u32) as usize;
+    let max_tokens = args.max_tokens.unwrap_or(DEFAULT_MAX_CONTEXT_TOKENS);
     let vcs_context = capture_vcs_context();
     match memory_service
         .search_memories("", Some(filter), limit)
@@ -28,7 +31,7 @@ pub async fn inject_context(
         Ok(results) => {
             let mut context = String::new();
             let mut observation_ids = Vec::new();
-            let max_chars = max_tokens * 4;
+            let max_chars = max_tokens * CHARS_PER_TOKEN_ESTIMATE;
             for result in results {
                 observation_ids.push(result.observation.id.clone());
                 let entry = format!(
@@ -46,7 +49,7 @@ pub async fn inject_context(
                 "observation_count": observation_ids.len(),
                 "observation_ids": observation_ids,
                 "context": context,
-                "estimated_tokens": context.len() / 4,
+                "estimated_tokens": context.len() / CHARS_PER_TOKEN_ESTIMATE,
                 "vcs_context": {
                     "branch": vcs_context.branch,
                     "commit": vcs_context.commit,

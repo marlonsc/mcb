@@ -7,8 +7,8 @@ use std::path::Path;
 
 use serde_yaml;
 
-use super::utils::collect_yaml_files;
 use crate::Result;
+use crate::utils::fs::collect_yaml_files;
 
 /// Template engine for YAML rules with inheritance and substitution
 pub struct TemplateEngine {
@@ -188,7 +188,7 @@ impl TemplateEngine {
         let mut result = template.clone();
 
         // Override with rule-specific values
-        self.merge_yaml_values(&mut result, rule);
+        Self::merge_yaml_values(&mut result, rule);
 
         // Process variable substitutions
         self.substitute_variables(&mut result, rule)?;
@@ -222,7 +222,7 @@ impl TemplateEngine {
     }
 
     /// Merge two YAML values (rule overrides template)
-    fn merge_yaml_values(&self, base: &mut serde_yaml::Value, override_value: &serde_yaml::Value) {
+    fn merge_yaml_values(base: &mut serde_yaml::Value, override_value: &serde_yaml::Value) {
         if let (serde_yaml::Value::Mapping(base_map), serde_yaml::Value::Mapping(override_map)) =
             (base, override_value)
         {
@@ -244,7 +244,7 @@ impl TemplateEngine {
     ) -> Result<()> {
         match value {
             serde_yaml::Value::String(s) => {
-                *s = self.substitute_string(s, variables)?;
+                *s = Self::substitute_string(s, variables)?;
             }
             serde_yaml::Value::Mapping(map) => {
                 for val in map.values_mut() {
@@ -256,13 +256,16 @@ impl TemplateEngine {
                     self.substitute_variables(item, variables)?;
                 }
             }
-            _ => {} // Other types don't need substitution
+            serde_yaml::Value::Null
+            | serde_yaml::Value::Bool(_)
+            | serde_yaml::Value::Number(_)
+            | serde_yaml::Value::Tagged(_) => {}
         }
         Ok(())
     }
 
     /// Substitute variables in a string
-    fn substitute_string(&self, input: &str, variables: &serde_yaml::Value) -> Result<String> {
+    fn substitute_string(input: &str, variables: &serde_yaml::Value) -> Result<String> {
         let mut result = input.to_owned();
 
         // Find all {{variable}} patterns
@@ -272,9 +275,11 @@ impl TemplateEngine {
 
         for capture in var_pattern.captures_iter(input) {
             if let Some(var_name) = capture.get(1) {
-                let full_match = capture.get(0).unwrap().as_str();
-                let var_value = self.get_variable_value(variables, var_name.as_str())?;
-                result = result.replace(full_match, &var_value);
+                let Some(full_match) = capture.get(0) else {
+                    continue;
+                };
+                let var_value = Self::get_variable_value(variables, var_name.as_str())?;
+                result = result.replace(full_match.as_str(), &var_value);
             }
         }
 
@@ -282,7 +287,7 @@ impl TemplateEngine {
     }
 
     /// Get variable value from the variables YAML
-    fn get_variable_value(&self, variables: &serde_yaml::Value, var_name: &str) -> Result<String> {
+    fn get_variable_value(variables: &serde_yaml::Value, var_name: &str) -> Result<String> {
         if let Some(value) = variables.get(var_name) {
             match value {
                 serde_yaml::Value::String(s) => Ok(s.clone()),
@@ -297,7 +302,9 @@ impl TemplateEngine {
                         .collect();
                     Ok(strings.join(","))
                 }
-                _ => Ok(format!("{value:?}")),
+                serde_yaml::Value::Null
+                | serde_yaml::Value::Mapping(_)
+                | serde_yaml::Value::Tagged(_) => Ok(format!("{value:?}")),
             }
         } else {
             Err(crate::ValidationError::Config(format!(

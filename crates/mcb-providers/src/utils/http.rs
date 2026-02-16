@@ -13,7 +13,8 @@ use super::http_response::HttpResponseUtils;
 use crate::constants::ERROR_MSG_REQUEST_TIMEOUT;
 
 /// Default timeout for HTTP requests (30 seconds)
-pub(crate) const DEFAULT_HTTP_TIMEOUT: Duration = Duration::from_secs(30);
+pub(crate) const DEFAULT_HTTP_TIMEOUT: Duration =
+    Duration::from_secs(crate::constants::DEFAULT_HTTP_TIMEOUT_SECS);
 
 #[derive(Debug, Clone, Copy)]
 /// Classification used to map HTTP request failures to domain errors.

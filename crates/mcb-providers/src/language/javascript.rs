@@ -1,11 +1,8 @@
 //! JavaScript/TypeScript language processor for AST-based code chunking.
 
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
-
 use crate::language::common::{
     AST_NODE_INTERFACE_DECLARATION, BaseProcessor, CHUNK_SIZE_JAVASCRIPT, LanguageConfig,
-    LanguageProcessor, NodeExtractionRule, TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION,
+    NodeExtractionRule, TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION,
 };
 
 /// JavaScript/TypeScript language processor.
@@ -53,19 +50,4 @@ impl Default for JavaScriptProcessor {
     }
 }
 
-impl LanguageProcessor for JavaScriptProcessor {
-    fn config(&self) -> &LanguageConfig {
-        self.processor.config()
-    }
-
-    fn extract_chunks_with_tree_sitter(
-        &self,
-        tree: &tree_sitter::Tree,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-}
+crate::impl_processor_delegate!(JavaScriptProcessor, processor);

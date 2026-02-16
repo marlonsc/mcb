@@ -2,11 +2,10 @@
 //!
 //! Validates Clean Architecture port/adapter patterns.
 
+use crate::constants::common::COMMENT_PREFIX;
 use crate::filters::LanguageId;
+use crate::pattern_registry::compile_regex;
 use std::path::PathBuf;
-use std::sync::LazyLock;
-
-use regex::Regex;
 
 use crate::config::PortAdapterRulesConfig;
 use crate::scan::for_each_file_under_root;
@@ -118,11 +117,8 @@ impl PortAdapterValidator {
             return Ok(violations);
         }
 
-        static TRAIT_START_RE: LazyLock<Regex> =
-            LazyLock::new(|| Regex::new(r"pub\s+trait\s+(\w+)").expect("valid regex literal"));
-        static FN_RE: LazyLock<Regex> = LazyLock::new(|| {
-            Regex::new(r"^\s*(?:async\s+)?fn\s+\w+").expect("valid regex literal")
-        });
+        let trait_start_re = compile_regex(r"pub\s+trait\s+(\w+)")?;
+        let fn_re = compile_regex(r"^\s*(?:async\s+)?fn\s+\w+")?;
 
         for_each_file_under_root(config, &ports_dir, Some(LanguageId::Rust), |entry| {
             let path = &entry.absolute_path;
@@ -134,7 +130,7 @@ impl PortAdapterValidator {
             let mut in_trait = false;
 
             for (line_num, line) in lines.iter().enumerate() {
-                if let Some(captures) = TRAIT_START_RE.captures(line)
+                if let Some(captures) = trait_start_re.captures(line)
                     && let Some(trait_name) = captures.get(1).map(|m| m.as_str().to_owned())
                 {
                     current_trait = Some((trait_name, line_num + 1, 0));
@@ -145,7 +141,7 @@ impl PortAdapterValidator {
                     brace_depth += line.matches('{').count();
                     brace_depth -= line.matches('}').count();
 
-                    if FN_RE.is_match(line)
+                    if fn_re.is_match(line)
                         && let Some((_, _, ref mut count)) = current_trait
                     {
                         *count += 1;
@@ -187,12 +183,9 @@ impl PortAdapterValidator {
             return Ok(violations);
         }
 
-        static ADAPTER_IMPORT_RE: LazyLock<Regex> = LazyLock::new(|| {
-            Regex::new(
-                r"use\s+(?:crate|super)::(?:\w+::)*(\w+(?:Provider|Repository|Adapter|Client))",
-            )
-            .expect("valid regex literal")
-        });
+        let adapter_import_re = compile_regex(
+            r"use\s+(?:crate|super)::(?:\w+::)*(\w+(?:Provider|Repository|Adapter|Client))",
+        )?;
 
         for_each_file_under_root(config, &providers_dir, Some(LanguageId::Rust), |entry| {
             let path = &entry.absolute_path;
@@ -215,11 +208,11 @@ impl PortAdapterValidator {
 
             for (line_num, line) in content.lines().enumerate() {
                 let trimmed = line.trim();
-                if trimmed.starts_with("//") {
+                if trimmed.starts_with(COMMENT_PREFIX) {
                     continue;
                 }
 
-                if let Some(captures) = ADAPTER_IMPORT_RE.captures(line) {
+                if let Some(captures) = adapter_import_re.captures(line) {
                     let imported = captures.get(1).map_or("", |m| m.as_str());
                     if imported.to_lowercase().contains(current_adapter) {
                         continue;

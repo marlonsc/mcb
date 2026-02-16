@@ -71,7 +71,7 @@ define_violations! {
             assertion: String,
             severity: Severity,
         },
-        /// Test only uses .unwrap() as assertion
+        /// Test only uses `.unwrap()` as assertion
         #[violation(
             id = "TEST006",
             severity = Warning,

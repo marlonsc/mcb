@@ -3,11 +3,11 @@ use std::path::PathBuf;
 use regex::Regex;
 
 use super::super::violation::ImplementationViolation;
-use super::utils::{
-    compile_pattern_pairs, extract_functions, is_fn_signature_or_brace, non_test_lines,
-};
 use crate::Result;
 use crate::traits::violation::Severity;
+use crate::utils::source::{
+    compile_pattern_pairs, extract_functions, is_fn_signature_or_brace, non_test_lines,
+};
 use crate::validators::implementation::constants::{
     HARDCODED_RETURN_PATTERNS, STUB_SKIP_FILE_KEYWORDS,
 };

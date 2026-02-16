@@ -7,6 +7,7 @@ use rmcp::model::CallToolResult;
 
 use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
+use crate::constants::limits::{DEFAULT_MEMORY_LIMIT, DEFAULT_TIMELINE_DEPTH};
 use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
@@ -18,7 +19,7 @@ pub async fn list_observations(
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
     let filter = build_memory_filter(args, None, args.tags.clone());
-    let limit = args.limit.unwrap_or(10) as usize;
+    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIMIT as u32) as usize;
     let query = args.query.clone().unwrap_or_default();
     match memory_service
         .memory_search(&query, Some(filter), limit)
@@ -75,8 +76,8 @@ pub async fn get_timeline(
         return Ok(tool_error("Missing anchor_id or query for timeline"));
     };
     let filter = build_memory_filter(args, None, None);
-    let depth_before = args.depth_before.unwrap_or(5);
-    let depth_after = args.depth_after.unwrap_or(5);
+    let depth_before = args.depth_before.unwrap_or(DEFAULT_TIMELINE_DEPTH);
+    let depth_after = args.depth_after.unwrap_or(DEFAULT_TIMELINE_DEPTH);
     match memory_service
         .get_timeline(
             &ObservationId::from_string(&anchor_id),

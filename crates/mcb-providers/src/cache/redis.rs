@@ -46,17 +46,6 @@ impl RedisCacheProvider {
     ///
     /// * `connection_string` - Redis connection URL (e.g., "<redis://localhost:6379>")
     ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use mcb_providers::cache::RedisCacheProvider;
-    ///
-    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// let provider = RedisCacheProvider::new("redis://localhost:6379")?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    ///
     /// # Errors
     ///
     /// Returns an error if the Redis client cannot be created from the connection string.
@@ -267,25 +256,20 @@ impl std::fmt::Debug for RedisCacheProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use mcb_domain::registry::cache::{CACHE_PROVIDERS, CacheProviderConfig, CacheProviderEntry};
+crate::register_cache_provider!(
+    redis_cache_factory,
+    config,
+    REDIS_PROVIDER,
+    "redis",
+    "Redis distributed cache",
+    {
+        let uri = config.uri.clone().ok_or_else(|| {
+            "Redis requires 'uri' configuration (e.g., redis://localhost:6379)".to_owned()
+        })?;
 
-/// Factory function for creating Redis cache provider instances.
-fn redis_cache_factory(
-    config: &CacheProviderConfig,
-) -> std::result::Result<Arc<dyn CacheProvider>, String> {
-    let uri = config.uri.clone().ok_or_else(|| {
-        "Redis requires 'uri' configuration (e.g., redis://localhost:6379)".to_owned()
-    })?;
+        let provider = RedisCacheProvider::new(&uri)
+            .map_err(|e| format!("Failed to create Redis provider: {e}"))?;
 
-    let provider = RedisCacheProvider::new(&uri)
-        .map_err(|e| format!("Failed to create Redis provider: {e}"))?;
-
-    Ok(Arc::new(provider))
-}
-
-#[linkme::distributed_slice(CACHE_PROVIDERS)]
-static REDIS_PROVIDER: CacheProviderEntry = CacheProviderEntry {
-    name: "redis",
-    description: "Redis distributed cache",
-    factory: redis_cache_factory,
-};
+        Ok(std::sync::Arc::new(provider))
+    }
+);

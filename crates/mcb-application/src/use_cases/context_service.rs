@@ -21,7 +21,8 @@ use std::path::{Component, Path};
 use std::sync::Arc;
 
 use mcb_domain::constants::keys::{
-    METADATA_KEY_END_LINE, METADATA_KEY_FILE_PATH, METADATA_KEY_START_LINE,
+    METADATA_KEY_CONTENT, METADATA_KEY_END_LINE, METADATA_KEY_FILE_PATH, METADATA_KEY_LANGUAGE,
+    METADATA_KEY_START_LINE,
 };
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
@@ -54,10 +55,10 @@ fn build_chunk_metadata(
             METADATA_KEY_FILE_PATH.to_owned(),
             json!(normalized_file_path),
         ),
-        ("content".to_owned(), json!(chunk.content)),
+        (METADATA_KEY_CONTENT.to_owned(), json!(chunk.content)),
         (METADATA_KEY_START_LINE.to_owned(), json!(chunk.start_line)),
         (METADATA_KEY_END_LINE.to_owned(), json!(chunk.end_line)),
-        ("language".to_owned(), json!(chunk.language)),
+        (METADATA_KEY_LANGUAGE.to_owned(), json!(chunk.language)),
     ])
 }
 

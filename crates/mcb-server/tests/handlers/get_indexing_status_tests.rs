@@ -2,7 +2,7 @@ use mcb_server::args::{IndexAction, IndexArgs};
 use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-use crate::handlers::test_helpers::create_real_domain_services;
+use crate::handlers::utils::create_real_domain_services;
 
 #[tokio::test]
 async fn test_get_indexing_status_success() {

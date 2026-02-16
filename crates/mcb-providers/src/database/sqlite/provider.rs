@@ -237,7 +237,7 @@ async fn apply_schema(pool: &sqlx::SqlitePool) -> Result<()> {
             .next()
             .unwrap_or(sql.as_str())
             .chars()
-            .take(120)
+            .take(crate::constants::SQL_PREVIEW_CHAR_LIMIT)
             .collect::<String>();
         sqlx::query(&sql).execute(&mut *conn).await.map_err(|e| {
             Error::memory_with_source(

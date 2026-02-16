@@ -26,27 +26,6 @@ use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request}
 /// Implements the vector store domain ports using Qdrant's REST API.
 /// Supports collection management, vector upsert, similarity search,
 /// and advanced filtering via Qdrant's payload-based query system.
-///
-/// ## Example
-///
-/// ```rust,no_run
-/// use mcb_providers::vector_store::QdrantVectorStoreProvider;
-/// use reqwest::Client;
-/// use std::time::Duration;
-///
-/// fn example() -> Result<(), Box<dyn std::error::Error>> {
-///     let client = Client::builder()
-///         .timeout(Duration::from_secs(30))
-///         .build()?;
-///     let provider = QdrantVectorStoreProvider::new(
-///         "http://localhost:6333",
-///         None,
-///         Duration::from_secs(30),
-///         client,
-///     );
-///     Ok(())
-/// }
-/// ```
 pub struct QdrantVectorStoreProvider {
     base_url: String,
     api_key: Option<String>,
@@ -219,7 +198,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         let payload = serde_json::json!({
             "vectors": {
                 "size": dimensions,
-                "distance": "Cosine"
+                "distance": crate::constants::QDRANT_DISTANCE_METRIC
             }
         });
 
@@ -484,36 +463,29 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use mcb_domain::registry::vector_store::{
-    VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
-};
-
 use crate::constants::QDRANT_DEFAULT_PORT;
 
-/// Factory function for creating Qdrant vector store provider instances.
-fn qdrant_factory(
-    config: &VectorStoreProviderConfig,
-) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
-    use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
+crate::register_vector_store_provider!(
+    qdrant_factory,
+    config,
+    QDRANT_PROVIDER,
+    "qdrant",
+    "Qdrant vector search engine (open-source, cloud and self-hosted)",
+    {
+        use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
-    let base_url = config
-        .uri
-        .clone()
-        .unwrap_or_else(|| format!("http://localhost:{QDRANT_DEFAULT_PORT}"));
-    let api_key = config.api_key.clone();
-    let http_client = create_default_client()?;
+        let base_url = config
+            .uri
+            .clone()
+            .unwrap_or_else(|| format!("http://localhost:{QDRANT_DEFAULT_PORT}"));
+        let api_key = config.api_key.clone();
+        let http_client = create_default_client()?;
 
-    Ok(Arc::new(QdrantVectorStoreProvider::new(
-        &base_url,
-        api_key,
-        DEFAULT_HTTP_TIMEOUT,
-        http_client,
-    )))
-}
-
-#[linkme::distributed_slice(VECTOR_STORE_PROVIDERS)]
-static QDRANT_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {
-    name: "qdrant",
-    description: "Qdrant vector search engine (open-source, cloud and self-hosted)",
-    factory: qdrant_factory,
-};
+        Ok(std::sync::Arc::new(QdrantVectorStoreProvider::new(
+            &base_url,
+            api_key,
+            DEFAULT_HTTP_TIMEOUT,
+            http_client,
+        )))
+    }
+);

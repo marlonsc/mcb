@@ -178,8 +178,7 @@ impl LanguageId {
             LANG::Java => Some(Self::Java),
             LANG::Cpp => Some(Self::Cpp),
             LANG::Kotlin => Some(Self::Kotlin),
-            // RCA supports more languages than we map to LanguageId
-            _other => None,
+            LANG::Ccomment | LANG::Preproc => None,
         }
     }
 

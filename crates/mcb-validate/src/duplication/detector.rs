@@ -60,7 +60,7 @@ impl CloneDetector {
         }
 
         // Deduplicate overlapping candidates
-        self.deduplicate_candidates(candidates)
+        Self::deduplicate_candidates(candidates)
     }
 
     /// Verify a single fingerprint match
@@ -101,17 +101,19 @@ impl CloneDetector {
         1.0
     }
 
-    /// Classify the type of clone based on similarity
+    /// Classify the type of clone based on similarity.
+    ///
+    /// Reuses [`DuplicationType::min_similarity`] thresholds so the
+    /// classification stays in sync with the canonical values.
     fn classify_clone_type(similarity: f64) -> DuplicationType {
-        if similarity >= 1.0 {
-            DuplicationType::ExactClone
-        } else if similarity >= 0.95 {
-            DuplicationType::RenamedClone
-        } else if similarity >= 0.80 {
-            DuplicationType::GappedClone
-        } else {
-            DuplicationType::SemanticClone
-        }
+        [
+            DuplicationType::ExactClone,
+            DuplicationType::RenamedClone,
+            DuplicationType::GappedClone,
+        ]
+        .into_iter()
+        .find(|t| similarity >= t.min_similarity())
+        .unwrap_or(DuplicationType::SemanticClone)
     }
 
     /// Check if a candidate passes the configured thresholds
@@ -132,7 +134,7 @@ impl CloneDetector {
     }
 
     /// Remove overlapping candidates, keeping the best one
-    fn deduplicate_candidates(&self, candidates: Vec<CloneCandidate>) -> Vec<CloneCandidate> {
+    fn deduplicate_candidates(candidates: Vec<CloneCandidate>) -> Vec<CloneCandidate> {
         if candidates.is_empty() {
             return candidates;
         }

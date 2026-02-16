@@ -4,10 +4,10 @@
 //! for handler testing.
 
 pub mod collection;
-pub mod helpers;
 pub mod http_mcp;
 pub mod invariants;
 pub mod real_providers;
+pub mod sync;
 pub mod test_fixtures;
 pub mod text;
 pub mod timeouts;

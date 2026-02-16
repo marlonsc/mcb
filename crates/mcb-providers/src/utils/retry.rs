@@ -13,6 +13,7 @@ pub struct RetryConfig {
 
 impl RetryConfig {
     /// Create a new retry configuration.
+    #[must_use]
     pub const fn new(max_attempts: usize, base_delay: Duration) -> Self {
         Self {
             max_attempts,
@@ -22,6 +23,10 @@ impl RetryConfig {
 }
 
 /// Retry an async operation with linear backoff based on attempt count.
+///
+/// # Errors
+///
+/// Returns the last error if all retry attempts fail or the retry predicate rejects the error.
 pub async fn retry_with_backoff<T, E, F, Fut, P>(
     config: RetryConfig,
     mut operation: F,

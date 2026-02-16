@@ -1,6 +1,6 @@
 mod agent_tests;
 mod api_key_tests;
-mod chunk_repository_tests;
+
 mod code_chunk_tests;
 mod codebase_tests;
 mod issue_tests;

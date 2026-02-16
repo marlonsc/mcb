@@ -9,14 +9,6 @@
 //! - Wraps any `VectorStoreProvider` implementation
 //! - Encrypts metadata before storage
 //! - Vectors remain unencrypted for searchability
-//!
-//! ## Usage
-//!
-//! ```no_run
-//! use mcb_providers::vector_store::EncryptedVectorStoreProvider;
-//! // use mcb_domain::ports::providers::CryptoProvider;
-//!
-//! // let encrypted = EncryptedVectorStoreProvider::new(inner_provider, crypto_service);
 //! ```
 
 use std::collections::HashMap;

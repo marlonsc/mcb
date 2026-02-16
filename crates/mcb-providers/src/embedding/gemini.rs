@@ -14,66 +14,22 @@ use reqwest::Client;
 
 use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
+use crate::{define_http_embedding_provider, impl_http_provider_base, register_http_provider};
 
-/// Gemini embedding provider
-///
-/// Implements the `EmbeddingProvider` domain port using Google's Gemini embedding API.
-/// Receives HTTP client via constructor injection.
-///
-/// ## Example
-///
-/// ```rust,no_run
-/// use mcb_providers::embedding::GeminiEmbeddingProvider;
-/// use reqwest::Client;
-/// use std::time::Duration;
-///
-/// fn example() -> Result<(), Box<dyn std::error::Error>> {
-///     let client = Client::builder()
-///         .timeout(Duration::from_secs(30))
-///         .build()?;
-///     let provider = GeminiEmbeddingProvider::new(
-///         "AIza-your-api-key".to_string(),
-///         None,
-///         "text-embedding-004".to_string(),
-///         Duration::from_secs(30),
-///         client,
-///     );
-///     Ok(())
-/// }
-/// ```
-pub struct GeminiEmbeddingProvider {
-    client: HttpEmbeddingClient,
-}
+define_http_embedding_provider!(
+    /// Gemini embedding provider
+    ///
+    /// Implements the `EmbeddingProvider` domain port using Google's Gemini embedding API.
+    /// Receives HTTP client via constructor injection.
+    GeminiEmbeddingProvider
+);
+
+impl_http_provider_base!(
+    GeminiEmbeddingProvider,
+    crate::constants::GEMINI_API_BASE_URL
+);
 
 impl GeminiEmbeddingProvider {
-    /// Create a new Gemini embedding provider
-    ///
-    /// # Arguments
-    /// * `api_key` - Google AI API key
-    /// * `base_url` - Optional custom base URL (defaults to Google AI API)
-    /// * `model` - Model name (e.g., "text-embedding-004")
-    /// * `timeout` - Request timeout duration
-    /// * `http_client` - Reqwest HTTP client for making API requests
-    #[must_use]
-    pub fn new(
-        api_key: String,
-        base_url: Option<String>,
-        model: String,
-        timeout: Duration,
-        http_client: Client,
-    ) -> Self {
-        Self {
-            client: HttpEmbeddingClient::new(
-                &api_key,
-                base_url,
-                "https://generativelanguage.googleapis.com",
-                model,
-                timeout,
-                http_client,
-            ),
-        }
-    }
-
     /// Get the model name for API calls (remove prefix if present)
     #[must_use]
     pub fn api_model_name(&self) -> &str {
@@ -83,30 +39,16 @@ impl GeminiEmbeddingProvider {
             .unwrap_or(&self.client.model)
     }
 
-    /// Get the model name for this provider
-    #[must_use]
-    pub fn model(&self) -> &str {
-        &self.client.model
-    }
-
     /// Get the maximum tokens supported by this provider
     #[must_use]
     pub fn max_tokens(&self) -> usize {
-        match self.api_model_name() {
-            _ => 2048,
-        }
+        crate::constants::GEMINI_MAX_TOKENS
     }
 
     /// Get the API key for this provider
     #[must_use]
     pub fn api_key(&self) -> &str {
         &self.client.api_key
-    }
-
-    /// Get the base URL for this provider
-    #[must_use]
-    pub fn base_url(&self) -> String {
-        self.client.base_url.clone()
     }
 
     /// Fetch embedding for a single text
@@ -178,9 +120,7 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
 
     /// Returns the embedding dimensions for the configured model.
     fn dimensions(&self) -> usize {
-        match self.api_model_name() {
-            _ => EMBEDDING_DIMENSION_GEMINI,
-        }
+        EMBEDDING_DIMENSION_GEMINI
     }
 
     /// Returns the provider name ("gemini").
@@ -200,26 +140,12 @@ use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
 
-/// Factory function for creating Gemini embedding provider instances.
-fn gemini_factory(
-    config: &EmbeddingProviderConfig,
-) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
-    use crate::utils::http::create_http_provider_config;
-
-    let cfg = create_http_provider_config(config, "Gemini", "text-embedding-004")?;
-
-    Ok(Arc::new(GeminiEmbeddingProvider::new(
-        cfg.api_key,
-        cfg.base_url,
-        cfg.model,
-        cfg.timeout,
-        cfg.client,
-    )))
-}
-
-#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-static GEMINI_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-    name: "gemini",
-    description: "Google Gemini embedding provider (gemini-embedding-001, text-embedding-004)",
-    factory: gemini_factory,
-};
+register_http_provider!(
+    GeminiEmbeddingProvider,
+    gemini_factory,
+    GEMINI_PROVIDER,
+    "gemini",
+    "Google Gemini embedding provider (gemini-embedding-001, text-embedding-004)",
+    "Gemini",
+    "text-embedding-004"
+);

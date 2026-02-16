@@ -1,5 +1,5 @@
+use crate::constants::common::COMMENT_PREFIX;
 use crate::scan::for_each_file_under_root;
-// use crate::traits::violation::ViolationCategory; // Removed unused import
 use crate::{Result, Severity};
 
 use std::path::{Path, PathBuf};
@@ -38,7 +38,7 @@ pub fn validate_bypass_boundaries(
                     context,
                     severity: Severity::Error,
                 },
-                "DEP004" | _ => DependencyViolation::AdminBypassImport {
+                _ => DependencyViolation::AdminBypassImport {
                     file,
                     line,
                     context,
@@ -84,7 +84,7 @@ where
             let content = std::fs::read_to_string(path)?;
             for (line_num, line) in content.lines().enumerate() {
                 let trimmed = line.trim();
-                if trimmed.starts_with("//") {
+                if trimmed.starts_with(COMMENT_PREFIX) {
                     continue;
                 }
                 if line.contains(pattern) {

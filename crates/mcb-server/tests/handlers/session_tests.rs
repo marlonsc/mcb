@@ -4,7 +4,7 @@ use mcb_server::handlers::SessionHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::handlers::test_helpers::create_real_domain_services;
+use crate::handlers::utils::create_real_domain_services;
 use crate::test_utils::text::extract_text;
 
 async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {

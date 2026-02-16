@@ -1,27 +1,19 @@
 use std::path::Path;
-use std::sync::OnceLock;
-
-use regex::Regex;
 
 use super::violation::PatternViolation;
+use crate::constants::common::{COMMENT_PREFIX, USE_PREFIX};
+use crate::pattern_registry::compile_regex;
 use crate::traits::violation::Severity;
 
-static STD_RESULT_PATTERN: OnceLock<Regex> = OnceLock::new();
-static EXPLICIT_RESULT_PATTERN: OnceLock<Regex> = OnceLock::new();
-
 /// Checks for result type usage violations in a single file.
-pub fn check_result_types(path: &Path, content: &str) -> Vec<PatternViolation> {
+pub fn check_result_types(path: &Path, content: &str) -> crate::Result<Vec<PatternViolation>> {
     let mut violations = Vec::new();
 
     // Pattern to find std::result::Result usage
-    let std_result_pattern = STD_RESULT_PATTERN
-        .get_or_init(|| Regex::new("std::result::Result<").expect("Invalid std result pattern"));
+    let std_result_pattern = compile_regex("std::result::Result<")?;
 
     // Pattern to find Result<T, E> with explicit error type (not crate::Result)
-    let explicit_result_pattern = EXPLICIT_RESULT_PATTERN.get_or_init(|| {
-        Regex::new(r"Result<[^,]+,\s*([A-Za-z][A-Za-z0-9_:]+)>")
-            .expect("Invalid explicit result pattern")
-    });
+    let explicit_result_pattern = compile_regex(r"Result<[^,]+,\s*([A-Za-z][A-Za-z0-9_:]+)>")?;
 
     // Skip error-related files (they define/extend error types)
     let file_name = path.file_name().and_then(|n| n.to_str());
@@ -32,14 +24,14 @@ pub fn check_result_types(path: &Path, content: &str) -> Vec<PatternViolation> {
     if file_name.is_some_and(|n| n == "error.rs" || n == "error_ext.rs" || n.starts_with("error"))
         || parent_name.is_some_and(|p| p == "error")
     {
-        return violations;
+        return Ok(violations);
     }
 
     for (line_num, line) in content.lines().enumerate() {
         let trimmed = line.trim();
 
         // Skip comments and use statements
-        if trimmed.starts_with("//") || trimmed.starts_with("use ") {
+        if trimmed.starts_with(COMMENT_PREFIX) || trimmed.starts_with(USE_PREFIX) {
             continue;
         }
 
@@ -77,5 +69,5 @@ pub fn check_result_types(path: &Path, content: &str) -> Vec<PatternViolation> {
             }
         }
     }
-    violations
+    Ok(violations)
 }

@@ -13,6 +13,8 @@ use mcb_domain::ports::services::ValidationReport;
 use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+
+use crate::constants::display::{CODE_PREVIEW_MAX_LINES, SEARCH_SLOW_THRESHOLD_MS};
 use serde::Serialize;
 
 /// Response formatter for MCP server tools
@@ -177,7 +179,7 @@ fn append_search_results(
         message.push_str("• Breaking complex queries into simpler ones\n");
     }
 
-    if duration.as_millis() > 1000 {
+    if duration.as_millis() > SEARCH_SLOW_THRESHOLD_MS {
         let _ = write!(
             message,
             "\n⚠️ **Performance Note:** Search took {:.2}s. Consider using more specific queries for faster results.\n",
@@ -188,10 +190,10 @@ fn append_search_results(
 
 fn append_code_preview(message: &mut String, result: &SearchResult) {
     let lines: Vec<&str> = result.content.lines().collect();
-    let preview_lines = if lines.len() > 10 {
+    let preview_lines = if lines.len() > CODE_PREVIEW_MAX_LINES {
         lines
             .iter()
-            .take(10)
+            .take(CODE_PREVIEW_MAX_LINES)
             .cloned()
             .collect::<Vec<_>>()
             .join("\n")

@@ -55,6 +55,7 @@ version = "{DEFAULT_VERSION}"
 }
 
 /// Get the workspace root for integration tests
+#[must_use]
 pub fn get_workspace_root() -> std::path::PathBuf {
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -206,6 +207,7 @@ pub fn assert_violations_exact<V: std::fmt::Debug>(
 // ---------------------------------------------------------------------------
 
 /// Returns the path to the `tests/fixtures/rust/` directory.
+#[must_use]
 pub fn fixtures_dir() -> std::path::PathBuf {
     std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
@@ -298,6 +300,7 @@ pub fn setup_fixture_workspace(temp: &TempDir, crate_names: &[&str]) {
 /// let (temp, root) = with_fixture_crate(TEST_CRATE);
 /// let validator = QualityValidator::new(&root);
 /// ```
+#[must_use]
 pub fn with_fixture_crate(crate_name: &str) -> (TempDir, std::path::PathBuf) {
     let temp = TempDir::new().unwrap();
     copy_fixture_crate(&temp, crate_name);
@@ -314,6 +317,7 @@ pub fn with_fixture_crate(crate_name: &str) -> (TempDir, std::path::PathBuf) {
 /// let (temp, root) = with_fixture_workspace(&[DOMAIN_CRATE, SERVER_CRATE]);
 /// let validator = RefactoringValidator::new(&root);
 /// ```
+#[must_use]
 pub fn with_fixture_workspace(crate_names: &[&str]) -> (TempDir, std::path::PathBuf) {
     let temp = TempDir::new().unwrap();
     setup_fixture_workspace(&temp, crate_names);
@@ -331,6 +335,7 @@ pub fn with_fixture_workspace(crate_names: &[&str]) -> (TempDir, std::path::Path
 /// let (temp, root) = with_inline_crate(TEST_CRATE, "pub fn clean() {}");
 /// let validator = QualityValidator::new(&root);
 /// ```
+#[must_use]
 pub fn with_inline_crate(crate_name: &str, content: &str) -> (TempDir, std::path::PathBuf) {
     let temp = TempDir::new().unwrap();
     create_test_crate(&temp, crate_name, content);
@@ -351,6 +356,7 @@ pub fn with_inline_crate(crate_name: &str, content: &str) -> (TempDir, std::path
 /// let ctx = create_rule_context();
 /// let result = engine.execute(&rule, &ctx);
 /// ```
+#[must_use]
 pub fn create_rule_context() -> mcb_validate::engines::RuleContext {
     use std::collections::HashMap;
     use std::path::PathBuf;
@@ -377,6 +383,7 @@ pub fn create_rule_context() -> mcb_validate::engines::RuleContext {
 ///     ("src/lib.rs", SNIPPET_LIB_RS),
 /// ]);
 /// ```
+#[must_use]
 pub fn create_rule_context_with_files(
     files: &[(&str, &str)],
 ) -> mcb_validate::engines::RuleContext {
@@ -398,6 +405,7 @@ pub fn create_rule_context_with_files(
 /// let vars = build_yaml_variables();
 /// let loader = YamlRuleLoader::with_variables(rules_dir, Some(vars)).unwrap();
 /// ```
+#[must_use]
 pub fn build_yaml_variables() -> serde_yaml::Value {
     let mut variables = serde_yaml::Mapping::new();
     variables.insert(
@@ -425,6 +433,7 @@ pub fn build_yaml_variables() -> serde_yaml::Value {
 /// ```rust,ignore
 /// let grl = build_grl_rule("TestRule", "Facts.x == true", "Facts.y = true");
 /// ```
+#[must_use]
 pub fn build_grl_rule(name: &str, condition: &str, action: &str) -> String {
     GRL_SIMPLE_RULE
         .replace("{name}", name)
@@ -443,6 +452,7 @@ pub fn build_grl_rule(name: &str, condition: &str, action: &str) -> String {
 /// let kb = build_kb_from_grl("test", &grl);
 /// let mut engine = RustRuleEngine::new(kb);
 /// ```
+#[must_use]
 pub fn build_kb_from_grl(kb_name: &str, grl: &str) -> rust_rule_engine::KnowledgeBase {
     use rust_rule_engine::{GRLParser, KnowledgeBase};
 
@@ -463,6 +473,7 @@ pub fn build_kb_from_grl(kb_name: &str, grl: &str) -> rust_rule_engine::Knowledg
 ///     (FACT_VIOLATION_TRIGGERED, RreValue::Boolean(false)),
 /// ]);
 /// ```
+#[must_use]
 pub fn create_facts(entries: &[(&str, rust_rule_engine::Value)]) -> rust_rule_engine::Facts {
     let facts = rust_rule_engine::Facts::new();
     for (key, value) in entries {
@@ -480,6 +491,7 @@ pub fn create_facts(entries: &[(&str, rust_rule_engine::Value)]) -> rust_rule_en
 ///     ("my-infrastructure", "0.1.0"),
 /// ]);
 /// ```
+#[must_use]
 pub fn cargo_toml_with_deps(crate_name: &str, deps: &[(&str, &str)]) -> String {
     let deps_str: Vec<String> = deps
         .iter()

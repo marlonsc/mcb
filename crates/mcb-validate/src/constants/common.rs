@@ -1,4 +1,7 @@
 //! Common validation constants shared across multiple validators.
+//!
+//! Cross-cutting code patterns: comment prefixes, test markers,
+//! declaration prefixes, and standard skip lists.
 
 /// Marker for test module configuration attribute.
 pub const CFG_TEST_MARKER: &str = "#[cfg(test)]";
@@ -31,32 +34,46 @@ pub const CONSTANTS_FILE_KEYWORDS: &[&str] = &["constant", "config"];
 pub const TEST_FUNCTION_PREFIX: &str = "test_";
 
 // ============================================================================
-// Architecture Path Fragments (shared by organization, naming, documentation validators)
+// Preview / Truncation Lengths
 // ============================================================================
 
-/// Path fragment identifying the ports directory.
-pub const ARCH_PATH_PORTS: &str = "/ports/";
+/// Short context preview (match expressions, error patterns) — 60 chars.
+pub const SHORT_PREVIEW_LENGTH: usize = 60;
 
-/// Path fragment identifying the ports/providers directory.
-pub const ARCH_PATH_PORTS_PROVIDERS: &str = "/ports/providers/";
+/// Standard context preview (async patterns, spawn context) — 80 chars.
+pub const CONTEXT_PREVIEW_LENGTH: usize = 80;
 
-/// Path fragment identifying the DI directory.
-pub const ARCH_PATH_DI: &str = "/di/";
+// ============================================================================
+// Search Radius Constants
+// ============================================================================
 
-/// Path fragment identifying the DI modules directory.
-pub const ARCH_PATH_DI_MODULES: &str = "/di/modules/";
+/// Lines to search backward for enclosing function names.
+pub const FUNCTION_NAME_SEARCH_LINES: usize = 10;
 
-/// Path fragment identifying the handlers directory.
-pub const ARCH_PATH_HANDLERS: &str = "/handlers/";
+/// Lines to search backward for async trait attributes.
+pub const ATTR_SEARCH_LINES: usize = 5;
 
-/// Path fragment identifying the admin directory.
-pub const ARCH_PATH_ADMIN: &str = "/admin/";
+/// Max forward offset for balanced-brace block extraction in `scan.rs`.
+pub const MAX_BLOCK_SEARCH_OFFSET: usize = 20;
 
-/// Path fragment identifying the server layer.
-pub const ARCH_PATH_SERVER: &str = "/server/";
+// ============================================================================
+// Rust Code Pattern Strings
+// ============================================================================
 
-/// Path fragment identifying the application layer.
-pub const ARCH_PATH_APPLICATION: &str = "/application/";
+/// Rust `fn` keyword prefix.
+pub const FN_PREFIX: &str = "fn ";
 
-/// Path fragment identifying the infrastructure layer.
-pub const ARCH_PATH_INFRASTRUCTURE: &str = "/infrastructure/";
+/// Rust `pub fn` prefix.
+pub const PUB_FN_PREFIX: &str = "pub fn ";
+
+/// Rust `pub async fn` prefix.
+pub const PUB_ASYNC_FN_PREFIX: &str = "pub async fn ";
+
+/// Rust `let` binding prefix.
+pub const LET_PREFIX: &str = "let ";
+
+/// Rust `pub use` re-export prefix.
+pub const PUB_USE_PREFIX: &str = "pub use";
+
+/// Rust `use` import prefix.
+pub const USE_PREFIX: &str = "use ";

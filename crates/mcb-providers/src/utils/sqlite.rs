@@ -74,6 +74,10 @@ pub mod query {
     use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
 
     /// Helper to query a single row and convert it to an entity.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query or row conversion fails.
     pub async fn query_one<T, F>(
         executor: &Arc<dyn DatabaseExecutor>,
         sql: &str,
@@ -90,6 +94,10 @@ pub mod query {
     }
 
     /// Helper to query multiple rows and convert them to entities.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query or row conversion fails.
     pub async fn query_all<T, F>(
         executor: &Arc<dyn DatabaseExecutor>,
         sql: &str,
@@ -112,6 +120,10 @@ pub mod query {
     }
 
     /// Helper to execute an INSERT statement and return the ID.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the SQL execution fails.
     #[allow(dead_code)]
     pub async fn insert(
         executor: &Arc<dyn DatabaseExecutor>,
@@ -130,6 +142,10 @@ pub mod query {
     }
 
     /// Helper to execute an UPDATE statement.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the SQL execution fails.
     #[allow(dead_code)]
     pub async fn update(
         executor: &Arc<dyn DatabaseExecutor>,
@@ -140,6 +156,10 @@ pub mod query {
     }
 
     /// Helper to execute a DELETE statement.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the SQL execution fails.
     #[allow(dead_code)]
     pub async fn delete(
         executor: &Arc<dyn DatabaseExecutor>,
@@ -150,6 +170,10 @@ pub mod query {
     }
 
     /// Helper to execute an UPSERT (INSERT OR REPLACE) statement.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the SQL execution fails.
     #[allow(dead_code)]
     pub async fn upsert(
         executor: &Arc<dyn DatabaseExecutor>,

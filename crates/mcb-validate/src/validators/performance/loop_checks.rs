@@ -1,4 +1,5 @@
 use super::constants::{CLONE_REGEX, CONTEXT_TRUNCATION_LENGTH, LOOP_ALLOCATION_PATTERNS};
+use crate::constants::common::{FN_PREFIX, LET_PREFIX, PUB_FN_PREFIX};
 use crate::pattern_registry::{compile_regex, compile_regexes};
 use crate::{Result, Severity};
 
@@ -13,10 +14,10 @@ pub fn validate_clone_in_loops(
     let clone_pattern = compile_regex(CLONE_REGEX)?;
     scan_files_with_patterns_in_loops(validator, &[clone_pattern], |file, line_num, line| {
         let trimmed = line.trim();
-        if trimmed.starts_with("fn ") || trimmed.starts_with("pub fn ") {
+        if trimmed.starts_with(FN_PREFIX) || trimmed.starts_with(PUB_FN_PREFIX) {
             return None;
         }
-        if trimmed.starts_with("let ") {
+        if trimmed.starts_with(LET_PREFIX) {
             return None;
         }
         if trimmed.contains(".insert(") {

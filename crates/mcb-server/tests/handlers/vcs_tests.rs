@@ -6,7 +6,7 @@ use mcb_server::handlers::VcsHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::*;
 
-use crate::handlers::test_helpers::create_real_domain_services;
+use crate::handlers::utils::create_real_domain_services;
 
 async fn create_handler() -> Option<(VcsHandler, tempfile::TempDir)> {
     let (services, temp_dir) = create_real_domain_services().await?;

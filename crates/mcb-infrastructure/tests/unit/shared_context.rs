@@ -39,6 +39,10 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                 config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
                 init_app(config).await
             });
+            // Leak the runtime so it persists for the duration of the test process.
+            // Otherwise, dropping `rt` kills all spawned background tasks/actors.
+            std::mem::forget(rt);
+
             match result {
                 Ok(ctx) => Some(ctx),
                 Err(e) => {

@@ -5,8 +5,8 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::*;
 use serde_json::json;
 
-use crate::handlers::test_helpers::create_base_memory_args;
-use crate::handlers::test_helpers::create_real_domain_services;
+use crate::handlers::utils::create_base_memory_args;
+use crate::handlers::utils::create_real_domain_services;
 
 async fn create_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
     let (services, temp_dir) = create_real_domain_services().await?;

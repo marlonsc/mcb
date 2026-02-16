@@ -301,7 +301,12 @@ impl Token {
         match self.token_type {
             TokenType::Identifier => "$ID",
             TokenType::Literal => "$LIT",
-            _ => &self.text,
+            TokenType::Keyword
+            | TokenType::Operator
+            | TokenType::Punctuation
+            | TokenType::Comment
+            | TokenType::Whitespace
+            | TokenType::Other => &self.text,
         }
     }
 }

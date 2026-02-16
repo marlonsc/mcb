@@ -9,7 +9,6 @@ pub mod constants;
 
 use crate::filters::LanguageId;
 use std::path::PathBuf;
-use std::sync::OnceLock;
 
 use regex::Regex;
 
@@ -23,24 +22,6 @@ use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_crate_file;
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, Severity, ValidationConfig};
-
-static DOC_COMMENT_PATTERN: OnceLock<Regex> = OnceLock::new();
-static DOC_COMMENT_CAPTURE_PATTERN: OnceLock<Regex> = OnceLock::new();
-static ATTR_PATTERN: OnceLock<Regex> = OnceLock::new();
-
-fn doc_comment_pattern() -> &'static Regex {
-    DOC_COMMENT_PATTERN
-        .get_or_init(|| compile_regex(DOC_COMMENT_REGEX).expect("valid regex literal"))
-}
-
-fn doc_comment_capture_pattern() -> &'static Regex {
-    DOC_COMMENT_CAPTURE_PATTERN
-        .get_or_init(|| compile_regex(DOC_COMMENT_CAPTURE_REGEX).expect("valid regex literal"))
-}
-
-fn attr_pattern() -> &'static Regex {
-    ATTR_PATTERN.get_or_init(|| compile_regex(ATTR_REGEX).expect("valid regex literal"))
-}
 
 define_violations! {
     dynamic_severity,
@@ -186,6 +167,9 @@ impl DocumentationValidator {
         let pub_trait_pattern = compile_regex(PUB_TRAIT_REGEX)?;
         let pub_fn_pattern = compile_regex(PUB_FN_REGEX)?;
         let example_pattern = compile_regex(EXAMPLE_SECTION_REGEX)?;
+        let doc_comment_re = compile_regex(DOC_COMMENT_REGEX)?;
+        let doc_comment_capture_re = compile_regex(DOC_COMMENT_CAPTURE_REGEX)?;
+        let attr_re = compile_regex(ATTR_REGEX)?;
 
         for_each_crate_file(
             &self.config,
@@ -199,7 +183,7 @@ impl DocumentationValidator {
                     // Check for public structs
                     if let Some(cap) = pub_struct_pattern.captures(line) {
                         let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                        if !self.has_doc_comment(&lines, line_num) {
+                        if !Self::has_doc_comment(&lines, line_num, &doc_comment_re, &attr_re) {
                             violations.push(DocumentationViolation::MissingPubItemDoc {
                                 file: path.clone(),
                                 line: line_num + 1,
@@ -213,7 +197,7 @@ impl DocumentationValidator {
                     // Check for public enums
                     if let Some(cap) = pub_enum_pattern.captures(line) {
                         let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                        if !self.has_doc_comment(&lines, line_num) {
+                        if !Self::has_doc_comment(&lines, line_num, &doc_comment_re, &attr_re) {
                             violations.push(DocumentationViolation::MissingPubItemDoc {
                                 file: path.clone(),
                                 line: line_num + 1,
@@ -231,7 +215,7 @@ impl DocumentationValidator {
                             continue;
                         };
 
-                        if self.has_doc_comment(&lines, line_num) {
+                        if Self::has_doc_comment(&lines, line_num, &doc_comment_re, &attr_re) {
                             // Check for example code in trait documentation
                             // Skip DI module traits and port traits - they are interface definitions
                             // that don't need examples (they define contracts for DI injection)
@@ -239,7 +223,12 @@ impl DocumentationValidator {
                                 path_str.contains(DI_MODULES_PATH) || path_str.contains(PORTS_PATH);
 
                             if !is_di_or_port_trait {
-                                let doc_section = self.get_doc_comment_section(&lines, line_num);
+                                let doc_section = Self::get_doc_comment_section(
+                                    &lines,
+                                    line_num,
+                                    &doc_comment_capture_re,
+                                    &attr_re,
+                                );
                                 if !example_pattern.is_match(&doc_section) {
                                     violations.push(DocumentationViolation::MissingExampleCode {
                                         file: path.clone(),
@@ -269,7 +258,7 @@ impl DocumentationValidator {
                             continue;
                         }
 
-                        if !self.has_doc_comment(&lines, line_num) {
+                        if !Self::has_doc_comment(&lines, line_num, &doc_comment_re, &attr_re) {
                             violations.push(DocumentationViolation::MissingPubItemDoc {
                                 file: path.clone(),
                                 line: line_num + 1,
@@ -292,7 +281,7 @@ impl DocumentationValidator {
     ///
     /// Looks backwards from the item line to find a `///` doc comment,
     /// skipping attributes and empty lines.
-    fn has_doc_comment(&self, lines: &[&str], item_line: usize) -> bool {
+    fn has_doc_comment(lines: &[&str], item_line: usize, doc_re: &Regex, attr_re: &Regex) -> bool {
         if item_line == 0 {
             return false;
         }
@@ -312,7 +301,7 @@ impl DocumentationValidator {
             }
 
             // Skip attributes
-            if attr_pattern().is_match(lines[i]) {
+            if attr_re.is_match(lines[i]) {
                 if i == 0 {
                     return false;
                 }
@@ -321,7 +310,7 @@ impl DocumentationValidator {
             }
 
             // Check for doc comment
-            return doc_comment_pattern().is_match(lines[i]);
+            return doc_re.is_match(lines[i]);
         }
     }
 
@@ -329,7 +318,12 @@ impl DocumentationValidator {
     ///
     /// Collects all consecutive `///` lines above the item, skipping attributes,
     /// and returns them as a single string for analysis.
-    fn get_doc_comment_section(&self, lines: &[&str], item_line: usize) -> String {
+    fn get_doc_comment_section(
+        lines: &[&str],
+        item_line: usize,
+        doc_capture_re: &Regex,
+        attr_re: &Regex,
+    ) -> String {
         if item_line == 0 {
             return String::new();
         }
@@ -341,7 +335,7 @@ impl DocumentationValidator {
             let line = lines[i];
 
             // Skip attributes
-            if attr_pattern().is_match(line) {
+            if attr_re.is_match(line) {
                 if i == 0 {
                     break;
                 }
@@ -350,7 +344,7 @@ impl DocumentationValidator {
             }
 
             // Collect doc comment
-            if let Some(cap) = doc_comment_capture_pattern().captures(line) {
+            if let Some(cap) = doc_capture_re.captures(line) {
                 let content = cap.get(1).map_or("", |m| m.as_str());
                 doc_lines.push(content);
             } else if !line.trim().is_empty() {

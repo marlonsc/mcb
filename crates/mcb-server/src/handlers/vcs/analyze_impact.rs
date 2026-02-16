@@ -7,6 +7,9 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{ImpactFile, ImpactResponse, ImpactSummary, repo_path};
 use crate::args::VcsArgs;
+use crate::constants::vcs::{
+    IMPACT_CHANGE_COUNT_WEIGHT, IMPACT_FILE_COUNT_WEIGHT, MAX_IMPACT_SCORE,
+};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
@@ -58,9 +61,9 @@ pub async fn analyze_impact(
         });
     }
     let total_changes = diff.total_additions + diff.total_deletions;
-    let impact_score = ((diff.files.len() as f64).ln_1p() * 10.0
-        + (total_changes as f64).ln_1p() * 5.0)
-        .min(100.0);
+    let impact_score = ((diff.files.len() as f64).ln_1p() * IMPACT_FILE_COUNT_WEIGHT
+        + (total_changes as f64).ln_1p() * IMPACT_CHANGE_COUNT_WEIGHT)
+        .min(MAX_IMPACT_SCORE);
     let result = ImpactResponse {
         base_ref,
         head_ref,

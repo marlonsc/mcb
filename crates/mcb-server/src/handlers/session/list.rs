@@ -6,6 +6,7 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
 use crate::args::SessionArgs;
+use crate::constants::limits::DEFAULT_SESSION_LIST_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
@@ -31,7 +32,7 @@ pub async fn list_sessions(
             .map_err(|_| McpError::invalid_params("Invalid status", None))?,
         project_id: args.project_id.clone(),
         worktree_id: args.worktree_id.clone(),
-        limit: Some(args.limit.unwrap_or(10) as usize),
+        limit: Some(args.limit.unwrap_or(DEFAULT_SESSION_LIST_LIMIT as u32) as usize),
     };
     match agent_service.list_sessions(query).await {
         Ok(sessions) => {

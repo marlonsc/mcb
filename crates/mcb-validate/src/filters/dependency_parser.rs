@@ -119,7 +119,7 @@ impl CargoDependencyParser {
         for crate_dir in crate_dirs {
             let cargo_toml_path = crate_dir.join("Cargo.toml");
             if cargo_toml_path.exists() {
-                let crate_deps = self.parse_cargo_toml(&cargo_toml_path)?;
+                let crate_deps = Self::parse_cargo_toml(&cargo_toml_path)?;
                 deps.insert(crate_dir, crate_deps);
             }
         }
@@ -180,7 +180,7 @@ impl CargoDependencyParser {
     }
 
     /// Parse a single Cargo.toml file
-    fn parse_cargo_toml(&self, path: &Path) -> Result<CrateDependencies> {
+    fn parse_cargo_toml(path: &Path) -> Result<CrateDependencies> {
         let content = fs::read_to_string(path)?;
         let value: toml::Value =
             toml::from_str(&content).map_err(|e| crate::ValidationError::Parse {
@@ -191,13 +191,13 @@ impl CargoDependencyParser {
         let mut deps = HashMap::new();
 
         if let Some(deps_section) = value.get("dependencies") {
-            self.parse_dependency_table(deps_section, &mut deps, false);
+            Self::parse_dependency_table(deps_section, &mut deps, false);
         }
         if let Some(dev_deps_section) = value.get("dev-dependencies") {
-            self.parse_dependency_table(dev_deps_section, &mut deps, false);
+            Self::parse_dependency_table(dev_deps_section, &mut deps, false);
         }
         if let Some(build_deps_section) = value.get("build-dependencies") {
-            self.parse_dependency_table(build_deps_section, &mut deps, false);
+            Self::parse_dependency_table(build_deps_section, &mut deps, false);
         }
 
         Ok(CrateDependencies { deps })
@@ -205,21 +205,20 @@ impl CargoDependencyParser {
 
     /// Parse a dependency table (dependencies, dev-dependencies, etc.)
     fn parse_dependency_table(
-        &self,
         deps_section: &toml::Value,
         deps: &mut HashMap<String, DependencyInfo>,
         is_optional: bool,
     ) {
         if let Some(table) = deps_section.as_table() {
             for (name, config) in table {
-                let info = self.parse_dependency_config(config, is_optional);
+                let info = Self::parse_dependency_config(config, is_optional);
                 deps.insert(name.clone(), info);
             }
         }
     }
 
     /// Parse individual dependency configuration
-    fn parse_dependency_config(&self, config: &toml::Value, is_optional: bool) -> DependencyInfo {
+    fn parse_dependency_config(config: &toml::Value, is_optional: bool) -> DependencyInfo {
         match config {
             // Simple version string: serde = "1.0"
             toml::Value::String(version) => DependencyInfo {
@@ -259,7 +258,11 @@ impl CargoDependencyParser {
                 }
             }
 
-            _ => DependencyInfo {
+            toml::Value::Integer(_)
+            | toml::Value::Float(_)
+            | toml::Value::Boolean(_)
+            | toml::Value::Datetime(_)
+            | toml::Value::Array(_) => DependencyInfo {
                 declared: !is_optional,
                 used_in_code: false,
                 version: None,
