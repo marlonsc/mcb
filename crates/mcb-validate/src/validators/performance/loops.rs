@@ -42,6 +42,96 @@ fn apply_line_brace_delta(loop_depth: &mut i32, line: &str) {
     *loop_depth -= line.chars().filter(|c| *c == '}').count() as i32;
 }
 
+struct LoopPatternScanInput<'a> {
+    path: &'a Path,
+    content: &'a str,
+    loop_start_pattern: &'a Regex,
+    patterns: &'a [Regex],
+}
+
+fn collect_loop_pattern_violations<F>(
+    input: &LoopPatternScanInput<'_>,
+    make_violation: &F,
+    violations: &mut Vec<PerformanceViolation>,
+) where
+    F: Fn(PathBuf, usize, &str) -> Option<PerformanceViolation>,
+{
+    let LoopPatternScanInput {
+        path,
+        content,
+        loop_start_pattern,
+        patterns,
+    } = input;
+
+    let mut in_loop = false;
+    let mut loop_depth = 0;
+
+    for (line_num, line) in content.lines().enumerate() {
+        let trimmed = line.trim();
+
+        if trimmed.starts_with(COMMENT_PREFIX) {
+            continue;
+        }
+
+        if loop_start_pattern.is_match(trimmed) {
+            in_loop = true;
+            loop_depth = 0;
+        }
+
+        if !in_loop {
+            continue;
+        }
+
+        apply_line_brace_delta(&mut loop_depth, line);
+        for pattern in *patterns {
+            if pattern.is_match(line)
+                && let Some(violation) = make_violation(path.to_path_buf(), line_num + 1, line)
+            {
+                violations.push(violation);
+            }
+        }
+
+        if loop_depth <= 0 {
+            in_loop = false;
+        }
+    }
+}
+
+fn collect_pattern_violations<F>(
+    path: &Path,
+    content: &str,
+    compiled_patterns: &[(Regex, &str, &str)],
+    make_violation: &F,
+    violations: &mut Vec<PerformanceViolation>,
+) where
+    F: Fn(PathBuf, usize, &str, &str) -> PerformanceViolation,
+{
+    let mut in_test_module = false;
+
+    for (line_num, line) in content.lines().enumerate() {
+        let trimmed = line.trim();
+
+        if trimmed.starts_with(COMMENT_PREFIX) {
+            continue;
+        }
+
+        if trimmed.contains(CFG_TEST_MARKER) {
+            in_test_module = true;
+            continue;
+        }
+
+        if in_test_module {
+            continue;
+        }
+
+        for (pattern, desc, sugg) in compiled_patterns {
+            if pattern.is_match(line) {
+                violations.push(make_violation(path.to_path_buf(), line_num + 1, desc, sugg));
+            }
+        }
+    }
+}
+
 /// Helper: Scan files for patterns inside loops
 pub fn scan_files_with_patterns_in_loops<F>(
     validator: &PerformanceValidator,
@@ -55,37 +145,16 @@ where
     let loop_start_pattern = compile_regex(r"^\s*(for|while|loop)\s+")?;
 
     for_each_relevant_file_content(validator, |path, content| {
-        let mut in_loop = false;
-        let mut loop_depth = 0;
-
-        for (line_num, line) in content.lines().enumerate() {
-            let trimmed = line.trim();
-
-            if trimmed.starts_with(COMMENT_PREFIX) {
-                continue;
-            }
-
-            if loop_start_pattern.is_match(trimmed) {
-                in_loop = true;
-                loop_depth = 0;
-            }
-
-            if in_loop {
-                apply_line_brace_delta(&mut loop_depth, line);
-
-                for pattern in patterns {
-                    if pattern.is_match(line)
-                        && let Some(violation) = make_violation(path.clone(), line_num + 1, line)
-                    {
-                        violations.push(violation);
-                    }
-                }
-
-                if loop_depth <= 0 {
-                    in_loop = false;
-                }
-            }
-        }
+        collect_loop_pattern_violations(
+            &LoopPatternScanInput {
+                path: &path,
+                content: &content,
+                loop_start_pattern: &loop_start_pattern,
+                patterns,
+            },
+            &make_violation,
+            &mut violations,
+        );
         Ok(())
     })?;
 
@@ -104,30 +173,13 @@ where
     let mut violations = Vec::new();
 
     for_each_relevant_file_content(validator, |path, content| {
-        let mut in_test_module = false;
-
-        for (line_num, line) in content.lines().enumerate() {
-            let trimmed = line.trim();
-
-            if trimmed.starts_with(COMMENT_PREFIX) {
-                continue;
-            }
-
-            if trimmed.contains(CFG_TEST_MARKER) {
-                in_test_module = true;
-                continue;
-            }
-
-            if in_test_module {
-                continue;
-            }
-
-            for (pattern, desc, sugg) in compiled_patterns {
-                if pattern.is_match(line) {
-                    violations.push(make_violation(path.clone(), line_num + 1, desc, sugg));
-                }
-            }
-        }
+        collect_pattern_violations(
+            &path,
+            &content,
+            compiled_patterns,
+            &make_violation,
+            &mut violations,
+        );
 
         Ok(())
     })?;

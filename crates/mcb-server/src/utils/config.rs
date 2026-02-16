@@ -8,14 +8,14 @@ pub fn load_startup_config() -> Result<AppConfig, mcb_domain::error::Error> {
     ConfigLoader::new().load()
 }
 
-/// Load startup configuration and terminate the process when loading fails.
+/// Load startup configuration, falling back to defaults when loading fails.
 #[must_use]
-pub fn load_startup_config_or_exit() -> AppConfig {
+pub fn load_startup_config_or_default() -> AppConfig {
     match load_startup_config() {
         Ok(config) => config,
         Err(error) => {
-            tracing::error!(error = %error, "startup config unavailable, aborting startup");
-            std::process::exit(2);
+            tracing::warn!(error = %error, "startup config unavailable, using defaults");
+            AppConfig::fallback()
         }
     }
 }

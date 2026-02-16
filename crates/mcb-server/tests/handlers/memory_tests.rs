@@ -7,6 +7,7 @@ use serde_json::json;
 
 use crate::handlers::utils::create_base_memory_args;
 use crate::handlers::utils::create_real_domain_services;
+use crate::test_utils::test_fixtures::{TEST_PROJECT_ID, TEST_SESSION_ID};
 
 async fn create_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
     let (services, temp_dir) = create_real_domain_services().await?;
@@ -61,10 +62,10 @@ async fn test_memory_store_observation_success() {
             "tags": ["test", "observation"]
         })),
         None,
-        Some("test-session".to_owned()),
+        Some(TEST_SESSION_ID.to_owned()),
     );
     let mut args = args;
-    args.project_id = Some("test-project".to_owned());
+    args.project_id = Some(TEST_PROJECT_ID.to_owned());
 
     let result = handler.handle(Parameters(args)).await;
     assert!(result.is_ok());
@@ -94,7 +95,7 @@ async fn test_memory_inject_with_filters() {
         action: MemoryAction::Inject,
         org_id: None,
         resource: MemoryResource::Observation,
-        project_id: Some("test-project".to_owned()),
+        project_id: Some(TEST_PROJECT_ID.to_owned()),
         data: None,
         ids: None,
         repo_id: Some("repo-123".to_owned()),

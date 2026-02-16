@@ -1,3 +1,5 @@
+//! Unit tests.
+
 mod browse_tests;
 mod config_tests;
 mod embedding_tests;

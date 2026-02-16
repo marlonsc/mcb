@@ -39,11 +39,10 @@ divided into independent sub-modules compiled separately. Each crate
 encapsulates specific services and logics (e.g., core server crate, providers
 crate, EventBus crate, etc.), but all operate in an integrated manner. To
 coordinate the lifecycle of modules, we introduced a central component called
-ServiceManager responsible for registering, initializing, and maintaining
-references to all services (from each crate) running. Similarly, we implemented
-a graceful shutdown mechanism via ShutdownCoordinator, which orchestrates the
-termination of each service in the correct order when the application is shut
-down, ensuring resource release (threads, connections) in a safe manner.
+a dill Catalog (ADR-029) responsible for composing, initializing, and resolving
+all services across crates. Providers register via linkme distributed slices
+(ADR-023) for compile-time auto-discovery, and the Catalog wires them into
+the application at startup via `init_app()` in mcb-infrastructure.
 
 ## Implementation
 
@@ -183,15 +182,16 @@ let provider = resolver.resolve_from_config()?;
 // Defaults to FastEmbedProvider when no config override
 ```
 
-**Layer 2: Runtime Factories** - Create production providers from configuration:
+**Layer 2: dill Catalog** - IoC container composes services from resolved providers:
 
 ```rust
-// Production with factories
-let embedding = EmbeddingProviderFactory::create(&config.embedding, None)?;
-let vector_store = VectorStoreProviderFactory::create(&config.vector_store, crypto)?;
-let services = DomainServicesFactory::create_services(
-    cache, crypto, config, embedding, vector_store, chunker
-).await?;
+// mcb-infrastructure/src/di/catalog.rs — dill Catalog (ADR-029)
+let catalog = CatalogBuilder::new()
+    .add_value(config)
+    .add_value(embedding_provider)    // Resolved from linkme registry
+    .add_value(vector_store_provider) // Resolved from linkme registry
+    .add_value(embedding_handle)      // RwLock<Arc<dyn EmbeddingProvider>>
+    .build();
 ```
 
 ### Testing Pattern
@@ -224,7 +224,7 @@ Developers can evolve modules in isolation and even publish reusable crates. The
 modular architecture also facilitates unit testing and integration testing
 focused per module. On the other hand, it added complexity in managing versions
 between internal crates and required an orchestration layer
-(ServiceManager/ShutdownCoordinator) to coordinate dependencies and
+(dill Catalog + linkme registry) to coordinate dependencies and
 initialization order. These additional structures increase robustness at the cost
 of a small coordination overhead. Overall, the decision aligned with the goal of
 a pluggable and extensible design, allowing inclusion or removal of

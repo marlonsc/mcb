@@ -21,6 +21,11 @@ use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorS
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use serde_json::Value;
 
+use crate::constants::{
+    VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_LINE_NUMBER,
+    VECTOR_FIELD_START_LINE,
+};
+
 /// Encrypted vector store provider
 ///
 /// Wraps any `VectorStoreProvider` implementation to provide encryption at rest.
@@ -85,13 +90,20 @@ impl<P: VectorStoreProvider> EncryptedVectorStoreProvider<P> {
         );
 
         // Preserve unencrypted fields for filtering and SearchResult construction
-        for key in ["content", "file_path", "language"] {
+        for key in [
+            VECTOR_FIELD_CONTENT,
+            VECTOR_FIELD_FILE_PATH,
+            VECTOR_FIELD_LANGUAGE,
+        ] {
             if let Some(val) = meta.get(key) {
                 processed.insert(key.to_owned(), val.clone());
             }
         }
-        if let Some(val) = meta.get("start_line").or_else(|| meta.get("line_number")) {
-            processed.insert("start_line".to_owned(), val.clone());
+        if let Some(val) = meta
+            .get(VECTOR_FIELD_START_LINE)
+            .or_else(|| meta.get(VECTOR_FIELD_LINE_NUMBER))
+        {
+            processed.insert(VECTOR_FIELD_START_LINE.to_owned(), val.clone());
         }
 
         Ok(processed)

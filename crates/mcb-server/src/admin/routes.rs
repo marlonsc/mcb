@@ -1,6 +1,7 @@
 //! Admin API routes
 //!
 //! Route definitions for the admin API endpoints.
+#![allow(clippy::redundant_type_annotations)]
 
 use std::sync::Arc;
 

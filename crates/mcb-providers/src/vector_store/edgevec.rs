@@ -18,7 +18,8 @@ use tokio::sync::{mpsc, oneshot};
 use crate::constants::{
     EDGEVEC_DEFAULT_DIMENSIONS, EDGEVEC_HNSW_EF_CONSTRUCTION, EDGEVEC_HNSW_EF_SEARCH,
     EDGEVEC_HNSW_M, EDGEVEC_HNSW_M0, EDGEVEC_QUANTIZATION_TYPE, STATS_FIELD_COLLECTION,
-    STATS_FIELD_VECTORS_COUNT,
+    STATS_FIELD_VECTORS_COUNT, VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE,
+    VECTOR_FIELD_LINE_NUMBER, VECTOR_FIELD_START_LINE,
 };
 
 /// `EdgeVec` vector store configuration
@@ -545,23 +546,26 @@ impl EdgeVecActor {
                     final_results.push(SearchResult {
                         id: id.clone(),
                         file_path: meta
-                            .get("file_path")
+                            .get(VECTOR_FIELD_FILE_PATH)
                             .and_then(|value| value.as_str())
                             .unwrap_or("unknown")
                             .to_owned(),
                         start_line: meta
-                            .get("start_line")
+                            .get(VECTOR_FIELD_START_LINE)
                             .and_then(serde_json::Value::as_u64)
-                            .or_else(|| meta.get("line_number").and_then(serde_json::Value::as_u64))
+                            .or_else(|| {
+                                meta.get(VECTOR_FIELD_LINE_NUMBER)
+                                    .and_then(serde_json::Value::as_u64)
+                            })
                             .unwrap_or(0) as u32,
                         content: meta
-                            .get("content")
+                            .get(VECTOR_FIELD_CONTENT)
                             .and_then(|value| value.as_str())
                             .unwrap_or("")
                             .to_owned(),
                         score: 1.0,
                         language: meta
-                            .get("language")
+                            .get(VECTOR_FIELD_LANGUAGE)
                             .and_then(|value| value.as_str())
                             .unwrap_or("unknown")
                             .to_owned(),
@@ -580,23 +584,26 @@ impl EdgeVecActor {
                 final_results.push(SearchResult {
                     id: ext_id.clone(),
                     file_path: meta
-                        .get("file_path")
+                        .get(VECTOR_FIELD_FILE_PATH)
                         .and_then(|value| value.as_str())
                         .unwrap_or("unknown")
                         .to_owned(),
                     start_line: meta
-                        .get("start_line")
+                        .get(VECTOR_FIELD_START_LINE)
                         .and_then(serde_json::Value::as_u64)
-                        .or_else(|| meta.get("line_number").and_then(serde_json::Value::as_u64))
+                        .or_else(|| {
+                            meta.get(VECTOR_FIELD_LINE_NUMBER)
+                                .and_then(serde_json::Value::as_u64)
+                        })
                         .unwrap_or(0) as u32,
                     content: meta
-                        .get("content")
+                        .get(VECTOR_FIELD_CONTENT)
                         .and_then(|value| value.as_str())
                         .unwrap_or("")
                         .to_owned(),
                     score: 1.0,
                     language: meta
-                        .get("language")
+                        .get(VECTOR_FIELD_LANGUAGE)
                         .and_then(|value| value.as_str())
                         .unwrap_or("unknown")
                         .to_owned(),
@@ -634,28 +641,29 @@ impl EdgeVecActor {
                         {
                             let meta = meta_val.as_object().cloned().unwrap_or_default();
                             let start_line = meta
-                                .get("start_line")
+                                .get(VECTOR_FIELD_START_LINE)
                                 .and_then(serde_json::Value::as_u64)
                                 .or_else(|| {
-                                    meta.get("line_number").and_then(serde_json::Value::as_u64)
+                                    meta.get(VECTOR_FIELD_LINE_NUMBER)
+                                        .and_then(serde_json::Value::as_u64)
                                 })
                                 .unwrap_or(0) as u32;
                             final_results.push(SearchResult {
                                 id: ext_id,
                                 file_path: meta
-                                    .get("file_path")
+                                    .get(VECTOR_FIELD_FILE_PATH)
                                     .and_then(|value| value.as_str())
                                     .unwrap_or("unknown")
                                     .to_owned(),
                                 start_line,
                                 content: meta
-                                    .get("content")
+                                    .get(VECTOR_FIELD_CONTENT)
                                     .and_then(|value| value.as_str())
                                     .unwrap_or("")
                                     .to_owned(),
                                 score: res.distance as f64,
                                 language: meta
-                                    .get("language")
+                                    .get(VECTOR_FIELD_LANGUAGE)
                                     .and_then(|value| value.as_str())
                                     .unwrap_or("unknown")
                                     .to_owned(),
@@ -716,7 +724,7 @@ impl EdgeVecActor {
                     .values()
                     .filter_map(|v| {
                         v.as_object()
-                            .and_then(|o| o.get("file_path"))
+                            .and_then(|o| o.get(VECTOR_FIELD_FILE_PATH))
                             .and_then(|v| v.as_str())
                     })
                     .collect();
@@ -737,10 +745,10 @@ impl EdgeVecActor {
 
         for meta_val in collection_metadata.values() {
             if let Some(meta) = meta_val.as_object()
-                && let Some(file_path) = meta.get("file_path").and_then(|v| v.as_str())
+                && let Some(file_path) = meta.get(VECTOR_FIELD_FILE_PATH).and_then(|v| v.as_str())
             {
                 let language = meta
-                    .get("language")
+                    .get(VECTOR_FIELD_LANGUAGE)
                     .and_then(|v| v.as_str())
                     .unwrap_or("unknown")
                     .to_owned();
@@ -772,14 +780,17 @@ impl EdgeVecActor {
             for (ext_id, meta_val) in collection_metadata.iter() {
                 if let Some(meta) = meta_val.as_object()
                     && meta
-                        .get("file_path")
+                        .get(VECTOR_FIELD_FILE_PATH)
                         .and_then(|v| v.as_str())
                         .is_some_and(|p| p.replace('\\', "/") == normalized_query)
                 {
                     let start_line = meta
-                        .get("start_line")
+                        .get(VECTOR_FIELD_START_LINE)
                         .and_then(serde_json::Value::as_u64)
-                        .or_else(|| meta.get("line_number").and_then(serde_json::Value::as_u64))
+                        .or_else(|| {
+                            meta.get(VECTOR_FIELD_LINE_NUMBER)
+                                .and_then(serde_json::Value::as_u64)
+                        })
                         .unwrap_or(0) as u32;
 
                     results.push(SearchResult {
@@ -787,13 +798,13 @@ impl EdgeVecActor {
                         file_path: file_path.to_owned(),
                         start_line,
                         content: meta
-                            .get("content")
+                            .get(VECTOR_FIELD_CONTENT)
                             .and_then(|value| value.as_str())
                             .unwrap_or("")
                             .to_owned(),
                         score: 1.0,
                         language: meta
-                            .get("language")
+                            .get(VECTOR_FIELD_LANGUAGE)
                             .and_then(|value| value.as_str())
                             .unwrap_or("unknown")
                             .to_owned(),

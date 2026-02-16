@@ -84,7 +84,7 @@ graph TB
         VDB[(Vector Database<br/>Milvus/Pinecone)]
         EMB[Embedding Service<br/>OpenAI/Ollama]
         CACHE[(Cache<br/>Redis)]
-        STORAGE[(Metadata Store<br/>PostgreSQL)]
+        STORAGE[(Metadata Store<br/>SQLite)]
     end
 
     AI --> MCP
@@ -177,7 +177,7 @@ graph TB
         end
 
         subgraph "Data Layer"
-            METADATA[(Metadata Store<br/>PostgreSQL)]
+            METADATA[(Metadata Store<br/>SQLite)]
             VECTORS[(Vector Database<br/>Milvus)]
             CACHE[(Cache Store<br/>Redis)]
         end
@@ -234,7 +234,7 @@ graph TB
 
 | Container | Technology | Responsibility | Interfaces |
 | ----------- | ------------ | ---------------- | ------------ |
-| **Metadata Store** | PostgreSQL | Structured data, user management | SQL, connection pooling |
+| **Metadata Store** | SQLite | Structured data, session management | SQL |
 | **Vector Database** | Milvus/Qdrant | High-dimensional vector storage | gRPC/REST, bulk operations |
 | **Cache Store** | Redis | Fast data caching, sessions | Redis protocol, pub/sub |
 
@@ -881,12 +881,14 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 ### Submodules
 
-- `embedding/`: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null (6 providers)
-- `vector_store/`: InMemory, Encrypted, Null (3 providers)
-- `cache/`: Moka, Redis cache providers
+- `embedding/`: FastEmbed (default), Ollama, OpenAI, VoyageAI, Gemini, Anthropic (7 providers)
+- `vector_store/`: EdgeVec (default), Qdrant, Milvus, Pinecone, Encrypted (5 providers)
+- `cache/`: Moka (default), Redis cache providers
 - `language/`: 12 AST-based language processors (Rust, Python, JS, TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
-- `routing/`: Circuit breakers, health monitoring, failover
-- `admin/`: Performance metrics provider
+- `events/`: TokioEventBus (default), NATS event bus providers
+- `database/`: SQLite persistence
+- `vcs/`: Git repository operations
+- `hybrid_search/`: BM25 + semantic search
 
 #### 🏗️ Infrastructure Layer (`crates/mcb-infrastructure/`)
 
@@ -903,7 +905,7 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 - `crypto/`: Encryption and hashing utilities
 - `health/`: Health check infrastructure
 - `logging/`: Logging configuration
-- `infrastructure/`: Null adapters for DI testing
+- `infrastructure/`: Admin types (metrics, indexing ops)
 
 #### 🌐 Server Layer (`crates/mcb-server/`)
 
@@ -978,40 +980,9 @@ make validate  # Run all architecture validation rules
 
 ### Advanced Features
 
-#### 🛡️ Provider Routing System (`crates/mcb-providers/src/routing/`)
+#### 🛡️ Infrastructure Routing (`crates/mcb-infrastructure/src/routing/`)
 
-**Purpose**: Intelligent provider management with resilience and optimization.
-
-### Submodules (1)
-
-### Health Monitoring (`health/`)
-
-- `HealthMonitor`: Continuous provider health checking
-- `ProviderHealthChecker`: Automated health assessment
-- `HealthCheckResult`: Structured health status reporting
-
-### Circuit Breaker (`circuit_breaker/`)
-
-- `CircuitBreaker`: Failure detection and recovery
-- `CircuitBreakerConfig`: Configurable failure thresholds
-- `CircuitBreakerState`: State management for resilience
-
-### Metrics Collection (`metrics/`)
-
-- `ProviderMetricsCollector`: Usage and performance tracking
-- `MetricsSummary`: Aggregated metrics reporting
-
-### Cost Tracking (`cost_tracker/`)
-
-- `CostTracker`: API usage and cost monitoring
-- `UsageMetrics`: Detailed usage statistics
-- `CostTrackerConfig`: Cost optimization settings
-
-### Failover Management (`failover/`)
-
-- `FailoverManager`: Automatic provider switching
-- `FailoverStrategy`: Priority-based and round-robin strategies
-- `PriorityBasedStrategy`: Cost and performance-aware selection
+**Purpose**: Request routing and dispatch helpers for provider selection.
 
 ### Router Core (`router/`)
 
@@ -1243,7 +1214,7 @@ impl VectorRecord {
 
 #### Metadata Storage
 
-**Primary Storage**: PostgreSQL for structured data and relationships
+**Primary Storage**: SQLite for structured data and relationships
 
 ```sql
 -- Optimized schema for code search metadata
@@ -2076,8 +2047,8 @@ services:
     environment:
 -   RUST_LOG=debug
 -   MCP_MODE=development
--   EMBEDDING_PROVIDER=mock
--   VECTOR_STORE=memory
+-   EMBEDDING_PROVIDER=fastembed
+-   VECTOR_STORE=edgevec
     volumes:
 -   .:/app
 -   cargo-cache:/usr/local/cargo/registry

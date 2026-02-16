@@ -1,3 +1,5 @@
+//! Unit tests.
+
 mod admin_tests;
 pub mod fts_check_tests;
 mod lifecycle_tests;

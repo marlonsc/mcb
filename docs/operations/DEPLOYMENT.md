@@ -52,19 +52,19 @@ Create a `config.toml` file in the project root:
 
 # Embedding provider configuration
 [embedding_provider]
-provider = "mock"  # Options: mock, openai, ollama, gemini, voyageai
+provider = "fastembed"  # Options: fastembed, openai, ollama, gemini, voyageai, anthropic
 
 # Vector store configuration
 [vector_store]
-provider = "memory"  # Options: memory, milvus, filesystem, encrypted
+provider = "edgevec"  # Options: edgevec, qdrant, milvus, pinecone, encrypted
 ```
 
 ## Configuration Options
 
 | Setting | Description | Default | Status |
 | --------- | ------------- | --------- | -------- |
-| `embedding_provider.provider` | Embedding provider to use | `"mock"` | ✅ Available |
-| `vector_store.provider` | Vector storage backend | `"memory"` | ✅ Available |
+| `embedding_provider.provider` | Embedding provider to use | `"fastembed"` | ✅ Available |
+| `vector_store.provider` | Vector storage backend | `"edgevec"` | ✅ Available |
 
 ## 🧪 Testing the Setup
 
@@ -484,51 +484,16 @@ data:
       indexSliceSize: 16
 ```
 
-## PostgreSQL (Hybrid Storage)
+## SQLite (Primary Storage)
 
-```sql
--- Initialize database
-CREATE DATABASE mcp_context_browser;
+SQLite is the primary metadata store. Schema is managed via sqlx migrations in `crates/mcb-providers/src/database/sqlite/`.
 
--- Create extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS vector;  -- For pgvector
-
--- Create tables
-CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    tenant_id UUID NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE repositories (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID REFERENCES users(id),
-    tenant_id UUID NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    url TEXT NOT NULL,
-    vcs_type VARCHAR(50) DEFAULT 'git',
-    indexed_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE TABLE code_embeddings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    repository_id UUID REFERENCES repositories(id),
-    file_path TEXT NOT NULL,
-    content_hash VARCHAR(64) NOT NULL,
-    embedding vector(768),  -- Adjust dimension based on model
-    metadata JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Indexes for performance
-CREATE INDEX idx_code_embeddings_repository ON code_embeddings(repository_id);
-CREATE INDEX idx_code_embeddings_embedding ON code_embeddings USING ivfflat (embedding vector_cosine_ops);
+```bash
+# Database path (default: ~/.mcb/data/mcb.db)
+MCP__DATA__DATABASE__PATH=~/.mcb/data/mcb.db
 ```
+
+Schema includes 48+ foreign keys, 69+ indexes, FTS5 for full-text search, and SHA256 dedup triggers. See `crates/mcb-providers/src/database/sqlite/` for migration files.
 
 ### Redis (Caching & Sessions)
 
@@ -613,7 +578,7 @@ cargo run --bin connectivity-test
 
 ```bash
 
-# Prometheus metrics
+# Metrics endpoint (JSON)
 curl http://localhost:3000/metrics
 
 # Health check

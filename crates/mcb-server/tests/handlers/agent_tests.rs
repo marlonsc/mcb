@@ -6,6 +6,7 @@ use rstest::rstest;
 use serde_json::json;
 
 use crate::handlers::utils::create_real_domain_services;
+use crate::test_utils::test_fixtures::TEST_SESSION_ID;
 
 async fn create_handler() -> Option<(AgentHandler, tempfile::TempDir)> {
     let (services, temp_dir) = create_real_domain_services().await?;
@@ -25,7 +26,7 @@ fn build_args(action: AgentAction, session_id: &str, data: serde_json::Value) ->
 #[case(
     build_args(
         AgentAction::LogTool,
-        "test-session",
+        TEST_SESSION_ID,
         json!({
             "tool_name": "search_code",
             "params_summary": "query: test",
@@ -37,14 +38,14 @@ fn build_args(action: AgentAction, session_id: &str, data: serde_json::Value) ->
 #[case(
     build_args(
         AgentAction::LogTool,
-        "test-session",
+        TEST_SESSION_ID,
         json!({ "success": true })
     )
 )]
 #[case(
     build_args(
         AgentAction::LogDelegation,
-        "test-session",
+        TEST_SESSION_ID,
         json!({
             "child_session_id": "child-session-123",
             "agent_type": "search_agent",

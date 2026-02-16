@@ -92,7 +92,7 @@ crates/mcb-infrastructure/src/
 ├── crypto/               # Encryption utilities
 ├── health/               # Health checks
 ├── logging.rs            # Structured logging
-└── adapters/             # Null adapters for testing
+└── infrastructure/       # Admin types (metrics, indexing ops)
 ```
 
 ## Testing

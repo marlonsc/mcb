@@ -4,7 +4,7 @@
 **Note**: Sync functionality is defined as a port trait in v0.2.1.
 
 **Trait**: `crates/mcb-domain/src/ports/infrastructure/sync.rs`
-**Null Adapter**: `crates/mcb-infrastructure/src/adapters/infrastructure/sync.rs`
+**Adapter**: No adapter implementation yet (port trait only)
 
 ## Overview
 

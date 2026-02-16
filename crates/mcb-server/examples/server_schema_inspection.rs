@@ -2,26 +2,42 @@
 
 use mcb_server::args::{IndexAction, SearchResource, ValidateAction};
 use schemars::schema_for;
+use std::io::{self, Write};
 
-fn main() {
-    println!("=== IndexAction (with rename_all = snake_case) ===");
+fn write_schema<W: Write>(
+    out: &mut W,
+    name: &str,
+    value: &impl serde::Serialize,
+) -> io::Result<()> {
+    writeln!(out, "=== {name} ===")?;
+    match serde_json::to_string_pretty(value) {
+        Ok(json) => writeln!(out, "{json}"),
+        Err(err) => writeln!(out, "failed to render {name}: {err}"),
+    }
+}
+
+fn main() -> io::Result<()> {
+    let mut out = io::stdout();
     let index_schema = schema_for!(IndexAction);
-    match serde_json::to_string_pretty(&index_schema) {
-        Ok(json) => println!("{json}"),
-        Err(err) => eprintln!("failed to render IndexAction schema: {err}"),
-    }
+    write_schema(
+        &mut out,
+        "IndexAction (with rename_all = snake_case)",
+        &index_schema,
+    )?;
+    writeln!(out)?;
 
-    println!("\n=== SearchResource (with rename_all = snake_case) ===");
     let search_schema = schema_for!(SearchResource);
-    match serde_json::to_string_pretty(&search_schema) {
-        Ok(json) => println!("{json}"),
-        Err(err) => eprintln!("failed to render SearchResource schema: {err}"),
-    }
+    write_schema(
+        &mut out,
+        "SearchResource (with rename_all = snake_case)",
+        &search_schema,
+    )?;
+    writeln!(out)?;
 
-    println!("\n=== ValidateAction (with rename_all = snake_case) ===");
     let validate_schema = schema_for!(ValidateAction);
-    match serde_json::to_string_pretty(&validate_schema) {
-        Ok(json) => println!("{json}"),
-        Err(err) => eprintln!("failed to render ValidateAction schema: {err}"),
-    }
+    write_schema(
+        &mut out,
+        "ValidateAction (with rename_all = snake_case)",
+        &validate_schema,
+    )
 }

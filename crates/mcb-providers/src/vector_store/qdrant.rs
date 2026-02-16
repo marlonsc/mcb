@@ -18,7 +18,8 @@ use mcb_domain::utils::id;
 
 use crate::constants::{
     HTTP_HEADER_CONTENT_TYPE, STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS,
-    STATS_FIELD_VECTORS_COUNT, STATUS_UNKNOWN,
+    STATS_FIELD_VECTORS_COUNT, STATUS_UNKNOWN, VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH,
+    VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_LINE_NUMBER, VECTOR_FIELD_START_LINE,
 };
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
@@ -114,23 +115,27 @@ impl QdrantVectorStoreProvider {
         SearchResult {
             id,
             file_path: payload
-                .get("file_path")
+                .get(VECTOR_FIELD_FILE_PATH)
                 .and_then(Value::as_str)
                 .unwrap_or("")
                 .to_owned(),
             start_line: payload
-                .get("start_line")
+                .get(VECTOR_FIELD_START_LINE)
                 .and_then(Value::as_u64)
-                .or_else(|| payload.get("line_number").and_then(Value::as_u64))
+                .or_else(|| {
+                    payload
+                        .get(VECTOR_FIELD_LINE_NUMBER)
+                        .and_then(Value::as_u64)
+                })
                 .unwrap_or(0) as u32,
             content: payload
-                .get("content")
+                .get(VECTOR_FIELD_CONTENT)
                 .and_then(Value::as_str)
                 .unwrap_or("")
                 .to_owned(),
             score,
             language: payload
-                .get("language")
+                .get(VECTOR_FIELD_LANGUAGE)
                 .and_then(Value::as_str)
                 .unwrap_or("unknown")
                 .to_owned(),
@@ -439,7 +444,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
         let payload = serde_json::json!({
             "filter": {
                 "must": [{
-                    "key": "file_path",
+                    "key": VECTOR_FIELD_FILE_PATH,
                     "match": { "value": file_path }
                 }]
             },

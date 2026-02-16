@@ -7,6 +7,7 @@ use rstest::*;
 use serial_test::serial;
 
 use crate::shared_context::shared_app_context;
+use crate::test_utils::TEST_PROJECT_ID;
 
 static TEST_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -43,7 +44,7 @@ mod integration_tests {
         // Store observations
         let (id_a, _) = service
             .store_observation(
-                "test-project".to_owned(),
+                TEST_PROJECT_ID.to_owned(),
                 "content about rust generics and trait bounds".to_owned(),
                 ObservationType::Context,
                 vec![],
@@ -54,7 +55,7 @@ mod integration_tests {
 
         let (id_b, _) = service
             .store_observation(
-                "test-project".to_owned(),
+                TEST_PROJECT_ID.to_owned(),
                 "content about python dynamic types".to_owned(),
                 ObservationType::Context,
                 vec![],
@@ -94,7 +95,7 @@ mod integration_tests {
         };
         let (id_a, _) = service
             .store_observation(
-                "test-project".to_owned(),
+                TEST_PROJECT_ID.to_owned(),
                 "session one observation".to_owned(),
                 ObservationType::Context,
                 vec![],
@@ -109,7 +110,7 @@ mod integration_tests {
         };
         let (_id_b, _) = service
             .store_observation(
-                "test-project".to_owned(),
+                TEST_PROJECT_ID.to_owned(),
                 "session two observation".to_owned(),
                 ObservationType::Context,
                 vec![],
@@ -144,7 +145,7 @@ mod integration_tests {
         };
         let (id_a, _) = service
             .store_observation(
-                "test-project".to_owned(),
+                TEST_PROJECT_ID.to_owned(),
                 "feature branch work".to_owned(),
                 ObservationType::Context,
                 vec![],
@@ -159,7 +160,7 @@ mod integration_tests {
         };
         let (_id_b, _) = service
             .store_observation(
-                "test-project".to_owned(),
+                TEST_PROJECT_ID.to_owned(),
                 "main branch work".to_owned(),
                 ObservationType::Context,
                 vec![],
@@ -194,7 +195,7 @@ mod integration_tests {
         };
         let (id_a, _) = service
             .store_observation(
-                "test-project".to_owned(),
+                TEST_PROJECT_ID.to_owned(),
                 "commit abc work".to_owned(),
                 ObservationType::Context,
                 vec![],
@@ -209,7 +210,7 @@ mod integration_tests {
         };
         let (_id_b, _) = service
             .store_observation(
-                "test-project".to_owned(),
+                TEST_PROJECT_ID.to_owned(),
                 "commit def work".to_owned(),
                 ObservationType::Context,
                 vec![],

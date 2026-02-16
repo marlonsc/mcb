@@ -1,15 +1,14 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # repository Module
 
-**Source**: `crates/mcb-infrastructure/src/adapters/repository/`
 **Traits**: `crates/mcb-domain/src/repositories/`
-**Crate**: `mcb-infrastructure`
+**Implementations**: `crates/mcb-providers/src/database/sqlite/` (7 repository implementations)
 **Files**: 3
 **Lines of Code**: ~400
 
 ## Overview
 
-Repository pattern implementation for data access abstraction. Provides repository interfaces and null implementations following the Repository pattern to separate data access logic from business logic.
+Repository pattern implementation for data access abstraction. Port traits defined in `mcb-domain`, concrete implementations in `mcb-providers/src/database/sqlite/` using SQLite + sqlx.
 
 ### Components
 

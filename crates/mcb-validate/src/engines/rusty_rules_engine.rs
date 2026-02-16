@@ -11,7 +11,10 @@ use super::hybrid_engine::{RuleContext, RuleEngine};
 use crate::Result;
 use crate::ValidationConfig;
 use crate::constants::common::{TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX};
-use crate::constants::rules::{DEFAULT_VIOLATION_MESSAGE, YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY};
+use crate::constants::rules::{
+    DEFAULT_VIOLATION_MESSAGE, YAML_FIELD_ACTION, YAML_FIELD_CONDITION, YAML_FIELD_FIX_TYPE,
+    YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY,
+};
 use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO};
 use crate::engines::hybrid_engine::RuleViolation;
 use crate::run_context::ValidationRunContext;
@@ -99,20 +102,20 @@ impl RustyRulesEngineWrapper {
     fn parse_rule_from_json(definition: &Value) -> Result<RustyRule> {
         // Parse rule type
         let rule_type = definition
-            .get("type")
+            .get(YAML_FIELD_FIX_TYPE)
             .and_then(|v| v.as_str())
             .unwrap_or("generic")
             .to_owned();
 
         // Parse condition
-        let condition = if let Some(condition_json) = definition.get("condition") {
+        let condition = if let Some(condition_json) = definition.get(YAML_FIELD_CONDITION) {
             Self::parse_condition_value(condition_json)?
         } else {
             Condition::All(vec![]) // Default empty condition
         };
 
         // Parse action
-        let action = if let Some(action_json) = definition.get("action") {
+        let action = if let Some(action_json) = definition.get(YAML_FIELD_ACTION) {
             Self::parse_action(action_json)
         } else {
             Action::Violation {
@@ -287,7 +290,10 @@ impl RuleEngine for RustyRulesEngineWrapper {
 
         let _rule_id = "unknown"; // Would be passed in real implementation
 
-        if let Some(rule_type) = rule_definition.get("type").and_then(|v| v.as_str()) {
+        if let Some(rule_type) = rule_definition
+            .get(YAML_FIELD_FIX_TYPE)
+            .and_then(|v| v.as_str())
+        {
             match rule_type {
                 "cargo_dependencies" => {
                     self.execute_cargo_dependency_rule(rule_definition, context)
@@ -316,7 +322,7 @@ impl RustyRulesEngineWrapper {
 
         // Get the condition (default to "not_exists" for backwards compatibility)
         let condition = rule_definition
-            .get("condition")
+            .get(YAML_FIELD_CONDITION)
             .and_then(|v| v.as_str())
             .unwrap_or("not_exists");
 
@@ -402,7 +408,7 @@ impl RustyRulesEngineWrapper {
 
         // Get the condition (default to "exceeds_limit")
         let condition = rule_definition
-            .get("condition")
+            .get(YAML_FIELD_CONDITION)
             .and_then(|v| v.as_str())
             .unwrap_or("exceeds_limit");
 

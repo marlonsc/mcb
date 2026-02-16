@@ -153,14 +153,12 @@ impl EventBusConfig {
 
     /// Default configuration (Tokio, default capacity).
     #[must_use]
-    #[must_use]
     pub fn default_config() -> Self {
         Self::tokio()
     }
-}
 
-impl Default for EventBusConfig {
-    fn default() -> Self {
+    #[must_use]
+    pub fn fallback() -> Self {
         Self::tokio()
     }
 }
@@ -193,6 +191,19 @@ pub struct BackupConfig {
 // Sync Configuration
 // ============================================================================
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SystemConfig {
+    pub events: EventBusConfig,
+}
+
+impl SystemConfig {
+    pub fn fallback() -> Self {
+        Self {
+            events: EventBusConfig::fallback(),
+        }
+    }
+}
 /// Sync configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]

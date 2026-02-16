@@ -4,7 +4,7 @@
 
 use mcb_infrastructure::config::{ServerConfig, TransportMode};
 
-use crate::utils::config::load_startup_config_or_exit;
+use crate::utils::config::load_startup_config_or_default;
 
 /// Transport configuration for MCP server
 ///
@@ -23,7 +23,7 @@ pub struct TransportConfig {
 /// Returns default `TransportConfig` with Stdio mode and no HTTP configuration
 impl Default for TransportConfig {
     fn default() -> Self {
-        let config = load_startup_config_or_exit();
+        let config = load_startup_config_or_default();
         Self {
             mode: config.server.transport_mode,
             http_port: Some(config.server.network.port),
@@ -46,7 +46,7 @@ impl TransportConfig {
     /// Create HTTP-only transport config
     #[must_use]
     pub fn http(port: u16) -> Self {
-        let config = load_startup_config_or_exit();
+        let config = load_startup_config_or_default();
         Self {
             mode: TransportMode::Http,
             http_port: Some(port),
@@ -57,7 +57,7 @@ impl TransportConfig {
     /// Create hybrid transport config (both stdio and HTTP)
     #[must_use]
     pub fn hybrid(http_port: u16) -> Self {
-        let config = load_startup_config_or_exit();
+        let config = load_startup_config_or_default();
         Self {
             mode: TransportMode::Hybrid,
             http_port: Some(http_port),

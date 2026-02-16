@@ -1,3 +1,5 @@
+//! Unit tests.
+
 pub mod architecture;
 pub mod async_patterns;
 pub mod cargo_dependency;

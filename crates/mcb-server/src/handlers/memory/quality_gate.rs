@@ -16,7 +16,6 @@ use crate::formatter::ResponseFormatter;
 use mcb_domain::utils::id as domain_id;
 
 use crate::constants::fields::{FIELD_MESSAGE, FIELD_OBSERVATION_ID, TAG_QUALITY_GATE};
-use crate::utils::mcp::tool_error;
 
 /// Stores a quality gate result as a semantic observation.
 #[tracing::instrument(skip_all)]
@@ -24,25 +23,13 @@ pub async fn store_quality_gate(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data: &serde_json::Map<String, Value> =
-        match require_data_map(&args.data, "Missing data payload for quality gate store") {
-            Ok(data) => data,
-            Err(error_result) => return Ok(error_result),
-        };
-    let gate_name: String = match require_str(data, "gate_name") {
-        Ok(value) => value,
-        Err(error_result) => return Ok(error_result),
-    };
-    let status_str: String = match require_str(data, "status") {
-        Ok(value) => value,
-        Err(error_result) => return Ok(error_result),
-    };
-    let status: mcb_domain::entities::memory::QualityGateStatus = match status_str.parse() {
-        Ok(v) => v,
-        Err(error) => {
-            return Ok(tool_error(error.to_string()));
-        }
-    };
+    let data = extract_field!(require_data_map(
+        &args.data,
+        "Missing data payload for quality gate store"
+    ));
+    let gate_name = extract_field!(require_str(data, "gate_name"));
+    let status_str = extract_field!(require_str(data, "status"));
+    let status: mcb_domain::entities::memory::QualityGateStatus = parse_enum!(status_str, "status");
     let timestamp = data
         .get("timestamp")
         .and_then(Value::as_i64)

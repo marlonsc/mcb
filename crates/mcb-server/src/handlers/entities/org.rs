@@ -129,21 +129,12 @@ impl OrgEntityHandler {
                 ok_json(&member)
             }
             (OrgEntityAction::List, OrgEntityResource::TeamMember) => {
-                let team_id = args
-                    .team_id
-                    .as_deref()
-                    .ok_or_else(|| McpError::invalid_params("team_id required for list", None))?;
+                let team_id = require_arg!(args.team_id, "team_id required for list");
                 ok_json(&map_opaque_error(self.repo.list_team_members(team_id).await)?)
             }
             (OrgEntityAction::Delete, OrgEntityResource::TeamMember) => {
-                let team_id = args
-                    .team_id
-                    .as_deref()
-                    .ok_or_else(|| McpError::invalid_params("team_id required for delete", None))?;
-                let user_id = args
-                    .user_id
-                    .as_deref()
-                    .ok_or_else(|| McpError::invalid_params("user_id required for delete", None))?;
+                let team_id = require_arg!(args.team_id, "team_id required for delete");
+                let user_id = require_arg!(args.user_id, "user_id required for delete");
                 map_opaque_error(self.repo.remove_team_member(team_id, user_id).await)?;
                 ok_text("deleted")
             }

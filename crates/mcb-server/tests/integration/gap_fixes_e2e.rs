@@ -1,4 +1,4 @@
-use crate::test_utils::test_fixtures::create_test_mcp_server;
+use crate::test_utils::test_fixtures::{TEST_REPO_NAME, create_test_mcp_server};
 use crate::test_utils::text::extract_text;
 use mcb_server::args::SessionAction;
 use mcb_server::args::SessionArgs;
@@ -97,7 +97,7 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
     let vcs_h = server.vcs_handler();
 
     // Create a git repo in the temp dir
-    let repo_path = temp_dir.path().join("test-repo");
+    let repo_path = temp_dir.path().join(TEST_REPO_NAME);
     fs::create_dir(&repo_path).unwrap();
 
     let _ = Command::new("git")
@@ -162,7 +162,7 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
         .filter_map(|v| v.as_str().map(std::borrow::ToOwned::to_owned))
         .collect();
 
-    let found = repo_strings.iter().any(|r| r.contains("test-repo"));
+    let found = repo_strings.iter().any(|r| r.contains(TEST_REPO_NAME));
     assert!(
         found,
         "Created repo test-repo not found in list: {repo_strings:?}"

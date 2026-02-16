@@ -125,20 +125,6 @@ pub struct McpContextGitDefaultsConfig {
 }
 
 /// Infrastructure configurations
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[serde(deny_unknown_fields)]
-pub struct InfrastructureConfig {
-    /// Cache system configuration
-    pub cache: CacheSystemConfig,
-    /// `EventBus` configuration
-    pub event_bus: EventBusConfig,
-    /// Metrics configuration
-    pub metrics: MetricsConfig,
-    /// Resilience configuration
-    pub resilience: ResilienceConfig,
-    /// Limits configuration
-    pub limits: LimitsConfig,
-}
 
 /// Data management configurations
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -153,7 +139,7 @@ pub struct DataConfig {
 }
 
 /// System infrastructure and data configurations
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SystemConfig {
     /// Infrastructure configurations
@@ -162,7 +148,16 @@ pub struct SystemConfig {
     pub data: DataConfig,
 }
 
-/// Operations and daemon configurations combined
+impl SystemConfig {
+    pub fn fallback() -> Self {
+        Self {
+            infrastructure: InfrastructureConfig::fallback(),
+            data: DataConfig::default(),
+        }
+    }
+}
+
+/// Operations and daemon configurations
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct OperationsDaemonConfig {
@@ -171,7 +166,6 @@ pub struct OperationsDaemonConfig {
     /// Operations configuration
     pub operations: OperationsConfig,
 }
-
 /// Main application configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -197,4 +191,21 @@ pub struct AppConfig {
     /// Project settings loaded from workspace
     #[serde(skip)]
     pub project_settings: Option<ProjectSettings>,
+}
+
+impl AppConfig {
+    pub fn fallback() -> Self {
+        Self {
+            mode: ModeConfig::default(),
+            server: ServerConfig::fallback(),
+            providers: ProvidersConfig::default(),
+            logging: LoggingConfig::default(),
+            auth: AuthConfig::default(),
+            system: SystemConfig::fallback(),
+            operations_daemon: OperationsDaemonConfig::default(),
+            mcp: McpConfig::default(),
+            mcp_context: McpContextDefaultsConfig::default(),
+            project_settings: None,
+        }
+    }
 }

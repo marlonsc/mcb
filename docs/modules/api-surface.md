@@ -65,8 +65,8 @@ External integrations:
 Configuration and DI:
 
 - `AppConfig`, `ServerConfig`, `AuthConfig`
-- `McpModule` - DI container
-- Null adapters for testing
+- dill Catalog - IoC container (ADR-029)
+- Admin services for runtime provider switching
 
 ### mcb-validate
 

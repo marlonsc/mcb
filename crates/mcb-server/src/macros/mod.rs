@@ -10,4 +10,6 @@ mod args;
 #[macro_use]
 mod dispatch;
 #[macro_use]
+mod handlers;
+#[macro_use]
 mod web;

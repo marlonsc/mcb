@@ -91,6 +91,21 @@ pub const YAML_FIELD_CRATE_NAME: &str = "crate_name";
 /// YAML field: allowed dependencies list.
 pub const YAML_FIELD_ALLOWED_DEPS: &str = "allowed_dependencies";
 
+/// YAML field: rule expression (for expression engine).
+pub const YAML_FIELD_EXPRESSION: &str = "expression";
+
+/// YAML field: rule condition (for condition-action engines).
+pub const YAML_FIELD_CONDITION: &str = "condition";
+
+/// YAML field: rule action (for condition-action engines).
+pub const YAML_FIELD_ACTION: &str = "action";
+
+/// YAML field: GRL rule definition.
+pub const YAML_FIELD_GRL: &str = "grl";
+
+/// YAML field: rule definition block reference.
+pub const YAML_FIELD_RULE_DEFINITION: &str = "rule_definition";
+
 // ============================================================================
 // Metrics threshold field names
 // ============================================================================

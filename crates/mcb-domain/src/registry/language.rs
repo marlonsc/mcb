@@ -24,43 +24,14 @@ pub struct LanguageProviderConfig {
     pub extra: HashMap<String, String>,
 }
 
-impl LanguageProviderConfig {
-    /// Create a new config with the given provider name
-    pub fn new(provider: impl Into<String>) -> Self {
-        Self {
-            provider: provider.into(),
-            ..Default::default()
-        }
-    }
-
+crate::impl_config_builder!(LanguageProviderConfig {
     /// Set the maximum chunk size in characters
-    #[must_use]
-    pub fn with_max_chunk_size(mut self, size: usize) -> Self {
-        self.max_chunk_size = Some(size);
-        self
-    }
-
+    max_chunk_size: with_max_chunk_size(usize),
     /// Set the minimum chunk size in characters
-    #[must_use]
-    pub fn with_min_chunk_size(mut self, size: usize) -> Self {
-        self.min_chunk_size = Some(size);
-        self
-    }
-
+    min_chunk_size: with_min_chunk_size(usize),
     /// Set the chunk overlap in characters
-    #[must_use]
-    pub fn with_overlap(mut self, overlap: usize) -> Self {
-        self.overlap = Some(overlap);
-        self
-    }
-
-    /// Add extra configuration
-    #[must_use]
-    pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.extra.insert(key.into(), value.into());
-        self
-    }
-}
+    overlap: with_overlap(usize),
+});
 
 crate::impl_registry!(
     provider_trait: crate::ports::providers::LanguageChunkingProvider,

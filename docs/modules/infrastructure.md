@@ -25,7 +25,8 @@ The infrastructure module contains DI bootstrap, configuration, routing, project
 - `infrastructure/` - Cross-cutting infrastructure modules
 - `error_ext.rs` - Error extension traits
 - `health.rs` - Health check infrastructure
-- `logging.rs` - Logging configuration
+- `logging/` - Logging configuration (tracing)
+- `macros.rs` - Infrastructure macros
 
 ## File Structure
 
@@ -44,7 +45,8 @@ crates/mcb-infrastructure/src/
 ├── validation/
 ├── error_ext.rs
 ├── health.rs
-├── logging.rs
+├── logging/
+├── macros.rs
 └── lib.rs
 ```
 
@@ -60,4 +62,4 @@ Infrastructure tests are in `crates/mcb-infrastructure/tests/`.
 
 ---
 
-### Updated 2026-02-14 - Added error_ext.rs, health.rs, logging.rs; accurate file tree (v0.2.1)
+### Updated 2026-02-15 - Fixed logging.rs to logging/, added macros.rs (v0.2.1)

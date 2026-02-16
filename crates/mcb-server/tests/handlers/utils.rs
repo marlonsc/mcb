@@ -13,7 +13,7 @@ use mcb_providers::database::{
 };
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
 
-use crate::test_utils::test_fixtures::try_shared_app_context;
+use crate::test_utils::test_fixtures::{TEST_PROJECT_ID, try_shared_app_context};
 
 /// Helper to create a base `MemoryArgs` with common defaults
 pub(crate) fn create_base_memory_args(
@@ -62,7 +62,7 @@ pub(crate) async fn create_real_domain_services()
         .await
         .expect("connect fresh test database");
 
-    let project_id = "test-project".to_owned();
+    let project_id = TEST_PROJECT_ID.to_owned();
 
     // Fresh repositories backed by the isolated database
     let memory_repository = Arc::new(SqliteMemoryRepository::new(Arc::clone(&db_executor)));

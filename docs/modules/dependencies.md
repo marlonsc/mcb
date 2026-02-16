@@ -73,7 +73,7 @@ digraph {
 | `mcb` | Unified facade, public API | All crates |
 | `mcb-domain` | Core types, ports, entities | None (innermost) |
 | `mcb-application` | Business logic, use cases | domain, providers |
-| `mcb-infrastructure` | DI, config, null adapters | domain |
+| `mcb-infrastructure` | DI, config, cross-cutting services | domain, application, providers |
 | `mcb-providers` | External integrations | domain |
 | `mcb-server` | MCP protocol, HTTP transport | All except validate |
 | `mcb-validate` | Architecture validation | domain |

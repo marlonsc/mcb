@@ -5,6 +5,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use crate::handlers::utils::create_real_domain_services;
+use crate::test_utils::test_fixtures::TEST_PROJECT_ID;
 use crate::test_utils::text::extract_text;
 
 async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
@@ -103,7 +104,7 @@ session_test!(
     data: json!({
         "session_summary_id": "summary-123",
         "model": "claude-3-sonnet",
-        "project_id": "test-project"
+        "project_id": TEST_PROJECT_ID
     }),
     agent_type: Some("explore".to_owned()),
     expect_ok
@@ -114,7 +115,7 @@ session_test!(
     SessionAction::Create,
     data: json!({
         "model": "claude-3-sonnet",
-        "project_id": "test-project"
+        "project_id": TEST_PROJECT_ID
     }),
     agent_type: Some("explore".to_owned()),
     expect_ok

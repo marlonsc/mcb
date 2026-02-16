@@ -207,11 +207,11 @@ export JWT_EXPIRATION="3600"  # 1 hour
 
 ## Database Configuration
 
-### PostgreSQL Connection
+### SQLite Connection
 
 | Variable | Default | Type | Description |
 | ---------- | --------- | ------ | ------------- |
-| `DATABASE_URL` | `` (empty) | String | PostgreSQL connection String; empty = disabled |
+| `DATABASE_URL` | `` (empty) | String | SQLite database path; empty = disabled |
 | `DATABASE_MAX_CONNECTIONS` | `20` | Integer | Connection pool size |
 | `DATABASE_MIN_IDLE` | `5` | Integer | Minimum idle connections |
 | `DATABASE_MAX_LIFETIME_SECS` | `1800` | Integer | Max connection lifetime (30 min) |

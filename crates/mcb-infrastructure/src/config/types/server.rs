@@ -194,8 +194,8 @@ impl ServerConfig {
     }
 }
 
-impl Default for ServerConfig {
-    fn default() -> Self {
+impl ServerConfig {
+    pub fn fallback() -> Self {
         ServerConfigBuilder::new().build()
     }
 }

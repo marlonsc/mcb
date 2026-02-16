@@ -20,9 +20,11 @@ use crate::constants::{
     MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_DISTANCE_METRIC, MILVUS_ERROR_COLLECTION_NOT_EXISTS,
     MILVUS_ERROR_RATE_LIMIT, MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_FLUSH_RETRY_BACKOFF_MS,
     MILVUS_FLUSH_RETRY_COUNT, MILVUS_INDEX_RETRY_BACKOFF_MS, MILVUS_IVFFLAT_NLIST,
-    MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE, MILVUS_VECTOR_INDEX_NAME,
-    STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS, STATS_FIELD_VECTORS_COUNT,
-    STATUS_ACTIVE,
+    MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_PARAM_METRIC_TYPE, MILVUS_PARAM_NLIST,
+    MILVUS_QUERY_BATCH_SIZE, MILVUS_VECTOR_INDEX_NAME, STATS_FIELD_COLLECTION,
+    STATS_FIELD_PROVIDER, STATS_FIELD_STATUS, STATS_FIELD_VECTORS_COUNT, STATUS_ACTIVE,
+    VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_ID, VECTOR_FIELD_LINE_NUMBER,
+    VECTOR_FIELD_START_LINE, VECTOR_FIELD_VECTOR,
 };
 use crate::utils::retry::{RetryConfig, retry_with_backoff};
 
@@ -223,12 +225,12 @@ impl MilvusVectorStoreProvider {
         let search_options = SearchOptions::new()
             .limit(limit)
             .output_fields(vec![
-                "id".to_owned(),
-                "file_path".to_owned(),
-                "start_line".to_owned(),
-                "content".to_owned(),
+                VECTOR_FIELD_ID.to_owned(),
+                VECTOR_FIELD_FILE_PATH.to_owned(),
+                VECTOR_FIELD_START_LINE.to_owned(),
+                VECTOR_FIELD_CONTENT.to_owned(),
             ])
-            .add_param("metric_type", MILVUS_DISTANCE_METRIC);
+            .add_param(MILVUS_PARAM_METRIC_TYPE, MILVUS_DISTANCE_METRIC);
 
         self.client
             .search(
@@ -278,7 +280,7 @@ impl MilvusVectorStoreProvider {
                 | Value::VectorArray(_) => None,
             })
             .unwrap_or_else(|| {
-                if name == "content" {
+                if name == VECTOR_FIELD_CONTENT {
                     String::new()
                 } else {
                     "unknown".to_owned()
@@ -314,23 +316,26 @@ impl MilvusVectorStoreProvider {
     fn build_collection_schema(name: &CollectionId, dimensions: usize) -> Result<CollectionSchema> {
         CollectionSchemaBuilder::new(&name.to_string(), &format!("Collection for {name}"))
             .add_field(FieldSchema::new_primary_int64(
-                "id",
+                VECTOR_FIELD_ID,
                 "primary key field",
                 true,
             ))
             .add_field(FieldSchema::new_float_vector(
-                "vector",
+                VECTOR_FIELD_VECTOR,
                 "feature field",
                 dimensions as i64,
             ))
             .add_field(FieldSchema::new_varchar(
-                "file_path",
+                VECTOR_FIELD_FILE_PATH,
                 "file path",
                 MILVUS_FIELD_VARCHAR_MAX_LENGTH,
             ))
-            .add_field(FieldSchema::new_int64("start_line", "start line"))
+            .add_field(FieldSchema::new_int64(
+                VECTOR_FIELD_START_LINE,
+                "start line",
+            ))
             .add_field(FieldSchema::new_varchar(
-                "content",
+                VECTOR_FIELD_CONTENT,
                 "content",
                 MILVUS_METADATA_VARCHAR_MAX_LENGTH,
             ))
@@ -342,20 +347,24 @@ impl MilvusVectorStoreProvider {
         use milvus::index::{IndexParams, IndexType, MetricType};
         let name_str = name.to_string();
 
-        let index_result = retry_with_backoff(
+        let index_result: std::result::Result<(), milvus::error::Error> = retry_with_backoff(
             RetryConfig::new(
                 MILVUS_FLUSH_RETRY_COUNT,
                 std::time::Duration::from_millis(MILVUS_INDEX_RETRY_BACKOFF_MS),
             ),
             |_| async {
+                let nlist_params: HashMap<String, String> = HashMap::from([(
+                    MILVUS_PARAM_NLIST.to_owned(),
+                    MILVUS_IVFFLAT_NLIST.to_string(),
+                )]);
                 let index_params = IndexParams::new(
                     MILVUS_VECTOR_INDEX_NAME.to_owned(),
                     IndexType::IvfFlat,
                     MetricType::L2,
-                    HashMap::from([("nlist".to_owned(), MILVUS_IVFFLAT_NLIST.to_string())]),
+                    nlist_params,
                 );
                 self.client
-                    .create_index(&name_str, "vector", index_params)
+                    .create_index(&name_str, VECTOR_FIELD_VECTOR, index_params)
                     .await
             },
             |e| {
@@ -426,19 +435,22 @@ impl MilvusVectorStoreProvider {
         for (embedding, meta) in vectors.iter().zip(metadata.iter()) {
             payload.vectors_flat.extend_from_slice(&embedding.vector);
             payload.file_paths.push(
-                meta.get("file_path")
+                meta.get(VECTOR_FIELD_FILE_PATH)
                     .and_then(|value| value.as_str())
                     .unwrap_or("unknown")
                     .to_owned(),
             );
             payload.start_lines.push(
-                meta.get("start_line")
+                meta.get(VECTOR_FIELD_START_LINE)
                     .and_then(serde_json::Value::as_i64)
-                    .or_else(|| meta.get("line_number").and_then(serde_json::Value::as_i64))
+                    .or_else(|| {
+                        meta.get(VECTOR_FIELD_LINE_NUMBER)
+                            .and_then(serde_json::Value::as_i64)
+                    })
                     .unwrap_or(0),
             );
             payload.contents.push(
-                meta.get("content")
+                meta.get(VECTOR_FIELD_CONTENT)
                     .and_then(|value| value.as_str())
                     .unwrap_or("")
                     .to_owned(),
@@ -466,7 +478,7 @@ impl MilvusVectorStoreProvider {
 
     fn build_insert_columns(payload: InsertPayload) -> Vec<FieldColumn> {
         let vector_column = FieldColumn {
-            name: "vector".to_owned(),
+            name: VECTOR_FIELD_VECTOR.to_owned(),
             dtype: DataType::FloatVector,
             value: ValueVec::Float(payload.vectors_flat),
             dim: payload.expected_dims as i64,
@@ -477,19 +489,19 @@ impl MilvusVectorStoreProvider {
         vec![
             vector_column,
             Self::build_field_column(
-                "file_path",
+                VECTOR_FIELD_FILE_PATH,
                 DataType::VarChar,
                 ValueVec::String(payload.file_paths),
                 MILVUS_FIELD_VARCHAR_MAX_LENGTH,
             ),
             Self::build_field_column(
-                "start_line",
+                VECTOR_FIELD_START_LINE,
                 DataType::Int64,
                 ValueVec::Long(payload.start_lines),
                 0,
             ),
             Self::build_field_column(
-                "content",
+                VECTOR_FIELD_CONTENT,
                 DataType::VarChar,
                 ValueVec::String(payload.contents),
                 MILVUS_METADATA_VARCHAR_MAX_LENGTH,
@@ -527,15 +539,24 @@ impl MilvusVectorStoreProvider {
                             search_result.score.get(index).copied().unwrap_or(0.0);
                         let score = 1.0 / (1.0 + distance_squared.sqrt());
                         let fields = &search_result.field;
-                        let start_line = Self::extract_long_field(fields, "start_line", index)
-                            .max(Self::extract_long_field(fields, "line_number", index))
-                            as u32;
+                        let start_line =
+                            Self::extract_long_field(fields, VECTOR_FIELD_START_LINE, index).max(
+                                Self::extract_long_field(fields, VECTOR_FIELD_LINE_NUMBER, index),
+                            ) as u32;
 
                         SearchResult {
                             id: Self::value_to_id_string(Some(id_value.clone())),
-                            file_path: Self::extract_string_field(fields, "file_path", index),
+                            file_path: Self::extract_string_field(
+                                fields,
+                                VECTOR_FIELD_FILE_PATH,
+                                index,
+                            ),
                             start_line,
-                            content: Self::extract_string_field(fields, "content", index),
+                            content: Self::extract_string_field(
+                                fields,
+                                VECTOR_FIELD_CONTENT,
+                                index,
+                            ),
                             score: score as f64,
                             language: "unknown".to_owned(),
                         }
@@ -556,23 +577,24 @@ impl MilvusVectorStoreProvider {
         (0..Self::query_row_count(query_results))
             .map(|index| {
                 let file_path = file_path_override.map_or_else(
-                    || Self::extract_string_field(query_results, "file_path", index),
+                    || Self::extract_string_field(query_results, VECTOR_FIELD_FILE_PATH, index),
                     std::string::ToString::to_string,
                 );
-                let start_line = Self::extract_long_field(query_results, "start_line", index).max(
-                    Self::extract_long_field(query_results, "line_number", index),
-                ) as u32;
+                let start_line =
+                    Self::extract_long_field(query_results, VECTOR_FIELD_START_LINE, index).max(
+                        Self::extract_long_field(query_results, VECTOR_FIELD_LINE_NUMBER, index),
+                    ) as u32;
 
                 SearchResult {
                     id: Self::value_to_id_string(
                         query_results
                             .iter()
-                            .find(|column| column.name == "id")
+                            .find(|column| column.name == VECTOR_FIELD_ID)
                             .and_then(|column| column.get(index)),
                     ),
                     file_path,
                     start_line,
-                    content: Self::extract_string_field(query_results, "content", index),
+                    content: Self::extract_string_field(query_results, VECTOR_FIELD_CONTENT, index),
                     score: 1.0,
                     language: "unknown".to_owned(),
                 }
@@ -594,10 +616,10 @@ impl MilvusVectorStoreProvider {
             .limit(batch_limit)
             .offset(offset)
             .output_fields(vec![
-                "id".to_owned(),
-                "file_path".to_owned(),
-                "start_line".to_owned(),
-                "content".to_owned(),
+                VECTOR_FIELD_ID.to_owned(),
+                VECTOR_FIELD_FILE_PATH.to_owned(),
+                VECTOR_FIELD_START_LINE.to_owned(),
+                VECTOR_FIELD_CONTENT.to_owned(),
             ]);
 
         match self
@@ -625,7 +647,7 @@ impl MilvusVectorStoreProvider {
         let mut file_counts: HashMap<String, u32> = HashMap::new();
 
         for index in 0..Self::query_row_count(query_results) {
-            let path = Self::extract_string_field(query_results, "file_path", index);
+            let path = Self::extract_string_field(query_results, VECTOR_FIELD_FILE_PATH, index);
             if path != "unknown" {
                 *file_counts.entry(path).or_insert(0) += 1;
             }
@@ -751,10 +773,10 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         use milvus::query::QueryOptions;
         let mut query_options = QueryOptions::new();
         query_options = query_options.output_fields(vec![
-            "id".to_owned(),
-            "file_path".to_owned(),
-            "start_line".to_owned(),
-            "content".to_owned(),
+            VECTOR_FIELD_ID.to_owned(),
+            VECTOR_FIELD_FILE_PATH.to_owned(),
+            VECTOR_FIELD_START_LINE.to_owned(),
+            VECTOR_FIELD_CONTENT.to_owned(),
         ]);
 
         let query_results = Self::map_milvus_error(
@@ -877,7 +899,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let expr = "id >= 0".to_owned();
         let query_options = QueryOptions::new()
             .limit(crate::constants::MILVUS_DEFAULT_QUERY_LIMIT)
-            .output_fields(vec!["file_path".to_owned()]);
+            .output_fields(vec![VECTOR_FIELD_FILE_PATH.to_owned()]);
 
         let query_results = match self.client.query(&name_str, &expr, &query_options).await {
             Ok(results) => results,
@@ -917,10 +939,10 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let query_options = QueryOptions::new()
             .limit(1000) // Reasonable limit for chunks per file
             .output_fields(vec![
-                "id".to_owned(),
-                "file_path".to_owned(),
-                "start_line".to_owned(),
-                "content".to_owned(),
+                VECTOR_FIELD_ID.to_owned(),
+                VECTOR_FIELD_FILE_PATH.to_owned(),
+                VECTOR_FIELD_START_LINE.to_owned(),
+                VECTOR_FIELD_CONTENT.to_owned(),
             ]);
 
         let query_results = match self.client.query(&name_str, &expr, &query_options).await {

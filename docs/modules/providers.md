@@ -35,8 +35,7 @@ pub trait EmbeddingProvider: Send + Sync {
 | Ollama | HTTP REST | None | nomic (768), minilm (384), mxbai (1024) | `OLLAMA__BASE_URL` | Self-hosted |
 | Gemini | HTTP REST | API key | text-embedding-004 (768) | `GEMINI__API_KEY` | Alternative |
 | FastEmbed | Local ONNX | None | AllMiniLML6V2 (384) — Actor pattern | Model enum | Privacy-first |
-| Anthropic | HTTP REST | x-api-key | claude-3-5-sonnet (optional) | `ANTHROPIC__API_KEY` | Optional |
-| Null | — | — | fixed vectors (128) | — | Testing |
+| Anthropic | HTTP REST | x-api-key | voyage-code-3 via VoyageAI (1024) | `ANTHROPIC__API_KEY` | Optional |
 
 All env keys are prefixed with `MCP__PROVIDERS__EMBEDDING__CONFIGS__`. Default timeout: 30s.
 

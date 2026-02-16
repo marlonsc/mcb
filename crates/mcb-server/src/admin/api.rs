@@ -25,10 +25,10 @@ use super::auth::AdminAuthConfig;
 use super::browse_handlers::BrowseState;
 use super::handlers::AdminState;
 use crate::constants::limits::DEFAULT_SHUTDOWN_TIMEOUT_SECS;
-use crate::utils::config::load_startup_config_or_exit;
+use crate::utils::config::load_startup_config_or_default;
 
 fn load_current_config() -> mcb_infrastructure::config::AppConfig {
-    load_startup_config_or_exit()
+    load_startup_config_or_default()
 }
 
 fn build_admin_state(
@@ -69,7 +69,7 @@ pub struct AdminApiConfig {
 
 impl Default for AdminApiConfig {
     fn default() -> Self {
-        let config = load_startup_config_or_exit();
+        let config = load_startup_config_or_default();
         Self {
             host: config.server.network.host,
             port: config.server.network.port,
@@ -81,7 +81,7 @@ impl AdminApiConfig {
     /// Create config for localhost with specified port
     #[must_use]
     pub fn localhost(port: u16) -> Self {
-        let config = load_startup_config_or_exit();
+        let config = load_startup_config_or_default();
         Self {
             host: config.server.network.host,
             port,

@@ -22,6 +22,8 @@ use rocket::http::{Header, Status};
 use rocket::local::asynchronous::Client;
 use rstest::rstest;
 
+use crate::test_utils::test_fixtures::TEST_EMBEDDING_DIMENSIONS;
+
 /// Mock `VectorStoreBrowser` for testing
 pub struct TestVectorStoreBrowser {
     collections: Vec<CollectionInfo>,
@@ -272,7 +274,7 @@ use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
 /// Creates a test vector store instance (`EdgeVec` in-memory)
 fn create_test_vector_store() -> EdgeVecVectorStoreProvider {
     let config = EdgeVecConfig {
-        dimensions: 384,
+        dimensions: TEST_EMBEDDING_DIMENSIONS,
         ..Default::default()
     };
     EdgeVecVectorStoreProvider::new(&config).expect("Failed to create test vector store")
@@ -311,7 +313,7 @@ async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) 
     let collection_id = CollectionId::from_name(collection);
     // Create collection
     store
-        .create_collection(&collection_id, 384)
+        .create_collection(&collection_id, TEST_EMBEDDING_DIMENSIONS)
         .await
         .expect("Failed to create collection");
 
@@ -371,7 +373,10 @@ async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) 
         ),
     ];
 
-    let embeddings: Vec<Embedding> = chunks.iter().map(|_| create_dummy_embedding(384)).collect();
+    let embeddings: Vec<Embedding> = chunks
+        .iter()
+        .map(|_| create_dummy_embedding(TEST_EMBEDDING_DIMENSIONS))
+        .collect();
 
     let metadata: Vec<HashMap<String, serde_json::Value>> = chunks
         .iter()

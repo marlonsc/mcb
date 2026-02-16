@@ -56,16 +56,11 @@ pub async fn store_execution(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match require_data_map(&args.data, "Missing data payload for execution store") {
-        Ok(data) => data,
-        Err(error_result) => return Ok(error_result),
-    };
-
-    // Validate all required fields upfront
-    let validated = match ValidatedExecutionData::validate(data) {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
-    };
+    let data = extract_field!(require_data_map(
+        &args.data,
+        "Missing data payload for execution store"
+    ));
+    let validated = extract_field!(ValidatedExecutionData::validate(data));
     let metadata = ExecutionMetadata {
         id: domain_id::generate().to_string(),
         command: validated.command.clone(),

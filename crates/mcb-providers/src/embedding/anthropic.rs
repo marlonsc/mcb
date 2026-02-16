@@ -19,8 +19,8 @@ use crate::{
 };
 
 use crate::constants::{
-    EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME, HTTP_HEADER_AUTHORIZATION,
-    HTTP_HEADER_CONTENT_TYPE,
+    EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_INPUT, EMBEDDING_PARAM_MODEL,
+    EMBEDDING_RESPONSE_FIELD, HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE,
 };
 use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
 use crate::utils::http::{
@@ -53,8 +53,8 @@ impl AnthropicEmbeddingProvider {
     /// Send embedding request and get response data
     async fn fetch_embeddings(&self, texts: &[String]) -> Result<serde_json::Value> {
         let payload = serde_json::json!({
-            "input": texts,
-            "model": self.client.model,
+            (EMBEDDING_PARAM_INPUT): texts,
+            (EMBEDDING_PARAM_MODEL): self.client.model,
             "input_type": "document",
             "encoding_format": "float"
         });
@@ -84,7 +84,7 @@ impl AnthropicEmbeddingProvider {
 
     /// Parse embedding vector from response data
     fn parse_embedding(&self, index: usize, item: &serde_json::Value) -> Result<Embedding> {
-        let embedding_vec = parse_embedding_vector(item, "embedding", index)?;
+        let embedding_vec = parse_embedding_vector(item, EMBEDDING_RESPONSE_FIELD, index)?;
 
         Ok(Embedding {
             vector: embedding_vec,

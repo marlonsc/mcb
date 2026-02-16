@@ -14,8 +14,8 @@ use crate::constants::common::{
     ASYNC_FN_PREFIX, EXPECT_CALL, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, UNWRAP_CALL,
 };
 use crate::constants::rules::{
-    DEFAULT_EXPR_MESSAGE, DEFAULT_EXPR_RULE_ID, YAML_FIELD_CATEGORY, YAML_FIELD_ID,
-    YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY,
+    DEFAULT_EXPR_MESSAGE, DEFAULT_EXPR_RULE_ID, YAML_FIELD_CATEGORY, YAML_FIELD_EXPRESSION,
+    YAML_FIELD_ID, YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY,
 };
 use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_WARNING};
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
@@ -219,7 +219,7 @@ impl RuleEngine for ExpressionEngine {
     ) -> Result<Vec<RuleViolation>> {
         // Extract expression from rule definition
         let expression = rule_definition
-            .get("expression")
+            .get(YAML_FIELD_EXPRESSION)
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
                 crate::ValidationError::Config(

@@ -13,7 +13,6 @@ use crate::args::MemoryArgs;
 use crate::constants::fields::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::utils::mcp::tool_error;
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -21,28 +20,14 @@ pub async fn store_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match require_data_map(&args.data, "Missing data payload for observation store") {
-        Ok(data) => data,
-        Err(error_result) => return Ok(error_result),
-    };
-    let content = match require_str(data, "content") {
-        Ok(value) => value,
-        Err(error_result) => return Ok(error_result),
-    };
-    // Consider using mcb_domain::schema::memory::COL_OBSERVATION_TYPE instead.
-    let observation_type_str: String = match require_str(data, "observation_type") {
-        Ok(value) => value,
-        Err(error_result) => return Ok(error_result),
-    };
+    let data = extract_field!(require_data_map(
+        &args.data,
+        "Missing data payload for observation store"
+    ));
+    let content = extract_field!(require_str(data, "content"));
+    let observation_type_str = extract_field!(require_str(data, "observation_type"));
     let observation_type: mcb_domain::entities::memory::ObservationType =
-        match observation_type_str.parse() {
-            Ok(v) => v,
-            Err(_) => {
-                return Ok(tool_error(format!(
-                    "Unknown observation type: {observation_type_str}"
-                )));
-            }
-        };
+        parse_enum!(observation_type_str, "observation_type");
     let tags = str_vec(data, "tags");
     let origin = resolve_memory_origin_context(
         args,

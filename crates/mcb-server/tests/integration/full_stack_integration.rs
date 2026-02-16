@@ -26,6 +26,7 @@ use rstest::rstest;
 use serde_json::json;
 
 use crate::test_utils::collection::unique_collection;
+use crate::test_utils::test_fixtures::TEST_EMBEDDING_DIMENSIONS;
 
 fn test_config() -> (AppConfig, tempfile::TempDir) {
     let temp_dir = tempfile::tempdir().expect("create temp dir");
@@ -65,7 +66,7 @@ fn create_test_chunks() -> Vec<CodeChunk> {
             file_path: "src/main.rs".to_owned(),
             content: "#[tokio::main]
 async fn main() {
-    let config = AppConfig::default();
+    let config = AppConfig::fallback();
     run_server(&config).await;
 }"
             .to_owned(),
@@ -125,8 +126,8 @@ async fn test_init_app_creates_working_context() {
     );
     assert_eq!(
         embedding.dimensions(),
-        384,
-        "FastEmbed provider has 384 dimensions"
+        TEST_EMBEDDING_DIMENSIONS,
+        "FastEmbed provider has {TEST_EMBEDDING_DIMENSIONS} dimensions"
     );
 
     // Verify vector store handle returns a real provider
@@ -163,7 +164,10 @@ async fn test_full_index_and_search_flow() {
 
     // Step 1: Create collection
     vector_store
-        .create_collection(&CollectionId::from_name(&collection), 384)
+        .create_collection(
+            &CollectionId::from_name(&collection),
+            TEST_EMBEDDING_DIMENSIONS,
+        )
         .await
         .expect("Collection creation should succeed");
 
@@ -257,11 +261,17 @@ async fn test_multiple_collections_isolated() {
     let collection_b = unique_collection("isolation-b");
 
     vector_store
-        .create_collection(&CollectionId::from_name(&collection_a), 384)
+        .create_collection(
+            &CollectionId::from_name(&collection_a),
+            TEST_EMBEDDING_DIMENSIONS,
+        )
         .await
         .expect("Create collection A");
     vector_store
-        .create_collection(&CollectionId::from_name(&collection_b), 384)
+        .create_collection(
+            &CollectionId::from_name(&collection_b),
+            TEST_EMBEDDING_DIMENSIONS,
+        )
         .await
         .expect("Create collection B");
 

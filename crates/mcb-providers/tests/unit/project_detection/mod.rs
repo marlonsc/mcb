@@ -1,3 +1,5 @@
+//! Unit tests.
+
 mod cargo_tests;
 mod go_tests;
 mod maven_tests;

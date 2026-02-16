@@ -79,10 +79,12 @@ mcb/
 │   │       │   ├── detection.rs
 │   │       │   ├── engine.rs
 │   │       │   └── mod.rs
-│   │       ├── routing/
-│   │       ├── storage/
+│   │       ├── analysis/
+│   │       ├── project_detection/
+│   │       ├── vcs/
 │   │       ├── workflow/
-│   │       └── admin/
+│   │       ├── utils/
+│   │       └── constants/
 │   │
 │   ├── mcb-server/                   # MCP server and web/admin APIs
 │   │   └── src/

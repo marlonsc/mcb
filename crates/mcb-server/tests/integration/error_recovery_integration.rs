@@ -23,6 +23,7 @@ use mcb_infrastructure::di::bootstrap::init_app;
 use rstest::rstest;
 
 use crate::test_utils::collection::unique_collection;
+use crate::test_utils::test_fixtures::TEST_EMBEDDING_DIMENSIONS;
 use mcb_infrastructure::di::bootstrap::AppContext;
 
 async fn try_init_app_or_skip(config: AppConfig) -> Option<AppContext> {
@@ -120,7 +121,10 @@ async fn test_search_empty_collection_returns_empty_not_error() {
 
     // Create empty collection
     vector_store
-        .create_collection(&CollectionId::from_name(&collection), 384)
+        .create_collection(
+            &CollectionId::from_name(&collection),
+            TEST_EMBEDDING_DIMENSIONS,
+        )
         .await
         .expect("Create collection");
 
@@ -207,7 +211,10 @@ async fn test_failed_search_doesnt_corrupt_state() {
 
     // Create and populate collection
     vector_store
-        .create_collection(&CollectionId::from_name(&collection), 384)
+        .create_collection(
+            &CollectionId::from_name(&collection),
+            TEST_EMBEDDING_DIMENSIONS,
+        )
         .await
         .expect("Create collection");
 
@@ -320,6 +327,9 @@ async fn test_concurrent_handle_access() {
 
     for task in tasks {
         let dims = task.await.expect("Task should not panic");
-        assert_eq!(dims, 384, "All accesses should return same dimensions");
+        assert_eq!(
+            dims, TEST_EMBEDDING_DIMENSIONS,
+            "All accesses should return same dimensions"
+        );
     }
 }

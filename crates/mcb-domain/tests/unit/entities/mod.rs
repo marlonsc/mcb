@@ -1,3 +1,5 @@
+//! Unit tests.
+
 mod agent_tests;
 mod api_key_tests;
 

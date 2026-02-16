@@ -1,3 +1,5 @@
+//! Unit tests.
+
 mod agent_repository_tests;
 mod ddl_tests;
 mod issue_entity_repository_tests;

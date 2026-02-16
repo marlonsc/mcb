@@ -57,9 +57,7 @@ impl IssueEntityHandler {
                 ok_json(&map_opaque_error(self.repo.get_issue(org_id.as_str(), &id).await)?)
             }
             (IssueEntityAction::List, IssueEntityResource::Issue) => {
-                let project_id = args.project_id.as_deref().ok_or_else(|| {
-                    McpError::invalid_params("project_id required for list", None)
-                })?;
+                let project_id = require_arg!(args.project_id, "project_id required for list");
                 ok_json(&map_opaque_error(self.repo.list_issues(org_id.as_str(), project_id).await)?)
             }
             (IssueEntityAction::Update, IssueEntityResource::Issue) => {
@@ -83,10 +81,7 @@ impl IssueEntityHandler {
                 ok_json(&map_opaque_error(self.repo.get_comment(&id).await)?)
             }
             (IssueEntityAction::List, IssueEntityResource::Comment) => {
-                let issue_id = args
-                    .issue_id
-                    .as_deref()
-                    .ok_or_else(|| McpError::invalid_params("issue_id required", None))?;
+                let issue_id = require_arg!(args.issue_id, "issue_id required");
                 ok_json(&map_opaque_error(self.repo.list_comments_by_issue(issue_id).await)?)
             }
             (IssueEntityAction::Delete, IssueEntityResource::Comment) => {
@@ -105,9 +100,7 @@ impl IssueEntityHandler {
                 ok_json(&map_opaque_error(self.repo.get_label(&id).await)?)
             }
             (IssueEntityAction::List, IssueEntityResource::Label) => {
-                let project_id = args.project_id.as_deref().ok_or_else(|| {
-                    McpError::invalid_params("project_id required for list", None)
-                })?;
+                let project_id = require_arg!(args.project_id, "project_id required for list");
                 ok_json(&map_opaque_error(self.repo.list_labels(org_id.as_str(), project_id).await)?)
             }
             (IssueEntityAction::Delete, IssueEntityResource::Label) => {
@@ -122,22 +115,13 @@ impl IssueEntityHandler {
                 ok_text("assigned")
             }
             (IssueEntityAction::Delete, IssueEntityResource::LabelAssignment) => {
-                let issue_id = args
-                    .issue_id
-                    .as_deref()
-                    .ok_or_else(|| McpError::invalid_params("issue_id required", None))?;
-                let label_id = args
-                    .label_id
-                    .as_deref()
-                    .ok_or_else(|| McpError::invalid_params("label_id required", None))?;
+                let issue_id = require_arg!(args.issue_id, "issue_id required");
+                let label_id = require_arg!(args.label_id, "label_id required");
                 map_opaque_error(self.repo.unassign_label(issue_id, label_id).await)?;
                 ok_text("unassigned")
             }
             (IssueEntityAction::List, IssueEntityResource::LabelAssignment) => {
-                let issue_id = args
-                    .issue_id
-                    .as_deref()
-                    .ok_or_else(|| McpError::invalid_params("issue_id required", None))?;
+                let issue_id = require_arg!(args.issue_id, "issue_id required");
                 ok_json(&map_opaque_error(self.repo.list_labels_for_issue(issue_id).await)?)
             }
             }

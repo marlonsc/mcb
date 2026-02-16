@@ -16,7 +16,7 @@ use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
-use crate::constants::{EMBEDDING_OPERATION_NAME, HTTP_HEADER_CONTENT_TYPE};
+use crate::constants::{EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_MODEL, HTTP_HEADER_CONTENT_TYPE};
 use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
@@ -73,7 +73,7 @@ impl OllamaEmbeddingProvider {
     /// Fetch embedding for a single text
     async fn fetch_single_embedding(&self, text: &str) -> Result<serde_json::Value> {
         let payload = serde_json::json!({
-            "model": self.client.model,
+            (EMBEDDING_PARAM_MODEL): self.client.model,
             "prompt": text,
             "stream": false
         });

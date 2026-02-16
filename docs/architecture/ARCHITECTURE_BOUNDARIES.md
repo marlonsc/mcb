@@ -159,10 +159,11 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 #### Exports
 
-- Embedding providers: `OllamaProvider`, `OpenAIProvider`, `VoyageAIProvider`, etc.
-- Vector store providers: `MilvusProvider`, `InMemoryProvider`, `EncryptedProvider`, etc.
-- Cache providers: `MokaProvider`, `RedisProvider`
-- Language parsers: `RustChunker`, `PythonChunker`, etc.
+- Embedding providers: `FastEmbedProvider` (default), `OllamaEmbeddingProvider`, `OpenAIEmbeddingProvider`, `VoyageAIEmbeddingProvider`, `GeminiEmbeddingProvider`, `AnthropicEmbeddingProvider`
+- Vector store providers: `EdgeVecVectorStoreProvider` (default), `QdrantVectorStoreProvider`, `MilvusVectorStoreProvider`, `PineconeVectorStoreProvider`, `EncryptedVectorStoreProvider`
+- Cache providers: `MokaCacheProvider` (default), `RedisCacheProvider`
+- Event bus providers: `TokioEventBusProvider` (default), `NatsEventBusProvider`
+- Language parsers: 12 AST-based language processors
 
 #### Module Structure
 
@@ -213,7 +214,7 @@ mcb-providers/src/
 - Admin services: `EmbeddingAdminService`, `VectorStoreAdminService`
 - Health: `HealthChecker`
 - Metrics: `MetricsCollector`
-- Lifecycle: `ServiceManager`, `ShutdownCoordinator`
+- Lifecycle: `init_app()`, `AppContext`
 
 #### Module Structure
 
@@ -225,11 +226,11 @@ mcb-infrastructure/src/
 ├── config/             # Configuration (Figment)
 │   ├── loader.rs
 │   └── types/
-├── handles/            # RwLock wrappers for runtime switching
-├── admin/              # Admin services (runtime provider switching)
+├── infrastructure/     # Admin types (metrics, indexing ops)
+├── services/           # Infrastructure services
 ├── health/             # Health checking
-├── metrics/            # Prometheus metrics
-└── lifecycle/          # Service lifecycle management
+├── crypto/             # Encryption services
+└── logging/            # Logging configuration (tracing)
 ```
 
 **DI Pattern** (ADR-029):

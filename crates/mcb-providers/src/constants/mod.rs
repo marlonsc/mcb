@@ -260,3 +260,54 @@ pub const MILVUS_ERROR_RATE_LIMIT: &str = "RateLimit";
 
 /// `EdgeVec` quantization type for scalar quantization.
 pub const EDGEVEC_QUANTIZATION_TYPE: &str = "scalar";
+
+// ============================================================================
+// VECTOR STORE METADATA FIELD NAMES
+// ============================================================================
+
+/// Vector store field: document identifier.
+pub const VECTOR_FIELD_ID: &str = "id";
+
+/// Vector store field: source file path.
+pub const VECTOR_FIELD_FILE_PATH: &str = "file_path";
+
+/// Vector store field: start line number.
+pub const VECTOR_FIELD_START_LINE: &str = "start_line";
+
+/// Vector store field: line number (legacy/fallback field name).
+pub const VECTOR_FIELD_LINE_NUMBER: &str = "line_number";
+
+/// Vector store field: content text.
+pub const VECTOR_FIELD_CONTENT: &str = "content";
+
+/// Vector store field: embedding vector.
+pub const VECTOR_FIELD_VECTOR: &str = "vector";
+
+/// Vector store field: programming language.
+pub const VECTOR_FIELD_LANGUAGE: &str = "language";
+
+/// Vector store field: metadata JSON blob.
+pub const VECTOR_FIELD_METADATA: &str = "metadata";
+
+// ============================================================================
+// EMBEDDING API FIELD NAMES
+// ============================================================================
+
+/// Embedding API response field: embedding vector.
+pub const EMBEDDING_RESPONSE_FIELD: &str = "embedding";
+
+/// Embedding API request field: model name.
+pub const EMBEDDING_PARAM_MODEL: &str = "model";
+
+/// Embedding API request field: input text.
+pub const EMBEDDING_PARAM_INPUT: &str = "input";
+
+// ============================================================================
+// MILVUS SCHEMA/INDEX PARAMETER NAMES
+// ============================================================================
+
+/// Milvus index parameter: distance metric type.
+pub const MILVUS_PARAM_METRIC_TYPE: &str = "metric_type";
+
+/// Milvus index parameter: IVF nlist value.
+pub const MILVUS_PARAM_NLIST: &str = "nlist";

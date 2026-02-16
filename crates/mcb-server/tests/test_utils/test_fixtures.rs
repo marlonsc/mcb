@@ -7,13 +7,11 @@
 //! `SQLite` database backed by its own `TempDir`.
 
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
 
 use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_domain::ports::services::IndexingResult;
 use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
-use mcb_infrastructure::config::ConfigLoader;
-use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 use mcb_infrastructure::di::modules::domain_services::{
     DomainServicesFactory, ServiceDependencies,
 };
@@ -25,6 +23,25 @@ use mcb_providers::database::{
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use tempfile::TempDir;
+
+// -----------------------------------------------------------------------------
+// Common test fixture constants
+// -----------------------------------------------------------------------------
+
+/// Test fixture: default project identifier.
+pub const TEST_PROJECT_ID: &str = "test-project";
+
+/// Test fixture: default session identifier.
+pub const TEST_SESSION_ID: &str = "test-session";
+
+/// Test fixture: default repository name.
+pub const TEST_REPO_NAME: &str = "test-repo";
+
+/// Test fixture: default organization identifier.
+pub const TEST_ORG_ID: &str = "test-org";
+
+/// Test fixture: default embedding dimensions (FastEmbed BGE-small-en-v1.5).
+pub const TEST_EMBEDDING_DIMENSIONS: usize = 384;
 
 // -----------------------------------------------------------------------------
 // Golden test helpers (shared by tests/golden and integration)
@@ -133,81 +150,7 @@ pub fn create_test_indexing_result(
 // Shared AppContext (process-wide, ONNX model loaded once)
 // ---------------------------------------------------------------------------
 
-/// Process-wide shared `AppContext`.
-///
-/// Loads the ONNX embedding model exactly once and reuses it across all tests.
-pub fn try_shared_app_context() -> Option<&'static AppContext> {
-    static CTX: OnceLock<(tokio::runtime::Runtime, Option<AppContext>)> = OnceLock::new();
-
-    let (_, ctx) = CTX.get_or_init(|| {
-        std::thread::spawn(|| {
-            let rt = tokio::runtime::Runtime::new().expect("create init runtime");
-            let result = rt.block_on(async {
-                let temp_dir = tempfile::tempdir().expect("create temp dir");
-                let temp_root = temp_dir.into_path(); // Keep path, let dir leak or persist? tempdir drops on drop. 
-                // We should arguably keep temp_dir alive too if db depends on it, but here we just pass path.
-                // If temp_dir is dropped, files go away. 
-                // In the original code, `temp_dir` was dropped at end of block_on async block!
-                // `let temp_root = temp_dir.keep();` prevents deletion.
-                // But wait, original code:
-                // let temp_root = temp_dir.keep();
-                // This consumes temp_dir and returns PathBuf. So persistence was fine.
-
-                let temp_path = temp_root.join("mcb-fixtures-shared.db");
-
-                let mut config = ConfigLoader::new().load().expect("load config");
-                config.providers.database.configs.insert(
-                    "default".to_owned(),
-                    mcb_infrastructure::config::DatabaseConfig {
-                        provider: "sqlite".to_owned(),
-                        path: Some(temp_path),
-                    },
-                );
-                config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-                init_app(config).await
-            });
-
-            match result {
-                Ok(ctx) => (rt, Some(ctx)),
-                Err(e) => {
-                    let msg = e.to_string();
-                    if msg.contains("model.onnx") || msg.contains("Failed to initialize FastEmbed") {
-                        eprintln!(
-                            "Skipping tests requiring shared AppContext: embedding model unavailable in offline env: {e}"
-                        );
-                        (rt, None)
-                    } else {
-                        panic!("shared init_app failed: {e}");
-                    }
-                }
-            }
-        })
-        .join()
-        .expect("init thread panicked")
-    });
-    ctx.as_ref()
-}
-
-pub fn shared_app_context() -> &'static AppContext {
-    try_shared_app_context().expect("shared AppContext init failed - ONNX model may be unavailable")
-}
-
-/// Persistent shared cache dir for `FastEmbed` ONNX model.
-///
-/// Avoids re-downloading the model on every test invocation by using a
-/// process-wide directory outside the per-test temp dirs.
-pub fn shared_fastembed_test_cache_dir() -> PathBuf {
-    static DIR: OnceLock<PathBuf> = OnceLock::new();
-    DIR.get_or_init(|| {
-        let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
-            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
-            PathBuf::from,
-        );
-        std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
-        cache_dir
-    })
-    .clone()
-}
+mcb_infrastructure::define_shared_test_context!("mcb-fixtures-shared.db");
 
 // ---------------------------------------------------------------------------
 // create_test_mcp_server
@@ -234,7 +177,7 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
         .await
         .expect("connect fresh test database");
 
-    let project_id = "test-project".to_owned();
+    let project_id = TEST_PROJECT_ID.to_owned();
 
     // Fresh repositories backed by the isolated database
     let memory_repository = Arc::new(SqliteMemoryRepository::new(Arc::clone(&db_executor)));

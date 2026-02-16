@@ -16,7 +16,10 @@ use crate::constants::engines::{
     ENGINE_TYPE_EVALEXPR, ENGINE_TYPE_EXPRESSION, ENGINE_TYPE_GRL, ENGINE_TYPE_JSON_DSL,
     ENGINE_TYPE_RETE, ENGINE_TYPE_RUST_RULE, ENGINE_TYPE_RUSTY_RULES,
 };
-use crate::constants::rules::{YAML_FIELD_ENGINE, YAML_FIELD_RULE};
+use crate::constants::rules::{
+    YAML_FIELD_ACTION, YAML_FIELD_CONDITION, YAML_FIELD_ENGINE, YAML_FIELD_EXPRESSION,
+    YAML_FIELD_GRL, YAML_FIELD_RULE, YAML_FIELD_RULE_DEFINITION,
+};
 use crate::engines::expression_engine::ExpressionEngine;
 use crate::engines::hybrid_engine::{RuleContext, RuleViolation};
 use crate::engines::rete_engine::ReteEngine;
@@ -92,12 +95,14 @@ impl RuleEngineRouter {
         }
 
         // Check for expression field
-        if rule_definition.get("expression").is_some() {
+        if rule_definition.get(YAML_FIELD_EXPRESSION).is_some() {
             return RoutedEngine::Expression;
         }
 
         // Check for JSON DSL structure
-        if rule_definition.get("condition").is_some() || rule_definition.get("action").is_some() {
+        if rule_definition.get(YAML_FIELD_CONDITION).is_some()
+            || rule_definition.get(YAML_FIELD_ACTION).is_some()
+        {
             return RoutedEngine::RustyRules;
         }
 
@@ -110,7 +115,7 @@ impl RuleEngineRouter {
         // Check "rule" or "grl" field for when/then keywords
         if let Some(rule_str) = rule_definition
             .get(YAML_FIELD_RULE)
-            .or_else(|| rule_definition.get("grl"))
+            .or_else(|| rule_definition.get(YAML_FIELD_GRL))
             .and_then(|v| v.as_str())
         {
             let lower = rule_str.to_lowercase();
@@ -119,7 +124,7 @@ impl RuleEngineRouter {
 
         // Check if there's a rule definition with GRL markers
         if let Some(rule_str) = rule_definition
-            .get("rule_definition")
+            .get(YAML_FIELD_RULE_DEFINITION)
             .and_then(|v| v.as_str())
         {
             let lower = rule_str.to_lowercase();
@@ -219,7 +224,7 @@ impl RuleEngineRouter {
             RoutedEngine::Rete => {
                 // Validate GRL syntax
                 if rule_definition.get(YAML_FIELD_RULE).is_none()
-                    && rule_definition.get("grl").is_none()
+                    && rule_definition.get(YAML_FIELD_GRL).is_none()
                 {
                     return Err(crate::ValidationError::Config(
                         "RETE rule must have 'rule' or 'grl' field".into(),
@@ -228,7 +233,7 @@ impl RuleEngineRouter {
             }
             RoutedEngine::Expression => {
                 // Validate expression
-                if rule_definition.get("expression").is_none() {
+                if rule_definition.get(YAML_FIELD_EXPRESSION).is_none() {
                     return Err(crate::ValidationError::Config(
                         "Expression rule must have 'expression' field".into(),
                     ));

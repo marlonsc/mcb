@@ -24,6 +24,7 @@ use mcb_server::transport::http_client::HttpClientTransport;
 use mcb_server::transport::types::{McpRequest, McpResponse};
 
 use crate::test_utils::http_mcp::get_free_port;
+use crate::test_utils::test_fixtures::TEST_EMBEDDING_DIMENSIONS;
 use crate::test_utils::timeouts::TEST_TIMEOUT;
 
 fn create_test_config() -> (AppConfig, tempfile::TempDir) {
@@ -522,20 +523,30 @@ async fn test_session_isolation_with_vector_store() {
 
     // Both should be able to create their own collections
     vector_store
-        .create_collection(&CollectionId::from_name(&coll_a), 384)
+        .create_collection(&CollectionId::from_name(&coll_a), TEST_EMBEDDING_DIMENSIONS)
         .await
         .expect("Create A");
     vector_store
-        .create_collection(&CollectionId::from_name(&coll_b), 384)
+        .create_collection(&CollectionId::from_name(&coll_b), TEST_EMBEDDING_DIMENSIONS)
         .await
         .expect("Create B");
 
     // Verify they're separate (search one, verify empty in other)
     let results_a = vector_store
-        .search_similar(&CollectionId::from_name(&coll_a), &vec![0.0; 384], 10, None)
+        .search_similar(
+            &CollectionId::from_name(&coll_a),
+            &vec![0.0; TEST_EMBEDDING_DIMENSIONS],
+            10,
+            None,
+        )
         .await;
     let results_b = vector_store
-        .search_similar(&CollectionId::from_name(&coll_b), &vec![0.0; 384], 10, None)
+        .search_similar(
+            &CollectionId::from_name(&coll_b),
+            &vec![0.0; TEST_EMBEDDING_DIMENSIONS],
+            10,
+            None,
+        )
         .await;
 
     // Both should succeed (collections exist) and be empty (no data inserted)

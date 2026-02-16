@@ -3,8 +3,8 @@
 /// JSON-RPC protocol version string.
 pub const JSONRPC_VERSION: &str = "2.0";
 
-/// HTTP Content-Type for JSON responses.
-pub const CONTENT_TYPE_JSON: &str = "application/json";
+/// HTTP Content-Type for JSON responses (re-exported from domain).
+pub use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
 /// HTTP MCP endpoint path.
 pub const MCP_ENDPOINT_PATH: &str = "/mcp";

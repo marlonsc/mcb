@@ -4,7 +4,7 @@
 **Note**: Snapshot functionality is defined as a port trait in v0.2.1.
 
 **Trait**: `crates/mcb-domain/src/ports/infrastructure/snapshot.rs`
-**Null Adapter**: `crates/mcb-infrastructure/src/adapters/infrastructure/snapshot.rs`
+**Adapter**: No adapter implementation yet (port trait only)
 
 ## Overview
 

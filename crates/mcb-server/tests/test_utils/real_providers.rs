@@ -14,7 +14,7 @@ use std::sync::Arc;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
 
-use super::test_fixtures::shared_app_context;
+use super::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
 
 /// Get the real `EdgeVec` vector store provider from the shared context.
 pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> {
@@ -79,7 +79,10 @@ mod tests {
 
         // Create collection
         store
-            .create_collection(&CollectionId::from_name(&collection), 384)
+            .create_collection(
+                &CollectionId::from_name(&collection),
+                TEST_EMBEDDING_DIMENSIONS,
+            )
             .await
             .expect("create");
 
@@ -121,7 +124,7 @@ mod tests {
         assert_eq!(provider.provider_name(), "fastembed");
         assert!(provider.dimensions() > 0);
         assert_eq!(embeddings.len(), 1);
-        assert_eq!(embeddings[0].vector.len(), 384);
+        assert_eq!(embeddings[0].vector.len(), TEST_EMBEDDING_DIMENSIONS);
     }
 
     #[tokio::test]
@@ -141,7 +144,7 @@ mod tests {
             .expect("fastembed warmup should succeed");
         assert_eq!(provider.provider_name(), "fastembed");
         assert_eq!(embeddings.len(), 1);
-        assert_eq!(embeddings[0].vector.len(), 384);
+        assert_eq!(embeddings[0].vector.len(), TEST_EMBEDDING_DIMENSIONS);
     }
 
     #[tokio::test]

@@ -26,15 +26,9 @@ implementation_status: N/A
 > failover, and health monitoring strategies are now documented in ADR-003. This
 > document is retained for historical reference only.
 >
-> Full multi-provider routing implemented in `crates/mcb-providers/src/routing/`:
+> Routing infrastructure in `crates/mcb-infrastructure/src/routing/`:
 >
-> **Routing Components** (`crates/mcb-providers/src/routing/`):
->
-> - `circuit_breaker.rs` - Circuit breaker with state transitions
 > - `health.rs` - Health monitoring for providers
-> - `cost_tracker.rs` - Cost tracking and budget management
-> - `failover.rs` - Automatic failover logic
-> - `metrics.rs` - Metrics collection
 > - `router.rs` - Provider router with selection strategies
 >
 > **Provider Implementations** (`crates/mcb-providers/src/`):
@@ -143,7 +137,7 @@ significant operational complexity.
 ### Provider Selection Strategy (mcb-providers)
 
 ```rust
-// crates/mcb-providers/src/routing/router.rs
+// crates/mcb-infrastructure/src/routing/router.rs
 #[derive(Clone)]
 pub enum ProviderSelectionStrategy {
     /// Always use the fastest available provider
@@ -224,12 +218,8 @@ impl EmbeddingProviderFactory {
 
 // Usage in DI bootstrap
 // crates/mcb-infrastructure/src/di/bootstrap.rs
-pub async fn create_services(config: &Config) -> Result<DomainServices> {
-    let embedding = EmbeddingProviderFactory::create(&config.embedding, None)?;
-    let vector_store = VectorStoreProviderFactory::create(
-        &config.vector_store, None)?;
-    // ... wire into services
-}
+// DomainServicesFactory::create_services(deps) wires everything via dill Catalog
+
 ```
 
 ### Health Monitoring and Failover
@@ -354,7 +344,7 @@ impl CostTracker {
 
 [providers.embedding]
 default_provider = "openai"
-fallback_providers = ["ollama", "mock"]
+fallback_providers = ["ollama", "fastembed"]
 
 [providers.embedding.openai]
 api_key = "${OPENAI_API_KEY}"
@@ -385,7 +375,7 @@ high_quality = "openai"     # For quality-critical tasks, use OpenAI
 cost_optimized = "ollama"   # For bulk processing, use free tier
 
 [routing.contextual.vector_store]
-development = "memory"      # Use in-memory for development
+development = "edgevec"     # Use EdgeVec for development
 production = "milvus"       # Use Milvus for production
 ```
 

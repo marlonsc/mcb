@@ -66,6 +66,14 @@ pub struct VisibilityValidator {
     enabled: bool,
 }
 
+struct InternalHelperScanInput<'a> {
+    content: &'a str,
+    path: &'a std::path::Path,
+    pub_crate_re: &'a regex::Regex,
+    pub_item_re_internal: &'a regex::Regex,
+    exempted_items: &'a HashSet<String>,
+}
+
 impl VisibilityValidator {
     /// Creates a new visibility validator, loading configuration from files.
     pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
@@ -127,26 +135,16 @@ impl VisibilityValidator {
             for_each_file_under_root(config, &full_path, Some(LanguageId::Rust), |entry| {
                 let path = &entry.absolute_path;
                 let content = std::fs::read_to_string(path)?;
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
-                    if pub_crate_re.is_match(trimmed) {
-                        continue;
-                    }
-
-                    if let Some(captures) = pub_item_re_internal.captures(trimmed) {
-                        let item_name = captures.get(2).map_or("unknown", |m| m.as_str());
-                        // Skip exempted items:
-                        if self.exempted_items.contains(item_name) {
-                            continue;
-                        }
-
-                        violations.push(VisibilityViolation::InternalHelperTooPublic {
-                            item_name: item_name.to_owned(),
-                            file: path.clone(),
-                            line: line_num + 1,
-                        });
-                    }
-                }
+                Self::collect_internal_helper_violations(
+                    &InternalHelperScanInput {
+                        content: &content,
+                        path,
+                        pub_crate_re: &pub_crate_re,
+                        pub_item_re_internal: &pub_item_re_internal,
+                        exempted_items: &self.exempted_items,
+                    },
+                    &mut violations,
+                );
 
                 Ok(())
             })?;
@@ -177,17 +175,8 @@ impl VisibilityValidator {
                 }
 
                 let content = std::fs::read_to_string(path)?;
-                let mut pub_count = 0;
-
-                for line in content.lines() {
-                    let trimmed = line.trim();
-                    if pub_crate_re.is_match(trimmed) {
-                        continue;
-                    }
-                    if pub_item_re_utility.is_match(trimmed) {
-                        pub_count += 1;
-                    }
-                }
+                let pub_count =
+                    Self::count_utility_pub_items(&content, &pub_crate_re, &pub_item_re_utility);
 
                 if pub_count > self.pub_count_threshold {
                     violations.push(VisibilityViolation::UtilityModuleTooPublic {
@@ -201,6 +190,45 @@ impl VisibilityValidator {
             })?;
         }
         Ok(violations)
+    }
+
+    fn collect_internal_helper_violations(
+        input: &InternalHelperScanInput<'_>,
+        violations: &mut Vec<VisibilityViolation>,
+    ) {
+        for (line_num, line) in input.content.lines().enumerate() {
+            let trimmed = line.trim();
+            if input.pub_crate_re.is_match(trimmed) {
+                continue;
+            }
+
+            if let Some(captures) = input.pub_item_re_internal.captures(trimmed) {
+                let item_name = captures.get(2).map_or("unknown", |m| m.as_str());
+                if input.exempted_items.contains(item_name) {
+                    continue;
+                }
+
+                violations.push(VisibilityViolation::InternalHelperTooPublic {
+                    item_name: item_name.to_owned(),
+                    file: input.path.to_path_buf(),
+                    line: line_num + 1,
+                });
+            }
+        }
+    }
+
+    fn count_utility_pub_items(
+        content: &str,
+        pub_crate_re: &regex::Regex,
+        pub_item_re_utility: &regex::Regex,
+    ) -> usize {
+        content
+            .lines()
+            .map(str::trim)
+            .filter(|trimmed| {
+                !pub_crate_re.is_match(trimmed) && pub_item_re_utility.is_match(trimmed)
+            })
+            .count()
     }
 }
 

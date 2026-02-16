@@ -23,7 +23,9 @@ use mcb_domain::registry::vector_store::{
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 
 use crate::config::AppConfig;
-use crate::constants::providers::{FALLBACK_EMBEDDING_PROVIDER, FALLBACK_VECTOR_STORE_PROVIDER};
+use crate::constants::providers::{
+    DEFAULT_DB_CONFIG_NAME, FALLBACK_EMBEDDING_PROVIDER, FALLBACK_VECTOR_STORE_PROVIDER,
+};
 
 // ============================================================================
 // Embedding Provider Resolver
@@ -72,7 +74,13 @@ impl EmbeddingProviderResolver {
         }
 
         // Fallback to named config (TOML: [providers.embedding.default])
-        if let Some(default_config) = self.config.providers.embedding.configs.get("default") {
+        if let Some(default_config) = self
+            .config
+            .providers
+            .embedding
+            .configs
+            .get(DEFAULT_DB_CONFIG_NAME)
+        {
             // If there's a specific config for this provider, use it
             if let Some(specific_config) = self
                 .config
@@ -160,7 +168,13 @@ impl VectorStoreProviderResolver {
         }
 
         // Fallback to named config (TOML: [providers.vector_store.default])
-        if let Some(default_config) = self.config.providers.vector_store.configs.get("default") {
+        if let Some(default_config) = self
+            .config
+            .providers
+            .vector_store
+            .configs
+            .get(DEFAULT_DB_CONFIG_NAME)
+        {
             // If there's a specific config for this provider, use it
             if let Some(specific_config) = self
                 .config

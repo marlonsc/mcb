@@ -1,5 +1,6 @@
 //! HTTP Transport for MCP
 //!
+#![allow(clippy::redundant_type_annotations)]
 //! Implements MCP protocol over HTTP using Server-Sent Events (SSE).
 //! This transport allows web clients to connect to the MCP server.
 //!

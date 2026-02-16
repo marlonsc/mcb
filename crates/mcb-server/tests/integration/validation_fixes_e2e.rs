@@ -11,6 +11,7 @@ use mcb_server::args::{
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
+use crate::test_utils::test_fixtures::TEST_PROJECT_ID;
 use crate::test_utils::text::extract_text;
 
 #[tokio::test]
@@ -58,12 +59,12 @@ async fn test_validation_session_create_schema_fallback() {
                 "session_summary_id": "summ-1",
                 "model": "test-model",
                 "agent_type": "sisyphus", // FALLBACK
-                "project_id": "test-project"
+                "project_id": TEST_PROJECT_ID
             })),
             worktree_id: None,
             parent_session_id: None,
             session_id: None,
-            project_id: Some("test-project".to_owned()),
+            project_id: Some(TEST_PROJECT_ID.to_owned()),
             limit: None,
             status: None,
         }))

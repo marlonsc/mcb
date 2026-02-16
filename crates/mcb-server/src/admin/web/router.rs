@@ -1,6 +1,7 @@
 //! Web Router Module
 //!
 //! Router configuration for the admin web interface.
+#![allow(clippy::redundant_type_annotations)]
 
 use std::sync::Arc;
 
