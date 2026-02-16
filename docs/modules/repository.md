@@ -20,12 +20,7 @@ Port definitions for repositories:
 - `ChunkRepository` - Code chunk persistence operations
 - `SearchRepository` - Search Result retrieval operations
 
-### Null Implementations (`mcb-infrastructure`)
-
-Test/development implementations:
-
-- `NullChunkRepository` - No-op chunk repository
-- `NullSearchRepository` - No-op search repository
+**Status**: Port traits defined, no adapter implementations yet.
 
 ## File Structure
 
@@ -33,11 +28,6 @@ Test/development implementations:
 crates/mcb-domain/src/repositories/
 ├── chunk_repository.rs       # ChunkRepository trait
 ├── search_repository.rs      # SearchRepository trait
-└── mod.rs
-
-crates/mcb-infrastructure/src/adapters/repository/
-├── chunk_repository.rs       # NullChunkRepository
-├── search_repository.rs      # NullSearchRepository
 └── mod.rs
 ```
 
@@ -51,16 +41,6 @@ pub trait ChunkRepository: Send + Sync {
     async fn get(&self, collection: &str, id: &str) -> Result<Option<CodeChunk>>;
     async fn delete(&self, collection: &str, id: &str) -> Result<()>;
 }
-
-// Null implementation (in mcb-infrastructure)
-pub struct NullChunkRepository;
-
-#[async_trait]
-impl ChunkRepository for NullChunkRepository {
-    async fn store(&self, _: &str, _: &[CodeChunk]) -> Result<()> { Ok(()) }
-    async fn get(&self, _: &str, _: &str) -> Result<Option<CodeChunk>> { Ok(None) }
-    async fn delete(&self, _: &str, _: &str) -> Result<()> { Ok(()) }
-}
 ```
 
 ## Key Exports
@@ -68,15 +48,11 @@ impl ChunkRepository for NullChunkRepository {
 ```rust
 // Traits (from mcb-domain)
 pub use repositories::{ChunkRepository, SearchRepository};
-
-// Null implementations (from mcb-infrastructure)
-pub use adapters::repository::{NullChunkRepository, NullSearchRepository};
 ```
 
 ## Cross-References
 
 - **Domain**: [domain.md](./domain.md) (trait definitions)
-- **Infrastructure**: [infrastructure.md](./infrastructure.md) (null implementations)
 - **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---

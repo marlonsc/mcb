@@ -32,7 +32,7 @@ pub async fn list_repositories(
     let discovered_repos = vcs_provider
         .list_repositories(&root)
         .await
-        .map_err(to_opaque_mcp_error)?;
+        .map_err(|e| to_opaque_mcp_error(&e))?;
 
     let repositories: Vec<String> = discovered_repos
         .iter()

@@ -13,8 +13,10 @@ use super::common::{
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use mcb_domain::utils::id as domain_id;
+
+use crate::constants::fields::{FIELD_MESSAGE, FIELD_OBSERVATION_ID, TAG_QUALITY_GATE};
 use crate::utils::mcp::tool_error;
-use uuid::Uuid;
 
 /// Stores a quality gate result as a semantic observation.
 #[tracing::instrument(skip_all)]
@@ -46,7 +48,7 @@ pub async fn store_quality_gate(
         .and_then(Value::as_i64)
         .unwrap_or_else(|| chrono::Utc::now().timestamp());
     let quality_gate = QualityGateResult {
-        id: Uuid::new_v4().to_string(),
+        id: domain_id::generate().to_string(),
         gate_name: gate_name.clone(),
         status,
         message: opt_str(data, "message"),
@@ -59,13 +61,13 @@ pub async fn store_quality_gate(
         quality_gate.status.as_str()
     );
     let tags = vec![
-        "quality_gate".to_owned(),
+        TAG_QUALITY_GATE.to_owned(),
         quality_gate.status.as_str().to_owned(),
     ];
     let origin = resolve_memory_origin_context(
         args,
         data,
-        MemoryOriginOptions {
+        &MemoryOriginOptions {
             execution_from_args: quality_gate.execution_id.as_deref(),
             execution_from_data: quality_gate.execution_id.as_deref(),
             file_path_payload: None,
@@ -91,7 +93,7 @@ pub async fn store_quality_gate(
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({
-            "observation_id": observation_id,
+            FIELD_OBSERVATION_ID: observation_id,
             "deduplicated": deduplicated,
         })),
         Err(e) => Ok(to_contextual_tool_error(e)),
@@ -114,10 +116,10 @@ pub async fn get_quality_gates(
             mapper: |result: &MemorySearchResult| {
                 let gate = result.observation.metadata.quality_gate.as_ref()?;
                 Some(serde_json::json!({
-                    "observation_id": result.observation.id,
+                    FIELD_OBSERVATION_ID: result.observation.id,
                     "gate_name": gate.gate_name,
                     "status": gate.status.as_str(),
-                    "message": gate.message,
+                    FIELD_MESSAGE: gate.message,
                     "timestamp": gate.timestamp,
                     "execution_id": gate.execution_id,
                     "created_at": result.observation.created_at,

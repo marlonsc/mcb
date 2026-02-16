@@ -1,3 +1,6 @@
+/// Validation macros (`mk_validators!`, `impl_validator!`, `define_violations!`)
+pub mod macros;
+
 pub mod async_patterns;
 pub mod clean_architecture;
 pub mod config_quality;

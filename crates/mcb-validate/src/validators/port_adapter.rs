@@ -8,6 +8,7 @@ use crate::pattern_registry::compile_regex;
 use std::path::PathBuf;
 
 use crate::config::PortAdapterRulesConfig;
+use crate::define_violations;
 use crate::scan::for_each_file_under_root;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, ValidationConfig};

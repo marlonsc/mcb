@@ -1,14 +1,46 @@
+use std::path::Path;
 use std::path::PathBuf;
 
 use regex::Regex;
 
 use crate::Result;
-use crate::constants::common::COMMENT_PREFIX;
+use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX, TEST_DIR_FRAGMENT};
 use crate::filters::LanguageId;
+use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 
 use super::PerformanceValidator;
 use super::violation::PerformanceViolation;
+
+fn should_skip_scan_file(validator: &PerformanceValidator, src_dir: &Path, path: &Path) -> bool {
+    validator.should_skip_crate(src_dir)
+        || path.to_str().is_some_and(|s| s.contains(TEST_DIR_FRAGMENT))
+}
+
+fn for_each_relevant_file_content<F>(validator: &PerformanceValidator, mut f: F) -> Result<()>
+where
+    F: FnMut(PathBuf, String) -> Result<()>,
+{
+    for_each_scan_file(
+        &validator.config,
+        Some(LanguageId::Rust),
+        false,
+        |entry, src_dir| {
+            let path = &entry.absolute_path;
+            if should_skip_scan_file(validator, src_dir, path) {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+            f(path.clone(), content)
+        },
+    )
+}
+
+fn apply_line_brace_delta(loop_depth: &mut i32, line: &str) {
+    *loop_depth += line.chars().filter(|c| *c == '{').count() as i32;
+    *loop_depth -= line.chars().filter(|c| *c == '}').count() as i32;
+}
 
 /// Helper: Scan files for patterns inside loops
 pub fn scan_files_with_patterns_in_loops<F>(
@@ -20,57 +52,42 @@ where
     F: Fn(PathBuf, usize, &str) -> Option<PerformanceViolation>,
 {
     let mut violations = Vec::new();
-    let loop_start_pattern = Regex::new(r"^\s*(for|while|loop)\s+")?;
+    let loop_start_pattern = compile_regex(r"^\s*(for|while|loop)\s+")?;
 
-    for_each_scan_file(
-        &validator.config,
-        Some(LanguageId::Rust),
-        false,
-        |entry, src_dir| {
-            let path = &entry.absolute_path;
-            if validator.should_skip_crate(src_dir)
-                || path.to_str().is_some_and(|s| s.contains("/tests/"))
-            {
-                return Ok(());
+    for_each_relevant_file_content(validator, |path, content| {
+        let mut in_loop = false;
+        let mut loop_depth = 0;
+
+        for (line_num, line) in content.lines().enumerate() {
+            let trimmed = line.trim();
+
+            if trimmed.starts_with(COMMENT_PREFIX) {
+                continue;
             }
 
-            let content = std::fs::read_to_string(path)?;
-            let mut in_loop = false;
-            let mut loop_depth = 0;
+            if loop_start_pattern.is_match(trimmed) {
+                in_loop = true;
+                loop_depth = 0;
+            }
 
-            for (line_num, line) in content.lines().enumerate() {
-                let trimmed = line.trim();
+            if in_loop {
+                apply_line_brace_delta(&mut loop_depth, line);
 
-                if trimmed.starts_with(COMMENT_PREFIX) {
-                    continue;
+                for pattern in patterns {
+                    if pattern.is_match(line)
+                        && let Some(violation) = make_violation(path.clone(), line_num + 1, line)
+                    {
+                        violations.push(violation);
+                    }
                 }
 
-                if loop_start_pattern.is_match(trimmed) {
-                    in_loop = true;
-                    loop_depth = 0;
-                }
-
-                if in_loop {
-                    loop_depth += line.chars().filter(|c| *c == '{').count() as i32;
-                    loop_depth -= line.chars().filter(|c| *c == '}').count() as i32;
-
-                    for pattern in patterns {
-                        if pattern.is_match(line)
-                            && let Some(violation) =
-                                make_violation(path.clone(), line_num + 1, line)
-                        {
-                            violations.push(violation);
-                        }
-                    }
-
-                    if loop_depth <= 0 {
-                        in_loop = false;
-                    }
+                if loop_depth <= 0 {
+                    in_loop = false;
                 }
             }
-            Ok(())
-        },
-    )?;
+        }
+        Ok(())
+    })?;
 
     Ok(violations)
 }
@@ -86,47 +103,34 @@ where
 {
     let mut violations = Vec::new();
 
-    for_each_scan_file(
-        &validator.config,
-        Some(LanguageId::Rust),
-        false,
-        |entry, src_dir| {
-            let path = &entry.absolute_path;
-            if validator.should_skip_crate(src_dir)
-                || path.to_str().is_some_and(|s| s.contains("/tests/"))
-            {
-                return Ok(());
+    for_each_relevant_file_content(validator, |path, content| {
+        let mut in_test_module = false;
+
+        for (line_num, line) in content.lines().enumerate() {
+            let trimmed = line.trim();
+
+            if trimmed.starts_with(COMMENT_PREFIX) {
+                continue;
             }
 
-            let content = std::fs::read_to_string(path)?;
-            let mut in_test_module = false;
-
-            for (line_num, line) in content.lines().enumerate() {
-                let trimmed = line.trim();
-
-                if trimmed.starts_with(COMMENT_PREFIX) {
-                    continue;
-                }
-
-                if trimmed.contains("#[cfg(test)]") {
-                    in_test_module = true;
-                    continue;
-                }
-
-                if in_test_module {
-                    continue;
-                }
-
-                for (pattern, desc, sugg) in compiled_patterns {
-                    if pattern.is_match(line) {
-                        violations.push(make_violation(path.clone(), line_num + 1, desc, sugg));
-                    }
-                }
+            if trimmed.contains(CFG_TEST_MARKER) {
+                in_test_module = true;
+                continue;
             }
 
-            Ok(())
-        },
-    )?;
+            if in_test_module {
+                continue;
+            }
+
+            for (pattern, desc, sugg) in compiled_patterns {
+                if pattern.is_match(line) {
+                    violations.push(make_violation(path.clone(), line_num + 1, desc, sugg));
+                }
+            }
+        }
+
+        Ok(())
+    })?;
 
     Ok(violations)
 }

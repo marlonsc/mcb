@@ -1,10 +1,6 @@
-#[path = "violation_field_fmt/collection_impls.rs"]
 mod collection_impls;
-#[path = "violation_field_fmt/core_impls.rs"]
 mod core_impls;
-#[path = "violation_field_fmt/domain_impls.rs"]
 mod domain_impls;
-#[path = "violation_field_fmt/scalar_impls.rs"]
 mod scalar_impls;
 
 /// Formats violation fields into stable template strings.
@@ -12,7 +8,7 @@ mod scalar_impls;
 /// # Example
 ///
 /// ```rust
-/// use mcb_validate::violation_macro::violation_field_fmt::ViolationFieldFmt;
+/// use mcb_validate::macros::violation_field_fmt::ViolationFieldFmt;
 /// assert_eq!(3usize.fmt_field(), "3");
 /// ```
 pub trait ViolationFieldFmt {

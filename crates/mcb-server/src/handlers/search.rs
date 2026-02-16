@@ -16,6 +16,7 @@ use validator::Validate;
 use crate::error_mapping::safe_internal_error;
 
 use crate::args::{SearchArgs, SearchResource};
+use crate::constants::fields::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
 use crate::constants::limits::DEFAULT_SEARCH_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
@@ -42,6 +43,9 @@ impl SearchHandler {
     }
 
     /// Handle a search tool request.
+    ///
+    /// # Errors
+    /// Returns an error when required request parameters are invalid.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
@@ -114,10 +118,10 @@ impl SearchHandler {
                             .into_iter()
                             .map(|r| {
                                 serde_json::json!({
-                                    "observation_id": r.observation.id,
+                                    FIELD_OBSERVATION_ID: r.observation.id,
                                     "project_id": r.observation.project_id,
                                     "content": r.observation.content,
-                                    "observation_type": r.observation.r#type.as_str(),
+                                    FIELD_OBSERVATION_TYPE: r.observation.r#type.as_str(),
                                     "tags": r.observation.tags,
                                     "similarity_score": r.similarity_score,
                                     "session_id": r.observation.metadata.session_id.clone(),

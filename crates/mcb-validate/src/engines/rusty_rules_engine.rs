@@ -10,6 +10,9 @@ use serde_json::Value;
 use super::hybrid_engine::{RuleContext, RuleEngine};
 use crate::Result;
 use crate::ValidationConfig;
+use crate::constants::common::{TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX};
+use crate::constants::rules::{DEFAULT_VIOLATION_MESSAGE, YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY};
+use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO};
 use crate::engines::hybrid_engine::RuleViolation;
 use crate::run_context::ValidationRunContext;
 use crate::traits::violation::{Severity, ViolationCategory};
@@ -113,7 +116,7 @@ impl RustyRulesEngineWrapper {
             Self::parse_action(action_json)
         } else {
             Action::Violation {
-                message: "Rule violation".to_owned(),
+                message: DEFAULT_VIOLATION_MESSAGE.to_owned(),
                 severity: Severity::Warning,
             }
         };
@@ -183,20 +186,19 @@ impl RustyRulesEngineWrapper {
     fn parse_action(action_json: &Value) -> Action {
         if let Some(violation) = action_json.get("violation") {
             let message = violation
-                .get("message")
+                .get(YAML_FIELD_MESSAGE)
                 .and_then(|v| v.as_str())
-                .unwrap_or("Rule violation")
+                .unwrap_or(DEFAULT_VIOLATION_MESSAGE)
                 .to_owned();
 
-            let severity =
-                violation
-                    .get("severity")
-                    .and_then(|v| v.as_str())
-                    .map_or(Severity::Warning, |s| match s {
-                        "error" => Severity::Error,
-                        "info" => Severity::Info,
-                        _ => Severity::Warning,
-                    });
+            let severity = violation
+                .get(YAML_FIELD_SEVERITY)
+                .and_then(|v| v.as_str())
+                .map_or(Severity::Warning, |s| match s {
+                    SEVERITY_ERROR => Severity::Error,
+                    SEVERITY_INFO => Severity::Info,
+                    _ => Severity::Warning,
+                });
 
             return Action::Violation { message, severity };
         }
@@ -426,9 +428,9 @@ impl RustyRulesEngineWrapper {
 
                     // Check exclusions
                     let path_str = file_path.clone();
-                    let should_exclude = path_str.contains("/tests/")
+                    let should_exclude = path_str.contains(TEST_DIR_FRAGMENT)
                         || path_str.contains("/target/")
-                        || path_str.ends_with("_test.rs");
+                        || path_str.ends_with(TEST_FILE_SUFFIX);
 
                     if line_count > max_lines && !should_exclude {
                         violations.push(

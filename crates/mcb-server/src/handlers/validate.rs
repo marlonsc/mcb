@@ -28,6 +28,9 @@ impl ValidateHandler {
     }
 
     /// Handle a validate tool request.
+    ///
+    /// # Errors
+    /// Returns an error when argument validation fails.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
@@ -44,7 +47,7 @@ impl ValidateHandler {
     }
 
     async fn handle_run(&self, args: &ValidateArgs) -> Result<CallToolResult, McpError> {
-        let path_str = self.required_path(args, "Missing required parameter: path")?;
+        let path_str = Self::required_path(args, "Missing required parameter: path")?;
         let path = PathBuf::from(path_str);
         if !path.exists() {
             return Ok(ResponseFormatter::format_validation_error(
@@ -93,7 +96,7 @@ impl ValidateHandler {
     }
 
     async fn handle_analyze(&self, args: &ValidateArgs) -> Result<CallToolResult, McpError> {
-        let path_str = self.required_path(args, "Missing required parameter: path for analyze")?;
+        let path_str = Self::required_path(args, "Missing required parameter: path for analyze")?;
         let path = PathBuf::from(path_str);
         if !path.exists() || !path.is_file() {
             return Ok(tool_error("Path must be an existing file"));
@@ -119,7 +122,6 @@ impl ValidateHandler {
     }
 
     fn required_path<'a>(
-        &self,
         args: &'a ValidateArgs,
         missing_message: &'static str,
     ) -> Result<&'a str, McpError> {
@@ -131,7 +133,7 @@ impl ValidateHandler {
     async fn run_validation_for_scope(
         &self,
         args: &ValidateArgs,
-        path: &PathBuf,
+        path: &std::path::Path,
         scope: ValidateScope,
         timer: Instant,
     ) -> Result<CallToolResult, McpError> {

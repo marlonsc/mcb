@@ -48,7 +48,9 @@ fn is_display_field_candidate(field: &crate::admin::registry::AdminFieldMeta) ->
 fn value_as_lov_string(value: &Value) -> String {
     match value {
         Value::String(s) => s.clone(),
-        _ => value.to_string().trim_matches('"').to_owned(),
+        Value::Null | Value::Bool(_) | Value::Number(_) | Value::Array(_) | Value::Object(_) => {
+            value.to_string().trim_matches('"').to_owned()
+        }
     }
 }
 
@@ -61,8 +63,7 @@ fn map_lov_item(rec: &Value, label_field: &str) -> Option<LovItem> {
     let id = object_id(obj)?;
     let label = obj
         .get(label_field)
-        .map(value_as_lov_string)
-        .unwrap_or_else(|| id.clone());
+        .map_or_else(|| id.clone(), value_as_lov_string);
     Some(LovItem { id, label })
 }
 

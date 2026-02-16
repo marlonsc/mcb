@@ -92,7 +92,7 @@ Major external crates:
 | Category | Crate | Purpose |
 | ---------- | ------- | | --------- |
 | Async | `tokio` | Async runtime |
-| HTTP | `axum` | HTTP server |
+| HTTP | `rocket` | HTTP server (ADR-026) |
 | DI | `dill` | IoC container, handle-based DI (ADR-029) |
 | Serialization | `serde` | JSON/TOML serialization |
 | Error handling | `thiserror`, `anyhow` | Error types |

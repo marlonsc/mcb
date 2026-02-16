@@ -20,7 +20,7 @@ implementation_status: Complete
 
 **Implemented** (v0.1.1)
 
-> Fully implemented with Clean Architecture + Shaku DI across 8 crates.
+> Fully implemented with Clean Architecture + dill/linkme DI across 7 crates.
 
 ## Context
 
@@ -47,17 +47,16 @@ down, ensuring resource release (threads, connections) in a safe manner.
 
 ## Implementation
 
-### Port Trait Definition (mcb-application)
+### Port Trait Definition (mcb-domain)
 
-Ports are defined as traits extending `shaku::Interface` for DI compatibility:
+Ports are defined as traits in `mcb-domain/src/ports/` with `Send + Sync` bounds:
 
 ```rust
-// crates/mcb-application/src/ports/providers/embedding.rs
-use shaku::Interface;
+// crates/mcb-domain/src/ports/providers/embedding.rs
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait EmbeddingProvider: Interface + Send + Sync {
+pub trait EmbeddingProvider: Send + Sync {
     async fn embed(&self, text: &str) -> Result<Embedding>;
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>>;
     fn dimensions(&self) -> usize;
@@ -67,87 +66,73 @@ pub trait EmbeddingProvider: Interface + Send + Sync {
 
 Important: All port traits must:
 
-- Extend `shaku::Interface` (which implies `'static + Send + Sync` with
-  thread_safe feature)
+- Be `Send + Sync` for multi-threaded async usage
 - Be object-safe (no generic methods, no `Self` returns)
 - Use `async_trait` for async methods
 
 ### Provider Implementation (mcb-providers)
 
-Providers implement ports and are registered as Shaku components:
+Providers implement port traits and register via linkme distributed slices:
 
 ```rust
-// crates/mcb-providers/src/embedding/openai.rs
-use shaku::Component;
+// crates/mcb-providers/src/embedding/ollama.rs
 use mcb_domain::ports::providers::EmbeddingProvider;
 
-#[derive(Component)]
-#[shaku(interface = EmbeddingProvider)]
-pub struct OpenAIEmbeddingProvider {
-    #[shaku(default)]
-    api_key: String,
-    #[shaku(default)]
+pub struct OllamaEmbeddingProvider {
+    api_url: String,
     model: String,
-    #[shaku(default)]
     client: reqwest::Client,
 }
 
 #[async_trait]
-impl EmbeddingProvider for OpenAIEmbeddingProvider {
+impl EmbeddingProvider for OllamaEmbeddingProvider {
     async fn embed(&self, text: &str) -> Result<Embedding> {
-        // OpenAI API call implementation
+        // Ollama API call implementation
     }
 
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
         // Batch embedding implementation
     }
 
-    fn dimensions(&self) -> usize { 1536 }
-    fn provider_name(&self) -> &str { "openai" }
+    fn dimensions(&self) -> usize { self.model_dimensions }
+    fn provider_name(&self) -> &str { "ollama" }
 }
 ```
 
-### Null Provider for Testing
+### Default Provider (FastEmbed)
 
 ```rust
-// crates/mcb-providers/src/embedding/null.rs
-use shaku::Component;
+// crates/mcb-providers/src/embedding/fastembed.rs
 use mcb_domain::ports::providers::EmbeddingProvider;
 
-#[derive(Component)]
-#[shaku(interface = EmbeddingProvider)]
-pub struct NullEmbeddingProvider;
+pub struct FastEmbedProvider { /* ... */ }
 
 #[async_trait]
-impl EmbeddingProvider for NullEmbeddingProvider {
-    async fn embed(&self, _text: &str) -> Result<Embedding> {
-        Ok(Embedding::zeros(128))
+impl EmbeddingProvider for FastEmbedProvider {
+    async fn embed(&self, text: &str) -> Result<Embedding> {
+        // Real embedding via fastembed
     }
 
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
-        Ok(texts.iter().map(|_| Embedding::zeros(128)).collect())
+        // Batch embedding via fastembed
     }
 
-    fn dimensions(&self) -> usize { 128 }
-    fn provider_name(&self) -> &str { "null" }
+    fn dimensions(&self) -> usize { self.model_dimensions }
+    fn provider_name(&self) -> &str { "fastembed" }
 }
 ```
 
-### DI Module Registration (mcb-infrastructure)
+### DI Provider Registration (mcb-providers)
 
-Shaku modules register components for DI:
+Providers register via linkme distributed slices for compile-time auto-discovery:
 
 ```rust
-// crates/mcb-infrastructure/src/di/modules/embedding_module.rs
-use shaku::module;
-use mcb_providers::embedding::NullEmbeddingProvider;
-
-module! {
-    pub EmbeddingModuleImpl {
-        components = [NullEmbeddingProvider],
-        providers = []
-    }
-}
+// crates/mcb-providers/src/embedding/fastembed.rs
+register_embedding_provider!(
+    fastembed_factory, config, FASTEMBED_ENTRY,
+    "fastembed", "Local FastEmbed embedding provider",
+    { Ok(Arc::new(FastEmbedProvider::from_config(config)?)) }
+);
 ```
 
 ### Service Layer with Injected Dependencies (mcb-application)
@@ -188,13 +173,14 @@ impl ContextService {
 
 The system uses a two-layer approach for DI (see [ADR-012](012-di-strategy-two-layer-approach.md)):
 
-**Layer 1: Shaku Modules** - Provide null implementations as defaults for testing:
+**Layer 1: linkme Distributed Slices** - Compile-time auto-discovery of providers:
 
 ```rust
-// Testing with Shaku modules (null providers) — HISTORICAL; DI is now dill
-// (ADR-029)
-let container = DiContainerBuilder::new().build().await?;
-// Uses NullEmbeddingProvider, NullVectorStoreProvider, etc.
+// Providers register via distributed_slice — DI resolves by config
+// (see ADR-029 for dill Catalog)
+let resolver = EmbeddingProviderResolver::new(config);
+let provider = resolver.resolve_from_config()?;
+// Defaults to FastEmbedProvider when no config override
 ```
 
 **Layer 2: Runtime Factories** - Create production providers from configuration:
@@ -215,13 +201,13 @@ let services = DomainServicesFactory::create_services(
 mod tests {
     use super::*;
     use std::sync::Arc;
-    use mcb_providers::embedding::NullEmbeddingProvider;
-    use mcb_providers::vector_store::NullVectorStoreProvider;
+    use mcb_providers::embedding::FastEmbedProvider;
+    use mcb_providers::vector_store::EdgeVecVectorStoreProvider;
 
     #[tokio::test]
-    async fn test_context_service_with_null_providers() {
-        let embedding_provider = Arc::new(NullEmbeddingProvider);
-        let vector_store_provider = Arc::new(NullVectorStoreProvider);
+    async fn test_context_service_with_default_providers() {
+        let embedding_provider = Arc::new(FastEmbedProvider::default());
+        let vector_store_provider = Arc::new(EdgeVecVectorStoreProvider::default());
 
         let service = ContextService::new(embedding_provider, vector_store_provider);
 

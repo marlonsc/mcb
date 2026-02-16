@@ -28,7 +28,7 @@ This directory contains all Architecture Decision Records (ADRs) for the Memory 
 
 - [ADR 011: HTTP Transport Request/Response Pattern](011-http-transport-request-response-pattern.md)
 - [ADR 012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI strategy; see ADR-029 for current dill-based implementation
-- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate workspace organization
+- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Seven-crate workspace organization
 
 ### v0.1.2 Refatoracao & Simplification
 

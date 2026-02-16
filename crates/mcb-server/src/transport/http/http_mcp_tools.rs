@@ -41,7 +41,7 @@ fn parse_tool_call_params(
     })
 }
 
-fn tool_result_to_json(result: rmcp::model::CallToolResult) -> serde_json::Value {
+fn tool_result_to_json(result: &rmcp::model::CallToolResult) -> serde_json::Value {
     let content_json: Vec<serde_json::Value> = result
         .content
         .iter()
@@ -152,7 +152,7 @@ pub(super) async fn handle_tools_call(
     let handlers = build_tool_handlers(&state.server);
 
     match route_tool_call(call_request, &handlers, execution_context).await {
-        Ok(result) => McpResponse::success(request.id.clone(), tool_result_to_json(result)),
+        Ok(result) => McpResponse::success(request.id.clone(), tool_result_to_json(&result)),
         Err(e) => {
             error!(error = ?e, "Tool call failed");
             let code = if e.code.0 == JSONRPC_INVALID_PARAMS {

@@ -66,6 +66,9 @@ pub async fn entities_index(state: Option<&State<AdminState>>) -> Template {
 }
 
 /// Entity list page with filtering, sorting, and pagination.
+///
+/// # Errors
+/// Returns `404` when entity slug is not registered.
 #[rocket::get("/ui/entities/<slug>?<params..>")]
 pub async fn entities_list(
     slug: &str,
@@ -121,6 +124,9 @@ pub async fn entities_list(
 }
 
 /// New entity form — renders an empty form with schema-driven fields.
+///
+/// # Errors
+/// Returns `404` when entity slug is not registered.
 #[rocket::get("/ui/entities/<slug>/new")]
 pub fn entities_new_form(slug: &str) -> Result<Template, status::Custom<String>> {
     let entity = find_or_404(slug)?;
@@ -147,6 +153,9 @@ pub fn entities_new_form(slug: &str) -> Result<Template, status::Custom<String>>
 }
 
 /// Detail view — fetches a single record via service adapter when available.
+///
+/// # Errors
+/// Returns `404` when entity slug is not registered.
 #[rocket::get("/ui/entities/<slug>/<id>", rank = 2)]
 pub async fn entities_detail(
     slug: &str,
@@ -185,6 +194,9 @@ pub async fn entities_detail(
 }
 
 /// Edit form — fetches record for pre-fill via service adapter when available.
+///
+/// # Errors
+/// Returns `404` when entity slug is not registered.
 #[rocket::get("/ui/entities/<slug>/<id>/edit")]
 pub async fn entities_edit_form(
     slug: &str,
@@ -223,6 +235,9 @@ pub async fn entities_edit_form(
 }
 
 /// Delete confirmation page.
+///
+/// # Errors
+/// Returns `404` when entity slug is not registered.
 #[rocket::get("/ui/entities/<slug>/<id>/delete")]
 pub async fn entities_delete_confirm(
     slug: &str,
@@ -261,6 +276,9 @@ pub async fn entities_delete_confirm(
 }
 
 /// Create entity — persists via service adapter and redirects to the list page.
+///
+/// # Errors
+/// Returns `404` for unknown entity slugs, `400` for invalid form payloads, and `500` for persistence failures.
 #[rocket::post("/ui/entities/<slug>", data = "<form>")]
 pub async fn entities_create(
     slug: &str,
@@ -282,6 +300,9 @@ pub async fn entities_create(
 }
 
 /// Update entity — persists via service adapter and redirects to the detail page.
+///
+/// # Errors
+/// Returns `404` for unknown entity slugs, `400` for invalid form payloads, and `500` for persistence failures.
 #[rocket::post("/ui/entities/<slug>/<id>", data = "<form>", rank = 2)]
 pub async fn entities_update(
     slug: &str,
@@ -308,6 +329,9 @@ pub async fn entities_update(
 }
 
 /// Bulk delete — deletes multiple records by comma-separated IDs.
+///
+/// # Errors
+/// Returns `404` when entity slug is not registered.
 #[rocket::post("/ui/entities/<slug>/bulk-delete", data = "<form>", rank = 1)]
 pub async fn entities_bulk_delete(
     slug: &str,
@@ -348,6 +372,9 @@ pub async fn entities_bulk_delete(
 }
 
 /// Delete entity — removes via service adapter and redirects to the list page.
+///
+/// # Errors
+/// Returns `404` for unknown entity slugs and `500` for persistence failures.
 #[rocket::post("/ui/entities/<slug>/<id>/delete")]
 pub async fn entities_delete(
     slug: &str,

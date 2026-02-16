@@ -26,18 +26,13 @@ pub trait SnapshotProvider: Send + Sync {
 }
 ```
 
-### NullSnapshotProvider (`mcb-infrastructure`)
-
-No-op implementation for testing and DI.
+**Status**: Port traits defined, no adapter implementations yet.
 
 ## File Structure
 
 ```text
 crates/mcb-domain/src/ports/infrastructure/
 └── snapshot.rs              # SnapshotProvider trait, StateStoreProvider trait
-
-crates/mcb-infrastructure/src/adapters/infrastructure/
-└── snapshot.rs              # NullSnapshotProvider, NullStateStoreProvider
 ```
 
 ## Domain Types
@@ -51,17 +46,13 @@ Related types in `mcb-domain`:
 ## Key Exports
 
 ```rust
-// Trait (from mcb-domain)
+// Traits (from mcb-domain)
 pub use ports::infrastructure::snapshot::{SnapshotProvider, StateStoreProvider};
-
-// Null implementation (from mcb-infrastructure)
-pub use adapters::infrastructure::snapshot::{NullSnapshotProvider, NullStateStoreProvider};
 ```
 
 ## Cross-References
 
 - **Domain**: [domain.md](./domain.md) (trait definition)
-- **Infrastructure**: [infrastructure.md](./infrastructure.md) (null adapter)
 - **Sync**: [sync.md](./sync.md) (uses snapshots)
 - **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 

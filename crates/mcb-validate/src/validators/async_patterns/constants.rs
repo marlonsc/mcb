@@ -23,3 +23,24 @@ pub const WRONG_MUTEX_PATTERNS: &[(&str, &str, &str)] = &[
         "Use tokio::sync::RwLock for async code",
     ),
 ];
+
+/// Function name keywords that indicate intentional fire-and-forget spawns.
+/// Includes constructor patterns that often spawn background workers.
+pub const BACKGROUND_FN_PATTERNS: &[&str] = &[
+    "spawn",
+    "background",
+    "graceful",
+    "shutdown",
+    "start",
+    "run",
+    "worker",
+    "daemon",
+    "listener",
+    "handler",
+    "process",
+    "new",
+    "with_",
+    "init",
+    "create",
+    "build",
+];

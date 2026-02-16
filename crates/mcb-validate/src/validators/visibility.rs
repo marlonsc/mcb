@@ -8,6 +8,7 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 
 use crate::config::VisibilityRulesConfig;
+use crate::define_violations;
 use crate::scan::for_each_file_under_root;
 use crate::traits::violation::ViolationCategory;
 use crate::{Result, ValidationConfig};

@@ -14,12 +14,18 @@ use super::json::json_map;
 use crate::error_mapping::safe_internal_error;
 
 /// Returns the required `id` parameter or an MCP invalid params error.
+///
+/// # Errors
+/// Returns an error when `id` is missing.
 pub fn require_id(id: &Option<String>) -> Result<String, McpError> {
     id.clone()
         .ok_or_else(|| McpError::invalid_params("id required", None))
 }
 
 /// Serializes a value into pretty JSON and wraps it in a successful MCP tool result.
+///
+/// # Errors
+/// Returns an error when JSON serialization fails.
 pub fn ok_json<T: Serialize>(val: &T) -> Result<CallToolResult, McpError> {
     let json = serde_json::to_string_pretty(val)
         .map_err(|e| safe_internal_error("json serialization", &e))?;
@@ -27,6 +33,9 @@ pub fn ok_json<T: Serialize>(val: &T) -> Result<CallToolResult, McpError> {
 }
 
 /// Wraps plain text in a successful MCP tool result.
+///
+/// # Errors
+/// Returns an error when MCP content encoding fails.
 pub fn ok_text(msg: &str) -> Result<CallToolResult, McpError> {
     Ok(CallToolResult::success(vec![Content::text(msg)]))
 }
@@ -61,6 +70,9 @@ pub fn normalize_identifier(value: Option<&str>) -> Option<String> {
 /// Resolves identifier precedence between explicit args and payload fields.
 ///
 /// Returns an error when both values are present but conflict.
+///
+/// # Errors
+/// Returns an error when argument and payload values conflict.
 pub fn resolve_identifier_precedence(
     field: &str,
     args_value: Option<&str>,
@@ -84,6 +96,9 @@ pub fn resolve_identifier_precedence(
 /// Resolve and require an identifier from args/payload precedence.
 ///
 /// Returns an invalid-params error with `required_message` when both values are absent.
+///
+/// # Errors
+/// Returns an error when values conflict or no identifier is available.
 pub fn require_resolved_identifier(
     field: &str,
     args_value: Option<&str>,
@@ -277,7 +292,10 @@ impl OriginPayloadFields {
 }
 
 /// Resolves an `OriginContext` from the provided input, handling precedence between args and payload.
-pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginContext, McpError> {
+///
+/// # Errors
+/// Returns an error when required fields are missing or conflicting identifiers are provided.
+pub fn resolve_origin_context(input: &OriginContextInput<'_>) -> Result<OriginContext, McpError> {
     let project_id = resolve_field(
         "project_id",
         input.project_id_args,
@@ -374,6 +392,9 @@ pub fn resolve_origin_context(input: OriginContextInput<'_>) -> Result<OriginCon
 }
 
 /// Deserializes required request data into the target type.
+///
+/// # Errors
+/// Returns an error when data is missing or deserialization fails.
 pub fn require_data<T: DeserializeOwned>(
     data: Option<serde_json::Value>,
     msg: &'static str,
@@ -383,11 +404,17 @@ pub fn require_data<T: DeserializeOwned>(
 }
 
 /// Maps domain errors to opaque MCP-safe errors.
+///
+/// # Errors
+/// Returns an error when the domain result is an error.
 pub fn map_opaque_error<T>(result: Result<T, Error>) -> Result<T, McpError> {
-    result.map_err(crate::error_mapping::to_opaque_mcp_error)
+    result.map_err(|e| crate::error_mapping::to_opaque_mcp_error(&e))
 }
 
 /// Requires a JSON object from an optional Value, returning an error if missing.
+///
+/// # Errors
+/// Returns an error when the payload is missing or not an object.
 pub fn require_data_map<'a>(
     data: &'a Option<Value>,
     missing_message: &'static str,
@@ -396,10 +423,44 @@ pub fn require_data_map<'a>(
 }
 
 /// Requires a string value from a JSON object, returning an error if missing.
+///
+/// # Errors
+/// Returns an error when the key is missing or value is not a string.
 pub fn require_str(data: &Map<String, Value>, key: &str) -> Result<String, CallToolResult> {
     data.get(key)
         .and_then(Value::as_str)
         .map(str::to_owned)
+        .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
+}
+
+/// Requires an i64 value from a JSON object, returning an error if missing.
+///
+/// # Errors
+/// Returns an error when the key is missing or value is not an integer.
+pub fn require_i64(data: &Map<String, Value>, key: &str) -> Result<i64, CallToolResult> {
+    data.get(key)
+        .and_then(Value::as_i64)
+        .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
+}
+
+/// Requires an i32 value from a JSON object, returning an error if missing or out of range.
+///
+/// # Errors
+/// Returns an error when the key is missing, value is not an integer, or exceeds i32 range.
+pub fn require_i32(data: &Map<String, Value>, key: &str) -> Result<i32, CallToolResult> {
+    data.get(key)
+        .and_then(Value::as_i64)
+        .and_then(|value| value.try_into().ok())
+        .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
+}
+
+/// Requires a boolean value from a JSON object, returning an error if missing.
+///
+/// # Errors
+/// Returns an error when the key is missing or value is not a boolean.
+pub fn require_bool(data: &Map<String, Value>, key: &str) -> Result<bool, CallToolResult> {
+    data.get(key)
+        .and_then(Value::as_bool)
         .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
 }
 

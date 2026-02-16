@@ -66,25 +66,28 @@ use crate::transport::stdio::StdioServerExt;
 /// 2. Otherwise, check `config.mode.mode_type`:
 ///    - `Standalone` → Run with local providers, stdio transport
 ///    - `Client` → Connect to remote server via HTTP
+///
+/// # Errors
+/// Returns an error when configuration loading, DI bootstrapping, or transport startup fails.
 pub async fn run(
     config_path: Option<&Path>,
     server_mode: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let config = load_config(config_path)?;
-    let log_receiver = mcb_infrastructure::logging::init_logging(config.logging.clone())?;
+    let log_receiver = mcb_infrastructure::logging::init_logging(&config.logging)?;
 
     if server_mode {
         // Explicit server mode via --server flag
-        run_server_mode(
+        Box::pin(run_server_mode(
             config,
             config_path.map(std::path::Path::to_path_buf),
             log_receiver,
-        )
+        ))
         .await
     } else {
         // Check config for operating mode
         match config.mode.mode_type {
-            OperatingMode::Standalone => run_standalone(config, log_receiver).await,
+            OperatingMode::Standalone => Box::pin(run_standalone(config, log_receiver)).await,
             OperatingMode::Client => run_client(config).await,
         }
     }
@@ -118,7 +121,10 @@ async fn run_server_mode(
 
     // Connect log event channel to the event bus for SSE streaming
     if let Some(receiver) = log_receiver {
-        mcb_infrastructure::logging::spawn_log_forwarder(receiver, event_bus.clone());
+        mcb_infrastructure::logging::spawn_log_forwarder(
+            receiver,
+            Arc::<dyn mcb_domain::ports::EventBusProvider>::clone(&event_bus),
+        );
         info!("Log event forwarder connected to event bus");
     }
 
@@ -128,7 +134,7 @@ async fn run_server_mode(
         mcb_infrastructure::config::watcher::ConfigWatcher::new(
             path.clone(),
             config.clone(),
-            event_bus.clone(),
+            Arc::<dyn mcb_domain::ports::EventBusProvider>::clone(&event_bus),
         )
         .await
         .ok()
@@ -143,7 +149,9 @@ async fn run_server_mode(
 
     // Register services from AppContext (Arc clone is O(1) — atomic refcount increment)
     for service in &app_context.lifecycle_services {
-        service_manager.register(service.clone());
+        service_manager.register(Arc::<dyn mcb_domain::ports::LifecycleManaged>::clone(
+            service,
+        ));
     }
 
     let admin_state = AdminState {
@@ -181,7 +189,7 @@ async fn run_server_mode(
         }
         TransportMode::Http => {
             info!(host = %http_host, port = http_port, "Starting HTTP transport (MCP + Admin)");
-            run_http_transport_with_admin(
+            Box::pin(run_http_transport_with_admin(
                 server,
                 &http_host,
                 http_port,
@@ -190,7 +198,7 @@ async fn run_server_mode(
                     auth_config,
                     browse_state: Some(browse_state),
                 },
-            )
+            ))
             .await
         }
         TransportMode::Hybrid => {

@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 // ============================================================================
 
 /// Logging configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct LoggingConfig {
     /// Log level (trace, debug, info, warn, error)
@@ -34,7 +34,7 @@ pub struct LoggingConfig {
 // ============================================================================
 
 /// Resource limits configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct LimitsConfig {
     /// Memory limit in bytes
@@ -75,7 +75,7 @@ impl CacheProvider {
 }
 
 /// Infrastructure cache system configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct CacheSystemConfig {
     /// Cache enabled
@@ -99,7 +99,7 @@ pub struct CacheSystemConfig {
 // ============================================================================
 
 /// Metrics configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct MetricsConfig {
     /// Metrics enabled
@@ -121,7 +121,7 @@ pub struct MetricsConfig {
 // ============================================================================
 
 /// Resilience configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct ResilienceConfig {
     /// Circuit breaker failure threshold

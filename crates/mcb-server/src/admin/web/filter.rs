@@ -15,7 +15,6 @@ pub enum SortOrder {
 impl<'v> rocket::form::FromFormField<'v> for SortOrder {
     fn from_value(field: rocket::form::ValueField<'v>) -> rocket::form::Result<'v, Self> {
         match field.value.to_lowercase().as_str() {
-            "asc" => Ok(SortOrder::Asc),
             "desc" => Ok(SortOrder::Desc),
             _ => Ok(SortOrder::Asc),
         }

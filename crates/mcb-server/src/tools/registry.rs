@@ -310,6 +310,9 @@ pub struct ToolDefinitions;
 
 impl ToolDefinitions {
     /// Resolve a tool definition by name from the descriptor registry.
+    ///
+    /// # Errors
+    /// Returns an error when the registry is invalid or the tool name is unknown.
     pub fn by_name(name: &str) -> Result<Tool, McpError> {
         validate_registry_unique_tool_names()?;
         let descriptor = descriptor_by_name(name)
@@ -318,52 +321,82 @@ impl ToolDefinitions {
     }
 
     /// Define the `index` tool.
+    ///
+    /// # Errors
+    /// Returns an error when descriptor lookup or schema generation fails.
     pub fn index() -> Result<Tool, McpError> {
         Self::by_name("index")
     }
 
     /// Define the `search` tool.
+    ///
+    /// # Errors
+    /// Returns an error when descriptor lookup or schema generation fails.
     pub fn search() -> Result<Tool, McpError> {
         Self::by_name("search")
     }
 
     /// Define the `validate` tool.
+    ///
+    /// # Errors
+    /// Returns an error when descriptor lookup or schema generation fails.
     pub fn validate() -> Result<Tool, McpError> {
         Self::by_name("validate")
     }
 
     /// Define the `memory` tool.
+    ///
+    /// # Errors
+    /// Returns an error when descriptor lookup or schema generation fails.
     pub fn memory() -> Result<Tool, McpError> {
         Self::by_name("memory")
     }
 
     /// Define the `session` tool.
+    ///
+    /// # Errors
+    /// Returns an error when descriptor lookup or schema generation fails.
     pub fn session() -> Result<Tool, McpError> {
         Self::by_name("session")
     }
 
     /// Define the `agent` tool.
+    ///
+    /// # Errors
+    /// Returns an error when descriptor lookup or schema generation fails.
     pub fn agent() -> Result<Tool, McpError> {
         Self::by_name("agent")
     }
 
     /// Define the `project` tool.
+    ///
+    /// # Errors
+    /// Returns an error when descriptor lookup or schema generation fails.
     pub fn project() -> Result<Tool, McpError> {
         Self::by_name("project")
     }
 
     /// Define the `vcs` tool.
+    ///
+    /// # Errors
+    /// Returns an error when descriptor lookup or schema generation fails.
     pub fn vcs() -> Result<Tool, McpError> {
         Self::by_name("vcs")
     }
 
     /// Define the `entity` tool.
+    ///
+    /// # Errors
+    /// Returns an error when descriptor lookup or schema generation fails.
     pub fn entity() -> Result<Tool, McpError> {
         Self::by_name("entity")
     }
 }
 
 /// Create the complete list of available tools from the shared registry.
+///
+/// # Errors
+/// Returns an error when the registry contains duplicate names or schema generation fails.
 pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
     validate_registry_unique_tool_names()?;
     TOOL_DESCRIPTORS
@@ -373,6 +406,9 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
 }
 
 /// Dispatch to the tool call function from the shared descriptor registry.
+///
+/// # Errors
+/// Returns an error when registry validation fails, the tool name is unknown, or tool execution fails.
 pub async fn dispatch_tool_call(
     request: &CallToolRequestParams,
     handlers: &ToolHandlers,

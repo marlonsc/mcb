@@ -34,6 +34,7 @@ use futures::{StreamExt, stream};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
+use mcb_domain::utils::id;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
 
@@ -277,7 +278,7 @@ impl EventBusProvider for NatsEventBusProvider {
                     source: None,
                 })?;
 
-        let sub_id = format!("nats-{}-{}", subject, uuid::Uuid::new_v4());
+        let sub_id = format!("nats-{}-{}", subject, id::generate());
         debug!("Created NATS subscription: {}", sub_id);
 
         Ok(sub_id)

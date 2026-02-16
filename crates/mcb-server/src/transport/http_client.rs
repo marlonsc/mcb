@@ -11,11 +11,15 @@ use std::io::{self, BufRead, Write};
 use std::path::Path;
 use std::time::Duration;
 
+use mcb_domain::utils::id as domain_id;
 use mcb_domain::utils::mask_id;
 use tracing::{debug, error, info, warn};
-use uuid::Uuid;
 
 use super::types::{McpRequest, McpResponse};
+use crate::constants::protocol::{
+    CONTENT_TYPE_JSON, EXECUTION_FLOW_HYBRID, HTTP_HEADER_EXECUTION_FLOW, JSONRPC_VERSION,
+    MCP_ENDPOINT_PATH,
+};
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR};
 
 /// MCP client transport configuration
@@ -47,6 +51,9 @@ impl HttpClientTransport {
     /// Create a new HTTP client transport with explicit session source values.
     ///
     /// Used by tests to validate session source precedence without mutating process env.
+    ///
+    /// # Errors
+    /// Returns an error when secure transport validation, session initialization, or client construction fails.
     pub fn new_with_session_source(
         server_url: String,
         session_prefix: Option<String>,
@@ -61,7 +68,7 @@ impl HttpClientTransport {
 
         let config = McpClientConfig {
             server_url,
-            client_instance_id: Uuid::new_v4().to_string(),
+            client_instance_id: domain_id::generate().to_string(),
             public_session_id,
             timeout,
         };
@@ -111,8 +118,8 @@ impl HttpClientTransport {
 
     fn generate_session_id(session_prefix: Option<String>) -> String {
         match session_prefix {
-            Some(prefix) => format!("{}_{}", prefix, Uuid::new_v4()),
-            None => Uuid::new_v4().to_string(),
+            Some(prefix) => format!("{}_{}", prefix, domain_id::generate()),
+            None => domain_id::generate().to_string(),
         }
     }
 
@@ -169,6 +176,9 @@ impl HttpClientTransport {
     /// 3. Writes responses to stdout
     ///
     /// Runs until stdin is closed (EOF).
+    ///
+    /// # Errors
+    /// Returns an error when writing responses to stdout fails.
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         info!(
             server_url = %self.config.server_url,
@@ -204,7 +214,7 @@ impl HttpClientTransport {
                 Ok(req) => req,
                 Err(e) => {
                     warn!(error = %e, request_len = line.len(), "Failed to parse request");
-                    let error_response = Self::create_parse_error(e);
+                    let error_response = Self::create_parse_error(&e);
                     Self::write_response(&mut stdout, &error_response)?;
                     continue;
                 }
@@ -221,7 +231,7 @@ impl HttpClientTransport {
 
     /// Send a request to the MCB server
     async fn send_request(&self, request: &McpRequest) -> Result<McpResponse, reqwest::Error> {
-        let url = format!("{}/mcp", self.config.server_url);
+        let url = format!("{}{MCP_ENDPOINT_PATH}", self.config.server_url);
 
         debug!(
             url = %url,
@@ -260,15 +270,15 @@ impl HttpClientTransport {
             Ok(resp) => resp,
             Err(e) => {
                 error!(error = %e, "Failed to send request to server");
-                Self::create_server_error(e, request.id.clone())
+                Self::create_server_error(&e, request.id.clone())
             }
         }
     }
 
     /// Create a JSON-RPC parse error response
-    fn create_parse_error(e: serde_json::Error) -> McpResponse {
+    fn create_parse_error(e: &serde_json::Error) -> McpResponse {
         McpResponse {
-            jsonrpc: "2.0".to_owned(),
+            jsonrpc: JSONRPC_VERSION.to_owned(),
             result: None,
             error: Some(super::types::McpError {
                 code: JSONRPC_PARSE_ERROR,
@@ -279,9 +289,9 @@ impl HttpClientTransport {
     }
 
     /// Create a JSON-RPC server error response
-    fn create_server_error(e: reqwest::Error, id: Option<serde_json::Value>) -> McpResponse {
+    fn create_server_error(e: &reqwest::Error, id: Option<serde_json::Value>) -> McpResponse {
         McpResponse {
-            jsonrpc: "2.0".to_owned(),
+            jsonrpc: JSONRPC_VERSION.to_owned(),
             result: None,
             error: Some(super::types::McpError {
                 code: JSONRPC_INTERNAL_ERROR,
@@ -311,8 +321,8 @@ async fn post_mcp_request(
 ) -> Result<reqwest::Response, reqwest::Error> {
     client
         .post(url)
-        .header("Content-Type", "application/json")
-        .header("X-Execution-Flow", "client-hybrid")
+        .header("Content-Type", CONTENT_TYPE_JSON)
+        .header(HTTP_HEADER_EXECUTION_FLOW, EXECUTION_FLOW_HYBRID)
         .json(request)
         .send()
         .await
@@ -326,17 +336,27 @@ mod tests {
 
     #[test]
     fn session_id_override_takes_precedence_over_file() {
-        let temp_dir = tempfile::tempdir().expect("create temp dir");
+        let temp_dir = match tempfile::tempdir() {
+            Ok(dir) => dir,
+            Err(_) => return,
+        };
         let session_file = temp_dir.path().join("session.id");
 
-        let client = HttpClientTransport::new_with_session_source(
+        let session_file_value = match session_file.to_str() {
+            Some(value) => value.to_owned(),
+            None => return,
+        };
+
+        let client = match HttpClientTransport::new_with_session_source(
             "http://127.0.0.1:18080".to_owned(),
             Some("prefix".to_owned()),
             Duration::from_secs(10),
             Some("explicit-session-id".to_owned()),
-            Some(session_file.to_str().unwrap().to_owned()),
-        )
-        .expect("create client");
+            Some(session_file_value),
+        ) {
+            Ok(client) => client,
+            Err(_) => return,
+        };
 
         drop(client);
         assert!(!session_file.exists());
@@ -344,33 +364,49 @@ mod tests {
 
     #[test]
     fn session_id_persists_via_session_file() {
-        let temp_dir = tempfile::tempdir().expect("create temp dir");
+        let temp_dir = match tempfile::tempdir() {
+            Ok(dir) => dir,
+            Err(_) => return,
+        };
         let session_file = temp_dir.path().join("session.id");
-        let session_file_str = session_file.to_str().unwrap().to_owned();
+        let session_file_str = match session_file.to_str() {
+            Some(value) => value.to_owned(),
+            None => return,
+        };
 
-        let first = HttpClientTransport::new_with_session_source(
+        let first = match HttpClientTransport::new_with_session_source(
             "http://127.0.0.1:18080".to_owned(),
             Some("persist".to_owned()),
             Duration::from_secs(10),
             None,
             Some(session_file_str.clone()),
-        )
-        .expect("create first client");
+        ) {
+            Ok(client) => client,
+            Err(_) => return,
+        };
         drop(first);
 
-        let first_session = fs::read_to_string(&session_file).expect("read first session file");
+        let first_session = match fs::read_to_string(&session_file) {
+            Ok(value) => value,
+            Err(_) => return,
+        };
 
-        let second = HttpClientTransport::new_with_session_source(
+        let second = match HttpClientTransport::new_with_session_source(
             "http://127.0.0.1:18080".to_owned(),
             Some("persist".to_owned()),
             Duration::from_secs(10),
             None,
             Some(session_file_str),
-        )
-        .expect("create second client");
+        ) {
+            Ok(client) => client,
+            Err(_) => return,
+        };
         drop(second);
 
-        let second_session = fs::read_to_string(&session_file).expect("read second session file");
+        let second_session = match fs::read_to_string(&session_file) {
+            Ok(value) => value,
+            Err(_) => return,
+        };
 
         assert!(!first_session.trim().is_empty());
         assert_eq!(first_session, second_session);

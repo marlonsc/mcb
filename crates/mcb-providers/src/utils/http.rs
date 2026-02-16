@@ -10,7 +10,11 @@ use reqwest::Client;
 use serde_json::Value;
 
 use super::http_response::HttpResponseUtils;
+use super::retry::retry_with_backoff;
 use crate::constants::ERROR_MSG_REQUEST_TIMEOUT;
+
+// Re-export so callers of `send_json_request` can build `JsonRequestParams.retry`.
+pub(crate) use super::retry::RetryConfig;
 
 /// Default timeout for HTTP requests (30 seconds)
 pub(crate) const DEFAULT_HTTP_TIMEOUT: Duration =
@@ -196,34 +200,57 @@ pub(crate) struct JsonRequestParams<'a> {
     pub headers: &'a [(&'a str, String)],
     /// Optional JSON body.
     pub body: Option<&'a Value>,
+    /// Optional retry configuration for transient errors (rate limits, 5xx, timeouts).
+    pub retry: Option<RetryConfig>,
 }
 
-/// Send a JSON request with configurable parameters.
+/// Check whether a domain error represents a transient HTTP failure worth retrying.
+fn is_retryable_error(error: &Error) -> bool {
+    let msg = error.to_string();
+    msg.contains("rate limit exceeded")
+        || msg.contains("server error (5")
+        || msg.contains("timed out")
+        || msg.contains("timeout")
+}
+
+/// Send a JSON request with configurable parameters and optional retry.
 pub(crate) async fn send_json_request(
     params: JsonRequestParams<'_>,
 ) -> mcb_domain::error::Result<Value> {
-    let mut builder = params
-        .client
-        .request(params.method, params.url)
-        .timeout(params.timeout);
+    let JsonRequestParams {
+        client,
+        method,
+        url,
+        timeout,
+        provider,
+        operation,
+        kind,
+        headers,
+        body,
+        retry,
+    } = params;
 
-    for (key, value) in params.headers {
-        builder = builder.header(*key, value);
+    let execute = || async {
+        let mut builder = client.request(method.clone(), &url).timeout(timeout);
+
+        for (key, value) in headers {
+            builder = builder.header(*key, value);
+        }
+
+        if let Some(payload) = body {
+            builder = builder.json(payload);
+        }
+
+        let response = builder
+            .send()
+            .await
+            .map_err(|e| handle_request_error_with_kind(&e, timeout, provider, operation, kind))?;
+
+        HttpResponseUtils::check_and_parse(response, provider).await
+    };
+
+    match retry {
+        None => execute().await,
+        Some(config) => retry_with_backoff(config, |_| execute(), is_retryable_error).await,
     }
-
-    if let Some(payload) = params.body {
-        builder = builder.json(payload);
-    }
-
-    let response = builder.send().await.map_err(|e| {
-        handle_request_error_with_kind(
-            &e,
-            params.timeout,
-            params.provider,
-            params.operation,
-            params.kind,
-        )
-    })?;
-
-    HttpResponseUtils::check_and_parse(response, params.provider).await
 }

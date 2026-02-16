@@ -1,3 +1,7 @@
+//! Cache provider linkme registration macro.
+//!
+//! Used by cache providers: moka, redis.
+
 /// Register a `CacheProvider` with `linkme`.
 ///
 /// This macro generates the factory function header and linkme static registration.

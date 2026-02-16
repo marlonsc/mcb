@@ -72,7 +72,7 @@ Alert on regression > 10%
 **v0.1.1** (Current):
 
 - 308+ tests must pass
-- Eight-crate workspace builds
+- Seven-crate workspace builds
 - mcb-validate reports 0 violations
 
 v0.2.0:

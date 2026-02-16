@@ -2,11 +2,11 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::{ExecutionMetadata, MemorySearchResult, ObservationType};
 use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Value;
 use tracing::error;
-use uuid::Uuid;
 
 use super::common::{
     MemoryOriginOptions, SearchMemoriesJsonSpec, build_observation_metadata, opt_str, require_bool,
@@ -14,6 +14,7 @@ use super::common::{
     search_memories_as_json, str_vec,
 };
 use crate::args::MemoryArgs;
+use crate::constants::fields::{FIELD_OBSERVATION_ID, TAG_EXECUTION, TAG_FAILURE, TAG_SUCCESS};
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
 
@@ -66,7 +67,7 @@ pub async fn store_execution(
         Err(error_result) => return Ok(error_result),
     };
     let metadata = ExecutionMetadata {
-        id: Uuid::new_v4().to_string(),
+        id: domain_id::generate().to_string(),
         command: validated.command.clone(),
         exit_code: Some(validated.exit_code),
         duration_ms: Some(validated.duration_ms),
@@ -95,12 +96,12 @@ pub async fn store_execution(
         validated.command, validated.exit_code, validated.success
     );
     let tags = vec![
-        "execution".to_owned(),
+        TAG_EXECUTION.to_owned(),
         metadata.execution_type.as_str().to_owned(),
         if validated.success {
-            "success"
+            TAG_SUCCESS
         } else {
-            "failure"
+            TAG_FAILURE
         }
         .to_owned(),
     ];
@@ -110,7 +111,7 @@ pub async fn store_execution(
     let origin = resolve_memory_origin_context(
         args,
         data,
-        MemoryOriginOptions {
+        &MemoryOriginOptions {
             execution_from_args: Some(generated_execution_id.as_str()),
             execution_from_data: payload_execution_id.as_deref(),
             file_path_payload: None,
@@ -142,7 +143,7 @@ pub async fn store_execution(
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({
-            "observation_id": observation_id,
+            FIELD_OBSERVATION_ID: observation_id,
             "deduplicated": deduplicated,
         })),
         Err(_e) => {
@@ -168,7 +169,7 @@ pub async fn get_executions(
             mapper: |result: &MemorySearchResult| {
                 let execution = result.observation.metadata.execution.as_ref()?;
                 Some(serde_json::json!({
-                    "observation_id": result.observation.id,
+                    FIELD_OBSERVATION_ID: result.observation.id,
                     "command": execution.command,
                     "exit_code": execution.exit_code,
                     "duration_ms": execution.duration_ms,

@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use super::super::violation::NamingViolation;
+use crate::constants::architecture::{ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES};
 use crate::traits::violation::Severity;
 use crate::utils::naming::get_suffix;
 
@@ -33,7 +34,7 @@ pub fn validate_file_suffix(
     }
 
     // Check handler files in server crate
-    if crate_name == server_crate && path_str.contains("/handlers/") {
+    if crate_name == server_crate && path_str.contains(ARCH_PATH_HANDLERS) {
         // Handlers should have descriptive names (snake_case tool names)
         // but NOT have _handler suffix (that's redundant with directory)
         if file_name.ends_with("_handler") {
@@ -50,7 +51,7 @@ pub fn validate_file_suffix(
     // Check service files should have _service suffix if in services directory
     // Note: mcb-domain/domain_services contains interfaces, not implementations
     // so we skip suffix validation for that directory
-    if path_str.contains("/services/")
+    if path_str.contains(ARCH_PATH_SERVICES)
         && !path_str.contains("/domain_services/")
         && crate_name != domain_crate
         && !file_name.ends_with("_service")

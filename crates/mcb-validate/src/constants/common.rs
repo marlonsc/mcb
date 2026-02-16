@@ -24,6 +24,12 @@ pub const CONST_DECLARATION_PREFIXES: &[&str] = &["const ", "pub const ", "stati
 /// Path fragments that indicate a test file or directory.
 pub const TEST_PATH_PATTERNS: &[&str] = &["/tests/", "/target/", "_test.rs", "test.rs"];
 
+/// Path fragment identifying a tests directory (used in single-pattern skip checks).
+pub const TEST_DIR_FRAGMENT: &str = "/tests/";
+
+/// Suffix identifying test source files.
+pub const TEST_FILE_SUFFIX: &str = "_test.rs";
+
 /// File stems that should be skipped in many validators.
 pub const STANDARD_SKIP_FILES: &[&str] = &["lib", "mod", "main", "build"];
 
@@ -77,3 +83,36 @@ pub const PUB_USE_PREFIX: &str = "pub use";
 
 /// Rust `use` import prefix.
 pub const USE_PREFIX: &str = "use ";
+
+/// Rust `async fn` keyword prefix.
+pub const ASYNC_FN_PREFIX: &str = "async fn ";
+
+/// Rust `mod ` keyword prefix.
+pub const MOD_PREFIX: &str = "mod ";
+
+// ============================================================================
+// Error Handling Detection Patterns
+// ============================================================================
+
+/// `.unwrap()` method call pattern.
+pub const UNWRAP_CALL: &str = ".unwrap()";
+
+/// `.expect(` method call pattern.
+pub const EXPECT_CALL: &str = ".expect(";
+
+// ============================================================================
+// Validation Hint Patterns
+// ============================================================================
+
+/// Prefix for inline ignore-hint comments (`mcb-validate-ignore: `).
+pub const VALIDATE_IGNORE_PREFIX: &str = "mcb-validate-ignore: ";
+
+// ============================================================================
+// DI / Implementation Suffix Patterns
+// ============================================================================
+
+/// Common concrete-type suffixes that indicate a DI violation.
+pub const DI_IMPL_SUFFIXES: &[&str] = &["Impl", "Implementation", "Adapter"];
+
+/// Handler file suffix (e.g. `foo_handler.rs`).
+pub const HANDLER_FILE_SUFFIX: &str = "_handler.rs";

@@ -17,10 +17,12 @@ use milvus::schema::{CollectionSchema, CollectionSchemaBuilder, FieldSchema};
 use milvus::value::{Value, ValueVec};
 
 use crate::constants::{
-    MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_DISTANCE_METRIC, MILVUS_FIELD_VARCHAR_MAX_LENGTH,
-    MILVUS_FLUSH_RETRY_BACKOFF_MS, MILVUS_FLUSH_RETRY_COUNT, MILVUS_INDEX_RETRY_BACKOFF_MS,
-    MILVUS_IVFFLAT_NLIST, MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE,
-    MILVUS_VECTOR_INDEX_NAME,
+    MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_DISTANCE_METRIC, MILVUS_ERROR_COLLECTION_NOT_EXISTS,
+    MILVUS_ERROR_RATE_LIMIT, MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_FLUSH_RETRY_BACKOFF_MS,
+    MILVUS_FLUSH_RETRY_COUNT, MILVUS_INDEX_RETRY_BACKOFF_MS, MILVUS_IVFFLAT_NLIST,
+    MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_QUERY_BATCH_SIZE, MILVUS_VECTOR_INDEX_NAME,
+    STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS, STATS_FIELD_VECTORS_COUNT,
+    STATUS_ACTIVE,
 };
 use crate::utils::retry::{RetryConfig, retry_with_backoff};
 
@@ -111,16 +113,25 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
             })?;
 
         let mut result = HashMap::new();
-        result.insert("collection".to_owned(), serde_json::json!(collection));
-        result.insert("status".to_owned(), serde_json::json!("active"));
+        result.insert(
+            STATS_FIELD_COLLECTION.to_owned(),
+            serde_json::json!(collection),
+        );
+        result.insert(
+            STATS_FIELD_STATUS.to_owned(),
+            serde_json::json!(STATUS_ACTIVE),
+        );
 
         if let Some(count_str) = stats.get("row_count")
             && let Ok(count) = count_str.parse::<i64>()
         {
-            result.insert("vectors_count".to_owned(), serde_json::json!(count));
+            result.insert(
+                STATS_FIELD_VECTORS_COUNT.to_owned(),
+                serde_json::json!(count),
+            );
         }
 
-        result.insert("provider".to_owned(), serde_json::json!("milvus"));
+        result.insert(STATS_FIELD_PROVIDER.to_owned(), serde_json::json!("milvus"));
         Ok(result)
     }
 
@@ -134,14 +145,14 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
             |_| self.client.flush_collections(vec![&name_str]),
             |e| {
                 let err_str = e.to_string();
-                err_str.contains("RateLimit") || err_str.contains("rate limit")
+                err_str.contains(MILVUS_ERROR_RATE_LIMIT) || err_str.contains("rate limit")
             },
         )
         .await;
 
         result.map(|_| ()).map_err(|e| {
             let err_str = e.to_string();
-            if err_str.contains("RateLimit") || err_str.contains("rate limit") {
+            if err_str.contains(MILVUS_ERROR_RATE_LIMIT) || err_str.contains("rate limit") {
                 Error::vector_db(format!("Failed to flush collection after retries: {e}"))
             } else {
                 Error::vector_db(format!("Failed to flush collection: {e}"))
@@ -180,7 +191,7 @@ impl MilvusVectorStoreProvider {
         let name_str = collection.to_string();
         if let Err(e) = self.client.load_collection(&name_str, None).await {
             let err_str = e.to_string();
-            if err_str.contains("CollectionNotExists")
+            if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
                 || err_str.contains("collection not found")
                 || err_str.contains("not exist")
             {
@@ -349,14 +360,17 @@ impl MilvusVectorStoreProvider {
             },
             |e| {
                 let err_str = e.to_string();
-                err_str.contains("CollectionNotExists") || err_str.contains("collection not found")
+                err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
+                    || err_str.contains("collection not found")
             },
         )
         .await;
 
         if let Err(e) = index_result {
             let err_str = e.to_string();
-            if err_str.contains("CollectionNotExists") || err_str.contains("collection not found") {
+            if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
+                || err_str.contains("collection not found")
+            {
                 return Err(Error::vector_db(format!(
                     "Failed to create index after retries: {e}"
                 )));
@@ -847,7 +861,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         // Ensure collection is loaded
         if let Err(e) = self.client.load_collection(&name_str, None).await {
             let err_str = e.to_string();
-            if err_str.contains("CollectionNotExists")
+            if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
                 || err_str.contains("collection not found")
                 || err_str.contains("not exist")
             {
@@ -885,7 +899,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         // Ensure collection is loaded
         if let Err(e) = self.client.load_collection(&name_str, None).await {
             let err_str = e.to_string();
-            if err_str.contains("CollectionNotExists")
+            if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
                 || err_str.contains("collection not found")
                 || err_str.contains("not exist")
             {

@@ -26,6 +26,9 @@ impl IssueEntityHandler {
     }
 
     /// Route an incoming `issue_entity` tool call to the appropriate CRUD operation.
+    ///
+    /// # Errors
+    /// Returns an error when required identifiers or payload fields are missing.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,

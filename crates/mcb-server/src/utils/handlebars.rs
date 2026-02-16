@@ -259,7 +259,6 @@ impl HelperDef for StatusBadgeHelper {
         let status = h.param(0).and_then(|p| p.value().as_str()).unwrap_or("");
 
         let color = match status {
-            "Draft" | "Stopped" => "gray",
             "Active" | "Running" | "Healthy" => "green",
             "InProgress" | "Starting" => "blue",
             "Error" | "Unhealthy" => "red",
@@ -333,7 +332,11 @@ impl HelperDef for TruncateTextHelper {
             .param(0)
             .map(|p| match p.value() {
                 Value::String(s) => s.clone(),
-                other => other.to_string(),
+                other @ Value::Null
+                | other @ Value::Bool(_)
+                | other @ Value::Number(_)
+                | other @ Value::Array(_)
+                | other @ Value::Object(_) => other.to_string(),
             })
             .unwrap_or_default();
 

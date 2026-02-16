@@ -25,6 +25,10 @@ use mcb_providers::database::{
 use tracing::info;
 
 use crate::config::{AppConfig, ConfigLoader};
+use crate::constants::providers::DEFAULT_DB_CONFIG_NAME;
+use crate::constants::services::{
+    CACHE_SERVICE_NAME, EMBEDDING_SERVICE_NAME, LANGUAGE_SERVICE_NAME, VECTOR_STORE_SERVICE_NAME,
+};
 use crate::crypto::CryptoService;
 use crate::di::admin::{
     CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface, EmbeddingAdminService,
@@ -399,43 +403,55 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     // ========================================================================
 
     let embedding_admin_svc = Arc::new(EmbeddingAdminService::new(
-        "Embedding Service",
+        EMBEDDING_SERVICE_NAME,
         Arc::clone(&embedding_resolver),
         Arc::clone(&embedding_handle),
     ));
-    let embedding_admin: Arc<dyn EmbeddingAdminInterface> =
-        Arc::clone(&embedding_admin_svc) as Arc<dyn EmbeddingAdminInterface>;
+    let embedding_admin: Arc<dyn EmbeddingAdminInterface> = embedding_admin_svc;
 
     let vector_store_admin_svc = Arc::new(VectorStoreAdminService::new(
-        "Vector Store Service",
+        VECTOR_STORE_SERVICE_NAME,
         Arc::clone(&vector_store_resolver),
         Arc::clone(&vector_store_handle),
     ));
-    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> =
-        Arc::clone(&vector_store_admin_svc) as Arc<dyn VectorStoreAdminInterface>;
+    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> = vector_store_admin_svc;
 
     let cache_admin_svc = Arc::new(CacheAdminService::new(
-        "Cache Service",
+        CACHE_SERVICE_NAME,
         Arc::clone(&cache_resolver),
         Arc::clone(&cache_handle),
     ));
-    let cache_admin: Arc<dyn CacheAdminInterface> =
-        Arc::clone(&cache_admin_svc) as Arc<dyn CacheAdminInterface>;
+    let cache_admin: Arc<dyn CacheAdminInterface> = cache_admin_svc;
 
     let language_admin_svc = Arc::new(LanguageAdminService::new(
-        "Language Service",
+        LANGUAGE_SERVICE_NAME,
         Arc::clone(&language_resolver),
         Arc::clone(&language_handle),
     ));
-    let language_admin: Arc<dyn LanguageAdminInterface> =
-        Arc::clone(&language_admin_svc) as Arc<dyn LanguageAdminInterface>;
+    let language_admin: Arc<dyn LanguageAdminInterface> = language_admin_svc;
 
     // Collect lifecycle managed services
     let lifecycle_services: Vec<Arc<dyn LifecycleManaged>> = vec![
-        embedding_admin_svc,
-        vector_store_admin_svc,
-        cache_admin_svc,
-        language_admin_svc,
+        Arc::new(EmbeddingAdminService::new(
+            EMBEDDING_SERVICE_NAME,
+            Arc::clone(&embedding_resolver),
+            Arc::clone(&embedding_handle),
+        )),
+        Arc::new(VectorStoreAdminService::new(
+            VECTOR_STORE_SERVICE_NAME,
+            Arc::clone(&vector_store_resolver),
+            Arc::clone(&vector_store_handle),
+        )),
+        Arc::new(CacheAdminService::new(
+            CACHE_SERVICE_NAME,
+            Arc::clone(&cache_resolver),
+            Arc::clone(&cache_handle),
+        )),
+        Arc::new(LanguageAdminService::new(
+            LANGUAGE_SERVICE_NAME,
+            Arc::clone(&language_resolver),
+            Arc::clone(&language_handle),
+        )),
     ];
 
     // ========================================================================
@@ -456,7 +472,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     // Create Domain Services & Repositories
     // ========================================================================
 
-    let db_config = config.providers.database.configs.get("default").ok_or_else(|| {
+    let db_config = config.providers.database.configs.get(DEFAULT_DB_CONFIG_NAME).ok_or_else(|| {
         mcb_domain::error::Error::config(
             "providers.database.configs.default is required; set path in config/default.toml under [providers.database.configs.default]",
         )
@@ -562,7 +578,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 ///
 /// Returns an error if application initialization fails.
 pub async fn init_test_app() -> Result<AppContext> {
-    let config = ConfigLoader::new().load().expect("load config");
+    let config = ConfigLoader::new().load()?;
     init_app(config).await
 }
 

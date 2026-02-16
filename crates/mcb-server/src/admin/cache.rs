@@ -18,6 +18,9 @@ pub struct CacheErrorResponse {
 }
 
 /// Get cache statistics (protected)
+///
+/// # Errors
+/// Returns `503` when cache provider is unavailable and `500` when stats retrieval fails.
 #[get("/cache/stats")]
 pub async fn get_cache_stats(
     _auth: AdminAuth,

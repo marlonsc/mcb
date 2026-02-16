@@ -7,6 +7,11 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 
+use super::constants::{
+    NORMALIZED_IDENTIFIER, NORMALIZED_LITERAL, RABIN_KARP_BASE, RABIN_KARP_MODULUS,
+};
+use super::utils::lines_overlap;
+
 /// A fingerprint represents a hash of a code fragment
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Fingerprint(u64);
@@ -70,8 +75,8 @@ impl TokenFingerprinter {
     /// Create a new fingerprinter with the given window size
     #[must_use]
     pub fn new(window_size: usize) -> Self {
-        let base: u64 = 31;
-        let modulus: u64 = 1_000_000_007; // Large prime
+        let base: u64 = RABIN_KARP_BASE;
+        let modulus: u64 = RABIN_KARP_MODULUS;
 
         // Precompute base^(window_size-1) mod modulus
         let base_power = Self::mod_pow(base, window_size.saturating_sub(1) as u64, modulus);
@@ -195,7 +200,7 @@ impl TokenFingerprinter {
 
                     // Skip if in the same file and overlapping
                     if loc1.file == loc2.file {
-                        let overlap = Self::lines_overlap(
+                        let overlap = lines_overlap(
                             loc1.start_line,
                             loc1.end_line,
                             loc2.start_line,
@@ -216,11 +221,6 @@ impl TokenFingerprinter {
         }
 
         matches
-    }
-
-    /// Check if two line ranges overlap
-    fn lines_overlap(start1: usize, end1: usize, start2: usize, end2: usize) -> bool {
-        !(end1 < start2 || end2 < start1)
     }
 
     /// Clear all stored fingerprints
@@ -299,8 +299,8 @@ impl Token {
     #[must_use]
     pub fn normalized_text(&self) -> &str {
         match self.token_type {
-            TokenType::Identifier => "$ID",
-            TokenType::Literal => "$LIT",
+            TokenType::Identifier => NORMALIZED_IDENTIFIER,
+            TokenType::Literal => NORMALIZED_LITERAL,
             TokenType::Keyword
             | TokenType::Operator
             | TokenType::Punctuation

@@ -37,7 +37,7 @@ pub async fn summarize_session(
         input.tool_name_args = Some("session");
         input.worktree_id_args = args.worktree_id.as_deref();
         input.require_project_id = true;
-        let origin_context = resolve_origin_context(input)?;
+        let origin_context = resolve_origin_context(&input)?;
         let project_id = origin_context.project_id.clone().ok_or_else(|| {
             McpError::invalid_params("project_id is required for summarize", None)
         })?;

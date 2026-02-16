@@ -11,103 +11,61 @@ macro_rules! define_violations {
         no_display,
         dynamic_severity,
         $category:expr,
-        $vis:vis enum $name:ident {
-            $(
-                $(#[doc = $doc:literal])*
-                #[violation(
-                    id = $id:literal,
-                    severity = $severity:ident
-                    $(, message = $msg:literal)?
-                    $(, suggestion = $suggestion:literal)?
-                )]
-                $variant:ident {
-                    $( $field:ident : $field_ty:ty ),* $(,)?
-                }
-            ),* $(,)?
-        }
+        $vis:vis enum $name:ident { $($body:tt)* }
     ) => {
         define_violations! {
-            @emit_variants
+            @forward
             no_display,
             dynamic_severity,
             $category,
-            $vis enum $name {
-                $(
-                    $(#[doc = $doc])*
-                    #[violation(id = $id, severity = $severity $(, message = $msg)? $(, suggestion = $suggestion)?)]
-                    $variant { $( $field : $field_ty ),* }
-                ),*
-            }
+            $vis enum $name { $($body)* }
         }
     };
 
     (
         dynamic_severity,
         $category:expr,
-        $vis:vis enum $name:ident {
-            $(
-                $(#[doc = $doc:literal])*
-                #[violation(
-                    id = $id:literal,
-                    severity = $severity:ident
-                    $(, message = $msg:literal)?
-                    $(, suggestion = $suggestion:literal)?
-                )]
-                $variant:ident {
-                    $( $field:ident : $field_ty:ty ),* $(,)?
-                }
-            ),* $(,)?
-        }
+        $vis:vis enum $name:ident { $($body:tt)* }
     ) => {
         define_violations! {
-            @emit_variants
+            @forward
             with_display,
             dynamic_severity,
             $category,
-            $vis enum $name {
-                $(
-                    $(#[doc = $doc])*
-                    #[violation(id = $id, severity = $severity $(, message = $msg)? $(, suggestion = $suggestion)?)]
-                    $variant { $( $field : $field_ty ),* }
-                ),*
-            }
+            $vis enum $name { $($body)* }
         }
     };
 
     (
         no_display,
         $category:expr,
-        $vis:vis enum $name:ident {
-            $(
-                $(#[doc = $doc:literal])*
-                #[violation(
-                    id = $id:literal,
-                    severity = $severity:ident
-                    $(, message = $msg:literal)?
-                    $(, suggestion = $suggestion:literal)?
-                )]
-                $variant:ident {
-                    $( $field:ident : $field_ty:ty ),* $(,)?
-                }
-            ),* $(,)?
-        }
+        $vis:vis enum $name:ident { $($body:tt)* }
     ) => {
         define_violations! {
-            @emit_variants
+            @forward
             no_display,
             static_severity,
             $category,
-            $vis enum $name {
-                $(
-                    $(#[doc = $doc])*
-                    #[violation(id = $id, severity = $severity $(, message = $msg)? $(, suggestion = $suggestion)?)]
-                    $variant { $( $field : $field_ty ),* }
-                ),*
-            }
+            $vis enum $name { $($body)* }
         }
     };
 
     (
+        $category:expr,
+        $vis:vis enum $name:ident { $($body:tt)* }
+    ) => {
+        define_violations! {
+            @forward
+            with_display,
+            static_severity,
+            $category,
+            $vis enum $name { $($body)* }
+        }
+    };
+
+    (@forward
+        $display:tt,
+        $severity_mode:ident,
         $category:expr,
         $vis:vis enum $name:ident {
             $(
@@ -126,8 +84,8 @@ macro_rules! define_violations {
     ) => {
         define_violations! {
             @emit_variants
-            with_display,
-            static_severity,
+            $display,
+            $severity_mode,
             $category,
             $vis enum $name {
                 $(
@@ -302,6 +260,7 @@ macro_rules! define_violations {
                 }
             }
         }
+
     };
 
     (@impl_violation
@@ -353,6 +312,7 @@ macro_rules! define_violations {
                 }
             }
         }
+
     };
 
     // Format helper - with message template
@@ -404,7 +364,7 @@ macro_rules! define_violations {
         if let Self::$variant { locations, .. } = $self {
             locations
                 .first()
-                .map(|loc| $crate::violation_macro::ExtractFilePath::extract_file_path(loc))
+                .map(|loc| $crate::macros::ExtractFilePath::extract_file_path(loc))
         } else {
             None
         }
@@ -463,7 +423,7 @@ macro_rules! define_violations {
     (@render_template $template:literal, $( $field:ident : $field_ty:ty ),*) => {{
         let mut rendered = $template.to_string();
         $(
-            let formatted = $crate::violation_macro::violation_field_fmt::ViolationFieldFmt::fmt_field($field);
+            let formatted = $crate::macros::violation_field_fmt::ViolationFieldFmt::fmt_field($field);
             rendered = rendered.replace(concat!("{", stringify!($field), "}"), &formatted);
         )*
         rendered

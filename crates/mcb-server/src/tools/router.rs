@@ -154,6 +154,9 @@ fn insert_argument_if_missing(
 ///
 /// Parses the request arguments and delegates to the matching handler.
 /// After tool execution, automatically triggers `PostToolUse` hook for memory operations.
+///
+/// # Errors
+/// Returns an error when execution context validation or tool dispatch fails.
 pub async fn route_tool_call(
     request: CallToolRequestParams,
     handlers: &ToolHandlers,
@@ -379,8 +382,12 @@ mod tests {
         let mut context = valid_context();
         context.project_id = Some("   ".to_owned());
 
-        let error = validate_execution_context("search", &context)
-            .expect_err("blank project_id must be rejected");
+        let validation = validate_execution_context("search", &context);
+        assert!(validation.is_err(), "blank project_id must be rejected");
+        let error = match validation {
+            Ok(()) => return,
+            Err(error) => error,
+        };
         assert!(error.message.contains("project_id"));
     }
 
@@ -390,8 +397,15 @@ mod tests {
         context.delegated = Some(true);
         context.parent_session_id = Some(" ".to_owned());
 
-        let error = validate_execution_context("memory", &context)
-            .expect_err("delegated context must include parent_session_id");
+        let validation = validate_execution_context("memory", &context);
+        assert!(
+            validation.is_err(),
+            "delegated context must include parent_session_id"
+        );
+        let error = match validation {
+            Ok(()) => return,
+            Err(error) => error,
+        };
         assert!(error.message.contains("parent_session_id"));
     }
 
@@ -413,8 +427,10 @@ mod tests {
             execution_flow: Some("stdio-only".to_owned()),
         };
 
-        validate_execution_context("validate", &context)
-            .expect("non-index/search/memory tools should not require provenance scope");
+        assert!(
+            validate_execution_context("validate", &context).is_ok(),
+            "non-index/search/memory tools should not require provenance scope"
+        );
     }
 
     #[test]
@@ -422,8 +438,15 @@ mod tests {
         let mut context = valid_context();
         context.execution_flow = Some("server-hybrid".to_owned());
 
-        let err = validate_execution_context("validate", &context)
-            .expect_err("validate must be rejected in server-hybrid flow");
+        let validation = validate_execution_context("validate", &context);
+        assert!(
+            validation.is_err(),
+            "validate must be rejected in server-hybrid flow"
+        );
+        let err = match validation {
+            Ok(()) => return,
+            Err(error) => error,
+        };
         assert!(err.message.contains("Operation mode matrix violation"));
     }
 
@@ -432,8 +455,15 @@ mod tests {
         let mut context = valid_context();
         context.execution_flow = Some("client-hybrid".to_owned());
 
-        let err = validate_execution_context("search", &context)
-            .expect_err("search must be rejected in client-hybrid flow");
+        let validation = validate_execution_context("search", &context);
+        assert!(
+            validation.is_err(),
+            "search must be rejected in client-hybrid flow"
+        );
+        let err = match validation {
+            Ok(()) => return,
+            Err(error) => error,
+        };
         assert!(err.message.contains("Operation mode matrix violation"));
     }
 
@@ -442,7 +472,9 @@ mod tests {
         let mut context = valid_context();
         context.execution_flow = Some("server-hybrid".to_owned());
 
-        validate_execution_context("search", &context)
-            .expect("search must be allowed in server-hybrid flow");
+        assert!(
+            validate_execution_context("search", &context).is_ok(),
+            "search must be allowed in server-hybrid flow"
+        );
     }
 }

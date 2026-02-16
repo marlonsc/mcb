@@ -1,9 +1,12 @@
-use crate::constants::common::{COMMENT_PREFIX, CONTEXT_PREVIEW_LENGTH};
+use crate::constants::common::{
+    CFG_TEST_MARKER, COMMENT_PREFIX, CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT,
+};
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
 
+use super::constants::BACKGROUND_FN_PATTERNS;
 use super::violation::AsyncViolation;
 
 /// Detect spawn without await patterns
@@ -17,28 +20,11 @@ pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncVio
 
     // Function name patterns that indicate intentional fire-and-forget spawns
     // Includes constructor patterns that often spawn background workers
-    let background_fn_patterns = [
-        "spawn",
-        "background",
-        "graceful",
-        "shutdown",
-        "start",
-        "run",
-        "worker",
-        "daemon",
-        "listener",
-        "handler",
-        "process",
-        "new",
-        "with_",
-        "init",
-        "create",
-        "build", // Constructor patterns
-    ];
+    let background_fn_patterns = BACKGROUND_FN_PATTERNS;
 
     for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, _src_dir| {
         let path = &entry.absolute_path;
-        if path.to_str().is_some_and(|s| s.contains("/tests/")) {
+        if path.to_str().is_some_and(|s| s.contains(TEST_DIR_FRAGMENT)) {
             return Ok(());
         }
 
@@ -50,12 +36,12 @@ pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncVio
             let trimmed = line.trim();
 
             // Skip comments
-            if trimmed.starts_with("//") {
+            if trimmed.starts_with(COMMENT_PREFIX) {
                 continue;
             }
 
             // Track test modules
-            if trimmed.contains("#[cfg(test)]") {
+            if trimmed.contains(CFG_TEST_MARKER) {
                 in_test_module = true;
                 continue;
             }

@@ -137,14 +137,22 @@ pub fn create_test_indexing_result(
 ///
 /// Loads the ONNX embedding model exactly once and reuses it across all tests.
 pub fn try_shared_app_context() -> Option<&'static AppContext> {
-    static CTX: OnceLock<Option<AppContext>> = OnceLock::new();
+    static CTX: OnceLock<(tokio::runtime::Runtime, Option<AppContext>)> = OnceLock::new();
 
-    CTX.get_or_init(|| {
+    let (_, ctx) = CTX.get_or_init(|| {
         std::thread::spawn(|| {
             let rt = tokio::runtime::Runtime::new().expect("create init runtime");
             let result = rt.block_on(async {
                 let temp_dir = tempfile::tempdir().expect("create temp dir");
-                let temp_root = temp_dir.keep();
+                let temp_root = temp_dir.into_path(); // Keep path, let dir leak or persist? tempdir drops on drop. 
+                // We should arguably keep temp_dir alive too if db depends on it, but here we just pass path.
+                // If temp_dir is dropped, files go away. 
+                // In the original code, `temp_dir` was dropped at end of block_on async block!
+                // `let temp_root = temp_dir.keep();` prevents deletion.
+                // But wait, original code:
+                // let temp_root = temp_dir.keep();
+                // This consumes temp_dir and returns PathBuf. So persistence was fine.
+
                 let temp_path = temp_root.join("mcb-fixtures-shared.db");
 
                 let mut config = ConfigLoader::new().load().expect("load config");
@@ -158,15 +166,16 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                 config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
                 init_app(config).await
             });
+
             match result {
-                Ok(ctx) => Some(ctx),
+                Ok(ctx) => (rt, Some(ctx)),
                 Err(e) => {
                     let msg = e.to_string();
                     if msg.contains("model.onnx") || msg.contains("Failed to initialize FastEmbed") {
                         eprintln!(
                             "Skipping tests requiring shared AppContext: embedding model unavailable in offline env: {e}"
                         );
-                        None
+                        (rt, None)
                     } else {
                         panic!("shared init_app failed: {e}");
                     }
@@ -175,8 +184,8 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
         })
         .join()
         .expect("init thread panicked")
-    })
-    .as_ref()
+    });
+    ctx.as_ref()
 }
 
 pub fn shared_app_context() -> &'static AppContext {

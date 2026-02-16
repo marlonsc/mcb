@@ -4,6 +4,7 @@
 
 use std::path::Path;
 
+use super::constants::CLIPPY_PREFIX;
 use super::types::{ClippyOutput, LintViolation, RuffViolation};
 
 /// Execute linter command
@@ -99,7 +100,7 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
         // Try to parse as ClippyOutput (with reason field)
         if let Ok(clippy_output) = serde_json::from_str::<ClippyOutput>(line) {
             // Only process compiler-message reason
-            if clippy_output.reason != "compiler-message" {
+            if clippy_output.reason != super::constants::CLIPPY_REASON_COMPILER_MESSAGE {
                 continue;
             }
 
@@ -123,10 +124,10 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
             }
 
             // Normalize rule code: ensure clippy:: prefix for consistency
-            let rule_code = if raw_code.starts_with("clippy::") {
+            let rule_code = if raw_code.starts_with(CLIPPY_PREFIX) {
                 raw_code
             } else {
-                format!("clippy::{raw_code}")
+                format!("{CLIPPY_PREFIX}{raw_code}")
             };
 
             violations.push(LintViolation {
@@ -157,7 +158,7 @@ pub fn find_project_root(files: &[&Path]) -> Option<std::path::PathBuf> {
     if let Some(first_file) = files.first() {
         let mut current = first_file.parent()?;
         loop {
-            if current.join("Cargo.toml").exists() {
+            if current.join(super::constants::CARGO_TOML_FILENAME).exists() {
                 return Some(current.to_path_buf());
             }
             current = current.parent()?;

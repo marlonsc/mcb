@@ -23,6 +23,9 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use mcb_domain::constants::keys::{
+    METADATA_KEY_CONTENT, METADATA_KEY_SESSION_ID, METADATA_KEY_TAGS, METADATA_KEY_TYPE,
+};
 use mcb_domain::entities::memory::{
     ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
     ObservationMetadata, ObservationType, OriginContext, SessionSummary,
@@ -37,14 +40,10 @@ use mcb_domain::utils::id;
 use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
 use std::str::FromStr;
-use uuid::Uuid;
-
-use mcb_domain::constants::keys::{
-    METADATA_KEY_CONTENT, METADATA_KEY_SESSION_ID, METADATA_KEY_TAGS, METADATA_KEY_TYPE,
-};
 
 use crate::constants::{
     HYBRID_SEARCH_MULTIPLIER, MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH, RRF_K,
+    RRF_MAX_SCORE_STREAMS, RRF_NORMALIZED_MAX, RRF_SCORE_NUMERATOR,
 };
 
 /// Hybrid memory service combining relational metadata with semantic vector search.
@@ -143,7 +142,7 @@ impl MemoryServiceImpl {
         let embedding_id = ids.first().cloned();
 
         let observation = Observation {
-            id: Uuid::new_v4().to_string(),
+            id: id::generate().to_string(),
             project_id,
             content,
             content_hash,
@@ -197,7 +196,7 @@ impl MemoryServiceImpl {
         let mut rrf_scores: HashMap<String, f32> = HashMap::new();
 
         for (rank, fts_result) in fts_results.iter().enumerate() {
-            let score = 1.0 / (RRF_K + rank as f32 + 1.0);
+            let score = RRF_SCORE_NUMERATOR / (RRF_K + rank as f32 + 1.0);
             let key = fts_result.id.clone();
             *rrf_scores.entry(key).or_default() += score;
         }
@@ -205,7 +204,7 @@ impl MemoryServiceImpl {
         for (rank, vec_result) in vector_results.iter().enumerate() {
             let content_hash = compute_content_hash(&vec_result.content);
             if let Ok(Some(obs)) = self.repository.find_by_hash(&content_hash).await {
-                let score = 1.0 / (RRF_K + rank as f32 + 1.0);
+                let score = RRF_SCORE_NUMERATOR / (RRF_K + rank as f32 + 1.0);
                 let key = obs.id.clone();
                 *rrf_scores.entry(key).or_default() += score;
             }
@@ -241,8 +240,8 @@ impl MemoryServiceImpl {
                 if !filter.matches(obs) {
                     continue;
                 }
-                let max_possible_rrf = 2.0 / (RRF_K + 1.0);
-                let normalized_score = (rrf_score / max_possible_rrf).min(1.0);
+                let max_possible_rrf = RRF_MAX_SCORE_STREAMS / (RRF_K + 1.0);
+                let normalized_score = (rrf_score / max_possible_rrf).min(RRF_NORMALIZED_MAX);
                 results.push(MemorySearchResult {
                     id: id.clone(),
                     observation: obs.clone(),
@@ -296,7 +295,7 @@ impl MemoryServiceImpl {
             input.project_id
         };
         let summary = SessionSummary {
-            id: Uuid::new_v4().to_string(),
+            id: id::generate().to_string(),
             project_id: project_id.clone(),
             session_id: session_id.clone(),
             topics: input.topics,
@@ -382,7 +381,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
 
         let metadata = ObservationMetadata {
-            id: Uuid::new_v4().to_string(),
+            id: id::generate().to_string(),
             ..Default::default()
         };
 

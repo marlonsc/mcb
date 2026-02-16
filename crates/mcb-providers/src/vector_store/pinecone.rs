@@ -15,11 +15,17 @@ use dashmap::DashMap;
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
+use crate::constants::{
+    EDGEVEC_DEFAULT_DIMENSIONS, HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER,
+    STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS, STATS_FIELD_VECTORS_COUNT,
+    STATUS_ACTIVE, STATUS_UNKNOWN,
+};
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
 
 /// Pinecone vector store provider
 ///
@@ -68,8 +74,8 @@ impl PineconeVectorStoreProvider {
         body: Option<Value>,
     ) -> Result<Value> {
         let headers = vec![
-            ("Api-Key", self.api_key.clone()),
-            ("Content-Type", CONTENT_TYPE_JSON.to_owned()),
+            (PINECONE_API_KEY_HEADER, self.api_key.clone()),
+            (HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned()),
         ];
 
         send_json_request(JsonRequestParams {
@@ -82,6 +88,7 @@ impl PineconeVectorStoreProvider {
             kind: RequestErrorKind::VectorDb,
             headers: &headers,
             body: body.as_ref(),
+            retry: Some(RetryConfig::new(2, std::time::Duration::from_secs(1))),
         })
         .await
     }
@@ -144,11 +151,11 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
 
         let mut stats = HashMap::new();
         stats.insert(
-            "collection".to_owned(),
+            STATS_FIELD_COLLECTION.to_owned(),
             serde_json::json!(collection.to_string()),
         );
         stats.insert(
-            "provider".to_owned(),
+            STATS_FIELD_PROVIDER.to_owned(),
             serde_json::json!(self.provider_name()),
         );
 
@@ -158,13 +165,19 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
                     && let Some(ns) = namespaces.get(&collection_str)
                     && let Some(count) = ns.get("vectorCount")
                 {
-                    stats.insert("vectors_count".to_owned(), count.clone());
+                    stats.insert(STATS_FIELD_VECTORS_COUNT.to_owned(), count.clone());
                 }
-                stats.insert("status".to_owned(), serde_json::json!("active"));
+                stats.insert(
+                    STATS_FIELD_STATUS.to_owned(),
+                    serde_json::json!(STATUS_ACTIVE),
+                );
             }
             Err(_) => {
-                stats.insert("status".to_owned(), serde_json::json!("unknown"));
-                stats.insert("vectors_count".to_owned(), serde_json::json!(0));
+                stats.insert(
+                    STATS_FIELD_STATUS.to_owned(),
+                    serde_json::json!(STATUS_UNKNOWN),
+                );
+                stats.insert(STATS_FIELD_VECTORS_COUNT.to_owned(), serde_json::json!(0));
             }
         }
 
@@ -225,7 +238,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         let batch_size = crate::constants::PINECONE_UPSERT_BATCH_SIZE;
 
         for (i, (embedding, meta)) in vectors.iter().zip(metadata.iter()).enumerate() {
-            let id = format!("vec_{}", uuid::Uuid::new_v4());
+            let id = format!("vec_{}", id::generate());
             pinecone_vectors.push(serde_json::json!({
                 "id": id,
                 "values": embedding.vector,
@@ -376,7 +389,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         let dimensions = self
             .collections
             .get(&collection_str)
-            .map_or(1536, |d| *d.value());
+            .map_or(EDGEVEC_DEFAULT_DIMENSIONS, |d| *d.value());
 
         let zero_vector = vec![0.0f32; dimensions];
         self.search_similar(collection, &zero_vector, limit, None)
@@ -419,7 +432,7 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         let dimensions = self
             .collections
             .get(&collection_str)
-            .map_or(1536, |d| *d.value());
+            .map_or(EDGEVEC_DEFAULT_DIMENSIONS, |d| *d.value());
 
         let zero_vector = vec![0.0f32; dimensions];
 

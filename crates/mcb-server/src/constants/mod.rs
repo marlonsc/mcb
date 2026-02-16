@@ -5,8 +5,16 @@
 
 /// Display formatting and presentation constants.
 pub mod display;
+/// JSON response field name constants.
+pub mod fields;
+/// Git reference constants for VCS handlers.
+pub mod git;
 /// Default limits and thresholds for MCP tool handlers and admin endpoints.
 pub mod limits;
+/// MCP and JSON-RPC protocol constants.
+pub mod protocol;
+/// MCP tool name constants.
+pub mod tools;
 /// VCS impact analysis constants.
 pub mod vcs;
 

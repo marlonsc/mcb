@@ -20,6 +20,7 @@ use crate::constants::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 use crate::traits::violation::{Violation, ViolationCategory};
 use mcb_domain::ports::providers::{ComplexityAnalyzer, DeadCodeDetector, TdgScorer};
 
+use crate::define_violations;
 use crate::validators::pmat_native::NativePmatAnalyzer;
 use crate::{Result, Severity, ValidationConfig};
 
@@ -102,14 +103,6 @@ define_violations! {
             error: String,
             severity: Severity,
         },
-    }
-}
-
-impl PmatViolation {
-    /// Returns the severity level of this violation.
-    #[must_use]
-    pub fn severity(&self) -> Severity {
-        <Self as Violation>::severity(self)
     }
 }
 

@@ -7,6 +7,7 @@ use rmcp::model::CallToolResult;
 
 use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
+use crate::constants::fields::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
 use crate::constants::limits::{DEFAULT_MEMORY_LIMIT, DEFAULT_TIMELINE_DEPTH};
 use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
@@ -31,7 +32,7 @@ pub async fn list_observations(
                 .map(|item| {
                     serde_json::json!({
                         "id": item.id,
-                        "observation_type": item.r#type.as_str(),
+                        FIELD_OBSERVATION_TYPE: item.r#type.as_str(),
                         "relevance_score": item.relevance_score,
                         "tags": item.tags,
                         "content_preview": item.content_preview,
@@ -62,7 +63,7 @@ pub async fn get_timeline(
     let anchor_id = if let Some(anchor_id) = args.anchor_id.clone() {
         anchor_id
     } else if let Some(query) = args.query.clone() {
-        let search_err = |e: mcb_domain::Error| to_opaque_mcp_error(e);
+        let search_err = |e: mcb_domain::Error| to_opaque_mcp_error(&e);
         let results = memory_service
             .search_memories(&query, None, 1)
             .await
@@ -92,9 +93,9 @@ pub async fn get_timeline(
                 .into_iter()
                 .map(|observation| {
                     serde_json::json!({
-                        "observation_id": observation.id,
+                        FIELD_OBSERVATION_ID: observation.id,
                         "content": observation.content,
-                        "observation_type": observation.r#type.as_str(),
+                        FIELD_OBSERVATION_TYPE: observation.r#type.as_str(),
                         "created_at": observation.created_at,
                     })
                 })

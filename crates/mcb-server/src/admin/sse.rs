@@ -46,7 +46,7 @@ use super::handlers::AdminState;
 #[allow(tail_expr_drop_order, impl_trait_overcaptures)]
 pub async fn events_stream(state: &State<AdminState>) -> EventStream![] {
     tracing::info!("events_stream called");
-    let event_bus = state.event_bus.clone();
+    let event_bus = std::sync::Arc::clone(&state.event_bus);
 
     EventStream! {
         // Subscribe to domain events

@@ -27,5 +27,13 @@ pub mod admin;
 // Admin types - exported for mcb-server AdminState
 pub use admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 pub use lifecycle::{ServiceInfo, ServiceManager, ServiceManagerError};
-// Event bus - exported for DI bootstrap and testing
-// pub use events::TokioBroadcastEventBus;
+/// Create the default in-process event bus for standalone contexts.
+///
+/// Uses `TokioEventBusProvider` — the same implementation resolved by the DI
+/// bootstrap. Exported so that `mcb-server` can build a minimal `AdminState`
+/// without a full `AppContext` while avoiding Null Object patterns.
+#[must_use]
+pub fn default_event_bus() -> std::sync::Arc<dyn mcb_domain::ports::infrastructure::EventBusProvider>
+{
+    std::sync::Arc::new(mcb_providers::events::TokioEventBusProvider::new())
+}

@@ -28,7 +28,7 @@ pub struct IssueEntityArgs {
     action: IssueEntityAction,
     action_desc: "Action: create, get, update, list, delete",
     resource: IssueEntityResource,
-    resource_desc: "Resource: issue, comment, label, label_assignment",
+    resource_desc: "Resource: issue, comment, label, `label_assignment`",
     /// Project ID (for issue/label listing)
     project_id: Option<String> => "Project ID (for issue/label listing)",
     /// Issue ID (for comment listing and label assignments)

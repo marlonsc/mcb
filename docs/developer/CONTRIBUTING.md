@@ -18,7 +18,7 @@ Thank you for your interest in contributing! This guide covers everything you ne
 git clone https://github.com/marlonsc/mcb.git
 cd mcb
 make build
-make test       # 1700+ tests across 9 crates
+make test       # 1700+ tests across 7 crates
 make check      # Full quality pipeline
 ```
 

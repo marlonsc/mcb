@@ -107,7 +107,7 @@ impl ConfigLoader {
             .context("Failed to extract configuration")?;
 
         // Validate configuration
-        self.validate_config(&app_config)?;
+        Self::validate_config(&app_config)?;
 
         // Apply project settings if available
         let mut app_config = app_config;
@@ -176,7 +176,7 @@ impl ConfigLoader {
     }
 
     /// Validate configuration values
-    fn validate_config(&self, config: &AppConfig) -> Result<()> {
+    fn validate_config(config: &AppConfig) -> Result<()> {
         validate_app_config(config)
     }
 

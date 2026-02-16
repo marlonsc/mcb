@@ -1,4 +1,4 @@
-use crate::constants::common::{COMMENT_PREFIX, FN_PREFIX};
+use crate::constants::common::{COMMENT_PREFIX, FN_PREFIX, MODULE_DOC_PREFIX};
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regex, compile_regex_pairs};
 use crate::scan::for_each_file_under_root;
@@ -79,7 +79,7 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
                 let line = lines[i];
 
                 // Skip module documentation comments (//!)
-                if line.trim().starts_with("//!") {
+                if line.trim().starts_with(MODULE_DOC_PREFIX) {
                     i += 1;
                     continue;
                 }

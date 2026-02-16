@@ -13,6 +13,7 @@ use crate::embedded_rules::EmbeddedRules;
 use crate::filters::LanguageId;
 use crate::linters::YamlRuleExecutor;
 use crate::metrics::{MetricThresholds, MetricViolation, RcaAnalyzer};
+use crate::pattern_registry::compile_regex;
 use crate::rules::yaml_loader::{ValidatedRule, YamlRuleLoader};
 use crate::scan::for_each_scan_file;
 use crate::traits::validator::Validator;
@@ -261,7 +262,7 @@ impl DeclarativeValidator {
             let mut compiled: Vec<(&str, Regex)> = Vec::new();
             for (name, val) in patterns_obj {
                 if let Some(pat) = val.as_str() {
-                    match Regex::new(pat) {
+                    match compile_regex(pat) {
                         Ok(rx) => compiled.push((name.as_str(), rx)),
                         Err(e) => {
                             warn!(
@@ -287,7 +288,7 @@ impl DeclarativeValidator {
             {
                 for v in ignore_arr {
                     if let Some(pat) = v.as_str() {
-                        if let Ok(rx) = Regex::new(pat) {
+                        if let Ok(rx) = compile_regex(pat) {
                             ignore_compiled.push(rx);
                         } else {
                             warn!(rule_id = %rule.id, "Invalid ignore pattern regex");

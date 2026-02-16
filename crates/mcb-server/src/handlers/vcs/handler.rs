@@ -27,6 +27,9 @@ impl VcsHandler {
     }
 
     /// Handle a VCS tool request.
+    ///
+    /// # Errors
+    /// Returns an error when argument validation fails.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,

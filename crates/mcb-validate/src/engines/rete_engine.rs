@@ -12,7 +12,9 @@ use rust_rule_engine::{Facts, GRLParser, KnowledgeBase, RustRuleEngine, Value as
 use serde_json::Value;
 
 use crate::Result;
+use crate::constants::rules::{DEFAULT_GRL_RULE_ID, DEFAULT_RETE_MESSAGE, YAML_FIELD_RULE};
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
+use crate::linters::constants::CARGO_TOML_FILENAME;
 use crate::traits::violation::{Severity, ViolationCategory};
 
 /// RETE Engine wrapper for rust-rule-engine library
@@ -69,7 +71,7 @@ impl ReteEngine {
         let internal_dep_prefix = &file_config.general.internal_dep_prefix;
 
         // Use cargo_metadata for reliable workspace/package parsing
-        let manifest_path = context.workspace_root.join("Cargo.toml");
+        let manifest_path = context.workspace_root.join(CARGO_TOML_FILENAME);
 
         // Try to get metadata from cargo
         let metadata_result = MetadataCommand::new()
@@ -187,7 +189,7 @@ impl ReteEngine {
                             None
                         }
                     })
-                    .unwrap_or_else(|| "Rule violation detected".to_owned());
+                    .unwrap_or_else(|| DEFAULT_RETE_MESSAGE.to_owned());
 
                 let rule_name = facts
                     .get("Facts.violation_rule_name")
@@ -198,7 +200,7 @@ impl ReteEngine {
                             None
                         }
                     })
-                    .unwrap_or_else(|| "GRL_RULE".to_owned());
+                    .unwrap_or_else(|| DEFAULT_GRL_RULE_ID.to_owned());
 
                 violations.push(
                     RuleViolation::new(
@@ -228,7 +230,7 @@ impl RuleEngine for ReteEngine {
     ) -> Result<Vec<RuleViolation>> {
         // Extract GRL code from rule definition
         let grl_code = rule_definition
-            .get("rule")
+            .get(YAML_FIELD_RULE)
             .or_else(|| rule_definition.get("grl"))
             .and_then(|v| v.as_str())
             .ok_or_else(|| {

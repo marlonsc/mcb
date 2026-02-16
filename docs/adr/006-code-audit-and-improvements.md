@@ -29,12 +29,12 @@ Accepted
 >
 > **v0.1.1 Modular Architecture Updates:**
 >
-> - ✅ **Eight-crate Clean Architecture** implemented (see [ADR-013]
+> - ✅ **Seven-crate Clean Architecture** implemented (see [ADR-013]
 (013-clean-architecture-crate-separation.md))
-> - ✅ **20+ port traits** in `crates/mcb-application/src/ports/`
-> - ✅ **Two-layer DI strategy** (see [ADR-012]
-(012-di-strategy-two-layer-approach.md))
-> - ✅ **All traits extend `shaku::Interface`** for DI compatibility
+> - ✅ **20+ port traits** in `crates/mcb-domain/src/ports/`
+> - ✅ **Three-layer DI strategy** (linkme + dill + handles; see [ADR-029]
+(029-hexagonal-architecture-dill.md))
+> - ✅ **All traits use `Send + Sync`** bounds for async DI compatibility
 > - ✅ **mcb-validate crate** enforces architecture boundaries
 
 ## Context
@@ -356,11 +356,11 @@ libs/
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 ```text
 crates/mcb-providers/src/
-├── embedding/        # 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
-├── vector_store/     # 3 vector store providers (In-Memory, Encrypted, Null)
+├── embedding/        # 7 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, Anthropic, FastEmbed)
+├── vector_store/     # 4 vector store providers (EdgeVec, Qdrant, Milvus, Pinecone)
 ├── language/         # 12 language processors with UniversalLanguageChunkingProvider
-├── cache/            # Cache providers (Moka, Null)
-└── events/           # Event providers
+├── cache/            # Cache providers (Moka, Redis)
+└── events/           # Event providers (Tokio, NATS)
 ```
 
 ### Quality Implications
@@ -393,9 +393,9 @@ v0.2.0 is purely architectural:
 - [ADR-003: Unified Provider Architecture & Routing]
 (003-unified-provider-architecture.md) - Provider routing and failover
 - [ADR-012: Two-Layer DI Strategy]
-(012-di-strategy-two-layer-approach.md) - Shaku DI patterns
+(012-di-strategy-two-layer-approach.md) - DI patterns
 - [ADR-013: Clean Architecture Crate Separation]
-(013-clean-architecture-crate-separation.md) - Eight-crate organization
+(013-clean-architecture-crate-separation.md) - Seven-crate organization
 
 ## References
 
@@ -407,5 +407,5 @@ v0.2.0 is purely architectural:
 - [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
 - [Builder Pattern](https://refactoring.guru/design-patterns/builder)
 - [Strategy Pattern](https://refactoring.guru/design-patterns/strategy)
-- [Shaku Documentation]
-(<https://docs.rs/shaku>) (historical; DI is now dill, ADR-029)
+- [dill Documentation]
+(<https://docs.rs/dill>) (current DI; see ADR-029)

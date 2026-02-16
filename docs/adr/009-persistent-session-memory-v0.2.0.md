@@ -1442,8 +1442,8 @@ fn reciprocal_rank_fusion(
 - [ADR-007: Integrated Web Administration Interface][adr-007] - Memory dashboard UI
 - [ADR-008: Git-Aware Semantic Indexing][adr-008] - Git-tagged observations
 - [ADR-010: Hooks Subsystem][adr-010] - Hook observation storage
-- [ADR-012: Two-Layer DI Strategy][adr-012] - Shaku DI for memory services
-- [ADR-013: Clean Architecture Crate Separation][adr-013] - Eight-crate organization
+- [ADR-012: Two-Layer DI Strategy][adr-012] - DI for memory services
+- [ADR-013: Clean Architecture Crate Separation][adr-013] - Seven-crate organization
 
 [adr-001]: 001-modular-crates-architecture.md
 [adr-003]: 003-unified-provider-architecture.md
@@ -1456,4 +1456,4 @@ fn reciprocal_rank_fusion(
 ## References
 
 - [Claude-mem v8.5.2](https://github.com/thedotmack/claude-mem) - Reference implementation
-- [Shaku Documentation](https://docs.rs/shaku) - DI framework (historical; see ADR-029)
+- [dill Documentation](https://docs.rs/dill) - DI framework (see ADR-029)

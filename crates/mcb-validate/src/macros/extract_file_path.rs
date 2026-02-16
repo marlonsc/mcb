@@ -3,7 +3,7 @@
 /// # Example
 ///
 /// ```rust
-/// use mcb_validate::violation_macro::ExtractFilePath;
+/// use mcb_validate::macros::ExtractFilePath;
 /// let p = std::path::PathBuf::from("src/lib.rs");
 /// assert_eq!(p.extract_file_path(), &p);
 /// ```

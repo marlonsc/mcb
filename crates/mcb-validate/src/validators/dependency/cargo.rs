@@ -1,3 +1,4 @@
+use crate::linters::constants::CARGO_TOML_FILENAME;
 use crate::{Result, Severity};
 
 use super::DependencyValidator;
@@ -15,7 +16,7 @@ pub fn validate_cargo_dependencies(
             .workspace_root
             .join("crates")
             .join(crate_name)
-            .join("Cargo.toml");
+            .join(CARGO_TOML_FILENAME);
 
         if !cargo_toml.exists() {
             continue;

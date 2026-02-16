@@ -16,6 +16,9 @@ use mcb_domain::ports::providers::{
 use tracing::info;
 
 use crate::config::AppConfig;
+use crate::constants::services::{
+    CACHE_SERVICE_NAME, EMBEDDING_SERVICE_NAME, LANGUAGE_SERVICE_NAME, VECTOR_STORE_SERVICE_NAME,
+};
 use crate::di::admin::{
     CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface, EmbeddingAdminService,
     LanguageAdminInterface, LanguageAdminService, VectorStoreAdminInterface,
@@ -92,23 +95,23 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     // ========================================================================
 
     let embedding_admin: Arc<dyn EmbeddingAdminInterface> = Arc::new(EmbeddingAdminService::new(
-        "Embedding Service",
+        EMBEDDING_SERVICE_NAME,
         Arc::clone(&embedding_resolver),
         Arc::clone(&embedding_handle),
     ));
     let vector_store_admin: Arc<dyn VectorStoreAdminInterface> =
         Arc::new(VectorStoreAdminService::new(
-            "Vector Store Service",
+            VECTOR_STORE_SERVICE_NAME,
             Arc::clone(&vector_store_resolver),
             Arc::clone(&vector_store_handle),
         ));
     let cache_admin: Arc<dyn CacheAdminInterface> = Arc::new(CacheAdminService::new(
-        "Cache Service",
+        CACHE_SERVICE_NAME,
         Arc::clone(&cache_resolver),
         Arc::clone(&cache_handle),
     ));
     let language_admin: Arc<dyn LanguageAdminInterface> = Arc::new(LanguageAdminService::new(
-        "Language Service",
+        LANGUAGE_SERVICE_NAME,
         Arc::clone(&language_resolver),
         Arc::clone(&language_handle),
     ));

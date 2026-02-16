@@ -23,6 +23,18 @@ pub mod allowlists;
 /// Clone detection fingerprinting keywords.
 pub mod duplication;
 
+/// YAML rule field names and default values.
+pub mod rules;
+
+/// Rule engine type identifiers.
+pub mod engines;
+
+/// Severity and violation category string constants.
+pub mod severities;
+
+/// Validator category name constants.
+pub mod validators;
+
 // ============================================================================
 // Re-exports for backward compatibility
 // ============================================================================

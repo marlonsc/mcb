@@ -37,19 +37,13 @@ pub trait LockProvider: Send + Sync {
 }
 ```
 
-### Null Implementations (`mcb-infrastructure`)
-
-- `NullSyncProvider` - No-op sync provider
-- `NullLockProvider` - No-op lock provider
+**Status**: Port traits defined, no adapter implementations yet.
 
 ## File Structure
 
 ```text
 crates/mcb-domain/src/ports/infrastructure/
 └── sync.rs                  # SyncProvider, LockProvider traits
-
-crates/mcb-infrastructure/src/adapters/infrastructure/
-└── sync.rs                  # NullSyncProvider, NullLockProvider
 ```
 
 ## Key Exports
@@ -57,15 +51,11 @@ crates/mcb-infrastructure/src/adapters/infrastructure/
 ```rust
 // Traits (from mcb-domain)
 pub use ports::infrastructure::sync::{SyncProvider, LockProvider};
-
-// Null implementations (from mcb-infrastructure)
-pub use adapters::infrastructure::sync::{NullSyncProvider, NullLockProvider};
 ```
 
 ## Cross-References
 
 - **Domain**: [domain.md](./domain.md) (trait definition)
-- **Infrastructure**: [infrastructure.md](./infrastructure.md) (null adapter)
 - **Snapshot**: [snapshot.md](./snapshot.md) (change detection)
 - **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 

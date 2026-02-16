@@ -7,6 +7,7 @@ mod wrappers;
 
 use std::path::{Path, PathBuf};
 
+use crate::constants::common::TEST_DIR_FRAGMENT;
 use crate::pattern_registry::required_pattern;
 use catch_all::validate_empty_catch_alls;
 use empty::validate_empty_methods;
@@ -95,7 +96,8 @@ impl ImplementationQualityValidator {
 }
 
 fn is_test_path(path: &Path) -> bool {
-    path.to_str().is_some_and(|path| path.contains("/tests/"))
+    path.to_str()
+        .is_some_and(|path| path.contains(TEST_DIR_FRAGMENT))
 }
 
 crate::impl_validator!(

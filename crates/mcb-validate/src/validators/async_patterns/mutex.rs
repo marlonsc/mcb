@@ -1,5 +1,5 @@
 use super::constants::WRONG_MUTEX_PATTERNS;
-use crate::constants::common::{COMMENT_PREFIX, TEST_PATH_PATTERNS};
+use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX, TEST_PATH_PATTERNS};
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regex_triples, required_pattern};
 use crate::scan::for_each_scan_file;
@@ -41,7 +41,7 @@ pub fn validate_mutex_types(config: &ValidationConfig) -> Result<Vec<AsyncViolat
             }
 
             // Track test modules
-            if trimmed.contains("#[cfg(test)]") {
+            if trimmed.contains(CFG_TEST_MARKER) {
                 in_test_module = true;
                 continue;
             }

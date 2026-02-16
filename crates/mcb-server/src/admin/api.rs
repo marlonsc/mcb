@@ -25,10 +25,10 @@ use super::auth::AdminAuthConfig;
 use super::browse_handlers::BrowseState;
 use super::handlers::AdminState;
 use crate::constants::limits::DEFAULT_SHUTDOWN_TIMEOUT_SECS;
-use crate::utils::config::load_startup_config_or_panic;
+use crate::utils::config::load_startup_config_or_exit;
 
 fn load_current_config() -> mcb_infrastructure::config::AppConfig {
-    load_startup_config_or_panic()
+    load_startup_config_or_exit()
 }
 
 fn build_admin_state(
@@ -69,7 +69,7 @@ pub struct AdminApiConfig {
 
 impl Default for AdminApiConfig {
     fn default() -> Self {
-        let config = load_startup_config_or_panic();
+        let config = load_startup_config_or_exit();
         Self {
             host: config.server.network.host,
             port: config.server.network.port,
@@ -81,7 +81,7 @@ impl AdminApiConfig {
     /// Create config for localhost with specified port
     #[must_use]
     pub fn localhost(port: u16) -> Self {
-        let config = load_startup_config_or_panic();
+        let config = load_startup_config_or_exit();
         Self {
             host: config.server.network.host,
             port,
@@ -91,9 +91,12 @@ impl AdminApiConfig {
     /// Get the Rocket configuration
     #[must_use]
     pub fn rocket_config(&self) -> RocketConfig {
-        let address: IpAddr = match self.host.parse() {
+        let address = match self.host.parse::<IpAddr>() {
             Ok(address) => address,
-            Err(error) => panic!("startup: admin host must be a valid IP address: {error}"),
+            Err(error) => {
+                tracing::error!(host = %self.host, error = %error, "invalid admin host, falling back to 127.0.0.1");
+                IpAddr::V4(std::net::Ipv4Addr::LOCALHOST)
+            }
         };
         RocketConfig {
             address,
@@ -163,6 +166,7 @@ impl AdminApi {
     }
 
     /// Create a new admin API server with configuration watcher support
+    #[must_use]
     pub fn with_config_watcher(
         config: AdminApiConfig,
         services: AdminApiServices,

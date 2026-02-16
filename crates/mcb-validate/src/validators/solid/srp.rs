@@ -1,12 +1,11 @@
 use super::constants::MAX_UNRELATED_STRUCTS_PER_FILE;
+use super::validate_decl_member_count;
+use super::{MemberCountInput, MemberCountKind, make_member_count_violation};
 use crate::Result;
 use crate::Severity;
 use crate::ValidationConfig;
 use crate::pattern_registry::required_pattern;
-use crate::utils::source::{
-    count_block_lines, count_matches_in_block, for_each_rust_file, scan_decl_blocks,
-    structs_seem_related,
-};
+use crate::utils::source::{count_block_lines, for_each_rust_file, structs_seem_related};
 use crate::validators::solid::violation::SolidViolation;
 
 /// SRP: Check for structs/impls that are too large
@@ -31,7 +30,10 @@ pub fn validate_srp(
             }
 
             if let Some(cap) = impl_pattern.captures(line) {
-                let name = cap.get(1).or(cap.get(2)).map_or("", |m| m.as_str());
+                let name = cap
+                    .get(1)
+                    .or(cap.get(2))
+                    .map_or("", |m: regex::Match| m.as_str());
                 let block_lines = count_block_lines(&lines, line_num);
 
                 if block_lines > max_struct_lines {
@@ -77,25 +79,22 @@ pub fn validate_impl_method_count(
     config: &ValidationConfig,
     max_impl_methods: usize,
 ) -> Result<Vec<SolidViolation>> {
-    let impl_pattern = required_pattern("SOLID003.impl_only_decl")?;
-    let fn_pattern = required_pattern("SOLID002.fn_decl")?;
-
-    scan_decl_blocks(
+    validate_decl_member_count(
         config,
-        impl_pattern,
-        fn_pattern,
-        count_matches_in_block,
+        "SOLID003.impl_only_decl",
+        "SOLID002.fn_decl",
         max_impl_methods,
-        |file, line, type_name, method_count, max_allowed| SolidViolation::ImplTooManyMethods {
-            file,
-            line,
-            type_name: type_name.to_owned(),
-            method_count,
-            max_allowed,
-            suggestion:
-                "Consider splitting into smaller, focused impl blocks or extracting to traits"
-                    .to_owned(),
-            severity: Severity::Warning,
+        |file, line, name, count, max| {
+            make_member_count_violation(
+                MemberCountKind::Impl,
+                MemberCountInput {
+                    file,
+                    line,
+                    item_name: name,
+                    method_count: count,
+                    max_allowed: max,
+                },
+            )
         },
     )
 }

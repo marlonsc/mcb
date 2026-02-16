@@ -30,7 +30,7 @@ pub enum PasswordAlgorithm {
 }
 
 /// JWT configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct JwtConfig {
     /// JWT secret key (REQUIRED when auth enabled, min 32 chars)
@@ -42,7 +42,7 @@ pub struct JwtConfig {
 }
 
 /// API key configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct ApiKeyConfig {
     /// API key authentication enabled
@@ -52,7 +52,7 @@ pub struct ApiKeyConfig {
 }
 
 /// Admin API key configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct AdminApiKeyConfig {
     /// Admin API key authentication enabled
@@ -64,7 +64,7 @@ pub struct AdminApiKeyConfig {
 }
 
 /// Authentication configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct AuthConfig {
     /// Enable authentication
@@ -150,6 +150,19 @@ impl EventBusConfig {
             max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
         }
     }
+
+    /// Default configuration (Tokio, default capacity).
+    #[must_use]
+    #[must_use]
+    pub fn default_config() -> Self {
+        Self::tokio()
+    }
+}
+
+impl Default for EventBusConfig {
+    fn default() -> Self {
+        Self::tokio()
+    }
 }
 
 // ============================================================================
@@ -157,7 +170,7 @@ impl EventBusConfig {
 // ============================================================================
 
 /// Backup configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct BackupConfig {
     /// Backup enabled
@@ -181,7 +194,7 @@ pub struct BackupConfig {
 // ============================================================================
 
 /// Sync configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct SyncConfig {
     /// Sync enabled
@@ -203,7 +216,7 @@ pub struct SyncConfig {
 // ============================================================================
 
 /// Snapshot configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct SnapshotConfig {
     /// Snapshot enabled
@@ -223,7 +236,7 @@ pub struct SnapshotConfig {
 // ============================================================================
 
 /// Daemon configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct DaemonConfig {
     /// Daemon enabled
@@ -243,7 +256,7 @@ pub struct DaemonConfig {
 // ============================================================================
 
 /// Operations configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct OperationsConfig {
     /// Operations tracking enabled

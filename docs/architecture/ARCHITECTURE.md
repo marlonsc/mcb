@@ -211,7 +211,7 @@ graph TB
 | Container | Technology | Responsibility | Interfaces |
 | ----------- | ------------ | ---------------- | ------------ |
 | **MCP Server** | Rust/Tokio | Protocol translation, request routing | MCP Protocol (stdio), Internal APIs |
-| **REST API** | Rust/Axum | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
+| **REST API** | Rust/Rocket | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
 | **WebSocket** | Rust/Tokio | Real-time notifications, live updates | WebSocket protocol |
 
 #### Application Containers
@@ -485,8 +485,8 @@ pub trait EmbeddingProvider: Send + Sync {
 | **Ollama** | nomic-embed-text | 768 | Self-hosted | ✅ Production |
 | **Gemini** | text-embedding-004 | 768 | Pay-per-token | ✅ Production |
 | **VoyageAI** | voyage-3-lite | 512 | Pay-per-token | ✅ Production |
-| **Anthropic** | N/A | N/A | Pay-per-token | 🚧 Planned |
-| **Mock** | Fixed vectors | 128 | Free | ✅ Development |
+| **Anthropic** | voyage-code-3 | 1024 | Pay-per-token | ✅ Production |
+| **FastEmbed** | AllMiniLML6V2 | 384 | Local (free) | ✅ Default |
 
 ##### Vector Store Providers
 
@@ -829,11 +829,11 @@ async fn test_search_service() {
     // Test without infrastructure dependencies
 }
 
-// Integration testing - null providers via dill Catalog
+// Integration testing - default providers via dill Catalog
 #[tokio::test]
 async fn test_full_flow() {
     let catalog = build_catalog(AppConfig::default()).await?;
-    // Uses NullCacheProvider, NullEmbeddingProvider, etc.
+    // Uses MokaCacheProvider, FastEmbedProvider, etc.
     // Safe for CI/CD without external services
 }
 ```
@@ -844,7 +844,7 @@ async fn test_full_flow() {
 
 ### Crate Structure (Clean Architecture Monorepo)
 
-The system follows Clean Architecture principles with 9 crates organized as a Cargo workspace:
+The system follows Clean Architecture principles with 7 crates organized as a Cargo workspace:
 
 #### 📦 Domain Layer (`crates/mcb-domain/`)
 
@@ -2009,7 +2009,7 @@ See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
 - ✅ Clear boundaries and responsibilities per crate
 - ✅ Testability without infrastructure dependencies
 - ✅ Parallel compilation, incremental builds
-- ⚠️ Eight crates require coordination
+- ⚠️ Seven crates require coordination
 - ⚠️ Learning curve for Clean Architecture concepts
 
 See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full details.

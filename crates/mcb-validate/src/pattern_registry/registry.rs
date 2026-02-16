@@ -9,6 +9,11 @@ use regex::Regex;
 use tracing::{error, warn};
 
 use crate::Result;
+use crate::constants::rules::{
+    YAML_FIELD_ALLOWED_DEPS, YAML_FIELD_CONFIG, YAML_FIELD_CRATE_NAME, YAML_FIELD_ID,
+    YAML_FIELD_PATTERNS, YAML_FIELD_REGEX, YAML_FIELD_SELECTORS,
+};
+use crate::linters::constants::CARGO_TOML_FILENAME;
 use crate::rules::templates::TemplateEngine;
 
 /// Registry of compiled regex patterns and configurations loaded from YAML rules
@@ -39,7 +44,8 @@ impl PatternRegistry {
     ) -> Result<Self> {
         let mut registry = Self::new();
 
-        for path in collect_rule_files(rules_dir) {
+        let rule_files = crate::utils::fs::collect_yaml_files(rules_dir)?;
+        for path in rule_files.into_iter().filter(|p| !is_template_path(p)) {
             if let Err(e) = registry.load_rule_file(&path, naming_config, project_prefix) {
                 warn!(
                     path = %path.display(),
@@ -106,10 +112,13 @@ impl PatternRegistry {
         }
 
         // Get rule ID for namespacing
-        let rule_id = yaml.get("id").and_then(|v| v.as_str()).unwrap_or("unknown");
+        let rule_id = yaml
+            .get(YAML_FIELD_ID)
+            .and_then(|v| v.as_str())
+            .unwrap_or("unknown");
 
         // Load patterns from "patterns" section
-        if let Some(patterns) = yaml.get("patterns").and_then(|v| v.as_mapping()) {
+        if let Some(patterns) = yaml.get(YAML_FIELD_PATTERNS).and_then(|v| v.as_mapping()) {
             for (name, pattern) in patterns {
                 if let (Some(name_str), Some(pattern_str)) = (name.as_str(), pattern.as_str()) {
                     let pattern_id = format!("{rule_id}.{name_str}");
@@ -119,9 +128,9 @@ impl PatternRegistry {
         }
 
         // Load patterns from "selectors" section (for AST patterns)
-        if let Some(selectors) = yaml.get("selectors").and_then(|v| v.as_sequence()) {
+        if let Some(selectors) = yaml.get(YAML_FIELD_SELECTORS).and_then(|v| v.as_sequence()) {
             for (i, selector) in selectors.iter().enumerate() {
-                if let Some(pattern) = selector.get("regex").and_then(|v| v.as_str()) {
+                if let Some(pattern) = selector.get(YAML_FIELD_REGEX).and_then(|v| v.as_str()) {
                     let pattern_id = format!("{rule_id}.selector_{i}");
                     self.register_pattern(&pattern_id, pattern)?;
                 }
@@ -129,17 +138,20 @@ impl PatternRegistry {
         }
 
         // Load generic configuration from "config" section
-        if let Some(config) = yaml.get("config") {
+        if let Some(config) = yaml.get(YAML_FIELD_CONFIG) {
             self.configs.insert(rule_id.to_owned(), config.clone());
         }
 
         // Also load top-level crate_name and allowed_dependencies if present (shorthand for dependency rules)
-        if let Some(crate_name) = yaml.get("crate_name") {
+        if let Some(crate_name) = yaml.get(YAML_FIELD_CRATE_NAME) {
             let mut map = serde_yaml::Mapping::new();
-            map.insert(serde_yaml::Value::from("crate_name"), crate_name.clone());
-            if let Some(allowed) = yaml.get("allowed_dependencies") {
+            map.insert(
+                serde_yaml::Value::from(YAML_FIELD_CRATE_NAME),
+                crate_name.clone(),
+            );
+            if let Some(allowed) = yaml.get(YAML_FIELD_ALLOWED_DEPS) {
                 map.insert(
-                    serde_yaml::Value::from("allowed_dependencies"),
+                    serde_yaml::Value::from(YAML_FIELD_ALLOWED_DEPS),
                     allowed.clone(),
                 );
             }
@@ -233,40 +245,6 @@ impl Default for PatternRegistry {
     }
 }
 
-fn collect_rule_files(rules_dir: &Path) -> Vec<PathBuf> {
-    let mut files = Vec::new();
-    let mut stack = vec![rules_dir.to_path_buf()];
-
-    while let Some(dir) = stack.pop() {
-        let Ok(entries) = std::fs::read_dir(&dir) else {
-            continue;
-        };
-
-        for entry in entries.flatten() {
-            let path = entry.path();
-            let Ok(file_type) = entry.file_type() else {
-                continue;
-            };
-
-            if file_type.is_dir() {
-                stack.push(path);
-                continue;
-            }
-
-            if file_type.is_file()
-                && path
-                    .extension()
-                    .is_some_and(|ext| ext == "yml" || ext == "yaml")
-                && !is_template_path(&path)
-            {
-                files.push(path);
-            }
-        }
-    }
-
-    files
-}
-
 /// Get the default rules directory.
 ///
 /// Resolution order (all workspace-relative unless overridden via env):
@@ -296,7 +274,7 @@ pub fn default_rules_dir() -> PathBuf {
         // Try to find mcb-validate/rules relative to workspace root
         if let Some(workspace_root) = PathBuf::from(&manifest_dir)
             .ancestors()
-            .find(|p| p.join("Cargo.toml").exists() && p.join("crates").exists())
+            .find(|p| p.join(CARGO_TOML_FILENAME).exists() && p.join("crates").exists())
         {
             let validate_rules = workspace_root.join("crates/mcb-validate/rules");
             if validate_rules.exists() {

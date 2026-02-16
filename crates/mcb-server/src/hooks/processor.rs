@@ -11,6 +11,8 @@ use mcb_domain::utils::mask_id;
 use mcb_domain::utils::id as domain_id;
 use tracing::debug;
 
+use crate::constants::fields::TAG_TOOL;
+
 use super::types::{
     HookError, HookResult, PostToolUseContext, SessionStartContext, ToolExecutionStatus,
 };
@@ -38,6 +40,9 @@ impl HookProcessor {
     /// Process the `PostToolUse` hook event.
     ///
     /// Stores tool execution results as observations in memory.
+    ///
+    /// # Errors
+    /// Returns an error when memory service is unavailable or observation storage fails.
     pub async fn process_post_tool_use(&self, context: PostToolUseContext) -> HookResult<()> {
         let memory_service = self
             .memory_service
@@ -95,7 +100,7 @@ impl HookProcessor {
             ..Default::default()
         };
 
-        let mut tags = vec!["tool".to_owned(), context.tool_name.clone()];
+        let mut tags = vec![TAG_TOOL.to_owned(), context.tool_name.clone()];
         if context.status == ToolExecutionStatus::Error {
             tags.push("error".to_owned());
         }
@@ -118,6 +123,9 @@ impl HookProcessor {
     /// Process the `SessionStart` hook event.
     ///
     /// Injects relevant context from previous sessions.
+    ///
+    /// # Errors
+    /// Returns an error when memory service is unavailable or context search fails.
     pub async fn process_session_start(&self, context: SessionStartContext) -> HookResult<()> {
         let memory_service = self
             .memory_service

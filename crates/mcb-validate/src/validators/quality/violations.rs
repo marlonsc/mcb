@@ -1,3 +1,4 @@
+use crate::define_violations;
 use crate::{Severity, traits::violation::ViolationCategory};
 use std::path::PathBuf;
 

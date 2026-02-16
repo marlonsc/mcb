@@ -31,6 +31,57 @@ macro_rules! entity_crud_dispatch {
     };
 }
 
+/// Generate an action mapping function from `EntityAction` to a domain-specific action enum.
+///
+/// Two modes:
+/// - `allow_all`: maps all 6 actions including `Release`
+/// - `reject_release`: maps 5 actions, rejects `Release` with an error
+macro_rules! define_action_mapper {
+    ($fn_name:ident, $target:ident, allow_all) => {
+        fn $fn_name(action: EntityAction) -> Result<$target, McpError> {
+            match action {
+                EntityAction::Create => Ok($target::Create),
+                EntityAction::Get => Ok($target::Get),
+                EntityAction::Update => Ok($target::Update),
+                EntityAction::List => Ok($target::List),
+                EntityAction::Delete => Ok($target::Delete),
+                EntityAction::Release => Ok($target::Release),
+            }
+        }
+    };
+    ($fn_name:ident, $target:ident, reject_release) => {
+        fn $fn_name(action: EntityAction) -> Result<$target, McpError> {
+            match action {
+                EntityAction::Create => Ok($target::Create),
+                EntityAction::Get => Ok($target::Get),
+                EntityAction::Update => Ok($target::Update),
+                EntityAction::List => Ok($target::List),
+                EntityAction::Delete => Ok($target::Delete),
+                EntityAction::Release => {
+                    Err(unsupported("release action is only valid for assignment"))
+                }
+            }
+        }
+    };
+}
+
+/// Generate a resource mapping function from `EntityResource` to a domain-specific resource enum.
+///
+/// Maps named variants 1:1 and returns an error for unrecognized resources.
+macro_rules! define_resource_mapper {
+    (
+        $fn_name:ident, $target:ident, $error_msg:literal,
+        { $($source:ident => $dest:ident),+ $(,)? }
+    ) => {
+        fn $fn_name(resource: EntityResource) -> Result<$target, McpError> {
+            match resource {
+                $(EntityResource::$source => Ok($target::$dest),)+
+                _ => Err(unsupported($error_msg)),
+            }
+        }
+    };
+}
+
 /// Route unified entity args to domain-specific entity handlers.
 macro_rules! define_route_method {
     (

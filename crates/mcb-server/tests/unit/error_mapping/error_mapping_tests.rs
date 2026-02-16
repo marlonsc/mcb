@@ -10,7 +10,7 @@ use crate::test_utils::text::extract_text;
 #[case(Error::NotFound { resource: "test".to_owned() }, "Not found: test")]
 #[case(Error::Internal { message: "secret".to_owned() }, "internal server error")]
 fn test_to_opaque_mcp_error(#[case] err: Error, #[case] expected_message: &str) {
-    let mcp_err = to_opaque_mcp_error(err);
+    let mcp_err = to_opaque_mcp_error(&err);
     assert_eq!(mcp_err.message, expected_message);
 }
 
@@ -59,7 +59,7 @@ fn safe_internal_error_never_leaks_underlying_message(
     "internal server error"
 )]
 fn opaque_error_never_leaks_internal_details(#[case] err: Error, #[case] expected: &str) {
-    let mcp_err = to_opaque_mcp_error(err);
+    let mcp_err = to_opaque_mcp_error(&err);
     assert_eq!(mcp_err.message, expected);
     assert!(!mcp_err.message.contains("SQL"));
     assert!(!mcp_err.message.contains("pool"));

@@ -10,31 +10,13 @@ use mcb_infrastructure::project::context_resolver::capture_vcs_context;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::{Map, Value};
-use uuid::Uuid;
 
 use crate::args::MemoryArgs;
 use crate::constants::limits::{DEFAULT_MEMORY_LIMIT, MEMORY_FETCH_MULTIPLIER};
-use crate::utils::mcp::{OriginPayloadFields, resolve_origin_context, tool_error};
-pub(super) use crate::utils::mcp::{opt_str, require_data_map, require_str, str_vec};
-
-pub(super) fn require_i64(data: &Map<String, Value>, key: &str) -> Result<i64, CallToolResult> {
-    data.get(key)
-        .and_then(Value::as_i64)
-        .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
-}
-
-pub(super) fn require_i32(data: &Map<String, Value>, key: &str) -> Result<i32, CallToolResult> {
-    data.get(key)
-        .and_then(Value::as_i64)
-        .and_then(|value| value.try_into().ok())
-        .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
-}
-
-pub(super) fn require_bool(data: &Map<String, Value>, key: &str) -> Result<bool, CallToolResult> {
-    data.get(key)
-        .and_then(Value::as_bool)
-        .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
-}
+use crate::utils::mcp::{OriginPayloadFields, resolve_origin_context};
+pub(super) use crate::utils::mcp::{
+    opt_str, require_bool, require_data_map, require_i32, require_i64, require_str, str_vec,
+};
 
 pub(super) struct MemoryOriginResolution {
     pub project_id: String,
@@ -59,7 +41,7 @@ pub(super) struct MemoryOriginOptions<'a> {
 pub(super) fn resolve_memory_origin_context(
     args: &MemoryArgs,
     data: &Map<String, Value>,
-    opts: MemoryOriginOptions<'_>,
+    opts: &MemoryOriginOptions<'_>,
 ) -> Result<MemoryOriginResolution, McpError> {
     let vcs_context = capture_vcs_context();
     let canonical_session_id = args.session_id.map(|id| {
@@ -82,7 +64,7 @@ pub(super) fn resolve_memory_origin_context(
     input.file_path_payload = opts.file_path_payload;
     input.require_project_id = true;
     input.timestamp = opts.timestamp;
-    let mut origin_context = resolve_origin_context(input)?;
+    let mut origin_context = resolve_origin_context(&input)?;
 
     if origin_context.repo_id.is_none() {
         origin_context.repo_id = vcs_context.repo_id;
@@ -118,7 +100,7 @@ pub(super) fn build_observation_metadata(
     quality_gate: Option<QualityGateResult>,
 ) -> ObservationMetadata {
     ObservationMetadata {
-        id: Uuid::new_v4().to_string(),
+        id: domain_id::generate().to_string(),
         session_id: canonical_session_id,
         repo_id: origin_context.repo_id.clone(),
         file_path: origin_context.file_path.clone(),

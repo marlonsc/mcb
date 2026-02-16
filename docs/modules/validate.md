@@ -9,7 +9,7 @@
 
 The validation module provides comprehensive architecture enforcement and code quality validation for the Memory Context Browser project. It implements a multi-phase validation pipeline that ensures Clean Architecture compliance, code quality standards, and architectural decision record (ADR) adherence.
 
-The module uses a **trait-based validator system** (`traits/`) with **macro-based violation definitions** (`violation_macro.rs`) and a **declarative validator pattern** for concise rule implementations.
+The module uses a **trait-based validator system** (`traits/`) with **macro-based violation definitions** (`macros.rs`) and a **declarative validator pattern** for concise rule implementations.
 
 ## Architecture
 
@@ -146,7 +146,7 @@ Code clone detection using Rabin-Karp algorithm:
 
 ### Root Modules
 
-- `violation_macro.rs` — Macro-based violation definitions (Display + field formatting)
+- `macros.rs` — Macro-based violation definitions (Display + field formatting)
 - `macros.rs` — Helper macros for validator implementation
 - `embedded_rules.rs` — Embedded rule definitions
 - `thresholds.rs` — Global threshold definitions
@@ -283,7 +283,7 @@ crates/mcb-validate/src/
 ├── run_context.rs
 ├── scan.rs
 ├── thresholds.rs
-├── violation_macro.rs
+├── macros.rs
 └── lib.rs
 ```
 

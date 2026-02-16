@@ -11,6 +11,8 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use crate::config::TestQualityRulesConfig;
+use crate::constants::common::{FUNCTION_NAME_SEARCH_LINES, TEST_DIR_FRAGMENT};
+use crate::define_violations;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
@@ -160,7 +162,7 @@ impl TestQualityValidator {
                 if !entry
                     .absolute_path
                     .to_str()
-                    .is_some_and(|s| s.contains("/tests/") || s.contains("/test_"))
+                    .is_some_and(|s| s.contains(TEST_DIR_FRAGMENT) || s.contains("/test_"))
                 {
                     return Ok(());
                 }
@@ -360,10 +362,7 @@ impl TestQualityValidator {
 
     fn find_function_name(lines: &[&str], start_idx: usize, fn_pattern: &Regex) -> Option<String> {
         // Look backwards for function name
-        for i in (0..=start_idx)
-            .rev()
-            .take(crate::constants::common::FUNCTION_NAME_SEARCH_LINES)
-        {
+        for i in (0..=start_idx).rev().take(FUNCTION_NAME_SEARCH_LINES) {
             if let Some(captures) = fn_pattern.captures(lines[i])
                 && let Some(name) = captures.get(1)
             {

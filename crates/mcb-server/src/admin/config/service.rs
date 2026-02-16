@@ -32,6 +32,9 @@ pub enum ConfigUpdateError {
 }
 
 /// Validate prerequisites for config update
+///
+/// # Errors
+/// Returns an error when section is invalid or watcher/path are unavailable.
 pub fn validate_update_prerequisites(
     section: &str,
     watcher: Option<&Arc<ConfigWatcher>>,
@@ -54,6 +57,9 @@ pub fn validate_update_prerequisites(
 }
 
 /// Read, parse, and update the configuration
+///
+/// # Errors
+/// Returns an error when reading, parsing, or value conversion fails.
 pub fn read_update_config(
     config_path: &Path,
     section: &str,
@@ -96,6 +102,9 @@ fn merge_section(
 }
 
 /// Write config to file and reload
+///
+/// # Errors
+/// Returns an error when serialization, write, or reload fails.
 pub async fn write_and_reload_config(
     config_path: &Path,
     config: &toml::Value,

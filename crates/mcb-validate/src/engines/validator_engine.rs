@@ -7,6 +7,11 @@ use serde_json::Value;
 use validator::{Validate, ValidationErrors};
 
 use crate::Result;
+use crate::constants::engines::{
+    ENGINE_TYPE_EVALEXPR, ENGINE_TYPE_EXPRESSION, ENGINE_TYPE_GRL, ENGINE_TYPE_JSON_DSL,
+    ENGINE_TYPE_RETE, ENGINE_TYPE_RUST_RULE, ENGINE_TYPE_RUSTY_RULES,
+};
+use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO, SEVERITY_WARNING};
 
 /// Engine for field validations using validator and garde
 #[derive(Clone)]
@@ -145,7 +150,7 @@ fn validate_category(category: &str) -> std::result::Result<(), ValidationErrors
 }
 
 fn validate_severity(severity: &str) -> std::result::Result<(), ValidationErrors> {
-    let valid_severities = ["error", "warning", "info"];
+    let valid_severities = [SEVERITY_ERROR, SEVERITY_WARNING, SEVERITY_INFO];
 
     if valid_severities.contains(&severity) {
         Ok(())
@@ -161,13 +166,13 @@ fn validate_severity(severity: &str) -> std::result::Result<(), ValidationErrors
 
 fn validate_engine(engine: &str) -> std::result::Result<(), ValidationErrors> {
     let valid_engines = [
-        "rust-rule-engine",
-        "rete",
-        "grl",
-        "rusty-rules",
-        "json-dsl",
-        "expression",
-        "evalexpr",
+        ENGINE_TYPE_RUST_RULE,
+        ENGINE_TYPE_RETE,
+        ENGINE_TYPE_GRL,
+        ENGINE_TYPE_RUSTY_RULES,
+        ENGINE_TYPE_JSON_DSL,
+        ENGINE_TYPE_EXPRESSION,
+        ENGINE_TYPE_EVALEXPR,
     ];
 
     if valid_engines.contains(&engine) {

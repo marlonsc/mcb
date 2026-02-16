@@ -10,6 +10,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::Result;
+use crate::linters::constants::CARGO_TOML_FILENAME;
 
 /// Information about a dependency
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,7 +68,7 @@ impl WorkspaceDependencies {
         let mut current = file_path.parent()?;
         loop {
             // Check if this directory contains Cargo.toml
-            if current.join("Cargo.toml").exists() {
+            if current.join(CARGO_TOML_FILENAME).exists() {
                 return self.deps.get(current);
             }
 
@@ -117,7 +118,7 @@ impl CargoDependencyParser {
         let crate_dirs = self.find_crate_dirs();
 
         for crate_dir in crate_dirs {
-            let cargo_toml_path = crate_dir.join("Cargo.toml");
+            let cargo_toml_path = crate_dir.join(CARGO_TOML_FILENAME);
             if cargo_toml_path.exists() {
                 let crate_deps = Self::parse_cargo_toml(&cargo_toml_path)?;
                 deps.insert(crate_dir, crate_deps);
@@ -131,7 +132,7 @@ impl CargoDependencyParser {
     fn find_crate_dirs(&self) -> Vec<PathBuf> {
         let mut crates = Vec::new();
 
-        if self.workspace_root.join("Cargo.toml").exists() {
+        if self.workspace_root.join(CARGO_TOML_FILENAME).exists() {
             crates.push(self.workspace_root.clone());
         }
 
@@ -164,7 +165,7 @@ impl CargoDependencyParser {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.is_file() {
-                if path.file_name().and_then(|n| n.to_str()) == Some("Cargo.toml")
+                if path.file_name().and_then(|n| n.to_str()) == Some(CARGO_TOML_FILENAME)
                     && let Some(parent) = path.parent()
                     && parent != root
                 {

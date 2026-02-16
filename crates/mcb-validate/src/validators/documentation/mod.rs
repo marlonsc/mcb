@@ -18,9 +18,10 @@ use self::constants::{
     MODULE_DOC_REGEX, MODULE_FILE_NAMES, PORTS_PATH, PUB_ENUM_REGEX, PUB_FN_REGEX,
     PUB_STRUCT_REGEX, PUB_TRAIT_REGEX,
 };
+use crate::define_violations;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_crate_file;
-use crate::traits::violation::{Violation, ViolationCategory};
+use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
 
 define_violations! {
@@ -65,16 +66,6 @@ define_violations! {
             item_name: String,
             severity: Severity,
         },
-    }
-}
-
-impl DocumentationViolation {
-    /// Returns the severity level of this violation.
-    ///
-    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
-    #[must_use]
-    pub fn severity(&self) -> Severity {
-        <Self as Violation>::severity(self)
     }
 }
 

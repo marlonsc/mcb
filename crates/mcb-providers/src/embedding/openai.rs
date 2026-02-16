@@ -15,9 +15,13 @@ use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
+use crate::constants::{
+    EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME, HTTP_HEADER_AUTHORIZATION,
+    HTTP_HEADER_CONTENT_TYPE,
+};
 use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
 use crate::utils::http::{
-    JsonRequestParams, RequestErrorKind, parse_embedding_vector, send_json_request,
+    JsonRequestParams, RequestErrorKind, RetryConfig, parse_embedding_vector, send_json_request,
 };
 use crate::{
     define_http_embedding_provider, impl_embedding_provider_trait, impl_http_provider_base,
@@ -55,20 +59,24 @@ impl OpenAIEmbeddingProvider {
         });
 
         let headers = vec![
-            ("Authorization", format!("Bearer {}", self.client.api_key)),
-            ("Content-Type", CONTENT_TYPE_JSON.to_owned()),
+            (
+                HTTP_HEADER_AUTHORIZATION,
+                format!("Bearer {}", self.client.api_key),
+            ),
+            (HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned()),
         ];
 
         send_json_request(JsonRequestParams {
             client: &self.client.client,
             method: reqwest::Method::POST,
-            url: format!("{}/embeddings", self.base_url()),
+            url: format!("{}{}", self.base_url(), EMBEDDING_API_ENDPOINT),
             timeout: self.client.timeout,
             provider: "OpenAI",
-            operation: "embeddings",
+            operation: EMBEDDING_OPERATION_NAME,
             kind: RequestErrorKind::Embedding,
             headers: &headers,
             body: Some(&payload),
+            retry: Some(RetryConfig::new(3, Duration::from_millis(500))),
         })
         .await
     }

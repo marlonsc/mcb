@@ -58,7 +58,7 @@ pub async fn store_session(
     };
     let session_id_str = session_id.as_str().clone();
 
-    let origin_context = resolve_origin_context(OriginContextInput {
+    let origin_context = resolve_origin_context(&OriginContextInput {
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),
         project_id_payload: payload.project_id.as_deref(),

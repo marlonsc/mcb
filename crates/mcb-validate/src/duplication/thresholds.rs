@@ -6,6 +6,8 @@
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
+use super::constants;
+
 /// Clone type classification following established taxonomy
 ///
 /// - Type 1 (Exact): Identical code fragments
@@ -91,26 +93,22 @@ pub struct DuplicationThresholds {
 impl Default for DuplicationThresholds {
     fn default() -> Self {
         Self {
-            min_lines: 6,
-            min_tokens: 50,
-            similarity_threshold: 0.80,
+            min_lines: constants::DEFAULT_MIN_LINES,
+            min_tokens: constants::DEFAULT_MIN_TOKENS,
+            similarity_threshold: constants::DEFAULT_SIMILARITY_THRESHOLD,
             detect_exact: true,
             detect_renamed: true,
             detect_gapped: true,
             detect_semantic: false, // Disabled by default (experimental)
-            languages: vec![
-                "rust".to_owned(),
-                "python".to_owned(),
-                "javascript".to_owned(),
-                "typescript".to_owned(),
-            ],
-            exclude_patterns: vec![
-                "**/target/**".to_owned(),
-                "**/node_modules/**".to_owned(),
-                "**/.git/**".to_owned(),
-                "**/vendor/**".to_owned(),
-            ],
-            max_gap_size: 5,
+            languages: constants::DEFAULT_LANGUAGES
+                .iter()
+                .map(|s| (*s).to_owned())
+                .collect(),
+            exclude_patterns: constants::DEFAULT_EXCLUDE_PATTERNS
+                .iter()
+                .map(|s| (*s).to_owned())
+                .collect(),
+            max_gap_size: constants::DEFAULT_MAX_GAP_SIZE,
         }
     }
 }
@@ -120,9 +118,9 @@ impl DuplicationThresholds {
     #[must_use]
     pub fn strict() -> Self {
         Self {
-            min_lines: 4,
-            min_tokens: 30,
-            similarity_threshold: 0.90,
+            min_lines: constants::STRICT_MIN_LINES,
+            min_tokens: constants::STRICT_MIN_TOKENS,
+            similarity_threshold: constants::STRICT_SIMILARITY_THRESHOLD,
             ..Default::default()
         }
     }
@@ -131,9 +129,9 @@ impl DuplicationThresholds {
     #[must_use]
     pub fn lenient() -> Self {
         Self {
-            min_lines: 10,
-            min_tokens: 100,
-            similarity_threshold: 0.70,
+            min_lines: constants::LENIENT_MIN_LINES,
+            min_tokens: constants::LENIENT_MIN_TOKENS,
+            similarity_threshold: constants::LENIENT_SIMILARITY_THRESHOLD,
             ..Default::default()
         }
     }

@@ -194,6 +194,12 @@ impl ServerConfig {
     }
 }
 
+impl Default for ServerConfig {
+    fn default() -> Self {
+        ServerConfigBuilder::new().build()
+    }
+}
+
 /// Server configuration builder
 #[derive(Clone)]
 pub struct ServerConfigBuilder {

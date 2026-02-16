@@ -29,6 +29,9 @@ impl PlanEntityHandler {
     /// This method acts as a dispatcher for all plan-related entities including plans,
     /// versions, and reviews. It handles authorization context (`org_id`) and ensures
     /// all required data is present.
+    ///
+    /// # Errors
+    /// Returns an error when required identifiers or payload fields are missing.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,

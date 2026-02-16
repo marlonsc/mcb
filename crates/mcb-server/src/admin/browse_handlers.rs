@@ -76,6 +76,9 @@ impl BrowseErrorResponse {
 /// # Authentication
 ///
 /// Requires valid admin API key via `X-Admin-Key` header.
+///
+/// # Errors
+/// Returns `404` for unknown collections and `500` for backend failures.
 #[get("/collections")]
 pub async fn list_collections(
     _auth: AdminAuth,
@@ -120,6 +123,9 @@ pub async fn list_collections(
 /// # Authentication
 ///
 /// Requires valid admin API key via `X-Admin-Key` header.
+///
+/// # Errors
+/// Returns `404` for unknown collections and `500` for backend failures.
 #[get("/collections/<name>/files?<limit>")]
 pub async fn list_collection_files(
     _auth: AdminAuth,
@@ -183,6 +189,9 @@ pub async fn list_collection_files(
 /// # Authentication
 ///
 /// Requires valid admin API key via `X-Admin-Key` header.
+///
+/// # Errors
+/// Returns `404` for unknown files/collections and `500` for backend failures.
 #[get("/collections/<name>/chunks/<path..>")]
 pub async fn get_file_chunks(
     _auth: AdminAuth,
@@ -269,6 +278,9 @@ pub async fn get_file_chunks(
 ///
 /// Returns a hierarchical tree structure of all indexed files in the
 /// collection, organized by directory. Useful for tree view navigation.
+///
+/// # Errors
+/// Returns `404` for unknown collections and `500` for backend failures.
 #[get("/collections/<name>/tree")]
 pub async fn get_collection_tree(
     _auth: AdminAuth,

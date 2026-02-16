@@ -10,6 +10,7 @@ use super::common::{
     resolve_memory_origin_context, str_vec,
 };
 use crate::args::MemoryArgs;
+use crate::constants::fields::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
@@ -46,7 +47,7 @@ pub async fn store_observation(
     let origin = resolve_memory_origin_context(
         args,
         data,
-        MemoryOriginOptions {
+        &MemoryOriginOptions {
             execution_from_args: None,
             execution_from_data: None,
             file_path_payload: data.get("file_path").and_then(|v| v.as_str()),
@@ -65,7 +66,7 @@ pub async fn store_observation(
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({
-            "observation_id": observation_id,
+            FIELD_OBSERVATION_ID: observation_id,
             "deduplicated": deduplicated,
         })),
         Err(e) => Ok(to_contextual_tool_error(e)),
@@ -97,7 +98,7 @@ pub async fn get_observations(
                     serde_json::json!({
                         "id": obs.id,
                         "content": obs.content,
-                        "observation_type": obs.r#type.as_str(),
+                        FIELD_OBSERVATION_TYPE: obs.r#type.as_str(),
                         "tags": obs.tags,
                         "session_id": obs.metadata.session_id,
                         "repo_id": obs.metadata.repo_id,

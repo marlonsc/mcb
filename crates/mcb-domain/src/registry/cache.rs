@@ -26,50 +26,16 @@ pub struct CacheProviderConfig {
     pub extra: HashMap<String, String>,
 }
 
-impl CacheProviderConfig {
-    /// Create a new config with the given provider name
-    pub fn new(provider: impl Into<String>) -> Self {
-        Self {
-            provider: provider.into(),
-            ..Default::default()
-        }
-    }
-
+crate::impl_config_builder!(CacheProviderConfig {
     /// Set the connection URI (for distributed caches)
-    #[must_use]
-    pub fn with_uri(mut self, uri: impl Into<String>) -> Self {
-        self.uri = Some(uri.into());
-        self
-    }
-
+    uri: with_uri(into String),
     /// Set the maximum cache size (entries or bytes depending on provider)
-    #[must_use]
-    pub fn with_max_size(mut self, max_size: usize) -> Self {
-        self.max_size = Some(max_size);
-        self
-    }
-
+    max_size: with_max_size(usize),
     /// Set the default TTL in seconds
-    #[must_use]
-    pub fn with_ttl_secs(mut self, ttl_secs: u64) -> Self {
-        self.ttl_secs = Some(ttl_secs);
-        self
-    }
-
+    ttl_secs: with_ttl_secs(u64),
     /// Set the namespace prefix for keys
-    #[must_use]
-    pub fn with_namespace(mut self, namespace: impl Into<String>) -> Self {
-        self.namespace = Some(namespace.into());
-        self
-    }
-
-    /// Add extra configuration
-    #[must_use]
-    pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.extra.insert(key.into(), value.into());
-        self
-    }
-}
+    namespace: with_namespace(into String),
+});
 
 crate::impl_registry!(
     provider_trait: crate::ports::providers::CacheProvider,

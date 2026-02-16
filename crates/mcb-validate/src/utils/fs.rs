@@ -26,7 +26,11 @@ pub fn collect_yaml_files(root: &Path) -> Result<Vec<PathBuf>> {
                 continue;
             }
 
-            if file_type.is_file() && path.extension().and_then(|ext| ext.to_str()) == Some("yml") {
+            if file_type.is_file()
+                && path
+                    .extension()
+                    .is_some_and(|ext| ext == "yml" || ext == "yaml")
+            {
                 files.push(path);
             }
         }

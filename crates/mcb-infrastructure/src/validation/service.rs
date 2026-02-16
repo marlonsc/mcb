@@ -238,7 +238,10 @@ fn extract_yaml_scalar(content: &str, key: &str) -> Option<String> {
         serde_yaml::Value::String(s) => Some(s.clone()),
         serde_yaml::Value::Bool(b) => Some(b.to_string()),
         serde_yaml::Value::Number(n) => Some(n.to_string()),
-        _ => None,
+        serde_yaml::Value::Null
+        | serde_yaml::Value::Sequence(_)
+        | serde_yaml::Value::Mapping(_)
+        | serde_yaml::Value::Tagged(_) => None,
     }
 }
 

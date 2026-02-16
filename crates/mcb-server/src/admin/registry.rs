@@ -463,8 +463,7 @@ fn detect_input_type<'a>(name: &str, field_schema: &'a Value) -> Cow<'a, str> {
         return match field_type {
             "boolean" => Cow::Borrowed("checkbox"),
             "integer" | "number" => Cow::Borrowed("number"),
-            "array" => Cow::Borrowed("textarea"),
-            "object" => Cow::Borrowed("textarea"),
+            "array" | "object" => Cow::Borrowed("textarea"),
             "string" => {
                 if let Some(format) = field_schema.get("format").and_then(Value::as_str)
                     && format == "date-time"

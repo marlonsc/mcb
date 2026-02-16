@@ -16,6 +16,9 @@ macro_rules! define_project_scoped_browse_endpoint {
         $doc:literal
     ) => {
         #[doc = $doc]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = "Returns `503 Service Unavailable` when backend services are unavailable."]
         #[get($route)]
         pub async fn $fn_name(
             _auth: AdminAuth,

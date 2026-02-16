@@ -3,6 +3,7 @@
 use std::path::PathBuf;
 
 use crate::Severity;
+use crate::define_violations;
 use crate::traits::violation::ViolationCategory;
 
 define_violations! {

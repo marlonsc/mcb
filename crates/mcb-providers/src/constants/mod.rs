@@ -192,3 +192,71 @@ pub const FILE_HASH_TOMBSTONE_TTL_SECS: i64 = 30 * 24 * 60 * 60;
 
 /// Max characters for SQL statement preview in log messages.
 pub const SQL_PREVIEW_CHAR_LIMIT: usize = 120;
+
+// ============================================================================
+// HTTP HEADER CONSTANTS
+// ============================================================================
+
+/// HTTP Authorization header name.
+pub const HTTP_HEADER_AUTHORIZATION: &str = "Authorization";
+
+/// HTTP Content-Type header name.
+pub const HTTP_HEADER_CONTENT_TYPE: &str = "Content-Type";
+
+/// Pinecone API key header name.
+pub const PINECONE_API_KEY_HEADER: &str = "Api-Key";
+
+// ============================================================================
+// EMBEDDING API ENDPOINT PATHS
+// ============================================================================
+
+/// OpenAI/Anthropic/VoyageAI embeddings endpoint path.
+pub const EMBEDDING_API_ENDPOINT: &str = "/embeddings";
+
+/// Ollama embed API endpoint path.
+pub const OLLAMA_EMBED_ENDPOINT: &str = "/api/embed";
+
+/// Embedding operation name for HTTP client calls.
+pub const EMBEDDING_OPERATION_NAME: &str = "embeddings";
+
+// ============================================================================
+// VECTOR STORE STATS FIELD NAMES
+// ============================================================================
+
+/// Stats JSON field: collection name.
+pub const STATS_FIELD_COLLECTION: &str = "collection";
+
+/// Stats JSON field: provider name.
+pub const STATS_FIELD_PROVIDER: &str = "provider";
+
+/// Stats JSON field: operational status.
+pub const STATS_FIELD_STATUS: &str = "status";
+
+/// Stats JSON field: vector count.
+pub const STATS_FIELD_VECTORS_COUNT: &str = "vectors_count";
+
+/// Stats JSON field: row count.
+pub const STATS_FIELD_ROW_COUNT: &str = "row_count";
+
+/// Status value: active/ready.
+pub const STATUS_ACTIVE: &str = "active";
+
+/// Status value: unknown/unavailable.
+pub const STATUS_UNKNOWN: &str = "unknown";
+
+// ============================================================================
+// MILVUS ERROR PATTERN STRINGS
+// ============================================================================
+
+/// Milvus error: collection does not exist (gRPC error message).
+pub const MILVUS_ERROR_COLLECTION_NOT_EXISTS: &str = "CollectionNotExists";
+
+/// Milvus error: rate limit exceeded.
+pub const MILVUS_ERROR_RATE_LIMIT: &str = "RateLimit";
+
+// ============================================================================
+// EDGEVEC CONSTANTS
+// ============================================================================
+
+/// `EdgeVec` quantization type for scalar quantization.
+pub const EDGEVEC_QUANTIZATION_TYPE: &str = "scalar";

@@ -89,15 +89,9 @@ impl ComplexityAnalyzerAdapter {
 ```rust
 // crates/mcb-application/src/use_cases/analysis/complexity.rs
 
-#[derive(Component)]
-#[shaku(interface = ComplexityAnalysisInterface)]
 pub struct ComplexityAnalysisService {
     adapter: Arc<ComplexityAnalyzerAdapter>,
-
-    #[shaku(inject)]
     cache: Arc<dyn CacheProvider>,
-
-    #[shaku(inject)]
     event_bus: Arc<dyn EventBusProvider>,
 }
 

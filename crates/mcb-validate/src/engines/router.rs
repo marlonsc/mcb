@@ -12,6 +12,11 @@ use derive_more::Display;
 use serde_json::Value;
 
 use crate::Result;
+use crate::constants::engines::{
+    ENGINE_TYPE_EVALEXPR, ENGINE_TYPE_EXPRESSION, ENGINE_TYPE_GRL, ENGINE_TYPE_JSON_DSL,
+    ENGINE_TYPE_RETE, ENGINE_TYPE_RUST_RULE, ENGINE_TYPE_RUSTY_RULES,
+};
+use crate::constants::rules::{YAML_FIELD_ENGINE, YAML_FIELD_RULE};
 use crate::engines::expression_engine::ExpressionEngine;
 use crate::engines::hybrid_engine::{RuleContext, RuleViolation};
 use crate::engines::rete_engine::ReteEngine;
@@ -64,11 +69,14 @@ impl RuleEngineRouter {
     #[must_use]
     pub fn detect_engine(rule_definition: &Value) -> RoutedEngine {
         // Check for explicit engine specification
-        if let Some(engine) = rule_definition.get("engine").and_then(|v| v.as_str()) {
+        if let Some(engine) = rule_definition
+            .get(YAML_FIELD_ENGINE)
+            .and_then(|v| v.as_str())
+        {
             return match engine {
-                "rete" | "rust-rule-engine" | "grl" => RoutedEngine::Rete,
-                "expression" | "evalexpr" => RoutedEngine::Expression,
-                "rusty-rules" | "json-dsl" => RoutedEngine::RustyRules,
+                ENGINE_TYPE_RETE | ENGINE_TYPE_RUST_RULE | ENGINE_TYPE_GRL => RoutedEngine::Rete,
+                ENGINE_TYPE_EXPRESSION | ENGINE_TYPE_EVALEXPR => RoutedEngine::Expression,
+                ENGINE_TYPE_RUSTY_RULES | ENGINE_TYPE_JSON_DSL => RoutedEngine::RustyRules,
                 _ => Self::detect_by_content(rule_definition),
             };
         }
@@ -101,7 +109,7 @@ impl RuleEngineRouter {
     fn has_grl_syntax(rule_definition: &Value) -> bool {
         // Check "rule" or "grl" field for when/then keywords
         if let Some(rule_str) = rule_definition
-            .get("rule")
+            .get(YAML_FIELD_RULE)
             .or_else(|| rule_definition.get("grl"))
             .and_then(|v| v.as_str())
         {
@@ -210,7 +218,9 @@ impl RuleEngineRouter {
         match engine {
             RoutedEngine::Rete => {
                 // Validate GRL syntax
-                if rule_definition.get("rule").is_none() && rule_definition.get("grl").is_none() {
+                if rule_definition.get(YAML_FIELD_RULE).is_none()
+                    && rule_definition.get("grl").is_none()
+                {
                     return Err(crate::ValidationError::Config(
                         "RETE rule must have 'rule' or 'grl' field".into(),
                     ));

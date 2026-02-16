@@ -4,6 +4,8 @@
 
 use std::collections::HashMap;
 
+use crate::constants::rules::{METRICS_FIELD_MAX, METRICS_FIELD_SEVERITY};
+use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO};
 use crate::traits::violation::Severity;
 
 /// Types of metrics we can measure
@@ -131,8 +133,8 @@ impl MetricThresholds {
 
     fn severity_from_str(s: Option<&str>) -> Severity {
         match s {
-            Some("error") => Severity::Error,
-            Some("info") => Severity::Info,
+            Some(SEVERITY_ERROR) => Severity::Error,
+            Some(SEVERITY_INFO) => Severity::Info,
             _ => Severity::Warning,
         }
     }
@@ -146,8 +148,8 @@ impl MetricThresholds {
         key: &str,
     ) -> Option<(u32, Severity)> {
         let section = obj.get(key)?;
-        let max = section.get("max")?.as_u64()?;
-        let severity_str = section.get("severity").and_then(|v| v.as_str());
+        let max = section.get(METRICS_FIELD_MAX)?.as_u64()?;
+        let severity_str = section.get(METRICS_FIELD_SEVERITY).and_then(|v| v.as_str());
         Some((Self::to_u32(max), Self::severity_from_str(severity_str)))
     }
 

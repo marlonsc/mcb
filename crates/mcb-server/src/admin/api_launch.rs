@@ -14,6 +14,9 @@ fn rocket_error(
 
 impl AdminApi {
     /// Start the admin API server.
+    ///
+    /// # Errors
+    /// Returns an error when Rocket fails to launch.
     pub async fn start(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let rocket_config = self.config.rocket_config();
 
@@ -34,6 +37,9 @@ impl AdminApi {
     }
 
     /// Start the admin API server with graceful shutdown.
+    ///
+    /// # Errors
+    /// Returns an error when Rocket fails to ignite or launch.
     pub async fn start_with_shutdown(
         self,
         shutdown_signal: impl Future<Output = ()> + Send + 'static,

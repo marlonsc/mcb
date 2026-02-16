@@ -23,7 +23,7 @@ fn json_sort_key(v: &Value) -> String {
         }
         Value::Bool(b) => format!("b{b}"),
         Value::Null => String::new(),
-        other => format!("x{other}"),
+        other @ (Value::Array(_) | Value::Object(_)) => format!("x{other}"),
     }
 }
 
@@ -37,7 +37,11 @@ fn apply_search_filter(records: &mut Vec<Value>, search: Option<&str>) {
         if let Value::Object(map) = rec {
             map.values().any(|v| match v {
                 Value::String(s) => s.to_lowercase().contains(&query_lower),
-                _ => v.to_string().to_lowercase().contains(&query_lower),
+                Value::Null
+                | Value::Bool(_)
+                | Value::Number(_)
+                | Value::Array(_)
+                | Value::Object(_) => v.to_string().to_lowercase().contains(&query_lower),
             })
         } else {
             false
@@ -71,7 +75,11 @@ fn record_matches_date_range(rec: &Value, epoch_from: Option<i64>, epoch_to: Opt
             .filter(|(k, _)| k.ends_with("_at"))
             .filter_map(|(_, v)| match v {
                 Value::Number(n) => n.as_i64(),
-                _ => None,
+                Value::Null
+                | Value::Bool(_)
+                | Value::String(_)
+                | Value::Array(_)
+                | Value::Object(_) => None,
             })
             .any(|ts| {
                 has_any_ts = true;
@@ -109,7 +117,7 @@ fn apply_sort(records: &mut [Value], params: &FilterParams, valid_sort_fields: &
     });
 }
 
-fn paginate(records: Vec<Value>, params: &FilterParams) -> FilteredResult {
+fn paginate(records: &[Value], params: &FilterParams) -> FilteredResult {
     let total_count = records.len();
     let per_page = if params.per_page == 0 {
         20
@@ -150,5 +158,5 @@ pub fn apply_filter_pipeline(
     let (epoch_from, epoch_to) = parse_date_range(params);
     apply_date_filter(&mut records, epoch_from, epoch_to);
     apply_sort(&mut records, params, valid_sort_fields);
-    paginate(records, params)
+    paginate(&records, params)
 }

@@ -53,7 +53,7 @@ Technical architecture documentation following C4 model principles.
 
 ### 📦 Modules (v0.2.1 Crate Structure)
 
-Module documentation organized by the nine-crate Clean Architecture:
+Module documentation organized by the seven-crate Clean Architecture:
 
 - **[Module Index](modules/README.md)** - Complete module documentation
 - [Domain Layer](modules/domain.md) - Core business logic (`mcb-domain`)

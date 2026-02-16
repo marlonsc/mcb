@@ -27,7 +27,7 @@ To optimize performance of frequent read/write context operations, we decided to
 
 ## Decision
 
-We implemented a configurable caching system, with Moka as the default provider and optional Redis support. The architecture defines a cache abstraction (for example, a trait CacheStore with operations get, set, invalidate, etc.), having MokaCache and RedisCache as implementations. By default, the application instantiates MokaCache, which offers high-performance local in-memory cache without external dependencies. If the configuration indicates Redis use (providing URL and connection parameters), the ServiceManager instead initializes a RedisCache and the modules pass through the same interface. The integration with the DI container (Shaku) allows injecting the chosen cache where needed, without the system components needing to know which implementation is in use.
+We implemented a configurable caching system, with Moka as the default provider and optional Redis support. The architecture defines a cache abstraction (for example, a trait CacheStore with operations get, set, invalidate, etc.), having MokaCache and RedisCache as implementations. By default, the application instantiates MokaCache, which offers high-performance local in-memory cache without external dependencies. If the configuration indicates Redis use (providing URL and connection parameters), the ServiceManager instead initializes a RedisCache and the modules pass through the same interface. The integration with the DI container (dill Catalog, ADR-029) allows injecting the chosen cache where needed, without the system components needing to know which implementation is in use.
 
 ### Consequences
 

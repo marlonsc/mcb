@@ -1,23 +1,9 @@
-use rmcp::model::{CallToolRequestParams, Content};
+use rmcp::model::CallToolRequestParams;
 use serde::de::DeserializeOwned;
 
 use crate::admin::handlers::AdminState;
 use crate::tools::{ToolExecutionContext, route_tool_call};
-
-fn extract_text_content(content: &[Content]) -> String {
-    content
-        .iter()
-        .filter_map(|entry| {
-            serde_json::to_value(entry).ok().and_then(|value| {
-                value
-                    .get("text")
-                    .and_then(|text| text.as_str())
-                    .map(str::to_string)
-            })
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
-}
+use crate::utils::text::extract_text;
 
 pub(super) async fn execute_tool_json<T: DeserializeOwned>(
     state: &AdminState,
@@ -45,7 +31,7 @@ pub(super) async fn execute_tool_json<T: DeserializeOwned>(
         .await
         .map_err(|e| e.message.to_string())?;
 
-    let text = extract_text_content(&result.content);
+    let text = extract_text(&result.content);
     if result.is_error.unwrap_or(false) {
         return Err(if text.is_empty() {
             format!("{tool_name} execution failed")

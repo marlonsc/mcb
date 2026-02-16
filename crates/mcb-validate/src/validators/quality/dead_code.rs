@@ -1,4 +1,5 @@
 use super::{QualityValidator, QualityViolation};
+use crate::constants::common::TEST_DIR_FRAGMENT;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
@@ -25,7 +26,7 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                 || entry
                     .absolute_path
                     .to_str()
-                    .is_some_and(|s| s.contains("/tests/"))
+                    .is_some_and(|s| s.contains(TEST_DIR_FRAGMENT))
                 || !entry.absolute_path.exists()
             {
                 return Ok(());

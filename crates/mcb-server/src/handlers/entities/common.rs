@@ -39,6 +39,9 @@ impl EntityHandler {
     }
 
     /// Route an `entity` tool call to the matching legacy entity handler.
+    ///
+    /// # Errors
+    /// Returns an error when action/resource mapping is invalid for the target domain handler.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
@@ -174,94 +177,38 @@ fn unsupported(msg: &'static str) -> McpError {
     McpError::invalid_params(msg, None)
 }
 
-fn map_vcs_action(action: EntityAction) -> Result<VcsEntityAction, McpError> {
-    match action {
-        EntityAction::Create => Ok(VcsEntityAction::Create),
-        EntityAction::Get => Ok(VcsEntityAction::Get),
-        EntityAction::Update => Ok(VcsEntityAction::Update),
-        EntityAction::List => Ok(VcsEntityAction::List),
-        EntityAction::Delete => Ok(VcsEntityAction::Delete),
-        EntityAction::Release => Ok(VcsEntityAction::Release),
-    }
-}
+define_action_mapper!(map_vcs_action, VcsEntityAction, allow_all);
+define_action_mapper!(
+    map_standard_action_to_plan,
+    PlanEntityAction,
+    reject_release
+);
+define_action_mapper!(
+    map_standard_action_to_issue,
+    IssueEntityAction,
+    reject_release
+);
+define_action_mapper!(map_standard_action_to_org, OrgEntityAction, reject_release);
 
-fn map_standard_action_to_plan(action: EntityAction) -> Result<PlanEntityAction, McpError> {
-    match action {
-        EntityAction::Create => Ok(PlanEntityAction::Create),
-        EntityAction::Get => Ok(PlanEntityAction::Get),
-        EntityAction::Update => Ok(PlanEntityAction::Update),
-        EntityAction::List => Ok(PlanEntityAction::List),
-        EntityAction::Delete => Ok(PlanEntityAction::Delete),
-        EntityAction::Release => Err(unsupported("release action is only valid for assignment")),
-    }
-}
+define_resource_mapper!(map_vcs_resource, VcsEntityResource,
+    "resource is not valid for vcs entity operation", {
+    Repository => Repository, Branch => Branch,
+    Worktree => Worktree, Assignment => Assignment,
+});
 
-fn map_standard_action_to_issue(action: EntityAction) -> Result<IssueEntityAction, McpError> {
-    match action {
-        EntityAction::Create => Ok(IssueEntityAction::Create),
-        EntityAction::Get => Ok(IssueEntityAction::Get),
-        EntityAction::Update => Ok(IssueEntityAction::Update),
-        EntityAction::List => Ok(IssueEntityAction::List),
-        EntityAction::Delete => Ok(IssueEntityAction::Delete),
-        EntityAction::Release => Err(unsupported("release action is only valid for assignment")),
-    }
-}
+define_resource_mapper!(map_plan_resource, PlanEntityResource,
+    "resource is not valid for plan entity operation", {
+    Plan => Plan, Version => Version, Review => Review,
+});
 
-fn map_standard_action_to_org(action: EntityAction) -> Result<OrgEntityAction, McpError> {
-    match action {
-        EntityAction::Create => Ok(OrgEntityAction::Create),
-        EntityAction::Get => Ok(OrgEntityAction::Get),
-        EntityAction::Update => Ok(OrgEntityAction::Update),
-        EntityAction::List => Ok(OrgEntityAction::List),
-        EntityAction::Delete => Ok(OrgEntityAction::Delete),
-        EntityAction::Release => Err(unsupported("release action is only valid for assignment")),
-    }
-}
+define_resource_mapper!(map_issue_resource, IssueEntityResource,
+    "resource is not valid for issue entity operation", {
+    Issue => Issue, Comment => Comment,
+    Label => Label, LabelAssignment => LabelAssignment,
+});
 
-fn map_vcs_resource(resource: EntityResource) -> Result<VcsEntityResource, McpError> {
-    match resource {
-        EntityResource::Repository => Ok(VcsEntityResource::Repository),
-        EntityResource::Branch => Ok(VcsEntityResource::Branch),
-        EntityResource::Worktree => Ok(VcsEntityResource::Worktree),
-        EntityResource::Assignment => Ok(VcsEntityResource::Assignment),
-        _ => Err(unsupported(
-            "resource is not valid for vcs entity operation",
-        )),
-    }
-}
-
-fn map_plan_resource(resource: EntityResource) -> Result<PlanEntityResource, McpError> {
-    match resource {
-        EntityResource::Plan => Ok(PlanEntityResource::Plan),
-        EntityResource::Version => Ok(PlanEntityResource::Version),
-        EntityResource::Review => Ok(PlanEntityResource::Review),
-        _ => Err(unsupported(
-            "resource is not valid for plan entity operation",
-        )),
-    }
-}
-
-fn map_issue_resource(resource: EntityResource) -> Result<IssueEntityResource, McpError> {
-    match resource {
-        EntityResource::Issue => Ok(IssueEntityResource::Issue),
-        EntityResource::Comment => Ok(IssueEntityResource::Comment),
-        EntityResource::Label => Ok(IssueEntityResource::Label),
-        EntityResource::LabelAssignment => Ok(IssueEntityResource::LabelAssignment),
-        _ => Err(unsupported(
-            "resource is not valid for issue entity operation",
-        )),
-    }
-}
-
-fn map_org_resource(resource: EntityResource) -> Result<OrgEntityResource, McpError> {
-    match resource {
-        EntityResource::Org => Ok(OrgEntityResource::Org),
-        EntityResource::User => Ok(OrgEntityResource::User),
-        EntityResource::Team => Ok(OrgEntityResource::Team),
-        EntityResource::TeamMember => Ok(OrgEntityResource::TeamMember),
-        EntityResource::ApiKey => Ok(OrgEntityResource::ApiKey),
-        _ => Err(unsupported(
-            "resource is not valid for org entity operation",
-        )),
-    }
-}
+define_resource_mapper!(map_org_resource, OrgEntityResource,
+    "resource is not valid for org entity operation", {
+    Org => Org, User => User, Team => Team,
+    TeamMember => TeamMember, ApiKey => ApiKey,
+});

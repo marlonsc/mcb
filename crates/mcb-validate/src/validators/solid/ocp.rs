@@ -47,7 +47,6 @@ pub fn validate_ocp(
 ///
 /// # Errors
 /// Returns an error if pattern compilation fails.
-#[allow(dead_code)]
 pub fn validate_string_dispatch(config: &ValidationConfig) -> Result<Vec<SolidViolation>> {
     let mut violations = Vec::new();
     let string_match_pattern = required_pattern("SOLID003.string_match")?;

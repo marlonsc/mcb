@@ -1,22 +1,5 @@
-pub fn extract_text(content: &[rmcp::model::Content]) -> String {
-    extract_text_with_sep(content, "\n")
-}
-
-pub fn extract_text_with_sep(content: &[rmcp::model::Content], sep: &str) -> String {
-    content
-        .iter()
-        .filter_map(|c| {
-            if let Ok(json) = serde_json::to_value(c)
-                && let Some(text) = json.get("text")
-            {
-                text.as_str().map(str::to_string)
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>()
-        .join(sep)
-}
+// Re-export from production code — single source of truth
+pub use mcb_server::utils::text::{extract_text, extract_text_with_sep};
 
 pub fn parse_json_text(text: &str) -> Option<serde_json::Value> {
     serde_json::from_str(text).ok()

@@ -9,7 +9,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
 use serde_json::Value;
 
-use uuid::Uuid;
+use mcb_domain::utils::id as domain_id;
 use validator::Validate;
 
 use crate::args::{AgentAction, AgentArgs};
@@ -30,6 +30,9 @@ impl AgentHandler {
     }
 
     /// Handle an agent tool request.
+    ///
+    /// # Errors
+    /// Returns an error when input validation fails or `session_id` is missing.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
@@ -70,7 +73,7 @@ impl AgentHandler {
                     }
                 };
                 let tool_call = ToolCall {
-                    id: format!("tc_{}", Uuid::new_v4()),
+                    id: format!("tc_{}", domain_id::generate()),
                     session_id: session_id.clone(),
                     tool_name: tool_name.clone(),
                     params_summary: data
@@ -106,7 +109,7 @@ impl AgentHandler {
                     }
                 };
                 let delegation = Delegation {
-                    id: format!("del_{}", Uuid::new_v4()),
+                    id: format!("del_{}", domain_id::generate()),
                     parent_session_id: session_id.clone(),
                     child_session_id: child_session_id.clone(),
                     prompt: data

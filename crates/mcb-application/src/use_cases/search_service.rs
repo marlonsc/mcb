@@ -13,6 +13,8 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::services::{ContextServiceInterface, SearchFilters, SearchServiceInterface};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
 
+use crate::constants::SEARCH_OVERFETCH_MULTIPLIER;
+
 /// Implementation of the `SearchServiceInterface`.
 ///
 /// Orchestrates vector similarity search via `ContextService` and applies application-level
@@ -102,7 +104,11 @@ impl SearchServiceInterface for SearchServiceImpl {
         filters: Option<&SearchFilters>,
     ) -> Result<Vec<SearchResult>> {
         // Get more results initially to account for filtering
-        let fetch_limit = if filters.is_some() { limit * 2 } else { limit };
+        let fetch_limit = if filters.is_some() {
+            limit * SEARCH_OVERFETCH_MULTIPLIER
+        } else {
+            limit
+        };
         let results = self
             .context_service
             .search_similar(collection, query, fetch_limit)

@@ -14,7 +14,7 @@ use typed_builder::TypedBuilder;
 #[builder(field_defaults(default, setter(into)))]
 pub struct OriginContext {
     /// Unique identity for this origin context (UUID v4, auto-generated on creation).
-    #[builder(default_code = "uuid::Uuid::new_v4().to_string()")]
+    #[builder(default_code = "crate::utils::id::generate().to_string()")]
     #[serde(default = "crate::entities::memory::origin_context::generate_id")]
     pub id: String,
     /// The ID of the organization.
@@ -62,7 +62,7 @@ pub struct OriginContext {
 }
 
 pub(crate) fn generate_id() -> String {
-    uuid::Uuid::new_v4().to_string()
+    crate::utils::id::generate().to_string()
 }
 
 impl Default for OriginContext {

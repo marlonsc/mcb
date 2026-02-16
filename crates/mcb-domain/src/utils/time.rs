@@ -101,10 +101,14 @@ mod tests {
 
     #[test]
     fn epoch_secs_i64_reasonable_range() -> TestResult {
+        use crate::constants::time::{TIMESTAMP_MAX_BOUNDARY, TIMESTAMP_MIN_BOUNDARY};
         let ts = epoch_secs_i64()?;
-        // Should be after 2020-01-01 (1577836800) and before 2100-01-01 (4102444800)
-        assert!(ts > 1_577_836_800, "timestamp too old: {ts}");
-        assert!(ts < 4_102_444_800, "timestamp too far in future: {ts}");
+        // Should be after 2020-01-01 and before 2100-01-01
+        assert!(ts > TIMESTAMP_MIN_BOUNDARY, "timestamp too old: {ts}");
+        assert!(
+            ts < TIMESTAMP_MAX_BOUNDARY,
+            "timestamp too far in future: {ts}"
+        );
         Ok(())
     }
 }

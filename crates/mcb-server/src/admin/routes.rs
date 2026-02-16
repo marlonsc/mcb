@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use crate::templates::Template;
-use rocket::{Build, Rocket, routes};
+use rocket::{Build, Rocket};
 
 use super::auth::AdminAuthConfig;
 use super::browse::{
@@ -78,76 +78,88 @@ pub fn admin_rocket(
     let mut rocket = rocket::custom(figment)
         .manage(state)
         .manage(auth_config)
-        .attach(Template::custom(
-            |engines: &mut crate::templates::Engines| {
-                crate::utils::handlebars::register_helpers(&mut engines.handlebars);
-            },
-        ));
+        .attach(Template::custom(|engines| {
+            crate::utils::handlebars::register_helpers(&mut engines.handlebars);
+        }));
 
-    // Mount base routes
-    rocket = rocket.mount(
-        "/",
-        routes![
-            // Health and monitoring
-            health_check,
-            extended_health_check,
-            get_metrics,
-            get_jobs_status,
-            list_browse_projects,
-            list_browse_repositories,
-            list_browse_plans,
-            list_browse_issues,
-            list_browse_organizations,
-            readiness_check,
-            liveness_check,
-            // Service control
-            shutdown,
-            // Configuration management
-            get_config,
-            reload_config,
-            update_config_section,
-            // SSE event stream
-            events_stream,
-            // Service lifecycle management
-            list_services,
-            services_health,
-            start_service,
-            stop_service,
-            restart_service,
-            // Cache management
-            get_cache_stats,
-            // Web UI routes
-            dashboard,
-            dashboard_ui,
-            favicon,
-            config_page,
-            health_page,
-            jobs_page,
-            browse_page,
-            browse_collection_page,
-            browse_file_page,
-            browse_tree_page,
-            theme_css,
-            shared_js,
-            entities_index,
-            entities_list,
-            entities_new_form,
-            entities_detail,
-            entities_edit_form,
-            entities_delete_confirm,
-            entities_create,
-            entities_update,
-            entities_delete,
-            entities_bulk_delete,
-            lov_endpoint,
-        ],
-    );
+    rocket = rocket
+        .mount(
+            "/",
+            rocket::routes![
+                health_check,
+                extended_health_check,
+                get_metrics,
+                get_jobs_status,
+                readiness_check,
+                liveness_check,
+            ],
+        )
+        .mount(
+            "/",
+            rocket::routes![
+                list_browse_projects,
+                list_browse_repositories,
+                list_browse_plans,
+                list_browse_issues,
+                list_browse_organizations,
+            ],
+        )
+        .mount("/", rocket::routes![shutdown])
+        .mount(
+            "/",
+            rocket::routes![get_config, reload_config, update_config_section],
+        )
+        .mount("/", rocket::routes![events_stream])
+        .mount(
+            "/",
+            rocket::routes![
+                list_services,
+                services_health,
+                start_service,
+                stop_service,
+                restart_service,
+            ],
+        )
+        .mount("/", rocket::routes![get_cache_stats])
+        .mount(
+            "/",
+            rocket::routes![
+                dashboard,
+                dashboard_ui,
+                favicon,
+                config_page,
+                health_page,
+                jobs_page,
+                browse_page,
+                browse_collection_page,
+                browse_file_page,
+                browse_tree_page,
+                theme_css,
+                shared_js,
+            ],
+        )
+        .mount(
+            "/",
+            rocket::routes![
+                entities_index,
+                entities_list,
+                entities_new_form,
+                entities_detail,
+                entities_edit_form,
+                entities_delete_confirm,
+                entities_create,
+                entities_update,
+                entities_delete,
+                entities_bulk_delete,
+                lov_endpoint,
+            ],
+        );
 
     // Add browse routes only if BrowseState is available
     if let Some(browse) = browse_state {
         rocket = rocket.manage(browse).mount(
             "/",
-            routes![
+            rocket::routes![
                 list_collections,
                 list_collection_files,
                 get_file_chunks,

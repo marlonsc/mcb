@@ -29,3 +29,15 @@ pub const ARCH_PATH_APPLICATION: &str = "/application/";
 
 /// Path fragment identifying the infrastructure layer.
 pub const ARCH_PATH_INFRASTRUCTURE: &str = "/infrastructure/";
+
+/// Path fragment identifying the services directory.
+pub const ARCH_PATH_SERVICES: &str = "/services/";
+
+/// Path fragment identifying the adapters directory.
+pub const ARCH_PATH_ADAPTERS: &str = "/adapters/";
+
+/// Path fragment identifying the domain layer.
+pub const ARCH_PATH_DOMAIN: &str = "/domain/";
+
+/// Path fragment identifying the config directory.
+pub const ARCH_PATH_CONFIG: &str = "/config/";

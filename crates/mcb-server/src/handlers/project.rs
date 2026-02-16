@@ -23,6 +23,9 @@ impl ProjectHandler {
     }
 
     /// Route an incoming `project` tool call to the appropriate operation.
+    ///
+    /// # Errors
+    /// Returns an error when required identifiers are missing or action/resource is unsupported.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,

@@ -19,7 +19,7 @@ pub use super::system::{
     EventBusProvider, JwtConfig, OperationsConfig, PasswordAlgorithm, SnapshotConfig, SyncConfig,
 };
 /// Embedding configuration container
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct EmbeddingConfigContainer {
     /// Provider name
@@ -39,7 +39,7 @@ pub struct EmbeddingConfigContainer {
 }
 
 /// Vector store configuration container
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct VectorStoreConfigContainer {
     /// Provider name
@@ -55,7 +55,7 @@ pub struct VectorStoreConfigContainer {
 }
 
 /// Database provider configuration entry
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct DatabaseConfig {
     /// Database provider name (e.g. "sqlite", "postgres")
@@ -65,7 +65,7 @@ pub struct DatabaseConfig {
 }
 
 /// Database configuration container
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct DatabaseConfigContainer {
     /// Active database provider name
@@ -75,7 +75,7 @@ pub struct DatabaseConfigContainer {
 }
 
 /// Provider configurations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct ProvidersConfig {
     /// Database provider configuration
@@ -87,7 +87,7 @@ pub struct ProvidersConfig {
 }
 
 /// Default context settings for MCP operations.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct McpContextDefaultsConfig {
     /// Git-related context defaults.
@@ -95,7 +95,7 @@ pub struct McpContextDefaultsConfig {
 }
 
 /// Indexing configuration for file discovery.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct IndexingConfig {
     /// File extensions to include during indexing.
@@ -103,7 +103,7 @@ pub struct IndexingConfig {
 }
 
 /// MCP server feature configuration.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct McpConfig {
     /// Indexing subsystem settings.
@@ -111,7 +111,7 @@ pub struct McpConfig {
 }
 
 /// Git defaults for MCP context resolution.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct McpContextGitDefaultsConfig {
     /// Default branches to consider.
@@ -125,7 +125,7 @@ pub struct McpContextGitDefaultsConfig {
 }
 
 /// Infrastructure configurations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct InfrastructureConfig {
     /// Cache system configuration
@@ -141,7 +141,7 @@ pub struct InfrastructureConfig {
 }
 
 /// Data management configurations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct DataConfig {
     /// Snapshot configuration
@@ -153,7 +153,7 @@ pub struct DataConfig {
 }
 
 /// System infrastructure and data configurations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct SystemConfig {
     /// Infrastructure configurations
@@ -163,7 +163,7 @@ pub struct SystemConfig {
 }
 
 /// Operations and daemon configurations combined
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct OperationsDaemonConfig {
     /// Daemon configuration

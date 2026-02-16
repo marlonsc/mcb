@@ -14,12 +14,18 @@ use async_trait::async_trait;
 use dashmap::DashMap;
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::Result;
+use mcb_domain::utils::id;
+
+use crate::constants::{
+    HTTP_HEADER_CONTENT_TYPE, STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS,
+    STATS_FIELD_VECTORS_COUNT, STATUS_UNKNOWN,
+};
 use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
 
 /// Qdrant vector store provider
 ///
@@ -71,7 +77,7 @@ impl QdrantVectorStoreProvider {
         path: &str,
         body: Option<Value>,
     ) -> Result<Value> {
-        let mut headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_owned())];
+        let mut headers = vec![(HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned())];
 
         if let Some(ref key) = self.api_key {
             headers.push(("api-key", key.clone()));
@@ -87,6 +93,7 @@ impl QdrantVectorStoreProvider {
             kind: RequestErrorKind::VectorDb,
             headers: &headers,
             body: body.as_ref(),
+            retry: Some(RetryConfig::new(2, std::time::Duration::from_secs(1))),
         })
         .await
     }
@@ -147,11 +154,11 @@ impl VectorStoreAdmin for QdrantVectorStoreProvider {
     async fn get_stats(&self, collection: &CollectionId) -> Result<HashMap<String, Value>> {
         let mut stats = HashMap::new();
         stats.insert(
-            "collection".to_owned(),
+            STATS_FIELD_COLLECTION.to_owned(),
             serde_json::json!(collection.to_string()),
         );
         stats.insert(
-            "provider".to_owned(),
+            STATS_FIELD_PROVIDER.to_owned(),
             serde_json::json!(self.provider_name()),
         );
 
@@ -165,17 +172,20 @@ impl VectorStoreAdmin for QdrantVectorStoreProvider {
         {
             Ok(data) => {
                 if let Some(result) = data.get("result") {
-                    if let Some(count) = result.get("vectors_count") {
-                        stats.insert("vectors_count".to_owned(), count.clone());
+                    if let Some(count) = result.get(STATS_FIELD_VECTORS_COUNT) {
+                        stats.insert(STATS_FIELD_VECTORS_COUNT.to_owned(), count.clone());
                     }
                     if let Some(status) = result.get("status") {
-                        stats.insert("status".to_owned(), status.clone());
+                        stats.insert(STATS_FIELD_STATUS.to_owned(), status.clone());
                     }
                 }
             }
             Err(_) => {
-                stats.insert("status".to_owned(), serde_json::json!("unknown"));
-                stats.insert("vectors_count".to_owned(), serde_json::json!(0));
+                stats.insert(
+                    STATS_FIELD_STATUS.to_owned(),
+                    serde_json::json!(STATUS_UNKNOWN),
+                );
+                stats.insert(STATS_FIELD_VECTORS_COUNT.to_owned(), serde_json::json!(0));
             }
         }
 
@@ -239,7 +249,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         let mut points = Vec::with_capacity(vectors.len());
 
         for (embedding, meta) in vectors.iter().zip(metadata.iter()) {
-            let id = uuid::Uuid::new_v4().to_string();
+            let id = id::generate().to_string();
             points.push(serde_json::json!({
                 "id": id,
                 "vector": embedding.vector,

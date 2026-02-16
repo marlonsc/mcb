@@ -23,6 +23,7 @@ use mcb_domain::registry::vector_store::{
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 
 use crate::config::AppConfig;
+use crate::constants::providers::{FALLBACK_EMBEDDING_PROVIDER, FALLBACK_VECTOR_STORE_PROVIDER};
 
 // ============================================================================
 // Embedding Provider Resolver
@@ -89,7 +90,7 @@ impl EmbeddingProviderResolver {
             }
         } else {
             // Fallback to fastembed (local provider) if no default configured
-            resolve_embedding_provider(&EmbeddingProviderConfig::new("fastembed"))
+            resolve_embedding_provider(&EmbeddingProviderConfig::new(FALLBACK_EMBEDDING_PROVIDER))
         }
     }
 
@@ -177,7 +178,9 @@ impl VectorStoreProviderResolver {
             }
         } else {
             // Fallback to edgevec (local HNSW) if no default configured
-            resolve_vector_store_provider(&VectorStoreProviderConfig::new("edgevec"))
+            resolve_vector_store_provider(&VectorStoreProviderConfig::new(
+                FALLBACK_VECTOR_STORE_PROVIDER,
+            ))
         }
     }
 

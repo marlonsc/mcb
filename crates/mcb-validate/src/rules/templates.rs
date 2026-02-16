@@ -8,6 +8,8 @@ use std::path::Path;
 use serde_yaml;
 
 use crate::Result;
+use crate::constants::rules::{YAML_FIELD_BASE, YAML_FIELD_NAME};
+use crate::pattern_registry::compile_regex;
 use crate::utils::fs::collect_yaml_files;
 
 /// Template engine for YAML rules with inheritance and substitution
@@ -116,15 +118,18 @@ impl TemplateEngine {
 
         // Verify this is actually a template
         if template
-            .get("_base")
+            .get(YAML_FIELD_BASE)
             .and_then(serde_yaml::Value::as_bool)
             .unwrap_or(false)
         {
             // Use the 'name' field from template YAML if present, otherwise use filename
-            let registry_name = template.get("name").and_then(|v| v.as_str()).map_or_else(
-                || template_name.to_owned(),
-                std::string::ToString::to_string,
-            );
+            let registry_name = template
+                .get(YAML_FIELD_NAME)
+                .and_then(|v| v.as_str())
+                .map_or_else(
+                    || template_name.to_owned(),
+                    std::string::ToString::to_string,
+                );
             self.templates.insert(registry_name, template);
         }
         Ok(())
@@ -155,14 +160,17 @@ impl TemplateEngine {
                 })?;
 
             if template
-                .get("_base")
+                .get(YAML_FIELD_BASE)
                 .and_then(serde_yaml::Value::as_bool)
                 .unwrap_or(false)
             {
-                let registry_name = template.get("name").and_then(|v| v.as_str()).map_or_else(
-                    || template_name.to_owned(),
-                    std::string::ToString::to_string,
-                );
+                let registry_name = template
+                    .get(YAML_FIELD_NAME)
+                    .and_then(|v| v.as_str())
+                    .map_or_else(
+                        || template_name.to_owned(),
+                        std::string::ToString::to_string,
+                    );
                 self.templates.insert(registry_name, template);
             }
         }
@@ -195,10 +203,10 @@ impl TemplateEngine {
 
         // Remove template metadata (but keep name if rule provided one)
         if let Some(obj) = result.as_mapping_mut() {
-            obj.remove("_base");
+            obj.remove(YAML_FIELD_BASE);
             // Only remove template's internal name if rule didn't provide its own
-            if rule.get("name").is_none() {
-                obj.remove("name");
+            if rule.get(YAML_FIELD_NAME).is_none() {
+                obj.remove(YAML_FIELD_NAME);
             }
         }
 
@@ -270,7 +278,7 @@ impl TemplateEngine {
 
         // Find all {{variable}} patterns
         // Find all {{variable}} patterns, allowing for spaces
-        let var_pattern = regex::Regex::new(r"\{\{\s*(\w+)\s*\}\}")
+        let var_pattern = compile_regex(r"\{\{\s*(\w+)\s*\}\}")
             .map_err(|e| crate::ValidationError::Config(format!("Regex error: {e}")))?;
 
         for capture in var_pattern.captures_iter(input) {

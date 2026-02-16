@@ -24,10 +24,4 @@ impl TokenGenerator {
         use base64::{Engine as _, engine::general_purpose};
         general_purpose::URL_SAFE_NO_PAD.encode(bytes)
     }
-
-    /// Generate a UUID v4
-    #[must_use]
-    pub fn generate_uuid() -> String {
-        uuid::Uuid::new_v4().to_string()
-    }
 }

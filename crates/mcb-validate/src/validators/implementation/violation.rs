@@ -10,7 +10,8 @@
 use std::path::PathBuf;
 
 use crate::Severity;
-use crate::traits::violation::{Violation, ViolationCategory};
+use crate::define_violations;
+use crate::traits::violation::ViolationCategory;
 
 define_violations! {
     dynamic_severity,
@@ -99,15 +100,5 @@ define_violations! {
             context: String,
             severity: Severity,
         },
-    }
-}
-
-impl ImplementationViolation {
-    /// Returns the severity level of the violation.
-    ///
-    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
-    #[must_use]
-    pub fn severity(&self) -> Severity {
-        <Self as Violation>::severity(self)
     }
 }

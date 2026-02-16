@@ -37,12 +37,8 @@ pub mod thresholds;
 /// Core traits for the validation system
 pub mod traits;
 
-/// Common macros for validation layer
-#[macro_use]
-pub mod macros;
-
 /// Violation runtime types (field formatting, file path extraction).
-pub mod violation_macro;
+pub mod macros;
 
 pub mod generic_reporter;
 pub mod reporter;
@@ -150,6 +146,8 @@ pub use rules::yaml_validator::YamlRuleValidator;
 
 use derive_more::Display;
 use thiserror::Error;
+
+use crate::linters::constants::CARGO_TOML_FILENAME;
 pub use validators::hygiene::{HygieneValidator, HygieneViolation};
 pub use validators::solid::{SolidValidator, SolidViolation};
 pub use validators::test_quality::{TestQualityValidator, TestQualityViolation};
@@ -439,7 +437,7 @@ pub fn find_workspace_root() -> Option<PathBuf> {
 pub fn find_workspace_root_from(start: &Path) -> Option<PathBuf> {
     let mut current = start.to_path_buf();
     loop {
-        let cargo_toml = current.join("Cargo.toml");
+        let cargo_toml = current.join(CARGO_TOML_FILENAME);
         if cargo_toml.exists()
             && let Ok(content) = std::fs::read_to_string(&cargo_toml)
             && content.contains("[workspace]")

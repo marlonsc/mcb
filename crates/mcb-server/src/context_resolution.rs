@@ -13,7 +13,7 @@ fn meta_value_as_string(meta: &Meta, keys: &[&str]) -> Option<String> {
             Value::String(v) => Some(v.clone()),
             Value::Number(v) => Some(v.to_string()),
             Value::Bool(v) => Some(v.to_string()),
-            _ => None,
+            Value::Null | Value::Array(_) | Value::Object(_) => None,
         };
         if extracted.is_some() {
             return extracted;
@@ -42,7 +42,7 @@ fn meta_value_as_bool(meta: &Meta, keys: &[&str]) -> Option<bool> {
                 "false" | "0" | "no" => Some(false),
                 _ => None,
             },
-            _ => None,
+            Value::Null | Value::Number(_) | Value::Array(_) | Value::Object(_) => None,
         };
         if extracted.is_some() {
             return extracted;

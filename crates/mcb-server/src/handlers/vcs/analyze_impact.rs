@@ -7,6 +7,7 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{ImpactFile, ImpactResponse, ImpactSummary, repo_path};
 use crate::args::VcsArgs;
+use crate::constants::git::GIT_REF_HEAD;
 use crate::constants::vcs::{
     IMPACT_CHANGE_COUNT_WEIGHT, IMPACT_FILE_COUNT_WEIGHT, MAX_IMPACT_SCORE,
 };
@@ -36,7 +37,7 @@ pub async fn analyze_impact(
     let head_ref = args
         .target_branch
         .clone()
-        .unwrap_or_else(|| "HEAD".to_owned());
+        .unwrap_or_else(|| GIT_REF_HEAD.to_owned());
     let diff = match vcs_provider.diff_refs(&repo, &base_ref, &head_ref).await {
         Ok(diff) => diff,
         Err(e) => {

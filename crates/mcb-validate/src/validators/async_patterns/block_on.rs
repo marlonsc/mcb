@@ -1,4 +1,6 @@
-use crate::constants::common::CONTEXT_PREVIEW_LENGTH;
+use crate::constants::common::{
+    CFG_TEST_MARKER, COMMENT_PREFIX, CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT,
+};
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regexes, required_pattern};
 use crate::scan::for_each_scan_file;
@@ -22,7 +24,7 @@ pub fn validate_block_on_usage(config: &ValidationConfig) -> Result<Vec<AsyncVio
 
     for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, _src_dir| {
         let path = &entry.absolute_path;
-        if path.to_str().is_some_and(|s| s.contains("/tests/")) {
+        if path.to_str().is_some_and(|s| s.contains(TEST_DIR_FRAGMENT)) {
             return Ok(());
         }
 
@@ -35,12 +37,12 @@ pub fn validate_block_on_usage(config: &ValidationConfig) -> Result<Vec<AsyncVio
             let trimmed = line.trim();
 
             // Skip comments
-            if trimmed.starts_with("//") {
+            if trimmed.starts_with(COMMENT_PREFIX) {
                 continue;
             }
 
             // Track test modules
-            if trimmed.contains("#[cfg(test)]") {
+            if trimmed.contains(CFG_TEST_MARKER) {
                 in_test_module = true;
                 continue;
             }

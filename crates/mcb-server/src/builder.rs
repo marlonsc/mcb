@@ -23,6 +23,7 @@ use crate::McpServer;
 /// Ensures all required domain services are provided before server construction.
 /// Follows the builder pattern to make server construction explicit and testable.
 #[derive(Default)]
+#[must_use]
 pub struct McpServerBuilder {
     indexing_service: Option<Arc<dyn IndexingServiceInterface>>,
     context_service: Option<Arc<dyn ContextServiceInterface>>,
@@ -41,7 +42,6 @@ pub struct McpServerBuilder {
 
 impl McpServerBuilder {
     /// Create a new server builder
-    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

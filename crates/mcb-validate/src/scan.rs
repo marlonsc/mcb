@@ -5,7 +5,7 @@
 
 use std::path::Path;
 
-use crate::constants::common::MAX_BLOCK_SEARCH_OFFSET;
+use crate::constants::common::{MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX};
 use crate::filters::LanguageId;
 use crate::run_context::{InventoryEntry, ValidationRunContext};
 use crate::{Result, ValidationConfig};
@@ -13,7 +13,7 @@ use crate::{Result, ValidationConfig};
 /// True if a path points to a test file or tests directory.
 #[must_use]
 pub fn is_test_path(path: &str) -> bool {
-    path.contains("_test.rs") || path.contains("/tests/")
+    path.contains(TEST_FILE_SUFFIX) || path.contains(TEST_DIR_FRAGMENT)
 }
 
 // ---------------------------------------------------------------------------

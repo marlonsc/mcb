@@ -35,7 +35,7 @@ pub enum OperatingMode {
 /// ```
 ///
 /// When `--server` flag is used, mode configuration is ignored and MCB runs as server.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct ModeConfig {
     /// Operating mode type (`standalone` or `client`).

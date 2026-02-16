@@ -60,7 +60,12 @@ fn default_include_submodules() -> bool {
 /// Default Git configuration: main/HEAD branches, depth 50, submodules included.
 impl Default for GitConfig {
     fn default() -> Self {
-        embedded_mcp_context_defaults().git
+        Self {
+            branches: vec!["main".to_owned(), "HEAD".to_owned(), "current".to_owned()],
+            depth: default_depth(),
+            ignore_patterns: Vec::new(),
+            include_submodules: default_include_submodules(),
+        }
     }
 }
 
@@ -74,14 +79,12 @@ struct EmbeddedMcpContext {
     git: GitConfig,
 }
 
-fn embedded_mcp_context_defaults() -> McpContextConfig {
-    toml::from_str::<EmbeddedDefaultsToml>(EMBEDDED_APP_DEFAULTS).map_or_else(
-        |e| panic!("Failed to load embedded mcp_context defaults: {e}"),
-        |parsed| McpContextConfig {
-            git: parsed.mcp_context.git,
-            custom: HashMap::new(),
-        },
-    )
+fn embedded_mcp_context_defaults() -> Result<McpContextConfig, ConfigError> {
+    let parsed: EmbeddedDefaultsToml = toml::from_str(EMBEDDED_APP_DEFAULTS)?;
+    Ok(McpContextConfig {
+        git: parsed.mcp_context.git,
+        custom: HashMap::new(),
+    })
 }
 
 /// Root MCP Context configuration
@@ -107,7 +110,7 @@ impl McpContextConfig {
         let config_path = path.join(".mcp-context.toml");
 
         if !config_path.exists() {
-            return Ok(embedded_mcp_context_defaults());
+            return embedded_mcp_context_defaults();
         }
 
         let content = fs::read_to_string(&config_path)?;
@@ -119,6 +122,6 @@ impl McpContextConfig {
     /// Load configuration, returning default if file not found
     #[must_use]
     pub fn load_from_path_or_default(path: &Path) -> Self {
-        Self::load_from_path(path).unwrap_or_else(|_| embedded_mcp_context_defaults())
+        Self::load_from_path(path).unwrap_or_default()
     }
 }

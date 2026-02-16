@@ -7,6 +7,7 @@ use std::path::Path;
 
 use rust_code_analysis::{Callback, Node, ParserTrait, action, guess_language};
 
+use crate::constants::common::{CFG_TEST_MARKER, EXPECT_CALL, MOD_PREFIX, UNWRAP_CALL};
 use crate::{Result, ValidationError};
 
 /// Detection result for unwrap/expect usage
@@ -93,9 +94,9 @@ fn detect_recursive(
 
 /// Extract method name from call expression text
 fn extract_method(text: &str) -> String {
-    if text.contains(".unwrap()") {
+    if text.contains(UNWRAP_CALL) {
         "unwrap".to_owned()
-    } else if text.contains(".expect(") {
+    } else if text.contains(EXPECT_CALL) {
         "expect".to_owned()
     } else {
         String::new()
@@ -119,19 +120,20 @@ fn find_test_modules_recursive(node: &Node, code: &[u8], ranges: &mut Vec<(usize
             let start = current.start_byte();
             let search_start = start.saturating_sub(50);
             let before = std::str::from_utf8(&code[search_start..start]).unwrap_or("");
-            if before.contains("#[cfg(test)]") {
+            if before.contains(CFG_TEST_MARKER) {
                 ranges.push((current.start_byte(), current.end_byte()));
                 continue;
             }
 
             if let Some(name_text) = current.utf8_text(code)
-                && (name_text.contains("mod tests") || name_text.contains("mod test"))
+                && (name_text.contains(&format!("{MOD_PREFIX}tests"))
+                    || name_text.contains(&format!("{MOD_PREFIX}test")))
             {
                 let all_before = std::str::from_utf8(&code[..start]).unwrap_or("");
-                if let Some(attr_pos) = all_before.rfind("#[cfg(test)]") {
+                if let Some(attr_pos) = all_before.rfind(CFG_TEST_MARKER) {
                     let between = &all_before[attr_pos..];
-                    if !between.contains("mod ")
-                        || between.rfind("mod ").unwrap_or(0) == between.len() - name_text.len()
+                    if !between.contains(MOD_PREFIX)
+                        || between.rfind(MOD_PREFIX).unwrap_or(0) == between.len() - name_text.len()
                     {
                         ranges.push((current.start_byte(), current.end_byte()));
                         continue;

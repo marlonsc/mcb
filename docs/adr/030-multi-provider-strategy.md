@@ -215,7 +215,7 @@ impl EmbeddingProviderFactory {
                 VoyageAIEmbeddingProvider::new(&config.voyage)?)),
             "gemini" => Ok(Arc::new(
                 GeminiEmbeddingProvider::new(&config.gemini)?)),
-            "null" | "test" => Ok(Arc::new(NullEmbeddingProvider)),
+            "fastembed" | "test" => Ok(Arc::new(FastEmbedProvider::default())),
             _ => Err(Error::config(format!(
                 "Unknown embedding provider: {}", config.provider))),
         }
@@ -538,4 +538,4 @@ The existing router pattern extends to new provider types:
 - [Provider Selection Strategies](https://aws.amazon.com/blogs/architecture/)
 - [Multicloud on AWS](https://aws.amazon.com/multicloud/)
 - [ADR-029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) - Current DI
-- [Shaku Documentation](https://docs.rs/shaku) (historical)
+- [dill Documentation](https://docs.rs/dill) - IoC container

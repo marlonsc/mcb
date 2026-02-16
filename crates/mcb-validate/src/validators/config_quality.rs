@@ -10,6 +10,9 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
+use crate::constants::architecture::ARCH_PATH_CONFIG;
+use crate::constants::common::DOC_COMMENT_PREFIX;
+use crate::define_violations;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
@@ -125,7 +128,7 @@ impl ConfigQualityValidator {
                 let is_config_file = entry
                     .absolute_path
                     .to_str()
-                    .is_some_and(|s| s.contains("/config/"))
+                    .is_some_and(|s| s.contains(ARCH_PATH_CONFIG))
                     || entry
                         .absolute_path
                         .file_name()
@@ -259,8 +262,8 @@ impl ConfigQualityValidator {
             {
                 // Check if there's a doc comment above
                 let has_doc_comment = i > 0 && {
-                    lines[i - 1].trim().starts_with("///")
-                        || (i > 1 && lines[i - 2].trim().starts_with("///"))
+                    lines[i - 1].trim().starts_with(DOC_COMMENT_PREFIX)
+                        || (i > 1 && lines[i - 2].trim().starts_with(DOC_COMMENT_PREFIX))
                 };
 
                 if !has_doc_comment {

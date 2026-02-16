@@ -7,6 +7,8 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use crate::config::LayerFlowRulesConfig;
+use crate::define_violations;
+use crate::linters::constants::CARGO_TOML_FILENAME;
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 
@@ -103,7 +105,7 @@ impl LayerFlowValidator {
         let crate_names = &self.circular_dependency_check_crates;
 
         for crate_name in crate_names {
-            let cargo_toml = crates_dir.join(crate_name).join("Cargo.toml");
+            let cargo_toml = crates_dir.join(crate_name).join(CARGO_TOML_FILENAME);
             if !cargo_toml.exists() {
                 continue;
             }
@@ -154,7 +156,7 @@ impl LayerFlowValidator {
                     violations.push(LayerFlowViolation::CircularDependency {
                         crate_a: crate_a.clone(),
                         crate_b: crate_b.clone(),
-                        file: crates_dir.join(crate_a).join("Cargo.toml"),
+                        file: crates_dir.join(crate_a).join(CARGO_TOML_FILENAME),
                         line: 1,
                     });
                 }

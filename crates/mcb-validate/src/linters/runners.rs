@@ -7,6 +7,10 @@ use std::process::Stdio;
 
 use tokio::process::Command;
 
+use super::constants::{
+    CARGO_ARG_SEPARATOR, CLIPPY_COMMAND, CLIPPY_MESSAGE_FORMAT_JSON, CLIPPY_PREFIX,
+    CLIPPY_WARN_FLAG,
+};
 use super::parsers::run_linter_command;
 use super::types::{LintViolation, LinterType};
 use crate::Result;
@@ -62,15 +66,15 @@ impl ClippyLinter {
         lint_codes: &[String],
     ) -> Result<Vec<LintViolation>> {
         let mut args = vec![
-            "clippy".to_owned(),
-            "--message-format=json".to_owned(),
-            "--".to_owned(),
+            CLIPPY_COMMAND.to_owned(),
+            CLIPPY_MESSAGE_FORMAT_JSON.to_owned(),
+            CARGO_ARG_SEPARATOR.to_owned(),
         ];
 
         // Add each lint code as a warning flag
         for code in lint_codes {
-            if code.starts_with("clippy::") {
-                args.push("-W".to_owned());
+            if code.starts_with(CLIPPY_PREFIX) {
+                args.push(CLIPPY_WARN_FLAG.to_owned());
                 args.push(code.clone());
             }
         }

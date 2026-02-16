@@ -16,6 +16,7 @@ use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
+use crate::constants::{EMBEDDING_OPERATION_NAME, HTTP_HEADER_CONTENT_TYPE};
 use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
@@ -77,7 +78,7 @@ impl OllamaEmbeddingProvider {
             "stream": false
         });
 
-        let headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_owned())];
+        let headers = vec![(HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned())];
 
         send_json_request(JsonRequestParams {
             client: &self.client.client,
@@ -88,10 +89,11 @@ impl OllamaEmbeddingProvider {
             ),
             timeout: self.client.timeout,
             provider: "Ollama",
-            operation: "embeddings",
+            operation: EMBEDDING_OPERATION_NAME,
             kind: RequestErrorKind::Embedding,
             headers: &headers,
             body: Some(&payload),
+            retry: None,
         })
         .await
         .map_err(|e| {

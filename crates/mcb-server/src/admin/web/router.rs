@@ -5,45 +5,17 @@
 use std::sync::Arc;
 
 use crate::templates::Template;
-use async_trait::async_trait;
-use mcb_domain::error::Result;
-use mcb_domain::events::DomainEvent;
-use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
-use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
-use rocket::{Build, Rocket, routes};
+use mcb_infrastructure::infrastructure::{
+    AtomicPerformanceMetrics, DefaultIndexingOperations, default_event_bus,
+};
+use rocket::{Build, Rocket};
 
 use super::entity_handlers;
 use super::handlers;
 use super::lov_handlers;
 use crate::admin::handlers::AdminState;
 use crate::constants::limits::DEFAULT_SHUTDOWN_TIMEOUT_SECS;
-use crate::utils::config::load_startup_config_or_panic;
-
-/// Minimal no-op event bus for the standalone web UI Rocket instance.
-///
-/// Used by [`web_rocket`] so that Rocket's sentinel check for
-/// `Option<&State<AdminState>>` in entity handlers passes without
-/// requiring a full production event bus.
-struct NullEventBus;
-
-#[async_trait]
-impl EventBusProvider for NullEventBus {
-    async fn publish_event(&self, _event: DomainEvent) -> Result<()> {
-        Ok(())
-    }
-    async fn subscribe_events(&self) -> Result<DomainEventStream> {
-        Ok(Box::pin(futures::stream::empty()))
-    }
-    fn has_subscribers(&self) -> bool {
-        false
-    }
-    async fn publish(&self, _topic: &str, _payload: &[u8]) -> Result<()> {
-        Ok(())
-    }
-    async fn subscribe(&self, _topic: &str) -> Result<String> {
-        Ok(String::new())
-    }
-}
+use crate::utils::config::load_startup_config_or_exit;
 
 /// Build a minimal [`AdminState`] with no real service backends.
 ///
@@ -54,11 +26,11 @@ fn default_admin_state() -> AdminState {
         metrics: Arc::new(AtomicPerformanceMetrics::new()),
         indexing: Arc::new(DefaultIndexingOperations::new()),
         config_watcher: None,
-        current_config: load_startup_config_or_panic(),
+        current_config: load_startup_config_or_exit(),
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: DEFAULT_SHUTDOWN_TIMEOUT_SECS,
-        event_bus: Arc::new(NullEventBus),
+        event_bus: default_event_bus(),
         service_manager: None,
         cache: None,
         project_workflow: None,
@@ -116,14 +88,12 @@ pub fn web_rocket() -> Rocket<Build> {
 
     rocket::custom(figment)
         .manage(default_admin_state())
-        .attach(Template::custom(
-            |engines: &mut crate::templates::Engines| {
-                crate::utils::handlebars::register_helpers(&mut engines.handlebars);
-            },
-        ))
+        .attach(Template::custom(|engines| {
+            crate::utils::handlebars::register_helpers(&mut engines.handlebars);
+        }))
         .mount(
             "/",
-            routes![
+            rocket::routes![
                 handlers::dashboard,
                 handlers::dashboard_ui,
                 handlers::config_page,
@@ -133,9 +103,15 @@ pub fn web_rocket() -> Rocket<Build> {
                 handlers::browse_collection_page,
                 handlers::browse_file_page,
                 handlers::browse_tree_page,
-                handlers::shared_js,
-                handlers::theme_css,
-                handlers::favicon,
+            ],
+        )
+        .mount(
+            "/",
+            rocket::routes![handlers::shared_js, handlers::theme_css, handlers::favicon],
+        )
+        .mount(
+            "/",
+            rocket::routes![
                 entity_handlers::entities_index,
                 entity_handlers::entities_list,
                 entity_handlers::entities_new_form,

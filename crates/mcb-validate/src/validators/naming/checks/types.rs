@@ -3,6 +3,7 @@ use std::path::Path;
 use regex::Regex;
 
 use super::super::violation::NamingViolation;
+use crate::constants::common::COMMENT_PREFIX;
 use crate::traits::violation::Severity;
 use crate::utils::naming::is_camel_case;
 
@@ -18,7 +19,7 @@ pub fn validate_type_names(
     for (line_num, line) in content.lines().enumerate() {
         // Skip comments
         let trimmed = line.trim();
-        if trimmed.starts_with("//") {
+        if trimmed.starts_with(COMMENT_PREFIX) {
             continue;
         }
 

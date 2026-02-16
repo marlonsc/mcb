@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 use crate::Severity;
+use crate::define_violations;
 use crate::traits::violation::ViolationCategory;
 
 /// Wrapper for dependency cycle to provide custom formatting.

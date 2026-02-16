@@ -5,6 +5,7 @@
 
 use std::path::{Path, PathBuf};
 
+use super::constants::CLIPPY_PREFIX;
 use super::engine::LinterEngine;
 use super::types::{LintViolation, LinterType};
 use crate::Result;
@@ -89,7 +90,7 @@ impl YamlRuleExecutor {
         let mut linters = Vec::new();
 
         for code in codes {
-            if code.starts_with("clippy::") {
+            if code.starts_with(CLIPPY_PREFIX) {
                 if !linters.contains(&LinterType::Clippy) {
                     linters.push(LinterType::Clippy);
                 }

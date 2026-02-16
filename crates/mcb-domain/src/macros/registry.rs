@@ -64,3 +64,63 @@ macro_rules! impl_registry {
         }
     };
 }
+
+/// Generate `new()`, builder methods, and `with_extra()` for a provider config struct.
+///
+/// Fields marked `into` generate `impl Into<T>` parameters; others take the type directly.
+///
+/// ```ignore
+/// crate::impl_config_builder!(MyConfig {
+///     /// Set the model
+///     model: with_model(into String),
+///     /// Set the dimensions
+///     dimensions: with_dimensions(usize),
+/// });
+/// ```
+#[macro_export]
+macro_rules! impl_config_builder {
+    (
+        $config:ident {
+            $(
+                $(#[doc = $doc:literal])*
+                $field:ident : $method:ident ( $($kind:tt)+ )
+            ),* $(,)?
+        }
+    ) => {
+        impl $config {
+            /// Create a new config with the given provider name
+            pub fn new(provider: impl Into<String>) -> Self {
+                Self { provider: provider.into(), ..Default::default() }
+            }
+
+            $(
+                impl_config_builder!(@builder_method $(#[doc = $doc])* ; $field ; $method ; $($kind)+);
+            )*
+
+            /// Add extra configuration
+            #[must_use]
+            pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+                self.extra.insert(key.into(), value.into());
+                self
+            }
+        }
+    };
+
+    (@builder_method $(#[$meta:meta])* ; $field:ident ; $method:ident ; into $ty:ty) => {
+        $(#[$meta])*
+        #[must_use]
+        pub fn $method(mut self, value: impl Into<$ty>) -> Self {
+            self.$field = Some(value.into());
+            self
+        }
+    };
+
+    (@builder_method $(#[$meta:meta])* ; $field:ident ; $method:ident ; $ty:ty) => {
+        $(#[$meta])*
+        #[must_use]
+        pub fn $method(mut self, value: $ty) -> Self {
+            self.$field = Some(value);
+            self
+        }
+    };
+}

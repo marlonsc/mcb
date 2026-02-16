@@ -1,3 +1,4 @@
+use crate::constants::io::{FILE_READ_BUFFER_SIZE, MASKED_ID_PREFIX_LENGTH};
 use crate::error::{Error, Result};
 use sha2::{Digest, Sha256};
 use std::fs::File;
@@ -38,10 +39,10 @@ pub fn compute_content_hash(content: &str) -> String {
 /// Mask sensitive ID for logging — shows first 8 chars + "...".
 #[must_use]
 pub fn mask_id(id: &str) -> String {
-    if id.len() <= 8 {
+    if id.len() <= MASKED_ID_PREFIX_LENGTH {
         id.to_owned()
     } else {
-        format!("{}...", &id[..8])
+        format!("{}...", &id[..MASKED_ID_PREFIX_LENGTH])
     }
 }
 
@@ -55,7 +56,7 @@ pub fn compute_file_hash(path: &Path) -> Result<String> {
         File::open(path).map_err(|e| Error::io(format!("Failed to open file {path:?}: {e}")))?;
     let mut reader = BufReader::new(file);
     let mut hasher = Sha256::new();
-    let mut buffer = [0u8; 8192];
+    let mut buffer = [0u8; FILE_READ_BUFFER_SIZE];
     loop {
         let count = reader
             .read(&mut buffer)

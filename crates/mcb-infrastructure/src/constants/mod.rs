@@ -62,3 +62,9 @@ pub mod search;
 
 /// Synchronization and concurrency constants.
 pub mod sync;
+
+/// DI service display names.
+pub mod services;
+
+/// Provider name constants for fallback and resolution.
+pub mod providers;

@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use git2::{BranchType, Repository, Sort};
+use mcb_domain::utils::id;
 use mcb_domain::{
     entities::vcs::{
         DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository,
@@ -11,7 +12,6 @@ use mcb_domain::{
     error::{Error, Result},
     ports::providers::VcsProvider,
 };
-use uuid::Uuid;
 
 /// Git implementation of `VcsProvider` using libgit2.
 ///
@@ -366,7 +366,7 @@ impl VcsProvider for Git2Provider {
                     .unwrap_or_default();
 
                 files.push(FileDiff {
-                    id: Uuid::new_v4().to_string(),
+                    id: id::generate().to_string(),
                     path,
                     status,
                     additions: 0,
@@ -389,7 +389,7 @@ impl VcsProvider for Git2Provider {
         .map_err(|e| Error::vcs_with_source("Failed to iterate diff", e))?;
 
         Ok(RefDiff {
-            id: Uuid::new_v4().to_string(),
+            id: id::generate().to_string(),
             base_ref: base_ref.to_owned(),
             head_ref: head_ref.to_owned(),
             files,

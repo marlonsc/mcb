@@ -5,13 +5,19 @@
 //! - Context preservation across layers
 //! - Error type placement (right layer)
 
-use crate::constants::common::{COMMENT_PREFIX, SHORT_PREVIEW_LENGTH};
+use crate::constants::architecture::{
+    ARCH_PATH_ADAPTERS, ARCH_PATH_DOMAIN, ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES,
+};
+use crate::constants::common::{
+    CFG_TEST_MARKER, COMMENT_PREFIX, HANDLER_FILE_SUFFIX, SHORT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT,
+};
 use crate::filters::LanguageId;
 use std::path::PathBuf;
 
+use crate::define_violations;
 use crate::pattern_registry::{compile_regex, compile_regex_pairs};
 use crate::scan::for_each_scan_file;
-use crate::traits::violation::{Violation, ViolationCategory};
+use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
 
 define_violations! {
@@ -62,16 +68,6 @@ define_violations! {
     }
 }
 
-impl ErrorBoundaryViolation {
-    /// Returns the severity level of this violation.
-    ///
-    /// Delegates to the [`Violation`] trait implementation to avoid duplication.
-    #[must_use]
-    pub fn severity(&self) -> Severity {
-        <Self as Violation>::severity(self)
-    }
-}
-
 /// Error boundary validator
 pub struct ErrorBoundaryValidator {
     config: ValidationConfig,
@@ -116,7 +112,7 @@ impl ErrorBoundaryValidator {
         let context_pattern = compile_regex(r"\.(context|with_context|map_err|ok_or_else)\s*\(")?;
 
         // Files that are likely error boundary crossing points
-        let boundary_paths = ["handlers/", "adapters/", "services/"];
+        let boundary_paths = [ARCH_PATH_HANDLERS, ARCH_PATH_ADAPTERS, ARCH_PATH_SERVICES];
 
         for_each_scan_file(
             &self.config,
@@ -129,7 +125,7 @@ impl ErrorBoundaryValidator {
                 };
 
                 // Skip test files
-                if path_str.contains("/tests/") {
+                if path_str.contains(TEST_DIR_FRAGMENT) {
                     return Ok(());
                 }
 
@@ -151,7 +147,7 @@ impl ErrorBoundaryValidator {
                     }
 
                     // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
+                    if trimmed.contains(CFG_TEST_MARKER) {
                         in_test_module = true;
                         continue;
                     }
@@ -217,12 +213,12 @@ impl ErrorBoundaryValidator {
                 };
 
                 // Skip test files
-                if path_str.contains("/tests/") {
+                if path_str.contains(TEST_DIR_FRAGMENT) {
                     return Ok(());
                 }
 
                 // Only check domain layer files (uses directory convention, not hardcoded crate names)
-                let is_domain = path_str.contains("/domain/");
+                let is_domain = path_str.contains(ARCH_PATH_DOMAIN);
                 if !is_domain {
                     return Ok(());
                 }
@@ -245,7 +241,7 @@ impl ErrorBoundaryValidator {
                     }
 
                     // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
+                    if trimmed.contains(CFG_TEST_MARKER) {
                         in_test_module = true;
                         continue;
                     }
@@ -313,13 +309,13 @@ impl ErrorBoundaryValidator {
                 };
 
                 // Skip test files
-                if path_str.contains("/tests/") {
+                if path_str.contains(TEST_DIR_FRAGMENT) {
                     return Ok(());
                 }
 
                 // Only check handler files
                 let is_handler =
-                    path_str.contains("/handlers/") || path_str.contains("_handler.rs");
+                    path_str.contains(ARCH_PATH_HANDLERS) || path_str.contains(HANDLER_FILE_SUFFIX);
                 if !is_handler {
                     return Ok(());
                 }
@@ -336,7 +332,7 @@ impl ErrorBoundaryValidator {
                     }
 
                     // Track test modules
-                    if trimmed.contains("#[cfg(test)]") {
+                    if trimmed.contains(CFG_TEST_MARKER) {
                         in_test_module = true;
                         continue;
                     }

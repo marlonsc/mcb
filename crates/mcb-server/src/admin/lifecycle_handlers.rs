@@ -108,6 +108,9 @@ async fn execute_service_action(
 /// # Authentication
 ///
 /// Requires valid admin API key via `X-Admin-Key` header.
+///
+/// # Errors
+/// Returns `503` when service manager is unavailable.
 #[get("/services")]
 pub fn list_services(
     _auth: AdminAuth,
@@ -140,6 +143,9 @@ pub fn list_services(
 /// # Authentication
 ///
 /// Requires valid admin API key via `X-Admin-Key` header.
+///
+/// # Errors
+/// Returns `503` when service manager is unavailable and `400` on action errors.
 #[post("/services/<name>/start")]
 pub async fn start_service(
     _auth: AdminAuth,
@@ -157,6 +163,9 @@ pub async fn start_service(
 /// # Authentication
 ///
 /// Requires valid admin API key via `X-Admin-Key` header.
+///
+/// # Errors
+/// Returns `503` when service manager is unavailable and `400` on action errors.
 #[post("/services/<name>/stop")]
 pub async fn stop_service(
     _auth: AdminAuth,
@@ -174,6 +183,9 @@ pub async fn stop_service(
 /// # Authentication
 ///
 /// Requires valid admin API key via `X-Admin-Key` header.
+///
+/// # Errors
+/// Returns `503` when service manager is unavailable and `400` on action errors.
 #[post("/services/<name>/restart")]
 pub async fn restart_service(
     _auth: AdminAuth,
@@ -191,6 +203,9 @@ pub async fn restart_service(
 /// # Authentication
 ///
 /// Requires valid admin API key via `X-Admin-Key` header.
+///
+/// # Errors
+/// Returns `503` when service manager is unavailable.
 #[get("/services/health")]
 pub async fn services_health(
     _auth: AdminAuth,

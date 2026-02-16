@@ -1,9 +1,7 @@
 //! Provides observation domain definitions.
+use super::memory::{ExecutionMetadata, OriginContext, QualityGateResult};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
-use uuid::Uuid;
-
-use super::memory::{ExecutionMetadata, OriginContext, QualityGateResult};
 
 /// Categorizes the type of observation recorded.
 #[derive(
@@ -105,7 +103,7 @@ impl Default for ObservationMetadata {
     /// Creates a new `ObservationMetadata` with a generated UUID and all optional fields set to `None`.
     fn default() -> Self {
         Self {
-            id: Uuid::new_v4().to_string(),
+            id: crate::utils::id::generate().to_string(),
             session_id: None,
             repo_id: None,
             file_path: None,

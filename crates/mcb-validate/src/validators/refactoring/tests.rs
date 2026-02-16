@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+use crate::constants::common::CFG_TEST_MARKER;
 use crate::filters::LanguageId;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity};
@@ -93,7 +95,7 @@ pub fn validate_missing_test_files(
 
                 // Check if file has inline tests (#[cfg(test)] module)
                 let content = std::fs::read_to_string(path)?;
-                if content.contains("#[cfg(test)]") {
+                if content.contains(CFG_TEST_MARKER) {
                     // File has inline tests, skip it
                     return Ok(());
                 }

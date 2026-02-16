@@ -1162,11 +1162,11 @@ if let Some(git) = &self.git_provider {
 - [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Hook monitoring UI
 - [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git context in hooks
 - [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Hook observation storage
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI for hook services
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate organization
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for hook services
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Seven-crate organization
 
 ## References
 
 - [Claude Code Hooks Documentation](https://docs.anthropic.com/claude-code/hooks)
-- [Shaku Documentation](https://docs.rs/shaku) - DI framework (historical; see ADR-029)
+- [dill Documentation](https://docs.rs/dill) - DI framework (see ADR-029)
 - Existing patterns: `crates/mcb-infrastructure/src/events/mod.rs`, `crates/mcb-infrastructure/src/di/registry.rs`, `crates/mcb-application/src/use_cases/context.rs`

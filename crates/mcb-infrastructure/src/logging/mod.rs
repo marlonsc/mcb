@@ -29,7 +29,7 @@ pub type LogEventReceiver = tokio::sync::mpsc::UnboundedReceiver<mcb_domain::eve
 /// # Errors
 ///
 /// Returns an error if the log level is invalid or tracing subscriber initialization fails.
-pub fn init_logging(config: LoggingConfig) -> Result<Option<LogEventReceiver>> {
+pub fn init_logging(config: &LoggingConfig) -> Result<Option<LogEventReceiver>> {
     let level = parse_log_level(&config.level)?;
     let filter = create_log_filter(&config.level);
     let file_appender = create_file_appender(&config.file_output);

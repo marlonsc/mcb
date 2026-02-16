@@ -6,9 +6,7 @@ use aes_gcm::{
 };
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
-use sha2::{Digest, Sha256};
 
-use super::utils::bytes_to_hex;
 use crate::constants::crypto::{AES_GCM_KEY_SIZE, AES_GCM_NONCE_SIZE};
 
 /// Encryption/decryption service
@@ -93,20 +91,6 @@ impl CryptoService {
         let mut nonce = vec![0u8; AES_GCM_NONCE_SIZE];
         AeadOsRng.fill_bytes(&mut nonce);
         nonce
-    }
-
-    /// Compute SHA-256 hash of data
-    #[must_use]
-    pub fn sha256(data: &[u8]) -> Vec<u8> {
-        let mut hasher = Sha256::new();
-        hasher.update(data);
-        hasher.finalize().to_vec()
-    }
-
-    /// Compute SHA-256 hash of data as hex string
-    #[must_use]
-    pub fn sha256_hex(data: &[u8]) -> String {
-        bytes_to_hex(&Self::sha256(data))
     }
 }
 

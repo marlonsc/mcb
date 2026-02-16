@@ -7,13 +7,15 @@ use std::time::Duration;
 use async_trait::async_trait;
 use mcb_domain::constants::embedding::EMBEDDING_DIMENSION_GEMINI;
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
+
+use crate::constants::HTTP_HEADER_CONTENT_TYPE;
 use mcb_domain::error::Result;
 use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
-use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
 use crate::{define_http_embedding_provider, impl_http_provider_base, register_http_provider};
 
 define_http_embedding_provider!(
@@ -64,7 +66,7 @@ impl GeminiEmbeddingProvider {
         );
 
         let headers = vec![
-            ("Content-Type", CONTENT_TYPE_JSON.to_owned()),
+            (HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned()),
             ("x-goog-api-key", self.client.api_key.clone()),
         ];
 
@@ -78,6 +80,7 @@ impl GeminiEmbeddingProvider {
             kind: RequestErrorKind::Embedding,
             headers: &headers,
             body: Some(&payload),
+            retry: Some(RetryConfig::new(3, std::time::Duration::from_millis(500))),
         })
         .await
     }

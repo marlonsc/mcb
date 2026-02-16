@@ -20,7 +20,7 @@ implementation_status: Complete
 
 Accepted
 
-> Fully implemented with Tokio async runtime across 8 crates in the Clean
+> Fully implemented with Tokio async runtime across 7 crates in the Clean
 > Architecture workspace.
 >
 > **Async Distribution by Crate**:
@@ -29,11 +29,11 @@ Accepted
 > - `mcb-application` - Use case services (ContextService, SearchService,
 >   IndexingService)
 > - `mcb-providers` - Provider implementations (embedding, vector_store, cache)
-> - `mcb-infrastructure` - DI bootstrap, factories, event bus
+> - `mcb-infrastructure` - DI bootstrap (dill+linkme), factories, event bus
 > - `mcb-server` - MCP protocol handlers, admin API
 >
-> All provider ports use `async_trait` and extend `shaku::Interface` for DI
-> compatibility.
+> All provider ports use `async_trait` with `Send + Sync` bounds.
+> DI via dill Catalog + linkme distributed slices (ADR-029).
 > Structured concurrency with `tokio::spawn` and async channels.
 
 ## Context
@@ -138,26 +138,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 }
 ```
 
-### Async Port Traits with Shaku DI (mcb-application)
+### Async Port Traits (mcb-domain)
 
-Port traits combine `async_trait` with `shaku::Interface` for DI compatibility:
+Port traits use `Send + Sync` bounds for async DI compatibility:
 
 ```rust
-// crates/mcb-application/src/ports/providers/embedding.rs
-use shaku::Interface;
+// crates/mcb-domain/src/ports/providers/embedding.rs
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait EmbeddingProvider: Interface + Send + Sync {
-    async fn embed(&self, text: &str) -> Result<Embedding>;
-
-    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
-        // Default implementation using streams for concurrency
-        let futures = texts.iter().map(|text| self.embed(text));
-        let results = futures_util::future::join_all(futures).await;
-        results.into_iter().collect()
+pub trait EmbeddingProvider: Send + Sync {
+    async fn embed(&self, text: &str) -> Result<Embedding> {
+        // Default: delegate to embed_batch
+        let embeddings = self.embed_batch(&[text.to_owned()]).await?;
+        embeddings.into_iter().next()
+            .ok_or_else(|| Error::embedding("No embedding returned"))
     }
 
+    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>>;
     fn dimensions(&self) -> usize;
     fn provider_name(&self) -> &str;
 }
@@ -165,46 +163,44 @@ pub trait EmbeddingProvider: Interface + Send + Sync {
 
 Important: Port traits in `mcb-domain` must:
 
-- Extend `shaku::Interface` (implies `'static + Send + Sync`)
+- Be `Send + Sync` for multi-threaded async usage
 - Use `async_trait` for async methods
 - Be object-safe for `Arc<dyn Trait>` usage
 
 ### Async Provider Implementations (mcb-providers)
 
-Providers implement async port traits with Shaku component registration:
+Providers implement async port traits and register via linkme distributed slices:
 
 ```rust
 // crates/mcb-providers/src/embedding/ollama.rs
-use shaku::Component;
 use async_trait::async_trait;
 use mcb_domain::ports::providers::EmbeddingProvider;
 
-#[derive(Component)]
-#[shaku(interface = EmbeddingProvider)]
-pub struct OllamaEmbeddingProvider {
-    #[shaku(default)]
-    base_url: String,
-    #[shaku(default)]
-    model: String,
-    #[shaku(default)]
-    client: reqwest::Client,
-}
+pub struct OllamaEmbeddingProvider { /* HTTP client, model config */ }
 
 #[async_trait]
 impl EmbeddingProvider for OllamaEmbeddingProvider {
-    async fn embed(&self, text: &str) -> Result<Embedding> {
-        // Async HTTP call to Ollama API
-        let response = self.client
-            .post(&format!("{}/api/embeddings", self.base_url))
-            .json(&EmbedRequest { model: &self.model, prompt: text })
-            .send()
-            .await?;
-        // ...
+    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
+        // Ollama API doesn't support batch - process sequentially
+        let mut results = Vec::with_capacity(texts.len());
+        for text in texts {
+            let response_data = self.fetch_single_embedding(text).await?;
+            results.push(self.parse_embedding(&response_data)?);
+        }
+        Ok(results)
     }
 
-    fn dimensions(&self) -> usize { 4096 }
+    fn dimensions(&self) -> usize { /* model-dependent */ 768 }
     fn provider_name(&self) -> &str { "ollama" }
 }
+
+// Auto-registration via linkme distributed slice
+#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
+static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
+    name: "ollama",
+    description: "Ollama local embedding provider",
+    factory: ollama_factory,
+};
 ```
 
 ### Structured Concurrency (mcb-application)
@@ -294,28 +290,28 @@ pub async fn handle_search_request(
 
 ### Testing Async Code
 
-Tests use null providers from Shaku modules for isolation:
+Tests use default providers for isolation:
 
 ```rust
 // crates/mcb-application/tests/services_test.rs
 #[cfg(test)]
 mod tests {
     use std::sync::Arc;
-    use mcb_providers::embedding::NullEmbeddingProvider;
-    use mcb_providers::vector_store::NullVectorStoreProvider;
+    use mcb_providers::embedding::FastEmbedProvider;
+    use mcb_providers::vector_store::EdgeVecVectorStoreProvider;
 
     #[tokio::test]
-    async fn test_embedding_with_null_provider() {
-        let provider = Arc::new(NullEmbeddingProvider);
+    async fn test_embedding_with_default_provider() {
+        let provider = Arc::new(FastEmbedProvider::default());
 
-        // Test async operation - returns deterministic zeros
+        // Test async operation with real provider
         let embedding = provider.embed("test text").await.unwrap();
-        assert_eq!(embedding.len(), 128); // Null provider returns 128-dim
+        assert!(!embedding.is_empty());
     }
 
     #[tokio::test]
     async fn test_concurrent_embedding_batch() {
-        let provider = Arc::new(NullEmbeddingProvider);
+        let provider = Arc::new(FastEmbedProvider::default());
 
         // Test concurrent embedding
         let texts = vec!["text1".to_string(), "text2".to_string(), "text3".to_string()];
@@ -325,15 +321,14 @@ mod tests {
     }
 }
 
-// Integration test with DI container (HISTORICAL; DI is now dill, ADR-029)
+// Integration test with DI catalog (dill, ADR-029)
 // crates/mcb-infrastructure/tests/di_test.rs
 #[tokio::test]
 async fn test_full_async_flow_with_di() {
-    use mcb_infrastructure::di::DiContainerBuilder;
+    use mcb_infrastructure::di::catalog::build_catalog;
 
-    let container = DiContainerBuilder::new().build().await.unwrap();
-    // Container provides null providers for testing
-    let embedding: Arc<dyn EmbeddingProvider> = container.embedding.resolve();
+    let catalog = build_catalog(&config).await.unwrap();
+    let embedding: Arc<dyn EmbeddingProvider> = catalog.get().unwrap();
 
     let result = embedding.embed("test").await;
     assert!(result.is_ok());
@@ -440,4 +435,4 @@ fn compute_complexity(content: &str) -> Result<ComplexityReport> {
 - [Rayon: Data Parallelism](https://docs.rs/rayon/latest/rayon/)
 - [Tokio spawn_blocking]
 (<https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html>) <!-- markdownlint-disable-line MD013 -->
-- [Shaku Documentation](https://docs.rs/shaku) (historical; see ADR-029)
+- [dill Documentation](https://docs.rs/dill) (current DI; see ADR-029)

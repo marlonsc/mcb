@@ -65,6 +65,9 @@ fn build_browse_response<T, R>(items: Vec<T>, map: impl FnOnce(Vec<T>, usize) ->
 }
 
 /// List workflow projects for browse entity graph
+///
+/// # Errors
+/// Returns `503 Service Unavailable` when the backend service is unavailable.
 #[get("/projects")]
 pub async fn list_browse_projects(
     _auth: AdminAuth,
@@ -123,6 +126,9 @@ define_project_scoped_browse_endpoint!(
 );
 
 /// List organizations for browse entity graph.
+///
+/// # Errors
+/// Returns `503 Service Unavailable` when the backend service is unavailable.
 #[get("/organizations")]
 pub async fn list_browse_organizations(
     _auth: AdminAuth,

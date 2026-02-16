@@ -4,6 +4,14 @@
 
 use std::path::PathBuf;
 
+use crate::constants::engines::{LINTER_CMD_CARGO, LINTER_CMD_RUFF};
+use crate::constants::severities::{
+    CATEGORY_ARCHITECTURE, CATEGORY_ASYNC, CATEGORY_CLEAN_ARCHITECTURE, CATEGORY_CONFIGURATION,
+    CATEGORY_DI, CATEGORY_DOCUMENTATION, CATEGORY_ERROR_BOUNDARY, CATEGORY_IMPLEMENTATION,
+    CATEGORY_KISS, CATEGORY_MIGRATION, CATEGORY_NAMING, CATEGORY_ORGANIZATION,
+    CATEGORY_PERFORMANCE, CATEGORY_PMAT, CATEGORY_REFACTORING, CATEGORY_SOLID, CATEGORY_TESTING,
+    CATEGORY_WEB_FRAMEWORK, SEVERITY_ERROR, SEVERITY_INFO,
+};
 use crate::traits::violation::{Severity, Violation, ViolationCategory};
 use derive_more::Display;
 
@@ -40,30 +48,30 @@ impl LintViolation {
 
     fn parsed_severity(&self) -> Severity {
         match self.severity.to_ascii_lowercase().as_str() {
-            "error" => Severity::Error,
-            "info" => Severity::Info,
+            SEVERITY_ERROR => Severity::Error,
+            SEVERITY_INFO => Severity::Info,
             _ => Severity::Warning,
         }
     }
 
     fn parsed_category(&self) -> ViolationCategory {
         match self.category.to_ascii_lowercase().as_str() {
-            "architecture" | "clean-architecture" => ViolationCategory::Architecture,
-            "organization" => ViolationCategory::Organization,
-            "solid" => ViolationCategory::Solid,
-            "di" => ViolationCategory::DependencyInjection,
-            "configuration" => ViolationCategory::Configuration,
-            "web-framework" => ViolationCategory::WebFramework,
-            "performance" => ViolationCategory::Performance,
-            "async" => ViolationCategory::Async,
-            "documentation" => ViolationCategory::Documentation,
-            "testing" => ViolationCategory::Testing,
-            "naming" => ViolationCategory::Naming,
-            "kiss" => ViolationCategory::Kiss,
-            "refactoring" | "migration" => ViolationCategory::Refactoring,
-            "error_boundary" => ViolationCategory::ErrorBoundary,
-            "implementation" => ViolationCategory::Implementation,
-            "pmat" => ViolationCategory::Pmat,
+            CATEGORY_ARCHITECTURE | CATEGORY_CLEAN_ARCHITECTURE => ViolationCategory::Architecture,
+            CATEGORY_ORGANIZATION => ViolationCategory::Organization,
+            CATEGORY_SOLID => ViolationCategory::Solid,
+            CATEGORY_DI => ViolationCategory::DependencyInjection,
+            CATEGORY_CONFIGURATION => ViolationCategory::Configuration,
+            CATEGORY_WEB_FRAMEWORK => ViolationCategory::WebFramework,
+            CATEGORY_PERFORMANCE => ViolationCategory::Performance,
+            CATEGORY_ASYNC => ViolationCategory::Async,
+            CATEGORY_DOCUMENTATION => ViolationCategory::Documentation,
+            CATEGORY_TESTING => ViolationCategory::Testing,
+            CATEGORY_NAMING => ViolationCategory::Naming,
+            CATEGORY_KISS => ViolationCategory::Kiss,
+            CATEGORY_REFACTORING | CATEGORY_MIGRATION => ViolationCategory::Refactoring,
+            CATEGORY_ERROR_BOUNDARY => ViolationCategory::ErrorBoundary,
+            CATEGORY_IMPLEMENTATION => ViolationCategory::Implementation,
+            CATEGORY_PMAT => ViolationCategory::Pmat,
             _ => ViolationCategory::Quality,
         }
     }
@@ -109,8 +117,8 @@ impl LinterType {
     #[must_use]
     pub fn command(&self) -> &'static str {
         match self {
-            LinterType::Ruff => "ruff",
-            LinterType::Clippy => "cargo",
+            LinterType::Ruff => LINTER_CMD_RUFF,
+            LinterType::Clippy => LINTER_CMD_CARGO,
         }
     }
 

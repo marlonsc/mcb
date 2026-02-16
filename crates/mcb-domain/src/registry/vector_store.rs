@@ -30,55 +30,23 @@ pub struct VectorStoreProviderConfig {
     pub extra: HashMap<String, String>,
 }
 
-impl VectorStoreProviderConfig {
-    /// Create a new config with the given provider name
-    pub fn new(provider: impl Into<String>) -> Self {
-        Self {
-            provider: provider.into(),
-            ..Default::default()
-        }
-    }
+crate::impl_config_builder!(VectorStoreProviderConfig {
+    /// Set the URI
+    uri: with_uri(into String),
+    /// Set the collection name
+    collection: with_collection(into String),
+    /// Set the embedding dimensions
+    dimensions: with_dimensions(usize),
+    /// Set the API key
+    api_key: with_api_key(into String),
+});
 
+impl VectorStoreProviderConfig {
     /// Enable encryption
     #[must_use]
     pub fn with_encryption(mut self, key: impl Into<String>) -> Self {
         self.encrypted = Some(true);
         self.encryption_key = Some(key.into());
-        self
-    }
-
-    /// Add extra configuration
-    #[must_use]
-    pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.extra.insert(key.into(), value.into());
-        self
-    }
-
-    /// Set the URI
-    #[must_use]
-    pub fn with_uri(mut self, uri: impl Into<String>) -> Self {
-        self.uri = Some(uri.into());
-        self
-    }
-
-    /// Set the collection name
-    #[must_use]
-    pub fn with_collection(mut self, collection: impl Into<String>) -> Self {
-        self.collection = Some(collection.into());
-        self
-    }
-
-    /// Set the dimensions
-    #[must_use]
-    pub fn with_dimensions(mut self, dimensions: usize) -> Self {
-        self.dimensions = Some(dimensions);
-        self
-    }
-
-    /// Set the API key
-    #[must_use]
-    pub fn with_api_key(mut self, api_key: impl Into<String>) -> Self {
-        self.api_key = Some(api_key.into());
         self
     }
 }

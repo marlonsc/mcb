@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: []
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

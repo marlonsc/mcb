@@ -4,6 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::filters::LanguageDetector;
+use crate::pattern_registry::compile_regex;
 
 use super::detector::{CloneDetector, tokenize_source};
 use super::fingerprint::TokenFingerprinter;
@@ -87,7 +88,7 @@ impl DuplicationAnalyzer {
         };
         for pattern in &self.thresholds.exclude_patterns {
             let pattern_regex = pattern.replace("**", ".*").replace('*', "[^/]*");
-            if regex::Regex::new(&pattern_regex)
+            if compile_regex(&pattern_regex)
                 .map(|r| r.is_match(path_str))
                 .unwrap_or(false)
             {

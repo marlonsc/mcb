@@ -56,6 +56,9 @@ impl IndexHandler {
     }
 
     /// Handle an index tool request.
+    ///
+    /// # Errors
+    /// Returns an error when required arguments are missing or invalid.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,

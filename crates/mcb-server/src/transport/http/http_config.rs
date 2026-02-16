@@ -1,6 +1,6 @@
 use std::net::SocketAddr;
 
-use crate::utils::config::load_startup_config_or_panic;
+use crate::utils::config::load_startup_config_or_exit;
 
 /// Configuration for the HTTP transport layer.
 #[derive(Debug, Clone)]
@@ -15,7 +15,7 @@ pub struct HttpTransportConfig {
 
 impl Default for HttpTransportConfig {
     fn default() -> Self {
-        let config = load_startup_config_or_panic();
+        let config = load_startup_config_or_exit();
         Self {
             host: config.server.network.host,
             port: config.server.network.port,
@@ -28,7 +28,7 @@ impl HttpTransportConfig {
     /// Build a config bound to the configured host with a custom port.
     #[must_use]
     pub fn localhost(port: u16) -> Self {
-        let config = load_startup_config_or_panic();
+        let config = load_startup_config_or_exit();
         Self {
             host: config.server.network.host,
             port,

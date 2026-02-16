@@ -14,7 +14,7 @@
 //! // let violations = query.execute(&root_node);
 //! ```
 
-use regex::Regex;
+use crate::pattern_registry::compile_regex;
 
 use super::{AstNode, AstViolation};
 
@@ -147,7 +147,9 @@ impl AstQuery {
                 .is_some_and(|s| s == value),
             QueryCondition::NotHasField { field } => !node.metadata.contains_key(field),
             QueryCondition::NameMatches { pattern } => match &node.name {
-                Some(name) => Regex::new(pattern).ok().is_some_and(|re| re.is_match(name)),
+                Some(name) => compile_regex(pattern)
+                    .ok()
+                    .is_some_and(|re| re.is_match(name)),
                 None => false,
             },
             QueryCondition::HasChild { child_type } => {

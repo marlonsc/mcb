@@ -3,6 +3,7 @@
 //! Integrates external linters (Ruff, Clippy) as first-layer validation
 //! that feeds into the unified violation reporting system.
 
+pub mod constants;
 pub mod engine;
 pub mod executor;
 pub mod parsers;

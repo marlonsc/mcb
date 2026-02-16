@@ -33,6 +33,9 @@ impl MemoryHandler {
     }
 
     /// Handles a memory tool invocation.
+    ///
+    /// # Errors
+    /// Returns an error when argument validation fails.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
@@ -174,7 +177,10 @@ impl MemoryHandler {
             MemoryResource::Observation => {
                 list_timeline::list_observations(&self.memory_service, args).await
             }
-            _ => Ok(tool_error(
+            MemoryResource::Execution
+            | MemoryResource::QualityGate
+            | MemoryResource::ErrorPattern
+            | MemoryResource::Session => Ok(tool_error(
                 "List action is only supported for observation resource",
             )),
         }

@@ -29,57 +29,18 @@ pub struct EmbeddingProviderConfig {
     pub extra: HashMap<String, String>,
 }
 
-impl EmbeddingProviderConfig {
-    /// Create a new config with the given provider name
-    pub fn new(provider: impl Into<String>) -> Self {
-        Self {
-            provider: provider.into(),
-            ..Default::default()
-        }
-    }
-
+crate::impl_config_builder!(EmbeddingProviderConfig {
     /// Set the model name
-    #[must_use]
-    pub fn with_model(mut self, model: impl Into<String>) -> Self {
-        self.model = Some(model.into());
-        self
-    }
-
+    model: with_model(into String),
     /// Set the API key
-    #[must_use]
-    pub fn with_api_key(mut self, api_key: impl Into<String>) -> Self {
-        self.api_key = Some(api_key.into());
-        self
-    }
-
+    api_key: with_api_key(into String),
     /// Set the base URL for the API
-    #[must_use]
-    pub fn with_base_url(mut self, base_url: impl Into<String>) -> Self {
-        self.base_url = Some(base_url.into());
-        self
-    }
-
+    base_url: with_base_url(into String),
     /// Set the embedding dimensions
-    #[must_use]
-    pub fn with_dimensions(mut self, dimensions: usize) -> Self {
-        self.dimensions = Some(dimensions);
-        self
-    }
-
+    dimensions: with_dimensions(usize),
     /// Set the cache directory
-    #[must_use]
-    pub fn with_cache_dir(mut self, cache_dir: impl Into<PathBuf>) -> Self {
-        self.cache_dir = Some(cache_dir.into());
-        self
-    }
-
-    /// Add extra configuration
-    #[must_use]
-    pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.extra.insert(key.into(), value.into());
-        self
-    }
-}
+    cache_dir: with_cache_dir(into PathBuf),
+});
 
 crate::impl_registry!(
     provider_trait: crate::ports::providers::EmbeddingProvider,

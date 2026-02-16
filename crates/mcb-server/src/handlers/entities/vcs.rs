@@ -27,6 +27,9 @@ impl VcsEntityHandler {
     }
 
     /// Route an incoming `vcs_entity` tool call to the appropriate CRUD operation.
+    ///
+    /// # Errors
+    /// Returns an error when required identifiers or payload fields are missing.
     #[tracing::instrument(
         skip(self),
         fields(action = ?args.action, resource = ?args.resource, org_id = tracing::field::Empty)

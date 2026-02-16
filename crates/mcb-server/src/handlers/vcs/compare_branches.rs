@@ -7,6 +7,7 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{BranchComparison, BranchDiffFile, repo_path};
 use crate::args::VcsArgs;
+use crate::constants::git::GIT_REF_HEAD;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 
@@ -33,7 +34,7 @@ pub async fn compare_branches(
     let head = args
         .target_branch
         .clone()
-        .unwrap_or_else(|| "HEAD".to_owned());
+        .unwrap_or_else(|| GIT_REF_HEAD.to_owned());
     let diff = match vcs_provider.diff_refs(&repo, &base, &head).await {
         Ok(diff) => diff,
         Err(e) => {

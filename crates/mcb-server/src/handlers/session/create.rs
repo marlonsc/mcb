@@ -3,10 +3,10 @@ use std::sync::Arc;
 
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
 use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde::Deserialize;
-use uuid::Uuid;
 
 use super::common::{parse_agent_type, require_data_map, require_str};
 use crate::args::SessionArgs;
@@ -63,10 +63,10 @@ pub async fn create_session(
     };
     let now = mcb_domain::utils::time::epoch_secs_i64()
         .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
-    let session_id = Uuid::new_v4().to_string();
+    let session_id = domain_id::generate().to_string();
     let session_summary_id = payload
         .session_summary_id
-        .unwrap_or_else(|| format!("auto_{}", Uuid::new_v4().simple()));
+        .unwrap_or_else(|| format!("auto_{}", domain_id::generate().simple()));
     let model = match payload.model {
         Some(value) => value,
         None => match require_str(data, schema::MODEL) {
@@ -92,7 +92,7 @@ pub async fn create_session(
         project_id: None,
         worktree_id: None,
     };
-    let origin_context = resolve_origin_context(OriginContextInput {
+    let origin_context = resolve_origin_context(&OriginContextInput {
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),
         project_id_payload: payload.project_id.as_deref(),

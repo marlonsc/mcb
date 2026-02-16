@@ -5,6 +5,8 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
+use crate::constants::protocol::JSONRPC_VERSION;
+
 /// MCP request payload (JSON-RPC format)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpRequest {
@@ -32,7 +34,7 @@ pub struct McpResponse {
 }
 
 fn default_jsonrpc() -> String {
-    "2.0".to_owned()
+    JSONRPC_VERSION.to_owned()
 }
 
 /// MCP error response (JSON-RPC format)
@@ -49,7 +51,7 @@ impl McpResponse {
     #[must_use]
     pub fn success(id: Option<serde_json::Value>, result: serde_json::Value) -> Self {
         Self {
-            jsonrpc: "2.0".to_owned(),
+            jsonrpc: JSONRPC_VERSION.to_owned(),
             result: Some(result),
             error: None,
             id,
@@ -59,7 +61,7 @@ impl McpResponse {
     /// Create an error response
     pub fn error(id: Option<serde_json::Value>, code: i32, message: impl Into<String>) -> Self {
         Self {
-            jsonrpc: "2.0".to_owned(),
+            jsonrpc: JSONRPC_VERSION.to_owned(),
             result: None,
             error: Some(McpError {
                 code,

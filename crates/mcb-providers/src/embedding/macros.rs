@@ -1,3 +1,7 @@
+//! HTTP embedding provider macros (struct definition, trait impl, registration).
+//!
+//! Used by embedding providers: openai, voyageai, anthropic, gemini, ollama.
+
 #[macro_export]
 /// Define a standard HTTP-based embedding provider struct.
 ///

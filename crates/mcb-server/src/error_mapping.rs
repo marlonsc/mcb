@@ -20,15 +20,12 @@ pub fn safe_internal_error(context: &str, error: &dyn std::fmt::Display) -> McpE
 ///
 /// # Security
 /// Never exposes provider/internal details to external callers.
-pub fn to_opaque_mcp_error(e: Error) -> McpError {
-    match &e {
-        Error::NotFound { .. } | Error::InvalidArgument { .. } => {
-            McpError::invalid_params(e.to_string(), None)
-        }
-        _ => {
-            tracing::error!(error = %e, "operation failed");
-            McpError::internal_error("internal server error", None)
-        }
+pub fn to_opaque_mcp_error(e: &Error) -> McpError {
+    if matches!(e, Error::NotFound { .. } | Error::InvalidArgument { .. }) {
+        McpError::invalid_params(e.to_string(), None)
+    } else {
+        tracing::error!(error = %e, "operation failed");
+        McpError::internal_error("internal server error", None)
     }
 }
 

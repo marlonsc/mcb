@@ -650,4 +650,4 @@ git2 = "0.20"
 
 - [git2 crate](https://docs.rs/git2/)
 - [libgit2](https://libgit2.org/)
-- [Shaku Documentation](https://docs.rs/shaku) (historical; DI is now dill, ADR-029)
+- [dill Documentation](https://docs.rs/dill) (current DI; see ADR-029)

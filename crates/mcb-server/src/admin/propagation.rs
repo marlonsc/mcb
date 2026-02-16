@@ -122,6 +122,9 @@ pub struct PropagatorHandle {
 
 impl PropagatorHandle {
     /// Wait for the propagator task to complete
+    ///
+    /// # Errors
+    /// Returns an error if the underlying task panics or is cancelled.
     pub async fn join(self) -> Result<(), tokio::task::JoinError> {
         self.handle.await
     }

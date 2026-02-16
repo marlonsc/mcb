@@ -39,6 +39,13 @@ use serde::{Deserialize, Serialize};
 use tracing::{error, warn};
 
 use crate::Severity;
+use crate::constants::validators::{
+    VALIDATOR_ARCHITECTURE, VALIDATOR_ASYNC_PATTERNS, VALIDATOR_CLEAN_ARCHITECTURE,
+    VALIDATOR_DEPENDENCY, VALIDATOR_DOCUMENTATION, VALIDATOR_ERROR_BOUNDARY,
+    VALIDATOR_IMPLEMENTATION, VALIDATOR_KISS, VALIDATOR_NAMING, VALIDATOR_ORGANIZATION,
+    VALIDATOR_PATTERNS, VALIDATOR_PERFORMANCE, VALIDATOR_PMAT, VALIDATOR_QUALITY,
+    VALIDATOR_REFACTORING, VALIDATOR_SOLID, VALIDATOR_TESTS,
+};
 
 /// Embedded default configuration (baked into binary at compile time)
 const EMBEDDED_VALIDATE_DEFAULTS: &str = include_str!("../../../../config/mcb-validate.toml");
@@ -110,23 +117,23 @@ impl FileConfig {
     #[must_use]
     pub fn is_validator_enabled(&self, name: &str) -> bool {
         match name {
-            "dependency" => self.validators.dependency,
-            "organization" => self.validators.organization,
-            "quality" => self.validators.quality,
-            "solid" => self.validators.solid,
-            "architecture" => self.validators.architecture,
-            "refactoring" => self.validators.refactoring,
-            "naming" => self.validators.naming,
-            "documentation" => self.validators.documentation,
-            "patterns" => self.validators.patterns,
-            "kiss" => self.validators.kiss,
-            "tests" => self.validators.tests,
-            "async_patterns" => self.validators.async_patterns,
-            "error_boundary" => self.validators.error_boundary,
-            "performance" => self.validators.performance,
-            "implementation" => self.validators.implementation,
-            "pmat" => self.validators.pmat,
-            "clean_architecture" => self.validators.clean_architecture,
+            VALIDATOR_DEPENDENCY => self.validators.dependency,
+            VALIDATOR_ORGANIZATION => self.validators.organization,
+            VALIDATOR_QUALITY => self.validators.quality,
+            VALIDATOR_SOLID => self.validators.solid,
+            VALIDATOR_ARCHITECTURE => self.validators.architecture,
+            VALIDATOR_REFACTORING => self.validators.refactoring,
+            VALIDATOR_NAMING => self.validators.naming,
+            VALIDATOR_DOCUMENTATION => self.validators.documentation,
+            VALIDATOR_PATTERNS => self.validators.patterns,
+            VALIDATOR_KISS => self.validators.kiss,
+            VALIDATOR_TESTS => self.validators.tests,
+            VALIDATOR_ASYNC_PATTERNS => self.validators.async_patterns,
+            VALIDATOR_ERROR_BOUNDARY => self.validators.error_boundary,
+            VALIDATOR_PERFORMANCE => self.validators.performance,
+            VALIDATOR_IMPLEMENTATION => self.validators.implementation,
+            VALIDATOR_PMAT => self.validators.pmat,
+            VALIDATOR_CLEAN_ARCHITECTURE => self.validators.clean_architecture,
             _ => true, // Unknown validators enabled by default
         }
     }

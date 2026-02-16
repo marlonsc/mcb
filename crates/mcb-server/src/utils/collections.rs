@@ -6,6 +6,9 @@ use mcb_domain::value_objects::CollectionId;
 /// the allowed set (`[a-zA-Z0-9_\-.]`).  Hyphens and dots are replaced with
 /// underscores during normalization so the resulting identifier is safe for
 /// vector-store backends that only accept `[a-z0-9_]`.
+///
+/// # Errors
+/// Returns an error when the input is empty, too long, or contains unsupported characters.
 pub fn normalize_collection_name(user_name: &str) -> Result<CollectionId, String> {
     if user_name.is_empty() {
         return Err("collection name cannot be empty".into());

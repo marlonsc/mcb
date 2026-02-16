@@ -38,7 +38,7 @@
 
 use std::sync::Arc;
 
-use rocket::{Build, Rocket, routes};
+use rocket::{Build, Rocket};
 use tracing::info;
 
 use crate::McpServer;
@@ -122,7 +122,7 @@ impl HttpTransport {
 
         rocket = rocket.manage(self.state.clone()).mount(
             "/",
-            routes![
+            rocket::routes![
                 http_mcp::handle_mcp_request,
                 http_health::healthz,
                 http_health::readyz
@@ -137,6 +137,9 @@ impl HttpTransport {
     }
 
     /// Start the HTTP transport server
+    ///
+    /// # Errors
+    /// Returns an error when socket resolution or Rocket launch fails.
     pub async fn start(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let addr = self.config.socket_addr()?;
         info!("HTTP transport listening on {}", addr);
@@ -158,6 +161,9 @@ impl HttpTransport {
     /// Start with graceful shutdown
     ///
     /// Note: Rocket handles graceful shutdown internally via Ctrl+C.
+    ///
+    /// # Errors
+    /// Returns an error when starting the transport fails.
     pub async fn start_with_shutdown(
         self,
         _shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,

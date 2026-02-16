@@ -2,9 +2,9 @@
 
 use rmcp::model::Content;
 
-/// Concatenate all text segments from an MCP `Content` slice.
+/// Concatenate all text segments from an MCP `Content` slice using a custom separator.
 #[must_use]
-pub fn extract_text_content(content: &[Content]) -> String {
+pub fn extract_text_with_sep(content: &[Content], sep: &str) -> String {
     content
         .iter()
         .filter_map(|c| {
@@ -15,5 +15,11 @@ pub fn extract_text_content(content: &[Content]) -> String {
             }
         })
         .collect::<Vec<_>>()
-        .join("\n")
+        .join(sep)
+}
+
+/// Concatenate all text segments from an MCP `Content` slice, separated by newlines.
+#[must_use]
+pub fn extract_text(content: &[Content]) -> String {
+    extract_text_with_sep(content, "\n")
 }

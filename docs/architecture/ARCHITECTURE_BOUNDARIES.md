@@ -5,7 +5,7 @@
 **Status**: Baseline Documentation
 **Last Updated**: 2026-02-14
 
-This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 9 workspace crates.
+This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 7 workspace crates.
 
 ---
 
@@ -22,7 +22,7 @@ This document defines the strict architectural boundaries for the MCB (Memory Co
 
 ## Crate Structure
 
-MCB follows a layered architecture across 9 Cargo workspace crates:
+MCB follows a layered architecture across 7 Cargo workspace crates:
 
 ```text
 crates/
@@ -33,8 +33,6 @@ crates/
 ├── mcb-infrastructure/  # Layer 4: DI, config, health, logging
 ├── mcb-server/          # Layer 5: MCP protocol, handlers, transport
 ├── mcb-validate/        # Dev tooling: architecture validation
-├── mcb-ast-utils/       # Shared AST/tree-sitter utilities
-├── mcb-language-support/ # Language detection and processing
 └── (tests/)             # Integration and golden tests
 ```
 
@@ -163,7 +161,7 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 - Embedding providers: `OllamaProvider`, `OpenAIProvider`, `VoyageAIProvider`, etc.
 - Vector store providers: `MilvusProvider`, `InMemoryProvider`, `EncryptedProvider`, etc.
-- Cache providers: `MokaProvider`, `RedisProvider`, `NullProvider`
+- Cache providers: `MokaProvider`, `RedisProvider`
 - Language parsers: `RustChunker`, `PythonChunker`, etc.
 
 #### Module Structure
@@ -541,7 +539,7 @@ make validate QUICK=1  # Fast validation
 | Version | Date | Changes |
 | --------- | ------ | --------- |
 | v0.2.0 | 2026-01-28 | Baseline documentation for architecture boundaries |
-| v0.2.1 | 2026-02-14 | Updated crate count (8→9), added mcb-ast-utils and mcb-language-support |
+| v0.2.1 | 2026-02-15 | Fixed crate count to 7, removed non-existent mcb-ast-utils and mcb-language-support |
 
 ---
 

@@ -22,6 +22,9 @@ pub struct ResponseFormatter;
 
 impl ResponseFormatter {
     /// Format search response for display
+    ///
+    /// # Errors
+    /// Returns an error if response content serialization fails.
     pub fn format_search_response(
         query: &str,
         results: &[SearchResult],
@@ -65,10 +68,11 @@ impl ResponseFormatter {
     /// Build a successful MCP tool result from a JSON-serializable value.
     ///
     /// Use this to avoid repeating serialization and `CallToolResult::success` in handlers.
+    ///
+    /// # Errors
+    /// Returns an error if the serialized payload cannot be encoded as MCP content.
     pub fn json_success<T: Serialize>(value: &T) -> Result<CallToolResult, McpError> {
-        let json = serde_json::to_string_pretty(value)
-            .unwrap_or_else(|_| String::from("Failed to serialize result"));
-        Ok(CallToolResult::success(vec![Content::text(json)]))
+        crate::utils::mcp::ok_json(value)
     }
 
     /// Format clear index response
@@ -118,10 +122,10 @@ fn build_search_response_message(
     limit: usize,
 ) -> String {
     let mut message = "🔍 **Semantic Code Search Results**\n\n".to_owned();
-    let _ = write!(message, "**Query:** \"{query}\" \n");
-    let _ = write!(
+    let _ = writeln!(message, "**Query:** \"{query}\" ");
+    let _ = writeln!(
         message,
-        "**Search completed in:** {:.2}s\n",
+        "**Search completed in:** {:.2}s",
         duration.as_secs_f64()
     );
     let _ = write!(message, "**Results found:** {}\n\n", results.len());
@@ -157,9 +161,9 @@ fn append_search_results(
     message.push_str("📊 **Search Results:**\n\n");
 
     for (i, result) in results.iter().enumerate() {
-        let _ = write!(
+        let _ = writeln!(
             message,
-            "**{}.** 📁 `{}` (line {})\n",
+            "**{}.** 📁 `{}` (line {})",
             i + 1,
             result.file_path,
             result.start_line
@@ -170,9 +174,9 @@ fn append_search_results(
     }
 
     if results.len() == limit {
-        let _ = write!(
+        let _ = writeln!(
             message,
-            "💡 **Showing top {limit} results.** For more results, try:\n"
+            "💡 **Showing top {limit} results.** For more results, try:"
         );
         message.push_str("• More specific search terms\n");
         message.push_str("• Different query formulations\n");
@@ -275,7 +279,7 @@ fn build_indexing_success_message(
             result.errors.len()
         );
         for error in &result.errors {
-            let _ = write!(message, "• {error}\n");
+            let _ = writeln!(message, "• {error}");
         }
     } else {
         message.push_str("\n🎯 **Next Steps:**\n");
@@ -329,21 +333,21 @@ fn build_indexing_status_message(status: &IndexingStatus) -> String {
 
     if status.is_indexing {
         message.push_str("🔄 **Indexing Status: In Progress**\n");
-        let _ = write!(message, "Progress: {:.1}%\n", status.progress * 100.0);
+        let _ = writeln!(message, "Progress: {:.1}%", status.progress * 100.0);
         if let Some(current_file) = &status.current_file {
-            let _ = write!(message, "Current file: `{current_file}`\n");
+            let _ = writeln!(message, "Current file: `{current_file}`");
         }
-        let _ = write!(
+        let _ = writeln!(
             message,
-            "Files processed: {}/{}\n",
+            "Files processed: {}/{}",
             status.processed_files, status.total_files
         );
     } else {
         message.push_str("📋 **Indexing Status: Idle**\n");
         if status.total_files > 0 {
-            let _ = write!(
+            let _ = writeln!(
                 message,
-                "Last run processed {}/{} files\n",
+                "Last run processed {}/{} files",
                 status.processed_files, status.total_files
             );
         } else {

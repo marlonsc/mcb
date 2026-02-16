@@ -220,12 +220,16 @@ impl McpServer {
     /// Create a new MCP server with injected dependencies
     #[must_use]
     pub fn new(services: McpServices, execution_flow: Option<String>) -> Self {
-        let hook_processor = HookProcessor::new(Some(services.memory.clone()));
-        let vcs_entity_handler = Arc::new(VcsEntityHandler::new(services.entities.vcs.clone()));
-        let plan_entity_handler = Arc::new(PlanEntityHandler::new(services.entities.plan.clone()));
-        let issue_entity_handler =
-            Arc::new(IssueEntityHandler::new(services.entities.issue.clone()));
-        let org_entity_handler = Arc::new(OrgEntityHandler::new(services.entities.org.clone()));
+        let hook_processor = HookProcessor::new(Some(Arc::clone(&services.memory)));
+        let vcs_entity_handler =
+            Arc::new(VcsEntityHandler::new(Arc::clone(&services.entities.vcs)));
+        let plan_entity_handler =
+            Arc::new(PlanEntityHandler::new(Arc::clone(&services.entities.plan)));
+        let issue_entity_handler = Arc::new(IssueEntityHandler::new(Arc::clone(
+            &services.entities.issue,
+        )));
+        let org_entity_handler =
+            Arc::new(OrgEntityHandler::new(Arc::clone(&services.entities.org)));
         let entity_handler = Arc::new(EntityHandler::new(
             Arc::clone(&vcs_entity_handler),
             Arc::clone(&plan_entity_handler),
@@ -234,20 +238,20 @@ impl McpServer {
         ));
 
         let handlers = ToolHandlers {
-            index: Arc::new(IndexHandler::new(services.indexing.clone())),
+            index: Arc::new(IndexHandler::new(Arc::clone(&services.indexing))),
             search: Arc::new(SearchHandler::new(
-                services.search.clone(),
-                services.memory.clone(),
+                Arc::clone(&services.search),
+                Arc::clone(&services.memory),
             )),
-            validate: Arc::new(ValidateHandler::new(services.validation.clone())),
-            memory: Arc::new(MemoryHandler::new(services.memory.clone())),
+            validate: Arc::new(ValidateHandler::new(Arc::clone(&services.validation))),
+            memory: Arc::new(MemoryHandler::new(Arc::clone(&services.memory))),
             session: Arc::new(SessionHandler::new(
-                services.agent_session.clone(),
-                services.memory.clone(),
+                Arc::clone(&services.agent_session),
+                Arc::clone(&services.memory),
             )),
-            agent: Arc::new(AgentHandler::new(services.agent_session.clone())),
-            project: Arc::new(ProjectHandler::new(services.project_workflow.clone())),
-            vcs: Arc::new(VcsHandler::new(services.vcs.clone())),
+            agent: Arc::new(AgentHandler::new(Arc::clone(&services.agent_session))),
+            project: Arc::new(ProjectHandler::new(Arc::clone(&services.project_workflow))),
+            vcs: Arc::new(VcsHandler::new(Arc::clone(&services.vcs))),
             vcs_entity: vcs_entity_handler,
             plan_entity: plan_entity_handler,
             issue_entity: issue_entity_handler,

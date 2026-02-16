@@ -10,6 +10,16 @@ use serde_yaml;
 use super::templates::TemplateEngine;
 use super::yaml_validator::YamlRuleValidator;
 use crate::Result;
+use crate::constants::rules::{
+    DEFAULT_RULE_CATEGORY, DEFAULT_RULE_DESCRIPTION, DEFAULT_RULE_ENGINE, DEFAULT_RULE_NAME,
+    DEFAULT_RULE_RATIONALE, DEFAULT_RULE_SEVERITY, YAML_FIELD_AST_QUERY, YAML_FIELD_BASE,
+    YAML_FIELD_CATEGORY, YAML_FIELD_CONFIG, YAML_FIELD_DESCRIPTION, YAML_FIELD_ENABLED,
+    YAML_FIELD_ENGINE, YAML_FIELD_EXTENDS, YAML_FIELD_FILTERS, YAML_FIELD_FIX_TYPE,
+    YAML_FIELD_FIXES, YAML_FIELD_ID, YAML_FIELD_LANGUAGE, YAML_FIELD_LINT_SELECT,
+    YAML_FIELD_MESSAGE, YAML_FIELD_METRICS, YAML_FIELD_NAME, YAML_FIELD_NODE_TYPE,
+    YAML_FIELD_PATTERN, YAML_FIELD_RATIONALE, YAML_FIELD_RULE, YAML_FIELD_SELECTORS,
+    YAML_FIELD_SEVERITY, YAML_FIELD_TEMPLATE,
+};
 use crate::filters::rule_filters::RuleFilters;
 use crate::utils::fs::collect_yaml_files;
 
@@ -282,7 +292,7 @@ impl YamlRuleLoader {
 
         // Check if this is a template
         if yaml_value
-            .get("_base")
+            .get(YAML_FIELD_BASE)
             .and_then(serde_yaml::Value::as_bool)
             .unwrap_or(false)
         {
@@ -291,38 +301,41 @@ impl YamlRuleLoader {
         }
 
         // Apply template if specified
-        let processed_yaml =
-            if let Some(template_name) = yaml_value.get("_template").and_then(|v| v.as_str()) {
-                // Merge variables into rule definition so template specific logic can access them
-                let template_args = if let Some(vars) = &self.variables {
-                    let mut args = vars.clone();
-                    // Simple shallow merge of rule over variables (for template arguments)
-                    if let serde_yaml::Value::Mapping(args_map) = &mut args
-                        && let serde_yaml::Value::Mapping(rule_map) = &yaml_value
-                    {
-                        for (k, v) in rule_map {
-                            args_map.insert(k.clone(), v.clone());
-                        }
+        let processed_yaml = if let Some(template_name) =
+            yaml_value.get(YAML_FIELD_TEMPLATE).and_then(|v| v.as_str())
+        {
+            // Merge variables into rule definition so template specific logic can access them
+            let template_args = if let Some(vars) = &self.variables {
+                let mut args = vars.clone();
+                // Simple shallow merge of rule over variables (for template arguments)
+                if let serde_yaml::Value::Mapping(args_map) = &mut args
+                    && let serde_yaml::Value::Mapping(rule_map) = &yaml_value
+                {
+                    for (k, v) in rule_map {
+                        args_map.insert(k.clone(), v.clone());
                     }
-                    args
-                } else {
-                    yaml_value.clone()
-                };
-
-                self.template_engine
-                    .apply_template(template_name, &template_args)?
+                }
+                args
             } else {
-                yaml_value
+                yaml_value.clone()
             };
+
+            self.template_engine
+                .apply_template(template_name, &template_args)?
+        } else {
+            yaml_value
+        };
 
         // Handle extends
-        let processed_yaml =
-            if let Some(extends_name) = processed_yaml.get("_extends").and_then(|v| v.as_str()) {
-                self.template_engine
-                    .extend_rule(extends_name, &processed_yaml)?
-            } else {
-                processed_yaml
-            };
+        let processed_yaml = if let Some(extends_name) = processed_yaml
+            .get(YAML_FIELD_EXTENDS)
+            .and_then(|v| v.as_str())
+        {
+            self.template_engine
+                .extend_rule(extends_name, &processed_yaml)?
+        } else {
+            processed_yaml
+        };
 
         // Substitute globals if provided
         let mut final_yaml = processed_yaml;
@@ -360,7 +373,7 @@ impl YamlRuleLoader {
             .ok_or_else(|| crate::ValidationError::Config("Rule must be an object".to_owned()))?;
 
         let id = obj
-            .get("id")
+            .get(YAML_FIELD_ID)
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
                 crate::ValidationError::Config("Rule must have an 'id' field".to_owned())
@@ -368,70 +381,70 @@ impl YamlRuleLoader {
             .to_owned();
 
         let name = obj
-            .get("name")
+            .get(YAML_FIELD_NAME)
             .and_then(|v| v.as_str())
-            .unwrap_or("Unnamed Rule")
+            .unwrap_or(DEFAULT_RULE_NAME)
             .to_owned();
 
         let category = obj
-            .get("category")
+            .get(YAML_FIELD_CATEGORY)
             .and_then(|v| v.as_str())
-            .unwrap_or("quality")
+            .unwrap_or(DEFAULT_RULE_CATEGORY)
             .to_owned();
 
         let severity = obj
-            .get("severity")
+            .get(YAML_FIELD_SEVERITY)
             .and_then(|v| v.as_str())
-            .unwrap_or("warning")
+            .unwrap_or(DEFAULT_RULE_SEVERITY)
             .to_owned();
 
         let enabled = obj
-            .get("enabled")
+            .get(YAML_FIELD_ENABLED)
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(true);
 
         let description = obj
-            .get("description")
+            .get(YAML_FIELD_DESCRIPTION)
             .and_then(|v| v.as_str())
-            .unwrap_or("No description provided")
+            .unwrap_or(DEFAULT_RULE_DESCRIPTION)
             .to_owned();
 
         let rationale = obj
-            .get("rationale")
+            .get(YAML_FIELD_RATIONALE)
             .and_then(|v| v.as_str())
-            .unwrap_or("No rationale provided")
+            .unwrap_or(DEFAULT_RULE_RATIONALE)
             .to_owned();
 
         let engine = obj
-            .get("engine")
+            .get(YAML_FIELD_ENGINE)
             .and_then(|v| v.as_str())
-            .unwrap_or("rusty-rules")
+            .unwrap_or(DEFAULT_RULE_ENGINE)
             .to_owned();
 
         let config = obj
-            .get("config")
+            .get(YAML_FIELD_CONFIG)
             .cloned()
             .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
 
         let rule_definition = obj
-            .get("rule")
+            .get(YAML_FIELD_RULE)
             .cloned()
             .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
 
         let fixes = obj
-            .get("fixes")
+            .get(YAML_FIELD_FIXES)
             .and_then(|v| v.as_array())
             .map(|arr| {
                 arr.iter()
                     .filter_map(|fix| {
                         if let Some(fix_obj) = fix.as_object() {
                             Some(RuleFix {
-                                fix_type: fix_obj.get("type")?.as_str()?.to_owned(),
+                                fix_type: fix_obj.get(YAML_FIELD_FIX_TYPE)?.as_str()?.to_owned(),
                                 pattern: fix_obj
-                                    .get("pattern")
+                                    .get(YAML_FIELD_PATTERN)
                                     .and_then(|v| v.as_str())
                                     .map(std::string::ToString::to_string),
-                                message: fix_obj.get("message")?.as_str()?.to_owned(),
+                                message: fix_obj.get(YAML_FIELD_MESSAGE)?.as_str()?.to_owned(),
                             })
                         } else {
                             None
@@ -443,7 +456,7 @@ impl YamlRuleLoader {
 
         // Extract lint_select codes (for Ruff/Clippy integration)
         let lint_select = obj
-            .get("lint_select")
+            .get(YAML_FIELD_LINT_SELECT)
             .and_then(|v| v.as_array())
             .map(|arr| {
                 arr.iter()
@@ -454,23 +467,23 @@ impl YamlRuleLoader {
 
         // Extract custom message
         let message = obj
-            .get("message")
+            .get(YAML_FIELD_MESSAGE)
             .and_then(|v| v.as_str())
             .map(std::string::ToString::to_string);
 
         // Extract AST selectors (Phase 2)
         let selectors = obj
-            .get("selectors")
+            .get(YAML_FIELD_SELECTORS)
             .and_then(|v| v.as_array())
             .map(|arr| {
                 arr.iter()
                     .filter_map(|sel| {
                         if let Some(sel_obj) = sel.as_object() {
                             Some(AstSelector {
-                                language: sel_obj.get("language")?.as_str()?.to_owned(),
-                                node_type: sel_obj.get("node_type")?.as_str()?.to_owned(),
+                                language: sel_obj.get(YAML_FIELD_LANGUAGE)?.as_str()?.to_owned(),
+                                node_type: sel_obj.get(YAML_FIELD_NODE_TYPE)?.as_str()?.to_owned(),
                                 pattern: sel_obj
-                                    .get("pattern")
+                                    .get(YAML_FIELD_PATTERN)
                                     .and_then(|v| v.as_str())
                                     .map(std::string::ToString::to_string),
                             })
@@ -484,17 +497,17 @@ impl YamlRuleLoader {
 
         // Extract ast_query (Phase 2)
         let ast_query = obj
-            .get("ast_query")
+            .get(YAML_FIELD_AST_QUERY)
             .and_then(|v| v.as_str())
             .map(std::string::ToString::to_string);
 
         // Extract metrics configuration (Phase 4 - rule/v3)
         let metrics = obj
-            .get("metrics")
+            .get(YAML_FIELD_METRICS)
             .and_then(|v| serde_json::from_value::<MetricsConfig>(v.clone()).ok());
 
         let filters = obj
-            .get("filters")
+            .get(YAML_FIELD_FILTERS)
             .and_then(|v| serde_json::from_value::<RuleFilters>(v.clone()).ok());
 
         Ok(ValidatedRule {

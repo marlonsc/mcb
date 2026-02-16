@@ -7,6 +7,7 @@ use std::path::PathBuf;
 
 use regex::Regex;
 
+use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX};
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_file_under_root;
@@ -49,10 +50,10 @@ pub fn source_lines(content: &str) -> Vec<(usize, &str)> {
     let mut in_test_module = false;
     for (idx, line) in content.lines().enumerate() {
         let trimmed = line.trim();
-        if trimmed.starts_with("//") {
+        if trimmed.starts_with(COMMENT_PREFIX) {
             continue;
         }
-        if trimmed.contains("#[cfg(test)]") {
+        if trimmed.contains(CFG_TEST_MARKER) {
             in_test_module = true;
             continue;
         }
@@ -72,7 +73,7 @@ pub fn non_test_lines<'a>(lines: &[&'a str]) -> Vec<(usize, &'a str)> {
     let mut in_test_module = false;
     for (i, line) in lines.iter().enumerate() {
         let trimmed = line.trim();
-        if trimmed.contains("#[cfg(test)]") {
+        if trimmed.contains(CFG_TEST_MARKER) {
             in_test_module = true;
             continue;
         }
@@ -306,7 +307,7 @@ pub fn extract_functions(fn_pattern: Option<&Regex>, lines: &[(usize, &str)]) ->
             let body: Vec<String> = lines[i..=fn_end_idx]
                 .iter()
                 .map(|(_, l)| l.trim().to_owned())
-                .filter(|l| !l.is_empty() && !l.starts_with("//"))
+                .filter(|l| !l.is_empty() && !l.starts_with(COMMENT_PREFIX))
                 .collect();
 
             let meaningful = meaningful_lines(&body);
@@ -342,7 +343,7 @@ pub fn extract_functions_with_body(
     let mut in_fn = false;
 
     for &(orig_idx, trimmed) in lines {
-        if trimmed.starts_with("//") {
+        if trimmed.starts_with(COMMENT_PREFIX) {
             continue;
         }
 

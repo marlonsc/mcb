@@ -3,6 +3,7 @@ use std::path::Path;
 use regex::Regex;
 
 use super::violation::PatternViolation;
+use crate::constants::common::{COMMENT_PREFIX, DI_IMPL_SUFFIXES, VALIDATE_IGNORE_PREFIX};
 use crate::traits::violation::Severity;
 
 /// Checks for Arc<Concrete> usage in a single file.
@@ -19,12 +20,14 @@ pub fn check_arc_usage(
         let trimmed = line.trim();
 
         // Skip comments
-        if trimmed.starts_with("//") {
+        if trimmed.starts_with(COMMENT_PREFIX) {
             continue;
         }
 
         // Check for ignore hints
-        let has_ignore_hint = line.contains("mcb-validate-ignore: admin_service_concrete_type");
+        let has_ignore_hint = line.contains(&format!(
+            "{VALIDATE_IGNORE_PREFIX}admin_service_concrete_type"
+        ));
 
         for cap in arc_pattern.captures_iter(line) {
             let type_name = cap.get(1).map_or("", |m| m.as_str());
@@ -50,9 +53,7 @@ pub fn check_arc_usage(
                 .any(|suffix| type_name.ends_with(suffix));
 
             // Also check for common service implementation patterns
-            let is_impl_suffix = type_name.ends_with("Impl")
-                || type_name.ends_with("Implementation")
-                || type_name.ends_with("Adapter");
+            let is_impl_suffix = DI_IMPL_SUFFIXES.iter().any(|s| type_name.ends_with(s));
 
             if is_likely_provider || is_impl_suffix {
                 // Skip if ignore hint is present
@@ -61,10 +62,11 @@ pub fn check_arc_usage(
                 }
 
                 let trait_name = if is_impl_suffix {
-                    type_name
-                        .trim_end_matches("Impl")
-                        .trim_end_matches("Implementation")
-                        .trim_end_matches("Adapter")
+                    let mut name = type_name;
+                    for suffix in DI_IMPL_SUFFIXES {
+                        name = name.trim_end_matches(suffix);
+                    }
+                    name
                 } else {
                     type_name
                 };
