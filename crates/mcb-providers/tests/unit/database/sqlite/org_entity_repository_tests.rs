@@ -95,7 +95,7 @@ async fn test_org_crud() {
     assert_eq!(after_update.name, "Updated Org");
 
     repo.delete_org("org-1").await.expect("delete");
-    assert_not_found(repo.get_org("org-1").await);
+    assert_not_found(&repo.get_org("org-1").await);
 }
 
 #[tokio::test]
@@ -125,7 +125,7 @@ async fn test_user_crud() {
     assert_eq!(after_update.role, UserRole::Admin);
 
     repo.delete_user("user-1").await.expect("delete");
-    assert_not_found(repo.get_user("user-1").await);
+    assert_not_found(&repo.get_user("user-1").await);
 }
 
 #[tokio::test]
@@ -144,7 +144,8 @@ async fn test_get_user_by_email() {
     assert_eq!(found.metadata.id, "user-1");
 
     assert_not_found(
-        repo.get_user_by_email(DEFAULT_ORG_ID, "nobody@example.com")
+        &repo
+            .get_user_by_email(DEFAULT_ORG_ID, "nobody@example.com")
             .await,
     );
 }
@@ -207,7 +208,7 @@ async fn test_team_and_members() {
         .expect("remove m2");
 
     repo.delete_team("team-1").await.expect("delete team");
-    assert_not_found(repo.get_team("team-1").await);
+    assert_not_found(&repo.get_team("team-1").await);
 }
 
 #[tokio::test]
@@ -235,7 +236,7 @@ async fn test_api_key_lifecycle() {
     assert_eq!(after_revoke.revoked_at, Some(2_000_000));
 
     repo.delete_api_key("key-1").await.expect("delete");
-    assert_not_found(repo.get_api_key("key-1").await);
+    assert_not_found(&repo.get_api_key("key-1").await);
 }
 
 #[rstest]

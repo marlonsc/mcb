@@ -16,7 +16,7 @@ use super::handlers;
 use super::lov_handlers;
 use crate::admin::handlers::AdminState;
 use crate::constants::limits::DEFAULT_SHUTDOWN_TIMEOUT_SECS;
-use crate::utils::config::load_startup_config_or_exit;
+use crate::utils::config::load_startup_config_or_default;
 
 /// Build a minimal [`AdminState`] with no real service backends.
 ///
@@ -27,7 +27,7 @@ fn default_admin_state() -> AdminState {
         metrics: Arc::new(AtomicPerformanceMetrics::new()),
         indexing: Arc::new(DefaultIndexingOperations::new()),
         config_watcher: None,
-        current_config: load_startup_config_or_exit(),
+        current_config: load_startup_config_or_default(),
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: DEFAULT_SHUTDOWN_TIMEOUT_SECS,

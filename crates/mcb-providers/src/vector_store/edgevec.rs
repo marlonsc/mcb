@@ -18,9 +18,9 @@ use tokio::sync::{mpsc, oneshot};
 use crate::constants::{
     EDGEVEC_DEFAULT_DIMENSIONS, EDGEVEC_HNSW_EF_CONSTRUCTION, EDGEVEC_HNSW_EF_SEARCH,
     EDGEVEC_HNSW_M, EDGEVEC_HNSW_M0, EDGEVEC_QUANTIZATION_TYPE, STATS_FIELD_COLLECTION,
-    STATS_FIELD_VECTORS_COUNT, VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE,
-    VECTOR_FIELD_LINE_NUMBER, VECTOR_FIELD_START_LINE,
+    STATS_FIELD_VECTORS_COUNT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE,
 };
+use crate::utils::vector_store::search_result_from_json_metadata;
 
 /// `EdgeVec` vector store configuration
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
@@ -542,34 +542,7 @@ impl EdgeVecActor {
         if let Some(collection_metadata) = self.metadata_store.get(collection) {
             for id in ids {
                 if let Some(meta_val) = collection_metadata.get(&id) {
-                    let meta = meta_val.as_object().cloned().unwrap_or_default();
-                    final_results.push(SearchResult {
-                        id: id.clone(),
-                        file_path: meta
-                            .get(VECTOR_FIELD_FILE_PATH)
-                            .and_then(|value| value.as_str())
-                            .unwrap_or("unknown")
-                            .to_owned(),
-                        start_line: meta
-                            .get(VECTOR_FIELD_START_LINE)
-                            .and_then(serde_json::Value::as_u64)
-                            .or_else(|| {
-                                meta.get(VECTOR_FIELD_LINE_NUMBER)
-                                    .and_then(serde_json::Value::as_u64)
-                            })
-                            .unwrap_or(0) as u32,
-                        content: meta
-                            .get(VECTOR_FIELD_CONTENT)
-                            .and_then(|value| value.as_str())
-                            .unwrap_or("")
-                            .to_owned(),
-                        score: 1.0,
-                        language: meta
-                            .get(VECTOR_FIELD_LANGUAGE)
-                            .and_then(|value| value.as_str())
-                            .unwrap_or("unknown")
-                            .to_owned(),
-                    });
+                    final_results.push(search_result_from_json_metadata(id.clone(), meta_val, 1.0));
                 }
             }
         }
@@ -580,34 +553,11 @@ impl EdgeVecActor {
         let mut final_results = Vec::new();
         if let Some(collection_metadata) = self.metadata_store.get(collection) {
             for (ext_id, meta_val) in collection_metadata.iter().take(limit) {
-                let meta = meta_val.as_object().cloned().unwrap_or_default();
-                final_results.push(SearchResult {
-                    id: ext_id.clone(),
-                    file_path: meta
-                        .get(VECTOR_FIELD_FILE_PATH)
-                        .and_then(|value| value.as_str())
-                        .unwrap_or("unknown")
-                        .to_owned(),
-                    start_line: meta
-                        .get(VECTOR_FIELD_START_LINE)
-                        .and_then(serde_json::Value::as_u64)
-                        .or_else(|| {
-                            meta.get(VECTOR_FIELD_LINE_NUMBER)
-                                .and_then(serde_json::Value::as_u64)
-                        })
-                        .unwrap_or(0) as u32,
-                    content: meta
-                        .get(VECTOR_FIELD_CONTENT)
-                        .and_then(|value| value.as_str())
-                        .unwrap_or("")
-                        .to_owned(),
-                    score: 1.0,
-                    language: meta
-                        .get(VECTOR_FIELD_LANGUAGE)
-                        .and_then(|value| value.as_str())
-                        .unwrap_or("unknown")
-                        .to_owned(),
-                });
+                final_results.push(search_result_from_json_metadata(
+                    ext_id.clone(),
+                    meta_val,
+                    1.0,
+                ));
             }
         }
         final_results
@@ -639,35 +589,11 @@ impl EdgeVecActor {
                         if let Some(ext_id) = external_id
                             && let Some(meta_val) = collection_metadata.get(&ext_id)
                         {
-                            let meta = meta_val.as_object().cloned().unwrap_or_default();
-                            let start_line = meta
-                                .get(VECTOR_FIELD_START_LINE)
-                                .and_then(serde_json::Value::as_u64)
-                                .or_else(|| {
-                                    meta.get(VECTOR_FIELD_LINE_NUMBER)
-                                        .and_then(serde_json::Value::as_u64)
-                                })
-                                .unwrap_or(0) as u32;
-                            final_results.push(SearchResult {
-                                id: ext_id,
-                                file_path: meta
-                                    .get(VECTOR_FIELD_FILE_PATH)
-                                    .and_then(|value| value.as_str())
-                                    .unwrap_or("unknown")
-                                    .to_owned(),
-                                start_line,
-                                content: meta
-                                    .get(VECTOR_FIELD_CONTENT)
-                                    .and_then(|value| value.as_str())
-                                    .unwrap_or("")
-                                    .to_owned(),
-                                score: res.distance as f64,
-                                language: meta
-                                    .get(VECTOR_FIELD_LANGUAGE)
-                                    .and_then(|value| value.as_str())
-                                    .unwrap_or("unknown")
-                                    .to_owned(),
-                            });
+                            final_results.push(search_result_from_json_metadata(
+                                ext_id,
+                                meta_val,
+                                res.distance as f64,
+                            ));
                         }
                     }
                 }
@@ -784,31 +710,10 @@ impl EdgeVecActor {
                         .and_then(|v| v.as_str())
                         .is_some_and(|p| p.replace('\\', "/") == normalized_query)
                 {
-                    let start_line = meta
-                        .get(VECTOR_FIELD_START_LINE)
-                        .and_then(serde_json::Value::as_u64)
-                        .or_else(|| {
-                            meta.get(VECTOR_FIELD_LINE_NUMBER)
-                                .and_then(serde_json::Value::as_u64)
-                        })
-                        .unwrap_or(0) as u32;
-
-                    results.push(SearchResult {
-                        id: ext_id.clone(),
-                        file_path: file_path.to_owned(),
-                        start_line,
-                        content: meta
-                            .get(VECTOR_FIELD_CONTENT)
-                            .and_then(|value| value.as_str())
-                            .unwrap_or("")
-                            .to_owned(),
-                        score: 1.0,
-                        language: meta
-                            .get(VECTOR_FIELD_LANGUAGE)
-                            .and_then(|value| value.as_str())
-                            .unwrap_or("unknown")
-                            .to_owned(),
-                    });
+                    let mut result =
+                        search_result_from_json_metadata(ext_id.clone(), meta_val, 1.0);
+                    result.file_path = file_path.to_owned();
+                    results.push(result);
                 }
             }
         }

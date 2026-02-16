@@ -11,6 +11,8 @@ use crate::ValidationConfig;
 use crate::config::FileConfig;
 use crate::embedded_rules::EmbeddedRules;
 use crate::filters::LanguageId;
+use crate::filters::dependency_parser::WorkspaceDependencies;
+use crate::filters::rule_filters::RuleFilterExecutor;
 use crate::linters::YamlRuleExecutor;
 use crate::metrics::{MetricThresholds, MetricViolation, RcaAnalyzer};
 use crate::pattern_registry::compile_regex;
@@ -223,27 +225,14 @@ impl DeclarativeValidator {
         rules: &[ValidatedRule],
         files: &[PathBuf],
     ) -> Vec<Box<dyn Violation>> {
-        let regex_rules: Vec<&ValidatedRule> = rules
-            .iter()
-            .filter(|r| {
-                r.enabled
-                    && r.lint_select.is_empty()
-                    && r.metrics.is_none()
-                    && r.selectors.is_empty()
-                    && r.ast_query.is_none()
-                    && r.config
-                        .get("patterns")
-                        .and_then(|v| v.as_object())
-                        .is_some()
-            })
-            .collect();
+        let regex_rules: Vec<&ValidatedRule> =
+            rules.iter().filter(|r| Self::is_regex_rule(r)).collect();
 
         if regex_rules.is_empty() {
             return Vec::new();
         }
 
-        let filter_executor =
-            crate::filters::rule_filters::RuleFilterExecutor::new(self.workspace_root.clone());
+        let filter_executor = RuleFilterExecutor::new(self.workspace_root.clone());
         let workspace_deps = match filter_executor.parse_workspace_dependencies() {
             Ok(deps) => deps,
             Err(e) => {
@@ -255,97 +244,161 @@ impl DeclarativeValidator {
         let mut violations: Vec<Box<dyn Violation>> = Vec::new();
 
         for rule in &regex_rules {
-            let Some(patterns_obj) = rule.config.get("patterns").and_then(|v| v.as_object()) else {
-                continue;
-            };
-
-            let mut compiled: Vec<(&str, Regex)> = Vec::new();
-            for (name, val) in patterns_obj {
-                if let Some(pat) = val.as_str() {
-                    match compile_regex(pat) {
-                        Ok(rx) => compiled.push((name.as_str(), rx)),
-                        Err(e) => {
-                            warn!(
-                                rule_id = %rule.id,
-                                pattern_name = %name,
-                                error = ?e,
-                                "Malformed regex pattern in rule"
-                            );
-                        }
-                    }
-                }
-            }
-
+            let compiled = Self::compile_rule_patterns(rule);
             if compiled.is_empty() {
                 continue;
             }
 
-            let mut ignore_compiled: Vec<Regex> = Vec::new();
-            if let Some(ignore_arr) = rule
-                .config
-                .get("ignore_patterns")
-                .and_then(|v| v.as_array())
-            {
-                for v in ignore_arr {
-                    if let Some(pat) = v.as_str() {
-                        if let Ok(rx) = compile_regex(pat) {
-                            ignore_compiled.push(rx);
-                        } else {
-                            warn!(rule_id = %rule.id, "Invalid ignore pattern regex");
-                        }
-                    }
-                }
-            }
+            let ignore_compiled = Self::compile_ignore_patterns(rule);
 
             for file in files {
-                // Check filters
-                if let Some(filters) = &rule.filters {
-                    let res = filter_executor
-                        .should_execute_rule(filters, file, None, &workspace_deps)
-                        .unwrap_or(false);
-                    if !res {
-                        continue;
-                    }
+                if !Self::should_execute_on_file(&filter_executor, &workspace_deps, rule, file) {
+                    continue;
                 }
 
-                let content = match std::fs::read_to_string(file) {
-                    Ok(c) => c,
-                    Err(e) => {
-                        warn!(
-                            file = %file.display(),
-                            error = ?e,
-                            "Failed to read file for regex validation"
-                        );
-                        continue;
-                    }
-                };
-
-                for (line_num, line) in content.lines().enumerate() {
-                    // Check ignore patterns
-                    if ignore_compiled.iter().any(|irx| irx.is_match(line)) {
-                        continue;
-                    }
-
-                    for (_name, rx) in &compiled {
-                        if rx.is_match(line) {
-                            violations.push(Box::new(PatternMatchViolation {
-                                rule_id: rule.id.clone(),
-                                file_path: file.clone(),
-                                line: line_num + 1,
-                                message: rule.message.clone().unwrap_or_else(|| {
-                                    format!("[{}] Pattern match: {}", rule.id, rule.description)
-                                }),
-                                severity: parse_severity(&rule.severity),
-                                category: parse_category(&rule.category),
-                            }));
-                            break;
-                        }
-                    }
-                }
+                violations.extend(Self::collect_regex_violations_for_file(
+                    rule,
+                    file,
+                    &compiled,
+                    &ignore_compiled,
+                ));
             }
         }
 
         violations
+    }
+
+    fn is_regex_rule(rule: &ValidatedRule) -> bool {
+        rule.enabled
+            && rule.lint_select.is_empty()
+            && rule.metrics.is_none()
+            && rule.selectors.is_empty()
+            && rule.ast_query.is_none()
+            && rule
+                .config
+                .get("patterns")
+                .and_then(|v| v.as_object())
+                .is_some()
+    }
+
+    fn compile_rule_patterns(rule: &ValidatedRule) -> Vec<Regex> {
+        let Some(patterns_obj) = rule.config.get("patterns").and_then(|v| v.as_object()) else {
+            return Vec::new();
+        };
+
+        patterns_obj
+            .iter()
+            .filter_map(|(name, val)| {
+                let pat = val.as_str()?;
+                match compile_regex(pat) {
+                    Ok(rx) => Some(rx),
+                    Err(e) => {
+                        warn!(
+                            rule_id = %rule.id,
+                            pattern_name = %name,
+                            error = ?e,
+                            "Malformed regex pattern in rule"
+                        );
+                        None
+                    }
+                }
+            })
+            .collect()
+    }
+
+    fn compile_ignore_patterns(rule: &ValidatedRule) -> Vec<Regex> {
+        let Some(ignore_arr) = rule
+            .config
+            .get("ignore_patterns")
+            .and_then(|v| v.as_array())
+        else {
+            return Vec::new();
+        };
+
+        ignore_arr
+            .iter()
+            .filter_map(|v| {
+                let pat = v.as_str()?;
+                match compile_regex(pat) {
+                    Ok(rx) => Some(rx),
+                    Err(_) => {
+                        warn!(rule_id = %rule.id, "Invalid ignore pattern regex");
+                        None
+                    }
+                }
+            })
+            .collect()
+    }
+
+    fn should_execute_on_file(
+        filter_executor: &RuleFilterExecutor,
+        workspace_deps: &WorkspaceDependencies,
+        rule: &ValidatedRule,
+        file: &Path,
+    ) -> bool {
+        let Some(filters) = &rule.filters else {
+            return true;
+        };
+
+        filter_executor
+            .should_execute_rule(filters, file, None, workspace_deps)
+            .unwrap_or(false)
+    }
+
+    fn collect_regex_violations_for_file(
+        rule: &ValidatedRule,
+        file: &Path,
+        compiled: &[Regex],
+        ignore_compiled: &[Regex],
+    ) -> Vec<Box<dyn Violation>> {
+        let content = match std::fs::read_to_string(file) {
+            Ok(c) => c,
+            Err(e) => {
+                warn!(
+                    file = %file.display(),
+                    error = ?e,
+                    "Failed to read file for regex validation"
+                );
+                return Vec::new();
+            }
+        };
+
+        content
+            .lines()
+            .enumerate()
+            .filter_map(|(line_num, line)| {
+                if ignore_compiled.iter().any(|irx| irx.is_match(line)) {
+                    return None;
+                }
+                if !compiled.iter().any(|rx| rx.is_match(line)) {
+                    return None;
+                }
+
+                Some(Self::build_pattern_match_violation(
+                    rule,
+                    file.to_path_buf(),
+                    line_num + 1,
+                ))
+            })
+            .collect()
+    }
+
+    fn build_pattern_match_violation(
+        rule: &ValidatedRule,
+        file_path: PathBuf,
+        line: usize,
+    ) -> Box<dyn Violation> {
+        Box::new(PatternMatchViolation {
+            rule_id: rule.id.clone(),
+            file_path,
+            line,
+            message: rule
+                .message
+                .clone()
+                .unwrap_or_else(|| format!("[{}] Pattern match: {}", rule.id, rule.description)),
+            severity: parse_severity(&rule.severity),
+            category: parse_category(&rule.category),
+        })
     }
 
     fn validate_ast_rules(rules: &[ValidatedRule]) -> Vec<Box<dyn Violation>> {

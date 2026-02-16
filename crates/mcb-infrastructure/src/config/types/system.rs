@@ -157,6 +157,7 @@ impl EventBusConfig {
         Self::tokio()
     }
 
+    /// Returns the fallback event bus configuration.
     #[must_use]
     pub fn fallback() -> Self {
         Self::tokio()
@@ -191,13 +192,17 @@ pub struct BackupConfig {
 // Sync Configuration
 // ============================================================================
 
+/// System-level runtime configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SystemConfig {
+    /// Event bus settings.
     pub events: EventBusConfig,
 }
 
 impl SystemConfig {
+    /// Returns the fallback system runtime configuration.
+    #[must_use]
     pub fn fallback() -> Self {
         Self {
             events: EventBusConfig::fallback(),

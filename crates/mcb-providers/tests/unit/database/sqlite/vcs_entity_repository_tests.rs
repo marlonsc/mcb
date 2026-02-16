@@ -155,7 +155,7 @@ async fn test_repository_crud() {
     repo.delete_repository(DEFAULT_ORG_ID, "repo-1")
         .await
         .expect("delete");
-    assert_not_found(repo.get_repository(DEFAULT_ORG_ID, "repo-1").await);
+    assert_not_found(&repo.get_repository(DEFAULT_ORG_ID, "repo-1").await);
 }
 
 #[rstest]
@@ -188,7 +188,7 @@ async fn branch_and_worktree_crud(#[case] entity_kind: &str) {
         assert_eq!(after_update.head_commit, "def456");
 
         repo.delete_branch("branch-1").await.expect("delete");
-        assert_not_found(repo.get_branch("branch-1").await);
+        assert_not_found(&repo.get_branch("branch-1").await);
         return;
     }
 
@@ -210,7 +210,7 @@ async fn branch_and_worktree_crud(#[case] entity_kind: &str) {
     assert_eq!(after_update.status, WorktreeStatus::InUse);
 
     repo.delete_worktree("wt-1").await.expect("delete");
-    assert_not_found(repo.get_worktree("wt-1").await);
+    assert_not_found(&repo.get_worktree("wt-1").await);
 }
 
 #[tokio::test]
@@ -280,7 +280,7 @@ async fn test_org_isolation_repositories() {
     repo.create_repository(&vcs_repo).await.expect("create");
 
     assert!(repo.get_repository("org-A", "repo-iso").await.is_ok());
-    assert_not_found(repo.get_repository("org-B", "repo-iso").await);
+    assert_not_found(&repo.get_repository("org-B", "repo-iso").await);
     assert!(
         repo.list_repositories("org-B", "proj-org-B")
             .await

@@ -256,5 +256,8 @@ mod tests {
         assert!(path.join("lib.rs").exists());
         let r = create_test_indexing_result(2, 10, 0);
         assert_eq!(r.files_processed, 2);
+        assert!(!TEST_SESSION_ID.is_empty());
+        assert!(!TEST_REPO_NAME.is_empty());
+        assert!(!TEST_ORG_ID.is_empty());
     }
 }

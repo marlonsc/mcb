@@ -106,7 +106,7 @@ async fn test_issue_crud() {
     repo.delete_issue(DEFAULT_ORG_ID, "issue-1")
         .await
         .expect("delete");
-    assert_not_found(repo.get_issue(DEFAULT_ORG_ID, "issue-1").await);
+    assert_not_found(&repo.get_issue(DEFAULT_ORG_ID, "issue-1").await);
 }
 
 #[tokio::test]
@@ -249,7 +249,7 @@ async fn org_isolation_issues(#[case] org_id: &str, #[case] should_find: bool) {
     if should_find {
         assert!(get_result.is_ok());
     } else {
-        assert_not_found(get_result);
+        assert_not_found(&get_result);
         assert!(
             repo.list_issues("org-B", "proj-org-B")
                 .await

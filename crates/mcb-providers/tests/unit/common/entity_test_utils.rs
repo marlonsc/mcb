@@ -126,6 +126,6 @@ pub async fn seed_isolated_org_scope(executor: &dyn DatabaseExecutor, org_id: &s
     .await;
 }
 
-pub fn assert_not_found<T>(result: mcb_domain::error::Result<T>) {
+pub fn assert_not_found<T>(result: &mcb_domain::error::Result<T>) {
     assert!(matches!(result, Err(Error::NotFound { .. })));
 }

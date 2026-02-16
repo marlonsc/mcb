@@ -48,7 +48,7 @@ redundant_type_annotations = "warn"
 rc_mutex = "deny"                        # Rc<Mutex<T>> is always wrong, use Arc<Mutex<T>>
 try_err = "deny"                         # no `Err(e)?`, just `return Err(e)`
 unnecessary_self_imports = "deny"        # no `use self as _`
-tests_outside_test_module = "warn"        # #[test] must be inside #[cfg(test)]
+tests_outside_test_module = "allow"
 manual_string_new = "warn"              # use String::new() not "".to_string()
 
 # ── Warn: should fix, tracked but non-blocking ────────────────

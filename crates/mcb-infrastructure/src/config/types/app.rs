@@ -125,6 +125,34 @@ pub struct McpContextGitDefaultsConfig {
 }
 
 /// Infrastructure configurations
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct InfrastructureConfig {
+    /// Cache system configuration
+    pub cache: CacheSystemConfig,
+    /// `EventBus` configuration
+    pub event_bus: EventBusConfig,
+    /// Metrics configuration
+    pub metrics: MetricsConfig,
+    /// Resilience configuration
+    pub resilience: ResilienceConfig,
+    /// Limits configuration
+    pub limits: LimitsConfig,
+}
+
+impl InfrastructureConfig {
+    /// Returns the fallback infrastructure configuration.
+    #[must_use]
+    pub fn fallback() -> Self {
+        Self {
+            cache: CacheSystemConfig::default(),
+            event_bus: EventBusConfig::tokio(),
+            metrics: MetricsConfig::default(),
+            resilience: ResilienceConfig::default(),
+            limits: LimitsConfig::default(),
+        }
+    }
+}
 
 /// Data management configurations
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -149,6 +177,8 @@ pub struct SystemConfig {
 }
 
 impl SystemConfig {
+    /// Returns the fallback system configuration.
+    #[must_use]
     pub fn fallback() -> Self {
         Self {
             infrastructure: InfrastructureConfig::fallback(),
@@ -194,6 +224,8 @@ pub struct AppConfig {
 }
 
 impl AppConfig {
+    /// Returns the fallback application configuration.
+    #[must_use]
     pub fn fallback() -> Self {
         Self {
             mode: ModeConfig::default(),

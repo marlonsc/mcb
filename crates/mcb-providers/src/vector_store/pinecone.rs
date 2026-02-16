@@ -23,10 +23,10 @@ use serde_json::Value;
 use crate::constants::{
     EDGEVEC_DEFAULT_DIMENSIONS, HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER,
     STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS, STATS_FIELD_VECTORS_COUNT,
-    STATUS_ACTIVE, STATUS_UNKNOWN, VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH,
-    VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_LINE_NUMBER, VECTOR_FIELD_START_LINE,
+    STATUS_ACTIVE, STATUS_UNKNOWN, VECTOR_FIELD_FILE_PATH,
 };
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
+use crate::utils::vector_store::search_result_from_json_metadata;
 
 /// Pinecone vector store provider
 ///
@@ -97,39 +97,9 @@ impl PineconeVectorStoreProvider {
     /// Convert Pinecone match result to domain `SearchResult`
     fn match_to_search_result(item: &Value, score: f64) -> SearchResult {
         let id = item["id"].as_str().unwrap_or("").to_owned();
-        let metadata = item
-            .get("metadata")
-            .cloned()
-            .unwrap_or(serde_json::json!({}));
-
-        SearchResult {
-            id,
-            file_path: metadata
-                .get(VECTOR_FIELD_FILE_PATH)
-                .and_then(Value::as_str)
-                .unwrap_or("")
-                .to_owned(),
-            start_line: metadata
-                .get(VECTOR_FIELD_START_LINE)
-                .and_then(Value::as_u64)
-                .or_else(|| {
-                    metadata
-                        .get(VECTOR_FIELD_LINE_NUMBER)
-                        .and_then(Value::as_u64)
-                })
-                .unwrap_or(0) as u32,
-            content: metadata
-                .get(VECTOR_FIELD_CONTENT)
-                .and_then(Value::as_str)
-                .unwrap_or("")
-                .to_owned(),
-            score,
-            language: metadata
-                .get(VECTOR_FIELD_LANGUAGE)
-                .and_then(Value::as_str)
-                .unwrap_or("unknown")
-                .to_owned(),
-        }
+        let default_metadata = serde_json::Value::Object(Default::default());
+        let metadata = item.get("metadata").unwrap_or(&default_metadata);
+        search_result_from_json_metadata(id, metadata, score)
     }
 }
 
@@ -344,38 +314,14 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
             .request(reqwest::Method::GET, "/vectors/fetch", Some(payload))
             .await?;
 
+        let empty_obj = serde_json::Value::Object(Default::default());
         let results = response["vectors"]
             .as_object()
             .map(|obj| {
                 obj.iter()
                     .map(|(id, data)| {
-                        let metadata = data
-                            .get("metadata")
-                            .cloned()
-                            .unwrap_or(serde_json::json!({}));
-                        SearchResult {
-                            id: id.clone(),
-                            file_path: metadata
-                                .get(VECTOR_FIELD_FILE_PATH)
-                                .and_then(Value::as_str)
-                                .unwrap_or("")
-                                .to_owned(),
-                            start_line: metadata
-                                .get(VECTOR_FIELD_START_LINE)
-                                .and_then(Value::as_u64)
-                                .unwrap_or(0) as u32,
-                            content: metadata
-                                .get(VECTOR_FIELD_CONTENT)
-                                .and_then(Value::as_str)
-                                .unwrap_or("")
-                                .to_owned(),
-                            score: 1.0,
-                            language: metadata
-                                .get(VECTOR_FIELD_LANGUAGE)
-                                .and_then(Value::as_str)
-                                .unwrap_or("unknown")
-                                .to_owned(),
-                        }
+                        let metadata = data.get("metadata").unwrap_or(&empty_obj);
+                        search_result_from_json_metadata(id.clone(), metadata, 1.0)
                     })
                     .collect()
             })
