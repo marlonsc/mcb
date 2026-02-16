@@ -5,24 +5,27 @@ use mcb_domain::value_objects::{ObservationId, SessionId};
 use mcb_providers::database::create_memory_repository_with_executor;
 use rstest::rstest;
 
-async fn setup_memory_repo() -> (
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
+async fn setup_memory_repo() -> TestResult<(
     std::sync::Arc<dyn MemoryRepository>,
     std::sync::Arc<dyn DatabaseExecutor>,
     tempfile::TempDir,
-) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
+)> {
+    let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("test.db");
 
-    let (memory_repo, executor) = create_memory_repository_with_executor(db_path)
-        .await
-        .expect("create memory repository");
+    let (memory_repo, executor) = create_memory_repository_with_executor(db_path).await?;
 
-    seed_default_org_and_project(executor.as_ref(), "proj-schema-upgrade").await;
+    seed_default_org_and_project(executor.as_ref(), "proj-schema-upgrade").await?;
 
-    (memory_repo, executor, temp_dir)
+    Ok((memory_repo, executor, temp_dir))
 }
 
-async fn seed_default_org_and_project(executor: &dyn DatabaseExecutor, project_id: &str) {
+async fn seed_default_org_and_project(
+    executor: &dyn DatabaseExecutor,
+    project_id: &str,
+) -> TestResult {
     executor
         .execute(
             "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
@@ -35,8 +38,7 @@ async fn seed_default_org_and_project(executor: &dyn DatabaseExecutor, project_i
                 SqlParam::I64(0),
             ],
         )
-        .await
-        .expect("seed default org");
+        .await?;
 
     executor
         .execute(
@@ -50,8 +52,8 @@ async fn seed_default_org_and_project(executor: &dyn DatabaseExecutor, project_i
                 SqlParam::I64(0),
             ],
         )
-        .await
-        .expect("seed project");
+        .await?;
+    Ok(())
 }
 
 #[rstest]
@@ -60,8 +62,8 @@ async fn seed_default_org_and_project(executor: &dyn DatabaseExecutor, project_i
 #[case("observation_tags")]
 #[case("session_topics")]
 #[tokio::test]
-async fn malformed_json_is_rejected(#[case] scenario: &str) {
-    let (memory_repo, executor, _temp_dir) = setup_memory_repo().await;
+async fn malformed_json_is_rejected(#[case] scenario: &str) -> TestResult {
+    let (memory_repo, executor, _temp_dir) = setup_memory_repo().await?;
 
     match scenario {
         "observation_metadata" => {
@@ -81,8 +83,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                         SqlParam::Null,
                     ],
                 )
-                .await
-                .expect("insert malformed observation row");
+                .await?;
 
             let err = memory_repo
                 .get_observation(&obs_id)
@@ -112,8 +113,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                         SqlParam::I64(1),
                     ],
                 )
-                .await
-                .expect("insert malformed session summary row");
+                .await?;
 
             let err = memory_repo
                 .get_session_summary(&session_id)
@@ -142,8 +142,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                         SqlParam::Null,
                     ],
                 )
-                .await
-                .expect("insert malformed tags row");
+                .await?;
 
             let err = memory_repo
                 .get_observation(&obs_id)
@@ -172,8 +171,7 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
                         SqlParam::I64(1),
                     ],
                 )
-                .await
-                .expect("insert malformed topics row");
+                .await?;
 
             let err = memory_repo
                 .get_session_summary(&session_id)
@@ -187,4 +185,5 @@ async fn malformed_json_is_rejected(#[case] scenario: &str) {
         }
         _ => panic!("unknown scenario: {scenario}"),
     }
+    Ok(())
 }

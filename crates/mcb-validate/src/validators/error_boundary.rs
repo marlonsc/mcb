@@ -73,18 +73,9 @@ pub struct ErrorBoundaryValidator {
     config: ValidationConfig,
 }
 
+crate::impl_simple_validator_new!(ErrorBoundaryValidator);
+
 impl ErrorBoundaryValidator {
-    /// Creates a new error boundary validator with default configuration
-    pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
-    }
-
-    /// Creates a validator with custom configuration
-    #[must_use]
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
-    }
-
     /// Runs all error boundary validations and returns detected violations
     ///
     /// # Errors

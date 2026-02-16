@@ -5,6 +5,8 @@ use mcb_providers::database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator
 use rstest::rstest;
 use rstest::*;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 #[fixture]
 fn project_ddl() -> Vec<String> {
     let generator = SqliteSchemaDdlGenerator;
@@ -166,7 +168,10 @@ fn project_schema_contains_all_fk_references(project_ddl: Vec<String>) {
             s.starts_with("CREATE TABLE") && s.contains(&format!("IF NOT EXISTS {table}"))
         });
         assert!(table_ddl.is_some(), "Table {table} not found in DDL");
-        let table_ddl = table_ddl.unwrap();
+        let table_ddl = match table_ddl {
+            Some(table_ddl) => table_ddl,
+            None => panic!("Table {table} not found in DDL"),
+        };
         assert!(
             table_ddl.contains(fk_ref),
             "Missing FK in {table}: expected {fk_ref}\nActual DDL: {table_ddl}"
@@ -308,10 +313,12 @@ fn project_schema_contains_unique_constraints(project_ddl: Vec<String>) {
     }
 
     // teams has UNIQUE(org_id, name) which duplicates the projects one, so check table-level
-    let teams_ddl = ddl
-        .iter()
-        .find(|s| s.contains("IF NOT EXISTS teams ("))
-        .expect("teams table not found");
+    let teams_ddl_opt = ddl.iter().find(|s| s.contains("IF NOT EXISTS teams ("));
+    assert!(teams_ddl_opt.is_some(), "teams table not found");
+    let teams_ddl = match teams_ddl_opt {
+        Some(value) => value,
+        None => panic!("teams table not found"),
+    };
     assert!(
         teams_ddl.contains("UNIQUE(org_id, name)"),
         "teams table missing UNIQUE(org_id, name)"
@@ -319,23 +326,20 @@ fn project_schema_contains_unique_constraints(project_ddl: Vec<String>) {
 }
 
 #[tokio::test]
-async fn test_ddl_executes_against_fresh_sqlite_db() {
+async fn test_ddl_executes_against_fresh_sqlite_db() -> TestResult {
     use mcb_providers::database::create_memory_repository_with_executor;
 
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("ddl_test.db");
 
-    let (_repo, executor) = create_memory_repository_with_executor(db_path)
-        .await
-        .expect("DDL execution failed — schema is not valid SQLite");
+    let (_repo, executor) = create_memory_repository_with_executor(db_path).await?;
 
     let rows = executor
         .query_all(
             "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
             &[],
         )
-        .await
-        .expect("Failed to query sqlite_master");
+        .await?;
 
     let table_names: Vec<String> = rows
         .iter()
@@ -392,12 +396,12 @@ async fn test_ddl_executes_against_fresh_sqlite_db() {
             "SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%'",
             &[],
         )
-        .await
-        .expect("Failed to query indexes from sqlite_master");
+        .await?;
 
     assert!(
         index_rows.len() >= 50,
         "Expected at least 50 indexes, found {}",
         index_rows.len()
     );
+    Ok(())
 }

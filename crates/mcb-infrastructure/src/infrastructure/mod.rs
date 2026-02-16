@@ -16,24 +16,19 @@
 //! because mcb-server needs them for `AdminState`. These implement traits from
 //! mcb-application but are infrastructure concerns, not external providers.
 
+// Admin module - partially exported for mcb-server
+pub mod admin;
+
+/// Infrastructure factory helpers.
+/// Infrastructure factory
+pub mod factory;
+
 // Internal modules - implementations NOT exported
 // pub(crate) mod events;
 pub(crate) mod lifecycle;
 
-// Admin module - partially exported for mcb-server
-pub mod admin;
-
 // Public data types (NOT implementations) - these are pure DTOs
 // Admin types - exported for mcb-server AdminState
 pub use admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
+pub use factory::default_event_bus;
 pub use lifecycle::{ServiceInfo, ServiceManager, ServiceManagerError};
-/// Create the default in-process event bus for standalone contexts.
-///
-/// Uses `TokioEventBusProvider` — the same implementation resolved by the DI
-/// bootstrap. Exported so that `mcb-server` can build a minimal `AdminState`
-/// without a full `AppContext` while avoiding Null Object patterns.
-#[must_use]
-pub fn default_event_bus() -> std::sync::Arc<dyn mcb_domain::ports::infrastructure::EventBusProvider>
-{
-    std::sync::Arc::new(mcb_providers::events::TokioEventBusProvider::new())
-}

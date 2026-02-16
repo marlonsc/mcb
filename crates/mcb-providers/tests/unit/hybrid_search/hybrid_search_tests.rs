@@ -148,7 +148,10 @@ async fn hybrid_search_engine_creation(#[case] weight_kind: &str) {
 #[case(false, 1)]
 #[case(true, 0)]
 #[tokio::test]
-async fn index_and_clear_collection(#[case] should_clear: bool, #[case] expected_count: i32) {
+async fn index_and_clear_collection(
+    #[case] should_clear: bool,
+    #[case] expected_count: i32,
+) -> Result<(), Box<dyn std::error::Error>> {
     let engine = HybridSearchEngine::new();
 
     let chunks = vec![
@@ -156,9 +159,9 @@ async fn index_and_clear_collection(#[case] should_clear: bool, #[case] expected
         create_test_chunk("fn validate_password() {}", "auth.rs", 10),
     ];
 
-    engine.index_chunks("test", &chunks).await.unwrap();
+    engine.index_chunks("test", &chunks).await?;
     if should_clear {
-        engine.clear_collection("test").await.unwrap();
+        engine.clear_collection("test").await?;
     }
 
     let stats = engine.get_stats().await;
@@ -166,10 +169,11 @@ async fn index_and_clear_collection(#[case] should_clear: bool, #[case] expected
         stats.get("collection_count"),
         Some(&serde_json::json!(expected_count))
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_hybrid_search() {
+async fn test_hybrid_search() -> Result<(), Box<dyn std::error::Error>> {
     let engine = HybridSearchEngine::new();
 
     // Index documents with clearly distinct content
@@ -185,7 +189,7 @@ async fn test_hybrid_search() {
             1,
         ),
     ];
-    engine.index_chunks("test", &chunks).await.unwrap();
+    engine.index_chunks("test", &chunks).await?;
 
     // Semantic results: data.rs has slightly higher semantic score
     // But auth.rs has much better BM25 match for the query
@@ -202,8 +206,7 @@ async fn test_hybrid_search() {
             semantic_results,
             10,
         )
-        .await
-        .unwrap();
+        .await?;
 
     assert_eq!(results.len(), 2);
     // Auth chunk should rank higher due to strong BM25 boost overcoming semantic difference
@@ -211,13 +214,14 @@ async fn test_hybrid_search() {
         results[0].file_path, "auth.rs",
         "Auth should rank first due to BM25 boost"
     );
+    Ok(())
 }
 
 #[rstest]
 #[case(10)]
 #[case(1)]
 #[tokio::test]
-async fn search_without_index(#[case] limit: usize) {
+async fn search_without_index(#[case] limit: usize) -> Result<(), Box<dyn std::error::Error>> {
     let engine = HybridSearchEngine::new();
 
     // Search without indexing should return semantic results as-is
@@ -228,9 +232,9 @@ async fn search_without_index(#[case] limit: usize) {
 
     let results = engine
         .search("nonexistent", "query", semantic_results.clone(), limit)
-        .await
-        .unwrap();
+        .await?;
 
     assert_eq!(results.len(), semantic_results.len().min(limit));
     assert_eq!(results[0].file_path, "a.rs");
+    Ok(())
 }

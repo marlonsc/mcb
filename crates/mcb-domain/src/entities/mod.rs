@@ -13,34 +13,13 @@
 //! | [`FileSnapshot`] | Entity representing a file's state for change tracking |
 //! | [`ProjectType`] | Detected project type with metadata (Cargo, npm, Python, Go, Maven) |
 //! | [`SubmoduleInfo`] | VCS submodule information with parent linking |
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
-/// Common metadata for domain entities.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
-pub struct EntityMetadata {
-    /// Unique identifier (UUID).
-    pub id: String,
-    /// Creation timestamp (Unix epoch).
-    pub created_at: i64,
-    /// Last update timestamp (Unix epoch).
-    pub updated_at: i64,
-}
-
-/// Trait for entities that have standard metadata.
-pub trait BaseEntity {
-    /// Returns the entity's unique identifier.
-    fn id(&self) -> &str;
-    /// Returns the creation timestamp.
-    fn created_at(&self) -> i64;
-    /// Returns the last update timestamp.
-    fn updated_at(&self) -> i64;
-}
 
 /// Agent session tracking entities
 pub mod agent;
 /// API key entities for authentication
 pub mod api_key;
+/// Common metadata for domain entities
+pub mod base;
 /// Core entity representing a semantically meaningful code segment
 pub mod code_chunk;
 /// Entities for codebase state management and change tracking
@@ -74,6 +53,7 @@ pub use agent::{
     AgentSession, AgentSessionStatus, AgentType, Checkpoint, CheckpointType, Delegation, ToolCall,
 };
 pub use api_key::ApiKey;
+pub use base::{BaseEntity, EntityMetadata};
 pub use code_chunk::CodeChunk;
 pub use codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
 pub use issue::{IssueComment, IssueLabel, IssueLabelAssignment};

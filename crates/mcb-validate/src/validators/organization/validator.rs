@@ -1,7 +1,5 @@
 //! Organization validator implementation
 
-use std::path::PathBuf;
-
 use super::violation::OrganizationViolation;
 use super::{
     domain_purity::validate_domain_traits_only, duplicate_strings::validate_duplicate_strings,
@@ -16,18 +14,9 @@ pub struct OrganizationValidator {
     config: ValidationConfig,
 }
 
+crate::impl_simple_validator_new!(OrganizationValidator);
+
 impl OrganizationValidator {
-    /// Initializes a new organization validator for the specified workspace root.
-    pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
-    }
-
-    /// Initializes a new organization validator with a custom configuration.
-    #[must_use]
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
-    }
-
     /// Executes all organization validation checks and returns the aggregated violations.
     ///
     /// # Errors

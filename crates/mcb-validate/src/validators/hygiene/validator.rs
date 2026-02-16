@@ -7,8 +7,6 @@
 //!
 //! This validator delegates specific checks to specialized modules in the `hygiene` directory.
 
-use std::path::PathBuf;
-
 use crate::{Result, ValidationConfig};
 
 /// Test hygiene violation types
@@ -25,18 +23,9 @@ pub struct HygieneValidator {
     config: ValidationConfig,
 }
 
+crate::impl_simple_validator_new!(HygieneValidator);
+
 impl HygieneValidator {
-    /// Create a new test validator
-    pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        Self::with_config(ValidationConfig::new(workspace_root))
-    }
-
-    /// Creates a validator with custom configuration for multi-directory support.
-    #[must_use]
-    pub fn with_config(config: ValidationConfig) -> Self {
-        Self { config }
-    }
-
     /// Runs all test organization validations and returns violations found.
     ///
     /// # Errors

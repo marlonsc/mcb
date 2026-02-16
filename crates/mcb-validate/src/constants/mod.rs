@@ -57,11 +57,7 @@ pub use duplication::DUPLICATION_KEYWORDS;
 // PMAT Integration (top-level, no sub-module needed)
 // ============================================================================
 
-/// Default cyclomatic complexity threshold.
-pub const DEFAULT_COMPLEXITY_THRESHOLD: u32 = 15;
+/// Default values for validation settings.
+pub mod defaults;
 
-/// Default TDG score threshold (0-100, higher is worse).
-pub const DEFAULT_TDG_THRESHOLD: u32 = 50;
-
-/// Default max lines per file before triggering a size violation.
-pub const DEFAULT_MAX_FILE_LINES: usize = 500;
+pub use defaults::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_MAX_FILE_LINES, DEFAULT_TDG_THRESHOLD};

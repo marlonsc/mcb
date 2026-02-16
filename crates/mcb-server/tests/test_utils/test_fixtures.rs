@@ -40,7 +40,7 @@ pub const TEST_REPO_NAME: &str = "test-repo";
 /// Test fixture: default organization identifier.
 pub const TEST_ORG_ID: &str = "test-org";
 
-/// Test fixture: default embedding dimensions (FastEmbed BGE-small-en-v1.5).
+/// Test fixture: default embedding dimensions (`FastEmbed` BGE-small-en-v1.5).
 pub const TEST_EMBEDDING_DIMENSIONS: usize = 384;
 
 // -----------------------------------------------------------------------------

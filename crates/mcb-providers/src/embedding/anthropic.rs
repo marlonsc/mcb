@@ -20,12 +20,10 @@ use crate::{
 
 use crate::constants::{
     EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_INPUT, EMBEDDING_PARAM_MODEL,
-    EMBEDDING_RESPONSE_FIELD, HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE,
+    HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE,
 };
-use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
-use crate::utils::http::{
-    JsonRequestParams, RequestErrorKind, RetryConfig, parse_embedding_vector, send_json_request,
-};
+use crate::utils::embedding::{HttpEmbeddingClient, parse_standard_embedding, process_batch};
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
 define_http_embedding_provider!(
@@ -84,13 +82,7 @@ impl AnthropicEmbeddingProvider {
 
     /// Parse embedding vector from response data
     fn parse_embedding(&self, index: usize, item: &serde_json::Value) -> Result<Embedding> {
-        let embedding_vec = parse_embedding_vector(item, EMBEDDING_RESPONSE_FIELD, index)?;
-
-        Ok(Embedding {
-            vector: embedding_vec,
-            model: self.client.model.clone(),
-            dimensions: self.dimensions(),
-        })
+        parse_standard_embedding(&self.client.model, self.dimensions(), index, item)
     }
 }
 

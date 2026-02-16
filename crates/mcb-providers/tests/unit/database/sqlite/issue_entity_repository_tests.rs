@@ -11,18 +11,19 @@ use mcb_domain::ports::repositories::issue_entity_repository::{
 use mcb_providers::database::SqliteIssueEntityRepository;
 
 use crate::common::entity_test_utils::{
-    TEST_NOW, assert_not_found, seed_default_scope, seed_isolated_org_scope, setup_executor,
+    TEST_NOW, TestResult, assert_not_found, seed_default_scope, seed_isolated_org_scope,
+    setup_executor,
 };
 
-async fn setup_repo() -> (
+async fn setup_repo() -> TestResult<(
     SqliteIssueEntityRepository,
     Arc<dyn DatabaseExecutor>,
     tempfile::TempDir,
-) {
-    let (executor, temp_dir) = setup_executor().await;
-    seed_default_scope(executor.as_ref()).await;
+)> {
+    let (executor, temp_dir) = setup_executor().await?;
+    seed_default_scope(executor.as_ref()).await?;
     let repo = SqliteIssueEntityRepository::new(Arc::clone(&executor));
-    (repo, executor, temp_dir)
+    Ok((repo, executor, temp_dir))
 }
 
 fn create_test_issue(id: &str) -> ProjectIssue {
@@ -73,102 +74,88 @@ fn create_test_label(id: &str, name: &str, color: &str) -> IssueLabel {
 }
 
 #[tokio::test]
-async fn test_issue_crud() {
-    let (repo, _executor, _temp) = setup_repo().await;
+async fn test_issue_crud() -> TestResult {
+    let (repo, _executor, _temp) = setup_repo().await?;
     let issue = create_test_issue("issue-1");
 
-    repo.create_issue(&issue).await.expect("create");
+    repo.create_issue(&issue).await?;
 
-    let retrieved = repo
-        .get_issue(DEFAULT_ORG_ID, "issue-1")
-        .await
-        .expect("get");
+    let retrieved = repo.get_issue(DEFAULT_ORG_ID, "issue-1").await?;
     assert_eq!(retrieved.title, "Issue issue-1");
     assert_eq!(retrieved.status, IssueStatus::Open);
 
-    let list = repo
-        .list_issues(DEFAULT_ORG_ID, "proj-1")
-        .await
-        .expect("list");
+    let list = repo.list_issues(DEFAULT_ORG_ID, "proj-1").await?;
     assert_eq!(list.len(), 1);
 
     let mut updated = issue.clone();
     updated.status = IssueStatus::InProgress;
     updated.updated_at = 2_000_000;
-    repo.update_issue(&updated).await.expect("update");
+    repo.update_issue(&updated).await?;
 
-    let after_update = repo
-        .get_issue(DEFAULT_ORG_ID, "issue-1")
-        .await
-        .expect("get");
+    let after_update = repo.get_issue(DEFAULT_ORG_ID, "issue-1").await?;
     assert_eq!(after_update.status, IssueStatus::InProgress);
 
-    repo.delete_issue(DEFAULT_ORG_ID, "issue-1")
-        .await
-        .expect("delete");
+    repo.delete_issue(DEFAULT_ORG_ID, "issue-1").await?;
     assert_not_found(&repo.get_issue(DEFAULT_ORG_ID, "issue-1").await);
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_comment_lifecycle() {
-    let (repo, _executor, _temp) = setup_repo().await;
+async fn test_comment_lifecycle() -> TestResult {
+    let (repo, _executor, _temp) = setup_repo().await?;
     let issue = create_test_issue("issue-1");
-    repo.create_issue(&issue).await.expect("create issue");
+    repo.create_issue(&issue).await?;
 
     let c1 = create_test_comment("c1", "issue-1");
     let c2 = create_test_comment("c2", "issue-1");
-    repo.create_comment(&c1).await.expect("create c1");
-    repo.create_comment(&c2).await.expect("create c2");
+    repo.create_comment(&c1).await?;
+    repo.create_comment(&c2).await?;
 
-    let retrieved = repo.get_comment("c1").await.expect("get");
+    let retrieved = repo.get_comment("c1").await?;
     assert_eq!(retrieved.content, "Comment c1");
 
-    let comments = repo.list_comments_by_issue("issue-1").await.expect("list");
+    let comments = repo.list_comments_by_issue("issue-1").await?;
     assert_eq!(comments.len(), 2);
 
-    repo.delete_comment("c1").await.expect("delete c1");
-    let after_delete = repo.list_comments_by_issue("issue-1").await.expect("list");
+    repo.delete_comment("c1").await?;
+    let after_delete = repo.list_comments_by_issue("issue-1").await?;
     assert_eq!(after_delete.len(), 1);
     assert_eq!(after_delete[0].id, "c2");
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_label_lifecycle() {
-    let (repo, _executor, _temp) = setup_repo().await;
+async fn test_label_lifecycle() -> TestResult {
+    let (repo, _executor, _temp) = setup_repo().await?;
 
     let l1 = create_test_label("lbl-1", "bug", "#ff0000");
     let l2 = create_test_label("lbl-2", "feature", "#00ff00");
-    repo.create_label(&l1).await.expect("create l1");
-    repo.create_label(&l2).await.expect("create l2");
+    repo.create_label(&l1).await?;
+    repo.create_label(&l2).await?;
 
-    let retrieved = repo.get_label("lbl-1").await.expect("get");
+    let retrieved = repo.get_label("lbl-1").await?;
     assert_eq!(retrieved.name, "bug");
     assert_eq!(retrieved.color, "#ff0000");
 
-    let labels = repo
-        .list_labels(DEFAULT_ORG_ID, "proj-1")
-        .await
-        .expect("list");
+    let labels = repo.list_labels(DEFAULT_ORG_ID, "proj-1").await?;
     assert_eq!(labels.len(), 2);
 
-    repo.delete_label("lbl-1").await.expect("delete");
-    let after_delete = repo
-        .list_labels(DEFAULT_ORG_ID, "proj-1")
-        .await
-        .expect("list");
+    repo.delete_label("lbl-1").await?;
+    let after_delete = repo.list_labels(DEFAULT_ORG_ID, "proj-1").await?;
     assert_eq!(after_delete.len(), 1);
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_label_assignment() {
-    let (repo, _executor, _temp) = setup_repo().await;
+async fn test_label_assignment() -> TestResult {
+    let (repo, _executor, _temp) = setup_repo().await?;
     let issue = create_test_issue("issue-1");
-    repo.create_issue(&issue).await.expect("create issue");
+    repo.create_issue(&issue).await?;
 
     let l1 = create_test_label("lbl-1", "bug", "#ff0000");
     let l2 = create_test_label("lbl-2", "urgent", "#ff8800");
-    repo.create_label(&l1).await.expect("create l1");
-    repo.create_label(&l2).await.expect("create l2");
+    repo.create_label(&l1).await?;
+    repo.create_label(&l2).await?;
 
     use mcb_domain::utils::id;
     use mcb_domain::value_objects::ids::IssueLabelAssignmentId;
@@ -191,32 +178,28 @@ async fn test_label_assignment() {
         label_id: "lbl-2".to_owned(),
         created_at: TEST_NOW,
     };
-    repo.assign_label(&a1).await.expect("assign l1");
-    repo.assign_label(&a2).await.expect("assign l2");
+    repo.assign_label(&a1).await?;
+    repo.assign_label(&a2).await?;
 
-    let assigned = repo
-        .list_labels_for_issue("issue-1")
-        .await
-        .expect("list labels for issue");
+    let assigned = repo.list_labels_for_issue("issue-1").await?;
     assert_eq!(assigned.len(), 2);
 
-    repo.unassign_label("issue-1", "lbl-1")
-        .await
-        .expect("unassign l1");
-    let after_unassign = repo.list_labels_for_issue("issue-1").await.expect("list");
+    repo.unassign_label("issue-1", "lbl-1").await?;
+    let after_unassign = repo.list_labels_for_issue("issue-1").await?;
     assert_eq!(after_unassign.len(), 1);
     assert_eq!(after_unassign[0].id, "lbl-2");
+    Ok(())
 }
 
 #[rstest]
 #[case("org-A", true)]
 #[case("org-B", false)]
 #[tokio::test]
-async fn org_isolation_issues(#[case] org_id: &str, #[case] should_find: bool) {
-    let (executor, _temp_dir) = setup_executor().await;
+async fn org_isolation_issues(#[case] org_id: &str, #[case] should_find: bool) -> TestResult {
+    let (executor, _temp_dir) = setup_executor().await?;
 
     for org_id in &["org-A", "org-B"] {
-        seed_isolated_org_scope(executor.as_ref(), org_id).await;
+        seed_isolated_org_scope(executor.as_ref(), org_id).await?;
     }
 
     let repo = SqliteIssueEntityRepository::new(executor);
@@ -243,34 +226,31 @@ async fn org_isolation_issues(#[case] org_id: &str, #[case] should_find: bool) {
         closed_at: None,
         closed_reason: String::new(),
     };
-    repo.create_issue(&issue).await.expect("create");
+    repo.create_issue(&issue).await?;
 
     let get_result = repo.get_issue(org_id, "issue-iso").await;
     if should_find {
         assert!(get_result.is_ok());
     } else {
         assert_not_found(&get_result);
-        assert!(
-            repo.list_issues("org-B", "proj-org-B")
-                .await
-                .unwrap()
-                .is_empty()
-        );
+        assert!(repo.list_issues("org-B", "proj-org-B").await?.is_empty());
     }
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_delete_issue_with_comments_fails() {
-    let (repo, _executor, _temp) = setup_repo().await;
+async fn test_delete_issue_with_comments_fails() -> TestResult {
+    let (repo, _executor, _temp) = setup_repo().await?;
     let issue = create_test_issue("issue-fk");
-    repo.create_issue(&issue).await.expect("create issue");
+    repo.create_issue(&issue).await?;
 
     let comment = create_test_comment("c1", "issue-fk");
-    repo.create_comment(&comment).await.expect("create comment");
+    repo.create_comment(&comment).await?;
 
     let result = repo.delete_issue(DEFAULT_ORG_ID, "issue-fk").await;
     assert!(
         result.is_err(),
         "Deleting an issue with comments should fail due to FK constraint"
     );
+    Ok(())
 }

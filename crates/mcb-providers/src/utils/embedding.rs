@@ -84,6 +84,28 @@ pub(crate) fn parse_float_array_lossy(
     Ok(values)
 }
 
+/// Parse a standard embedding response item (OpenAI/Anthropic/VoyageAI format).
+///
+/// Extracts the embedding vector from `item[EMBEDDING_RESPONSE_FIELD]` and wraps
+/// it in an `Embedding` value object with the given model name and dimensions.
+pub(crate) fn parse_standard_embedding(
+    model: &str,
+    dimensions: usize,
+    index: usize,
+    item: &Value,
+) -> Result<Embedding> {
+    let embedding_vec = super::http::parse_embedding_vector(
+        item,
+        crate::constants::EMBEDDING_RESPONSE_FIELD,
+        index,
+    )?;
+    Ok(Embedding {
+        vector: embedding_vec,
+        model: model.to_owned(),
+        dimensions,
+    })
+}
+
 /// Processes a batch of texts by fetching embeddings and parsing each result.
 ///
 /// Returns an error if the response count doesn't match the input count.

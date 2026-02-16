@@ -13,7 +13,12 @@ pub fn error_text(result: &CallToolResult) -> String {
 pub fn assert_error_shape(result: &CallToolResult, expected_message: &str) {
     assert_eq!(result.is_error, Some(true), "expected is_error=true");
 
-    let content_json = serde_json::to_value(&result.content).expect("serialize content");
+    let content_json_result = serde_json::to_value(&result.content);
+    assert!(content_json_result.is_ok(), "serialize content");
+    let content_json = match content_json_result {
+        Ok(value) => value,
+        Err(_) => return,
+    };
     assert!(content_json.is_array(), "error content must be an array");
     assert!(
         content_json

@@ -2,23 +2,9 @@
 
 pub mod adapter;
 pub mod mapper;
+/// Adapter resolver
+pub mod resolver;
 pub mod unified;
 
 pub use adapter::EntityCrudAdapter;
-
-use crate::admin::handlers::AdminState;
-use mapper::slug_to_resource;
-use unified::UnifiedEntityCrudAdapter;
-
-/// Resolves a CRUD adapter for the given entity slug from `AdminState`.
-#[must_use]
-pub fn resolve_adapter(slug: &str, state: &AdminState) -> Option<Box<dyn EntityCrudAdapter>> {
-    let handlers = state.tool_handlers.as_ref()?;
-    let (resource, parent_field) = slug_to_resource(slug)?;
-
-    Some(Box::new(UnifiedEntityCrudAdapter {
-        resource,
-        parent_field,
-        handlers: handlers.clone(),
-    }))
-}
+pub use resolver::resolve_adapter;

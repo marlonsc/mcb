@@ -13,6 +13,11 @@ use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, ValidationConfig};
 
+#[path = "source_functions.rs"]
+mod source_functions;
+#[path = "source_relatedness.rs"]
+mod source_relatedness;
+
 // ── File traversal ──────────────────────────────────────────────────────
 
 /// Generic helper: iterate over all Rust files in crate source directories.
@@ -124,12 +129,8 @@ pub fn required_patterns<'a>(ids: impl Iterator<Item = &'a str>) -> Result<Vec<&
 /// Check if a line is a function signature or standalone brace.
 #[must_use]
 pub fn is_fn_signature_or_brace(line: &str) -> bool {
-    line.starts_with("fn ")
-        || line.starts_with("pub fn ")
-        || line.starts_with("async fn ")
-        || line.starts_with("pub async fn ")
-        || line == "{"
-        || line == "}"
+    const FN_PREFIXES: [&str; 4] = ["fn ", "pub fn ", "async fn ", "pub async fn "];
+    matches!(line, "{" | "}") || FN_PREFIXES.iter().any(|prefix| line.starts_with(prefix))
 }
 
 // ── Block scanning ──────────────────────────────────────────────────────
@@ -215,10 +216,7 @@ pub fn count_match_arms(lines: &[&str], start_line: usize) -> Result<usize> {
 /// Returns an error if file traversal fails.
 pub fn scan_decl_blocks<F, V>(
     config: &ValidationConfig,
-    decl_pattern: &Regex,
-    member_fn_pattern: &Regex,
-    count_fn: fn(&[&str], usize, &Regex) -> usize,
-    max_allowed: usize,
+    scan_config: &DeclScanConfig<'_>,
     make_violation: F,
 ) -> Result<Vec<V>>
 where
@@ -228,17 +226,18 @@ where
 
     for_each_rust_file(config, |path, lines| {
         for (line_num, line) in lines.iter().enumerate() {
-            if let Some(cap) = decl_pattern.captures(line) {
+            if let Some(cap) = scan_config.decl_pattern.captures(line) {
                 let name = cap.get(1).map_or("", |m| m.as_str());
-                let method_count = count_fn(&lines, line_num, member_fn_pattern);
+                let method_count =
+                    (scan_config.count_fn)(&lines, line_num, scan_config.member_fn_pattern);
 
-                if method_count > max_allowed {
+                if method_count > scan_config.max_allowed {
                     violations.push(make_violation(
                         path.clone(),
                         line_num + 1,
                         name,
                         method_count,
-                        max_allowed,
+                        scan_config.max_allowed,
                     ));
                 }
             }
@@ -247,6 +246,18 @@ where
     })?;
 
     Ok(violations)
+}
+
+/// Configuration for declaration-block scanning.
+pub struct DeclScanConfig<'a> {
+    /// Regex that identifies the declaration start and captures declaration name in group 1.
+    pub decl_pattern: &'a Regex,
+    /// Regex that identifies member functions within a declaration block.
+    pub member_fn_pattern: &'a Regex,
+    /// Strategy function that counts member functions from a starting declaration line.
+    pub count_fn: fn(&[&str], usize, &Regex) -> usize,
+    /// Maximum allowed member count before emitting a violation.
+    pub max_allowed: usize,
 }
 
 // ── Function extraction ─────────────────────────────────────────────────
@@ -269,63 +280,7 @@ pub struct FunctionInfo {
 /// Returns structured function info for each detected function.
 #[must_use]
 pub fn extract_functions(fn_pattern: Option<&Regex>, lines: &[(usize, &str)]) -> Vec<FunctionInfo> {
-    let mut functions = Vec::new();
-
-    let mut i = 0;
-    while i < lines.len() {
-        let (orig_idx, trimmed) = lines[i];
-        if let Some(re) = fn_pattern
-            && let Some(cap) = re.captures(trimmed)
-        {
-            let fn_name = cap
-                .get(1)
-                .map(|m| m.as_str().to_owned())
-                .unwrap_or_default();
-            let fn_start = orig_idx + 1; // 1-based
-
-            // Find function body extent by tracking braces
-            let mut brace_depth: i32 = 0;
-            let mut fn_started = false;
-            let mut fn_end_idx = i;
-
-            for (j, (_, line_content)) in lines[i..].iter().enumerate() {
-                let opens = i32::try_from(line_content.chars().filter(|c| *c == '{').count())
-                    .unwrap_or(i32::MAX);
-                let closes = i32::try_from(line_content.chars().filter(|c| *c == '}').count())
-                    .unwrap_or(i32::MAX);
-
-                if opens > 0 {
-                    fn_started = true;
-                }
-                brace_depth += opens - closes;
-                if fn_started && brace_depth <= 0 {
-                    fn_end_idx = i + j;
-                    break;
-                }
-            }
-
-            let body: Vec<String> = lines[i..=fn_end_idx]
-                .iter()
-                .map(|(_, l)| l.trim().to_owned())
-                .filter(|l| !l.is_empty() && !l.starts_with(COMMENT_PREFIX))
-                .collect();
-
-            let meaningful = meaningful_lines(&body);
-            let has_cf = has_control_flow(&body);
-
-            functions.push(FunctionInfo {
-                name: fn_name,
-                start_line: fn_start,
-                body_lines: body,
-                meaningful_body: meaningful,
-                has_control_flow: has_cf,
-            });
-
-            i = fn_end_idx;
-        }
-        i += 1;
-    }
-    functions
+    source_functions::extract_functions_impl(fn_pattern, lines)
 }
 
 /// Extract functions with full body tracking, optionally tracking impl blocks.
@@ -335,66 +290,12 @@ pub fn extract_functions_with_body(
     lines: &[(usize, &str)],
     current_struct: &mut String,
 ) -> Vec<FunctionInfo> {
-    let mut functions = Vec::new();
-    let mut current_fn_name = String::new();
-    let mut fn_start_line: usize = 0;
-    let mut fn_body_lines: Vec<String> = Vec::new();
-    let mut brace_depth: i32 = 0;
-    let mut in_fn = false;
-
-    for &(orig_idx, trimmed) in lines {
-        if trimmed.starts_with(COMMENT_PREFIX) {
-            continue;
-        }
-
-        if let Some(re) = impl_pattern
-            && let Some(cap) = re.captures(trimmed)
-        {
-            *current_struct = cap
-                .get(1)
-                .map(|m| m.as_str().to_owned())
-                .unwrap_or_default();
-        }
-
-        if let Some(re) = fn_pattern
-            && let Some(cap) = re.captures(trimmed)
-        {
-            current_fn_name = cap
-                .get(1)
-                .map(|m| m.as_str().to_owned())
-                .unwrap_or_default();
-            fn_start_line = orig_idx + 1; // 1-based
-            fn_body_lines.clear();
-            in_fn = true;
-            brace_depth = 0;
-        }
-
-        if in_fn {
-            let opens =
-                i32::try_from(trimmed.chars().filter(|c| *c == '{').count()).unwrap_or(i32::MAX);
-            let closes =
-                i32::try_from(trimmed.chars().filter(|c| *c == '}').count()).unwrap_or(i32::MAX);
-            brace_depth += opens - closes;
-
-            if !trimmed.is_empty() && !trimmed.starts_with("#[") {
-                fn_body_lines.push(trimmed.to_owned());
-            }
-
-            if brace_depth <= 0 && opens > 0 {
-                let meaningful = meaningful_lines(&fn_body_lines);
-                functions.push(FunctionInfo {
-                    name: current_fn_name.clone(),
-                    start_line: fn_start_line,
-                    body_lines: fn_body_lines.clone(),
-                    meaningful_body: meaningful,
-                    has_control_flow: has_control_flow(&fn_body_lines),
-                });
-                in_fn = false;
-                fn_body_lines.clear();
-            }
-        }
-    }
-    functions
+    source_functions::extract_functions_with_body_impl(
+        fn_pattern,
+        impl_pattern,
+        lines,
+        current_struct,
+    )
 }
 
 // ── Structural relatedness ──────────────────────────────────────────────
@@ -402,198 +303,7 @@ pub fn extract_functions_with_body(
 /// Check if structs seem related (share common prefix/suffix).
 #[must_use]
 pub fn structs_seem_related(names: &[String]) -> bool {
-    use crate::validators::solid::constants::MIN_NAMES_FOR_RELATION_CHECK;
-    if names.len() < MIN_NAMES_FOR_RELATION_CHECK {
-        return true;
-    }
-
-    let checks = [
-        has_common_prefix,
-        has_common_suffix,
-        has_purpose_suffix,
-        has_shared_keyword,
-        has_common_words,
-    ];
-
-    checks.iter().any(|check| check(names))
+    source_relatedness::structs_seem_related_impl(names)
 }
 
 // ── Private helpers ─────────────────────────────────────────────────────
-
-/// Filter a list of body lines to only meaningful ones (no braces, no `fn` sigs).
-fn meaningful_lines(body: &[String]) -> Vec<String> {
-    use crate::constants::common::FN_PREFIX;
-    body.iter()
-        .filter(|l| {
-            !l.starts_with('{')
-                && !l.starts_with('}')
-                && *l != "{"
-                && *l != "}"
-                && !l.starts_with(FN_PREFIX)
-        })
-        .cloned()
-        .collect()
-}
-
-/// Check if any line in a function body contains control-flow keywords.
-fn has_control_flow(body: &[String]) -> bool {
-    body.iter().any(|line| {
-        line.contains(" if ")
-            || line.starts_with("if ")
-            || line.contains("} else")
-            || line.starts_with("match ")
-            || line.contains(" match ")
-            || line.starts_with("for ")
-            || line.starts_with("while ")
-            || line.starts_with("loop ")
-            || line.contains(" else {")
-            || line.contains("else {")
-    })
-}
-
-/// Check for common prefix (at least `MIN_AFFIX_LENGTH` chars).
-fn has_common_prefix(names: &[String]) -> bool {
-    use crate::validators::solid::constants::{MAX_AFFIX_LENGTH, MIN_AFFIX_LENGTH};
-    let first = &names[0];
-    for len in (MIN_AFFIX_LENGTH..=first.len().min(MAX_AFFIX_LENGTH)).rev() {
-        let prefix = &first[..len];
-        if names.iter().all(|n| n.starts_with(prefix)) {
-            return true;
-        }
-    }
-    false
-}
-
-/// Check for common suffix (at least `MIN_AFFIX_LENGTH` chars).
-fn has_common_suffix(names: &[String]) -> bool {
-    use crate::validators::solid::constants::{MAX_AFFIX_LENGTH, MIN_AFFIX_LENGTH};
-    let first = &names[0];
-    for len in (MIN_AFFIX_LENGTH..=first.len().min(MAX_AFFIX_LENGTH)).rev() {
-        let suffix = &first[first.len().saturating_sub(len)..];
-        if names.iter().all(|n| n.ends_with(suffix)) {
-            return true;
-        }
-    }
-    false
-}
-
-/// Check if structs share related purpose suffixes.
-fn has_purpose_suffix(names: &[String]) -> bool {
-    let purpose_suffixes = [
-        "Config",
-        "State",
-        "Error",
-        "Request",
-        "Response",
-        "Options",
-        "Args",
-        "Report",
-        "Entry",
-        "Info",
-        "Data",
-        "Metrics",
-        "Operation",
-        "Status",
-        "Result",
-        "Summary",
-        "File",
-        "Match",
-        "Check",
-        "Health",
-        "Complexity",
-    ];
-    names
-        .iter()
-        .any(|n| purpose_suffixes.iter().any(|suffix| n.ends_with(suffix)))
-}
-
-/// Check if structs share domain keywords.
-fn has_shared_keyword(names: &[String]) -> bool {
-    let domain_keywords = [
-        "Config",
-        "Options",
-        "Settings",
-        "Error",
-        "Result",
-        "Builder",
-        "Handler",
-        "Provider",
-        "Service",
-        "Health",
-        "Crypto",
-        "Admin",
-        "Http",
-        "Args",
-        "Request",
-        "Response",
-        "State",
-        "Status",
-        "Info",
-        "Data",
-        "Message",
-        "Event",
-        "Token",
-        "Auth",
-        "Cache",
-        "Index",
-        "Search",
-        "Chunk",
-        "Embed",
-        "Vector",
-        "Transport",
-        "Operation",
-        "Mcp",
-        "Protocol",
-        "Server",
-        "Client",
-        "Connection",
-        "Session",
-        "Route",
-        "Endpoint",
-        "Memory",
-        "Observation",
-        "Filter",
-        "Pattern",
-    ];
-
-    domain_keywords.iter().any(|keyword| {
-        let has_keyword: Vec<_> = names.iter().filter(|n| n.contains(keyword)).collect();
-        has_keyword.len() > names.len() / 2
-    })
-}
-
-/// Check for partial word overlaps in CamelCase names.
-fn has_common_words(names: &[String]) -> bool {
-    use crate::validators::solid::constants::MIN_WORD_LENGTH_FOR_COMPARISON;
-    let words: Vec<Vec<&str>> = names.iter().map(|n| split_camel_case(n)).collect();
-
-    if let Some(first_words) = words.first() {
-        for word in first_words {
-            if word.len() >= MIN_WORD_LENGTH_FOR_COMPARISON {
-                let count = words.iter().filter(|w| w.contains(word)).count();
-                if count > names.len() / 2 {
-                    return true;
-                }
-            }
-        }
-    }
-    false
-}
-
-/// Split a CamelCase string into words.
-fn split_camel_case(s: &str) -> Vec<&str> {
-    let mut words = Vec::new();
-    let mut start = 0;
-    for (i, c) in s.char_indices() {
-        if c.is_uppercase() && i > 0 {
-            if start < i {
-                words.push(&s[start..i]);
-            }
-            start = i;
-        }
-    }
-    if start < s.len() {
-        words.push(&s[start..]);
-    }
-    words
-}

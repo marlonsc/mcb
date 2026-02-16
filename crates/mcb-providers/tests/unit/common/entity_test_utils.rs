@@ -5,17 +5,21 @@ use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 use mcb_providers::database::create_memory_repository_with_executor;
 
 pub const TEST_NOW: i64 = 1_000_000;
+pub type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
-pub async fn setup_executor() -> (Arc<dyn DatabaseExecutor>, tempfile::TempDir) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
+pub async fn setup_executor() -> TestResult<(Arc<dyn DatabaseExecutor>, tempfile::TempDir)> {
+    let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("test.db");
-    let (_mem_repo, executor) = create_memory_repository_with_executor(db_path)
-        .await
-        .expect("create executor");
-    (executor, temp_dir)
+    let (_mem_repo, executor) = create_memory_repository_with_executor(db_path).await?;
+    Ok((executor, temp_dir))
 }
 
-pub async fn seed_org(executor: &dyn DatabaseExecutor, org_id: &str, name: &str, slug: &str) {
+pub async fn seed_org(
+    executor: &dyn DatabaseExecutor,
+    org_id: &str,
+    name: &str,
+    slug: &str,
+) -> TestResult {
     executor
         .execute(
             "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
@@ -28,8 +32,8 @@ pub async fn seed_org(executor: &dyn DatabaseExecutor, org_id: &str, name: &str,
                 SqlParam::I64(0),
             ],
         )
-        .await
-        .expect("seed org");
+        .await?;
+    Ok(())
 }
 
 pub async fn seed_project(
@@ -38,7 +42,7 @@ pub async fn seed_project(
     org_id: &str,
     name: &str,
     path: &str,
-) {
+) -> TestResult {
     executor
         .execute(
             "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
@@ -51,8 +55,8 @@ pub async fn seed_project(
                 SqlParam::I64(0),
             ],
         )
-        .await
-        .expect("seed project");
+        .await?;
+    Ok(())
 }
 
 pub async fn seed_user(
@@ -61,7 +65,7 @@ pub async fn seed_user(
     org_id: &str,
     email: &str,
     display_name: &str,
-) {
+) -> TestResult {
     executor
         .execute(
             "INSERT INTO users (id, org_id, email, display_name, role, api_key_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -76,18 +80,18 @@ pub async fn seed_user(
                 SqlParam::I64(0),
             ],
         )
-        .await
-        .expect("seed user");
+        .await?;
+    Ok(())
 }
 
-pub async fn seed_default_scope(executor: &dyn DatabaseExecutor) {
+pub async fn seed_default_scope(executor: &dyn DatabaseExecutor) -> TestResult {
     seed_org(
         executor,
         mcb_domain::constants::keys::DEFAULT_ORG_ID,
         "default",
         "default",
     )
-    .await;
+    .await?;
     seed_project(
         executor,
         "proj-1",
@@ -95,7 +99,7 @@ pub async fn seed_default_scope(executor: &dyn DatabaseExecutor) {
         "Test Project",
         "/test",
     )
-    .await;
+    .await?;
     seed_user(
         executor,
         "user-1",
@@ -103,11 +107,12 @@ pub async fn seed_default_scope(executor: &dyn DatabaseExecutor) {
         "test@example.com",
         "Test User",
     )
-    .await;
+    .await?;
+    Ok(())
 }
 
-pub async fn seed_isolated_org_scope(executor: &dyn DatabaseExecutor, org_id: &str) {
-    seed_org(executor, org_id, org_id, org_id).await;
+pub async fn seed_isolated_org_scope(executor: &dyn DatabaseExecutor, org_id: &str) -> TestResult {
+    seed_org(executor, org_id, org_id, org_id).await?;
     seed_project(
         executor,
         &format!("proj-{org_id}"),
@@ -115,7 +120,7 @@ pub async fn seed_isolated_org_scope(executor: &dyn DatabaseExecutor, org_id: &s
         &format!("Project {org_id}"),
         &format!("/{org_id}"),
     )
-    .await;
+    .await?;
     seed_user(
         executor,
         &format!("user-{org_id}"),
@@ -123,7 +128,8 @@ pub async fn seed_isolated_org_scope(executor: &dyn DatabaseExecutor, org_id: &s
         &format!("{org_id}@test.com"),
         &format!("User {org_id}"),
     )
-    .await;
+    .await?;
+    Ok(())
 }
 
 pub fn assert_not_found<T>(result: &mcb_domain::error::Result<T>) {

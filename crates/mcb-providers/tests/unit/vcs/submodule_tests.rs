@@ -5,19 +5,19 @@ use rstest::rstest;
 use tempfile::TempDir;
 
 #[tokio::test]
-async fn test_collect_submodules_empty_repo() {
-    let temp = TempDir::new().expect("Failed to create temp dir");
-    let repo = Repository::init(temp.path()).expect("Failed to init repo");
+async fn test_collect_submodules_empty_repo() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempDir::new()?;
+    let repo = Repository::init(temp.path())?;
 
-    let sig = git2::Signature::now("Test", "test@test.com").unwrap();
-    let tree_id = repo.index().unwrap().write_tree().unwrap();
-    let tree = repo.find_tree(tree_id).unwrap();
-    repo.commit(Some("HEAD"), &sig, &sig, "Initial commit", &tree, &[])
-        .unwrap();
+    let sig = git2::Signature::now("Test", "test@test.com")?;
+    let mut index = repo.index()?;
+    let tree_id = index.write_tree()?;
+    let tree = repo.find_tree(tree_id)?;
+    repo.commit(Some("HEAD"), &sig, &sig, "Initial commit", &tree, &[])?;
 
-    let result = collect_submodules(temp.path(), "test-repo").await;
-    assert!(result.is_ok());
-    assert!(result.unwrap().is_empty());
+    let result = collect_submodules(temp.path(), "test-repo").await?;
+    assert!(result.is_empty());
+    Ok(())
 }
 
 #[rstest]

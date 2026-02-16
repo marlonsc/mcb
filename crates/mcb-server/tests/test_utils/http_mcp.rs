@@ -10,14 +10,13 @@ use tempfile::TempDir;
 
 use crate::test_utils::test_fixtures::create_test_mcp_server;
 
-pub fn get_free_port() -> u16 {
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to port 0");
-    let port = listener
-        .local_addr()
-        .expect("Failed to get local address")
-        .port();
+pub type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
+pub fn get_free_port() -> std::io::Result<u16> {
+    let listener = TcpListener::bind("127.0.0.1:0")?;
+    let port = listener.local_addr()?.port();
     drop(listener);
-    port
+    Ok(port)
 }
 
 pub struct McpTestContext {
@@ -27,24 +26,22 @@ pub struct McpTestContext {
 }
 
 impl McpTestContext {
-    pub async fn new() -> Self {
-        let port = get_free_port();
+    pub async fn new() -> TestResult<Self> {
+        let port = get_free_port()?;
         let (server_instance, temp) = create_test_mcp_server().await;
         let server = Arc::new(server_instance);
 
         let http_config = HttpTransportConfig::localhost(port);
-        let transport = HttpTransport::new(http_config, server.clone());
+        let transport = HttpTransport::new(http_config, Arc::clone(&server));
 
         let rocket = transport.rocket();
-        let client = Client::tracked(rocket)
-            .await
-            .expect("Failed to create test client");
+        let client = Client::tracked(rocket).await?;
 
-        Self {
+        Ok(Self {
             client,
             server,
             _temp: temp,
-        }
+        })
     }
 }
 
@@ -52,21 +49,21 @@ pub async fn post_mcp(
     ctx: &McpTestContext,
     request: &McpRequest,
     headers: &[(&str, &str)],
-) -> (Status, McpResponse) {
+) -> TestResult<(Status, McpResponse)> {
     let mut builder = ctx.client.post("/mcp").header(ContentType::JSON);
     for (name, value) in headers {
         builder = builder.header(Header::new((*name).to_owned(), (*value).to_owned()));
     }
 
     let response = builder
-        .body(serde_json::to_string(request).expect("serialize request"))
+        .body(serde_json::to_string(request)?)
         .dispatch()
         .await;
 
     let status = response.status();
-    let body = response.into_string().await.expect("Response body");
-    let parsed: McpResponse = serde_json::from_str(&body).expect("Parse response");
-    (status, parsed)
+    let body = response.into_string().await.unwrap_or_default();
+    let parsed: McpResponse = serde_json::from_str(&body)?;
+    Ok((status, parsed))
 }
 
 pub fn tools_list_request() -> McpRequest {
@@ -101,7 +98,7 @@ mod tests {
     fn http_mcp_symbols_are_linked() {
         let _ = std::mem::size_of::<McpTestContext>();
         let _ = server_ref as for<'a> fn(&'a McpTestContext) -> &'a Arc<mcb_server::McpServer>;
-        let _ = get_free_port as fn() -> u16;
+        let _ = get_free_port as fn() -> std::io::Result<u16>;
         let _ = tools_list_request as fn() -> mcb_server::transport::types::McpRequest;
         let _ = tools_call_request as fn(&str) -> mcb_server::transport::types::McpRequest;
         let _ = post_mcp;

@@ -10,7 +10,9 @@ use schemars::{JsonSchema, schema_for};
 use serde_json::Value;
 
 fn schema_json<T: JsonSchema>() -> Value {
-    serde_json::to_value(schema_for!(T)).expect("serialize schema")
+    let serialized = serde_json::to_value(schema_for!(T));
+    assert!(serialized.is_ok(), "serialize schema");
+    serialized.unwrap_or_else(|_| Value::Null)
 }
 
 fn required_names(schema: &Value) -> Vec<String> {
@@ -96,7 +98,8 @@ fn enum_values(schema: &Value) -> Vec<String> {
         return const_values;
     }
 
-    panic!("enum array")
+    assert!(!const_values.is_empty(), "enum array");
+    const_values
 }
 
 #[rstest]
@@ -129,10 +132,11 @@ fn schema_required_fields_include_contract(
 #[case("entity", schema_json::<EntityArgs>(), vec!["action", "resource", "data", "org_id"])]
 #[case("validate", schema_json::<ValidateArgs>(), vec!["action", "scope", "path"])]
 fn schema_has_expected_property_names(
-    #[case] _schema_name: &str,
+    #[case] schema_name: &str,
     #[case] schema: Value,
     #[case] expected_fields: Vec<&str>,
 ) {
+    assert!(!schema_name.is_empty());
     for field in expected_fields {
         assert_property_exists(&schema, field);
     }

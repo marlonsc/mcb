@@ -12,7 +12,7 @@ fn transition_happy_paths(
     #[case] context_id: &str,
     #[case] phase_id: &str,
     #[case] expected_state: &str,
-) {
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut session = WorkflowSession::new("s1".to_owned(), "p1".to_owned());
     if from_state == "ready" {
         session.current_state = WorkflowState::Ready {
@@ -30,19 +30,32 @@ fn transition_happy_paths(
         }
     };
 
-    let new_state = apply_transition(&mut session, &trigger).expect("transition failed");
+    let new_state = apply_transition(&mut session, &trigger)?;
 
     if expected_state == "ready" {
         match new_state {
             WorkflowState::Ready { context_id: got } => assert_eq!(got, context_id),
-            _ => panic!("Expected Ready state"),
+            WorkflowState::Initializing
+            | WorkflowState::Planning { .. }
+            | WorkflowState::Executing { .. }
+            | WorkflowState::Verifying { .. }
+            | WorkflowState::PhaseComplete { .. }
+            | WorkflowState::Completed
+            | WorkflowState::Failed { .. } => panic!("Expected Ready state"),
         }
     } else {
         match new_state {
             WorkflowState::Planning { phase_id: got } => assert_eq!(got, phase_id),
-            _ => panic!("Expected Planning state"),
+            WorkflowState::Initializing
+            | WorkflowState::Ready { .. }
+            | WorkflowState::Executing { .. }
+            | WorkflowState::Verifying { .. }
+            | WorkflowState::PhaseComplete { .. }
+            | WorkflowState::Completed
+            | WorkflowState::Failed { .. } => panic!("Expected Planning state"),
         }
     }
+    Ok(())
 }
 
 #[test]

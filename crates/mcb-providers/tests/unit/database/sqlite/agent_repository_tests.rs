@@ -17,26 +17,26 @@ use mcb_providers::database::{
     create_project_repository_from_executor,
 };
 
-async fn setup_repositories() -> (
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
+async fn setup_repositories() -> TestResult<(
     Arc<dyn AgentRepository>,
     Arc<dyn MemoryRepository>,
     Arc<dyn ProjectRepository>,
     Arc<dyn DatabaseExecutor>,
     tempfile::TempDir,
-) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
+)> {
+    let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("test.db");
 
-    let (memory_repo, executor) = create_memory_repository_with_executor(db_path)
-        .await
-        .expect("Failed to create executor");
-    seed_default_org(executor.as_ref()).await;
+    let (memory_repo, executor) = create_memory_repository_with_executor(db_path).await?;
+    seed_default_org(executor.as_ref()).await?;
     let agent_repo = create_agent_repository_from_executor(Arc::clone(&executor));
     let project_repo = create_project_repository_from_executor(Arc::clone(&executor));
-    (agent_repo, memory_repo, project_repo, executor, temp_dir)
+    Ok((agent_repo, memory_repo, project_repo, executor, temp_dir))
 }
 
-async fn seed_default_org(executor: &dyn DatabaseExecutor) {
+async fn seed_default_org(executor: &dyn DatabaseExecutor) -> TestResult {
     executor
         .execute(
             "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
@@ -49,8 +49,8 @@ async fn seed_default_org(executor: &dyn DatabaseExecutor) {
                 SqlParam::I64(0),
             ],
         )
-        .await
-        .expect("seed default org");
+        .await?;
+    Ok(())
 }
 
 fn create_test_project(id: &str) -> Project {
@@ -122,7 +122,7 @@ async fn seed_worktree(
     repository_id: &str,
     branch_id: &str,
     worktree_id: &str,
-) {
+) -> TestResult {
     let now = 1_000_000_i64;
 
     executor
@@ -140,8 +140,7 @@ async fn seed_worktree(
                 SqlParam::I64(now),
             ],
         )
-        .await
-        .expect("seed repository");
+        .await?;
 
     executor
         .execute(
@@ -156,8 +155,7 @@ async fn seed_worktree(
                 SqlParam::I64(now),
             ],
         )
-        .await
-        .expect("seed branch");
+        .await?;
 
     executor
         .execute(
@@ -173,8 +171,8 @@ async fn seed_worktree(
                 SqlParam::I64(now),
             ],
         )
-        .await
-        .expect("seed worktree");
+        .await?;
+    Ok(())
 }
 
 // ============================================================================
@@ -185,141 +183,94 @@ async fn seed_worktree(
 #[case(false)]
 #[case(true)]
 #[tokio::test]
-async fn agent_session_lifecycle(#[case] store_tool_call: bool) {
-    let (agent_repo, memory_repo, project_repo, _executor, _temp) = setup_repositories().await;
+async fn agent_session_lifecycle(#[case] store_tool_call: bool) -> TestResult {
+    let (agent_repo, memory_repo, project_repo, _executor, _temp) = setup_repositories().await?;
 
     // Prerequisite: Create Project
     let project = create_test_project("proj-1");
-    project_repo
-        .create(&project)
-        .await
-        .expect("Failed to create project");
+    project_repo.create(&project).await?;
 
     // Prerequisite: Create SessionSummary
     let summary = create_test_session_summary("sess-1", "proj-1");
-    memory_repo
-        .store_session_summary(&summary)
-        .await
-        .expect("Failed to store session summary");
+    memory_repo.store_session_summary(&summary).await?;
 
     // Test: Create AgentSession
     let session = create_test_agent_session("agent-1", "sess-1");
-    agent_repo
-        .create_session(&session)
-        .await
-        .expect("Failed to create agent session");
+    agent_repo.create_session(&session).await?;
 
     // Verify
-    let retrieved = agent_repo
-        .get_session("agent-1")
-        .await
-        .expect("Failed to get session");
+    let retrieved = agent_repo.get_session("agent-1").await?;
     assert!(retrieved.is_some());
-    assert_eq!(retrieved.unwrap().id, "agent-1");
+    let session = match retrieved {
+        Some(session) => session,
+        None => panic!("session should exist"),
+    };
+    assert_eq!(session.id, "agent-1");
 
     if store_tool_call {
         let tool_call = create_test_tool_call("tool-1", "agent-1");
-        agent_repo
-            .store_tool_call(&tool_call)
-            .await
-            .expect("Failed to store tool call");
+        agent_repo.store_tool_call(&tool_call).await?;
     }
+    Ok(())
 }
 
 #[tokio::test]
-async fn list_sessions_by_project() {
-    let (agent_repo, memory_repo, project_repo, _executor, _temp) = setup_repositories().await;
+async fn list_sessions_by_project() -> TestResult {
+    let (agent_repo, memory_repo, project_repo, _executor, _temp) = setup_repositories().await?;
 
     let project_1 = create_test_project("proj-1");
     let project_2 = create_test_project("proj-2");
-    project_repo
-        .create(&project_1)
-        .await
-        .expect("create project 1");
-    project_repo
-        .create(&project_2)
-        .await
-        .expect("create project 2");
+    project_repo.create(&project_1).await?;
+    project_repo.create(&project_2).await?;
 
     let summary_1 = create_test_session_summary("sess-1", "proj-1");
     let summary_2 = create_test_session_summary("sess-2", "proj-2");
-    memory_repo
-        .store_session_summary(&summary_1)
-        .await
-        .expect("store summary 1");
-    memory_repo
-        .store_session_summary(&summary_2)
-        .await
-        .expect("store summary 2");
+    memory_repo.store_session_summary(&summary_1).await?;
+    memory_repo.store_session_summary(&summary_2).await?;
 
     let mut session_1 = create_test_agent_session("agent-1", "sess-1");
     session_1.project_id = Some("proj-1".to_owned());
     let mut session_2 = create_test_agent_session("agent-2", "sess-2");
     session_2.project_id = Some("proj-2".to_owned());
 
-    agent_repo
-        .create_session(&session_1)
-        .await
-        .expect("create session 1");
-    agent_repo
-        .create_session(&session_2)
-        .await
-        .expect("create session 2");
+    agent_repo.create_session(&session_1).await?;
+    agent_repo.create_session(&session_2).await?;
 
-    let sessions = agent_repo
-        .list_sessions_by_project("proj-1")
-        .await
-        .expect("list sessions by project");
+    let sessions = agent_repo.list_sessions_by_project("proj-1").await?;
 
     assert_eq!(sessions.len(), 1);
     assert_eq!(sessions[0].id, "agent-1");
     assert_eq!(sessions[0].project_id.as_deref(), Some("proj-1"));
+    Ok(())
 }
 
 #[tokio::test]
-async fn list_sessions_by_worktree() {
-    let (agent_repo, memory_repo, project_repo, executor, _temp) = setup_repositories().await;
+async fn list_sessions_by_worktree() -> TestResult {
+    let (agent_repo, memory_repo, project_repo, executor, _temp) = setup_repositories().await?;
 
     let project_1 = create_test_project("proj-1");
-    project_repo
-        .create(&project_1)
-        .await
-        .expect("create project");
+    project_repo.create(&project_1).await?;
 
-    seed_worktree(executor.as_ref(), "proj-1", "repo-1", "branch-1", "wt-1").await;
-    seed_worktree(executor.as_ref(), "proj-1", "repo-2", "branch-2", "wt-2").await;
+    seed_worktree(executor.as_ref(), "proj-1", "repo-1", "branch-1", "wt-1").await?;
+    seed_worktree(executor.as_ref(), "proj-1", "repo-2", "branch-2", "wt-2").await?;
 
     let summary_1 = create_test_session_summary("sess-1", "proj-1");
     let summary_2 = create_test_session_summary("sess-2", "proj-1");
-    memory_repo
-        .store_session_summary(&summary_1)
-        .await
-        .expect("store summary 1");
-    memory_repo
-        .store_session_summary(&summary_2)
-        .await
-        .expect("store summary 2");
+    memory_repo.store_session_summary(&summary_1).await?;
+    memory_repo.store_session_summary(&summary_2).await?;
 
     let mut session_1 = create_test_agent_session("agent-1", "sess-1");
     session_1.worktree_id = Some("wt-1".to_owned());
     let mut session_2 = create_test_agent_session("agent-2", "sess-2");
     session_2.worktree_id = Some("wt-2".to_owned());
 
-    agent_repo
-        .create_session(&session_1)
-        .await
-        .expect("create session 1");
-    agent_repo
-        .create_session(&session_2)
-        .await
-        .expect("create session 2");
+    agent_repo.create_session(&session_1).await?;
+    agent_repo.create_session(&session_2).await?;
 
-    let sessions = agent_repo
-        .list_sessions_by_worktree("wt-1")
-        .await
-        .expect("list sessions by worktree");
+    let sessions = agent_repo.list_sessions_by_worktree("wt-1").await?;
 
     assert_eq!(sessions.len(), 1);
     assert_eq!(sessions[0].id, "agent-1");
     assert_eq!(sessions[0].worktree_id.as_deref(), Some("wt-1"));
+    Ok(())
 }
