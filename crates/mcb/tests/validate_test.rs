@@ -7,10 +7,11 @@ use std::fs;
 #[fixture]
 fn workspace_root() -> std::path::PathBuf {
     let temp_dir = std::env::temp_dir().join(format!("mcb-validate-test-{}", uuid::Uuid::new_v4()));
-    fs::create_dir_all(&temp_dir).expect("create temp dir");
+    fs::create_dir_all(&temp_dir).unwrap_or_else(|e| unreachable!("create temp dir: {e}"));
 
     // Create mcb.yaml to mark it as a workspace
-    fs::write(temp_dir.join("mcb.yaml"), "project: test").expect("write mcb.yaml");
+    fs::write(temp_dir.join("mcb.yaml"), "project: test")
+        .unwrap_or_else(|e| unreachable!("write mcb.yaml: {e}"));
 
     temp_dir
 }
@@ -38,7 +39,7 @@ fn test_validate_execution(clean_workspace: std::path::PathBuf) {
     let _ = fs::remove_dir_all(&clean_workspace);
 
     assert!(result.is_ok(), "Validation failed: {:?}", result.err());
-    let validation_result = result.unwrap();
+    let validation_result = result.unwrap_or_else(|e| unreachable!("already checked: {e}"));
     assert_eq!(
         validation_result.errors, 0,
         "Expected 0 errors in empty workspace"
@@ -64,7 +65,9 @@ fn test_validate_strict_mode(clean_workspace: std::path::PathBuf) {
 
     assert!(result.is_ok());
     assert!(
-        !result.unwrap().failed(),
+        !result
+            .unwrap_or_else(|e| unreachable!("already checked: {e}"))
+            .failed(),
         "Should pass strict mode in clean workspace"
     );
 }

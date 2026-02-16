@@ -17,7 +17,7 @@ use async_trait::async_trait;
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, Delegation, ToolCall};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::agent_repository::{
+use mcb_domain::ports::repositories::agent::{
     AgentCheckpointRepository, AgentEventRepository, AgentSessionQuery, AgentSessionRepository,
 };
 use mcb_domain::utils::mask_id;

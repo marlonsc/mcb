@@ -8,7 +8,7 @@ use rocket::http::{ContentType, Header, Status};
 use rocket::local::asynchronous::Client;
 use tempfile::TempDir;
 
-use crate::test_utils::test_fixtures::create_test_mcp_server;
+use crate::utils::test_fixtures::create_test_mcp_server;
 
 pub type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 

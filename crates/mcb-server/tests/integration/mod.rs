@@ -6,15 +6,16 @@
 mod admin;
 #[path = "../handlers/mod.rs"]
 mod handlers;
-#[path = "../test_utils/mod.rs"]
-mod test_utils;
 #[path = "../tools/mod.rs"]
 mod tools;
-
-// Integration helpers - service detection and skip macros
+#[path = "../utils/mod.rs"]
 mod utils;
 
-pub use utils::{
+// Integration helpers - service detection and skip macros
+#[path = "utils.rs"]
+mod helpers;
+
+pub use helpers::{
     check_service_available, is_ci, is_milvus_available, is_ollama_available,
     is_postgres_available, is_redis_available,
 };

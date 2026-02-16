@@ -3,11 +3,12 @@
 //! Run with: `cargo test -p mcb-server --test unit`
 
 // Shared test utilities (single declaration for all unit tests)
-#[path = "test_utils/mod.rs"]
-mod test_utils;
+#[path = "utils/mod.rs"]
+mod utils;
 
 // Search-specific fixtures (only used by unit tests, not integration)
-#[path = "test_utils/search_fixtures.rs"]
+// Search-specific fixtures (only used by unit tests, not integration)
+#[path = "utils/search_fixtures.rs"]
 mod search_fixtures;
 
 #[path = "unit/args_tests.rs"]

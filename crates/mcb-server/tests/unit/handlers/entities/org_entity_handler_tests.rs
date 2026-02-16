@@ -3,7 +3,7 @@ use mcb_server::handlers::entities::OrgEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::test_utils::text::extract_text;
+use crate::utils::text::extract_text;
 
 fn create_handler() -> OrgEntityHandler {
     let ctx = crate::shared_context::shared_app_context();

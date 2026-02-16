@@ -14,7 +14,7 @@
 //! ## Usage
 //!
 //! ```text
-//! use crate::test_utils::real_providers::*;
+//! use crate::utils::real_providers::*;
 //!
 //! #[tokio::test]
 //! async fn test_with_real_providers() {

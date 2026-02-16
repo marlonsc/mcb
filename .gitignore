@@ -28,7 +28,7 @@ Thumbs.db
 # ---------------------------------------------------------------------------
 # AI / Agent — runtime data (never version-controlled)
 # ---------------------------------------------------------------------------
-context/
+/context/
 docs/context/
 docs/contexts/
 .claude/

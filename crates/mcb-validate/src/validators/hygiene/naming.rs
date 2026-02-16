@@ -31,7 +31,7 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
             let Some(path_str) = path.to_str() else {
                 return Ok(());
             };
-            if path_str.contains("test_utils")
+            if path_str.contains("utils")
                 || file_name.contains("mock")
                 || file_name.contains("fixture")
                 || file_name.contains("helper")
@@ -94,12 +94,7 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
                     let file_full = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                     if !matches!(
                         file_full,
-                        "lib.rs"
-                            | "mod.rs"
-                            | "test_utils.rs"
-                            | "unit.rs"
-                            | "integration.rs"
-                            | "e2e.rs"
+                        "lib.rs" | "mod.rs" | "utils.rs" | "unit.rs" | "integration.rs" | "e2e.rs"
                     ) {
                         violations.push(HygieneViolation::BadTestFileName {
                             file: path.clone(),

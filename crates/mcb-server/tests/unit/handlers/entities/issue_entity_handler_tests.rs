@@ -3,7 +3,7 @@ use mcb_server::handlers::entities::IssueEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::test_utils::text::extract_text;
+use crate::utils::text::extract_text;
 
 fn create_handler() -> IssueEntityHandler {
     let ctx = crate::shared_context::shared_app_context();

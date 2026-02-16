@@ -6,7 +6,7 @@ use mcb_domain::entities::{
 };
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use mcb_domain::ports::repositories::org_entity_repository::{
+use mcb_domain::ports::repositories::org::{
     ApiKeyRegistry, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
 };
 

@@ -22,7 +22,7 @@
 //! - **Trait-based DI**: All dependencies injected as `Arc<dyn Trait>`
 //! - **Composition Root**: Services composed in catalog.rs `build_catalog()`
 //! - **Runtime Switching**: Providers can be changed via admin API
-//! - **Testability**: Default local providers (FastEmbed, EdgeVec) enable isolated testing
+//! - **Testability**: Default local providers (`FastEmbed`, `EdgeVec`) enable isolated testing
 
 pub mod admin;
 pub mod bootstrap;
@@ -32,7 +32,9 @@ pub mod handle;
 pub mod handles;
 pub mod modules;
 pub mod provider_resolvers;
+pub mod repositories;
 pub mod resolver;
+pub mod test_factory;
 pub mod vcs;
 
 pub use admin::{
@@ -52,7 +54,9 @@ pub use provider_resolvers::{
     CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
     VectorStoreProviderResolver,
 };
+pub use repositories::create_vcs_entity_repository;
 pub use resolver::{
     AvailableProviders, ResolvedProviders, list_available_providers, resolve_providers,
 };
+pub use test_factory::create_test_dependencies;
 pub use vcs::default_vcs_provider;

@@ -4,7 +4,7 @@ use async_trait::async_trait;
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use mcb_domain::ports::repositories::plan_entity_repository::{
+use mcb_domain::ports::repositories::plan::{
     PlanRegistry, PlanReviewRegistry, PlanVersionRegistry,
 };
 

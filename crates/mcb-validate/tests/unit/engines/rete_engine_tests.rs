@@ -65,15 +65,11 @@ async fn test_rule_execution_modifies_facts() -> Result<(), Box<dyn std::error::
         result.rules_evaluated
     );
 
-    match facts.get(FACT_RESULT_VALUE) {
-        Some(RreValue::Boolean(true)) => { /* SUCCESS */ }
-        other => {
-            assert!(
-                false,
-                "Rule did NOT modify the fact! {FACT_RESULT_VALUE} should be Boolean(true) but got: {other:?}"
-            );
-        }
-    }
+    assert_eq!(
+        facts.get(FACT_RESULT_VALUE),
+        Some(RreValue::Boolean(true)),
+        "Rule did NOT modify the fact! {FACT_RESULT_VALUE} should be Boolean(true)"
+    );
     Ok(())
 }
 

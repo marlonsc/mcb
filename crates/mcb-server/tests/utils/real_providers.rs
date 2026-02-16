@@ -40,7 +40,7 @@ pub async fn create_real_embedding_provider_with_model(
 mod tests {
     use mcb_domain::value_objects::CollectionId;
 
-    use crate::test_utils::collection::unique_collection;
+    use crate::utils::collection::unique_collection;
 
     use super::*;
 

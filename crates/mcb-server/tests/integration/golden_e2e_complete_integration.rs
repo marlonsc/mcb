@@ -8,12 +8,12 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use serde::Deserialize;
 
-use crate::test_utils::test_fixtures::{
+use crate::utils::test_fixtures::{
     GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, golden_content_to_string,
     golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
 };
-use crate::test_utils::text::extract_text;
-use crate::test_utils::timeouts::TEST_TIMEOUT;
+use crate::utils::text::extract_text;
+use crate::utils::timeouts::TEST_TIMEOUT;
 
 fn index_args(action: IndexAction, path: Option<String>, collection: Option<String>) -> IndexArgs {
     IndexArgs {
@@ -60,15 +60,15 @@ struct GoldenQueriesFixture {
     queries: Vec<GoldenQuery>,
 }
 
-fn load_golden_queries_fixture() -> GoldenQueriesFixture {
+fn load_golden_queries_fixture() -> Result<GoldenQueriesFixture, Box<dyn std::error::Error>> {
     let path = golden_queries_path();
-    let content = std::fs::read_to_string(path).expect("Failed to read golden_queries.json");
-    serde_json::from_str(&content).expect("Failed to parse golden_queries.json")
+    let content = std::fs::read_to_string(path)?;
+    Ok(serde_json::from_str(&content)?)
 }
 
 #[tokio::test]
 async fn test_golden_e2e_complete_workflow() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     assert!(
         path.exists(),
@@ -150,7 +150,7 @@ async fn test_golden_e2e_complete_workflow() {
 
 #[tokio::test]
 async fn test_golden_e2e_handles_concurrent_operations() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let status_h = server.index_handler();
     let r1 = status_h.handle(Parameters(index_args(
         IndexAction::Status,
@@ -169,7 +169,7 @@ async fn test_golden_e2e_handles_concurrent_operations() {
 
 #[tokio::test]
 async fn test_golden_e2e_respects_collection_isolation() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let clear = server.index_handler();
     clear
         .handle(Parameters(index_args(
@@ -191,7 +191,7 @@ async fn test_golden_e2e_respects_collection_isolation() {
 
 #[tokio::test]
 async fn test_golden_e2e_handles_reindex_correctly() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let index_h = server.index_handler();
     let collection = "golden_reindex_test";
@@ -214,7 +214,7 @@ async fn test_golden_index_variants(
     #[case] collection: Option<String>,
     #[case] extensions: Option<Vec<String>>,
 ) {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     assert!(path.exists(), "sample_codebase must exist: {path:?}");
 
@@ -242,7 +242,7 @@ async fn test_golden_index_variants(
 
 #[tokio::test]
 async fn test_golden_index_respects_ignore_patterns() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let handler = server.index_handler();
     let mut args = index_args(
@@ -264,7 +264,7 @@ async fn test_golden_mcp_index_schema_actions(
     #[case] action: IndexAction,
     #[case] assert_status_text: bool,
 ) {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let index_h = server.index_handler();
     let r = index_h
         .handle(Parameters(index_args(
@@ -288,7 +288,7 @@ async fn test_golden_mcp_index_schema_actions(
 
 #[tokio::test]
 async fn test_golden_mcp_search_code_schema() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let search_h = server.search_handler();
     let r = search_h
         .handle(Parameters(search_args(
@@ -305,7 +305,7 @@ async fn test_golden_mcp_search_code_schema() {
 #[case("   ")]
 #[tokio::test]
 async fn test_golden_mcp_empty_query_error_responses(#[case] query: &str) {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let result = server
         .search_handler()
         .handle(Parameters(search_args(query, None, Some(5))))
@@ -317,7 +317,7 @@ async fn test_golden_mcp_empty_query_error_responses(#[case] query: &str) {
 
 #[tokio::test]
 async fn test_golden_search_returns_relevant_results() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_search_relevance";
     server
@@ -355,7 +355,7 @@ async fn test_golden_search_returns_relevant_results() {
 
 #[tokio::test]
 async fn test_golden_search_ranking_is_correct() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_ranking_test";
     server
@@ -381,7 +381,7 @@ async fn test_golden_search_ranking_is_correct() {
 
 #[tokio::test]
 async fn test_golden_search_respects_limit_parameter() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_limit_test";
     server
@@ -410,7 +410,7 @@ async fn test_golden_search_respects_limit_parameter() {
 
 #[tokio::test]
 async fn test_golden_search_filters_by_extension() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_ext_filter_test";
     let mut args = index_args(
@@ -438,7 +438,7 @@ async fn test_golden_search_filters_by_extension() {
 
 #[tokio::test]
 async fn test_golden_e2e_golden_queries_setup() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_queries_e2e";
 
@@ -491,7 +491,7 @@ async fn test_golden_e2e_golden_queries_setup() {
 
 #[tokio::test]
 async fn test_golden_e2e_golden_queries_one_query() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_queries_one";
 
@@ -515,7 +515,7 @@ async fn test_golden_e2e_golden_queries_one_query() {
         .await
         .expect("index");
 
-    let fixture = load_golden_queries_fixture();
+    let fixture = load_golden_queries_fixture().expect("load golden queries fixture");
     assert!(
         !fixture.queries.is_empty(),
         "golden_queries.json must have queries"
@@ -541,7 +541,7 @@ async fn test_golden_e2e_golden_queries_one_query() {
 
 #[tokio::test]
 async fn test_golden_e2e_golden_queries_all_handlers_succeed() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let path = sample_codebase_path();
     let collection = "golden_queries_all";
 
@@ -565,7 +565,7 @@ async fn test_golden_e2e_golden_queries_all_handlers_succeed() {
         .await
         .expect("index");
 
-    let fixture = load_golden_queries_fixture();
+    let fixture = load_golden_queries_fixture().expect("load golden queries fixture");
     assert!(
         !fixture.queries.is_empty(),
         "golden_queries.json must have queries"

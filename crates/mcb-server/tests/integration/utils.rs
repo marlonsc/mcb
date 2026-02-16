@@ -102,7 +102,7 @@ pub fn should_run_docker_integration_tests() -> bool {
 #[macro_export]
 macro_rules! skip_if_service_unavailable {
     ($service:expr, $is_available:expr) => {
-        if !$crate::utils::should_run_docker_integration_tests() {
+        if !$crate::helpers::should_run_docker_integration_tests() {
             println!("⊘ SKIPPED: Docker integration tests disabled in this environment");
             return;
         }
@@ -126,7 +126,7 @@ macro_rules! skip_if_service_unavailable {
 #[macro_export]
 macro_rules! skip_if_any_service_unavailable {
     ($($service:expr => $is_available:expr),+ $(,)?) => {
-        if !$crate::utils::should_run_docker_integration_tests() {
+        if !$crate::helpers::should_run_docker_integration_tests() {
             println!("⊘ SKIPPED: Docker integration tests disabled in this environment");
             return;
         }

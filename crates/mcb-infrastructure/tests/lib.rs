@@ -5,7 +5,7 @@
 //! Test Structure:
 //! - `tests/unit.rs` - Unit tests (constants, crypto, `error_ext`, health, logging)
 //! - `tests/integration.rs` - Integration tests (cache, config, di, utils)
-//! - `tests/test_utils/` - Real provider factories for full-stack testing
+//! - `tests/utils/` - Real provider factories for full-stack testing
 //!
 //! Run all tests: `cargo test -p mcb-infrastructure`
 //! Run unit tests: `cargo test -p mcb-infrastructure --test unit`
@@ -15,7 +15,7 @@
 mod shared_context;
 
 // Real provider test utilities for full-stack integration testing
-pub mod test_utils;
+pub mod utils;
 
 // Shared test utilities
 /// Shared test helper functions.

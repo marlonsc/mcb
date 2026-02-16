@@ -9,9 +9,7 @@ use mcb_server::tools::router::{ToolExecutionContext, ToolHandlers, route_tool_c
 use rmcp::model::CallToolRequestParams;
 use rocket::http::Status;
 
-use crate::test_utils::http_mcp::{
-    McpTestContext, post_mcp, tools_call_request, tools_list_request,
-};
+use crate::utils::http_mcp::{McpTestContext, post_mcp, tools_call_request, tools_list_request};
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
     ToolHandlers {

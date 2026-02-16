@@ -4,7 +4,7 @@ use std::sync::Arc;
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
-use mcb_domain::ports::repositories::plan_entity_repository::{
+use mcb_domain::ports::repositories::plan::{
     PlanRegistry, PlanReviewRegistry, PlanVersionRegistry,
 };
 use mcb_providers::database::SqlitePlanEntityRepository;

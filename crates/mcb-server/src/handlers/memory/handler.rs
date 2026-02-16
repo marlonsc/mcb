@@ -16,7 +16,7 @@ use crate::constants::limits::DEFAULT_MEMORY_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::json;
-use crate::utils::mcp::{resolve_identifier_precedence, resolve_org_id, tool_error};
+use crate::utils::mcp::{resolve_identifier_precedence, tool_error};
 
 /// Handler for memory-related MCP tool operations.
 ///

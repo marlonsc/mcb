@@ -22,7 +22,7 @@ use rocket::http::{Header, Status};
 use rocket::local::asynchronous::Client;
 use rstest::rstest;
 
-use crate::test_utils::test_fixtures::TEST_EMBEDDING_DIMENSIONS;
+use crate::utils::test_fixtures::TEST_EMBEDDING_DIMENSIONS;
 
 /// Mock `VectorStoreBrowser` for testing
 pub struct TestVectorStoreBrowser {
@@ -84,14 +84,12 @@ fn create_test_highlight_service() -> Arc<dyn HighlightServiceInterface> {
 }
 
 /// Create test admin state with minimal dependencies
-fn create_test_admin_state() -> AdminState {
-    AdminState {
+fn create_test_admin_state() -> Result<AdminState, Box<dyn std::error::Error>> {
+    Ok(AdminState {
         metrics: AtomicPerformanceMetrics::new_shared(),
         indexing: DefaultIndexingOperations::new_shared(),
         config_watcher: None,
-        current_config: mcb_infrastructure::config::ConfigLoader::new()
-            .load()
-            .expect("load config"),
+        current_config: mcb_infrastructure::config::ConfigLoader::new().load()?,
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: 30,
@@ -104,12 +102,14 @@ fn create_test_admin_state() -> AdminState {
         issue_entity: None,
         org_entity: None,
         tool_handlers: None,
-    }
+    })
 }
 
 /// Create a test Rocket client with browse state
-async fn create_test_client(browse_state: BrowseState) -> Client {
-    let admin_state = create_test_admin_state();
+async fn create_test_client(
+    browse_state: BrowseState,
+) -> Result<Client, Box<dyn std::error::Error>> {
+    let admin_state = create_test_admin_state()?;
     let auth_config = Arc::new(AdminAuthConfig {
         enabled: true,
         header_name: "X-Admin-Key".to_owned(),
@@ -117,9 +117,7 @@ async fn create_test_client(browse_state: BrowseState) -> Client {
     });
 
     let rocket = admin_rocket(admin_state, auth_config, Some(browse_state));
-    Client::tracked(rocket)
-        .await
-        .expect("valid rocket instance")
+    Ok(Client::tracked(rocket).await?)
 }
 
 fn create_test_browse_state(browser: TestVectorStoreBrowser) -> BrowseState {
@@ -146,10 +144,10 @@ async fn test_list_collections(
     #[case] expected_total: usize,
     #[case] expected_name_a: Option<&str>,
     #[case] expected_name_b: Option<&str>,
-) {
+) -> Result<(), Box<dyn std::error::Error>> {
     let browser = TestVectorStoreBrowser::new().with_collections(collections);
     let browse_state = create_test_browse_state(browser);
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     let response = client
         .get("/collections")
@@ -158,11 +156,14 @@ async fn test_list_collections(
         .await;
 
     assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
     assert!(body.contains(&format!("\"total\":{expected_total}")));
     if expected_total == 0 {
         assert!(body.contains("\"collections\":[]"));
-        return;
+        return Ok(());
     }
     if let Some(name) = expected_name_a {
         assert!(body.contains(name));
@@ -170,10 +171,11 @@ async fn test_list_collections(
     if let Some(name) = expected_name_b {
         assert!(body.contains(name));
     }
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_list_files_in_collection() {
+async fn test_list_files_in_collection() -> Result<(), Box<dyn std::error::Error>> {
     let files = vec![
         FileInfo::new("src/main.rs".to_owned(), 5, "rust", None),
         FileInfo::new("src/lib.rs".to_owned(), 3, "rust", None),
@@ -185,7 +187,7 @@ async fn test_list_files_in_collection() {
         highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     let response = client
         .get("/collections/test_collection/files")
@@ -194,14 +196,18 @@ async fn test_list_files_in_collection() {
         .await;
 
     assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
     assert!(body.contains("src/main.rs"));
     assert!(body.contains("src/lib.rs"));
     assert!(body.contains("\"total\":2"));
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_get_file_chunks() {
+async fn test_get_file_chunks() -> Result<(), Box<dyn std::error::Error>> {
     let chunks = vec![
         SearchResult {
             id: "chunk_1".to_owned(),
@@ -227,7 +233,7 @@ async fn test_get_file_chunks() {
         highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     let response = client
         .get("/collections/test_collection/chunks/src/main.rs")
@@ -236,19 +242,25 @@ async fn test_get_file_chunks() {
         .await;
 
     assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
     assert!(body.contains("fn main()"));
     assert!(body.contains("fn helper()"));
     assert!(body.contains("\"total\":2"));
+    Ok(())
 }
 
 #[rstest]
 #[case(None)]
 #[case(Some("invalid-key".to_owned()))]
 #[tokio::test]
-async fn test_browse_auth_validation(#[case] admin_key: Option<String>) {
+async fn test_browse_auth_validation(
+    #[case] admin_key: Option<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let browse_state = create_test_browse_state(TestVectorStoreBrowser::new());
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     let mut request = client.get("/collections");
     if let Some(key) = admin_key {
@@ -261,6 +273,7 @@ async fn test_browse_auth_validation(#[case] admin_key: Option<String>) {
         "Expected 401 or 403, got {:?}",
         response.status()
     );
+    Ok(())
 }
 
 // ============================================================================
@@ -272,12 +285,12 @@ use mcb_domain::value_objects::Embedding;
 use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
 
 /// Creates a test vector store instance (`EdgeVec` in-memory)
-fn create_test_vector_store() -> EdgeVecVectorStoreProvider {
+fn create_test_vector_store() -> Result<EdgeVecVectorStoreProvider, Box<dyn std::error::Error>> {
     let config = EdgeVecConfig {
         dimensions: TEST_EMBEDDING_DIMENSIONS,
         ..Default::default()
     };
-    EdgeVecVectorStoreProvider::new(&config).expect("Failed to create test vector store")
+    Ok(EdgeVecVectorStoreProvider::new(&config)?)
 }
 
 /// Helper to create metadata for a code chunk
@@ -309,13 +322,15 @@ fn create_dummy_embedding(dimensions: usize) -> Embedding {
 }
 
 /// Populate vector store with test data simulating real indexed code
-async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) {
+async fn populate_test_store(
+    store: &dyn VectorStoreProvider,
+    collection: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     let collection_id = CollectionId::from_name(collection);
     // Create collection
     store
         .create_collection(&collection_id, TEST_EMBEDDING_DIMENSIONS)
-        .await
-        .expect("Failed to create collection");
+        .await?;
 
     // Simulate indexed Rust files from a real project
     let chunks = [
@@ -385,17 +400,17 @@ async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) 
 
     store
         .insert_vectors(&collection_id, &embeddings, metadata)
-        .await
-        .expect("Failed to insert vectors");
+        .await?;
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_e2e_real_store_list_collections() {
+async fn test_e2e_real_store_list_collections() -> Result<(), Box<dyn std::error::Error>> {
     // Create real in-memory store
-    let store = create_test_vector_store();
+    let store = create_test_vector_store()?;
 
     // Populate with test data
-    populate_test_store(&store, "test_project").await;
+    populate_test_store(&store, "test_project").await?;
 
     // Create browse state with real store
     let browse_state = BrowseState {
@@ -403,7 +418,7 @@ async fn test_e2e_real_store_list_collections() {
         highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     // List collections
     let response = client
@@ -413,10 +428,13 @@ async fn test_e2e_real_store_list_collections() {
         .await;
 
     assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
 
     // Parse and validate JSON response
-    let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
+    let json: serde_json::Value = serde_json::from_str(&body)?;
     let expected_collection = CollectionId::from_name("test_project").to_string();
 
     // Validate collection exists
@@ -426,7 +444,9 @@ async fn test_e2e_real_store_list_collections() {
     );
 
     // Validate counts
-    let collections = json["collections"].as_array().expect("collections array");
+    let collections = json["collections"]
+        .as_array()
+        .ok_or("collections array missing")?;
     assert_eq!(collections.len(), 1, "Should have 1 collection");
 
     let collection = &collections[0];
@@ -434,19 +454,20 @@ async fn test_e2e_real_store_list_collections() {
     assert_eq!(collection["vector_count"], 8, "Should have 8 chunks total");
     assert_eq!(collection["file_count"], 4, "Should have 4 unique files");
     assert_eq!(collection["provider"], "edgevec");
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_e2e_real_store_list_files() {
-    let store = create_test_vector_store();
-    populate_test_store(&store, "test_project").await;
+async fn test_e2e_real_store_list_files() -> Result<(), Box<dyn std::error::Error>> {
+    let store = create_test_vector_store()?;
+    populate_test_store(&store, "test_project").await?;
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
         highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     // List files in collection
     let response = client
@@ -456,12 +477,15 @@ async fn test_e2e_real_store_list_files() {
         .await;
 
     assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
 
-    let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
+    let json: serde_json::Value = serde_json::from_str(&body)?;
 
     // Validate files list
-    let files = json["files"].as_array().expect("files array");
+    let files = json["files"].as_array().ok_or("files array missing")?;
     assert_eq!(files.len(), 4, "Should have 4 files");
 
     // Check that all expected files are present
@@ -483,29 +507,30 @@ async fn test_e2e_real_store_list_files() {
 
     // Validate chunk counts per file
     for file in files {
-        let path = file["path"].as_str().unwrap();
-        let chunk_count = file["chunk_count"].as_u64().unwrap();
+        let path = file["path"].as_str().ok_or("path missing")?;
+        let chunk_count = file["chunk_count"].as_u64().ok_or("chunk_count missing")?;
         match path {
             "src/lib.rs" => assert_eq!(chunk_count, 3, "lib.rs should have 3 chunks"),
             "src/config.rs" => assert_eq!(chunk_count, 2, "config.rs should have 2 chunks"),
             "src/handlers.rs" => assert_eq!(chunk_count, 2, "handlers.rs should have 2 chunks"),
             "src/main.rs" => assert_eq!(chunk_count, 1, "main.rs should have 1 chunk"),
-            _ => panic!("Unexpected file: {path}"),
+            _ => return Err(format!("Unexpected file: {path}").into()),
         }
     }
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_e2e_real_store_get_file_chunks() {
-    let store = create_test_vector_store();
-    populate_test_store(&store, "test_project").await;
+async fn test_e2e_real_store_get_file_chunks() -> Result<(), Box<dyn std::error::Error>> {
+    let store = create_test_vector_store()?;
+    populate_test_store(&store, "test_project").await?;
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
         highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     // Get chunks for lib.rs
     let response = client
@@ -515,12 +540,15 @@ async fn test_e2e_real_store_get_file_chunks() {
         .await;
 
     assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
 
-    let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
+    let json: serde_json::Value = serde_json::from_str(&body)?;
 
     // Validate chunks
-    let chunks = json["chunks"].as_array().expect("chunks array");
+    let chunks = json["chunks"].as_array().ok_or("chunks array missing")?;
     assert_eq!(chunks.len(), 3, "lib.rs should have 3 chunks");
 
     // Chunks should be sorted by start_line
@@ -540,7 +568,7 @@ async fn test_e2e_real_store_get_file_chunks() {
     assert!(
         first_chunk["content"]
             .as_str()
-            .unwrap()
+            .ok_or("content missing")?
             .contains("Main library module"),
         "First chunk should contain module doc"
     );
@@ -549,7 +577,7 @@ async fn test_e2e_real_store_get_file_chunks() {
     assert!(
         second_chunk["content"]
             .as_str()
-            .unwrap()
+            .ok_or("content missing")?
             .contains("pub fn initialize"),
         "Second chunk should contain initialize function"
     );
@@ -558,29 +586,30 @@ async fn test_e2e_real_store_get_file_chunks() {
     assert!(
         third_chunk["content"]
             .as_str()
-            .unwrap()
+            .ok_or("content missing")?
             .contains("#[cfg(test)]"),
         "Third chunk should contain test module"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_e2e_real_store_navigate_full_flow() {
+async fn test_e2e_real_store_navigate_full_flow() -> Result<(), Box<dyn std::error::Error>> {
     // This test simulates the full user flow:
     // 1. List collections
     // 2. Select a collection and list files
     // 3. Select a file and view chunks
     // 4. Validate data at each step
 
-    let store = create_test_vector_store();
-    populate_test_store(&store, "my_rust_project").await;
+    let store = create_test_vector_store()?;
+    populate_test_store(&store, "my_rust_project").await?;
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
         highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     // Step 1: List collections
     let response = client
@@ -590,16 +619,23 @@ async fn test_e2e_real_store_navigate_full_flow() {
         .await;
 
     assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
-    let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
+    let json: serde_json::Value = serde_json::from_str(&body)?;
 
-    let collections = json["collections"].as_array().expect("collections array");
+    let collections = json["collections"]
+        .as_array()
+        .ok_or("collections array missing")?;
     assert!(
         !collections.is_empty(),
         "Should have at least one collection"
     );
 
-    let collection_name = collections[0]["name"].as_str().expect("collection name");
+    let collection_name = collections[0]["name"]
+        .as_str()
+        .ok_or("collection name missing")?;
     assert_eq!(
         collection_name,
         CollectionId::from_name("my_rust_project").to_string()
@@ -614,19 +650,24 @@ async fn test_e2e_real_store_navigate_full_flow() {
         .await;
 
     assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
-    let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
+    let json: serde_json::Value = serde_json::from_str(&body)?;
 
-    let files = json["files"].as_array().expect("files array");
+    let files = json["files"].as_array().ok_or("files array missing")?;
     assert!(!files.is_empty(), "Should have files");
 
     // Find config.rs
     let config_file = files
         .iter()
         .find(|f| f["path"].as_str() == Some("src/config.rs"))
-        .expect("Should find config.rs");
+        .ok_or("Should find config.rs")?;
 
-    let chunk_count = config_file["chunk_count"].as_u64().expect("chunk count");
+    let chunk_count = config_file["chunk_count"]
+        .as_u64()
+        .ok_or("chunk count missing")?;
     assert_eq!(chunk_count, 2, "config.rs should have 2 chunks");
 
     // Step 3: Get chunks for config.rs
@@ -638,10 +679,13 @@ async fn test_e2e_real_store_navigate_full_flow() {
         .await;
 
     assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
-    let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
+    let json: serde_json::Value = serde_json::from_str(&body)?;
 
-    let chunks = json["chunks"].as_array().expect("chunks array");
+    let chunks = json["chunks"].as_array().ok_or("chunks array missing")?;
     assert_eq!(chunks.len(), 2, "config.rs should have 2 chunks");
 
     // Validate chunk contents
@@ -658,19 +702,20 @@ async fn test_e2e_real_store_navigate_full_flow() {
         contents.iter().any(|c| c.contains("impl Config")),
         "Should have Config impl block"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_e2e_real_store_collection_not_found() {
-    let store = create_test_vector_store();
-    populate_test_store(&store, "existing_collection").await;
+async fn test_e2e_real_store_collection_not_found() -> Result<(), Box<dyn std::error::Error>> {
+    let store = create_test_vector_store()?;
+    populate_test_store(&store, "existing_collection").await?;
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
         highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     // Try to list files in non-existent collection
     let response = client
@@ -685,22 +730,23 @@ async fn test_e2e_real_store_collection_not_found() {
         "Expected 404 or 500 for non-existent collection, got {:?}",
         response.status()
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_e2e_real_store_multiple_collections() {
-    let store = create_test_vector_store();
+async fn test_e2e_real_store_multiple_collections() -> Result<(), Box<dyn std::error::Error>> {
+    let store = create_test_vector_store()?;
 
     // Create multiple collections
-    populate_test_store(&store, "project_alpha").await;
-    populate_test_store(&store, "project_beta").await;
+    populate_test_store(&store, "project_alpha").await?;
+    populate_test_store(&store, "project_beta").await?;
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
         highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     // List all collections
     let response = client
@@ -710,10 +756,15 @@ async fn test_e2e_real_store_multiple_collections() {
         .await;
 
     assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
-    let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
+    let json: serde_json::Value = serde_json::from_str(&body)?;
 
-    let collections = json["collections"].as_array().expect("collections array");
+    let collections = json["collections"]
+        .as_array()
+        .ok_or("collections array missing")?;
     assert_eq!(collections.len(), 2, "Should have 2 collections");
     let expected_alpha = CollectionId::from_name("project_alpha").to_string();
     let expected_beta = CollectionId::from_name("project_beta").to_string();
@@ -734,4 +785,5 @@ async fn test_e2e_real_store_multiple_collections() {
 
     // Validate total count
     assert_eq!(json["total"], 2);
+    Ok(())
 }

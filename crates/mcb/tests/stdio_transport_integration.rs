@@ -15,10 +15,42 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::time::Duration;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
+/// RAII guard that ensures a child process is killed and waited on when dropped.
+/// Prevents zombie processes on early `?` returns.
+struct ChildGuard(Option<std::process::Child>);
+
+impl ChildGuard {
+    fn new(child: std::process::Child) -> Self {
+        Self(Some(child))
+    }
+
+    /// Take the inner child out of the guard (for explicit cleanup).
+    fn inner_mut(&mut self) -> &mut std::process::Child {
+        self.0
+            .as_mut()
+            .unwrap_or_else(|| unreachable!("child already taken"))
+    }
+}
+
+impl Drop for ChildGuard {
+    fn drop(&mut self) {
+        if let Some(mut child) = self.0.take() {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
+    }
+}
+
 /// Get the path to the mcb binary.
 ///
 /// Uses `CARGO_BIN_EXE_mcb` which is set by cargo test when
 /// the binary is built as part of the test run.
+///
+/// # Panics
+///
+/// Panics if the binary cannot be found in any expected location.
 fn get_mcb_path() -> PathBuf {
     // cargo test sets this environment variable when the binary is part of the workspace
     if let Ok(path) = std::env::var("CARGO_BIN_EXE_mcb") {
@@ -37,7 +69,7 @@ fn get_mcb_path() -> PathBuf {
         return release_path;
     }
 
-    panic!(
+    unreachable!(
         "mcb binary not found. Run `cargo build -p mcb-server` first.\n\
          Checked:\n\
          - CARGO_BIN_EXE_mcb env var\n\
@@ -56,7 +88,7 @@ fn create_test_command(mcb_path: &PathBuf) -> Command {
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .expect("system time")
+            .unwrap_or_default()
             .as_nanos()
     );
     cmd.arg("serve");
@@ -68,44 +100,49 @@ fn create_test_command(mcb_path: &PathBuf) -> Command {
     cmd
 }
 
-/// Helper to spawn mcb binary with stdio transport
-fn spawn_mcb_stdio() -> std::process::Child {
+/// Helper to spawn mcb binary with stdio transport.
+///
+/// # Panics
+///
+/// Panics if the process cannot be spawned.
+fn spawn_mcb_stdio() -> ChildGuard {
     let mcb_path = get_mcb_path();
 
-    create_test_command(&mcb_path)
+    let child = create_test_command(&mcb_path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .unwrap_or_else(|e| panic!("Failed to spawn mcb at {mcb_path:?}: {e}"))
+        .unwrap_or_else(|e| unreachable!("Failed to spawn mcb at {mcb_path:?}: {e}"));
+
+    ChildGuard::new(child)
 }
 
-/// Send a JSON-RPC request and read the response
+/// Send a JSON-RPC request and read the response.
+///
+/// # Errors
+///
+/// Returns an error if writing, flushing, reading, or parsing fails.
 fn send_request_get_response(
     stdin: &mut std::process::ChildStdin,
     stdout: &mut BufReader<std::process::ChildStdout>,
     request: &serde_json::Value,
-) -> serde_json::Value {
+) -> TestResult<serde_json::Value> {
     // Send request with newline delimiter
-    let request_str = serde_json::to_string(request).unwrap();
-    writeln!(stdin, "{request_str}").expect("Failed to write request");
-    stdin.flush().expect("Failed to flush stdin");
+    let request_str = serde_json::to_string(request)?;
+    writeln!(stdin, "{request_str}")?;
+    stdin.flush()?;
 
     // Read response line
     let mut response_line = String::new();
-    match stdout.read_line(&mut response_line) {
-        Ok(0) => panic!("EOF reading stdout - server likely crashed. Check stderr."),
-        Ok(_) => {}
-        Err(e) => panic!("Failed to read response: {e}"),
-    }
+    let n = stdout.read_line(&mut response_line)?;
+    assert!(
+        n > 0,
+        "EOF reading stdout - server likely crashed. Check stderr."
+    );
 
-    match serde_json::from_str(&response_line) {
-        Ok(val) => val,
-        Err(e) => {
-            eprintln!("Failed to parse JSON response: {response_line}");
-            panic!("JSON parse error: {e}");
-        }
-    }
+    let val: serde_json::Value = serde_json::from_str(&response_line)?;
+    Ok(val)
 }
 
 /// Create the MCP initialize request required to start a session
@@ -125,29 +162,38 @@ fn create_initialize_request(id: i64) -> serde_json::Value {
     })
 }
 
-/// Send the initialized notification (required after initialize response)
-fn send_initialized_notification(stdin: &mut std::process::ChildStdin) {
+/// Send the initialized notification (required after initialize response).
+///
+/// # Errors
+///
+/// Returns an error if writing or flushing fails.
+fn send_initialized_notification(stdin: &mut std::process::ChildStdin) -> TestResult {
     let notification = serde_json::json!({
         "jsonrpc": "2.0",
         "method": "notifications/initialized"
     });
-    let notification_str = serde_json::to_string(&notification).unwrap();
-    writeln!(stdin, "{notification_str}").expect("Failed to write notification");
-    stdin.flush().expect("Failed to flush stdin");
+    let notification_str = serde_json::to_string(&notification)?;
+    writeln!(stdin, "{notification_str}")?;
+    stdin.flush()?;
+    Ok(())
 }
 
-/// Initialize the MCP session (required before any other requests)
+/// Initialize the MCP session (required before any other requests).
+///
+/// # Errors
+///
+/// Returns an error if the initialize handshake fails.
 fn initialize_mcp_session(
     stdin: &mut std::process::ChildStdin,
     stdout: &mut BufReader<std::process::ChildStdout>,
-) -> serde_json::Value {
+) -> TestResult<serde_json::Value> {
     let init_request = create_initialize_request(0);
-    let response = send_request_get_response(stdin, stdout, &init_request);
+    let response = send_request_get_response(stdin, stdout, &init_request)?;
 
     // Send initialized notification
-    send_initialized_notification(stdin);
+    send_initialized_notification(stdin)?;
 
-    response
+    Ok(response)
 }
 
 // =============================================================================
@@ -159,25 +205,24 @@ fn initialize_mcp_session(
 /// This prevents regression of the fix in commit ffbe441 where ANSI color codes
 /// from logging were polluting the JSON-RPC stream on stdout.
 #[test]
-fn test_stdio_no_ansi_codes_in_output() {
-    let mut child = spawn_mcb_stdio();
+fn test_stdio_no_ansi_codes_in_output() -> TestResult {
+    let mut guard = spawn_mcb_stdio();
+    let child = guard.inner_mut();
 
-    let mut stdin = child.stdin.take().expect("Failed to get stdin");
-    let stdout = child.stdout.take().expect("Failed to get stdout");
+    let mut stdin = child.stdin.take().ok_or("Failed to get stdin")?;
+    let stdout = child.stdout.take().ok_or("Failed to get stdout")?;
     let mut stdout_reader = BufReader::new(stdout);
 
     // Send initialize request (required by MCP protocol)
     let request = create_initialize_request(1);
 
-    let request_str = serde_json::to_string(&request).unwrap();
-    writeln!(stdin, "{request_str}").expect("Failed to write request");
-    stdin.flush().expect("Failed to flush stdin");
+    let request_str = serde_json::to_string(&request)?;
+    writeln!(stdin, "{request_str}")?;
+    stdin.flush()?;
 
     // Read response
     let mut response_line = String::new();
-    stdout_reader
-        .read_line(&mut response_line)
-        .expect("Failed to read response");
+    stdout_reader.read_line(&mut response_line)?;
 
     // CRITICAL: Check for ANSI escape codes
     // \x1b[ is the start of ANSI escape sequences
@@ -192,23 +237,22 @@ fn test_stdio_no_ansi_codes_in_output() {
         "Escape character found in stdout! Response: {response_line:?}"
     );
 
-    // Kill the process and wait to avoid zombies
-    drop(stdin);
-    let _ = child.kill();
-    let _ = child.wait();
+    Ok(())
+    // ChildGuard drop handles kill + wait
 }
 
 /// Test that response is valid JSON (not corrupted by logs)
 #[test]
-fn test_stdio_response_is_valid_json() {
-    let mut child = spawn_mcb_stdio();
+fn test_stdio_response_is_valid_json() -> TestResult {
+    let mut guard = spawn_mcb_stdio();
+    let child = guard.inner_mut();
 
-    let mut stdin = child.stdin.take().expect("Failed to get stdin");
-    let stdout = child.stdout.take().expect("Failed to get stdout");
+    let mut stdin = child.stdin.take().ok_or("Failed to get stdin")?;
+    let stdout = child.stdout.take().ok_or("Failed to get stdout")?;
     let mut stdout_reader = BufReader::new(stdout);
 
     // Initialize session first (required by MCP protocol)
-    let _ = initialize_mcp_session(&mut stdin, &mut stdout_reader);
+    let _ = initialize_mcp_session(&mut stdin, &mut stdout_reader)?;
 
     // Send tools/list request
     let request = serde_json::json!({
@@ -217,36 +261,25 @@ fn test_stdio_response_is_valid_json() {
         "id": 1
     });
 
-    let request_str = serde_json::to_string(&request).unwrap();
-    writeln!(stdin, "{request_str}").expect("Failed to write request");
-    stdin.flush().expect("Failed to flush stdin");
+    let request_str = serde_json::to_string(&request)?;
+    writeln!(stdin, "{request_str}")?;
+    stdin.flush()?;
 
     // Read response
     let mut response_line = String::new();
-    stdout_reader
-        .read_line(&mut response_line)
-        .expect("Failed to read response");
+    stdout_reader.read_line(&mut response_line)?;
 
     // Verify it's valid JSON
-    let response: Result<serde_json::Value, _> = serde_json::from_str(&response_line);
-    assert!(
-        response.is_ok(),
-        "Response is not valid JSON! Raw output: {:?}\nParse error: {:?}",
-        response_line,
-        response.err()
-    );
+    let response: serde_json::Value = serde_json::from_str(&response_line)?;
 
     // Verify it has JSON-RPC structure
-    let response = response.unwrap();
     assert_eq!(
         response.get("jsonrpc").and_then(|v| v.as_str()),
         Some("2.0"),
         "Response missing jsonrpc field"
     );
 
-    drop(stdin);
-    let _ = child.kill();
-    let _ = child.wait();
+    Ok(())
 }
 
 // =============================================================================
@@ -255,15 +288,16 @@ fn test_stdio_response_is_valid_json() {
 
 /// Test complete tools/list roundtrip via stdio
 #[test]
-fn test_stdio_roundtrip_tools_list() {
-    let mut child = spawn_mcb_stdio();
+fn test_stdio_roundtrip_tools_list() -> TestResult {
+    let mut guard = spawn_mcb_stdio();
+    let child = guard.inner_mut();
 
-    let mut stdin = child.stdin.take().expect("Failed to get stdin");
-    let stdout = child.stdout.take().expect("Failed to get stdout");
+    let mut stdin = child.stdin.take().ok_or("Failed to get stdin")?;
+    let stdout = child.stdout.take().ok_or("Failed to get stdout")?;
     let mut stdout_reader = BufReader::new(stdout);
 
     // Initialize session first (required by MCP protocol)
-    let _ = initialize_mcp_session(&mut stdin, &mut stdout_reader);
+    let _ = initialize_mcp_session(&mut stdin, &mut stdout_reader)?;
 
     let request = serde_json::json!({
         "jsonrpc": "2.0",
@@ -271,7 +305,7 @@ fn test_stdio_roundtrip_tools_list() {
         "id": 42
     });
 
-    let response = send_request_get_response(&mut stdin, &mut stdout_reader, &request);
+    let response = send_request_get_response(&mut stdin, &mut stdout_reader, &request)?;
 
     // Verify response structure
     assert_eq!(response["jsonrpc"], "2.0");
@@ -286,7 +320,9 @@ fn test_stdio_roundtrip_tools_list() {
     let result = &response["result"];
     assert!(result["tools"].is_array(), "tools should be an array");
 
-    let tools = result["tools"].as_array().unwrap();
+    let tools = result["tools"]
+        .as_array()
+        .ok_or("tools should be an array")?;
     assert!(!tools.is_empty(), "Should have at least one tool");
 
     // Verify expected tools exist
@@ -303,23 +339,22 @@ fn test_stdio_roundtrip_tools_list() {
     assert!(tool_names.contains(&"agent"), "Missing agent tool");
     assert!(tool_names.contains(&"vcs"), "Missing vcs tool");
 
-    drop(stdin);
-    let _ = child.kill();
-    let _ = child.wait();
+    Ok(())
 }
 
 /// Test initialize request via stdio
 #[test]
-fn test_stdio_roundtrip_initialize() {
-    let mut child = spawn_mcb_stdio();
+fn test_stdio_roundtrip_initialize() -> TestResult {
+    let mut guard = spawn_mcb_stdio();
+    let child = guard.inner_mut();
 
-    let mut stdin = child.stdin.take().expect("Failed to get stdin");
-    let stdout = child.stdout.take().expect("Failed to get stdout");
+    let mut stdin = child.stdin.take().ok_or("Failed to get stdin")?;
+    let stdout = child.stdout.take().ok_or("Failed to get stdout")?;
     let mut stdout_reader = BufReader::new(stdout);
 
     let request = create_initialize_request(1);
 
-    let response = send_request_get_response(&mut stdin, &mut stdout_reader, &request);
+    let response = send_request_get_response(&mut stdin, &mut stdout_reader, &request)?;
 
     // Verify response structure
     assert_eq!(response["jsonrpc"], "2.0");
@@ -334,8 +369,9 @@ fn test_stdio_roundtrip_initialize() {
     // Verify protocol version is a proper string (not Debug format)
     let version = &result["protocolVersion"];
     assert!(version.is_string(), "protocolVersion should be a string");
+    let version_str = version.as_str().ok_or("protocolVersion not a string")?;
     assert!(
-        !version.as_str().unwrap().contains("ProtocolVersion"),
+        !version_str.contains("ProtocolVersion"),
         "protocolVersion has Debug format leak"
     );
 
@@ -346,22 +382,21 @@ fn test_stdio_roundtrip_initialize() {
         "Should have server name"
     );
 
-    drop(stdin);
-    let _ = child.kill();
-    let _ = child.wait();
+    Ok(())
 }
 
 /// Test error response via stdio (unknown method)
 #[test]
-fn test_stdio_error_response_format() {
-    let mut child = spawn_mcb_stdio();
+fn test_stdio_error_response_format() -> TestResult {
+    let mut guard = spawn_mcb_stdio();
+    let child = guard.inner_mut();
 
-    let mut stdin = child.stdin.take().expect("Failed to get stdin");
-    let stdout = child.stdout.take().expect("Failed to get stdout");
+    let mut stdin = child.stdin.take().ok_or("Failed to get stdin")?;
+    let stdout = child.stdout.take().ok_or("Failed to get stdout")?;
     let mut stdout_reader = BufReader::new(stdout);
 
     // Initialize session first (required by MCP protocol)
-    let _ = initialize_mcp_session(&mut stdin, &mut stdout_reader);
+    let _ = initialize_mcp_session(&mut stdin, &mut stdout_reader)?;
 
     let request = serde_json::json!({
         "jsonrpc": "2.0",
@@ -369,7 +404,7 @@ fn test_stdio_error_response_format() {
         "id": 99
     });
 
-    let response = send_request_get_response(&mut stdin, &mut stdout_reader, &request);
+    let response = send_request_get_response(&mut stdin, &mut stdout_reader, &request)?;
 
     // Verify error response structure
     assert_eq!(response["jsonrpc"], "2.0");
@@ -381,9 +416,7 @@ fn test_stdio_error_response_format() {
     assert!(error["code"].is_i64(), "Error should have numeric code");
     assert!(error["message"].is_string(), "Error should have message");
 
-    drop(stdin);
-    let _ = child.kill();
-    let _ = child.wait();
+    Ok(())
 }
 
 // =============================================================================
@@ -392,18 +425,19 @@ fn test_stdio_error_response_format() {
 
 /// Test that logs go to stderr, not stdout
 #[test]
-fn test_stdio_logs_go_to_stderr() {
-    let mut child = spawn_mcb_stdio();
+fn test_stdio_logs_go_to_stderr() -> TestResult {
+    let mut guard = spawn_mcb_stdio();
+    let child = guard.inner_mut();
 
-    let mut stdin = child.stdin.take().expect("Failed to get stdin");
-    let stdout = child.stdout.take().expect("Failed to get stdout");
-    let stderr = child.stderr.take().expect("Failed to get stderr");
+    let mut stdin = child.stdin.take().ok_or("Failed to get stdin")?;
+    let stdout = child.stdout.take().ok_or("Failed to get stdout")?;
+    let stderr = child.stderr.take().ok_or("Failed to get stderr")?;
 
     let mut stdout_reader = BufReader::new(stdout);
     let stderr_reader = BufReader::new(stderr);
 
     // Initialize session first (required by MCP protocol)
-    let _ = initialize_mcp_session(&mut stdin, &mut stdout_reader);
+    let _ = initialize_mcp_session(&mut stdin, &mut stdout_reader)?;
 
     // Send request
     let request = serde_json::json!({
@@ -412,19 +446,16 @@ fn test_stdio_logs_go_to_stderr() {
         "id": 1
     });
 
-    let request_str = serde_json::to_string(&request).unwrap();
-    writeln!(stdin, "{request_str}").expect("Failed to write request");
-    stdin.flush().expect("Failed to flush stdin");
+    let request_str = serde_json::to_string(&request)?;
+    writeln!(stdin, "{request_str}")?;
+    stdin.flush()?;
 
     // Read stdout response
     let mut response_line = String::new();
-    stdout_reader
-        .read_line(&mut response_line)
-        .expect("Failed to read response");
+    stdout_reader.read_line(&mut response_line)?;
 
     // Stdout should be pure JSON
-    let response: serde_json::Value =
-        serde_json::from_str(&response_line).expect("Stdout should be valid JSON");
+    let response: serde_json::Value = serde_json::from_str(&response_line)?;
     assert_eq!(response["jsonrpc"], "2.0");
 
     // Give some time for stderr to accumulate logs
@@ -432,6 +463,8 @@ fn test_stdio_logs_go_to_stderr() {
 
     // Terminate process before reading stderr to avoid blocking on open pipe
     drop(stdin);
+    // ChildGuard handles kill + wait on drop, but we need the stderr reader to work
+    // so kill explicitly here before reading
     let _ = child.kill();
     let _ = child.wait();
 
@@ -452,5 +485,5 @@ fn test_stdio_logs_go_to_stderr() {
         }
     }
 
-    // Process already terminated above.
+    Ok(())
 }

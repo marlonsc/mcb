@@ -6,7 +6,7 @@ use rstest::rstest;
 #[rstest]
 fn test_default_git_config() {
     let config = GitConfig::default();
-    assert_eq!(config.branches, vec!["main", "HEAD"]);
+    assert_eq!(config.branches, vec!["main", "HEAD", "current"]);
     assert_eq!(config.depth, 50);
     assert!(config.ignore_patterns.is_empty());
     assert!(config.include_submodules);

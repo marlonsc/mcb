@@ -11,7 +11,7 @@ fn get_workspace_root() -> Result<PathBuf, Box<dyn std::error::Error>> {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .and_then(|p| p.parent())
-        .map(|p| p.to_path_buf())
+        .map(std::path::Path::to_path_buf)
         .ok_or_else(|| "Failed to find workspace root from CARGO_MANIFEST_DIR".into())
 }
 

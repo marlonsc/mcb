@@ -24,7 +24,6 @@ use crate::constants::limits::DEFAULT_SEARCH_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::collections::normalize_collection_name;
-use crate::utils::mcp::resolve_org_id;
 
 /// Handler for code and memory search MCP tool operations.
 #[derive(Clone)]

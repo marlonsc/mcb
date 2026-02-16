@@ -4,7 +4,7 @@
 //!
 
 // Shared test utilities
-#[path = "../test_utils/mod.rs"]
+#[path = "../utils/mod.rs"]
 mod test_utils;
 
 mod shared_context;

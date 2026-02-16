@@ -5,14 +5,15 @@
 // Integration test modules
 mod admin;
 mod handlers;
-mod test_utils;
+#[path = "utils/mod.rs"]
+mod utils;
 mod tools;
 
 // Integration helpers - service detection and skip macros
 #[path = "integration/utils.rs"]
-mod utils;
+mod helpers;
 
-pub use utils::{
+pub use helpers::{
     check_service_available, is_ci, is_milvus_available, is_ollama_available,
     is_postgres_available, is_redis_available,
 };

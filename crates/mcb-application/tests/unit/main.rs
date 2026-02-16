@@ -5,5 +5,6 @@
 mod decorators;
 mod registry_tests;
 mod shared_context;
+#[path = "utils.rs"]
 mod test_utils;
 mod use_cases;

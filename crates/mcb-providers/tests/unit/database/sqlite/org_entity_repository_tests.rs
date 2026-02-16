@@ -6,7 +6,7 @@ use mcb_domain::entities::{
     ApiKey, Organization, Team, TeamMember, TeamMemberRole, User, UserRole,
 };
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
-use mcb_domain::ports::repositories::org_entity_repository::{
+use mcb_domain::ports::repositories::org::{
     ApiKeyRegistry, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
 };
 use mcb_providers::database::SqliteOrgEntityRepository;

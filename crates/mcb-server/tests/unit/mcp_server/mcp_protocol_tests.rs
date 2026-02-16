@@ -13,7 +13,7 @@ extern crate mcb_providers;
 
 use mcb_server::transport::types::{McpRequest, McpResponse};
 
-use crate::test_utils::http_mcp::McpTestContext;
+use crate::utils::http_mcp::McpTestContext;
 
 // =============================================================================
 // PROTOCOL VERSION & INITIALIZE TESTS

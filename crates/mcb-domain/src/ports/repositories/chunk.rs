@@ -20,7 +20,7 @@ use crate::error::Result;
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::repositories::chunk_repository::ChunkRepository;
+/// use mcb_domain::ports::repositories::chunk::ChunkRepository;
 /// use mcb_domain::entities::CodeChunk;
 /// use std::sync::Arc;
 ///

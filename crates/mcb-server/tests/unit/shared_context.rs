@@ -1,1 +1,1 @@
-pub use crate::test_utils::test_fixtures::shared_app_context;
+pub use crate::utils::test_fixtures::shared_app_context;

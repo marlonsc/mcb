@@ -6,7 +6,7 @@ use mcb_server::admin::{auth::AdminAuthConfig, routes::admin_rocket};
 use rocket::http::Status;
 use rocket::local::asynchronous::Client;
 
-use crate::test_utils::timeouts::TEST_TIMEOUT;
+use crate::utils::timeouts::TEST_TIMEOUT;
 
 use super::harness::AdminTestHarness;
 

@@ -2,7 +2,7 @@ use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface
 use mcb_domain::value_objects::CollectionId;
 use rocket::http::Status;
 
-use crate::test_utils::timeouts::TEST_TIMEOUT;
+use crate::utils::timeouts::TEST_TIMEOUT;
 
 use super::harness::AdminTestHarness;
 

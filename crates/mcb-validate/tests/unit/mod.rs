@@ -3,7 +3,7 @@
 //! Run with: `cargo test -p mcb-validate --test unit`
 
 // Shared test utilities (single source — lives outside unit/ dir)
-#[path = "../test_utils.rs"]
+#[path = "../utils.rs"]
 pub mod test_utils;
 
 // Centralized test constants (shared across unit and integration tests)

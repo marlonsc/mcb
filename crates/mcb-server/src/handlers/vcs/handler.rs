@@ -10,7 +10,6 @@ use validator::Validate;
 
 use super::{analyze_impact, compare_branches, index_repo, list_repos, search_branch};
 use crate::args::{VcsAction, VcsArgs};
-use crate::utils::mcp::resolve_org_id;
 
 /// Handler for VCS-related MCP tool operations.
 ///

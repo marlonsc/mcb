@@ -18,12 +18,14 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::infrastructure::{DatabaseExecutor, DatabaseProvider};
-use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
+use mcb_domain::ports::repositories::{
+    AgentRepository, MemoryRepository, ProjectRepository, VcsEntityRepository,
+};
 use mcb_domain::schema::{ProjectSchema, SchemaDdlGenerator};
 
 use super::{
     SqliteAgentRepository, SqliteExecutor, SqliteMemoryRepository, SqliteProjectRepository,
-    SqliteSchemaDdlGenerator,
+    SqliteSchemaDdlGenerator, SqliteVcsEntityRepository,
 };
 use mcb_domain::registry::database::{
     DATABASE_PROVIDERS, DatabaseProviderConfig, DatabaseProviderEntry,
@@ -117,6 +119,13 @@ pub fn create_project_repository_from_executor(
     executor: Arc<dyn DatabaseExecutor>,
 ) -> Arc<dyn ProjectRepository> {
     Arc::new(SqliteProjectRepository::new(executor))
+}
+
+/// Create a VCS entity repository backed by the provided database executor.
+pub fn create_vcs_entity_repository_from_executor(
+    executor: Arc<dyn DatabaseExecutor>,
+) -> Arc<dyn VcsEntityRepository> {
+    Arc::new(SqliteVcsEntityRepository::new(executor))
 }
 
 async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {

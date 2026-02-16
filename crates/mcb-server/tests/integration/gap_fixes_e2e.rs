@@ -1,5 +1,5 @@
-use crate::test_utils::test_fixtures::{TEST_REPO_NAME, create_test_mcp_server};
-use crate::test_utils::text::extract_text;
+use crate::utils::test_fixtures::{TEST_REPO_NAME, create_test_mcp_server};
+use crate::utils::text::extract_text;
 use mcb_server::args::SessionAction;
 use mcb_server::args::SessionArgs;
 use mcb_server::args::ValidateAction;

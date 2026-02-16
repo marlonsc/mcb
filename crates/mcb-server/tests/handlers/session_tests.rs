@@ -5,8 +5,8 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use crate::handlers::utils::create_real_domain_services;
-use crate::test_utils::test_fixtures::TEST_PROJECT_ID;
-use crate::test_utils::text::extract_text;
+use crate::utils::test_fixtures::TEST_PROJECT_ID;
+use crate::utils::text::extract_text;
 
 async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
     let (services, temp_dir) = create_real_domain_services().await?;

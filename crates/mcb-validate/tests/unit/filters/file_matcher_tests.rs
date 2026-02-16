@@ -66,12 +66,12 @@ fn parse_patterns() {
 #[rstest]
 #[case("src/main.rs", true)]
 #[case("tests/test.py", true)]
-#[case("src/test_utils/helpers.rs", false)]
+#[case("src/utils/helpers.rs", false)]
 #[case("lib.py", false)]
 fn from_mixed_patterns(#[case] file: &str, #[case] expected: bool) {
     let patterns = vec![
         "src/**/*.rs".to_owned(),
-        "!**/test_utils/**".to_owned(),
+        "!**/utils/**".to_owned(),
         "tests/**/*.py".to_owned(),
     ];
 

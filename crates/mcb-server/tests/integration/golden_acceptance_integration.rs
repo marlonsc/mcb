@@ -248,7 +248,7 @@ fn unique_test_config() -> Result<AppConfig, Box<dyn std::error::Error>> {
     Ok(config)
 }
 
-use crate::test_utils::test_fixtures::shared_fastembed_test_cache_dir;
+use crate::utils::test_fixtures::shared_fastembed_test_cache_dir;
 
 // ============================================================================
 // Real Provider Tests (using FastEmbed + EdgeVec)
@@ -262,7 +262,7 @@ async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
 
-    let golden_config = load_golden_queries();
+    let golden_config = load_golden_queries()?;
     let collection = &golden_config.config.collection_name;
     let chunks = read_sample_codebase_files();
 
@@ -321,17 +321,18 @@ async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>
         chunks.len(),
         "Should insert all chunks from sample_codebase"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_golden_search_validates_expected_files() {
-    let config = unique_test_config();
-    let ctx = init_app(config).await.expect("init_app should succeed");
+async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std::error::Error>> {
+    let config = unique_test_config()?;
+    let ctx = init_app(config).await?;
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
 
-    let golden_config = load_golden_queries();
+    let golden_config = load_golden_queries()?;
     let collection = "golden_expected_files_test";
     let chunks = read_sample_codebase_files();
 
@@ -408,6 +409,7 @@ async fn test_golden_search_validates_expected_files() {
             result_files
         );
     }
+    Ok(())
 }
 
 /// Test that validates all golden queries find their expected files.
@@ -417,14 +419,14 @@ async fn test_golden_search_validates_expected_files() {
 /// The provider generates vectors based on domain keywords
 /// (embedding, `vector_store`, handler, cache, di, error, chunking, etc.)
 #[tokio::test]
-async fn test_golden_all_queries_find_expected_files() {
-    let config = unique_test_config();
-    let ctx = init_app(config).await.expect("init_app should succeed");
+async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std::error::Error>> {
+    let config = unique_test_config()?;
+    let ctx = init_app(config).await?;
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
 
-    let golden_config = load_golden_queries();
+    let golden_config = load_golden_queries()?;
     let collection = "golden_all_queries_test";
     let chunks = read_sample_codebase_files();
 
@@ -521,10 +523,11 @@ async fn test_golden_all_queries_find_expected_files() {
         total,
         failed_queries.join("\n")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_golden_full_workflow_end_to_end() {
+async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error::Error>> {
     // This test validates the complete golden test workflow:
     // 1. Load config
     // 2. Read real files from sample_codebase
@@ -533,12 +536,12 @@ async fn test_golden_full_workflow_end_to_end() {
     // 5. Search with all golden queries
     // 6. Validate expected_files found
 
-    let app_config = unique_test_config();
-    let ctx = init_app(app_config).await.expect("init_app should succeed");
+    let app_config = unique_test_config()?;
+    let ctx = init_app(app_config).await?;
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
-    let golden_config = load_golden_queries();
+    let golden_config = load_golden_queries()?;
 
     let collection = &golden_config.config.collection_name;
     let chunks = read_sample_codebase_files();
@@ -612,4 +615,5 @@ async fn test_golden_full_workflow_end_to_end() {
         success_rate >= 0.5,
         "At least 50% of golden queries should find expected files. Got: {successful_queries}/{total}"
     );
+    Ok(())
 }

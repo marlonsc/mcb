@@ -13,6 +13,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
+/// Locate the mcb binary from env or target directory.
+///
+/// # Panics
+///
+/// Panics if the binary cannot be found in any expected location.
 fn get_mcb_path() -> PathBuf {
     if let Ok(path) = std::env::var("CARGO_BIN_EXE_mcb") {
         return PathBuf::from(path);
@@ -26,18 +31,18 @@ fn get_mcb_path() -> PathBuf {
 
     let release_path = PathBuf::from(manifest_dir).join("../../target/release/mcb");
     if release_path.exists() {
-        return release_path;
+        release_path
+    } else {
+        unreachable!(
+            "mcb binary not found. Checked CARGO_BIN_EXE_mcb and target/debug|release/mcb from {manifest_dir}"
+        )
     }
-
-    panic!(
-        "mcb binary not found. Checked CARGO_BIN_EXE_mcb and target/debug|release/mcb from {manifest_dir}"
-    );
 }
 
 fn unique_temp_path(name: &str) -> PathBuf {
     let stamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .expect("system time")
+        .unwrap_or_default()
         .as_nanos();
     std::env::temp_dir().join(format!("mcb-startup-smoke-{name}-{stamp}"))
 }
@@ -46,6 +51,11 @@ fn config_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/smoke-test.toml")
 }
 
+/// Spawn the MCB server process for testing.
+///
+/// # Panics
+///
+/// Panics if the process cannot be spawned.
 fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
     Command::new(get_mcb_path())
         .arg("serve")
@@ -58,12 +68,15 @@ fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
         .stderr(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
-        .expect("spawn mcb process")
+        .unwrap_or_else(|e| unreachable!("spawn mcb process: {e}"))
 }
 
 fn cleanup_temp_files(db_path: &std::path::Path, prefix: &str) {
     let _ = fs::remove_file(db_path);
-    if let Ok(entries) = fs::read_dir(db_path.parent().unwrap()) {
+    let Some(parent) = db_path.parent() else {
+        return;
+    };
+    if let Ok(entries) = fs::read_dir(parent) {
         for entry in entries.flatten() {
             let name = entry.file_name();
             if name.to_string_lossy().contains(prefix) {
@@ -76,20 +89,20 @@ fn cleanup_temp_files(db_path: &std::path::Path, prefix: &str) {
 #[test]
 fn corrupted_db_is_backed_up_and_recreated() {
     let db_path = unique_temp_path("corrupt.db");
-    fs::write(&db_path, b"this-is-not-a-valid-sqlite-database").expect("write corrupt db fixture");
+    fs::write(&db_path, b"this-is-not-a-valid-sqlite-database")
+        .unwrap_or_else(|e| unreachable!("write corrupt db fixture: {e}"));
 
     let mut child = spawn_mcb_serve(&db_path);
 
     // Give it time to try init, fail, recover, and start
     // We can monitor stderr for the recovery message to exit early
-    let stderr = if let Some(stderr) = child.stderr.take() {
-        stderr
-    } else {
-        panic!("capture stderr");
-    };
+    let stderr = child
+        .stderr
+        .take()
+        .unwrap_or_else(|| unreachable!("capture stderr"));
     let reader = BufReader::new(stderr);
     let recovered = Arc::new(AtomicBool::new(false));
-    let recovered_clone = recovered.clone();
+    let recovered_clone = Arc::clone(&recovered);
 
     let log_thread = thread::spawn(move || {
         for line in reader.lines().map_while(Result::ok) {
@@ -113,8 +126,11 @@ fn corrupted_db_is_backed_up_and_recreated() {
     let _ = child.wait();
     let _ = log_thread.join(); // This might hang if reader doesn't close, but child kill closes pipe
 
-    let has_backup = fs::read_dir(db_path.parent().unwrap())
-        .expect("read temp dir")
+    let has_backup = db_path
+        .parent()
+        .and_then(|p| fs::read_dir(p).ok())
+        .into_iter()
+        .flatten()
         .filter_map(std::result::Result::ok)
         .any(|e| {
             e.file_name()
@@ -135,11 +151,14 @@ fn corrupted_db_is_backed_up_and_recreated() {
 fn ddl_error_messages_include_source_context() {
     let db_path = unique_temp_path("ddl-ctx.db");
     // Write just enough zeros to look like a file but be invalid header
-    fs::write(&db_path, vec![0u8; 100]).expect("write invalid db");
+    fs::write(&db_path, vec![0u8; 100]).unwrap_or_else(|e| unreachable!("write invalid db: {e}"));
 
     let mut child = spawn_mcb_serve(&db_path);
 
-    let stderr = child.stderr.take().expect("capture stderr");
+    let stderr = child
+        .stderr
+        .take()
+        .unwrap_or_else(|| unreachable!("capture stderr"));
     let reader = BufReader::new(stderr);
 
     let mut logs = String::new();

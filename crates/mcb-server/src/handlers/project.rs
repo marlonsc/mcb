@@ -5,7 +5,6 @@ use std::sync::Arc;
 use mcb_domain::ports::repositories::ProjectRepository;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
-use serde_json::Value;
 use tracing::info;
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};

@@ -5,7 +5,7 @@ use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::{IssueStatus, IssueType, ProjectIssue};
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
-use mcb_domain::ports::repositories::issue_entity_repository::{
+use mcb_domain::ports::repositories::issue::{
     IssueCommentRegistry, IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry,
 };
 use mcb_providers::database::SqliteIssueEntityRepository;

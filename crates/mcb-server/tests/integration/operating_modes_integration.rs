@@ -23,14 +23,14 @@ use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
 use mcb_server::transport::http_client::HttpClientTransport;
 use mcb_server::transport::types::{McpRequest, McpResponse};
 
-use crate::test_utils::http_mcp::get_free_port;
-use crate::test_utils::test_fixtures::TEST_EMBEDDING_DIMENSIONS;
-use crate::test_utils::timeouts::TEST_TIMEOUT;
+use crate::utils::http_mcp::get_free_port;
+use crate::utils::test_fixtures::TEST_EMBEDDING_DIMENSIONS;
+use crate::utils::timeouts::TEST_TIMEOUT;
 
-fn create_test_config() -> (AppConfig, tempfile::TempDir) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
+fn create_test_config() -> Result<(AppConfig, tempfile::TempDir), Box<dyn std::error::Error>> {
+    let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("test.db");
-    let mut config = ConfigLoader::new().load().expect("load config");
+    let mut config = ConfigLoader::new().load()?;
     config.providers.database.configs.insert(
         "default".to_owned(),
         mcb_infrastructure::config::DatabaseConfig {
@@ -39,10 +39,10 @@ fn create_test_config() -> (AppConfig, tempfile::TempDir) {
         },
     );
     config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-    (config, temp_dir)
+    Ok((config, temp_dir))
 }
 
-use crate::test_utils::test_fixtures::shared_fastembed_test_cache_dir;
+use crate::utils::test_fixtures::shared_fastembed_test_cache_dir;
 
 /// Create test configuration for client mode
 fn create_client_config(server_port: u16) -> ModeConfig {
@@ -418,12 +418,12 @@ fn test_mcp_response_error_serialization_roundtrip() {
 #[rstest]
 #[case(false)]
 #[case(true)]
-fn app_config_mode_setup(#[case] use_client_mode: bool) {
-    let (mut config, _temp_dir) = create_test_config();
+fn app_config_mode_setup(#[case] use_client_mode: bool) -> Result<(), Box<dyn std::error::Error>> {
+    let (mut config, _temp_dir) = create_test_config()?;
     let mut expected_port = None;
 
     if use_client_mode {
-        let port = get_free_port().expect("get free port");
+        let port = get_free_port()?;
         config.mode = create_client_config(port);
         expected_port = Some(port);
     }
@@ -435,6 +435,7 @@ fn app_config_mode_setup(#[case] use_client_mode: bool) {
         assert_eq!(config.mode.mode_type, OperatingMode::Standalone);
         assert!(config.mode.is_standalone());
     }
+    Ok(())
 }
 
 // ============================================================================
@@ -466,11 +467,11 @@ fn test_get_free_port_returns_different_ports() {
 // ============================================================================
 
 #[tokio::test]
-async fn test_standalone_mode_initializes_providers() {
-    let (config, _temp_dir) = create_test_config();
+async fn test_standalone_mode_initializes_providers() -> Result<(), Box<dyn std::error::Error>> {
+    let (config, _temp_dir) = create_test_config()?;
 
     // In standalone mode, init_app creates local providers
-    let ctx = init_app(config).await.expect("Failed to init app");
+    let ctx = init_app(config).await?;
 
     // Verify embedding provider
     let embedding = ctx.embedding_handle().get();
@@ -480,16 +481,18 @@ async fn test_standalone_mode_initializes_providers() {
     // Verify vector store provider
     let vector_store = ctx.vector_store_handle().get();
     assert!(!vector_store.provider_name().is_empty());
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_mode_selection_affects_nothing_in_standalone() {
+async fn test_mode_selection_affects_nothing_in_standalone()
+-> Result<(), Box<dyn std::error::Error>> {
     // In standalone mode, we don't connect to any server
     // Everything runs locally
-    let (mut config, _temp_dir) = create_test_config();
+    let (mut config, _temp_dir) = create_test_config()?;
     config.mode.mode_type = OperatingMode::Standalone;
 
-    let ctx = init_app(config).await.expect("Init should succeed");
+    let ctx = init_app(config).await?;
 
     // Verify we have working providers
     let embedding = ctx.embedding_handle().get();
@@ -500,12 +503,13 @@ async fn test_mode_selection_affects_nothing_in_standalone() {
         result.is_ok(),
         "Standalone mode should have working embedding"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_session_isolation_with_vector_store() {
-    let (config, _temp_dir) = create_test_config();
-    let ctx = init_app(config).await.expect("Failed to init app");
+async fn test_session_isolation_with_vector_store() -> Result<(), Box<dyn std::error::Error>> {
+    let (config, _temp_dir) = create_test_config()?;
+    let ctx = init_app(config).await?;
 
     let manager = SessionManager::new();
     let vector_store = ctx.vector_store_handle().get();
@@ -524,12 +528,10 @@ async fn test_session_isolation_with_vector_store() {
     // Both should be able to create their own collections
     vector_store
         .create_collection(&CollectionId::from_name(&coll_a), TEST_EMBEDDING_DIMENSIONS)
-        .await
-        .expect("Create A");
+        .await?;
     vector_store
         .create_collection(&CollectionId::from_name(&coll_b), TEST_EMBEDDING_DIMENSIONS)
-        .await
-        .expect("Create B");
+        .await?;
 
     // Verify they're separate (search one, verify empty in other)
     let results_a = vector_store
@@ -552,6 +554,7 @@ async fn test_session_isolation_with_vector_store() {
     // Both should succeed (collections exist) and be empty (no data inserted)
     assert!(results_a.is_ok());
     assert!(results_b.is_ok());
+    Ok(())
 }
 
 // ============================================================================
@@ -561,22 +564,22 @@ async fn test_session_isolation_with_vector_store() {
 /// Helper to create an MCP server — delegates to shared fixture which reuses
 /// the process-wide `AppContext` (ONNX model loaded once).
 async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
-    crate::test_utils::test_fixtures::create_test_mcp_server().await
+    crate::utils::test_fixtures::create_test_mcp_server().await
 }
 
 type TestClient = rocket::local::asynchronous::Client;
 
-async fn create_http_test_client(port: u16) -> (TestClient, tempfile::TempDir) {
+async fn create_http_test_client(
+    port: u16,
+) -> Result<(TestClient, tempfile::TempDir), Box<dyn std::error::Error>> {
     let (server_instance, temp_dir) = create_test_mcp_server().await;
     let server = Arc::new(server_instance);
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
     let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
+    let client = rocket::local::asynchronous::Client::tracked(rocket).await?;
 
-    (client, temp_dir)
+    Ok((client, temp_dir))
 }
 
 #[tokio::test]
@@ -671,9 +674,9 @@ async fn test_http_server_core_methods(
     #[case] request_id: i64,
     #[case] expect_error: bool,
     #[case] expected_error_code: Option<i32>,
-) {
-    let port = get_free_port().expect("get free port");
-    let (client, _temp) = create_http_test_client(port).await;
+) -> Result<(), Box<dyn std::error::Error>> {
+    let port = get_free_port()?;
+    let (client, _temp) = create_http_test_client(port).await?;
 
     let request = McpRequest {
         method: method.to_owned(),
@@ -707,21 +710,24 @@ async fn test_http_server_core_methods(
         .header(rocket::http::Header::new("X-Agent-Program", "opencode"))
         .header(rocket::http::Header::new("X-Model-Id", "gpt-5.3-codex"))
         .header(rocket::http::Header::new("X-Delegated", "false"))
-        .body(serde_json::to_string(&request).unwrap())
+        .body(serde_json::to_string(&request)?)
         .dispatch()
         .await;
 
     assert_eq!(response.status(), rocket::http::Status::Ok);
 
-    let body = response.into_string().await.expect("Response body");
-    let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("Response body missing")?;
+    let mcp_response: McpResponse = serde_json::from_str(&body)?;
 
     if expect_error {
-        let error = mcp_response.error.expect("Method should error");
+        let error = mcp_response.error.ok_or("Method should error")?;
         if let Some(code) = expected_error_code {
             assert_eq!(error.code, code);
         }
-        return;
+        return Ok(());
     }
 
     assert!(mcp_response.error.is_none(), "Method should not error");
@@ -732,13 +738,14 @@ async fn test_http_server_core_methods(
     );
 
     if method == "initialize" {
-        let result = mcp_response.result.expect("Should have result");
+        let result = mcp_response.result.ok_or("Should have result")?;
         assert!(result.get("serverInfo").is_some(), "Should have serverInfo");
         assert!(
             result.get("capabilities").is_some(),
             "Should have capabilities"
         );
     }
+    Ok(())
 }
 
 #[tokio::test]
@@ -934,9 +941,9 @@ async fn test_http_server_tools_call_without_workspace_provenance_is_rejected() 
 async fn test_http_server_tools_call_invalid_params_return_error(
     #[case] params: Option<serde_json::Value>,
     #[case] expected_message: &str,
-) {
-    let port = get_free_port().expect("get free port");
-    let (client, _temp) = create_http_test_client(port).await;
+) -> Result<(), Box<dyn std::error::Error>> {
+    let port = get_free_port()?;
+    let (client, _temp) = create_http_test_client(port).await?;
 
     let request = McpRequest {
         method: "tools/call".to_owned(),
@@ -947,15 +954,19 @@ async fn test_http_server_tools_call_invalid_params_return_error(
     let response = client
         .post("/mcp")
         .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request).unwrap())
+        .body(serde_json::to_string(&request)?)
         .dispatch()
         .await;
 
     assert_eq!(response.status(), rocket::http::Status::Ok);
 
-    let body = response.into_string().await.expect("Response body");
-    let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
+    let body = response
+        .into_string()
+        .await
+        .ok_or("Response body missing")?;
+    let mcp_response: McpResponse = serde_json::from_str(&body)?;
 
-    let error = mcp_response.error.expect(expected_message);
+    let error = mcp_response.error.ok_or(expected_message)?;
     assert_eq!(error.code, -32602);
+    Ok(())
 }

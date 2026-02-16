@@ -6,7 +6,7 @@ use rstest::rstest;
 use serde_json::json;
 
 use crate::handlers::utils::create_real_domain_services;
-use crate::test_utils::test_fixtures::TEST_SESSION_ID;
+use crate::utils::test_fixtures::TEST_SESSION_ID;
 
 async fn create_handler() -> Option<(AgentHandler, tempfile::TempDir)> {
     let (services, temp_dir) = create_real_domain_services().await?;

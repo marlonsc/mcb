@@ -1,6 +1,6 @@
 use mcb_server::transport::http_client::HttpClientTransport;
 
-use crate::test_utils::timeouts::TEST_TIMEOUT;
+use crate::utils::timeouts::TEST_TIMEOUT;
 
 #[test]
 fn test_http_client_creation() {

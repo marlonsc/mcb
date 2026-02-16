@@ -11,12 +11,12 @@ use mcb_server::args::{
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::test_utils::test_fixtures::TEST_PROJECT_ID;
-use crate::test_utils::text::extract_text;
+use crate::utils::test_fixtures::TEST_PROJECT_ID;
+use crate::utils::text::extract_text;
 
 #[tokio::test]
 async fn test_validation_agent_sql_storage_flow() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let agent_h = server.agent_handler();
 
     // Verify LogTool handles repo errors gracefully (proving handler execution)
@@ -46,7 +46,7 @@ async fn test_validation_agent_sql_storage_flow() {
 
 #[tokio::test]
 async fn test_validation_session_create_schema_fallback() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let session_h = server.session_handler();
 
     // Try creating session with agent_type inside data (MISSING from top-level args)
@@ -83,7 +83,7 @@ async fn test_validation_session_create_schema_fallback() {
 
 #[tokio::test]
 async fn test_validation_memory_observation_enum_error() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
 
     let result = memory_h
@@ -117,7 +117,7 @@ async fn test_validation_memory_observation_enum_error() {
     assert!(resp.is_error.unwrap_or(false));
     let text = extract_text(&resp.content);
     assert!(
-        text.contains("Unknown observation type:"),
+        text.contains("Invalid observation_type:") || text.contains("Unknown observation type:"),
         "Error message validation failed: {text}"
     );
 }

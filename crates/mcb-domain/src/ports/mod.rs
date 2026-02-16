@@ -57,5 +57,9 @@ pub use providers::{
     ProviderConfigManagerInterface, ValidationOptions, ValidationProvider, ValidatorInfo,
     VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider,
 };
-pub use repositories::{AgentRepository, MemoryRepository};
+pub use repositories::{
+    AgentRepository, AgentSessionQuery, ChunkRepository, FileHashRepository, FtsSearchResult,
+    IssueEntityRepository, MemoryRepository, OrgEntityRepository, PlanEntityRepository,
+    ProjectRepository, RepositoryStats, SearchRepository, SearchStats, VcsEntityRepository,
+};
 pub use services::{ValidationReport, ValidationServiceInterface, ViolationEntry};

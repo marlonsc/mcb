@@ -259,7 +259,7 @@ fn test_format_clear_index(
 // HELPER FUNCTIONS
 // =============================================================================
 
-use crate::test_utils::text::extract_text;
+use crate::utils::text::extract_text;
 
 mod handler_error_tests {
     use mcb_server::args::{IndexAction, IndexArgs};

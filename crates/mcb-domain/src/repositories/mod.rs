@@ -1,21 +1,10 @@
-//! Repository Interfaces
+//! Repository Interfaces (re-exports from [`crate::ports::repositories`]).
 //!
-//! Interfaces for data persistence and retrieval operations.
-//! Repositories abstract the storage and retrieval of domain entities,
-//! providing a consistent interface regardless of the underlying storage technology.
-//!
-//! ## Repositories
-//!
-//! | Repository | Description |
-//! | ------------ | ------------- |
-//! | ChunkRepository | Persistence operations for code chunks |
-//! | SearchRepository | Query operations for semantic search |
+//! This module provides backward-compatible access to repository port traits.
+//! The canonical definitions live in [`crate::ports::repositories`].
 
-/// Code chunk repository interface
-pub mod chunk_repository;
-/// Search repository interface
-pub mod search_repository;
+pub use crate::ports::repositories::chunk;
+pub use crate::ports::repositories::search;
 
-// Re-export repository interfaces
-pub use chunk_repository::{ChunkRepository, RepositoryStats};
-pub use search_repository::{SearchRepository, SearchStats};
+pub use crate::ports::repositories::{ChunkRepository, RepositoryStats};
+pub use crate::ports::repositories::{SearchRepository, SearchStats};

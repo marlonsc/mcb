@@ -1,19 +1,13 @@
 use std::sync::Arc;
 
-use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
 use mcb_domain::value_objects::SessionId;
 use mcb_infrastructure::di::modules::domain_services::{
-    DomainServicesContainer, DomainServicesFactory, ServiceDependencies,
-};
-use mcb_providers::database::{
-    SqliteFileHashConfig, SqliteFileHashRepository, SqliteIssueEntityRepository,
-    SqliteMemoryRepository, SqliteOrgEntityRepository, SqlitePlanEntityRepository,
-    SqliteProjectRepository, SqliteVcsEntityRepository, create_agent_repository_from_executor,
+    DomainServicesContainer, DomainServicesFactory,
 };
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
 
-use crate::test_utils::test_fixtures::{TEST_PROJECT_ID, try_shared_app_context};
+use crate::utils::test_fixtures::{TEST_PROJECT_ID, try_shared_app_context};
 
 /// Helper to create a base `MemoryArgs` with common defaults
 pub(crate) fn create_base_memory_args(
@@ -60,47 +54,11 @@ pub(crate) async fn create_real_domain_services()
 
     let project_id = TEST_PROJECT_ID.to_owned();
 
-    // Fresh repositories backed by the isolated database
-    let memory_repository = Arc::new(SqliteMemoryRepository::new(Arc::clone(&db_executor)));
-    let agent_repository = create_agent_repository_from_executor(Arc::clone(&db_executor));
-    let project_repository: Arc<dyn ProjectRepository> =
-        Arc::new(SqliteProjectRepository::new(Arc::clone(&db_executor)));
-    let file_hash_repository = Arc::new(SqliteFileHashRepository::new(
-        Arc::clone(&db_executor),
-        SqliteFileHashConfig::default(),
-        project_id.clone(),
-    ));
-    let vcs_entity_repository = Arc::new(SqliteVcsEntityRepository::new(Arc::clone(&db_executor)));
-    let plan_entity_repository =
-        Arc::new(SqlitePlanEntityRepository::new(Arc::clone(&db_executor)));
-    let issue_entity_repository =
-        Arc::new(SqliteIssueEntityRepository::new(Arc::clone(&db_executor)));
-    let org_entity_repository = Arc::new(SqliteOrgEntityRepository::new(Arc::clone(&db_executor)));
-
-    // Reuse shared providers (embedding, vector store, cache, language)
-    let deps = ServiceDependencies {
+    let deps = mcb_infrastructure::di::test_factory::create_test_dependencies(
         project_id,
-        cache: mcb_infrastructure::cache::provider::SharedCacheProvider::from_arc(
-            ctx.cache_handle().get(),
-        ),
-        crypto: ctx.crypto_service(),
-        config: (*ctx.config).clone(),
-        embedding_provider: ctx.embedding_handle().get(),
-        vector_store_provider: ctx.vector_store_handle().get(),
-        language_chunker: ctx.language_handle().get(),
-        indexing_ops: ctx.indexing(),
-        event_bus: ctx.event_bus(),
-        memory_repository,
-        agent_repository,
-        file_hash_repository,
-        vcs_provider: ctx.vcs_provider(),
-        project_service: ctx.project_service(),
-        project_repository,
-        vcs_entity_repository,
-        plan_entity_repository,
-        issue_entity_repository,
-        org_entity_repository,
-    };
+        Arc::clone(&db_executor),
+        &ctx,
+    );
 
     let services = DomainServicesFactory::create_services(deps).await.ok()?;
     Some((services, temp_dir))

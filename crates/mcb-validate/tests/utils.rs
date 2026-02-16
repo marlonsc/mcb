@@ -389,16 +389,16 @@ pub fn setup_fixture_workspace(temp: &TempDir, crate_names: &[&str]) {
 /// Panics if `TempDir` creation or fixture copy fails.
 #[must_use]
 pub fn with_fixture_crate(crate_name: &str) -> (TempDir, std::path::PathBuf) {
-    let temp = match TempDir::new() {
-        Ok(t) => t,
-        Err(e) => {
-            assert!(false, "create temp dir failed: {e:?}");
-            return (
-                TempDir::new().unwrap_or_else(|_| std::process::abort()),
-                std::path::PathBuf::new(),
-            );
-        }
-    };
+    let temp_result = TempDir::new();
+    assert!(
+        temp_result.is_ok(),
+        "create temp dir failed: {:?}",
+        temp_result.err()
+    );
+    let temp = temp_result.unwrap_or_else(|_| {
+        // assert above guarantees Ok, so this branch is unreachable
+        std::process::abort()
+    });
     copy_fixture_crate(&temp, crate_name);
     let root = temp.path().to_path_buf();
     (temp, root)

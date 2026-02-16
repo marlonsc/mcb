@@ -8,7 +8,7 @@ use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource, SearchArgs, Sea
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::test_utils::text::extract_text;
+use crate::utils::text::extract_text;
 
 // =============================================================================
 // Memory E2E Tests
@@ -16,7 +16,7 @@ use crate::test_utils::text::extract_text;
 
 #[tokio::test]
 async fn test_golden_memory_store_with_default_project() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
 
     // Store observation with a test project
@@ -58,7 +58,7 @@ async fn test_golden_memory_store_with_default_project() {
 
 #[tokio::test]
 async fn test_golden_memory_list_empty_graceful() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
 
     // List memories for a project with no data
@@ -100,7 +100,7 @@ async fn test_golden_memory_list_empty_graceful() {
 
 #[tokio::test]
 async fn test_golden_context_search_basic() {
-    let (server, _temp) = crate::test_utils::test_fixtures::create_test_mcp_server().await;
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
     let memory_h = server.memory_handler();
     let search_h = server.search_handler();
     let project_id = "search-project";
