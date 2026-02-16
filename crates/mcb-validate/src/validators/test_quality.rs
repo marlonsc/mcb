@@ -11,7 +11,9 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use crate::config::TestQualityRulesConfig;
-use crate::constants::common::{FUNCTION_NAME_SEARCH_LINES, TEST_DIR_FRAGMENT};
+use crate::constants::common::{
+    FORWARD_SEARCH_LINES, FUNCTION_NAME_SEARCH_LINES, MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT,
+};
 use crate::define_violations;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
@@ -119,14 +121,9 @@ impl crate::traits::validator::Validator for TestQualityValidator {
     }
 }
 
-impl TestQualityValidator {
-    /// Create a new test quality validator with the given workspace root
-    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
-        let root: std::path::PathBuf = workspace_root.into();
-        let file_config = crate::config::FileConfig::load(&root);
-        Self::with_config(ValidationConfig::new(root), &file_config.rules.test_quality)
-    }
+crate::impl_rules_validator_new!(TestQualityValidator, test_quality);
 
+impl TestQualityValidator {
     /// Create a validator with a custom configuration
     #[must_use]
     pub fn with_config(config: ValidationConfig, rules: &TestQualityRulesConfig) -> Self {
@@ -147,12 +144,10 @@ impl TestQualityValidator {
         let mut violations = Vec::new();
 
         // Regex patterns
-        let _ignore_pattern = compile_regex(r"#\[ignore\]")?;
         let test_pattern = compile_regex(r"#\[test\]|#\[tokio::test\]")?;
         let fn_pattern = compile_regex(r"fn\s+(\w+)")?;
         let empty_body_pattern = compile_regex(r"\{\s*\}")?;
         let stub_assert_pattern = compile_regex(r"assert!\(true\)|assert_eq!\(true,\s*true\)")?;
-        let _doc_comment_pattern = compile_regex(r"^\s*///")?;
 
         for_each_scan_file(
             &self.config,
@@ -173,7 +168,6 @@ impl TestQualityValidator {
                 Self::check_ignored_tests(
                     &entry.absolute_path,
                     &lines,
-                    &test_pattern,
                     &fn_pattern,
                     &mut violations,
                 );
@@ -209,7 +203,6 @@ impl TestQualityValidator {
     fn check_ignored_tests(
         file: &Path,
         lines: &[&str],
-        test_pattern: &Regex,
         fn_pattern: &Regex,
         violations: &mut Vec<TestQualityViolation>,
     ) {
@@ -226,9 +219,7 @@ impl TestQualityValidator {
 
                 if !has_justification {
                     // Find the test function name
-                    if let Some(test_name) =
-                        Self::find_test_name(lines, i, test_pattern, fn_pattern)
-                    {
+                    if let Some(test_name) = Self::find_test_name(lines, i, fn_pattern) {
                         violations.push(TestQualityViolation::IgnoreWithoutJustification {
                             file: file.to_path_buf(),
                             line: i + 1,
@@ -286,8 +277,8 @@ impl TestQualityValidator {
         for (i, line) in lines.iter().enumerate() {
             if test_pattern.is_match(line) {
                 // Find the function declaration
-                if let Some(fn_line_idx) =
-                    (i..i + 5).find(|&idx| idx < lines.len() && fn_pattern.is_match(lines[idx]))
+                if let Some(fn_line_idx) = (i..i + FORWARD_SEARCH_LINES)
+                    .find(|&idx| idx < lines.len() && fn_pattern.is_match(lines[idx]))
                 {
                     // Check if the function body is empty (just {})
                     if let Some(body_start) = (fn_line_idx..fn_line_idx + 3)
@@ -321,14 +312,12 @@ impl TestQualityValidator {
     ) {
         for (i, line) in lines.iter().enumerate() {
             if test_pattern.is_match(line) {
-                for offset in 0..20 {
+                for offset in 0..MAX_BLOCK_SEARCH_OFFSET {
                     if i + offset >= lines.len() {
                         break;
                     }
                     if stub_assert_pattern.is_match(lines[i + offset]) {
-                        if let Some(test_name) =
-                            Self::find_test_name(lines, i, test_pattern, fn_pattern)
-                        {
+                        if let Some(test_name) = Self::find_test_name(lines, i, fn_pattern) {
                             violations.push(TestQualityViolation::StubTestAssertion {
                                 file: file.to_path_buf(),
                                 line: i + offset + 1,
@@ -343,13 +332,8 @@ impl TestQualityValidator {
         }
     }
 
-    fn find_test_name(
-        lines: &[&str],
-        start_idx: usize,
-        _test_pattern: &Regex,
-        fn_pattern: &Regex,
-    ) -> Option<String> {
-        let end = std::cmp::min(start_idx + 5, lines.len());
+    fn find_test_name(lines: &[&str], start_idx: usize, fn_pattern: &Regex) -> Option<String> {
+        let end = std::cmp::min(start_idx + FORWARD_SEARCH_LINES, lines.len());
         for line in lines.iter().take(end).skip(start_idx) {
             if let Some(captures) = fn_pattern.captures(line)
                 && let Some(name) = captures.get(1)

@@ -46,8 +46,6 @@ impl SessionHandler {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
-        let _org_id = resolve_org_id(args.org_id.as_deref());
-
         match args.action {
             SessionAction::Create => create::create_session(&self.agent_service, &args).await,
             SessionAction::Get => get::get_session(&self.agent_service, &args).await,

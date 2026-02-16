@@ -125,8 +125,7 @@ macro_rules! define_shared_test_context {
                             Some(shared_fastembed_test_cache_dir());
                         $crate::di::bootstrap::init_app(config).await
                     });
-                    // Leak the runtime so background actors survive the test process.
-                    std::mem::forget(rt);
+                    let _rt = std::mem::ManuallyDrop::new(rt);
 
                     match result {
                         Ok(ctx) => Some(ctx),

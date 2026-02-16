@@ -176,7 +176,6 @@ impl TestService {
             0 => PortServiceState::Starting,
             1 => PortServiceState::Running,
             2 => PortServiceState::Stopping,
-            3 => PortServiceState::Stopped,
             _ => PortServiceState::Stopped,
         }
     }

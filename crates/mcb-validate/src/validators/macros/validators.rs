@@ -57,6 +57,23 @@ macro_rules! impl_rules_validator_new {
     };
 }
 
+/// Generates `new(workspace_root)` for validators that load `FileConfig` and pass
+/// only a rules sub-config to `with_config` (no `ValidationConfig`).
+///
+/// Use for validators that don't store `ValidationConfig` (Type C).
+#[macro_export]
+macro_rules! impl_config_only_validator_new {
+    ($struct_name:ident, $rules_field:ident) => {
+        impl $struct_name {
+            /// Create a new validator, loading configuration from files.
+            pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
+                let file_config = $crate::config::FileConfig::load(workspace_root);
+                Self::with_config(&file_config.rules.$rules_field)
+            }
+        }
+    };
+}
+
 /// Implements the `Validator` trait for validators exposing `validate_all()`.
 #[macro_export]
 macro_rules! impl_validator {

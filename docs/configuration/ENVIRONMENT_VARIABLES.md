@@ -357,10 +357,10 @@ export MCP_PROVIDERS__EMBEDDING__API_KEY=...
 
 ### Vector Store Provider
 
-#### In-Memory (Default, Single-Node)
+#### EdgeVec (Default, Single-Node)
 
 ```bash
-export MCP_PROVIDERS__VECTOR_STORE__PROVIDER=in-memory
+export MCP_PROVIDERS__VECTOR_STORE__PROVIDER=edgevec
 export MCP_PROVIDERS__VECTOR_STORE__DIMENSIONS=768
 ```
 

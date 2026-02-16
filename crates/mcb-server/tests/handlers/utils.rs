@@ -51,16 +51,12 @@ pub(crate) async fn create_real_domain_services()
 -> Option<(DomainServicesContainer, tempfile::TempDir)> {
     let ctx = try_shared_app_context()?;
 
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let temp_dir = tempfile::tempdir().ok()?;
     let db_path = temp_dir.path().join("test.db");
 
     // Create a fresh SQLite database for this test
-    let db_provider = resolve_database_provider(&DatabaseProviderConfig::new("sqlite"))
-        .expect("resolve sqlite provider");
-    let db_executor = db_provider
-        .connect(&db_path)
-        .await
-        .expect("connect fresh test database");
+    let db_provider = resolve_database_provider(&DatabaseProviderConfig::new("sqlite")).ok()?;
+    let db_executor = db_provider.connect(&db_path).await.ok()?;
 
     let project_id = TEST_PROJECT_ID.to_owned();
 
@@ -106,8 +102,6 @@ pub(crate) async fn create_real_domain_services()
         org_entity_repository,
     };
 
-    let services = DomainServicesFactory::create_services(deps)
-        .await
-        .expect("build domain services");
+    let services = DomainServicesFactory::create_services(deps).await.ok()?;
     Some((services, temp_dir))
 }

@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use crate::constants::common::{COMMENT_PREFIX, FN_PREFIX};
+use crate::constants::common::{ATTRIBUTE_PREFIX, COMMENT_PREFIX, FN_PREFIX};
 
 use super::FunctionInfo;
 
@@ -95,7 +95,7 @@ pub(super) fn extract_functions_with_body_impl(
             i32::try_from(trimmed.chars().filter(|c| *c == '}').count()).unwrap_or(i32::MAX);
         brace_depth += opens - closes;
 
-        if !trimmed.is_empty() && !trimmed.starts_with("#[") {
+        if !trimmed.is_empty() && !trimmed.starts_with(ATTRIBUTE_PREFIX) {
             fn_body_lines.push(trimmed.to_owned());
         }
 

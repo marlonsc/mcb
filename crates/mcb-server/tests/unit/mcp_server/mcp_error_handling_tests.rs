@@ -268,10 +268,12 @@ mod handler_error_tests {
 
     async fn create_handler() -> IndexHandler {
         let ctx = crate::shared_context::shared_app_context();
-        let services = ctx
-            .build_domain_services()
-            .await
-            .expect("build domain services");
+        let services_res = ctx.build_domain_services().await;
+        assert!(services_res.is_ok(), "build domain services");
+        let services = match services_res {
+            Ok(services) => services,
+            Err(_) => unreachable!(),
+        };
         IndexHandler::new(services.indexing_service)
     }
 

@@ -32,3 +32,30 @@ pub const TAG_QUALITY_GATE: &str = "quality_gate";
 
 /// JSON field: execution tag.
 pub const TAG_EXECUTION: &str = "execution";
+
+/// Response count field name.
+pub const FIELD_COUNT: &str = "count";
+
+/// Response results array field name.
+pub const FIELD_RESULTS: &str = "results";
+
+/// Search query echo field name.
+pub const FIELD_QUERY: &str = "query";
+
+/// Response items array field name.
+pub const FIELD_ITEMS: &str = "items";
+
+/// Updated flag field name.
+pub const FIELD_UPDATED: &str = "updated";
+
+/// Branch name field name.
+pub const FIELD_BRANCH: &str = "branch";
+
+/// Commit reference field name.
+pub const FIELD_COMMIT: &str = "commit";
+
+/// Sessions list field name.
+pub const FIELD_SESSIONS: &str = "sessions";
+
+/// Observations list field name.
+pub const FIELD_OBSERVATIONS: &str = "observations";

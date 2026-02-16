@@ -1,13 +1,15 @@
 use crate::filters::LanguageId;
 use std::path::PathBuf;
 
-use regex::Regex;
-
 use super::constants::{
     ATTR_REGEX, DI_MODULES_PATH, DOC_COMMENT_CAPTURE_REGEX, DOC_COMMENT_REGEX,
     EXAMPLE_SECTION_REGEX, ITEM_KIND_ENUM, ITEM_KIND_FUNCTION, ITEM_KIND_STRUCT, ITEM_KIND_TRAIT,
     MODULE_DOC_REGEX, MODULE_FILE_NAMES, PORTS_PATH, PUB_ENUM_REGEX, PUB_FN_REGEX,
     PUB_STRUCT_REGEX, PUB_TRAIT_REGEX,
+};
+use super::helpers::{
+    DocItemContext, DocRegexContext, MissingDocSpec, ScanLineContext, SimplePubItemSpec,
+    get_doc_comment_section, has_doc_comment,
 };
 use crate::define_violations;
 use crate::pattern_registry::compile_regex;
@@ -144,6 +146,16 @@ impl DocumentationValidator {
         let doc_comment_re = compile_regex(DOC_COMMENT_REGEX)?;
         let doc_comment_capture_re = compile_regex(DOC_COMMENT_CAPTURE_REGEX)?;
         let attr_re = compile_regex(ATTR_REGEX)?;
+        let simple_pub_item_specs = [
+            SimplePubItemSpec {
+                pattern: &pub_struct_pattern,
+                item_kind: ITEM_KIND_STRUCT,
+            },
+            SimplePubItemSpec {
+                pattern: &pub_enum_pattern,
+                item_kind: ITEM_KIND_ENUM,
+            },
+        ];
 
         for_each_crate_file(
             &self.config,
@@ -152,96 +164,58 @@ impl DocumentationValidator {
                 let path = &entry.absolute_path;
                 let content = std::fs::read_to_string(path)?;
                 let lines: Vec<&str> = content.lines().collect();
+                let path_str = path.to_str().unwrap_or_default();
+                let regex_ctx = DocRegexContext {
+                    doc_comment_re: &doc_comment_re,
+                    doc_comment_capture_re: &doc_comment_capture_re,
+                    attr_re: &attr_re,
+                    example_pattern: &example_pattern,
+                };
 
                 for (line_num, line) in lines.iter().enumerate() {
-                    // Check for public structs
-                    if let Some(cap) = pub_struct_pattern.captures(line) {
+                    let scan_ctx = ScanLineContext {
+                        path,
+                        lines: &lines,
+                        line_num,
+                        line,
+                    };
+                    Self::check_simple_public_item_docs(
+                        &mut violations,
+                        &scan_ctx,
+                        &simple_pub_item_specs,
+                        &regex_ctx,
+                    );
+
+                    if let Some(cap) = pub_trait_pattern.captures(scan_ctx.line) {
                         let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                        if !Self::has_doc_comment(&lines, line_num, &doc_comment_re, &attr_re) {
-                            violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: path.clone(),
-                                line: line_num + 1,
-                                item_name: name.to_owned(),
-                                item_kind: ITEM_KIND_STRUCT.to_owned(),
-                                severity: Severity::Warning,
-                            });
-                        }
+                        let item_ctx = Self::build_item_ctx(
+                            scan_ctx.path,
+                            scan_ctx.lines,
+                            scan_ctx.line_num,
+                            name,
+                        );
+                        Self::check_public_trait_docs(
+                            &mut violations,
+                            &item_ctx,
+                            path_str,
+                            &regex_ctx,
+                        );
                     }
 
-                    // Check for public enums
-                    if let Some(cap) = pub_enum_pattern.captures(line) {
+                    if let Some(cap) = pub_fn_pattern.captures(scan_ctx.line) {
                         let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                        if !Self::has_doc_comment(&lines, line_num, &doc_comment_re, &attr_re) {
-                            violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: path.clone(),
-                                line: line_num + 1,
-                                item_name: name.to_owned(),
-                                item_kind: ITEM_KIND_ENUM.to_owned(),
-                                severity: Severity::Warning,
-                            });
-                        }
-                    }
-
-                    // Check for public traits
-                    if let Some(cap) = pub_trait_pattern.captures(line) {
-                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                        let Some(path_str) = path.to_str() else {
-                            continue;
-                        };
-
-                        if Self::has_doc_comment(&lines, line_num, &doc_comment_re, &attr_re) {
-                            // Check for example code in trait documentation
-                            // Skip DI module traits and port traits - they are interface definitions
-                            // that don't need examples (they define contracts for DI injection)
-                            let is_di_or_port_trait =
-                                path_str.contains(DI_MODULES_PATH) || path_str.contains(PORTS_PATH);
-
-                            if !is_di_or_port_trait {
-                                let doc_section = Self::get_doc_comment_section(
-                                    &lines,
-                                    line_num,
-                                    &doc_comment_capture_re,
-                                    &attr_re,
-                                );
-                                if !example_pattern.is_match(&doc_section) {
-                                    violations.push(DocumentationViolation::MissingExampleCode {
-                                        file: path.clone(),
-                                        line: line_num + 1,
-                                        item_name: name.to_owned(),
-                                        item_kind: ITEM_KIND_TRAIT.to_owned(),
-                                        severity: Severity::Info,
-                                    });
-                                }
-                            }
-                        } else {
-                            violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: path.clone(),
-                                line: line_num + 1,
-                                item_name: name.to_owned(),
-                                item_kind: ITEM_KIND_TRAIT.to_owned(),
-                                severity: Severity::Warning,
-                            });
-                        }
-                    }
-
-                    // Check for public functions (only top-level, not in impl blocks)
-                    if let Some(cap) = pub_fn_pattern.captures(line) {
-                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-
-                        // Skip methods in impl blocks (approximation: indentation > 0)
-                        if line.starts_with("    ") || line.starts_with('\t') {
-                            continue;
-                        }
-
-                        if !Self::has_doc_comment(&lines, line_num, &doc_comment_re, &attr_re) {
-                            violations.push(DocumentationViolation::MissingPubItemDoc {
-                                file: path.clone(),
-                                line: line_num + 1,
-                                item_name: name.to_owned(),
-                                item_kind: ITEM_KIND_FUNCTION.to_owned(),
-                                severity: Severity::Info,
-                            });
-                        }
+                        let item_ctx = Self::build_item_ctx(
+                            scan_ctx.path,
+                            scan_ctx.lines,
+                            scan_ctx.line_num,
+                            name,
+                        );
+                        Self::check_public_function_docs(
+                            &mut violations,
+                            &item_ctx,
+                            scan_ctx.line,
+                            &regex_ctx,
+                        );
                     }
                 }
 
@@ -252,88 +226,138 @@ impl DocumentationValidator {
         Ok(violations)
     }
 
-    /// Checks if a line has a documentation comment above it.
-    ///
-    /// Looks backwards from the item line to find a `///` doc comment,
-    /// skipping attributes and empty lines.
-    fn has_doc_comment(lines: &[&str], item_line: usize, doc_re: &Regex, attr_re: &Regex) -> bool {
-        if item_line == 0 {
-            return false;
-        }
-
-        // Look backwards for doc comments, skipping attributes
-        let mut i = item_line - 1;
-        loop {
-            let line = lines[i].trim();
-
-            // Skip empty lines between attributes and doc comments
-            if line.is_empty() {
-                if i == 0 {
-                    return false;
-                }
-                i -= 1;
-                continue;
-            }
-
-            // Skip attributes
-            if attr_re.is_match(lines[i]) {
-                if i == 0 {
-                    return false;
-                }
-                i -= 1;
-                continue;
-            }
-
-            // Check for doc comment
-            return doc_re.is_match(lines[i]);
+    fn build_item_ctx<'a>(
+        path: &'a std::path::Path,
+        lines: &'a [&'a str],
+        line_num: usize,
+        item_name: &'a str,
+    ) -> DocItemContext<'a> {
+        DocItemContext {
+            path,
+            lines,
+            line_num,
+            item_name,
         }
     }
 
-    /// Extracts the complete documentation comment section for an item.
-    ///
-    /// Collects all consecutive `///` lines above the item, skipping attributes,
-    /// and returns them as a single string for analysis.
-    fn get_doc_comment_section(
-        lines: &[&str],
-        item_line: usize,
-        doc_capture_re: &Regex,
-        attr_re: &Regex,
-    ) -> String {
-        if item_line == 0 {
-            return String::new();
-        }
-
-        let mut doc_lines = Vec::new();
-        let mut i = item_line - 1;
-
-        loop {
-            let line = lines[i];
-
-            // Skip attributes
-            if attr_re.is_match(line) {
-                if i == 0 {
-                    break;
-                }
-                i -= 1;
+    fn check_simple_public_item_docs(
+        violations: &mut Vec<DocumentationViolation>,
+        scan_ctx: &ScanLineContext<'_>,
+        specs: &[SimplePubItemSpec<'_>],
+        regex_ctx: &DocRegexContext<'_>,
+    ) {
+        for spec in specs {
+            let Some(cap) = spec.pattern.captures(scan_ctx.line) else {
                 continue;
-            }
+            };
 
-            // Collect doc comment
-            if let Some(cap) = doc_capture_re.captures(line) {
-                let content = cap.get(1).map_or("", |m| m.as_str());
-                doc_lines.push(content);
-            } else if !line.trim().is_empty() {
-                break;
-            }
+            let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
+            let item_ctx =
+                Self::build_item_ctx(scan_ctx.path, scan_ctx.lines, scan_ctx.line_num, name);
+            Self::push_missing_pub_item_doc_if_needed(
+                violations,
+                &item_ctx,
+                &MissingDocSpec {
+                    item_kind: spec.item_kind,
+                    severity: Severity::Warning,
+                },
+                regex_ctx,
+            );
+        }
+    }
 
-            if i == 0 {
-                break;
-            }
-            i -= 1;
+    fn push_missing_pub_item_doc_if_needed(
+        violations: &mut Vec<DocumentationViolation>,
+        item_ctx: &DocItemContext<'_>,
+        spec: &MissingDocSpec<'_>,
+        regex_ctx: &DocRegexContext<'_>,
+    ) {
+        if has_doc_comment(
+            item_ctx.lines,
+            item_ctx.line_num,
+            regex_ctx.doc_comment_re,
+            regex_ctx.attr_re,
+        ) {
+            return;
         }
 
-        doc_lines.reverse();
-        doc_lines.join("\n")
+        violations.push(DocumentationViolation::MissingPubItemDoc {
+            file: item_ctx.path.to_path_buf(),
+            line: item_ctx.line_num + 1,
+            item_name: item_ctx.item_name.to_owned(),
+            item_kind: spec.item_kind.to_owned(),
+            severity: spec.severity,
+        });
+    }
+
+    fn check_public_trait_docs(
+        violations: &mut Vec<DocumentationViolation>,
+        item_ctx: &DocItemContext<'_>,
+        path_str: &str,
+        regex_ctx: &DocRegexContext<'_>,
+    ) {
+        if !has_doc_comment(
+            item_ctx.lines,
+            item_ctx.line_num,
+            regex_ctx.doc_comment_re,
+            regex_ctx.attr_re,
+        ) {
+            Self::push_missing_pub_item_doc_if_needed(
+                violations,
+                item_ctx,
+                &MissingDocSpec {
+                    item_kind: ITEM_KIND_TRAIT,
+                    severity: Severity::Warning,
+                },
+                regex_ctx,
+            );
+            return;
+        }
+
+        let is_di_or_port_trait =
+            path_str.contains(DI_MODULES_PATH) || path_str.contains(PORTS_PATH);
+        if is_di_or_port_trait {
+            return;
+        }
+
+        let doc_section = get_doc_comment_section(
+            item_ctx.lines,
+            item_ctx.line_num,
+            regex_ctx.doc_comment_capture_re,
+            regex_ctx.attr_re,
+        );
+        if regex_ctx.example_pattern.is_match(&doc_section) {
+            return;
+        }
+
+        violations.push(DocumentationViolation::MissingExampleCode {
+            file: item_ctx.path.to_path_buf(),
+            line: item_ctx.line_num + 1,
+            item_name: item_ctx.item_name.to_owned(),
+            item_kind: ITEM_KIND_TRAIT.to_owned(),
+            severity: Severity::Info,
+        });
+    }
+
+    fn check_public_function_docs(
+        violations: &mut Vec<DocumentationViolation>,
+        item_ctx: &DocItemContext<'_>,
+        line: &str,
+        regex_ctx: &DocRegexContext<'_>,
+    ) {
+        if line.starts_with("    ") || line.starts_with('\t') {
+            return;
+        }
+
+        Self::push_missing_pub_item_doc_if_needed(
+            violations,
+            item_ctx,
+            &MissingDocSpec {
+                item_kind: ITEM_KIND_FUNCTION,
+                severity: Severity::Info,
+            },
+            regex_ctx,
+        );
     }
 }
 

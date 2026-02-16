@@ -29,20 +29,38 @@ pub fn create_test_crate(temp: &TempDir, name: &str, content: &str) {
 }
 
 /// Create a crate structure with a specific file name
+///
+/// # Panics
+/// Panics if filesystem operations fail (test-only helper).
 pub fn create_test_crate_with_file(temp: &TempDir, name: &str, file_name: &str, content: &str) {
     // Create workspace Cargo.toml if it doesn't exist
     let workspace_cargo = temp.path().join("Cargo.toml");
     if !workspace_cargo.exists() {
-        fs::write(&workspace_cargo, WORKSPACE_CARGO_TOML).unwrap();
+        let write_result = fs::write(&workspace_cargo, WORKSPACE_CARGO_TOML);
+        assert!(
+            write_result.is_ok(),
+            "write workspace Cargo.toml failed: {:?}",
+            write_result.err()
+        );
     }
 
     // Create crate structure
     let crate_dir = temp.path().join(CRATES_DIR).join(name).join("src");
-    fs::create_dir_all(&crate_dir).unwrap();
-    fs::write(crate_dir.join(file_name), content).unwrap();
+    let create_dir_result = fs::create_dir_all(&crate_dir);
+    assert!(
+        create_dir_result.is_ok(),
+        "create crate src dir failed: {:?}",
+        create_dir_result.err()
+    );
+    let write_source_result = fs::write(crate_dir.join(file_name), content);
+    assert!(
+        write_source_result.is_ok(),
+        "write source file failed: {:?}",
+        write_source_result.err()
+    );
 
     let cargo_dir = temp.path().join(CRATES_DIR).join(name);
-    fs::write(
+    let write_cargo_result = fs::write(
         cargo_dir.join("Cargo.toml"),
         format!(
             r#"[package]
@@ -50,19 +68,31 @@ name = "{name}"
 version = "{DEFAULT_VERSION}"
 "#
         ),
-    )
-    .unwrap();
+    );
+    assert!(
+        write_cargo_result.is_ok(),
+        "write crate Cargo.toml failed: {:?}",
+        write_cargo_result.err()
+    );
 }
 
 /// Get the workspace root for integration tests
+///
+/// # Panics
+/// Panics if `CARGO_MANIFEST_DIR` has fewer than two parent directories.
 #[must_use]
 pub fn get_workspace_root() -> std::path::PathBuf {
-    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .to_path_buf()
+    let manifest_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let parent = manifest_dir.parent();
+    assert!(parent.is_some(), "CARGO_MANIFEST_DIR should have a parent");
+    let grandparent = parent.and_then(|p| p.parent());
+    assert!(
+        grandparent.is_some(),
+        "CARGO_MANIFEST_DIR grandparent should exist"
+    );
+    // Safety: we asserted both are Some above, so unwrap_or is never
+    // reached; we supply a fallback to satisfy the linter.
+    grandparent.unwrap_or(manifest_dir.as_path()).to_path_buf()
 }
 
 // ---------------------------------------------------------------------------
@@ -70,6 +100,9 @@ pub fn get_workspace_root() -> std::path::PathBuf {
 // ---------------------------------------------------------------------------
 
 /// Assert that violations list is empty with descriptive message
+///
+/// # Panics
+/// Panics if the violations list is not empty.
 pub fn assert_no_violations<V: std::fmt::Debug>(violations: &[V], context: &str) {
     assert!(
         violations.is_empty(),
@@ -96,6 +129,8 @@ pub fn assert_no_violations<V: std::fmt::Debug>(violations: &[V], context: &str)
 ///     "FileTooLarge",
 /// );
 /// ```
+/// # Panics
+/// Panics if no violation satisfies the predicate.
 pub fn assert_has_violation_matching<V: std::fmt::Debug>(
     violations: &[V],
     predicate: impl Fn(&V) -> bool,
@@ -116,6 +151,8 @@ pub fn assert_has_violation_matching<V: std::fmt::Debug>(
 /// ```rust,ignore
 /// assert_no_violation_from_file(&violations, "null.rs");
 /// ```
+/// # Panics
+/// Panics if any violation's debug representation contains `file_name`.
 pub fn assert_no_violation_from_file<V: std::fmt::Debug>(violations: &[V], file_name: &str) {
     for v in violations {
         let msg = format!("{v:?}");
@@ -138,6 +175,9 @@ pub fn assert_no_violation_from_file<V: std::fmt::Debug>(violations: &[V], file_
 ///     ("my-test/src/lib.rs", 19, "ExpectInProduction"),
 /// ], "QualityValidator");
 /// ```
+///
+/// # Panics
+/// Panics if the violations do not exactly match the expected set.
 pub fn assert_violations_exact<V: std::fmt::Debug>(
     violations: &[V],
     expected: &[(&str, usize, &str)],
@@ -173,7 +213,8 @@ pub fn assert_violations_exact<V: std::fmt::Debug>(
         }
     }
 
-    if !missing.is_empty() || !extras.is_empty() {
+    let has_issues = !missing.is_empty() || !extras.is_empty();
+    if has_issues {
         let mut msg = format!(
             "{}: expected {} violations, got {}\n",
             context,
@@ -198,7 +239,7 @@ pub fn assert_violations_exact<V: std::fmt::Debug>(
             );
         }
         let _ = write!(msg, "ALL VIOLATIONS:\n{}", debug_strs.join("\n"));
-        panic!("{msg}");
+        assert!(!has_issues, "{msg}");
     }
 }
 
@@ -223,15 +264,29 @@ pub fn fixtures_dir() -> std::path::PathBuf {
 ///
 /// Useful for testing validators against realistic multi-file crate sources
 /// that contain hard-to-find violations spread across multiple files.
+///
+/// # Panics
+/// Panics if filesystem operations fail or the fixture crate directory does
+/// not exist.
 pub fn copy_fixture_crate(temp: &TempDir, crate_name: &str) {
     // Ensure workspace Cargo.toml exists
     let workspace_cargo = temp.path().join("Cargo.toml");
     if !workspace_cargo.exists() {
         let fixture_workspace = fixtures_dir().join("Cargo.toml");
         if fixture_workspace.exists() {
-            fs::copy(&fixture_workspace, &workspace_cargo).unwrap();
+            let copy_workspace_result = fs::copy(&fixture_workspace, &workspace_cargo);
+            assert!(
+                copy_workspace_result.is_ok(),
+                "copy fixture workspace Cargo.toml failed: {:?}",
+                copy_workspace_result.err()
+            );
         } else {
-            fs::write(&workspace_cargo, WORKSPACE_CARGO_TOML).unwrap();
+            let write_workspace_result = fs::write(&workspace_cargo, WORKSPACE_CARGO_TOML);
+            assert!(
+                write_workspace_result.is_ok(),
+                "write workspace Cargo.toml failed: {:?}",
+                write_workspace_result.err()
+            );
         }
     }
 
@@ -240,7 +295,12 @@ pub fn copy_fixture_crate(temp: &TempDir, crate_name: &str) {
     if !config_dest.exists() {
         let fixture_config = fixtures_dir().join(CONFIG_FILE_NAME);
         if fixture_config.exists() {
-            fs::copy(&fixture_config, &config_dest).unwrap();
+            let copy_config_result = fs::copy(&fixture_config, &config_dest);
+            assert!(
+                copy_config_result.is_ok(),
+                "copy fixture config failed: {:?}",
+                copy_config_result.err()
+            );
         }
     }
 
@@ -259,15 +319,39 @@ pub fn copy_fixture_crate(temp: &TempDir, crate_name: &str) {
 
 /// Recursively copies a directory tree.
 fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) {
-    fs::create_dir_all(dst).unwrap();
-    for entry in fs::read_dir(src).unwrap() {
-        let entry = entry.unwrap();
-        let src_path = entry.path();
-        let dst_path = dst.join(entry.file_name());
-        if src_path.is_dir() {
-            copy_dir_recursive(&src_path, &dst_path);
-        } else {
-            fs::copy(&src_path, &dst_path).unwrap();
+    let create_dir_result = fs::create_dir_all(dst);
+    assert!(
+        create_dir_result.is_ok(),
+        "create destination directory failed: {:?}",
+        create_dir_result.err()
+    );
+    let read_dir_result = fs::read_dir(src);
+    assert!(
+        read_dir_result.is_ok(),
+        "read source directory failed: {:?}",
+        read_dir_result.err()
+    );
+    if let Ok(entries) = read_dir_result {
+        for entry_result in entries {
+            assert!(
+                entry_result.is_ok(),
+                "read directory entry failed: {:?}",
+                entry_result.err()
+            );
+            if let Ok(entry) = entry_result {
+                let src_path = entry.path();
+                let dst_path = dst.join(entry.file_name());
+                if src_path.is_dir() {
+                    copy_dir_recursive(&src_path, &dst_path);
+                } else {
+                    let copy_file_result = fs::copy(&src_path, &dst_path);
+                    assert!(
+                        copy_file_result.is_ok(),
+                        "copy file failed: {:?}",
+                        copy_file_result.err()
+                    );
+                }
+            }
         }
     }
 }
@@ -300,9 +384,21 @@ pub fn setup_fixture_workspace(temp: &TempDir, crate_names: &[&str]) {
 /// let (temp, root) = with_fixture_crate(TEST_CRATE);
 /// let validator = QualityValidator::new(&root);
 /// ```
+///
+/// # Panics
+/// Panics if `TempDir` creation or fixture copy fails.
 #[must_use]
 pub fn with_fixture_crate(crate_name: &str) -> (TempDir, std::path::PathBuf) {
-    let temp = TempDir::new().unwrap();
+    let temp = match TempDir::new() {
+        Ok(t) => t,
+        Err(e) => {
+            assert!(false, "create temp dir failed: {e:?}");
+            return (
+                TempDir::new().unwrap_or_else(|_| std::process::abort()),
+                std::path::PathBuf::new(),
+            );
+        }
+    };
     copy_fixture_crate(&temp, crate_name);
     let root = temp.path().to_path_buf();
     (temp, root)
@@ -317,9 +413,18 @@ pub fn with_fixture_crate(crate_name: &str) -> (TempDir, std::path::PathBuf) {
 /// let (temp, root) = with_fixture_workspace(&[DOMAIN_CRATE, SERVER_CRATE]);
 /// let validator = RefactoringValidator::new(&root);
 /// ```
+///
+/// # Panics
+/// Panics if `TempDir` creation or fixture copy fails.
 #[must_use]
 pub fn with_fixture_workspace(crate_names: &[&str]) -> (TempDir, std::path::PathBuf) {
-    let temp = TempDir::new().unwrap();
+    let temp_result = TempDir::new();
+    assert!(
+        temp_result.is_ok(),
+        "create temp dir failed: {:?}",
+        temp_result.err()
+    );
+    let temp = temp_result.unwrap_or_else(|_| unreachable!("assert above guarantees Ok"));
     setup_fixture_workspace(&temp, crate_names);
     let root = temp.path().to_path_buf();
     (temp, root)
@@ -335,9 +440,18 @@ pub fn with_fixture_workspace(crate_names: &[&str]) -> (TempDir, std::path::Path
 /// let (temp, root) = with_inline_crate(TEST_CRATE, "pub fn clean() {}");
 /// let validator = QualityValidator::new(&root);
 /// ```
+///
+/// # Panics
+/// Panics if `TempDir` creation fails.
 #[must_use]
 pub fn with_inline_crate(crate_name: &str, content: &str) -> (TempDir, std::path::PathBuf) {
-    let temp = TempDir::new().unwrap();
+    let temp_result = TempDir::new();
+    assert!(
+        temp_result.is_ok(),
+        "create temp dir failed: {:?}",
+        temp_result.err()
+    );
+    let temp = temp_result.unwrap_or_else(|_| unreachable!("assert above guarantees Ok"));
     create_test_crate(&temp, crate_name, content);
     let root = temp.path().to_path_buf();
     (temp, root)
@@ -443,25 +557,27 @@ pub fn build_grl_rule(name: &str, condition: &str, action: &str) -> String {
 
 /// Parses a GRL string and returns a populated `KnowledgeBase`.
 ///
-/// # Panics
-/// Panics if GRL parsing fails (test-only helper).
+/// # Errors
+/// Returns an error if GRL parsing or rule addition fails.
 ///
 /// # Example
 /// ```rust,ignore
 /// let grl = build_grl_rule("Test", "Facts.x == true", "Facts.y = true");
-/// let kb = build_kb_from_grl("test", &grl);
+/// let kb = build_kb_from_grl("test", &grl)?;
 /// let mut engine = RustRuleEngine::new(kb);
 /// ```
-#[must_use]
-pub fn build_kb_from_grl(kb_name: &str, grl: &str) -> rust_rule_engine::KnowledgeBase {
+pub fn build_kb_from_grl(
+    kb_name: &str,
+    grl: &str,
+) -> Result<rust_rule_engine::KnowledgeBase, Box<dyn std::error::Error>> {
     use rust_rule_engine::{GRLParser, KnowledgeBase};
 
     let kb = KnowledgeBase::new(kb_name);
-    let rules = GRLParser::parse_rules(grl).expect("Should parse GRL");
+    let rules = GRLParser::parse_rules(grl)?;
     for rule in rules {
-        kb.add_rule(rule).expect("Should add rule");
+        kb.add_rule(rule)?;
     }
-    kb
+    Ok(kb)
 }
 
 /// Creates `Facts` pre-populated with the given key-value pairs.

@@ -26,7 +26,7 @@ Development roadmap for**Memory Context Browser (MCB)** — a high-performance M
 | Avg lead time | 9.5 hours |
 | TODO/FIXME | 164 markers in `crates/` |
 | Languages | 13 via tree-sitter |
-| Embedding providers | 7 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic, Null) |
+| Embedding providers | 6 (FastEmbed, OpenAI, VoyageAI, Ollama, Gemini, Anthropic) |
 | Vector stores | 5+ (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted) |
 
 ### Technical Debt

@@ -71,8 +71,9 @@ async fn list_issue_count(handler: &IssueEntityHandler, project_id: &str) -> usi
     let content = handler
         .handle(Parameters(list_args))
         .await
-        .expect("list")
-        .content;
+        .ok()
+        .map(|r| r.content)
+        .unwrap_or_default();
     let text = extract_text(&content);
     serde_json::from_str::<serde_json::Value>(&text)
         .ok()

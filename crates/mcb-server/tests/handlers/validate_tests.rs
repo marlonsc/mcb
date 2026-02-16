@@ -9,17 +9,17 @@ use tempfile::TempDir;
 
 use crate::handlers::utils::create_real_domain_services;
 
-fn create_temp_file() -> (TempDir, PathBuf) {
-    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+fn create_temp_file() -> Result<(TempDir, PathBuf), std::io::Error> {
+    let temp_dir = TempDir::new()?;
     let file_path = temp_dir.path().join("test.rs");
-    fs::write(&file_path, "fn main() { println!(\"test\"); }").expect("Failed to write file");
-    (temp_dir, file_path)
+    fs::write(&file_path, "fn main() { println!(\"test\"); }")?;
+    Ok((temp_dir, file_path))
 }
 
-fn create_temp_dir() -> (TempDir, PathBuf) {
-    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+fn create_temp_dir() -> Result<(TempDir, PathBuf), std::io::Error> {
+    let temp_dir = TempDir::new()?;
     let dir_path = temp_dir.path().to_path_buf();
-    (temp_dir, dir_path)
+    Ok((temp_dir, dir_path))
 }
 
 /// Macro to generate validation handler tests with common setup and assertions.
@@ -53,10 +53,10 @@ macro_rules! validate_test {
 
     ($test_name:ident, $action:expr, $path_expr:expr, $(scope: $scope:expr,)? $(rules: $rules:expr,)? $(category: $category:expr,)? expect_ok) => {
         #[tokio::test]
-        async fn $test_name() {
-            let (_temp_dir, path) = $path_expr;
+        async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
+            let (_temp_dir, path) = $path_expr?;
             let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
-                return;
+                return Ok(());
             };
             let handler = ValidateHandler::new(services.validation_service);
 
@@ -70,16 +70,17 @@ macro_rules! validate_test {
 
             let result = handler.handle(Parameters(args)).await;
             assert!(result.is_ok());
-            let response = result.expect("Expected successful response");
+            let response = result?;
             assert!(!response.is_error.unwrap_or(false));
+            Ok(())
         }
     };
 
     ($test_name:ident, $action:expr, path: $path:expr, $(scope: $scope:expr,)? expect_error) => {
         #[tokio::test]
-        async fn $test_name() {
+        async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
             let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
-                return;
+                return Ok(());
             };
             let handler = ValidateHandler::new(services.validation_service);
 
@@ -93,17 +94,18 @@ macro_rules! validate_test {
 
             let result = handler.handle(Parameters(args)).await;
             assert!(result.is_ok());
-            let response = result.expect("Expected response");
+            let response = result?;
             assert!(response.is_error.unwrap_or(false), "Should return error");
+            Ok(())
         }
     };
 
     ($test_name:ident, $action:expr, $path_expr:expr, expect_error) => {
         #[tokio::test]
-        async fn $test_name() {
-            let (_temp_dir, path) = $path_expr;
+        async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
+            let (_temp_dir, path) = $path_expr?;
             let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
-                return;
+                return Ok(());
             };
             let handler = ValidateHandler::new(services.validation_service);
 
@@ -117,8 +119,9 @@ macro_rules! validate_test {
 
             let result = handler.handle(Parameters(args)).await;
             assert!(result.is_ok());
-            let response = result.expect("Expected response");
+            let response = result?;
             assert!(response.is_error.unwrap_or(false), "Should return error");
+            Ok(())
         }
     };
 }
@@ -168,10 +171,10 @@ validate_test!(
 );
 
 #[tokio::test]
-async fn test_validate_run_with_specific_rules() {
-    let (_temp_dir, path) = create_temp_file();
+async fn test_validate_run_with_specific_rules() -> Result<(), Box<dyn std::error::Error>> {
+    let (_temp_dir, path) = create_temp_file()?;
     let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
-        return;
+        return Ok(());
     };
     let handler = ValidateHandler::new(services.validation_service);
 
@@ -185,17 +188,20 @@ async fn test_validate_run_with_specific_rules() {
 
     let result = handler.handle(Parameters(args)).await;
     assert!(result.is_ok());
-    let response = result.expect("Expected response");
+    let response = result?;
     assert!(response.is_error.unwrap_or(false), "Should return error");
+    Ok(())
 }
 
 #[rstest]
 #[case(None)]
 #[case(Some("style".to_owned()))]
 #[tokio::test]
-async fn test_validate_list_rules(#[case] category: Option<String>) {
+async fn test_validate_list_rules(
+    #[case] category: Option<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
-        return;
+        return Ok(());
     };
     let handler = ValidateHandler::new(services.validation_service);
 
@@ -210,8 +216,9 @@ async fn test_validate_list_rules(#[case] category: Option<String>) {
     let result = handler.handle(Parameters(args)).await;
 
     assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
+    let response = result?;
     assert!(!response.is_error.unwrap_or(false));
+    Ok(())
 }
 
 validate_test!(

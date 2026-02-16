@@ -4,8 +4,10 @@ use mcb_validate::{DependencyValidator, DependencyViolation};
 use rstest::*;
 use tempfile::TempDir;
 
-fn create_test_workspace() -> TempDir {
-    let temp = TempDir::new().unwrap();
+type TestResult = Result<(), Box<dyn std::error::Error>>;
+
+fn create_test_workspace() -> Result<TempDir, Box<dyn std::error::Error>> {
+    let temp = TempDir::new()?;
 
     fs::write(
         temp.path().join("Cargo.toml"),
@@ -13,11 +15,10 @@ fn create_test_workspace() -> TempDir {
 [workspace]
 members = ["crates/mcb-domain", "crates/mcb-infrastructure"]
 "#,
-    )
-    .unwrap();
+    )?;
 
     let domain_dir = temp.path().join("crates/mcb-domain");
-    fs::create_dir_all(domain_dir.join("src")).unwrap();
+    fs::create_dir_all(domain_dir.join("src"))?;
     fs::write(
         domain_dir.join("Cargo.toml"),
         r#"
@@ -28,12 +29,11 @@ version = "0.1.1"
 [dependencies]
 serde = "1.0"
 "#,
-    )
-    .unwrap();
-    fs::write(domain_dir.join("src/lib.rs"), "pub fn domain() {}").unwrap();
+    )?;
+    fs::write(domain_dir.join("src/lib.rs"), "pub fn domain() {}")?;
 
     let infra_dir = temp.path().join("crates/mcb-infrastructure");
-    fs::create_dir_all(infra_dir.join("src")).unwrap();
+    fs::create_dir_all(infra_dir.join("src"))?;
     fs::write(
         infra_dir.join("Cargo.toml"),
         r#"
@@ -44,35 +44,34 @@ version = "0.1.1"
 [dependencies]
 mcb-domain = { path = "../mcb-domain" }
 "#,
-    )
-    .unwrap();
+    )?;
     fs::write(
         infra_dir.join("src/lib.rs"),
         "use mcb_domain::domain;\npub fn infra() { domain(); }",
-    )
-    .unwrap();
+    )?;
 
-    temp
+    Ok(temp)
 }
 
 #[rstest]
-fn test_valid_dependencies() {
-    let temp = create_test_workspace();
+fn test_valid_dependencies() -> TestResult {
+    let temp = create_test_workspace()?;
     let validator = DependencyValidator::new(temp.path());
 
-    let violations = validator.validate_cargo_dependencies().unwrap();
+    let violations = validator.validate_cargo_dependencies()?;
     assert!(
         violations.is_empty(),
         "Expected no violations, got: {violations:?}"
     );
+    Ok(())
 }
 
 #[rstest]
-fn test_forbidden_dependency() {
-    let temp = TempDir::new().unwrap();
+fn test_forbidden_dependency() -> TestResult {
+    let temp = TempDir::new()?;
 
     let domain_dir = temp.path().join("crates/mcb-domain");
-    fs::create_dir_all(domain_dir.join("src")).unwrap();
+    fs::create_dir_all(domain_dir.join("src"))?;
     fs::write(
         domain_dir.join("Cargo.toml"),
         r#"
@@ -83,15 +82,15 @@ version = "0.1.1"
 [dependencies]
 mcb-infrastructure = { path = "../mcb-infrastructure" }
 "#,
-    )
-    .unwrap();
-    fs::write(domain_dir.join("src/lib.rs"), "").unwrap();
+    )?;
+    fs::write(domain_dir.join("src/lib.rs"), "")?;
 
     let validator = DependencyValidator::new(temp.path());
-    let violations = validator.validate_cargo_dependencies().unwrap();
+    let violations = validator.validate_cargo_dependencies()?;
 
     assert_eq!(violations.len(), 1);
-    match &violations[0] {
+    let violation = &violations[0];
+    match violation {
         DependencyViolation::ForbiddenCargoDepedency {
             crate_name,
             forbidden_dep,
@@ -100,16 +99,22 @@ mcb-infrastructure = { path = "../mcb-infrastructure" }
             assert_eq!(crate_name, "mcb-domain");
             assert_eq!(forbidden_dep, "mcb-infrastructure");
         }
-        _ => panic!("Expected ForbiddenCargoDependency"),
+        DependencyViolation::ForbiddenUseStatement { .. }
+        | DependencyViolation::CircularDependency { .. }
+        | DependencyViolation::AdminBypassImport { .. }
+        | DependencyViolation::CliBypassPath { .. } => {
+            return Err(format!("Expected ForbiddenCargoDependency, got {violation:?}").into());
+        }
     }
+    Ok(())
 }
 
 #[rstest]
-fn test_forbidden_use_statement() {
-    let temp = TempDir::new().unwrap();
+fn test_forbidden_use_statement() -> TestResult {
+    let temp = TempDir::new()?;
 
     let domain_dir = temp.path().join("crates/mcb-domain");
-    fs::create_dir_all(domain_dir.join("src")).unwrap();
+    fs::create_dir_all(domain_dir.join("src"))?;
     fs::write(
         domain_dir.join("Cargo.toml"),
         r#"
@@ -117,19 +122,18 @@ fn test_forbidden_use_statement() {
 name = "mcb-domain"
 version = "0.1.1"
 "#,
-    )
-    .unwrap();
+    )?;
     fs::write(
         domain_dir.join("src/lib.rs"),
         "use mcb_infrastructure::something;",
-    )
-    .unwrap();
+    )?;
 
     let validator = DependencyValidator::new(temp.path());
-    let violations = validator.validate_use_statements().unwrap();
+    let violations = validator.validate_use_statements()?;
 
     assert_eq!(violations.len(), 1);
-    match &violations[0] {
+    let violation = &violations[0];
+    match violation {
         DependencyViolation::ForbiddenUseStatement {
             crate_name,
             forbidden_dep,
@@ -138,31 +142,35 @@ version = "0.1.1"
             assert_eq!(crate_name, "mcb-domain");
             assert_eq!(forbidden_dep, "mcb-infrastructure");
         }
-        _ => panic!("Expected ForbiddenUseStatement"),
+        DependencyViolation::ForbiddenCargoDepedency { .. }
+        | DependencyViolation::CircularDependency { .. }
+        | DependencyViolation::AdminBypassImport { .. }
+        | DependencyViolation::CliBypassPath { .. } => {
+            return Err(format!("Expected ForbiddenUseStatement, got {violation:?}").into());
+        }
     }
+    Ok(())
 }
 
 #[rstest]
-fn test_admin_bypass_boundary_blocks_non_allowlisted_imports() {
-    let temp = TempDir::new().unwrap();
+fn test_admin_bypass_boundary_blocks_non_allowlisted_imports() -> TestResult {
+    let temp = TempDir::new()?;
     let admin_web = temp.path().join("crates/mcb-server/src/admin/web");
-    fs::create_dir_all(&admin_web).unwrap();
+    fs::create_dir_all(&admin_web)?;
     fs::write(
         admin_web.join("entity_handlers.rs"),
         "use mcb_domain::ports::repositories::OrgEntityRepository;",
-    )
-    .unwrap();
+    )?;
 
     let admin_allowed = temp.path().join("crates/mcb-server/src/admin");
-    fs::create_dir_all(&admin_allowed).unwrap();
+    fs::create_dir_all(&admin_allowed)?;
     fs::write(
         admin_allowed.join("crud_adapter.rs"),
         "use mcb_domain::ports::repositories::OrgEntityRepository;",
-    )
-    .unwrap();
+    )?;
 
     let config_dir = temp.path().join("config");
-    fs::create_dir_all(&config_dir).unwrap();
+    fs::create_dir_all(&config_dir)?;
     fs::write(
         config_dir.join("mcb-validate-internal.toml"),
         r#"
@@ -175,37 +183,35 @@ allowed_files = [
     "crates/mcb-server/src/admin/handlers.rs",
 ]
 "#,
-    )
-    .unwrap();
+    )?;
 
     let validator = DependencyValidator::new(temp.path());
-    let violations = validator.validate_bypass_boundaries().unwrap();
+    let violations = validator.validate_bypass_boundaries()?;
 
     assert_eq!(violations.len(), 1);
     assert!(matches!(
         &violations[0],
         DependencyViolation::AdminBypassImport { .. }
     ));
+    Ok(())
 }
 
 #[rstest]
-fn test_cli_bypass_boundary_blocks_non_allowlisted_direct_validate_usage() {
-    let temp = TempDir::new().unwrap();
+fn test_cli_bypass_boundary_blocks_non_allowlisted_direct_validate_usage() -> TestResult {
+    let temp = TempDir::new()?;
     let cli_dir = temp.path().join("crates/mcb/src/cli");
-    fs::create_dir_all(&cli_dir).unwrap();
+    fs::create_dir_all(&cli_dir)?;
     fs::write(
         cli_dir.join("lint.rs"),
         "use mcb_validate::ValidationConfig;",
-    )
-    .unwrap();
+    )?;
     fs::write(
         cli_dir.join("validate.rs"),
         "use mcb_validate::ValidationConfig;",
-    )
-    .unwrap();
+    )?;
 
     let config_dir = temp.path().join("config");
-    fs::create_dir_all(&config_dir).unwrap();
+    fs::create_dir_all(&config_dir)?;
     fs::write(
         config_dir.join("mcb-validate-internal.toml"),
         r#"
@@ -215,15 +221,15 @@ scan_root = "crates/mcb/src/cli"
 pattern = "mcb_validate::"
 allowed_files = ["crates/mcb/src/cli/validate.rs"]
 "#,
-    )
-    .unwrap();
+    )?;
 
     let validator = DependencyValidator::new(temp.path());
-    let violations = validator.validate_bypass_boundaries().unwrap();
+    let violations = validator.validate_bypass_boundaries()?;
 
     assert_eq!(violations.len(), 1);
     assert!(matches!(
         &violations[0],
         DependencyViolation::CliBypassPath { .. }
     ));
+    Ok(())
 }

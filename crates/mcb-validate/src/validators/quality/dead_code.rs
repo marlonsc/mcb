@@ -1,5 +1,5 @@
 use super::{QualityValidator, QualityViolation};
-use crate::constants::common::TEST_DIR_FRAGMENT;
+use crate::constants::common::{FORWARD_SEARCH_LINES, TEST_DIR_FRAGMENT};
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
@@ -68,7 +68,7 @@ fn find_dead_code_item(
     fn_pattern: &Regex,
     field_pattern: &Regex,
 ) -> Option<String> {
-    let end = std::cmp::min(start_idx + 5, lines.len());
+    let end = std::cmp::min(start_idx + FORWARD_SEARCH_LINES, lines.len());
     for line in lines.iter().take(end).skip(start_idx) {
         if let Some(name) = struct_pattern.captures(line).and_then(|c| c.get(1)) {
             return Some(format!("struct {}", name.as_str()));

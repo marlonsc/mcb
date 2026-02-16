@@ -7,28 +7,28 @@ use std::fs;
 use mcb_domain::ports::services::ValidationServiceInterface;
 use mcb_infrastructure::validation::InfraValidationService;
 
-fn get_workspace_root() -> PathBuf {
+fn get_workspace_root() -> Result<PathBuf, Box<dyn std::error::Error>> {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .to_path_buf()
+        .and_then(|p| p.parent())
+        .map(|p| p.to_path_buf())
+        .ok_or_else(|| "Failed to find workspace root from CARGO_MANIFEST_DIR".into())
 }
 
 #[tokio::test]
-async fn test_list_validators() {
+async fn test_list_validators() -> Result<(), Box<dyn std::error::Error>> {
     let service = InfraValidationService::new();
-    let validators = service.list_validators().await.unwrap();
+    let validators = service.list_validators().await?;
 
     assert!(validators.contains(&"clean_architecture".to_owned()));
     assert!(validators.contains(&"solid".to_owned()));
     assert!(validators.contains(&"quality".to_owned()));
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_validate_mcb_workspace_quality_only() {
-    let workspace_root = get_workspace_root();
+async fn test_validate_mcb_workspace_quality_only() -> Result<(), Box<dyn std::error::Error>> {
+    let workspace_root = get_workspace_root()?;
     let service = InfraValidationService::new();
 
     let result = std::thread::Builder::new()
@@ -36,19 +36,25 @@ async fn test_validate_mcb_workspace_quality_only() {
         .stack_size(8 * 1024 * 1024)
         .spawn(move || {
             tokio::runtime::Runtime::new()
-                .unwrap()
-                .block_on(service.validate(&workspace_root, Some(&["quality".to_owned()]), None))
-        })
-        .expect("spawn thread")
+                .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))
+                .and_then(|rt| {
+                    rt.block_on(service.validate(
+                        &workspace_root,
+                        Some(&["quality".to_owned()]),
+                        None,
+                    ))
+                })
+        })?
         .join()
-        .expect("thread join");
+        .map_err(|_| "thread panicked")?;
 
     assert!(result.is_ok());
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_validate_with_specific_validator() {
-    let workspace_root = get_workspace_root();
+async fn test_validate_with_specific_validator() -> Result<(), Box<dyn std::error::Error>> {
+    let workspace_root = get_workspace_root()?;
     let service = InfraValidationService::new();
 
     let result = std::thread::Builder::new()
@@ -56,49 +62,47 @@ async fn test_validate_with_specific_validator() {
         .stack_size(8 * 1024 * 1024)
         .spawn(move || {
             tokio::runtime::Runtime::new()
-                .unwrap()
-                .block_on(service.validate(
-                    &workspace_root,
-                    Some(&["quality".to_owned()]),
-                    Some("warning"),
-                ))
-        })
-        .expect("spawn thread")
+                .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))
+                .and_then(|rt| {
+                    rt.block_on(service.validate(
+                        &workspace_root,
+                        Some(&["quality".to_owned()]),
+                        Some("warning"),
+                    ))
+                })
+        })?
         .join()
-        .expect("thread join");
+        .map_err(|_| "thread panicked")?;
 
-    assert!(result.is_ok());
-    let report = result.unwrap();
+    let report = result?;
     assert!(report.passed || !report.violations.is_empty());
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_validate_detects_inline_tests_in_src_via_registry_path() {
-    let tmp = tempfile::tempdir().expect("create tempdir");
+async fn test_validate_detects_inline_tests_in_src_via_registry_path()
+-> Result<(), Box<dyn std::error::Error>> {
+    let tmp = tempfile::tempdir()?;
     let workspace = tmp.path();
 
-    fs::create_dir_all(workspace.join("crates/foo/src")).expect("create crate src");
+    fs::create_dir_all(workspace.join("crates/foo/src"))?;
     fs::write(
         workspace.join("Cargo.toml"),
         "[workspace]\nmembers = [\"crates/foo\"]\n",
-    )
-    .expect("write workspace cargo");
+    )?;
     fs::write(
         workspace.join("crates/foo/Cargo.toml"),
         "[package]\nname = \"foo\"\nversion = \"0.1.0\"\nedition = \"2021\"\n",
-    )
-    .expect("write crate cargo");
+    )?;
     fs::write(
         workspace.join("crates/foo/src/lib.rs"),
         "#[cfg(test)]\nmod tests {\n    #[test]\n    fn smoke() {\n        assert_eq!(1, 1);\n    }\n}\n",
-    )
-    .expect("write src lib");
+    )?;
 
     let service = InfraValidationService::new();
     let report = service
         .validate(workspace, Some(&["hygiene".to_owned()]), Some("warning"))
-        .await
-        .expect("validate should succeed");
+        .await?;
 
     assert!(report.passed);
     assert!(report.warnings > 0);
@@ -117,4 +121,5 @@ async fn test_validate_detects_inline_tests_in_src_via_registry_path() {
         "violations={:?}",
         report.violations
     );
+    Ok(())
 }

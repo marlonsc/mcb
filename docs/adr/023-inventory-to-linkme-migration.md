@@ -114,9 +114,9 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 ## Implementation Status
 
-- [x] All embedding providers (6): Ollama, OpenAI, VoyageAI, Gemini, FastEmbed, null
-- [x] All cache providers (3): Moka, Redis, null
-- [x] All vector store providers (5): Milvus, filesystem, in_memory, EdgeVec, null
+- [x] All embedding providers (6): FastEmbed, OpenAI, VoyageAI, Ollama, Gemini, Anthropic
+- [x] All cache providers (2): Moka, Redis
+- [x] All vector store providers (5): EdgeVec, Milvus, Qdrant, Pinecone, Encrypted
 - [x] All language providers (1): universal
 - [x] Pure linkme registries (no inventory fallback)
 - [x] All provider entry structs use `#[linkme::distributed_slice]`

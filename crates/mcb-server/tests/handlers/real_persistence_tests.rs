@@ -23,7 +23,7 @@ use crate::test_utils::text::{extract_text, parse_count_from_json_text};
 async fn list_observation_count(
     memory_h: &mcb_server::handlers::MemoryHandler,
     query: &str,
-) -> usize {
+) -> Result<usize, rmcp::ErrorData> {
     let list_args = MemoryArgs {
         action: MemoryAction::List,
         org_id: None,
@@ -45,12 +45,9 @@ async fn list_observation_count(
         limit: Some(100),
     };
 
-    let list_result = memory_h
-        .handle(Parameters(list_args))
-        .await
-        .expect("list observations");
+    let list_result = memory_h.handle(Parameters(list_args)).await?;
     let list_text = extract_text(&list_result.content);
-    parse_count_from_json_text(&list_text)
+    Ok(parse_count_from_json_text(&list_text))
 }
 
 // =============================================================================
@@ -849,7 +846,9 @@ async fn test_real_session_list_filters_by_parent_session_id() {
 #[case("observation")]
 #[case("execution")]
 #[tokio::test]
-async fn test_real_memory_store_conflicting_ids_rejected_without_side_effect(#[case] mode: &str) {
+async fn test_real_memory_store_conflicting_ids_rejected_without_side_effect(
+    #[case] mode: &str,
+) -> Result<(), rmcp::ErrorData> {
     let (server, _temp) = create_test_mcp_server().await;
     let memory_h = server.memory_handler();
     let query = if mode == "observation" {
@@ -858,7 +857,7 @@ async fn test_real_memory_store_conflicting_ids_rejected_without_side_effect(#[c
         "conflict-execution-side-effect-token"
     };
 
-    let before_count = list_observation_count(&memory_h, query).await;
+    let before_count = list_observation_count(&memory_h, query).await?;
 
     let (resource, project_id, repo_id, data, expected_error) = if mode == "observation" {
         (
@@ -917,8 +916,9 @@ async fn test_real_memory_store_conflicting_ids_rejected_without_side_effect(#[c
         .expect_err("conflicting identifiers must fail");
     assert!(err.message.contains(expected_error));
 
-    let after_count = list_observation_count(&memory_h, query).await;
+    let after_count = list_observation_count(&memory_h, query).await?;
     assert_eq!(after_count, before_count);
+    Ok(())
 }
 
 #[tokio::test]

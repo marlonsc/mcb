@@ -17,15 +17,16 @@ use crate::shared_context::{shared_app_context, shared_fastembed_test_cache_dir}
 extern crate mcb_providers;
 
 /// Build a fresh config+tempdir for tests that intentionally test `init_app()`.
-fn test_config() -> (AppConfig, tempfile::TempDir) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
+///
+/// # Errors
+///
+/// Returns an error if the temp directory or config loading fails.
+fn test_config() -> Result<(AppConfig, tempfile::TempDir), Box<dyn std::error::Error>> {
+    let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("test.db");
     let default_path =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../config/default.toml");
-    let mut config = ConfigLoader::new()
-        .with_config_path(default_path)
-        .load()
-        .expect("load config");
+    let mut config = ConfigLoader::new().with_config_path(default_path).load()?;
     config.providers.database.configs.insert(
         "default".to_owned(),
         mcb_infrastructure::config::DatabaseConfig {
@@ -34,22 +35,14 @@ fn test_config() -> (AppConfig, tempfile::TempDir) {
         },
     );
     config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-    (config, temp_dir)
+    Ok((config, temp_dir))
 }
 
 #[tokio::test]
 #[serial]
-async fn test_di_container_builder() {
-    let (config, _temp) = test_config();
-    let result = init_app(config).await;
-
-    assert!(
-        result.is_ok(),
-        "init_app should complete successfully: {:?}",
-        result.err()
-    );
-
-    let app_context = result.unwrap();
+async fn test_di_container_builder() -> Result<(), Box<dyn std::error::Error>> {
+    let (config, _temp) = test_config()?;
+    let app_context = init_app(config).await?;
 
     // Verify context has expected fields
     assert!(
@@ -60,15 +53,15 @@ async fn test_di_container_builder() {
     // Verify handles are accessible
     let embedding_handle = app_context.embedding_handle();
     assert!(!embedding_handle.provider_name().is_empty());
+    Ok(())
 }
 
 #[tokio::test]
 #[serial]
-async fn test_provider_selection_from_config() {
+async fn test_provider_selection_from_config() -> Result<(), Box<dyn std::error::Error>> {
     // Test that providers are correctly selected based on configuration
 
-    let (_base, _temp) = test_config();
-    let mut config = _base;
+    let (mut config, _temp) = test_config()?;
     config.providers.embedding.configs.insert(
         "default".to_owned(),
         EmbeddingConfig {
@@ -92,9 +85,7 @@ async fn test_provider_selection_from_config() {
         },
     );
 
-    let app_context = init_app(config)
-        .await
-        .expect("Should initialize with local providers");
+    let app_context = init_app(config).await?;
 
     // Verify correct providers were selected via handles
     assert_eq!(
@@ -110,6 +101,7 @@ async fn test_provider_selection_from_config() {
         app_context.language_handle().get().provider_name(),
         "universal"
     ); // default language
+    Ok(())
 }
 
 #[tokio::test]

@@ -5,13 +5,10 @@ use std::path::PathBuf;
 
 use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry, Violation};
 
+type TestResult = Result<(), Box<dyn std::error::Error>>;
+
 fn get_workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .to_path_buf()
+    crate::test_utils::get_workspace_root()
 }
 
 #[rstest]
@@ -23,11 +20,11 @@ fn validate_workspace_group(
     #[case] validator_name: &str,
     #[case] header: &str,
     #[case] must_be_clean: bool,
-) {
+) -> TestResult {
     let workspace_root = get_workspace_root();
     let config = ValidationConfig::new(&workspace_root);
     let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let violations = registry.validate_named(&config, &[validator_name]).unwrap();
+    let violations = registry.validate_named(&config, &[validator_name])?;
 
     println!("\n=== {header} ===");
     for v in &violations {
@@ -42,14 +39,15 @@ fn validate_workspace_group(
             violations.len()
         );
     }
+    Ok(())
 }
 
 #[test]
-fn test_validate_workspace_quality() {
+fn test_validate_workspace_quality() -> TestResult {
     let workspace_root = get_workspace_root();
     let config = ValidationConfig::new(&workspace_root);
     let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let violations = registry.validate_named(&config, &["quality"]).unwrap();
+    let violations = registry.validate_named(&config, &["quality"])?;
 
     println!("\n=== Quality Violations ===");
     let errors: Vec<_> = violations
@@ -84,16 +82,15 @@ fn test_validate_workspace_quality() {
 
     // Ensure test executed successfully
     // Validation completed successfully
+    Ok(())
 }
 
 #[test]
-fn test_validate_workspace_documentation() {
+fn test_validate_workspace_documentation() -> TestResult {
     let workspace_root = get_workspace_root();
     let config = ValidationConfig::new(&workspace_root);
     let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let violations = registry
-        .validate_named(&config, &["documentation"])
-        .unwrap();
+    let violations = registry.validate_named(&config, &["documentation"])?;
 
     println!("\n=== Documentation Violations ===");
     let by_severity = |sev: Severity| violations.iter().filter(|v| v.severity() == sev).count();
@@ -116,23 +113,29 @@ fn test_validate_workspace_documentation() {
 
     // Ensure test executed successfully
     // Validation completed successfully
+    Ok(())
 }
 
 #[test]
-fn test_full_validation_report() {
+fn test_full_validation_report() -> TestResult {
     let handle = std::thread::Builder::new()
         .name("full-report".into())
         .stack_size(16 * 1024 * 1024)
         .spawn(run_full_validation_report)
-        .expect("spawn thread");
-    handle.join().expect("thread join");
+        .map_err(|err| format!("spawn thread failed: {err}"))?;
+    let join_result = handle
+        .join()
+        .map_err(|_| "thread join failed".to_string())?;
+    join_result?;
+    Ok(())
 }
 
-fn run_full_validation_report() {
+fn run_full_validation_report() -> TestResult {
     let workspace_root = get_workspace_root();
     let validator_names = ValidatorRegistry::standard_validator_names();
 
     let mut all_violations: Vec<Box<dyn Violation>> = Vec::new();
+    let mut validator_errors: Vec<String> = Vec::new();
 
     for &name in validator_names {
         let root = workspace_root.clone();
@@ -143,22 +146,35 @@ fn run_full_validation_report() {
             .spawn(move || {
                 let config = ValidationConfig::new(&root);
                 let registry = ValidatorRegistry::standard_for(&root);
-                let v = registry
+                let validator = registry
                     .validators()
                     .iter()
                     .find(|v| v.name() == vname)
-                    .expect("validator must exist");
-                v.validate(&config)
+                    .ok_or_else(|| "validator must exist".to_string())?;
+                validator.validate(&config).map_err(|err| err.to_string())
             })
-            .expect("spawn thread")
+            .map_err(|err| format!("spawn thread failed: {err}"))?
             .join();
 
         match result {
-            Ok(Ok(violations)) => all_violations.extend(violations),
-            Ok(Err(e)) => eprintln!("Validator '{name}' error: {e}"),
-            Err(_) => eprintln!("Validator '{name}' panicked (likely stack overflow)"),
+            Ok(Ok(violations)) => {
+                all_violations.extend(violations);
+            }
+            Ok(Err(err)) => {
+                validator_errors.push(format!("Validator '{name}' error: {err}"));
+            }
+            Err(_) => {
+                validator_errors.push(format!(
+                    "Validator '{name}' panicked (likely stack overflow)"
+                ));
+            }
         }
     }
+
+    assert!(
+        validator_errors.is_empty(),
+        "Validation thread errors: {validator_errors:?}"
+    );
 
     assert!(
         !validator_names.is_empty(),
@@ -168,10 +184,11 @@ fn run_full_validation_report() {
         !all_violations.is_empty(),
         "Full validation should produce violations"
     );
+    Ok(())
 }
 
 #[test]
-fn test_validation_config() {
+fn test_validation_config() -> TestResult {
     let workspace_root = get_workspace_root();
     let config = ValidationConfig::new(&workspace_root)
         .with_additional_path("src.legacy")
@@ -184,7 +201,7 @@ fn test_validation_config() {
     println!("Additional paths: {:?}", config.additional_src_paths);
     println!("Exclude patterns: {:?}", config.exclude_patterns);
 
-    let dirs = config.get_source_dirs().unwrap();
+    let dirs = config.get_source_dirs()?;
     println!("\nSource directories to scan:");
     for dir in &dirs {
         println!("  - {}", dir.display());
@@ -193,4 +210,5 @@ fn test_validation_config() {
 
     // Ensure test executed successfully
     // Validation completed successfully
+    Ok(())
 }

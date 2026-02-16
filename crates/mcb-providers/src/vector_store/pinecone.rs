@@ -23,7 +23,8 @@ use serde_json::Value;
 use crate::constants::{
     EDGEVEC_DEFAULT_DIMENSIONS, HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER,
     STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS, STATS_FIELD_VECTORS_COUNT,
-    STATUS_ACTIVE, STATUS_UNKNOWN, VECTOR_FIELD_FILE_PATH,
+    STATUS_ACTIVE, STATUS_UNKNOWN, VECTOR_FIELD_FILE_PATH, VECTOR_STORE_RETRY_BACKOFF_SECS,
+    VECTOR_STORE_RETRY_COUNT,
 };
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
 use crate::utils::vector_store::search_result_from_json_metadata;
@@ -89,7 +90,10 @@ impl PineconeVectorStoreProvider {
             kind: RequestErrorKind::VectorDb,
             headers: &headers,
             body: body.as_ref(),
-            retry: Some(RetryConfig::new(2, std::time::Duration::from_secs(1))),
+            retry: Some(RetryConfig::new(
+                VECTOR_STORE_RETRY_COUNT,
+                std::time::Duration::from_secs(VECTOR_STORE_RETRY_BACKOFF_SECS),
+            )),
         })
         .await
     }

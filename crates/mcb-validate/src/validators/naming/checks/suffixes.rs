@@ -2,6 +2,7 @@ use std::path::Path;
 
 use super::super::violation::NamingViolation;
 use crate::constants::architecture::{ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES};
+use crate::constants::common::{FACTORY_FILE_SUFFIX, REPOSITORY_FILE_SUFFIX, SERVICE_FILE_SUFFIX};
 use crate::traits::violation::Severity;
 use crate::utils::naming::get_suffix;
 
@@ -21,14 +22,14 @@ pub fn validate_file_suffix(
 
     // Check repository files should have _repository suffix
     if (path_str.contains("/repositories/") || path_str.contains("/adapters/repository/"))
-        && !file_name.ends_with("_repository")
+        && !file_name.ends_with(REPOSITORY_FILE_SUFFIX)
         && file_name != "mod"
     {
         return Some(NamingViolation::BadFileSuffix {
             path: path.to_path_buf(),
             component_type: "Repository".to_owned(),
             current_suffix: get_suffix(file_name).to_owned(),
-            expected_suffix: "_repository".to_owned(),
+            expected_suffix: REPOSITORY_FILE_SUFFIX.to_owned(),
             severity: Severity::Warning,
         });
     }
@@ -54,26 +55,29 @@ pub fn validate_file_suffix(
     if path_str.contains(ARCH_PATH_SERVICES)
         && !path_str.contains("/domain_services/")
         && crate_name != domain_crate
-        && !file_name.ends_with("_service")
+        && !file_name.ends_with(SERVICE_FILE_SUFFIX)
         && file_name != "mod"
     {
         return Some(NamingViolation::BadFileSuffix {
             path: path.to_path_buf(),
             component_type: "Service".to_owned(),
             current_suffix: get_suffix(file_name).to_owned(),
-            expected_suffix: "_service".to_owned(),
+            expected_suffix: SERVICE_FILE_SUFFIX.to_owned(),
             severity: Severity::Info,
         });
     }
 
     // Check factory files - allow both 'factory.rs' and '*_factory.rs'
     // A file named exactly "factory.rs" is valid (e.g., provider_factory module)
-    if file_name.contains("factory") && !file_name.ends_with("_factory") && file_name != "factory" {
+    if file_name.contains("factory")
+        && !file_name.ends_with(FACTORY_FILE_SUFFIX)
+        && file_name != "factory"
+    {
         return Some(NamingViolation::BadFileSuffix {
             path: path.to_path_buf(),
             component_type: "Factory".to_owned(),
             current_suffix: get_suffix(file_name).to_owned(),
-            expected_suffix: "_factory".to_owned(),
+            expected_suffix: FACTORY_FILE_SUFFIX.to_owned(),
             severity: Severity::Info,
         });
     }

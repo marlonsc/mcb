@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use super::violation::PatternViolation;
-use crate::constants::common::{COMMENT_PREFIX, USE_PREFIX};
+use crate::constants::common::{COMMENT_PREFIX, ERROR_FILE_PREFIX, ERROR_MODULE_FILE, USE_PREFIX};
 use crate::pattern_registry::compile_regex;
 use crate::traits::violation::Severity;
 
@@ -21,8 +21,9 @@ pub fn check_result_types(path: &Path, content: &str) -> crate::Result<Vec<Patte
         .parent()
         .and_then(|p| p.file_name())
         .and_then(|n| n.to_str());
-    if file_name.is_some_and(|n| n == "error.rs" || n == "error_ext.rs" || n.starts_with("error"))
-        || parent_name.is_some_and(|p| p == "error")
+    if file_name.is_some_and(|n| {
+        n == ERROR_MODULE_FILE || n == "error_ext.rs" || n.starts_with(ERROR_FILE_PREFIX)
+    }) || parent_name.is_some_and(|p| p == ERROR_FILE_PREFIX)
     {
         return Ok(violations);
     }

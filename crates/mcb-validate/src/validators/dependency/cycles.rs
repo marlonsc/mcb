@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use super::DependencyValidator;
 use super::violation::{DependencyCycle, DependencyViolation};
+use crate::constants::common::MCB_DEPENDENCY_PREFIX;
 use crate::linters::constants::CARGO_TOML_FILENAME;
 use crate::{Result, Severity};
 
@@ -31,7 +32,7 @@ pub fn detect_circular_dependencies(
         let mut deps = HashSet::new();
         if let Some(dependencies) = parsed.get("dependencies").and_then(|d| d.as_table()) {
             for dep_name in dependencies.keys() {
-                if dep_name.starts_with("mcb") {
+                if dep_name.starts_with(MCB_DEPENDENCY_PREFIX) {
                     deps.insert(dep_name.replace('_', "-"));
                 }
             }

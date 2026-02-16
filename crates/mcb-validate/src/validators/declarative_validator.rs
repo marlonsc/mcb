@@ -21,6 +21,7 @@ use crate::traits::validator::Validator;
 use crate::traits::violation::Violation;
 use crate::validators::declarative_support::{
     PatternMatchViolation, build_substitution_variables, parse_category, parse_severity,
+    validate_path_rules,
 };
 
 /// Executes embedded YAML declarative rules against the workspace.
@@ -391,69 +392,8 @@ impl Validator for DeclarativeValidator {
         violations.extend(Self::validate_metrics_rules(&rules, &files));
         violations.extend(Self::validate_lint_select_rules(&rules, &files));
         violations.extend(self.validate_regex_rules(&rules, &files));
-        violations.extend(self.validate_path_rules(&rules, &files));
+        violations.extend(validate_path_rules(&self.workspace_root, &rules, &files));
         violations.extend(Self::validate_ast_rules(&rules));
         Ok(violations)
-    }
-}
-
-impl DeclarativeValidator {
-    /// Validates path-based rules that check file location (not content).
-    ///
-    /// Rules with `engine: path` define filters that identify files in wrong locations.
-    /// If a file matches the rule's filters, that IS the violation (the file exists
-    /// in a disallowed location).
-    fn validate_path_rules(
-        &self,
-        rules: &[ValidatedRule],
-        files: &[PathBuf],
-    ) -> Vec<Box<dyn Violation>> {
-        let path_rules: Vec<&ValidatedRule> = rules
-            .iter()
-            .filter(|r| r.enabled && r.engine == "path")
-            .collect();
-
-        if path_rules.is_empty() {
-            return Vec::new();
-        }
-
-        let filter_executor =
-            crate::filters::rule_filters::RuleFilterExecutor::new(self.workspace_root.clone());
-        let workspace_deps = match filter_executor.parse_workspace_dependencies() {
-            Ok(deps) => deps,
-            Err(e) => {
-                warn!(error = ?e, "Failed to parse workspace dependencies for path rules");
-                return Vec::new();
-            }
-        };
-
-        let mut violations: Vec<Box<dyn Violation>> = Vec::new();
-
-        for rule in &path_rules {
-            for file in files {
-                if let Some(filters) = &rule.filters {
-                    let should_exec = filter_executor
-                        .should_execute_rule(filters, file, None, &workspace_deps)
-                        .unwrap_or(false);
-
-                    if should_exec {
-                        violations.push(Box::new(PatternMatchViolation {
-                            rule_id: rule.id.clone(),
-                            file_path: file.clone(),
-                            line: 0,
-                            message: rule.message.clone().unwrap_or_else(|| {
-                                format!(
-                                    "[{}] File placement violation: {}",
-                                    rule.id, rule.description
-                                )
-                            }),
-                            severity: parse_severity(&rule.severity),
-                            category: parse_category(&rule.category),
-                        }));
-                    }
-                }
-            }
-        }
-        violations
     }
 }

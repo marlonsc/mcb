@@ -62,6 +62,9 @@ pub const ATTR_SEARCH_LINES: usize = 5;
 /// Max forward offset for balanced-brace block extraction in `scan.rs`.
 pub const MAX_BLOCK_SEARCH_OFFSET: usize = 20;
 
+/// Lines to search forward for declarations after a marker.
+pub const FORWARD_SEARCH_LINES: usize = 5;
+
 // ============================================================================
 // Rust Code Pattern Strings
 // ============================================================================
@@ -116,3 +119,39 @@ pub const DI_IMPL_SUFFIXES: &[&str] = &["Impl", "Implementation", "Adapter"];
 
 /// Handler file suffix (e.g. `foo_handler.rs`).
 pub const HANDLER_FILE_SUFFIX: &str = "_handler.rs";
+
+/// Repository file name suffix.
+pub const REPOSITORY_FILE_SUFFIX: &str = "_repository";
+
+/// Service file name suffix.
+pub const SERVICE_FILE_SUFFIX: &str = "_service";
+
+/// Factory file name suffix.
+pub const FACTORY_FILE_SUFFIX: &str = "_factory";
+
+// ============================================================================
+// Error Module Detection
+// ============================================================================
+
+/// Error module file name.
+pub const ERROR_MODULE_FILE: &str = "error.rs";
+
+/// Error module name prefix.
+pub const ERROR_FILE_PREFIX: &str = "error";
+
+// ============================================================================
+// Performance / Allocation Detection
+// ============================================================================
+
+/// Standard collection type prefixes for allocation detection in loops.
+pub const HEAP_ALLOC_PREFIXES: &[&str] = &["Vec::", "String::", "HashMap::", "HashSet::"];
+
+// ============================================================================
+// Workspace Crate Prefixes
+// ============================================================================
+
+/// MCB workspace crate name prefix.
+pub const MCB_CRATE_PREFIX: &str = "mcb-";
+
+/// MCB dependency name prefix (without hyphen).
+pub const MCB_DEPENDENCY_PREFIX: &str = "mcb";

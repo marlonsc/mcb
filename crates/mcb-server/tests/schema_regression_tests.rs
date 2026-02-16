@@ -12,7 +12,7 @@ use serde_json::Value;
 fn schema_json<T: JsonSchema>() -> Value {
     let serialized = serde_json::to_value(schema_for!(T));
     assert!(serialized.is_ok(), "serialize schema");
-    serialized.unwrap_or_else(|_| Value::Null)
+    serialized.unwrap_or(Value::Null)
 }
 
 fn required_names(schema: &Value) -> Vec<String> {

@@ -186,7 +186,7 @@ crates/mcb-providers/src/
 │   ├── anthropic.rs    # Anthropic API
 │   ├── fastembed.rs    # Local ONNX embeddings (feature-gated)
 │   ├── gemini.rs       # Google Gemini
-│   ├── helpers.rs      # Shared embedding utilities
+│   ├── macros.rs       # Provider registration macros
 │   ├── ollama.rs       # Self-hosted
 │   ├── openai.rs       # OpenAI API
 │   ├── voyageai.rs     # VoyageAI
@@ -220,7 +220,7 @@ crates/mcb-providers/src/
 ├── vector_store/
 │   ├── edgevec.rs      # In-process HNSW
 │   ├── encrypted.rs    # AES-GCM encrypted decorator (feature-gated)
-│   ├── helpers.rs      # Shared vector utilities
+│   ├── macros.rs       # Provider registration macros
 │   ├── milvus.rs       # Milvus gRPC client
 │   ├── pinecone.rs     # Pinecone REST client
 │   ├── qdrant.rs       # Qdrant REST client

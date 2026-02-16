@@ -23,7 +23,8 @@ use crate::{
 
 use crate::constants::{
     EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_INPUT, EMBEDDING_PARAM_MODEL,
-    HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE,
+    EMBEDDING_RETRY_BACKOFF_MS, EMBEDDING_RETRY_COUNT, HTTP_HEADER_AUTHORIZATION,
+    HTTP_HEADER_CONTENT_TYPE,
 };
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
@@ -80,7 +81,10 @@ impl VoyageAIEmbeddingProvider {
             kind: RequestErrorKind::Embedding,
             headers: &headers,
             body: Some(&payload),
-            retry: Some(RetryConfig::new(3, std::time::Duration::from_millis(500))),
+            retry: Some(RetryConfig::new(
+                EMBEDDING_RETRY_COUNT,
+                std::time::Duration::from_millis(EMBEDDING_RETRY_BACKOFF_MS),
+            )),
         })
         .await
     }

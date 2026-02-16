@@ -29,24 +29,22 @@ fn base_vcs_args(action: VcsAction) -> VcsArgs {
     }
 }
 
-fn create_git_repo_fixture() -> (tempfile::TempDir, String) {
-    let repo_dir = tempfile::tempdir().expect("create temp repo dir");
+fn create_git_repo_fixture() -> Result<(tempfile::TempDir, String), std::io::Error> {
+    let repo_dir = tempfile::tempdir()?;
     let repo_path = repo_dir.path().to_path_buf();
 
-    fs::write(repo_path.join("README.md"), "# test\n").expect("write fixture file");
+    fs::write(repo_path.join("README.md"), "# test\n")?;
 
     let init = Command::new("git")
         .args(["init", "-q"])
         .current_dir(&repo_path)
-        .status()
-        .expect("run git init");
+        .status()?;
     assert!(init.success(), "git init should succeed");
 
     let add = Command::new("git")
         .args(["add", "README.md"])
         .current_dir(&repo_path)
-        .status()
-        .expect("run git add");
+        .status()?;
     assert!(add.success(), "git add should succeed");
 
     let commit = Command::new("git")
@@ -60,11 +58,10 @@ fn create_git_repo_fixture() -> (tempfile::TempDir, String) {
             "init",
         ])
         .current_dir(&repo_path)
-        .status()
-        .expect("run git commit");
+        .status()?;
     assert!(commit.success(), "git commit should succeed");
 
-    (repo_dir, repo_path.to_string_lossy().to_string())
+    Ok((repo_dir, repo_path.to_string_lossy().to_string()))
 }
 
 #[rstest]
@@ -72,11 +69,13 @@ fn create_git_repo_fixture() -> (tempfile::TempDir, String) {
 #[case(Some(5))]
 #[case(None)]
 #[tokio::test]
-async fn test_vcs_list_repositories_cases(#[case] limit: Option<u32>) {
+async fn test_vcs_list_repositories_cases(
+    #[case] limit: Option<u32>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let Some((handler, _services_temp_dir)) = create_handler().await else {
-        return;
+        return Ok(());
     };
-    let (_repo_dir, repo_path) = create_git_repo_fixture();
+    let (_repo_dir, repo_path) = create_git_repo_fixture()?;
 
     let mut args = base_vcs_args(VcsAction::ListRepositories);
     args.repo_path = Some(repo_path);
@@ -85,17 +84,18 @@ async fn test_vcs_list_repositories_cases(#[case] limit: Option<u32>) {
     let result = handler.handle(Parameters(args)).await;
 
     assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
+    let response = result?;
     assert!(!response.is_error.unwrap_or(false));
+    Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn test_vcs_index_repository_success() {
+async fn test_vcs_index_repository_success() -> Result<(), Box<dyn std::error::Error>> {
     let Some((handler, _services_temp_dir)) = create_handler().await else {
-        return;
+        return Ok(());
     };
-    let (_repo_dir, repo_path) = create_git_repo_fixture();
+    let (_repo_dir, repo_path) = create_git_repo_fixture()?;
 
     let mut args = base_vcs_args(VcsAction::IndexRepository);
     args.repo_path = Some(repo_path);
@@ -105,14 +105,15 @@ async fn test_vcs_index_repository_success() {
     let result = handler.handle(Parameters(args)).await;
 
     assert!(result.is_ok());
-    let _response = result.expect("Expected successful response");
+    let _response = result?;
+    Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn test_vcs_index_repository_with_repo_path() {
+async fn test_vcs_index_repository_with_repo_path() -> Result<(), rmcp::ErrorData> {
     let Some((handler, _services_temp_dir)) = create_handler().await else {
-        return;
+        return Ok(());
     };
 
     let mut args = base_vcs_args(VcsAction::IndexRepository);
@@ -122,14 +123,15 @@ async fn test_vcs_index_repository_with_repo_path() {
     let result = handler.handle(Parameters(args)).await;
 
     assert!(result.is_ok());
-    let _response = result.expect("Expected response");
+    let _response = result?;
+    Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn test_vcs_analyze_impact_with_defaults() {
+async fn test_vcs_analyze_impact_with_defaults() -> Result<(), rmcp::ErrorData> {
     let Some((handler, _services_temp_dir)) = create_handler().await else {
-        return;
+        return Ok(());
     };
 
     let mut args = base_vcs_args(VcsAction::AnalyzeImpact);
@@ -140,14 +142,15 @@ async fn test_vcs_analyze_impact_with_defaults() {
     let result = handler.handle(Parameters(args)).await;
 
     assert!(result.is_ok());
-    let _response = result.expect("Expected response");
+    let _response = result?;
+    Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn test_vcs_analyze_impact_missing_repo_path() {
+async fn test_vcs_analyze_impact_missing_repo_path() -> Result<(), rmcp::ErrorData> {
     let Some((handler, _services_temp_dir)) = create_handler().await else {
-        return;
+        return Ok(());
     };
 
     let mut args = base_vcs_args(VcsAction::AnalyzeImpact);
@@ -157,9 +160,10 @@ async fn test_vcs_analyze_impact_missing_repo_path() {
     let result = handler.handle(Parameters(args)).await;
 
     assert!(result.is_ok());
-    let response = result.expect("Expected response");
+    let response = result?;
     assert!(
         response.is_error.unwrap_or(false),
         "Missing repo_path and repo_id should return error"
     );
+    Ok(())
 }

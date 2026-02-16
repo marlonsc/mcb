@@ -97,13 +97,18 @@ impl AdminTestHarness {
 
     /// Build an `AdminState` without creating a Rocket client.
     pub fn build_state(&self) -> AdminState {
+        let current_config = mcb_infrastructure::config::ConfigLoader::new()
+            .load()
+            .unwrap_or_else(|_| mcb_infrastructure::config::AppConfig::fallback());
+        let metrics: Arc<dyn PerformanceMetricsInterface> =
+            Arc::<AtomicPerformanceMetrics>::clone(&self.metrics);
+        let indexing: Arc<dyn IndexingOperationsInterface> =
+            Arc::<DefaultIndexingOperations>::clone(&self.indexing);
         AdminState {
-            metrics: self.metrics.clone(),
-            indexing: self.indexing.clone(),
+            metrics,
+            indexing,
             config_watcher: None,
-            current_config: mcb_infrastructure::config::ConfigLoader::new()
-                .load()
-                .expect("load config"),
+            current_config,
             config_path: None,
             shutdown_coordinator: None,
             shutdown_timeout_secs: self.shutdown_timeout_secs,
@@ -127,14 +132,17 @@ impl AdminTestHarness {
         Arc<AtomicPerformanceMetrics>,
         Arc<DefaultIndexingOperations>,
     ) {
-        let metrics = self.metrics.clone();
-        let indexing = self.indexing.clone();
+        let metrics = Arc::clone(&self.metrics);
+        let indexing = Arc::clone(&self.indexing);
         let state = self.build_state();
         let auth_config = Arc::new(self.auth_config);
 
-        let client = Client::tracked(admin_rocket(state, auth_config, None))
-            .await
-            .expect("valid rocket instance");
+        let client_result = Client::tracked(admin_rocket(state, auth_config, None)).await;
+        assert!(client_result.is_ok(), "valid rocket instance");
+        let client = match client_result {
+            Ok(client) => client,
+            Err(_) => unreachable!(),
+        };
 
         (client, metrics, indexing)
     }

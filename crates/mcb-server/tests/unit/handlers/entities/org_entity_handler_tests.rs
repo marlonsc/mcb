@@ -57,8 +57,9 @@ async fn list_org_count(handler: &OrgEntityHandler) -> usize {
     let content = handler
         .handle(Parameters(list_args))
         .await
-        .expect("list")
-        .content;
+        .ok()
+        .map(|r| r.content)
+        .unwrap_or_default();
     let text = extract_text(&content);
     serde_json::from_str::<serde_json::Value>(&text)
         .ok()

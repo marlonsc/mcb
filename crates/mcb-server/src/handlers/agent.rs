@@ -41,8 +41,6 @@ impl AgentHandler {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
-        let _org_id = resolve_org_id(args.org_id.as_deref());
-
         let session_id = args.session_id.as_str();
         if session_id.is_empty()
             || args.session_id.inner() == uuid::Uuid::nil()

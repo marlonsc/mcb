@@ -11,7 +11,14 @@ use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
 ///
 /// This is a shared helper used by memory-related tests that need
 /// a project to exist before storing observations.
-pub async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &str) {
+///
+/// # Errors
+///
+/// Returns an error if the database INSERT statements fail.
+pub async fn create_test_project(
+    executor: &dyn DatabaseExecutor,
+    project_id: &str,
+) -> mcb_domain::error::Result<()> {
     let now = chrono::Utc::now().timestamp();
     // Ensure default organization exists (FK: projects.org_id → organizations.id)
     executor
@@ -26,8 +33,7 @@ pub async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &s
                 SqlParam::I64(now),
             ],
         )
-        .await
-        .unwrap();
+        .await?;
     executor
         .execute(
             "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
@@ -40,6 +46,6 @@ pub async fn create_test_project(executor: &dyn DatabaseExecutor, project_id: &s
                 SqlParam::I64(now),
             ],
         )
-        .await
-        .unwrap();
+        .await?;
+    Ok(())
 }

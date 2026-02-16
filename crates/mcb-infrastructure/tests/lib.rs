@@ -21,8 +21,11 @@ pub mod test_utils;
 /// Shared test helper functions.
 pub mod test_helpers {
     /// Create a temporary test directory
-    #[must_use]
-    pub fn temp_dir() -> tempfile::TempDir {
-        tempfile::tempdir().expect("Failed to create temp directory")
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the temporary directory cannot be created.
+    pub fn temp_dir() -> std::io::Result<tempfile::TempDir> {
+        tempfile::tempdir()
     }
 }

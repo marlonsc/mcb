@@ -42,13 +42,17 @@ use serde_json::json;
 use crate::shared_context::shared_fastembed_test_cache_dir;
 
 /// Create a NEW `AppContext` (for tests that need isolated state).
+///
+/// # Errors
+///
+/// Returns an error if config loading or app initialization fails.
 pub async fn create_test_app_context() -> Result<AppContext> {
-    let mut config = ConfigLoader::new().load().expect("load config");
+    let mut config = ConfigLoader::new().load()?;
     let temp_dir = std::env::temp_dir().join(format!(
         "mcb-test-ctx-{}.db",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
+            .unwrap_or_default()
             .as_nanos()
     ));
     config.providers.database.configs.insert(
@@ -71,6 +75,10 @@ pub struct FullStackTestContext {
 
 impl FullStackTestContext {
     /// Create new full-stack test context
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the app context cannot be created.
     pub async fn new() -> Result<Self> {
         let app_context = create_test_app_context().await?;
         Ok(Self { app_context })
@@ -89,11 +97,19 @@ impl FullStackTestContext {
     }
 
     /// Embed texts using the real embedding provider
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the embedding provider fails.
     pub async fn embed_texts(&self, texts: &[String]) -> Result<Vec<Embedding>> {
         self.embedding().embed_batch(texts).await
     }
 
     /// Create collection in vector store
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the vector store collection creation fails.
     pub async fn create_collection(&self, name: &str, dimensions: usize) -> Result<()> {
         let collection_id = CollectionId::from_name(name);
         self.vector_store()
@@ -103,7 +119,11 @@ impl FullStackTestContext {
 
     /// Index chunks with embeddings
     ///
-    /// This exercises the real embedding → vector store flow.
+    /// This exercises the real embedding -> vector store flow.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if embedding generation or vector store insertion fails.
     pub async fn index_chunks(
         &self,
         collection: &str,
@@ -138,6 +158,10 @@ impl FullStackTestContext {
     }
 
     /// Search and return all results
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if embedding generation or vector store search fails.
     pub async fn search_all(
         &self,
         collection: &str,

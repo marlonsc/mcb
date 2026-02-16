@@ -46,12 +46,14 @@ impl OrgEntityHandler {
                     .and_then(|value| value.get("org_id"))
                     .and_then(serde_json::Value::as_str)
                     .map(str::to_owned);
-                let org: Organization = require_data(args.data, "data required for create")?;
-                let _resolved_org_id = resolve_identifier_precedence(
+                let mut org: Organization = require_data(args.data, "data required for create")?;
+                if let Some(resolved) = resolve_identifier_precedence(
                     "org_id",
                     args.org_id.as_deref(),
                     payload_org_id.as_deref(),
-                )?;
+                )? {
+                    org.id = resolved;
+                }
                 map_opaque_error(self.repo.create_org(&org).await)?;
                 ok_json(&org)
             }

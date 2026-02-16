@@ -13,16 +13,16 @@ struct CurrentDirGuard {
 }
 
 impl CurrentDirGuard {
-    fn new(new_dir: &Path) -> Self {
-        let original = env::current_dir().expect("read current dir");
-        env::set_current_dir(new_dir).expect("set current dir");
-        Self { original }
+    fn new(new_dir: &Path) -> Result<Self, Box<dyn std::error::Error>> {
+        let original = env::current_dir()?;
+        env::set_current_dir(new_dir)?;
+        Ok(Self { original })
     }
 }
 
 impl Drop for CurrentDirGuard {
     fn drop(&mut self) {
-        env::set_current_dir(&self.original).expect("restore current dir");
+        let _ = env::set_current_dir(&self.original);
     }
 }
 
@@ -57,41 +57,44 @@ struct RestoreFileGuard {
 }
 
 impl RestoreFileGuard {
-    fn move_out(target: &Path, backup: &Path) -> Self {
-        fs::rename(target, backup).expect("move default.toml to backup");
-        Self {
+    fn move_out(target: &Path, backup: &Path) -> Result<Self, Box<dyn std::error::Error>> {
+        fs::rename(target, backup)?;
+        Ok(Self {
             backup: backup.to_path_buf(),
             target: target.to_path_buf(),
-        }
+        })
     }
 }
 
 impl Drop for RestoreFileGuard {
     fn drop(&mut self) {
         if self.backup.exists() {
-            fs::rename(&self.backup, &self.target).expect("restore default.toml from backup");
+            let _ = fs::rename(&self.backup, &self.target);
         }
     }
 }
 
-fn workspace_default_toml() -> PathBuf {
+fn workspace_default_toml() -> Result<PathBuf, Box<dyn std::error::Error>> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     for dir in manifest_dir.ancestors() {
         let candidate = dir.join("config").join("default.toml");
         if candidate.exists() {
-            return candidate;
+            return Ok(candidate);
         }
     }
 
-    panic!("workspace config/default.toml not found from CARGO_MANIFEST_DIR ancestors");
+    Err("workspace config/default.toml not found from CARGO_MANIFEST_DIR ancestors".into())
 }
 
-fn write_temp_default(temp_dir: &TempDir, contents: &str) -> PathBuf {
+fn write_temp_default(
+    temp_dir: &TempDir,
+    contents: &str,
+) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let config_dir = temp_dir.path().join("config");
-    fs::create_dir_all(&config_dir).expect("create temp config dir");
+    fs::create_dir_all(&config_dir)?;
     let default_path = config_dir.join("default.toml");
-    fs::write(&default_path, contents).expect("write temp default.toml");
-    default_path
+    fs::write(&default_path, contents)?;
+    Ok(default_path)
 }
 
 fn inject_key_into_section(toml: &str, section_header: &str, key_line: &str) -> String {
@@ -151,13 +154,13 @@ fn remove_server_network_port(default_toml: &str) -> String {
 
 #[test]
 #[serial]
-fn test_missing_default_toml_fails() {
-    let temp_dir = TempDir::new().expect("create temp dir");
-    let _cwd_guard = CurrentDirGuard::new(temp_dir.path());
+fn test_missing_default_toml_fails() -> Result<(), Box<dyn std::error::Error>> {
+    let temp_dir = TempDir::new()?;
+    let _cwd_guard = CurrentDirGuard::new(temp_dir.path())?;
 
-    let default_path = workspace_default_toml();
+    let default_path = workspace_default_toml()?;
     let backup_path = default_path.with_extension("toml.strict-config-test-backup");
-    let _restore = RestoreFileGuard::move_out(&default_path, &backup_path);
+    let _restore = RestoreFileGuard::move_out(&default_path, &backup_path)?;
 
     let result = ConfigLoader::new().load();
     assert!(result.is_err(), "missing default.toml must fail");
@@ -168,39 +171,39 @@ fn test_missing_default_toml_fails() {
             || message.contains("Default configuration file not found"),
         "error should mention missing default.toml, got: {message}"
     );
+    Ok(())
 }
 
 #[test]
 #[serial]
-fn test_unknown_key_rejected() {
-    let temp_dir = TempDir::new().expect("create temp dir");
-    let default_toml =
-        fs::read_to_string(workspace_default_toml()).expect("read workspace default.toml");
+fn test_unknown_key_rejected() -> Result<(), Box<dyn std::error::Error>> {
+    let temp_dir = TempDir::new()?;
+    let default_toml = fs::read_to_string(workspace_default_toml()?)?;
 
     // Inject a bogus key into the existing [server.network] section.
     // We must NOT duplicate the TOML section header — that would cause a
     // TOML parse error and give a false positive.
     let strict_toml =
         inject_key_into_section(&default_toml, "[server.network]", "bogus_key = true");
-    let _default_path = write_temp_default(&temp_dir, &strict_toml);
-    let _cwd_guard = CurrentDirGuard::new(temp_dir.path());
+    let _default_path = write_temp_default(&temp_dir, &strict_toml)?;
+    let _cwd_guard = CurrentDirGuard::new(temp_dir.path())?;
 
     let result = ConfigLoader::new().load();
     assert!(
         result.is_err(),
         "unknown keys in TOML should be rejected (strict mode / deny_unknown_fields), but load succeeded"
     );
+    Ok(())
 }
 
 #[test]
 #[serial]
-fn test_missing_required_key_fails() {
-    let temp_dir = TempDir::new().expect("create temp dir");
-    let default_toml =
-        fs::read_to_string(workspace_default_toml()).expect("read workspace default.toml");
+fn test_missing_required_key_fails() -> Result<(), Box<dyn std::error::Error>> {
+    let temp_dir = TempDir::new()?;
+    let default_toml = fs::read_to_string(workspace_default_toml()?)?;
     let missing_port_toml = remove_server_network_port(&default_toml);
-    let _default_path = write_temp_default(&temp_dir, &missing_port_toml);
-    let _cwd_guard = CurrentDirGuard::new(temp_dir.path());
+    let _default_path = write_temp_default(&temp_dir, &missing_port_toml)?;
+    let _cwd_guard = CurrentDirGuard::new(temp_dir.path())?;
 
     let result = ConfigLoader::new().load();
     assert!(
@@ -213,37 +216,36 @@ fn test_missing_required_key_fails() {
         message.contains("server.network.port") || message.contains("port"),
         "error should mention missing key, got: {message}"
     );
+    Ok(())
 }
 
 #[test]
 #[serial]
-fn test_mcp_env_override_port_works() {
-    let temp_dir = TempDir::new().expect("create temp dir");
-    let default_toml =
-        fs::read_to_string(workspace_default_toml()).expect("read workspace default.toml");
-    let _default_path = write_temp_default(&temp_dir, &default_toml);
-    let _cwd_guard = CurrentDirGuard::new(temp_dir.path());
+fn test_mcp_env_override_port_works() -> Result<(), Box<dyn std::error::Error>> {
+    let temp_dir = TempDir::new()?;
+    let default_toml = fs::read_to_string(workspace_default_toml()?)?;
+    let _default_path = write_temp_default(&temp_dir, &default_toml)?;
+    let _cwd_guard = CurrentDirGuard::new(temp_dir.path())?;
     let _env_guard = EnvVarGuard::set("MCP__SERVER__NETWORK__PORT", "9999");
 
-    let config = ConfigLoader::new()
-        .load()
-        .expect("load config with env override");
+    let config = ConfigLoader::new().load()?;
     assert_eq!(
         config.server.network.port, 9999,
         "MCP__SERVER__NETWORK__PORT should override port from default.toml"
     );
+    Ok(())
 }
 
 // ── Enforcement: no config bypass ────────────────────────────────────────────
 
-fn workspace_root() -> PathBuf {
+fn workspace_root() -> Result<PathBuf, Box<dyn std::error::Error>> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     for dir in manifest_dir.ancestors() {
         if dir.join("Cargo.lock").exists() {
-            return dir.to_path_buf();
+            return Ok(dir.to_path_buf());
         }
     }
-    panic!("workspace root not found from CARGO_MANIFEST_DIR ancestors");
+    Err("workspace root not found from CARGO_MANIFEST_DIR ancestors".into())
 }
 
 fn scan_rs_files(dir: &Path) -> Vec<PathBuf> {
@@ -267,8 +269,8 @@ fn scan_rs_files(dir: &Path) -> Vec<PathBuf> {
 }
 
 #[test]
-fn test_no_direct_env_var_in_production_code() {
-    let root = workspace_root();
+fn test_no_direct_env_var_in_production_code() -> Result<(), Box<dyn std::error::Error>> {
+    let root = workspace_root()?;
     let allowed_paths: &[&str] = &[
         "mcb-infrastructure/src/config/loader.rs",
         "mcb-validate/src/config/",
@@ -324,11 +326,12 @@ fn test_no_direct_env_var_in_production_code() {
         "Direct env var reads found outside config loader (Task 3 / Task 5 must fix these):\n{}",
         violations.join("\n")
     );
+    Ok(())
 }
 
 #[test]
-fn test_no_impl_default_in_config_types() {
-    let root = workspace_root();
+fn test_no_impl_default_in_config_types() -> Result<(), Box<dyn std::error::Error>> {
+    let root = workspace_root()?;
     let types_dir = root.join("crates/mcb-infrastructure/src/config/types");
 
     let allowed = [
@@ -367,11 +370,12 @@ fn test_no_impl_default_in_config_types() {
         "impl Default found on operational config types (defaults must come from default.toml):\n{}",
         violations.join("\n")
     );
+    Ok(())
 }
 
 #[test]
-fn test_no_serde_default_in_config_types() {
-    let root = workspace_root();
+fn test_no_serde_default_in_config_types() -> Result<(), Box<dyn std::error::Error>> {
+    let root = workspace_root()?;
     let types_dir = root.join("crates/mcb-infrastructure/src/config/types");
     let mut violations = Vec::new();
 
@@ -396,11 +400,12 @@ fn test_no_serde_default_in_config_types() {
         "serde(default) found in config types (operational defaults must come from default.toml):\n{}",
         violations.join("\n")
     );
+    Ok(())
 }
 
 #[test]
-fn test_no_hardcoded_fallback_for_security_ids() {
-    let root = workspace_root();
+fn test_no_hardcoded_fallback_for_security_ids() -> Result<(), Box<dyn std::error::Error>> {
+    let root = workspace_root()?;
 
     let security_id_fallback_patterns: &[(&str, &str)] = &[
         (r#""default""#, "project_id"),
@@ -451,13 +456,14 @@ fn test_no_hardcoded_fallback_for_security_ids() {
          must never exist — auto-detect from workspace/MCP or fail:\n{}",
         violations.join("\n")
     );
+    Ok(())
 }
 
 // ── Enforcement: no duplicated domain constants outside mcb-domain ───────────
 
 #[test]
-fn test_no_lang_constants_outside_domain() {
-    let root = workspace_root();
+fn test_no_lang_constants_outside_domain() -> Result<(), Box<dyn std::error::Error>> {
+    let root = workspace_root()?;
     let domain_lang = root.join("crates/mcb-domain/src/constants/lang.rs");
 
     // Only scan non-domain crate source dirs for LANG_ constant definitions
@@ -514,11 +520,12 @@ fn test_no_lang_constants_outside_domain() {
          (Single Source of Truth). Found duplicate definitions:\n{}",
         violations.join("\n")
     );
+    Ok(())
 }
 
 #[test]
-fn test_no_bm25_constants_outside_domain() {
-    let root = workspace_root();
+fn test_no_bm25_constants_outside_domain() -> Result<(), Box<dyn std::error::Error>> {
+    let root = workspace_root()?;
 
     let scan_dirs = &[
         "mcb-server/src",
@@ -574,11 +581,12 @@ fn test_no_bm25_constants_outside_domain() {
          (Single Source of Truth). Found duplicate definitions:\n{}",
         violations.join("\n")
     );
+    Ok(())
 }
 
 #[test]
-fn test_no_hardcoded_provider_defaults() {
-    let root = workspace_root();
+fn test_no_hardcoded_provider_defaults() -> Result<(), Box<dyn std::error::Error>> {
+    let root = workspace_root()?;
 
     // These function names indicate hardcoded fallback defaults for providers
     let banned_patterns = &[
@@ -623,4 +631,5 @@ fn test_no_hardcoded_provider_defaults() {
          Provider defaults come from config/default.toml:\n{}",
         violations.join("\n")
     );
+    Ok(())
 }

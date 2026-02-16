@@ -73,7 +73,7 @@ fn test_operating_mode_enum_variants() {
 
 #[test]
 fn test_mode_config_client_settings() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let config = create_client_config(port);
 
     assert_eq!(config.mode_type, OperatingMode::Client);
@@ -219,7 +219,7 @@ fn test_session_prefix_hash_uniqueness() {
 
 #[test]
 fn test_http_transport_config_localhost() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let config = HttpTransportConfig::localhost(port);
     let loaded = ConfigLoader::new().load().expect("load config");
 
@@ -230,7 +230,7 @@ fn test_http_transport_config_localhost() {
 
 #[test]
 fn test_http_transport_config_socket_addr() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let config = HttpTransportConfig::localhost(port);
     let addr = config.socket_addr().expect("valid socket addr");
     let loaded = ConfigLoader::new().load().expect("load config");
@@ -255,7 +255,7 @@ fn test_http_transport_config_default() {
 
 #[test]
 fn test_http_client_session_id_with_prefix() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let client = HttpClientTransport::new_with_session_source(
         format!("http://127.0.0.1:{port}"),
         Some("test-prefix".to_owned()),
@@ -270,7 +270,7 @@ fn test_http_client_session_id_with_prefix() {
 
 #[test]
 fn test_http_client_session_id_without_prefix() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let client = HttpClientTransport::new_with_session_source(
         format!("http://127.0.0.1:{port}"),
         None,
@@ -287,7 +287,7 @@ fn test_http_client_session_id_without_prefix() {
 
 #[test]
 fn test_http_client_server_url() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let expected_url = format!("http://127.0.0.1:{port}");
     let client = HttpClientTransport::new_with_session_source(
         expected_url.clone(),
@@ -303,7 +303,7 @@ fn test_http_client_server_url() {
 
 #[test]
 fn test_http_client_from_mode_config() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let mode_config = create_client_config(port);
 
     let client = HttpClientTransport::new_with_session_source(
@@ -423,7 +423,7 @@ fn app_config_mode_setup(#[case] use_client_mode: bool) {
     let mut expected_port = None;
 
     if use_client_mode {
-        let port = get_free_port();
+        let port = get_free_port().expect("get free port");
         config.mode = create_client_config(port);
         expected_port = Some(port);
     }
@@ -443,15 +443,15 @@ fn app_config_mode_setup(#[case] use_client_mode: bool) {
 
 #[test]
 fn test_get_free_port_returns_valid_port() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     assert!(port > 0);
     assert!(port < 65535);
 }
 
 #[test]
 fn test_get_free_port_returns_different_ports() {
-    let port1 = get_free_port();
-    let port2 = get_free_port();
+    let port1 = get_free_port().expect("get free port");
+    let port2 = get_free_port().expect("get free port");
 
     // While not guaranteed, in practice these should be different
     // due to sequential port allocation
@@ -581,7 +581,7 @@ async fn create_http_test_client(port: u16) -> (TestClient, tempfile::TempDir) {
 
 #[tokio::test]
 async fn test_http_server_tools_list() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let (server_instance, _temp) = create_test_mcp_server().await;
     let server = Arc::new(server_instance);
 
@@ -672,7 +672,7 @@ async fn test_http_server_core_methods(
     #[case] expect_error: bool,
     #[case] expected_error_code: Option<i32>,
 ) {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let (client, _temp) = create_http_test_client(port).await;
 
     let request = McpRequest {
@@ -743,7 +743,7 @@ async fn test_http_server_core_methods(
 
 #[tokio::test]
 async fn test_http_server_with_session_header() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let (server_instance, _temp) = create_test_mcp_server().await;
     let server = Arc::new(server_instance);
 
@@ -787,7 +787,7 @@ async fn test_http_server_with_session_header() {
 
 #[tokio::test]
 async fn test_http_server_tools_call_index_status() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let (server_instance, _temp) = create_test_mcp_server().await;
     let server = Arc::new(server_instance);
 
@@ -867,7 +867,7 @@ async fn test_http_server_tools_call_index_status() {
 
 #[tokio::test]
 async fn test_http_server_tools_call_without_workspace_provenance_is_rejected() {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let (server_instance, _temp) = create_test_mcp_server().await;
     let server = Arc::new(server_instance);
 
@@ -935,7 +935,7 @@ async fn test_http_server_tools_call_invalid_params_return_error(
     #[case] params: Option<serde_json::Value>,
     #[case] expected_message: &str,
 ) {
-    let port = get_free_port();
+    let port = get_free_port().expect("get free port");
     let (client, _temp) = create_http_test_client(port).await;
 
     let request = McpRequest {

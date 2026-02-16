@@ -84,11 +84,18 @@ async fn test_highlight_unsupported_language() {
     let result = service.highlight("code", "brainfuck").await;
 
     assert!(result.is_err());
-    match result.unwrap_err() {
-        Error::Highlight(HighlightError::UnsupportedLanguage(lang)) => {
-            assert_eq!(lang, "brainfuck");
-        }
-        _ => panic!("Expected Highlight(UnsupportedLanguage) error"),
+    let err_opt = result.err();
+    assert!(err_opt.is_some());
+    let err = match err_opt {
+        Some(error) => error,
+        None => return,
+    };
+    assert!(matches!(
+        err,
+        Error::Highlight(HighlightError::UnsupportedLanguage(_))
+    ));
+    if let Error::Highlight(HighlightError::UnsupportedLanguage(lang)) = err {
+        assert_eq!(lang, "brainfuck");
     }
 }
 

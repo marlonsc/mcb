@@ -90,13 +90,11 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
         .build()
 }
 
-// Service retrieval
-pub fn get_embedding_provider(catalog: &Catalog) -> Result<Arc<dyn EmbeddingProvider>> {
-    catalog.get_one::<dyn EmbeddingProvider>()
-        .map_err(|e| {
-            Error::configuration(format!("Service not found: {e:?}"))
-        })
-}
+// Service retrieval via AppContext (bootstrap.rs)
+// AppContext holds all resolved providers as typed fields:
+//   app_context.embedding_handle()    → Arc<EmbeddingProviderHandle>
+//   app_context.vector_store_handle() → Arc<VectorStoreProviderHandle>
+//   app_context.cache_handle()        → Arc<CacheProviderHandle>
 ```
 
 ### 3. Architecture Layers

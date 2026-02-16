@@ -38,8 +38,6 @@ impl VcsHandler {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
-        let _org_id = resolve_org_id(args.org_id.as_deref());
-
         match args.action {
             VcsAction::ListRepositories => {
                 list_repos::list_repositories(&self.vcs_provider, &args).await

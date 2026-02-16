@@ -80,13 +80,9 @@ pub struct PortAdapterValidator {
     providers_dir: String,
 }
 
-impl PortAdapterValidator {
-    /// Creates a new port/adapter validator, loading configuration from files.
-    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
-        let file_config = crate::config::FileConfig::load(workspace_root);
-        Self::with_config(&file_config.rules.port_adapter)
-    }
+crate::impl_config_only_validator_new!(PortAdapterValidator, port_adapter);
 
+impl PortAdapterValidator {
     /// Creates a new port/adapter validator with current configuration.
     #[must_use]
     pub fn with_config(config: &PortAdapterRulesConfig) -> Self {

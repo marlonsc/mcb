@@ -42,7 +42,7 @@ async fn test_grl_parsing_with_assertion() {
 
 /// Verifies that rules fire and modify facts.
 #[tokio::test]
-async fn test_rule_execution_modifies_facts() {
+async fn test_rule_execution_modifies_facts() -> Result<(), Box<dyn std::error::Error>> {
     let mut engine = ReteEngine::new();
 
     let grl = build_grl_rule(
@@ -51,21 +51,13 @@ async fn test_rule_execution_modifies_facts() {
         &format!("{FACT_RESULT_VALUE} = true"),
     );
 
-    engine.load_grl(&grl).expect("Should load GRL");
+    engine.load_grl(&grl)?;
 
-    let kb = build_kb_from_grl("test", &grl);
+    let kb = build_kb_from_grl("test", &grl)?;
     let facts = create_facts(&[(FACT_HAS_INTERNAL_DEPS, RreValue::Boolean(true))]);
 
     let mut rre_engine = RustRuleEngine::new(kb);
-    let exec_result = rre_engine.execute(&facts);
-
-    assert!(
-        exec_result.is_ok(),
-        "Rule execution failed: {:?}",
-        exec_result.err()
-    );
-
-    let result = exec_result.unwrap();
+    let result = rre_engine.execute(&facts)?;
     assert!(
         result.rules_fired > 0,
         "No rules fired! Expected at least 1 rule to fire. Got: rules_fired={}, rules_evaluated={}",
@@ -75,16 +67,20 @@ async fn test_rule_execution_modifies_facts() {
 
     match facts.get(FACT_RESULT_VALUE) {
         Some(RreValue::Boolean(true)) => { /* SUCCESS */ }
-        other => panic!(
-            "Rule did NOT modify the fact! {FACT_RESULT_VALUE} should be Boolean(true) but got: {other:?}"
-        ),
+        other => {
+            assert!(
+                false,
+                "Rule did NOT modify the fact! {FACT_RESULT_VALUE} should be Boolean(true) but got: {other:?}"
+            );
+        }
     }
+    Ok(())
 }
 
 /// End-to-end test for CA001 Domain Independence rule:
 /// YAML rule → GRL parsing → execution → violation detection.
 #[tokio::test]
-async fn test_ca001_detects_violation_end_to_end() {
+async fn test_ca001_detects_violation_end_to_end() -> Result<(), Box<dyn std::error::Error>> {
     let grl = build_grl_rule(
         "DomainIndependence",
         &format!("{FACT_HAS_INTERNAL_DEPS} == true && {FACT_VIOLATION_TRIGGERED} == false"),
@@ -95,7 +91,7 @@ async fn test_ca001_detects_violation_end_to_end() {
         ),
     );
 
-    let kb = build_kb_from_grl("test", &grl);
+    let kb = build_kb_from_grl("test", &grl)?;
 
     // Case 1: VIOLATION — has_internal_dependencies=true
     {
@@ -106,7 +102,7 @@ async fn test_ca001_detects_violation_end_to_end() {
         ]);
 
         let mut rre_engine = RustRuleEngine::new(kb.clone());
-        let result = rre_engine.execute(&facts).expect("execute should succeed");
+        let result = rre_engine.execute(&facts)?;
 
         assert_eq!(
             result.rules_fired, 1,
@@ -114,10 +110,11 @@ async fn test_ca001_detects_violation_end_to_end() {
             result.rules_fired
         );
 
-        match facts.get(FACT_VIOLATION_TRIGGERED) {
-            Some(RreValue::Boolean(true)) => { /* expected */ }
-            other => panic!("CA001 did not trigger violation! Got: {other:?}"),
-        }
+        assert_eq!(
+            facts.get(FACT_VIOLATION_TRIGGERED),
+            Some(RreValue::Boolean(true)),
+            "CA001 did not trigger violation"
+        );
     }
 
     // Case 2: NO violation — has_internal_dependencies=false
@@ -129,7 +126,7 @@ async fn test_ca001_detects_violation_end_to_end() {
         ]);
 
         let mut rre_engine = RustRuleEngine::new(kb);
-        let result = rre_engine.execute(&facts).expect("execute should succeed");
+        let result = rre_engine.execute(&facts)?;
 
         assert_eq!(
             result.rules_fired, 0,
@@ -137,9 +134,11 @@ async fn test_ca001_detects_violation_end_to_end() {
             result.rules_fired
         );
 
-        match facts.get(FACT_VIOLATION_TRIGGERED) {
-            Some(RreValue::Boolean(false)) => { /* expected */ }
-            other => panic!("CA001 incorrectly triggered violation! Got: {other:?}"),
-        }
+        assert_eq!(
+            facts.get(FACT_VIOLATION_TRIGGERED),
+            Some(RreValue::Boolean(false)),
+            "CA001 incorrectly triggered violation"
+        );
     }
+    Ok(())
 }

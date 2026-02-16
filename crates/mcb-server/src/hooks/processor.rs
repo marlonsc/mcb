@@ -151,12 +151,15 @@ impl HookProcessor {
             commit: None,
         };
 
-        let _results = memory_service
+        let results = memory_service
             .memory_search("session context", Some(filter), 10)
             .await
             .map_err(|e| HookError::FailedToInjectContext(e.to_string()))?;
 
-        debug!("SessionStart hook processed successfully");
+        debug!(
+            count = results.len(),
+            "SessionStart hook processed successfully"
+        );
         Ok(())
     }
 }

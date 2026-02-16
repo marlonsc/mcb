@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use crate::constants::architecture::ARCH_PATH_CONFIG;
-use crate::constants::common::DOC_COMMENT_PREFIX;
+use crate::constants::common::{COMMENT_PREFIX, DOC_COMMENT_PREFIX};
 use crate::define_violations;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
@@ -282,7 +282,9 @@ impl ConfigQualityValidator {
         // Check for documentation comment or constant usage
         if line_idx > 0 {
             let prev_line = lines[line_idx - 1];
-            if prev_line.contains("///") || prev_line.contains("//") || prev_line.contains("const")
+            if prev_line.contains(DOC_COMMENT_PREFIX)
+                || prev_line.contains(COMMENT_PREFIX)
+                || prev_line.contains("const")
             {
                 return true;
             }

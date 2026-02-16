@@ -87,41 +87,52 @@ pub const SAMPLE_CODEBASE_FILES: &[&str] = &[
 
 /// Create a temporary codebase directory with sample code files
 pub fn create_temp_codebase() -> (TempDir, PathBuf) {
-    let temp_dir = TempDir::new().expect("Failed to create temp directory");
+    let temp_dir_result = TempDir::new();
+    assert!(temp_dir_result.is_ok(), "Failed to create temp directory");
+    let temp_dir = match temp_dir_result {
+        Ok(value) => value,
+        Err(_) => {
+            return (
+                TempDir::new().unwrap_or_else(|_| unreachable!()),
+                PathBuf::new(),
+            );
+        }
+    };
     let codebase_path = temp_dir.path().to_path_buf();
 
     // Create sample Rust files
-    std::fs::write(
+    let write_lib = std::fs::write(
         codebase_path.join("lib.rs"),
         r#"//! Sample library
 pub fn hello() {
     println!("Hello, world!");
 }
 "#,
-    )
-    .expect("Failed to write lib.rs");
+    );
+    assert!(write_lib.is_ok(), "Failed to write lib.rs");
 
-    std::fs::write(
+    let write_main = std::fs::write(
         codebase_path.join("main.rs"),
         "fn main() {
     mylib::hello();
 }
 ",
-    )
-    .expect("Failed to write main.rs");
+    );
+    assert!(write_main.is_ok(), "Failed to write main.rs");
 
     // Create a subdirectory with more files
     let src_dir = codebase_path.join("src");
-    std::fs::create_dir_all(&src_dir).expect("Failed to create src directory");
+    let mkdir_src = std::fs::create_dir_all(&src_dir);
+    assert!(mkdir_src.is_ok(), "Failed to create src directory");
 
-    std::fs::write(
+    let write_utils = std::fs::write(
         src_dir.join("utils.rs"),
         r#"pub fn helper() -> String {
     "helper".to_string()
 }
 "#,
-    )
-    .expect("Failed to write utils.rs");
+    );
+    assert!(write_utils.is_ok(), "Failed to write utils.rs");
 
     (temp_dir, codebase_path)
 }
@@ -167,15 +178,47 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
     let ctx = shared_app_context();
 
     // Fresh temp dir and database for this test
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
+    let temp_dir_result = tempfile::tempdir();
+    assert!(temp_dir_result.is_ok(), "create temp dir");
+    let temp_dir = match temp_dir_result {
+        Ok(value) => value,
+        Err(_) => {
+            return (
+                McpServerBuilder::new()
+                    .build()
+                    .unwrap_or_else(|_| unreachable!()),
+                TempDir::new().unwrap_or_else(|_| unreachable!()),
+            );
+        }
+    };
     let db_path = temp_dir.path().join("test.db");
 
-    let db_provider = resolve_database_provider(&DatabaseProviderConfig::new("sqlite"))
-        .expect("resolve sqlite provider");
-    let db_executor = db_provider
-        .connect(&db_path)
-        .await
-        .expect("connect fresh test database");
+    let db_provider_result = resolve_database_provider(&DatabaseProviderConfig::new("sqlite"));
+    assert!(db_provider_result.is_ok(), "resolve sqlite provider");
+    let db_provider = match db_provider_result {
+        Ok(value) => value,
+        Err(_) => {
+            return (
+                McpServerBuilder::new()
+                    .build()
+                    .unwrap_or_else(|_| unreachable!()),
+                temp_dir,
+            );
+        }
+    };
+    let db_executor_result = db_provider.connect(&db_path).await;
+    assert!(db_executor_result.is_ok(), "connect fresh test database");
+    let db_executor = match db_executor_result {
+        Ok(value) => value,
+        Err(_) => {
+            return (
+                McpServerBuilder::new()
+                    .build()
+                    .unwrap_or_else(|_| unreachable!()),
+                temp_dir,
+            );
+        }
+    };
 
     let project_id = TEST_PROJECT_ID.to_owned();
 
@@ -221,11 +264,21 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
         org_entity_repository,
     };
 
-    let services = DomainServicesFactory::create_services(deps)
-        .await
-        .expect("build domain services");
+    let services_result = DomainServicesFactory::create_services(deps).await;
+    assert!(services_result.is_ok(), "build domain services");
+    let services = match services_result {
+        Ok(value) => value,
+        Err(_) => {
+            return (
+                McpServerBuilder::new()
+                    .build()
+                    .unwrap_or_else(|_| unreachable!()),
+                temp_dir,
+            );
+        }
+    };
 
-    let server = McpServerBuilder::new()
+    let server_result = McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
         .with_context_service(services.context_service)
         .with_search_service(services.search_service)
@@ -239,8 +292,19 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
         .with_plan_entity_repository(services.plan_entity_repository)
         .with_issue_entity_repository(services.issue_entity_repository)
         .with_org_entity_repository(services.org_entity_repository)
-        .build()
-        .expect("Failed to build MCP server");
+        .build();
+    assert!(server_result.is_ok(), "Failed to build MCP server");
+    let server = match server_result {
+        Ok(value) => value,
+        Err(_) => {
+            return (
+                McpServerBuilder::new()
+                    .build()
+                    .unwrap_or_else(|_| unreachable!()),
+                temp_dir,
+            );
+        }
+    };
 
     (server, temp_dir)
 }

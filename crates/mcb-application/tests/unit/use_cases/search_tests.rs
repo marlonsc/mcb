@@ -23,10 +23,10 @@ fn unique_collection(prefix: &str) -> CollectionId {
 #[fixture]
 async fn ctx() -> Arc<dyn ContextServiceInterface> {
     let app_ctx = shared_app_context();
-    let services = app_ctx
-        .build_domain_services()
-        .await
-        .expect("build domain services");
+    let services_result = app_ctx.build_domain_services().await;
+    assert!(services_result.is_ok(), "build domain services failed");
+    // SAFETY: assert above guarantees Ok
+    let services = services_result.unwrap_or_else(|_| unreachable!());
     services.context_service
 }
 

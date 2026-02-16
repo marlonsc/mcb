@@ -5,56 +5,46 @@ use mcb_domain::ports::MemoryRepository;
 use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::value_objects::ObservationId;
 use mcb_providers::database::{create_memory_repository, create_memory_repository_with_executor};
-use rstest::rstest;
-
-use rstest::*;
 use tempfile::TempDir;
 
 use crate::test_utils::create_test_project;
 
-#[fixture]
-async fn repo() -> (Arc<dyn MemoryRepository>, TempDir) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
+async fn setup_repo() -> Result<(Arc<dyn MemoryRepository>, TempDir), Box<dyn std::error::Error>> {
+    let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("test.db");
-    let repo = create_memory_repository(db_path).await.unwrap();
-    (repo, temp_dir)
+    let repo = create_memory_repository(db_path).await?;
+    Ok((repo, temp_dir))
 }
 
-#[fixture]
-async fn repo_and_executor() -> (
-    Arc<dyn MemoryRepository>,
-    Arc<dyn DatabaseExecutor>,
-    TempDir,
-) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let db_path = temp_dir.path().join("test.db");
-    let (repo, executor) = create_memory_repository_with_executor(db_path)
-        .await
-        .unwrap();
-    (repo, executor, temp_dir)
-}
-
-#[rstest]
-#[tokio::test]
-async fn test_memory_repository_creates(#[future] repo: (Arc<dyn MemoryRepository>, TempDir)) {
-    let (repo, _dir) = repo.await;
-    let results = repo.search("test", 1).await.unwrap();
-    assert!(results.is_empty());
-}
-
-#[rstest]
-#[tokio::test]
-async fn test_memory_repository_store_and_get_observation(
-    #[future] repo_and_executor: (
+async fn setup_repo_and_executor() -> Result<
+    (
         Arc<dyn MemoryRepository>,
         Arc<dyn DatabaseExecutor>,
         TempDir,
     ),
-) {
-    let (repo, executor, _dir) = repo_and_executor.await;
+    Box<dyn std::error::Error>,
+> {
+    let temp_dir = tempfile::tempdir()?;
+    let db_path = temp_dir.path().join("test.db");
+    let (repo, executor) = create_memory_repository_with_executor(db_path).await?;
+    Ok((repo, executor, temp_dir))
+}
+
+#[tokio::test]
+async fn test_memory_repository_creates() -> Result<(), Box<dyn std::error::Error>> {
+    let (repo, _dir) = setup_repo().await?;
+    let results = repo.search("test", 1).await?;
+    assert!(results.is_empty());
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_memory_repository_store_and_get_observation() -> Result<(), Box<dyn std::error::Error>>
+{
+    let (repo, executor, _dir) = setup_repo_and_executor().await?;
 
     let project_id = "test-project";
-    create_test_project(executor.as_ref(), project_id).await;
+    create_test_project(executor.as_ref(), project_id).await?;
 
     let obs_id = ObservationId::from_name("test-obs-1");
     let obs = Observation {
@@ -69,10 +59,12 @@ async fn test_memory_repository_store_and_get_observation(
         embedding_id: None,
     };
 
-    repo.store_observation(&obs).await.unwrap();
+    repo.store_observation(&obs).await?;
 
-    let got = repo.get_observation(&obs_id).await.unwrap();
+    let got = repo.get_observation(&obs_id).await?;
 
     assert!(got.is_some());
-    assert_eq!(got.unwrap().content, "content");
+    let observation = got.ok_or("observation should exist")?;
+    assert_eq!(observation.content, "content");
+    Ok(())
 }
