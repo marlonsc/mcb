@@ -178,5 +178,5 @@ static MAVEN_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "maven",
     description: "Detects Maven projects with pom.xml",
     marker_files: &["pom.xml"],
-    factory: maven_factory,
+    build: maven_factory,
 };

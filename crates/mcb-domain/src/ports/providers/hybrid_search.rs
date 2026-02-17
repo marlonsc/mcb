@@ -32,7 +32,7 @@ pub struct HybridSearchResult {
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::providers::hybrid_search::HybridSearchProvider;
+/// use mcb_domain::ports::HybridSearchProvider;
 /// use std::sync::Arc;
 ///
 /// async fn search_hybrid(provider: Arc<dyn HybridSearchProvider>) -> mcb_domain::Result<()> {

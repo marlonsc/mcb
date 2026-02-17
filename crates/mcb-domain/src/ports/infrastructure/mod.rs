@@ -17,7 +17,6 @@
 //! | [`ProviderRouter`] | Provider routing and selection services |
 //! | [`DatabaseExecutor`] | SQL execution (repositories use via DI, no direct driver) |
 
-pub mod admin;
 /// Authentication service port
 pub mod auth;
 /// Database executor port (SQL execution abstraction)
@@ -37,10 +36,6 @@ mod state_store;
 pub mod sync;
 
 // Re-export infrastructure ports
-pub use admin::{
-    CacheAdminInterface, EmbeddingAdminInterface, LanguageAdminInterface, ProviderInfo,
-    VectorStoreAdminInterface,
-};
 pub use auth::AuthServiceInterface;
 pub use database::{DatabaseExecutor, DatabaseProvider, SqlParam, SqlRow};
 pub use events::{DomainEventStream, EventBusProvider};

@@ -43,7 +43,8 @@ fn detects_duplicate_port_declarations_from_synthetic_files() {
         SsotViolation::ForbiddenLegacyImport { .. }
         | SsotViolation::ForbiddenLegacySchemaSymbol { .. }
         | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
-        | SsotViolation::ForbiddenLegacySchemaImport { .. } => {
+        | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
     }
@@ -82,7 +83,8 @@ fn detects_forbidden_legacy_imports_from_synthetic_files() {
         SsotViolation::DuplicatePortDeclaration { .. }
         | SsotViolation::ForbiddenLegacySchemaSymbol { .. }
         | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
-        | SsotViolation::ForbiddenLegacySchemaImport { .. } => {
+        | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
     }
@@ -124,7 +126,7 @@ fn returns_no_violations_for_clean_synthetic_files() {
         ),
         (
             "application/service.rs",
-            "use mcb_domain::ports::repositories::user_repository::UserRepository;\n",
+            "use mcb_domain::ports::UserRepository;\n",
         ),
     ]);
 
@@ -165,7 +167,8 @@ fn detects_forbidden_legacy_schema_symbol_on_project_schema_struct() {
         SsotViolation::DuplicatePortDeclaration { .. }
         | SsotViolation::ForbiddenLegacyImport { .. }
         | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
-        | SsotViolation::ForbiddenLegacySchemaImport { .. } => {
+        | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
     }
@@ -197,7 +200,8 @@ fn detects_forbidden_legacy_schema_symbol_on_memory_schema_import() {
         SsotViolation::DuplicatePortDeclaration { .. }
         | SsotViolation::ForbiddenLegacyImport { .. }
         | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
-        | SsotViolation::ForbiddenLegacySchemaImport { .. } => {
+        | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
     }
@@ -240,7 +244,8 @@ fn detects_forbidden_schema_memory_macro_path() {
         SsotViolation::DuplicatePortDeclaration { .. }
         | SsotViolation::ForbiddenLegacyImport { .. }
         | SsotViolation::ForbiddenLegacySchemaSymbol { .. }
-        | SsotViolation::ForbiddenLegacySchemaImport { .. } => {
+        | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
     }
@@ -276,7 +281,8 @@ fn detects_forbidden_legacy_schema_import_paths() {
         SsotViolation::DuplicatePortDeclaration { .. }
         | SsotViolation::ForbiddenLegacyImport { .. }
         | SsotViolation::ForbiddenLegacySchemaSymbol { .. }
-        | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. } => {
+        | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
+        | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
     }
@@ -308,8 +314,26 @@ fn detects_forbidden_legacy_schema_symbol_on_ddl_generator_struct() {
         SsotViolation::DuplicatePortDeclaration { .. }
         | SsotViolation::ForbiddenLegacyImport { .. }
         | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
-        | SsotViolation::ForbiddenLegacySchemaImport { .. } => {
+        | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
     }
+}
+
+#[test]
+fn detects_forbidden_root_schema_paths() {
+    let files = synthetic_files(&[(
+        "application/non_canonical.rs",
+        "use mcb_domain::Schema;\nlet _ = mcb_domain::ColumnType::Text;\n",
+    )]);
+
+    let violations = SsotValidator::validate_synthetic_files(&files).unwrap();
+
+    let root_path_violations = violations
+        .iter()
+        .filter(|violation| matches!(violation, SsotViolation::ForbiddenRootSchemaPath { .. }))
+        .collect::<Vec<_>>();
+
+    assert_eq!(root_path_violations.len(), 2);
 }

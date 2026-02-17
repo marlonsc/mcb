@@ -17,6 +17,8 @@ use crate::value_objects::{Embedding, ObservationId, SessionId};
 pub struct CreateSessionSummaryInput {
     /// Project identifier owning this session summary.
     pub project_id: String,
+    /// Organization identifier owning this session summary.
+    pub org_id: String,
     /// Session identifier being summarized.
     pub session_id: SessionId,
     /// Main topics covered in the session.

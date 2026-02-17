@@ -325,6 +325,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         let params = [
             SqlParam::String(summary.id.clone()),
             SqlParam::String(summary.project_id.clone()),
+            SqlParam::String(summary.org_id.clone()),
             SqlParam::String(summary.session_id.clone()),
             SqlParam::String(topics),
             SqlParam::String(decisions),
@@ -337,8 +338,8 @@ impl MemoryRepository for SqliteMemoryRepository {
         self.executor
             .execute(
                 "
-                INSERT INTO session_summaries (id, project_id, session_id, topics, decisions, next_steps, key_files, origin_context, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO session_summaries (id, project_id, org_id, session_id, topics, decisions, next_steps, key_files, origin_context, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     topics = excluded.topics,
                     decisions = excluded.decisions,

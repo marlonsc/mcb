@@ -82,5 +82,5 @@ static CARGO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "cargo",
     description: "Detects Rust projects with Cargo.toml",
     marker_files: &["Cargo.toml"],
-    factory: cargo_factory,
+    build: cargo_factory,
 };

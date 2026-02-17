@@ -45,7 +45,7 @@ macro_rules! register_cache_provider {
             mcb_domain::registry::cache::CacheProviderEntry {
                 name: $provider_slug,
                 description: $description,
-                factory: $factory_fn,
+                build: $factory_fn,
             };
     };
 }

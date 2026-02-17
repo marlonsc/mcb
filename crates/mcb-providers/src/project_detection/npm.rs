@@ -103,5 +103,5 @@ static NPM_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "npm",
     description: "Detects Node.js projects with package.json",
     marker_files: &["package.json"],
-    factory: npm_factory,
+    build: npm_factory,
 };

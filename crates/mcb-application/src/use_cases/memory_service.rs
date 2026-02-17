@@ -297,6 +297,7 @@ impl MemoryServiceImpl {
         let summary = SessionSummary {
             id: id::generate().to_string(),
             project_id: project_id.clone(),
+            org_id: input.org_id,
             session_id: session_id.clone(),
             topics: input.topics,
             decisions: input.decisions,

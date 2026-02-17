@@ -5,8 +5,8 @@ pub fn table() -> TableDef {
         "agent_sessions",
         [
             crate::col!("id", Text, pk),
-            crate::col!("project_id", Text),
-            crate::col!("worktree_id", Text),
+            crate::col!("project_id", Text, nullable),
+            crate::col!("worktree_id", Text, nullable),
             crate::col!("session_summary_id", Text),
             crate::col!("agent_type", Text),
             crate::col!("model", Text),

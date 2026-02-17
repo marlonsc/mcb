@@ -125,8 +125,7 @@ humantime = { workspace = true }
 # Shell expansion
 shellexpand = { workspace = true }
 
-# Temp files (optional, for test-utils feature)
-tempfile = { workspace = true, optional = true }
+tempfile = { workspace = true }
 
 # Additional crypto
 pbkdf2 = { workspace = true }
@@ -161,7 +160,7 @@ mcb-validate = { path = "../mcb-validate" }
 
 [features]
 default = []
-test-utils = ["dep:tempfile"]
+test-utils = []
 
 [lints]
 workspace = true

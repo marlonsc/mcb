@@ -137,7 +137,39 @@ pub struct ServiceDependencies {
 /// Domain services factory - creates services with runtime dependencies
 pub struct DomainServicesFactory;
 
+struct IndexingServiceInputs {
+    context_service: Arc<dyn ContextServiceInterface>,
+    language_chunker: Arc<dyn LanguageChunkingProvider>,
+    indexing_ops: Arc<dyn IndexingOperationsInterface>,
+    event_bus: Arc<dyn EventBusProvider>,
+    file_hash_repository: Arc<dyn FileHashRepository>,
+    supported_extensions: Vec<String>,
+}
+
 impl DomainServicesFactory {
+    fn build_context_service(
+        cache_provider: Arc<dyn mcb_domain::ports::CacheProvider>,
+        embedding_provider: Arc<dyn EmbeddingProvider>,
+        vector_store_provider: Arc<dyn VectorStoreProvider>,
+    ) -> Arc<dyn ContextServiceInterface> {
+        Arc::new(ContextServiceImpl::new(
+            cache_provider,
+            embedding_provider,
+            vector_store_provider,
+        ))
+    }
+
+    fn build_indexing_service(inputs: IndexingServiceInputs) -> Arc<dyn IndexingServiceInterface> {
+        Arc::new(IndexingServiceImpl::new_with_file_hash_repository(
+            inputs.context_service,
+            inputs.language_chunker,
+            inputs.indexing_ops,
+            inputs.event_bus,
+            inputs.file_hash_repository,
+            inputs.supported_extensions,
+        ))
+    }
+
     /// Creates all domain services from runtime dependencies.
     ///
     /// Assembles the complete set of domain service implementations using constructor injection.
@@ -156,24 +188,23 @@ impl DomainServicesFactory {
     ///
     /// Returns an error if service initialization fails.
     pub async fn create_services(deps: ServiceDependencies) -> Result<DomainServicesContainer> {
-        let context_service: Arc<dyn ContextServiceInterface> = Arc::new(ContextServiceImpl::new(
+        let context_service = Self::build_context_service(
             deps.cache.as_provider(),
             Arc::clone(&deps.embedding_provider),
             Arc::clone(&deps.vector_store_provider),
-        ));
+        );
 
         let search_service: Arc<dyn SearchServiceInterface> =
             Arc::new(SearchServiceImpl::new(Arc::clone(&context_service)));
 
-        let indexing_service: Arc<dyn IndexingServiceInterface> =
-            Arc::new(IndexingServiceImpl::new_with_file_hash_repository(
-                Arc::clone(&context_service),
-                deps.language_chunker,
-                deps.indexing_ops,
-                deps.event_bus,
-                deps.file_hash_repository,
-                deps.config.mcp.indexing.supported_extensions.clone(),
-            ));
+        let indexing_service = Self::build_indexing_service(IndexingServiceInputs {
+            context_service: Arc::clone(&context_service),
+            language_chunker: deps.language_chunker,
+            indexing_ops: deps.indexing_ops,
+            event_bus: deps.event_bus,
+            file_hash_repository: deps.file_hash_repository,
+            supported_extensions: deps.config.mcp.indexing.supported_extensions.clone(),
+        });
 
         let validation_service: Arc<dyn ValidationServiceInterface> =
             Arc::new(InfraValidationService::new());
@@ -220,16 +251,14 @@ impl DomainServicesFactory {
         let file_hash_repository = app_context.file_hash_repository();
         let supported_extensions = app_context.config.mcp.indexing.supported_extensions.clone();
 
-        Ok(Arc::new(
-            IndexingServiceImpl::new_with_file_hash_repository(
-                context_service,
-                language_chunker,
-                indexing_ops,
-                event_bus,
-                file_hash_repository,
-                supported_extensions,
-            ),
-        ))
+        Ok(Self::build_indexing_service(IndexingServiceInputs {
+            context_service,
+            language_chunker,
+            indexing_ops,
+            event_bus,
+            file_hash_repository,
+            supported_extensions,
+        }))
     }
 
     /// Create context service from app context
@@ -244,11 +273,11 @@ impl DomainServicesFactory {
         let embedding_provider = app_context.embedding_handle().get();
         let vector_store_provider = app_context.vector_store_handle().get();
 
-        Ok(Arc::new(ContextServiceImpl::new(
+        Ok(Self::build_context_service(
             cache_provider,
             embedding_provider,
             vector_store_provider,
-        )))
+        ))
     }
 
     /// Create search service from app context

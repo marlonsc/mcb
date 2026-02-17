@@ -196,5 +196,5 @@ fn ollama_factory(
 static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
     name: "ollama",
     description: "Ollama local embedding provider (nomic-embed-text, all-minilm, etc.)",
-    factory: ollama_factory,
+    build: ollama_factory,
 };

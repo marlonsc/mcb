@@ -78,7 +78,7 @@ macro_rules! register_vector_store_provider {
             mcb_domain::registry::vector_store::VectorStoreProviderEntry {
                 name: $provider_slug,
                 description: $description,
-                factory: $factory_fn,
+                build: $factory_fn,
             };
     };
 }

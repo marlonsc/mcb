@@ -21,7 +21,7 @@ pub struct DatabaseProviderConfig {
 crate::impl_config_builder!(DatabaseProviderConfig {});
 
 crate::impl_registry!(
-    provider_trait: crate::ports::infrastructure::DatabaseProvider,
+    provider_trait: crate::ports::DatabaseProvider,
     config_type: DatabaseProviderConfig,
     entry_type: DatabaseProviderEntry,
     slice_name: DATABASE_PROVIDERS,

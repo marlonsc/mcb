@@ -10,7 +10,7 @@ use mcb_domain::{
         DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository,
     },
     error::{Error, Result},
-    ports::providers::VcsProvider,
+    ports::VcsProvider,
 };
 
 /// Git implementation of `VcsProvider` using libgit2.

@@ -2,77 +2,15 @@
 
 use std::env;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use mcb_infrastructure::config::ConfigLoader;
 use serial_test::serial;
 use tempfile::TempDir;
 
-struct CurrentDirGuard {
-    original: PathBuf,
-}
-
-impl CurrentDirGuard {
-    fn new(new_dir: &Path) -> Result<Self, Box<dyn std::error::Error>> {
-        let original = env::current_dir()?;
-        env::set_current_dir(new_dir)?;
-        Ok(Self { original })
-    }
-}
-
-impl Drop for CurrentDirGuard {
-    fn drop(&mut self) {
-        let _ = env::set_current_dir(&self.original);
-    }
-}
-
-struct EnvVarGuard {
-    key: String,
-}
-
-impl EnvVarGuard {
-    fn set(key: &str, value: &str) -> Self {
-        // SAFETY: These tests run under `#[serial]` so no concurrent env access.
-        unsafe {
-            env::set_var(key, value);
-        }
-        Self {
-            key: key.to_owned(),
-        }
-    }
-}
-
-impl Drop for EnvVarGuard {
-    fn drop(&mut self) {
-        // SAFETY: These tests run under `#[serial]` so no concurrent env access.
-        unsafe {
-            env::remove_var(&self.key);
-        }
-    }
-}
-
-struct RestoreFileGuard {
-    backup: PathBuf,
-    target: PathBuf,
-}
-
-impl RestoreFileGuard {
-    fn move_out(target: &Path, backup: &Path) -> Result<Self, Box<dyn std::error::Error>> {
-        fs::rename(target, backup)?;
-        Ok(Self {
-            backup: backup.to_path_buf(),
-            target: target.to_path_buf(),
-        })
-    }
-}
-
-impl Drop for RestoreFileGuard {
-    fn drop(&mut self) {
-        if self.backup.exists() {
-            let _ = fs::rename(&self.backup, &self.target);
-        }
-    }
-}
+use crate::utils::env_vars::EnvVarGuard;
+use crate::utils::fs_guards::{CurrentDirGuard, RestoreFileGuard};
+use crate::utils::workspace::{scan_rs_files, workspace_root};
 
 fn workspace_default_toml() -> Result<PathBuf, Box<dyn std::error::Error>> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -237,36 +175,6 @@ fn test_mcp_env_override_port_works() -> Result<(), Box<dyn std::error::Error>> 
 }
 
 // ── Enforcement: no config bypass ────────────────────────────────────────────
-
-fn workspace_root() -> Result<PathBuf, Box<dyn std::error::Error>> {
-    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    for dir in manifest_dir.ancestors() {
-        if dir.join("Cargo.lock").exists() {
-            return Ok(dir.to_path_buf());
-        }
-    }
-    Err("workspace root not found from CARGO_MANIFEST_DIR ancestors".into())
-}
-
-fn scan_rs_files(dir: &Path) -> Vec<PathBuf> {
-    let mut results = Vec::new();
-    if !dir.exists() {
-        return results;
-    }
-    for entry in walkdir::WalkDir::new(dir)
-        .into_iter()
-        .filter_map(std::result::Result::ok)
-    {
-        let path = entry.path();
-        if path.extension().is_some_and(|ext| ext == "rs")
-            && !path.to_string_lossy().contains("/tests/")
-            && !path.to_string_lossy().contains("/test_")
-        {
-            results.push(path.to_path_buf());
-        }
-    }
-    results
-}
 
 #[test]
 fn test_no_direct_env_var_in_production_code() -> Result<(), Box<dyn std::error::Error>> {

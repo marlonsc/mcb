@@ -317,5 +317,5 @@ fn universal_language_factory(
 static UNIVERSAL_LANGUAGE_PROVIDER: LanguageProviderEntry = LanguageProviderEntry {
     name: "universal",
     description: "Universal language chunker supporting all languages via tree-sitter",
-    factory: universal_language_factory,
+    build: universal_language_factory,
 };

@@ -146,5 +146,5 @@ static GO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "go",
     description: "Detects Go projects with go.mod",
     marker_files: &["go.mod"],
-    factory: go_factory,
+    build: go_factory,
 };

@@ -44,6 +44,10 @@ pub async fn summarize_session(
         match memory_service
             .create_session_summary(CreateSessionSummaryInput {
                 project_id,
+                org_id: args
+                    .org_id
+                    .clone()
+                    .unwrap_or(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_owned()),
                 session_id: *session_id,
                 topics,
                 decisions,

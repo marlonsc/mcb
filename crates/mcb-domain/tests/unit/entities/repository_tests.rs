@@ -65,6 +65,7 @@ fn repository_serialization_roundtrip(sample_repo: Repository) {
 fn sample_branch() -> Branch {
     Branch {
         id: "br-001".to_owned(),
+        org_id: "org-001".to_owned(),
         repository_id: "repo-001".to_owned(),
         name: "main".to_owned(),
         is_default: true,
@@ -85,6 +86,7 @@ fn branch_construction(sample_branch: Branch) {
 fn branch_without_upstream() {
     let branch = Branch {
         id: "br-002".to_owned(),
+        org_id: "org-001".to_owned(),
         repository_id: "repo-001".to_owned(),
         name: "feat/local-only".to_owned(),
         is_default: false,

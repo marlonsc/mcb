@@ -217,7 +217,7 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
     let deps = mcb_infrastructure::di::test_factory::create_test_dependencies(
         project_id,
         &db_executor,
-        &ctx,
+        ctx,
     );
 
     let services_result = DomainServicesFactory::create_services(deps).await;

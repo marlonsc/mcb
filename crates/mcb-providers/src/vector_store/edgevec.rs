@@ -5,6 +5,7 @@
 //! This implementation uses the Actor pattern to eliminate locks and ensure non-blocking operation.
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
@@ -292,6 +293,41 @@ impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
 }
 
 #[async_trait]
+impl VectorStoreBrowser for EdgeVecVectorStoreProvider {
+    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
+        send_actor_msg!(self, Browse(BrowseMessage::ListCollections {}))
+    }
+
+    async fn list_file_paths(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<FileInfo>> {
+        send_actor_msg!(
+            self,
+            Browse(BrowseMessage::ListFilePaths {
+                collection: collection.to_string(),
+                limit: limit
+            })
+        )
+    }
+
+    async fn get_chunks_by_file(
+        &self,
+        collection: &CollectionId,
+        file_path: &str,
+    ) -> Result<Vec<SearchResult>> {
+        send_actor_msg!(
+            self,
+            Browse(BrowseMessage::GetChunksByFile {
+                collection: collection.to_string(),
+                file_path: file_path.to_owned()
+            })
+        )
+    }
+}
+
+#[async_trait]
 impl VectorStoreProvider for EdgeVecVectorStoreProvider {
     async fn create_collection(&self, collection: &CollectionId, _dimensions: usize) -> Result<()> {
         send_actor_msg!(
@@ -378,41 +414,6 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
             Query(QueryMessage::ListVectors {
                 collection: collection.to_string(),
                 limit: limit
-            })
-        )
-    }
-}
-
-#[async_trait]
-impl VectorStoreBrowser for EdgeVecVectorStoreProvider {
-    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
-        send_actor_msg!(self, Browse(BrowseMessage::ListCollections {}))
-    }
-
-    async fn list_file_paths(
-        &self,
-        collection: &CollectionId,
-        limit: usize,
-    ) -> Result<Vec<FileInfo>> {
-        send_actor_msg!(
-            self,
-            Browse(BrowseMessage::ListFilePaths {
-                collection: collection.to_string(),
-                limit: limit
-            })
-        )
-    }
-
-    async fn get_chunks_by_file(
-        &self,
-        collection: &CollectionId,
-        file_path: &str,
-    ) -> Result<Vec<SearchResult>> {
-        send_actor_msg!(
-            self,
-            Browse(BrowseMessage::GetChunksByFile {
-                collection: collection.to_string(),
-                file_path: file_path.to_owned()
             })
         )
     }
@@ -824,8 +825,6 @@ impl EdgeVecActor {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use std::sync::Arc;
-
 use mcb_domain::registry::vector_store::{
     VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };
@@ -854,5 +853,5 @@ fn edgevec_factory(
 static EDGEVEC_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {
     name: "edgevec",
     description: "EdgeVec in-memory HNSW vector store (high-performance)",
-    factory: edgevec_factory,
+    build: edgevec_factory,
 };

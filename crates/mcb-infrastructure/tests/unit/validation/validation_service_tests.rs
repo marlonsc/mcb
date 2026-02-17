@@ -1,19 +1,11 @@
 //! Unit tests for `ValidationService`
 
+use std::fs;
 use std::path::PathBuf;
 
-use std::fs;
-
+use crate::utils::workspace::workspace_root;
 use mcb_domain::ports::ValidationServiceInterface;
 use mcb_infrastructure::validation::InfraValidationService;
-
-fn get_workspace_root() -> Result<PathBuf, Box<dyn std::error::Error>> {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .and_then(|p| p.parent())
-        .map(std::path::Path::to_path_buf)
-        .ok_or_else(|| "Failed to find workspace root from CARGO_MANIFEST_DIR".into())
-}
 
 #[tokio::test]
 async fn test_list_validators() -> Result<(), Box<dyn std::error::Error>> {
@@ -28,7 +20,7 @@ async fn test_list_validators() -> Result<(), Box<dyn std::error::Error>> {
 
 #[tokio::test]
 async fn test_validate_mcb_workspace_quality_only() -> Result<(), Box<dyn std::error::Error>> {
-    let workspace_root = get_workspace_root()?;
+    let workspace_root = workspace_root()?;
     let service = InfraValidationService::new();
 
     let result = std::thread::Builder::new()
@@ -54,7 +46,7 @@ async fn test_validate_mcb_workspace_quality_only() -> Result<(), Box<dyn std::e
 
 #[tokio::test]
 async fn test_validate_with_specific_validator() -> Result<(), Box<dyn std::error::Error>> {
-    let workspace_root = get_workspace_root()?;
+    let workspace_root = workspace_root()?;
     let service = InfraValidationService::new();
 
     let result = std::thread::Builder::new()

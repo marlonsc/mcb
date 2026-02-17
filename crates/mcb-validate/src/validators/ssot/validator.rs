@@ -16,6 +16,8 @@ const FORBIDDEN_SCHEMA_SYMBOL: &str = r"\b(ProjectSchema|MemorySchema|MemorySche
 const FORBIDDEN_SCHEMA_MACRO_PATH: &str = r"\$crate::schema::memory::";
 const FORBIDDEN_SCHEMA_IMPORT_PATTERN: &str =
     r"\b(?:pub\s+)?use\s+[^;]*\b(ProjectSchema|MemorySchema)\b";
+const FORBIDDEN_ROOT_SCHEMA_PATH_PATTERN: &str = r"\bmcb_domain::(Schema|SchemaDdlGenerator|ColumnDef|ColumnType|TableDef|IndexDef|FtsDef|ForeignKeyDef|UniqueConstraintDef|COL_OBSERVATION_TYPE)\b";
+const FORBIDDEN_ROOT_SCHEMA_IMPORT_PATTERN: &str = r"\b(?:pub\s+)?use\s+mcb_domain::\{[^}]*\b(Schema|SchemaDdlGenerator|ColumnDef|ColumnType|TableDef|IndexDef|FtsDef|ForeignKeyDef|UniqueConstraintDef|COL_OBSERVATION_TYPE)\b[^}]*\}";
 
 /// Validator for single-source-of-truth invariants.
 pub struct SsotValidator {
@@ -66,6 +68,9 @@ impl SsotValidator {
         let forbidden_schema_symbol_pattern = compile_regex(FORBIDDEN_SCHEMA_SYMBOL)?;
         let forbidden_schema_macro_path_pattern = compile_regex(FORBIDDEN_SCHEMA_MACRO_PATH)?;
         let forbidden_schema_import_pattern = compile_regex(FORBIDDEN_SCHEMA_IMPORT_PATTERN)?;
+        let forbidden_root_schema_path_pattern = compile_regex(FORBIDDEN_ROOT_SCHEMA_PATH_PATTERN)?;
+        let forbidden_root_schema_import_pattern =
+            compile_regex(FORBIDDEN_ROOT_SCHEMA_IMPORT_PATTERN)?;
 
         files.sort_by(|a, b| a.0.cmp(&b.0));
 
@@ -119,6 +124,26 @@ impl SsotValidator {
                         import_path: line.trim().to_owned(),
                         severity: Severity::Error,
                     });
+                }
+
+                if forbidden_root_schema_import_pattern.is_match(line) {
+                    violations.push(SsotViolation::ForbiddenRootSchemaPath {
+                        file: path.clone(),
+                        line: line_index + 1,
+                        path: line.trim().to_owned(),
+                        severity: Severity::Error,
+                    });
+                }
+
+                for cap in forbidden_root_schema_path_pattern.captures_iter(line) {
+                    if let Some(path_match) = cap.get(0) {
+                        violations.push(SsotViolation::ForbiddenRootSchemaPath {
+                            file: path.clone(),
+                            line: line_index + 1,
+                            path: path_match.as_str().to_owned(),
+                            severity: Severity::Error,
+                        });
+                    }
                 }
             }
         }

@@ -116,5 +116,5 @@ static PYTHON_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "python",
     description: "Detects Python projects with pyproject.toml or requirements.txt",
     marker_files: &["pyproject.toml", "requirements.txt"],
-    factory: python_factory,
+    build: python_factory,
 };

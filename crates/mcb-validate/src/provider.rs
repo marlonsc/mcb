@@ -299,5 +299,5 @@ fn mcb_validate_factory(
 static MCB_VALIDATE_PROVIDER: ValidationProviderEntry = ValidationProviderEntry {
     name: "mcb-validate",
     description: "Architecture and code quality validation engine",
-    factory: mcb_validate_factory,
+    build: mcb_validate_factory,
 };

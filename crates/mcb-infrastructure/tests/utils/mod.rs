@@ -3,8 +3,14 @@
 //! ALL shared test helpers live here. No helpers outside this directory.
 #![allow(dead_code)]
 
+#[allow(missing_docs)]
+pub mod env_vars;
+#[allow(missing_docs)]
+pub mod fs_guards;
 pub mod real_providers;
 pub mod shared_context;
+#[allow(missing_docs)]
+pub mod workspace;
 
 use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 

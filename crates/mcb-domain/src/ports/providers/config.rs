@@ -13,7 +13,7 @@ use crate::value_objects::{EmbeddingConfig, VectorStoreConfig};
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::providers::config::ProviderConfigManagerInterface;
+/// use mcb_domain::ports::ProviderConfigManagerInterface;
 /// use std::sync::Arc;
 ///
 /// fn list_providers(config_manager: Arc<dyn ProviderConfigManagerInterface>) {

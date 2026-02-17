@@ -97,86 +97,53 @@ impl McpServer {
     ) -> ToolExecutionContext {
         let request_meta = request.meta.as_ref();
         let context_meta = &context.meta;
+        let value = |keys: &[&str]| resolve_context_value(request_meta, context_meta, keys);
+        let value_or_env =
+            |keys: &[&str], env_key: &str| value(keys).or_else(|| std::env::var(env_key).ok());
 
-        let session_id = resolve_context_value(
-            request_meta,
-            context_meta,
-            &["session_id", "sessionId", "x-session-id", "x_session_id"],
-        );
-        let parent_session_id = resolve_context_value(
-            request_meta,
-            context_meta,
-            &[
-                schema::PARENT_SESSION_ID,
-                "parentSessionId",
-                "x-parent-session-id",
-                "x_parent_session_id",
-            ],
-        );
-        let project_id = resolve_context_value(
-            request_meta,
-            context_meta,
-            &[
-                schema::PROJECT_ID,
-                "projectId",
-                "x-project-id",
-                "x_project_id",
-            ],
-        );
-        let worktree_id = resolve_context_value(
-            request_meta,
-            context_meta,
-            &[
-                schema::WORKTREE_ID,
-                "worktreeId",
-                "x-worktree-id",
-                "x_worktree_id",
-            ],
-        );
+        let session_id = value(&["session_id", "sessionId", "x-session-id", "x_session_id"]);
+        let parent_session_id = value(&[
+            schema::PARENT_SESSION_ID,
+            "parentSessionId",
+            "x-parent-session-id",
+            "x_parent_session_id",
+        ]);
+        let project_id = value(&[
+            schema::PROJECT_ID,
+            "projectId",
+            "x-project-id",
+            "x_project_id",
+        ]);
+        let worktree_id = value(&[
+            schema::WORKTREE_ID,
+            "worktreeId",
+            "x-worktree-id",
+            "x_worktree_id",
+        ]);
 
-        let mut repo_id = resolve_context_value(
-            request_meta,
-            context_meta,
-            &[schema::REPO_ID, "repoId", "x-repo-id", "x_repo_id"],
-        );
-        let mut repo_path = resolve_context_value(
-            request_meta,
-            context_meta,
-            &[schema::REPO_PATH, "repoPath", "x-repo-path", "x_repo_path"],
-        );
-        let operator_id = resolve_context_value(
-            request_meta,
-            context_meta,
+        let mut repo_id = value(&[schema::REPO_ID, "repoId", "x-repo-id", "x_repo_id"]);
+        let mut repo_path = value(&[schema::REPO_PATH, "repoPath", "x-repo-path", "x_repo_path"]);
+        let operator_id = value_or_env(
             &[
                 "operator_id",
                 "operatorId",
                 "x-operator-id",
                 "x_operator_id",
             ],
-        )
-        .or_else(|| std::env::var("USER").ok());
-        let machine_id = resolve_context_value(
-            request_meta,
-            context_meta,
+            "USER",
+        );
+        let machine_id = value_or_env(
             &["machine_id", "machineId", "x-machine-id", "x_machine_id"],
-        )
-        .or_else(|| std::env::var("HOSTNAME").ok());
-        let agent_program = resolve_context_value(
-            request_meta,
-            context_meta,
-            &[
-                "agent_program",
-                "agentProgram",
-                "ide",
-                "x-agent-program",
-                "x_agent_program",
-            ],
+            "HOSTNAME",
         );
-        let model_id = resolve_context_value(
-            request_meta,
-            context_meta,
-            &["model_id", "model", "modelId", "x-model-id", "x_model_id"],
-        );
+        let agent_program = value(&[
+            "agent_program",
+            "agentProgram",
+            "ide",
+            "x-agent-program",
+            "x_agent_program",
+        ]);
+        let model_id = value(&["model_id", "model", "modelId", "x-model-id", "x_model_id"]);
         let delegated = resolve_context_bool(
             request_meta,
             context_meta,

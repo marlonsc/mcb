@@ -38,7 +38,7 @@ crate::impl_config_builder!(CacheProviderConfig {
 });
 
 crate::impl_registry!(
-    provider_trait: crate::ports::providers::CacheProvider,
+    provider_trait: crate::ports::CacheProvider,
     config_type: CacheProviderConfig,
     entry_type: CacheProviderEntry,
     slice_name: CACHE_PROVIDERS,

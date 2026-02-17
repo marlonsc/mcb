@@ -16,8 +16,9 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::{CryptoProvider, EncryptedData};
-use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::ports::{
+    CryptoProvider, EncryptedData, VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider,
+};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use serde_json::Value;
 
@@ -136,6 +137,29 @@ impl<P: VectorStoreProvider> VectorStoreAdmin for EncryptedVectorStoreProvider<P
 }
 
 #[async_trait]
+impl<P: VectorStoreProvider> VectorStoreBrowser for EncryptedVectorStoreProvider<P> {
+    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
+        self.inner.list_collections().await
+    }
+
+    async fn list_file_paths(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<FileInfo>> {
+        self.inner.list_file_paths(collection, limit).await
+    }
+
+    async fn get_chunks_by_file(
+        &self,
+        collection: &CollectionId,
+        file_path: &str,
+    ) -> Result<Vec<SearchResult>> {
+        self.inner.get_chunks_by_file(collection, file_path).await
+    }
+}
+
+#[async_trait]
 impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvider<P> {
     async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
         self.inner.create_collection(name, dimensions).await
@@ -203,38 +227,6 @@ impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvide
     ) -> Result<Vec<SearchResult>> {
         // Delegate to inner provider - SearchResult fields are extracted from stored metadata
         self.inner.list_vectors(collection, limit).await
-    }
-}
-
-/// `VectorStoreBrowser` implementation for encrypted provider
-///
-/// Delegates all browse operations to the inner provider.
-/// Only available when the inner provider also implements `VectorStoreBrowser`.
-#[async_trait]
-impl<P: VectorStoreProvider + VectorStoreBrowser> VectorStoreBrowser
-    for EncryptedVectorStoreProvider<P>
-{
-    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
-        // Delegate to inner provider
-        self.inner.list_collections().await
-    }
-
-    async fn list_file_paths(
-        &self,
-        collection: &CollectionId,
-        limit: usize,
-    ) -> Result<Vec<FileInfo>> {
-        // Delegate to inner provider
-        self.inner.list_file_paths(collection, limit).await
-    }
-
-    async fn get_chunks_by_file(
-        &self,
-        collection: &CollectionId,
-        file_path: &str,
-    ) -> Result<Vec<SearchResult>> {
-        // Delegate to inner provider
-        self.inner.get_chunks_by_file(collection, file_path).await
     }
 }
 

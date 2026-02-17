@@ -1,7 +1,7 @@
 //! Qdrant Vector Store Provider
 //!
-//! Implements the `VectorStoreProvider`, `VectorStoreAdmin`, and `VectorStoreBrowser` ports
-//! using Qdrant's cloud and self-hosted vector database REST API.
+//! Implements the `VectorStoreProvider` port using Qdrant's cloud and self-hosted
+//! vector database REST API.
 //!
 //! Qdrant is an open-source vector search engine with rich filtering and payload support.
 //! This provider communicates via Qdrant's REST API using the reqwest HTTP client.
@@ -118,6 +118,8 @@ impl QdrantVectorStoreProvider {
 
 #[async_trait]
 impl VectorStoreAdmin for QdrantVectorStoreProvider {
+    // --- Admin Methods ---
+
     async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
         let response = self
             .request(reqwest::Method::GET, &format!("/collections/{name}"), None)
@@ -181,7 +183,82 @@ impl VectorStoreAdmin for QdrantVectorStoreProvider {
 }
 
 #[async_trait]
+impl VectorStoreBrowser for QdrantVectorStoreProvider {
+    // --- Browser Methods ---
+
+    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
+        let response = self
+            .request(reqwest::Method::GET, "/collections", None)
+            .await?;
+
+        let collections = response["result"]["collections"]
+            .as_array()
+            .map(|arr| {
+                arr.iter()
+                    .map(|item| {
+                        let name = item["name"].as_str().unwrap_or("").to_owned();
+                        CollectionInfo::new(name, 0, 0, None, self.provider_name())
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        Ok(collections)
+    }
+
+    async fn list_file_paths(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<FileInfo>> {
+        let results = self.list_vectors(collection, limit).await?;
+        Ok(crate::utils::vector_store::build_file_info_from_results(
+            results,
+        ))
+    }
+
+    async fn get_chunks_by_file(
+        &self,
+        collection: &CollectionId,
+        file_path: &str,
+    ) -> Result<Vec<SearchResult>> {
+        let payload = serde_json::json!({
+            "filter": {
+                "must": [{
+                    "key": VECTOR_FIELD_FILE_PATH,
+                    "match": { "value": file_path }
+                }]
+            },
+            "limit": 100,
+            "with_payload": true
+        });
+
+        let response = self
+            .request(
+                reqwest::Method::POST,
+                &format!("/collections/{collection}/points/scroll"),
+                Some(payload),
+            )
+            .await?;
+
+        let mut results: Vec<SearchResult> = response["result"]["points"]
+            .as_array()
+            .map(|arr| {
+                arr.iter()
+                    .map(|item| Self::point_to_search_result(item, 1.0))
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        results.sort_by_key(|r| r.start_line);
+        Ok(results)
+    }
+}
+
+#[async_trait]
 impl VectorStoreProvider for QdrantVectorStoreProvider {
+    // --- Provider Methods ---
+
     async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
         let payload = serde_json::json!({
             "vectors": {
@@ -372,77 +449,6 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
             })
             .unwrap_or_default();
 
-        Ok(results)
-    }
-}
-
-#[async_trait]
-impl VectorStoreBrowser for QdrantVectorStoreProvider {
-    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
-        let response = self
-            .request(reqwest::Method::GET, "/collections", None)
-            .await?;
-
-        let collections = response["result"]["collections"]
-            .as_array()
-            .map(|arr| {
-                arr.iter()
-                    .map(|item| {
-                        let name = item["name"].as_str().unwrap_or("").to_owned();
-                        CollectionInfo::new(name, 0, 0, None, self.provider_name())
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
-
-        Ok(collections)
-    }
-
-    async fn list_file_paths(
-        &self,
-        collection: &CollectionId,
-        limit: usize,
-    ) -> Result<Vec<FileInfo>> {
-        let results = self.list_vectors(collection, limit).await?;
-        Ok(crate::utils::vector_store::build_file_info_from_results(
-            results,
-        ))
-    }
-
-    async fn get_chunks_by_file(
-        &self,
-        collection: &CollectionId,
-        file_path: &str,
-    ) -> Result<Vec<SearchResult>> {
-        let payload = serde_json::json!({
-            "filter": {
-                "must": [{
-                    "key": VECTOR_FIELD_FILE_PATH,
-                    "match": { "value": file_path }
-                }]
-            },
-            "limit": 100,
-            "with_payload": true
-        });
-
-        let response = self
-            .request(
-                reqwest::Method::POST,
-                &format!("/collections/{collection}/points/scroll"),
-                Some(payload),
-            )
-            .await?;
-
-        let mut results: Vec<SearchResult> = response["result"]["points"]
-            .as_array()
-            .map(|arr| {
-                arr.iter()
-                    .map(|item| Self::point_to_search_result(item, 1.0))
-                    .collect()
-            })
-            .unwrap_or_default();
-
-        results.sort_by_key(|r| r.start_line);
         Ok(results)
     }
 }

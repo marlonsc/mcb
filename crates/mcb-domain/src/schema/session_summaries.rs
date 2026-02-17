@@ -5,9 +5,9 @@ pub fn table() -> TableDef {
         "session_summaries",
         [
             crate::col!("id", Text, pk),
-            crate::col!("org_id", Text),
+            crate::col!("org_id", Text, nullable),
             crate::col!("project_id", Text),
-            crate::col!("repo_id", Text),
+            crate::col!("repo_id", Text, nullable),
             crate::col!("session_id", Text),
             crate::col!("topics", Text, nullable),
             crate::col!("decisions", Text, nullable),

@@ -11,6 +11,8 @@ pub struct SessionSummary {
     pub id: String,
     /// Stores the project id value.
     pub project_id: String,
+    /// Stores the org id value.
+    pub org_id: String,
     /// Stores the session id value.
     pub session_id: String,
     /// Stores the topics value.

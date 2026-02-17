@@ -6,7 +6,7 @@ pub fn table() -> TableDef {
         [
             crate::col!("id", Text, pk),
             crate::col!("org_id", Text),
-            crate::col!("project_id", Text),
+            crate::col!("project_id", Text, nullable),
             crate::col!("repository_id", Text),
             crate::col!("name", Text),
             crate::col!("is_default", Integer),

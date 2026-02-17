@@ -16,7 +16,14 @@ fn get_service() -> HighlightServiceImpl {
 async fn highlight_code(code: &str, language: &str, service: &HighlightServiceImpl) -> String {
     match service.highlight(code, language).await {
         Ok(highlighted) => HtmlRenderer::render(&highlighted),
-        Err(_) => String::new(),
+        Err(_) => {
+            let fallback = mcb_domain::value_objects::browse::HighlightedCode::new(
+                code.to_owned(),
+                vec![],
+                language.to_owned(),
+            );
+            HtmlRenderer::render(&fallback)
+        }
     }
 }
 

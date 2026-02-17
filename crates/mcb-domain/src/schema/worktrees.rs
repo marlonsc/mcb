@@ -5,8 +5,8 @@ pub fn table() -> TableDef {
         "worktrees",
         [
             crate::col!("id", Text, pk),
-            crate::col!("org_id", Text),
-            crate::col!("project_id", Text),
+            crate::col!("org_id", Text, nullable),
+            crate::col!("project_id", Text, nullable),
             crate::col!("repository_id", Text),
             crate::col!("branch_id", Text),
             crate::col!("path", Text),

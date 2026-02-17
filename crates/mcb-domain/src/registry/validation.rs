@@ -43,7 +43,7 @@ crate::impl_config_builder!(ValidationProviderConfig {
 });
 
 crate::impl_registry!(
-    provider_trait: crate::ports::providers::ValidationProvider,
+    provider_trait: crate::ports::ValidationProvider,
     config_type: ValidationProviderConfig,
     entry_type: ValidationProviderEntry,
     slice_name: VALIDATION_PROVIDERS,

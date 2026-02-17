@@ -26,7 +26,7 @@ define_violations! {
             id = "SSOT002",
             severity = Error,
             message = "Forbidden legacy import: {file}:{line} uses '{import_path}'",
-            suggestion = "Replace with mcb_domain::ports::repositories::..."
+            suggestion = "Replace with mcb_domain::ports::{TypeName} imports"
         )]
         ForbiddenLegacyImport {
             file: PathBuf,
@@ -71,6 +71,19 @@ define_violations! {
             file: PathBuf,
             line: usize,
             import_path: String,
+            severity: Severity,
+        },
+        #[doc = "Forbidden root-level schema path usage."]
+        #[violation(
+            id = "SSOT006",
+            severity = Error,
+            message = "Forbidden root schema path: {file}:{line} uses '{path}'",
+            suggestion = "Use canonical mcb_domain::schema::* paths instead of root-level schema symbols"
+        )]
+        ForbiddenRootSchemaPath {
+            file: PathBuf,
+            line: usize,
+            path: String,
             severity: Severity,
         },
     }

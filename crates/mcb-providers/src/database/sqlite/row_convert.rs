@@ -74,6 +74,7 @@ pub fn row_to_session_summary(row: &dyn SqlRow) -> Result<SessionSummary> {
     Ok(SessionSummary {
         id: required_string(row, "id")?,
         project_id: required_string(row, "project_id")?,
+        org_id: required_string(row, "org_id")?,
         session_id: required_string(row, "session_id")?,
         topics: match topics_json {
             Some(json) => serde_json::from_str(&json)

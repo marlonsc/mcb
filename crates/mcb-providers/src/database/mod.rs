@@ -1,8 +1,8 @@
 //! Database providers: memory repository and schema application per backend.
 //!
 //! Each backend (SQLite, PostgreSQL, MySQL, etc.) has its own submodule and
-//! implements [`mcb_domain::SchemaDdlGenerator`] to produce
-//! dialect-specific DDL from the generic [`mcb_domain::Schema`].
+//! implements [`mcb_domain::schema::SchemaDdlGenerator`] to produce
+//! dialect-specific DDL from the generic [`mcb_domain::schema::Schema`].
 //!
 //! - **sqlite** – SQLite adapter and DDL generator (FTS5, etc.)
 //! - **postgres** – (future) PostgreSQL adapter and DDL

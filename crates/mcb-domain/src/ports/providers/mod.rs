@@ -10,7 +10,6 @@
 //! | ------ | ------------- |
 //! | EmbeddingProvider | Text embedding generation services |
 //! | VectorStoreProvider | Vector storage and similarity search |
-//! | VectorStoreBrowser | Collection and file browsing for Admin UI |
 //! | HybridSearchProvider | Combined semantic and keyword search |
 //! | LanguageChunkingProvider | Language-specific code chunking |
 //! | MetricsAnalysisProvider | Code complexity metrics analysis |
@@ -52,7 +51,9 @@ pub mod vector_store;
 pub use analysis::{
     ComplexityAnalyzer, ComplexityFinding, DeadCodeDetector, DeadCodeFinding, TdgFinding, TdgScorer,
 };
-pub use cache::{CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, CacheStats};
+pub use cache::{
+    CacheEntryConfig, CacheProvider, CacheStats, DEFAULT_CACHE_NAMESPACE, DEFAULT_CACHE_TTL_SECS,
+};
 pub use config::ProviderConfigManagerInterface;
 pub use crypto::{CryptoProvider, EncryptedData};
 pub use embedding::EmbeddingProvider;
@@ -66,4 +67,4 @@ pub use metrics_analysis::{
 pub use project_detection::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
 pub use validation::{ValidationOptions, ValidationProvider, ValidatorInfo};
 pub use vcs::VcsProvider;
-pub use vector_store::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+pub use vector_store::VectorStoreProvider;

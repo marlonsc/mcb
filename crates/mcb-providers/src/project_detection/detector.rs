@@ -22,7 +22,7 @@ pub async fn detect_all_projects(path: &Path) -> Vec<ProjectType> {
             continue;
         }
 
-        match (entry.factory)(&config) {
+        match (entry.build)(&config) {
             Ok(detector) => match detector.detect(path).await {
                 Ok(Some(project_type)) => {
                     tracing::debug!(

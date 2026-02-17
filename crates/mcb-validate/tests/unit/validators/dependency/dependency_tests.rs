@@ -159,14 +159,14 @@ fn test_admin_bypass_boundary_blocks_non_allowlisted_imports() -> TestResult {
     fs::create_dir_all(&admin_web)?;
     fs::write(
         admin_web.join("entity_handlers.rs"),
-        "use mcb_domain::ports::repositories::OrgEntityRepository;",
+        "use mcb_domain::ports::OrgEntityRepository;",
     )?;
 
     let admin_allowed = temp.path().join("crates/mcb-server/src/admin");
     fs::create_dir_all(&admin_allowed)?;
     fs::write(
         admin_allowed.join("crud_adapter.rs"),
-        "use mcb_domain::ports::repositories::OrgEntityRepository;",
+        "use mcb_domain::ports::OrgEntityRepository;",
     )?;
 
     let config_dir = temp.path().join("config");
@@ -177,7 +177,7 @@ fn test_admin_bypass_boundary_blocks_non_allowlisted_imports() -> TestResult {
 [[rules.dependency.bypass_boundaries]]
 violation_id = "DEP004"
 scan_root = "crates/mcb-server/src/admin"
-pattern = "mcb_domain::ports::repositories"
+ pattern = "mcb_domain::ports::OrgEntityRepository"
 allowed_files = [
     "crates/mcb-server/src/admin/crud_adapter.rs",
     "crates/mcb-server/src/admin/handlers.rs",

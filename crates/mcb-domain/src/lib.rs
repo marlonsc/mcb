@@ -76,9 +76,5 @@ pub use constants::values::*;
 pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};
-pub use schema::{
-    COL_OBSERVATION_TYPE, ColumnDef, ColumnType, ForeignKeyDef, FtsDef, IndexDef, Schema,
-    SchemaDdlGenerator, TableDef, UniqueConstraintDef,
-};
 pub use utils::{compute_content_hash, project_type, vcs_context};
 pub use value_objects::*;

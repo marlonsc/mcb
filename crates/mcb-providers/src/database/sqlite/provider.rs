@@ -57,7 +57,7 @@ fn create_sqlite_database_provider(
 static SQLITE_DATABASE_PROVIDER: DatabaseProviderEntry = DatabaseProviderEntry {
     name: "sqlite",
     description: "SQLite database backend",
-    factory: create_sqlite_database_provider,
+    build: create_sqlite_database_provider,
 };
 
 #[async_trait]

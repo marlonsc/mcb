@@ -243,5 +243,5 @@ fn fastembed_factory(
 static FASTEMBED_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
     name: "fastembed",
     description: "FastEmbed local provider (AllMiniLML6V2, BGESmallEN, etc.)",
-    factory: fastembed_factory,
+    build: fastembed_factory,
 };

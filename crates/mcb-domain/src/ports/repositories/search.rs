@@ -17,7 +17,7 @@ use crate::value_objects::search::SearchResult;
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::repositories::search::SearchRepository;
+/// use mcb_domain::ports::SearchRepository;
 /// use std::sync::Arc;
 ///
 /// async fn search_code(repo: Arc<dyn SearchRepository>) -> mcb_domain::Result<()> {

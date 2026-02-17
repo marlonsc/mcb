@@ -90,92 +90,6 @@ impl MilvusVectorStoreProvider {
     }
 }
 
-#[async_trait]
-impl VectorStoreAdmin for MilvusVectorStoreProvider {
-    async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
-        let name_str = name.to_string();
-        Self::map_milvus_error(
-            self.client.has_collection(&name_str).await,
-            "check collection",
-        )
-    }
-
-    async fn get_stats(
-        &self,
-        collection: &CollectionId,
-    ) -> Result<HashMap<String, serde_json::Value>> {
-        let stats = self
-            .client
-            .get_collection_stats(&collection.to_string())
-            .await
-            .map_err(|e| {
-                Error::vector_db(format!(
-                    "Failed to get stats for collection '{collection}': {e}"
-                ))
-            })?;
-
-        let mut result = HashMap::new();
-        result.insert(
-            STATS_FIELD_COLLECTION.to_owned(),
-            serde_json::json!(collection),
-        );
-        result.insert(
-            STATS_FIELD_STATUS.to_owned(),
-            serde_json::json!(STATUS_ACTIVE),
-        );
-
-        if let Some(count_str) = stats.get("row_count")
-            && let Ok(count) = count_str.parse::<i64>()
-        {
-            result.insert(
-                STATS_FIELD_VECTORS_COUNT.to_owned(),
-                serde_json::json!(count),
-            );
-        }
-
-        result.insert(STATS_FIELD_PROVIDER.to_owned(), serde_json::json!("milvus"));
-        Ok(result)
-    }
-
-    async fn flush(&self, collection: &CollectionId) -> Result<()> {
-        let name_str = collection.to_string();
-        let result = retry_with_backoff(
-            RetryConfig::new(
-                MILVUS_FLUSH_RETRY_COUNT,
-                std::time::Duration::from_millis(MILVUS_FLUSH_RETRY_BACKOFF_MS),
-            ),
-            |_| self.client.flush_collections(vec![&name_str]),
-            |e| {
-                let err_str = e.to_string();
-                err_str.contains(MILVUS_ERROR_RATE_LIMIT) || err_str.contains("rate limit")
-            },
-        )
-        .await;
-
-        result.map(|_| ()).map_err(|e| {
-            let err_str = e.to_string();
-            if err_str.contains(MILVUS_ERROR_RATE_LIMIT) || err_str.contains("rate limit") {
-                Error::vector_db(format!("Failed to flush collection after retries: {e}"))
-            } else {
-                Error::vector_db(format!("Failed to flush collection: {e}"))
-            }
-        })
-    }
-
-    fn provider_name(&self) -> &str {
-        "milvus"
-    }
-
-    async fn health_check(&self) -> Result<()> {
-        // Try to list collections as a health check - lighter than creating a test collection
-        Self::map_milvus_error(
-            self.client.list_collections().await,
-            "health check (list collections)",
-        )?;
-        Ok(())
-    }
-}
-
 impl MilvusVectorStoreProvider {
     /// Validate search parameters
     fn validate_search_params(query_vector: &[f32], limit: usize) -> Result<()> {
@@ -662,7 +576,211 @@ impl MilvusVectorStoreProvider {
 }
 
 #[async_trait]
+impl VectorStoreAdmin for MilvusVectorStoreProvider {
+    // --- Admin Methods ---
+
+    async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
+        let name_str = name.to_string();
+        Self::map_milvus_error(
+            self.client.has_collection(&name_str).await,
+            "check collection",
+        )
+    }
+
+    async fn get_stats(
+        &self,
+        collection: &CollectionId,
+    ) -> Result<HashMap<String, serde_json::Value>> {
+        let stats = self
+            .client
+            .get_collection_stats(&collection.to_string())
+            .await
+            .map_err(|e| {
+                Error::vector_db(format!(
+                    "Failed to get stats for collection '{collection}': {e}"
+                ))
+            })?;
+
+        let mut result = HashMap::new();
+        result.insert(
+            STATS_FIELD_COLLECTION.to_owned(),
+            serde_json::json!(collection),
+        );
+        result.insert(
+            STATS_FIELD_STATUS.to_owned(),
+            serde_json::json!(STATUS_ACTIVE),
+        );
+
+        if let Some(count_str) = stats.get("row_count")
+            && let Ok(count) = count_str.parse::<i64>()
+        {
+            result.insert(
+                STATS_FIELD_VECTORS_COUNT.to_owned(),
+                serde_json::json!(count),
+            );
+        }
+
+        result.insert(STATS_FIELD_PROVIDER.to_owned(), serde_json::json!("milvus"));
+        Ok(result)
+    }
+
+    async fn flush(&self, collection: &CollectionId) -> Result<()> {
+        let name_str = collection.to_string();
+        let result = retry_with_backoff(
+            RetryConfig::new(
+                MILVUS_FLUSH_RETRY_COUNT,
+                std::time::Duration::from_millis(MILVUS_FLUSH_RETRY_BACKOFF_MS),
+            ),
+            |_| self.client.flush_collections(vec![&name_str]),
+            |e| {
+                let err_str = e.to_string();
+                err_str.contains(MILVUS_ERROR_RATE_LIMIT) || err_str.contains("rate limit")
+            },
+        )
+        .await;
+
+        result.map(|_| ()).map_err(|e| {
+            let err_str = e.to_string();
+            if err_str.contains(MILVUS_ERROR_RATE_LIMIT) || err_str.contains("rate limit") {
+                Error::vector_db(format!("Failed to flush collection after retries: {e}"))
+            } else {
+                Error::vector_db(format!("Failed to flush collection: {e}"))
+            }
+        })
+    }
+
+    fn provider_name(&self) -> &str {
+        "milvus"
+    }
+}
+
+#[async_trait]
+impl VectorStoreBrowser for MilvusVectorStoreProvider {
+    // --- Browser Methods ---
+
+    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
+        let collection_names =
+            Self::map_milvus_error(self.client.list_collections().await, "list collections")?;
+
+        let mut collections = Vec::new();
+
+        for name in collection_names {
+            let collection_id = CollectionId::from_name(&name);
+            // Get stats for each collection
+            let stats = self.get_stats(&collection_id).await.unwrap_or_default();
+            let vector_count = stats
+                .get("vectors_count")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0);
+
+            // For now, we don't have a quick way to count unique files without querying all data
+            // In a future optimization, we could cache this or use Milvus aggregation
+            collections.push(CollectionInfo::new(
+                name,
+                vector_count,
+                0, // file_count will be populated when listing files
+                None,
+                self.provider_name(),
+            ));
+        }
+
+        Ok(collections)
+    }
+
+    async fn list_file_paths(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<FileInfo>> {
+        if limit == 0 {
+            return Ok(Vec::new());
+        }
+        let name_str = collection.to_string();
+
+        // Ensure collection is loaded
+        if let Err(e) = self.client.load_collection(&name_str, None).await {
+            let err_str = e.to_string();
+            if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
+                || err_str.contains("collection not found")
+                || err_str.contains("not exist")
+            {
+                return Ok(Vec::new());
+            }
+            return Err(Error::vector_db(format!(
+                "Failed to load collection '{collection}': {e}"
+            )));
+        }
+
+        use milvus::query::QueryOptions;
+
+        let expr = "id >= 0".to_owned();
+        let query_options = QueryOptions::new()
+            .limit(crate::constants::MILVUS_DEFAULT_QUERY_LIMIT)
+            .output_fields(vec![VECTOR_FIELD_FILE_PATH.to_owned()]);
+
+        let query_results = match self.client.query(&name_str, &expr, &query_options).await {
+            Ok(results) => results,
+            Err(e) => {
+                tracing::warn!(error = %e, "failed to query file paths");
+                return Ok(Vec::new());
+            }
+        };
+
+        Ok(Self::convert_to_file_infos(&query_results, limit))
+    }
+
+    async fn get_chunks_by_file(
+        &self,
+        collection: &CollectionId,
+        file_path: &str,
+    ) -> Result<Vec<SearchResult>> {
+        let name_str = collection.to_string();
+        // Ensure collection is loaded
+        if let Err(e) = self.client.load_collection(&name_str, None).await {
+            let err_str = e.to_string();
+            if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
+                || err_str.contains("collection not found")
+                || err_str.contains("not exist")
+            {
+                return Ok(Vec::new());
+            }
+            return Err(Error::vector_db(format!(
+                "Failed to load collection '{collection}': {e}"
+            )));
+        }
+
+        use milvus::query::QueryOptions;
+
+        // Query with filter on file_path
+        let expr = format!("file_path == \"{}\"", file_path.replace('"', "\\\""));
+        let query_options = QueryOptions::new()
+            .limit(1000) // Reasonable limit for chunks per file
+            .output_fields(vec![
+                VECTOR_FIELD_ID.to_owned(),
+                VECTOR_FIELD_FILE_PATH.to_owned(),
+                VECTOR_FIELD_START_LINE.to_owned(),
+                VECTOR_FIELD_CONTENT.to_owned(),
+            ]);
+
+        let query_results = match self.client.query(&name_str, &expr, &query_options).await {
+            Ok(results) => results,
+            Err(e) => {
+                tracing::warn!(error = %e, "failed to query chunks by file");
+                return Ok(Vec::new());
+            }
+        };
+
+        let mut results = Self::convert_query_results(&query_results, Some(file_path));
+        results.sort_by_key(|r| r.start_line);
+
+        Ok(results)
+    }
+}
+
+#[async_trait]
 impl VectorStoreProvider for MilvusVectorStoreProvider {
+    // --- Provider Methods ---
+
     async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
         let schema = Self::build_collection_schema(name, dimensions)?;
 
@@ -836,127 +954,6 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         }
 
         Ok(all_results)
-    }
-}
-
-#[async_trait]
-impl VectorStoreBrowser for MilvusVectorStoreProvider {
-    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
-        let collection_names =
-            Self::map_milvus_error(self.client.list_collections().await, "list collections")?;
-
-        let mut collections = Vec::new();
-
-        for name in collection_names {
-            let collection_id = CollectionId::from_name(&name);
-            // Get stats for each collection
-            let stats = self.get_stats(&collection_id).await.unwrap_or_default();
-            let vector_count = stats
-                .get("vectors_count")
-                .and_then(serde_json::Value::as_u64)
-                .unwrap_or(0);
-
-            // For now, we don't have a quick way to count unique files without querying all data
-            // In a future optimization, we could cache this or use Milvus aggregation
-            collections.push(CollectionInfo::new(
-                name,
-                vector_count,
-                0, // file_count will be populated when listing files
-                None,
-                self.provider_name(),
-            ));
-        }
-
-        Ok(collections)
-    }
-
-    async fn list_file_paths(
-        &self,
-        collection: &CollectionId,
-        limit: usize,
-    ) -> Result<Vec<FileInfo>> {
-        if limit == 0 {
-            return Ok(Vec::new());
-        }
-        let name_str = collection.to_string();
-
-        // Ensure collection is loaded
-        if let Err(e) = self.client.load_collection(&name_str, None).await {
-            let err_str = e.to_string();
-            if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
-                || err_str.contains("collection not found")
-                || err_str.contains("not exist")
-            {
-                return Ok(Vec::new());
-            }
-            return Err(Error::vector_db(format!(
-                "Failed to load collection '{collection}': {e}"
-            )));
-        }
-
-        use milvus::query::QueryOptions;
-
-        let expr = "id >= 0".to_owned();
-        let query_options = QueryOptions::new()
-            .limit(crate::constants::MILVUS_DEFAULT_QUERY_LIMIT)
-            .output_fields(vec![VECTOR_FIELD_FILE_PATH.to_owned()]);
-
-        let query_results = match self.client.query(&name_str, &expr, &query_options).await {
-            Ok(results) => results,
-            Err(e) => {
-                tracing::warn!(error = %e, "failed to query file paths");
-                return Ok(Vec::new());
-            }
-        };
-
-        Ok(Self::convert_to_file_infos(&query_results, limit))
-    }
-
-    async fn get_chunks_by_file(
-        &self,
-        collection: &CollectionId,
-        file_path: &str,
-    ) -> Result<Vec<SearchResult>> {
-        let name_str = collection.to_string();
-        // Ensure collection is loaded
-        if let Err(e) = self.client.load_collection(&name_str, None).await {
-            let err_str = e.to_string();
-            if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
-                || err_str.contains("collection not found")
-                || err_str.contains("not exist")
-            {
-                return Ok(Vec::new());
-            }
-            return Err(Error::vector_db(format!(
-                "Failed to load collection '{collection}': {e}"
-            )));
-        }
-
-        use milvus::query::QueryOptions;
-
-        // Query with filter on file_path
-        let expr = format!("file_path == \"{}\"", file_path.replace('"', "\\\""));
-        let query_options = QueryOptions::new()
-            .limit(1000) // Reasonable limit for chunks per file
-            .output_fields(vec![
-                VECTOR_FIELD_ID.to_owned(),
-                VECTOR_FIELD_FILE_PATH.to_owned(),
-                VECTOR_FIELD_START_LINE.to_owned(),
-                VECTOR_FIELD_CONTENT.to_owned(),
-            ]);
-
-        let query_results = match self.client.query(&name_str, &expr, &query_options).await {
-            Ok(results) => results,
-            Err(e) => {
-                tracing::warn!(error = %e, "failed to query chunks by file");
-                return Ok(Vec::new());
-            }
-        };
-
-        let mut results = Self::convert_query_results(&query_results, Some(file_path));
-        results.sort_by_key(|r| r.start_line);
-
-        Ok(results)
     }
 }
 

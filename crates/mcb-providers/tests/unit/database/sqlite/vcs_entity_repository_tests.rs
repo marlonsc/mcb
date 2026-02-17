@@ -51,6 +51,7 @@ fn create_test_repository(id: &str, project_id: &str) -> Repository {
 fn create_test_branch(id: &str, repository_id: &str, name: &str) -> Branch {
     Branch {
         id: id.to_owned(),
+        org_id: DEFAULT_ORG_ID.to_owned(),
         repository_id: repository_id.to_owned(),
         name: name.to_owned(),
         is_default: name == "main",
@@ -78,10 +79,11 @@ fn create_test_worktree(id: &str, repository_id: &str, branch_id: &str) -> Workt
 async fn seed_agent_session(executor: &dyn DatabaseExecutor) -> TestResult {
     executor
         .execute(
-            "INSERT INTO session_summaries (id, project_id, session_id, topics, decisions, next_steps, key_files, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO session_summaries (id, project_id, org_id, session_id, topics, decisions, next_steps, key_files, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             &[
                 SqlParam::String("summ-1".to_owned()),
                 SqlParam::String("proj-1".to_owned()),
+                SqlParam::String(DEFAULT_ORG_ID.to_owned()),
                 SqlParam::String("sid-1".to_owned()),
                 SqlParam::String("[]".to_owned()),
                 SqlParam::String("[]".to_owned()),

@@ -57,7 +57,7 @@ pub(crate) async fn create_real_domain_services()
     let deps = mcb_infrastructure::di::test_factory::create_test_dependencies(
         project_id,
         &db_executor,
-        &ctx,
+        ctx,
     );
 
     let services = DomainServicesFactory::create_services(deps).await.ok()?;
