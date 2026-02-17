@@ -12,7 +12,7 @@ use crate::constants::{
     EMBEDDING_RETRY_BACKOFF_MS, EMBEDDING_RETRY_COUNT, HTTP_HEADER_CONTENT_TYPE,
 };
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::EmbeddingProvider;
+use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
@@ -143,7 +143,7 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
 use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };

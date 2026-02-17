@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use std::fs;
 
-use mcb_domain::ports::services::ValidationServiceInterface;
+use mcb_domain::ports::ValidationServiceInterface;
 use mcb_infrastructure::validation::InfraValidationService;
 
 fn get_workspace_root() -> Result<PathBuf, Box<dyn std::error::Error>> {

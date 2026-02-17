@@ -1,13 +1,7 @@
-//! Unit test suite for mcb-infrastructure
-//!
-//! Run with: `cargo test -p mcb-infrastructure --test unit`
-//!
+//! Unit tests — `cargo test -p mcb-infrastructure --test unit`
 
-// Shared test utilities
 #[path = "../utils/mod.rs"]
-mod test_utils;
-
-mod shared_context;
+mod utils;
 
 pub mod config;
 pub mod constants;
@@ -20,5 +14,5 @@ pub mod infrastructure;
 pub mod logging;
 pub mod routing;
 pub mod services;
-pub mod utils;
+pub mod util_tests;
 pub mod validation;

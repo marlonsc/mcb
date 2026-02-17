@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use mcb_domain::constants::keys as schema;
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus};
-use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Map;

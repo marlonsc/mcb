@@ -6,17 +6,14 @@
 use std::sync::Arc;
 
 use mcb_domain::error::Result;
-use mcb_domain::ports::admin::{
-    IndexingOperationsInterface, LifecycleManaged, PerformanceMetricsInterface, ShutdownCoordinator,
+use mcb_domain::ports::{
+    AgentRepository, CacheAdminInterface, CryptoProvider, EmbeddingAdminInterface,
+    EventBusProvider, FileHashRepository, HighlightServiceInterface, IndexingOperationsInterface,
+    IssueEntityRepository, LanguageAdminInterface, LifecycleManaged, MemoryRepository,
+    OrgEntityRepository, PerformanceMetricsInterface, PlanEntityRepository, ProjectDetectorService,
+    ProjectRepository, ShutdownCoordinator, VcsEntityRepository, VcsProvider,
+    VectorStoreAdminInterface,
 };
-use mcb_domain::ports::browse::HighlightServiceInterface;
-use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_domain::ports::providers::{CryptoProvider, VcsProvider};
-use mcb_domain::ports::repositories::{
-    AgentRepository, FileHashRepository, IssueEntityRepository, MemoryRepository,
-    OrgEntityRepository, PlanEntityRepository, ProjectRepository, VcsEntityRepository,
-};
-use mcb_domain::ports::services::ProjectDetectorService;
 
 use mcb_providers::database::{
     SqliteFileHashConfig, SqliteFileHashRepository, SqliteMemoryRepository,
@@ -31,9 +28,7 @@ use crate::constants::services::{
 };
 use crate::crypto::CryptoService;
 use crate::di::admin::{
-    CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface, EmbeddingAdminService,
-    LanguageAdminInterface, LanguageAdminService, VectorStoreAdminInterface,
-    VectorStoreAdminService,
+    CacheAdminService, EmbeddingAdminService, LanguageAdminService, VectorStoreAdminService,
 };
 use crate::di::database_resolver::DatabaseProviderResolver;
 use crate::di::handles::{

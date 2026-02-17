@@ -6,6 +6,7 @@ pub mod context;
 pub mod hash;
 pub mod indexing;
 pub mod memory;
+pub mod operations;
 pub mod project;
 pub mod search;
 pub mod validation;

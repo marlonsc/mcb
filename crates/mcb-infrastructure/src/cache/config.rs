@@ -2,7 +2,7 @@
 //!
 //! Infrastructure-specific cache utilities only.
 //! Type definitions (`CacheEntryConfig`, `CacheStats`) are in mcb-domain.
-//! Use `mcb_domain::ports::providers::cache::{CacheEntryConfig`, `CacheStats`} directly.
+//! Use `mcb_domain::ports::{CacheEntryConfig`, `CacheStats`} directly.
 
 use mcb_domain::error::{Error, Result};
 

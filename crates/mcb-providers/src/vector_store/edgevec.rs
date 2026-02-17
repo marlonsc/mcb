@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use dashmap::DashMap;
 use edgevec::hnsw::VectorId;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use tokio::sync::{mpsc, oneshot};

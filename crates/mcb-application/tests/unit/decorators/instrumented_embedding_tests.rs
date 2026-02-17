@@ -4,11 +4,10 @@ use rstest::*;
 use std::sync::Arc;
 
 use mcb_application::decorators::InstrumentedEmbeddingProvider;
-use mcb_domain::ports::admin::PerformanceMetricsInterface;
-use mcb_domain::ports::providers::EmbeddingProvider;
+use mcb_domain::ports::{EmbeddingProvider, PerformanceMetricsInterface};
 use mcb_infrastructure::infrastructure::admin::AtomicPerformanceMetrics;
 
-use crate::shared_context::shared_app_context;
+use crate::utils::shared_context::shared_app_context;
 
 #[fixture]
 async fn provider_context() -> Arc<dyn EmbeddingProvider> {

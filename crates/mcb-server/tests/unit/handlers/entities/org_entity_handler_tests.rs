@@ -6,7 +6,7 @@ use serde_json::json;
 use crate::utils::text::extract_text;
 
 fn create_handler() -> OrgEntityHandler {
-    let ctx = crate::shared_context::shared_app_context();
+    let ctx = crate::utils::shared_context::shared_app_context();
     OrgEntityHandler::new(ctx.org_entity_repository())
 }
 

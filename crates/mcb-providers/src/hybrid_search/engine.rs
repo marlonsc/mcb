@@ -29,7 +29,7 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use mcb_domain::constants::search::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
-use mcb_domain::ports::providers::HybridSearchProvider;
+use mcb_domain::ports::HybridSearchProvider;
 use mcb_domain::{entities::CodeChunk, error::Result, value_objects::SearchResult};
 use serde_json::Value;
 use tokio::sync::RwLock;

@@ -1,39 +1,18 @@
-//! Integration test suite for mcb-validate
-//!
-//! Run with: `cargo test -p mcb-validate --test integration`
+//! Integration tests — `cargo test -p mcb-validate --test integration`
 
-#[path = "ca001_integration_tests.rs"]
-mod ca001;
+#[path = "../utils/mod.rs"]
+pub mod utils;
 
-#[path = "integration_architecture.rs"]
-mod architecture;
-
-#[path = "integration_ast.rs"]
-mod ast;
-
-#[path = "integration_duplication.rs"]
-mod duplication;
-
-#[path = "integration_engines.rs"]
-mod engines;
-
-#[path = "integration_full.rs"]
-mod full;
-
-#[path = "integration_linters.rs"]
-mod linters;
-
-#[path = "integration_metrics.rs"]
-mod metrics;
-
-#[path = "integration_rca_metrics.rs"]
-mod rca_metrics;
-
-#[path = "integration_tests.rs"]
+mod ca001_integration_tests;
+mod ca009_tests;
+mod integration_architecture;
+mod integration_ast;
+mod integration_duplication;
+mod integration_engines;
+mod integration_full;
+mod integration_linters;
+mod integration_metrics;
+mod integration_rca_metrics;
 mod integration_tests;
-
-#[path = "integration_yaml_metrics.rs"]
-mod yaml_metrics;
-
-#[path = "ca009_tests.rs"]
-mod ca009;
+mod integration_yaml_metrics;
+mod test_individual;

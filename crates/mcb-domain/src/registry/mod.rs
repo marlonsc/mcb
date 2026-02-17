@@ -54,4 +54,5 @@ pub mod cache;
 pub mod database;
 pub mod embedding;
 pub mod language;
+pub mod validation;
 pub mod vector_store;

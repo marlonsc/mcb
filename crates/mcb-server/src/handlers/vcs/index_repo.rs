@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::VcsProvider;
 use mcb_infrastructure::config::McpContextConfig;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;

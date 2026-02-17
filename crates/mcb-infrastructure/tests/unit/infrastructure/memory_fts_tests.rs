@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{Observation, ObservationType};
+use mcb_domain::ports::DatabaseExecutor;
 use mcb_domain::ports::MemoryRepository;
-use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::value_objects::ObservationId;
-use mcb_providers::database::create_memory_repository_with_executor;
+use mcb_infrastructure::di::create_memory_repository_with_executor;
 use tempfile::TempDir;
 use uuid::Uuid;
 
-use crate::test_utils::create_test_project;
+use crate::utils::create_test_project;
 
 async fn setup_repo_and_executor() -> Result<
     (

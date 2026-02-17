@@ -172,7 +172,7 @@ CREATE INDEX idx_checkpoints_session ON checkpoints(session_id);
 
 ## Part 3: Project State Tables
 
-Adições ao `ProjectSchema`.
+Additions to the canonical `Schema`.
 
 ### 3.1 phases
 

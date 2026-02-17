@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use mcb_domain::error::{Error, Result};
 use mcb_domain::events::DomainEvent;
-use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::EventBusProvider;
 use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use tokio::runtime::Handle;
 use tokio::sync::RwLock;

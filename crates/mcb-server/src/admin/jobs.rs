@@ -2,7 +2,7 @@
 //!
 //! Provides endpoints for monitoring background job status.
 
-use mcb_domain::ports::jobs::{Job, JobStatus, JobType};
+use mcb_domain::ports::{Job, JobStatus, JobType};
 use rocket::serde::json::Json;
 use rocket::{State, get};
 use serde::Serialize;

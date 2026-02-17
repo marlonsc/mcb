@@ -5,8 +5,8 @@
 //! - POST /admin/provider/switch - Switch to a different provider
 
 use mcb_infrastructure::config::ConfigLoader;
+use mcb_infrastructure::infrastructure::default_event_bus;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
-use mcb_providers::events::TokioEventBusProvider;
 use mcb_server::admin::{AdminApi, AdminApiConfig};
 use rstest::rstest;
 use serde_json::json;
@@ -14,7 +14,7 @@ use serde_json::json;
 fn create_test_admin_api() -> AdminApi {
     let metrics = AtomicPerformanceMetrics::new_shared();
     let indexing = DefaultIndexingOperations::new_shared();
-    let event_bus = TokioEventBusProvider::new_shared();
+    let event_bus = default_event_bus();
 
     let config = AdminApiConfig {
         port: 9091,

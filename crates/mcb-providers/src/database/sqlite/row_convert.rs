@@ -9,7 +9,7 @@ use mcb_domain::entities::memory::{
 use mcb_domain::entities::project::Project;
 use mcb_domain::entities::project::{IssueStatus, IssueType, ProjectIssue};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::SqlRow;
+use mcb_domain::ports::SqlRow;
 use mcb_domain::schema::COL_OBSERVATION_TYPE;
 use std::str::FromStr;
 

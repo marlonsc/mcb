@@ -9,12 +9,12 @@
 use mcb_validate::engines::rete_engine::ReteEngine;
 use rust_rule_engine::{RustRuleEngine, Value as RreValue};
 
-use crate::test_constants::{
+use crate::utils::test_constants::{
     DOMAIN_CRATE, FACT_CRATE_NAME, FACT_HAS_INTERNAL_DEPS, FACT_RESULT_VALUE,
     FACT_VIOLATION_MESSAGE, FACT_VIOLATION_RULE_NAME, FACT_VIOLATION_TRIGGERED, FORBIDDEN_PREFIX,
     RULE_CA001,
 };
-use crate::test_utils::*;
+use crate::utils::*;
 
 #[test]
 fn test_rete_engine_creation() {

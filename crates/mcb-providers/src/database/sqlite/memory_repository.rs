@@ -23,8 +23,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::entities::memory::{MemoryFilter, Observation, SessionSummary};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::memory::{FtsSearchResult, MemoryRepository};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
+use mcb_domain::ports::{FtsSearchResult, MemoryRepository};
 use mcb_domain::utils::mask_id;
 use mcb_domain::value_objects::ids::{ObservationId, SessionId};
 use tracing::debug;
@@ -91,8 +91,8 @@ fn build_timeline_filter_sql(filter: Option<&MemoryFilter>) -> (String, Vec<SqlP
 
 /// Assembles a timeline from before/after row sets plus the anchor observation.
 async fn assemble_timeline(
-    before_rows: &[Arc<dyn mcb_domain::ports::infrastructure::database::SqlRow>],
-    after_rows: &[Arc<dyn mcb_domain::ports::infrastructure::database::SqlRow>],
+    before_rows: &[Arc<dyn mcb_domain::ports::SqlRow>],
+    after_rows: &[Arc<dyn mcb_domain::ports::SqlRow>],
     repo: &SqliteMemoryRepository,
     anchor_id: &ObservationId,
 ) -> Result<Vec<Observation>> {
@@ -138,7 +138,7 @@ impl SqliteMemoryRepository {
         anchor_time: i64,
         limit: usize,
         order: &str,
-    ) -> Result<Vec<Arc<dyn mcb_domain::ports::infrastructure::database::SqlRow>>> {
+    ) -> Result<Vec<Arc<dyn mcb_domain::ports::SqlRow>>> {
         let op = if order == "DESC" { "<" } else { ">" };
         let sql = format!("{base_sql} AND created_at {op} ? ORDER BY created_at {order} LIMIT ?");
         let mut params = base_params.to_vec();

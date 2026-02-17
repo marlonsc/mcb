@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
+use mcb_domain::ports::{CreateSessionSummaryInput, MemoryServiceInterface};
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 

@@ -1,6 +1,6 @@
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::MemoryRepository;
+use mcb_domain::ports::MemoryRepository;
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 use mcb_domain::value_objects::{ObservationId, SessionId};
 use mcb_providers::database::create_memory_repository_with_executor;
 use rstest::rstest;

@@ -33,33 +33,66 @@ pub mod repositories;
 /// Application service ports
 pub mod services;
 
-// Re-export commonly used port traits for convenience
+// ============================================================================
+// Canonical re-exports — the ONE import surface for all port traits/types.
+// Consumers MUST use `use mcb_domain::ports::{...};` only.
+// ============================================================================
+
+// --- Admin ---
 pub use admin::{
-    DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation, IndexingOperationsInterface,
-    LifecycleManaged, PerformanceMetricsData, PerformanceMetricsInterface, PortServiceState,
-    ShutdownCoordinator, ValidationOperation, ValidationOperationResult,
-    ValidationOperationsInterface,
+    CacheAdminInterface, DependencyHealth, DependencyHealthCheck, EmbeddingAdminInterface,
+    ExtendedHealthResponse, IndexingOperation, IndexingOperationStatus,
+    IndexingOperationsInterface, LanguageAdminInterface, LifecycleManaged, PerformanceMetricsData,
+    PerformanceMetricsInterface, PortServiceState, ProviderInfo, ShutdownCoordinator,
+    ValidationOperation, ValidationOperationResult, ValidationOperationsInterface,
+    ValidationStatus, VectorStoreAdminInterface,
 };
+
+// --- Browse ---
 pub use browse::{BrowseError, BrowseServiceInterface, HighlightError, HighlightServiceInterface};
+
+// --- Infrastructure ---
 pub use infrastructure::{
-    AuthServiceInterface, DatabaseExecutor, DomainEventStream, EventBusProvider, ProviderContext,
-    ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator, SnapshotProvider, SqlParam,
-    SqlRow, StateStoreProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult,
+    AuthServiceInterface, DatabaseExecutor, DatabaseProvider, DomainEventStream, EventBusProvider,
+    ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator, SnapshotProvider,
+    SqlParam, SqlRow, StateStoreProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult,
     SystemMetrics, SystemMetricsCollectorInterface,
 };
+
+// --- Jobs ---
 pub use jobs::{
     Job, JobCounts, JobId, JobManagerInterface, JobProgressUpdate, JobResult, JobStatus, JobType,
 };
+
+// --- Providers ---
 pub use providers::{
-    CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, CacheStats, CryptoProvider,
-    EmbeddingProvider, EncryptedData, FileMetrics, FunctionMetrics, HalsteadMetrics,
-    HybridSearchProvider, HybridSearchResult, LanguageChunkingProvider, MetricsAnalysisProvider,
-    ProviderConfigManagerInterface, ValidationOptions, ValidationProvider, ValidatorInfo,
-    VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider,
+    CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, CacheStats, ComplexityAnalyzer,
+    ComplexityFinding, CryptoProvider, DeadCodeDetector, DeadCodeFinding, EmbeddingProvider,
+    EncryptedData, FileMetrics, FunctionMetrics, HalsteadMetrics, HybridSearchProvider,
+    HybridSearchResult, LanguageChunkingProvider, MetricLabels, MetricsAnalysisProvider,
+    MetricsProvider, ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
+    ProviderConfigManagerInterface, TdgFinding, TdgScorer, ValidationOptions, ValidationProvider,
+    ValidatorInfo, VcsProvider, VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider,
 };
+
+// --- Repositories ---
 pub use repositories::{
-    AgentRepository, AgentSessionQuery, ChunkRepository, FileHashRepository, FtsSearchResult,
-    IssueEntityRepository, MemoryRepository, OrgEntityRepository, PlanEntityRepository,
-    ProjectRepository, RepositoryStats, SearchRepository, SearchStats, VcsEntityRepository,
+    AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
+    AgentSessionRepository, ApiKeyRegistry, AssignmentManager, BranchRegistry, ChunkRepository,
+    FileHashRepository, FtsSearchResult, IssueCommentRegistry, IssueEntityRepository,
+    IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry, MemoryRepository,
+    OrgEntityRepository, OrgRegistry, PlanEntityRepository, PlanRegistry, PlanReviewRegistry,
+    PlanVersionRegistry, ProjectRepository, RepositoryRegistry, RepositoryStats, SearchRepository,
+    SearchStats, TeamMemberManager, TeamRegistry, UserRegistry, VcsEntityRepository,
+    WorktreeManager,
 };
-pub use services::{ValidationReport, ValidationServiceInterface, ViolationEntry};
+
+// --- Services ---
+pub use services::{
+    AgentSessionManager, AgentSessionServiceInterface, CheckpointManager, ChunkingOptions,
+    ChunkingResult, CodeChunker, ComplexityReport, ContextServiceInterface,
+    CreateSessionSummaryInput, DelegationTracker, FunctionComplexity, IndexingResult,
+    IndexingServiceInterface, IndexingStatus, MemoryServiceInterface, ProjectDetectorService,
+    RuleInfo, SearchFilters, SearchServiceInterface, ValidationReport, ValidationServiceInterface,
+    ViolationEntry,
+};

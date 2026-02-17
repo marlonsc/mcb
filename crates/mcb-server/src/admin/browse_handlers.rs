@@ -13,8 +13,8 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::browse::HighlightServiceInterface;
-use mcb_domain::ports::providers::VectorStoreBrowser;
+use mcb_domain::ports::HighlightServiceInterface;
+use mcb_domain::ports::VectorStoreBrowser;
 use mcb_domain::value_objects::CollectionId;
 use mcb_domain::value_objects::FileTreeNode;
 use rocket::http::Status;

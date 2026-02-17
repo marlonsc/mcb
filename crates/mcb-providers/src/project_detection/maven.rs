@@ -6,9 +6,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::project_detection::{
-    ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
-};
+use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
 use quick_xml::Reader;
 use quick_xml::events::Event;
 use tokio::fs::read_to_string;

@@ -5,7 +5,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use mcb_domain::ports::admin::ShutdownCoordinator;
+use mcb_domain::ports::ShutdownCoordinator;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, post};

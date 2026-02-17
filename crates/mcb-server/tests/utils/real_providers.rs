@@ -12,7 +12,7 @@ extern crate mcb_providers;
 use std::sync::Arc;
 
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
+use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider};
 
 use super::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
 

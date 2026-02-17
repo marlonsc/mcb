@@ -2,7 +2,7 @@
 //!
 //! Provides endpoints for liveness, readiness, and extended health checks.
 
-use mcb_domain::ports::admin::{
+use mcb_domain::ports::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, PerformanceMetricsData,
 };
 use mcb_domain::utils::time as domain_time;
@@ -100,10 +100,7 @@ pub fn extended_health_check(
 
 fn build_dependency_checks(
     metrics: &PerformanceMetricsData,
-    operations: &std::collections::HashMap<
-        OperationId,
-        mcb_domain::ports::admin::IndexingOperation,
-    >,
+    operations: &std::collections::HashMap<OperationId, mcb_domain::ports::IndexingOperation>,
     now: u64,
 ) -> Vec<DependencyHealthCheck> {
     vec![
@@ -131,10 +128,7 @@ fn build_embedding_health(metrics: &PerformanceMetricsData, now: u64) -> Depende
 }
 
 fn build_vector_store_health(
-    operations: &std::collections::HashMap<
-        OperationId,
-        mcb_domain::ports::admin::IndexingOperation,
-    >,
+    operations: &std::collections::HashMap<OperationId, mcb_domain::ports::IndexingOperation>,
     now: u64,
 ) -> DependencyHealthCheck {
     DependencyHealthCheck {

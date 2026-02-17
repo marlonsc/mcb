@@ -5,8 +5,8 @@ use std::time::Instant;
 
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::error::Error;
-use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::ports::services::SearchServiceInterface;
+use mcb_domain::ports::MemoryServiceInterface;
+use mcb_domain::ports::SearchServiceInterface;
 use mcb_domain::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;

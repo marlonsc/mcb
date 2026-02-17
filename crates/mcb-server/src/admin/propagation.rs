@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use futures::StreamExt;
 use mcb_domain::events::DomainEvent;
-use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
+use mcb_domain::ports::{DomainEventStream, EventBusProvider};
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use tracing::{debug, error, info, warn};
 

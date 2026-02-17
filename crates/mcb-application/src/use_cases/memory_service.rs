@@ -31,10 +31,10 @@ use mcb_domain::entities::memory::{
     ObservationMetadata, ObservationType, OriginContext, SessionSummary,
 };
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::EmbeddingProvider;
-use mcb_domain::ports::providers::VectorStoreProvider;
-use mcb_domain::ports::repositories::MemoryRepository;
-use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
+use mcb_domain::ports::{
+    CreateSessionSummaryInput, EmbeddingProvider, MemoryRepository, MemoryServiceInterface,
+    VectorStoreProvider,
+};
 use mcb_domain::utils::compute_content_hash;
 use mcb_domain::utils::id;
 use mcb_domain::utils::time as domain_time;

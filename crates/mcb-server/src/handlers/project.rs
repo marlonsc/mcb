@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::repositories::ProjectRepository;
+use mcb_domain::ports::ProjectRepository;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 use tracing::info;

@@ -33,13 +33,13 @@ use std::sync::Arc;
 
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::{EmbeddingProvider, VectorStoreProvider};
+use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
 use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 use serde_json::json;
 
-use crate::shared_context::shared_fastembed_test_cache_dir;
+use crate::utils::shared_context::shared_fastembed_test_cache_dir;
 
 /// Create a NEW `AppContext` (for tests that need isolated state).
 ///

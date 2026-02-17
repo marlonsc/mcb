@@ -16,8 +16,8 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
-use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::ports::{CryptoProvider, EncryptedData};
+use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use serde_json::Value;
 

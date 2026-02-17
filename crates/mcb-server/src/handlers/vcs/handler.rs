@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::VcsProvider;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;

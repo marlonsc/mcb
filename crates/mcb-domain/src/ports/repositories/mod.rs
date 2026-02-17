@@ -21,13 +21,23 @@ pub mod search;
 /// VCS entity management
 pub mod vcs;
 
-pub use agent::{AgentRepository, AgentSessionQuery};
+pub use agent::{
+    AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
+    AgentSessionRepository,
+};
 pub use chunk::{ChunkRepository, RepositoryStats};
 pub use file_hash::FileHashRepository;
-pub use issue::IssueEntityRepository;
+pub use issue::{
+    IssueCommentRegistry, IssueEntityRepository, IssueLabelAssignmentManager, IssueLabelRegistry,
+    IssueRegistry,
+};
 pub use memory::{FtsSearchResult, MemoryRepository};
-pub use org::OrgEntityRepository;
-pub use plan::PlanEntityRepository;
+pub use org::{
+    ApiKeyRegistry, OrgEntityRepository, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
+};
+pub use plan::{PlanEntityRepository, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry};
 pub use project::ProjectRepository;
 pub use search::{SearchRepository, SearchStats};
-pub use vcs::VcsEntityRepository;
+pub use vcs::{
+    AssignmentManager, BranchRegistry, RepositoryRegistry, VcsEntityRepository, WorktreeManager,
+};

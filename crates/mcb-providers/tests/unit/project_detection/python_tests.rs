@@ -1,6 +1,6 @@
 //! Tests for Python project detector (REF003).
 
-use mcb_domain::ports::providers::project_detection::{ProjectDetector, ProjectDetectorConfig};
+use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig};
 use mcb_providers::project_detection::PythonDetector;
 use rstest::rstest;
 

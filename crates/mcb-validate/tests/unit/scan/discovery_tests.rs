@@ -14,8 +14,8 @@ use mcb_validate::{
 };
 use rstest::rstest;
 
-use crate::test_constants::*;
-use crate::test_utils::*;
+use crate::utils::test_constants::*;
+use crate::utils::*;
 
 /// Helper: sets up the full fixture workspace with all 4 crates.
 fn full_workspace() -> (tempfile::TempDir, std::path::PathBuf) {

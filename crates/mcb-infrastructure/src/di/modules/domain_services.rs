@@ -19,25 +19,18 @@ use mcb_application::use_cases::{
     SearchServiceImpl,
 };
 use mcb_domain::error::Result;
-use mcb_domain::ports::admin::IndexingOperationsInterface;
-use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_domain::ports::providers::{
-    EmbeddingProvider, LanguageChunkingProvider, VcsProvider, VectorStoreProvider,
-};
-use mcb_domain::ports::repositories::{
-    AgentRepository, FileHashRepository, IssueEntityRepository, MemoryRepository,
-    OrgEntityRepository, PlanEntityRepository, ProjectRepository, VcsEntityRepository,
-};
-use mcb_domain::ports::services::{
-    AgentSessionServiceInterface, ContextServiceInterface, IndexingServiceInterface,
-    MemoryServiceInterface, ProjectDetectorService, SearchServiceInterface,
-    ValidationServiceInterface,
+use mcb_domain::ports::{
+    AgentRepository, AgentSessionServiceInterface, ContextServiceInterface, CryptoProvider,
+    EmbeddingProvider, EventBusProvider, FileHashRepository, IndexingOperationsInterface,
+    IndexingServiceInterface, IssueEntityRepository, LanguageChunkingProvider, MemoryRepository,
+    MemoryServiceInterface, OrgEntityRepository, PlanEntityRepository, ProjectDetectorService,
+    ProjectRepository, SearchServiceInterface, ValidationServiceInterface, VcsEntityRepository,
+    VcsProvider, VectorStoreProvider,
 };
 
 use super::super::bootstrap::AppContext;
 use crate::cache::provider::SharedCacheProvider;
 use crate::config::AppConfig;
-use mcb_domain::ports::providers::CryptoProvider;
 // Use infrastructure validation service
 use crate::validation::InfraValidationService;
 

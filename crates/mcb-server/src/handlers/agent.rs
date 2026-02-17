@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::agent::{Delegation, ToolCall};
-use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;

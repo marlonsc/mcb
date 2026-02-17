@@ -65,7 +65,7 @@ mod embedding_registry_tests {
     #[tokio::test]
     async fn test_resolve_fastembed_provider() {
         let config = EmbeddingProviderConfig::new("fastembed")
-            .with_cache_dir(crate::shared_context::shared_fastembed_test_cache_dir());
+            .with_cache_dir(crate::utils::shared_context::shared_fastembed_test_cache_dir());
 
         let result = resolve_embedding_provider(&config);
 
@@ -334,7 +334,7 @@ mod integration_tests {
     async fn test_local_providers_available_for_testing() {
         let embedding = resolve_embedding_provider(
             &EmbeddingProviderConfig::new("fastembed")
-                .with_cache_dir(crate::shared_context::shared_fastembed_test_cache_dir()),
+                .with_cache_dir(crate::utils::shared_context::shared_fastembed_test_cache_dir()),
         );
         let cache = resolve_cache_provider(&CacheProviderConfig::new("moka").with_max_size(1000));
 

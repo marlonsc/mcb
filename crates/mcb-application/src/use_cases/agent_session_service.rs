@@ -22,9 +22,8 @@ use mcb_domain::entities::agent::{
     AgentSession, AgentSessionStatus, Checkpoint, Delegation, ToolCall,
 };
 use mcb_domain::error::Result;
-use mcb_domain::ports::repositories::agent::{AgentRepository, AgentSessionQuery};
-use mcb_domain::ports::services::agent::{
-    AgentSessionManager, CheckpointManager, DelegationTracker,
+use mcb_domain::ports::{
+    AgentRepository, AgentSessionManager, AgentSessionQuery, CheckpointManager, DelegationTracker,
 };
 use mcb_domain::utils::time as domain_time;
 

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{MemorySearchResult, ObservationType, QualityGateResult};
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Value;

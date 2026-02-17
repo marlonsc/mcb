@@ -1,33 +1,7 @@
-//! SQLite-specific DDL generation from the generic schema.
-//!
-//! Implements [`MemorySchemaDdlGenerator`] (memory subset) and [`SchemaDdlGenerator`]
-//! (full project schema) for `SQLite` only. Other backends (`PostgreSQL`, `MySQL`)
-//! have their own modules with their own dialect.
-
 use mcb_domain::schema::{
-    ColumnType, ForeignKeyDef, FtsDef, IndexDef, MemorySchema, MemorySchemaDdlGenerator,
-    ProjectSchema, SchemaDdlGenerator, TableDef, UniqueConstraintDef,
+    ColumnType, ForeignKeyDef, FtsDef, IndexDef, Schema, SchemaDdlGenerator, TableDef,
+    UniqueConstraintDef,
 };
-
-/// Generates `SQLite` DDL from the generic memory schema (observations, `session_summaries`, FTS).
-#[derive(Debug, Clone, Default)]
-pub struct SqliteMemoryDdlGenerator;
-
-impl MemorySchemaDdlGenerator for SqliteMemoryDdlGenerator {
-    fn generate_ddl(&self, schema: &MemorySchema) -> Vec<String> {
-        let mut stmts = Vec::new();
-        for table in &schema.tables {
-            stmts.push(table_to_sqlite_ddl(table, &[]));
-        }
-        if let Some(fts) = &schema.fts {
-            stmts.extend(rebuild_fts_sqlite(fts));
-        }
-        for idx in &schema.indexes {
-            stmts.push(index_to_sqlite_ddl(idx));
-        }
-        stmts
-    }
-}
 
 /// Generates `SQLite` DDL from the full project schema (collections, observations,
 /// `session_summaries`, `file_hashes`, FTS, indexes, unique constraints).
@@ -35,7 +9,7 @@ impl MemorySchemaDdlGenerator for SqliteMemoryDdlGenerator {
 pub struct SqliteSchemaDdlGenerator;
 
 impl SchemaDdlGenerator for SqliteSchemaDdlGenerator {
-    fn generate_ddl(&self, schema: &ProjectSchema) -> Vec<String> {
+    fn generate_ddl(&self, schema: &Schema) -> Vec<String> {
         let mut stmts = Vec::new();
         for table in &schema.tables {
             let uniques: Vec<&UniqueConstraintDef> = schema
@@ -67,10 +41,6 @@ fn column_type_sqlite(ty: &ColumnType) -> &'static str {
         ColumnType::Real => "REAL",
         ColumnType::Blob => "BLOB",
     }
-}
-
-fn table_to_sqlite_ddl(table: &TableDef, unique_constraints: &[&UniqueConstraintDef]) -> String {
-    table_to_sqlite_ddl_with_fk(table, unique_constraints, &[])
 }
 
 fn table_to_sqlite_ddl_with_fk(

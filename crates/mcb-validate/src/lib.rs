@@ -57,6 +57,8 @@ pub mod rules;
 
 // === Pattern Registry (YAML-driven patterns) ===
 pub mod pattern_registry;
+/// Validation provider adapter that exposes this crate through domain ports.
+pub mod provider;
 
 // === Rule Filtering System (Phase 6) ===
 pub mod filters;
@@ -114,7 +116,7 @@ pub use engines::{HybridRuleEngine, RuleEngineType};
 pub use validators::error_boundary::{ErrorBoundaryValidator, ErrorBoundaryViolation};
 // Re-export new DRY violation system
 pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary};
-pub use mcb_domain::ports::services::validation::ViolationEntry;
+pub use mcb_domain::ports::ViolationEntry;
 pub use validators::implementation::{ImplementationQualityValidator, ImplementationViolation};
 pub use validators::kiss::{KissValidator, KissViolation};
 pub use validators::layer_flow::{LayerFlowValidator, LayerFlowViolation};
@@ -150,6 +152,7 @@ use thiserror::Error;
 use crate::linters::constants::CARGO_TOML_FILENAME;
 pub use validators::hygiene::{HygieneValidator, HygieneViolation};
 pub use validators::solid::{SolidValidator, SolidViolation};
+pub use validators::ssot::{SsotValidator, SsotViolation};
 pub use validators::test_quality::{TestQualityValidator, TestQualityViolation};
 // Re-export centralized thresholds
 pub use thresholds::{ValidationThresholds, thresholds};

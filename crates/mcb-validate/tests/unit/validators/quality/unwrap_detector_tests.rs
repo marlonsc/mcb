@@ -7,7 +7,7 @@ use mcb_validate::ast::UnwrapDetector;
 use rstest::rstest;
 use rstest::*;
 
-use crate::test_constants::{EXPECT_METHOD, UNWRAP_METHOD};
+use crate::utils::test_constants::{EXPECT_METHOD, UNWRAP_METHOD};
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 

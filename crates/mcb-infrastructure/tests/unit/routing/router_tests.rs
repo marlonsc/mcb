@@ -6,9 +6,7 @@
 use rstest::rstest;
 use std::sync::Arc;
 
-use mcb_domain::ports::infrastructure::routing::{
-    ProviderContext, ProviderHealthStatus, ProviderRouter,
-};
+use mcb_domain::ports::{ProviderContext, ProviderHealthStatus, ProviderRouter};
 use mcb_infrastructure::routing::{DefaultProviderRouter, HealthMonitor, InMemoryHealthMonitor};
 use rstest::*;
 

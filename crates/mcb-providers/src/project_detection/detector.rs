@@ -3,7 +3,7 @@
 use std::path::Path;
 
 use mcb_domain::entities::project::ProjectType;
-use mcb_domain::ports::providers::project_detection::ProjectDetectorConfig;
+use mcb_domain::ports::ProjectDetectorConfig;
 
 use super::registry::PROJECT_DETECTORS;
 

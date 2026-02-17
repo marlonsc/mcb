@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::ErrorPattern;
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;

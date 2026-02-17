@@ -14,7 +14,7 @@ use async_trait::async_trait;
 use dashmap::DashMap;
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;

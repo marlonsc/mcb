@@ -15,3 +15,5 @@ pub mod performance;
 pub mod quality;
 pub mod refactoring;
 pub mod solid;
+/// SSOT validator tests.
+pub mod ssot;

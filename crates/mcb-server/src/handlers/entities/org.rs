@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::{ApiKey, Organization, Team, TeamMember, User};
-use mcb_domain::ports::repositories::OrgEntityRepository;
+use mcb_domain::ports::OrgEntityRepository;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 

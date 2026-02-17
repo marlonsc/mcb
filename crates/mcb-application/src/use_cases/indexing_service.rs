@@ -26,12 +26,9 @@ use std::time::Instant;
 use ignore::WalkBuilder;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
-use mcb_domain::ports::admin::IndexingOperationsInterface;
-use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_domain::ports::providers::LanguageChunkingProvider;
-use mcb_domain::ports::repositories::FileHashRepository;
-use mcb_domain::ports::services::{
-    ContextServiceInterface, IndexingResult, IndexingServiceInterface,
+use mcb_domain::ports::{
+    ContextServiceInterface, EventBusProvider, FileHashRepository, IndexingOperationsInterface,
+    IndexingResult, IndexingServiceInterface, IndexingStatus, LanguageChunkingProvider,
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
 use tracing::{error, info, warn};
@@ -271,9 +268,7 @@ impl IndexingServiceInterface for IndexingServiceImpl {
         })
     }
 
-    fn get_status(&self) -> mcb_domain::ports::services::IndexingStatus {
-        use mcb_domain::ports::services::IndexingStatus;
-
+    fn get_status(&self) -> IndexingStatus {
         let ops = self.indexing_ops.get_operations();
         // Get first active operation if any - use if-let to avoid expect()
         if let Some((_, op)) = ops.iter().next() {

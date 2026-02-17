@@ -3,10 +3,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use mcb_domain::ports::repositories::plan::{
-    PlanRegistry, PlanReviewRegistry, PlanVersionRegistry,
-};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
+use mcb_domain::ports::{PlanRegistry, PlanReviewRegistry, PlanVersionRegistry};
 
 use crate::utils::sqlite::query as query_helpers;
 use crate::utils::sqlite::row::{req_i64, req_str};

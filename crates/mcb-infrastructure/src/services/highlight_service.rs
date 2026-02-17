@@ -13,7 +13,7 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::browse::{HighlightError, HighlightServiceInterface};
+use mcb_domain::ports::{HighlightError, HighlightServiceInterface};
 use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, HighlightedCode};
 use tree_sitter::Language;
 use tree_sitter_highlight::{Highlight, HighlightConfiguration, HighlightEvent, Highlighter};

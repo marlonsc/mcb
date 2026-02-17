@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::ProjectIssue;
-use mcb_domain::ports::repositories::IssueEntityRepository;
+use mcb_domain::ports::IssueEntityRepository;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 

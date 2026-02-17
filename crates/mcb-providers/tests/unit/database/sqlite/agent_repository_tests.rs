@@ -10,8 +10,8 @@ use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, ToolCall};
 use mcb_domain::entities::memory::SessionSummary;
 use mcb_domain::entities::project::Project;
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
+use mcb_domain::ports::{AgentRepository, MemoryRepository, ProjectRepository};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 use mcb_providers::database::{
     create_agent_repository_from_executor, create_memory_repository_with_executor,
     create_project_repository_from_executor,

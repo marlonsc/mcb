@@ -22,8 +22,7 @@ use std::time::Instant;
 use async_trait::async_trait;
 use delegate::delegate;
 use mcb_domain::error::Result;
-use mcb_domain::ports::admin::PerformanceMetricsInterface;
-use mcb_domain::ports::providers::EmbeddingProvider;
+use mcb_domain::ports::{EmbeddingProvider, PerformanceMetricsInterface};
 use mcb_domain::value_objects::Embedding;
 
 /// Instrumented embedding provider decorator

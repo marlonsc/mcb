@@ -79,7 +79,7 @@ async fn main() {
 }
 
 async fn assert_embedding_batch_shape(
-    embedding: &Arc<dyn mcb_domain::ports::providers::EmbeddingProvider>,
+    embedding: &Arc<dyn mcb_domain::ports::EmbeddingProvider>,
     texts: &[String],
 ) -> Result<(), Box<dyn std::error::Error>> {
     let embeddings = embedding.embed_batch(texts).await?;

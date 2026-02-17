@@ -10,7 +10,7 @@ use mcb_domain::constants::embedding::{
     EMBEDDING_DIMENSION_VOYAGEAI_CODE, EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
 };
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::EmbeddingProvider;
+use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
@@ -110,7 +110,7 @@ impl_embedding_provider_trait!(
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
 use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };

@@ -12,7 +12,7 @@ use mcb_domain::constants::embedding::{
     EMBEDDING_DIMENSION_OLLAMA_NOMIC,
 };
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::EmbeddingProvider;
+use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
@@ -163,7 +163,7 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
 use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };

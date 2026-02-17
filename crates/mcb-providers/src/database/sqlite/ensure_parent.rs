@@ -1,6 +1,6 @@
 use mcb_domain::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 
 /// Ensure the default organization row exists (FK target for projects).
 pub async fn ensure_org_exists(executor: &dyn DatabaseExecutor, timestamp: i64) -> Result<()> {

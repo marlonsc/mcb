@@ -4,13 +4,11 @@ use std::sync::Arc;
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::repository::{Branch, Repository, VcsType};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::vcs::{
-    AssignmentManager, BranchRegistry, RepositoryRegistry, WorktreeManager,
-};
+use mcb_domain::ports::{AssignmentManager, BranchRegistry, RepositoryRegistry, WorktreeManager};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 use mcb_providers::database::SqliteVcsEntityRepository;
 
-use crate::common::entity_test_utils::{
+use crate::utils::entity::{
     TEST_NOW, TestResult, assert_not_found, seed_default_scope, seed_isolated_org_scope,
     seed_project, setup_executor,
 };

@@ -5,13 +5,13 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use mcb_application::use_cases::SearchServiceImpl;
 use mcb_domain::entities::CodeChunk;
-use mcb_domain::ports::services::*;
+use mcb_domain::ports::{ContextServiceInterface, SearchServiceInterface};
 use mcb_domain::utils::id;
 use mcb_domain::value_objects::CollectionId;
 use rstest::*;
 use serde_json::json;
 
-use crate::shared_context::shared_app_context;
+use crate::utils::shared_context::shared_app_context;
 
 static COLLECTION_COUNTER: AtomicU64 = AtomicU64::new(0);
 

@@ -10,7 +10,7 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::infrastructure::DatabaseExecutor;
+use mcb_domain::ports::DatabaseExecutor;
 
 use mcb_providers::database::{
     SqliteAgentRepository, SqliteFileHashConfig, SqliteFileHashRepository,
@@ -27,24 +27,24 @@ use crate::di::modules::domain_services::ServiceDependencies;
 /// but creates fresh SQLite-backed repositories using `executor`.
 pub fn create_test_dependencies(
     project_id: String,
-    executor: Arc<dyn DatabaseExecutor>,
+    executor: &Arc<dyn DatabaseExecutor>,
     app_context: &AppContext,
 ) -> ServiceDependencies {
     // Fresh repositories backed by the isolated database
-    let memory_repository = Arc::new(SqliteMemoryRepository::new(Arc::clone(&executor)));
-    let agent_repository = Arc::new(SqliteAgentRepository::new(Arc::clone(&executor)));
-    let project_repository = Arc::new(SqliteProjectRepository::new(Arc::clone(&executor)));
+    let memory_repository = Arc::new(SqliteMemoryRepository::new(Arc::clone(executor)));
+    let agent_repository = Arc::new(SqliteAgentRepository::new(Arc::clone(executor)));
+    let project_repository = Arc::new(SqliteProjectRepository::new(Arc::clone(executor)));
 
     let file_hash_repository = Arc::new(SqliteFileHashRepository::new(
-        Arc::clone(&executor),
+        Arc::clone(executor),
         SqliteFileHashConfig::default(),
         project_id.clone(),
     ));
 
-    let vcs_entity_repository = Arc::new(SqliteVcsEntityRepository::new(Arc::clone(&executor)));
-    let plan_entity_repository = Arc::new(SqlitePlanEntityRepository::new(Arc::clone(&executor)));
-    let issue_entity_repository = Arc::new(SqliteIssueEntityRepository::new(Arc::clone(&executor)));
-    let org_entity_repository = Arc::new(SqliteOrgEntityRepository::new(Arc::clone(&executor)));
+    let vcs_entity_repository = Arc::new(SqliteVcsEntityRepository::new(Arc::clone(executor)));
+    let plan_entity_repository = Arc::new(SqlitePlanEntityRepository::new(Arc::clone(executor)));
+    let issue_entity_repository = Arc::new(SqliteIssueEntityRepository::new(Arc::clone(executor)));
+    let org_entity_repository = Arc::new(SqliteOrgEntityRepository::new(Arc::clone(executor)));
 
     ServiceDependencies {
         project_id,

@@ -31,7 +31,7 @@
 //!
 //! ```no_run
 //! use mcb_providers::hybrid_search::HybridSearchEngine;
-//! use mcb_domain::ports::providers::HybridSearchProvider;
+//! use mcb_domain::ports::HybridSearchProvider;
 //!
 //! // Create engine with default weights (40% BM25, 60% semantic)
 //! let engine = HybridSearchEngine::new();

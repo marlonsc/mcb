@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
-use mcb_domain::ports::repositories::PlanEntityRepository;
+use mcb_domain::ports::PlanEntityRepository;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 

@@ -1,5 +1,5 @@
 //! Tests for memory service port (REF003: dedicated test file).
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::MemoryServiceInterface;
 use rstest::rstest;
 
 #[rstest]

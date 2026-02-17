@@ -84,6 +84,10 @@ macro_rules! impl_admin_interface {
 /// `shared_fastembed_test_cache_dir()` functions backed by process-wide
 /// `OnceLock` statics so the ONNX embedding model is loaded only once.
 ///
+/// Config is loaded from `config/default.toml` + env overrides via
+/// [`TestConfigBuilder`](crate::config::TestConfigBuilder), then the
+/// database path and embedding cache are overridden for test isolation.
+///
 /// ## Usage
 ///
 /// ```ignore
@@ -96,6 +100,9 @@ macro_rules! define_shared_test_context {
         /// Process-wide shared `AppContext`, or `None` when the ONNX model is
         /// unavailable (offline / CI without model cache).
         ///
+        /// Config is loaded from `default.toml` via `TestConfigBuilder` with
+        /// test-specific overrides (temp database, shared embedding cache).
+        ///
         /// # Panics
         ///
         /// Panics if `init_app` fails for reasons other than a missing ONNX model.
@@ -105,24 +112,19 @@ macro_rules! define_shared_test_context {
 
             CTX.get_or_init(|| {
                 std::thread::spawn(|| {
-                    let rt = tokio::runtime::Runtime::new().expect("create init runtime");
+                    let rt = tokio::runtime::Runtime::new()
+                        .unwrap_or_else(|e| panic!("create init runtime: {e}"));
                     let result = rt.block_on(async {
-                        let temp_dir = tempfile::tempdir().expect("create temp dir");
-                        let temp_root = temp_dir.keep();
-                        let temp_path = temp_root.join($db_name);
+                        let (config, _temp_dir) = $crate::config::TestConfigBuilder::new()?
+                            .with_temp_db($db_name)?
+                            .with_fastembed_shared_cache()?
+                            .build()?;
 
-                        let mut config = $crate::config::ConfigLoader::new()
-                            .load()
-                            .expect("load config");
-                        config.providers.database.configs.insert(
-                            "default".to_owned(),
-                            $crate::config::DatabaseConfig {
-                                provider: "sqlite".to_owned(),
-                                path: Some(temp_path),
-                            },
-                        );
-                        config.providers.embedding.cache_dir =
-                            Some(shared_fastembed_test_cache_dir());
+                        // Keep the temp dir alive for the process lifetime
+                        if let Some(td) = _temp_dir {
+                            let _ = td.keep();
+                        }
+
                         $crate::di::bootstrap::init_app(config).await
                     });
                     let _rt = std::mem::ManuallyDrop::new(rt);

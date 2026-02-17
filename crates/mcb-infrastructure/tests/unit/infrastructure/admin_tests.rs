@@ -1,4 +1,4 @@
-use mcb_domain::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
+use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::infrastructure::admin::{
     AtomicPerformanceMetrics, DefaultIndexingOperations,

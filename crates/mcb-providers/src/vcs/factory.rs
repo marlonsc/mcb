@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::VcsProvider;
 
 use super::git2_provider;
 

@@ -7,7 +7,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use mcb_domain::error::Result;
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, DatabaseProvider};
+use mcb_domain::ports::{DatabaseExecutor, DatabaseProvider};
 use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
 
 use crate::config::AppConfig;

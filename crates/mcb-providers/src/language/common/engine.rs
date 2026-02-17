@@ -10,7 +10,7 @@ use std::sync::LazyLock;
 use async_trait::async_trait;
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::services::chunking::{ChunkingOptions, ChunkingResult, CodeChunker};
+use mcb_domain::ports::{ChunkingOptions, ChunkingResult, CodeChunker};
 use mcb_domain::value_objects::Language;
 
 use super::constants::CHUNK_SIZE_GENERIC;
@@ -272,7 +272,7 @@ impl Default for UniversalLanguageChunkingProvider {
     }
 }
 
-impl mcb_domain::ports::providers::LanguageChunkingProvider for UniversalLanguageChunkingProvider {
+impl mcb_domain::ports::LanguageChunkingProvider for UniversalLanguageChunkingProvider {
     fn language(&self) -> mcb_domain::value_objects::Language {
         "universal".to_owned()
     }
@@ -301,7 +301,7 @@ impl mcb_domain::ports::providers::LanguageChunkingProvider for UniversalLanguag
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::LanguageChunkingProvider as LanguageProviderPort;
+use mcb_domain::ports::LanguageChunkingProvider as LanguageProviderPort;
 use mcb_domain::registry::language::{
     LANGUAGE_PROVIDERS, LanguageProviderConfig, LanguageProviderEntry,
 };

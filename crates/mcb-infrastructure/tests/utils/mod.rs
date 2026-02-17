@@ -1,15 +1,12 @@
-//! Utility Tests Module
+//! Test utilities for mcb-infrastructure
 //!
-//! Provides factories and helpers for creating real (not mocked) test contexts
-//! that exercise the full DI container and provider stack.
-// This module is shared between multiple test binaries; not all items are used in each.
+//! ALL shared test helpers live here. No helpers outside this directory.
 #![allow(dead_code)]
 
-mod timing_tests;
-
 pub mod real_providers;
+pub mod shared_context;
 
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 
 /// Creates a test project row in the in-memory database.
 ///

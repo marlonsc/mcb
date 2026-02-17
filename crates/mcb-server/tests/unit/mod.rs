@@ -1,19 +1,10 @@
-//! Unit test suite for mcb-server
-//!
-//! Run with: `cargo test -p mcb-server --test unit`
+//! Unit tests — `cargo test -p mcb-server --test unit`
 
-// Shared test utilities
 #[path = "../utils/mod.rs"]
+#[allow(dead_code, unused_imports)]
 mod utils;
 
-// Search-specific fixtures
-#[path = "../utils/search_fixtures.rs"]
-mod search_fixtures;
-
-mod shared_context;
-
 pub mod builder;
-
 pub mod constants;
 pub mod context_resolution;
 pub mod error_mapping;
@@ -28,5 +19,4 @@ pub mod services;
 pub mod templates;
 pub mod tools;
 pub mod transport;
-#[path = "utils/mod.rs"]
 pub mod util_tests;

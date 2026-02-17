@@ -3511,6 +3511,7 @@ dependencies = [
  "globset",
  "insta",
  "jsonschema",
+ "linkme",
  "mcb-domain",
  "mockall",
  "petgraph 0.8.3",

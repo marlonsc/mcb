@@ -6,7 +6,7 @@
 //! (~5-10s) per test.  Each call to [`create_test_mcp_server`] gets an isolated
 //! `SQLite` database backed by its own `TempDir`.
 
-use mcb_domain::ports::services::IndexingResult;
+use mcb_domain::ports::IndexingResult;
 use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
 use mcb_infrastructure::di::modules::domain_services::DomainServicesFactory;
 use std::path::{Path, PathBuf};
@@ -216,7 +216,7 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
 
     let deps = mcb_infrastructure::di::test_factory::create_test_dependencies(
         project_id,
-        Arc::clone(&db_executor),
+        &db_executor,
         &ctx,
     );
 

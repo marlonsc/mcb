@@ -7,7 +7,7 @@ use std::time::Instant;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
-use mcb_domain::ports::infrastructure::routing::ProviderHealthStatus;
+use mcb_domain::ports::ProviderHealthStatus;
 
 /// Health data for a single provider
 #[derive(Debug)]
@@ -39,7 +39,7 @@ impl Default for ProviderHealthData {
 ///
 /// ```
 /// use mcb_infrastructure::routing::{InMemoryHealthMonitor, HealthMonitor};
-/// use mcb_domain::ports::infrastructure::routing::ProviderHealthStatus;
+/// use mcb_domain::ports::ProviderHealthStatus;
 ///
 /// let monitor = InMemoryHealthMonitor::new();
 ///

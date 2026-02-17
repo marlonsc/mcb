@@ -9,8 +9,8 @@ use std::path::Path;
 use std::time::Duration;
 
 use mcb_domain::SearchResult;
-use mcb_domain::ports::services::ValidationReport;
-use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
+use mcb_domain::ports::ValidationReport;
+use mcb_domain::ports::{IndexingResult, IndexingStatus};
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 

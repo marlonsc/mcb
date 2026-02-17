@@ -10,7 +10,7 @@
 use std::sync::Arc;
 
 use mcb_domain::error::Result;
-use mcb_domain::ports::services::{ContextServiceInterface, SearchFilters, SearchServiceInterface};
+use mcb_domain::ports::{ContextServiceInterface, SearchFilters, SearchServiceInterface};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
 
 use crate::constants::SEARCH_OVERFETCH_MULTIPLIER;

@@ -8,15 +8,15 @@ use std::path::Path;
 use std::sync::Arc;
 
 use mcb_domain::constants::keys as schema;
-use mcb_domain::ports::providers::VcsProvider;
-use mcb_domain::ports::repositories::{
-    IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
-    VcsEntityRepository,
-};
-use mcb_domain::ports::services::AgentSessionServiceInterface;
-use mcb_domain::ports::services::{
+use mcb_domain::ports::AgentSessionServiceInterface;
+use mcb_domain::ports::VcsProvider;
+use mcb_domain::ports::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
     ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
+};
+use mcb_domain::ports::{
+    IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
+    VcsEntityRepository,
 };
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;

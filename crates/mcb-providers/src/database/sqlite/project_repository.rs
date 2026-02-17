@@ -15,8 +15,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::entities::project::Project;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::ProjectRepository;
+use mcb_domain::ports::ProjectRepository;
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 
 use super::row_convert;
 use crate::utils::sqlite::query as query_helpers;

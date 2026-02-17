@@ -11,7 +11,7 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::{
+use mcb_domain::ports::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
 use mcb_domain::registry::cache::{CacheProviderConfig, resolve_cache_provider};

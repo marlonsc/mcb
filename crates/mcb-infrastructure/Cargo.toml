@@ -125,6 +125,9 @@ humantime = { workspace = true }
 # Shell expansion
 shellexpand = { workspace = true }
 
+# Temp files (optional, for test-utils feature)
+tempfile = { workspace = true, optional = true }
+
 # Additional crypto
 pbkdf2 = { workspace = true }
 hmac = { workspace = true }
@@ -156,6 +159,10 @@ mcb-providers = { path = "../mcb-providers" }
 # Architecture validation (for MCP tool integration)
 mcb-validate = { path = "../mcb-validate" }
 
+[features]
+default = []
+test-utils = ["dep:tempfile"]
+
 [lints]
 workspace = true
 
@@ -171,3 +178,7 @@ insta = { workspace = true }
 [[test]]
 name = "unit"
 path = "tests/unit/mod.rs"
+
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"

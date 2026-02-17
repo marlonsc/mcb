@@ -21,7 +21,7 @@ use crate::constants::{
     STATS_FIELD_VECTORS_COUNT, STATUS_UNKNOWN, VECTOR_FIELD_FILE_PATH,
     VECTOR_STORE_RETRY_BACKOFF_SECS, VECTOR_STORE_RETRY_COUNT,
 };
-use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
 use serde_json::Value;

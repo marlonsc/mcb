@@ -6,10 +6,8 @@ use async_trait::async_trait;
 use mcb_domain::entities::repository::{Branch, Repository, VcsType};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use mcb_domain::ports::repositories::vcs::{
-    AssignmentManager, BranchRegistry, RepositoryRegistry, WorktreeManager,
-};
+use mcb_domain::ports::{AssignmentManager, BranchRegistry, RepositoryRegistry, WorktreeManager};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
 use serde_json::json;
 
 use crate::utils::sqlite::row::{req_i64, req_str};

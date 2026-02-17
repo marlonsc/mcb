@@ -4,7 +4,7 @@ async fn create_real_services() -> Result<
     mcb_infrastructure::di::modules::domain_services::DomainServicesContainer,
     Box<dyn std::error::Error>,
 > {
-    let ctx = crate::shared_context::shared_app_context();
+    let ctx = crate::utils::shared_context::shared_app_context();
     Ok(ctx.build_domain_services().await?)
 }
 

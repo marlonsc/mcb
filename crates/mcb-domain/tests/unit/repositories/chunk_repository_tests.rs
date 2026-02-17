@@ -1,7 +1,7 @@
 //! Tests for chunk repository interfaces and types
 
 use mcb_domain::entities::CodeChunk;
-use mcb_domain::repositories::{ChunkRepository, RepositoryStats};
+use mcb_domain::ports::{ChunkRepository, RepositoryStats};
 use rstest::rstest;
 
 #[rstest]
