@@ -18,7 +18,9 @@ use crate::test_utils::http_mcp::McpTestContext;
 
 #[fixture]
 async fn ctx() -> McpTestContext {
-    McpTestContext::new().await
+    McpTestContext::new()
+        .await
+        .expect("create MCP test context")
 }
 
 // =============================================================================

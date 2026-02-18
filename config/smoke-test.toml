@@ -11,9 +11,13 @@ transport_mode = "stdio"
 host = "127.0.0.1"
 port = 18080
 
+[providers.embedding]
+provider = "openai"
+
 [providers.embedding.configs.default]
-provider = "fastembed"
-model = "AllMiniLML6V2"
+provider = "openai"
+model = "text-embedding-3-small"
+api_key = "test-key"
 
 [providers.vector_store.configs.default]
 provider = "edgevec"

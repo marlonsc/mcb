@@ -151,13 +151,17 @@ async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str)
 #[case("entity")]
 #[tokio::test]
 async fn client_hybrid_blocks_server_side_tools(#[case] tool_name: &str) {
-    let ctx = McpTestContext::new().await;
+    let ctx = McpTestContext::new()
+        .await
+        .expect("create MCP test context");
     let request = tools_call_request(tool_name);
     let headers = [
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "client-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers).await;
+    let (status, response) = post_mcp(&ctx, &request, &headers)
+        .await
+        .expect("call MCP endpoint");
 
     assert_eq!(status, rocket::http::Status::Ok);
     let error = response
@@ -173,13 +177,17 @@ async fn client_hybrid_blocks_server_side_tools(#[case] tool_name: &str) {
 
 #[tokio::test]
 async fn server_hybrid_blocks_validate() {
-    let ctx = McpTestContext::new().await;
+    let ctx = McpTestContext::new()
+        .await
+        .expect("create MCP test context");
     let request = tools_call_request("validate");
     let headers = [
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "server-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers).await;
+    let (status, response) = post_mcp(&ctx, &request, &headers)
+        .await
+        .expect("call MCP endpoint");
 
     assert_eq!(status, rocket::http::Status::Ok);
     let error = response

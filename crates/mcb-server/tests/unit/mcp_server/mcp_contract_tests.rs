@@ -17,7 +17,9 @@ use crate::test_utils::http_mcp::{
 
 #[fixture]
 async fn ctx() -> McpTestContext {
-    McpTestContext::new().await
+    McpTestContext::new()
+        .await
+        .expect("create MCP test context")
 }
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
@@ -53,7 +55,9 @@ fn direct_tool_call_request(tool_name: &str) -> CallToolRequestParams {
 async fn test_tool_name_set_stability(#[future] ctx: McpTestContext) {
     let ctx = ctx.await;
     let request = tools_list_request();
-    let (status, response) = post_mcp(&ctx, &request, &[]).await;
+    let (status, response) = post_mcp(&ctx, &request, &[])
+        .await
+        .expect("call MCP endpoint");
 
     assert_eq!(status, Status::Ok);
     assert!(response.error.is_none(), "tools/list should not error");
@@ -86,7 +90,9 @@ async fn test_tool_name_set_stability(#[future] ctx: McpTestContext) {
 async fn test_tool_count_stability(#[future] ctx: McpTestContext) {
     let ctx = ctx.await;
     let request = tools_list_request();
-    let (status, response) = post_mcp(&ctx, &request, &[]).await;
+    let (status, response) = post_mcp(&ctx, &request, &[])
+        .await
+        .expect("call MCP endpoint");
 
     assert_eq!(status, Status::Ok);
     assert!(response.error.is_none(), "tools/list should not error");
@@ -106,7 +112,9 @@ async fn test_each_tool_has_non_null_object_input_schema_with_properties(
 ) {
     let ctx = ctx.await;
     let request = tools_list_request();
-    let (status, response) = post_mcp(&ctx, &request, &[]).await;
+    let (status, response) = post_mcp(&ctx, &request, &[])
+        .await
+        .expect("call MCP endpoint");
 
     assert_eq!(status, Status::Ok);
     assert!(response.error.is_none(), "tools/list should not error");
@@ -229,7 +237,9 @@ async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid(
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "server-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers).await;
+    let (status, response) = post_mcp(&ctx, &request, &headers)
+        .await
+        .expect("call MCP endpoint");
 
     assert_eq!(status, Status::Ok);
     let error = response
@@ -260,7 +270,9 @@ async fn test_operation_mode_matrix_blocks_tools_in_client_hybrid(
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "client-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers).await;
+    let (status, response) = post_mcp(&ctx, &request, &headers)
+        .await
+        .expect("call MCP endpoint");
 
     assert_eq!(status, Status::Ok);
     let error = response

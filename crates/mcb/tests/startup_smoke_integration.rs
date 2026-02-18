@@ -54,6 +54,8 @@ fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
         .arg(config_path())
         .env("MCP__SERVER__TRANSPORT_MODE", "hybrid")
         .env("MCP__PROVIDERS__DATABASE__CONFIGS__DEFAULT__PATH", db_path)
+        .env("MCP__PROVIDERS__EMBEDDING__PROVIDER", "openai")
+        .env("MCP__PROVIDERS__EMBEDDING__API_KEY", "test-key")
         .env("RUST_LOG", "info")
         .stderr(Stdio::piped())
         .stdout(Stdio::piped())

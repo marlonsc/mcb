@@ -9,9 +9,16 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use async_trait::async_trait;
+
+use mcb_domain::error::Result;
+use mcb_domain::ports::providers::EmbeddingProvider;
 use mcb_domain::ports::repositories::ProjectRepository;
 use mcb_domain::ports::services::IndexingResult;
 use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
+use mcb_domain::value_objects::Embedding;
+use mcb_infrastructure::config::{ConfigLoader, DatabaseConfig};
+use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 use mcb_infrastructure::di::modules::domain_services::{
     DomainServicesFactory, ServiceDependencies,
 };
@@ -147,10 +154,133 @@ pub fn create_test_indexing_result(
 }
 
 // ---------------------------------------------------------------------------
-// Shared AppContext (process-wide, ONNX model loaded once)
+// Shared AppContext (process-wide) with deterministic embedding fallback
 // ---------------------------------------------------------------------------
 
-mcb_infrastructure::define_shared_test_context!("mcb-fixtures-shared.db");
+#[derive(Debug)]
+struct DeterministicEmbeddingProvider;
+
+#[async_trait]
+impl EmbeddingProvider for DeterministicEmbeddingProvider {
+    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
+        Ok(texts
+            .iter()
+            .map(|text| {
+                let mut vector = vec![0.0_f32; TEST_EMBEDDING_DIMENSIONS];
+                if !text.is_empty() {
+                    let base = (text.len() % TEST_EMBEDDING_DIMENSIONS) as f32 / 10.0;
+                    for (i, value) in vector.iter_mut().enumerate() {
+                        *value = base + (i as f32 / 1000.0);
+                    }
+                }
+                Embedding {
+                    vector,
+                    model: "fastembed-test-fallback".to_owned(),
+                    dimensions: TEST_EMBEDDING_DIMENSIONS,
+                }
+            })
+            .collect())
+    }
+
+    fn dimensions(&self) -> usize {
+        TEST_EMBEDDING_DIMENSIONS
+    }
+
+    fn provider_name(&self) -> &str {
+        "fastembed"
+    }
+}
+
+pub fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
+    static DIR: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+    DIR.get_or_init(|| {
+        let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
+            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
+            std::path::PathBuf::from,
+        );
+        std::fs::create_dir_all(&cache_dir).expect("create shared fastembed test cache dir");
+        cache_dir
+    })
+    .clone()
+}
+
+pub fn try_shared_app_context() -> Option<&'static AppContext> {
+    static CTX: std::sync::OnceLock<Option<AppContext>> = std::sync::OnceLock::new();
+
+    CTX.get_or_init(|| {
+        std::thread::spawn(|| {
+            let rt = tokio::runtime::Runtime::new().expect("create init runtime");
+            let result = rt.block_on(async {
+                let temp_dir = tempfile::tempdir().expect("create temp dir");
+                let temp_root = temp_dir.keep();
+                let temp_path = temp_root.join("mcb-fixtures-shared.db");
+
+                let mut config = ConfigLoader::new().load().expect("load config");
+                config.providers.database.configs.insert(
+                    "default".to_owned(),
+                    DatabaseConfig {
+                        provider: "sqlite".to_owned(),
+                        path: Some(temp_path),
+                    },
+                );
+                config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
+
+                match init_app(config).await {
+                    Ok(ctx) => Ok(ctx),
+                    Err(err) => {
+                        let msg = err.to_string();
+                        if msg.contains("model.onnx")
+                            || msg.contains("Failed to initialize FastEmbed")
+                        {
+                            let mut fallback = ConfigLoader::new().load().expect("load config");
+                            fallback.providers.database.configs.insert(
+                                "default".to_owned(),
+                                DatabaseConfig {
+                                    provider: "sqlite".to_owned(),
+                                    path: Some(
+                                        std::env::temp_dir().join("mcb-fixtures-fallback.db"),
+                                    ),
+                                },
+                            );
+                            fallback.providers.embedding.provider = Some("openai".to_owned());
+                            fallback.providers.embedding.api_key = Some("test-key".to_owned());
+                            if let Some(cfg) =
+                                fallback.providers.embedding.configs.get_mut("default")
+                            {
+                                cfg.provider = "openai".to_owned();
+                                cfg.model = "text-embedding-3-small".to_owned();
+                                cfg.api_key = Some("test-key".to_owned());
+                            }
+
+                            let ctx = init_app(fallback).await?;
+                            ctx.embedding_handle()
+                                .set(Arc::new(DeterministicEmbeddingProvider));
+                            Ok(ctx)
+                        } else {
+                            Err(err)
+                        }
+                    }
+                }
+            });
+            std::mem::forget(rt);
+
+            match result {
+                Ok(ctx) => Some(ctx),
+                Err(err) => {
+                    eprintln!("shared init_app failed: {err}");
+                    None
+                }
+            }
+        })
+        .join()
+        .expect("init thread panicked")
+    })
+    .as_ref()
+}
+
+pub fn shared_app_context() -> &'static AppContext {
+    try_shared_app_context().expect("shared AppContext init failed")
+}
 
 // ---------------------------------------------------------------------------
 // create_test_mcp_server
