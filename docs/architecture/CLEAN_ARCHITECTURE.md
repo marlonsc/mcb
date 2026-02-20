@@ -109,6 +109,99 @@ pub enum DomainError {
 
 **Dependency**: None (except standard library + thiserror)
 
+#### Unified Domain Data Model (Entities + Schemas + Traits)
+
+Yes—this architecture supports unifying data-model declarations in the domain layer, with clear separation of concerns:
+
+- **Entities / Value Objects** remain the business representation of the model.
+- **Canonical schema types** (tables, columns, foreign keys, indexes) define persistence shape in a backend-agnostic way.
+- **Traits (ports)** define behavior contracts for adapters and use cases.
+
+Recommended pattern:
+
+1. Keep the **canonical model** in `mcb-domain` as the single source of truth.
+2. Express persistence metadata through domain schema types (`Schema`, `TableDef`, `ColumnDef`).
+3. Keep serialization/transport and DB-specific concerns in outer layers (providers/server).
+4. Generate backend-specific DDL via `SchemaDdlGenerator` implementations in adapters.
+
+This unifies the model semantically without coupling domain entities to transport frameworks or SQL dialect specifics.
+
+##### Example rewrite (before → after) for one entity across all levels
+
+Below is a concrete **Project** example showing how declaration can evolve from fragmented to unified.
+
+**Before (fragmented by layer, duplicated contract):**
+
+```rust
+// mcb-domain/src/entities/project.rs
+pub struct Project {
+    pub id: String,
+    pub name: String,
+}
+
+// mcb-providers/src/sql/project_row.rs
+pub struct ProjectRow {
+    pub id: String,
+    pub name: String,
+    pub created_at: i64,
+}
+
+// mcb-application/src/ports/project_repo.rs
+#[async_trait]
+pub trait ProjectRepo {
+    async fn save(&self, row: ProjectRow) -> anyhow::Result<()>;
+    async fn get(&self, id: &str) -> anyhow::Result<Option<ProjectRow>>;
+}
+```
+
+Problems in this model:
+
+- entity shape and persistence shape drift independently;
+- trait leaks storage row type into application boundary;
+- duplication of field naming/semantics across crates.
+
+**After (unified canonical model in domain):**
+
+```rust
+// mcb-domain/src/entities/project.rs
+pub struct Project {
+    pub id: String,
+    pub name: String,
+    pub created_at: i64,
+}
+
+// mcb-domain/src/schema/projects.rs
+pub fn table_def() -> TableDef {
+    TableDef {
+        name: "projects".into(),
+        columns: vec![
+            ColumnDef { name: "id".into(), type_: ColumnType::Text, primary_key: true, unique: true, not_null: true, auto_increment: false },
+            ColumnDef { name: "name".into(), type_: ColumnType::Text, primary_key: false, unique: false, not_null: true, auto_increment: false },
+            ColumnDef { name: "created_at".into(), type_: ColumnType::Timestamp, primary_key: false, unique: false, not_null: true, auto_increment: false },
+        ],
+    }
+}
+
+// mcb-domain/src/ports/project_repository.rs
+#[async_trait]
+pub trait ProjectRepository: Send + Sync {
+    async fn save(&self, project: &Project) -> Result<()>;
+    async fn get_by_id(&self, id: &str) -> Result<Option<Project>>;
+}
+```
+
+```rust
+// mcb-providers/src/persistence/sqlite/project_repository.rs
+// Adapter maps Project <-> SQL rows and uses SchemaDdlGenerator for backend DDL.
+```
+
+Result:
+
+- **Entity** defines business meaning.
+- **Schema** defines canonical persistence intent.
+- **Trait** defines use-case boundary.
+- Providers only implement mapping + dialect details.
+
 ### Layer 3: Application (mcb-application)
 
 **Purpose**: Use cases and business logic orchestration
