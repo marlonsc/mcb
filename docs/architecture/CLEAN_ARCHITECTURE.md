@@ -109,6 +109,123 @@ pub enum DomainError {
 
 **Dependency**: None (except standard library + thiserror)
 
+#### Unified Domain Data Model (Entities + Schemas + Traits)
+
+Yes—this architecture supports unifying data-model declarations in the domain layer, with clear separation of concerns:
+
+- **Entities / Value Objects** remain the business representation of the model.
+- **Canonical schema types** (tables, columns, foreign keys, indexes) define persistence shape in a backend-agnostic way.
+- **Traits (ports)** define behavior contracts for adapters and use cases.
+
+Recommended pattern:
+
+1. Keep the **canonical model** in `mcb-domain` as the single source of truth.
+2. Express persistence metadata through domain schema types (`Schema`, `TableDef`, `ColumnDef`).
+3. Keep serialization/transport and DB-specific concerns in outer layers (providers/server).
+4. Generate backend-specific DDL via `SchemaDdlGenerator` implementations in adapters.
+
+This unifies the model semantically without coupling domain entities to transport frameworks or SQL dialect specifics.
+
+##### Example rewrite (before → after) for one entity across all levels
+
+Below is a concrete **Project** example showing how declaration can evolve from fragmented to unified.
+
+**Before (fragmented by layer, duplicated contract):**
+
+```rust
+// mcb-domain/src/entities/project.rs  (incomplete — missing org_id, path, updated_at)
+pub struct Project {
+    pub id: String,
+    pub name: String,
+}
+
+// mcb-providers/src/database/sqlite/project_repository.rs  (leaks storage type)
+pub struct ProjectRow {
+    pub id: String,
+    pub name: String,
+    pub created_at: i64,
+}
+
+// mcb-domain/src/ports/repositories/project.rs  (trait uses storage type, no tenant scoping)
+#[async_trait]
+pub trait ProjectRepo {
+    async fn save(&self, row: ProjectRow) -> anyhow::Result<()>;
+    async fn get(&self, id: &str) -> anyhow::Result<Option<ProjectRow>>;
+}
+```
+
+Problems in this model:
+
+- entity shape and persistence shape drift independently;
+- trait leaks storage row type into application boundary;
+- duplication of field naming/semantics across crates.
+
+**After (unified canonical model in domain):**
+
+```rust
+// mcb-domain/src/entities/project.rs
+pub struct Project {
+    pub id: String,
+    pub org_id: String,       // tenant isolation
+    pub name: String,
+    pub path: String,
+    pub created_at: i64,
+    pub updated_at: i64,
+}
+
+// mcb-domain/src/schema/projects.rs
+pub fn table() -> TableDef {
+    crate::table!(
+        "projects",
+        [
+            crate::col!("id", Text, pk),
+            crate::col!("org_id", Text),
+            crate::col!("name", Text),
+            crate::col!("path", Text),
+            crate::col!("created_at", Integer),
+            crate::col!("updated_at", Integer),
+        ]
+    )
+}
+
+pub fn indexes() -> Vec<IndexDef> {
+    vec![crate::index!("idx_projects_org", "projects", ["org_id"])]
+}
+
+pub fn foreign_keys() -> Vec<ForeignKeyDef> {
+    vec![crate::fk!("projects", "org_id", "organizations", "id")]
+}
+
+pub fn unique_constraints() -> Vec<UniqueConstraintDef> {
+    vec![crate::unique!("projects", ["org_id", "name"])]
+}
+
+// mcb-domain/src/ports/repositories/project.rs
+/// Port for project persistence with row-level tenant isolation.
+/// All query methods require `org_id` to scope data to a single organization.
+#[async_trait]
+pub trait ProjectRepository: Send + Sync {
+    async fn create(&self, project: &Project) -> Result<()>;
+    async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Project>;
+    async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Project>;
+    async fn list(&self, org_id: &str) -> Result<Vec<Project>>;
+    async fn update(&self, project: &Project) -> Result<()>;
+    async fn delete(&self, org_id: &str, id: &str) -> Result<()>;
+}
+```
+
+```rust
+// mcb-providers/src/persistence/sqlite/project_repository.rs
+// Adapter maps Project <-> SQL rows and uses SchemaDdlGenerator for backend DDL.
+```
+
+Result:
+
+- **Entity** defines business meaning.
+- **Schema** defines canonical persistence intent.
+- **Trait** defines use-case boundary.
+- Providers only implement mapping + dialect details.
+
 ### Layer 3: Application (mcb-application)
 
 **Purpose**: Use cases and business logic orchestration
