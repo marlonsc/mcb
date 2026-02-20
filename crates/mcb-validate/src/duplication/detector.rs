@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! AST-Based Clone Detection
 //!
 //! Provides accurate clone detection using tree-sitter AST analysis.

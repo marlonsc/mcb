@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! VCS impact analysis constants.
 
 /// Weight applied to the file-count term in impact score calculation.

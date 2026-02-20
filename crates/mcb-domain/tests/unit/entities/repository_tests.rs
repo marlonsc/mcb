@@ -32,23 +32,21 @@ fn vcs_type_from_str(#[case] input: &str, #[case] expected: Result<VcsType, ()>)
 #[fixture]
 fn sample_repo() -> Repository {
     Repository {
-        metadata: mcb_domain::entities::EntityMetadata {
-            id: "repo-001".to_owned(),
-            created_at: 1000,
-            updated_at: 1000,
-        },
+        id: "repo-001".to_owned(),
         org_id: "org-001".to_owned(),
         project_id: "proj-001".to_owned(),
         name: "mcb-data-model".to_owned(),
         url: "https://github.com/org/mcb-data-model".to_owned(),
         local_path: "/home/dev/mcb-data-model".to_owned(),
         vcs_type: VcsType::Git,
+        created_at: 1000,
+        updated_at: 1000,
     }
 }
 
 #[rstest]
 fn repository_construction(sample_repo: Repository) {
-    assert_eq!(sample_repo.metadata.id, "repo-001");
+    assert_eq!(sample_repo.id, "repo-001");
     assert_eq!(sample_repo.vcs_type, VcsType::Git);
 }
 
@@ -56,7 +54,7 @@ fn repository_construction(sample_repo: Repository) {
 fn repository_serialization_roundtrip(sample_repo: Repository) {
     let json = serde_json::to_string(&sample_repo).expect("serialize");
     let deserialized: Repository = serde_json::from_str(&json).expect("deserialize");
-    assert_eq!(deserialized.metadata.id, sample_repo.metadata.id);
+    assert_eq!(deserialized.id, sample_repo.id);
     assert_eq!(deserialized.name, sample_repo.name);
     assert_eq!(deserialized.vcs_type, sample_repo.vcs_type);
 }

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#embedding-providers)
+//!
 //! HTTP embedding provider macros (struct definition, trait impl, registration).
 //!
 //! Used by embedding providers: openai, voyageai, anthropic, gemini, ollama.
@@ -39,12 +42,14 @@ macro_rules! impl_http_provider_base {
             ) -> Self {
                 Self {
                     client: HttpEmbeddingClient::new(
-                        api_key,
-                        base_url,
-                        $default_base_url,
-                        model,
-                        timeout,
-                        http_client,
+                        $crate::utils::embedding::HttpEmbeddingClientConfig {
+                            api_key: api_key.to_owned(),
+                            base_url,
+                            default_base_url: $default_base_url.to_owned(),
+                            model,
+                            timeout,
+                            client: http_client,
+                        },
                     ),
                 }
             }

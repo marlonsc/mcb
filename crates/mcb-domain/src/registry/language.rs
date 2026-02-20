@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Language Chunking Provider Registry
 //!
 //! Auto-registration system for language chunking providers using linkme distributed slices.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! SOLID Principles Validation
 //!
 //! Validates code against SOLID principles:

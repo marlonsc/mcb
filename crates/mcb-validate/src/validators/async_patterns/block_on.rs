@@ -1,11 +1,13 @@
-use crate::constants::common::{
-    CFG_TEST_MARKER, COMMENT_PREFIX, CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT,
-};
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
+use crate::constants::common::{CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT};
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regexes, required_pattern};
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
 
+use super::for_each_async_fn_line;
 use super::violation::AsyncViolation;
 
 /// Detect `block_on()` usage in async context
@@ -29,57 +31,19 @@ pub fn validate_block_on_usage(config: &ValidationConfig) -> Result<Vec<AsyncVio
         }
 
         let content = std::fs::read_to_string(path)?;
-        let mut in_async_fn = false;
-        let mut async_fn_depth = 0;
-        let mut in_test_module = false;
 
-        for (line_num, line) in content.lines().enumerate() {
-            let trimmed = line.trim();
-
-            // Skip comments
-            if trimmed.starts_with(COMMENT_PREFIX) {
-                continue;
-            }
-
-            // Track test modules
-            if trimmed.contains(CFG_TEST_MARKER) {
-                in_test_module = true;
-                continue;
-            }
-
-            if in_test_module {
-                continue;
-            }
-
-            // Track async function entry
-            if async_fn_pattern.is_match(trimmed) {
-                in_async_fn = true;
-                async_fn_depth = 0;
-            }
-
-            if in_async_fn {
-                let open = line.chars().filter(|c| *c == '{').count();
-                let close = line.chars().filter(|c| *c == '}').count();
-                async_fn_depth += i32::try_from(open).unwrap_or(i32::MAX);
-                async_fn_depth -= i32::try_from(close).unwrap_or(i32::MAX);
-
-                // Check for block_on calls
-                for pattern in &compiled_block_on {
-                    if pattern.is_match(line) {
-                        violations.push(AsyncViolation::BlockOnInAsync {
-                            file: path.clone(),
-                            line: line_num + 1,
-                            context: trimmed.chars().take(CONTEXT_PREVIEW_LENGTH).collect(),
-                            severity: Severity::Error,
-                        });
-                    }
-                }
-
-                if async_fn_depth <= 0 {
-                    in_async_fn = false;
+        for_each_async_fn_line(&content, async_fn_pattern, |line_num, line, trimmed| {
+            for pattern in &compiled_block_on {
+                if pattern.is_match(line) {
+                    violations.push(AsyncViolation::BlockOnInAsync {
+                        file: path.clone(),
+                        line: line_num + 1,
+                        context: trimmed.chars().take(CONTEXT_PREVIEW_LENGTH).collect(),
+                        severity: Severity::Error,
+                    });
                 }
             }
-        }
+        });
 
         Ok(())
     })?;

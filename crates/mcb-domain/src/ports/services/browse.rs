@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
+//!
 //! Browse and Highlight Port Definitions
 //!
 //! Traits for browsing file trees and syntax highlighting.

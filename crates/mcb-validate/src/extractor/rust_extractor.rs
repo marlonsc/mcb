@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Rust-specific AST fact extractor.
 //!
 //! Uses `rust-code-analysis` (which wraps `tree-sitter`) to parse Rust source

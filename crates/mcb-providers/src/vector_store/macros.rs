@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#vector-store-providers)
+//!
 //! Vector store provider macros.
 //!
 //! - `send_actor_msg!`: Actor message send/await pattern (edgevec only)

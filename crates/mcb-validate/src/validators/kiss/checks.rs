@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::constants::common::{
     CFG_TEST_MARKER, COMMENT_PREFIX, FN_PREFIX, SHORT_PREVIEW_LENGTH, TEST_FUNCTION_PREFIX,
 };

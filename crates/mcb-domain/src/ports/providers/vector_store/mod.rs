@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../../docs/modules/domain.md#provider-ports)
+//!
 use std::collections::HashMap;
 
 use serde_json::Value;

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Provider Constants
 //!
 //! Constants specific to provider implementations. These are separated from

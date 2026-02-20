@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Web Handlers Module
 //!
 //! HTTP handlers for the admin web interface.

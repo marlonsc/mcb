@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
+//!
 #![allow(missing_docs)]
 
 use std::cell::RefCell;

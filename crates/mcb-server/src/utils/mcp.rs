@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Shared helper functions for tool handlers.
 
 use mcb_domain::entities::memory::OriginContext;

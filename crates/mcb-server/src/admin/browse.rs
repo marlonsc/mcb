@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Admin browse endpoints
 //!
 //! Provides endpoints for browsing projects, repositories, plans, issues, and organizations.

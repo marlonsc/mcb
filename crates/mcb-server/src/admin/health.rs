@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Admin health check definition
 //!
 //! Provides endpoints for liveness, readiness, and extended health checks.

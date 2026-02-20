@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../docs/modules/infrastructure.md)
+//!
 //! Health check endpoints and monitoring
 //!
 //! Provides health check endpoints and health monitoring capabilities

@@ -1,8 +1,10 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
+//!
 use super::constants::{
     DOMAIN_ALLOWED_METHODS, DOMAIN_ALLOWED_PREFIXES, DOMAIN_CRATE_PATH, PORTS_DIR_PATH,
 };
 use super::violation::OrganizationViolation;
-use crate::constants::common::COMMENT_PREFIX;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::{for_each_scan_file, is_test_path};
@@ -22,10 +24,7 @@ use crate::{Result, Severity, ValidationConfig};
 pub fn validate_domain_traits_only(
     config: &ValidationConfig,
 ) -> Result<Vec<OrganizationViolation>> {
-    fn is_getter_method(line: &str) -> bool {
-        let trimmed = line.trim();
-        trimmed.contains("&self") && !trimmed.contains("&mut self")
-    }
+    let is_getter_method = |line: &str| line.contains("&self") && !line.contains("&mut self");
     let mut violations = Vec::new();
 
     // Pattern for impl blocks with methods
@@ -33,7 +32,6 @@ pub fn validate_domain_traits_only(
     let method_pattern = compile_regex(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\(")?;
 
     for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, src_dir| {
-        // Only check domain crate
         if !src_dir
             .to_str()
             .is_some_and(|s| s.contains(DOMAIN_CRATE_PATH))
@@ -45,77 +43,60 @@ pub fn validate_domain_traits_only(
             return Ok(());
         };
 
-        // Skip test files
-        if is_test_path(path_str) {
-            return Ok(());
-        }
-
-        // Skip ports (trait definitions expected there)
-        if path_str.contains(PORTS_DIR_PATH) {
+        if is_test_path(path_str) || path_str.contains(PORTS_DIR_PATH) {
             return Ok(());
         }
 
         let content = std::fs::read_to_string(&entry.absolute_path)?;
-        let lines: Vec<&str> = content.lines().collect();
 
         let mut in_impl_block = false;
         let mut impl_name = String::new();
         let mut brace_depth = 0;
         let mut impl_start_brace = 0;
 
-        for (line_num, line) in lines.iter().enumerate() {
-            let trimmed = line.trim();
+        crate::validators::for_each_non_test_non_comment_line(
+            &content,
+            |line_num, line, trimmed| {
+                let line_num = line_num + 1;
 
-            // Skip comments
-            if trimmed.starts_with(COMMENT_PREFIX) {
-                continue;
-            }
-
-            // Track impl blocks
-            if let Some(cap) = impl_block_pattern.captures(line)
-                && !trimmed.contains("trait ")
-            {
-                in_impl_block = true;
-                impl_name = cap.get(1).map_or("", |m| m.as_str()).to_owned();
-                impl_start_brace = brace_depth;
-            }
-
-            brace_depth += i32::try_from(line.chars().filter(|c| *c == '{').count()).unwrap_or(0);
-            brace_depth -= i32::try_from(line.chars().filter(|c| *c == '}').count()).unwrap_or(0);
-
-            if in_impl_block && brace_depth <= impl_start_brace {
-                in_impl_block = false;
-            }
-
-            if in_impl_block && let Some(cap) = method_pattern.captures(line) {
-                let method_name = cap.get(1).map_or("", |m| m.as_str());
-
-                if DOMAIN_ALLOWED_METHODS.contains(&method_name) {
-                    continue;
-                }
-
-                if DOMAIN_ALLOWED_PREFIXES
-                    .iter()
-                    .any(|p| method_name.starts_with(p))
+                if let Some(cap) = impl_block_pattern.captures(line)
+                    && !trimmed.contains("trait ")
                 {
-                    continue;
+                    in_impl_block = true;
+                    impl_name = cap.get(1).map_or("", |m| m.as_str()).to_owned();
+                    impl_start_brace = brace_depth;
                 }
 
-                // Check if this is a getter method (takes &self, returns value, no side effects)
-                if is_getter_method(line) {
-                    continue;
+                brace_depth +=
+                    i32::try_from(line.chars().filter(|c| *c == '{').count()).unwrap_or(0);
+                brace_depth -=
+                    i32::try_from(line.chars().filter(|c| *c == '}').count()).unwrap_or(0);
+
+                if in_impl_block && brace_depth <= impl_start_brace {
+                    in_impl_block = false;
                 }
 
-                // This looks like business logic in domain layer
-                violations.push(OrganizationViolation::DomainLayerImplementation {
-                    file: entry.absolute_path.clone(),
-                    line: line_num + 1,
-                    impl_type: "method".to_owned(),
-                    type_name: format!("{impl_name}::{method_name}"),
-                    severity: Severity::Info,
-                });
-            }
-        }
+                if in_impl_block && let Some(cap) = method_pattern.captures(line) {
+                    let method_name = cap.get(1).map_or("", |m| m.as_str());
+
+                    let allowed_method = DOMAIN_ALLOWED_METHODS.contains(&method_name)
+                        || DOMAIN_ALLOWED_PREFIXES
+                            .iter()
+                            .any(|p| method_name.starts_with(p))
+                        || is_getter_method(line);
+
+                    if !allowed_method {
+                        violations.push(OrganizationViolation::DomainLayerImplementation {
+                            file: entry.absolute_path.clone(),
+                            line: line_num,
+                            impl_type: "method".to_owned(),
+                            type_name: format!("{impl_name}::{method_name}"),
+                            severity: Severity::Info,
+                        });
+                    }
+                }
+            },
+        );
 
         Ok(())
     })?;

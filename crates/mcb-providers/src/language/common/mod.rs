@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! Common utilities for language chunking providers
 //!
 //! This module contains shared code used by all language-specific processors.

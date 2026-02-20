@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 use regex::Regex;
 
 use crate::constants::common::{ATTRIBUTE_PREFIX, COMMENT_PREFIX, FN_PREFIX};
@@ -116,27 +119,11 @@ pub(super) fn extract_functions_with_body_impl(
 }
 
 fn find_function_end(lines: &[(usize, &str)], start_idx: usize) -> usize {
-    let mut brace_depth: i32 = 0;
-    let mut fn_started = false;
-    let mut fn_end_idx = start_idx;
-
-    for (j, (_, line_content)) in lines[start_idx..].iter().enumerate() {
-        let opens =
-            i32::try_from(line_content.chars().filter(|c| *c == '{').count()).unwrap_or(i32::MAX);
-        let closes =
-            i32::try_from(line_content.chars().filter(|c| *c == '}').count()).unwrap_or(i32::MAX);
-
-        if opens > 0 {
-            fn_started = true;
-        }
-        brace_depth += opens - closes;
-        if fn_started && brace_depth <= 0 {
-            fn_end_idx = start_idx + j;
-            break;
-        }
-    }
-
-    fn_end_idx
+    mcb_domain::utils::analysis::count_balanced_block_lines(
+        lines[start_idx..].iter().map(|(_, l)| l),
+        usize::MAX,
+    )
+    .map_or(start_idx, |len| start_idx + len - 1)
 }
 
 fn meaningful_lines(body: &[String]) -> Vec<String> {

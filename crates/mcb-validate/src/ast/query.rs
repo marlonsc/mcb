@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! AST Query Engine
 //!
 //! Provides querying capabilities over unified AST format for rule validation.

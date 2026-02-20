@@ -1,5 +1,7 @@
 //! `OpenAI` Embedding Provider
 //!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#embedding-providers)
+//!
 //! Implements the `EmbeddingProvider` port using `OpenAI`'s embedding API.
 //! Supports text-embedding-3-small, text-embedding-3-large, and ada-002.
 

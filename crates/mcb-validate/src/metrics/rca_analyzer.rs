@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! rust-code-analysis integration for comprehensive code metrics
 //!
 //! Provides 16 code metrics using the rust-code-analysis library:

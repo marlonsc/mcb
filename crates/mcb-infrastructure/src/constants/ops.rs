@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `OPERATIONS_CLEANUP_INTERVAL_SECS`.
 pub const OPERATIONS_CLEANUP_INTERVAL_SECS: u64 = 3600;
 /// Constant value for `OPERATIONS_RETENTION_SECS`.

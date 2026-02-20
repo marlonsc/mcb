@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! Violation enum definition macro with automatic trait implementations.
 //!
 //! Used by 37+ validator files to define strongly-typed violation enums

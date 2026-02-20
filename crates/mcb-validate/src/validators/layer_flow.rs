@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Layer Event Flow Validation
 //!
 //! Validates that dependencies flow in correct Clean Architecture direction:
@@ -75,90 +78,66 @@ impl LayerFlowValidator {
         }
     }
 
-    /// Validates the layer flow constraints for the given configuration.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if Cargo.toml reading or dependency analysis fails.
-    pub fn validate(&self, config: &ValidationConfig) -> Result<Vec<LayerFlowViolation>> {
-        let mut violations = Vec::new();
-        // Forbidden imports are now handled by DeclarativeValidator rules (CA009-CA014)
-        violations.extend(self.check_circular_dependencies(config)?);
-        Ok(violations)
-    }
-
     fn check_circular_dependencies(
         &self,
         config: &ValidationConfig,
     ) -> Result<Vec<LayerFlowViolation>> {
-        let mut violations = Vec::new();
         let crates_dir = config.workspace_root.join("crates");
         if !crates_dir.exists() {
-            return Ok(violations);
+            return Ok(Vec::new());
         }
 
-        let mut deps: HashMap<String, HashSet<String>> = HashMap::new();
         let crate_names = &self.circular_dependency_check_crates;
 
-        for crate_name in crate_names {
-            let cargo_toml = crates_dir.join(crate_name).join(CARGO_TOML_FILENAME);
-            if !cargo_toml.exists() {
-                continue;
-            }
-            let content = std::fs::read_to_string(&cargo_toml)?;
-            let mut crate_deps = HashSet::new();
-            let mut in_dev_deps = false;
-            let mut in_build_deps = false;
+        let deps: HashMap<String, HashSet<String>> = crate_names
+            .iter()
+            .filter_map(|crate_name| {
+                let cargo_toml = crates_dir.join(crate_name).join(CARGO_TOML_FILENAME);
+                cargo_toml.exists().then_some((crate_name, cargo_toml))
+            })
+            .map(|(crate_name, cargo_toml)| {
+                let content = std::fs::read_to_string(&cargo_toml)?;
+                let parsed: toml::Value = toml::from_str(&content)?;
+                let crate_deps: HashSet<String> = parsed
+                    .get("dependencies")
+                    .and_then(|d| d.as_table())
+                    .map(|deps_table| {
+                        deps_table
+                            .keys()
+                            .map(|dep| dep.replace('_', "-"))
+                            .filter(|dep| dep != crate_name && crate_names.contains(dep))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                Ok((crate_name.clone(), crate_deps))
+            })
+            .collect::<Result<_>>()?;
 
-            for line in content.lines() {
-                let trimmed = line.trim();
-
-                // Skip comments - they're not actual dependencies
-                if trimmed.starts_with('#') {
-                    continue;
-                }
-
-                // Track section changes
-                if trimmed.starts_with('[') {
-                    in_dev_deps = trimmed.contains("dev-dependencies");
-                    in_build_deps = trimmed.contains("build-dependencies");
-                }
-
-                // Skip dev-dependencies and build-dependencies (not part of runtime graph)
-                if in_dev_deps || in_build_deps {
-                    continue;
-                }
-
-                // Only match actual dependency declarations, not any mention of crate name
-                // Look for patterns like: crate-name = { path = ... } or crate-name.path = ...
-                for dep_crate in crate_names {
-                    if dep_crate != crate_name
-                        && (trimmed.starts_with(dep_crate)
-                            || trimmed.contains(&format!("\"{dep_crate}\"")))
-                    {
-                        crate_deps.insert(dep_crate.clone());
-                    }
-                }
-            }
-            deps.insert(crate_name.clone(), crate_deps);
-        }
-
-        let crate_list: Vec<_> = deps.keys().cloned().collect();
-        for (i, crate_a) in crate_list.iter().enumerate() {
-            for crate_b in crate_list.iter().skip(i + 1) {
-                let a_deps_b = deps.get(crate_a).is_some_and(|d| d.contains(crate_b));
-                let b_deps_a = deps.get(crate_b).is_some_and(|d| d.contains(crate_a));
-                if a_deps_b && b_deps_a {
-                    violations.push(LayerFlowViolation::CircularDependency {
+        Ok(deps
+            .keys()
+            .cloned()
+            .collect::<Vec<_>>()
+            .into_iter()
+            .enumerate()
+            .flat_map(|(i, crate_a)| {
+                let deps_ref = &deps;
+                let crates_dir_ref = &crates_dir;
+                let crate_list: Vec<String> = deps_ref.keys().cloned().collect();
+                crate_list
+                    .into_iter()
+                    .skip(i + 1)
+                    .filter(move |crate_b| {
+                        deps_ref.get(&crate_a).is_some_and(|d| d.contains(crate_b))
+                            && deps_ref.get(crate_b).is_some_and(|d| d.contains(&crate_a))
+                    })
+                    .map(move |crate_b| LayerFlowViolation::CircularDependency {
                         crate_a: crate_a.clone(),
-                        crate_b: crate_b.clone(),
-                        file: crates_dir.join(crate_a).join(CARGO_TOML_FILENAME),
+                        crate_b,
+                        file: crates_dir_ref.join(&crate_a).join(CARGO_TOML_FILENAME),
                         line: 1,
-                    });
-                }
-            }
-        }
-        Ok(violations)
+                    })
+            })
+            .collect())
     }
 }
 
@@ -172,7 +151,7 @@ impl crate::traits::validator::Validator for LayerFlowValidator {
     }
 
     fn validate(&self, config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
-        let violations = self.validate(config)?;
+        let violations = self.check_circular_dependencies(config)?;
         Ok(violations
             .into_iter()
             .map(|v| Box::new(v) as Box<dyn Violation>)

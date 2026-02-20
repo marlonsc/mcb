@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `DEFAULT_FILE_PERMISSIONS`.
 pub const DEFAULT_FILE_PERMISSIONS: u32 = 0o644;
 /// Constant value for `DEFAULT_DIR_PERMISSIONS`.

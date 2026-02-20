@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 /// VCS context (branch, commit, repo id) captured from the current environment.
 #[derive(Clone)]
 pub struct VcsContext {

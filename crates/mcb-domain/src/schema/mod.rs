@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 mod agent_sessions;
 mod agent_worktree_assignments;
 mod api_keys;

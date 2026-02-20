@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Provider Resolvers - Components for resolving providers from linkme registry
 //!
 //! These components wrap the linkme registry resolution and can be injected
@@ -9,6 +12,7 @@
 //! AppConfig (injected) → Resolver → linkme registry → Arc<dyn Provider>
 //! ```
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use mcb_domain::ports::{
@@ -73,33 +77,16 @@ impl EmbeddingProviderResolver {
             return resolve_embedding_provider(&registry_config);
         }
 
-        // Fallback to named config (TOML: [providers.embedding.default])
-        if let Some(default_config) = self
-            .config
-            .providers
-            .embedding
-            .configs
-            .get(DEFAULT_DB_CONFIG_NAME)
-        {
-            // If there's a specific config for this provider, use it
-            if let Some(specific_config) = self
-                .config
-                .providers
-                .embedding
-                .configs
-                .get(&default_config.provider.clone())
-            {
-                let registry_config = embedding_config_to_registry(specific_config);
-                resolve_embedding_provider(&registry_config)
-            } else {
-                // Use the default config directly
-                let registry_config = embedding_config_to_registry(default_config);
-                resolve_embedding_provider(&registry_config)
-            }
-        } else {
-            // Fallback to fastembed (local provider) if no default configured
-            resolve_embedding_provider(&EmbeddingProviderConfig::new(FALLBACK_EMBEDDING_PROVIDER))
-        }
+        resolve_named_config_or_fallback(
+            &self.config.providers.embedding.configs,
+            embedding_config_to_registry,
+            resolve_embedding_provider,
+            || {
+                resolve_embedding_provider(&EmbeddingProviderConfig::new(
+                    FALLBACK_EMBEDDING_PROVIDER,
+                ))
+            },
+        )
     }
 
     /// Resolve provider from override config (for admin API)
@@ -167,35 +154,16 @@ impl VectorStoreProviderResolver {
             return resolve_vector_store_provider(&registry_config);
         }
 
-        // Fallback to named config (TOML: [providers.vector_store.default])
-        if let Some(default_config) = self
-            .config
-            .providers
-            .vector_store
-            .configs
-            .get(DEFAULT_DB_CONFIG_NAME)
-        {
-            // If there's a specific config for this provider, use it
-            if let Some(specific_config) = self
-                .config
-                .providers
-                .vector_store
-                .configs
-                .get(&default_config.provider.clone())
-            {
-                let registry_config = vector_store_config_to_registry(specific_config);
-                resolve_vector_store_provider(&registry_config)
-            } else {
-                // Use the default config directly
-                let registry_config = vector_store_config_to_registry(default_config);
-                resolve_vector_store_provider(&registry_config)
-            }
-        } else {
-            // Fallback to edgevec (local HNSW) if no default configured
-            resolve_vector_store_provider(&VectorStoreProviderConfig::new(
-                FALLBACK_VECTOR_STORE_PROVIDER,
-            ))
-        }
+        resolve_named_config_or_fallback(
+            &self.config.providers.vector_store.configs,
+            vector_store_config_to_registry,
+            resolve_vector_store_provider,
+            || {
+                resolve_vector_store_provider(&VectorStoreProviderConfig::new(
+                    FALLBACK_VECTOR_STORE_PROVIDER,
+                ))
+            },
+        )
     }
 
     /// Resolve provider from override config (for admin API)
@@ -214,6 +182,45 @@ impl VectorStoreProviderResolver {
     #[must_use]
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
         mcb_domain::registry::vector_store::list_vector_store_providers()
+    }
+}
+
+trait ProviderNamed {
+    fn provider_name(&self) -> &str;
+}
+
+impl ProviderNamed for EmbeddingConfig {
+    fn provider_name(&self) -> &str {
+        &self.provider
+    }
+}
+
+impl ProviderNamed for VectorStoreConfig {
+    fn provider_name(&self) -> &str {
+        &self.provider
+    }
+}
+
+fn resolve_named_config_or_fallback<TConfig, TRegistry, TProvider, TBuild, TResolve, TFallback>(
+    configs: &HashMap<String, TConfig>,
+    to_registry: TBuild,
+    resolve: TResolve,
+    fallback: TFallback,
+) -> mcb_domain::error::Result<TProvider>
+where
+    TConfig: ProviderNamed,
+    TBuild: Fn(&TConfig) -> TRegistry,
+    TResolve: Fn(&TRegistry) -> mcb_domain::error::Result<TProvider>,
+    TFallback: FnOnce() -> mcb_domain::error::Result<TProvider>,
+{
+    if let Some(default_config) = configs.get(DEFAULT_DB_CONFIG_NAME) {
+        let selected_config = configs
+            .get(default_config.provider_name())
+            .unwrap_or(default_config);
+        let registry_config = to_registry(selected_config);
+        resolve(&registry_config)
+    } else {
+        fallback()
     }
 }
 

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Provider name constants for fallback and resolution.
 
 /// Local fallback embedding provider name.

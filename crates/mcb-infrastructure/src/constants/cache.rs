@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `REDIS_POOL_SIZE`.
 pub const REDIS_POOL_SIZE: usize = 10;
 /// Constant value for `DEFAULT_CACHE_NAMESPACE`.

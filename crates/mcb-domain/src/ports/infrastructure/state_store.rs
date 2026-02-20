@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! State Store Port
 //!
 //! Defines the contract for simple key-value state persistence.

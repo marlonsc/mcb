@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 //! Cryptographic Provider Port
 //!
 //! Defines the interface for cryptographic operations used by providers

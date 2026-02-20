@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Rule Engine Router
 //!
 //! Routes rules to the appropriate engine based on complexity detection.

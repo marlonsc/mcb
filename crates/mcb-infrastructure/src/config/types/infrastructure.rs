@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../../docs/modules/infrastructure.md#configuration)
+//!
 //! Infrastructure configuration types
 //!
 //! configuration for infrastructure concerns:

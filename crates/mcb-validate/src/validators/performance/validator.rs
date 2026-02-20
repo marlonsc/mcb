@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::config::PerformanceRulesConfig;
 use crate::{Result, ValidationConfig};
 

@@ -1,10 +1,8 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
-# infrastructure Module
+# Infrastructure Layer
 
 **Source**: `crates/mcb-infrastructure/src/`
 **Crate**: `mcb-infrastructure`
-**Files**: 73
-**Lines of Code**: ~7,860
 
 ## ↔ Code ↔ Docs cross-reference
 
@@ -17,58 +15,67 @@
 
 ## Overview
 
-The infrastructure module contains DI bootstrap, configuration, routing, project wiring, and shared technical services.
+The infrastructure module contains the technical plumbing of the system: DI bootstrap, configuration management, logging, caching, and shared technical services.
 
-## Top-Level Areas
+---
 
-- [`di/`](../../crates/mcb-infrastructure/src/di/) - Container/bootstrap and module wiring
-- [`config/`](../../crates/mcb-infrastructure/src/config/) - Configuration parsing and typed config
-- [`constants/`](../../crates/mcb-infrastructure/src/constants/) - Shared constants
-- [`project/`](../../crates/mcb-infrastructure/src/project/) - Project-oriented helpers
-- [`services/`](../../crates/mcb-infrastructure/src/services/) - Infrastructure services
-- [`validation/`](../../crates/mcb-infrastructure/src/validation/) - Validation support
-- [`routing/`](../../crates/mcb-infrastructure/src/routing/) - Routing and dispatch helpers
-- [`utils/`](../../crates/mcb-infrastructure/src/utils/) - Utility helpers
-- [`cache/`](../../crates/mcb-infrastructure/src/cache/) - Caching infrastructure
-- [`crypto/`](../../crates/mcb-infrastructure/src/crypto/) - Cryptographic utilities
-- [`infrastructure/`](../../crates/mcb-infrastructure/src/infrastructure/) - Cross-cutting infrastructure modules
-- [`error_ext.rs`](../../crates/mcb-infrastructure/src/error_ext.rs) - Error extension traits
-- [`health.rs`](../../crates/mcb-infrastructure/src/health.rs) - Health check infrastructure
-- [`logging/`](../../crates/mcb-infrastructure/src/logging/) - Logging configuration (tracing)
-- [`macros.rs`](../../crates/mcb-infrastructure/src/macros.rs) - Infrastructure macros
+## Dependency Injection
+
+Dependency injection system using **dill IoC Container** with linkme registry for provider discovery and handle-based runtime switching.
+
+### Architecture
+
+```text
+linkme (compile-time)     dill Catalog (runtime)     Handle-based
+─────────────────────     ─────────────────────      ────────────
+EMBEDDING_PROVIDERS  →    Resolver → add_value() →   Handle (RwLock)
+(list of factories)                                       ↓
+                                                    AdminService
+                                                   (switch via API)
+```
+
+- **Bootstrap** ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/di/bootstrap.rs)): Application initialization.
+- **Handles** ([`handles.rs`](../../crates/mcb-infrastructure/src/di/handles.rs)): RwLock wrappers for runtime switching.
+- **Catalog** ([`catalog.rs`](../../crates/mcb-infrastructure/src/di/catalog.rs)): dill IoC Container configuration.
+
+---
+
+## Configuration
+
+Type-safe, layered configuration management with environment variable overrides.
+
+### Configuration Structure
+
+- **Types** ([`types.rs`](../../crates/mcb-infrastructure/src/config/types.rs)): Hierarchical structures (`AppConfig`, `ServerConfig`, `AuthConfig`).
+- **Loader** ([`loader.rs`](../../crates/mcb-infrastructure/src/config/loader.rs)): Multi-source loading (Environment + `.toml`).
+
+👉 **Canonical Env Var Matrix**: [`ENVIRONMENT_VARIABLES.md`](../configuration/ENVIRONMENT_VARIABLES.md)
+
+---
+
+## Shared Technical Areas
+
+- [`cache/`](../../crates/mcb-infrastructure/src/cache/) - Shared caching infrastructure.
+- [`logging/`](../../crates/mcb-infrastructure/src/logging/) - Contextual logging (Tracing/OpenTelemetry).
+- [`crypto/`](../../crates/mcb-infrastructure/src/crypto/) - AES-256 and SHA-256 utilities.
+- [`health.rs`](../../crates/mcb-infrastructure/src/health.rs) - System health check orchestration.
 
 ## File Structure
 
 ```text
 crates/mcb-infrastructure/src/
-├── cache/
-├── config/
-├── constants/
-├── crypto/
-├── di/
-├── infrastructure/
-├── project/
-├── routing/
-├── services/
-├── utils/
-├── validation/
-├── error_ext.rs
-├── health.rs
-├── logging/
-├── macros.rs
-└── lib.rs
+├── cache/          # Shared caching
+├── config/         # Configuration loading
+├── constants/      # System-wide constants
+├── crypto/         # Cryptography
+├── di/             # Dependency Injection root
+├── logging/        # Tracing/Logging
+├── routing/        # Internal message routing
+├── services/       # Infrastructure services
+├── utils/          # Shared utilities
+└── lib.rs          # Crate entry point
 ```
-
-## Testing
-
-Infrastructure tests are in `crates/mcb-infrastructure/tests/`.
-
-## Cross-References
-
-- **Domain**: [domain.md](./domain.md)
-- **Server**: [server.md](./server.md)
-- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-### Updated 2026-02-15 - Fixed logging.rs to logging/, added macros.rs (v0.2.1)
+### Updated 2026-02-20 - Consolidated di.md and config.md for SSOT adherence

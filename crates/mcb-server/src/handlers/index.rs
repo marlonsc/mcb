@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Index handler for codebase indexing operations.
 
 use std::path::PathBuf;

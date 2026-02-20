@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Mapping utilities between slugs, resources, and args.
 
 use crate::args::{EntityAction, EntityArgs, EntityResource};

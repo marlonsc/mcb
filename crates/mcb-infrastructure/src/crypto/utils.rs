@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Cryptographic utilities
 
 use aes_gcm::aead::{OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore};

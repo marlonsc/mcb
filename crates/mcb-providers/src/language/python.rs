@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Python language processor for AST-based code chunking.
 
 use crate::language::common::{CHUNK_SIZE_PYTHON, TS_NODE_FUNCTION_DEFINITION};

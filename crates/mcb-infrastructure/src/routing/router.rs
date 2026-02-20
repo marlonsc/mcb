@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Provider Router Implementations
 //!
 //! Provides routing logic for selecting providers based on health and context.

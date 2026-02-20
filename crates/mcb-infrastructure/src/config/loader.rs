@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
+//!
 //! Configuration loader
 //!
 //! Handles loading configuration from various sources including

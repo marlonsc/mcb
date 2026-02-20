@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Sync Coordinator Domain Port
 //!
 //! Defines the business contract for file synchronization coordination.

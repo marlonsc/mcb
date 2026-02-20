@@ -1,5 +1,7 @@
 //! Naming Convention Validation
 //!
+//! **Documentation**: [`docs/modules/validate.md#naming`](../../../../../docs/modules/validate.md#naming)
+//!
 //! Validates naming conventions:
 //! - Structs/Enums/Traits: CamelCase
 //! - Functions/Methods: `snake_case`

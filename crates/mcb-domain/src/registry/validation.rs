@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Validation Provider Registry
 //!
 //! Auto-registration system for validation providers using linkme distributed slices.

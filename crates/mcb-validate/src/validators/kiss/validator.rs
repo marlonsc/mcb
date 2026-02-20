@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::config::KISSRulesConfig;
 use crate::thresholds::thresholds;
 use crate::{Result, ValidationConfig};

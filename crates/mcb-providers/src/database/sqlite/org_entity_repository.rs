@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md#database)
+//!
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -16,6 +19,19 @@ use crate::utils::sqlite::row::{opt_i64, opt_i64_param, opt_str, opt_str_param, 
 /// SQLite-backed repository for organization, user, team, and API key entities.
 pub struct SqliteOrgEntityRepository {
     executor: Arc<dyn DatabaseExecutor>,
+}
+
+const INSERT_ORG_SQL: &str = "INSERT INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
+
+fn org_insert_params(org: &Organization) -> [SqlParam; 6] {
+    [
+        SqlParam::String(org.id.clone()),
+        SqlParam::String(org.name.clone()),
+        SqlParam::String(org.slug.clone()),
+        SqlParam::String(org.settings_json.clone()),
+        SqlParam::I64(org.created_at),
+        SqlParam::I64(org.updated_at),
+    ]
 }
 
 impl SqliteOrgEntityRepository {
@@ -41,11 +57,7 @@ fn row_to_org(row: &dyn SqlRow) -> Result<Organization> {
 /// Converts a SQL row to a User.
 fn row_to_user(row: &dyn SqlRow) -> Result<User> {
     Ok(User {
-        metadata: mcb_domain::entities::EntityMetadata {
-            id: req_str(row, "id")?,
-            created_at: req_i64(row, "created_at")?,
-            updated_at: req_i64(row, "updated_at")?,
-        },
+        id: req_str(row, "id")?,
         org_id: req_str(row, "org_id")?,
         email: req_str(row, "email")?,
         display_name: req_str(row, "display_name")?,
@@ -53,6 +65,8 @@ fn row_to_user(row: &dyn SqlRow) -> Result<User> {
             .parse::<UserRole>()
             .map_err(|e| Error::memory(format!("Invalid user role: {e}")))?,
         api_key_hash: opt_str(row, "api_key_hash")?,
+        created_at: req_i64(row, "created_at")?,
+        updated_at: req_i64(row, "updated_at")?,
     })
 }
 
@@ -109,19 +123,8 @@ impl OrgRegistry for SqliteOrgEntityRepository {
     /// Creates a new organization.
     // TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)
     async fn create_org(&self, org: &Organization) -> Result<()> {
-        self.executor
-            .execute(
-                "INSERT INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                &[
-                    SqlParam::String(org.id.clone()),
-                    SqlParam::String(org.name.clone()),
-                    SqlParam::String(org.slug.clone()),
-                    SqlParam::String(org.settings_json.clone()),
-                    SqlParam::I64(org.created_at),
-                    SqlParam::I64(org.updated_at),
-                ],
-            )
-            .await
+        let params = org_insert_params(org);
+        query_helpers::execute(&self.executor, INSERT_ORG_SQL, &params).await
     }
 
     /// Retrieves an organization by ID.
@@ -184,14 +187,14 @@ impl UserRegistry for SqliteOrgEntityRepository {
             .execute(
                 "INSERT INTO users (id, org_id, email, display_name, role, api_key_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 &[
-                    SqlParam::String(user.metadata.id.clone()),
+                    SqlParam::String(user.id.clone()),
                     SqlParam::String(user.org_id.clone()),
                     SqlParam::String(user.email.clone()),
                     SqlParam::String(user.display_name.clone()),
                     SqlParam::String(user.role.as_str().to_owned()),
                     opt_str_param(&user.api_key_hash),
-                    SqlParam::I64(user.metadata.created_at),
-                    SqlParam::I64(user.metadata.updated_at),
+                    SqlParam::I64(user.created_at),
+                    SqlParam::I64(user.updated_at),
                 ],
             )
             .await
@@ -247,8 +250,8 @@ impl UserRegistry for SqliteOrgEntityRepository {
                     SqlParam::String(user.display_name.clone()),
                     SqlParam::String(user.role.as_str().to_owned()),
                     opt_str_param(&user.api_key_hash),
-                    SqlParam::I64(user.metadata.updated_at),
-                    SqlParam::String(user.metadata.id.clone()),
+                    SqlParam::I64(user.updated_at),
+                    SqlParam::String(user.id.clone()),
                 ],
             )
             .await

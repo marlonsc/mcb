@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
+//!
 //! Centralized configuration path logic
 //!
 //! Provides standard locations for configuration files and directories.

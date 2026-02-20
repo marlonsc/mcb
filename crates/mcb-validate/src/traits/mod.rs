@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 #[path = "../validators/traits/validator.rs"]
 pub mod validator;
 #[path = "../validators/traits/violation.rs"]

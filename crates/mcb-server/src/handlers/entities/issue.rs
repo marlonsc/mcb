@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Issue entity CRUD handler implementation.
 
 use std::sync::Arc;

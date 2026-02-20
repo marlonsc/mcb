@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Error Boundary Validation
 //!
 //! Validates Clean Architecture error handling patterns:
@@ -69,29 +72,21 @@ define_violations! {
     }
 }
 
-/// Error boundary validator
-pub struct ErrorBoundaryValidator {
-    config: ValidationConfig,
-}
-
-crate::impl_simple_validator_new!(ErrorBoundaryValidator);
+crate::create_validator!(
+    ErrorBoundaryValidator,
+    "error_boundary",
+    "Validates error handling patterns across layer boundaries",
+    ErrorBoundaryViolation,
+    [
+        Self::validate_error_context,
+        Self::validate_layer_error_types,
+        Self::validate_leaked_errors,
+    ]
+);
 
 impl ErrorBoundaryValidator {
-    /// Runs all error boundary validations and returns detected violations
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if file scanning or regex compilation fails.
-    pub fn validate_all(&self) -> Result<Vec<ErrorBoundaryViolation>> {
-        let mut violations = Vec::new();
-        violations.extend(self.validate_error_context()?);
-        violations.extend(self.validate_layer_error_types()?);
-        violations.extend(self.validate_leaked_errors()?);
-        Ok(violations)
-    }
-
     fn scan_relevant_lines<FileFilter, LineHandler>(
-        &self,
+        config: &ValidationConfig,
         file_filter: FileFilter,
         mut line_handler: LineHandler,
     ) -> Result<()>
@@ -99,45 +94,40 @@ impl ErrorBoundaryValidator {
         FileFilter: Fn(&Path, &str) -> bool,
         LineHandler: FnMut(&PathBuf, usize, &str, &str),
     {
-        for_each_scan_file(
-            &self.config,
-            Some(LanguageId::Rust),
-            false,
-            |entry, _src_dir| {
-                let path = &entry.absolute_path;
-                let Some(path_str) = path.to_str() else {
-                    return Ok(());
-                };
+        for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, _src_dir| {
+            let path = &entry.absolute_path;
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
 
-                if path_str.contains(TEST_DIR_FRAGMENT) || !file_filter(path, path_str) {
-                    return Ok(());
+            if path_str.contains(TEST_DIR_FRAGMENT) || !file_filter(path, path_str) {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+            let mut in_test_module = false;
+
+            for (line_num, line) in content.lines().enumerate() {
+                let trimmed = line.trim();
+
+                if trimmed.starts_with(COMMENT_PREFIX) {
+                    continue;
                 }
 
-                let content = std::fs::read_to_string(path)?;
-                let mut in_test_module = false;
-
-                for (line_num, line) in content.lines().enumerate() {
-                    let trimmed = line.trim();
-
-                    if trimmed.starts_with(COMMENT_PREFIX) {
-                        continue;
-                    }
-
-                    if trimmed.contains(CFG_TEST_MARKER) {
-                        in_test_module = true;
-                        continue;
-                    }
-
-                    if in_test_module {
-                        continue;
-                    }
-
-                    line_handler(path, line_num + 1, line, trimmed);
+                if trimmed.contains(CFG_TEST_MARKER) {
+                    in_test_module = true;
+                    continue;
                 }
 
-                Ok(())
-            },
-        )
+                if in_test_module {
+                    continue;
+                }
+
+                line_handler(path, line_num + 1, line, trimmed);
+            }
+
+            Ok(())
+        })
     }
 
     /// Detects error propagation without context (missing `.context()` or `.map_err()`)
@@ -145,7 +135,9 @@ impl ErrorBoundaryValidator {
     /// # Errors
     ///
     /// Returns an error if regex compilation or source file reading fails.
-    pub fn validate_error_context(&self) -> Result<Vec<ErrorBoundaryViolation>> {
+    pub fn validate_error_context(
+        config: &ValidationConfig,
+    ) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 
         // Pattern: ? operator without .context() or .with_context()
@@ -156,7 +148,8 @@ impl ErrorBoundaryValidator {
         // Files that are likely error boundary crossing points
         let boundary_paths = [ARCH_PATH_HANDLERS, ARCH_PATH_ADAPTERS, ARCH_PATH_SERVICES];
 
-        self.scan_relevant_lines(
+        Self::scan_relevant_lines(
+            config,
             |_path, path_str| boundary_paths.iter().any(|p| path_str.contains(p)),
             |path, line_num, _line, trimmed| {
                 if question_mark_pattern.is_match(trimmed)
@@ -184,7 +177,9 @@ impl ErrorBoundaryValidator {
     /// # Errors
     ///
     /// Returns an error if regex compilation or source file reading fails.
-    pub fn validate_layer_error_types(&self) -> Result<Vec<ErrorBoundaryViolation>> {
+    pub fn validate_layer_error_types(
+        config: &ValidationConfig,
+    ) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 
         // Infrastructure error types that shouldn't appear in domain
@@ -199,7 +194,8 @@ impl ErrorBoundaryValidator {
 
         let compiled_errors = compile_regex_pairs(&infra_errors)?;
 
-        self.scan_relevant_lines(
+        Self::scan_relevant_lines(
+            config,
             |path, path_str| {
                 if !path_str.contains(ARCH_PATH_DOMAIN) {
                     return false;
@@ -230,7 +226,9 @@ impl ErrorBoundaryValidator {
     /// # Errors
     ///
     /// Returns an error if regex compilation or source file reading fails.
-    pub fn validate_leaked_errors(&self) -> Result<Vec<ErrorBoundaryViolation>> {
+    pub fn validate_leaked_errors(
+        config: &ValidationConfig,
+    ) -> Result<Vec<ErrorBoundaryViolation>> {
         let mut violations = Vec::new();
 
         // Patterns that indicate internal errors being exposed
@@ -251,7 +249,8 @@ impl ErrorBoundaryValidator {
 
         let compiled_leaks = compile_regex_pairs(&leak_patterns)?;
 
-        self.scan_relevant_lines(
+        Self::scan_relevant_lines(
+            config,
             |_path, path_str| {
                 path_str.contains(ARCH_PATH_HANDLERS) || path_str.contains(HANDLER_FILE_SUFFIX)
             },
@@ -272,9 +271,3 @@ impl ErrorBoundaryValidator {
         Ok(violations)
     }
 }
-
-crate::impl_validator!(
-    ErrorBoundaryValidator,
-    "error_boundary",
-    "Validates error handling patterns across layer boundaries"
-);

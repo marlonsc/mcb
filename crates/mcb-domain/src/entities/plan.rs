@@ -1,40 +1,25 @@
 //! Plan Domain Entities
 //!
-//! This module defines the entities used for high-level planning and architectural
-//! decision making. It supports versioning and review workflows to manage the
-//! lifecycle of strategic initiatives.
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
 //!
-//! # Core Entities
-//! - [`Plan`]: The high-level container for a strategic initiative.
-//! - [`PlanVersion`]: An immutable snapshot of the plan content.
-//! - [`PlanReview`]: A formal approval/rejection record for a specific version.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::EntityMetadata;
-
-/// A plan definition owned by an organization and project.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct Plan {
-    /// Common entity metadata (id, timestamps).
-    #[serde(flatten)]
-    pub metadata: EntityMetadata,
-    /// Organization that owns this plan.
-    pub org_id: String,
-    /// Project this plan belongs to.
-    pub project_id: String,
-    /// Human-readable title for the plan.
-    pub title: String,
-    /// Detailed plan description.
-    pub description: String,
-    /// Current lifecycle status.
-    pub status: PlanStatus,
-    /// User that created the plan.
-    pub created_by: String,
+crate::define_entity_org_project_audited! {
+    /// A plan definition owned by an organization and project.
+    #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+    pub struct Plan {
+        /// Title of the strategic plan.
+        pub title: String,
+        /// Detailed description of the plan.
+        pub description: String,
+        /// Current lifecycle status of the plan.
+        pub status: PlanStatus,
+        /// User identifier of the plan creator.
+        pub created_by: String,
+    }
 }
-
-impl_base_entity!(Plan);
 
 /// Lifecycle status for a plan.
 #[derive(
@@ -64,13 +49,7 @@ pub enum PlanStatus {
     Archived,
 }
 
-impl PlanStatus {
-    /// Returns the string representation.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(PlanStatus);
 
 /// A versioned snapshot of a plan's content.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -136,10 +115,4 @@ pub enum ReviewVerdict {
     NeedsRevision,
 }
 
-impl ReviewVerdict {
-    /// Returns the string representation.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(ReviewVerdict);

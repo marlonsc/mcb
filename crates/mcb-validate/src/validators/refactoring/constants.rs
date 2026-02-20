@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#refactoring)
+//!
 //! Constants for refactoring validators.
 
 /// Regex pattern for detecting type definitions (struct, trait, enum).

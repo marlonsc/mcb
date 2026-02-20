@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Vector Store Provider Utilities
 //!
 //! Shared utilities for vector store provider implementations (DRY principle).

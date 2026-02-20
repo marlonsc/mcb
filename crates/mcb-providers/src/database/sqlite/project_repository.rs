@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md#database)
+//!
 //! `SQLite` Project Repository
 //!
 //! # Overview
@@ -29,6 +32,19 @@ pub struct SqliteProjectRepository {
     executor: Arc<dyn DatabaseExecutor>,
 }
 
+const INSERT_PROJECT_SQL: &str = "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
+
+fn project_insert_params(project: &Project) -> [SqlParam; 6] {
+    [
+        SqlParam::String(project.id.clone()),
+        SqlParam::String(project.org_id.clone()),
+        SqlParam::String(project.name.clone()),
+        SqlParam::String(project.path.clone()),
+        SqlParam::I64(project.created_at),
+        SqlParam::I64(project.updated_at),
+    ]
+}
+
 impl SqliteProjectRepository {
     /// Create a repository that uses the given executor.
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
@@ -42,19 +58,8 @@ impl ProjectRepository for SqliteProjectRepository {
     /// Creates a new project.
     // TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)
     async fn create(&self, project: &Project) -> Result<()> {
-        self.executor
-            .execute(
-                "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-                &[
-                    SqlParam::String(project.id.clone()),
-                    SqlParam::String(project.org_id.clone()),
-                    SqlParam::String(project.name.clone()),
-                    SqlParam::String(project.path.clone()),
-                    SqlParam::I64(project.created_at),
-                    SqlParam::I64(project.updated_at),
-                ],
-            )
-            .await
+        let params = project_insert_params(project);
+        query_helpers::execute(&self.executor, INSERT_PROJECT_SQL, &params).await
     }
 
     /// Retrieves a project by ID.
@@ -105,21 +110,14 @@ impl ProjectRepository for SqliteProjectRepository {
     /// Lists all projects in an organization.
     // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 97)
     async fn list(&self, org_id: &str) -> Result<Vec<Project>> {
-        let rows = self
-            .executor
-            .query_all(
-                "SELECT * FROM projects WHERE org_id = ?",
-                &[SqlParam::String(org_id.to_owned())],
-            )
-            .await?;
-        let mut projects = Vec::with_capacity(rows.len());
-        for row in rows {
-            projects.push(
-                row_convert::row_to_project(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode project", e))?,
-            );
-        }
-        Ok(projects)
+        query_helpers::query_all(
+            &self.executor,
+            "SELECT * FROM projects WHERE org_id = ?",
+            &[SqlParam::String(org_id.to_owned())],
+            row_convert::row_to_project,
+            "project",
+        )
+        .await
     }
 
     /// Updates an existing project.

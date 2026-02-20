@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 /// Extracts a canonical file path from tuple/path container variants.
 ///
 /// # Example

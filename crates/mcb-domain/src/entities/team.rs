@@ -1,21 +1,20 @@
 //! Team and TeamMember entities — groups of users within an organization.
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
+//!
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// A team groups users within an organization for access control and
-/// project assignment. Teams are used in the GitHub-like RBAC model:
-/// Organization → Teams → Projects.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct Team {
-    /// Unique identifier (UUID).
-    pub id: String,
-    /// Organization this team belongs to (tenant isolation).
-    pub org_id: String,
-    /// Human-readable team name (unique within an org).
-    pub name: String,
-    /// Timestamp when the team was created (Unix epoch).
-    pub created_at: i64,
+crate::define_entity_org_created! {
+    /// A team groups users within an organization for access control and
+    /// project assignment. Teams are used in the GitHub-like RBAC model:
+    /// Organization → Teams → Projects.
+    #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+    pub struct Team {
+        /// Display name of the team.
+        pub name: String,
+    }
 }
 
 use crate::value_objects::ids::TeamMemberId;
@@ -58,10 +57,4 @@ pub enum TeamMemberRole {
     Member,
 }
 
-impl TeamMemberRole {
-    /// Returns the string representation of the team member role.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(TeamMemberRole);

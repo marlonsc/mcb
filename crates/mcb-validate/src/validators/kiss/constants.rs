@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! Constants for KISS validators.
 
 /// Type name suffixes that identify DI container structs (allowed more fields).

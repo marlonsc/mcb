@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::filters::LanguageId;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
@@ -22,8 +25,7 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
             let path = &entry.absolute_path;
             let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
 
-            // Skip lib.rs and mod.rs
-            if file_name == "lib" || file_name == "mod" {
+            if ["lib", "mod"].contains(&file_name) {
                 return Ok(());
             }
 
@@ -32,14 +34,13 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
                 return Ok(());
             };
             if path_str.contains("utils")
-                || file_name.contains("mock")
-                || file_name.contains("fixture")
-                || file_name.contains("helper")
+                || ["mock", "fixture", "helper"]
+                    .iter()
+                    .any(|kw| file_name.contains(kw))
             {
                 return Ok(());
             }
 
-            // Check directory-based naming conventions
             let parent_dir = path
                 .parent()
                 .and_then(|p| p.file_name())
@@ -60,11 +61,9 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
                     }
                 }
                 "integration" => {
-                    // Integration tests can be more flexible but should indicate their purpose
-                    let is_valid_integration = file_name.contains("integration")
-                        || file_name.contains("workflow")
-                        || file_name.ends_with("_integration")
-                        || file_name.ends_with("_workflow");
+                    let is_valid_integration = ["integration", "workflow"]
+                        .iter()
+                        .any(|kw| file_name.contains(kw) || file_name.ends_with(&format!("_{kw}")));
 
                     if !is_valid_integration {
                         violations.push(HygieneViolation::BadTestFileName {
@@ -75,9 +74,9 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
                     }
                 }
                 "e2e" => {
-                    // E2E tests should clearly indicate they're end-to-end
-                    let is_valid_e2e = file_name.contains("e2e")
-                        || file_name.contains("end_to_end")
+                    let is_valid_e2e = ["e2e", "end_to_end"]
+                        .iter()
+                        .any(|kw| file_name.contains(kw))
                         || file_name.starts_with("test_");
 
                     if !is_valid_e2e {
@@ -89,8 +88,6 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
                     }
                 }
                 "tests" => {
-                    // Files directly in tests/ directory (not in any subdirectory)
-                    // are violations UNLESS they are entry points
                     let file_full = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
                     if !matches!(
                         file_full,
@@ -103,10 +100,7 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
                         });
                     }
                 }
-                _ => {
-                    // Files in subdirectories are allowed (module structure)
-                    // No violation
-                }
+                _ => {}
             }
             Ok(())
         })?;

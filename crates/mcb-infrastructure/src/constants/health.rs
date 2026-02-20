@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `HEALTH_CHECK_TIMEOUT_SECS`.
 pub const HEALTH_CHECK_TIMEOUT_SECS: u64 = 5;
 /// Constant value for `HEALTH_CHECK_INTERVAL_SECS`.

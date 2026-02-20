@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Infrastructure Services
 //!
 //! Infrastructure service implementations for port traits defined in mcb-application.

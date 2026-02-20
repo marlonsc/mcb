@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};

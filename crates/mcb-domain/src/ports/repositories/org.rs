@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
+//!
 //! Organization Entity Repository Port
 //!
 //! # Overview

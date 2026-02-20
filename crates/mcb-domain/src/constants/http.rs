@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! HTTP constants -- Single Source of Truth
 
 /// MIME type for JSON content

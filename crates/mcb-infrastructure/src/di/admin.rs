@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Provider Admin Services - Runtime provider switching via API
 //!
 //! These components allow switching providers at runtime without restarting

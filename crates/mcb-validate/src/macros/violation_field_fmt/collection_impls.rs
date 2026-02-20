@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use std::path::PathBuf;
 
 use super::ViolationFieldFmt;

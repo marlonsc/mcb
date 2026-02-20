@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use rocket::Request;
 use rocket::request::{FromRequest, Outcome};
 

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Infrastructure layer constants. Domain-specific constants are in `mcb_domain::constants`.
 
 /// Abstract syntax tree (AST) related constants.

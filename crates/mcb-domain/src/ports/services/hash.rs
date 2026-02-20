@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
+//!
 //! Provides hash domain definitions.
 use std::path::Path;
 

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use std::path::Path;
 
 use regex::Regex;
@@ -15,62 +18,44 @@ pub fn check_arc_usage(
     provider_traits: &[String],
 ) -> Vec<PatternViolation> {
     let mut violations = Vec::new();
+    let ignore_hint = format!("{VALIDATE_IGNORE_PREFIX}admin_service_concrete_type");
+    let normalized_trait_name = |type_name: &str| {
+        if provider_traits
+            .iter()
+            .any(|suffix| type_name.ends_with(suffix))
+        {
+            return Some(type_name.to_owned());
+        }
+
+        let (name, changed) = DI_IMPL_SUFFIXES.iter().fold(
+            (type_name.to_owned(), false),
+            |(name, changed), suffix| {
+                let next = name.trim_end_matches(suffix).to_owned();
+                (next.clone(), changed || next != name)
+            },
+        );
+        changed.then_some(name)
+    };
 
     for (line_num, line) in content.lines().enumerate() {
         let trimmed = line.trim();
-
-        // Skip comments
         if trimmed.starts_with(COMMENT_PREFIX) {
             continue;
         }
 
-        // Check for ignore hints
-        let has_ignore_hint = line.contains(&format!(
-            "{VALIDATE_IGNORE_PREFIX}admin_service_concrete_type"
-        ));
+        let has_ignore_hint = line.contains(&ignore_hint);
 
         for cap in arc_pattern.captures_iter(line) {
             let type_name = cap.get(1).map_or("", |m| m.as_str());
 
-            // Skip allowed concrete types
-            if allowed_concrete.iter().any(|s| s == type_name) {
+            let skip = allowed_concrete.iter().any(|s| s == type_name)
+                || line.contains(&format!("Arc<dyn {type_name}"))
+                || line.contains(&format!("Arc<{type_name}<"));
+            if skip || has_ignore_hint {
                 continue;
             }
 
-            // Skip if already using dyn (handled by different pattern)
-            if line.contains(&format!("Arc<dyn {type_name}")) {
-                continue;
-            }
-
-            // Skip decorator pattern: Arc<Type<T>> (generic wrapper types)
-            if line.contains(&format!("Arc<{type_name}<")) {
-                continue;
-            }
-
-            // Check if type name ends with a provider trait suffix
-            let is_likely_provider = provider_traits
-                .iter()
-                .any(|suffix| type_name.ends_with(suffix));
-
-            // Also check for common service implementation patterns
-            let is_impl_suffix = DI_IMPL_SUFFIXES.iter().any(|s| type_name.ends_with(s));
-
-            if is_likely_provider || is_impl_suffix {
-                // Skip if ignore hint is present
-                if has_ignore_hint {
-                    continue;
-                }
-
-                let trait_name = if is_impl_suffix {
-                    let mut name = type_name;
-                    for suffix in DI_IMPL_SUFFIXES {
-                        name = name.trim_end_matches(suffix);
-                    }
-                    name
-                } else {
-                    type_name
-                };
-
+            if let Some(trait_name) = normalized_trait_name(type_name) {
                 violations.push(PatternViolation::ConcreteTypeInDi {
                     file: path.to_path_buf(),
                     line: line_num + 1,

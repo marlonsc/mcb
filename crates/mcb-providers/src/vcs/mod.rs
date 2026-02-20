@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Version Control System Providers
 //!
 //! This module contains implementations of the `VcsProvider` trait.

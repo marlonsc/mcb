@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
+//!
 //! Generic Reporter
 //!
 //! This module provides the `GenericReporter` which facilitates the generation of
@@ -11,7 +14,7 @@ use std::path::PathBuf;
 use serde::Serialize;
 
 use crate::Severity;
-use crate::traits::violation::{Violation, ViolationCategory};
+use crate::traits::violation::Violation;
 
 /// Report containing all violations with summary
 #[derive(Debug, Clone, Serialize)]
@@ -62,6 +65,35 @@ impl GenericReporter {
 
 /// Generic reporter for violations
 pub struct GenericReporter;
+
+fn violation_location(v: &ViolationEntry) -> String {
+    match (&v.file, v.line) {
+        (Some(file), Some(line)) => format!("{file}:{line}"),
+        (Some(file), None) => file.clone(),
+        (None, _) => "unknown".to_owned(),
+    }
+}
+
+fn ci_line(v: &dyn Violation, level: &str) -> String {
+    match (v.file(), v.line()) {
+        (Some(file), Some(line)) => {
+            format!(
+                "::{level} file={},line={}::[{}] {}",
+                file.display(),
+                line,
+                v.id(),
+                v.message()
+            )
+        }
+        (Some(file), None) => format!(
+            "::{level} file={}::[{}] {}",
+            file.display(),
+            v.id(),
+            v.message()
+        ),
+        (None, _) => format!("::{level} ::[{}] {}", v.id(), v.message()),
+    }
+}
 
 impl GenericReporter {
     /// Create a report from violations
@@ -156,36 +188,33 @@ impl GenericReporter {
         );
         let _ = writeln!(output);
 
-        // By category
         if !report.violations_by_category.is_empty() {
             output.push_str("--- Violations by Category ---\n\n");
-
-            // Sort categories for consistent output
             let mut categories: Vec<_> = report.violations_by_category.keys().collect();
             categories.sort();
 
             for category in categories {
-                let violations = &report.violations_by_category[category];
-                if violations.is_empty() {
+                let category_violations = &report.violations_by_category[category];
+                if category_violations.is_empty() {
                     continue;
                 }
 
-                let _ = writeln!(output, "=== {} ({}) ===", category, violations.len());
-
-                for v in violations {
-                    let location = match (&v.file, v.line) {
-                        (Some(f), Some(l)) => format!("{f}:{l}"),
-                        (Some(f), None) => f.clone(),
-                        (None, _) => "unknown".to_owned(),
-                    };
-
+                let _ = writeln!(
+                    output,
+                    "=== {} ({}) ===",
+                    category,
+                    category_violations.len()
+                );
+                for v in category_violations {
                     let _ = writeln!(
                         output,
                         "  [{:>7}] [{}] {} - {}",
-                        v.severity, v.id, location, v.message
+                        v.severity,
+                        v.id,
+                        violation_location(v),
+                        v.message
                     );
-
-                    if let Some(ref suggestion) = v.suggestion {
+                    if let Some(suggestion) = &v.suggestion {
                         let _ = writeln!(output, "            -> {suggestion}");
                     }
                 }
@@ -208,66 +237,9 @@ impl GenericReporter {
                 Severity::Info => continue, // Info messages are not reported in CI
             };
 
-            if let (Some(file), Some(line)) = (v.file(), v.line()) {
-                let _ = writeln!(
-                    output,
-                    "::{} file={},line={}::[{}] {}",
-                    level,
-                    file.display(),
-                    line,
-                    v.id(),
-                    v.message()
-                );
-            } else if let Some(file) = v.file() {
-                let _ = writeln!(
-                    output,
-                    "::{} file={}::[{}] {}",
-                    level,
-                    file.display(),
-                    v.id(),
-                    v.message()
-                );
-            } else {
-                let _ = writeln!(output, "::{} ::[{}] {}", level, v.id(), v.message());
-            }
+            let _ = writeln!(output, "{}", ci_line(v.as_ref(), level));
         }
 
         output
-    }
-
-    /// Count violations by severity
-    #[must_use]
-    pub fn count_by_severity(violations: &[Box<dyn Violation>]) -> (usize, usize, usize) {
-        violations
-            .iter()
-            .fold((0, 0, 0), |(e, w, i), v| match v.severity() {
-                Severity::Error => (e + 1, w, i),
-                Severity::Warning => (e, w + 1, i),
-                Severity::Info => (e, w, i + 1),
-            })
-    }
-
-    /// Filter violations by category
-    #[must_use]
-    pub fn filter_by_category(
-        violations: Vec<Box<dyn Violation>>,
-        category: ViolationCategory,
-    ) -> Vec<Box<dyn Violation>> {
-        violations
-            .into_iter()
-            .filter(|v| v.category() == category)
-            .collect()
-    }
-
-    /// Filter violations by severity
-    #[must_use]
-    pub fn filter_by_severity(
-        violations: Vec<Box<dyn Violation>>,
-        severity: Severity,
-    ) -> Vec<Box<dyn Violation>> {
-        violations
-            .into_iter()
-            .filter(|v| v.severity() == severity)
-            .collect()
     }
 }

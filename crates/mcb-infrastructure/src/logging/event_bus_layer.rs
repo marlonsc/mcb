@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Custom tracing Layer that forwards log events to the event bus.
 //!
 //! Captures tracing events and sends them as `DomainEvent::LogEvent` through

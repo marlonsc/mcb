@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! Constants for implementation quality validators.
 
 /// Hardcoded return pattern IDs and descriptions: (`pattern_id`, description).

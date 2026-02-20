@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! System Metrics Collector Port
 //!
 //! Defines the contract for collecting system metrics.

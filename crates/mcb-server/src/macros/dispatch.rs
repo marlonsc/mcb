@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Entity handler dispatch macros.
 //!
 //! Used by `handlers/entities/` for CRUD routing and action mapping.

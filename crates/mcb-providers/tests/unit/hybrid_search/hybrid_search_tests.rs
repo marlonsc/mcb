@@ -15,24 +15,24 @@ use rstest::rstest;
 
 fn create_test_chunk(content: &str, file_path: &str, start_line: u32) -> CodeChunk {
     CodeChunk {
-        id: format!("{}:{}", file_path, start_line),
-        content: content.to_string(),
-        file_path: file_path.to_string(),
+        id: format!("{file_path}:{start_line}"),
+        content: content.to_owned(),
+        file_path: file_path.to_owned(),
         start_line,
         end_line: start_line + content.lines().count() as u32,
-        language: "Rust".to_string(),
+        language: "Rust".to_owned(),
         metadata: serde_json::json!({}),
     }
 }
 
 fn create_test_search_result(file_path: &str, start_line: u32, score: f64) -> SearchResult {
     SearchResult {
-        id: format!("{}:{}", file_path, start_line),
-        content: format!("Content of {}:{}", file_path, start_line),
-        file_path: file_path.to_string(),
+        id: format!("{file_path}:{start_line}"),
+        content: format!("Content of {file_path}:{start_line}"),
+        file_path: file_path.to_owned(),
         start_line,
         score,
-        language: "Rust".to_string(),
+        language: "Rust".to_owned(),
     }
 }
 
@@ -47,7 +47,7 @@ fn create_test_search_result(file_path: &str, start_line: u32, score: f64) -> Se
 #[case("fn hello_world() { println!(\"Hello, World!\"); }", "fn", false)]
 fn tokenize(#[case] input: &str, #[case] token: &str, #[case] should_contain: bool) {
     let tokens = BM25Scorer::tokenize(input);
-    assert_eq!(tokens.contains(&token.to_string()), should_contain);
+    assert_eq!(tokens.contains(&token.to_owned()), should_contain);
 }
 
 #[test]
@@ -94,9 +94,7 @@ fn bm25_relevant_chunk_ranks_higher(#[case] mode: &str) {
 
         assert!(
             score_auth > score_data,
-            "Auth chunk should score higher than data chunk (auth={}, data={})",
-            score_auth,
-            score_data
+            "Auth chunk should score higher than data chunk (auth={score_auth}, data={score_data})"
         );
         return;
     }

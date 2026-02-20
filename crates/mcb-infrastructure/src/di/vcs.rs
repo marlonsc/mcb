@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! VCS provider factory for standalone/server composition.
 //!
 //! Provides a default VCS provider so that the server layer does not

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Session manager implementation.
 
 use std::collections::hash_map::DefaultHasher;

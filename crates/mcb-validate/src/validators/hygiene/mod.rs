@@ -1,3 +1,7 @@
+//! Code hygiene validation module
+//!
+//! **Documentation**: [`docs/modules/validate.md#hygiene`](../../../../../docs/modules/validate.md#hygiene)
+//!
 /// Test directory structure checks.
 pub mod directory;
 /// Test function naming checks.

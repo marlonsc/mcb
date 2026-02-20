@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 use rmcp::model::CallToolRequestParams;
 use serde::de::DeserializeOwned;
 

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 mod collection_impls;
 mod core_impls;
 mod domain_impls;

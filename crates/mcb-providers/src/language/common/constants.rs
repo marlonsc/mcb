@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! Constants for code chunking operations
 //!
 //! Language-specific chunk sizes and node extraction rule defaults.

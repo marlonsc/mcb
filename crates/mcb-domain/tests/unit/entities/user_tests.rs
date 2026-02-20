@@ -4,18 +4,16 @@ use rstest::rstest;
 #[rstest]
 fn user_construction() {
     let user = User {
-        metadata: mcb_domain::entities::EntityMetadata {
-            id: "usr-001".to_owned(),
-            created_at: 1000,
-            updated_at: 1000,
-        },
+        id: "usr-001".to_owned(),
         org_id: "org-001".to_owned(),
         email: "alice@acme.com".to_owned(),
         display_name: "Alice".to_owned(),
         role: UserRole::Admin,
         api_key_hash: None,
+        created_at: 1000,
+        updated_at: 1000,
     };
-    assert_eq!(user.metadata.id, "usr-001");
+    assert_eq!(user.id, "usr-001");
     assert_eq!(user.org_id, "org-001");
     assert_eq!(user.email, "alice@acme.com");
     assert_eq!(user.role, UserRole::Admin);
@@ -25,20 +23,18 @@ fn user_construction() {
 #[rstest]
 fn user_serialization_roundtrip() {
     let user = User {
-        metadata: mcb_domain::entities::EntityMetadata {
-            id: "usr-002".to_owned(),
-            created_at: 2000,
-            updated_at: 3000,
-        },
+        id: "usr-002".to_owned(),
         org_id: "org-001".to_owned(),
         email: "bob@acme.com".to_owned(),
         display_name: "Bob".to_owned(),
         role: UserRole::Member,
         api_key_hash: Some("$argon2id$...".to_owned()),
+        created_at: 2000,
+        updated_at: 3000,
     };
     let json = serde_json::to_string(&user).expect("serialize");
     let deserialized: User = serde_json::from_str(&json).expect("deserialize");
-    assert_eq!(deserialized.metadata.id, "usr-002");
+    assert_eq!(deserialized.id, "usr-002");
     assert_eq!(deserialized.role, UserRole::Member);
     assert!(deserialized.api_key_hash.is_some());
 }

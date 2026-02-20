@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#value-objects)
+//!
 //! Code highlighting value objects and types.
 
 use serde::{Deserialize, Serialize};

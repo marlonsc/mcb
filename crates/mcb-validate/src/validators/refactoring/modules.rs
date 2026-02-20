@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#refactoring)
+//!
 use std::path::Path;
 
 use crate::filters::LanguageId;
@@ -32,27 +35,28 @@ pub fn validate_mod_declarations(
 
                 let parent_dir = path.parent().unwrap_or(Path::new("."));
                 let content = std::fs::read_to_string(path)?;
-                let lines: Vec<&str> = content.lines().collect();
+                let file_stem = path.file_stem().and_then(|s| s.to_str());
+                let module_decl_exists = |mod_name: &str| {
+                    let direct = [
+                        parent_dir.join(format!("{mod_name}.rs")),
+                        parent_dir.join(mod_name).join("mod.rs"),
+                    ];
+                    let nested = file_stem.map(|stem| {
+                        [
+                            parent_dir.join(stem).join(format!("{mod_name}.rs")),
+                            parent_dir.join(stem).join(mod_name).join("mod.rs"),
+                        ]
+                    });
 
-                for (line_num, line) in lines.iter().enumerate() {
+                    direct.into_iter().any(|p| p.exists())
+                        || nested.is_some_and(|paths| paths.into_iter().any(|p| p.exists()))
+                };
+
+                for (line_num, line) in content.lines().enumerate() {
                     if let Some(cap) = mod_pattern.captures(line) {
                         let mod_name = cap.get(1).map_or("", |m| m.as_str());
 
-                        // Check if module file exists (Rust: same dir or parent_name/mod_name)
-                        let mod_file = parent_dir.join(format!("{mod_name}.rs"));
-                        let mod_dir = parent_dir.join(mod_name).join("mod.rs");
-                        let module_subdir = path.file_stem().and_then(|s| s.to_str()).map(|stem| {
-                            (
-                                parent_dir.join(stem).join(format!("{mod_name}.rs")),
-                                parent_dir.join(stem).join(mod_name).join("mod.rs"),
-                            )
-                        });
-
-                        let exists = mod_file.exists()
-                            || mod_dir.exists()
-                            || module_subdir.is_some_and(|(f, d)| f.exists() || d.exists());
-
-                        if !exists {
+                        if !module_decl_exists(mod_name) {
                             violations.push(RefactoringViolation::DeletedModuleReference {
                                 referencing_file: path.clone(),
                                 line: line_num + 1,

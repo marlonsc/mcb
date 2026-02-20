@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
+//!
 //! Domain service port interfaces for core business operations.
 
 pub mod agent;

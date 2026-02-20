@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md)
+//!
 use std::path::PathBuf;
 
 use regex::{Match, Regex};
@@ -19,14 +22,11 @@ pub fn validate_pass_through_wrappers(
 
     for (file_path, content) in files {
         let fname = file_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-        if fname.contains("adapter") || fname.contains("wrapper") {
+        if ["adapter", "wrapper"].iter().any(|kw| fname.contains(kw)) {
             continue;
         }
 
-        let lines: Vec<&str> = content.lines().collect();
-        let non_test = non_test_lines(&lines);
-
-        // Track current impl block
+        let non_test = non_test_lines(&content.lines().collect::<Vec<_>>());
         let mut current_struct_name = String::new();
         for func in extract_functions_with_body(
             Some(fn_pattern),
@@ -34,10 +34,10 @@ pub fn validate_pass_through_wrappers(
             &non_test,
             &mut current_struct_name,
         ) {
-            if func.meaningful_body.len() != 1 {
-                continue;
-            }
-            if let Some(cap) = passthrough_pattern.captures(&func.meaningful_body[0]) {
+            let matched = (func.meaningful_body.len() == 1)
+                .then(|| passthrough_pattern.captures(&func.meaningful_body[0]))
+                .flatten();
+            if let Some(cap) = matched {
                 let field = cap.get(1).map_or("", |m: Match| m.as_str());
                 let method = cap.get(2).map_or("", |m: Match| m.as_str());
                 if method == func.name || method.starts_with(&func.name) {

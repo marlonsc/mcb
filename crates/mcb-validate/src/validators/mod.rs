@@ -10,15 +10,18 @@ pub mod clean_architecture;
 pub mod config_quality;
 pub(crate) mod declarative_support;
 pub mod declarative_validator;
+/// Dependency validation module
 pub mod dependency;
 pub mod documentation;
 pub mod error_boundary;
-/// Hygiene validation (e.g., TODOs, formatting)
+/// Hygiene validation module (e.g., TODOs, formatting)
 pub mod hygiene;
+/// Implementation pattern validation module
 pub mod implementation;
 /// KISS principle validation (Keep It Simple, Stupid).
 pub mod kiss;
 pub mod layer_flow;
+/// Naming convention validation module
 pub mod naming;
 /// Organization validation (e.g., directory structure)
 pub mod organization;
@@ -27,14 +30,38 @@ pub mod performance;
 pub mod pmat;
 pub(crate) mod pmat_native;
 pub mod port_adapter;
-/// Quality validation (e.g., unwrap, panic, metrics)
+/// Code quality validation module (unwrap, panic, metrics)
 pub mod quality;
 pub mod refactoring;
+/// SOLID principles validation module
 pub mod solid;
-/// Single-source-of-truth invariants validator.
+/// Single Source of Truth (SSOT) invariants validator
 pub mod ssot;
 pub mod test_quality;
 pub mod visibility;
+
+use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX};
+
+pub(crate) fn for_each_non_test_non_comment_line<F>(content: &str, mut visit: F)
+where
+    F: FnMut(usize, &str, &str),
+{
+    let mut in_test_module = false;
+    for (line_num, line) in content.lines().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.starts_with(COMMENT_PREFIX) {
+            continue;
+        }
+        if trimmed.contains(CFG_TEST_MARKER) {
+            in_test_module = true;
+            continue;
+        }
+        if in_test_module {
+            continue;
+        }
+        visit(line_num, line, trimmed);
+    }
+}
 
 pub use self::async_patterns::{AsyncPatternValidator, AsyncViolation};
 pub use self::clean_architecture::{CleanArchitectureValidator, CleanArchitectureViolation};

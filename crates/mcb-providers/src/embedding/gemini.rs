@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#embedding-providers)
+//!
 //! Gemini Embedding Provider
 //!
 //! Implements the `EmbeddingProvider` port using Google's Gemini embedding API.

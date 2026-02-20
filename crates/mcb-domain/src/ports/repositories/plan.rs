@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
+//!
 //! Plan Entity Repository Port
 //!
 //! # Overview

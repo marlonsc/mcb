@@ -1,5 +1,7 @@
 //! Embedding Provider Implementations
 //!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#embedding-providers)
+//!
 //! Converts text into dense vector embeddings for semantic search.
 //! Each provider offers different tradeoffs between quality, cost, and privacy.
 //!

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Validation Service Implementation
 //!
 //! # Overview
@@ -69,7 +72,7 @@ impl ValidationServiceInterface for InfraValidationService {
     }
 
     async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>> {
-        get_validation_rules(category)
+        Ok(mcb_validate::utils::yaml::get_validation_rules(category))
     }
 
     async fn analyze_complexity(
@@ -111,43 +114,7 @@ fn convert_report(
     report: mcb_validate::GenericReport,
     severity_filter: Option<&str>,
 ) -> ValidationReport {
-    let min_severity = match severity_filter {
-        Some("error") => 0,
-        Some("warning") => 1,
-        _ => 2,
-    };
-
-    let all_violations: Vec<mcb_validate::ViolationEntry> = report
-        .violations_by_category
-        .into_values()
-        .flatten()
-        .collect();
-
-    let violations: Vec<ViolationEntry> = all_violations
-        .into_iter()
-        .filter(|v| {
-            let severity_level = match v.severity.as_str() {
-                "ERROR" => 0,
-                "WARNING" => 1,
-                _ => 2,
-            };
-            severity_level <= min_severity
-        })
-        .collect();
-
-    let errors = violations.iter().filter(|v| v.severity == "ERROR").count();
-
-    ValidationReport {
-        total_violations: violations.len(),
-        errors,
-        warnings: violations
-            .iter()
-            .filter(|v| v.severity == "WARNING")
-            .count(),
-        infos: violations.iter().filter(|v| v.severity == "INFO").count(),
-        violations,
-        passed: errors == 0,
-    }
+    mcb_validate::utils::validation_report::from_generic_report(report, severity_filter, true)
 }
 
 fn run_file_validation(
@@ -170,79 +137,9 @@ fn run_file_validation(
         .filter(|v| v.file.as_ref().is_some_and(|f| f.contains(&file_str)))
         .collect();
 
-    let errors = file_violations
-        .iter()
-        .filter(|v| v.severity == "ERROR")
-        .count();
-
-    Ok(ValidationReport {
-        total_violations: file_violations.len(),
-        errors,
-        warnings: file_violations
-            .iter()
-            .filter(|v| v.severity == "WARNING")
-            .count(),
-        infos: file_violations
-            .iter()
-            .filter(|v| v.severity == "INFO")
-            .count(),
-        violations: file_violations,
-        passed: errors == 0,
-    })
-}
-
-fn get_validation_rules(category: Option<&str>) -> Result<Vec<RuleInfo>> {
-    let all_rules: Vec<RuleInfo> = mcb_validate::EmbeddedRules::all_yaml()
-        .into_iter()
-        .filter(|(path, _)| path.ends_with(".yml") && !path.contains("/templates/"))
-        .filter_map(|(_, content)| {
-            if extract_yaml_scalar(content, "_base").as_deref() == Some("true") {
-                return None;
-            }
-
-            let enabled =
-                extract_yaml_scalar(content, "enabled").is_none_or(|value| value != "false");
-            if !enabled {
-                return None;
-            }
-
-            let id = extract_yaml_scalar(content, "id")?;
-            Some(RuleInfo {
-                id,
-                category: extract_yaml_scalar(content, "category")
-                    .unwrap_or_else(|| "quality".to_owned()),
-                severity: extract_yaml_scalar(content, "severity")
-                    .unwrap_or_else(|| "warning".to_owned()),
-                description: extract_yaml_scalar(content, "description")
-                    .unwrap_or_else(|| "No description provided".to_owned()),
-                engine: extract_yaml_scalar(content, "engine")
-                    .unwrap_or_else(|| "rusty-rules".to_owned()),
-            })
-        })
-        .collect();
-
-    if let Some(cat) = category {
-        Ok(all_rules
-            .into_iter()
-            .filter(|r| r.category == cat)
-            .collect())
-    } else {
-        Ok(all_rules)
-    }
-}
-
-fn extract_yaml_scalar(content: &str, key: &str) -> Option<String> {
-    let mapping: serde_yaml::Value = serde_yaml::from_str(content).ok()?;
-    let value = mapping.get(key)?;
-    match value {
-        serde_yaml::Value::String(s) => Some(s.clone()),
-        serde_yaml::Value::Bool(b) => Some(b.to_string()),
-        serde_yaml::Value::Number(n) => Some(n.to_string()),
-        serde_yaml::Value::Null
-        | serde_yaml::Value::Sequence(_)
-        | serde_yaml::Value::Mapping(_)
-        | serde_yaml::Value::Tagged(_) => None,
-    }
+    Ok(mcb_validate::utils::validation_report::from_violations(
+        file_violations,
+    ))
 }
 
 fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<ComplexityReport> {

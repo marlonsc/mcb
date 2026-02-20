@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Authentication Service Port
 //!
 //! Defines the contract for authentication services.

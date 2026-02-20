@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::constants::common::COMMENT_PREFIX;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity};
@@ -27,22 +30,24 @@ pub fn validate_bypass_boundaries(
         let pattern = boundary.pattern.clone();
 
         scan_bypass_patterns(
-            validator,
-            &scan_root,
-            |rel| !allowed.iter().any(|a| rel == Path::new(a)),
-            &pattern,
-            |file, line, context| match violation_id.as_str() {
-                "DEP005" => DependencyViolation::CliBypassPath {
-                    file,
-                    line,
-                    context,
-                    severity: Severity::Error,
-                },
-                _ => DependencyViolation::AdminBypassImport {
-                    file,
-                    line,
-                    context,
-                    severity: Severity::Error,
+            ScanBypassParams {
+                validator,
+                scan_root: &scan_root,
+                should_check_file: |rel| !allowed.iter().any(|a| rel == Path::new(a)),
+                pattern: &pattern,
+                make_violation: |file, line, context| match violation_id.as_str() {
+                    "DEP005" => DependencyViolation::CliBypassPath {
+                        file,
+                        line,
+                        context,
+                        severity: Severity::Error,
+                    },
+                    _ => DependencyViolation::AdminBypassImport {
+                        file,
+                        line,
+                        context,
+                        severity: Severity::Error,
+                    },
                 },
             },
             &mut violations,
@@ -53,17 +58,21 @@ pub fn validate_bypass_boundaries(
 }
 
 fn scan_bypass_patterns<F, G>(
-    validator: &DependencyValidator,
-    scan_root: &Path,
-    should_check_file: F,
-    pattern: &str,
-    make_violation: G,
+    params: ScanBypassParams<'_, F, G>,
     out: &mut Vec<DependencyViolation>,
 ) -> Result<()>
 where
     F: Fn(&Path) -> bool,
     G: Fn(PathBuf, usize, String) -> DependencyViolation,
 {
+    let ScanBypassParams {
+        validator,
+        scan_root,
+        should_check_file,
+        pattern,
+        make_violation,
+    } = params;
+
     if !scan_root.exists() {
         return Ok(());
     }
@@ -101,4 +110,16 @@ where
     )?;
 
     Ok(())
+}
+
+struct ScanBypassParams<'a, F, G>
+where
+    F: Fn(&Path) -> bool,
+    G: Fn(PathBuf, usize, String) -> DependencyViolation,
+{
+    validator: &'a DependencyValidator,
+    scan_root: &'a Path,
+    should_check_file: F,
+    pattern: &'a str,
+    make_violation: G,
 }

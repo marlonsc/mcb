@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#value-objects)
+//!
 //! Domain Type Definitions
 //!
 //! Type aliases and basic type definitions for dynamic domain concepts.

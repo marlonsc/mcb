@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Secure token generation
 
 use aes_gcm::aead::{OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore};

@@ -36,16 +36,14 @@ fn create_test_org(id: &str, name: &str, slug: &str) -> Organization {
 
 fn create_test_user(id: &str, org_id: &str, email: &str) -> User {
     User {
-        metadata: mcb_domain::entities::EntityMetadata {
-            id: id.to_owned(),
-            created_at: TEST_NOW,
-            updated_at: TEST_NOW,
-        },
+        id: id.to_owned(),
         org_id: org_id.to_owned(),
         email: email.to_owned(),
         display_name: format!("User {id}"),
         role: UserRole::Member,
         api_key_hash: None,
+        created_at: TEST_NOW,
+        updated_at: TEST_NOW,
     }
 }
 
@@ -118,7 +116,7 @@ async fn test_user_crud() -> TestResult {
     let mut updated = user.clone();
     updated.display_name = "Updated User".to_owned();
     updated.role = UserRole::Admin;
-    updated.metadata.updated_at = 2_000_000;
+    updated.updated_at = 2_000_000;
     repo.update_user(&updated).await?;
 
     let after_update = repo.get_user("user-1").await?;
@@ -142,7 +140,7 @@ async fn test_get_user_by_email() -> TestResult {
     let found = repo
         .get_user_by_email(DEFAULT_ORG_ID, "alice@example.com")
         .await?;
-    assert_eq!(found.metadata.id, "user-1");
+    assert_eq!(found.id, "user-1");
 
     assert_not_found(
         &repo

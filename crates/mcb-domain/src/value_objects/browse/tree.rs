@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#value-objects)
+//!
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 

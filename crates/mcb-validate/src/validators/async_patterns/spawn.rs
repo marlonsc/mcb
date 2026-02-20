@@ -1,6 +1,7 @@
-use crate::constants::common::{
-    CFG_TEST_MARKER, COMMENT_PREFIX, CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT,
-};
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
+use crate::constants::common::{CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT};
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_scan_file;
@@ -17,10 +18,7 @@ pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncVio
     let spawn_pattern = required_pattern("ASYNC001.tokio_spawn")?;
     let assigned_spawn_pattern = required_pattern("ASYNC001.assigned_spawn")?;
     let fn_pattern = required_pattern("ASYNC001.fn_decl")?;
-
-    // Function name patterns that indicate intentional fire-and-forget spawns
-    // Includes constructor patterns that often spawn background workers
-    let background_fn_patterns = BACKGROUND_FN_PATTERNS;
+    let is_background_fn = |name: &str| BACKGROUND_FN_PATTERNS.iter().any(|p| name.contains(p));
 
     for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, _src_dir| {
         let path = &entry.absolute_path;
@@ -29,43 +27,23 @@ pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncVio
         }
 
         let content = std::fs::read_to_string(path)?;
-        let mut in_test_module = false;
         let mut current_fn_name = String::new();
 
-        for (line_num, line) in content.lines().enumerate() {
-            let trimmed = line.trim();
+        crate::validators::for_each_non_test_non_comment_line(
+            &content,
+            |line_num, line, trimmed| {
+                // Track current function name
+                if let Some(cap) = fn_pattern.captures(line) {
+                    current_fn_name = cap.get(1).map_or("", |m| m.as_str()).to_lowercase();
+                }
 
-            // Skip comments
-            if trimmed.starts_with(COMMENT_PREFIX) {
-                continue;
-            }
+                let unassigned_spawn = spawn_pattern.is_match(line)
+                    && !assigned_spawn_pattern.is_match(line)
+                    && !line.contains(".await")
+                    && !line.contains("let _")
+                    && !is_background_fn(&current_fn_name);
 
-            // Track test modules
-            if trimmed.contains(CFG_TEST_MARKER) {
-                in_test_module = true;
-                continue;
-            }
-
-            if in_test_module {
-                continue;
-            }
-
-            // Track current function name
-            if let Some(cap) = fn_pattern.captures(line) {
-                current_fn_name = cap.get(1).map_or("", |m| m.as_str()).to_lowercase();
-            }
-
-            // Check for unassigned spawn
-            if spawn_pattern.is_match(line) && !assigned_spawn_pattern.is_match(line) {
-                // Check if it's being used in a chain (e.g., .await)
-                if !line.contains(".await") && !line.contains("let _") {
-                    // Skip if function name suggests fire-and-forget is intentional
-                    let is_background_fn = background_fn_patterns
-                        .iter()
-                        .any(|p| current_fn_name.contains(p));
-                    if is_background_fn {
-                        continue;
-                    }
+                if unassigned_spawn {
                     violations.push(AsyncViolation::UnawaitedSpawn {
                         file: path.clone(),
                         line: line_num + 1,
@@ -73,8 +51,8 @@ pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncVio
                         severity: Severity::Info,
                     });
                 }
-            }
-        }
+            },
+        );
 
         Ok(())
     })?;

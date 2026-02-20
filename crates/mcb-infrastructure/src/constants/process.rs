@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `DAEMON_CHECK_INTERVAL_SECS`.
 pub const DAEMON_CHECK_INTERVAL_SECS: u64 = 30;
 /// Constant value for `DAEMON_RESTART_DELAY_SECS`.

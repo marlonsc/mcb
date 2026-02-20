@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md)
+//!
 mod ca;
 mod constants;
 mod functions;

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Domain macros organized by usage context.
 //!
 //! Sub-modules group macros by the domain area they serve:

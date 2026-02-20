@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 /// Maximum number of file paths to return when building collection tree
 pub const LIST_FILE_PATHS_LIMIT: usize = 10_000;
 

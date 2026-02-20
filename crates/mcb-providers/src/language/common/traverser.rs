@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! AST traverser for extracting code chunks based on rules
 //!
 //! This module provides the `AstTraverser` that walks tree-sitter ASTs

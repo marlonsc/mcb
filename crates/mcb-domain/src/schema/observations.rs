@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 use crate::schema::types::{
     COL_OBSERVATION_TYPE, ForeignKeyDef, IndexDef, TableDef, UniqueConstraintDef,
 };

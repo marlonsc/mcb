@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 /// Default max chunk size (lines)
 pub const LANGUAGE_DEFAULT_MAX_CHUNK_SIZE: usize = 50;
 

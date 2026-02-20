@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! Intelligent chunking engine
 //!
 //! Provides the main `IntelligentChunker` that orchestrates language-specific

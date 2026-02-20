@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Event Bus Provider Port
 //!
 //! Defines the contract for event publish/subscribe services.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Agent handler for tool call and delegation logging.
 
 use std::sync::Arc;

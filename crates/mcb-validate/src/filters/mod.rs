@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Rule Filtering System
 //!
 //! Provides intelligent filtering of validation rules based on:

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Repository factories for standalone/server composition.
 //!
 //! Provides default repository implementations so that the server layer does not

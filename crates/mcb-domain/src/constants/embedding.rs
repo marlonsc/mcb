@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 /// Null/placeholder provider dimension (MiniLM-L6 default).
 pub const EMBEDDING_DIMENSION_NULL: usize = 384;
 /// `FastEmbed` default model dimension (MiniLM-L6-v2).

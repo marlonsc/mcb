@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md)
+//!
 use std::path::PathBuf;
 
 use regex::Regex;
@@ -21,14 +24,12 @@ pub fn validate_hardcoded_returns(
     let mut violations = Vec::new();
 
     for (file_path, content) in files {
-        // Skip null/fake provider files
         let fname = file_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
         if STUB_SKIP_FILE_KEYWORDS.iter().any(|k| fname.contains(k)) {
             continue;
         }
 
-        let lines: Vec<&str> = content.lines().collect();
-        let non_test_lines = non_test_lines(&lines);
+        let non_test_lines = non_test_lines(&content.lines().collect::<Vec<_>>());
 
         for func in extract_functions(Some(fn_pattern), &non_test_lines) {
             if func.has_control_flow {
@@ -38,16 +39,17 @@ pub fn validate_hardcoded_returns(
                 if is_fn_signature_or_brace(line) {
                     continue;
                 }
-                for (pattern, desc) in &compiled {
-                    if pattern.is_match(line) {
-                        violations.push(ImplementationViolation::HardcodedReturnValue {
-                            file: file_path.clone(),
-                            line: func.start_line,
-                            method_name: func.name.clone(),
-                            return_value: desc.to_string(),
-                            severity: Severity::Warning,
-                        });
-                    }
+                for (pattern, desc) in compiled
+                    .iter()
+                    .filter(|(pattern, _)| pattern.is_match(line))
+                {
+                    violations.push(ImplementationViolation::HardcodedReturnValue {
+                        file: file_path.clone(),
+                        line: func.start_line,
+                        method_name: func.name.clone(),
+                        return_value: desc.to_string(),
+                        severity: Severity::Warning,
+                    });
                 }
             }
         }

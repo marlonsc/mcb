@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Admin cache endpoints
 //!
 //! Provides endpoints for monitoring cache statistics.

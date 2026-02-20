@@ -1,15 +1,17 @@
 //! Use Cases - Application Layer Services
 //!
-//! **Documentation**: [`docs/modules/application.md#use-cases-use_cases`](../../../../docs/modules/application.md#use-cases-use_cases)
+//! **Documentation**: [docs/modules/application.md](../../../../docs/modules/application.md#use-cases)
 //!
 //! This module contains the use case implementations that orchestrate
 //! business logic and coordinate between domain entities and external ports.
 //!
 //! ## Use Cases Implemented
 //!
+//! - `agent_session_service`: Manages agent session lifecycle and tool history
 //! - `context_service`: Code intelligence and semantic operations
-//! - `search_service`: Semantic search operations
 //! - `indexing_service`: Code indexing and ingestion operations
+//! - `memory_service`: Observation/memory capture and awareness
+//! - `search_service`: Semantic, hybrid, and lexical search operations
 //!
 //! ## Dependency Injection
 //!

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Duplication Detection Thresholds and Types
 //!
 //! Defines duplication types (clone categories) and configurable thresholds

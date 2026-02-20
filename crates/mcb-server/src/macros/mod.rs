@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Server macros organized by usage context.
 //!
 //! Sub-modules group macros by the server area they serve:

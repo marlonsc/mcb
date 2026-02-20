@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#embedding-providers)
+//!
 //! Anthropic embedding provider backed by Voyage models.
 
 use std::time::Duration;

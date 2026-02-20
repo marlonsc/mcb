@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! Performance Pattern Validation
 //!
 //! This module provides the `PerformanceValidator` which identifies common performance

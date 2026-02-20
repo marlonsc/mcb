@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `JWT_DEFAULT_EXPIRATION_SECS`.
 pub const JWT_DEFAULT_EXPIRATION_SECS: u64 = 86400;
 /// Constant value for `JWT_REFRESH_EXPIRATION_SECS`.

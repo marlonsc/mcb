@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::filters::LanguageId;
 use crate::pattern_registry::{required_pattern, required_patterns};
 use crate::scan::for_each_file_under_root;
@@ -25,11 +28,6 @@ pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<Hygiene
             continue;
         }
 
-        // We use is_fixture_path logic locally or duplicated?
-        // Original code: if Self::is_fixture_path(path) { return Ok(()); }
-        // Let's implement a local helper or use a shared one if available.
-        // Similar to organization/validator.rs using generic scan, we can filter inside.
-
         for_each_file_under_root(config, &src_dir, Some(LanguageId::Rust), |entry| {
             let path = &entry.absolute_path;
             if path.to_str().is_some_and(|s| s.contains("/fixtures/")) {
@@ -53,10 +51,9 @@ pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<Hygiene
                     continue;
                 }
 
-                if mod_tests_pattern.is_match(line) {
-                    if last_cfg_test_line.is_some_and(|cfg_line| line_num <= cfg_line + 5) {
-                        continue;
-                    }
+                if mod_tests_pattern.is_match(line)
+                    && !last_cfg_test_line.is_some_and(|cfg_line| line_num <= cfg_line + 5)
+                {
                     has_inline_module_marker = true;
                     violations.push(HygieneViolation::InlineTestModule {
                         file: path.clone(),
@@ -66,17 +63,16 @@ pub fn validate_no_inline_tests(config: &ValidationConfig) -> Result<Vec<Hygiene
                 }
             }
 
-            if !has_inline_module_marker {
-                for (line_num, line) in lines.iter().enumerate() {
-                    if test_attr_pattern.is_match(line) || tokio_test_attr_pattern.is_match(line) {
-                        violations.push(HygieneViolation::InlineTestModule {
-                            file: path.clone(),
-                            line: line_num + 1,
-                            severity: Severity::Warning,
-                        });
-                        break;
-                    }
-                }
+            if !has_inline_module_marker
+                && let Some((line_num, _)) = lines.iter().enumerate().find(|(_, line)| {
+                    test_attr_pattern.is_match(line) || tokio_test_attr_pattern.is_match(line)
+                })
+            {
+                violations.push(HygieneViolation::InlineTestModule {
+                    file: path.clone(),
+                    line: line_num + 1,
+                    severity: Severity::Warning,
+                });
             }
             Ok(())
         })?;

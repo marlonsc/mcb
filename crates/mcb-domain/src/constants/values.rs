@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Domain layer constants definitions
 
 // ============================================================================
@@ -6,6 +9,12 @@
 
 /// Default batch size for indexing operations
 pub const INDEXING_BATCH_SIZE: usize = 10;
+
+/// Indexing status: started
+pub const INDEXING_STATUS_STARTED: &str = "started";
+
+/// Indexing status: completed
+pub const INDEXING_STATUS_COMPLETED: &str = "completed";
 
 /// Minimum character length for a code chunk to be indexed
 pub const INDEXING_CHUNK_MIN_LENGTH: usize = 25;

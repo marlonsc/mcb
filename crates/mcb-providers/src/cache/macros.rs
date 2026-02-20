@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Cache provider linkme registration macro.
 //!
 //! Used by cache providers: moka, redis.

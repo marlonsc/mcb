@@ -1,5 +1,7 @@
 //! External Provider Ports
 //!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 //! Ports for external services and providers that the domain depends on.
 //! These interfaces define contracts for embedding providers, vector stores,
 //! language chunking, caching, cryptography, and other external services.

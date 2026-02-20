@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Moka in-memory cache provider
 //!
 //! High-performance, concurrent in-memory cache implementation using Moka.

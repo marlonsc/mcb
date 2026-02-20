@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Infrastructure factory helpers.
 //!
 //! Config-driven factories for contexts that don't need full `AppContext`.

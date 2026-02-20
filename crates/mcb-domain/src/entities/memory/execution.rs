@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -25,13 +28,7 @@ pub enum ExecutionType {
     CI,
 }
 
-impl ExecutionType {
-    /// Returns the string representation of the execution type.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(ExecutionType);
 
 /// Metadata about an execution event (test, lint, build, or CI).
 #[skip_serializing_none]

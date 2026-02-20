@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -31,15 +34,7 @@ pub enum QualityGateStatus {
     Skipped,
 }
 
-impl QualityGateStatus {
-    /// Converts the quality gate status to its string representation.
-    ///
-    /// Returns a static string slice representing the status value.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(QualityGateStatus);
 
 /// Represents the result of a quality gate execution.
 ///

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Service Lifecycle Management
 //!
 //! This module provides the `ServiceManager` which orchestrates the lifecycle
@@ -157,22 +160,13 @@ impl ServiceManager {
     ///
     /// Returns an error if the service is not found or fails to start.
     pub async fn start(&self, name: &str) -> Result<(), ServiceManagerError> {
-        let service = self
-            .services
-            .get(name)
-            .ok_or_else(|| ServiceManagerError::ServiceNotFound(name.to_owned()))?;
-
-        let previous_state = service.state();
-        info!(service = %name, previous = ?previous_state, "Starting service");
-
-        service.start().await?;
-
-        let new_state = service.state();
-        self.emit_state_change(name, new_state, Some(previous_state))
-            .await;
-
-        info!(service = %name, state = ?new_state, "Service started");
-        Ok(())
+        self.execute_service_op(
+            name,
+            "starting",
+            "started",
+            |s| async move { s.start().await },
+        )
+        .await
     }
 
     /// Stop a specific service
@@ -181,22 +175,13 @@ impl ServiceManager {
     ///
     /// Returns an error if the service is not found or fails to stop.
     pub async fn stop(&self, name: &str) -> Result<(), ServiceManagerError> {
-        let service = self
-            .services
-            .get(name)
-            .ok_or_else(|| ServiceManagerError::ServiceNotFound(name.to_owned()))?;
-
-        let previous_state = service.state();
-        info!(service = %name, previous = ?previous_state, "Stopping service");
-
-        service.stop().await?;
-
-        let new_state = service.state();
-        self.emit_state_change(name, new_state, Some(previous_state))
-            .await;
-
-        info!(service = %name, state = ?new_state, "Service stopped");
-        Ok(())
+        self.execute_service_op(
+            name,
+            "stopping",
+            "stopped",
+            |s| async move { s.stop().await },
+        )
+        .await
     }
 
     /// Restart a specific service
@@ -205,21 +190,42 @@ impl ServiceManager {
     ///
     /// Returns an error if the service is not found or fails to restart.
     pub async fn restart(&self, name: &str) -> Result<(), ServiceManagerError> {
-        let service = self
-            .services
-            .get(name)
-            .ok_or_else(|| ServiceManagerError::ServiceNotFound(name.to_owned()))?;
+        self.execute_service_op(name, "restarting", "restarted", |s| async move {
+            s.restart().await
+        })
+        .await
+    }
+
+    /// Internal helper to execute a service lifecycle operation with state tracking.
+    async fn execute_service_op<F, Fut>(
+        &self,
+        name: &str,
+        op_present: &str,
+        op_past: &str,
+        operation: F,
+    ) -> Result<(), ServiceManagerError>
+    where
+        F: FnOnce(Arc<dyn LifecycleManaged>) -> Fut,
+        Fut: std::future::Future<Output = mcb_domain::error::Result<()>>,
+    {
+        let service = {
+            let entry = self
+                .services
+                .get(name)
+                .ok_or_else(|| ServiceManagerError::ServiceNotFound(name.to_owned()))?;
+            Arc::clone(entry.value())
+        };
 
         let previous_state = service.state();
-        info!(service = %name, previous = ?previous_state, "Restarting service");
+        info!(service = %name, previous = ?previous_state, "{} service", op_present);
 
-        service.restart().await?;
+        operation(Arc::clone(&service)).await?;
 
         let new_state = service.state();
         self.emit_state_change(name, new_state, Some(previous_state))
             .await;
 
-        info!(service = %name, state = ?new_state, "Service restarted");
+        info!(service = %name, state = ?new_state, "Service {}", op_past);
         Ok(())
     }
 

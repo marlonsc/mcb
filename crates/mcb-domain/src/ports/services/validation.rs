@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
+//!
 //! Provides validation domain definitions.
 //!
 //! This module defines the core data structures and service interfaces for

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -100,55 +103,57 @@ impl MemoryFilter {
     /// Returns true when the observation satisfies all populated filter fields.
     #[must_use]
     pub fn matches(&self, obs: &Observation) -> bool {
-        if self
+        let project_ok = self
             .project_id
             .as_ref()
-            .is_some_and(|id| obs.project_id != *id)
-        {
-            return false;
-        }
-        if self
+            .is_none_or(|id| obs.project_id == *id);
+
+        let session_ok = self
             .session_id
             .as_ref()
-            .is_some_and(|id| obs.metadata.session_id.as_ref() != Some(id))
-        {
-            return false;
-        }
-        if self.parent_session_id.as_ref().is_some_and(|id| {
+            .is_none_or(|id| obs.metadata.session_id.as_ref() == Some(id));
+
+        let parent_session_ok = self.parent_session_id.as_ref().is_none_or(|id| {
             obs.metadata
                 .origin_context
                 .as_ref()
                 .and_then(|ctx| ctx.parent_session_id.as_ref())
-                != Some(id)
-        }) {
-            return false;
-        }
-        if self
+                == Some(id)
+        });
+
+        let repo_ok = self
             .repo_id
             .as_ref()
-            .is_some_and(|id| obs.metadata.repo_id.as_ref() != Some(id))
-        {
-            return false;
-        }
-        if self.r#type.as_ref().is_some_and(|t| &obs.r#type != t) {
-            return false;
-        }
-        if self
+            .is_none_or(|id| obs.metadata.repo_id.as_ref() == Some(id));
+
+        let type_ok = self.r#type.as_ref().is_none_or(|t| &obs.r#type == t);
+
+        let time_ok = self
             .time_range
             .as_ref()
-            .is_some_and(|(start, end)| obs.created_at < *start || obs.created_at > *end)
-        {
-            return false;
-        }
-        if self
+            .is_none_or(|(start, end)| obs.created_at >= *start && obs.created_at <= *end);
+
+        let branch_ok = self
             .branch
             .as_ref()
-            .is_some_and(|b| obs.metadata.branch.as_ref() != Some(b))
-        {
-            return false;
-        }
-        self.commit
+            .is_none_or(|b| obs.metadata.branch.as_ref() == Some(b));
+
+        let commit_ok = self
+            .commit
             .as_ref()
-            .is_none_or(|c| obs.metadata.commit.as_ref() == Some(c))
+            .is_none_or(|c| obs.metadata.commit.as_ref() == Some(c));
+
+        [
+            project_ok,
+            session_ok,
+            parent_session_ok,
+            repo_ok,
+            type_ok,
+            time_ok,
+            branch_ok,
+            commit_ok,
+        ]
+        .into_iter()
+        .all(std::convert::identity)
     }
 }

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Template Engine for YAML Rules
 //!
 //! Provides template inheritance and variable substitution for DRY rule definitions.

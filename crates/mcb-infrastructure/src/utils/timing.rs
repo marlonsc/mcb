@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Timing instrumentation helpers
 //!
 //! Provides reusable timing patterns for operation tracking.

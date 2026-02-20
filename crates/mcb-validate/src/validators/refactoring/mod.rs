@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#refactoring)
+//!
 //! Refactoring Completeness Validation
 //!
 //! Validates that refactorings are complete and not left halfway:

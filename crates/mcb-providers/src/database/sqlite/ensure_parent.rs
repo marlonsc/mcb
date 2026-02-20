@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md#database)
+//!
 use mcb_domain::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{DatabaseExecutor, SqlParam};

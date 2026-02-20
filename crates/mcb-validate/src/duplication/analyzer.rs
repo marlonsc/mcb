@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! `DuplicationAnalyzer` and `DuplicationStats` implementation.
 
 use std::fs;

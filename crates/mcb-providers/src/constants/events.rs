@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 /// NATS default subject for domain events
 pub const NATS_DEFAULT_SUBJECT: &str = "mcb.events";
 

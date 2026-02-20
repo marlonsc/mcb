@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md)
+//!
 use std::path::Path;
 
 use super::super::violation::NamingViolation;
@@ -52,19 +55,19 @@ pub fn validate_file_suffix(
     // Check service files should have _service suffix if in services directory
     // Note: mcb-domain/domain_services contains interfaces, not implementations
     // so we skip suffix validation for that directory
-    if path_str.contains(ARCH_PATH_SERVICES)
-        && !path_str.contains("/domain_services/")
-        && crate_name != domain_crate
-        && !file_name.ends_with(SERVICE_FILE_SUFFIX)
-        && file_name != "mod"
-    {
-        return Some(NamingViolation::BadFileSuffix {
-            path: path.to_path_buf(),
-            component_type: "Service".to_owned(),
-            current_suffix: get_suffix(file_name).to_owned(),
-            expected_suffix: SERVICE_FILE_SUFFIX.to_owned(),
-            severity: Severity::Info,
-        });
+    if path_str.contains(ARCH_PATH_SERVICES) {
+        let in_domain_services = path_str.contains("/domain_services/");
+        let invalid_service_name = !file_name.ends_with(SERVICE_FILE_SUFFIX) && file_name != "mod";
+
+        if !in_domain_services && crate_name != domain_crate && invalid_service_name {
+            return Some(NamingViolation::BadFileSuffix {
+                path: path.to_path_buf(),
+                component_type: "Service".to_owned(),
+                current_suffix: get_suffix(file_name).to_owned(),
+                expected_suffix: SERVICE_FILE_SUFFIX.to_owned(),
+                severity: Severity::Info,
+            });
+        }
     }
 
     // Check factory files - allow both 'factory.rs' and '*_factory.rs'

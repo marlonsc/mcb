@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../docs/modules/infrastructure.md)
+//!
 //! Common macros for infrastructure layer
 
 // ============================================================================

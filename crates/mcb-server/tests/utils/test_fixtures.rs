@@ -198,15 +198,12 @@ pub fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
     static DIR: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
     DIR.get_or_init(|| {
         let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
-            || {
-                std::env::temp_dir()
-                    .join(format!("mcb-fastembed-test-cache-{}", std::process::id()))
-            },
+            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
             std::path::PathBuf::from,
         );
         if let Err(err) = std::fs::create_dir_all(&cache_dir) {
             tracing::warn!("failed to create shared fastembed cache dir: {err}");
-            return std::env::temp_dir();
+            return std::env::temp_dir().join("mcb-fastembed-test-cache");
         }
         cache_dir
     })

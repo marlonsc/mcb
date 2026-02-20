@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Configuration Management Service Logic
 
 use std::path::{Path, PathBuf};

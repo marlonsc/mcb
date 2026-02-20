@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Unified CRUD adapter implementation.
 
 use std::collections::HashSet;

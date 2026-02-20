@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
+//!
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};

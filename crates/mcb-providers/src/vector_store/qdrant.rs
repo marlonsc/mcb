@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#vector-store-providers)
+//!
 //! Qdrant Vector Store Provider
 //!
 //! Implements the `VectorStoreProvider` port using Qdrant's cloud and self-hosted
@@ -26,7 +29,7 @@ use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInf
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
+use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
 use crate::utils::vector_store::search_result_from_json_metadata;
 
 /// Qdrant vector store provider
@@ -85,20 +88,17 @@ impl QdrantVectorStoreProvider {
             headers.push(("api-key", key.clone()));
         }
 
-        send_json_request(JsonRequestParams {
+        send_vector_db_request(VectorDbRequestParams {
             client: &self.http_client,
             method,
             url: self.api_url(path),
             timeout: self.timeout,
             provider: "Qdrant",
             operation: path,
-            kind: RequestErrorKind::VectorDb,
             headers: &headers,
             body: body.as_ref(),
-            retry: Some(RetryConfig::new(
-                VECTOR_STORE_RETRY_COUNT,
-                std::time::Duration::from_secs(VECTOR_STORE_RETRY_BACKOFF_SECS),
-            )),
+            retry_attempts: VECTOR_STORE_RETRY_COUNT,
+            retry_backoff_secs: VECTOR_STORE_RETRY_BACKOFF_SECS,
         })
         .await
     }

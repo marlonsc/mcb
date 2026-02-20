@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Caching infrastructure with TTL and namespaces
 //!
 //! Provides caching configuration and wiring.

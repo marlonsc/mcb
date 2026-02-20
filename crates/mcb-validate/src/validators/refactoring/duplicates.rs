@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#refactoring)
+//!
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
@@ -21,6 +24,38 @@ pub fn validate_duplicate_definitions(
 
     // Map: type_name -> Vec<file_path>
     let mut definitions: HashMap<String, Vec<PathBuf>> = HashMap::new();
+    let crates_from_locations = |locations: &[PathBuf]| -> HashSet<String> {
+        locations
+            .iter()
+            .filter_map(|p| {
+                p.to_str()?
+                    .split(CRATE_PATH_DELIMITER)
+                    .nth(1)
+                    .and_then(|s| s.split('/').next())
+                    .map(std::string::ToString::to_string)
+            })
+            .collect()
+    };
+    let duplicate_dirs_count = |locations: &[PathBuf]| -> usize {
+        locations
+            .iter()
+            .filter_map(|p| p.parent()?.to_str().map(str::to_owned))
+            .collect::<HashSet<_>>()
+            .len()
+    };
+    let duplicate_suggestion = |type_name: &str, crates: &HashSet<String>, severity: Severity| {
+        match severity {
+            Severity::Info => format!(
+                "Type '{type_name}' exists in {crates:?}. This is a known migration pattern - consolidate when migration completes."
+            ),
+            Severity::Warning => format!(
+                "Type '{type_name}' is defined in {crates:?}. Consider consolidating to one location."
+            ),
+            Severity::Error => format!(
+                "Type '{type_name}' is unexpectedly defined in multiple crates: {crates:?}. This requires immediate consolidation."
+            ),
+        }
+    };
 
     for src_dir in validator.config.get_scan_dirs()? {
         if validator.should_skip_crate(&src_dir) {
@@ -70,68 +105,35 @@ pub fn validate_duplicate_definitions(
         )?;
     }
 
-    // Find duplicates (same name in different files)
     for (type_name, locations) in definitions {
-        if locations.len() > 1 {
-            // Check if duplicates are in different crates
-            let crates: HashSet<String> = locations
-                .iter()
-                .filter_map(|p| {
-                    p.to_str()?
-                        .split(CRATE_PATH_DELIMITER)
-                        .nth(1)
-                        .and_then(|s| s.split('/').next())
-                        .map(std::string::ToString::to_string)
-                })
-                .collect();
+        if locations.len() <= 1 {
+            continue;
+        }
 
-            if crates.len() > 1 {
-                // Cross-crate duplicate - categorize by pattern
-                let severity = categorize_duplicate_severity(validator, &type_name, &crates);
+        let crates = crates_from_locations(&locations);
 
-                let suggestion = match severity {
-                    Severity::Info => format!(
-                        "Type '{type_name}' exists in {crates:?}. This is a known migration pattern - consolidate when migration completes."
-                    ),
-                    Severity::Warning => format!(
-                        "Type '{type_name}' is defined in {crates:?}. Consider consolidating to one location."
-                    ),
-                    Severity::Error => format!(
-                        "Type '{type_name}' is unexpectedly defined in multiple crates: {crates:?}. This requires immediate consolidation."
-                    ),
-                };
+        if crates.len() > 1 {
+            let severity = categorize_duplicate_severity(validator, &type_name, &crates);
+            violations.push(RefactoringViolation::DuplicateDefinition {
+                type_name: type_name.clone(),
+                locations: locations.clone(),
+                suggestion: duplicate_suggestion(&type_name, &crates, severity),
+                severity,
+            });
+            continue;
+        }
 
-                violations.push(RefactoringViolation::DuplicateDefinition {
-                    type_name: type_name.clone(),
-                    locations: locations.clone(),
-                    suggestion,
-                    severity,
-                });
-            } else if locations.len() >= 2 {
-                // Same crate but duplicates - check if in different directories
-                let dirs: HashSet<String> = locations
-                    .iter()
-                    .filter_map(|p| {
-                        let parent = p.parent()?;
-                        let parent_str = parent.to_str()?;
-                        Some(parent_str.to_owned())
-                    })
-                    .collect();
-
-                // Only flag if duplicates are in different directories (not just mod.rs + impl.rs)
-                if dirs.len() >= 2 {
-                    violations.push(RefactoringViolation::DuplicateDefinition {
-                        type_name: type_name.clone(),
-                        locations: locations.clone(),
-                        suggestion: format!(
-                            "Type '{}' is defined {} times in different directories within the same crate. Consolidate to single location.",
-                            type_name,
-                            locations.len()
-                        ),
-                        severity: Severity::Warning,
-                    });
-                }
-            }
+        if duplicate_dirs_count(&locations) >= 2 {
+            violations.push(RefactoringViolation::DuplicateDefinition {
+                type_name: type_name.clone(),
+                locations: locations.clone(),
+                suggestion: format!(
+                    "Type '{}' is defined {} times in different directories within the same crate. Consolidate to single location.",
+                    type_name,
+                    locations.len()
+                ),
+                severity: Severity::Warning,
+            });
         }
     }
 

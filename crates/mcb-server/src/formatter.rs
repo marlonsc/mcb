@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../docs/modules/server.md)
+//!
 //! Response formatting utilities for MCP server
 //!
 //! This module contains utilities for formatting tool responses in a consistent,

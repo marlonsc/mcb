@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::config::PatternRulesConfig;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;

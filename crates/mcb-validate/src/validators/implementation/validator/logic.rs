@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md)
+//!
 use std::path::{Path, PathBuf};
 
 use super::catch_all::validate_empty_catch_alls;

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Embedded Handlebars templates compiled into the binary.
 //!
 //! When the template directory is unavailable at runtime (e.g., installed binary

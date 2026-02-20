@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#vector-store-providers)
+//!
 //! Pinecone Vector Store Provider
 //!
 //! Implements the `VectorStoreProvider` using Pinecone's cloud vector database REST API.
@@ -25,7 +28,7 @@ use crate::constants::{
     STATUS_ACTIVE, STATUS_UNKNOWN, VECTOR_FIELD_FILE_PATH, VECTOR_STORE_RETRY_BACKOFF_SECS,
     VECTOR_STORE_RETRY_COUNT,
 };
-use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
+use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
 use crate::utils::vector_store::search_result_from_json_metadata;
 
 /// Pinecone vector store provider
@@ -77,20 +80,17 @@ impl PineconeVectorStoreProvider {
             (HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned()),
         ];
 
-        send_json_request(JsonRequestParams {
+        send_vector_db_request(VectorDbRequestParams {
             client: &self.http_client,
             method,
             url: self.api_url(path),
             timeout: self.timeout,
             provider: "Pinecone",
             operation: path,
-            kind: RequestErrorKind::VectorDb,
             headers: &headers,
             body: body.as_ref(),
-            retry: Some(RetryConfig::new(
-                VECTOR_STORE_RETRY_COUNT,
-                std::time::Duration::from_secs(VECTOR_STORE_RETRY_BACKOFF_SECS),
-            )),
+            retry_attempts: VECTOR_STORE_RETRY_COUNT,
+            retry_backoff_secs: VECTOR_STORE_RETRY_BACKOFF_SECS,
         })
         .await
     }

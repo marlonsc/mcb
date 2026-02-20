@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 use mcb_domain::value_objects::CollectionId;
 
 /// Validate and normalize a user-supplied collection name into a valid [`CollectionId`].

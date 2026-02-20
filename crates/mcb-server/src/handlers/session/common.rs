@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 

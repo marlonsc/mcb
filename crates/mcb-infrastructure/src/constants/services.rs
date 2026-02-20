@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! DI service display names.
 //!
 //! Used by bootstrap and catalog for service registration and logging.

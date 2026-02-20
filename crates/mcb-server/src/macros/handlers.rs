@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Handler utility macros for field extraction and validation.
 //!
 //! Used by `handlers/memory/` and `handlers/entities/` to reduce

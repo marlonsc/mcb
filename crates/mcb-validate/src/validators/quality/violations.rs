@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
+//!
 use crate::define_violations;
 use crate::{Severity, traits::violation::ViolationCategory};
 use std::path::PathBuf;

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Admin entity registry — schema-driven metadata for auto-generated CRUD UI.
 //!
 //! Reads `schemars::JsonSchema` derives from domain entities at runtime via

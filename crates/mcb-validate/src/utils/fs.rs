@@ -1,40 +1,17 @@
-use std::path::{Path, PathBuf};
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
+//! Filesystem utilities re-exported from `mcb-domain`.
 
 use crate::Result;
+use std::path::{Path, PathBuf};
 
-/// Collect all YAML files recursively from a directory
+/// Collect all YAML files recursively from a directory.
 ///
 /// # Errors
 ///
 /// Returns an error if directory traversal fails.
 pub fn collect_yaml_files(root: &Path) -> Result<Vec<PathBuf>> {
-    if !root.exists() {
-        return Ok(Vec::new());
-    }
-
-    let mut files = Vec::new();
-    let mut stack = vec![root.to_path_buf()];
-
-    while let Some(dir) = stack.pop() {
-        for entry in std::fs::read_dir(&dir).map_err(crate::ValidationError::Io)? {
-            let entry = entry.map_err(crate::ValidationError::Io)?;
-            let path = entry.path();
-            let file_type = entry.file_type().map_err(crate::ValidationError::Io)?;
-
-            if file_type.is_dir() {
-                stack.push(path);
-                continue;
-            }
-
-            if file_type.is_file()
-                && path
-                    .extension()
-                    .is_some_and(|ext| ext == "yml" || ext == "yaml")
-            {
-                files.push(path);
-            }
-        }
-    }
-
-    Ok(files)
+    mcb_domain::utils::fs::find_files_by_extensions(root, &["yml", "yaml"])
+        .map_err(|e| crate::ValidationError::Config(e.to_string()))
 }

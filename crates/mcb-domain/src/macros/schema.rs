@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! DDL schema builder macros.
 //!
 //! Used by `schema/` modules for table, column, and index definitions.
@@ -77,6 +80,19 @@ macro_rules! index {
             table: $table.to_string(),
             columns: vec![ $($col.to_string()),* ],
         }
+    };
+}
+
+/// Define multiple indexes for a table in one go.
+/// Define multiple indexes for a single table with one macro call.
+#[macro_export]
+macro_rules! indexes_for_table {
+    ($table:expr, { $($name:expr => [ $($col:expr),* $(,)? ]),+ $(,)? }) => {
+        vec![
+            $(
+                $crate::index!($name, $table, [$($col),*]),
+            )+
+        ]
     };
 }
 

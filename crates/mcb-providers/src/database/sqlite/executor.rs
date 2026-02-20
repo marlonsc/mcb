@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md#database)
+//!
 //! `SQLite` implementation of the database executor port.
 //!
 //! Uses the domain port [`DatabaseExecutor`] and [`SqlRow`]; repositories depend

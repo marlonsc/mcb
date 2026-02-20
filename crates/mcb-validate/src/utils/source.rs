@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Source code analysis utilities.
 //!
 //! Provides function extraction, brace-delimited block tracking, declaration

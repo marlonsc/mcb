@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
+//!
 //! VCS Entity Repository Port
 //!
 //! # Overview
@@ -10,10 +13,8 @@ use crate::entities::worktree::{AgentWorktreeAssignment, Worktree};
 use crate::error::Result;
 
 #[async_trait]
-/// Defines behavior for `VcsEntityRepository`.
-#[async_trait]
-/// Registry for VCS repositories.
-pub trait RepositoryRegistry: Send + Sync {
+/// Unified repository for VCS entities.
+pub trait VcsEntityRepository: Send + Sync {
     /// Performs the create repository operation.
     async fn create_repository(&self, repo: &Repository) -> Result<()>;
     /// Performs the get repository operation.
@@ -24,11 +25,7 @@ pub trait RepositoryRegistry: Send + Sync {
     async fn update_repository(&self, repo: &Repository) -> Result<()>;
     /// Performs the delete repository operation.
     async fn delete_repository(&self, org_id: &str, id: &str) -> Result<()>;
-}
 
-#[async_trait]
-/// Registry for branches.
-pub trait BranchRegistry: Send + Sync {
     /// Performs the create branch operation.
     async fn create_branch(&self, branch: &Branch) -> Result<()>;
     /// Performs the get branch operation.
@@ -39,11 +36,7 @@ pub trait BranchRegistry: Send + Sync {
     async fn update_branch(&self, branch: &Branch) -> Result<()>;
     /// Performs the delete branch operation.
     async fn delete_branch(&self, id: &str) -> Result<()>;
-}
 
-#[async_trait]
-/// Manager for worktrees.
-pub trait WorktreeManager: Send + Sync {
     /// Performs the create worktree operation.
     async fn create_worktree(&self, wt: &Worktree) -> Result<()>;
     /// Performs the get worktree operation.
@@ -54,11 +47,7 @@ pub trait WorktreeManager: Send + Sync {
     async fn update_worktree(&self, wt: &Worktree) -> Result<()>;
     /// Performs the delete worktree operation.
     async fn delete_worktree(&self, id: &str) -> Result<()>;
-}
 
-#[async_trait]
-/// Manager for agent worktree assignments.
-pub trait AssignmentManager: Send + Sync {
     /// Performs the create assignment operation.
     async fn create_assignment(&self, asgn: &AgentWorktreeAssignment) -> Result<()>;
     /// Performs the get assignment operation.
@@ -70,15 +59,4 @@ pub trait AssignmentManager: Send + Sync {
     ) -> Result<Vec<AgentWorktreeAssignment>>;
     /// Performs the release assignment operation.
     async fn release_assignment(&self, id: &str, released_at: i64) -> Result<()>;
-}
-
-/// Aggregate trait for VCS entity management.
-pub trait VcsEntityRepository:
-    RepositoryRegistry + BranchRegistry + WorktreeManager + AssignmentManager + Send + Sync
-{
-}
-
-impl<T> VcsEntityRepository for T where
-    T: RepositoryRegistry + BranchRegistry + WorktreeManager + AssignmentManager + Send + Sync
-{
 }

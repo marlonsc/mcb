@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 use crate::constants::io::{FILE_READ_BUFFER_SIZE, MASKED_ID_PREFIX_LENGTH};
 use crate::error::{Error, Result};
 use sha2::{Digest, Sha256};

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#vector-store-providers)
+//!
 //! `EdgeVec` Vector Store Provider
 //!
 //! High-performance embedded vector database implementation using `EdgeVec`.

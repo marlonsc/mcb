@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! RETE Engine Wrapper
 //!
 //! Wrapper for rust-rule-engine crate implementing RETE-UL algorithm.

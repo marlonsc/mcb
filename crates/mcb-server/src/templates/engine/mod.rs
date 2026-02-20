@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Template engine abstraction and management.
 //!
 //! This module defines the [`Engine`] trait for templating engines and the

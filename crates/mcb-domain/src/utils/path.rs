@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Canonical path utilities — strict, no fallbacks.
 //!
 //! See [`UTILITIES_POLICY.md`](./UTILITIES_POLICY.md) for rules.

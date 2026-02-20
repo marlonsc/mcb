@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! List-of-Values (LOV) endpoint for populating FK dropdown selects.
 //!
 //! Returns lightweight `[{id, label}]` JSON arrays suitable for `<select>`

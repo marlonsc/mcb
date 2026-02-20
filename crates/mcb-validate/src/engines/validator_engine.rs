@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Validator Engine
 //!
 //! Uses validator and garde crates for field-level validations

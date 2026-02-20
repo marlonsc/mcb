@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use mcb_domain::entities::memory::{ExecutionMetadata, ObservationMetadata, QualityGateResult};
 use std::sync::Arc;
 

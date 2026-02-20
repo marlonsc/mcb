@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Token Fingerprinting using Rabin-Karp Rolling Hash
 //!
 //! Provides fast initial duplication detection using a rolling hash algorithm.

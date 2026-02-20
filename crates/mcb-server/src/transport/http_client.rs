@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! HTTP Client Transport
 //!
 //! MCP client that connects to a remote MCB server via HTTP.
@@ -364,49 +367,38 @@ mod tests {
 
     #[test]
     fn session_id_persists_via_session_file() {
-        let temp_dir = match tempfile::tempdir() {
-            Ok(dir) => dir,
-            Err(_) => return,
-        };
+        let temp_dir = tempfile::tempdir().expect("failed to create temp dir");
         let session_file = temp_dir.path().join("session.id");
-        let session_file_str = match session_file.to_str() {
-            Some(value) => value.to_owned(),
-            None => return,
-        };
+        let session_file_str = session_file
+            .to_str()
+            .expect("session file path is not valid UTF-8")
+            .to_owned();
 
-        let first = match HttpClientTransport::new_with_session_source(
+        let first = HttpClientTransport::new_with_session_source(
             "http://127.0.0.1:18080".to_owned(),
             Some("persist".to_owned()),
             Duration::from_secs(10),
             None,
             Some(session_file_str.clone()),
-        ) {
-            Ok(client) => client,
-            Err(_) => return,
-        };
+        )
+        .expect("failed to create first client");
         drop(first);
 
-        let first_session = match fs::read_to_string(&session_file) {
-            Ok(value) => value,
-            Err(_) => return,
-        };
+        let first_session =
+            fs::read_to_string(&session_file).expect("failed to read first session");
 
-        let second = match HttpClientTransport::new_with_session_source(
+        let second = HttpClientTransport::new_with_session_source(
             "http://127.0.0.1:18080".to_owned(),
             Some("persist".to_owned()),
             Duration::from_secs(10),
             None,
             Some(session_file_str),
-        ) {
-            Ok(client) => client,
-            Err(_) => return,
-        };
+        )
+        .expect("failed to create second client");
         drop(second);
 
-        let second_session = match fs::read_to_string(&session_file) {
-            Ok(value) => value,
-            Err(_) => return,
-        };
+        let second_session =
+            fs::read_to_string(&session_file).expect("failed to read second session");
 
         assert!(!first_session.trim().is_empty());
         assert_eq!(first_session, second_session);

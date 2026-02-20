@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! FSM transition logic and state validation rules for ADR-034 Workflow.
 //!
 //! Implements the state machine rules that govern valid transitions

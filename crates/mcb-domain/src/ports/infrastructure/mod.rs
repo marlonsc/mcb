@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Infrastructure Ports
 //!
 //! Ports for infrastructure services that provide technical capabilities

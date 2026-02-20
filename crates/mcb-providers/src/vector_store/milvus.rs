@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#vector-store-providers)
+//!
 //! Milvus vector store provider implementation
 //!
 //! High-performance cloud vector database using Milvus.

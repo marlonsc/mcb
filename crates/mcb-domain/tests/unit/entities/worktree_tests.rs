@@ -58,19 +58,17 @@ fn worktree_variants(
     #[case] assigned_agent_id: Option<&str>,
 ) {
     let wt = Worktree {
-        metadata: mcb_domain::entities::EntityMetadata {
-            id: id.to_owned(),
-            created_at: 1000,
-            updated_at: 1000,
-        },
+        id: id.to_owned(),
         repository_id: repository_id.to_owned(),
         branch_id: branch_id.to_owned(),
         path: path.to_owned(),
         status: status.clone(),
         assigned_agent_id: assigned_agent_id.map(str::to_string),
+        created_at: 1000,
+        updated_at: 1000,
     };
 
-    assert_eq!(wt.metadata.id, id);
+    assert_eq!(wt.id, id);
     assert_eq!(wt.repository_id, repository_id);
     assert_eq!(wt.branch_id, branch_id);
     assert_eq!(wt.path, path);
@@ -78,7 +76,7 @@ fn worktree_variants(
 
     let json = serde_json::to_string(&wt).expect("serialize");
     let deserialized: Worktree = serde_json::from_str(&json).expect("deserialize");
-    assert_eq!(deserialized.metadata.id, id);
+    assert_eq!(deserialized.id, id);
     assert_eq!(deserialized.status, status);
     assert_eq!(deserialized.path, path);
 }

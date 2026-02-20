@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! NATS Event Bus Provider
 //!
 //! Event bus implementation using NATS for distributed event distribution.

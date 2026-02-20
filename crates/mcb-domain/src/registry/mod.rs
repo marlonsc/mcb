@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Provider Registry System
 //!
 //! Defines the auto-registration infrastructure for plugin providers.

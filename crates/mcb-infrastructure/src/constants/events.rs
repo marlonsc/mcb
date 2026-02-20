@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `DEFAULT_NATS_CLIENT_NAME`.
 pub const DEFAULT_NATS_CLIENT_NAME: &str = "mcb-context-browser";
 /// Constant value for `NATS_CONNECT_TIMEOUT_SECS`.

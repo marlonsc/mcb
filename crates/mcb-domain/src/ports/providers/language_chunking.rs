@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 //! Language Chunking Provider Port
 //!
 //! Port for language-specific code chunking providers. Each provider handles

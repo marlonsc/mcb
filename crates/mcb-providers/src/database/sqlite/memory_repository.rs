@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md#database)
+//!
 //! `SQLite` Memory Repository
 // TODO(REF003): Missing test file for crates/mcb-providers/src/database/sqlite/memory_repository.rs.
 // Expected: crates/mcb-providers/tests/memory_repository_test.rs

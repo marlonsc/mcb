@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 use crate::entities::project::ProjectType;
 
 /// Helper for retrieving the project name without needing methods on the domain type.

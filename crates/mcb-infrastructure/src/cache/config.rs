@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Cache configuration utilities
 //!
 //! Infrastructure-specific cache utilities only.

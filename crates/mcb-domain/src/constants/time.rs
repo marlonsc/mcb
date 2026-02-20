@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Time validation and boundary constants.
 
 /// Minimum valid Unix timestamp (2020-01-01 00:00:00 UTC).

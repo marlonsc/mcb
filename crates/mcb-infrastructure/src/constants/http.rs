@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Default HTTP server port.
 pub const DEFAULT_HTTP_PORT: u16 = 8080;
 

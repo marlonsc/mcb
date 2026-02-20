@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Expression Engine Wrapper
 //!
 //! Wrapper for evalexpr crate providing simple boolean expression evaluation.
@@ -30,6 +33,22 @@ use crate::traits::violation::{Severity, ViolationCategory};
 pub struct ExpressionEngine {
     /// Cached contexts for repeated evaluations
     cached_contexts: HashMap<String, HashMapContext>,
+}
+
+/// `ExpressionRuleInput` struct.
+pub struct ExpressionRuleInput<'a> {
+    /// Rule ID
+    pub rule_id: &'a str,
+    /// Expression to evaluate
+    pub expression: &'a str,
+    /// Rule context containing file contents
+    pub context: &'a RuleContext,
+    /// Violation message
+    pub message: &'a str,
+    /// Violation severity
+    pub severity: Severity,
+    /// Violation category
+    pub category: ViolationCategory,
 }
 
 impl Default for ExpressionEngine {
@@ -172,13 +191,17 @@ impl ExpressionEngine {
     /// Returns an error if expression evaluation fails.
     pub async fn execute_expression_rule(
         &self,
-        rule_id: &str,
-        expression: &str,
-        context: &RuleContext,
-        message: &str,
-        severity: Severity,
-        category: ViolationCategory,
+        input: ExpressionRuleInput<'_>,
     ) -> Result<Vec<RuleViolation>> {
+        let ExpressionRuleInput {
+            rule_id,
+            expression,
+            context,
+            message,
+            severity,
+            category,
+        } = input;
+
         let mut violations = Vec::new();
 
         match self.evaluate_expression(expression, context) {
@@ -259,8 +282,15 @@ impl RuleEngine for ExpressionEngine {
                 _ => ViolationCategory::Quality,
             });
 
-        self.execute_expression_rule(rule_id, expression, context, message, severity, category)
-            .await
+        self.execute_expression_rule(ExpressionRuleInput {
+            rule_id,
+            expression,
+            context,
+            message,
+            severity,
+            category,
+        })
+        .await
     }
 }
 

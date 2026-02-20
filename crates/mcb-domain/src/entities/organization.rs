@@ -1,27 +1,23 @@
 //! Organization entity — the root tenant for multi-tenant isolation.
 //!
-//! **Documentation**: [`docs/modules/domain.md#core-entities-entities`](../../../../docs/modules/domain.md#core-entities-entities)
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
 //!
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// An organization is the top-level tenant. Every user, team, project,
-/// and piece of data belongs to exactly one organization. Row-level
-/// isolation in the database is enforced via `org_id` foreign keys.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct Organization {
-    /// Unique identifier (UUID).
-    pub id: String,
-    /// Human-readable display name.
-    pub name: String,
-    /// URL-safe slug for routing and display (e.g. "acme-corp").
-    pub slug: String,
-    /// Arbitrary JSON settings (quotas, feature flags, etc.).
-    pub settings_json: String,
-    /// Timestamp when the organization was created (Unix epoch).
-    pub created_at: i64,
-    /// Timestamp when the organization was last updated (Unix epoch).
-    pub updated_at: i64,
+crate::define_entity_id_audited! {
+    /// An organization is the top-level tenant. Every user, team, project,
+    /// and piece of data belongs to exactly one organization. Row-level
+    /// isolation in the database is enforced via `org_id` foreign keys.
+    #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+    pub struct Organization {
+        /// Readable name of the organization.
+        pub name: String,
+        /// URL-friendly identifier for the organization.
+        pub slug: String,
+        /// JSON-encoded settings for the organization.
+        pub settings_json: String,
+    }
 }
 
 /// Status of an organization in its lifecycle.
@@ -47,10 +43,4 @@ pub enum OrgStatus {
     Archived,
 }
 
-impl OrgStatus {
-    /// Returns the string representation of the organization status.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(OrgStatus);

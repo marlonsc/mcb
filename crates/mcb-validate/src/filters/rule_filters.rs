@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Rule Filter Executor
 //!
 //! Coordinates filtering of validation rules based on language, dependencies, and file patterns.
@@ -57,15 +60,15 @@ pub struct RuleFilters {
 impl RuleFilters {
     /// Returns `true` when no filter criteria are configured.
     pub fn is_empty(&self) -> bool {
-        self.languages.is_none()
-            && self.dependencies.is_none()
-            && self.file_patterns.is_none()
-            && self
-                .allow
-                .as_ref()
-                .is_none_or(ApplicabilityFilter::is_empty)
-            && self.deny.as_ref().is_none_or(ApplicabilityFilter::is_empty)
-            && self.skip.as_ref().is_none_or(ApplicabilityFilter::is_empty)
+        let no_file_filters =
+            self.languages.is_none() && self.dependencies.is_none() && self.file_patterns.is_none();
+        let no_allow = self
+            .allow
+            .as_ref()
+            .is_none_or(ApplicabilityFilter::is_empty);
+        let no_deny = self.deny.as_ref().is_none_or(ApplicabilityFilter::is_empty);
+        let no_skip = self.skip.as_ref().is_none_or(ApplicabilityFilter::is_empty);
+        no_file_filters && no_allow && no_deny && no_skip
     }
 }
 
@@ -124,45 +127,37 @@ impl RuleFilterExecutor {
             return Ok(true);
         }
 
-        if let Some(languages) = &filters.languages
-            && !self
-                .language_detector
+        let language_ok = filters.languages.as_ref().is_none_or(|languages| {
+            self.language_detector
                 .matches_languages(file_path, file_content, languages)
-        {
-            return Ok(false);
-        }
+        });
 
-        if let Some(required_deps) = &filters.dependencies
-            && !Self::check_dependencies(required_deps, file_path, workspace_deps)
-        {
-            return Ok(false);
-        }
+        let dependencies_ok = filters.dependencies.as_ref().is_none_or(|required_deps| {
+            Self::check_dependencies(required_deps, file_path, workspace_deps)
+        });
 
-        if let Some(patterns) = &filters.file_patterns
-            && !self.matches_patterns_with_fallback(file_path, patterns)
-        {
-            return Ok(false);
-        }
+        let patterns_ok = filters
+            .file_patterns
+            .as_ref()
+            .is_none_or(|patterns| self.matches_patterns_with_fallback(file_path, patterns));
 
-        if let Some(skip) = &filters.skip
-            && self.matches_filter(file_path, skip)
-        {
-            return Ok(false);
-        }
+        let skip_match = filters
+            .skip
+            .as_ref()
+            .is_some_and(|skip| self.matches_filter(file_path, skip));
 
-        if let Some(deny) = &filters.deny
-            && self.matches_filter(file_path, deny)
-        {
-            let allowed = filters
-                .allow
-                .as_ref()
-                .is_some_and(|allow| self.matches_filter(file_path, allow));
-            if !allowed {
-                return Ok(false);
-            }
-        }
+        let deny_match = filters
+            .deny
+            .as_ref()
+            .is_some_and(|deny| self.matches_filter(file_path, deny));
+        let allow_match = filters
+            .allow
+            .as_ref()
+            .is_some_and(|allow| self.matches_filter(file_path, allow));
 
-        Ok(true)
+        let access_ok = !skip_match && (!deny_match || allow_match);
+
+        Ok(language_ok && dependencies_ok && patterns_ok && access_ok)
     }
 
     fn relative_path<'a>(&'a self, file_path: &'a Path) -> &'a Path {

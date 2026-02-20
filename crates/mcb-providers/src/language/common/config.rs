@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! Configuration structures for intelligent code chunking
 //!
 //! Defines the core configuration types used for language-specific

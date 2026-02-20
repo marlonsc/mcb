@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Module Visibility Validation
 //!
 //! Validates proper use of pub(crate), pub, and private visibility.

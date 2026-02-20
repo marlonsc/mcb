@@ -1,24 +1,9 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Entity and value-object macros.
 //!
 //! Used by `entities/` and `value_objects/` modules.
-
-/// Implement `BaseEntity` for structs using `EntityMetadata`
-#[macro_export]
-macro_rules! impl_base_entity {
-    ($t:ty) => {
-        impl $crate::entities::BaseEntity for $t {
-            fn id(&self) -> &str {
-                &self.metadata.id
-            }
-            fn created_at(&self) -> i64 {
-                self.metadata.created_at
-            }
-            fn updated_at(&self) -> i64 {
-                self.metadata.updated_at
-            }
-        }
-    };
-}
 
 /// Define a strong-typed UUID identifier for a domain entity.
 ///
@@ -122,6 +107,164 @@ macro_rules! define_id {
         impl From<&str> for $name {
             fn from(s: &str) -> Self {
                 Self::from_string(s)
+            }
+        }
+    };
+}
+
+/// Define an entity with `id` and `created_at` fields.
+#[macro_export]
+macro_rules! define_entity_id_created {
+    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
+        $(#[$meta])*
+        $vis struct $name {
+            /// Unique identifier for the entity.
+            pub id: String,
+            $($body)*
+            /// Timestamp when the entity was created (Unix epoch).
+            pub created_at: i64,
+        }
+    };
+}
+
+/// Define an entity with `id`, `created_at`, and `updated_at` fields.
+#[macro_export]
+macro_rules! define_entity_id_audited {
+    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
+        $(#[$meta])*
+        $vis struct $name {
+            /// Unique identifier for the entity.
+            pub id: String,
+            $($body)*
+            /// Timestamp when the entity was created (Unix epoch).
+            pub created_at: i64,
+            /// Timestamp when the entity was last updated (Unix epoch).
+            pub updated_at: i64,
+        }
+    };
+}
+
+/// Define an entity with `id`, `org_id`, and `created_at` fields.
+#[macro_export]
+macro_rules! define_entity_org_created {
+    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
+        $(#[$meta])*
+        $vis struct $name {
+            /// Unique identifier for the entity.
+            pub id: String,
+            $($body)*
+            /// Organization identifier for tenant isolation.
+            pub org_id: String,
+            /// Timestamp when the entity was created (Unix epoch).
+            pub created_at: i64,
+        }
+    };
+}
+
+/// Define an entity with `id`, `org_id`, `created_at`, and `updated_at` fields.
+#[macro_export]
+macro_rules! define_entity_org_audited {
+    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
+        $(#[$meta])*
+        $vis struct $name {
+            /// Unique identifier for the entity.
+            pub id: String,
+            $($body)*
+            /// Organization identifier for tenant isolation.
+            pub org_id: String,
+            /// Timestamp when the entity was created (Unix epoch).
+            pub created_at: i64,
+            /// Timestamp when the entity was last updated (Unix epoch).
+            pub updated_at: i64,
+        }
+    };
+}
+
+/// Define an entity with `id`, `org_id`, `project_id`, and `created_at` fields.
+#[macro_export]
+macro_rules! define_entity_project_created {
+    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
+        $(#[$meta])*
+        $vis struct $name {
+            /// Unique identifier for the entity.
+            pub id: String,
+            $($body)*
+            /// Project identifier the entity belongs to.
+            pub project_id: String,
+            /// Timestamp when the entity was created (Unix epoch).
+            pub created_at: i64,
+        }
+    };
+}
+
+/// Define an entity with `id`, `project_id`, `created_at`, and `updated_at` fields.
+#[macro_export]
+macro_rules! define_entity_project_audited {
+    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
+        $(#[$meta])*
+        $vis struct $name {
+            /// Unique identifier for the entity.
+            pub id: String,
+            $($body)*
+            /// Project identifier the entity belongs to.
+            pub project_id: String,
+            /// Timestamp when the entity was created (Unix epoch).
+            pub created_at: i64,
+            /// Timestamp when the entity was last updated (Unix epoch).
+            pub updated_at: i64,
+        }
+    };
+}
+
+/// Define an entity with `id`, `org_id`, `project_id`, `created_at`, and `updated_at` fields.
+#[macro_export]
+macro_rules! define_entity_org_project_audited {
+    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
+        $(#[$meta])*
+        $vis struct $name {
+            /// Unique identifier for the entity.
+            pub id: String,
+            $($body)*
+            /// Organization identifier for tenant isolation.
+            pub org_id: String,
+            /// Project identifier the entity belongs to.
+            pub project_id: String,
+            /// Timestamp when the entity was created (Unix epoch).
+            pub created_at: i64,
+            /// Timestamp when the entity was last updated (Unix epoch).
+            pub updated_at: i64,
+        }
+    };
+}
+
+/// Define an entity with `id`, `org_id`, `project_id`, and `created_at` fields.
+#[macro_export]
+macro_rules! define_entity_org_project_created {
+    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
+        $(#[$meta])*
+        $vis struct $name {
+            /// Unique identifier for the entity.
+            pub id: String,
+            $($body)*
+            /// Organization identifier for tenant isolation.
+            pub org_id: String,
+            /// Project identifier the entity belongs to.
+            pub project_id: String,
+            /// Timestamp when the entity was created (Unix epoch).
+            pub created_at: i64,
+        }
+    };
+}
+
+/// Implement `as_str()` by delegating to `AsRefStr::as_ref()`.
+#[macro_export]
+macro_rules! impl_as_str_from_as_ref {
+    ($type:ty) => {
+        impl $type {
+            /// Returns the canonical string representation.
+            #[must_use]
+            pub fn as_str(&self) -> &str {
+                self.as_ref()
             }
         }
     };

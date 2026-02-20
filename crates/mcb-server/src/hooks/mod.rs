@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Hook processor for automatic memory operations on tool completion and session start.
 //!
 //! This module provides a hook system that automatically:

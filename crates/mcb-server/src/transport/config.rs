@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Transport Configuration Module
 //!
 //! Configuration types and utilities for MCP server transports.

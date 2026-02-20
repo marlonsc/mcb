@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `DEFAULT_CONFIG_FILENAME`.
 pub const DEFAULT_CONFIG_FILENAME: &str = "mcb.toml";
 /// Constant value for `DEFAULT_CONFIG_DIR`.

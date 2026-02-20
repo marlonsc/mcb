@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Service Lifecycle HTTP Handlers
 //!
 //! HTTP handlers for service lifecycle management endpoints.

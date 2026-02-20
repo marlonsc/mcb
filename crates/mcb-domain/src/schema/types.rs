@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 /// Logical column type used by the canonical schema model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ColumnType {

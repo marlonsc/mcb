@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! AST-based Unwrap Detector using rust-code-analysis
 //!
 //! Uses our fork with extended Node API for unwrap/expect detection.

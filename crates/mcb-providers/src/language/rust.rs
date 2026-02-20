@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Rust language processor for AST-based code chunking.
 
 use crate::language::common::{BaseProcessor, CHUNK_SIZE_RUST, LanguageConfig, NodeExtractionRule};

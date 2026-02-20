@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Provider Handles - Runtime-swappable provider wrappers
 //!
 //! Type aliases for the generic `Handle<T>`.

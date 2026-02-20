@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Structured logging with tracing
 //!
 //! Provides centralized logging configuration and utilities using the tracing ecosystem.

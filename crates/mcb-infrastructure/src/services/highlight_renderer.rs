@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 use mcb_domain::value_objects::browse::{HighlightCategory, HighlightedCode};
 
 /// Renders highlighted code to HTML.

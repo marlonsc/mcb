@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 use super::types::{ForeignKeyDef, FtsDef, IndexDef, Schema, TableDef, UniqueConstraintDef};
 use super::{
     agent_sessions, agent_worktree_assignments, api_keys, branches, checkpoints, collections,

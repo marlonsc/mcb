@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Database Provider Registry
 //!
 //! Auto-registration system for database providers using linkme distributed slices.

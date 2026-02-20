@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Lifecycle & Health Port Definitions
 //!
 //! Types and traits for service lifecycle management, health checks,

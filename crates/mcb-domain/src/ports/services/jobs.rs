@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
+//!
 //! Jobs Service Domain Ports
 //!
 //! Defines generic job management interfaces that abstract over specific

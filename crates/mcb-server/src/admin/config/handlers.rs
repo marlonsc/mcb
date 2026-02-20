@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Configuration Management Handlers
 //!
 //! HTTP handlers for runtime configuration management.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use super::constants::MIN_STRING_MATCH_ARMS_FOR_DISPATCH;
 use crate::Result;
 use crate::Severity;

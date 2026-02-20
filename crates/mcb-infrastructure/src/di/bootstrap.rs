@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! DI Container Bootstrap - Provider Handles + Infrastructure Services
 //!
 //! Provides the composition root using runtime-swappable provider handles

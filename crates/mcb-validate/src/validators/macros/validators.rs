@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! Validator registration and trait implementation macros.
 //!
 //! Used by `validators/` for building registries and implementing the `Validator` trait.
@@ -98,5 +101,33 @@ macro_rules! impl_validator {
                     .collect())
             }
         }
+    };
+}
+/// Defines a standard simple validator that executes a list of functions.
+#[macro_export]
+macro_rules! create_validator {
+    ($name:ident, $id:literal, $desc:literal, $violation_ty:ty, [ $($func:path),* $(,)? ]) => {
+        #[doc = $desc]
+        pub struct $name {
+            pub(crate) config: $crate::ValidationConfig,
+        }
+
+        $crate::impl_simple_validator_new!($name);
+
+        impl $name {
+            /// Run all validations and return violations of the specific type.
+            ///
+            /// # Errors
+            /// Returns an error if file traversal or pattern compilation fails.
+            pub fn validate_all(&self) -> $crate::Result<Vec<$violation_ty>> {
+                let mut violations: Vec<$violation_ty> = Vec::new();
+                $(
+                    violations.extend($func(&self.config)?);
+                )*
+                Ok(violations)
+            }
+        }
+
+        $crate::impl_validator!($name, $id, $desc);
     };
 }

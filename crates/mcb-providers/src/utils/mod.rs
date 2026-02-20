@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Provider Utilities
 //!
 //! Shared utilities used by provider implementations.

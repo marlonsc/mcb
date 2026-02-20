@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! KISS Principle Validation
 //!
 //! Validates code simplicity by detecting overly complex structures:

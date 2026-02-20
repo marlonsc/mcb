@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! JSON response field name constants.
 //!
 //! Shared field names used across handler response formatting.

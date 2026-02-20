@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use super::adapter::EntityCrudAdapter;
 use super::mapper::slug_to_resource;
 use super::unified::UnifiedEntityCrudAdapter;

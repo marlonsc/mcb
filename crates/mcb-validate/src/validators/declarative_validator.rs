@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Declarative rule validator that executes embedded YAML rules.
 
 use std::path::{Path, PathBuf};

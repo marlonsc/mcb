@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
+//!
 //! Configuration file watcher for hot-reloading
 //!
 //! Provides automatic configuration reloading when the configuration file changes.

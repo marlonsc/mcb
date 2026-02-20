@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Admin Web UI Module
 //!
 //! Provides a web interface for the admin panel.

@@ -1,3 +1,7 @@
+//! Code quality validation module
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
+//!
 mod comments;
 pub mod constants;
 mod dead_code;

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Code Duplication Detection (Phase 5)
 //!
 //! Provides clone detection using a hybrid approach:

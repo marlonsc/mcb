@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Admin API Authentication
 //!
 //! Provides API key-based authentication for admin endpoints.

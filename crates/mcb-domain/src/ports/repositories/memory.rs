@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
+//!
 //! Memory repository port for observation storage.
 
 use async_trait::async_trait;

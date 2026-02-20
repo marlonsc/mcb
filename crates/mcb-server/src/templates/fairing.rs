@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Rocket fairing for managing template contexts and lifecycles.
 
 use rocket::fairing::{self, Fairing, Info, Kind};

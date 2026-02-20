@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use super::violation::HygieneViolation;
 use crate::filters::LanguageId;
 use crate::run_context::ValidationRunContext;

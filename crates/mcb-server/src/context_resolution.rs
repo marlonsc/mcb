@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../docs/modules/server.md)
+//!
 /// Resolves typed values from MCP request and context metadata.
 ///
 /// This module extracts session IDs, project IDs, and other context values

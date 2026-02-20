@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `DEFAULT_MEMORY_LIMIT`.
 pub const DEFAULT_MEMORY_LIMIT: usize = 1024 * 1024 * 1024;
 /// Constant value for `DEFAULT_CPU_LIMIT`.

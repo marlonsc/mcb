@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 
 /// Load server startup configuration.

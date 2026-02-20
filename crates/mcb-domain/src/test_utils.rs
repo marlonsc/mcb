@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md#testing-utilities](../../../docs/modules/domain.md#testing-utilities)
+//!
 use crate::entities::agent::{
     AgentSession, AgentSessionStatus, AgentType, Checkpoint, CheckpointType, ToolCall,
 };
@@ -24,16 +27,14 @@ pub fn create_test_project(id: &str) -> Project {
 #[must_use]
 pub fn create_test_user() -> User {
     User {
-        metadata: crate::entities::EntityMetadata {
-            id: Uuid::new_v4().to_string(),
-            created_at: 0,
-            updated_at: 0,
-        },
+        id: Uuid::new_v4().to_string(),
         org_id: "test-org".to_owned(),
         email: "test@example.com".to_owned(),
         display_name: "Test User".to_owned(),
         role: crate::entities::user::UserRole::Member,
         api_key_hash: None,
+        created_at: 0,
+        updated_at: 0,
     }
 }
 

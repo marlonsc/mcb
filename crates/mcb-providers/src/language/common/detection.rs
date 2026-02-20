@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! Language Detection
 //!
 //! Provides functions to detect programming languages from file extensions,

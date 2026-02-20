@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#value-objects)
+//!
 //! Configuration Value Objects
 //!
 //! Value objects representing configuration for external providers

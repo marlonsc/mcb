@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Provider Routing Port
 //!
 //! Defines the contract for provider routing and selection services.

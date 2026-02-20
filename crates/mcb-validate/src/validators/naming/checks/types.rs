@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md)
+//!
 use std::path::Path;
 
 use regex::Regex;
@@ -15,46 +18,20 @@ pub fn validate_type_names(
     trait_pattern: &Regex,
 ) -> Vec<NamingViolation> {
     let mut violations = Vec::new();
+    let type_patterns = [struct_pattern, enum_pattern, trait_pattern];
 
     for (line_num, line) in content.lines().enumerate() {
-        // Skip comments
         let trimmed = line.trim();
         if trimmed.starts_with(COMMENT_PREFIX) {
             continue;
         }
 
-        // Check structs
-        if let Some(cap) = struct_pattern.captures(line) {
-            let name = cap.get(1).map_or("", |m| m.as_str());
-            if !is_camel_case(name) {
-                violations.push(NamingViolation::BadTypeName {
-                    file: path.to_path_buf(),
-                    line: line_num + 1,
-                    name: name.to_owned(),
-                    expected_case: "CamelCase".to_owned(),
-                    severity: Severity::Warning,
-                });
-            }
-        }
-
-        // Check enums
-        if let Some(cap) = enum_pattern.captures(line) {
-            let name = cap.get(1).map_or("", |m| m.as_str());
-            if !is_camel_case(name) {
-                violations.push(NamingViolation::BadTypeName {
-                    file: path.to_path_buf(),
-                    line: line_num + 1,
-                    name: name.to_owned(),
-                    expected_case: "CamelCase".to_owned(),
-                    severity: Severity::Warning,
-                });
-            }
-        }
-
-        // Check traits
-        if let Some(cap) = trait_pattern.captures(line) {
-            let name = cap.get(1).map_or("", |m| m.as_str());
-            if !is_camel_case(name) {
+        for pattern in type_patterns {
+            if let Some(cap) = pattern.captures(line) {
+                let name = cap.get(1).map_or("", |m| m.as_str());
+                if is_camel_case(name) {
+                    continue;
+                }
                 violations.push(NamingViolation::BadTypeName {
                     file: path.to_path_buf(),
                     line: line_num + 1,

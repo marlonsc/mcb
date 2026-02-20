@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! MCP tool name constants.
 //!
 //! These are the canonical tool names registered with the MCP protocol.

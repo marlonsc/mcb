@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#vector-store-providers)
+//!
 //! Encrypted vector store wrapper
 //!
 //! Provides encryption at rest for any vector store provider.

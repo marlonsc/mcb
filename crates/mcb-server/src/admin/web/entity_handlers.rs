@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Entity CRUD handlers — schema-driven Handlebars template rendering.
 
 use crate::templates::Template;

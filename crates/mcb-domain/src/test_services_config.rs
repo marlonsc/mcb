@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../docs/modules/domain.md)
+//!
 use std::path::PathBuf;
 use std::sync::OnceLock;
 

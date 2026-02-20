@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 

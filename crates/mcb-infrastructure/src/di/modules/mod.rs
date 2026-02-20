@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! DI Module Organization - Simple Container Pattern
 //!
 //! This module provides domain service factories for runtime service creation.

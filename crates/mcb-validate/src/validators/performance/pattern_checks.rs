@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use super::constants::{
     ARC_MUTEX_OVERUSE_PATTERNS, INEFFICIENT_ITERATOR_PATTERNS, INEFFICIENT_STRING_PATTERNS,
 };

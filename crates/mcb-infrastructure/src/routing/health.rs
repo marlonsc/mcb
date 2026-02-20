@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Health Monitoring for Provider Routing
 //!
 //! Tracks provider health status based on success/failure reports.

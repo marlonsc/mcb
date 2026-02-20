@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/application.md](../../../../docs/modules/application.md#decorators)
+//!
 //! Instrumented Embedding Provider Decorator
 //!
 //! Wraps an `EmbeddingProvider` to record timing metrics for all operations.

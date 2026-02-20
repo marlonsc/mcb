@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Language Detection for Rule Filtering
 //!
 //! Detects programming language from file extensions and content patterns.
@@ -262,31 +265,24 @@ impl LanguageId {
     #[must_use]
     pub fn from_shebang(first_line: &str) -> Option<Self> {
         let line = first_line.trim().to_ascii_lowercase();
-        if !line.starts_with("#!") {
-            return None;
-        }
-
-        if line.contains("python") {
-            return Some(Self::Python);
-        }
-        if line.contains("ts-node") {
-            return Some(Self::TypeScript);
-        }
-        if line.contains("node") || line.contains("deno") {
-            return Some(Self::JavaScript);
-        }
-        if line.contains("bash")
-            || line.contains("sh")
-            || line.contains("zsh")
-            || line.contains("ksh")
-        {
-            return Some(Self::Shell);
-        }
-        if line.contains("ruby") {
-            return Some(Self::Ruby);
-        }
-
-        None
+        line.starts_with("#!")
+            .then(|| {
+                if line.contains("python") {
+                    Self::Python
+                } else if line.contains("ts-node") {
+                    Self::TypeScript
+                } else if line.contains("node") || line.contains("deno") {
+                    Self::JavaScript
+                } else if ["bash", "sh", "zsh", "ksh"]
+                    .iter()
+                    .any(|shell| line.contains(shell))
+                {
+                    Self::Shell
+                } else {
+                    Self::Ruby
+                }
+            })
+            .filter(|lang| *lang != Self::Ruby || line.contains("ruby"))
     }
 }
 

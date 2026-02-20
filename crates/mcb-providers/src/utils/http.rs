@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! HTTP Client Utilities
 //!
 //! Shared HTTP client creation and error handling utilities
@@ -253,4 +256,51 @@ pub(crate) async fn send_json_request(
         None => execute().await,
         Some(config) => retry_with_backoff(config, |_| execute(), is_retryable_error).await,
     }
+}
+
+pub(crate) struct VectorDbRequestParams<'a> {
+    pub client: &'a Client,
+    pub method: reqwest::Method,
+    pub url: String,
+    pub timeout: Duration,
+    pub provider: &'a str,
+    pub operation: &'a str,
+    pub headers: &'a [(&'a str, String)],
+    pub body: Option<&'a Value>,
+    pub retry_attempts: usize,
+    pub retry_backoff_secs: u64,
+}
+
+pub(crate) async fn send_vector_db_request(
+    params: VectorDbRequestParams<'_>,
+) -> mcb_domain::error::Result<Value> {
+    let VectorDbRequestParams {
+        client,
+        method,
+        url,
+        timeout,
+        provider,
+        operation,
+        headers,
+        body,
+        retry_attempts,
+        retry_backoff_secs,
+    } = params;
+
+    send_json_request(JsonRequestParams {
+        client,
+        method,
+        url,
+        timeout,
+        provider,
+        operation,
+        kind: RequestErrorKind::VectorDb,
+        headers,
+        body,
+        retry: Some(RetryConfig::new(
+            retry_attempts,
+            Duration::from_secs(retry_backoff_secs),
+        )),
+    })
+    .await
 }

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 use mcb_domain::error::Error;
 
 fn format_error(label: &str, detail: impl std::fmt::Display) -> String {
@@ -15,76 +18,58 @@ fn log_and_static_error(log: &str, message: &str) -> String {
 }
 
 fn map_client_error(error: &Error) -> Option<String> {
-    if let Error::NotFound { resource } = error {
-        return Some(format!("Not found: {resource}"));
-    }
-    if let Error::InvalidArgument { message } = error {
-        return Some(format!("Invalid argument: {message}"));
-    }
-    if let Error::ObservationNotFound { id } = error {
-        return Some(format!("Observation not found: {id}"));
-    }
-    if let Error::DuplicateObservation { content_hash } = error {
-        return Some(format!("Duplicate observation: {content_hash}"));
-    }
-    if let Error::RepositoryNotFound { path } = error {
-        return Some(format!("Repository not found: {path}"));
-    }
-    if let Error::BranchNotFound { name } = error {
-        return Some(format!("Branch not found: {name}"));
-    }
-    if let Error::InvalidRegex { pattern, message } = error {
-        return Some(format!("Invalid regex pattern '{pattern}': {message}"));
-    }
-    tracing::trace!(mapper = "client", error = %error, "skipped unmatched variant");
-    None
+    #[allow(clippy::wildcard_enum_match_arm)]
+    let message = match error {
+        Error::NotFound { resource } => format!("Not found: {resource}"),
+        Error::InvalidArgument { message } => format!("Invalid argument: {message}"),
+        Error::ObservationNotFound { id } => format!("Observation not found: {id}"),
+        Error::DuplicateObservation { content_hash } => {
+            format!("Duplicate observation: {content_hash}")
+        }
+        Error::RepositoryNotFound { path } => format!("Repository not found: {path}"),
+        Error::BranchNotFound { name } => format!("Branch not found: {name}"),
+        Error::InvalidRegex { pattern, message } => {
+            format!("Invalid regex pattern '{pattern}': {message}")
+        }
+        _ => {
+            tracing::trace!(mapper = "client", error = %error, "skipped unmatched variant");
+            return None;
+        }
+    };
+    Some(message)
 }
 
 fn map_provider_error(error: &Error) -> Option<String> {
-    if let Error::Database { message, .. } = error {
-        return Some(log_and_format_error(
-            "database operation failed",
-            "Database error",
-            message,
-        ));
-    }
-    if let Error::VectorDb { message } = error {
-        return Some(log_and_format_error(
+    #[allow(clippy::wildcard_enum_match_arm)]
+    let message = match error {
+        Error::Database { message, .. } => {
+            log_and_format_error("database operation failed", "Database error", message)
+        }
+        Error::VectorDb { message } => log_and_format_error(
             "vector database operation failed",
             "Vector database error",
             message,
-        ));
-    }
-    if let Error::Embedding { message } = error {
-        return Some(log_and_format_error(
-            "embedding operation failed",
-            "Embedding error",
-            message,
-        ));
-    }
-    if let Error::Network { message, .. } = error {
-        return Some(log_and_format_error(
-            "network operation failed",
-            "Network error",
-            message,
-        ));
-    }
-    if let Error::ObservationStorage { message, .. } = error {
-        return Some(log_and_format_error(
+        ),
+        Error::Embedding { message } => {
+            log_and_format_error("embedding operation failed", "Embedding error", message)
+        }
+        Error::Network { message, .. } => {
+            log_and_format_error("network operation failed", "Network error", message)
+        }
+        Error::ObservationStorage { message, .. } => log_and_format_error(
             "observation storage failed",
             "Memory storage error",
             message,
-        ));
-    }
-    if let Error::Vcs { message, .. } = error {
-        return Some(log_and_format_error(
-            "VCS operation failed",
-            "VCS error",
-            message,
-        ));
-    }
-    tracing::trace!(mapper = "provider", error = %error, "skipped unmatched variant");
-    None
+        ),
+        Error::Vcs { message, .. } => {
+            log_and_format_error("VCS operation failed", "VCS error", message)
+        }
+        _ => {
+            tracing::trace!(mapper = "provider", error = %error, "skipped unmatched variant");
+            return None;
+        }
+    };
+    Some(message)
 }
 
 fn map_config_error(error: &Error) -> Option<String> {

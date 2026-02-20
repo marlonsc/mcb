@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
+//!
 use super::{QualityValidator, QualityViolation};
 use crate::constants::common::TEST_PATH_PATTERNS;
 use crate::filters::LanguageId;

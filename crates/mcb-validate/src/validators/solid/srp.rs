@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use super::constants::MAX_UNRELATED_STRUCTS_PER_FILE;
 use super::validate_decl_member_count;
 use super::{MemberCountInput, MemberCountKind, make_member_count_violation};

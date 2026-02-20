@@ -19,7 +19,7 @@ The providers module implements a trait-based abstraction layer for AI and stora
 
 All port traits are resolved via**dill Catalog** (ADR-029) for dependency injection.
 
-## Embedding Providers (`embedding/`)
+## Embedding Providers
 
 Transform text into vector embeddings.
 
@@ -46,9 +46,7 @@ pub trait EmbeddingProvider: Send + Sync {
 
 All env keys are prefixed with `MCP__PROVIDERS__EMBEDDING__CONFIGS__`. Default timeout: 30s.
 
-## Vector Store Providers (`vector_store/`)
-
-Store and search vector embeddings.
+## Vector Store Providers
 
 **Port:** `VectorStoreProvider` + `VectorStoreAdmin` + `VectorStoreBrowser` (`Send + Sync`)
 
@@ -70,7 +68,7 @@ pub trait VectorStoreProvider: Send + Sync {
 | Pinecone | [`pinecone.rs`](../../crates/mcb-providers/src/vector_store/pinecone.rs) | HTTP REST | API key | Pre-created index | Managed cloud |
 | Encrypted | [`encrypted.rs`](../../crates/mcb-providers/src/vector_store/encrypted.rs) | Wraps any | N/A | AES-256-GCM decorator | Security-sensitive |
 
-## Database (`database/sqlite/`)
+## Database
 
 - **Engine**: SQLite via sqlx v0.8 — primary persistence
 - **Full-text search**: FTS5 for lexical search
@@ -81,21 +79,21 @@ pub trait VectorStoreProvider: Send + Sync {
 
 | Repository | Source | Domain Port | Purpose |
 | ----------- | ------ | ------------- | --------- |
-| MemoryRepo | [`memory.rs`](../../crates/mcb-providers/src/database/sqlite/memory.rs) | `MemoryRepository` | Observation storage + FTS search |
-| AgentRepo | [`agent.rs`](../../crates/mcb-providers/src/database/sqlite/agent.rs) | `AgentRepository` | Agent session persistence + query |
-| OrgRepo | [`org.rs`](../../crates/mcb-providers/src/database/sqlite/org.rs) | `OrgEntityRepository` | Multi-tenant org data |
-| VcsRepo | [`vcs.rs`](../../crates/mcb-providers/src/database/sqlite/vcs.rs) | `VcsEntityRepository` | Repository/branch persistence |
-| PlanRepo | [`plan.rs`](../../crates/mcb-providers/src/database/sqlite/plan.rs) | `PlanEntityRepository` | Plan version/review persistence |
-| IssueRepo | [`issue.rs`](../../crates/mcb-providers/src/database/sqlite/issue.rs) | `IssueEntityRepository` | Issue tracking persistence |
-| ProjectRepo | [`project.rs`](../../crates/mcb-providers/src/database/sqlite/project.rs) | `ProjectRepository` | Project CRUD |
+| MemoryRepo | [`memory_repository.rs`](../../crates/mcb-providers/src/database/sqlite/memory_repository.rs) | `MemoryRepository` | Observation storage + FTS search |
+| AgentRepo | [`agent_repository.rs`](../../crates/mcb-providers/src/database/sqlite/agent_repository.rs) | `AgentRepository` | Agent session persistence + query |
+| OrgRepo | [`org_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/org_entity_repository.rs) | `OrgEntityRepository` | Multi-tenant org data |
+| VcsRepo | [`vcs_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/vcs_entity_repository.rs) | `VcsEntityRepository` | Repository/branch persistence |
+| PlanRepo | [`plan_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/plan_entity_repository.rs) | `PlanEntityRepository` | Plan version/review persistence |
+| IssueRepo | [`issue_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/issue_entity_repository.rs) | `IssueEntityRepository` | Issue tracking persistence |
+| ProjectRepo | [`project_repository.rs`](../../crates/mcb-providers/src/database/sqlite/project_repository.rs) | `ProjectRepository` | Project CRUD |
 
-## Hybrid Search (`hybrid_search/`)
+## Hybrid Search
 
 Combines BM25 lexical search (via FTS5) with semantic vector search for improved recall and precision.
 
 **Port:** `HybridSearchProvider`
 
-## Cache Providers (`cache/`)
+## Cache Providers
 
 | Provider | Backend | Protocol | Use Case |
 | ---------- | --------- | ---------- | ---------- |
@@ -115,7 +113,7 @@ Combines BM25 lexical search (via FTS5) with semantic vector search for improved
 - **Project detection**: Cargo, npm, Python, Go, Maven manifest parsing
 - **Submodules**: list, initialize, update
 
-## Language Processors (`language/`)
+## Language Processors
 
 AST-based code chunking via**tree-sitter v0.26**for**13 languages (12 parsers; JavaScript handles both JS and TS)**. Language-specific processors with fallback to generic chunking. File extension → language detection.
 
@@ -135,7 +133,7 @@ AST-based code chunking via**tree-sitter v0.26**for**13 languages (12 parsers; J
 | Swift | tree-sitter-swift | Production |
 | Kotlin | tree-sitter-kotlin-ng | Production |
 
-## Analysis (`analysis/`)
+## Analysis
 
 Native code analysis using Rust-code-analysis integration:
 

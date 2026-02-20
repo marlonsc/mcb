@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Cache Provider Registry
 //!
 //! Auto-registration system for cache providers using linkme distributed slices.

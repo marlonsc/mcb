@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Generic Provider Handle - Runtime-swappable provider wrapper
 //!
 //! A single generic implementation replacing four specific handle types.

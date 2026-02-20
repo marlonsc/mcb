@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Clone detection constants.
 //!
 //! Keywords and patterns used by the duplication analyzer for

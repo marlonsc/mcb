@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! YAML rule field names and default values.
 //!
 //! Constants for the YAML-based rule definition format used by

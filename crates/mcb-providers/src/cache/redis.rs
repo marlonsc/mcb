@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Redis distributed cache provider
 //!
 //! Distributed cache implementation using Redis as the backend.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Domain Events
 //!
 //! Domain events represent significant business occurrences that have happened

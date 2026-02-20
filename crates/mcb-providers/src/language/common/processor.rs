@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! Language processor trait and base implementation
 //!
 //! Defines the `LanguageProcessor` trait that provides a common interface

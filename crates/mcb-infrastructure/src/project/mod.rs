@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Project Infrastructure Module
 //!
 //! Provides the implementation of `ProjectDetectorService` that

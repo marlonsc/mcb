@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! Common macros for providers layer
 
 /// Implements `LanguageProcessor` by delegating to an inner `BaseProcessor` field.

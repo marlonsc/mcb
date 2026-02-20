@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Log event forwarder
 //!
 //! Bridges the synchronous tracing Layer with the async event bus.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Handlebars custom helpers for the admin web UI.
 //!
 //! Provides formatting, badge rendering, and display helpers that can be

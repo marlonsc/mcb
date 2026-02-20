@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Linter Engine Module
 //!
 //! Unified linter interface for coordinating multiple linters.

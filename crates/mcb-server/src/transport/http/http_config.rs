@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use std::net::SocketAddr;
 
 use crate::utils::config::load_startup_config_or_default;

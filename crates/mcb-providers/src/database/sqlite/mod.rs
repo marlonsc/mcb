@@ -1,6 +1,6 @@
 //! `SQLite` backend for the memory and full project schema.
 //!
-//! **Documentation**: [`docs/modules/providers.md#database-sqlite`](../../../../../docs/modules/providers.md#database-sqlite)
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md#database)
 //!
 //! Implements [`SchemaDdlGenerator`](mcb_domain::schema::SchemaDdlGenerator) (full project: collections,
 //! observations, `session_summaries`, `file_hashes`) for `SQLite`.

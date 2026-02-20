@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! AST Decoder
 //!
 //! Converts Tree-sitter concrete syntax trees to unified `AstNode` format.

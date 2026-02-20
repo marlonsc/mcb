@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Git2-based implementation of `VcsProvider`
 
 use std::path::{Path, PathBuf};
@@ -7,7 +10,8 @@ use git2::{BranchType, Repository, Sort};
 use mcb_domain::utils::id;
 use mcb_domain::{
     entities::vcs::{
-        DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository,
+        DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsCommitInput,
+        VcsRepository,
     },
     error::{Error, Result},
     ports::VcsProvider,
@@ -214,15 +218,15 @@ impl VcsProvider for Git2Provider {
             let author = commit.author();
             let parent_hashes: Vec<String> = commit.parent_ids().map(|id| id.to_string()).collect();
 
-            commits.push(VcsCommit::new(
-                format!("{}:{}", repo.id(), oid),
-                oid.to_string(),
-                commit.message().unwrap_or("").to_owned(),
-                author.name().unwrap_or("Unknown").to_owned(),
-                author.email().unwrap_or("").to_owned(),
-                commit.time().seconds(),
+            commits.push(VcsCommit::new(VcsCommitInput {
+                id: format!("{}:{}", repo.id(), oid),
+                hash: oid.to_string(),
+                message: commit.message().unwrap_or("").to_owned(),
+                author: author.name().unwrap_or("Unknown").to_owned(),
+                author_email: author.email().unwrap_or("").to_owned(),
+                timestamp: commit.time().seconds(),
                 parent_hashes,
-            ));
+            }));
         }
 
         Ok(commits)

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#value-objects)
+//!
 use serde::{Deserialize, Serialize};
 
 /// Workspace-level project settings loaded from `.mcb/project.toml`

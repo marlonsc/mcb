@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
+//!
 //! Organization violation types and trait implementations
 
 use std::path::PathBuf;

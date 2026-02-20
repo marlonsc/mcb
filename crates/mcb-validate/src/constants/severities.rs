@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Severity and category string constants.
 //!
 //! Used by rule engines, linter integration, and violation classification

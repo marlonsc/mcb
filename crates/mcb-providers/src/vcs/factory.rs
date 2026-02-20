@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 use std::sync::Arc;
 
 use mcb_domain::ports::VcsProvider;

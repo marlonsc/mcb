@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Metric thresholds configuration
 //!
 //! Defines threshold values for various code metrics and how they map to violations.

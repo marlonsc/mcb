@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Hybrid Search Providers
 //!
 //! This module provides hybrid search functionality that combines BM25 text-based

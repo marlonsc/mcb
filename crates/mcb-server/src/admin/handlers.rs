@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Admin request handlers shared code
 //!
 //! Contains shared state and type definitions used across admin modules.

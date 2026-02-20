@@ -1,6 +1,6 @@
 //! Decorator Module - SOLID Open/Closed Compliant
 //!
-//! **Documentation**: [`docs/modules/application.md#decorators`](../../../../docs/modules/application.md#decorators)
+//! **Documentation**: [docs/modules/application.md](../../../../docs/modules/application.md#decorators)
 //!
 //! Provides decorators that wrap providers to add cross-cutting concerns
 //! without modifying the original provider implementations.

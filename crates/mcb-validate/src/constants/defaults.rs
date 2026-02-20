@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Default values for validation settings.
 
 /// Default cyclomatic complexity threshold.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
+//!
 //! Project Domain Entities
 //!
 //! # Overview
@@ -14,21 +17,15 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// Registered project in MCB - serves as root entity linking collections, observations, and file hashes.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct Project {
-    /// Unique identifier for the project.
-    pub id: String,
-    /// Organization this project belongs to (tenant isolation).
-    pub org_id: String,
-    /// Display name of the project.
-    pub name: String,
-    /// Absolute filesystem path to the project root.
-    pub path: String,
-    /// Timestamp when the project was registered (Unix epoch).
-    pub created_at: i64,
-    /// Timestamp when the project was last updated (Unix epoch).
-    pub updated_at: i64,
+crate::define_entity_org_audited! {
+    /// Registered project in MCB - serves as root entity linking collections, observations, and file hashes.
+    #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+    pub struct Project {
+        /// Display name of the project.
+        pub name: String,
+        /// Root filesystem path of the project.
+        pub path: String,
+    }
 }
 
 /// Project type detected from manifest files
@@ -150,13 +147,7 @@ pub enum PhaseStatus {
     Skipped,
 }
 
-impl PhaseStatus {
-    /// Returns the string representation of the phase status.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(PhaseStatus);
 
 /// Classifies the nature of a project issue.
 #[derive(
@@ -185,13 +176,7 @@ pub enum IssueType {
     Documentation,
 }
 
-impl IssueType {
-    /// Returns the string representation of the issue type.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(IssueType);
 
 /// Tracks the lifecycle state of an issue.
 #[derive(
@@ -220,13 +205,7 @@ pub enum IssueStatus {
     Closed,
 }
 
-impl IssueStatus {
-    /// Returns the string representation of the issue status.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(IssueStatus);
 
 /// Defines the relationship between two project issues.
 #[derive(
@@ -252,133 +231,103 @@ pub enum DependencyType {
     ParentOf,
 }
 
-impl DependencyType {
-    /// Returns the string representation of the dependency type.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
+crate::impl_as_str_from_as_ref!(DependencyType);
+
+crate::define_entity_project_audited! {
+    /// Represents a distinct stage in the project roadmap.
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct ProjectPhase {
+        /// Name of the phase.
+        pub name: String,
+        /// Detailed description of phase objectives.
+        pub description: String,
+        /// Order of execution in the roadmap.
+        pub sequence: i32,
+        /// Current lifecycle status.
+        pub status: PhaseStatus,
+        /// When work on the phase began.
+        pub started_at: Option<i64>,
+        /// When the phase was completed.
+        pub completed_at: Option<i64>,
     }
 }
 
-/// Represents a distinct stage in the project roadmap.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProjectPhase {
-    /// Unique identifier for the phase.
-    pub id: String,
-    /// Identifier of the project this phase belongs to.
-    pub project_id: String,
-    /// Display name of the phase.
-    pub name: String,
-    /// Detailed description of the phase's goals and scope.
-    pub description: String,
-    /// Order in the roadmap (1-indexed).
-    pub sequence: i32,
-    /// Current execution status of the phase.
-    pub status: PhaseStatus,
-    /// Timestamp when the phase started execution (Unix epoch).
-    pub started_at: Option<i64>,
-    /// Timestamp when the phase was completed (Unix epoch).
-    pub completed_at: Option<i64>,
-    /// Timestamp when the phase was created (Unix epoch).
-    pub created_at: i64,
-    /// Timestamp when the phase was last updated (Unix epoch).
-    pub updated_at: i64,
+crate::define_entity_org_project_audited! {
+    /// Represents a unit of work, bug, or feature request within a project.
+    #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+    pub struct ProjectIssue {
+        /// User identifier of the issue creator.
+        pub created_by: String,
+        /// Optional phase this issue belongs to.
+        #[serde(default)]
+        pub phase_id: Option<String>,
+        /// Concise summary of the issue.
+        pub title: String,
+        /// Detailed explanation of the issue or task requirements.
+        pub description: String,
+        /// Classification of the issue (e.g., Task, Bug, Feature).
+        pub issue_type: IssueType,
+        /// Current lifecycle state of the issue.
+        pub status: IssueStatus,
+        /// Priority 0-4 (0=critical, 4=backlog).
+        pub priority: i32,
+        /// User identifier of the person assigned to this issue.
+        #[serde(default)]
+        pub assignee: Option<String>,
+        /// Denormalized label names for fast read access (inline JSON).
+        pub labels: Vec<String>,
+        /// Estimated effort in minutes.
+        #[serde(default)]
+        pub estimated_minutes: Option<i64>,
+        /// Actual effort in minutes.
+        #[serde(default)]
+        pub actual_minutes: Option<i64>,
+        /// Free-form operational notes.
+        #[serde(default)]
+        pub notes: String,
+        /// Free-form design notes.
+        #[serde(default)]
+        pub design: String,
+        /// Optional parent issue identifier for sub-task relationships.
+        #[serde(default)]
+        pub parent_issue_id: Option<String>,
+        /// Timestamp when the issue was closed (Unix epoch).
+        #[serde(default)]
+        pub closed_at: Option<i64>,
+        /// Human-readable reason why the issue was closed.
+        #[serde(default)]
+        pub closed_reason: String,
+    }
 }
 
-/// Represents a unit of work, bug, or feature request within a project.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct ProjectIssue {
-    /// Unique identifier for the issue.
-    pub id: String,
-    /// Organization this issue belongs to (tenant isolation).
-    pub org_id: String,
-    /// Identifier of the project this issue belongs to.
-    pub project_id: String,
-    /// User identifier of the issue creator.
-    pub created_by: String,
-    /// Optional phase this issue belongs to.
-    #[serde(default)]
-    pub phase_id: Option<String>,
-    /// Concise summary of the issue.
-    pub title: String,
-    /// Detailed explanation of the issue or task requirements.
-    pub description: String,
-    /// Classification of the issue (e.g., Task, Bug, Feature).
-    pub issue_type: IssueType,
-    /// Current lifecycle state of the issue.
-    pub status: IssueStatus,
-    /// Priority 0-4 (0=critical, 4=backlog).
-    pub priority: i32,
-    /// User identifier of the person assigned to this issue.
-    #[serde(default)]
-    pub assignee: Option<String>,
-    /// Denormalized label names for fast read access (inline JSON).
-    ///
-    /// The normalized source of truth is `IssueLabel` + `IssueLabelAssignment`
-    /// (relational). This field is a read-optimized cache; writes go through
-    /// the label assignment API which keeps both in sync.
-    pub labels: Vec<String>,
-    /// Estimated effort in minutes.
-    #[serde(default)]
-    pub estimated_minutes: Option<i64>,
-    /// Actual effort in minutes.
-    #[serde(default)]
-    pub actual_minutes: Option<i64>,
-    /// Free-form operational notes (Beads-compatible).
-    #[serde(default)]
-    pub notes: String,
-    /// Free-form design notes (Beads-compatible).
-    #[serde(default)]
-    pub design: String,
-    /// Optional parent issue identifier for sub-task relationships.
-    #[serde(default)]
-    pub parent_issue_id: Option<String>,
-    /// Timestamp when the issue was created (Unix epoch).
-    pub created_at: i64,
-    /// Timestamp when the issue was last updated (Unix epoch).
-    pub updated_at: i64,
-    /// Timestamp when the issue was closed (Unix epoch).
-    #[serde(default)]
-    pub closed_at: Option<i64>,
-    /// Human-readable reason why the issue was closed.
-    #[serde(default)]
-    pub closed_reason: String,
+crate::define_entity_id_created! {
+    /// Represents a directed relationship between two issues.
+    #[derive(Debug, Clone, Serialize, Deserialize)]
+    pub struct ProjectDependency {
+        /// Source issue of the relationship.
+        pub from_issue_id: String,
+        /// Target issue of the relationship.
+        pub to_issue_id: String,
+        /// Type of relationship (e.g., `Blocks`, `RelatesTo`).
+        pub dependency_type: DependencyType,
+    }
 }
 
-/// Represents a directed relationship between two issues.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProjectDependency {
-    /// Unique identifier for the dependency record.
-    pub id: String,
-    /// Identifier of the source issue.
-    pub from_issue_id: String,
-    /// Identifier of the target issue.
-    pub to_issue_id: String,
-    /// The nature of the relationship between the issues.
-    pub dependency_type: DependencyType,
-    /// Timestamp when the dependency was created (Unix epoch).
-    pub created_at: i64,
-}
-
-/// Represents a recorded architectural or project decision.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ProjectDecision {
-    /// Unique identifier for the decision.
-    pub id: String,
-    /// Identifier of the project this decision applies to.
-    pub project_id: String,
-    /// Optional issue this decision relates to.
-    pub issue_id: Option<String>,
-    /// Concise summary of the decision made.
-    pub title: String,
-    /// Background information and rationale leading to the decision.
-    pub context: String,
-    /// The chosen course of action or conclusion.
-    pub decision: String,
-    /// Expected outcomes, impacts, or side effects of the decision.
-    pub consequences: String,
-    /// Timestamp when the decision was recorded (Unix epoch).
-    pub created_at: i64,
+crate::define_entity_project_created! {
+    /// Represents a recorded architectural or project decision.
+    #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+    pub struct ProjectDecision {
+        /// Optional issue this decision relates to.
+        pub issue_id: Option<String>,
+        /// Title of the decision.
+        pub title: String,
+        /// Context that led to the decision.
+        pub context: String,
+        /// The choice made.
+        pub decision: String,
+        /// Known side effects or consequences.
+        pub consequences: String,
+    }
 }
 
 /// Filter for querying project issues with optional constraints.

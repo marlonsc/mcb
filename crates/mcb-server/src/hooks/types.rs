@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Type definitions for the hook system.
 //!
 //! Includes hook event types, contexts, and errors.

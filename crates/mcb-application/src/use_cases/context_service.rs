@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/application.md](../../../../docs/modules/application.md#use-cases)
+//!
 //! Context Service Use Case
 //!
 //! # Overview

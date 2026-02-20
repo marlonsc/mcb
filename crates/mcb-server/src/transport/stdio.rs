@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Stdio Transport for MCP
 //!
 //! Implements MCP protocol over standard input/output streams.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
+//!
 use super::constants::{
     COMMENT_SEARCH_RADIUS, IGNORE_HINT_KEYWORDS, LOCK_POISONING_STRINGS, SAFETY_COMMENT_MARKERS,
 };

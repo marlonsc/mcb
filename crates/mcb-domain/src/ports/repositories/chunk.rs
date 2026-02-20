@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
+//!
 //! Repository Ports
 //!
 //! Abstractions for persistent storage of code chunks and search indices.

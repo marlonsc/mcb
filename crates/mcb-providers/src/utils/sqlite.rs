@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! SQLite Provider Utilities
 //!
 //! Shared row mapping, query helpers, and extraction functions
@@ -130,15 +133,7 @@ pub mod query {
         sql: &str,
         params: &[SqlParam],
     ) -> Result<i64> {
-        executor.execute(sql, params).await?;
-        let row = executor
-            .query_one("SELECT last_insert_rowid() as id", &[])
-            .await?;
-        if let Some(r) = row {
-            Ok(r.try_get_i64("id")?.unwrap_or(0))
-        } else {
-            Ok(0)
-        }
+        execute_and_get_last_insert_id(executor, sql, params).await
     }
 
     /// Helper to execute an UPDATE statement.
@@ -148,6 +143,19 @@ pub mod query {
     /// Returns an error if the SQL execution fails.
     #[allow(dead_code)]
     pub async fn update(
+        executor: &Arc<dyn DatabaseExecutor>,
+        sql: &str,
+        params: &[SqlParam],
+    ) -> Result<()> {
+        executor.execute(sql, params).await
+    }
+
+    /// Helper to execute a statement.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the SQL execution fails.
+    pub async fn execute(
         executor: &Arc<dyn DatabaseExecutor>,
         sql: &str,
         params: &[SqlParam],
@@ -176,6 +184,14 @@ pub mod query {
     /// Returns an error if the SQL execution fails.
     #[allow(dead_code)]
     pub async fn upsert(
+        executor: &Arc<dyn DatabaseExecutor>,
+        sql: &str,
+        params: &[SqlParam],
+    ) -> Result<i64> {
+        execute_and_get_last_insert_id(executor, sql, params).await
+    }
+
+    async fn execute_and_get_last_insert_id(
         executor: &Arc<dyn DatabaseExecutor>,
         sql: &str,
         params: &[SqlParam],

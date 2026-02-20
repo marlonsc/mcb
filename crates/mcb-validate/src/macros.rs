@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
+//!
 //! Violation runtime types (field formatting, file path extraction).
 //!
 //! The declarative macros (`define_violations!`, `impl_validator!`) live in

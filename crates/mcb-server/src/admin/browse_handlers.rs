@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Browse handlers for Admin UI
 //!
 //! REST API handlers for browsing indexed collections, files, and code chunks.

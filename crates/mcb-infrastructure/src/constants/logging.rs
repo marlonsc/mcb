@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `DEFAULT_LOG_LEVEL`.
 pub const DEFAULT_LOG_LEVEL: &str = "info";
 /// Constant value for `LOG_MAX_FILES`.

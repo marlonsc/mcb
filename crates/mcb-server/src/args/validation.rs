@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 use validator::ValidationError;
 
 pub(crate) fn validate_file_path(path: &str) -> Result<(), ValidationError> {

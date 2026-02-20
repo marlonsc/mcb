@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Templating system integration for MCB Server.
 //!
 //! This module provides a `Rocket` fairing and supporting structures to integrate

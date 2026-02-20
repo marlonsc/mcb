@@ -1,10 +1,12 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
+//!
 use super::constants::{
     DUPLICATE_STRING_MIN_FILES, DUPLICATE_STRING_REGEX, DUPLICATE_STRING_SKIP_PATTERNS,
 };
 use super::violation::OrganizationViolation;
 use crate::constants::common::{
-    ATTRIBUTE_PREFIX, CFG_TEST_MARKER, COMMENT_PREFIX, CONST_DECLARATION_PREFIXES,
-    CONSTANTS_FILE_KEYWORDS,
+    ATTRIBUTE_PREFIX, CONST_DECLARATION_PREFIXES, CONSTANTS_FILE_KEYWORDS,
 };
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
@@ -37,77 +39,56 @@ pub fn validate_duplicate_strings(config: &ValidationConfig) -> Result<Vec<Organ
             }
 
             // Skip test files
-            let Some(path_str) = path.to_str() else {
-                return Ok(());
-            };
-            if is_test_path(path_str) {
+            if path.to_str().is_none_or(is_test_path) {
                 return Ok(());
             }
 
             let content = std::fs::read_to_string(path)?;
-            let mut in_test_module = false;
-
-            for (line_num, line) in content.lines().enumerate() {
-                let trimmed = line.trim();
-
-                // Skip comments and doc strings
-                if trimmed.starts_with(COMMENT_PREFIX) || trimmed.starts_with(ATTRIBUTE_PREFIX) {
-                    continue;
-                }
-
-                // Track test module context
-                if trimmed.contains(CFG_TEST_MARKER) {
-                    in_test_module = true;
-                    continue;
-                }
-
-                // Skip test modules
-                if in_test_module {
-                    continue;
-                }
-
-                // Skip const/static definitions
-                if CONST_DECLARATION_PREFIXES
-                    .iter()
-                    .any(|p| trimmed.starts_with(p))
-                {
-                    continue;
-                }
-
-                for cap in string_pattern.captures_iter(line) {
-                    let string_val = cap.get(1).map_or("", |m| m.as_str());
-
-                    // Skip common patterns that are OK to repeat
-                    if DUPLICATE_STRING_SKIP_PATTERNS
-                        .iter()
-                        .any(|pat| string_val.contains(pat))
-                    {
-                        continue;
+            crate::validators::for_each_non_test_non_comment_line(
+                &content,
+                |line_num, line, trimmed| {
+                    let skip_line = trimmed.starts_with(ATTRIBUTE_PREFIX)
+                        || CONST_DECLARATION_PREFIXES
+                            .iter()
+                            .any(|p| trimmed.starts_with(p));
+                    if skip_line {
+                        return;
                     }
 
-                    string_occurrences
-                        .entry(string_val.to_owned())
-                        .or_default()
-                        .push((path.clone(), line_num + 1));
-                }
-            }
+                    string_occurrences.extend(
+                        string_pattern
+                            .captures_iter(line)
+                            .filter_map(|cap| cap.get(1).map(|m| m.as_str().to_owned()))
+                            .filter(|s| {
+                                !DUPLICATE_STRING_SKIP_PATTERNS
+                                    .iter()
+                                    .any(|pat| s.contains(pat))
+                            })
+                            .map(|string_val| (string_val, vec![(path.clone(), line_num + 1)])),
+                    );
+                },
+            );
 
             Ok(())
         },
     )?;
 
     // Report strings that appear in 4+ files (higher threshold)
-    for (value, occurrences) in string_occurrences {
-        let unique_files: HashSet<_> = occurrences.iter().map(|(f, _)| f).collect();
-        if unique_files.len() >= DUPLICATE_STRING_MIN_FILES {
-            violations.push(OrganizationViolation::DuplicateStringLiteral {
-                value,
-                occurrences,
-                suggestion: "Consider creating a named constant".to_owned(),
-                severity: Severity::Info,
-            });
-        }
-    }
+    violations.extend(
+        string_occurrences
+            .into_iter()
+            .filter_map(|(value, occurrences)| {
+                let unique_files: HashSet<_> = occurrences.iter().map(|(f, _)| f).collect();
+                (unique_files.len() >= DUPLICATE_STRING_MIN_FILES).then(|| {
+                    OrganizationViolation::DuplicateStringLiteral {
+                        value,
+                        occurrences,
+                        suggestion: "Consider creating a named constant".to_owned(),
+                        severity: Severity::Info,
+                    }
+                })
+            }),
+    );
 
     Ok(violations)
 }

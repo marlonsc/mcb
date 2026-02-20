@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#value-objects)
+//!
 //! Domain Value Objects
 //!
 //! Immutable value objects that represent concepts in the domain

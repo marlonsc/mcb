@@ -1,4 +1,6 @@
-use crate::constants::common::COMMENT_PREFIX;
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_file_under_root;
@@ -34,40 +36,28 @@ pub fn validate_use_statements(
                 let path = &entry.absolute_path;
                 let content = std::fs::read_to_string(path)?;
 
-                for (line_num, line) in content.lines().enumerate() {
-                    // Skip comments
-                    let trimmed = line.trim();
-                    if trimmed.starts_with(COMMENT_PREFIX) || trimmed.starts_with("/*") {
-                        continue;
-                    }
-
-                    // Skip lines that are likely string literals (contain quotes)
-                    if line.contains('"') {
-                        continue;
-                    }
-
-                    for cap in use_pattern.captures_iter(line) {
-                        let used_crate = cap.get(1).map_or("", |m| m.as_str());
-                        let used_crate_kebab = used_crate.replace('_', "-");
-
-                        // Skip self-references
-                        if used_crate_kebab == *crate_name {
-                            continue;
+                crate::validators::for_each_non_test_non_comment_line(
+                    &content,
+                    |line_num, line, _trimmed| {
+                        if line.trim().starts_with("/*") || line.contains('"') {
+                            return;
                         }
-
-                        // Check if this dependency is allowed
-                        if !allowed.contains(&used_crate_kebab) {
-                            violations.push(DependencyViolation::ForbiddenUseStatement {
+                        violations.extend(use_pattern.captures_iter(line).filter_map(|cap| {
+                            let used_crate_kebab =
+                                cap.get(1).map_or("", |m| m.as_str()).replace('_', "-");
+                            (used_crate_kebab != *crate_name
+                                && !allowed.contains(&used_crate_kebab))
+                            .then(|| DependencyViolation::ForbiddenUseStatement {
                                 crate_name: crate_name.clone(),
                                 forbidden_dep: used_crate_kebab,
                                 file: path.clone(),
                                 line: line_num + 1,
                                 context: line.trim().to_owned(),
                                 severity: Severity::Error,
-                            });
-                        }
-                    }
-                }
+                            })
+                        }));
+                    },
+                );
 
                 Ok(())
             },

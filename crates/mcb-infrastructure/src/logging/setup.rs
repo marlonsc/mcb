@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 use std::io::IsTerminal;
 
 use mcb_domain::error::{Error, Result};

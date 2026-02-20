@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
+//!
 //! Embedded default validation rules for self-contained execution.
 
 /// Embedded YAML defaults for mcb-validate.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Infrastructure Provider Interfaces
 //!
 //! Defines the port interfaces for infrastructure services that are used

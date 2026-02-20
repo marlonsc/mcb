@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Tool argument definition macros.
 //!
 //! Used by `args/` modules for MCP tool schema definitions.

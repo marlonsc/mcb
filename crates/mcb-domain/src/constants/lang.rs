@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Language identifier constants -- Single Source of Truth
 //!
 //! All language string identifiers used across the codebase.

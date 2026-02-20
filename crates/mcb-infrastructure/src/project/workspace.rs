@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 use std::path::{Path, PathBuf};
 
 /// Explorer for workspace structure and crate discovery.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! View-model helpers for the admin web UI.
 
 use serde::Serialize;

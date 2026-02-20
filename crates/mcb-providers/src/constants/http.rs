@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 /// Default HTTP request timeout in seconds
 pub const DEFAULT_HTTP_TIMEOUT_SECS: u64 = 30;
 

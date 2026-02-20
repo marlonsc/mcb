@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Cache Provider Implementations
 //!
 //! Provides caching backends for embedding and search result caching.

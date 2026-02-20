@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! I/O and buffer size constants.
 
 /// Buffer size for file reading operations (8 KiB).

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Project detector registry (linkme distributed slice).
 // linkme distributed_slice uses #[link_section] internally
 #![allow(unsafe_code)]

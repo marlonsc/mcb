@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Rocket route and template macros.
 //!
 //! Used by `admin/` for browse endpoints and `templates/` for context building.

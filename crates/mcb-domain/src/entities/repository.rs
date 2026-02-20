@@ -1,43 +1,8 @@
-//! Repository Domain Entities
 //!
-//! This module defines entities for tracking and managing Version Control System (VCS)
-//! repositories. It facilitates multi-tenant environment support by associating
-//! repositories with Organizations and Projects.
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
 //!
-//! # Core Entities
-//! - [`Repository`]: A persisted record of a remote or local VCS repository (Git, Hg, SVN).
-//! - [`Branch`]: A specific line of development within a repository.
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-// ---------------------------------------------------------------------------
-// Repository
-// ---------------------------------------------------------------------------
-
-use super::EntityMetadata;
-
-/// A tracked VCS repository belonging to a project within an organization.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct Repository {
-    /// Common entity metadata (id, timestamps).
-    #[serde(flatten)]
-    pub metadata: EntityMetadata,
-    /// Organization that owns this repository.
-    pub org_id: String,
-    /// Project this repository belongs to.
-    pub project_id: String,
-    /// Human-readable display name (e.g. "mcb-data-model-v2").
-    pub name: String,
-    /// Remote URL (e.g. `https://github.com/org/repo`).
-    pub url: String,
-    /// Local filesystem path where the repo is cloned.
-    pub local_path: String,
-    /// Version control system type.
-    pub vcs_type: VcsType,
-}
-
-impl_base_entity!(Repository);
 
 /// Type of version control system.
 #[derive(
@@ -80,26 +45,41 @@ impl VcsType {
 }
 
 // ---------------------------------------------------------------------------
+// Repository
+// ---------------------------------------------------------------------------
+
+crate::define_entity_org_project_audited! {
+    /// A tracked repository registered in the platform.
+    #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+    pub struct Repository {
+        /// Display name of the repository.
+        pub name: String,
+        /// Remote URL of the repository (e.g. <https://github.com/user/repo.git>).
+        pub url: String,
+        /// Local path where the repository is checked out.
+        pub local_path: String,
+        /// Type of version control system used.
+        pub vcs_type: VcsType,
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Branch
 // ---------------------------------------------------------------------------
 
-/// A tracked branch within a repository.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct Branch {
-    /// Unique identifier (UUID).
-    pub id: String,
-    /// Organization this branch belongs to.
-    pub org_id: String,
-    /// Repository this branch belongs to.
-    pub repository_id: String,
-    /// Branch name (e.g. "main", "feat/data-model-v2").
-    pub name: String,
-    /// Whether this is the repository's default branch.
-    pub is_default: bool,
-    /// Current HEAD commit SHA.
-    pub head_commit: String,
-    /// Upstream tracking branch (e.g. "origin/main").
-    pub upstream: Option<String>,
-    /// Timestamp when the branch was first tracked (Unix epoch).
-    pub created_at: i64,
+crate::define_entity_org_created! {
+    /// A tracked branch within a repository.
+    #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+    pub struct Branch {
+        /// Repository this branch belongs to.
+        pub repository_id: String,
+        /// Branch name (e.g. "main", "feat/data-model-v2").
+        pub name: String,
+        /// Whether this is the repository's default branch.
+        pub is_default: bool,
+        /// Current HEAD commit SHA.
+        pub head_commit: String,
+        /// Upstream tracking branch (e.g. "origin/main").
+        pub upstream: Option<String>,
+    }
 }

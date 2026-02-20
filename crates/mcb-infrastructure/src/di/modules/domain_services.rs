@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Domain Services DI Module
 //!
 //! Provides domain service implementations that can be injected into the server.
@@ -15,8 +18,8 @@
 use std::sync::Arc;
 
 use mcb_application::use_cases::{
-    AgentSessionServiceImpl, ContextServiceImpl, IndexingServiceImpl, MemoryServiceImpl,
-    SearchServiceImpl,
+    AgentSessionServiceImpl, ContextServiceImpl, IndexingServiceDeps, IndexingServiceImpl,
+    IndexingServiceWithHashDeps, MemoryServiceImpl, SearchServiceImpl,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::{
@@ -161,12 +164,16 @@ impl DomainServicesFactory {
 
     fn build_indexing_service(inputs: IndexingServiceInputs) -> Arc<dyn IndexingServiceInterface> {
         Arc::new(IndexingServiceImpl::new_with_file_hash_repository(
-            inputs.context_service,
-            inputs.language_chunker,
-            inputs.indexing_ops,
-            inputs.event_bus,
-            inputs.file_hash_repository,
-            inputs.supported_extensions,
+            IndexingServiceWithHashDeps {
+                service: IndexingServiceDeps {
+                    context_service: inputs.context_service,
+                    language_chunker: inputs.language_chunker,
+                    indexing_ops: inputs.indexing_ops,
+                    event_bus: inputs.event_bus,
+                    supported_extensions: inputs.supported_extensions,
+                },
+                file_hash_repository: inputs.file_hash_repository,
+            },
         ))
     }
 

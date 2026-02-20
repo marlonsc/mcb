@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! BM25 text ranking algorithm implementation
 //!
 //! BM25 (Best Matching 25) is a ranking function used for information retrieval.

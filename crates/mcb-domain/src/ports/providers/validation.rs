@@ -1,5 +1,7 @@
 //! Validation Provider Port
 //!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 //! Port for pluggable code validation providers. Implementations can be
 //! different validation engines (mcb-validate, clippy, ESLint, etc.) that
 //! analyze code for architecture violations, code quality issues, and more.

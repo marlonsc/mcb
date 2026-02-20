@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Database executor port (infrastructure).
 //!
 //! Abstraction for SQL execution so repositories and application code do not

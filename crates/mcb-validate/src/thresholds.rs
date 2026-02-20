@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
+//!
 //! Centralized validation thresholds
 //!
 //! All numeric limits used by validators are defined here.

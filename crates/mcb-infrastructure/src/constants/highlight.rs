@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Syntax highlighting constants
 
 /// Tree-sitter highlight capture names (order must match `HighlightConfiguration`)

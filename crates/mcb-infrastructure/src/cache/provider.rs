@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Shared cache provider wrapper
 //!
 //! Infrastructure wrapper for cache providers from mcb-providers.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `AES_GCM_KEY_SIZE`.
 pub const AES_GCM_KEY_SIZE: usize = 32;
 /// Constant value for `AES_GCM_NONCE_SIZE`.

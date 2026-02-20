@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md#clean-architecture)
+//!
 use std::path::PathBuf;
 
 use crate::config::CleanArchitectureRulesConfig;

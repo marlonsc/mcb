@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! HTTP Transport for MCP
 //!
 #![allow(clippy::redundant_type_annotations)]

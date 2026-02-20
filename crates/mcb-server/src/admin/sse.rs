@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Server-Sent Events (SSE) Handler
 //!
 //! Provides real-time event streaming for the admin dashboard.

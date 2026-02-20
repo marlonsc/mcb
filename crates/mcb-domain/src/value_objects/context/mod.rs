@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#value-objects)
+//!
 //! Runtime context value objects for tenant isolation and project identity.
 
 /// Organization tenant context

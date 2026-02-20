@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 /// `EdgeVec` HNSW M parameter (max connections per node in layers > 0)
 pub const EDGEVEC_HNSW_M: u32 = 16;
 

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use mcb_domain::constants::keys as schema;
 use std::sync::Arc;
 

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::constants::common::MCB_DEPENDENCY_PREFIX;
 use crate::linters::constants::CARGO_TOML_FILENAME;
 use crate::{Result, Severity};
@@ -26,25 +29,22 @@ pub fn validate_cargo_dependencies(
         let content = std::fs::read_to_string(&cargo_toml)?;
         let parsed: toml::Value = toml::from_str(&content)?;
 
-        // Check [dependencies] section
         if let Some(deps) = parsed.get("dependencies").and_then(|d| d.as_table()) {
-            for dep_name in deps.keys() {
-                if dep_name.starts_with(MCB_DEPENDENCY_PREFIX) && dep_name != crate_name {
-                    let dep_crate = dep_name.replace('_', "-");
-                    if !allowed.contains(&dep_crate) {
-                        violations.push(DependencyViolation::ForbiddenCargoDepedency {
-                            crate_name: crate_name.clone(),
-                            forbidden_dep: dep_crate,
-                            location: cargo_toml.clone(),
-                            severity: Severity::Error,
-                        });
-                    }
-                }
-            }
+            violations.extend(
+                deps.keys()
+                    .filter(|dep_name| {
+                        dep_name.starts_with(MCB_DEPENDENCY_PREFIX) && *dep_name != crate_name
+                    })
+                    .map(|dep_name| dep_name.replace('_', "-"))
+                    .filter(|dep_crate| !allowed.contains(dep_crate))
+                    .map(|dep_crate| DependencyViolation::ForbiddenCargoDepedency {
+                        crate_name: crate_name.clone(),
+                        forbidden_dep: dep_crate,
+                        location: cargo_toml.clone(),
+                        severity: Severity::Error,
+                    }),
+            );
         }
-
-        // Check [dev-dependencies] section (more lenient - allow test utilities)
-        // Dev dependencies are allowed to have more flexibility
     }
 
     Ok(violations)

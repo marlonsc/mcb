@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Entity CRUD adapter trait definition.
 
 use std::collections::HashSet;

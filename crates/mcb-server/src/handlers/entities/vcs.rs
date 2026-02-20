@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! VCS entity CRUD handler implementation.
 
 use std::sync::Arc;
@@ -101,7 +104,7 @@ impl VcsEntityHandler {
                     Some(repo.project_id.as_str()),
                     "project_id required for repository update",
                 )?;
-                let existing = map_opaque_error(self.repo.get_repository(&org_id, &repo.metadata.id).await)?;
+                let existing = map_opaque_error(self.repo.get_repository(&org_id, &repo.id).await)?;
                 if existing.project_id != repo.project_id {
                     return Err(McpError::invalid_params(
                         format!(

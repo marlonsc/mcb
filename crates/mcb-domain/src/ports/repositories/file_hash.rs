@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
+//!
 //! Provides file hash repository domain definitions.
 use async_trait::async_trait;
 use std::path::Path;

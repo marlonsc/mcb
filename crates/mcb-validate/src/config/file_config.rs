@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! File-based Configuration
 //!
 //! Loads validation configuration via figment layered providers.

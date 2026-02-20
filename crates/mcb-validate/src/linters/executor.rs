@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! YAML Rule Executor Module
 //!
 //! Executes YAML rules that use `lint_select` for linter-based validation.

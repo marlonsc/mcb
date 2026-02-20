@@ -1,5 +1,7 @@
 //! `VoyageAI` Embedding Provider
 //!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#embedding-providers)
+//!
 //! Implements the `EmbeddingProvider` port using `VoyageAI`'s embedding API.
 //! Optimized for code embeddings with voyage-code-3 model.
 

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Validator category name constants.
 //!
 //! Used by the file-level configuration system to map category names

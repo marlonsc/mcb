@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use rmcp::ServerHandler;
 use rocket::serde::json::Json;
 use rocket::{State, post};

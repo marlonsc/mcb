@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Operations Tracking Port Definitions
 //!
 //! Interfaces for tracking performance metrics, indexing operations,

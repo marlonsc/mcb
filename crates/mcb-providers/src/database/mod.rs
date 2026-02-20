@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#database)
+//!
 //! Database providers: memory repository and schema application per backend.
 //!
 //! Each backend (SQLite, PostgreSQL, MySQL, etc.) has its own submodule and

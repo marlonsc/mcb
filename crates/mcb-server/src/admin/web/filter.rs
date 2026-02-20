@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Query parameter types for server-side entity list filtering, sorting, and pagination.
 
 use rocket::form::FromForm;

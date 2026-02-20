@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Schema constants
 //!
 //! Contains column names and other schema-related constants that are used

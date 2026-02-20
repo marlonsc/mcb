@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../docs/modules/server.md)
+//!
 //! MCP Server Builder
 //!
 //! Builder pattern for constructing MCP servers with dependency injection.

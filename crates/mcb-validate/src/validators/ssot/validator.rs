@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::PathBuf;
 

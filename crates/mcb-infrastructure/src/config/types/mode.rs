@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../../docs/modules/infrastructure.md#configuration)
+//!
 //! Operating mode configuration
 //!
 //! Defines how MCB operates: standalone (local providers), client (connects to server),

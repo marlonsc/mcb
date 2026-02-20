@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 use crate::schema::types::{ForeignKeyDef, IndexDef, TableDef, UniqueConstraintDef};
 
 pub fn table() -> TableDef {
@@ -30,14 +33,17 @@ pub fn table() -> TableDef {
 }
 
 pub fn indexes() -> Vec<IndexDef> {
-    vec![
-        crate::index!("idx_issues_org", "project_issues", ["org_id"]),
-        crate::index!("idx_issues_project", "project_issues", ["project_id"]),
-        crate::index!("idx_issues_phase", "project_issues", ["phase_id"]),
-        crate::index!("idx_issues_status", "project_issues", ["status"]),
-        crate::index!("idx_issues_assignee", "project_issues", ["assignee"]),
-        crate::index!("idx_issues_parent", "project_issues", ["parent_issue_id"]),
-    ]
+    crate::indexes_for_table!(
+        "project_issues",
+        {
+            "idx_issues_org" => ["org_id"],
+            "idx_issues_project" => ["project_id"],
+            "idx_issues_phase" => ["phase_id"],
+            "idx_issues_status" => ["status"],
+            "idx_issues_assignee" => ["assignee"],
+            "idx_issues_parent" => ["parent_issue_id"],
+        }
+    )
 }
 
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {

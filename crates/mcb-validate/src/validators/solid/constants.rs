@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! SOLID validator constants.
 //!
 //! Thresholds and limits for Single Responsibility, Open-Closed, and

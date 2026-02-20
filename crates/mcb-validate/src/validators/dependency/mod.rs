@@ -1,5 +1,7 @@
 //! Dependency Graph Validation
 //!
+//! **Documentation**: [`docs/modules/validate.md#dependency`](../../../../../docs/modules/validate.md#dependency)
+//!
 //! Validates Clean Architecture layer boundaries:
 //! - domain: No internal dependencies (pure domain entities)
 //! - application: Only domain (use cases and ports)

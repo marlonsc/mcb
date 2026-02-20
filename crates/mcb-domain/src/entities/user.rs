@@ -1,39 +1,26 @@
-//! User Domain Entity
 //!
-//! This module defines the `User` entity, representing a human or service account
-//! within an organization. It handles identity, role management, and authentication
-//! metadata for tenant isolation.
-
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
+//!
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// A user belongs to exactly one organization and can be a member of
-/// multiple teams. Users authenticate via API keys (Phase 1) and
-/// external `IdP` / OAuth in later phases.
-///
-use super::EntityMetadata;
-
-/// A user belongs to exactly one organization and can be a member of
-/// multiple teams. Users authenticate via API keys (Phase 1) and
-/// external `IdP` / OAuth in later phases.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
-pub struct User {
-    /// Common entity metadata (id, timestamps).
-    #[serde(flatten)]
-    pub metadata: EntityMetadata,
-    /// Organization this user belongs to (tenant isolation).
-    pub org_id: String,
-    /// Email address (unique within an org).
-    pub email: String,
-    /// Human-readable display name.
-    pub display_name: String,
-    /// Role within the organization (e.g. "admin", "member", "viewer").
-    pub role: UserRole,
-    /// Bcrypt/Argon2 hash of the user's primary API key (nullable — set on first key creation).
-    pub api_key_hash: Option<String>,
+crate::define_entity_org_audited! {
+    /// Represents a user within the system.
+    ///
+    /// Users are associated with an organization and have specific roles that
+    /// determine their permissions.
+    #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+    pub struct User {
+        /// Email address of the user.
+        pub email: String,
+        /// Name to be displayed for the user.
+        pub display_name: String,
+        /// Role assigned to the user within the organization.
+        pub role: UserRole,
+        /// Hashed API key for the user, if applicable.
+        pub api_key_hash: Option<String>,
+    }
 }
-
-impl_base_entity!(User);
 
 /// Role a user holds within an organization.
 #[derive(
@@ -62,10 +49,4 @@ pub enum UserRole {
     Service,
 }
 
-impl UserRole {
-    /// Returns the string representation of the user role.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(UserRole);

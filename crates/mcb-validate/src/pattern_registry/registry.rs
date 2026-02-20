@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Pattern Registry Implementation
 //!
 //! Loads regex patterns from YAML rules and provides centralized access.

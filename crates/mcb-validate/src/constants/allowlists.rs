@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Validation allow-lists and skip patterns.
 //!
 //! Types, names, files, and directory patterns that are intentionally

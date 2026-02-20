@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Port trait definition macros.
 //!
 //! Used by `ports/` modules for admin interfaces, enum parsing, and metrics.

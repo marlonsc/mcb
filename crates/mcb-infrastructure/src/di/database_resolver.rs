@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Resolver for database providers.
 //!
 //! Handles dynamic resolution of database providers (e.g. `SQLite`, Postgres)

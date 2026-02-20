@@ -1,10 +1,12 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
+//!
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crate::{
-    EmbeddedRules, GenericReport, GenericReporter, ValidationConfig, ValidatorRegistry,
-    find_workspace_root_from,
+    GenericReport, GenericReporter, ValidationConfig, ValidatorRegistry, find_workspace_root_from,
 };
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
@@ -75,7 +77,7 @@ impl ValidationProvider for McbValidateProvider {
     }
 
     fn get_rules(&self, category: Option<&str>) -> Vec<RuleInfo> {
-        get_validation_rules(category)
+        crate::utils::yaml::get_validation_rules(category)
     }
 
     async fn validate(
@@ -161,25 +163,9 @@ fn run_file_validation(file_path: &Path, options: &ValidationOptions) -> Result<
         })
         .collect();
 
-    let errors = file_violations
-        .iter()
-        .filter(|violation| violation.severity == "ERROR")
-        .count();
-
-    Ok(ValidationReport {
-        total_violations: file_violations.len(),
-        errors,
-        warnings: file_violations
-            .iter()
-            .filter(|violation| violation.severity == "WARNING")
-            .count(),
-        infos: file_violations
-            .iter()
-            .filter(|violation| violation.severity == "INFO")
-            .count(),
-        violations: file_violations,
-        passed: errors == 0,
-    })
+    Ok(crate::utils::validation_report::from_violations(
+        file_violations,
+    ))
 }
 
 fn convert_report(
@@ -187,106 +173,11 @@ fn convert_report(
     severity_filter: Option<&str>,
     include_suggestions: bool,
 ) -> ValidationReport {
-    let min_severity = match severity_filter.map(str::to_ascii_lowercase).as_deref() {
-        Some("error") => 0,
-        Some("warning") => 1,
-        _ => 2,
-    };
-
-    let violations: Vec<ViolationEntry> = report
-        .violations_by_category
-        .into_values()
-        .flatten()
-        .filter(|violation| {
-            let severity_level = match violation.severity.as_str() {
-                "ERROR" => 0,
-                "WARNING" => 1,
-                _ => 2,
-            };
-            severity_level <= min_severity
-        })
-        .map(|mut violation| {
-            if !include_suggestions {
-                violation.suggestion = None;
-            }
-            violation
-        })
-        .collect();
-
-    let errors = violations
-        .iter()
-        .filter(|violation| violation.severity == "ERROR")
-        .count();
-
-    ValidationReport {
-        total_violations: violations.len(),
-        errors,
-        warnings: violations
-            .iter()
-            .filter(|violation| violation.severity == "WARNING")
-            .count(),
-        infos: violations
-            .iter()
-            .filter(|violation| violation.severity == "INFO")
-            .count(),
-        violations,
-        passed: errors == 0,
-    }
-}
-
-fn get_validation_rules(category: Option<&str>) -> Vec<RuleInfo> {
-    let all_rules: Vec<RuleInfo> = EmbeddedRules::all_yaml()
-        .into_iter()
-        .filter(|(path, _)| path.ends_with(".yml") && !path.contains("/templates/"))
-        .filter_map(|(_, content)| {
-            if extract_yaml_scalar(content, "_base").as_deref() == Some("true") {
-                return None;
-            }
-
-            let enabled =
-                extract_yaml_scalar(content, "enabled").is_none_or(|value| value != "false");
-            if !enabled {
-                return None;
-            }
-
-            let id = extract_yaml_scalar(content, "id")?;
-            Some(RuleInfo {
-                id,
-                category: extract_yaml_scalar(content, "category")
-                    .unwrap_or_else(|| "quality".to_owned()),
-                severity: extract_yaml_scalar(content, "severity")
-                    .unwrap_or_else(|| "warning".to_owned()),
-                description: extract_yaml_scalar(content, "description")
-                    .unwrap_or_else(|| "No description provided".to_owned()),
-                engine: extract_yaml_scalar(content, "engine")
-                    .unwrap_or_else(|| "rusty-rules".to_owned()),
-            })
-        })
-        .collect();
-
-    if let Some(cat) = category {
-        all_rules
-            .into_iter()
-            .filter(|rule| rule.category == cat)
-            .collect()
-    } else {
-        all_rules
-    }
-}
-
-fn extract_yaml_scalar(content: &str, key: &str) -> Option<String> {
-    let mapping: serde_yaml::Value = serde_yaml::from_str(content).ok()?;
-    let value = mapping.get(key)?;
-
-    match value {
-        serde_yaml::Value::String(s) => Some(s.clone()),
-        serde_yaml::Value::Bool(b) => Some(b.to_string()),
-        serde_yaml::Value::Number(n) => Some(n.to_string()),
-        serde_yaml::Value::Null
-        | serde_yaml::Value::Sequence(_)
-        | serde_yaml::Value::Mapping(_)
-        | serde_yaml::Value::Tagged(_) => None,
-    }
+    crate::utils::validation_report::from_generic_report(
+        report,
+        severity_filter,
+        include_suggestions,
+    )
 }
 
 fn mcb_validate_factory(

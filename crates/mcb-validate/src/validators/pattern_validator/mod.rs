@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! Pattern Compliance Validation
 //!
 //! This module provides the `PatternValidator` which ensures code patterns across the

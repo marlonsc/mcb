@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Provider Admin Port Definitions
 //!
 //! Interfaces for managing provider lifecycle (listing, switching, configuring)

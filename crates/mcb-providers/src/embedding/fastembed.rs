@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#embedding-providers)
+//!
 //! `FastEmbed` Local Embedding Provider
 //!
 //! Implements the `EmbeddingProvider` port using the fastembed library for local

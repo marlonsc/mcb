@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 pub use super::agent::{AgentAction, AgentArgs};
 pub use super::entity::{
     EntityAction, EntityArgs, EntityResource, IssueEntityAction, IssueEntityArgs,

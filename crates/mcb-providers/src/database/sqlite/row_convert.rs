@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md#database)
+//!
 //! Row-to-entity conversion using the domain port [`SqlRow`].
 
 use mcb_domain::constants::keys as schema;

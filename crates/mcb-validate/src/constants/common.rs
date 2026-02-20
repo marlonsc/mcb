@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Common validation constants shared across multiple validators.
 //!
 //! Cross-cutting code patterns: comment prefixes, test markers,

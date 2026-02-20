@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Admin control endpoints
 //!
 //! Provides endpoints for server control operations like shutdown.

@@ -63,40 +63,26 @@ define_violations! {
     }
 }
 
-/// Validates documentation completeness for public items in Rust crates.
-///
-/// Ensures all public items (structs, enums, traits, functions) have rustdoc comments (///)
-/// and that module-level documentation exists. Optionally checks for example code in trait documentation.
-pub struct DocumentationValidator {
-    config: ValidationConfig,
-}
-
-crate::impl_simple_validator_new!(DocumentationValidator);
+crate::create_validator!(
+    DocumentationValidator,
+    "documentation",
+    "Validates documentation standards",
+    DocumentationViolation,
+    [Self::validate_module_docs, Self::validate_pub_item_docs,]
+);
 
 impl DocumentationValidator {
-    /// Run all documentation validations
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if file scanning or regex compilation fails.
-    pub fn validate_all(&self) -> Result<Vec<DocumentationViolation>> {
-        let mut violations = Vec::new();
-        violations.extend(self.validate_module_docs()?);
-        violations.extend(self.validate_pub_item_docs()?);
-        Ok(violations)
-    }
-
     /// Verify module-level documentation exists
     ///
     /// # Errors
     ///
     /// Returns an error if regex compilation or file scanning fails.
-    pub fn validate_module_docs(&self) -> Result<Vec<DocumentationViolation>> {
+    pub fn validate_module_docs(config: &ValidationConfig) -> Result<Vec<DocumentationViolation>> {
         let mut violations = Vec::new();
         let module_doc_pattern = compile_regex(MODULE_DOC_REGEX)?;
 
         for_each_crate_file(
-            &self.config,
+            config,
             Some(LanguageId::Rust),
             |entry, _src_dir, _crate_name| {
                 let path = &entry.absolute_path;
@@ -134,7 +120,9 @@ impl DocumentationValidator {
     /// # Errors
     ///
     /// Returns an error if regex compilation or file scanning fails.
-    pub fn validate_pub_item_docs(&self) -> Result<Vec<DocumentationViolation>> {
+    pub fn validate_pub_item_docs(
+        config: &ValidationConfig,
+    ) -> Result<Vec<DocumentationViolation>> {
         let mut violations = Vec::new();
 
         // Patterns for public items
@@ -158,7 +146,7 @@ impl DocumentationValidator {
         ];
 
         for_each_crate_file(
-            &self.config,
+            config,
             Some(LanguageId::Rust),
             |entry, _src_dir, _crate_name| {
                 let path = &entry.absolute_path;
@@ -360,9 +348,3 @@ impl DocumentationValidator {
         );
     }
 }
-
-crate::impl_validator!(
-    DocumentationValidator,
-    "documentation",
-    "Validates documentation standards"
-);

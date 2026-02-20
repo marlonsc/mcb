@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/application.md](../../../../docs/modules/application.md#use-cases)
+//!
 //! Memory Service Use Case
 //!
 //! # Overview
@@ -26,6 +29,9 @@ use std::sync::Arc;
 use mcb_domain::constants::keys::{
     METADATA_KEY_CONTENT, METADATA_KEY_SESSION_ID, METADATA_KEY_TAGS, METADATA_KEY_TYPE,
 };
+use mcb_domain::constants::search::{
+    HYBRID_SEARCH_MULTIPLIER, RRF_K, RRF_MAX_SCORE_STREAMS, RRF_NORMALIZED_MAX, RRF_SCORE_NUMERATOR,
+};
 use mcb_domain::entities::memory::{
     ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
     ObservationMetadata, ObservationType, OriginContext, SessionSummary,
@@ -41,10 +47,7 @@ use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
 use std::str::FromStr;
 
-use crate::constants::{
-    HYBRID_SEARCH_MULTIPLIER, MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH, RRF_K,
-    RRF_MAX_SCORE_STREAMS, RRF_NORMALIZED_MAX, RRF_SCORE_NUMERATOR,
-};
+use crate::constants::{MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH};
 
 /// Hybrid memory service combining relational metadata with semantic vector search.
 ///

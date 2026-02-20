@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 use crate::schema::types::{ForeignKeyDef, IndexDef, TableDef, UniqueConstraintDef};
 
 pub fn table() -> TableDef {
@@ -25,34 +28,17 @@ pub fn table() -> TableDef {
 }
 
 pub fn indexes() -> Vec<IndexDef> {
-    vec![
-        crate::index!(
-            "idx_agent_sessions_summary",
-            "agent_sessions",
-            ["session_summary_id"]
-        ),
-        crate::index!(
-            "idx_agent_sessions_parent",
-            "agent_sessions",
-            ["parent_session_id"]
-        ),
-        crate::index!("idx_agent_sessions_type", "agent_sessions", ["agent_type"]),
-        crate::index!(
-            "idx_agent_sessions_project",
-            "agent_sessions",
-            ["project_id"]
-        ),
-        crate::index!(
-            "idx_agent_sessions_worktree",
-            "agent_sessions",
-            ["worktree_id"]
-        ),
-        crate::index!(
-            "idx_agent_sessions_started",
-            "agent_sessions",
-            ["started_at"]
-        ),
-    ]
+    crate::indexes_for_table!(
+        "agent_sessions",
+        {
+            "idx_agent_sessions_summary" => ["session_summary_id"],
+            "idx_agent_sessions_parent" => ["parent_session_id"],
+            "idx_agent_sessions_type" => ["agent_type"],
+            "idx_agent_sessions_project" => ["project_id"],
+            "idx_agent_sessions_worktree" => ["worktree_id"],
+            "idx_agent_sessions_started" => ["started_at"],
+        }
+    )
 }
 
 pub fn foreign_keys() -> Vec<ForeignKeyDef> {

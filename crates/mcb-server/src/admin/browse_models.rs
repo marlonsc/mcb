@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 use serde::Serialize;
 
 /// Projects list response for browse entity navigation.

@@ -1,4 +1,7 @@
 //!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
+//!
 //! Registry-backed tool definitions and dispatch for MCP protocol.
 // linkme distributed_slice uses #[link_section] internally
 #![allow(unsafe_code)]
@@ -318,78 +321,6 @@ impl ToolDefinitions {
         let descriptor = descriptor_by_name(name)
             .ok_or_else(|| McpError::invalid_params(format!("Unknown tool: {name}"), None))?;
         create_tool_from_descriptor(descriptor)
-    }
-
-    /// Define the `index` tool.
-    ///
-    /// # Errors
-    /// Returns an error when descriptor lookup or schema generation fails.
-    pub fn index() -> Result<Tool, McpError> {
-        Self::by_name("index")
-    }
-
-    /// Define the `search` tool.
-    ///
-    /// # Errors
-    /// Returns an error when descriptor lookup or schema generation fails.
-    pub fn search() -> Result<Tool, McpError> {
-        Self::by_name("search")
-    }
-
-    /// Define the `validate` tool.
-    ///
-    /// # Errors
-    /// Returns an error when descriptor lookup or schema generation fails.
-    pub fn validate() -> Result<Tool, McpError> {
-        Self::by_name("validate")
-    }
-
-    /// Define the `memory` tool.
-    ///
-    /// # Errors
-    /// Returns an error when descriptor lookup or schema generation fails.
-    pub fn memory() -> Result<Tool, McpError> {
-        Self::by_name("memory")
-    }
-
-    /// Define the `session` tool.
-    ///
-    /// # Errors
-    /// Returns an error when descriptor lookup or schema generation fails.
-    pub fn session() -> Result<Tool, McpError> {
-        Self::by_name("session")
-    }
-
-    /// Define the `agent` tool.
-    ///
-    /// # Errors
-    /// Returns an error when descriptor lookup or schema generation fails.
-    pub fn agent() -> Result<Tool, McpError> {
-        Self::by_name("agent")
-    }
-
-    /// Define the `project` tool.
-    ///
-    /// # Errors
-    /// Returns an error when descriptor lookup or schema generation fails.
-    pub fn project() -> Result<Tool, McpError> {
-        Self::by_name("project")
-    }
-
-    /// Define the `vcs` tool.
-    ///
-    /// # Errors
-    /// Returns an error when descriptor lookup or schema generation fails.
-    pub fn vcs() -> Result<Tool, McpError> {
-        Self::by_name("vcs")
-    }
-
-    /// Define the `entity` tool.
-    ///
-    /// # Errors
-    /// Returns an error when descriptor lookup or schema generation fails.
-    pub fn entity() -> Result<Tool, McpError> {
-        Self::by_name("entity")
     }
 }
 

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Port/Adapter Compliance Validation
 //!
 //! Validates Clean Architecture port/adapter patterns.

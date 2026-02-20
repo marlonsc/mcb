@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Submodule traversal service using git2.
 
 use std::collections::{HashSet, VecDeque};

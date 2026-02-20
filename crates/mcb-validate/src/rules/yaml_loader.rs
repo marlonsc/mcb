@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! YAML Rule Loader
 //!
 //! Automatically loads and validates YAML-based rules with template support.

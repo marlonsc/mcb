@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 /// `VoyageAI` max input tokens
 pub const VOYAGEAI_MAX_INPUT_TOKENS: usize = 16000;
 

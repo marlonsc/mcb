@@ -1,4 +1,7 @@
 //! Project detection port for identifying project types in repositories.
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 
 use std::path::Path;
 use std::sync::Arc;

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Code Metrics Module
 //!
 //! Provides code complexity metrics analysis using rust-code-analysis (RCA).

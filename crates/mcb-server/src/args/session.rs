@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 use mcb_domain::value_objects::ids::SessionId;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

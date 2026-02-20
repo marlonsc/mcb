@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/application.md](../../../../docs/modules/application.md#use-cases)
+//!
 //! Search Service Use Case
 //!
 //! # Overview
@@ -9,11 +12,10 @@
 
 use std::sync::Arc;
 
+use mcb_domain::constants::search::SEARCH_OVERFETCH_MULTIPLIER;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{ContextServiceInterface, SearchFilters, SearchServiceInterface};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
-
-use crate::constants::SEARCH_OVERFETCH_MULTIPLIER;
 
 /// Implementation of the `SearchServiceInterface`.
 ///

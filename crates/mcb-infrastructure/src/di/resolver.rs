@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Dynamic Provider Resolver
 //!
 //! Resolves providers by name using the linkme distributed slice registry.

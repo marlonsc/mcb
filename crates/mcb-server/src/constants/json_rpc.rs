@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 /// JSON-RPC Method not found error code
 pub const JSONRPC_METHOD_NOT_FOUND: i32 = -32601;
 

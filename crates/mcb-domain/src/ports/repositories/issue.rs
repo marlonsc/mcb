@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
+//!
 //! Issue Entity Repository Port
 //!
 //! # Overview
@@ -9,8 +12,6 @@ use crate::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use crate::entities::project::ProjectIssue;
 use crate::error::Result;
 
-#[async_trait]
-/// Defines behavior for `IssueEntityRepository`.
 #[async_trait]
 /// Registry for issues.
 pub trait IssueRegistry: Send + Sync {

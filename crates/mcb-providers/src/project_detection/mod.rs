@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Project detection with auto-registration via linkme.
 #![allow(unsafe_code)]
 

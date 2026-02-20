@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Organization entity CRUD handler implementation.
 
 use std::sync::Arc;

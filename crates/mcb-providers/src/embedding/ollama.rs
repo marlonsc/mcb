@@ -1,5 +1,7 @@
 //! Ollama Embedding Provider
 //!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#embedding-providers)
+//!
 //! Implements the `EmbeddingProvider` port using Ollama's local embedding API.
 //! Supports various local embedding models like nomic-embed-text, all-minilm, etc.
 
@@ -17,7 +19,9 @@ use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use crate::constants::{EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_MODEL, HTTP_HEADER_CONTENT_TYPE};
-use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
+use crate::utils::embedding::{
+    HttpEmbeddingClient, HttpEmbeddingClientConfig, parse_float_array_lossy,
+};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
@@ -42,14 +46,14 @@ impl OllamaEmbeddingProvider {
     #[must_use]
     pub fn new(base_url: String, model: String, timeout: Duration, http_client: Client) -> Self {
         Self {
-            client: HttpEmbeddingClient::new(
-                "", // No API key for Ollama
-                Some(base_url),
-                crate::constants::OLLAMA_DEFAULT_BASE_URL,
+            client: HttpEmbeddingClient::new(HttpEmbeddingClientConfig {
+                api_key: String::new(),
+                base_url: Some(base_url),
+                default_base_url: crate::constants::OLLAMA_DEFAULT_BASE_URL.to_owned(),
                 model,
                 timeout,
-                http_client,
-            ),
+                client: http_client,
+            }),
         }
     }
 

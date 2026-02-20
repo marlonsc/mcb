@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Configuration propagation for runtime config changes
 //!
 //! Handles propagating configuration changes to services that support hot-reload.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../../docs/modules/domain.md#provider-ports)
+//!
 pub(crate) mod config;
 mod provider;
 mod stats;

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Processor implementation for hook events.
 //!
 //! Handles the execution logic for various lifecycle hooks.

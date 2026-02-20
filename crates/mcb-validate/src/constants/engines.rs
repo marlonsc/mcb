@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Rule engine type identifiers.
 //!
 //! String constants for the pluggable rule engine system used in

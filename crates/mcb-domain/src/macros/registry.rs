@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Provider registry infrastructure macros.
 //!
 //! Used by `registry/` modules for auto-registration via `linkme`.

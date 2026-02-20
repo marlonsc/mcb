@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use std::sync::Arc;
 
 use rmcp::model::CallToolRequestParams;

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Admin jobs endpoints
 //!
 //! Provides endpoints for monitoring background job status.

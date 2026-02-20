@@ -1,4 +1,7 @@
 //!
+//! **Documentation**: [docs/modules/server.md](../../../docs/modules/server.md)
+//!
+//!
 //! Core MCP protocol server that orchestrates semantic code search operations.
 //! Follows Clean Architecture principles with dependency injection.
 //!

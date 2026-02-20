@@ -1,19 +1,80 @@
-use crate::schema::types::{ForeignKeyDef, IndexDef, TableDef, UniqueConstraintDef};
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
+use crate::schema::types::{
+    ColumnDef, ColumnType, ForeignKeyDef, IndexDef, TableDef, UniqueConstraintDef,
+};
 
 pub fn table() -> TableDef {
-    crate::table!(
-        "checkpoints",
-        [
-            crate::col!("id", Text, pk),
-            crate::col!("session_id", Text),
-            crate::col!("checkpoint_type", Text),
-            crate::col!("description", Text),
-            crate::col!("snapshot_data", Text),
-            crate::col!("created_at", Integer),
-            crate::col!("restored_at", Integer, nullable),
-            crate::col!("expired", Integer, nullable),
-        ]
-    )
+    TableDef {
+        name: "checkpoints".to_owned(),
+        columns: vec![
+            ColumnDef {
+                name: "id".to_owned(),
+                type_: ColumnType::Text,
+                primary_key: true,
+                unique: true,
+                not_null: true,
+                auto_increment: false,
+            },
+            ColumnDef {
+                name: "session_id".to_owned(),
+                type_: ColumnType::Text,
+                primary_key: false,
+                unique: false,
+                not_null: true,
+                auto_increment: false,
+            },
+            ColumnDef {
+                name: "checkpoint_type".to_owned(),
+                type_: ColumnType::Text,
+                primary_key: false,
+                unique: false,
+                not_null: true,
+                auto_increment: false,
+            },
+            ColumnDef {
+                name: "description".to_owned(),
+                type_: ColumnType::Text,
+                primary_key: false,
+                unique: false,
+                not_null: true,
+                auto_increment: false,
+            },
+            ColumnDef {
+                name: "snapshot_data".to_owned(),
+                type_: ColumnType::Text,
+                primary_key: false,
+                unique: false,
+                not_null: true,
+                auto_increment: false,
+            },
+            ColumnDef {
+                name: "created_at".to_owned(),
+                type_: ColumnType::Integer,
+                primary_key: false,
+                unique: false,
+                not_null: true,
+                auto_increment: false,
+            },
+            ColumnDef {
+                name: "restored_at".to_owned(),
+                type_: ColumnType::Integer,
+                primary_key: false,
+                unique: false,
+                not_null: false,
+                auto_increment: false,
+            },
+            ColumnDef {
+                name: "expired".to_owned(),
+                type_: ColumnType::Integer,
+                primary_key: false,
+                unique: false,
+                not_null: false,
+                auto_increment: false,
+            },
+        ],
+    }
 }
 
 pub fn indexes() -> Vec<IndexDef> {

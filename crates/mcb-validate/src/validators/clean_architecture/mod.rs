@@ -1,4 +1,7 @@
 //! Clean Architecture validation module
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#clean-architecture)
+//!
 
 mod validator;
 mod violation;

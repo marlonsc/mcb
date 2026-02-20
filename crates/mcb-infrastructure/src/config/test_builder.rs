@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
+//!
 //! Fluent builder for test configurations.
 //!
 //! Always starts from `config/default.toml` + env overrides, then applies

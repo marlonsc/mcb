@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `CIRCUIT_BREAKER_FAILURE_THRESHOLD`.
 pub const CIRCUIT_BREAKER_FAILURE_THRESHOLD: u32 = 5;
 /// Constant value for `CIRCUIT_BREAKER_TIMEOUT_SECS`.

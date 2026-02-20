@@ -10,13 +10,7 @@ use rstest::rstest;
 #[case("validate")]
 #[case("memory")]
 fn test_tool_definitions_core(#[case] tool_name: &str) {
-    let tool = match tool_name {
-        "index" => ToolDefinitions::index().expect("Should create index tool"),
-        "search" => ToolDefinitions::search().expect("Should create search tool"),
-        "validate" => ToolDefinitions::validate().expect("Should create validate tool"),
-        "memory" => ToolDefinitions::memory().expect("Should create memory tool"),
-        _ => panic!("unknown tool"),
-    };
+    let tool = ToolDefinitions::by_name(tool_name).expect("Should create tool");
 
     assert_eq!(&*tool.name, tool_name);
     assert!(tool.description.is_some(), "Tool should have description");

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Filter pipeline logic for in-memory filtering.
 
 use std::collections::HashSet;

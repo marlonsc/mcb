@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Rusty Rules Engine Wrapper
 //!
 //! Wrapper for rusty-rules crate with JSON DSL and composition support.

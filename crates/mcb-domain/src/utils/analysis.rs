@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md#domain-utilities-utils](../../../../docs/modules/domain.md#domain-utilities-utils)
+//!
 use crate::error::{Error, Result};
 use regex::Regex;
 use std::path::PathBuf;
@@ -55,6 +58,42 @@ pub fn extract_function_body(content: &str, start_pos: usize) -> Option<String> 
         }
         i += 1;
     }
+    None
+}
+
+/// Extracts a code block defined by balanced braces `{}` from an iterator of lines.
+/// Returns the number of lines from the start of the iterator that contain the balanced block.
+#[must_use]
+pub fn count_balanced_block_lines<I, S>(lines: I, max_search_offset: usize) -> Option<usize>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<str>,
+{
+    let mut brace_balance = 0;
+    let mut found_start = false;
+
+    for (offset, line) in lines.into_iter().enumerate() {
+        let line_ref = line.as_ref();
+
+        let open_count = line_ref.chars().filter(|c| *c == '{').count() as i32;
+        let close_count = line_ref.chars().filter(|c| *c == '}').count() as i32;
+
+        if open_count > 0 && !found_start {
+            found_start = true;
+        }
+
+        if found_start {
+            brace_balance += open_count;
+            brace_balance -= close_count;
+
+            if brace_balance <= 0 {
+                return Some(offset + 1); // Length in lines
+            }
+        } else if offset > max_search_offset {
+            return None;
+        }
+    }
+
     None
 }
 

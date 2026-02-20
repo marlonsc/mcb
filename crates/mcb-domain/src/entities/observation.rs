@@ -1,4 +1,7 @@
 //! Provides observation domain definitions.
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
+//!
 use super::memory::{ExecutionMetadata, OriginContext, QualityGateResult};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
@@ -33,21 +36,7 @@ pub enum ObservationType {
     QualityGate,
 }
 
-impl ObservationType {
-    /// Returns the string representation of the observation type.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use mcb_domain::ObservationType;
-    /// assert_eq!(ObservationType::Code.as_str(), "code");
-    /// assert_eq!(ObservationType::Decision.as_str(), "decision");
-    /// ```
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(ObservationType);
 
 /// Metadata associated with an observation.
 ///

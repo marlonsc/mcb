@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! Implementation Quality Validation
 //!
 //! Detects false, incomplete, or low-quality implementations:

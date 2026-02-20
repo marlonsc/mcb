@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#value-objects)
+//!
 use typed_builder::TypedBuilder;
 
 /// Auto-resolved project identity derived from the git repository.

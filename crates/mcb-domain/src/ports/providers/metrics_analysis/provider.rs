@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../../docs/modules/domain.md#provider-ports)
+//!
 #![allow(missing_docs)]
 
 use std::path::Path;

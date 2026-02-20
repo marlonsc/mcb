@@ -1,5 +1,7 @@
 //! Agent Session Service Use Case
 //!
+//! **Documentation**: [docs/modules/application.md](../../../../docs/modules/application.md#use-cases)
+//!
 //! # Overview
 //! The `AgentSessionService` handles the lifecycle and persistence of autonomous agent sessions.
 //! It serves as the system of record for agent interactions, state transitions, and execution history.

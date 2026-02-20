@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `DB_POOL_SIZE`.
 pub const DB_POOL_SIZE: u32 = 10;
 /// Constant value for `DB_CONNECTION_TIMEOUT_SECS`.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::constants::common::{COMMENT_PREFIX, FN_PREFIX, MODULE_DOC_PREFIX};
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regex, compile_regex_pairs};

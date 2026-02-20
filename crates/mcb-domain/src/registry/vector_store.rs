@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Vector Store Provider Registry
 //!
 //! Auto-registration system for vector store providers using linkme distributed slices.

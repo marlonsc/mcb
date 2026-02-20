@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! VCS handler for version control operations.
 //!
 //! This module provides a unified handler for VCS-related MCP tool operations.

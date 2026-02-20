@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Embedding Provider Registry
 //!
 //! Auto-registration system for embedding providers using linkme distributed slices.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Default limits and thresholds for MCP tool handlers and admin endpoints.
 
 // ============================================================================

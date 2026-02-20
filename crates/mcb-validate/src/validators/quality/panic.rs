@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
+//!
 use super::constants::PANIC_REGEX;
 use super::{QualityValidator, QualityViolation};
 use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX};
@@ -30,22 +33,11 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
             for (line_num, line) in content.lines().enumerate() {
                 let trimmed = line.trim();
 
-                // Skip comments
-                if trimmed.starts_with(COMMENT_PREFIX) {
-                    continue;
-                }
-
-                if trimmed.contains(CFG_TEST_MARKER) {
-                    in_test_module = true;
-                    continue;
-                }
-
-                if in_test_module {
-                    continue;
-                }
-
-                // Check for panic!
-                if panic_pattern.is_match(line) {
+                in_test_module = in_test_module || trimmed.contains(CFG_TEST_MARKER);
+                if !trimmed.starts_with(COMMENT_PREFIX)
+                    && !in_test_module
+                    && panic_pattern.is_match(line)
+                {
                     violations.push(QualityViolation::PanicInProduction {
                         file: entry.absolute_path.clone(),
                         line: line_num + 1,

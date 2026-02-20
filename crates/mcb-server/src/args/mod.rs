@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Argument types and validators for MCP tool requests.
 //!
 //! This module provides request argument types for all MCP tools and validation

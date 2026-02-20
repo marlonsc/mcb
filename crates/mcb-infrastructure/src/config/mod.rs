@@ -1,6 +1,6 @@
 //! Configuration Management - Type-safe, layered, Validated
 //!
-//! **Documentation**: [`docs/modules/config.md`](../../../../docs/modules/config.md)
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
 //!
 //! Provides TOML configuration loading, validation, and hot-reloading
 //! for all system components. This module manages the application's

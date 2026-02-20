@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! General utility functions and helper modules for the MCB Server.
 //!
 //! This module contains shared logic that doesn't fit into a specific domain,

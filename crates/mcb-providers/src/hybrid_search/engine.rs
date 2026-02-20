@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Hybrid search engine combining BM25 and semantic search
 //!
 //! This module provides the core engine that combines BM25 text-based ranking

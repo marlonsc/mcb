@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! MCP and JSON-RPC protocol constants.
 
 /// JSON-RPC protocol version string.

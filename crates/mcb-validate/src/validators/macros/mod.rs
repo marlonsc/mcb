@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! Validation macros — used by all validators in this module.
 //!
 //! - `validators.rs`: Registry and trait macros (`mk_validators!`, `impl_validator!`)

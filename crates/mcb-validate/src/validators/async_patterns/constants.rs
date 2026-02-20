@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! Constants for async pattern validators.
 
 /// Patterns for detecting wrong mutex types in async code: (pattern, description, suggestion).

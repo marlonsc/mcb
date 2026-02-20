@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 use crate::schema::types::{ForeignKeyDef, IndexDef, TableDef, UniqueConstraintDef};
 
 pub fn table() -> TableDef {

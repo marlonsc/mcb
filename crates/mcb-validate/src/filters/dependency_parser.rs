@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Cargo.toml Dependency Parser
 //!
 //! Parses Cargo.toml files to extract declared dependencies for validation.

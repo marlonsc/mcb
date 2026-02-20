@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Event Publisher Domain Port
 //!
 //! Defines the business contract for publishing system events. This abstraction

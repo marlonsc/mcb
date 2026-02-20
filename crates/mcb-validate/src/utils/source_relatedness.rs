@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 use crate::validators::solid::constants::{
     MAX_AFFIX_LENGTH, MIN_AFFIX_LENGTH, MIN_NAMES_FOR_RELATION_CHECK,
     MIN_WORD_LENGTH_FOR_COMPARISON,
@@ -125,7 +128,10 @@ fn has_shared_keyword(names: &[String]) -> bool {
 }
 
 fn has_common_words(names: &[String]) -> bool {
-    let words: Vec<Vec<&str>> = names.iter().map(|n| split_camel_case(n)).collect();
+    let words: Vec<Vec<&str>> = names
+        .iter()
+        .map(|n| crate::utils::naming::split_camel_case(n))
+        .collect();
 
     if let Some(first_words) = words.first() {
         for word in first_words {
@@ -138,21 +144,4 @@ fn has_common_words(names: &[String]) -> bool {
         }
     }
     false
-}
-
-fn split_camel_case(s: &str) -> Vec<&str> {
-    let mut words = Vec::new();
-    let mut start = 0;
-    for (i, c) in s.char_indices() {
-        if c.is_uppercase() && i > 0 {
-            if start < i {
-                words.push(&s[start..i]);
-            }
-            start = i;
-        }
-    }
-    if start < s.len() {
-        words.push(&s[start..]);
-    }
-    words
 }

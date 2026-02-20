@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use super::MemberCountInput;
 use super::MemberCountKind;
 use super::make_member_count_violation;

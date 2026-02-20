@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
+//!
 //! Search Repository Interface
 //!
 //! Interface for search operations that combine semantic vector search

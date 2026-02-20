@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Utility functions for text extraction and processing.
 
 use rmcp::model::Content;

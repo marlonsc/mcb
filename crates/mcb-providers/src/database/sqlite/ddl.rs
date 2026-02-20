@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md#database)
+//!
 use mcb_domain::schema::{
     ColumnType, ForeignKeyDef, FtsDef, IndexDef, Schema, SchemaDdlGenerator, TableDef,
     UniqueConstraintDef,

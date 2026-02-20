@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 //! Memory domain entities
 //!
 //! Includes observations, execution history, and memory search results.

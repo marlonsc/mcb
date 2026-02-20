@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Dill Catalog Configuration
 //!
 //! Configures the dill `IoC` container with all infrastructure services.

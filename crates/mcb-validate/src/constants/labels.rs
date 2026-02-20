@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Pending-task and stub detection labels.
 //!
 //! Labels are built via `concat!()` to prevent the source file itself from

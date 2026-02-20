@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Hybrid Rule Engine
 //!
 //! Orchestrates multiple rule engines for maximum flexibility:
@@ -182,6 +185,22 @@ pub struct HybridRuleEngine {
     cache: HashMap<String, Vec<u8>>, // Compiled rule cache
 }
 
+/// Input for lint-based rules executing via `YamlRuleExecutor`.
+pub struct LintRuleInput<'a> {
+    /// Rule ID
+    pub rule_id: &'a str,
+    /// List of linters or linter tags enabled for this rule
+    pub lint_select: &'a [String],
+    /// Rule context
+    pub context: &'a RuleContext,
+    /// Custom violation message
+    pub custom_message: Option<&'a str>,
+    /// Severity level
+    pub severity: Severity,
+    /// Category classification
+    pub category: ViolationCategory,
+}
+
 impl HybridRuleEngine {
     /// Create a new hybrid rule engine
     #[must_use]
@@ -342,17 +361,18 @@ impl HybridRuleEngine {
     /// # Errors
     ///
     /// Returns an error if linter execution or violation conversion fails.
-    pub async fn execute_lint_rule(
-        &self,
-        rule_id: &str,
-        lint_select: &[String],
-        context: &RuleContext,
-        custom_message: Option<&str>,
-        severity: Severity,
-        category: ViolationCategory,
-    ) -> Result<RuleResult> {
+    pub async fn execute_lint_rule(&self, input: LintRuleInput<'_>) -> Result<RuleResult> {
         use crate::linters::YamlRuleExecutor;
         use crate::rules::yaml_loader::ValidatedRule;
+
+        let LintRuleInput {
+            rule_id,
+            lint_select,
+            context,
+            custom_message,
+            severity,
+            category,
+        } = input;
 
         let start_time = std::time::Instant::now();
 

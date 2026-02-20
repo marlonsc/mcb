@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Architecture path fragment constants.
 //!
 //! Shared path patterns used by organization, naming, and documentation

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! File Pattern Matching
 //!
 //! Matches file paths against glob patterns for rule filtering.

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Linter Runners Module
 //!
 //! Concrete implementations for running specific linters.

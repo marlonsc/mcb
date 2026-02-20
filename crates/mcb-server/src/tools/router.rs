@@ -1,4 +1,7 @@
 //!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
+//!
 //! Routes incoming tool call requests to the appropriate handlers.
 //! This module provides a centralized dispatch mechanism for MCP tool calls.
 

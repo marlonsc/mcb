@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! AST and tree-sitter node type constants
 
 /// AST node type for function definitions.

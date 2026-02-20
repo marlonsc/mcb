@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use regex::Regex;
 
 pub(super) struct DocItemContext<'a> {

@@ -1,6 +1,6 @@
 //! Embedding Provider Port
 //!
-//! **Documentation**: [`docs/modules/providers.md#embedding-providers-embedding`](../../../../docs/modules/providers.md#embedding-providers-embedding)
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
 //!
 //! Defines the business contract for AI providers that transform text into
 //! semantic embeddings.

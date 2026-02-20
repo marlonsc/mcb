@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../docs/modules/server.md)
+//!
 //! Authentication and Authorization
 //!
 //! Handles user authentication and authorization for admin interfaces.

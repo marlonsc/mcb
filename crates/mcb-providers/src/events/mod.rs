@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Event Bus Provider Implementations
 //!
 //! Provides event bus backends for domain events.

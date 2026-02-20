@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../docs/modules/infrastructure.md)
+//!
 //! Error extension utilities
 //!
 //! Provides context extension methods for domain errors and infrastructure-specific

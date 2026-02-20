@@ -25,17 +25,15 @@ async fn setup_repo() -> TestResult<(
 
 fn create_test_plan(id: &str) -> Plan {
     Plan {
-        metadata: mcb_domain::entities::EntityMetadata {
-            id: id.to_owned(),
-            created_at: TEST_NOW,
-            updated_at: TEST_NOW,
-        },
+        id: id.to_owned(),
         org_id: DEFAULT_ORG_ID.to_owned(),
         project_id: "proj-1".to_owned(),
         title: format!("Plan {id}"),
         description: format!("Description for plan {id}"),
         status: PlanStatus::Draft,
         created_by: "user-1".to_owned(),
+        created_at: TEST_NOW,
+        updated_at: TEST_NOW,
     }
 }
 
@@ -80,7 +78,7 @@ async fn test_plan_crud() -> TestResult {
 
     let mut updated = plan.clone();
     updated.status = PlanStatus::Active;
-    updated.metadata.updated_at = 2_000_000;
+    updated.updated_at = 2_000_000;
     repo.update_plan(&updated).await?;
 
     let after_update = repo.get_plan(DEFAULT_ORG_ID, "plan-1").await?;
@@ -146,17 +144,15 @@ async fn org_isolation_plans(#[case] org_id: &str, #[case] should_find: bool) ->
 
     let repo = SqlitePlanEntityRepository::new(executor);
     let plan = Plan {
-        metadata: mcb_domain::entities::EntityMetadata {
-            id: "plan-iso".to_owned(),
-            created_at: TEST_NOW,
-            updated_at: TEST_NOW,
-        },
+        id: "plan-iso".to_owned(),
         org_id: "org-A".to_owned(),
         project_id: "proj-org-A".to_owned(),
         title: "Org A Plan".to_owned(),
         description: "belongs to A".to_owned(),
         status: PlanStatus::Draft,
         created_by: "user-org-A".to_owned(),
+        created_at: TEST_NOW,
+        updated_at: TEST_NOW,
     };
     repo.create_plan(&plan).await?;
 
@@ -191,7 +187,7 @@ async fn test_plan_versioning_flow() -> TestResult {
 
     let mut updated_plan = plan.clone();
     updated_plan.status = PlanStatus::Active;
-    updated_plan.metadata.updated_at = 2_000_000;
+    updated_plan.updated_at = 2_000_000;
     repo.update_plan(&updated_plan).await?;
 
     let final_plan = repo.get_plan(DEFAULT_ORG_ID, "plan-flow").await?;

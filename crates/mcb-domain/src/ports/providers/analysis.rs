@@ -1,4 +1,7 @@
 //! Native PMAT-style analysis provider ports.
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 
 use std::path::{Path, PathBuf};
 

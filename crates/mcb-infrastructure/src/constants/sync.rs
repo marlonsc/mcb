@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Constant value for `SYNC_BATCH_SIZE`.
 pub const SYNC_BATCH_SIZE: usize = 100;
 /// Constant value for `SYNC_DEBOUNCE_DELAY_MS`.

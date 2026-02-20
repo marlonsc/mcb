@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Transport layer types
 //!
 //! Common types used across transport implementations for MCP protocol messages.

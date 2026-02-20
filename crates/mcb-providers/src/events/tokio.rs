@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Tokio Broadcast Event Bus Provider
 //!
 //! Event bus implementation using tokio broadcast channels for
