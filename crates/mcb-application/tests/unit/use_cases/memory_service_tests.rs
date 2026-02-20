@@ -7,7 +7,7 @@ use rstest::*;
 use serial_test::serial;
 
 use crate::utils::TEST_PROJECT_ID;
-use crate::utils::shared_context::shared_app_context;
+use crate::utils::shared_context::try_shared_app_context;
 
 static TEST_COUNTER: AtomicU64 = AtomicU64::new(0);
 
@@ -19,15 +19,17 @@ fn test_epoch_secs_i64_reports_recent_time() {
 }
 
 #[fixture]
-async fn memory_service() -> MemoryServiceImpl {
-    let app_ctx = shared_app_context();
+async fn memory_service() -> Option<MemoryServiceImpl> {
+    let Some(app_ctx) = try_shared_app_context() else {
+        return None;
+    };
     let id = TEST_COUNTER.fetch_add(1, Ordering::Relaxed);
-    MemoryServiceImpl::new(
+    Some(MemoryServiceImpl::new(
         format!("test-project-{id}"),
         app_ctx.memory_repository(),
         app_ctx.embedding_handle().get(),
         app_ctx.vector_store_handle().get(),
-    )
+    ))
 }
 
 mod integration_tests {
@@ -37,9 +39,12 @@ mod integration_tests {
     #[tokio::test]
     #[serial]
     async fn test_hybrid_search_combines_fts_and_vector(
-        #[future] memory_service: MemoryServiceImpl,
+        #[future] memory_service: Option<MemoryServiceImpl>,
     ) {
-        let service = memory_service.await;
+        let Some(service) = memory_service.await else {
+            eprintln!("skipping: shared AppContext unavailable (FastEmbed model missing)");
+            return;
+        };
 
         // Store observations
         let (id_a, _) = service
@@ -86,8 +91,13 @@ mod integration_tests {
     #[rstest]
     #[tokio::test]
     #[serial]
-    async fn test_search_respects_memory_filter(#[future] memory_service: MemoryServiceImpl) {
-        let service = memory_service.await;
+    async fn test_search_respects_memory_filter(
+        #[future] memory_service: Option<MemoryServiceImpl>,
+    ) {
+        let Some(service) = memory_service.await else {
+            eprintln!("skipping: shared AppContext unavailable (FastEmbed model missing)");
+            return;
+        };
 
         let meta1 = ObservationMetadata {
             session_id: Some("session-1".to_owned()),
@@ -136,8 +146,11 @@ mod integration_tests {
     #[rstest]
     #[tokio::test]
     #[serial]
-    async fn test_filter_by_branch(#[future] memory_service: MemoryServiceImpl) {
-        let service = memory_service.await;
+    async fn test_filter_by_branch(#[future] memory_service: Option<MemoryServiceImpl>) {
+        let Some(service) = memory_service.await else {
+            eprintln!("skipping: shared AppContext unavailable (FastEmbed model missing)");
+            return;
+        };
 
         let meta1 = ObservationMetadata {
             branch: Some("feature/auth".to_owned()),
@@ -186,8 +199,11 @@ mod integration_tests {
     #[rstest]
     #[tokio::test]
     #[serial]
-    async fn test_filter_by_commit(#[future] memory_service: MemoryServiceImpl) {
-        let service = memory_service.await;
+    async fn test_filter_by_commit(#[future] memory_service: Option<MemoryServiceImpl>) {
+        let Some(service) = memory_service.await else {
+            eprintln!("skipping: shared AppContext unavailable (FastEmbed model missing)");
+            return;
+        };
 
         let meta1 = ObservationMetadata {
             commit: Some("abc1234".to_owned()),

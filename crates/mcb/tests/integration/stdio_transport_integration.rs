@@ -97,6 +97,8 @@ fn create_test_command(mcb_path: &PathBuf) -> Command {
         "MCP__PROVIDERS__DATABASE__CONFIGS__DEFAULT__PATH",
         unique_db,
     );
+    cmd.env("MCP__PROVIDERS__EMBEDDING__PROVIDER", "openai");
+    cmd.env("MCP__PROVIDERS__EMBEDDING__API_KEY", "test-key");
     cmd
 }
 

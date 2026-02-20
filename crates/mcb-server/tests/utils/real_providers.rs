@@ -11,21 +11,31 @@ extern crate mcb_providers;
 
 use std::sync::Arc;
 
-use mcb_domain::error::Result;
+use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider};
 
-use super::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
+use super::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, try_shared_app_context};
 
 /// Get the real `EdgeVec` vector store provider from the shared context.
 pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> {
-    Ok(shared_app_context().vector_store_handle().get())
+    let Some(ctx) = try_shared_app_context() else {
+        return Err(Error::embedding(
+            "Shared AppContext unavailable — FastEmbed model may be missing",
+        ));
+    };
+    Ok(ctx.vector_store_handle().get())
 }
 
 /// Get the real `FastEmbed` provider from the shared context.
 ///
 /// The ONNX model is loaded once on first access and reused across all tests.
 pub async fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvider>> {
-    Ok(shared_app_context().embedding_handle().get())
+    let Some(ctx) = try_shared_app_context() else {
+        return Err(Error::embedding(
+            "Shared AppContext unavailable — FastEmbed model may be missing",
+        ));
+    };
+    Ok(ctx.embedding_handle().get())
 }
 
 /// Get a real `FastEmbed` provider (model parameter is accepted for API compat).
@@ -64,7 +74,13 @@ mod tests {
             println!("Skipping integration test");
             return;
         }
-        let store = create_real_vector_store().await.expect("vector store");
+        let store = match create_real_vector_store().await {
+            Ok(store) => store,
+            Err(err) => {
+                eprintln!("Skipping integration test (provider unavailable): {err}");
+                return;
+            }
+        };
         assert_eq!(store.provider_name(), "edgevec");
     }
 
@@ -74,7 +90,13 @@ mod tests {
             println!("Skipping integration test");
             return;
         }
-        let store = create_real_vector_store().await.expect("vector store");
+        let store = match create_real_vector_store().await {
+            Ok(store) => store,
+            Err(err) => {
+                eprintln!("Skipping integration test (provider unavailable): {err}");
+                return;
+            }
+        };
         let collection = unique_collection("vec-store");
 
         // Create collection
@@ -113,9 +135,13 @@ mod tests {
             println!("Skipping integration test");
             return;
         }
-        let provider = create_real_embedding_provider()
-            .await
-            .expect("fastembed provider should init");
+        let provider = match create_real_embedding_provider().await {
+            Ok(provider) => provider,
+            Err(err) => {
+                eprintln!("Skipping integration test (provider unavailable): {err}");
+                return;
+            }
+        };
 
         let embeddings = provider
             .embed_batch(&["warmup".to_owned()])
@@ -133,10 +159,17 @@ mod tests {
             println!("Skipping integration test");
             return;
         }
-        let provider =
-            create_real_embedding_provider_with_model(fastembed::EmbeddingModel::BGESmallENV15)
-                .await
-                .expect("fastembed provider should init");
+        let provider = match create_real_embedding_provider_with_model(
+            fastembed::EmbeddingModel::BGESmallENV15,
+        )
+        .await
+        {
+            Ok(provider) => provider,
+            Err(err) => {
+                eprintln!("Skipping integration test (provider unavailable): {err}");
+                return;
+            }
+        };
 
         let embeddings = provider
             .embed_batch(&["warmup".to_owned()])
@@ -153,9 +186,13 @@ mod tests {
             println!("Skipping integration test");
             return;
         }
-        let provider = create_real_embedding_provider()
-            .await
-            .expect("fastembed provider should init");
+        let provider = match create_real_embedding_provider().await {
+            Ok(provider) => provider,
+            Err(err) => {
+                eprintln!("Skipping integration test (provider unavailable): {err}");
+                return;
+            }
+        };
 
         let texts = vec!["hello world".to_owned(), "rust programming".to_owned()];
 
