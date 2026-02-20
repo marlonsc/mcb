@@ -5,7 +5,6 @@
 //! Note: mcb-providers is linked as dev-dependency to ensure
 //! providers are registered via linkme distributed slices.
 
-use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 use mcb_infrastructure::di::EmbeddingHandleExt;
 use mcb_infrastructure::di::bootstrap::init_app;
@@ -62,45 +61,29 @@ async fn test_provider_selection_from_config() -> Result<(), Box<dyn std::error:
     // Test that providers are correctly selected based on configuration
 
     let (mut config, _temp) = test_config()?;
-    config.providers.embedding.configs.insert(
-        "default".to_owned(),
-        EmbeddingConfig {
-            provider: "openai".to_owned(),
-            model: "text-embedding-3-small".to_owned(),
-            api_key: Some("test-key".to_owned()),
-            base_url: None,
-            dimensions: Some(384),
-            max_tokens: Some(1000),
-        },
-    );
-    config.providers.vector_store.configs.insert(
-        "default".to_owned(),
-        VectorStoreConfig {
-            provider: "edgevec".to_owned(),
-            address: None,
-            token: None,
-            collection: Some("test".to_owned()),
-            dimensions: Some(384),
-            timeout_secs: None,
-        },
-    );
+
+    config.providers.embedding.provider = Some("fastembed".to_owned());
+    config.providers.embedding.dimensions = Some(384);
+
+    config.providers.vector_store.provider = Some("edgevec".to_owned());
+    config.providers.vector_store.dimensions = Some(384);
+    config.providers.vector_store.collection = Some("test".to_owned());
 
     let app_context = init_app(config).await?;
 
-    // Verify correct providers were selected via handles
     assert_eq!(
         app_context.embedding_handle().get().provider_name(),
-        "openai"
+        "fastembed"
     );
     assert_eq!(
         app_context.vector_store_handle().get().provider_name(),
         "edgevec"
     );
-    assert_eq!(app_context.cache_handle().get().provider_name(), "moka"); // default cache
+    assert_eq!(app_context.cache_handle().get().provider_name(), "moka");
     assert_eq!(
         app_context.language_handle().get().provider_name(),
         "universal"
-    ); // default language
+    );
     Ok(())
 }
 

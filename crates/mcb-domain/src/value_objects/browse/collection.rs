@@ -30,7 +30,7 @@ impl CollectionInfo {
     ) -> Self {
         let name = name.into();
         Self {
-            id: CollectionId::from_name(&name),
+            id: CollectionId::from_string(&name),
             name,
             vector_count,
             file_count,

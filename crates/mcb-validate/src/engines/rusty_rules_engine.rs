@@ -9,7 +9,6 @@ use serde_json::Value;
 
 use super::hybrid_engine::{RuleContext, RuleEngine};
 use crate::Result;
-use crate::ValidationConfig;
 use crate::constants::common::{TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX};
 use crate::constants::rules::{
     DEFAULT_VIOLATION_MESSAGE, YAML_FIELD_ACTION, YAML_FIELD_CONDITION, YAML_FIELD_FIX_TYPE,
@@ -17,7 +16,6 @@ use crate::constants::rules::{
 };
 use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO};
 use crate::engines::hybrid_engine::RuleViolation;
-use crate::run_context::ValidationRunContext;
 use crate::traits::violation::{Severity, ViolationCategory};
 
 /// Wrapper for rusty-rules engine
@@ -235,38 +233,15 @@ impl RustyRulesEngineWrapper {
     }
 
     fn has_forbidden_dependency(pattern: &str, context: &RuleContext) -> bool {
-        // Check Cargo.toml files for forbidden dependencies
-        use glob::Pattern;
-
-        let Ok(cargo_pattern) = Pattern::new("**/Cargo.toml") else {
-            return false;
-        };
         let trimmed_pattern = pattern.trim_matches('"');
         let pattern_prefix = trimmed_pattern.trim_end_matches('*');
 
-        if let Ok(run_context) =
-            ValidationRunContext::active_or_build(&ValidationConfig::new(&context.workspace_root))
-        {
-            for entry in run_context.file_inventory() {
-                let path = &entry.absolute_path;
-                if !cargo_pattern.matches_path(path) {
-                    continue;
-                }
-
-                if let Ok(content) = run_context.read_cached(path)
-                    && dependency_matches(content.as_ref(), pattern_prefix)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+        if workspace_has_forbidden_cargo_dependency(&context.workspace_root, pattern_prefix) {
+            return true;
         }
 
         for (path, content) in &context.file_contents {
-            if cargo_pattern.matches_path(std::path::Path::new(path.as_str()))
-                && dependency_matches(content, pattern_prefix)
-            {
+            if path.ends_with("Cargo.toml") && dependency_matches(content, pattern_prefix) {
                 return true;
             }
         }
@@ -275,11 +250,45 @@ impl RustyRulesEngineWrapper {
     }
 }
 
+fn workspace_has_forbidden_cargo_dependency(
+    workspace_root: &std::path::Path,
+    pattern_prefix: &str,
+) -> bool {
+    let mut stack = vec![workspace_root.to_path_buf()];
+
+    while let Some(dir) = stack.pop() {
+        let Ok(entries) = std::fs::read_dir(&dir) else {
+            continue;
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                stack.push(path);
+                continue;
+            }
+
+            if path.file_name().and_then(std::ffi::OsStr::to_str) != Some("Cargo.toml") {
+                continue;
+            }
+
+            if let Ok(content) = std::fs::read_to_string(&path)
+                && dependency_matches(content.as_ref(), pattern_prefix)
+            {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
 fn dependency_matches(content: &str, pattern_prefix: &str) -> bool {
     content
         .parse::<toml::Value>()
         .ok()
         .is_some_and(|toml_value| toml_dependencies_match(&toml_value, pattern_prefix))
+        || dependencies_match_by_line(content, pattern_prefix)
 }
 
 fn toml_dependencies_match(toml_value: &toml::Value, pattern_prefix: &str) -> bool {
@@ -293,6 +302,37 @@ fn toml_dependencies_match(toml_value: &toml::Value, pattern_prefix: &str) -> bo
     deps_table
         .keys()
         .any(|dep_name| dep_name.starts_with(pattern_prefix))
+}
+
+fn dependencies_match_by_line(content: &str, pattern_prefix: &str) -> bool {
+    let mut in_dependencies = false;
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() || trimmed.starts_with('#') {
+            continue;
+        }
+
+        if trimmed.starts_with('[') && trimmed.ends_with(']') {
+            in_dependencies = trimmed == "[dependencies]";
+            continue;
+        }
+
+        if !in_dependencies {
+            continue;
+        }
+
+        let Some((key, _)) = trimmed.split_once('=') else {
+            continue;
+        };
+
+        let dep_name = key.trim().trim_matches('"').trim_matches('\'');
+        if dep_name.starts_with(pattern_prefix) {
+            return true;
+        }
+    }
+
+    false
 }
 
 #[async_trait]

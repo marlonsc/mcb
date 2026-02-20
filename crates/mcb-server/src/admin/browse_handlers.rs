@@ -95,6 +95,7 @@ pub async fn list_collections(
     let collection_responses = collections
         .into_iter()
         .map(|c| CollectionInfoResponse {
+            id: c.id.to_string(),
             name: c.name,
             vector_count: c.vector_count,
             file_count: c.file_count,

@@ -41,7 +41,7 @@ pub fn test_service_url(key: &str) -> Option<String> {
     test_services_table()?
         .get(key)
         .and_then(|v| v.as_str())
-        .map(str::to_string)
+        .map(ToOwned::to_owned)
 }
 
 /// Returns a required service URL from `[test_services]`.

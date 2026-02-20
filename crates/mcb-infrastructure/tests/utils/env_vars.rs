@@ -10,6 +10,8 @@ impl EnvVarGuard {
     #[must_use]
     pub fn new(vars: &[(&str, &str)]) -> Self {
         for (k, v) in vars {
+            // SAFETY: Test-only helper; tests using env vars run serially
+            // (not multi-threaded) so concurrent mutation is not a concern.
             unsafe {
                 env::set_var(k, v);
             }
@@ -26,6 +28,8 @@ impl EnvVarGuard {
 
     pub fn remove(vars: &[&str]) {
         for key in vars {
+            // SAFETY: Test-only helper; tests using env vars run serially
+            // (not multi-threaded) so concurrent mutation is not a concern.
             unsafe {
                 env::remove_var(key);
             }
@@ -36,6 +40,8 @@ impl EnvVarGuard {
 impl Drop for EnvVarGuard {
     fn drop(&mut self) {
         for key in &self.keys {
+            // SAFETY: Test-only helper; tests using env vars run serially
+            // (not multi-threaded) so concurrent mutation is not a concern.
             unsafe {
                 env::remove_var(key);
             }

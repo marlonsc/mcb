@@ -439,18 +439,15 @@ async fn test_e2e_real_store_list_collections() {
     // Parse and validate JSON response
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
 
-    // Validate collection exists
-    assert!(
-        body.contains("test_project"),
-        "Should contain collection name"
-    );
+    let expected_collection_id = CollectionId::from_name("test_project").to_string();
 
     // Validate counts
     let collections = json["collections"].as_array().expect("collections array");
     assert_eq!(collections.len(), 1, "Should have 1 collection");
 
     let collection = &collections[0];
-    assert_eq!(collection["name"], "test_project");
+    assert_eq!(collection["id"], expected_collection_id);
+    assert_eq!(collection["name"], expected_collection_id);
     assert_eq!(collection["vector_count"], 8, "Should have 8 chunks total");
     assert_eq!(collection["file_count"], 4, "Should have 4 unique files");
     assert_eq!(collection["provider"], "edgevec");
@@ -631,11 +628,14 @@ async fn test_e2e_real_store_navigate_full_flow() {
         "Should have at least one collection"
     );
 
-    let collection_name = collections[0]["name"].as_str().expect("collection name");
-    assert_eq!(collection_name, "my_rust_project");
+    let collection_id = collections[0]["id"].as_str().expect("collection id");
+    assert_eq!(
+        collection_id,
+        CollectionId::from_name("my_rust_project").to_string()
+    );
 
     // Step 2: List files in the collection
-    let files_url = format!("/collections/{}/files", collection_name);
+    let files_url = format!("/collections/{}/files", collection_id);
     let response = client
         .get(&files_url)
         .header(Header::new("X-Admin-Key", "test-key"))
@@ -659,7 +659,7 @@ async fn test_e2e_real_store_navigate_full_flow() {
     assert_eq!(chunk_count, 2, "config.rs should have 2 chunks");
 
     // Step 3: Get chunks for config.rs
-    let chunks_url = format!("/collections/{}/chunks/src/config.rs", collection_name);
+    let chunks_url = format!("/collections/{}/chunks/src/config.rs", collection_id);
     let response = client
         .get(&chunks_url)
         .header(Header::new("X-Admin-Key", "test-key"))
@@ -749,16 +749,22 @@ async fn test_e2e_real_store_multiple_collections() {
     let collections = json["collections"].as_array().expect("collections array");
     assert_eq!(collections.len(), 2, "Should have 2 collections");
 
-    let names: Vec<&str> = collections
+    let ids: Vec<&str> = collections
         .iter()
-        .filter_map(|c| c["name"].as_str())
+        .filter_map(|c| c["id"].as_str())
         .collect();
 
+    let alpha_id = CollectionId::from_name("project_alpha").to_string();
+    let beta_id = CollectionId::from_name("project_beta").to_string();
+
     assert!(
-        names.contains(&"project_alpha"),
-        "Should have project_alpha"
+        ids.contains(&alpha_id.as_str()),
+        "Should have project_alpha id"
     );
-    assert!(names.contains(&"project_beta"), "Should have project_beta");
+    assert!(
+        ids.contains(&beta_id.as_str()),
+        "Should have project_beta id"
+    );
 
     // Validate total count
     assert_eq!(json["total"], 2);

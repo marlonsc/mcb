@@ -110,6 +110,8 @@ pub struct CollectionListResponse {
 /// Collection information for browse API
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollectionInfoResponse {
+    /// Stable collection identifier
+    pub id: String,
     /// Collection name
     pub name: String,
     /// Number of vectors in the collection
