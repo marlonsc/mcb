@@ -123,12 +123,17 @@ impl LayerFlowValidator {
                 let deps_ref = &deps;
                 let crates_dir_ref = &crates_dir;
                 let crate_list: Vec<String> = deps_ref.keys().cloned().collect();
+                let crate_a_filter = crate_a.clone();
                 crate_list
                     .into_iter()
                     .skip(i + 1)
                     .filter(move |crate_b| {
-                        deps_ref.get(&crate_a).is_some_and(|d| d.contains(crate_b))
-                            && deps_ref.get(crate_b).is_some_and(|d| d.contains(&crate_a))
+                        deps_ref
+                            .get(&crate_a_filter)
+                            .is_some_and(|d| d.contains(crate_b))
+                            && deps_ref
+                                .get(crate_b)
+                                .is_some_and(|d| d.contains(&crate_a_filter))
                     })
                     .map(move |crate_b| LayerFlowViolation::CircularDependency {
                         crate_a: crate_a.clone(),

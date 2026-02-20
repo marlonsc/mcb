@@ -39,7 +39,7 @@ pub fn validate_hardcoded_returns(
                 if is_fn_signature_or_brace(line) {
                     continue;
                 }
-                for (pattern, desc) in compiled
+                for (_pattern, desc) in compiled
                     .iter()
                     .filter(|(pattern, _)| pattern.is_match(line))
                 {

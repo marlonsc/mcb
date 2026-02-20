@@ -37,11 +37,14 @@ pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncVio
                     current_fn_name = cap.get(1).map_or("", |m| m.as_str()).to_lowercase();
                 }
 
-                let unassigned_spawn = spawn_pattern.is_match(line)
-                    && !assigned_spawn_pattern.is_match(line)
-                    && !line.contains(".await")
-                    && !line.contains("let _")
-                    && !is_background_fn(&current_fn_name);
+                let has_spawn = spawn_pattern.is_match(line);
+                let has_assignment = assigned_spawn_pattern.is_match(line);
+                let has_await = line.contains(".await");
+                let is_ignored_spawn = line.contains("let _");
+                let in_background_fn = is_background_fn(&current_fn_name);
+                let no_followup =
+                    !(has_assignment || has_await || is_ignored_spawn || in_background_fn);
+                let unassigned_spawn = has_spawn && no_followup;
 
                 if unassigned_spawn {
                     violations.push(AsyncViolation::UnawaitedSpawn {

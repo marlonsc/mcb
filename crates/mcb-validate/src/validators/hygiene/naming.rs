@@ -7,6 +7,59 @@ use crate::{Result, Severity, ValidationConfig};
 
 use super::violation::HygieneViolation;
 
+fn expected_naming_for_parent(
+    parent_dir: &str,
+    file_name: &str,
+    file_full: &str,
+) -> Option<(String, Severity)> {
+    match parent_dir {
+        "unit" => (!file_name.ends_with("_tests")).then(|| {
+            (
+                format!("{file_name}_tests.rs (unit tests must end with _tests)"),
+                Severity::Warning,
+            )
+        }),
+        "integration" => {
+            let ok = ["integration", "workflow"]
+                .iter()
+                .any(|kw| file_name.contains(kw) || file_name.ends_with(&format!("_{kw}")));
+            (!ok).then(|| {
+                (
+                    format!(
+                        "{file_name}_integration.rs or {file_name}_workflow.rs (integration tests should indicate their purpose)"
+                    ),
+                    Severity::Info,
+                )
+            })
+        }
+        "e2e" => {
+            let ok = ["e2e", "end_to_end"]
+                .iter()
+                .any(|kw| file_name.contains(kw))
+                || file_name.starts_with("test_");
+            (!ok).then(|| {
+                (
+                    format!(
+                        "{file_name}_e2e.rs or test_{file_name}.rs (e2e tests should indicate they're end-to-end)"
+                    ),
+                    Severity::Info,
+                )
+            })
+        }
+        "tests" => (!matches!(
+            file_full,
+            "lib.rs" | "mod.rs" | "utils.rs" | "unit.rs" | "integration.rs" | "e2e.rs"
+        ))
+        .then(|| {
+            (
+                "Move to a subdirectory (e.g., tests/unit/)".to_owned(),
+                Severity::Warning,
+            )
+        }),
+        _ => None,
+    }
+}
+
 /// Checks test file naming conventions and directory structure compliance.
 ///
 /// # Errors
@@ -29,7 +82,6 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
                 return Ok(());
             }
 
-            // Skip test utility files (mocks, fixtures, helpers)
             let Some(path_str) = path.to_str() else {
                 return Ok(());
             };
@@ -47,61 +99,17 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
                 .and_then(|n| n.to_str())
                 .unwrap_or("");
 
-            match parent_dir {
-                "unit" => {
-                    // Unit tests must follow [module]_tests.rs pattern
-                    if !file_name.ends_with("_tests") {
-                        violations.push(HygieneViolation::BadTestFileName {
-                            file: path.clone(),
-                            suggestion: format!(
-                                "{file_name}_tests.rs (unit tests must end with _tests)"
-                            ),
-                            severity: Severity::Warning,
-                        });
-                    }
-                }
-                "integration" => {
-                    let is_valid_integration = ["integration", "workflow"]
-                        .iter()
-                        .any(|kw| file_name.contains(kw) || file_name.ends_with(&format!("_{kw}")));
-
-                    if !is_valid_integration {
-                        violations.push(HygieneViolation::BadTestFileName {
-                            file: path.clone(),
-                            suggestion: format!("{file_name}_integration.rs or {file_name}_workflow.rs (integration tests should indicate their purpose)"),
-                            severity: Severity::Info,
-                        });
-                    }
-                }
-                "e2e" => {
-                    let is_valid_e2e = ["e2e", "end_to_end"]
-                        .iter()
-                        .any(|kw| file_name.contains(kw))
-                        || file_name.starts_with("test_");
-
-                    if !is_valid_e2e {
-                        violations.push(HygieneViolation::BadTestFileName {
-                            file: path.clone(),
-                            suggestion: format!("{file_name}_e2e.rs or test_{file_name}.rs (e2e tests should indicate they're end-to-end)"),
-                            severity: Severity::Info,
-                        });
-                    }
-                }
-                "tests" => {
-                    let file_full = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                    if !matches!(
-                        file_full,
-                        "lib.rs" | "mod.rs" | "utils.rs" | "unit.rs" | "integration.rs" | "e2e.rs"
-                    ) {
-                        violations.push(HygieneViolation::BadTestFileName {
-                            file: path.clone(),
-                            suggestion: "Move to a subdirectory (e.g., tests/unit/)".to_owned(),
-                            severity: Severity::Warning,
-                        });
-                    }
-                }
-                _ => {}
+            let file_full = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if let Some((suggestion, severity)) =
+                expected_naming_for_parent(parent_dir, file_name, file_full)
+            {
+                violations.push(HygieneViolation::BadTestFileName {
+                    file: path.clone(),
+                    suggestion,
+                    severity,
+                });
             }
+
             Ok(())
         })?;
     }

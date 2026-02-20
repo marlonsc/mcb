@@ -24,7 +24,6 @@ use crate::{Result, Severity, ValidationConfig};
 pub fn validate_domain_traits_only(
     config: &ValidationConfig,
 ) -> Result<Vec<OrganizationViolation>> {
-    let is_getter_method = |line: &str| line.contains("&self") && !line.contains("&mut self");
     let mut violations = Vec::new();
 
     // Pattern for impl blocks with methods
@@ -32,18 +31,16 @@ pub fn validate_domain_traits_only(
     let method_pattern = compile_regex(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\(")?;
 
     for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, src_dir| {
-        if !src_dir
-            .to_str()
-            .is_some_and(|s| s.contains(DOMAIN_CRATE_PATH))
-        {
-            return Ok(());
-        }
-
         let Some(path_str) = entry.absolute_path.to_str() else {
             return Ok(());
         };
 
-        if is_test_path(path_str) || path_str.contains(PORTS_DIR_PATH) {
+        if !src_dir
+            .to_str()
+            .is_some_and(|s| s.contains(DOMAIN_CRATE_PATH))
+            || is_test_path(path_str)
+            || path_str.contains(PORTS_DIR_PATH)
+        {
             return Ok(());
         }
 
@@ -78,12 +75,11 @@ pub fn validate_domain_traits_only(
 
                 if in_impl_block && let Some(cap) = method_pattern.captures(line) {
                     let method_name = cap.get(1).map_or("", |m| m.as_str());
-
                     let allowed_method = DOMAIN_ALLOWED_METHODS.contains(&method_name)
                         || DOMAIN_ALLOWED_PREFIXES
                             .iter()
                             .any(|p| method_name.starts_with(p))
-                        || is_getter_method(line);
+                        || (line.contains("&self") && !line.contains("&mut self"));
 
                     if !allowed_method {
                         violations.push(OrganizationViolation::DomainLayerImplementation {
