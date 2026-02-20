@@ -159,7 +159,7 @@ sha2 = "0.10"
 hex = "0.4"
 
 # Utilities
-uuid = { version = "1.20", features = ["v4", "v5", "serde"] }
+uuid = { version = "1.21", features = ["v4", "v5", "serde"] }
 dirs = "6.0"
 
 # HTTP server - Rocket (migrated from Axum in v0.1.2 - ADR-026)
@@ -207,7 +207,7 @@ schemars = "1.2"
 validator = { version = "0.20", features = ["derive"] }
 
 # MCP SDK
-rmcp = { version = "0.15", features = [
+rmcp = { version = "0.16", features = [
     "server",
     "client",
     "macros",
