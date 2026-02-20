@@ -247,7 +247,8 @@ humantime = "2.1"
 async-nats = "0.46"
 
 # Local embeddings without external services
-fastembed = { version = "5.9", default-features = false, features = [
+fastembed = { version = "5.11", default-features = false, features = [
+    "default",
     "hf-hub-native-tls",
     "image-models",
     "ort-load-dynamic",
