@@ -152,7 +152,7 @@ schemars = "1.2"
 validator = { version = "0.20", features = ["derive"] }
 
 # MCP SDK
-rmcp = { version = "0.15", features = [
+rmcp = { version = "0.16", features = [
     "server",
     "client",
     "macros",
@@ -261,7 +261,7 @@ evalexpr = "13"
 garde = { version = "0.22", features = ["derive"] }
 
 # JSON Schema validation
-jsonschema = "0.41"
+jsonschema = "0.42"
 
 # Pest parser for DSL
 pest = "2.8"
