@@ -36,7 +36,7 @@ fn map_client_error(error: &Error) -> Option<String> {
     if let Error::InvalidRegex { pattern, message } = error {
         return Some(format!("Invalid regex pattern '{pattern}': {message}"));
     }
-    tracing::trace!("map_client_error skipped variant: {error}");
+    tracing::trace!(mapper = "client", error = %error, "skipped unmatched variant");
     None
 }
 
@@ -83,7 +83,7 @@ fn map_provider_error(error: &Error) -> Option<String> {
             message,
         ));
     }
-    tracing::trace!("map_provider_error skipped variant: {error}");
+    tracing::trace!(mapper = "provider", error = %error, "skipped unmatched variant");
     None
 }
 
@@ -100,7 +100,7 @@ fn map_config_error(error: &Error) -> Option<String> {
     if let Error::Authentication { message, .. } = error {
         return Some(format_error("Authentication error", message));
     }
-    tracing::trace!("map_config_error skipped variant: {error}");
+    tracing::trace!(mapper = "config", error = %error, "skipped unmatched variant");
     None
 }
 

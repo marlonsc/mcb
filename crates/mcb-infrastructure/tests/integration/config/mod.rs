@@ -2,8 +2,8 @@
 //!
 //! Tests for configuration loading, validation, and management.
 
+mod config_repro_tests;
 mod loader_tests;
-mod repro_test;
 mod strict_config_tests;
 
 mod server_tests;

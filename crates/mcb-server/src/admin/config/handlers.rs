@@ -22,7 +22,7 @@ pub async fn get_config(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> (Status, Json<ConfigResponse>) {
-    tracing::info!("get_config called");
+    tracing::info!(handler = "get_config", "admin config request");
     let config = if let Some(watcher) = &state.config_watcher {
         watcher.get_config().await
     } else {
@@ -51,7 +51,7 @@ pub async fn reload_config(
     _auth: AdminAuth,
     state: &State<AdminState>,
 ) -> (Status, Json<ConfigReloadResponse>) {
-    tracing::info!("reload_config called");
+    tracing::info!(handler = "reload_config", "admin config reload request");
     let Some(watcher) = &state.config_watcher else {
         return (
             Status::ServiceUnavailable,
@@ -64,12 +64,15 @@ pub async fn reload_config(
             let sanitized = SanitizedConfig::from_app_config(&new_config);
             (Status::Ok, Json(ConfigReloadResponse::success(sanitized)))
         }
-        Err(e) => (
-            Status::InternalServerError,
-            Json(ConfigReloadResponse::failure(format!(
-                "Failed to reload configuration: {e}"
-            ))),
-        ),
+        Err(e) => {
+            tracing::error!(handler = "reload_config", error = %e, "configuration reload failed");
+            (
+                Status::InternalServerError,
+                Json(ConfigReloadResponse::failure(
+                    "Failed to reload configuration".to_string(),
+                )),
+            )
+        }
     }
 }
 
@@ -81,7 +84,11 @@ pub async fn update_config_section(
     section: &str,
     request: Json<ConfigSectionUpdateRequest>,
 ) -> (Status, Json<ConfigSectionUpdateResponse>) {
-    tracing::info!("update_config_section called");
+    tracing::info!(
+        handler = "update_config_section",
+        section = section,
+        "admin config update request"
+    );
     let request = request.into_inner();
 
     // Validate and get required resources
@@ -126,45 +133,48 @@ impl ConfigUpdateError {
                     "Configuration file path not available",
                 )),
             ),
-            Self::ReadFailed(e) => (
-                Status::InternalServerError,
-                Json(Resp::failure(
-                    section,
-                    format!("Failed to read configuration file: {e}"),
-                )),
-            ),
-            Self::ParseFailed(e) => (
-                Status::InternalServerError,
-                Json(Resp::failure(
-                    section,
-                    format!("Failed to parse configuration file: {e}"),
-                )),
-            ),
+            Self::ReadFailed(e) => {
+                tracing::error!(handler = "update_config_section", section = section, error = %e, "failed to read configuration file");
+                (
+                    Status::InternalServerError,
+                    Json(Resp::failure(section, "Failed to read configuration file")),
+                )
+            }
+            Self::ParseFailed(e) => {
+                tracing::error!(handler = "update_config_section", section = section, error = %e, "failed to parse configuration file");
+                (
+                    Status::InternalServerError,
+                    Json(Resp::failure(section, "Failed to parse configuration file")),
+                )
+            }
             Self::InvalidFormat => (
                 Status::BadRequest,
                 Json(Resp::failure(section, "Invalid configuration value format")),
             ),
-            Self::SerializeFailed(e) => (
-                Status::InternalServerError,
-                Json(Resp::failure(
-                    section,
-                    format!("Failed to serialize configuration: {e}"),
-                )),
-            ),
-            Self::WriteFailed(e) => (
-                Status::InternalServerError,
-                Json(Resp::failure(
-                    section,
-                    format!("Failed to write configuration file: {e}"),
-                )),
-            ),
-            Self::ReloadFailed(e) => (
-                Status::InternalServerError,
-                Json(Resp::failure(
-                    section,
-                    format!("Configuration updated but reload failed: {e}"),
-                )),
-            ),
+            Self::SerializeFailed(e) => {
+                tracing::error!(handler = "update_config_section", section = section, error = %e, "failed to serialize configuration");
+                (
+                    Status::InternalServerError,
+                    Json(Resp::failure(section, "Failed to serialize configuration")),
+                )
+            }
+            Self::WriteFailed(e) => {
+                tracing::error!(handler = "update_config_section", section = section, error = %e, "failed to write configuration file");
+                (
+                    Status::InternalServerError,
+                    Json(Resp::failure(section, "Failed to write configuration file")),
+                )
+            }
+            Self::ReloadFailed(e) => {
+                tracing::error!(handler = "update_config_section", section = section, error = %e, "configuration updated but reload failed");
+                (
+                    Status::InternalServerError,
+                    Json(Resp::failure(
+                        section,
+                        "Configuration updated but reload failed",
+                    )),
+                )
+            }
         }
     }
 }
