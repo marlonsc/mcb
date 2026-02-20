@@ -20,9 +20,7 @@ fn test_epoch_secs_i64_reports_recent_time() {
 
 #[fixture]
 async fn memory_service() -> Option<MemoryServiceImpl> {
-    let Some(app_ctx) = try_shared_app_context() else {
-        return None;
-    };
+    let app_ctx = try_shared_app_context()?;
     let id = TEST_COUNTER.fetch_add(1, Ordering::Relaxed);
     Some(MemoryServiceImpl::new(
         format!("test-project-{id}"),

@@ -297,9 +297,10 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
     .as_ref()
 }
 
+#[allow(clippy::panic)]
 pub fn shared_app_context() -> &'static AppContext {
     try_shared_app_context().unwrap_or_else(|| {
-        tracing::error!("shared AppContext init failed");
+        tracing::error!(component = "test_fixtures", "shared AppContext init failed");
         panic!("shared AppContext init failed");
     })
 }

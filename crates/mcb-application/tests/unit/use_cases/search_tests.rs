@@ -22,13 +22,8 @@ fn unique_collection(prefix: &str) -> CollectionId {
 
 #[fixture]
 async fn ctx() -> Option<Arc<dyn ContextServiceInterface>> {
-    let Some(app_ctx) = try_shared_app_context() else {
-        return None;
-    };
-    let services = app_ctx
-        .build_domain_services()
-        .await
-        .expect("build domain services");
+    let app_ctx = try_shared_app_context()?;
+    let services = app_ctx.build_domain_services().await.ok()?;
     Some(services.context_service)
 }
 

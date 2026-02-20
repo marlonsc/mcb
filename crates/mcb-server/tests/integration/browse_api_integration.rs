@@ -4,6 +4,13 @@
 //! Uses mock `VectorStoreBrowser` for isolation.
 //!
 //! E2E tests with real `EdgeVec` stores live in `tests/e2e/browse_e2e.rs`.
+#![allow(
+    clippy::expect_used,
+    clippy::str_to_string,
+    clippy::doc_markdown,
+    clippy::uninlined_format_args,
+    clippy::panic
+)]
 
 use std::sync::Arc;
 
@@ -281,9 +288,10 @@ async fn test_browse_auth_validation(
 // Real End-to-End Tests with EdgeVecVectorStore
 // ============================================================================
 
-use mcb_domain::ports::providers::VectorStoreProvider;
+use mcb_domain::ports::VectorStoreProvider;
 use mcb_domain::value_objects::Embedding;
 use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
+use std::collections::HashMap;
 
 /// Creates a test vector store instance (EdgeVec in-memory)
 fn create_test_vector_store() -> EdgeVecVectorStoreProvider {
@@ -411,10 +419,12 @@ async fn test_e2e_real_store_list_collections() {
     // Create browse state with real store
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // List collections
     let response = client
@@ -453,10 +463,12 @@ async fn test_e2e_real_store_list_files() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // List files in collection
     let response = client
@@ -517,10 +529,12 @@ async fn test_e2e_real_store_get_file_chunks() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // Get chunks for lib.rs
     let response = client
@@ -593,10 +607,12 @@ async fn test_e2e_real_store_navigate_full_flow() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // Step 1: List collections
     let response = client
@@ -680,10 +696,12 @@ async fn test_e2e_real_store_collection_not_found() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // Try to list files in non-existent collection
     let response = client
@@ -710,10 +728,12 @@ async fn test_e2e_real_store_multiple_collections() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // List all collections
     let response = client

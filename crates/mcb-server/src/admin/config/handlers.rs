@@ -69,7 +69,7 @@ pub async fn reload_config(
             (
                 Status::InternalServerError,
                 Json(ConfigReloadResponse::failure(
-                    "Failed to reload configuration".to_string(),
+                    "Failed to reload configuration".to_owned(),
                 )),
             )
         }

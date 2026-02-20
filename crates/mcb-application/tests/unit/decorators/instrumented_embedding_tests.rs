@@ -24,9 +24,7 @@ async fn instrumented(
     #[future] provider_context: Option<Arc<dyn EmbeddingProvider>>,
     metrics: Arc<AtomicPerformanceMetrics>,
 ) -> Option<(InstrumentedEmbeddingProvider, Arc<AtomicPerformanceMetrics>)> {
-    let Some(inner) = provider_context.await else {
-        return None;
-    };
+    let inner = provider_context.await?;
     let provider = InstrumentedEmbeddingProvider::new(
         inner,
         Arc::clone(&metrics) as Arc<dyn PerformanceMetricsInterface>,
