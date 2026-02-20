@@ -43,7 +43,7 @@ pub struct GenericSummary {
     pub passed: bool,
 }
 
-pub use mcb_domain::ports::services::validation::ViolationEntry;
+pub use mcb_domain::ports::ViolationEntry;
 
 impl GenericReporter {
     /// Create a domain violation entry from a violation trait object

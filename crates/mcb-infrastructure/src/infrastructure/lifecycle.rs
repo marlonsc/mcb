@@ -52,10 +52,10 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use dashmap::DashMap;
 use mcb_domain::events::{DomainEvent, ServiceState as EventServiceState};
-use mcb_domain::ports::admin::{
-    DependencyHealthCheck, LifecycleManaged, PortServiceState, ShutdownCoordinator,
+use mcb_domain::ports::{
+    DependencyHealthCheck, EventBusProvider, LifecycleManaged, PortServiceState,
+    ShutdownCoordinator,
 };
-use mcb_domain::ports::infrastructure::EventBusProvider;
 use serde::Serialize;
 use tokio::sync::Notify;
 use tracing::{error, info, warn};

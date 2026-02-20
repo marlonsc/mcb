@@ -6,17 +6,14 @@
 use std::sync::Arc;
 
 use mcb_domain::error::Result;
-use mcb_domain::ports::admin::{
-    IndexingOperationsInterface, LifecycleManaged, PerformanceMetricsInterface, ShutdownCoordinator,
+use mcb_domain::ports::{
+    AgentRepository, CacheAdminInterface, CryptoProvider, EmbeddingAdminInterface,
+    EventBusProvider, FileHashRepository, HighlightServiceInterface, IndexingOperationsInterface,
+    IssueEntityRepository, LanguageAdminInterface, LifecycleManaged, MemoryRepository,
+    OrgEntityRepository, PerformanceMetricsInterface, PlanEntityRepository, ProjectDetectorService,
+    ProjectRepository, ShutdownCoordinator, VcsEntityRepository, VcsProvider,
+    VectorStoreAdminInterface,
 };
-use mcb_domain::ports::browse::HighlightServiceInterface;
-use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_domain::ports::providers::{CryptoProvider, VcsProvider};
-use mcb_domain::ports::repositories::{
-    AgentRepository, FileHashRepository, IssueEntityRepository, MemoryRepository,
-    OrgEntityRepository, PlanEntityRepository, ProjectRepository, VcsEntityRepository,
-};
-use mcb_domain::ports::services::ProjectDetectorService;
 
 use mcb_providers::database::{
     SqliteFileHashConfig, SqliteFileHashRepository, SqliteMemoryRepository,
@@ -31,9 +28,7 @@ use crate::constants::services::{
 };
 use crate::crypto::CryptoService;
 use crate::di::admin::{
-    CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface, EmbeddingAdminService,
-    LanguageAdminInterface, LanguageAdminService, VectorStoreAdminInterface,
-    VectorStoreAdminService,
+    CacheAdminService, EmbeddingAdminService, LanguageAdminService, VectorStoreAdminService,
 };
 use crate::di::database_resolver::DatabaseProviderResolver;
 use crate::di::handles::{
@@ -298,14 +293,7 @@ impl AppContext {
         let indexing_ops = self.indexing();
         let event_bus = self.event_bus();
 
-        let project_id = std::env::current_dir()
-            .ok()
-            .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(String::from))
-            .ok_or_else(|| {
-                mcb_domain::error::Error::config(
-                    "cannot determine project ID from current directory",
-                )
-            })?;
+        let project_id = current_project_id()?;
 
         let memory_repository = self.memory_repository();
         let agent_repository = self.agent_repository();
@@ -407,51 +395,36 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         Arc::clone(&embedding_resolver),
         Arc::clone(&embedding_handle),
     ));
-    let embedding_admin: Arc<dyn EmbeddingAdminInterface> = embedding_admin_svc;
+    let embedding_admin = Arc::clone(&embedding_admin_svc) as Arc<dyn EmbeddingAdminInterface>;
 
     let vector_store_admin_svc = Arc::new(VectorStoreAdminService::new(
         VECTOR_STORE_SERVICE_NAME,
         Arc::clone(&vector_store_resolver),
         Arc::clone(&vector_store_handle),
     ));
-    let vector_store_admin: Arc<dyn VectorStoreAdminInterface> = vector_store_admin_svc;
+    let vector_store_admin =
+        Arc::clone(&vector_store_admin_svc) as Arc<dyn VectorStoreAdminInterface>;
 
     let cache_admin_svc = Arc::new(CacheAdminService::new(
         CACHE_SERVICE_NAME,
         Arc::clone(&cache_resolver),
         Arc::clone(&cache_handle),
     ));
-    let cache_admin: Arc<dyn CacheAdminInterface> = cache_admin_svc;
+    let cache_admin = Arc::clone(&cache_admin_svc) as Arc<dyn CacheAdminInterface>;
 
     let language_admin_svc = Arc::new(LanguageAdminService::new(
         LANGUAGE_SERVICE_NAME,
         Arc::clone(&language_resolver),
         Arc::clone(&language_handle),
     ));
-    let language_admin: Arc<dyn LanguageAdminInterface> = language_admin_svc;
+    let language_admin = Arc::clone(&language_admin_svc) as Arc<dyn LanguageAdminInterface>;
 
     // Collect lifecycle managed services
     let lifecycle_services: Vec<Arc<dyn LifecycleManaged>> = vec![
-        Arc::new(EmbeddingAdminService::new(
-            EMBEDDING_SERVICE_NAME,
-            Arc::clone(&embedding_resolver),
-            Arc::clone(&embedding_handle),
-        )),
-        Arc::new(VectorStoreAdminService::new(
-            VECTOR_STORE_SERVICE_NAME,
-            Arc::clone(&vector_store_resolver),
-            Arc::clone(&vector_store_handle),
-        )),
-        Arc::new(CacheAdminService::new(
-            CACHE_SERVICE_NAME,
-            Arc::clone(&cache_resolver),
-            Arc::clone(&cache_handle),
-        )),
-        Arc::new(LanguageAdminService::new(
-            LANGUAGE_SERVICE_NAME,
-            Arc::clone(&language_resolver),
-            Arc::clone(&language_handle),
-        )),
+        embedding_admin_svc,
+        vector_store_admin_svc,
+        cache_admin_svc,
+        language_admin_svc,
     ];
 
     // ========================================================================
@@ -495,15 +468,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         Arc::new(SqliteMemoryRepository::new(Arc::clone(&db_executor)));
     let agent_repository = create_agent_repository_from_executor(Arc::clone(&db_executor));
     let project_repository = create_project_repository_from_executor(Arc::clone(&db_executor));
-    let project_id = std::env::current_dir()
-        .ok()
-        .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(String::from))
-        .ok_or_else(|| {
-            mcb_domain::error::Error::config(
-                "cannot determine project ID from current directory; \
-                 ensure MCB is launched from a named directory",
-            )
-        })?;
+    let project_id = current_project_id()?;
     let file_hash_repository: Arc<dyn FileHashRepository> =
         Arc::new(SqliteFileHashRepository::new(
             Arc::clone(&db_executor),
@@ -600,4 +565,15 @@ fn create_crypto_service(config: &AppConfig) -> Result<CryptoService> {
     };
 
     CryptoService::new(master_key)
+}
+
+fn current_project_id() -> Result<String> {
+    std::env::current_dir()
+        .ok()
+        .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(String::from))
+        .ok_or_else(|| {
+            mcb_domain::error::Error::config(
+                "cannot determine project ID from current directory; ensure MCB is launched from a named directory",
+            )
+        })
 }

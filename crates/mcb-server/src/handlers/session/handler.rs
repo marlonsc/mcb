@@ -2,8 +2,8 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::services::AgentSessionServiceInterface;
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::AgentSessionServiceInterface;
+use mcb_domain::ports::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
@@ -11,7 +11,6 @@ use validator::Validate;
 
 use super::{create, get, list, summarize, update};
 use crate::args::{SessionAction, SessionArgs};
-use crate::utils::mcp::resolve_org_id;
 
 /// Handler for agent session MCP tool operations.
 ///
@@ -45,8 +44,6 @@ impl SessionHandler {
     ) -> Result<CallToolResult, McpError> {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
-
-        let _org_id = resolve_org_id(args.org_id.as_deref());
 
         match args.action {
             SessionAction::Create => create::create_session(&self.agent_service, &args).await,

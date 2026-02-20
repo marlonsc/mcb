@@ -69,7 +69,7 @@ Add to `~/.config/Claude/claude_desktop_config.json` (Linux) or
       "env": {
         "EMBEDDING_PROVIDER": "openai",
         "OPENAI_API_KEY": "sk-your-key-here",
-        "VECTOR_STORE_PROVIDER": "in-memory"
+        "VECTOR_STORE_PROVIDER": "edgevec"
       }
     }
   }
@@ -107,10 +107,10 @@ Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Ko
 
 | Provider | Best for | Setup |
 | ---------- | ---------- | ------- |
-| `in-memory` | Development, testing | None |
-| `filesystem` | Persistent storage | None |
-| `milvus` | Production scale | Docker/Kubernetes |
-| `edgevec` | Embedded use | None |
+| `edgevec` | Development, testing (default) | None |
+| `milvus` | Production, large scale | Docker/Kubernetes |
+| `qdrant` | Self-hosted, Rust-native | Docker |
+| `pinecone` | Managed cloud | API key |
 
 ### Using Milvus
 

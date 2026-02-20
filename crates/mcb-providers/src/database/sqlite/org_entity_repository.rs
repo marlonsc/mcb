@@ -5,10 +5,10 @@ use mcb_domain::entities::{
     ApiKey, Organization, Team, TeamMember, TeamMemberRole, User, UserRole,
 };
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use mcb_domain::ports::repositories::org_entity_repository::{
+use mcb_domain::ports::{
     ApiKeyRegistry, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
 };
+use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
 
 use crate::utils::sqlite::query as query_helpers;
 use crate::utils::sqlite::row::{opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_str};

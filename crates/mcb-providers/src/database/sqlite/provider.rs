@@ -10,6 +10,16 @@
 //! - **Schema Migration**: Applying DDL at startup and verifying schema integrity.
 //! - **Factory Methods**: Creating `MemoryRepository`, `AgentRepository`, etc. from a path or executor.
 //! - **Recovery**: Automatically backing up and recreating Corrupt/Incompatible databases.
+//!
+//! # Architecture Note
+//!
+//! Factory functions in this module are **internal** to `mcb-providers` and
+//! the DI wiring layer (`mcb-infrastructure`). Consumer crates MUST NOT call
+//! them directly. Use instead:
+//!
+//! - `mcb_infrastructure::di::create_test_dependencies()` for test setup
+//! - `mcb_infrastructure::di::create_memory_repository()` for standalone repos
+//! - `mcb_domain::registry::database::resolve_database_provider()` for config-driven resolution
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -17,13 +27,15 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::error::Result;
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, DatabaseProvider};
-use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
-use mcb_domain::schema::{ProjectSchema, SchemaDdlGenerator};
+use mcb_domain::ports::{
+    AgentRepository, MemoryRepository, ProjectRepository, VcsEntityRepository,
+};
+use mcb_domain::ports::{DatabaseExecutor, DatabaseProvider};
+use mcb_domain::schema::{Schema, SchemaDdlGenerator};
 
 use super::{
     SqliteAgentRepository, SqliteExecutor, SqliteMemoryRepository, SqliteProjectRepository,
-    SqliteSchemaDdlGenerator,
+    SqliteSchemaDdlGenerator, SqliteVcsEntityRepository,
 };
 use mcb_domain::registry::database::{
     DATABASE_PROVIDERS, DatabaseProviderConfig, DatabaseProviderEntry,
@@ -45,7 +57,7 @@ fn create_sqlite_database_provider(
 static SQLITE_DATABASE_PROVIDER: DatabaseProviderEntry = DatabaseProviderEntry {
     name: "sqlite",
     description: "SQLite database backend",
-    factory: create_sqlite_database_provider,
+    build: create_sqlite_database_provider,
 };
 
 #[async_trait]
@@ -56,7 +68,7 @@ impl DatabaseProvider for SqliteDatabaseProvider {
     }
 }
 
-/// Create a file-backed memory repository: connect, apply [`ProjectSchema`] DDL, return repository.
+/// Create a file-backed memory repository: connect, apply [`Schema`] DDL, return repository.
 ///
 /// # Errors
 ///
@@ -100,7 +112,7 @@ pub fn create_agent_repository_from_executor(
     Arc::new(SqliteAgentRepository::new(executor))
 }
 
-/// Create a file-backed project repository: connect, apply [`ProjectSchema`] DDL, return repository.
+/// Create a file-backed project repository: connect, apply [`Schema`] DDL, return repository.
 ///
 /// # Errors
 ///
@@ -117,6 +129,13 @@ pub fn create_project_repository_from_executor(
     executor: Arc<dyn DatabaseExecutor>,
 ) -> Arc<dyn ProjectRepository> {
     Arc::new(SqliteProjectRepository::new(executor))
+}
+
+/// Create a VCS entity repository backed by the provided database executor.
+pub fn create_vcs_entity_repository_from_executor(
+    executor: Arc<dyn DatabaseExecutor>,
+) -> Arc<dyn VcsEntityRepository> {
+    Arc::new(SqliteVcsEntityRepository::new(executor))
 }
 
 async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
@@ -221,7 +240,7 @@ fn backup_and_remove(path: &std::path::Path) -> Result<()> {
 async fn apply_schema(pool: &sqlx::SqlitePool) -> Result<()> {
     use mcb_domain::error::Error;
     let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
+    let schema = Schema::definition();
     let ddl = generator.generate_ddl(&schema);
     let ddl_len = ddl.len();
 
@@ -263,7 +282,7 @@ async fn apply_schema(pool: &sqlx::SqlitePool) -> Result<()> {
 async fn migrate_and_verify_schema(pool: &sqlx::SqlitePool) -> Result<()> {
     use mcb_domain::error::Error;
 
-    let schema = ProjectSchema::definition();
+    let schema = Schema::definition();
     for table_def in &schema.tables {
         let present = get_existing_columns(pool, &table_def.name).await?;
         if present.is_empty() {

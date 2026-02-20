@@ -37,9 +37,10 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
         .build()
 }
 
-pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>> {
-    catalog.get_one::<T>()
-}
+// Service retrieval via AppContext (bootstrap.rs):
+//   app_context.embedding_handle()    → Arc<EmbeddingProviderHandle>
+//   app_context.vector_store_handle() → Arc<VectorStoreProviderHandle>
+//   app_context.cache_handle()        → Arc<CacheProviderHandle>
 ```
 
 ### Bootstrap (`bootstrap.rs`)

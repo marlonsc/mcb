@@ -32,9 +32,7 @@ use crate::error::Result;
 
 // Note: ValidationReport and ViolationEntry are defined in ports/services.rs
 // We re-export them here for convenience when implementing ValidationProvider
-pub use crate::ports::services::{
-    ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ViolationEntry,
-};
+pub use crate::ports::{RuleInfo, ValidationReport};
 
 // ============================================================================
 // Provider-specific types

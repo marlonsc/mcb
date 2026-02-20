@@ -5,8 +5,8 @@ use std::time::Instant;
 
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::error::Error;
-use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::ports::services::SearchServiceInterface;
+use mcb_domain::ports::MemoryServiceInterface;
+use mcb_domain::ports::SearchServiceInterface;
 use mcb_domain::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
@@ -16,12 +16,14 @@ use validator::Validate;
 use crate::error_mapping::safe_internal_error;
 
 use crate::args::{SearchArgs, SearchResource};
-use crate::constants::fields::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
+use crate::constants::fields::{
+    FIELD_BRANCH, FIELD_COMMIT, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE,
+    FIELD_QUERY, FIELD_RESULTS,
+};
 use crate::constants::limits::DEFAULT_SEARCH_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::collections::normalize_collection_name;
-use crate::utils::mcp::resolve_org_id;
 
 /// Handler for code and memory search MCP tool operations.
 #[derive(Clone)]
@@ -56,8 +58,6 @@ impl SearchHandler {
                 e.to_string(),
             )));
         }
-
-        let _org_id = resolve_org_id(args.org_id.as_deref());
 
         let query = args.query.trim();
         if query.is_empty() {
@@ -127,16 +127,16 @@ impl SearchHandler {
                                     "session_id": r.observation.metadata.session_id.clone(),
                                     "repo_id": r.observation.metadata.repo_id.clone(),
                                     "file_path": r.observation.metadata.file_path,
-                                    "branch": r.observation.metadata.branch,
-                                    "commit": r.observation.metadata.commit,
+                                    (FIELD_BRANCH): r.observation.metadata.branch,
+                                    (FIELD_COMMIT): r.observation.metadata.commit,
                                     "origin_context": r.observation.metadata.origin_context,
                                 })
                             })
                             .collect();
                         let response = ResponseFormatter::json_success(&serde_json::json!({
-                            "query": query,
-                            "count": results.len(),
-                            "results": results,
+                            (FIELD_QUERY): query,
+                            (FIELD_COUNT): results.len(),
+                            (FIELD_RESULTS): results,
                         }))
                         .map_err(|e| safe_internal_error("format memory search results", &e))?;
                         Ok(response)

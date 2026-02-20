@@ -10,7 +10,7 @@ use mcb_domain::constants::embedding::{
     EMBEDDING_DIMENSION_VOYAGEAI_CODE, EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
 };
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::EmbeddingProvider;
+use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
@@ -23,7 +23,8 @@ use crate::{
 
 use crate::constants::{
     EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_INPUT, EMBEDDING_PARAM_MODEL,
-    HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE,
+    EMBEDDING_RETRY_BACKOFF_MS, EMBEDDING_RETRY_COUNT, HTTP_HEADER_AUTHORIZATION,
+    HTTP_HEADER_CONTENT_TYPE,
 };
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
@@ -80,7 +81,10 @@ impl VoyageAIEmbeddingProvider {
             kind: RequestErrorKind::Embedding,
             headers: &headers,
             body: Some(&payload),
-            retry: Some(RetryConfig::new(3, std::time::Duration::from_millis(500))),
+            retry: Some(RetryConfig::new(
+                EMBEDDING_RETRY_COUNT,
+                std::time::Duration::from_millis(EMBEDDING_RETRY_BACKOFF_MS),
+            )),
         })
         .await
     }
@@ -106,7 +110,7 @@ impl_embedding_provider_trait!(
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
 use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };

@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType, OriginContext};
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::MemoryServiceInterface;
 use mcb_domain::utils::mask_id;
 
 use mcb_domain::utils::id as domain_id;
@@ -151,12 +151,15 @@ impl HookProcessor {
             commit: None,
         };
 
-        let _results = memory_service
+        let results = memory_service
             .memory_search("session context", Some(filter), 10)
             .await
             .map_err(|e| HookError::FailedToInjectContext(e.to_string()))?;
 
-        debug!("SessionStart hook processed successfully");
+        debug!(
+            count = results.len(),
+            "SessionStart hook processed successfully"
+        );
         Ok(())
     }
 }

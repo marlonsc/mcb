@@ -15,8 +15,8 @@ use async_trait::async_trait;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::ProjectIssue;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::issue_entity_repository::{
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
+use mcb_domain::ports::{
     IssueCommentRegistry, IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry,
 };
 use std::sync::Arc;

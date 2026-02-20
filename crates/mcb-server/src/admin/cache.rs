@@ -25,8 +25,7 @@ pub struct CacheErrorResponse {
 pub async fn get_cache_stats(
     _auth: AdminAuth,
     state: &State<AdminState>,
-) -> Result<Json<mcb_domain::ports::providers::cache::CacheStats>, (Status, Json<CacheErrorResponse>)>
-{
+) -> Result<Json<mcb_domain::ports::CacheStats>, (Status, Json<CacheErrorResponse>)> {
     tracing::info!("get_cache_stats called");
     let Some(cache) = &state.cache else {
         return Err((

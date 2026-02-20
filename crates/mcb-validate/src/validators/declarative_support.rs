@@ -1,8 +1,11 @@
 use std::path::{Path, PathBuf};
 
 use derive_more::Display;
+use tracing::warn;
 
 use crate::config::FileConfig;
+use crate::filters::rule_filters::RuleFilterExecutor;
+use crate::rules::yaml_loader::ValidatedRule;
 use crate::traits::violation::{Severity, Violation, ViolationCategory};
 
 pub(crate) fn build_substitution_variables(workspace_root: &Path) -> serde_yaml::Value {
@@ -114,4 +117,60 @@ pub(crate) fn parse_category(s: &str) -> ViolationCategory {
         "refactoring" => ViolationCategory::Refactoring,
         _ => ViolationCategory::Quality,
     }
+}
+
+pub(crate) fn validate_path_rules(
+    workspace_root: &Path,
+    rules: &[ValidatedRule],
+    files: &[PathBuf],
+) -> Vec<Box<dyn Violation>> {
+    let path_rules: Vec<&ValidatedRule> = rules
+        .iter()
+        .filter(|r| r.enabled && r.engine == "path")
+        .collect();
+
+    if path_rules.is_empty() {
+        return Vec::new();
+    }
+
+    let filter_executor = RuleFilterExecutor::new(workspace_root.to_path_buf());
+    let workspace_deps = match filter_executor.parse_workspace_dependencies() {
+        Ok(deps) => deps,
+        Err(e) => {
+            warn!(error = ?e, "Failed to parse workspace dependencies for path rules");
+            return Vec::new();
+        }
+    };
+
+    let mut violations: Vec<Box<dyn Violation>> = Vec::new();
+
+    for rule in &path_rules {
+        for file in files {
+            let Some(filters) = &rule.filters else {
+                continue;
+            };
+
+            let should_exec = filter_executor
+                .should_execute_rule(filters, file, None, &workspace_deps)
+                .unwrap_or(false);
+
+            if should_exec {
+                violations.push(Box::new(PatternMatchViolation {
+                    rule_id: rule.id.clone(),
+                    file_path: file.clone(),
+                    line: 0,
+                    message: rule.message.clone().unwrap_or_else(|| {
+                        format!(
+                            "[{}] File placement violation: {}",
+                            rule.id, rule.description
+                        )
+                    }),
+                    severity: parse_severity(&rule.severity),
+                    category: parse_category(&rule.category),
+                }));
+            }
+        }
+    }
+
+    violations
 }

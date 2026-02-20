@@ -6,9 +6,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::project_detection::{
-    ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
-};
+use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
 use regex::Regex;
 use tokio::fs::read_to_string;
 
@@ -148,5 +146,5 @@ static GO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "go",
     description: "Detects Go projects with go.mod",
     marker_files: &["go.mod"],
-    factory: go_factory,
+    build: go_factory,
 };

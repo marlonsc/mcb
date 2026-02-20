@@ -1,40 +1,13 @@
 //! Tests verifying Figment configuration pattern compliance (ADR-025)
 #![allow(unsafe_code)]
+#![allow(clippy::mem_forget)]
+#![allow(clippy::used_underscore_binding)]
 
+use crate::utils::env_vars::EnvVarGuard;
 use mcb_infrastructure::config::loader::ConfigLoader;
 use rstest::rstest;
 use rstest::*;
 use serial_test::serial;
-use std::env;
-
-struct EnvVarGuard {
-    keys: Vec<String>,
-}
-
-impl EnvVarGuard {
-    fn new(vars: &[(&str, &str)]) -> Self {
-        for (k, v) in vars {
-            // SAFETY: Tests run serially via #[serial], so no concurrent env access.
-            unsafe {
-                env::set_var(k, v);
-            }
-        }
-        Self {
-            keys: vars.iter().map(|(k, _)| k.to_string()).collect(),
-        }
-    }
-}
-
-impl Drop for EnvVarGuard {
-    fn drop(&mut self) {
-        for k in &self.keys {
-            // SAFETY: Tests run serially via #[serial], so no concurrent env access.
-            unsafe {
-                env::remove_var(k);
-            }
-        }
-    }
-}
 
 #[fixture]
 fn auth_disabled() -> EnvVarGuard {
@@ -43,11 +16,6 @@ fn auth_disabled() -> EnvVarGuard {
 
 #[fixture]
 fn clean_env() -> EnvVarGuard {
-    // Just ensures these specific vars are cleaned if they were set externally (unlikely in test)
-    // Actually EnvVarGuard only cleans what IT set.
-    // For "clean state", we might need to verify unset.
-    // But existing tests just remove_env.
-    // Let's rely on Drop of EnvVarGuard.
     EnvVarGuard::new(&[])
 }
 
@@ -141,13 +109,7 @@ fn test_legacy_disable_watching_not_supported(_auth_disabled: EnvVarGuard) {
 #[rstest]
 #[serial]
 fn test_auth_disabled_by_default_loads_without_jwt_secret() {
-    // Ensure clean state - remove any auth env vars from previous tests
-    // EnvVarGuard drop logic handles cleanup of manually set vars.
-    // To be extra safe against leaks from other tests (though serial helps):
-    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
-    unsafe { env::remove_var("MCP__AUTH__ENABLED") };
-    // SAFETY: Tests run serially via #[serial], so no concurrent env access.
-    unsafe { env::remove_var("MCP__AUTH__JWT__SECRET") };
+    EnvVarGuard::remove(&["MCP__AUTH__ENABLED", "MCP__AUTH__JWT__SECRET"]);
 
     let result = ConfigLoader::new().load();
 

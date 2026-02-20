@@ -10,7 +10,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use async_trait::async_trait;
 use mcb_domain::error::Result;
-use mcb_domain::ports::admin::{
+use mcb_domain::ports::{
     DependencyHealth, DependencyHealthCheck, LifecycleManaged, PortServiceState,
 };
 use rstest::*;
@@ -176,7 +176,6 @@ impl TestService {
             0 => PortServiceState::Starting,
             1 => PortServiceState::Running,
             2 => PortServiceState::Stopping,
-            3 => PortServiceState::Stopped,
             _ => PortServiceState::Stopped,
         }
     }

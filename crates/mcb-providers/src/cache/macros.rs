@@ -36,10 +36,7 @@ macro_rules! register_cache_provider {
         /// Factory function for creating provider instances.
         fn $factory_fn(
             $config_var: &mcb_domain::registry::cache::CacheProviderConfig,
-        ) -> std::result::Result<
-            std::sync::Arc<dyn mcb_domain::ports::providers::cache::CacheProvider>,
-            String,
-        > {
+        ) -> std::result::Result<std::sync::Arc<dyn mcb_domain::ports::CacheProvider>, String> {
             $body
         }
 
@@ -48,7 +45,7 @@ macro_rules! register_cache_provider {
             mcb_domain::registry::cache::CacheProviderEntry {
                 name: $provider_slug,
                 description: $description,
-                factory: $factory_fn,
+                build: $factory_fn,
             };
     };
 }

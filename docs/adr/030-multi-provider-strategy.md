@@ -33,11 +33,11 @@ implementation_status: N/A
 >
 > **Provider Implementations** (`crates/mcb-providers/src/`):
 >
-> - `embedding/` - 6 providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed,
->   Null)
-> - `vector_store/` - 6 providers (In-Memory, Encrypted, Filesystem,
->   Milvus, EdgeVec, Null)
-> - `cache/` - Cache providers (Moka, Null)
+> - `embedding/` - 6 providers (FastEmbed, OpenAI, VoyageAI, Ollama, Gemini,
+>   Anthropic)
+> - `vector_store/` - 5 providers (EdgeVec, Milvus, Qdrant, Pinecone,
+>   Encrypted)
+> - `cache/` - Cache providers (Moka, Redis)
 > - `language/` - 12 language processors with
 >   `UniversalLanguageChunkingProvider`
 >
@@ -454,11 +454,12 @@ types beyond embedding providers:
 
 ### Extended Provider Types
 
-Current (v0.1.2):
+Current (v0.2.1):
 
-- Embedding Providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) - 6
+- Embedding Providers (FastEmbed, OpenAI, VoyageAI, Ollama, Gemini, Anthropic) -
+  6 total
+- Vector Store Providers (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted) - 5
   total
-- Vector Store Providers (In-Memory, Encrypted, Null) - 3 total
 
 Future (v0.3.0+):
 

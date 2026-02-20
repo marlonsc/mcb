@@ -217,11 +217,11 @@ pub enum Error {
 
     /// Browse operation error
     #[error("Browse error: {0}")]
-    Browse(#[from] crate::ports::browse::BrowseError),
+    Browse(#[from] crate::ports::BrowseError),
 
     /// Highlighting operation error
     #[error("Highlighting error: {0}")]
-    Highlight(#[from] crate::ports::browse::HighlightError),
+    Highlight(#[from] crate::ports::HighlightError),
 }
 
 impl Error {

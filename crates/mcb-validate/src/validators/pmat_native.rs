@@ -6,7 +6,7 @@ use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, ValidationConfig};
-use mcb_domain::ports::providers::{
+use mcb_domain::ports::{
     ComplexityAnalyzer, ComplexityFinding, DeadCodeDetector, DeadCodeFinding, TdgFinding, TdgScorer,
 };
 use mcb_domain::utils::analysis::{

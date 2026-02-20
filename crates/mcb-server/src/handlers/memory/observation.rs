@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::MemoryServiceInterface;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
@@ -10,7 +10,9 @@ use super::common::{
     resolve_memory_origin_context, str_vec,
 };
 use crate::args::MemoryArgs;
-use crate::constants::fields::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
+use crate::constants::fields::{
+    FIELD_BRANCH, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE, FIELD_OBSERVATIONS,
+};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
@@ -89,15 +91,15 @@ pub async fn get_observations(
                         "session_id": obs.metadata.session_id,
                         "repo_id": obs.metadata.repo_id,
                         "file_path": obs.metadata.file_path,
-                        "branch": obs.metadata.branch,
+                        (FIELD_BRANCH): obs.metadata.branch,
                         "created_at": obs.created_at,
                         "content_hash": obs.content_hash,
                     })
                 })
                 .collect();
             ResponseFormatter::json_success(&serde_json::json!({
-                "count": observations.len(),
-                "observations": observations,
+                (FIELD_COUNT): observations.len(),
+                (FIELD_OBSERVATIONS): observations,
             }))
         }
         Err(e) => Ok(to_contextual_tool_error(e)),

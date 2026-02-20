@@ -3,13 +3,11 @@ use std::sync::Arc;
 
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
-use mcb_domain::ports::infrastructure::DatabaseExecutor;
-use mcb_domain::ports::repositories::plan_entity_repository::{
-    PlanRegistry, PlanReviewRegistry, PlanVersionRegistry,
-};
+use mcb_domain::ports::DatabaseExecutor;
+use mcb_domain::ports::{PlanRegistry, PlanReviewRegistry, PlanVersionRegistry};
 use mcb_providers::database::SqlitePlanEntityRepository;
 
-use crate::common::entity_test_utils::{
+use crate::utils::entity::{
     TEST_NOW, TestResult, assert_not_found, seed_default_scope, seed_isolated_org_scope,
     setup_executor,
 };

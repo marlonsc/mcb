@@ -11,7 +11,7 @@
 //!              AdminService.switch_provider()
 //! ```
 
-use mcb_domain::ports::providers::{
+use mcb_domain::ports::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
 

@@ -11,7 +11,7 @@
 //! ## Usage
 //!
 //! ```no_run
-//! use mcb_domain::ports::infrastructure::EventBusProvider;
+//! use mcb_domain::ports::EventBusProvider;
 //! use mcb_domain::events::DomainEvent;
 //! use std::sync::Arc;
 //!

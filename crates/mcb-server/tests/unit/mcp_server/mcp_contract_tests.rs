@@ -7,20 +7,9 @@ use std::sync::Arc;
 use mcb_server::McpServer;
 use mcb_server::tools::router::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use rmcp::model::CallToolRequestParams;
-use rstest::*;
-
 use rocket::http::Status;
 
-use crate::test_utils::http_mcp::{
-    McpTestContext, post_mcp, tools_call_request, tools_list_request,
-};
-
-#[fixture]
-async fn ctx() -> McpTestContext {
-    McpTestContext::new()
-        .await
-        .expect("create MCP test context")
-}
+use crate::utils::http_mcp::{McpTestContext, post_mcp, tools_call_request, tools_list_request};
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
     ToolHandlers {
@@ -52,85 +41,106 @@ fn direct_tool_call_request(tool_name: &str) -> CallToolRequestParams {
 
 #[rstest]
 #[tokio::test]
-async fn test_tool_name_set_stability(#[future] ctx: McpTestContext) {
-    let ctx = ctx.await;
+async fn test_tool_name_set_stability() -> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
     let request = tools_list_request();
-    let (status, response) = post_mcp(&ctx, &request, &[])
-        .await
-        .expect("call MCP endpoint");
+    let (status, response) = post_mcp(&ctx, &request, &[]).await?;
 
     assert_eq!(status, Status::Ok);
     assert!(response.error.is_none(), "tools/list should not error");
 
-    let result = response.result.expect("tools/list result");
-    let tools = result
-        .get("tools")
-        .and_then(|v| v.as_array())
-        .expect("tools array");
+    let result_opt = response.result;
+    assert!(result_opt.is_some(), "tools/list result");
+    let result = match result_opt {
+        Some(value) => value,
+        None => return Ok(()),
+    };
+    let tools_opt = result.get("tools").and_then(serde_json::Value::as_array);
+    assert!(tools_opt.is_some(), "tools array");
+    let tools = match tools_opt {
+        Some(values) => values,
+        None => return Ok(()),
+    };
 
-    let actual: BTreeSet<&str> = tools
+    let actual: BTreeSet<String> = tools
         .iter()
-        .map(|tool| {
-            tool.get("name")
-                .and_then(|v| v.as_str())
-                .expect("tool name must be string")
-        })
+        .filter_map(|tool| tool.get("name").and_then(|v| v.as_str()).map(str::to_owned))
         .collect();
 
-    let expected: BTreeSet<&str> = [
+    let expected: BTreeSet<String> = [
         "agent", "entity", "index", "memory", "project", "search", "session", "validate", "vcs",
     ]
-    .into();
+    .into_iter()
+    .map(str::to_owned)
+    .collect();
 
     assert_eq!(actual, expected, "tool names contract changed");
+    Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn test_tool_count_stability(#[future] ctx: McpTestContext) {
-    let ctx = ctx.await;
+async fn test_tool_count_stability() -> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
     let request = tools_list_request();
-    let (status, response) = post_mcp(&ctx, &request, &[])
-        .await
-        .expect("call MCP endpoint");
+    let (status, response) = post_mcp(&ctx, &request, &[]).await?;
 
     assert_eq!(status, Status::Ok);
     assert!(response.error.is_none(), "tools/list should not error");
 
-    let result = response.result.expect("tools/list result");
-    let tools = result
-        .get("tools")
-        .and_then(|v| v.as_array())
-        .expect("tools array");
+    let result_opt = response.result;
+    assert!(result_opt.is_some(), "tools/list result");
+    let result = match result_opt {
+        Some(value) => value,
+        None => return Ok(()),
+    };
+    let tools_opt = result.get("tools").and_then(serde_json::Value::as_array);
+    assert!(tools_opt.is_some(), "tools array");
+    let tools = match tools_opt {
+        Some(values) => values,
+        None => return Ok(()),
+    };
     assert_eq!(tools.len(), 9, "tool count contract changed");
+    Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn test_each_tool_has_non_null_object_input_schema_with_properties(
-    #[future] ctx: McpTestContext,
-) {
-    let ctx = ctx.await;
+async fn test_each_tool_has_non_null_object_input_schema_with_properties()
+-> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
     let request = tools_list_request();
-    let (status, response) = post_mcp(&ctx, &request, &[])
-        .await
-        .expect("call MCP endpoint");
+    let (status, response) = post_mcp(&ctx, &request, &[]).await?;
 
     assert_eq!(status, Status::Ok);
     assert!(response.error.is_none(), "tools/list should not error");
 
-    let result = response.result.expect("tools/list result");
-    let tools = result
-        .get("tools")
-        .and_then(|v| v.as_array())
-        .expect("tools array");
+    let result_opt = response.result;
+    assert!(result_opt.is_some(), "tools/list result");
+    let result = match result_opt {
+        Some(value) => value,
+        None => return Ok(()),
+    };
+    let tools_opt = result.get("tools").and_then(serde_json::Value::as_array);
+    assert!(tools_opt.is_some(), "tools array");
+    let tools = match tools_opt {
+        Some(values) => values,
+        None => return Ok(()),
+    };
 
     for tool in tools {
-        let name = tool
-            .get("name")
-            .and_then(|v| v.as_str())
-            .expect("tool name string");
-        let schema = tool.get("inputSchema").expect("inputSchema must exist");
+        let name_opt = tool.get("name").and_then(serde_json::Value::as_str);
+        assert!(name_opt.is_some(), "tool name string");
+        let name = match name_opt {
+            Some(value) => value,
+            None => continue,
+        };
+        let schema_opt = tool.get("inputSchema");
+        assert!(schema_opt.is_some(), "inputSchema must exist");
+        let schema = match schema_opt {
+            Some(value) => value,
+            None => continue,
+        };
 
         assert!(!schema.is_null(), "{name} inputSchema must not be null");
         assert!(schema.is_object(), "{name} inputSchema must be object");
@@ -146,6 +156,7 @@ async fn test_each_tool_has_non_null_object_input_schema_with_properties(
             "{name} inputSchema.properties must be object"
         );
     }
+    Ok(())
 }
 
 #[rstest]
@@ -154,15 +165,20 @@ async fn test_each_tool_has_non_null_object_input_schema_with_properties(
 #[case("memory")]
 #[tokio::test]
 async fn test_provenance_gating_requires_full_provenance_fields(
-    #[future] ctx: McpTestContext,
     #[case] tool_name: &str,
-) {
-    let ctx = ctx.await;
+) -> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
     let handlers = tool_handlers(&ctx.server);
     let request = direct_tool_call_request(tool_name);
-    let error = route_tool_call(request, &handlers, ToolExecutionContext::default())
-        .await
-        .expect_err("provenance-gated tools should fail without full provenance");
+    let error_result = route_tool_call(request, &handlers, ToolExecutionContext::default()).await;
+    assert!(
+        error_result.is_err(),
+        "provenance-gated tools should fail without full provenance"
+    );
+    let error = match error_result {
+        Ok(_) => return Ok(()),
+        Err(error) => error,
+    };
 
     assert_eq!(error.code.0, -32602);
     assert!(error.message.contains("Missing execution provenance"));
@@ -185,6 +201,7 @@ async fn test_provenance_gating_requires_full_provenance_fields(
             error.message
         );
     }
+    Ok(())
 }
 
 #[rstest]
@@ -193,10 +210,9 @@ async fn test_provenance_gating_requires_full_provenance_fields(
 #[case("memory")]
 #[tokio::test]
 async fn test_delegation_requires_parent_session_id_when_delegated_true(
-    #[future] ctx: McpTestContext,
     #[case] tool_name: &str,
-) {
-    let ctx = ctx.await;
+) -> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
     let handlers = tool_handlers(&ctx.server);
     let request = direct_tool_call_request(tool_name);
     let execution_context = ToolExecutionContext {
@@ -214,9 +230,15 @@ async fn test_delegation_requires_parent_session_id_when_delegated_true(
         timestamp: Some(1),
         execution_flow: Some("stdio-only".to_owned()),
     };
-    let error = route_tool_call(request, &handlers, execution_context)
-        .await
-        .expect_err("delegated=true without parent_session_id should fail");
+    let error_result = route_tool_call(request, &handlers, execution_context).await;
+    assert!(
+        error_result.is_err(),
+        "delegated=true without parent_session_id should fail"
+    );
+    let error = match error_result {
+        Ok(_) => return Ok(()),
+        Err(error) => error,
+    };
 
     assert_eq!(error.code.0, -32602);
     assert!(
@@ -224,31 +246,36 @@ async fn test_delegation_requires_parent_session_id_when_delegated_true(
         "error should mention missing parent_session_id: {}",
         error.message
     );
+    Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid(
-    #[future] ctx: McpTestContext,
-) {
-    let ctx = ctx.await;
+async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid()
+-> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
     let request = tools_call_request("validate");
     let headers = [
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "server-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers)
-        .await
-        .expect("call MCP endpoint");
+    let (status, response) = post_mcp(&ctx, &request, &headers).await?;
 
     assert_eq!(status, Status::Ok);
-    let error = response
-        .error
-        .expect("validate should be blocked in server-hybrid");
+    let error_opt = response.error;
+    assert!(
+        error_opt.is_some(),
+        "validate should be blocked in server-hybrid"
+    );
+    let error = match error_opt {
+        Some(error) => error,
+        None => return Ok(()),
+    };
     assert_eq!(error.code, -32602);
     assert!(error.message.contains("Operation mode matrix violation"));
     assert!(error.message.contains("validate"));
     assert!(error.message.contains("server-hybrid"));
+    Ok(())
 }
 
 #[rstest]
@@ -261,25 +288,29 @@ async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid(
 #[case("entity")]
 #[tokio::test]
 async fn test_operation_mode_matrix_blocks_tools_in_client_hybrid(
-    #[future] ctx: McpTestContext,
     #[case] tool_name: &str,
-) {
-    let ctx = ctx.await;
+) -> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
     let request = tools_call_request(tool_name);
     let headers = [
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "client-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers)
-        .await
-        .expect("call MCP endpoint");
+    let (status, response) = post_mcp(&ctx, &request, &headers).await?;
 
     assert_eq!(status, Status::Ok);
-    let error = response
-        .error
-        .expect("tool should be blocked in client-hybrid");
+    let error_opt = response.error;
+    assert!(
+        error_opt.is_some(),
+        "tool should be blocked in client-hybrid"
+    );
+    let error = match error_opt {
+        Some(error) => error,
+        None => return Ok(()),
+    };
     assert_eq!(error.code, -32602);
     assert!(error.message.contains("Operation mode matrix violation"));
     assert!(error.message.contains(tool_name));
     assert!(error.message.contains("client-hybrid"));
+    Ok(())
 }

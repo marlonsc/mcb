@@ -36,8 +36,8 @@
 
 // Re-export mcb-domain types commonly used with providers
 pub use mcb_domain::error::{Error, Result};
-pub use mcb_domain::ports::providers::CryptoProvider;
-pub use mcb_domain::ports::providers::{
+pub use mcb_domain::ports::CryptoProvider;
+pub use mcb_domain::ports::{
     CacheProvider, ComplexityAnalyzer, DeadCodeDetector, EmbeddingProvider, HybridSearchProvider,
     LanguageChunkingProvider, TdgScorer, VcsProvider, VectorStoreProvider,
 };
@@ -93,7 +93,7 @@ pub use hybrid_search::HybridSearchEngine;
 /// implements the generic schema DDL in its dialect.
 pub mod database;
 
-pub use database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
+pub use database::SqliteSchemaDdlGenerator;
 
 /// Project type detection providers
 pub mod project_detection;

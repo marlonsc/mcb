@@ -49,7 +49,7 @@
 use std::sync::Arc;
 
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{
+use mcb_domain::ports::{
     CacheProvider as CacheProviderTrait, EmbeddingProvider, LanguageChunkingProvider,
     VectorStoreProvider,
 };

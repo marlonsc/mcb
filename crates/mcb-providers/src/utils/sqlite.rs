@@ -6,7 +6,7 @@
 /// Row extraction helpers for mapping `SqlRow` values to Rust types.
 pub mod row {
     use mcb_domain::error::{Error, Result};
-    use mcb_domain::ports::infrastructure::database::{SqlParam, SqlRow};
+    use mcb_domain::ports::{SqlParam, SqlRow};
 
     /// Helper to get a required string field.
     ///
@@ -71,7 +71,7 @@ pub mod query {
     use std::sync::Arc;
 
     use mcb_domain::error::{Error, Result};
-    use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
+    use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
 
     /// Helper to query a single row and convert it to an entity.
     ///

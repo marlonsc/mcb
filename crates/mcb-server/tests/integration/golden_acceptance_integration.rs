@@ -59,14 +59,17 @@ pub struct QueryConfig {
 }
 
 /// Load golden queries from fixture file
-fn load_golden_queries() -> GoldenQueriesConfig {
+///
+/// # Errors
+///
+/// Returns an error if the fixture file cannot be read or parsed.
+fn load_golden_queries() -> Result<GoldenQueriesConfig, Box<dyn std::error::Error>> {
     let fixture_path =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/golden_queries.json");
 
-    let content = std::fs::read_to_string(&fixture_path)
-        .unwrap_or_else(|_| panic!("Failed to read golden queries from {fixture_path:?}"));
+    let content = std::fs::read_to_string(&fixture_path)?;
 
-    serde_json::from_str(&content).expect("Failed to parse golden queries JSON")
+    Ok(serde_json::from_str(&content)?)
 }
 
 /// Read all source files from `sample_codebase` and create `CodeChunks`
@@ -111,8 +114,8 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
 // ============================================================================
 
 #[test]
-fn test_golden_queries_fixture_valid() {
-    let config = load_golden_queries();
+fn test_golden_queries_fixture_valid() -> Result<(), Box<dyn std::error::Error>> {
+    let config = load_golden_queries()?;
 
     assert_eq!(config.version, "0.1.2");
     assert!(
@@ -140,14 +143,18 @@ fn test_golden_queries_fixture_valid() {
             query.id
         );
     }
+    Ok(())
 }
 
 #[rstest]
 #[case("timeout_ms", true)]
 #[case("top_k", true)]
 #[case("relevance_threshold", true)]
-fn test_config_values_reasonable(#[case] field: &str, #[case] expected_valid: bool) {
-    let config = load_golden_queries();
+fn test_config_values_reasonable(
+    #[case] field: &str,
+    #[case] expected_valid: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let config = load_golden_queries()?;
     let is_valid = match field {
         "timeout_ms" => config.config.timeout_ms >= 1000,
         "top_k" => config.config.top_k >= 1 && config.config.top_k <= 100,
@@ -157,11 +164,12 @@ fn test_config_values_reasonable(#[case] field: &str, #[case] expected_valid: bo
         _ => false,
     };
     assert_eq!(is_valid, expected_valid, "Config field '{field}' invalid");
+    Ok(())
 }
 
 #[test]
-fn test_query_ids_unique() {
-    let config = load_golden_queries();
+fn test_query_ids_unique() -> Result<(), Box<dyn std::error::Error>> {
+    let config = load_golden_queries()?;
     let mut seen = std::collections::HashSet::new();
 
     for query in &config.queries {
@@ -171,6 +179,7 @@ fn test_query_ids_unique() {
             query.id
         );
     }
+    Ok(())
 }
 
 #[test]
@@ -217,11 +226,14 @@ fn test_sample_codebase_contains_expected_file(#[case] expected_file: &str) {
 }
 
 /// Create a test configuration with a unique database path to allow parallel execution
-fn unique_test_config() -> AppConfig {
-    let mut config = ConfigLoader::new().load().expect("load config");
+///
+/// # Errors
+///
+/// Returns an error if configuration cannot be loaded or system time is unavailable.
+fn unique_test_config() -> Result<AppConfig, Box<dyn std::error::Error>> {
+    let mut config = ConfigLoader::new().load()?;
     let stamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("system time")
+        .duration_since(std::time::UNIX_EPOCH)?
         .as_nanos();
     let thread_id = std::thread::current().id();
     let db_path = std::env::temp_dir().join(format!("mcb-golden-test-{stamp}-{thread_id:?}.db"));
@@ -233,24 +245,24 @@ fn unique_test_config() -> AppConfig {
         },
     );
     config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-    config
+    Ok(config)
 }
 
-use crate::test_utils::test_fixtures::shared_fastembed_test_cache_dir;
+use crate::utils::test_fixtures::shared_fastembed_test_cache_dir;
 
 // ============================================================================
 // Real Provider Tests (using FastEmbed + EdgeVec)
 // ============================================================================
 
 #[tokio::test]
-async fn test_golden_index_real_files() {
-    let config = unique_test_config();
-    let ctx = init_app(config).await.expect("init_app should succeed");
+async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>> {
+    let config = unique_test_config()?;
+    let ctx = init_app(config).await?;
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
 
-    let golden_config = load_golden_queries();
+    let golden_config = load_golden_queries()?;
     let collection = &golden_config.config.collection_name;
     let chunks = read_sample_codebase_files();
 
@@ -309,17 +321,18 @@ async fn test_golden_index_real_files() {
         chunks.len(),
         "Should insert all chunks from sample_codebase"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_golden_search_validates_expected_files() {
-    let config = unique_test_config();
-    let ctx = init_app(config).await.expect("init_app should succeed");
+async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std::error::Error>> {
+    let config = unique_test_config()?;
+    let ctx = init_app(config).await?;
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
 
-    let golden_config = load_golden_queries();
+    let golden_config = load_golden_queries()?;
     let collection = "golden_expected_files_test";
     let chunks = read_sample_codebase_files();
 
@@ -396,6 +409,7 @@ async fn test_golden_search_validates_expected_files() {
             result_files
         );
     }
+    Ok(())
 }
 
 /// Test that validates all golden queries find their expected files.
@@ -405,14 +419,14 @@ async fn test_golden_search_validates_expected_files() {
 /// The provider generates vectors based on domain keywords
 /// (embedding, `vector_store`, handler, cache, di, error, chunking, etc.)
 #[tokio::test]
-async fn test_golden_all_queries_find_expected_files() {
-    let config = unique_test_config();
-    let ctx = init_app(config).await.expect("init_app should succeed");
+async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std::error::Error>> {
+    let config = unique_test_config()?;
+    let ctx = init_app(config).await?;
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
 
-    let golden_config = load_golden_queries();
+    let golden_config = load_golden_queries()?;
     let collection = "golden_all_queries_test";
     let chunks = read_sample_codebase_files();
 
@@ -509,10 +523,11 @@ async fn test_golden_all_queries_find_expected_files() {
         total,
         failed_queries.join("\n")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_golden_full_workflow_end_to_end() {
+async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error::Error>> {
     // This test validates the complete golden test workflow:
     // 1. Load config
     // 2. Read real files from sample_codebase
@@ -521,12 +536,12 @@ async fn test_golden_full_workflow_end_to_end() {
     // 5. Search with all golden queries
     // 6. Validate expected_files found
 
-    let app_config = unique_test_config();
-    let ctx = init_app(app_config).await.expect("init_app should succeed");
+    let app_config = unique_test_config()?;
+    let ctx = init_app(app_config).await?;
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
-    let golden_config = load_golden_queries();
+    let golden_config = load_golden_queries()?;
 
     let collection = &golden_config.config.collection_name;
     let chunks = read_sample_codebase_files();
@@ -600,4 +615,5 @@ async fn test_golden_full_workflow_end_to_end() {
         success_rate >= 0.5,
         "At least 50% of golden queries should find expected files. Got: {successful_queries}/{total}"
     );
+    Ok(())
 }

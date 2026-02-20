@@ -5,8 +5,8 @@
 
 use mcb_validate::ErrorBoundaryValidator;
 
-use crate::test_constants::*;
-use crate::test_utils::*;
+use crate::utils::test_constants::*;
+use crate::utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions

@@ -7,8 +7,8 @@ use mcb_server::McpServer;
 use mcb_server::tools::router::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use rmcp::model::CallToolRequestParams;
 
-use crate::test_utils::http_mcp::{McpTestContext, post_mcp, tools_call_request};
-use crate::test_utils::test_fixtures::create_test_mcp_server;
+use crate::utils::http_mcp::{McpTestContext, post_mcp, tools_call_request};
+use crate::utils::test_fixtures::create_test_mcp_server;
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
     ToolHandlers {
@@ -150,49 +150,57 @@ async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str)
 #[case("vcs")]
 #[case("entity")]
 #[tokio::test]
-async fn client_hybrid_blocks_server_side_tools(#[case] tool_name: &str) {
-    let ctx = McpTestContext::new()
-        .await
-        .expect("create MCP test context");
+async fn client_hybrid_blocks_server_side_tools(
+    #[case] tool_name: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
     let request = tools_call_request(tool_name);
     let headers = [
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "client-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers)
-        .await
-        .expect("call MCP endpoint");
+    let (status, response) = post_mcp(&ctx, &request, &headers).await?;
 
     assert_eq!(status, rocket::http::Status::Ok);
-    let error = response
-        .error
-        .unwrap_or_else(|| panic!("{tool_name} should be blocked in client-hybrid"));
+    let error_opt = response.error;
+    assert!(
+        error_opt.is_some(),
+        "{tool_name} should be blocked in client-hybrid"
+    );
+    let error = match error_opt {
+        Some(error) => error,
+        None => return Ok(()),
+    };
     assert_eq!(error.code, -32602);
     assert!(
         error.message.contains("Operation mode matrix violation"),
         "{tool_name}: expected mode violation, got: {}",
         error.message
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn server_hybrid_blocks_validate() {
-    let ctx = McpTestContext::new()
-        .await
-        .expect("create MCP test context");
+async fn server_hybrid_blocks_validate() -> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
     let request = tools_call_request("validate");
     let headers = [
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "server-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers)
-        .await
-        .expect("call MCP endpoint");
+    let (status, response) = post_mcp(&ctx, &request, &headers).await?;
 
     assert_eq!(status, rocket::http::Status::Ok);
-    let error = response
-        .error
-        .expect("validate should be blocked in server-hybrid");
+    let error_opt = response.error;
+    assert!(
+        error_opt.is_some(),
+        "validate should be blocked in server-hybrid"
+    );
+    let error = match error_opt {
+        Some(error) => error,
+        None => return Ok(()),
+    };
     assert_eq!(error.code, -32602);
     assert!(error.message.contains("Operation mode matrix violation"));
+    Ok(())
 }

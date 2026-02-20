@@ -18,7 +18,7 @@ use std::path::PathBuf;
 
 use crate::constants::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 use crate::traits::violation::{Violation, ViolationCategory};
-use mcb_domain::ports::providers::{ComplexityAnalyzer, DeadCodeDetector, TdgScorer};
+use mcb_domain::ports::{ComplexityAnalyzer, DeadCodeDetector, TdgScorer};
 
 use crate::define_violations;
 use crate::validators::pmat_native::NativePmatAnalyzer;

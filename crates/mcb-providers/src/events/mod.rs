@@ -21,6 +21,6 @@ pub mod tokio;
 // Re-export domain event types
 pub use mcb_domain::events::DomainEvent;
 // Re-export port trait from application layer
-pub use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
+pub use mcb_domain::ports::{DomainEventStream, EventBusProvider};
 pub use nats::NatsEventBusProvider;
 pub use tokio::TokioEventBusProvider;

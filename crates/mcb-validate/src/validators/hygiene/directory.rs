@@ -42,7 +42,7 @@ pub fn validate_test_directory_structure(
                 path.parent() == Some(normalized_tests_dir.as_path())
                     && !matches!(
                         path.file_name().and_then(|n| n.to_str()).unwrap_or(""),
-                        "lib.rs" | "mod.rs" | "test_utils.rs"
+                        "lib.rs" | "mod.rs" | "utils.rs"
                     )
             });
 
@@ -65,10 +65,10 @@ pub fn validate_test_directory_structure(
             let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
             // Skip allowed files in root tests directory
-            // These are: lib.rs, mod.rs, test_utils.rs, and entry points for test subdirectories
+            // These are: lib.rs, mod.rs, utils.rs, and entry points for test subdirectories
             if matches!(
                 file_name,
-                "lib.rs" | "mod.rs" | "test_utils.rs" | "unit.rs" | "integration.rs" | "e2e.rs"
+                "lib.rs" | "mod.rs" | "utils.rs" | "unit.rs" | "integration.rs" | "e2e.rs"
             ) {
                 continue;
             }

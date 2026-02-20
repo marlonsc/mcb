@@ -1,5 +1,5 @@
 use super::constants::{CLONE_REGEX, CONTEXT_TRUNCATION_LENGTH, LOOP_ALLOCATION_PATTERNS};
-use crate::constants::common::{FN_PREFIX, LET_PREFIX, PUB_FN_PREFIX};
+use crate::constants::common::{FN_PREFIX, HEAP_ALLOC_PREFIXES, LET_PREFIX, PUB_FN_PREFIX};
 use crate::pattern_registry::{compile_regex, compile_regexes};
 use crate::{Result, Severity};
 
@@ -47,17 +47,16 @@ pub fn validate_allocation_in_loops(
     let compiled_patterns = compile_regexes(LOOP_ALLOCATION_PATTERNS.iter().copied())?;
 
     scan_files_with_patterns_in_loops(validator, &compiled_patterns, |file, line_num, line| {
-        let allocation_type = if line.contains("Vec::") {
-            "Vec allocation"
-        } else if line.contains("String::") {
-            "String allocation"
-        } else if line.contains("HashMap::") {
-            "HashMap allocation"
-        } else if line.contains("HashSet::") {
-            "HashSet allocation"
-        } else {
-            "Allocation"
-        };
+        let allocation_type = HEAP_ALLOC_PREFIXES
+            .iter()
+            .find(|p| line.contains(*p))
+            .map_or("Allocation", |p| match *p {
+                "Vec::" => "Vec allocation",
+                "String::" => "String allocation",
+                "HashMap::" => "HashMap allocation",
+                "HashSet::" => "HashSet allocation",
+                _ => "Allocation",
+            });
 
         Some(PerformanceViolation::AllocationInLoop {
             file,

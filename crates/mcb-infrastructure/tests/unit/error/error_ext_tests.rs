@@ -22,6 +22,7 @@ fn test_error_context_extension() {
 }
 
 #[rstest]
+#[allow(clippy::wildcard_enum_match_arm)]
 fn test_infra_error_creation() {
     let error = infra::infrastructure_error_msg("test error message");
 

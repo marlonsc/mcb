@@ -124,6 +124,7 @@ rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+mcb-infrastructure = { path = "../mcb-infrastructure", features = ["test-utils"] }
 
 [[test]]
 name = "unit"
@@ -132,3 +133,7 @@ path = "tests/unit/mod.rs"
 [[test]]
 name = "integration"
 path = "tests/integration/mod.rs"
+
+[[test]]
+name = "e2e"
+path = "tests/e2e/mod.rs"

@@ -1,6 +1,6 @@
 //! Tests for `ProjectService`
 
-use mcb_domain::ports::services::project::ProjectDetectorService;
+use mcb_domain::ports::ProjectDetectorService;
 use mcb_infrastructure::project::ProjectService;
 
 #[tokio::test]

@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::config::NamingRulesConfig;
+use crate::constants::common::MCB_CRATE_PREFIX;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::run_context::ValidationRunContext;
@@ -164,7 +165,7 @@ impl NamingValidator {
             let Some(component) = component.as_os_str().to_str() else {
                 continue;
             };
-            if component.starts_with("mcb-") {
+            if component.starts_with(MCB_CRATE_PREFIX) {
                 return match component {
                     "mcb-domain" => self.rules.domain_crate.clone(),
                     "mcb-infrastructure" => self.rules.infrastructure_crate.clone(),

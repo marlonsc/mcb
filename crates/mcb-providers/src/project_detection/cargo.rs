@@ -7,9 +7,7 @@ use async_trait::async_trait;
 use cargo_toml::Manifest;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::project_detection::{
-    ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
-};
+use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
 
 use super::PROJECT_DETECTORS;
 
@@ -84,5 +82,5 @@ static CARGO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "cargo",
     description: "Detects Rust projects with Cargo.toml",
     marker_files: &["Cargo.toml"],
-    factory: cargo_factory,
+    build: cargo_factory,
 };

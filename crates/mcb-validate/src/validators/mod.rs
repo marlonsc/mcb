@@ -27,6 +27,8 @@ pub mod port_adapter;
 pub mod quality;
 pub mod refactoring;
 pub mod solid;
+/// Single-source-of-truth invariants validator.
+pub mod ssot;
 pub mod test_quality;
 pub mod visibility;
 
@@ -50,5 +52,6 @@ pub use self::port_adapter::{PortAdapterValidator, PortAdapterViolation};
 pub use self::quality::{QualityValidator, QualityViolation};
 pub use self::refactoring::{RefactoringValidator, RefactoringViolation};
 pub use self::solid::{SolidValidator, SolidViolation};
+pub use self::ssot::{SsotValidator, SsotViolation};
 pub use self::test_quality::{TestQualityValidator, TestQualityViolation};
 pub use self::visibility::{VisibilityValidator, VisibilityViolation};

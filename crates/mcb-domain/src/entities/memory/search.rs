@@ -71,7 +71,7 @@ impl std::fmt::Debug for MemoryFilter {
         f.debug_struct("MemoryFilter")
             .field("id", &self.id)
             .field("tags", &self.tags)
-            .field(crate::schema::memory::COL_OBSERVATION_TYPE, &self.r#type)
+            .field(crate::schema::COL_OBSERVATION_TYPE, &self.r#type)
             .field(
                 "session_id_present",
                 &if self.session_id.is_some() {

@@ -19,7 +19,7 @@ use crate::value_objects::Embedding;
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::providers::EmbeddingProvider;
+/// use mcb_domain::ports::EmbeddingProvider;
 /// use std::sync::Arc;
 ///
 /// async fn embed_code(provider: Arc<dyn EmbeddingProvider>) -> mcb_domain::Result<()> {

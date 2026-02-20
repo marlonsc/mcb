@@ -4,13 +4,13 @@ use std::sync::Arc;
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::{IssueStatus, IssueType, ProjectIssue};
-use mcb_domain::ports::infrastructure::DatabaseExecutor;
-use mcb_domain::ports::repositories::issue_entity_repository::{
+use mcb_domain::ports::DatabaseExecutor;
+use mcb_domain::ports::{
     IssueCommentRegistry, IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry,
 };
 use mcb_providers::database::SqliteIssueEntityRepository;
 
-use crate::common::entity_test_utils::{
+use crate::utils::entity::{
     TEST_NOW, TestResult, assert_not_found, seed_default_scope, seed_isolated_org_scope,
     setup_executor,
 };

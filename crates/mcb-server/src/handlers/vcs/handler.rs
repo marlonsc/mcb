@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::VcsProvider;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
@@ -10,7 +10,6 @@ use validator::Validate;
 
 use super::{analyze_impact, compare_branches, index_repo, list_repos, search_branch};
 use crate::args::{VcsAction, VcsArgs};
-use crate::utils::mcp::resolve_org_id;
 
 /// Handler for VCS-related MCP tool operations.
 ///
@@ -37,8 +36,6 @@ impl VcsHandler {
     ) -> Result<CallToolResult, McpError> {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
-
-        let _org_id = resolve_org_id(args.org_id.as_deref());
 
         match args.action {
             VcsAction::ListRepositories => {

@@ -132,7 +132,7 @@ macro_rules! register_http_provider {
         static $static_name: EmbeddingProviderEntry = EmbeddingProviderEntry {
             name: $provider_slug,
             description: $description,
-            factory: $factory_fn,
+            build: $factory_fn,
         };
     };
 }

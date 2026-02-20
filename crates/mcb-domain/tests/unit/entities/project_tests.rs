@@ -22,7 +22,10 @@ fn project_type_cargo(#[case] name: &str, #[case] version: &str) {
             assert_eq!(actual_name, name);
             assert_eq!(actual_version, version);
         }
-        _ => panic!("expected Cargo"),
+        ProjectType::Npm { .. }
+        | ProjectType::Python { .. }
+        | ProjectType::Go { .. }
+        | ProjectType::Maven { .. } => panic!("expected Cargo"),
     }
 }
 

@@ -1,6 +1,6 @@
 //! Tests for Go project detector (REF003).
 
-use mcb_domain::ports::providers::project_detection::{ProjectDetector, ProjectDetectorConfig};
+use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig};
 use mcb_providers::project_detection::GoDetector;
 use rstest::rstest;
 

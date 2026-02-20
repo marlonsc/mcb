@@ -4,13 +4,11 @@ use std::sync::Arc;
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::repository::{Branch, Repository, VcsType};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::vcs_entity_repository::{
-    AssignmentManager, BranchRegistry, RepositoryRegistry, WorktreeManager,
-};
+use mcb_domain::ports::{AssignmentManager, BranchRegistry, RepositoryRegistry, WorktreeManager};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 use mcb_providers::database::SqliteVcsEntityRepository;
 
-use crate::common::entity_test_utils::{
+use crate::utils::entity::{
     TEST_NOW, TestResult, assert_not_found, seed_default_scope, seed_isolated_org_scope,
     seed_project, setup_executor,
 };
@@ -53,6 +51,7 @@ fn create_test_repository(id: &str, project_id: &str) -> Repository {
 fn create_test_branch(id: &str, repository_id: &str, name: &str) -> Branch {
     Branch {
         id: id.to_owned(),
+        org_id: DEFAULT_ORG_ID.to_owned(),
         repository_id: repository_id.to_owned(),
         name: name.to_owned(),
         is_default: name == "main",
@@ -80,10 +79,11 @@ fn create_test_worktree(id: &str, repository_id: &str, branch_id: &str) -> Workt
 async fn seed_agent_session(executor: &dyn DatabaseExecutor) -> TestResult {
     executor
         .execute(
-            "INSERT INTO session_summaries (id, project_id, session_id, topics, decisions, next_steps, key_files, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO session_summaries (id, project_id, org_id, session_id, topics, decisions, next_steps, key_files, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             &[
                 SqlParam::String("summ-1".to_owned()),
                 SqlParam::String("proj-1".to_owned()),
+                SqlParam::String(DEFAULT_ORG_ID.to_owned()),
                 SqlParam::String("sid-1".to_owned()),
                 SqlParam::String("[]".to_owned()),
                 SqlParam::String("[]".to_owned()),

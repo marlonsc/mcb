@@ -6,10 +6,8 @@ use async_trait::async_trait;
 use mcb_domain::entities::repository::{Branch, Repository, VcsType};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
-use mcb_domain::ports::repositories::vcs_entity_repository::{
-    AssignmentManager, BranchRegistry, RepositoryRegistry, WorktreeManager,
-};
+use mcb_domain::ports::{AssignmentManager, BranchRegistry, RepositoryRegistry, WorktreeManager};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
 use serde_json::json;
 
 use crate::utils::sqlite::row::{req_i64, req_str};
@@ -80,6 +78,7 @@ fn row_to_branch(row: &dyn SqlRow) -> Result<Branch> {
     let is_default_i = req_i64(row, "is_default")?;
     Ok(Branch {
         id: req_str(row, "id")?,
+        org_id: req_str(row, "org_id")?,
         repository_id: req_str(row, "repository_id")?,
         name: req_str(row, "name")?,
         is_default: is_default_i != 0,
@@ -231,9 +230,10 @@ impl BranchRegistry for SqliteVcsEntityRepository {
     async fn create_branch(&self, branch: &Branch) -> Result<()> {
         self.executor
             .execute(
-                "INSERT INTO branches (id, repository_id, name, is_default, head_commit, upstream, origin_context, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO branches (id, org_id, repository_id, name, is_default, head_commit, upstream, origin_context, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 &[
                     SqlParam::String(branch.id.clone()),
+                    SqlParam::String(branch.org_id.clone()),
                     SqlParam::String(branch.repository_id.clone()),
                     SqlParam::String(branch.name.clone()),
                     SqlParam::I64(if branch.is_default { 1 } else { 0 }),

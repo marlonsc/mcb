@@ -7,8 +7,8 @@
 use mcb_validate::rules::yaml_loader::YamlRuleLoader;
 use rstest::*;
 
-use crate::test_constants::*;
-use crate::test_utils::{build_yaml_variables, get_workspace_root};
+use crate::utils::test_constants::*;
+use crate::utils::{build_yaml_variables, get_workspace_root};
 
 #[rstest]
 #[tokio::test]

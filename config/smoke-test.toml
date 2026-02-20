@@ -17,7 +17,6 @@ provider = "openai"
 [providers.embedding.configs.default]
 provider = "openai"
 model = "text-embedding-3-small"
-api_key = "test-key"
 
 [providers.vector_store.configs.default]
 provider = "edgevec"

@@ -5,13 +5,13 @@ use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::{
     ApiKey, Organization, Team, TeamMember, TeamMemberRole, User, UserRole,
 };
-use mcb_domain::ports::infrastructure::DatabaseExecutor;
-use mcb_domain::ports::repositories::org_entity_repository::{
+use mcb_domain::ports::DatabaseExecutor;
+use mcb_domain::ports::{
     ApiKeyRegistry, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
 };
 use mcb_providers::database::SqliteOrgEntityRepository;
 
-use crate::common::entity_test_utils::{TEST_NOW, TestResult, assert_not_found, setup_executor};
+use crate::utils::entity::{TEST_NOW, TestResult, assert_not_found, setup_executor};
 
 async fn setup_repo() -> TestResult<(
     SqliteOrgEntityRepository,

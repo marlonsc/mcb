@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use mcb_domain::constants::keys as schema;
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus};
-use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Map;
@@ -10,6 +10,7 @@ use serde_json::Value;
 
 use super::common::{json_map, opt_str, require_session_id_str};
 use crate::args::SessionArgs;
+use crate::constants::fields::FIELD_UPDATED;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::{resolve_identifier_precedence, tool_error};
@@ -53,7 +54,7 @@ pub async fn update_session(
                 Ok(_) => ResponseFormatter::json_success(&serde_json::json!({
                     schema::ID: session_id,
                     schema::STATUS: status,
-                    "updated": true,
+                    (FIELD_UPDATED): true,
                 })),
                 Err(e) => {
                     error!("Failed to update agent session: {:?}", e);

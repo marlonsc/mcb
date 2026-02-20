@@ -1,16 +1,16 @@
 use mcb_server::builder::{BuilderError, McpServerBuilder};
 
-async fn create_real_services()
--> mcb_infrastructure::di::modules::domain_services::DomainServicesContainer {
-    let ctx = crate::shared_context::shared_app_context();
-    ctx.build_domain_services()
-        .await
-        .expect("build domain services")
+async fn create_real_services() -> Result<
+    mcb_infrastructure::di::modules::domain_services::DomainServicesContainer,
+    Box<dyn std::error::Error>,
+> {
+    let ctx = crate::utils::shared_context::shared_app_context();
+    Ok(ctx.build_domain_services().await?)
 }
 
 #[tokio::test]
-async fn test_builder_all_services_provided() {
-    let services = create_real_services().await;
+async fn test_builder_all_services_provided() -> Result<(), Box<dyn std::error::Error>> {
+    let services = create_real_services().await?;
 
     let result = McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
@@ -29,11 +29,12 @@ async fn test_builder_all_services_provided() {
         .build();
 
     assert!(result.is_ok());
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_builder_missing_indexing_service() {
-    let services = create_real_services().await;
+async fn test_builder_missing_indexing_service() -> Result<(), Box<dyn std::error::Error>> {
+    let services = create_real_services().await?;
 
     let result = McpServerBuilder::new()
         .with_context_service(services.context_service)
@@ -45,15 +46,16 @@ async fn test_builder_missing_indexing_service() {
         .build();
 
     assert!(result.is_err());
-    match result {
-        Err(BuilderError::MissingDependency(dep)) => assert_eq!(dep, "indexing service"),
-        _ => panic!("Expected MissingDependency error"),
-    }
+    assert!(matches!(
+        result,
+        Err(BuilderError::MissingDependency(dep)) if dep == "indexing service"
+    ));
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_builder_missing_vcs_provider() {
-    let services = create_real_services().await;
+async fn test_builder_missing_vcs_provider() -> Result<(), Box<dyn std::error::Error>> {
+    let services = create_real_services().await?;
 
     let result = McpServerBuilder::new()
         .with_indexing_service(services.indexing_service)
@@ -65,10 +67,11 @@ async fn test_builder_missing_vcs_provider() {
         .build();
 
     assert!(result.is_err());
-    match result {
-        Err(BuilderError::MissingDependency(dep)) => assert_eq!(dep, "vcs provider"),
-        _ => panic!("Expected MissingDependency error"),
-    }
+    assert!(matches!(
+        result,
+        Err(BuilderError::MissingDependency(dep)) if dep == "vcs provider"
+    ));
+    Ok(())
 }
 
 #[test]

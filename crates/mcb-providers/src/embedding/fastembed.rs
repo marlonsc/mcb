@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
 use mcb_domain::constants::embedding::EMBEDDING_DIMENSION_FASTEMBED_DEFAULT;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::EmbeddingProvider;
+use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
 use tokio::sync::{mpsc, oneshot};
 
@@ -190,7 +190,7 @@ impl FastEmbedActor {
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
 use mcb_domain::registry::embedding::{
     EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
 };
@@ -243,5 +243,5 @@ fn fastembed_factory(
 static FASTEMBED_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
     name: "fastembed",
     description: "FastEmbed local provider (AllMiniLML6V2, BGESmallEN, etc.)",
-    factory: fastembed_factory,
+    build: fastembed_factory,
 };

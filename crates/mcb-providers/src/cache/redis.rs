@@ -26,7 +26,7 @@ use std::sync::{Arc, RwLock};
 
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheProvider, CacheStats};
+use mcb_domain::ports::{CacheEntryConfig, CacheProvider, CacheStats};
 use redis::{AsyncCommands, Client, aio::MultiplexedConnection};
 
 /// Redis cache provider

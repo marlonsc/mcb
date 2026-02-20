@@ -6,6 +6,7 @@
 //! - Example code blocks for traits
 
 pub mod constants;
+mod helpers;
 mod validator;
 
 pub use self::validator::{DocumentationValidator, DocumentationViolation};

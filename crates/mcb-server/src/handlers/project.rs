@@ -2,10 +2,9 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::repositories::ProjectRepository;
+use mcb_domain::ports::ProjectRepository;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
-use serde_json::Value;
 use tracing::info;
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
@@ -32,8 +31,6 @@ impl ProjectHandler {
         Parameters(args): Parameters<ProjectArgs>,
     ) -> Result<CallToolResult, McpError> {
         let project_id = &args.project_id;
-        let _data = args.data.unwrap_or(Value::Null);
-
         let org_id = resolve_org_id(None);
 
         if project_id.trim().is_empty() && !matches!(args.action, ProjectAction::List) {

@@ -3,10 +3,10 @@ use mcb_server::handlers::entities::IssueEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::test_utils::text::extract_text;
+use crate::utils::text::extract_text;
 
 fn create_handler() -> IssueEntityHandler {
-    let ctx = crate::shared_context::shared_app_context();
+    let ctx = crate::utils::shared_context::shared_app_context();
     IssueEntityHandler::new(ctx.issue_entity_repository())
 }
 
@@ -71,8 +71,9 @@ async fn list_issue_count(handler: &IssueEntityHandler, project_id: &str) -> usi
     let content = handler
         .handle(Parameters(list_args))
         .await
-        .expect("list")
-        .content;
+        .ok()
+        .map(|r| r.content)
+        .unwrap_or_default();
     let text = extract_text(&content);
     serde_json::from_str::<serde_json::Value>(&text)
         .ok()

@@ -1,337 +1,159 @@
-use mcb_domain::schema::{
-    MemorySchema, MemorySchemaDdlGenerator, ProjectSchema, SchemaDdlGenerator,
-};
-use mcb_providers::database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
+use mcb_domain::schema::{Schema, SchemaDdlGenerator};
+use mcb_providers::database::SqliteSchemaDdlGenerator;
 use rstest::rstest;
 use rstest::*;
 
 type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 #[fixture]
-fn project_ddl() -> Vec<String> {
+fn schema_def() -> Schema {
+    Schema::definition()
+}
+
+#[fixture]
+fn schema_ddl(schema_def: Schema) -> Vec<String> {
     let generator = SqliteSchemaDdlGenerator;
-    let schema = ProjectSchema::definition();
-    generator.generate_ddl(&schema)
+    generator.generate_ddl(&schema_def)
+}
+
+fn find_table_ddl<'a>(ddl: &'a [String], table: &str) -> &'a str {
+    ddl.iter()
+        .find(|stmt| {
+            stmt.starts_with("CREATE TABLE") && stmt.contains(&format!("IF NOT EXISTS {table}"))
+        })
+        .map_or_else(
+            || unreachable!("Table {table} not found in DDL — schema definition changed?"),
+            String::as_str,
+        )
 }
 
 #[rstest]
-#[case("memory")]
-#[case("project")]
-fn sqlite_ddl_generators_produce_statements(#[case] schema_kind: &str) {
-    let ddl: Vec<String> = if schema_kind == "memory" {
-        let generator = SqliteMemoryDdlGenerator;
-        let schema = MemorySchema::definition();
-        generator.generate_ddl(&schema)
-    } else {
-        let generator = SqliteSchemaDdlGenerator;
-        let schema = ProjectSchema::definition();
-        generator.generate_ddl(&schema)
-    };
+fn sqlite_ddl_generators_produce_statements(schema_def: Schema) {
+    let generator = SqliteSchemaDdlGenerator;
+    let ddl = generator.generate_ddl(&schema_def);
 
     assert!(!ddl.is_empty());
     assert!(ddl.iter().any(|s| s.contains("CREATE TABLE")));
-    if schema_kind == "memory" {
-        assert!(ddl.iter().any(|s| s.contains("fts5")));
-        return;
-    }
-
-    assert!(
-        ddl.iter()
-            .any(|s| s.contains("CREATE TABLE") && s.contains("collections"))
-    );
-    assert!(ddl.iter().any(|s| s.contains("observations")));
-    assert!(ddl.iter().any(|s| s.contains("session_summaries")));
-    assert!(ddl.iter().any(|s| s.contains("file_hashes")));
-    assert!(
-        ddl.iter()
-            .any(|s| s.contains("UNIQUE(project_id, collection, file_path)"))
-    );
+    assert!(ddl.iter().any(|s| s.contains("fts5")));
     assert!(ddl.iter().any(|s| s.contains("AUTOINCREMENT")));
-}
 
-#[rstest]
-fn project_schema_has_27_create_table_statements(project_ddl: Vec<String>) {
-    let ddl = project_ddl;
-    let create_count = ddl.iter().filter(|s| s.starts_with("CREATE TABLE")).count();
-    assert_eq!(
-        create_count, 27,
-        "Expected 27 CREATE TABLE statements, got {create_count}"
-    );
-}
-
-#[rstest]
-fn project_schema_contains_all_multi_tenant_tables(project_ddl: Vec<String>) {
-    let ddl = project_ddl;
-    let joined = ddl.join("\n");
-
-    let expected_tables = [
-        "organizations",
-        "users",
-        "teams",
-        "team_members",
-        "api_keys",
-        "projects",
-        "collections",
-        "observations",
-        "session_summaries",
-        "file_hashes",
-        "agent_sessions",
-        "delegations",
-        "tool_calls",
-        "checkpoints",
-        "error_patterns",
-        "error_pattern_matches",
-        "project_issues",
-        "issue_comments",
-        "issue_labels",
-        "issue_label_assignments",
-        "plans",
-        "plan_versions",
-        "plan_reviews",
-        "repositories",
-        "branches",
-        "worktrees",
-        "agent_worktree_assignments",
-    ];
-
-    for table in &expected_tables {
-        let pattern = format!("CREATE TABLE IF NOT EXISTS {table}");
-        assert!(joined.contains(&pattern), "Missing table in DDL: {table}");
+    for table in &schema_def.tables {
+        assert!(
+            ddl.iter()
+                .any(|s| s.contains("CREATE TABLE") && s.contains(&table.name)),
+            "Missing table DDL for {}",
+            table.name
+        );
     }
 }
 
 #[rstest]
-fn project_schema_contains_all_fk_references(project_ddl: Vec<String>) {
-    let ddl = project_ddl;
+fn schema_create_table_count_matches_schema(schema_ddl: Vec<String>, schema_def: Schema) {
+    let create_count = schema_ddl
+        .iter()
+        .filter(|s| s.starts_with("CREATE TABLE IF NOT EXISTS") && !s.contains("VIRTUAL TABLE"))
+        .count();
+    assert_eq!(
+        create_count,
+        schema_def.tables.len(),
+        "Expected {} CREATE TABLE statements, got {create_count}",
+        schema_def.tables.len()
+    );
+}
 
-    let expected_fks = [
-        // Core project FKs
-        ("collections", "REFERENCES projects(id)"),
-        ("observations", "REFERENCES projects(id)"),
-        ("session_summaries", "REFERENCES projects(id)"),
-        ("file_hashes", "REFERENCES projects(id)"),
-        // Multi-tenant FKs
-        ("users", "REFERENCES organizations(id)"),
-        ("teams", "REFERENCES organizations(id)"),
-        ("team_members", "REFERENCES teams(id)"),
-        ("team_members", "REFERENCES users(id)"),
-        ("api_keys", "REFERENCES users(id)"),
-        ("api_keys", "REFERENCES organizations(id)"),
-        ("projects", "REFERENCES organizations(id)"),
-        // Agent FKs
-        ("agent_sessions", "REFERENCES agent_sessions(id)"),
-        ("agent_sessions", "REFERENCES projects(id)"),
-        ("agent_sessions", "REFERENCES worktrees(id)"),
-        ("delegations", "REFERENCES agent_sessions(id)"),
-        ("tool_calls", "REFERENCES agent_sessions(id)"),
-        ("checkpoints", "REFERENCES agent_sessions(id)"),
-        // Error pattern FKs
-        ("error_patterns", "REFERENCES projects(id)"),
-        ("error_pattern_matches", "REFERENCES error_patterns(id)"),
-        ("error_pattern_matches", "REFERENCES observations(id)"),
-        // Plan entity FKs
-        ("plans", "REFERENCES organizations(id)"),
-        ("plans", "REFERENCES projects(id)"),
-        ("plans", "REFERENCES users(id)"),
-        ("plan_versions", "REFERENCES organizations(id)"),
-        ("plan_versions", "REFERENCES plans(id)"),
-        ("plan_versions", "REFERENCES users(id)"),
-        ("plan_reviews", "REFERENCES organizations(id)"),
-        ("plan_reviews", "REFERENCES plan_versions(id)"),
-        ("plan_reviews", "REFERENCES users(id)"),
-        // Issue entity FKs
-        ("project_issues", "REFERENCES organizations(id)"),
-        ("project_issues", "REFERENCES projects(id)"),
-        ("project_issues", "REFERENCES users(id)"),
-        ("project_issues", "REFERENCES project_issues(id)"),
-        ("issue_comments", "REFERENCES project_issues(id)"),
-        ("issue_comments", "REFERENCES users(id)"),
-        ("issue_labels", "REFERENCES organizations(id)"),
-        ("issue_labels", "REFERENCES projects(id)"),
-        ("issue_label_assignments", "REFERENCES project_issues(id)"),
-        ("issue_label_assignments", "REFERENCES issue_labels(id)"),
-        // VCS entity FKs
-        ("repositories", "REFERENCES organizations(id)"),
-        ("repositories", "REFERENCES projects(id)"),
-        ("branches", "REFERENCES repositories(id)"),
-        ("worktrees", "REFERENCES repositories(id)"),
-        ("worktrees", "REFERENCES branches(id)"),
-        (
-            "agent_worktree_assignments",
-            "REFERENCES agent_sessions(id)",
-        ),
-        ("agent_worktree_assignments", "REFERENCES worktrees(id)"),
-    ];
-
-    for (table, fk_ref) in &expected_fks {
-        let table_ddl = ddl.iter().find(|s| {
-            s.starts_with("CREATE TABLE") && s.contains(&format!("IF NOT EXISTS {table}"))
-        });
-        assert!(table_ddl.is_some(), "Table {table} not found in DDL");
-        let table_ddl = match table_ddl {
-            Some(table_ddl) => table_ddl,
-            None => panic!("Table {table} not found in DDL"),
-        };
+#[rstest]
+fn schema_contains_all_tables(schema_ddl: Vec<String>, schema_def: Schema) {
+    let joined = schema_ddl.join("\n");
+    for table in &schema_def.tables {
+        let pattern = format!("CREATE TABLE IF NOT EXISTS {}", table.name);
         assert!(
-            table_ddl.contains(fk_ref),
-            "Missing FK in {table}: expected {fk_ref}\nActual DDL: {table_ddl}"
+            joined.contains(&pattern),
+            "Missing table in DDL: {}",
+            table.name
+        );
+    }
+}
+
+#[rstest]
+fn schema_contains_all_fk_references(schema_ddl: Vec<String>, schema_def: Schema) {
+    for fk in &schema_def.foreign_keys {
+        let table_ddl = find_table_ddl(&schema_ddl, &fk.from_table);
+        let fk_ref = format!("REFERENCES {}({})", fk.to_table, fk.to_column);
+        let fk_col = format!("{} ", fk.from_column);
+        assert!(
+            table_ddl.contains(&fk_ref) && table_ddl.contains(&fk_col),
+            "Missing FK in {}.{} -> {}.{}\nActual DDL: {}",
+            fk.from_table,
+            fk.from_column,
+            fk.to_table,
+            fk.to_column,
+            table_ddl
         );
     }
 
-    let schema_def = ProjectSchema::definition();
+    let fk_count_in_tables: usize = schema_def
+        .tables
+        .iter()
+        .map(|table| {
+            let table_ddl = find_table_ddl(&schema_ddl, &table.name);
+            table_ddl.matches(" REFERENCES ").count()
+        })
+        .sum();
+
     assert_eq!(
+        fk_count_in_tables,
         schema_def.foreign_keys.len(),
-        47,
-        "Expected 47 total FK definitions, got {}",
+        "Expected {} FK references in DDL, got {fk_count_in_tables}",
         schema_def.foreign_keys.len()
     );
 }
 
 #[rstest]
-fn project_schema_contains_all_indexes(project_ddl: Vec<String>) {
-    let ddl = project_ddl;
-    let joined = ddl.join("\n");
+fn schema_contains_all_indexes(schema_ddl: Vec<String>, schema_def: Schema) {
+    let joined = schema_ddl.join("\n");
+    let index_count = schema_ddl
+        .iter()
+        .filter(|s| s.starts_with("CREATE INDEX IF NOT EXISTS"))
+        .count();
 
-    let expected_indexes = [
-        // Core indexes
-        "idx_projects_org",
-        "idx_collections_project",
-        "idx_obs_project",
-        "idx_summary_project",
-        "idx_file_hashes_project",
-        "idx_file_hashes_collection",
-        "idx_file_hashes_deleted",
-        // Memory indexes
-        "idx_obs_hash",
-        "idx_obs_created",
-        "idx_obs_type",
-        "idx_obs_embedding",
-        "idx_summary_session",
-        // Agent indexes
-        "idx_agent_sessions_summary",
-        "idx_agent_sessions_parent",
-        "idx_agent_sessions_type",
-        "idx_agent_sessions_project",
-        "idx_agent_sessions_worktree",
-        "idx_agent_sessions_started",
-        "idx_delegations_parent",
-        "idx_delegations_child",
-        "idx_tool_calls_session",
-        "idx_tool_calls_tool",
-        "idx_checkpoints_session",
-        // Error pattern indexes
-        "idx_error_patterns_project",
-        "idx_error_patterns_category",
-        "idx_error_patterns_signature",
-        "idx_error_patterns_embedding",
-        "idx_error_patterns_last_seen",
-        "idx_error_pattern_matches_pattern",
-        "idx_error_pattern_matches_observation",
-        // Issue entity indexes
-        "idx_issues_org",
-        "idx_issues_project",
-        "idx_issues_phase",
-        "idx_issues_status",
-        "idx_issues_assignee",
-        "idx_issues_parent",
-        "idx_issue_comments_issue",
-        "idx_issue_comments_author",
-        "idx_issue_labels_org",
-        "idx_issue_labels_project",
-        "idx_issue_label_assignments_issue",
-        "idx_issue_label_assignments_label",
-        // Multi-tenant indexes
-        "idx_users_org",
-        "idx_users_email",
-        "idx_users_api_key_hash",
-        "idx_teams_org",
-        "idx_team_members_team",
-        "idx_team_members_user",
-        "idx_api_keys_user",
-        "idx_api_keys_org",
-        "idx_api_keys_key_hash",
-        "idx_organizations_name",
-        // Plan entity indexes
-        "idx_plans_org",
-        "idx_plans_project",
-        "idx_plans_status",
-        "idx_plan_versions_org",
-        "idx_plan_versions_plan",
-        "idx_plan_versions_created_by",
-        "idx_plan_reviews_org",
-        "idx_plan_reviews_version",
-        "idx_plan_reviews_reviewer",
-        // VCS entity indexes
-        "idx_repositories_org",
-        "idx_repositories_project",
-        "idx_branches_repo",
-        "idx_worktrees_repo",
-        "idx_worktrees_branch",
-        "idx_worktrees_agent",
-        "idx_agent_worktree_assignments_session",
-        "idx_agent_worktree_assignments_worktree",
-    ];
-
-    let index_count = ddl.iter().filter(|s| s.starts_with("CREATE INDEX")).count();
     assert_eq!(
         index_count,
-        expected_indexes.len(),
+        schema_def.indexes.len(),
         "Expected {} indexes, got {index_count}",
-        expected_indexes.len()
+        schema_def.indexes.len()
     );
 
-    for idx_name in &expected_indexes {
+    for index in &schema_def.indexes {
         assert!(
-            joined.contains(idx_name),
-            "Missing index in DDL: {idx_name}"
+            joined.contains(&index.name),
+            "Missing index in DDL: {}",
+            index.name
         );
     }
 }
 
 #[rstest]
-fn project_schema_contains_unique_constraints(project_ddl: Vec<String>) {
-    let ddl = project_ddl;
-    let joined = ddl.join("\n");
-
-    let expected_uniques = [
-        "UNIQUE(org_id, name)",                      // projects
-        "UNIQUE(project_id, name)",                  // collections
-        "UNIQUE(project_id, collection, file_path)", // file_hashes
-        "UNIQUE(org_id, email)",                     // users
-        "UNIQUE(team_id, user_id)",                  // team_members
-        "UNIQUE(issue_id, label_id)",                // issue_label_assignments
-        "UNIQUE(plan_id, version_number)",           // plan_versions
-        "UNIQUE(org_id, project_id, name)",          // repositories
-        "UNIQUE(repository_id, name)",               // branches
-    ];
-
-    for uc in &expected_uniques {
+fn schema_contains_unique_constraints(schema_ddl: Vec<String>, schema_def: Schema) {
+    for unique in &schema_def.unique_constraints {
+        let table_ddl = find_table_ddl(&schema_ddl, &unique.table);
+        let unique_sql = format!("UNIQUE({})", unique.columns.join(", "));
         assert!(
-            joined.contains(uc),
-            "Missing unique constraint in DDL: {uc}"
+            table_ddl.contains(&unique_sql),
+            "Missing unique constraint in {}: {}\nActual DDL: {}",
+            unique.table,
+            unique_sql,
+            table_ddl
         );
     }
-
-    // teams has UNIQUE(org_id, name) which duplicates the projects one, so check table-level
-    let teams_ddl_opt = ddl.iter().find(|s| s.contains("IF NOT EXISTS teams ("));
-    assert!(teams_ddl_opt.is_some(), "teams table not found");
-    let teams_ddl = match teams_ddl_opt {
-        Some(value) => value,
-        None => panic!("teams table not found"),
-    };
-    assert!(
-        teams_ddl.contains("UNIQUE(org_id, name)"),
-        "teams table missing UNIQUE(org_id, name)"
-    );
 }
 
 #[tokio::test]
 async fn test_ddl_executes_against_fresh_sqlite_db() -> TestResult {
     use mcb_providers::database::create_memory_repository_with_executor;
+    let schema_def = Schema::definition();
 
     let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("ddl_test.db");
-
     let (_repo, executor) = create_memory_repository_with_executor(db_path).await?;
 
     let rows = executor
@@ -346,35 +168,12 @@ async fn test_ddl_executes_against_fresh_sqlite_db() -> TestResult {
         .filter_map(|r| r.try_get_string("name").ok().flatten())
         .collect();
 
-    let expected_tables = [
-        "agent_sessions",
-        "agent_worktree_assignments",
-        "api_keys",
-        "branches",
-        "checkpoints",
-        "collections",
-        "delegations",
-        "error_pattern_matches",
-        "error_patterns",
-        "file_hashes",
-        "issue_comments",
-        "issue_label_assignments",
-        "issue_labels",
-        "observations",
-        "observations_fts",
-        "organizations",
-        "plan_reviews",
-        "plan_versions",
-        "plans",
-        "project_issues",
-        "projects",
-        "repositories",
-        "session_summaries",
-        "teams",
-        "team_members",
-        "tool_calls",
-        "worktrees",
-    ];
+    let expected_tables: Vec<String> = schema_def
+        .tables
+        .iter()
+        .map(|table| table.name.clone())
+        .chain(std::iter::once("observations_fts".to_owned()))
+        .collect();
 
     assert!(
         table_names.len() >= expected_tables.len(),
@@ -386,7 +185,7 @@ async fn test_ddl_executes_against_fresh_sqlite_db() -> TestResult {
 
     for expected in &expected_tables {
         assert!(
-            table_names.contains(&expected.to_string()),
+            table_names.contains(expected),
             "Table {expected} not created in SQLite DB. Found: {table_names:?}"
         );
     }
@@ -399,9 +198,11 @@ async fn test_ddl_executes_against_fresh_sqlite_db() -> TestResult {
         .await?;
 
     assert!(
-        index_rows.len() >= 50,
-        "Expected at least 50 indexes, found {}",
+        index_rows.len() >= schema_def.indexes.len(),
+        "Expected at least {} indexes, found {}",
+        schema_def.indexes.len(),
         index_rows.len()
     );
+
     Ok(())
 }

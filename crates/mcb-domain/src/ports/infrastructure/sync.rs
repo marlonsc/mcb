@@ -73,7 +73,7 @@ impl SyncResult {
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::infrastructure::sync::{SyncCoordinator, SyncOptions};
+/// use mcb_domain::ports::{SyncCoordinator, SyncOptions};
 /// use std::path::Path;
 /// use std::sync::Arc;
 ///

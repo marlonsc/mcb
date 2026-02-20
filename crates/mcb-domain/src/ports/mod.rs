@@ -19,43 +19,73 @@
 //! - **services** - Application service ports (validation, etc.)
 
 /// Administrative interfaces for system management and monitoring
-pub mod admin;
-/// Browse and highlight service ports
-pub mod browse;
+mod admin;
 /// Infrastructure service ports
-pub mod infrastructure;
-/// Generic background job management ports
-pub mod jobs;
+mod infrastructure;
 /// External service provider ports
-pub mod providers;
+mod providers;
 /// Repository ports for data persistence
-pub mod repositories;
+mod repositories;
 /// Application service ports
-pub mod services;
+mod services;
 
-// Re-export commonly used port traits for convenience
+// ============================================================================
+// Canonical re-exports — the ONE import surface for all port traits/types.
+// Consumers MUST use `use mcb_domain::ports::{...};` only.
+// ============================================================================
+
+// --- Admin ---
 pub use admin::{
-    DependencyHealthCheck, ExtendedHealthResponse, IndexingOperation, IndexingOperationsInterface,
-    LifecycleManaged, PerformanceMetricsData, PerformanceMetricsInterface, PortServiceState,
-    ShutdownCoordinator, ValidationOperation, ValidationOperationResult,
-    ValidationOperationsInterface,
+    CacheAdminInterface, EmbeddingAdminInterface, IndexingOperation, IndexingOperationStatus,
+    IndexingOperationsInterface, LanguageAdminInterface, PerformanceMetricsData,
+    PerformanceMetricsInterface, ProviderInfo, ValidationOperation, ValidationOperationResult,
+    ValidationOperationsInterface, ValidationStatus, VectorStoreAdminInterface,
 };
-pub use browse::{BrowseError, BrowseServiceInterface, HighlightError, HighlightServiceInterface};
+
+// --- Infrastructure ---
 pub use infrastructure::{
-    AuthServiceInterface, DatabaseExecutor, DomainEventStream, EventBusProvider, ProviderContext,
-    ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator, SnapshotProvider, SqlParam,
-    SqlRow, StateStoreProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult,
-    SystemMetrics, SystemMetricsCollectorInterface,
+    AuthServiceInterface, DatabaseExecutor, DatabaseProvider, DependencyHealth,
+    DependencyHealthCheck, DomainEventStream, EventBusProvider, ExtendedHealthResponse,
+    LifecycleManaged, PortServiceState, ProviderContext, ProviderHealthStatus, ProviderRouter,
+    SharedSyncCoordinator, ShutdownCoordinator, SnapshotProvider, SqlParam, SqlRow,
+    StateStoreProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult, SystemMetrics,
+    SystemMetricsCollectorInterface,
 };
-pub use jobs::{
-    Job, JobCounts, JobId, JobManagerInterface, JobProgressUpdate, JobResult, JobStatus, JobType,
-};
+
+// --- Providers ---
+pub use providers::vector_store::{VectorStoreAdmin, VectorStoreBrowser};
 pub use providers::{
-    CacheEntryConfig, CacheProvider, CacheProviderFactoryInterface, CacheStats, CryptoProvider,
-    EmbeddingProvider, EncryptedData, FileMetrics, FunctionMetrics, HalsteadMetrics,
-    HybridSearchProvider, HybridSearchResult, LanguageChunkingProvider, MetricsAnalysisProvider,
-    ProviderConfigManagerInterface, ValidationOptions, ValidationProvider, ValidatorInfo,
-    VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider,
+    CacheEntryConfig, CacheProvider, CacheStats, ComplexityAnalyzer, ComplexityFinding,
+    CryptoProvider, DEFAULT_CACHE_NAMESPACE, DEFAULT_CACHE_TTL_SECS, DeadCodeDetector,
+    DeadCodeFinding, EmbeddingProvider, EncryptedData, FileMetrics, FunctionMetrics,
+    HalsteadMetrics, HttpClientConfig, HttpClientProvider, HybridSearchProvider,
+    HybridSearchResult, LanguageChunkingProvider, MetricLabels, MetricsAnalysisProvider,
+    MetricsError, MetricsProvider, MetricsResult, ProjectDetector, ProjectDetectorConfig,
+    ProjectDetectorEntry, ProviderConfigManagerInterface, TdgFinding, TdgScorer, ValidationOptions,
+    ValidationProvider, ValidatorInfo, VcsProvider, VectorStoreProvider,
 };
-pub use repositories::{AgentRepository, MemoryRepository};
-pub use services::{ValidationReport, ValidationServiceInterface, ViolationEntry};
+
+// --- Repositories ---
+pub use repositories::{
+    AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
+    AgentSessionRepository, ApiKeyRegistry, AssignmentManager, BranchRegistry, ChunkRepository,
+    FileHashRepository, FtsSearchResult, IssueCommentRegistry, IssueEntityRepository,
+    IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry, MemoryRepository,
+    OrgEntityRepository, OrgRegistry, PlanEntityRepository, PlanRegistry, PlanReviewRegistry,
+    PlanVersionRegistry, ProjectRepository, RepositoryRegistry, RepositoryStats, SearchRepository,
+    SearchStats, TeamMemberManager, TeamRegistry, UserRegistry, VcsEntityRepository,
+    WorktreeManager,
+};
+
+// --- Services ---
+pub use services::{
+    AgentSessionManager, AgentSessionServiceInterface, BatchIndexingServiceInterface, BrowseError,
+    BrowseServiceInterface, CheckpointManager, ChunkingOptions, ChunkingOrchestratorInterface,
+    ChunkingResult, CodeChunker, ComplexityReport, ContextServiceInterface,
+    CreateSessionSummaryInput, DelegationTracker, FileHashService, FunctionComplexity,
+    HighlightError, HighlightServiceInterface, IndexingResult, IndexingServiceInterface,
+    IndexingStats, IndexingStatus, Job, JobCounts, JobId, JobManagerInterface, JobProgressUpdate,
+    JobResult, JobStatus, JobType, MemoryServiceInterface, ProjectDetectorService, RuleInfo,
+    SearchFilters, SearchServiceInterface, ValidationReport, ValidationServiceInterface,
+    ViolationEntry,
+};

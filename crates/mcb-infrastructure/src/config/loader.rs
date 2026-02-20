@@ -180,6 +180,18 @@ impl ConfigLoader {
         validate_app_config(config)
     }
 
+    /// Validate an `AppConfig` that was built or mutated outside the loader.
+    ///
+    /// Used by [`TestConfigBuilder`](super::test_builder::TestConfigBuilder)
+    /// to re-validate after applying test overrides (fail-fast).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any config value is invalid.
+    pub fn validate_for_test(config: &AppConfig) -> Result<()> {
+        validate_app_config(config)
+    }
+
     /// Load project-specific settings from workspace root
     fn load_project_settings() -> Option<ProjectSettings> {
         let current_dir = env::current_dir().ok()?;

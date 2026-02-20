@@ -9,7 +9,8 @@ use crate::constants::architecture::{
     ARCH_PATH_ADAPTERS, ARCH_PATH_DOMAIN, ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES,
 };
 use crate::constants::common::{
-    CFG_TEST_MARKER, COMMENT_PREFIX, HANDLER_FILE_SUFFIX, SHORT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT,
+    CFG_TEST_MARKER, COMMENT_PREFIX, ERROR_FILE_PREFIX, ERROR_MODULE_FILE, HANDLER_FILE_SUFFIX,
+    SHORT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT,
 };
 use crate::filters::LanguageId;
 use std::path::{Path, PathBuf};
@@ -204,7 +205,7 @@ impl ErrorBoundaryValidator {
                     return false;
                 }
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                file_name != "error.rs" && !file_name.starts_with("error")
+                file_name != ERROR_MODULE_FILE && !file_name.starts_with(ERROR_FILE_PREFIX)
             },
             |path, line_num, line, _trimmed| {
                 for (pattern, desc) in &compiled_errors {

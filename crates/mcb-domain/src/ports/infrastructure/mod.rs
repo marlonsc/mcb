@@ -23,6 +23,7 @@ pub mod auth;
 pub mod database;
 /// Event bus provider port
 pub mod events;
+pub mod lifecycle;
 /// System metrics collector port
 pub mod metrics;
 /// Provider routing and selection port
@@ -38,6 +39,10 @@ pub mod sync;
 pub use auth::AuthServiceInterface;
 pub use database::{DatabaseExecutor, DatabaseProvider, SqlParam, SqlRow};
 pub use events::{DomainEventStream, EventBusProvider};
+pub use lifecycle::{
+    DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, LifecycleManaged,
+    PortServiceState, ShutdownCoordinator,
+};
 pub use metrics::{SystemMetrics, SystemMetricsCollectorInterface};
 pub use routing::{ProviderContext, ProviderHealthStatus, ProviderRouter};
 pub use snapshot::{SnapshotProvider, SyncProvider};

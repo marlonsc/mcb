@@ -8,9 +8,9 @@ use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::time::Instant;
 
 use dashmap::DashMap;
-use mcb_domain::ports::admin::{
-    IndexingOperation, IndexingOperationsInterface, PerformanceMetricsData,
-    PerformanceMetricsInterface,
+use mcb_domain::ports::{
+    IndexingOperation, IndexingOperationStatus, IndexingOperationsInterface,
+    PerformanceMetricsData, PerformanceMetricsInterface,
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
 
@@ -177,7 +177,7 @@ impl DefaultIndexingOperations {
             id,
             collection: *collection,
             current_file: None,
-            status: mcb_domain::ports::admin::IndexingOperationStatus::Starting,
+            status: IndexingOperationStatus::Starting,
             total_files,
             processed_files: 0,
             started_at: chrono::Utc::now().timestamp(),

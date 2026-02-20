@@ -3,7 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use mcb_domain::error::Error;
-use mcb_domain::ports::providers::{
+use mcb_domain::ports::{
     ComplexityAnalyzer, ComplexityFinding, DeadCodeDetector, DeadCodeFinding, TdgFinding, TdgScorer,
 };
 use mcb_domain::utils::analysis::{

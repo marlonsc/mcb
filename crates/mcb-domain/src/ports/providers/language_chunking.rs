@@ -29,7 +29,7 @@ use crate::value_objects::Language;
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::providers::LanguageChunkingProvider;
+/// use mcb_domain::ports::LanguageChunkingProvider;
 /// use std::sync::Arc;
 ///
 /// fn chunk_code(provider: Arc<dyn LanguageChunkingProvider>) {

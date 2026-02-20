@@ -223,9 +223,9 @@ pub struct AppContext {
 
 #### Responsibilities
 
-- Implement EmbeddingProvider (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null)
-- Implement VectorStoreProvider (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null)
-- Implement CacheProvider (Moka, Redis, Null)
+- Implement EmbeddingProvider (FastEmbed, OpenAI, VoyageAI, Ollama, Gemini, Anthropic)
+- Implement VectorStoreProvider (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted)
+- Implement CacheProvider (Moka, Redis)
 - Implement LanguageChunkingProvider (Tree-sitter based)
 - Auto-register via linkme distributed slices
 

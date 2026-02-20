@@ -5,10 +5,10 @@
 
 use mcb_validate::SolidValidator;
 
-use crate::test_constants::{
+use crate::utils::test_constants::{
     DOMAIN_CRATE, FIXTURE_DOMAIN_SERVICE_PATH, INFRA_CRATE, SERVER_CRATE, TEST_CRATE,
 };
-use crate::test_utils::*;
+use crate::utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions

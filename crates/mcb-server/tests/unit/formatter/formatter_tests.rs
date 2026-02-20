@@ -3,11 +3,11 @@
 use std::path::Path;
 use std::time::Duration;
 
-use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
+use mcb_domain::ports::{IndexingResult, IndexingStatus};
 use mcb_server::formatter::ResponseFormatter;
 use rstest::rstest;
 
-use crate::search_fixtures::{create_test_search_result, create_test_search_results};
+use crate::utils::search_fixtures::{create_test_search_result, create_test_search_results};
 
 fn build_indexing_result(
     files_processed: usize,

@@ -24,7 +24,7 @@ use crate::error::Result;
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::providers::crypto::{CryptoProvider, EncryptedData};
+/// use mcb_domain::ports::{CryptoProvider, EncryptedData};
 /// use std::sync::Arc;
 ///
 /// fn encrypt_metadata(crypto: Arc<dyn CryptoProvider>, data: &[u8]) -> mcb_domain::Result<EncryptedData> {

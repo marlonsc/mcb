@@ -1,3 +1,4 @@
+use crate::constants::common::MCB_DEPENDENCY_PREFIX;
 use crate::linters::constants::CARGO_TOML_FILENAME;
 use crate::{Result, Severity};
 
@@ -28,7 +29,7 @@ pub fn validate_cargo_dependencies(
         // Check [dependencies] section
         if let Some(deps) = parsed.get("dependencies").and_then(|d| d.as_table()) {
             for dep_name in deps.keys() {
-                if dep_name.starts_with("mcb") && dep_name != crate_name {
+                if dep_name.starts_with(MCB_DEPENDENCY_PREFIX) && dep_name != crate_name {
                     let dep_crate = dep_name.replace('_', "-");
                     if !allowed.contains(&dep_crate) {
                         violations.push(DependencyViolation::ForbiddenCargoDepedency {

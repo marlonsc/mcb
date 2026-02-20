@@ -14,6 +14,24 @@ struct QualityPatterns {
     unimplemented: Regex,
 }
 
+struct QualityScanInput<'a> {
+    test_attr_pattern: &'a Regex,
+    fn_pattern: &'a Regex,
+    real_assert_pattern: &'a Regex,
+    unwrap_pattern: &'a Regex,
+    compiled_trivial: &'a [(Regex, &'a str)],
+}
+
+struct TestBodyInput<'a> {
+    path: &'a std::path::Path,
+    lines: &'a [&'a str],
+    fn_line_idx: usize,
+    fn_name: &'a str,
+    real_assert_pattern: &'a Regex,
+    unwrap_pattern: &'a Regex,
+    compiled_trivial: &'a [(Regex, &'a str)],
+}
+
 /// Validates test quality by checking for trivial assertions, unwrap-only tests, and comment-only tests.
 ///
 /// # Errors
@@ -56,6 +74,13 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
         r"(?:^|\s)(assert!|assert_eq!|assert_ne!|assert_matches!|debug_assert!|debug_assert_eq!|debug_assert_ne!|panic!)",
     )?;
     let unwrap_pattern = compile_regex(r"\.unwrap\(|\.expect\(")?;
+    let scan_input = QualityScanInput {
+        test_attr_pattern: &test_attr_pattern,
+        fn_pattern: &fn_pattern,
+        real_assert_pattern: &real_assert_pattern,
+        unwrap_pattern: &unwrap_pattern,
+        compiled_trivial: &compiled_trivial,
+    };
 
     for crate_dir in config.get_source_dirs()? {
         let tests_dir = crate_dir.join("tests");
@@ -72,108 +97,130 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
 
-            check_forbidden_patterns(path, &lines, &patterns, &mut violations);
-
-            let mut i = 0;
-            while i < lines.len() {
-                let line = lines[i];
-
-                // Skip module documentation comments (//!)
-                if line.trim().starts_with(MODULE_DOC_PREFIX) {
-                    i += 1;
-                    continue;
-                }
-
-                // Check for test attribute
-                let is_test_attr = test_attr_pattern.is_match(line);
-
-                if is_test_attr {
-                    // Find the function definition
-                    let mut fn_line_idx = i + 1;
-                    while fn_line_idx < lines.len() {
-                        let potential_fn = lines[fn_line_idx];
-                        let fn_cap = fn_pattern.captures(potential_fn);
-
-                        if let Some(cap) = fn_cap {
-                            let fn_name = cap.get(1).map_or("", |m| m.as_str());
-
-                            if let Some((body_lines, _end_idx)) =
-                                crate::scan::extract_balanced_block(&lines, fn_line_idx)
-                            {
-                                // Analyze test body
-                                let mut has_assertion = false;
-                                let mut has_unwrap = false;
-                                let mut has_code = false;
-
-                                for (i, body_line) in body_lines.iter().enumerate() {
-                                    let body_line_idx = fn_line_idx + i;
-                                    let trimmed = body_line.trim();
-
-                                    // Ignore comments and empty lines
-                                    if trimmed.is_empty() || trimmed.starts_with(COMMENT_PREFIX) {
-                                        continue;
-                                    }
-
-                                    // Ignore function signature and braces
-                                    if trimmed.starts_with(FN_PREFIX)
-                                        || trimmed == "}"
-                                        || trimmed == "{"
-                                    {
-                                        continue;
-                                    }
-
-                                    has_code = true;
-
-                                    if real_assert_pattern.is_match(trimmed) {
-                                        has_assertion = true;
-                                    }
-
-                                    if unwrap_pattern.is_match(trimmed) {
-                                        has_unwrap = true;
-                                    }
-
-                                    // Check for trivial assertions
-                                    for (regex, desc) in &compiled_trivial {
-                                        if regex.is_match(trimmed) {
-                                            violations.push(HygieneViolation::TrivialAssertion {
-                                                file: path.clone(),
-                                                line: body_line_idx + 1,
-                                                function_name: fn_name.to_owned(),
-                                                assertion: (*desc).to_owned(),
-                                                severity: Severity::Warning,
-                                            });
-                                        }
-                                    }
-                                }
-
-                                if !has_code {
-                                    violations.push(HygieneViolation::CommentOnlyTest {
-                                        file: path.clone(),
-                                        line: fn_line_idx + 1,
-                                        function_name: fn_name.to_owned(),
-                                        severity: Severity::Warning,
-                                    });
-                                } else if !has_assertion && has_unwrap {
-                                    violations.push(HygieneViolation::UnwrapOnlyAssertion {
-                                        file: path.clone(),
-                                        line: fn_line_idx + 1,
-                                        function_name: fn_name.to_owned(),
-                                        severity: Severity::Warning,
-                                    });
-                                }
-                            }
-                            break;
-                        }
-                        fn_line_idx += 1;
-                    }
-                }
-                i += 1;
-            }
+            violations.extend(process_quality_file(path, &lines, &patterns, &scan_input));
             Ok(())
         })?;
     }
 
     Ok(violations)
+}
+
+fn find_next_test_fn(
+    lines: &[&str],
+    start_idx: usize,
+    fn_pattern: &Regex,
+) -> Option<(usize, String)> {
+    lines
+        .iter()
+        .enumerate()
+        .skip(start_idx)
+        .find_map(|(line_idx, candidate)| {
+            let captures = fn_pattern.captures(candidate)?;
+            let fn_name = captures.get(1).map_or("", |m| m.as_str());
+            Some((line_idx, fn_name.to_owned()))
+        })
+}
+
+fn process_quality_file(
+    path: &std::path::Path,
+    lines: &[&str],
+    patterns: &QualityPatterns,
+    scan_input: &QualityScanInput<'_>,
+) -> Vec<HygieneViolation> {
+    let mut violations = Vec::new();
+    check_forbidden_patterns(path, lines, patterns, &mut violations);
+
+    for (line_idx, line) in lines.iter().enumerate() {
+        if line.trim().starts_with(MODULE_DOC_PREFIX)
+            || !scan_input.test_attr_pattern.is_match(line)
+        {
+            continue;
+        }
+
+        let Some((fn_line_idx, fn_name)) =
+            find_next_test_fn(lines, line_idx + 1, scan_input.fn_pattern)
+        else {
+            continue;
+        };
+
+        let input = TestBodyInput {
+            path,
+            lines,
+            fn_line_idx,
+            fn_name: &fn_name,
+            real_assert_pattern: scan_input.real_assert_pattern,
+            unwrap_pattern: scan_input.unwrap_pattern,
+            compiled_trivial: scan_input.compiled_trivial,
+        };
+        violations.extend(analyze_test_function_body(&input));
+    }
+
+    violations
+}
+
+fn analyze_test_function_body(input: &TestBodyInput<'_>) -> Vec<HygieneViolation> {
+    let Some((body_lines, _)) = crate::scan::extract_balanced_block(input.lines, input.fn_line_idx)
+    else {
+        return Vec::new();
+    };
+
+    let mut violations = Vec::new();
+    let mut has_assertion = false;
+    let mut has_unwrap = false;
+    let mut has_code = false;
+
+    for (offset, body_line) in body_lines.iter().enumerate() {
+        let body_line_idx = input.fn_line_idx + offset;
+        let trimmed = body_line.trim();
+        if should_skip_body_line(trimmed) {
+            continue;
+        }
+
+        has_code = true;
+        if input.real_assert_pattern.is_match(trimmed) {
+            has_assertion = true;
+        }
+        if input.unwrap_pattern.is_match(trimmed) {
+            has_unwrap = true;
+        }
+
+        for (regex, desc) in input.compiled_trivial {
+            if regex.is_match(trimmed) {
+                violations.push(HygieneViolation::TrivialAssertion {
+                    file: input.path.to_path_buf(),
+                    line: body_line_idx + 1,
+                    function_name: input.fn_name.to_owned(),
+                    assertion: (*desc).to_owned(),
+                    severity: Severity::Warning,
+                });
+            }
+        }
+    }
+
+    if !has_code {
+        violations.push(HygieneViolation::CommentOnlyTest {
+            file: input.path.to_path_buf(),
+            line: input.fn_line_idx + 1,
+            function_name: input.fn_name.to_owned(),
+            severity: Severity::Warning,
+        });
+    } else if !has_assertion && has_unwrap {
+        violations.push(HygieneViolation::UnwrapOnlyAssertion {
+            file: input.path.to_path_buf(),
+            line: input.fn_line_idx + 1,
+            function_name: input.fn_name.to_owned(),
+            severity: Severity::Warning,
+        });
+    }
+
+    violations
+}
+
+fn should_skip_body_line(trimmed: &str) -> bool {
+    trimmed.is_empty()
+        || trimmed.starts_with(COMMENT_PREFIX)
+        || trimmed.starts_with(FN_PREFIX)
+        || matches!(trimmed, "{" | "}")
 }
 
 /// Checks for forbidden patterns in test files.

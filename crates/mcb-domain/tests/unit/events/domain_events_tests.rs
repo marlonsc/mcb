@@ -28,14 +28,20 @@ impl TestEventPublisher {
     }
 
     fn get_published_events(&self) -> Vec<DomainEvent> {
-        self.published_events.lock().unwrap().clone()
+        match self.published_events.lock() {
+            Ok(guard) => guard.clone(),
+            Err(poisoned) => poisoned.into_inner().clone(),
+        }
     }
 }
 
 #[async_trait]
 impl EventPublisher for TestEventPublisher {
     async fn publish(&self, event: DomainEvent) -> mcb_domain::Result<()> {
-        self.published_events.lock().unwrap().push(event);
+        match self.published_events.lock() {
+            Ok(mut guard) => guard.push(event),
+            Err(mut poisoned) => poisoned.get_mut().push(event),
+        }
         Ok(())
     }
 
@@ -140,7 +146,7 @@ fn test_event_publisher_trait_object() {
 }
 
 #[tokio::test]
-async fn test_event_serialization() {
+async fn test_event_serialization() -> Result<(), Box<dyn std::error::Error>> {
     // Events should be serializable (for transport/logging)
     let event = DomainEvent::FileChangesDetected {
         root_path: "/code".to_owned(),
@@ -149,10 +155,11 @@ async fn test_event_serialization() {
         removed: 3,
     };
 
-    let json = serde_json::to_string(&event).unwrap();
+    let json = serde_json::to_string(&event)?;
     assert!(json.contains("FileChangesDetected"));
     assert!(json.contains("/code"));
 
-    let deserialized: DomainEvent = serde_json::from_str(&json).unwrap();
+    let deserialized: DomainEvent = serde_json::from_str(&json)?;
     assert_eq!(event, deserialized);
+    Ok(())
 }

@@ -6,7 +6,7 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::EventBusProvider;
 
 use super::LogEventReceiver;
 

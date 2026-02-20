@@ -18,4 +18,4 @@ pub mod time;
 /// VCS context data types for memory observations.
 pub mod vcs_context;
 
-pub use id::*;
+pub use id::{compute_content_hash, compute_file_hash, correlate_id, mask_id};

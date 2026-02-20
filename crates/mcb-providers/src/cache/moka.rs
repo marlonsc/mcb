@@ -12,7 +12,7 @@ use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheProvider, CacheStats};
+use mcb_domain::ports::{CacheEntryConfig, CacheProvider, CacheStats};
 use moka::future::Cache;
 
 /// Moka-based in-memory cache provider

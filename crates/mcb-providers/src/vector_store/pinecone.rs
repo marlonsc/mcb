@@ -1,7 +1,6 @@
 //! Pinecone Vector Store Provider
 //!
-//! Implements the `VectorStoreProvider`, `VectorStoreAdmin`, and `VectorStoreBrowser` ports
-//! using Pinecone's cloud vector database REST API.
+//! Implements the `VectorStoreProvider` using Pinecone's cloud vector database REST API.
 //!
 //! Pinecone is a managed vector database optimized for machine learning applications.
 //! This provider communicates via Pinecone's REST API using the reqwest HTTP client.
@@ -14,7 +13,7 @@ use async_trait::async_trait;
 use dashmap::DashMap;
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
@@ -23,7 +22,8 @@ use serde_json::Value;
 use crate::constants::{
     EDGEVEC_DEFAULT_DIMENSIONS, HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER,
     STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS, STATS_FIELD_VECTORS_COUNT,
-    STATUS_ACTIVE, STATUS_UNKNOWN, VECTOR_FIELD_FILE_PATH,
+    STATUS_ACTIVE, STATUS_UNKNOWN, VECTOR_FIELD_FILE_PATH, VECTOR_STORE_RETRY_BACKOFF_SECS,
+    VECTOR_STORE_RETRY_COUNT,
 };
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
 use crate::utils::vector_store::search_result_from_json_metadata;
@@ -32,8 +32,6 @@ use crate::utils::vector_store::search_result_from_json_metadata;
 ///
 /// Implements the vector store domain ports using Pinecone's cloud REST API.
 /// Supports index management, vector upsert, search, and metadata filtering.
-/// }
-/// ```
 pub struct PineconeVectorStoreProvider {
     api_key: String,
     host: String,
@@ -89,7 +87,10 @@ impl PineconeVectorStoreProvider {
             kind: RequestErrorKind::VectorDb,
             headers: &headers,
             body: body.as_ref(),
-            retry: Some(RetryConfig::new(2, std::time::Duration::from_secs(1))),
+            retry: Some(RetryConfig::new(
+                VECTOR_STORE_RETRY_COUNT,
+                std::time::Duration::from_secs(VECTOR_STORE_RETRY_BACKOFF_SECS),
+            )),
         })
         .await
     }
@@ -105,6 +106,8 @@ impl PineconeVectorStoreProvider {
 
 #[async_trait]
 impl VectorStoreAdmin for PineconeVectorStoreProvider {
+    // --- Admin Methods ---
+
     async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
         let name_str = name.to_string();
         Ok(self.collections.contains_key(&name_str))
@@ -170,7 +173,79 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
 }
 
 #[async_trait]
+impl VectorStoreBrowser for PineconeVectorStoreProvider {
+    // --- Browser Methods ---
+
+    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
+        let collections: Vec<CollectionInfo> = self
+            .collections
+            .iter()
+            .map(|entry| CollectionInfo::new(entry.key(), 0, 0, None, self.provider_name()))
+            .collect();
+        Ok(collections)
+    }
+
+    async fn list_file_paths(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<FileInfo>> {
+        let results = self.list_vectors(collection, limit).await?;
+        Ok(crate::utils::vector_store::build_file_info_from_results(
+            results,
+        ))
+    }
+
+    async fn get_chunks_by_file(
+        &self,
+        collection: &CollectionId,
+        file_path: &str,
+    ) -> Result<Vec<SearchResult>> {
+        let filter = serde_json::json!({
+            (VECTOR_FIELD_FILE_PATH): { "$eq": file_path }
+        });
+
+        let collection_str = collection.to_string();
+        let dimensions = self
+            .collections
+            .get(&collection_str)
+            .map_or(EDGEVEC_DEFAULT_DIMENSIONS, |d| *d.value());
+
+        let zero_vector = vec![0.0f32; dimensions];
+
+        let payload = serde_json::json!({
+            "vector": zero_vector,
+            "topK": 100,
+            "namespace": collection_str,
+            "includeMetadata": true,
+            "filter": filter
+        });
+
+        let response = self
+            .request(reqwest::Method::POST, "/query", Some(payload))
+            .await?;
+
+        let mut results: Vec<SearchResult> = response["matches"]
+            .as_array()
+            .map(|arr| {
+                arr.iter()
+                    .map(|m| {
+                        let score = m["score"].as_f64().unwrap_or(0.0);
+                        Self::match_to_search_result(m, score)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        results.sort_by_key(|r| r.start_line);
+        Ok(results)
+    }
+}
+
+#[async_trait]
 impl VectorStoreProvider for PineconeVectorStoreProvider {
+    // --- Provider Methods ---
+
     async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
         let name_str = name.to_string();
         if self.collections.contains_key(&name_str) {
@@ -348,74 +423,6 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
     }
 }
 
-#[async_trait]
-impl VectorStoreBrowser for PineconeVectorStoreProvider {
-    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
-        let collections: Vec<CollectionInfo> = self
-            .collections
-            .iter()
-            .map(|entry| CollectionInfo::new(entry.key(), 0, 0, None, self.provider_name()))
-            .collect();
-        Ok(collections)
-    }
-
-    async fn list_file_paths(
-        &self,
-        collection: &CollectionId,
-        limit: usize,
-    ) -> Result<Vec<FileInfo>> {
-        let results = self.list_vectors(collection, limit).await?;
-        Ok(crate::utils::vector_store::build_file_info_from_results(
-            results,
-        ))
-    }
-
-    async fn get_chunks_by_file(
-        &self,
-        collection: &CollectionId,
-        file_path: &str,
-    ) -> Result<Vec<SearchResult>> {
-        let filter = serde_json::json!({
-            (VECTOR_FIELD_FILE_PATH): { "$eq": file_path }
-        });
-
-        let collection_str = collection.to_string();
-        let dimensions = self
-            .collections
-            .get(&collection_str)
-            .map_or(EDGEVEC_DEFAULT_DIMENSIONS, |d| *d.value());
-
-        let zero_vector = vec![0.0f32; dimensions];
-
-        let payload = serde_json::json!({
-            "vector": zero_vector,
-            "topK": 100,
-            "namespace": collection_str,
-            "includeMetadata": true,
-            "filter": filter
-        });
-
-        let response = self
-            .request(reqwest::Method::POST, "/query", Some(payload))
-            .await?;
-
-        let mut results: Vec<SearchResult> = response["matches"]
-            .as_array()
-            .map(|arr| {
-                arr.iter()
-                    .map(|m| {
-                        let score = m["score"].as_f64().unwrap_or(0.0);
-                        Self::match_to_search_result(m, score)
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
-
-        results.sort_by_key(|r| r.start_line);
-        Ok(results)
-    }
-}
-
 // ============================================================================
 // Auto-registration via linkme distributed slice
 // ============================================================================
@@ -452,5 +459,5 @@ fn pinecone_factory(
 static PINECONE_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {
     name: "pinecone",
     description: "Pinecone cloud vector database (managed, serverless)",
-    factory: pinecone_factory,
+    build: pinecone_factory,
 };

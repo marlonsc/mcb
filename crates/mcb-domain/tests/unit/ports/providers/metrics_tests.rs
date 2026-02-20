@@ -3,7 +3,7 @@
 //! Tests for `labels!` macro.
 
 use mcb_domain::labels;
-use mcb_domain::ports::providers::metrics::MetricLabels;
+use mcb_domain::ports::MetricLabels;
 
 #[test]
 fn test_labels_macro() {

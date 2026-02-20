@@ -22,6 +22,6 @@ pub mod redis;
 
 // Re-export for convenience
 // Re-export domain types used by cache providers
-pub use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheStats};
+pub use mcb_domain::ports::{CacheEntryConfig, CacheStats};
 pub use moka::MokaCacheProvider;
 pub use redis::RedisCacheProvider;

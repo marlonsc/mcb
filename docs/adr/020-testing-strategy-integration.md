@@ -105,7 +105,7 @@ crates/
 ├── mcb-server/tests/           # Server and integration tests
 │   ├── admin/                  # Admin API tests
 │   ├── handlers/               # MCP handler tests
-│   └── test_utils/             # Test fixtures
+│   └── utils/             # Test fixtures
 └── mcb-validate/tests/         # Validator tests
 ```
 

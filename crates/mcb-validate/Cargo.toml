@@ -85,11 +85,12 @@ tree-sitter-cpp.workspace = true
 # Async traits
 async-trait.workspace = true
 tokio.workspace = true
+linkme.workspace = true
 
 # Logging
 tracing.workspace = true
 
-# Explicit test targets — prevents test_utils.rs and test_constants.rs
+# Explicit test targets — prevents utils.rs and test_constants.rs
 # from being auto-discovered as standalone test binaries.
 [[test]]
 name = "unit"

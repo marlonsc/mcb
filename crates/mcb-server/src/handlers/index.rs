@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 
-use mcb_domain::ports::services::IndexingServiceInterface;
+use mcb_domain::ports::IndexingServiceInterface;
 use mcb_domain::value_objects::CollectionId;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;

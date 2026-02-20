@@ -2,7 +2,7 @@ use mcb_domain::constants::keys as schema;
 use std::sync::Arc;
 
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
-use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::AgentSessionServiceInterface;
 use mcb_domain::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;

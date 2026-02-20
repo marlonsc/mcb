@@ -1,4 +1,5 @@
 //! Prints the generated JSON schema for `OrgStatus`.
+#![allow(clippy::print_stdout, clippy::print_stderr)]
 
 use mcb_domain::entities::OrgStatus;
 use schemars::schema_for;

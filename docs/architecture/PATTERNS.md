@@ -124,9 +124,9 @@ MCP__INFRASTRUCTURE__CACHE__PROVIDER=moka
 
 MCB uses a layered testing approach:
 
-- **Mocks**: `Arc<Mutex<Vec<T>>>` state tracking in `test_utils/mock_services/`. Mocks record all calls for assertion. Used when you need to verify interaction patterns.
+- **Mocks**: `Arc<Mutex<Vec<T>>>` state tracking in `utils/mock_services/`. Mocks record all calls for assertion. Used when you need to verify interaction patterns.
 - **Real providers**: `extern crate mcb_providers` forces linkme registration in integration tests. This ensures the full provider discovery chain works end-to-end.
-- **Fixtures**: Shared data in `test_utils` modules per crate. Fixtures provide consistent test data across unit and integration tests.
+- **Fixtures**: Shared data in `utils` modules per crate. Fixtures provide consistent test data across unit and integration tests.
 - **Test layout**: Integration tests in `tests/` directory (not inline `#[cfg(test)]`). Test files follow `tests/unit/*_tests.rs`, `tests/integration/*_tests.rs` pattern.
 - **Tools**: `rstest` (parameterized), `mockall` (auto-mocks), `insta` (snapshots), `tempfile` (temp dirs)
 

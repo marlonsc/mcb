@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use mcb_domain::entities::repository::{Branch, Repository};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
-use mcb_domain::ports::repositories::VcsEntityRepository;
+use mcb_domain::ports::VcsEntityRepository;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 

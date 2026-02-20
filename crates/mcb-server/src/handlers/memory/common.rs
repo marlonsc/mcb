@@ -4,7 +4,7 @@ use std::sync::Arc;
 use mcb_domain::utils::id as domain_id;
 use mcb_domain::{
     entities::memory::{MemoryFilter, MemorySearchResult, ObservationType},
-    ports::services::MemoryServiceInterface,
+    ports::MemoryServiceInterface,
 };
 use mcb_infrastructure::project::context_resolver::capture_vcs_context;
 use rmcp::ErrorData as McpError;

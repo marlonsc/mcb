@@ -16,8 +16,8 @@ use std::net::IpAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use mcb_domain::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
-use mcb_domain::ports::infrastructure::EventBusProvider;
+use mcb_domain::ports::EventBusProvider;
+use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_infrastructure::config::watcher::ConfigWatcher;
 use rocket::config::{Config as RocketConfig, LogLevel};
 

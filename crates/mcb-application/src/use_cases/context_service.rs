@@ -26,8 +26,10 @@ use mcb_domain::constants::keys::{
 };
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::{CacheEntryConfig, EmbeddingProvider, VectorStoreProvider};
-use mcb_domain::ports::services::ContextServiceInterface;
+use mcb_domain::ports::{
+    CacheEntryConfig, CacheProvider, ContextServiceInterface, EmbeddingProvider,
+    VectorStoreProvider,
+};
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
 use serde_json::json;
 
@@ -111,7 +113,7 @@ fn normalize_relative_file_path(raw: &str) -> Result<String> {
 /// Orchestrates `EmbeddingProvider`, `VectorStoreProvider`, and `CacheProvider` to deliver
 /// low-latency semantic search capabilities.
 pub struct ContextServiceImpl {
-    cache: Arc<dyn mcb_domain::ports::providers::cache::CacheProvider>,
+    cache: Arc<dyn CacheProvider>,
     embedding_provider: Arc<dyn EmbeddingProvider>,
     vector_store_provider: Arc<dyn VectorStoreProvider>,
 }
@@ -119,7 +121,7 @@ pub struct ContextServiceImpl {
 impl ContextServiceImpl {
     /// Create new context service with injected dependencies
     pub fn new(
-        cache: Arc<dyn mcb_domain::ports::providers::cache::CacheProvider>,
+        cache: Arc<dyn CacheProvider>,
         embedding_provider: Arc<dyn EmbeddingProvider>,
         vector_store_provider: Arc<dyn VectorStoreProvider>,
     ) -> Self {

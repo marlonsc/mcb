@@ -11,12 +11,12 @@
 
 use std::sync::Arc;
 
-pub use mcb_domain::ports::admin::{
+pub use mcb_domain::ports::{
     CacheAdminInterface, DependencyHealth, DependencyHealthCheck, EmbeddingAdminInterface,
     LanguageAdminInterface, LifecycleManaged, PortServiceState, ProviderInfo,
     VectorStoreAdminInterface,
 };
-use mcb_domain::ports::providers::{
+use mcb_domain::ports::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
 use mcb_domain::registry::cache::CacheProviderConfig;

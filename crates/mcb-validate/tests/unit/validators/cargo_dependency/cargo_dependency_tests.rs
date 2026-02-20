@@ -9,8 +9,8 @@ use mcb_validate::engines::hybrid_engine::RuleEngine;
 use mcb_validate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
 use serde_json::json;
 
-use crate::test_constants::*;
-use crate::test_utils::*;
+use crate::utils::test_constants::*;
+use crate::utils::*;
 
 #[test]
 fn test_cargo_dependency_detection() {

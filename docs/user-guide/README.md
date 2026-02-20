@@ -14,8 +14,8 @@ analysis capabilities to AI assistants through a standardized MCP interface.
 ### Core Features
 
 - **🔍 Vector-Based Search**: Semantic similarity search using embeddings
-- **💾 In-Memory Storage**: Fast vector storage for development and testing
-- **🎭 Mock Embeddings**: Fixed-dimension embedding generation for testing
+- **💾 EdgeVec Storage**: In-process HNSW vector storage (default, zero-config)
+- **🧠 FastEmbed**: Local ONNX embedding generation (default, no API key needed)
 - **🔧 MCP Protocol**: Basic MCP server implementation with stdio transport
 - **📁 File Processing**: Simple text-based code file reading and chunking
 

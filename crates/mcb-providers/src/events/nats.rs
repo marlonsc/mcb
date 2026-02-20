@@ -33,7 +33,7 @@ use async_trait::async_trait;
 use futures::{StreamExt, stream};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::events::DomainEvent;
-use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
+use mcb_domain::ports::{DomainEventStream, EventBusProvider};
 use mcb_domain::utils::id;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};

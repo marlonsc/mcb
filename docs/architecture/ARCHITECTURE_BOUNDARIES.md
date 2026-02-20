@@ -170,13 +170,18 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 ```text
 mcb-providers/src/
 ├── embedding/          # Embedding provider implementations
+│   ├── fastembed.rs    # Local ONNX (default)
 │   ├── ollama.rs
 │   ├── openai.rs
-│   └── voyageai.rs
+│   ├── voyageai.rs
+│   ├── gemini.rs
+│   └── anthropic.rs
 ├── vector_store/       # Vector store implementations
+│   ├── edgevec.rs      # In-process HNSW (default)
 │   ├── milvus.rs
-│   ├── in_memory.rs
-│   └── encrypted.rs
+│   ├── qdrant.rs
+│   ├── pinecone.rs
+│   └── encrypted.rs    # AES-GCM decorator
 ├── cache/              # Cache implementations
 └── language/           # Language-specific chunkers
 ```
@@ -246,10 +251,10 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
         .build()
 }
 
-// Retrieve service
-pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>> {
-    catalog.get_one::<T>()
-}
+// Service retrieval via AppContext (bootstrap.rs)
+// AppContext holds all resolved providers as typed fields:
+//   app_context.embedding_handle()    → Arc<EmbeddingProviderHandle>
+//   app_context.vector_store_handle() → Arc<VectorStoreProviderHandle>
 ```
 
 ---

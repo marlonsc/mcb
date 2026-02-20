@@ -5,7 +5,7 @@ use aes_gcm::{
     aead::{Aead, AeadCore, KeyInit, OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore},
 };
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
+use mcb_domain::ports::{CryptoProvider, EncryptedData};
 
 use crate::constants::crypto::{AES_GCM_KEY_SIZE, AES_GCM_NONCE_SIZE};
 

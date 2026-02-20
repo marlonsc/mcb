@@ -2,12 +2,12 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use mcb_application::use_cases::memory_service::MemoryServiceImpl;
 use mcb_domain::entities::memory::{MemoryFilter, ObservationMetadata, ObservationType};
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::MemoryServiceInterface;
 use rstest::*;
 use serial_test::serial;
 
-use crate::shared_context::try_shared_app_context;
-use crate::test_utils::TEST_PROJECT_ID;
+use crate::utils::TEST_PROJECT_ID;
+use crate::utils::shared_context::try_shared_app_context;
 
 static TEST_COUNTER: AtomicU64 = AtomicU64::new(0);
 

@@ -16,9 +16,9 @@ use std::path::Path;
 use std::sync::Arc;
 
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::DatabaseExecutor;
-use mcb_domain::ports::infrastructure::database::SqlParam;
-use mcb_domain::ports::repositories::FileHashRepository;
+use mcb_domain::ports::DatabaseExecutor;
+use mcb_domain::ports::FileHashRepository;
+use mcb_domain::ports::SqlParam;
 use serde_json::json;
 
 /// Configuration for `SqliteFileHashRepository`

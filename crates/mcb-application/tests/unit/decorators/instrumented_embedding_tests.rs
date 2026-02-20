@@ -4,11 +4,10 @@ use rstest::*;
 use std::sync::Arc;
 
 use mcb_application::decorators::InstrumentedEmbeddingProvider;
-use mcb_domain::ports::admin::PerformanceMetricsInterface;
-use mcb_domain::ports::providers::EmbeddingProvider;
+use mcb_domain::ports::{EmbeddingProvider, PerformanceMetricsInterface};
 use mcb_infrastructure::infrastructure::admin::AtomicPerformanceMetrics;
 
-use crate::shared_context::try_shared_app_context;
+use crate::utils::shared_context::try_shared_app_context;
 
 #[fixture]
 async fn provider_context() -> Option<Arc<dyn EmbeddingProvider>> {
@@ -41,7 +40,7 @@ async fn test_instrumented_records_metrics(
     #[future] instrumented: Option<(InstrumentedEmbeddingProvider, Arc<AtomicPerformanceMetrics>)>,
 ) {
     let Some((provider, metrics)) = instrumented.await else {
-        eprintln!("skipping: shared AppContext unavailable (FastEmbed model missing)");
+        tracing::warn!("skipping: shared AppContext unavailable (FastEmbed model missing)");
         return;
     };
 
@@ -64,7 +63,7 @@ async fn test_instrumented_delegates_to_inner(
     #[future] instrumented: Option<(InstrumentedEmbeddingProvider, Arc<AtomicPerformanceMetrics>)>,
 ) {
     let Some((provider, _metrics)) = instrumented.await else {
-        eprintln!("skipping: shared AppContext unavailable (FastEmbed model missing)");
+        tracing::warn!("skipping: shared AppContext unavailable (FastEmbed model missing)");
         return;
     };
 

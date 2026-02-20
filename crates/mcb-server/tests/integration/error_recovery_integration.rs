@@ -13,6 +13,8 @@
 // Force linkme registration of all providers
 extern crate mcb_providers;
 
+use std::sync::Arc;
+
 use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
@@ -22,29 +24,30 @@ use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 use mcb_infrastructure::di::bootstrap::init_app;
 use rstest::rstest;
 
-use crate::test_utils::collection::unique_collection;
-use crate::test_utils::test_fixtures::TEST_EMBEDDING_DIMENSIONS;
+use crate::utils::collection::unique_collection;
+use crate::utils::test_fixtures::TEST_EMBEDDING_DIMENSIONS;
 use mcb_infrastructure::di::bootstrap::AppContext;
 
-async fn try_init_app_or_skip(config: AppConfig) -> Option<AppContext> {
+async fn try_init_app_or_skip(
+    config: AppConfig,
+) -> Result<Option<AppContext>, Box<dyn std::error::Error>> {
     match init_app(config).await {
-        Ok(ctx) => Some(ctx),
+        Ok(ctx) => Ok(Some(ctx)),
         Err(e)
             if e.to_string().contains("model.onnx")
                 || e.to_string().contains("Failed to initialize") =>
         {
-            eprintln!("Skipping: embedding model unavailable in offline env: {e}");
-            None
+            tracing::warn!("Skipping: embedding model unavailable in offline env: {e}");
+            Ok(None)
         }
-        Err(e) => panic!("init_app failed unexpectedly: {e}"),
+        Err(e) => Err(format!("init_app failed unexpectedly: {e}").into()),
     }
 }
 
-fn unique_test_config() -> AppConfig {
-    let mut config = ConfigLoader::new().load().expect("load config");
+fn unique_test_config() -> Result<AppConfig, Box<dyn std::error::Error>> {
+    let mut config = ConfigLoader::new().load()?;
     let stamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("system time")
+        .duration_since(std::time::UNIX_EPOCH)?
         .as_nanos();
     let thread_id = std::thread::current().id();
     let db_path =
@@ -57,10 +60,10 @@ fn unique_test_config() -> AppConfig {
         },
     );
     config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-    config
+    Ok(config)
 }
 
-use crate::test_utils::test_fixtures::shared_fastembed_test_cache_dir;
+use crate::utils::test_fixtures::shared_fastembed_test_cache_dir;
 
 // ============================================================================
 // Provider Resolution Error Handling
@@ -71,7 +74,9 @@ use crate::test_utils::test_fixtures::shared_fastembed_test_cache_dir;
 #[case("vector_store")]
 #[case("cache")]
 #[case("language")]
-fn test_unknown_provider_error_message(#[case] provider_kind: &str) {
+fn test_unknown_provider_error_message(
+    #[case] provider_kind: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
     let result_text = match provider_kind {
         "embedding" => {
             resolve_embedding_provider(&EmbeddingProviderConfig::new("nonexistent_xyz_provider"))
@@ -94,13 +99,14 @@ fn test_unknown_provider_error_message(#[case] provider_kind: &str) {
         _ => None,
     };
 
-    let err_text = result_text.expect("Should fail for unknown provider");
+    let err_text = result_text.ok_or("Should fail for unknown provider")?;
     assert!(
         err_text.contains("Unknown")
             || err_text.contains("not found")
             || err_text.contains("nonexistent"),
         "Error should mention the issue. Got: {err_text}"
     );
+    Ok(())
 }
 
 // ============================================================================
@@ -108,10 +114,11 @@ fn test_unknown_provider_error_message(#[case] provider_kind: &str) {
 // ============================================================================
 
 #[tokio::test]
-async fn test_search_empty_collection_returns_empty_not_error() {
-    let config = unique_test_config();
-    let Some(ctx) = try_init_app_or_skip(config).await else {
-        return;
+async fn test_search_empty_collection_returns_empty_not_error()
+-> Result<(), Box<dyn std::error::Error>> {
+    let config = unique_test_config()?;
+    let Some(ctx) = try_init_app_or_skip(config).await? else {
+        return Ok(());
     };
 
     let embedding = ctx.embedding_handle().get();
@@ -125,14 +132,10 @@ async fn test_search_empty_collection_returns_empty_not_error() {
             &CollectionId::from_name(&collection),
             TEST_EMBEDDING_DIMENSIONS,
         )
-        .await
-        .expect("Create collection");
+        .await?;
 
     // Search in empty collection
-    let query_embedding = embedding
-        .embed_batch(&["test query".to_owned()])
-        .await
-        .expect("Embed");
+    let query_embedding = embedding.embed_batch(&["test query".to_owned()]).await?;
 
     let results = vector_store
         .search_similar(
@@ -141,13 +144,13 @@ async fn test_search_empty_collection_returns_empty_not_error() {
             10,
             None,
         )
-        .await
-        .expect("Search should not error on empty collection");
+        .await?;
 
     assert!(
         results.is_empty(),
         "Empty collection should return empty results"
     );
+    Ok(())
 }
 
 // ============================================================================
@@ -155,22 +158,17 @@ async fn test_search_empty_collection_returns_empty_not_error() {
 // ============================================================================
 
 #[tokio::test]
-async fn test_init_app_with_default_config_succeeds() {
-    let config = unique_test_config();
-    let result = init_app(config).await;
-
-    assert!(
-        result.is_ok(),
-        "init_app with default config should succeed: {}",
-        result.err().map(|e| e.to_string()).unwrap_or_default()
-    );
+async fn test_init_app_with_default_config_succeeds() -> Result<(), Box<dyn std::error::Error>> {
+    let config = unique_test_config()?;
+    init_app(config).await?;
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_provider_handles_return_valid_instances() {
-    let config = unique_test_config();
-    let Some(ctx) = try_init_app_or_skip(config).await else {
-        return;
+async fn test_provider_handles_return_valid_instances() -> Result<(), Box<dyn std::error::Error>> {
+    let config = unique_test_config()?;
+    let Some(ctx) = try_init_app_or_skip(config).await? else {
+        return Ok(());
     };
 
     // All handles should return valid providers
@@ -191,6 +189,7 @@ async fn test_provider_handles_return_valid_instances() {
         !cache.provider_name().is_empty(),
         "Cache should have a name"
     );
+    Ok(())
 }
 
 // ============================================================================
@@ -198,10 +197,10 @@ async fn test_provider_handles_return_valid_instances() {
 // ============================================================================
 
 #[tokio::test]
-async fn test_failed_search_doesnt_corrupt_state() {
-    let config = unique_test_config();
-    let Some(ctx) = try_init_app_or_skip(config).await else {
-        return;
+async fn test_failed_search_doesnt_corrupt_state() -> Result<(), Box<dyn std::error::Error>> {
+    let config = unique_test_config()?;
+    let Some(ctx) = try_init_app_or_skip(config).await? else {
+        return Ok(());
     };
 
     let embedding = ctx.embedding_handle().get();
@@ -215,13 +214,9 @@ async fn test_failed_search_doesnt_corrupt_state() {
             &CollectionId::from_name(&collection),
             TEST_EMBEDDING_DIMENSIONS,
         )
-        .await
-        .expect("Create collection");
+        .await?;
 
-    let embeddings = embedding
-        .embed_batch(&["test data".to_owned()])
-        .await
-        .expect("Embed");
+    let embeddings = embedding.embed_batch(&["test data".to_owned()]).await?;
 
     let metadata = vec![{
         let mut m = std::collections::HashMap::new();
@@ -231,8 +226,7 @@ async fn test_failed_search_doesnt_corrupt_state() {
 
     vector_store
         .insert_vectors(&CollectionId::from_name(&collection), &embeddings, metadata)
-        .await
-        .expect("Insert");
+        .await?;
 
     // Try search with wrong dimensions (should fail or handle gracefully)
     let wrong_dim_vector = vec![0.1f32; 100]; // Wrong dimensions
@@ -248,10 +242,7 @@ async fn test_failed_search_doesnt_corrupt_state() {
         .await;
 
     // Original search should still work
-    let correct_query = embedding
-        .embed_batch(&["test".to_owned()])
-        .await
-        .expect("Embed");
+    let correct_query = embedding.embed_batch(&["test".to_owned()]).await?;
 
     let results = vector_store
         .search_similar(
@@ -260,10 +251,10 @@ async fn test_failed_search_doesnt_corrupt_state() {
             10,
             None,
         )
-        .await
-        .expect("Search should still work after failed attempt");
+        .await?;
 
     assert!(!results.is_empty(), "Collection should not be corrupted");
+    Ok(())
 }
 
 // ============================================================================
@@ -308,17 +299,17 @@ fn test_resolve_with_empty_config_values() {
 // ============================================================================
 
 #[tokio::test]
-async fn test_concurrent_handle_access() {
-    let config = unique_test_config();
-    let Some(ctx) = try_init_app_or_skip(config).await else {
-        return;
+async fn test_concurrent_handle_access() -> Result<(), Box<dyn std::error::Error>> {
+    let config = unique_test_config()?;
+    let Some(ctx) = try_init_app_or_skip(config).await? else {
+        return Ok(());
     };
 
     let handle = ctx.embedding_handle();
 
     let mut tasks = Vec::new();
     for _ in 0..10 {
-        let h = handle.clone();
+        let h = Arc::clone(&handle);
         tasks.push(tokio::spawn(async move {
             let provider = h.get();
             provider.dimensions()
@@ -326,10 +317,11 @@ async fn test_concurrent_handle_access() {
     }
 
     for task in tasks {
-        let dims = task.await.expect("Task should not panic");
+        let dims = task.await?;
         assert_eq!(
             dims, TEST_EMBEDDING_DIMENSIONS,
             "All accesses should return same dimensions"
         );
     }
+    Ok(())
 }

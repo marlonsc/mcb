@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mcb_domain::ports::services::{CreateSessionSummaryInput, MemoryServiceInterface};
+use mcb_domain::ports::{CreateSessionSummaryInput, MemoryServiceInterface};
 use mcb_domain::value_objects::SessionId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
@@ -82,6 +82,10 @@ pub async fn store_session(
     match memory_service
         .create_session_summary(CreateSessionSummaryInput {
             project_id,
+            org_id: args
+                .org_id
+                .clone()
+                .unwrap_or(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_owned()),
             session_id,
             topics: payload.topics,
             decisions: payload.decisions,

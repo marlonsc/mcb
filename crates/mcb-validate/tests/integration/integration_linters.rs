@@ -14,11 +14,12 @@ use mcb_validate::{ValidatedRule, YamlRuleLoader};
 
 fn get_workspace_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .to_path_buf()
+        .ancestors()
+        .nth(2)
+        .map_or_else(
+            || PathBuf::from(env!("CARGO_MANIFEST_DIR")),
+            std::path::Path::to_path_buf,
+        )
 }
 
 /// Check if an external tool is available on the system
@@ -58,7 +59,10 @@ fn get_default_substitution_variables() -> serde_yaml::Value {
         "validate_crate": "mcb-validate",
         "validate_module": "mcb_validate"
     });
-    serde_yaml::to_value(json).unwrap()
+    match serde_yaml::to_value(json) {
+        Ok(value) => value,
+        Err(_) => serde_yaml::Value::Mapping(serde_yaml::Mapping::new()),
+    }
 }
 
 // ==================== Unit Tests for Linter Types ====================

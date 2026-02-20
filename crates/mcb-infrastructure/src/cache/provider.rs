@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use delegate::delegate;
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::{CacheEntryConfig, CacheProvider, CacheStats};
+use mcb_domain::ports::{CacheEntryConfig, CacheProvider, CacheStats};
 
 /// Shared cache provider wrapper
 ///

@@ -19,8 +19,8 @@ macro_rules! impl_registry {
             pub name: &'static str,
             /// Human-readable description
             pub description: &'static str,
-            /// Factory function to create provider instance
-            pub factory: fn(&$config) -> std::result::Result<std::sync::Arc<dyn $trait>, String>,
+            /// Constructor function to create provider instance
+            pub build: fn(&$config) -> std::result::Result<std::sync::Arc<dyn $trait>, String>,
         }
 
         #[linkme::distributed_slice]
@@ -32,13 +32,13 @@ macro_rules! impl_registry {
         /// # Errors
         ///
         /// Returns an error if the requested provider name is not found in the
-        /// registry or if the provider factory fails to construct an instance.
+        /// registry or if the provider constructor fails to construct an instance.
         pub fn $resolve(config: &$config) -> $crate::error::Result<std::sync::Arc<dyn $trait>> {
             let provider_name = &config.provider;
 
             for entry in $slice {
                 if entry.name == provider_name {
-                    return (entry.factory)(config).map_err(|e| {
+                    return (entry.build)(config).map_err(|e| {
                         $crate::error::Error::Configuration {
                             message: e.to_string(),
                             source: None,

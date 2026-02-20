@@ -9,11 +9,11 @@
 use std::path::Path;
 use std::time::Duration;
 
-use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
+use mcb_domain::ports::{IndexingResult, IndexingStatus};
 use mcb_server::formatter::ResponseFormatter;
 use rstest::rstest;
 
-use crate::search_fixtures::{create_test_search_result, create_test_search_results};
+use crate::utils::search_fixtures::{create_test_search_result, create_test_search_results};
 
 // =============================================================================
 // ERROR RESPONSE TESTS
@@ -259,7 +259,7 @@ fn test_format_clear_index(
 // HELPER FUNCTIONS
 // =============================================================================
 
-use crate::test_utils::text::extract_text;
+use crate::utils::text::extract_text;
 
 mod handler_error_tests {
     use mcb_server::args::{IndexAction, IndexArgs};
@@ -267,11 +267,13 @@ mod handler_error_tests {
     use rmcp::handler::server::wrapper::Parameters;
 
     async fn create_handler() -> IndexHandler {
-        let ctx = crate::shared_context::shared_app_context();
-        let services = ctx
-            .build_domain_services()
-            .await
-            .expect("build domain services");
+        let ctx = crate::utils::shared_context::shared_app_context();
+        let services_res = ctx.build_domain_services().await;
+        assert!(services_res.is_ok(), "build domain services");
+        let services = match services_res {
+            Ok(services) => services,
+            Err(_) => unreachable!(),
+        };
         IndexHandler::new(services.indexing_service)
     }
 

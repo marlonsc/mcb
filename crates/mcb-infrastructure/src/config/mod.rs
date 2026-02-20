@@ -7,6 +7,7 @@
 pub mod loader;
 mod mcp_context_config;
 pub mod paths;
+pub mod test_builder;
 pub mod types;
 pub mod watcher;
 
@@ -23,4 +24,5 @@ pub use paths::{
     COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, VCS_LOCK_FILENAME,
     VCS_REGISTRY_FILENAME, config_dir,
 };
+pub use test_builder::TestConfigBuilder;
 pub use watcher::{ConfigWatcher, ConfigWatcherBuilder, ConfigWatcherUtils};

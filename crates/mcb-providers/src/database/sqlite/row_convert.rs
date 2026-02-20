@@ -9,7 +9,7 @@ use mcb_domain::entities::memory::{
 use mcb_domain::entities::project::Project;
 use mcb_domain::entities::project::{IssueStatus, IssueType, ProjectIssue};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::SqlRow;
+use mcb_domain::ports::SqlRow;
 use mcb_domain::schema::COL_OBSERVATION_TYPE;
 use std::str::FromStr;
 
@@ -74,6 +74,7 @@ pub fn row_to_session_summary(row: &dyn SqlRow) -> Result<SessionSummary> {
     Ok(SessionSummary {
         id: required_string(row, "id")?,
         project_id: required_string(row, "project_id")?,
+        org_id: required_string(row, "org_id")?,
         session_id: required_string(row, "session_id")?,
         topics: match topics_json {
             Some(json) => serde_json::from_str(&json)

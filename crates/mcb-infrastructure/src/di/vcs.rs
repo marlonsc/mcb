@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::VcsProvider;
 use mcb_providers::vcs;
 
 /// Returns the default VCS provider for standalone and server modes.

@@ -5,12 +5,12 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use mcb_domain::ports::admin::{
+use mcb_domain::ports::CacheProvider;
+use mcb_domain::ports::EventBusProvider;
+use mcb_domain::ports::{
     IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
 };
-use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_domain::ports::providers::CacheProvider;
-use mcb_domain::ports::repositories::{
+use mcb_domain::ports::{
     IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
     VcsEntityRepository,
 };

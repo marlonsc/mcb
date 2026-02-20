@@ -68,10 +68,8 @@ macro_rules! register_vector_store_provider {
         /// Factory function for creating provider instances.
         fn $factory_fn(
             $config_var: &mcb_domain::registry::vector_store::VectorStoreProviderConfig,
-        ) -> std::result::Result<
-            std::sync::Arc<dyn mcb_domain::ports::providers::VectorStoreProvider>,
-            String,
-        > {
+        ) -> std::result::Result<std::sync::Arc<dyn mcb_domain::ports::VectorStoreProvider>, String>
+        {
             $body
         }
 
@@ -80,7 +78,7 @@ macro_rules! register_vector_store_provider {
             mcb_domain::registry::vector_store::VectorStoreProviderEntry {
                 name: $provider_slug,
                 description: $description,
-                factory: $factory_fn,
+                build: $factory_fn,
             };
     };
 }

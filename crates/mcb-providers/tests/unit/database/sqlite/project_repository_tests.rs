@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::project::Project;
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::ProjectRepository;
+use mcb_domain::ports::ProjectRepository;
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 use mcb_providers::database::{
     create_memory_repository_with_executor, create_project_repository_from_executor,
 };

@@ -510,7 +510,7 @@ pub trait VectorStoreProvider: Send + Sync {
 | **Milvus** | C++ + Go | IVF_FLAT, HNSW | 100M+ vectors | ✅ Production |
 | **Pinecone** | Cloud-native | HNSW | 1B+ vectors | 🚧 Planned |
 | **Qdrant** | Rust | HNSW | 10M+ vectors | 🚧 Planned |
-| **In-Memory** | Rust + DashMap | Brute force | <1M vectors | ✅ Development |
+| **EdgeVec** | Rust + HNSW | HNSW (M=16, EF=100) | <1M vectors | ✅ Development |
 
 ##### Additional Domain Ports
 
@@ -730,15 +730,16 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
         .add_value(embedding_provider)    // From linkme registry
         .add_value(embedding_handle)      // RwLock wrapper
         .add_value(embedding_admin)       // Runtime switching
-        .add_value(auth_service)          // Null implementation
+        .add_value(performance_metrics)   // AtomicPerformanceMetrics
         .add_value(event_bus)             // TokioBroadcast
         .build()
 }
 
-// Service retrieval
-pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>> {
-    catalog.get_one::<T>()
-}
+// Service retrieval via AppContext (bootstrap.rs)
+// AppContext holds all resolved providers as typed fields:
+//   app_context.embedding_handle()    → Arc<EmbeddingProviderHandle>
+//   app_context.vector_store_handle() → Arc<VectorStoreProviderHandle>
+//   app_context.cache_handle()        → Arc<CacheProviderHandle>
 ```
 
 **DI Components** (in `mcb-infrastructure/src/di/`):
@@ -1210,7 +1211,7 @@ impl VectorRecord {
 | **Milvus** | Production, large scale | High (HNSW index) | 100M+ vectors |
 | **Pinecone** | Cloud-native, managed | High (optimized) | 1B+ vectors |
 | **Qdrant** | Self-hosted, Rust-native | High (HNSW) | 10M+ vectors |
-| **In-Memory** | Development, testing | Fast (brute force) | <1M vectors |
+| **EdgeVec** | Development, testing | Fast (HNSW in-process) | <1M vectors |
 
 #### Metadata Storage
 
@@ -1244,25 +1245,10 @@ CREATE INDEX idx_chunks_metadata ON code_chunks USING GIN(metadata);
 
 ### Multi-Level Caching
 
-1. **Application Cache**: Redis for search results and embeddings
-2. **Provider Cache**: In-memory LRU cache for frequently accessed data
-3. **CDN Cache**: For static assets and documentation
+1. **Default Cache**: Moka in-memory LRU cache (high-performance, single-node)
+2. **Distributed Cache**: Redis (optional, for multi-node deployments)
 
-```rust
-#[derive(Clone)]
-pub struct CacheConfig {
-    pub redis_url: String,
-    pub embedding_ttl: Duration,
-    pub search_ttl: Duration,
-    pub max_memory_mb: usize,
-}
-
-pub struct CacheManager {
-    redis: redis::Client,
-    in_memory: Arc<RwLock<LruCache<String, Vec<u8>>>>,
-    config: CacheConfig,
-}
-```
+Cache provider is resolved via DI (linkme registry → dill Catalog → `CacheProviderHandle`).
 
 ### Data Lifecycle Management
 
@@ -2279,7 +2265,7 @@ impl BackupManager {
 #### Delivered
 
 - ✅ Real embedding provider integrations (OpenAI, Ollama, Gemini, VoyageAI)
-- ✅ Production vector database integration (Milvus, In-Memory, Filesystem)
+- ✅ Production vector database integration (Milvus, EdgeVec, Qdrant, Pinecone)
 - ✅ Enhanced file processing with AST parsing
 - ✅ Performance optimization and caching
 - ✅ Complete DI system with provider registry and routing

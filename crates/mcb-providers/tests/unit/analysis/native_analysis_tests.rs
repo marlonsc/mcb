@@ -3,7 +3,7 @@ mod tests {
     use rstest::rstest;
     use std::fs;
 
-    use mcb_domain::ports::providers::{ComplexityAnalyzer, DeadCodeDetector, TdgScorer};
+    use mcb_domain::ports::{ComplexityAnalyzer, DeadCodeDetector, TdgScorer};
     use mcb_providers::analysis::NativePmatAnalyzer;
     use rstest::*;
     use tempfile::TempDir;

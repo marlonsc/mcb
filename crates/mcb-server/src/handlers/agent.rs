@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::agent::{Delegation, ToolCall};
-use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
@@ -15,7 +15,7 @@ use validator::Validate;
 use crate::args::{AgentAction, AgentArgs};
 use crate::error_mapping::{safe_internal_error, to_contextual_tool_error};
 use crate::formatter::ResponseFormatter;
-use crate::utils::mcp::{resolve_org_id, tool_error};
+use crate::utils::mcp::tool_error;
 
 /// Handler for agent tool call and delegation logging operations.
 #[derive(Clone)]
@@ -40,8 +40,6 @@ impl AgentHandler {
     ) -> Result<CallToolResult, McpError> {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
-
-        let _org_id = resolve_org_id(args.org_id.as_deref());
 
         let session_id = args.session_id.as_str();
         if session_id.is_empty()

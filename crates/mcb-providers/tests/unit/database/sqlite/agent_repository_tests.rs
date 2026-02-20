@@ -10,8 +10,8 @@ use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, ToolCall};
 use mcb_domain::entities::memory::SessionSummary;
 use mcb_domain::entities::project::Project;
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, SqlParam};
-use mcb_domain::ports::repositories::{AgentRepository, MemoryRepository, ProjectRepository};
+use mcb_domain::ports::{AgentRepository, MemoryRepository, ProjectRepository};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 use mcb_providers::database::{
     create_agent_repository_from_executor, create_memory_repository_with_executor,
     create_project_repository_from_executor,
@@ -70,6 +70,7 @@ fn create_test_session_summary(id: &str, project_id: &str) -> SessionSummary {
     SessionSummary {
         id: id.to_owned(),
         project_id: project_id.to_owned(),
+        org_id: DEFAULT_ORG_ID.to_owned(),
         session_id: "linked-session-id".to_owned(), // Just a string for now
         topics: vec![],
         decisions: vec![],
@@ -144,9 +145,10 @@ async fn seed_worktree(
 
     executor
         .execute(
-            "INSERT INTO branches (id, repository_id, name, is_default, head_commit, upstream, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO branches (id, org_id, repository_id, name, is_default, head_commit, upstream, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             &[
                 SqlParam::String(branch_id.to_owned()),
+                SqlParam::String(DEFAULT_ORG_ID.to_owned()),
                 SqlParam::String(repository_id.to_owned()),
                 SqlParam::String("main".to_owned()),
                 SqlParam::Bool(true),

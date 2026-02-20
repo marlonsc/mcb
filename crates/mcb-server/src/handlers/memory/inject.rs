@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::MemoryServiceInterface;
 use mcb_infrastructure::project::context_resolver::capture_vcs_context;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;

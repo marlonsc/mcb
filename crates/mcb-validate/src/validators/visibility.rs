@@ -74,13 +74,9 @@ struct InternalHelperScanInput<'a> {
     exempted_items: &'a HashSet<String>,
 }
 
-impl VisibilityValidator {
-    /// Creates a new visibility validator, loading configuration from files.
-    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
-        let file_config = crate::config::FileConfig::load(workspace_root);
-        Self::with_config(&file_config.rules.visibility)
-    }
+crate::impl_config_only_validator_new!(VisibilityValidator, visibility);
 
+impl VisibilityValidator {
     /// Creates a new visibility validator with current configuration.
     #[must_use]
     pub fn with_config(config: &VisibilityRulesConfig) -> Self {

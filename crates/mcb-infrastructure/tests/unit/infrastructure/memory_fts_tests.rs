@@ -1,43 +1,35 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{Observation, ObservationType};
+use mcb_domain::ports::DatabaseExecutor;
 use mcb_domain::ports::MemoryRepository;
-use mcb_domain::ports::infrastructure::DatabaseExecutor;
 use mcb_domain::value_objects::ObservationId;
-use mcb_providers::database::create_memory_repository_with_executor;
-use rstest::*;
+use mcb_infrastructure::di::create_memory_repository_with_executor;
 use tempfile::TempDir;
 use uuid::Uuid;
 
-use crate::test_utils::create_test_project;
+use crate::utils::create_test_project;
 
-#[fixture]
-async fn repo_and_executor() -> (
-    Arc<dyn MemoryRepository>,
-    Arc<dyn DatabaseExecutor>,
-    TempDir,
-) {
-    let temp_dir = tempfile::tempdir().expect("create temp dir");
-    let db_path = temp_dir.path().join("test.db");
-    let (repo, executor) = create_memory_repository_with_executor(db_path)
-        .await
-        .unwrap();
-    (repo, executor, temp_dir)
-}
-
-#[rstest]
-#[tokio::test]
-async fn test_fts_search_flow(
-    #[future] repo_and_executor: (
+async fn setup_repo_and_executor() -> Result<
+    (
         Arc<dyn MemoryRepository>,
         Arc<dyn DatabaseExecutor>,
         TempDir,
     ),
-) {
-    let (repo, executor, _dir) = repo_and_executor.await;
+    Box<dyn std::error::Error>,
+> {
+    let temp_dir = tempfile::tempdir()?;
+    let db_path = temp_dir.path().join("test.db");
+    let (repo, executor) = create_memory_repository_with_executor(db_path).await?;
+    Ok((repo, executor, temp_dir))
+}
+
+#[tokio::test]
+async fn test_fts_search_flow() -> Result<(), Box<dyn std::error::Error>> {
+    let (repo, executor, _dir) = setup_repo_and_executor().await?;
 
     let project_id = "test-project".to_owned();
-    create_test_project(executor.as_ref(), &project_id).await;
+    create_test_project(executor.as_ref(), &project_id).await?;
 
     let id = Uuid::new_v4().to_string();
     let obs = Observation {
@@ -51,22 +43,22 @@ async fn test_fts_search_flow(
         created_at: 100,
         embedding_id: None,
     };
-    repo.store_observation(&obs).await.unwrap();
+    repo.store_observation(&obs).await?;
 
     // 2. Search FTS for "fox" -> returns ID with rank
-    let results = repo.search("fox", 10).await.unwrap();
+    let results = repo.search("fox", 10).await?;
     assert!(results.iter().any(|r| r.id == id), "Should find 'fox'");
 
     // 3. Search FTS for "dog" -> returns empty
-    let results = repo.search("dog", 10).await.unwrap();
+    let results = repo.search("dog", 10).await?;
     assert!(results.is_empty(), "Should not find 'dog'");
 
     // 4. Delete observation
     repo.delete_observation(&ObservationId::from(id.as_str()))
-        .await
-        .unwrap();
+        .await?;
 
     // 5. Search FTS for "fox" -> returns empty (verifies trigger)
-    let results = repo.search("fox", 10).await.unwrap();
+    let results = repo.search("fox", 10).await?;
     assert!(results.is_empty(), "Should not find 'fox' after delete");
+    Ok(())
 }

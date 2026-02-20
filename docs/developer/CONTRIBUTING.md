@@ -60,7 +60,7 @@ crates/mcb-{name}/
     ├── unit.rs          ← Unit test module
     ├── integration.rs   ← Integration test module
     ├── unit/*_tests.rs  ← Individual test files
-    └── test_utils/      ← Shared test helpers
+    └── utils/      ← Shared test helpers
 ```
 
 ### Code Structure (v0.2.1 Clean Architecture)
@@ -161,7 +161,7 @@ cargo test test_name -- --nocapture     # Specific test with output
 - **Test files**: `tests/unit/*_tests.rs`, `tests/integration/*_tests.rs`
 - **Test helpers**: `rstest` (params), `mockall` (mocks), `insta` (snapshots), `tempfile`
 - **Real providers**: `extern crate mcb_providers` forces linkme registration
-- **Mocks**: `Arc<Mutex<Vec<T>>>` state tracking in `test_utils/mock_services/`
+- **Mocks**: `Arc<Mutex<Vec<T>>>` state tracking in `utils/mock_services/`
 
 ## 🔨 Make-First Workflow
 

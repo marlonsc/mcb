@@ -88,6 +88,8 @@ impl VcsType {
 pub struct Branch {
     /// Unique identifier (UUID).
     pub id: String,
+    /// Organization this branch belongs to.
+    pub org_id: String,
     /// Repository this branch belongs to.
     pub repository_id: String,
     /// Branch name (e.g. "main", "feat/data-model-v2").

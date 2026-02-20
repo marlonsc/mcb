@@ -64,13 +64,9 @@ pub struct LayerFlowValidator {
     circular_dependency_check_crates: Vec<String>,
 }
 
-impl LayerFlowValidator {
-    /// Creates a new layer flow validator, loading rules from configuration.
-    pub fn new(workspace_root: impl Into<std::path::PathBuf>) -> Self {
-        let file_config = crate::config::FileConfig::load(workspace_root);
-        Self::with_config(&file_config.rules.layer_flow)
-    }
+crate::impl_config_only_validator_new!(LayerFlowValidator, layer_flow);
 
+impl LayerFlowValidator {
     /// Creates a new layer flow validator with current configuration.
     #[must_use]
     pub fn with_config(config: &LayerFlowRulesConfig) -> Self {

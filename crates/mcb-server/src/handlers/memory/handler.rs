@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::ErrorPattern;
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::ports::MemoryServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
@@ -11,11 +11,12 @@ use validator::Validate;
 
 use super::{execution, inject, list_timeline, observation, quality_gate, session};
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
+use crate::constants::fields::FIELD_COUNT;
 use crate::constants::limits::DEFAULT_MEMORY_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::json;
-use crate::utils::mcp::{resolve_identifier_precedence, resolve_org_id, tool_error};
+use crate::utils::mcp::{resolve_identifier_precedence, tool_error};
 
 /// Handler for memory-related MCP tool operations.
 ///
@@ -41,12 +42,9 @@ impl MemoryHandler {
         &self,
         Parameters(args): Parameters<MemoryArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let validate_err = |_e: validator::ValidationErrors| {
-            McpError::invalid_params("failed to validate memory args", None)
-        };
-        args.validate().map_err(validate_err)?;
-
-        let _org_id = resolve_org_id(args.org_id.as_deref());
+        args.validate().map_err(|e| {
+            McpError::invalid_params(format!("failed to validate memory args: {e}"), None)
+        })?;
 
         match args.action {
             MemoryAction::Store => self.handle_store(&args).await,
@@ -165,7 +163,7 @@ impl MemoryHandler {
             .await
         {
             Ok(patterns) => ResponseFormatter::json_success(&serde_json::json!({
-                "count": patterns.len(),
+                (FIELD_COUNT): patterns.len(),
                 "patterns": patterns,
             })),
             Err(e) => Ok(to_contextual_tool_error(e)),

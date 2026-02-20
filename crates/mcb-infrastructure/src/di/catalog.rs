@@ -6,12 +6,11 @@ use std::sync::Arc;
 
 use dill::{Catalog, CatalogBuilder};
 use mcb_domain::error::Result;
-use mcb_domain::ports::admin::{
-    IndexingOperationsInterface, PerformanceMetricsInterface, ShutdownCoordinator,
-};
-use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
+use mcb_domain::ports::{
+    CacheAdminInterface, CacheProvider, EmbeddingAdminInterface, EmbeddingProvider,
+    EventBusProvider, IndexingOperationsInterface, LanguageAdminInterface,
+    LanguageChunkingProvider, PerformanceMetricsInterface, ShutdownCoordinator,
+    VectorStoreAdminInterface, VectorStoreProvider,
 };
 use tracing::info;
 
@@ -20,9 +19,7 @@ use crate::constants::services::{
     CACHE_SERVICE_NAME, EMBEDDING_SERVICE_NAME, LANGUAGE_SERVICE_NAME, VECTOR_STORE_SERVICE_NAME,
 };
 use crate::di::admin::{
-    CacheAdminInterface, CacheAdminService, EmbeddingAdminInterface, EmbeddingAdminService,
-    LanguageAdminInterface, LanguageAdminService, VectorStoreAdminInterface,
-    VectorStoreAdminService,
+    CacheAdminService, EmbeddingAdminService, LanguageAdminService, VectorStoreAdminService,
 };
 use crate::di::handles::{
     CacheProviderHandle, EmbeddingProviderHandle, LanguageProviderHandle, VectorStoreProviderHandle,

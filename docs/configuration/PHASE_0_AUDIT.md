@@ -218,12 +218,11 @@
 
 -   **Status**: PASSED
 -   **VectorStoreProviderConfig Enum**(6 variants):
+-   EdgeVec (in-process HNSW, default)
 -   Milvus (address, token, collection, dimensions, timeout)
--   EdgeVec (address, token, collection, dimensions, timeout)
--   InMemory (dimensions)
--   Filesystem (path, dimensions)
--   Encrypted (path, key, dimensions)
--   Null (dimensions)
+-   Qdrant (url, api_key, collection, dimensions)
+-   Pinecone (api_key, index, dimensions)
+-   Encrypted (wraps any provider, AES-GCM)
 -   **Validation**: Type-safe enum
 -   **Env Var Support**: Via TOML config
 
