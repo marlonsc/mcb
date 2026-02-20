@@ -57,53 +57,47 @@ pub fn validate_duplicate_definitions(
         }
     };
 
-    for src_dir in validator.config.get_scan_dirs()? {
-        if validator.should_skip_crate(&src_dir) {
-            continue;
-        }
+    for_each_scan_file(
+        &validator.config,
+        Some(LanguageId::Rust),
+        false,
+        |entry, candidate_src_dir| {
+            if validator.should_skip_crate(candidate_src_dir) {
+                return Ok(());
+            }
 
-        for_each_scan_file(
-            &validator.config,
-            Some(LanguageId::Rust),
-            false,
-            |entry, candidate_src_dir| {
-                let path = &entry.absolute_path;
-                if candidate_src_dir != src_dir {
-                    return Ok(());
+            let path = &entry.absolute_path;
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
+
+            // Skip test files and archived directories
+            if REFACTORING_SKIP_PATTERNS
+                .iter()
+                .any(|p| path_str.contains(p))
+            {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+
+            for cap in definition_pattern.captures_iter(&content) {
+                let type_name = cap.get(1).map_or("", |m| m.as_str());
+
+                // Skip generic names that are expected to appear in multiple places
+                if validator.generic_type_names.contains(type_name) {
+                    continue;
                 }
 
-                let Some(path_str) = path.to_str() else {
-                    return Ok(());
-                };
+                definitions
+                    .entry(type_name.to_owned())
+                    .or_default()
+                    .push(path.clone());
+            }
 
-                // Skip test files and archived directories
-                if REFACTORING_SKIP_PATTERNS
-                    .iter()
-                    .any(|p| path_str.contains(p))
-                {
-                    return Ok(());
-                }
-
-                let content = std::fs::read_to_string(path)?;
-
-                for cap in definition_pattern.captures_iter(&content) {
-                    let type_name = cap.get(1).map_or("", |m| m.as_str());
-
-                    // Skip generic names that are expected to appear in multiple places
-                    if validator.generic_type_names.contains(type_name) {
-                        continue;
-                    }
-
-                    definitions
-                        .entry(type_name.to_owned())
-                        .or_default()
-                        .push(path.clone());
-                }
-
-                Ok(())
-            },
-        )?;
-    }
+            Ok(())
+        },
+    )?;
 
     for (type_name, locations) in definitions {
         if locations.len() <= 1 {

@@ -162,7 +162,7 @@ def _apply_exclude_file_filter(
     return filtered
 
 
-def main() -> int:
+def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Analyze SARIF quality reports")
 
@@ -247,7 +247,7 @@ def main() -> int:
 
     if not all_issues:
         print("✅ No issues found to analyze")
-        return 0
+        return
 
     # Apply filters
     filtered = all_issues
@@ -261,7 +261,7 @@ def main() -> int:
 
     if not filtered:
         print("✅ No issues matched filters")
-        return 0
+        return
 
     # Analyze
     report = analyze_issues(filtered)
@@ -275,8 +275,6 @@ def main() -> int:
         args.report_file.write_text(md_content, encoding="utf-8")
         print(f"\n📝 Detailed report written to {args.report_file}")
 
-    return 0
-
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

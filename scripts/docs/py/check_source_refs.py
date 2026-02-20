@@ -10,25 +10,7 @@ import argparse
 import utils
 
 
-def main():
-    """Main entry point for checking broken source references in documentation."""
-    parser = argparse.ArgumentParser(
-        description="Check broken source references in docs."
-    )
-    parser.add_argument("--root", default=".", help="Project root directory")
-    args = parser.parse_args()
-
-    # Use project root from args if provided, otherwise detect
-    project_root = os.path.abspath(args.root)
-    if args.root == ".":
-        project_root = utils.get_project_root()
-
-    docs_dir = os.path.join(project_root, "docs")
-
-    if not os.path.exists(docs_dir):
-        print(f"Error: docs directory not found at {docs_dir}")
-        sys.exit(1)
-
+def _check_files(docs_dir, project_root):
     issues = []
     checked = 0
 
@@ -61,9 +43,32 @@ def main():
 
             # Check directly or check if it's a file without extension (directories)
             # Also try checking if it's a Rust file reference without .rs extension (common in docs)
-            if not os.path.exists(target):
-                if not os.path.exists(target + ".rs"):
-                    issues.append((rel_filepath, ref))
+            if not os.path.exists(target) and not os.path.exists(target + ".rs"):
+                issues.append((rel_filepath, ref))
+
+    return issues, checked
+
+
+def main():
+    """Main entry point for checking broken source references in documentation."""
+    parser = argparse.ArgumentParser(
+        description="Check broken source references in docs."
+    )
+    parser.add_argument("--root", default=".", help="Project root directory")
+    args = parser.parse_args()
+
+    # Use project root from args if provided, otherwise detect
+    project_root = os.path.abspath(args.root)
+    if args.root == ".":
+        project_root = utils.get_project_root()
+
+    docs_dir = os.path.join(project_root, "docs")
+
+    if not os.path.exists(docs_dir):
+        print(f"Error: docs directory not found at {docs_dir}")
+        sys.exit(1)
+
+    issues, checked = _check_files(docs_dir, project_root)
 
     print(f"Checked source refs in {checked} docs")
 

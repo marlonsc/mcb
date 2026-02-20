@@ -23,6 +23,114 @@ const FORBIDDEN_ROOT_SCHEMA_PATH_PATTERN: &str = r"\bmcb_domain::(Schema|SchemaD
 const FORBIDDEN_ROOT_SCHEMA_IMPORT_PATTERN: &str = r"\b(?:pub\s+)?use\s+mcb_domain::\{[^}]*\b(Schema|SchemaDdlGenerator|ColumnDef|ColumnType|TableDef|IndexDef|FtsDef|ForeignKeyDef|UniqueConstraintDef|COL_OBSERVATION_TYPE)\b[^}]*\}";
 const FORBIDDEN_RAW_ID_FIELD_PATTERN: &str = r"\bpub\s+([a-z_][a-z0-9_]*)\s*:\s*(String|Uuid)\b";
 
+fn push_line_match(
+    violations: &mut Vec<SsotViolation>,
+    pattern: &regex::Regex,
+    line: &str,
+    make: impl Fn(String) -> SsotViolation,
+) {
+    if pattern.is_match(line) {
+        violations.push(make(line.trim().to_owned()));
+    }
+}
+
+fn push_capture_group(
+    violations: &mut Vec<SsotViolation>,
+    pattern: &regex::Regex,
+    line: &str,
+    group: usize,
+    make: impl Fn(&str) -> SsotViolation,
+) {
+    for cap in pattern.captures_iter(line) {
+        if let Some(m) = cap.get(group) {
+            violations.push(make(m.as_str()));
+        }
+    }
+}
+
+fn push_duplicate_declarations(
+    violations: &mut Vec<SsotViolation>,
+    declaration_locations: BTreeMap<String, Vec<(PathBuf, usize)>>,
+) {
+    for (declaration_name, locations) in declaration_locations {
+        let unique_paths = locations
+            .iter()
+            .map(|(path, _line)| path.clone())
+            .collect::<HashSet<_>>();
+
+        if unique_paths.len() < 2 {
+            continue;
+        }
+
+        let mut sorted_locations = locations;
+        sorted_locations.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
+
+        let Some((file, line)) = sorted_locations.first().cloned() else {
+            continue;
+        };
+
+        let locations_text = sorted_locations
+            .iter()
+            .map(|(path, location_line)| format!("{}:{location_line}", path.display()))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        violations.push(SsotViolation::DuplicatePortDeclaration {
+            file,
+            line,
+            declaration_name,
+            locations: locations_text,
+            severity: Severity::Error,
+        });
+    }
+}
+
+fn record_declarations(
+    declaration_locations: &mut BTreeMap<String, Vec<(PathBuf, usize)>>,
+    declaration_pattern: &regex::Regex,
+    line: &str,
+    path: &PathBuf,
+    line_number: usize,
+) {
+    for cap in declaration_pattern.captures_iter(line) {
+        if let Some(name_match) = cap.get(1) {
+            declaration_locations
+                .entry(name_match.as_str().to_owned())
+                .or_default()
+                .push((path.clone(), line_number));
+        }
+    }
+}
+
+fn push_raw_id_field_violations(
+    violations: &mut Vec<SsotViolation>,
+    forbidden_raw_id_field_pattern: &regex::Regex,
+    path: &PathBuf,
+    line: &str,
+    line_number: usize,
+) {
+    for cap in forbidden_raw_id_field_pattern.captures_iter(line) {
+        let Some(field_name_match) = cap.get(1) else {
+            continue;
+        };
+        let Some(field_type_match) = cap.get(2) else {
+            continue;
+        };
+
+        if !field_name_match.as_str().ends_with("id") {
+            continue;
+        }
+
+        violations.push(SsotViolation::ForbiddenRawIdFieldType {
+            file: path.clone(),
+            line: line_number,
+            field_name: field_name_match.as_str().to_owned(),
+            field_type: field_type_match.as_str().to_owned(),
+            severity: Severity::Error,
+        });
+    }
+}
+
 /// Validator for single-source-of-truth invariants.
 pub struct SsotValidator {
     config: ValidationConfig,
@@ -84,129 +192,102 @@ impl SsotValidator {
 
         for (path, content) in &files {
             for (line_index, line) in content.lines().enumerate() {
-                for cap in declaration_pattern.captures_iter(line) {
-                    if let Some(name_match) = cap.get(1) {
-                        declaration_locations
-                            .entry(name_match.as_str().to_owned())
-                            .or_default()
-                            .push((path.clone(), line_index + 1));
-                    }
-                }
+                let line_number = line_index + 1;
+                record_declarations(
+                    &mut declaration_locations,
+                    &declaration_pattern,
+                    line,
+                    path,
+                    line_number,
+                );
 
-                if legacy_import_pattern.is_match(line) {
-                    violations.push(SsotViolation::ForbiddenLegacyImport {
+                push_line_match(
+                    &mut violations,
+                    &legacy_import_pattern,
+                    line,
+                    |import_path| SsotViolation::ForbiddenLegacyImport {
                         file: path.clone(),
-                        line: line_index + 1,
-                        import_path: line.trim().to_owned(),
+                        line: line_number,
+                        import_path,
                         severity: Severity::Error,
-                    });
-                }
+                    },
+                );
 
-                for cap in forbidden_schema_symbol_pattern.captures_iter(line) {
-                    if let Some(symbol_name_match) = cap.get(1) {
-                        violations.push(SsotViolation::ForbiddenLegacySchemaSymbol {
-                            file: path.clone(),
-                            line: line_index + 1,
-                            symbol_name: symbol_name_match.as_str().to_owned(),
-                            severity: Severity::Error,
-                        });
-                    }
-                }
-
-                if forbidden_schema_macro_path_pattern.is_match(line) {
-                    violations.push(SsotViolation::ForbiddenSchemaMemoryMacroPath {
+                push_capture_group(
+                    &mut violations,
+                    &forbidden_schema_symbol_pattern,
+                    line,
+                    1,
+                    |symbol_name| SsotViolation::ForbiddenLegacySchemaSymbol {
                         file: path.clone(),
-                        line: line_index + 1,
-                        macro_path: line.trim().to_owned(),
+                        line: line_number,
+                        symbol_name: symbol_name.to_owned(),
                         severity: Severity::Error,
-                    });
-                }
+                    },
+                );
 
-                if forbidden_schema_import_pattern.is_match(line) {
-                    violations.push(SsotViolation::ForbiddenLegacySchemaImport {
+                push_line_match(
+                    &mut violations,
+                    &forbidden_schema_macro_path_pattern,
+                    line,
+                    |macro_path| SsotViolation::ForbiddenSchemaMemoryMacroPath {
                         file: path.clone(),
-                        line: line_index + 1,
-                        import_path: line.trim().to_owned(),
+                        line: line_number,
+                        macro_path,
                         severity: Severity::Error,
-                    });
-                }
+                    },
+                );
 
-                if forbidden_root_schema_import_pattern.is_match(line) {
-                    violations.push(SsotViolation::ForbiddenRootSchemaPath {
+                push_line_match(
+                    &mut violations,
+                    &forbidden_schema_import_pattern,
+                    line,
+                    |import_path| SsotViolation::ForbiddenLegacySchemaImport {
                         file: path.clone(),
-                        line: line_index + 1,
-                        path: line.trim().to_owned(),
+                        line: line_number,
+                        import_path,
                         severity: Severity::Error,
-                    });
-                }
+                    },
+                );
 
-                for cap in forbidden_root_schema_path_pattern.captures_iter(line) {
-                    if let Some(path_match) = cap.get(0) {
-                        violations.push(SsotViolation::ForbiddenRootSchemaPath {
-                            file: path.clone(),
-                            line: line_index + 1,
-                            path: path_match.as_str().to_owned(),
-                            severity: Severity::Error,
-                        });
-                    }
-                }
+                push_line_match(
+                    &mut violations,
+                    &forbidden_root_schema_import_pattern,
+                    line,
+                    |path_text| SsotViolation::ForbiddenRootSchemaPath {
+                        file: path.clone(),
+                        line: line_number,
+                        path: path_text,
+                        severity: Severity::Error,
+                    },
+                );
+
+                push_capture_group(
+                    &mut violations,
+                    &forbidden_root_schema_path_pattern,
+                    line,
+                    0,
+                    |path_text| SsotViolation::ForbiddenRootSchemaPath {
+                        file: path.clone(),
+                        line: line_number,
+                        path: path_text.to_owned(),
+                        severity: Severity::Error,
+                    },
+                );
 
                 if is_domain_model_file(path) {
-                    for cap in forbidden_raw_id_field_pattern.captures_iter(line) {
-                        let Some(field_name_match) = cap.get(1) else {
-                            continue;
-                        };
-                        let Some(field_type_match) = cap.get(2) else {
-                            continue;
-                        };
-
-                        if !field_name_match.as_str().ends_with("id") {
-                            continue;
-                        }
-
-                        violations.push(SsotViolation::ForbiddenRawIdFieldType {
-                            file: path.clone(),
-                            line: line_index + 1,
-                            field_name: field_name_match.as_str().to_owned(),
-                            field_type: field_type_match.as_str().to_owned(),
-                            severity: Severity::Error,
-                        });
-                    }
+                    push_raw_id_field_violations(
+                        &mut violations,
+                        &forbidden_raw_id_field_pattern,
+                        path,
+                        line,
+                        line_number,
+                    );
                 }
             }
         }
 
-        for (declaration_name, locations) in declaration_locations {
-            let unique_paths = locations
-                .iter()
-                .map(|(path, _line)| path.clone())
-                .collect::<HashSet<_>>();
-
-            if unique_paths.len() < 2 {
-                continue;
-            }
-
-            let mut sorted_locations = locations;
-            sorted_locations.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
-
-            let Some((file, line)) = sorted_locations.first().cloned() else {
-                continue;
-            };
-
-            let locations_text = sorted_locations
-                .iter()
-                .map(|(path, location_line)| format!("{}:{location_line}", path.display()))
-                .collect::<Vec<_>>()
-                .join(", ");
-
-            violations.push(SsotViolation::DuplicatePortDeclaration {
-                file,
-                line,
-                declaration_name,
-                locations: locations_text,
-                severity: Severity::Error,
-            });
-        }
+        push_duplicate_declarations(&mut violations, declaration_locations);
 
         Ok(violations)
     }

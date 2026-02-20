@@ -64,14 +64,9 @@ pub fn validate_domain_traits_only(
                     impl_start_brace = brace_depth;
                 }
 
-                brace_depth +=
-                    i32::try_from(line.chars().filter(|c| *c == '{').count()).unwrap_or(0);
-                brace_depth -=
-                    i32::try_from(line.chars().filter(|c| *c == '}').count()).unwrap_or(0);
-
-                if in_impl_block && brace_depth <= impl_start_brace {
-                    in_impl_block = false;
-                }
+                brace_depth += i32::try_from(line.matches('{').count()).unwrap_or(0);
+                brace_depth -= i32::try_from(line.matches('}').count()).unwrap_or(0);
+                in_impl_block &= brace_depth > impl_start_brace;
 
                 if in_impl_block && let Some(cap) = method_pattern.captures(line) {
                     let method_name = cap.get(1).map_or("", |m| m.as_str());

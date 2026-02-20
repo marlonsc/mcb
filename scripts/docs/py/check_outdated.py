@@ -6,28 +6,32 @@ import re
 import sys
 import argparse
 
-
 import utils
 
 
-def main():
-    """Main entry point for outdated documentation check."""
-    parser = argparse.ArgumentParser(description="Check outdated content in docs.")
-    parser.add_argument("--root", default=".", help="Project root directory")
-    args = parser.parse_args()
+def _process_lines(lines, rel_filepath, OUTDATED_PATTERNS, is_suppressed):
+    issues_in_file = []
+    for i, line in enumerate(lines, 1):
+        # Skip whitespace, comments, code blocks start/end
+        if (
+            not line.strip()
+            or line.strip().startswith("<!--")
+            or line.strip().startswith("```")
+        ):
+            continue
 
-    # Use project root from args if provided, otherwise detect
-    project_root = os.path.abspath(args.root)
-    if args.root == ".":
-        project_root = utils.get_project_root()
+        # Check line content
+        for pattern, desc in OUTDATED_PATTERNS:
+            # Use ignore case if pattern is lowercase
+            flags = re.IGNORECASE if pattern.islower() else 0
+            if re.search(pattern, line, flags) and not is_suppressed(line):
+                issues_in_file.append((rel_filepath, i, desc, line.strip()[:80]))
+    return issues_in_file
 
-    docs_dir = os.path.join(project_root, "docs")
 
-    if not os.path.exists(docs_dir):
-        print(f"Error: docs directory not found at {docs_dir}")
-        sys.exit(1)
-
+def _check_files(docs_dir, project_root):
     issues = []
+    checked = 0
 
     # Patterns to flag
     OUTDATED_PATTERNS = [
@@ -51,7 +55,6 @@ def main():
             re.IGNORECASE,
         )
 
-    checked = 0
     md_files = utils.find_md_files(
         docs_dir, exclude_dirs={".git", "fixtures", "archive"}
     )
@@ -67,22 +70,32 @@ def main():
             print(f"Error reading {rel_filepath}: {e}")
             continue
 
-        for i, line in enumerate(lines, 1):
-            # Skip whitespace, comments, code blocks start/end
-            if (
-                not line.strip()
-                or line.strip().startswith("<!--")
-                or line.strip().startswith("```")
-            ):
-                continue
+        file_issues = _process_lines(
+            lines, rel_filepath, OUTDATED_PATTERNS, is_suppressed
+        )
+        issues.extend(file_issues)
 
-            # Check line content
-            for pattern, desc in OUTDATED_PATTERNS:
-                # Use ignore case if pattern is lowercase
-                flags = re.IGNORECASE if pattern.islower() else 0
-                if re.search(pattern, line, flags):
-                    if not is_suppressed(line):
-                        issues.append((rel_filepath, i, desc, line.strip()[:80]))
+    return issues, checked
+
+
+def main():
+    """Main entry point for outdated documentation check."""
+    parser = argparse.ArgumentParser(description="Check outdated content in docs.")
+    parser.add_argument("--root", default=".", help="Project root directory")
+    args = parser.parse_args()
+
+    # Use project root from args if provided, otherwise detect
+    project_root = os.path.abspath(args.root)
+    if args.root == ".":
+        project_root = utils.get_project_root()
+
+    docs_dir = os.path.join(project_root, "docs")
+
+    if not os.path.exists(docs_dir):
+        print(f"Error: docs directory not found at {docs_dir}")
+        sys.exit(1)
+
+    issues, checked = _check_files(docs_dir, project_root)
 
     print(f"Checked {checked} files for outdated content.")
 

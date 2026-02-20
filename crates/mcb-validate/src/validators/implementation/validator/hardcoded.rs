@@ -31,14 +31,15 @@ pub fn validate_hardcoded_returns(
 
         let non_test_lines = non_test_lines(&content.lines().collect::<Vec<_>>());
 
-        for func in extract_functions(Some(fn_pattern), &non_test_lines) {
-            if func.has_control_flow {
-                continue;
-            }
-            for line in &func.body_lines {
-                if is_fn_signature_or_brace(line) {
-                    continue;
-                }
+        for func in extract_functions(Some(fn_pattern), &non_test_lines)
+            .into_iter()
+            .filter(|func| !func.has_control_flow)
+        {
+            for line in func
+                .body_lines
+                .iter()
+                .filter(|line| !is_fn_signature_or_brace(line))
+            {
                 for (_pattern, desc) in compiled
                     .iter()
                     .filter(|(pattern, _)| pattern.is_match(line))

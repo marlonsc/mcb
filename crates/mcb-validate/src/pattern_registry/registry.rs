@@ -68,10 +68,6 @@ impl PatternRegistry {
         naming_config: &crate::config::NamingRulesConfig,
         project_prefix: &str,
     ) -> Result<()> {
-        if is_template_path(path) {
-            return Ok(());
-        }
-
         let content = std::fs::read_to_string(path)?;
         let mut yaml: serde_yaml::Value = serde_yaml::from_str(&content)?;
 
@@ -121,27 +117,34 @@ impl PatternRegistry {
             .unwrap_or("unknown");
 
         // Load patterns from "patterns" section
-        if let Some(patterns) = yaml.get(YAML_FIELD_PATTERNS).and_then(|v| v.as_mapping()) {
-            for (name, pattern) in patterns {
-                if let (Some(name_str), Some(pattern_str)) = (name.as_str(), pattern.as_str()) {
-                    let pattern_id = format!("{rule_id}.{name_str}");
-                    self.register_pattern(&pattern_id, pattern_str)?;
-                }
+        for (name, pattern) in yaml
+            .get(YAML_FIELD_PATTERNS)
+            .and_then(|v| v.as_mapping())
+            .into_iter()
+            .flat_map(|patterns| patterns.iter())
+        {
+            if let (Some(name_str), Some(pattern_str)) = (name.as_str(), pattern.as_str()) {
+                let pattern_id = format!("{rule_id}.{name_str}");
+                self.register_pattern(&pattern_id, pattern_str)?;
             }
         }
 
         // Load patterns from "selectors" section (for AST patterns)
-        if let Some(selectors) = yaml.get(YAML_FIELD_SELECTORS).and_then(|v| v.as_sequence()) {
-            for (i, selector) in selectors.iter().enumerate() {
-                if let Some(pattern) = selector.get(YAML_FIELD_REGEX).and_then(|v| v.as_str()) {
-                    let pattern_id = format!("{rule_id}.selector_{i}");
-                    self.register_pattern(&pattern_id, pattern)?;
-                }
+        for (i, selector) in yaml
+            .get(YAML_FIELD_SELECTORS)
+            .and_then(|v| v.as_sequence())
+            .into_iter()
+            .flat_map(|selectors| selectors.iter())
+            .enumerate()
+        {
+            if let Some(pattern) = selector.get(YAML_FIELD_REGEX).and_then(|v| v.as_str()) {
+                let pattern_id = format!("{rule_id}.selector_{i}");
+                self.register_pattern(&pattern_id, pattern)?;
             }
         }
 
         // Load generic configuration from "config" section
-        if let Some(config) = yaml.get(YAML_FIELD_CONFIG) {
+        for config in yaml.get(YAML_FIELD_CONFIG) {
             self.configs.insert(rule_id.to_owned(), config.clone());
         }
 
@@ -152,7 +155,7 @@ impl PatternRegistry {
                 serde_yaml::Value::from(YAML_FIELD_CRATE_NAME),
                 crate_name.clone(),
             );
-            if let Some(allowed) = yaml.get(YAML_FIELD_ALLOWED_DEPS) {
+            for allowed in yaml.get(YAML_FIELD_ALLOWED_DEPS) {
                 map.insert(
                     serde_yaml::Value::from(YAML_FIELD_ALLOWED_DEPS),
                     allowed.clone(),
