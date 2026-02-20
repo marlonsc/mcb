@@ -6,10 +6,10 @@ import re
 import sys
 import argparse
 
-import utils
+import scripts.docs.py.utils as utils
 
 
-def _process_lines(lines, rel_filepath, OUTDATED_PATTERNS, is_suppressed):
+def _process_lines(lines, rel_filepath, outdated_patterns, is_suppressed):
     issues_in_file = []
     for i, line in enumerate(lines, 1):
         # Skip whitespace, comments, code blocks start/end
@@ -21,7 +21,7 @@ def _process_lines(lines, rel_filepath, OUTDATED_PATTERNS, is_suppressed):
             continue
 
         # Check line content
-        for pattern, desc in OUTDATED_PATTERNS:
+        for pattern, desc in outdated_patterns:
             # Use ignore case if pattern is lowercase
             flags = re.IGNORECASE if pattern.islower() else 0
             if re.search(pattern, line, flags) and not is_suppressed(line):

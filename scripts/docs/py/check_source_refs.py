@@ -7,7 +7,7 @@ import sys
 import argparse
 
 
-import utils
+import scripts.docs.py.utils as utils
 
 
 def _check_files(docs_dir, project_root):
