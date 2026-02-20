@@ -3,7 +3,7 @@
 
 This document provides an overview of the public API surface of the Memory Context Browser.
 
-**↔ Code ↔ Docs cross-reference**
+## ↔ Code ↔ Docs cross-reference
 
 | Direction | Link |
 | --------- | ---- |

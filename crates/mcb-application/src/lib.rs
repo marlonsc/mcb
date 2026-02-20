@@ -4,9 +4,9 @@
 //! implementing use cases and orchestrating business logic according to
 //! Clean Architecture principles.
 //!
-//! **Documentation**: [`docs/modules/application.md`](../../../../docs/modules/application.md) |
-//! **Architecture**: [`ADR-013`](../../../../docs/adr/013-clean-architecture-crate-separation.md),
-//! [`ADR-029`](../../../../docs/adr/029-hexagonal-architecture-dill.md)
+//! **Documentation**: [`docs/modules/application.md`](../../../docs/modules/application.md) |
+//! **Architecture**: [`ADR-013`](../../../docs/adr/013-clean-architecture-crate-separation.md),
+//! [`ADR-029`](../../../docs/adr/029-hexagonal-architecture-dill.md)
 //!
 //! ## Architecture
 //!

@@ -1,5 +1,7 @@
 //! Vector Store Provider Implementations
 //!
+//! **Documentation**: [`docs/modules/providers.md#vector-store-providers-vector_store`](../../../../docs/modules/providers.md#vector-store-providers-vector_store)
+//!
 //! Provides storage backends for vector embeddings.
 //!
 //! ## Available Providers

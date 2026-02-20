@@ -4,7 +4,7 @@
 **Source**: `crates/mcb-providers/src/`
 **Crate**: `mcb-providers`
 
-**↔ Code ↔ Docs cross-reference**
+## ↔ Code ↔ Docs cross-reference
 
 | Direction | Link |
 | --------- | ---- |

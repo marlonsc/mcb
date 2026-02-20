@@ -1,59 +1,35 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # repository Module
 
-**Traits**: `crates/mcb-domain/src/repositories/`
-**Implementations**: `crates/mcb-providers/src/database/sqlite/` (7 repository implementations)
-**Files**: 3
-**Lines of Code**: ~400
+**Port Traits**: [`crates/mcb-domain/src/repositories/`](../../crates/mcb-domain/src/repositories/)
+**Implementations**: See [`providers.md#database-sqlite`](./providers.md#database-sqlite)
+
+## ↔ Code ↔ Docs cross-reference
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-domain/src/repositories/mod.rs`](../../crates/mcb-domain/src/repositories/mod.rs) links here |
+| Port Traits | [`mcb-domain::repositories`](../../crates/mcb-domain/src/repositories/) |
+| Implementations | [`mcb-providers::database::sqlite`](./providers.md#database-sqlite) |
 
 ## Overview
 
-Repository pattern implementation for data access abstraction. Port traits defined in `mcb-domain`, concrete implementations in `mcb-providers/src/database/sqlite/` using SQLite + sqlx.
+The repository module defines the data access contracts (ports) used by the domain and application layers. Following Clean Architecture, the domain defines the *what* (traits), and the infrastructure/providers implement the *how* (SQLite/sqlx).
 
-### Components
+## Repository Traits (`mcb-domain`)
 
-### Repository Traits (`mcb-domain`)
+| Repository | Purpose | Source |
+| ----------- | ------- | ------ |
+| `MemoryRepository` | Observation storage + FTS search | [`memory_repository.rs`](../../crates/mcb-domain/src/repositories/memory_repository.rs) |
+| `AgentRepository` | Agent session persistence | [`agent_repository.rs`](../../crates/mcb-domain/src/repositories/agent_repository.rs) |
+| `OrgEntityRepository` | Organization tenant isolation | [`org_registry.rs`](../../crates/mcb-domain/src/repositories/org_registry.rs) |
+| `VcsEntityRepository` | Repository & branch metadata | [`repository_registry.rs`](../../crates/mcb-domain/src/repositories/repository_registry.rs) |
+| `PlanEntityRepository` | Task plans & versioning | [`plan_registry.rs`](../../crates/mcb-domain/src/repositories/plan_registry.rs) |
+| `ProjectRepository` | Project & worktree coordination | [`project_repository.rs`](../../crates/mcb-domain/src/repositories/project_repository.rs) |
 
-Port definitions for repositories:
+## Implementation Strategy
 
-- `ChunkRepository` - Code chunk persistence operations
-- `SearchRepository` - Search Result retrieval operations
-
-**Status**: Port traits defined, no adapter implementations yet.
-
-## File Structure
-
-```text
-crates/mcb-domain/src/repositories/
-├── chunk_repository.rs       # ChunkRepository trait
-├── search_repository.rs      # SearchRepository trait
-└── mod.rs
-```
-
-## Repository Pattern
-
-```rust
-// Port trait (in mcb-domain); DI via dill (ADR-029)
-#[async_trait]
-pub trait ChunkRepository: Send + Sync {
-    async fn store(&self, collection: &str, chunks: &[CodeChunk]) -> Result<()>;
-    async fn get(&self, collection: &str, id: &str) -> Result<Option<CodeChunk>>;
-    async fn delete(&self, collection: &str, id: &str) -> Result<()>;
-}
-```
-
-## Key Exports
-
-```rust
-// Traits (from mcb-domain)
-pub use repositories::{ChunkRepository, SearchRepository};
-```
-
-## Cross-References
-
-- **Domain**: [domain.md](./domain.md) (trait definitions)
-- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+All production implementations use **SQLite 3** via the `sqlx` crate, providing ACID transactions and row-level isolation for multi-tenancy.
 
 ---
-
-### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)
+*Updated 2026-02-20 - Consolidated repository documentation to point to implementations in providers.md.*

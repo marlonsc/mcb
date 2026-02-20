@@ -6,6 +6,14 @@
 **Files**: 8+
 **Lines of Code**: ~800
 
+## ↔ Code ↔ Docs cross-reference
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-infrastructure/src/di/mod.rs`](../../crates/mcb-infrastructure/src/di/mod.rs) links here |
+| Docs → Code | [`crates/mcb-infrastructure/src/di/`](../../crates/mcb-infrastructure/src/di/) — DI system root |
+| Architecture | [`ADR-029`](../adr/029-hexagonal-architecture-dill.md) · [`ADR-012`](../adr/012-di-strategy-two-layer-approach.md) |
+
 ## Overview
 
 Dependency injection system using dill IoC Container with handle-based runtime switching and linkme registry for provider discovery.
@@ -43,31 +51,21 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 //   app_context.cache_handle()        → Arc<CacheProviderHandle>
 ```
 
-### Bootstrap (`bootstrap.rs`)
+### Bootstrap ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/di/bootstrap.rs))
 
 Application initialization and AppContext creation.
 
-### Handles (`handles.rs`)
+### Handles ([`handles.rs`](../../crates/mcb-infrastructure/src/di/handles.rs))
 
-RwLock wrappers for runtime provider switching:
+RwLock wrappers for runtime provider switching.
 
-- `EmbeddingProviderHandle`
-- `VectorStoreProviderHandle`
-- `CacheProviderHandle`
-- `LanguageProviderHandle`
-
-### Provider Resolvers (`provider_resolvers.rs`)
+### Provider Resolvers ([`provider_resolvers.rs`](../../crates/mcb-infrastructure/src/di/provider_resolvers.rs))
 
 Components that access the linkme registry to resolve providers by name.
 
-### Admin Services (`admin.rs`)
+### Admin Services ([`admin.rs`](../../crates/mcb-infrastructure/src/di/admin.rs))
 
-Runtime provider switching via API:
-
-- `EmbeddingAdminService` (implements `EmbeddingAdminInterface`)
-- `VectorStoreAdminService` (implements `VectorStoreAdminInterface`)
-- `CacheAdminService` (implements `CacheAdminInterface`)
-- `LanguageAdminService` (implements `LanguageAdminInterface`)
+Runtime provider switching via API.
 
 ## File Structure
 

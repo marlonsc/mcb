@@ -81,20 +81,11 @@ Documentation templates and standards.
 
 ### 📚 Additional References
 
-- **[API Reference](API_REFERENCE.md)** - API and tool reference index
-- **[Environment Variables](configuration/ENVIRONMENT_VARIABLES.md)** - Full
-  environment variable matrix
-- **[MCB Context Config](configuration/MCB_CONTEXT.md)** - `.mcp-context.toml`
-  reference
-- **Generated Metrics** - Generated automatically by `make docs` (see output in `docs/generated/`)
+- **[Tool Specification](MCP_TOOLS.md)** - Definitions of all available MCP tools
+- **[Environment Variables](configuration/ENVIRONMENT_VARIABLES.md)** - Full environment variable matrix
+- **[MCB Context Config](configuration/MCB_CONTEXT.md)** - `.mcp-context.toml` reference
 - **[Testing Integration](testing/E2E_INTEGRATION.md)** - End-to-end testing strategy
-- **[Context Discovery Research](research/CONTEXT_DISCOVERY_GIT_INTEGRATION.md)**
-  - Git-aware context findings
-- **[Project Management Research](research/PROJECT_MANAGEMENT_RESEARCH.md)** -
-  Planning and workflow research
-- **[FastEmbed Provider](providers/fastembed.md)** - Provider-specific documentation
-- **[v0.4.0 Knowledge Graph Spec](v040-KNOWLEDGE-GRAPH-SPEC.md)** - Advanced
-  context system specification
+- **[v0.4.0 Knowledge Graph Spec](v040-KNOWLEDGE-GRAPH-SPEC.md)** - Future context system specification (Draft)
 
 ## 🔧 Documentation Automation
 

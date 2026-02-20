@@ -1,5 +1,7 @@
 //! MCP Transport Layer
 //!
+//! **Documentation**: [`docs/modules/server.md#transport`](../../../../docs/modules/server.md#transport)
+//!
 //! Transport implementations for the MCP protocol.
 //! Handles different transport mechanisms (stdio, HTTP, client, etc.).
 //!

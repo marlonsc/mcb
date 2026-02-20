@@ -1,5 +1,7 @@
 //! MCP Tools Module
 //!
+//! **Documentation**: [`docs/modules/server.md#tools`](../../../../docs/modules/server.md#tools)
+//!
 //! - registry.rs - Tool definitions and schema management
 //! - router.rs - Tool dispatch and routing
 

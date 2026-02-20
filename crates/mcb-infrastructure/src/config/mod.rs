@@ -1,4 +1,6 @@
-//! Configuration management with hot-reload capabilities
+//! Configuration Management - Type-safe, layered, Validated
+//!
+//! **Documentation**: [`docs/modules/config.md`](../../../../docs/modules/config.md)
 //!
 //! Provides TOML configuration loading, validation, and hot-reloading
 //! for all system components. This module manages the application's

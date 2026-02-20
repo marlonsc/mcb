@@ -2,9 +2,9 @@
 //!
 //! A Model Context Protocol server for semantic code analysis using vector embeddings.
 //!
-//! **Documentation**: [`docs/modules/api-surface.md`](../../../../docs/modules/api-surface.md) |
-//! **Architecture**: [`ADR-001`](../../../../docs/adr/001-modular-crates-architecture.md),
-//! [`ADR-013`](../../../../docs/adr/013-clean-architecture-crate-separation.md)
+//! **Documentation**: [`docs/modules/api-surface.md`](../../../docs/modules/api-surface.md) |
+//! **Architecture**: [`ADR-001`](../../../docs/adr/001-modular-crates-architecture.md),
+//! [`ADR-013`](../../../docs/adr/013-clean-architecture-crate-separation.md)
 //!
 //! This crate is the public facade — it re-exports domain types and the server entry point.
 //!

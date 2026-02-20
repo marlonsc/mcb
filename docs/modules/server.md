@@ -5,7 +5,7 @@
 **Crate**: `mcb-server`
 **Lines of Code**: ~15,800+
 
-**↔ Code ↔ Docs cross-reference**
+## ↔ Code ↔ Docs cross-reference
 
 | Direction | Link |
 | --------- | ---- |

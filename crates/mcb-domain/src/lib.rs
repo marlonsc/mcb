@@ -1,11 +1,11 @@
-//! # Domain Layer
+//! # MCP Context Browser - Domain Layer
 //!
-//! Core business logic and domain types for semantic code analysis.
-//! Contains only pure domain entities, value objects, and business rules.
+//! **Documentation**: [`docs/modules/domain.md`](../../../docs/modules/domain.md)
 //!
-//! **Documentation**: [`docs/modules/domain.md`](../../../../docs/modules/domain.md) |
-//! **Architecture**: [`ADR-001`](../../../../docs/adr/001-modular-crates-architecture.md),
-//! [`ADR-013`](../../../../docs/adr/013-clean-architecture-crate-separation.md)
+//! Canonical business logic and domain entities.
+//! This crate is the single source of truth for domain concepts.
+//!
+//! **Strategy**: [`ADR-013`](../../../docs/adr/013-clean-architecture-crate-separation.md)
 //!
 //! ## Architecture
 //!

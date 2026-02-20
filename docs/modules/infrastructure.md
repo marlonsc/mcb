@@ -6,7 +6,7 @@
 **Files**: 73
 **Lines of Code**: ~7,860
 
-**↔ Code ↔ Docs cross-reference**
+## ↔ Code ↔ Docs cross-reference
 
 | Direction | Link |
 | --------- | ---- |

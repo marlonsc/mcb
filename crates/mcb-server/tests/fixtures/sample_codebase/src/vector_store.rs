@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 
 /// Trait for vector store providers
-pub trait VectorStoreProvider: Send + Sync {
+pub trait SampleVectorStoreProvider: Send + Sync {
     /// Create a new collection
     fn create_collection(&self, name: &str, dimensions: usize);
 
@@ -49,7 +49,7 @@ impl MilvusVectorStore {
     }
 }
 
-impl VectorStoreProvider for MilvusVectorStore {
+impl SampleVectorStoreProvider for MilvusVectorStore {
     fn create_collection(&self, name: &str, dimensions: usize) {
         // Milvus collection creation
         println!(
@@ -87,7 +87,7 @@ impl InMemoryVectorStore {
     }
 }
 
-impl VectorStoreProvider for InMemoryVectorStore {
+impl SampleVectorStoreProvider for InMemoryVectorStore {
     fn create_collection(&self, _name: &str, _dimensions: usize) {
         // In-memory collection creation
     }

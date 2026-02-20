@@ -1,5 +1,7 @@
 //! Dependency Injection System - dill `IoC` + Handle-based Pattern + linkme Registry
 //!
+//! **Documentation**: [`docs/modules/di.md`](../../../../docs/modules/di.md)
+//!
 //! This module implements dependency injection using:
 //! - **dill Catalog**: `IoC` container for service resolution
 //! - **Handle-based pattern**: Runtime-swappable provider handles with `RwLock`

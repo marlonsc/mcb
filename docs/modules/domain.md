@@ -9,7 +9,7 @@
 **Structs**: 20+
 **Enums**: 8
 
-**↔ Code ↔ Docs cross-reference**
+## ↔ Code ↔ Docs cross-reference
 
 | Direction | Link |
 | --------- | ---- |

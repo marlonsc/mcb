@@ -1,5 +1,7 @@
 //! Domain Entities
 //!
+//! **Documentation**: [`docs/modules/domain.md#core-entities-entities`](../../../../docs/modules/domain.md#core-entities-entities)
+//!
 //! Core business entities that represent the fundamental concepts
 //! of the semantic code search domain. Entities have identity and
 //! encapsulate business rules.

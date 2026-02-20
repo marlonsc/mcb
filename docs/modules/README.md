@@ -7,10 +7,7 @@ This index links all module-level documentation pages.
 - [admin.md](./admin.md)
 - [api-surface.md](./api-surface.md)
 - [application.md](./application.md)
-- [chunking.md](./chunking.md)
 - [config.md](./config.md)
-- [core.md](./core.md)
-- [daemon.md](./daemon.md)
 - [dependencies.md](./dependencies.md)
 - [di.md](./di.md)
 - [domain.md](./domain.md)
@@ -18,6 +15,8 @@ This index links all module-level documentation pages.
 - [metrics.md](./metrics.md)
 - [module-structure.md](./module-structure.md)
 - [providers.md](./providers.md)
+- [project.md](./project.md) (Issue & Project Tracking)
+- [project-cli.md](./project-cli.md) (CLI Reference)
 - [repository.md](./repository.md)
 - [server.md](./server.md)
 - [services.md](./services.md)
@@ -25,4 +24,4 @@ This index links all module-level documentation pages.
 - [sync.md](./sync.md)
 - [validate.md](./validate.md)
 
-## Updated 2026-02-14
+## Updated 2026-02-20 - Removed legacy core.md, daemon.md and consolidated chunking.md into providers.md

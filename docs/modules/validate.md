@@ -5,7 +5,7 @@
 **Crate**: `mcb-validate`
 **Lines of Code**: ~8,000+
 
-**↔ Code ↔ Docs cross-reference**
+## ↔ Code ↔ Docs cross-reference
 
 | Direction | Link |
 | --------- | ---- |

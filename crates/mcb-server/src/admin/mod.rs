@@ -1,5 +1,7 @@
 //! Admin module
 //!
+//! **Documentation**: [`docs/modules/admin.md`](../../../../docs/modules/admin.md)
+//!
 //! Provides administrative endpoints and functionality for server management.
 
 pub mod api;

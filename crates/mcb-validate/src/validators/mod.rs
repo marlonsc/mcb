@@ -1,3 +1,7 @@
+//! Architecture Validators - Clean Architecture, SOLID, Quality, and hygiene
+//!
+//! **Documentation**: [`docs/modules/validate.md#validators-validators`](../../../../docs/modules/validate.md#validators-validators)
+//!
 /// Validation macros (`mk_validators!`, `impl_validator!`, `define_violations!`)
 pub mod macros;
 

@@ -1,35 +1,38 @@
-<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
-# Beads Issue Tracking System - Complete Data Model Documentation
+# Project & Issue Management Module
+
+**Source**: `crates/mcb-domain/src/entities/project.rs` and `crates/mcb-domain/src/entities/issue.rs`
+**Crate**: `mcb-domain` / `mcb-server`
+
+## ↔ Code ↔ Docs cross-reference
+
+|Direction|Link|
+|---------|----|
+|Entity (Project)|[`crates/mcb-domain/src/entities/project.rs`](../../crates/mcb-domain/src/entities/project.rs)|
+|Entity (Issue)|[`crates/mcb-domain/src/entities/issue.rs`](../../crates/mcb-domain/src/entities/issue.rs)|
+|Repository (Project)|[`crates/mcb-providers/src/database/sqlite/project_repository.rs`](../../crates/mcb-providers/src/database/sqlite/project_repository.rs)|
+|Repository (Issue)|[`crates/mcb-providers/src/database/sqlite/issue_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/issue_entity_repository.rs)|
+|ADR|[`ADR-047`](../adr/047-project-architecture.md)|
+|CLI Guide|[`project-cli.md`](./project-cli.md)|
 
 ## Overview
 
-Beads is an AI-native issue tracking system designed to live in Git repositories. It uses a hybrid storage model combining SQLite (primary) and JSONL (export/sync format) to track issues, dependencies, and metadata.
-
-**Repository**: [GitHub.com/steveyegge/beads](https://github.com/steveyegge/beads)
+MCB implements an AI-native issue tracking and project coordination system (internally known as **Beads**). It uses a hybrid storage model combining SQLite (primary performance) and JSONL (git-tracked sync format) to manage issues, dependencies, and project scope.
 
 ---
 
-## 1. Directory Structure (.beads/)
+## Directory Structure (`.mcp-project/`)
 
 ```text
-.beads/
-├── beads.db              # SQLite database (primary storage)
-├── beads.db-shm         # SQLite shared memory file (WAL mode)
-├── beads.db-wal         # SQLite write-ahead log
-├── issues.jsonl         # JSONL export (git-tracked, synced via bd sync)
-├── interactions.jsonl   # Interaction/comment history (JSONL)
-├── config.yaml          # Configuration file (git-tracked)
-├── metadata.json        # Database metadata
-├── daemon.lock          # Daemon lock file (runtime only)
-├── daemon.log           # Daemon log file (runtime only)
-├── daemon.pid           # Daemon process ID (runtime only)
-├── bd.sock              # Unix socket for daemon RPC (runtime only)
-├── last-touched         # Timestamp of last operation
-├── .local_version       # Local version tracking
-├── .gitignore           # Git ignore rules
-├── README.md            # Beads documentation
-└── export-state/        # Export state tracking
-    └── <hash>.json      # Export state metadata
+.mcp-project/
+├── project.db            # SQLite database (primary storage)
+├── project.db-shm        # SQLite shared memory file (WAL mode)
+├── project.db-wal        # SQLite write-ahead log
+├── issues.jsonl          # JSONL export (git-tracked)
+├── interactions.jsonl    # Interaction/comment history (JSONL)
+├── config.yaml           # Configuration file (git-tracked)
+├── metadata.json         # Database metadata
+├── daemon.log            # Daemon log file
+└── .gitignore            # Git ignore rules
 ```
 
 ### Git Tracking
@@ -43,63 +46,63 @@ Beads is an AI-native issue tracking system designed to live in Git repositories
 
 ### 2.1 Core Issue Fields (SQLite `issues` Table)
 
-| Field | Type | Constraints | Description |
-| ------- | ------ | ------------- | ------------- |
-| `id` | TEXT | PRIMARY KEY | Issue ID (e.g., `mcb-123`, `bd-xyz`) |
-| `content_hash` | TEXT |  | Hash of issue content for change detection |
-| `title` | TEXT | NOT NULL, ≤500 chars | Issue title |
-| `description` | TEXT | DEFAULT '' | Full description |
-| `design` | TEXT | DEFAULT '' | Design notes/specification |
-| `acceptance_criteria` | TEXT | DEFAULT '' | Acceptance criteria |
-| `notes` | TEXT | DEFAULT '' | Additional notes |
-| `status` | TEXT | DEFAULT 'open' | Status (see 2.2) |
-| `priority` | INTEGER | 0-4, DEFAULT 2 | Priority level (0=critical, 4=backlog) |
-| `issue_type` | TEXT | DEFAULT 'task' | Type (see 2.3) |
-| `assignee` | TEXT |  | Assigned person |
-| `estimated_minutes` | INTEGER |  | Time estimate |
-| `created_at` | DATETIME | NOT NULL | Creation timestamp |
-| `created_by` | TEXT | DEFAULT '' | Creator name |
-| `owner` | TEXT | DEFAULT '' | Owner email/identifier |
-| `updated_at` | DATETIME | NOT NULL | Last update timestamp |
-| `closed_at` | DATETIME |  | Closure timestamp (NULL if open) |
-| `closed_by_session` | TEXT | DEFAULT '' | Session ID that closed it |
-| `close_reason` | TEXT | DEFAULT '' | Reason for closure |
-| `external_ref` | TEXT | UNIQUE | External reference (e.g., `gh-123`, `jira-ABC`) |
-| `compaction_level` | INTEGER | DEFAULT 0 | Compaction level for history |
-| `compacted_at` | DATETIME |  | Compaction timestamp |
-| `compacted_at_commit` | TEXT |  | Git commit of compaction |
-| `original_size` | INTEGER |  | Original size before compaction |
-| `deleted_at` | DATETIME |  | Deletion timestamp |
-| `deleted_by` | TEXT | DEFAULT '' | Who deleted it |
-| `delete_reason` | TEXT | DEFAULT '' | Reason for deletion |
-| `original_type` | TEXT | DEFAULT '' | Original type before change |
-| `sender` | TEXT | DEFAULT '' | Sender (for messages) |
-| `ephemeral` | INTEGER | DEFAULT 0 | 1 if ephemeral (not exported) |
-| `pinned` | INTEGER | DEFAULT 0 | 1 if pinned |
-| `is_template` | INTEGER | DEFAULT 0 | 1 if template molecule |
-| `crystallizes` | INTEGER | DEFAULT 0 | 1 if crystallizes work |
-| `mol_type` | TEXT | DEFAULT '' | Molecule type (swarm, patrol, work) |
-| `work_type` | TEXT | DEFAULT 'Mutex' | Work type (Mutex, open_competition) |
-| `quality_score` | REAL | 0.0-1.0 | Quality score (set by refineries) |
-| `source_system` | TEXT | DEFAULT '' | Federation source system |
-| `event_kind` | TEXT | DEFAULT '' | Event kind (for event issues) |
-| `actor` | TEXT | DEFAULT '' | Actor URI (for events) |
-| `target` | TEXT | DEFAULT '' | Target URI (for events) |
-| `payload` | TEXT | DEFAULT '' | Event payload (JSON) |
-| `source_repo` | TEXT | DEFAULT '.' | Source repository |
-| `await_type` | TEXT |  | Await type (gate coordination) |
-| `await_id` | TEXT |  | Await ID (gate coordination) |
-| `timeout_ns` | INTEGER |  | Timeout in nanoseconds |
-| `waiters` | TEXT |  | Waiters list (JSON) |
-| `hook_bead` | TEXT | DEFAULT '' | Hook bead ID |
-| `role_bead` | TEXT | DEFAULT '' | Role bead ID |
-| `agent_state` | TEXT | DEFAULT '' | Agent state (JSON) |
-| `last_activity` | DATETIME |  | Last activity timestamp |
-| `role_type` | TEXT | DEFAULT '' | Role type |
-| `rig` | TEXT | DEFAULT '' | Rig name (partition) |
-| `due_at` | DATETIME |  | Due date/time |
-| `defer_until` | DATETIME |  | Defer until date/time |
-| `metadata` | TEXT | DEFAULT '{}' | Custom metadata (JSON) |
+|Field|Type|Constraints|Description|
+|-------|------|-------------|-------------|
+|`id`|TEXT|PRIMARY KEY|Issue ID (e.g., `mcb-123`, `bd-xyz`)|
+|`content_hash`|TEXT||Hash of issue content for change detection|
+|`title`|TEXT|NOT NULL, ≤500 chars|Issue title|
+|`description`|TEXT|DEFAULT ''|Full description|
+|`design`|TEXT|DEFAULT ''|Design notes/specification|
+|`acceptance_criteria`|TEXT|DEFAULT ''|Acceptance criteria|
+|`notes`|TEXT|DEFAULT ''|Additional notes|
+|`status`|TEXT|DEFAULT 'open'|Status (see 2.2)|
+|`priority`|INTEGER|0-4, DEFAULT 2|Priority level (0=critical, 4=backlog)|
+|`issue_type`|TEXT|DEFAULT 'task'|Type (see 2.3)|
+|`assignee`|TEXT||Assigned person|
+|`estimated_minutes`|INTEGER||Time estimate|
+|`created_at`|DATETIME|NOT NULL|Creation timestamp|
+|`created_by`|TEXT|DEFAULT ''|Creator name|
+|`owner`|TEXT|DEFAULT ''|Owner email/identifier|
+|`updated_at`|DATETIME|NOT NULL|Last update timestamp|
+|`closed_at`|DATETIME||Closure timestamp (NULL if open)|
+|`closed_by_session`|TEXT|DEFAULT ''|Session ID that closed it|
+|`close_reason`|TEXT|DEFAULT ''|Reason for closure|
+|`external_ref`|TEXT|UNIQUE|External reference (e.g., `gh-123`, `jira-ABC`)|
+|`compaction_level`|INTEGER|DEFAULT 0|Compaction level for history|
+|`compacted_at`|DATETIME||Compaction timestamp|
+|`compacted_at_commit`|TEXT||Git commit of compaction|
+|`original_size`|INTEGER||Original size before compaction|
+|`deleted_at`|DATETIME||Deletion timestamp|
+|`deleted_by`|TEXT|DEFAULT ''|Who deleted it|
+|`delete_reason`|TEXT|DEFAULT ''|Reason for deletion|
+|`original_type`|TEXT|DEFAULT ''|Original type before change|
+|`sender`|TEXT|DEFAULT ''|Sender (for messages)|
+|`ephemeral`|INTEGER|DEFAULT 0|1 if ephemeral (not exported)|
+|`pinned`|INTEGER|DEFAULT 0|1 if pinned|
+|`is_template`|INTEGER|DEFAULT 0|1 if template molecule|
+|`crystallizes`|INTEGER|DEFAULT 0|1 if crystallizes work|
+|`mol_type`|TEXT|DEFAULT ''|Molecule type (swarm, patrol, work)|
+|`work_type`|TEXT|DEFAULT 'Mutex'|Work type (Mutex, open_competition)|
+|`quality_score`|REAL|0.0-1.0|Quality score (set by refineries)|
+|`source_system`|TEXT|DEFAULT ''|Federation source system|
+|`event_kind`|TEXT|DEFAULT ''|Event kind (for event issues)|
+|`actor`|TEXT|DEFAULT ''|Actor URI (for events)|
+|`target`|TEXT|DEFAULT ''|Target URI (for events)|
+|`payload`|TEXT|DEFAULT ''|Event payload (JSON)|
+|`source_repo`|TEXT|DEFAULT '.'|Source repository|
+|`await_type`|TEXT||Await type (gate coordination)|
+|`await_id`|TEXT||Await ID (gate coordination)|
+|`timeout_ns`|INTEGER||Timeout in nanoseconds|
+|`waiters`|TEXT||Waiters list (JSON)|
+|`hook_bead`|TEXT|DEFAULT ''|Hook bead ID|
+|`role_bead`|TEXT|DEFAULT ''|Role bead ID|
+|`agent_state`|TEXT|DEFAULT ''|Agent state (JSON)|
+|`last_activity`|DATETIME||Last activity timestamp|
+|`role_type`|TEXT|DEFAULT ''|Role type|
+|`rig`|TEXT|DEFAULT ''|Rig name (partition)|
+|`due_at`|DATETIME||Due date/time|
+|`defer_until`|DATETIME||Defer until date/time|
+|`metadata`|TEXT|DEFAULT '{}'|Custom metadata (JSON)|
 
 ### 2.2 Status Values
 

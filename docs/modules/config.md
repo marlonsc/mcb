@@ -6,13 +6,22 @@
 **Files**: 3+
 **Lines of Code**: ~1,000
 
+## ↔ Code ↔ Docs cross-reference
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-infrastructure/src/config/mod.rs`](../../crates/mcb-infrastructure/src/config/mod.rs) links here |
+| Docs → Code | [`crates/mcb-infrastructure/src/config/`](../../crates/mcb-infrastructure/src/config/) — Config logic |
+| Env Vars | [`ENVIRONMENT_VARIABLES.md`](../configuration/ENVIRONMENT_VARIABLES.md) (**Canonical SSOT**) |
+| ADR | [`ADR-041`](../adr/041-modular-config-system.md) |
+
 ## Overview
 
 Application configuration management with type-safe structures, environment variable overrides, and validation.
 
 ### Key Components
 
-### Configuration Types (`types.rs`)
+### Configuration Types ([`types.rs`](../../crates/mcb-infrastructure/src/config/types.rs))
 
 Hierarchical configuration structures:
 
@@ -22,14 +31,9 @@ Hierarchical configuration structures:
 - `CacheConfig` - Cache configuration
 - `ProviderConfig` - Provider settings
 
-### Configuration Loader (`loader.rs`)
+### Configuration Loader ([`loader.rs`](../../crates/mcb-infrastructure/src/config/loader.rs))
 
-Multi-source configuration loading:
-
-- File-based configuration (TOML, JSON)
-- Environment variable overrides
-- Validation and defaults
-- Hot-reload support
+Multi-source configuration loading.
 
 ## File Structure
 
@@ -65,13 +69,9 @@ pub struct AuthConfig {
 
 ## Environment Variables
 
-| Variable | Description | Default |
-| ---------- | ------------- | --------- |
-| `MCP__SERVER__NETWORK__PORT` | Server port | 3000 |
-| `MCP__SERVER__NETWORK__HOST` | Server host | 0.0.0.0 |
-| `MCP_JWT_SECRET` | JWT signing secret | (required) |
-| `MCP_CACHE_ENABLED` | Enable caching | true |
-| `MCP_LOG_FORMAT` | Log format (JSON/text) | text |
+The full matrix of environment variables is documented in the canonical **Single Source of Truth**:
+
+👉 **[docs/configuration/ENVIRONMENT_VARIABLES.md](../configuration/ENVIRONMENT_VARIABLES.md)**
 
 ## Key Exports
 

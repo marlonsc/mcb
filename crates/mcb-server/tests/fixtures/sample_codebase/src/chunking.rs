@@ -15,7 +15,7 @@ pub struct CodeChunk {
 }
 
 /// Language chunking provider trait
-pub trait LanguageChunkingProvider: Send + Sync {
+pub trait SampleLanguageChunkingProvider: Send + Sync {
     /// Chunk source code into pieces
     fn chunk_code(&self, content: &str, language: &str) -> Vec<CodeChunk>;
 
@@ -54,7 +54,7 @@ impl UniversalLanguageChunker {
     }
 }
 
-impl LanguageChunkingProvider for UniversalLanguageChunker {
+impl SampleLanguageChunkingProvider for UniversalLanguageChunker {
     fn chunk_code(&self, content: &str, language: &str) -> Vec<CodeChunk> {
         let nodes = self.parse_with_tree_sitter(content, language);
         let boundaries = self.split_by_semantic_boundaries(content, &nodes);
