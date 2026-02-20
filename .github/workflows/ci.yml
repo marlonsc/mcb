@@ -199,6 +199,8 @@ jobs:
         with:
           save-if: false
       - run: make validate
+        env:
+          RUST_MIN_STACK: 16777216
       - name: Check Provider Traits Location
         run: |
           VIOLATIONS=$(
