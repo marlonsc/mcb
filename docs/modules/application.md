@@ -6,7 +6,14 @@
 **Files**: 11 files
 **Lines of Code**: ~2,000
 
-**Project links**: See `docs/architecture/ARCHITECTURE.md`, `docs/modules/domain.md`, `docs/developer/ROADMAP.md`.
+**↔ Code ↔ Docs cross-reference**
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-application/src/lib.rs`](../../crates/mcb-application/src/lib.rs) links here |
+| Docs → Code | [`crates/mcb-application/src/lib.rs`](../../crates/mcb-application/src/lib.rs) — crate root |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) · [`ADR-029`](../adr/029-hexagonal-architecture-dill.md) |
+| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
 
 ## Overview
 
@@ -16,15 +23,15 @@ The application module implements use-case services and decorators following Cle
 
 ### Use Cases (`use_cases/`)
 
-- `agent_session_service.rs` - Agent session lifecycle use cases
-- `context_service.rs` - Embedding and vector operations
-- `indexing_service.rs` - Codebase indexing and processing
-- `memory_service.rs` - Observation/memory use cases
-- `search_service.rs` - Query processing and ranking
+- [`agent_session_service.rs`](../../crates/mcb-application/src/use_cases/agent_session_service.rs) - Agent session lifecycle use cases
+- [`context_service.rs`](../../crates/mcb-application/src/use_cases/context_service.rs) - Embedding and vector operations
+- [`indexing_service.rs`](../../crates/mcb-application/src/use_cases/indexing_service.rs) - Codebase indexing and processing
+- [`memory_service.rs`](../../crates/mcb-application/src/use_cases/memory_service.rs) - Observation/memory use cases
+- [`search_service.rs`](../../crates/mcb-application/src/use_cases/search_service.rs) - Query processing and ranking
 
 ### Decorators (`decorators/`)
 
-- `instrumented_embedding.rs` - Embedding provider metrics instrumentation
+- [`instrumented_embedding.rs`](../../crates/mcb-application/src/decorators/instrumented_embedding.rs) - Embedding provider metrics instrumentation
 
 ### Root Files
 

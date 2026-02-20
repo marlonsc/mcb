@@ -16,7 +16,7 @@
 
 use std::path::PathBuf;
 
-use crate::constants::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
+use crate::constants::defaults::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 use crate::traits::violation::{Violation, ViolationCategory};
 use mcb_domain::ports::{ComplexityAnalyzer, DeadCodeDetector, TdgScorer};
 

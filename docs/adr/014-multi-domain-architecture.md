@@ -125,7 +125,7 @@ v0.1.1 (Completed):
 
 v0.3.0 (Planned):
 
-- [ ] Create `crates/mcb-application/src/ports/analysis/` (analysis domain ports)
+- [ ] Create `crates/mcb-domain/src/ports/analysis/` (analysis domain ports; per ADR-029, ports are in mcb-domain)
 - [ ] Create `crates/mcb-providers/src/analyzers/` (PMAT adapters)
 - [ ] Define `AnalysisInterface` trait
 - [ ] Port PMAT complexity/TDG/SATD algorithms
@@ -135,6 +135,14 @@ v0.5.0 (Planned):
 - [ ] Define `QualityInterface` trait
 - [ ] Define `GitInterface` trait
 - [ ] Implement quality and git domain services
+
+## Canonical References
+
+> **Note**: This ADR is a historical decision record. For current architecture
+> details, consult the normative documents listed below.
+
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
 
 ## Related ADRs
 

@@ -1,5 +1,7 @@
 //! Organization entity — the root tenant for multi-tenant isolation.
-
+//!
+//! **Documentation**: [`docs/modules/domain.md#core-entities-entities`](../../../../docs/modules/domain.md#core-entities-entities)
+//!
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

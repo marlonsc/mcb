@@ -2,6 +2,10 @@
 //!
 //! MCP protocol server implementation for semantic code analysis using vector embeddings.
 //!
+//! **Documentation**: [`docs/modules/server.md`](../../../../docs/modules/server.md) |
+//! **Protocol**: [`ADR-033`](../../../../docs/adr/033-mcp-handler-consolidation.md),
+//! [`ADR-011`](../../../../docs/adr/011-http-transport-request-response-pattern.md)
+//!
 //! For user guides and tutorials, see the [online documentation](https://marlonsc.github.io/mcb/).
 //!
 //! ## Features

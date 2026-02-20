@@ -5,6 +5,15 @@
 **Crate**: `mcb-validate`
 **Lines of Code**: ~8,000+
 
+**↔ Code ↔ Docs cross-reference**
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-validate/src/lib.rs`](../../crates/mcb-validate/src/lib.rs) links here |
+| Docs → Code | [`crates/mcb-validate/src/lib.rs`](../../crates/mcb-validate/src/lib.rs) — crate root |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) · [`ADR-020`](../adr/020-testing-strategy-integration.md) |
+| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
+
 ## Overview
 
 The validation module provides comprehensive architecture enforcement and code quality validation for the Memory Context Browser project. It implements a multi-phase validation pipeline that ensures Clean Architecture compliance, code quality standards, and architectural decision record (ADR) adherence.

@@ -1,4 +1,5 @@
-//! Code Chunk Entity
+//!
+//! **Documentation**: [`docs/modules/domain.md#core-entities-entities`](../../../../docs/modules/domain.md#core-entities-entities)
 //!
 //! The core domain entity representing a semantically meaningful segment
 //! of source code. Code chunks are the fundamental units of semantic indexing

@@ -1,5 +1,7 @@
 //! Use Cases - Application Layer Services
 //!
+//! **Documentation**: [`docs/modules/application.md#use-cases-use_cases`](../../../../docs/modules/application.md#use-cases-use_cases)
+//!
 //! This module contains the use case implementations that orchestrate
 //! business logic and coordinate between domain entities and external ports.
 //!

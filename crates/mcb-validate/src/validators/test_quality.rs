@@ -213,7 +213,7 @@ impl TestQualityValidator {
                     let prev_line = lines[i - 1];
                     prev_line.contains("Requires")
                         || prev_line.contains("requires")
-                        || prev_line.contains(crate::constants::PENDING_LABEL_TODO)
+                        || prev_line.contains(crate::constants::labels::PENDING_LABEL_TODO)
                         || prev_line.contains("WIP")
                 };
 

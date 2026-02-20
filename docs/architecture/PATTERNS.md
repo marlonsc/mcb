@@ -130,6 +130,29 @@ MCB uses a layered testing approach:
 - **Test layout**: Integration tests in `tests/` directory (not inline `#[cfg(test)]`). Test files follow `tests/unit/*_tests.rs`, `tests/integration/*_tests.rs` pattern.
 - **Tools**: `rstest` (parameterized), `mockall` (auto-mocks), `insta` (snapshots), `tempfile` (temp dirs)
 
+## v0.2.1 No-Feature Standardization Contract
+
+This cycle is architecture optimization only.
+
+### Allowed Changes
+
+- Deduplicate declarations and remove redundant conversions.
+- Normalize API naming (`id` is identifier; do not overload `name` as ID).
+- Tighten validation and fail early.
+
+### Disallowed Changes
+
+- New features (endpoints/commands/providers/config surface).
+- Compatibility shims and dual-path behavior.
+
+### Banned Patterns (fast-fail)
+
+- Raw `String`/`Uuid` as domain IDs where strong ID types exist.
+- Port traits declared outside `mcb-domain/src/ports/**`.
+- DTO-to-domain `From`/`Into` mapping inside domain modules.
+- API responses forwarding internal `.to_string()` errors directly.
+- Legacy alias modules kept only for backward compatibility.
+
 ## Key Patterns Summary
 
 | Pattern | Key Location | When to Use |

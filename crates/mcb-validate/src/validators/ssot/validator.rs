@@ -18,6 +18,7 @@ const FORBIDDEN_SCHEMA_IMPORT_PATTERN: &str =
     r"\b(?:pub\s+)?use\s+[^;]*\b(ProjectSchema|MemorySchema)\b";
 const FORBIDDEN_ROOT_SCHEMA_PATH_PATTERN: &str = r"\bmcb_domain::(Schema|SchemaDdlGenerator|ColumnDef|ColumnType|TableDef|IndexDef|FtsDef|ForeignKeyDef|UniqueConstraintDef|COL_OBSERVATION_TYPE)\b";
 const FORBIDDEN_ROOT_SCHEMA_IMPORT_PATTERN: &str = r"\b(?:pub\s+)?use\s+mcb_domain::\{[^}]*\b(Schema|SchemaDdlGenerator|ColumnDef|ColumnType|TableDef|IndexDef|FtsDef|ForeignKeyDef|UniqueConstraintDef|COL_OBSERVATION_TYPE)\b[^}]*\}";
+const FORBIDDEN_RAW_ID_FIELD_PATTERN: &str = r"\bpub\s+([a-z_][a-z0-9_]*)\s*:\s*(String|Uuid)\b";
 
 /// Validator for single-source-of-truth invariants.
 pub struct SsotValidator {
@@ -71,6 +72,7 @@ impl SsotValidator {
         let forbidden_root_schema_path_pattern = compile_regex(FORBIDDEN_ROOT_SCHEMA_PATH_PATTERN)?;
         let forbidden_root_schema_import_pattern =
             compile_regex(FORBIDDEN_ROOT_SCHEMA_IMPORT_PATTERN)?;
+        let forbidden_raw_id_field_pattern = compile_regex(FORBIDDEN_RAW_ID_FIELD_PATTERN)?;
 
         files.sort_by(|a, b| a.0.cmp(&b.0));
 
@@ -145,6 +147,29 @@ impl SsotValidator {
                         });
                     }
                 }
+
+                if is_domain_model_file(path) {
+                    for cap in forbidden_raw_id_field_pattern.captures_iter(line) {
+                        let Some(field_name_match) = cap.get(1) else {
+                            continue;
+                        };
+                        let Some(field_type_match) = cap.get(2) else {
+                            continue;
+                        };
+
+                        if !field_name_match.as_str().ends_with("id") {
+                            continue;
+                        }
+
+                        violations.push(SsotViolation::ForbiddenRawIdFieldType {
+                            file: path.clone(),
+                            line: line_index + 1,
+                            field_name: field_name_match.as_str().to_owned(),
+                            field_type: field_type_match.as_str().to_owned(),
+                            severity: Severity::Error,
+                        });
+                    }
+                }
             }
         }
 
@@ -182,6 +207,11 @@ impl SsotValidator {
 
         Ok(violations)
     }
+}
+
+fn is_domain_model_file(path: &std::path::Path) -> bool {
+    let path = path.to_string_lossy().replace('\\', "/");
+    path.contains("mcb-domain/src/entities/") || path.contains("mcb-domain/src/value_objects/")
 }
 
 impl Validator for SsotValidator {

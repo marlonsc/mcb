@@ -1,5 +1,7 @@
 //! Domain Port Interfaces
 //!
+//! **Documentation**: [`docs/modules/domain.md#port-interfaces-domain-boundaries`](../../../../docs/modules/domain.md#port-interfaces-domain-boundaries)
+//!
 //! Defines all boundary contracts between domain and external layers.
 //! Ports are organized by their purpose and enable dependency injection
 //! with clear separation of concerns.

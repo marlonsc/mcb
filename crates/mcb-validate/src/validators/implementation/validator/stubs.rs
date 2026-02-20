@@ -11,7 +11,7 @@ pub fn validate_stub_macros(
     files: &[(PathBuf, String)],
     fn_pattern: &Regex,
 ) -> Result<Vec<ImplementationViolation>> {
-    use crate::constants::STUB_PANIC_LABEL;
+    use crate::constants::labels::STUB_PANIC_LABEL;
     let stub_pattern_ids = [
         ("IMPL001.stub_todo", "todo"),
         ("IMPL001.stub_unimplemented", "unimplemented"),

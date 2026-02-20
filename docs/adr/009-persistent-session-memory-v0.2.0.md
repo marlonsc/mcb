@@ -25,8 +25,7 @@ implementation_status: Partial
 > Not yet implemented. Target crate structure for v0.2.0:
 >
 > - `crates/mcb-domain/src/memory.rs` - Memory domain types
-> - `crates/mcb-application/src/ports/providers/memory.rs` - MemoryProvider port
->   trait
+> - `crates/mcb-domain/src/ports/providers/memory.rs` - MemoryProvider port trait (see ADR-029)
 > - `crates/mcb-application/src/use_cases/session.rs` - Session manager service
 > - `crates/mcb-application/src/use_cases/memory_search.rs` - Memory search
 >   service
@@ -36,6 +35,11 @@ implementation_status: Partial
 > - `crates/mcb-server/src/handlers/memory_tools.rs` - MCP tool handlers
 > - `crates/mcb-infrastructure/src/config/memory.rs` - Memory configuration
 > - Requires ADR-008 git integration for git-tagged observations
+>
+> **⚠ Architecture note (2026-02-20)**: Code paths referencing
+> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029,
+> all port traits are defined in `mcb-domain/src/ports/providers/`. When
+> implementing, use the corrected locations.
 
 ## Context
 
@@ -333,7 +337,7 @@ pub struct TimelineContext {
 
 ### Phase 2: Memory Provider Port
 
-**Create**: `crates/mcb-application/src/ports/providers/memory.rs`
+**Create/Use**: `crates/mcb-domain/src/ports/providers/` (canonical provider port location)
 
 ```rust
 use async_trait::async_trait;
@@ -1323,7 +1327,7 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 | File | Purpose |
 | ------ | --------- |
 | `crates/mcb-domain/src/memory.rs` | Memory domain types |
-| `crates/mcb-application/src/ports/providers/memory.rs` | MemoryProvider trait |
+| `crates/mcb-domain/src/ports/providers/` | Memory-related provider port (canonical location) |
 | `crates/mcb-providers/src/memory/mod.rs` | Memory providers module |
 | `crates/mcb-providers/src/memory/sqlite_memory.rs` | SQLite implementation |
 | `crates/mcb-application/src/use_cases/session.rs` | Session manager service |
@@ -1339,7 +1343,7 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 | ------ | -------- |
 | `crates/mcb-providers/Cargo.toml` | Add `sqlx` dependency |
 | `crates/mcb-domain/src/mod.rs` | Export memory module |
-| `crates/mcb-application/src/ports/providers/mod.rs` | Export MemoryProvider |
+| `crates/mcb-domain/src/ports/providers/mod.rs` | Export provider ports from canonical domain module |
 | `crates/mcb-providers/src/lib.rs` | Export memory providers |
 | `crates/mcb-application/src/use_cases/mod.rs` | Export session, memory_search, context_injection |
 | `crates/mcb-server/src/mcp_server.rs` | Register memory tools |
@@ -1433,6 +1437,17 @@ fn reciprocal_rank_fusion(
 2. **Vector retrieval**: `VectorStoreProvider::search_similar("memories", query_embedding, limit)`
 3. **Fusion**: RRF merge with k=60
 4. **Return**: `ObservationIndex` with fused scores
+
+## Canonical References
+
+> **Note**: This ADR is a historical decision record. For current architecture
+> details, consult the normative documents below. Code paths referencing
+> `mcb-application/src/ports/providers/` are outdated; per ADR-029, all port
+> traits now reside in `mcb-domain/src/ports/providers/`.
+
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
+- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Full system architecture (normative)
 
 ## Related ADRs
 

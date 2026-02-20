@@ -4,7 +4,14 @@
 **Source**: `crates/mcb-providers/src/`
 **Crate**: `mcb-providers`
 
-**Project links**: See `docs/architecture/ARCHITECTURE.md` and `docs/developer/ROADMAP.md` for provider architecture and v0.2.1 roadmap alignment.
+**↔ Code ↔ Docs cross-reference**
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-providers/src/lib.rs`](../../crates/mcb-providers/src/lib.rs) links here |
+| Docs → Code | [`crates/mcb-providers/src/lib.rs`](../../crates/mcb-providers/src/lib.rs) — crate root |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-030`](../adr/030-multi-provider-strategy.md) · [`ADR-003`](../adr/003-unified-provider-architecture.md) |
+| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
 
 ## Overview
 
@@ -28,14 +35,14 @@ pub trait EmbeddingProvider: Send + Sync {
 }
 ```
 
-| Provider | Protocol | Auth | Models (dimensions) | Env Key Suffix | Use Case |
-| ---------- | ---------- | ------ | --------------------- | ---------------- | ---------- |
-| OpenAI | HTTP REST | Bearer | 3-small (1536), 3-large (3072), ada-002 (1536) | `OPENAI__API_KEY` | Production |
-| VoyageAI | HTTP REST | Bearer | voyage-code-3 (1024), voyage-3 (1024) | `VOYAGEAI__API_KEY` | Code-specialized |
-| Ollama | HTTP REST | None | nomic (768), minilm (384), mxbai (1024) | `OLLAMA__BASE_URL` | Self-hosted |
-| Gemini | HTTP REST | API key | text-embedding-004 (768) | `GEMINI__API_KEY` | Alternative |
-| FastEmbed | Local ONNX | None | AllMiniLML6V2 (384) — Actor pattern | Model enum | Privacy-first |
-| Anthropic | HTTP REST | x-api-key | voyage-code-3 via VoyageAI (1024) | `ANTHROPIC__API_KEY` | Optional |
+| Provider | Source | Protocol | Auth | Models (dimensions) | Env Key Suffix | Use Case |
+| ---------- | ------ | ---------- | ------ | --------------------- | ---------------- | ---------- |
+| OpenAI | [`openai.rs`](../../crates/mcb-providers/src/embedding/openai.rs) | HTTP REST | Bearer | 3-small (1536), 3-large (3072), ada-002 (1536) | `OPENAI__API_KEY` | Production |
+| VoyageAI | [`voyageai.rs`](../../crates/mcb-providers/src/embedding/voyageai.rs) | HTTP REST | Bearer | voyage-code-3 (1024), voyage-3 (1024) | `VOYAGEAI__API_KEY` | Code-specialized |
+| Ollama | [`ollama.rs`](../../crates/mcb-providers/src/embedding/ollama.rs) | HTTP REST | None | nomic (768), minilm (384), mxbai (1024) | `OLLAMA__BASE_URL` | Self-hosted |
+| Gemini | [`gemini.rs`](../../crates/mcb-providers/src/embedding/gemini.rs) | HTTP REST | API key | text-embedding-004 (768) | `GEMINI__API_KEY` | Alternative |
+| FastEmbed | [`fastembed.rs`](../../crates/mcb-providers/src/embedding/fastembed.rs) | Local ONNX | None | AllMiniLML6V2 (384) — Actor pattern | Model enum | Privacy-first |
+| Anthropic | [`anthropic.rs`](../../crates/mcb-providers/src/embedding/anthropic.rs) | HTTP REST | x-api-key | voyage-code-3 via VoyageAI (1024) | `ANTHROPIC__API_KEY` | Optional |
 
 All env keys are prefixed with `MCP__PROVIDERS__EMBEDDING__CONFIGS__`. Default timeout: 30s.
 
@@ -55,13 +62,13 @@ pub trait VectorStoreProvider: Send + Sync {
 }
 ```
 
-| Provider | Protocol | Auth | Algorithm | Use Case |
-| ---------- | ---------- | ------ | ----------- | ---------- |
-| EdgeVec | In-process | None | HNSW (M=16, EF=100) | Dev/test, single-instance |
-| Milvus | gRPC | Optional | IVF_FLAT (NLIST=128) | Production cloud |
-| Qdrant | HTTP REST | API key | HNSW configurable | Production cloud |
-| Pinecone | HTTP REST | API key | Pre-created index | Managed cloud |
-| Encrypted | Wraps any | N/A | AES-256-GCM decorator | Security-sensitive |
+| Provider | Source | Protocol | Auth | Algorithm | Use Case |
+| ---------- | ------ | ---------- | ------ | ----------- | ---------- |
+| EdgeVec | [`edgevec.rs`](../../crates/mcb-providers/src/vector_store/edgevec.rs) | In-process | None | HNSW (M=16, EF=100) | Dev/test, single-instance |
+| Milvus | [`milvus.rs`](../../crates/mcb-providers/src/vector_store/milvus.rs) | gRPC | Optional | IVF_FLAT (NLIST=128) | Production cloud |
+| Qdrant | [`qdrant.rs`](../../crates/mcb-providers/src/vector_store/qdrant.rs) | HTTP REST | API key | HNSW configurable | Production cloud |
+| Pinecone | [`pinecone.rs`](../../crates/mcb-providers/src/vector_store/pinecone.rs) | HTTP REST | API key | Pre-created index | Managed cloud |
+| Encrypted | [`encrypted.rs`](../../crates/mcb-providers/src/vector_store/encrypted.rs) | Wraps any | N/A | AES-256-GCM decorator | Security-sensitive |
 
 ## Database (`database/sqlite/`)
 
@@ -72,15 +79,15 @@ pub trait VectorStoreProvider: Send + Sync {
 
 **Repository implementations** (7 total):
 
-| Repository | Domain Port | Purpose |
-| ----------- | ------------- | --------- |
-| MemoryRepo | `MemoryRepository` | Observation storage + FTS search |
-| AgentRepo | `AgentRepository` | Agent session persistence + query |
-| OrgRepo | `OrgEntityRepository` | Multi-tenant org data |
-| VcsRepo | `VcsEntityRepository` | Repository/branch persistence |
-| PlanRepo | `PlanEntityRepository` | Plan version/review persistence |
-| IssueRepo | `IssueEntityRepository` | Issue tracking persistence |
-| ProjectRepo | `ProjectRepository` | Project CRUD |
+| Repository | Source | Domain Port | Purpose |
+| ----------- | ------ | ------------- | --------- |
+| MemoryRepo | [`memory.rs`](../../crates/mcb-providers/src/database/sqlite/memory.rs) | `MemoryRepository` | Observation storage + FTS search |
+| AgentRepo | [`agent.rs`](../../crates/mcb-providers/src/database/sqlite/agent.rs) | `AgentRepository` | Agent session persistence + query |
+| OrgRepo | [`org.rs`](../../crates/mcb-providers/src/database/sqlite/org.rs) | `OrgEntityRepository` | Multi-tenant org data |
+| VcsRepo | [`vcs.rs`](../../crates/mcb-providers/src/database/sqlite/vcs.rs) | `VcsEntityRepository` | Repository/branch persistence |
+| PlanRepo | [`plan.rs`](../../crates/mcb-providers/src/database/sqlite/plan.rs) | `PlanEntityRepository` | Plan version/review persistence |
+| IssueRepo | [`issue.rs`](../../crates/mcb-providers/src/database/sqlite/issue.rs) | `IssueEntityRepository` | Issue tracking persistence |
+| ProjectRepo | [`project.rs`](../../crates/mcb-providers/src/database/sqlite/project.rs) | `ProjectRepository` | Project CRUD |
 
 ## Hybrid Search (`hybrid_search/`)
 

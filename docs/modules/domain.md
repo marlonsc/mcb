@@ -9,7 +9,14 @@
 **Structs**: 20+
 **Enums**: 8
 
-**Project links**: See `docs/architecture/ARCHITECTURE.md` and `docs/developer/ROADMAP.md` for domain architecture and v0.2.1 objectives.
+**↔ Code ↔ Docs cross-reference**
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-domain/src/lib.rs`](../../crates/mcb-domain/src/lib.rs) links here |
+| Docs → Code | [`crates/mcb-domain/src/lib.rs`](../../crates/mcb-domain/src/lib.rs) — crate root |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-001`](../adr/001-modular-crates-architecture.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) |
+| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
 
 ## Overview
 

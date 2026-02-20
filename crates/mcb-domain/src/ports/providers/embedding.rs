@@ -1,3 +1,10 @@
+//! Embedding Provider Port
+//!
+//! **Documentation**: [`docs/modules/providers.md#embedding-providers-embedding`](../../../../docs/modules/providers.md#embedding-providers-embedding)
+//!
+//! Defines the business contract for AI providers that transform text into
+//! semantic embeddings.
+
 use async_trait::async_trait;
 
 use crate::error::Result;

@@ -11,12 +11,43 @@ This document defines the strict architectural boundaries for the MCB (Memory Co
 
 ## Table of Contents
 
-1. [Crate Structure](#crate-structure)
-2. [Layer Dependency Rules](#layer-dependency-rules)
-3. [Port/Adapter Pattern](#portadapter-pattern)
-4. [Module Ownership](#module-ownership)
-5. [Boundary Violations](#boundary-violations)
-6. [Validation Rules](#validation-rules)
+1. [v0.2.1 Standardization Contract](#v021-standardization-contract)
+2. [Crate Structure](#crate-structure)
+3. [Layer Dependency Rules](#layer-dependency-rules)
+4. [Port/Adapter Pattern](#portadapter-pattern)
+5. [Module Ownership](#module-ownership)
+6. [Boundary Violations](#boundary-violations)
+7. [Validation Rules](#validation-rules)
+
+---
+
+## v0.2.1 Standardization Contract
+
+This release applies architecture optimization only (no net-new features).
+
+### Scope Guardrails
+
+- Allowed:
+  - deduplication, refactoring, schema tightening, naming unification
+  - removal of legacy/duplicate pathways
+  - stricter validation and fast-fail enforcement
+- Not allowed:
+  - new endpoints, new commands, new providers, new env/config surfaces
+  - compatibility shims or dual-path implementations
+
+### Canonical Ownership
+
+- IDs: `mcb-domain/src/value_objects/ids.rs` via `define_id!`.
+- Port traits: `mcb-domain/src/ports/**` only.
+- Domain entities/value objects: `mcb-domain/src/entities/**`, `mcb-domain/src/value_objects/**`.
+- DTO-to-domain mapping: boundary layers only (`mcb-server`, provider adapters), never in domain.
+
+### Fast-Fail Rules
+
+- Reject raw `String` or `Uuid` IDs in domain entities/value objects.
+- Reject duplicate port trait declarations outside `mcb-domain/src/ports/**`.
+- Reject leaking internal error strings across API boundaries.
+- Reject compatibility wrappers that keep old pathways alive.
 
 ---
 
@@ -269,7 +300,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 - `mcb-application` (services via DI)
 - `mcb-infrastructure` (DI catalog, config, health)
 - MCP libraries
-- HTTP libraries (Rocket)
+- HTTP libraries (Poem)
 
 #### Prohibited Dependencies
 
@@ -287,7 +318,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 mcb-server/src/
 ├── mcp_server.rs       # MCP server core
 ├── transport/          # Transport implementations
-│   ├── http.rs         # HTTP transport (Rocket)
+│   ├── http.rs         # HTTP transport (Poem)
 │   └── stdio.rs        # Stdio transport
 ├── handlers/           # MCP tool handlers
 │   ├── index.rs

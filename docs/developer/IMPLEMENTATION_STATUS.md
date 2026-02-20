@@ -331,7 +331,7 @@ All framework migrations completed.
 - `crypto.rs` - CryptoProvider trait
 - `config.rs` - ConfigProvider trait
 
-`mcb-application` re-exports from `mcb-domain` for backward compatibility.
+All port traits are now defined exclusively in `mcb-domain/src/ports/` (per ADR-029).
 
 ---
 

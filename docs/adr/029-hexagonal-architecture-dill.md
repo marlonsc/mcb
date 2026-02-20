@@ -61,12 +61,8 @@ pub trait VectorStoreProvider: Send + Sync {
 }
 ```
 
-Application layer re-exports for backward compatibility:
-
-```rust
-// mcb-application/src/ports/providers/mod.rs
-pub use mcb_domain::ports::providers::*;
-```
+Application layer does not own provider ports. Import provider traits directly from
+`mcb-domain/src/ports/providers/` to avoid duplicate declarations and compatibility shims.
 
 ### 2. dill Catalog as IoC Container
 
@@ -178,12 +174,21 @@ New mcb-validate rules enforce the architecture:
 1. **Bootstrap still exists**: `init_app()` wraps `build_catalog()`
 2. **AppContext unchanged**: Same public interface for consumers
 
+## Canonical References
+
+> **Note**: This ADR is a historical decision record. For current architecture
+> details, consult the normative documents below. The code paths in this ADR
+> reflect the state at the time of writing; the current single source of truth
+> for port trait locations is `mcb-domain/src/ports/providers/` (not
+> `mcb-application/src/ports/providers/`, which was removed as duplicated).
+
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
+- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Full system architecture (normative)
+
 ## References
 
 - [dill-rs Documentation](https://docs.rs/dill/latest/dill/)
-- [ADR 023: Inventory to linkme Migration]
-(023-inventory-to-linkme-migration.md)
-- [ADR 024: Simplified Dependency Injection]
-(024-simplified-dependency-injection.md)
-- [Clean Architecture]
-(<https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html>)
+- [ADR 023: Inventory to linkme Migration](023-inventory-to-linkme-migration.md)
+- [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md)
+- [Clean Architecture](<https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html>)

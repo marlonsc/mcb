@@ -71,6 +71,7 @@ CONTINUATION_*.md
 
 # OpenCode: ignore runtime (node_modules, bun.lock), no config to track
 .opencode/
+opencode.jsonc
 
 # Codex: ignore runtime cache
 .codex/
@@ -144,6 +145,7 @@ list_unpinned.py
 # Log files
 # ---------------------------------------------------------------------------
 *.log
+.logs/
 *.txt
 !LICENSE.txt
 mcb.20??-??-??

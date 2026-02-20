@@ -22,7 +22,7 @@ implementation_status: Partial
 > Not yet implemented. Target crate structure for v0.2.0:
 >
 > - `crates/mcb-domain/src/hooks.rs` - Hook domain types
-> - `crates/mcb-application/src/ports/providers/hooks.rs` - HookProcessor port trait
+> - `crates/mcb-domain/src/ports/providers/hooks.rs` - HookProcessor port trait (see ADR-029)
 > - `crates/mcb-application/src/use_cases/hooks.rs` - HookService
 > - `crates/mcb-providers/src/hooks/` - Hook provider implementations
 > - `crates/mcb-server/src/handlers/hook_tools.rs` - MCP tool handlers
@@ -30,6 +30,11 @@ implementation_status: Partial
 > - `crates/mcb-infrastructure/src/di/hooks_registry.rs` - Hook processor registry
 > - EventBus exists in `crates/mcb-infrastructure/src/events/mod.rs`
 > - Requires ADR-009 memory integration for hook observations
+>
+> **⚠ Architecture note (2026-02-20)**: Code paths referencing
+> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029,
+> all port traits are defined in `mcb-domain/src/ports/providers/`. When
+> implementing, use the corrected locations.
 
 ## Context
 
@@ -326,7 +331,7 @@ pub enum PolicyAction {
 
 ### Phase 4: Hook Provider Port
 
-**Create**: `crates/mcb-application/src/ports/providers/hooks.rs`
+**Create/Use**: `crates/mcb-domain/src/ports/providers/` (canonical provider port location)
 
 ```rust
 //! Hook provider ports
@@ -1113,7 +1118,7 @@ fn default_cache_ttl() -> u64 { 300 }
 | File | LOC | Purpose |
 | ------ | ----- | --------- |
 | `crates/mcb-domain/src/hooks.rs` | ~120 | Hook domain types |
-| `crates/mcb-application/src/ports/providers/hooks.rs` | ~30 | HookProcessor trait |
+| `crates/mcb-domain/src/ports/providers/` | ~30 | Hook processor/provider port (canonical location) |
 | `crates/mcb-infrastructure/src/di/hooks_registry.rs` | ~50 | Registry (pattern copy) |
 | `crates/mcb-providers/src/hooks/policy_engine.rs` | ~80 | Policy evaluation |
 | `crates/mcb-providers/src/hooks/claude_processor.rs` | ~100 | Claude API via HttpClient |
@@ -1130,7 +1135,7 @@ fn default_cache_ttl() -> u64 { 300 }
 | `crates/mcb-domain/src/error.rs` | Add `Hook` variant |
 | `crates/mcb-infrastructure/src/events/mod.rs` | Add 3 hook events |
 | `crates/mcb-domain/src/mod.rs` | Export hooks module |
-| `crates/mcb-application/src/ports/providers/mod.rs` | Export HookProcessor |
+| `crates/mcb-domain/src/ports/providers/mod.rs` | Export provider ports from canonical domain module |
 | `crates/mcb-providers/src/lib.rs` | Export hooks providers |
 | `crates/mcb-application/src/use_cases/mod.rs` | Export HookService |
 | `crates/mcb-server/src/mcp_server.rs` | Register hook tools |
@@ -1154,6 +1159,17 @@ if let Some(git) = &self.git_provider {
 1.**Context retrieval**: Use `MemoryProvider.search_observations()` for context injection
 2.**Observation storage**: Store hook observations via `MemoryProvider.memory (action=store, resource=observation)()`
 3.**Shared types**: Reuse `Observation`, `ObservationType` from memory domain
+
+## Canonical References
+
+> **Note**: This ADR is a historical decision record. For current architecture
+> details, consult the normative documents below. Code paths referencing
+> `mcb-application/src/ports/providers/` are outdated; per ADR-029, all port
+> traits now reside in `mcb-domain/src/ports/providers/`.
+
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
+- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Full system architecture (normative)
 
 ## Related ADRs
 

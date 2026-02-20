@@ -312,7 +312,7 @@ cargo run -p mcb-validate
 
 ### Adding a New Use Case
 
-1. Define service interface in `mcb-application/src/ports/`
+1. Define service interface in `mcb-domain/src/ports/` (port traits are in domain per ADR-029)
 2. Implement service in `mcb-application/src/services/`
 3. Inject port dependencies via constructor
 4. Wire in `mcb-infrastructure/src/di/` if needed
@@ -337,6 +337,14 @@ async fn test_full_indexing_flow() {
     // Uses default providers resolved from config
 }
 ```
+
+## Canonical References
+
+> **Note**: This ADR is a historical decision record. For current architecture
+> details, consult the normative documents listed below.
+
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
 
 ## Related ADRs
 

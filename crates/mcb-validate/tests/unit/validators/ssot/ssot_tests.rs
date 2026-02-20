@@ -44,6 +44,7 @@ fn detects_duplicate_port_declarations_from_synthetic_files() {
         | SsotViolation::ForbiddenLegacySchemaSymbol { .. }
         | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
         | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRawIdFieldType { .. }
         | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
@@ -84,6 +85,7 @@ fn detects_forbidden_legacy_imports_from_synthetic_files() {
         | SsotViolation::ForbiddenLegacySchemaSymbol { .. }
         | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
         | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRawIdFieldType { .. }
         | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
@@ -168,6 +170,7 @@ fn detects_forbidden_legacy_schema_symbol_on_project_schema_struct() {
         | SsotViolation::ForbiddenLegacyImport { .. }
         | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
         | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRawIdFieldType { .. }
         | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
@@ -201,6 +204,7 @@ fn detects_forbidden_legacy_schema_symbol_on_memory_schema_import() {
         | SsotViolation::ForbiddenLegacyImport { .. }
         | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
         | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRawIdFieldType { .. }
         | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
@@ -245,6 +249,7 @@ fn detects_forbidden_schema_memory_macro_path() {
         | SsotViolation::ForbiddenLegacyImport { .. }
         | SsotViolation::ForbiddenLegacySchemaSymbol { .. }
         | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRawIdFieldType { .. }
         | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
@@ -282,6 +287,7 @@ fn detects_forbidden_legacy_schema_import_paths() {
         | SsotViolation::ForbiddenLegacyImport { .. }
         | SsotViolation::ForbiddenLegacySchemaSymbol { .. }
         | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
+        | SsotViolation::ForbiddenRawIdFieldType { .. }
         | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
@@ -315,6 +321,7 @@ fn detects_forbidden_legacy_schema_symbol_on_ddl_generator_struct() {
         | SsotViolation::ForbiddenLegacyImport { .. }
         | SsotViolation::ForbiddenSchemaMemoryMacroPath { .. }
         | SsotViolation::ForbiddenLegacySchemaImport { .. }
+        | SsotViolation::ForbiddenRawIdFieldType { .. }
         | SsotViolation::ForbiddenRootSchemaPath { .. } => {
             unreachable!("Unexpected violation variant")
         }
@@ -336,4 +343,34 @@ fn detects_forbidden_root_schema_paths() {
         .collect::<Vec<_>>();
 
     assert_eq!(root_path_violations.len(), 2);
+}
+
+#[test]
+fn detects_forbidden_raw_id_field_type_in_domain_models() {
+    let files = synthetic_files(&[(
+        "crates/mcb-domain/src/entities/sample.rs",
+        "pub struct SampleEntity {\n    pub session_id: String,\n}\n",
+    )]);
+
+    let violations = SsotValidator::validate_synthetic_files(&files).unwrap();
+
+    let raw_id_violations = violations
+        .iter()
+        .filter(|violation| matches!(violation, SsotViolation::ForbiddenRawIdFieldType { .. }))
+        .collect::<Vec<_>>();
+
+    assert_eq!(raw_id_violations.len(), 1);
+    let SsotViolation::ForbiddenRawIdFieldType {
+        field_name,
+        field_type,
+        line,
+        ..
+    } = raw_id_violations[0]
+    else {
+        unreachable!("Unexpected violation variant");
+    };
+
+    assert_eq!(field_name, "session_id");
+    assert_eq!(field_type, "String");
+    assert_eq!(*line, 2);
 }

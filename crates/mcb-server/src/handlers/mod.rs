@@ -1,5 +1,7 @@
 //! MCP tool handlers.
-
+//!
+//! **Documentation**: [`docs/modules/server.md#key-areas`](../../../../docs/modules/server.md#key-areas)
+//!
 pub mod agent;
 pub mod entities;
 pub mod index;

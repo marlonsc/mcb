@@ -86,5 +86,19 @@ define_violations! {
             path: String,
             severity: Severity,
         },
+        #[doc = "Forbidden raw ID field type in domain entities/value objects."]
+        #[violation(
+            id = "SSOT007",
+            severity = Error,
+            message = "Forbidden raw ID field type: {file}:{line} uses '{field_type}' for '{field_name}'",
+            suggestion = "Use a strong-typed ID from mcb_domain::value_objects::ids via define_id!"
+        )]
+        ForbiddenRawIdFieldType {
+            file: PathBuf,
+            line: usize,
+            field_name: String,
+            field_type: String,
+            severity: Severity,
+        },
     }
 }

@@ -36,28 +36,8 @@ pub mod severities;
 pub mod validators;
 
 // ============================================================================
-// Re-exports for backward compatibility
-// ============================================================================
-
-// Labels (used by quality/comments.rs, implementation/stubs.rs, test_quality.rs)
-pub use labels::{
-    PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
-    REPORT_TEST_PENDING_LABEL, STUB_PANIC_LABEL,
-};
-
-// Allowlists
-pub use allowlists::{
-    GENERIC_TYPE_NAMES, REFACTORING_SKIP_DIR_PATTERNS, REFACTORING_SKIP_FILES, UTILITY_TYPES,
-};
-
-// Duplication (used by duplication/detector.rs)
-pub use duplication::DUPLICATION_KEYWORDS;
-
-// ============================================================================
 // PMAT Integration (top-level, no sub-module needed)
 // ============================================================================
 
 /// Default values for validation settings.
 pub mod defaults;
-
-pub use defaults::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_MAX_FILE_LINES, DEFAULT_TDG_THRESHOLD};

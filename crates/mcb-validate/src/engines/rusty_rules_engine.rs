@@ -456,7 +456,7 @@ impl RustyRulesEngineWrapper {
             return Ok(violations);
         }
 
-        let max_lines = crate::constants::DEFAULT_MAX_FILE_LINES;
+        let max_lines = crate::constants::defaults::DEFAULT_MAX_FILE_LINES;
         for (file_path, content) in &context.file_contents {
             if !file_path.ends_with(pattern) || Self::is_size_check_excluded(file_path) {
                 continue;

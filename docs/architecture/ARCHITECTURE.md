@@ -1,10 +1,6 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Memory Context Browser - Comprehensive Architecture Documentation
 
-[![Version](https://img.shields.io/badge/version-0.2.1--dev-blue)](https://github.com/marlonsc/mcb/releases)
-[![Rust](https://img.shields.io/badge/rust-1.92%2B-orange)](https://www.rust-lang.org/)
-[![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-
 ## Model Context Protocol Server for Semantic Code Analysis using Vector Embeddings
 
 ---
@@ -211,7 +207,7 @@ graph TB
 | Container | Technology | Responsibility | Interfaces |
 | ----------- | ------------ | ---------------- | ------------ |
 | **MCP Server** | Rust/Tokio | Protocol translation, request routing | MCP Protocol (stdio), Internal APIs |
-| **REST API** | Rust/Rocket | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
+| **REST API** | Rust/Poem | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
 | **WebSocket** | Rust/Tokio | Real-time notifications, live updates | WebSocket protocol |
 
 #### Application Containers
@@ -610,7 +606,7 @@ Provider port traits are defined in `mcb-domain/src/ports/providers/`:
 | `CryptoProvider` | Encryption services |
 | `ConfigProvider` | Configuration access |
 
-The `mcb-application` layer re-exports these traits for backward compatibility, but implementations in `mcb-providers` import directly from `mcb-domain`.
+All provider port traits are defined in `mcb-domain/src/ports/providers/` (single source of truth per ADR-029). Implementations in `mcb-providers` import directly from `mcb-domain`.
 
 ### Extensibility - Adding New Providers
 
@@ -707,7 +703,7 @@ pub static CONCRETE_NEW_SERVICE: ProviderRegistration = ProviderRegistration {
 
 ### Guidelines (2)
 
-- Define registry slice in `mcb-application/src/ports/registry/`
+- Define registry slice in `mcb-domain/src/ports/registry/` (all ports are in mcb-domain per ADR-029)
 - Register all implementations in provider module
 - Use async factory for initialization
 - Return `Arc<dyn Trait>` from factory
@@ -811,10 +807,10 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 | Category | Location | Examples |
 | ---------- | ---------- | ---------- |
 | Provider Ports | `mcb-domain/src/ports/providers/` | EmbeddingProvider, VectorStoreProvider, CacheProvider |
-| Infrastructure Ports | `mcb-application/src/ports/infrastructure/` | SyncProvider, SnapshotProvider, EventPublisher |
-| Admin Ports | `mcb-application/src/ports/admin.rs` | PerformanceMetrics, IndexingOperations |
+| Infrastructure Ports | `mcb-domain/src/ports/infrastructure/` | SyncProvider, SnapshotProvider, EventPublisher |
+| Admin Ports | `mcb-domain/src/ports/admin/` | PerformanceMetrics, IndexingOperations |
 
-> **Note**: Provider ports are defined in mcb-domain (single source of truth). Application layer re-exports for backward compatibility.
+> **Note**: All port traits are defined in mcb-domain (single source of truth per ADR-029).
 
 ### Testing with DI
 
@@ -861,7 +857,7 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 - `constants.rs`: Domain constants
 - `error.rs`: Domain error types
 
-> **Note**: All provider port traits are defined in mcb-domain (single source of truth). Application layer re-exports for backward compatibility.
+> **Note**: All port traits (providers, infrastructure, admin, repositories, services) are defined in mcb-domain (single source of truth per ADR-029).
 
 #### 🔧 Application Layer (`crates/mcb-application/`)
 
@@ -872,9 +868,8 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 - `use_cases/context_service.rs`: ContextService - embedding generation and vector storage coordination
 - `use_cases/indexing_service.rs`: IndexingService - codebase indexing workflow
 - `use_cases/search_service.rs`: SearchService - semantic search operations
-- `domain_services/chunking.rs`: ChunkingOrchestrator - batch chunking coordination
-- `ports/registry/`: linkme distributed slices for provider auto-registration
-- `ports/providers/`: Re-exports from mcb-domain (backward compatibility)
+- `decorators/`: Service decorators for cross-cutting concerns
+- `constants.rs`: Application-level constants
 
 #### 🔌 Providers Layer (`crates/mcb-providers/`)
 

@@ -2,9 +2,11 @@
 //!
 //! A Model Context Protocol server for semantic code analysis using vector embeddings.
 //!
-//! This crate provides the main public API for the MCP Context Browser.
-//! It re-exports the domain types and will eventually provide access to
-//! the full application functionality.
+//! **Documentation**: [`docs/modules/api-surface.md`](../../../../docs/modules/api-surface.md) |
+//! **Architecture**: [`ADR-001`](../../../../docs/adr/001-modular-crates-architecture.md),
+//! [`ADR-013`](../../../../docs/adr/013-clean-architecture-crate-separation.md)
+//!
+//! This crate is the public facade — it re-exports domain types and the server entry point.
 //!
 //! ## Features
 //!
@@ -35,11 +37,11 @@
 //!
 //! The codebase follows Clean Architecture principles:
 //!
-//! - `domain` - Core business logic and types (ports, entities, domain errors)
-//! - `services` - Application services and use cases
-//! - `infrastructure` - External concerns (config, logging, HTTP)
-//! - `adapters` - Repository implementations and external integrations
-//! - `server` - MCP protocol server and API endpoints
+//! - `mcb-domain` — Core business logic, port traits, entities
+//! - `mcb-application` — Application services and use cases
+//! - `mcb-infrastructure` — DI, config, routing, cross-cutting concerns
+//! - `mcb-providers` — Repository + external provider implementations
+//! - `mcb-server` — MCP protocol server, admin API endpoints
 
 // CLI module
 pub mod cli;

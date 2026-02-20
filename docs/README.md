@@ -3,7 +3,7 @@
 
 [![Documentation Status](https://img.shields.io/badge/docs-automated-green)](https://github.com/marlonsc/mcb/actions)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue)](https://github.com/marlonsc/mcb/releases)
-[![Architecture](https://img.shields.io/badge/architecture-C4--model-blue)](docs/architecture/ARCHITECTURE.md)
+[![Architecture](https://img.shields.io/badge/architecture-C4--model-blue)](architecture/ARCHITECTURE.md)
 [![ADRs](https://img.shields.io/badge/ADRs-49-blue)](adr/README.md)
 
 ## Comprehensive documentation for the Memory Context Browser project
@@ -35,9 +35,7 @@ Technical architecture documentation following C4 model principles.
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 - **[Architecture Overview](architecture/ARCHITECTURE.md)** - Comprehensive system architecture
-- **[Architecture Diagrams](diagrams/)** - Visual architecture documentation
-- [System Context](diagrams/generated/index.html) - System boundaries and external systems
-- [Container Architecture](diagrams/generated/index.html) - Service and deployment architecture
+- **[Architecture Diagrams](diagrams/)** - Visual architecture documentation (PlantUML sources)
 - **[Architecture Decision Records](adr/README.md)** - Historical architectural decisions (48 ADRs total)
 - [ADR 001: Modular Crates Architecture](adr/001-modular-crates-architecture.md)
 - [ADR 002: Async-First Architecture](adr/002-async-first-architecture.md)

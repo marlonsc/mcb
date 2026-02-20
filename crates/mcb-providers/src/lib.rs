@@ -4,6 +4,10 @@
 //! Clean Architecture principles. Each provider implements a port (trait)
 //! defined in `mcb-domain`.
 //!
+//! **Documentation**: [`docs/modules/providers.md`](../../../../docs/modules/providers.md) |
+//! **Strategy**: [`ADR-030`](../../../../docs/adr/030-multi-provider-strategy.md),
+//! [`ADR-003`](../../../../docs/adr/003-unified-provider-architecture.md)
+//!
 //! ## Provider Categories
 //!
 //! | Category | Port | Implementations |

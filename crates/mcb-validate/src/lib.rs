@@ -1,5 +1,8 @@
 //! Architecture Validation for MCP Context Browser
 //!
+//! **Documentation**: [`docs/modules/validate.md`](../../../../docs/modules/validate.md) |
+//! **Strategy**: [`ADR-020`](../../../../docs/adr/020-testing-strategy-integration.md)
+//!
 //! This crate provides comprehensive validation of workspace crates against:
 //! - Clean Architecture principles (dependency direction)
 //! - Code quality standards (no unwrap/expect in production)

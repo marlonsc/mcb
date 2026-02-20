@@ -403,5 +403,5 @@ pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
 
 /// Check if a word is a common keyword (simplified, multi-language)
 fn is_keyword(word: &str) -> bool {
-    crate::constants::DUPLICATION_KEYWORDS.contains(&word)
+    crate::constants::duplication::DUPLICATION_KEYWORDS.contains(&word)
 }

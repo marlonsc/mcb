@@ -5,6 +5,10 @@
 //! This layer provides shared technical capabilities used across the entire system.
 //! All adapters/providers are in mcb-providers crate, accessed via linkme registry.
 //!
+//! **Documentation**: [`docs/modules/infrastructure.md`](../../../../docs/modules/infrastructure.md) |
+//! **DI Architecture**: [`ADR-029`](../../../../docs/adr/029-hexagonal-architecture-dill.md),
+//! [`ADR-023`](../../../../docs/adr/023-inventory-to-linkme-migration.md)
+//!
 //! ## Module Categories
 //!
 //! ### Security & Authentication

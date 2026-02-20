@@ -1,5 +1,5 @@
 use super::{QualityValidator, QualityViolation};
-use crate::constants::{
+use crate::constants::labels::{
     PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
 };
 use crate::filters::LanguageId;

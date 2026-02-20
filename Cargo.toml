@@ -165,7 +165,6 @@ dirs = "6.0"
 # HTTP server - Rocket (migrated from Axum in v0.1.2 - ADR-026)
 rocket = { version = "0.5", features = ["json"] }
 
-
 # System metrics
 sysinfo = "0.38"
 nix = { version = "0.31", features = ["fs"] }
