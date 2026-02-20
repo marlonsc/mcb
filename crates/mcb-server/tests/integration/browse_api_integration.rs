@@ -611,7 +611,11 @@ async fn test_e2e_real_store_list_files() {
 }
 
 #[tokio::test]
-#[cfg_attr(windows, ignore)] // EdgeVec metadata filtering behaves differently on Windows
+// TEMP: Ignored on Windows due to path normalization mismatch:
+// `PathBuf::to_string_lossy()` yields `\` on Windows while stored metadata uses `/`,
+// and EdgeVec currently matches `file_path` metadata via exact string equality.
+// Follow-up: mcb-ns8z (normalize paths + remove this ignore)
+#[cfg_attr(windows, ignore)]
 async fn test_e2e_real_store_get_file_chunks() {
     let store = create_test_vector_store();
     populate_test_store(&store, "test_project").await;
