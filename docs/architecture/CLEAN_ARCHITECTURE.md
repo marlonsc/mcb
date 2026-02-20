@@ -133,20 +133,20 @@ Below is a concrete **Project** example showing how declaration can evolve from 
 **Before (fragmented by layer, duplicated contract):**
 
 ```rust
-// mcb-domain/src/entities/project.rs
+// mcb-domain/src/entities/project.rs  (incomplete — missing org_id, path, updated_at)
 pub struct Project {
     pub id: String,
     pub name: String,
 }
 
-// mcb-providers/src/sql/project_row.rs
+// mcb-providers/src/database/sqlite/project_repository.rs  (leaks storage type)
 pub struct ProjectRow {
     pub id: String,
     pub name: String,
     pub created_at: i64,
 }
 
-// mcb-application/src/ports/project_repo.rs
+// mcb-domain/src/ports/repositories/project.rs  (trait uses storage type, no tenant scoping)
 #[async_trait]
 pub trait ProjectRepo {
     async fn save(&self, row: ProjectRow) -> anyhow::Result<()>;
@@ -166,27 +166,51 @@ Problems in this model:
 // mcb-domain/src/entities/project.rs
 pub struct Project {
     pub id: String,
+    pub org_id: String,       // tenant isolation
     pub name: String,
+    pub path: String,
     pub created_at: i64,
+    pub updated_at: i64,
 }
 
 // mcb-domain/src/schema/projects.rs
-pub fn table_def() -> TableDef {
-    TableDef {
-        name: "projects".into(),
-        columns: vec![
-            ColumnDef { name: "id".into(), type_: ColumnType::Text, primary_key: true, unique: true, not_null: true, auto_increment: false },
-            ColumnDef { name: "name".into(), type_: ColumnType::Text, primary_key: false, unique: false, not_null: true, auto_increment: false },
-            ColumnDef { name: "created_at".into(), type_: ColumnType::Timestamp, primary_key: false, unique: false, not_null: true, auto_increment: false },
-        ],
-    }
+pub fn table() -> TableDef {
+    crate::table!(
+        "projects",
+        [
+            crate::col!("id", Text, pk),
+            crate::col!("org_id", Text),
+            crate::col!("name", Text),
+            crate::col!("path", Text),
+            crate::col!("created_at", Integer),
+            crate::col!("updated_at", Integer),
+        ]
+    )
 }
 
-// mcb-domain/src/ports/project_repository.rs
+pub fn indexes() -> Vec<IndexDef> {
+    vec![crate::index!("idx_projects_org", "projects", ["org_id"])]
+}
+
+pub fn foreign_keys() -> Vec<ForeignKeyDef> {
+    vec![crate::fk!("projects", "org_id", "organizations", "id")]
+}
+
+pub fn unique_constraints() -> Vec<UniqueConstraintDef> {
+    vec![crate::unique!("projects", ["org_id", "name"])]
+}
+
+// mcb-domain/src/ports/repositories/project.rs
+/// Port for project persistence with row-level tenant isolation.
+/// All query methods require `org_id` to scope data to a single organization.
 #[async_trait]
 pub trait ProjectRepository: Send + Sync {
-    async fn save(&self, project: &Project) -> Result<()>;
-    async fn get_by_id(&self, id: &str) -> Result<Option<Project>>;
+    async fn create(&self, project: &Project) -> Result<()>;
+    async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Project>;
+    async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Project>;
+    async fn list(&self, org_id: &str) -> Result<Vec<Project>>;
+    async fn update(&self, project: &Project) -> Result<()>;
+    async fn delete(&self, org_id: &str, id: &str) -> Result<()>;
 }
 ```
 
