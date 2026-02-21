@@ -131,7 +131,6 @@ impl AgentSessionRepository for SqliteAgentRepository {
     }
 
     /// Retrieves a session by ID.
-    // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 91)
     async fn get_session(&self, id: &str) -> Result<Option<AgentSession>> {
         query_helpers::query_one(
             &self.executor,
@@ -258,7 +257,6 @@ impl AgentSessionRepository for SqliteAgentRepository {
     }
 
     /// Lists sessions for a specific project.
-    // TODO(qlty): Found 18 lines of similar code in 3 locations (mass = 97)
     async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>> {
         query_helpers::query_all(
             &self.executor,
@@ -271,7 +269,6 @@ impl AgentSessionRepository for SqliteAgentRepository {
     }
 
     /// Lists sessions for a specific worktree.
-    // TODO(qlty): Found 18 lines of similar code in 3 locations (mass = 97)
     async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>> {
         query_helpers::query_all(
             &self.executor,
@@ -418,7 +415,6 @@ impl AgentCheckpointRepository for SqliteAgentRepository {
     }
 
     /// Retrieves a checkpoint by ID.
-    // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 91)
     async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>> {
         query_helpers::query_one(
             &self.executor,

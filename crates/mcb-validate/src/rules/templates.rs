@@ -129,10 +129,7 @@ impl TemplateEngine {
             let registry_name = template
                 .get(YAML_FIELD_NAME)
                 .and_then(|v| v.as_str())
-                .map_or_else(
-                    || template_name.to_owned(),
-                    std::string::ToString::to_string,
-                );
+                .map_or_else(|| template_name.to_owned(), str::to_owned);
             self.templates.insert(registry_name, template);
         }
         Ok(())
@@ -170,10 +167,7 @@ impl TemplateEngine {
                 let registry_name = template
                     .get(YAML_FIELD_NAME)
                     .and_then(|v| v.as_str())
-                    .map_or_else(
-                        || template_name.to_owned(),
-                        std::string::ToString::to_string,
-                    );
+                    .map_or_else(|| template_name.to_owned(), str::to_owned);
                 self.templates.insert(registry_name, template);
             }
         }
@@ -309,7 +303,7 @@ impl TemplateEngine {
                     let strings: Vec<String> = seq
                         .iter()
                         .filter_map(|v| v.as_str())
-                        .map(std::string::ToString::to_string)
+                        .map(str::to_owned)
                         .collect();
                     Ok(strings.join(","))
                 }

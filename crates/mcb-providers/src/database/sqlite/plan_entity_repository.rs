@@ -10,7 +10,7 @@ use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
 use mcb_domain::ports::{PlanRegistry, PlanReviewRegistry, PlanVersionRegistry};
 
 use crate::utils::sqlite::query as query_helpers;
-use crate::utils::sqlite::row::{req_i64, req_str};
+use crate::utils::sqlite::row::{req_i64, req_parsed, req_str};
 
 /// SQLite-backed repository for plan, version, and review entities.
 pub struct SqlitePlanEntityRepository {
@@ -19,7 +19,6 @@ pub struct SqlitePlanEntityRepository {
 
 impl SqlitePlanEntityRepository {
     /// Creates a new repository using the provided database executor.
-    // TODO(qlty): Found 31 lines of similar code in 3 locations (mass = 216)
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
@@ -27,9 +26,7 @@ impl SqlitePlanEntityRepository {
 
 /// Converts a SQL row to a Plan.
 fn row_to_plan(row: &dyn SqlRow) -> Result<Plan> {
-    let status = req_str(row, "status")?
-        .parse::<PlanStatus>()
-        .map_err(|e| Error::memory(format!("Invalid plan status: {e}")))?;
+    let status: PlanStatus = req_parsed(row, "status")?;
 
     Ok(Plan {
         id: req_str(row, "id")?,
@@ -60,9 +57,7 @@ fn row_to_plan_version(row: &dyn SqlRow) -> Result<PlanVersion> {
 
 /// Converts a SQL row to a `PlanReview`.
 fn row_to_plan_review(row: &dyn SqlRow) -> Result<PlanReview> {
-    let verdict = req_str(row, "verdict")?
-        .parse::<ReviewVerdict>()
-        .map_err(|e| Error::memory(format!("Invalid review verdict: {e}")))?;
+    let verdict: ReviewVerdict = req_parsed(row, "verdict")?;
 
     Ok(PlanReview {
         id: req_str(row, "id")?,

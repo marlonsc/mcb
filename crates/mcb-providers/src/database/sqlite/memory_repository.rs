@@ -202,7 +202,6 @@ impl MemoryRepository for SqliteMemoryRepository {
     }
 
     /// Retrieves an observation by ID.
-    // TODO(qlty): Found 16 lines of similar code in 2 locations (mass = 95)
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
         query_helpers::query_one(
             &self.executor,
@@ -214,7 +213,6 @@ impl MemoryRepository for SqliteMemoryRepository {
     }
 
     /// Retrieves an observation by content hash.
-    // TODO(qlty): Found 16 lines of similar code in 3 locations (mass = 91)
     async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
         query_helpers::query_one(
             &self.executor,
@@ -362,7 +360,6 @@ impl MemoryRepository for SqliteMemoryRepository {
     }
 
     /// Retrieves the latest summary for a session.
-    // TODO(qlty): Found 17 lines of similar code in 2 locations (mass = 95)
     async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
         query_helpers::query_one(
             &self.executor,

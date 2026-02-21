@@ -4,9 +4,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use mcb_domain::entities::{
-    ApiKey, Organization, Team, TeamMember, TeamMemberRole, User, UserRole,
-};
+use mcb_domain::entities::{ApiKey, Organization, Team, TeamMember, User};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{
     ApiKeyRegistry, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
@@ -14,7 +12,9 @@ use mcb_domain::ports::{
 use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
 
 use crate::utils::sqlite::query as query_helpers;
-use crate::utils::sqlite::row::{opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_str};
+use crate::utils::sqlite::row::{
+    opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_parsed, req_str,
+};
 
 /// SQLite-backed repository for organization, user, team, and API key entities.
 pub struct SqliteOrgEntityRepository {
@@ -36,7 +36,6 @@ fn org_insert_params(org: &Organization) -> [SqlParam; 6] {
 
 impl SqliteOrgEntityRepository {
     /// Creates a new repository using the provided database executor.
-    // TODO(qlty): Found 31 lines of similar code in 3 locations (mass = 216)
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
@@ -61,9 +60,7 @@ fn row_to_user(row: &dyn SqlRow) -> Result<User> {
         org_id: req_str(row, "org_id")?,
         email: req_str(row, "email")?,
         display_name: req_str(row, "display_name")?,
-        role: req_str(row, "role")?
-            .parse::<UserRole>()
-            .map_err(|e| Error::memory(format!("Invalid user role: {e}")))?,
+        role: req_parsed(row, "role")?,
         api_key_hash: opt_str(row, "api_key_hash")?,
         created_at: req_i64(row, "created_at")?,
         updated_at: req_i64(row, "updated_at")?,
@@ -95,9 +92,7 @@ fn row_to_team_member(row: &dyn SqlRow) -> Result<TeamMember> {
         id: TeamMemberId::from_uuid(id_uuid),
         team_id,
         user_id,
-        role: req_str(row, "role")?
-            .parse::<TeamMemberRole>()
-            .map_err(|e| Error::memory(format!("Invalid team member role: {e}")))?,
+        role: req_parsed(row, "role")?,
         joined_at: req_i64(row, "joined_at")?,
     })
 }
@@ -121,7 +116,6 @@ fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
 /// Persistent organization registry using `SQLite`.
 impl OrgRegistry for SqliteOrgEntityRepository {
     /// Creates a new organization.
-    // TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)
     async fn create_org(&self, org: &Organization) -> Result<()> {
         let params = org_insert_params(org);
         query_helpers::execute(&self.executor, INSERT_ORG_SQL, &params).await

@@ -210,7 +210,7 @@ impl PatternRegistry {
             .and_then(|v| v.as_sequence())
             .map(|seq| {
                 seq.iter()
-                    .filter_map(|v| v.as_str().map(std::string::ToString::to_string))
+                    .filter_map(|v| v.as_str().map(str::to_owned))
                     .collect()
             })
             .unwrap_or_default()

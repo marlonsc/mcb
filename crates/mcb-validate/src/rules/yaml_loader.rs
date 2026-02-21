@@ -446,7 +446,7 @@ impl YamlRuleLoader {
                                 pattern: fix_obj
                                     .get(YAML_FIELD_PATTERN)
                                     .and_then(|v| v.as_str())
-                                    .map(std::string::ToString::to_string),
+                                    .map(str::to_owned),
                                 message: fix_obj.get(YAML_FIELD_MESSAGE)?.as_str()?.to_owned(),
                             })
                         } else {
@@ -463,7 +463,7 @@ impl YamlRuleLoader {
             .and_then(|v| v.as_array())
             .map(|arr| {
                 arr.iter()
-                    .filter_map(|code| code.as_str().map(std::string::ToString::to_string))
+                    .filter_map(|code| code.as_str().map(str::to_owned))
                     .collect()
             })
             .unwrap_or_default();
@@ -472,7 +472,7 @@ impl YamlRuleLoader {
         let message = obj
             .get(YAML_FIELD_MESSAGE)
             .and_then(|v| v.as_str())
-            .map(std::string::ToString::to_string);
+            .map(str::to_owned);
 
         // Extract AST selectors (Phase 2)
         let selectors = obj
@@ -488,7 +488,7 @@ impl YamlRuleLoader {
                                 pattern: sel_obj
                                     .get(YAML_FIELD_PATTERN)
                                     .and_then(|v| v.as_str())
-                                    .map(std::string::ToString::to_string),
+                                    .map(str::to_owned),
                             })
                         } else {
                             None
@@ -502,7 +502,7 @@ impl YamlRuleLoader {
         let ast_query = obj
             .get(YAML_FIELD_AST_QUERY)
             .and_then(|v| v.as_str())
-            .map(std::string::ToString::to_string);
+            .map(str::to_owned);
 
         // Extract metrics configuration (Phase 4 - rule/v3)
         let metrics = obj

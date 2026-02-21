@@ -66,11 +66,62 @@ pub mod row {
             None => SqlParam::Null,
         }
     }
+
+    /// Extract a required string field and parse it into `T`.
+    ///
+    /// Combines `req_str` + `.parse()` + error mapping into a single call.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the column is missing, cannot be read, or fails to parse.
+    pub fn req_parsed<T: std::str::FromStr>(row: &dyn SqlRow, col: &str) -> Result<T>
+    where
+        T::Err: std::fmt::Display,
+    {
+        let s = req_str(row, col)?;
+        s.parse()
+            .map_err(|e| Error::memory(format!("Invalid {col}: {e}")))
+    }
+
+    /// Parse an optional JSON column into a `Vec<T>`, defaulting to empty.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the JSON is present but cannot be deserialized.
+    pub fn json_vec<T: serde::de::DeserializeOwned>(
+        row: &dyn SqlRow,
+        field: &str,
+        err_ctx: &str,
+    ) -> Result<Vec<T>> {
+        match row.try_get_string(field)? {
+            Some(json) => {
+                serde_json::from_str(&json).map_err(|e| Error::memory_with_source(err_ctx, e))
+            }
+            None => Ok(Vec::new()),
+        }
+    }
+
+    /// Parse an optional JSON column into `Option<T>`, defaulting to `None`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the JSON is present but cannot be deserialized.
+    pub fn json_opt<T: serde::de::DeserializeOwned>(
+        row: &dyn SqlRow,
+        field: &str,
+        err_ctx: &str,
+    ) -> Result<Option<T>> {
+        match row.try_get_string(field)? {
+            Some(json) => {
+                serde_json::from_str(&json).map_err(|e| Error::memory_with_source(err_ctx, e))
+            }
+            None => Ok(None),
+        }
+    }
 }
 
 /// Query helpers for common database operations.
 pub mod query {
-    #![allow(dead_code)]
     use std::sync::Arc;
 
     use mcb_domain::error::{Error, Result};
@@ -122,34 +173,6 @@ pub mod query {
         Ok(result)
     }
 
-    /// Helper to execute an INSERT statement and return the ID.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the SQL execution fails.
-    #[allow(dead_code)]
-    pub async fn insert(
-        executor: &Arc<dyn DatabaseExecutor>,
-        sql: &str,
-        params: &[SqlParam],
-    ) -> Result<i64> {
-        execute_and_get_last_insert_id(executor, sql, params).await
-    }
-
-    /// Helper to execute an UPDATE statement.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the SQL execution fails.
-    #[allow(dead_code)]
-    pub async fn update(
-        executor: &Arc<dyn DatabaseExecutor>,
-        sql: &str,
-        params: &[SqlParam],
-    ) -> Result<()> {
-        executor.execute(sql, params).await
-    }
-
     /// Helper to execute a statement.
     ///
     /// # Errors
@@ -161,49 +184,5 @@ pub mod query {
         params: &[SqlParam],
     ) -> Result<()> {
         executor.execute(sql, params).await
-    }
-
-    /// Helper to execute a DELETE statement.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the SQL execution fails.
-    #[allow(dead_code)]
-    pub async fn delete(
-        executor: &Arc<dyn DatabaseExecutor>,
-        sql: &str,
-        params: &[SqlParam],
-    ) -> Result<()> {
-        executor.execute(sql, params).await
-    }
-
-    /// Helper to execute an UPSERT (INSERT OR REPLACE) statement.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the SQL execution fails.
-    #[allow(dead_code)]
-    pub async fn upsert(
-        executor: &Arc<dyn DatabaseExecutor>,
-        sql: &str,
-        params: &[SqlParam],
-    ) -> Result<i64> {
-        execute_and_get_last_insert_id(executor, sql, params).await
-    }
-
-    async fn execute_and_get_last_insert_id(
-        executor: &Arc<dyn DatabaseExecutor>,
-        sql: &str,
-        params: &[SqlParam],
-    ) -> Result<i64> {
-        executor.execute(sql, params).await?;
-        let row = executor
-            .query_one("SELECT last_insert_rowid() as id", &[])
-            .await?;
-        if let Some(r) = row {
-            Ok(r.try_get_i64("id")?.unwrap_or(0))
-        } else {
-            Ok(0)
-        }
     }
 }

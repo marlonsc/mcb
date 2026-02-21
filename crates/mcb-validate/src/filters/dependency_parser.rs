@@ -237,14 +237,14 @@ impl CargoDependencyParser {
                 let version = table
                     .get("version")
                     .and_then(|v| v.as_str())
-                    .map(std::string::ToString::to_string);
+                    .map(str::to_owned);
 
                 let features = table
                     .get("features")
                     .and_then(|v| v.as_array())
                     .map(|arr| {
                         arr.iter()
-                            .filter_map(|v| v.as_str().map(std::string::ToString::to_string))
+                            .filter_map(|v| v.as_str().map(str::to_owned))
                             .collect()
                     })
                     .unwrap_or_default();

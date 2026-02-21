@@ -112,9 +112,7 @@ impl AstDecoder {
 
         // If node itself is an identifier
         if node.kind() == "identifier" || node.kind() == "type_identifier" {
-            node.utf8_text(source.as_bytes())
-                .ok()
-                .map(std::string::ToString::to_string)
+            node.utf8_text(source.as_bytes()).ok().map(str::to_owned)
         } else {
             None
         }
@@ -137,10 +135,7 @@ impl AstDecoder {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind().contains("type") && child.kind() != "type" {
-                return child
-                    .utf8_text(source.as_bytes())
-                    .ok()
-                    .map(std::string::ToString::to_string);
+                return child.utf8_text(source.as_bytes()).ok().map(str::to_owned);
             }
         }
         None

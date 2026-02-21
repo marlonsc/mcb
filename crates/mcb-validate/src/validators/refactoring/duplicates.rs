@@ -32,7 +32,7 @@ pub fn validate_duplicate_definitions(
                     .split(CRATE_PATH_DELIMITER)
                     .nth(1)
                     .and_then(|s| s.split('/').next())
-                    .map(std::string::ToString::to_string)
+                    .map(str::to_owned)
             })
             .collect()
     };

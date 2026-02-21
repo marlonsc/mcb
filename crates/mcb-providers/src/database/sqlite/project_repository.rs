@@ -56,7 +56,6 @@ impl SqliteProjectRepository {
 /// Persistent project repository using `SQLite`.
 impl ProjectRepository for SqliteProjectRepository {
     /// Creates a new project.
-    // TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)
     async fn create(&self, project: &Project) -> Result<()> {
         let params = project_insert_params(project);
         query_helpers::execute(&self.executor, INSERT_PROJECT_SQL, &params).await
@@ -108,7 +107,6 @@ impl ProjectRepository for SqliteProjectRepository {
     }
 
     /// Lists all projects in an organization.
-    // TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 97)
     async fn list(&self, org_id: &str) -> Result<Vec<Project>> {
         query_helpers::query_all(
             &self.executor,

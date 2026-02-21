@@ -13,7 +13,8 @@ use mcb_domain::ports::VcsEntityRepository;
 use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
 use serde_json::json;
 
-use crate::utils::sqlite::row::{req_i64, req_str};
+use crate::utils::sqlite::query as query_helpers;
+use crate::utils::sqlite::row::{req_i64, req_parsed, req_str};
 
 /// SQLite-backed repository for VCS repositories, branches, worktrees, and assignments.
 pub struct SqliteVcsEntityRepository {
@@ -22,44 +23,14 @@ pub struct SqliteVcsEntityRepository {
 
 impl SqliteVcsEntityRepository {
     /// Creates a new repository using the provided database executor.
-    // TODO(qlty): Found 31 lines of similar code in 3 locations (mass = 216)
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
-    }
-
-    /// Helper to query a single row and convert it.
-    async fn query_one<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Option<T>>
-    where
-        F: FnOnce(&dyn SqlRow) -> Result<T>,
-    {
-        match self.executor.query_one(sql, params).await? {
-            Some(r) => Ok(Some(convert(r.as_ref())?)),
-            None => Ok(None),
-        }
-    }
-
-    /// Helper to query multiple rows and convert them.
-    async fn query_all<T, F>(&self, sql: &str, params: &[SqlParam], convert: F) -> Result<Vec<T>>
-    where
-        F: Fn(&dyn SqlRow) -> Result<T>,
-    {
-        let rows = self.executor.query_all(sql, params).await?;
-        let mut result = Vec::with_capacity(rows.len());
-        for row in rows {
-            result.push(
-                convert(row.as_ref())
-                    .map_err(|e| Error::memory_with_source("decode vcs entity", e))?,
-            );
-        }
-        Ok(result)
     }
 }
 
 /// Converts a SQL row to a Repository.
 fn row_to_repository(row: &dyn SqlRow) -> Result<Repository> {
-    let vcs_type = req_str(row, "vcs_type")?
-        .parse::<VcsType>()
-        .map_err(|e| Error::memory(format!("Invalid vcs_type: {e}")))?;
+    let vcs_type: VcsType = req_parsed(row, "vcs_type")?;
 
     Ok(Repository {
         id: req_str(row, "id")?,
@@ -91,9 +62,7 @@ fn row_to_branch(row: &dyn SqlRow) -> Result<Branch> {
 
 /// Converts a SQL row to a Worktree.
 fn row_to_worktree(row: &dyn SqlRow) -> Result<Worktree> {
-    let status = req_str(row, "status")?
-        .parse::<WorktreeStatus>()
-        .map_err(|e| Error::memory(format!("Invalid worktree status: {e}")))?;
+    let status: WorktreeStatus = req_parsed(row, "status")?;
 
     Ok(Worktree {
         id: req_str(row, "id")?,
@@ -155,7 +124,8 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     /// Retrieves a repository by ID.
     async fn get_repository(&self, org_id: &str, id: &str) -> Result<Repository> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM repositories WHERE org_id = ? AND id = ?",
             &[
                 SqlParam::String(org_id.to_owned()),
@@ -169,13 +139,15 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     /// Lists repositories in an organization for a project.
     async fn list_repositories(&self, org_id: &str, project_id: &str) -> Result<Vec<Repository>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM repositories WHERE org_id = ? AND project_id = ?",
             &[
                 SqlParam::String(org_id.to_owned()),
                 SqlParam::String(project_id.to_owned()),
             ],
             row_to_repository,
+            "vcs entity",
         )
         .await
     }
@@ -253,7 +225,8 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     /// Retrieves a branch by ID.
     async fn get_branch(&self, id: &str) -> Result<Branch> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM branches WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_branch,
@@ -264,10 +237,12 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     /// Lists branches in a repository.
     async fn list_branches(&self, repository_id: &str) -> Result<Vec<Branch>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM branches WHERE repository_id = ?",
             &[SqlParam::String(repository_id.to_owned())],
             row_to_branch,
+            "vcs entity",
         )
         .await
     }
@@ -342,7 +317,8 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     /// Retrieves a worktree by ID.
     async fn get_worktree(&self, id: &str) -> Result<Worktree> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM worktrees WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_worktree,
@@ -353,10 +329,12 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     /// Lists worktrees in a repository.
     async fn list_worktrees(&self, repository_id: &str) -> Result<Vec<Worktree>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM worktrees WHERE repository_id = ?",
             &[SqlParam::String(repository_id.to_owned())],
             row_to_worktree,
+            "vcs entity",
         )
         .await
     }
@@ -428,7 +406,8 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     /// Retrieves an assignment by ID.
     async fn get_assignment(&self, id: &str) -> Result<AgentWorktreeAssignment> {
-        self.query_one(
+        query_helpers::query_one(
+            &self.executor,
             "SELECT * FROM agent_worktree_assignments WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_assignment,
@@ -442,10 +421,12 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
         &self,
         worktree_id: &str,
     ) -> Result<Vec<AgentWorktreeAssignment>> {
-        self.query_all(
+        query_helpers::query_all(
+            &self.executor,
             "SELECT * FROM agent_worktree_assignments WHERE worktree_id = ?",
             &[SqlParam::String(worktree_id.to_owned())],
             row_to_assignment,
+            "vcs entity",
         )
         .await
     }
