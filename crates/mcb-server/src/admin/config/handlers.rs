@@ -16,6 +16,8 @@ use super::{
     ConfigReloadResponse, ConfigResponse, ConfigSectionUpdateRequest, ConfigSectionUpdateResponse,
     SanitizedConfig,
 };
+use mcb_infrastructure::logging::log_operation_error;
+
 use crate::admin::auth::AdminAuth;
 use crate::admin::handlers::AdminState;
 
@@ -68,7 +70,7 @@ pub async fn reload_config(
             (Status::Ok, Json(ConfigReloadResponse::success(sanitized)))
         }
         Err(e) => {
-            tracing::error!(handler = "reload_config", error = %e, "configuration reload failed");
+            log_operation_error("reload_config", "configuration reload failed", &e);
             (
                 Status::InternalServerError,
                 Json(ConfigReloadResponse::failure(
@@ -137,14 +139,22 @@ impl ConfigUpdateError {
                 )),
             ),
             Self::ReadFailed(e) => {
-                tracing::error!(handler = "update_config_section", section = section, error = %e, "failed to read configuration file");
+                log_operation_error(
+                    "update_config_section",
+                    "failed to read configuration file",
+                    e,
+                );
                 (
                     Status::InternalServerError,
                     Json(Resp::failure(section, "Failed to read configuration file")),
                 )
             }
             Self::ParseFailed(e) => {
-                tracing::error!(handler = "update_config_section", section = section, error = %e, "failed to parse configuration file");
+                log_operation_error(
+                    "update_config_section",
+                    "failed to parse configuration file",
+                    e,
+                );
                 (
                     Status::InternalServerError,
                     Json(Resp::failure(section, "Failed to parse configuration file")),
@@ -155,21 +165,33 @@ impl ConfigUpdateError {
                 Json(Resp::failure(section, "Invalid configuration value format")),
             ),
             Self::SerializeFailed(e) => {
-                tracing::error!(handler = "update_config_section", section = section, error = %e, "failed to serialize configuration");
+                log_operation_error(
+                    "update_config_section",
+                    "failed to serialize configuration",
+                    e,
+                );
                 (
                     Status::InternalServerError,
                     Json(Resp::failure(section, "Failed to serialize configuration")),
                 )
             }
             Self::WriteFailed(e) => {
-                tracing::error!(handler = "update_config_section", section = section, error = %e, "failed to write configuration file");
+                log_operation_error(
+                    "update_config_section",
+                    "failed to write configuration file",
+                    e,
+                );
                 (
                     Status::InternalServerError,
                     Json(Resp::failure(section, "Failed to write configuration file")),
                 )
             }
             Self::ReloadFailed(e) => {
-                tracing::error!(handler = "update_config_section", section = section, error = %e, "configuration updated but reload failed");
+                log_operation_error(
+                    "update_config_section",
+                    "configuration updated but reload failed",
+                    e,
+                );
                 (
                     Status::InternalServerError,
                     Json(Resp::failure(
@@ -191,14 +213,14 @@ use std::sync::Arc;
 use axum::Json as AxumJson;
 use axum::extract::{Path, State as AxumState};
 use axum::http::StatusCode;
-use axum::response::IntoResponse;
 
 use crate::admin::auth::AxumAdminAuth;
+use crate::admin::error::{AdminError, AdminStatusResult};
 
 pub async fn get_config_axum(
     _auth: AxumAdminAuth,
     AxumState(state): AxumState<Arc<AdminState>>,
-) -> impl IntoResponse {
+) -> AdminStatusResult<ConfigResponse> {
     tracing::info!(handler = "get_config_axum", "admin config request");
     let config = if let Some(watcher) = &state.config_watcher {
         watcher.get_config().await
@@ -208,7 +230,7 @@ pub async fn get_config_axum(
 
     let sanitized = SanitizedConfig::from_app_config(&config);
 
-    (
+    Ok((
         StatusCode::OK,
         AxumJson(ConfigResponse {
             success: true,
@@ -219,40 +241,30 @@ pub async fn get_config_axum(
                 .as_ref()
                 .map(|_| chrono::Utc::now().to_rfc3339()),
         }),
-    )
+    ))
 }
 
 pub async fn reload_config_axum(
     _auth: AxumAdminAuth,
     AxumState(state): AxumState<Arc<AdminState>>,
-) -> impl IntoResponse {
+) -> AdminStatusResult<ConfigReloadResponse> {
     tracing::info!(
         handler = "reload_config_axum",
         "admin config reload request"
     );
-    let Some(watcher) = &state.config_watcher else {
-        return (
-            StatusCode::SERVICE_UNAVAILABLE,
-            AxumJson(ConfigReloadResponse::watcher_unavailable()),
-        );
-    };
+    let watcher = require_service!(state, config_watcher, "Configuration watcher not available");
 
     match watcher.reload().await {
         Ok(new_config) => {
             let sanitized = SanitizedConfig::from_app_config(&new_config);
-            (
+            Ok((
                 StatusCode::OK,
                 AxumJson(ConfigReloadResponse::success(sanitized)),
-            )
+            ))
         }
         Err(e) => {
-            tracing::error!(handler = "reload_config_axum", error = %e, "configuration reload failed");
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                AxumJson(ConfigReloadResponse::failure(
-                    "Failed to reload configuration".to_owned(),
-                )),
-            )
+            log_operation_error("reload_config_axum", "configuration reload failed", &e);
+            Err(AdminError::internal("Failed to reload configuration"))
         }
     }
 }
@@ -262,99 +274,79 @@ pub async fn update_config_section_axum(
     AxumState(state): AxumState<Arc<AdminState>>,
     Path(section): Path<String>,
     AxumJson(request): AxumJson<ConfigSectionUpdateRequest>,
-) -> impl IntoResponse {
+) -> AdminStatusResult<ConfigSectionUpdateResponse> {
     tracing::info!(
         handler = "update_config_section_axum",
         section = %section,
         "admin config update request"
     );
 
-    let (watcher, config_path) = match validate_update_prerequisites(
+    let (watcher, config_path) = validate_update_prerequisites(
         &section,
         state.config_watcher.as_ref(),
         state.config_path.as_ref(),
-    ) {
-        Ok(resources) => resources,
-        Err(e) => return e.to_axum_response(&section),
-    };
+    )
+    .map_err(|e| e.into_admin_error(&section))?;
 
-    let updated_config = match read_update_config(&config_path, &section, &request.values) {
-        Ok(config) => config,
-        Err(e) => return e.to_axum_response(&section),
-    };
+    let updated_config = read_update_config(&config_path, &section, &request.values)
+        .map_err(|e| e.into_admin_error(&section))?;
 
-    match write_and_reload_config(&config_path, &updated_config, &watcher).await {
-        Ok(sanitized) => (
-            StatusCode::OK,
-            AxumJson(ConfigSectionUpdateResponse::success(&section, sanitized)),
-        ),
-        Err(e) => e.to_axum_response(&section),
-    }
+    let sanitized = write_and_reload_config(&config_path, &updated_config, &watcher)
+        .await
+        .map_err(|e| e.into_admin_error(&section))?;
+
+    Ok((
+        StatusCode::OK,
+        AxumJson(ConfigSectionUpdateResponse::success(&section, sanitized)),
+    ))
 }
 
 impl ConfigUpdateError {
-    fn to_axum_response(
-        &self,
-        section: &str,
-    ) -> (StatusCode, AxumJson<ConfigSectionUpdateResponse>) {
-        use ConfigSectionUpdateResponse as Resp;
+    fn into_admin_error(&self, section: &str) -> AdminError {
         match self {
-            Self::InvalidSection => (
-                StatusCode::BAD_REQUEST,
-                AxumJson(Resp::invalid_section(section)),
-            ),
-            Self::WatcherUnavailable => (
-                StatusCode::SERVICE_UNAVAILABLE,
-                AxumJson(Resp::watcher_unavailable(section)),
-            ),
-            Self::PathUnavailable => (
-                StatusCode::SERVICE_UNAVAILABLE,
-                AxumJson(Resp::failure(
-                    section,
-                    "Configuration file path not available",
-                )),
-            ),
+            Self::InvalidSection => AdminError::bad_request(format!("Invalid section: {section}")),
+            Self::WatcherUnavailable => {
+                AdminError::unavailable("Configuration watcher not available")
+            }
+            Self::PathUnavailable => {
+                AdminError::unavailable("Configuration file path not available")
+            }
             Self::ReadFailed(e) => {
-                tracing::error!(handler = "update_config_section_axum", section = section, error = %e, "failed to read configuration file");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    AxumJson(Resp::failure(section, "Failed to read configuration file")),
-                )
+                log_operation_error(
+                    "update_config_section_axum",
+                    "failed to read configuration file",
+                    e,
+                );
+                AdminError::internal("Failed to read configuration file")
             }
             Self::ParseFailed(e) => {
-                tracing::error!(handler = "update_config_section_axum", section = section, error = %e, "failed to parse configuration file");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    AxumJson(Resp::failure(section, "Failed to parse configuration file")),
-                )
+                log_operation_error(
+                    "update_config_section_axum",
+                    "failed to parse configuration file",
+                    e,
+                );
+                AdminError::internal("Failed to parse configuration file")
             }
-            Self::InvalidFormat => (
-                StatusCode::BAD_REQUEST,
-                AxumJson(Resp::failure(section, "Invalid configuration value format")),
-            ),
+            Self::InvalidFormat => AdminError::bad_request("Invalid configuration value format"),
             Self::SerializeFailed(e) => {
-                tracing::error!(handler = "update_config_section_axum", section = section, error = %e, "failed to serialize configuration");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    AxumJson(Resp::failure(section, "Failed to serialize configuration")),
-                )
+                log_operation_error(
+                    "update_config_section_axum",
+                    "failed to serialize configuration",
+                    e,
+                );
+                AdminError::internal("Failed to serialize configuration")
             }
             Self::WriteFailed(e) => {
-                tracing::error!(handler = "update_config_section_axum", section = section, error = %e, "failed to write configuration file");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    AxumJson(Resp::failure(section, "Failed to write configuration file")),
-                )
+                log_operation_error(
+                    "update_config_section_axum",
+                    "failed to write configuration file",
+                    e,
+                );
+                AdminError::internal("Failed to write configuration file")
             }
             Self::ReloadFailed(e) => {
                 tracing::error!(handler = "update_config_section_axum", section = section, error = %e, "configuration updated but reload failed");
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    AxumJson(Resp::failure(
-                        section,
-                        "Configuration updated but reload failed",
-                    )),
-                )
+                AdminError::internal("Configuration updated but reload failed")
             }
         }
     }

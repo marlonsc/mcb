@@ -16,6 +16,7 @@ mod browse_runtime;
 pub mod cache;
 /// Configuration management endpoints for viewing and updating server settings.
 pub mod config;
+pub mod error;
 
 /// Service control endpoints such as shutdown.
 pub mod control;

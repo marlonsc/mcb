@@ -68,8 +68,7 @@ macro_rules! define_project_scoped_browse_endpoint {
             _auth: crate::admin::auth::AxumAdminAuth,
             axum::extract::State(state): axum::extract::State<std::sync::Arc<AdminState>>,
             axum::extract::Query(params): axum::extract::Query<ProjectIdQuery>,
-        ) -> Result<axum::Json<$response>, (axum::http::StatusCode, axum::Json<CacheErrorResponse>)>
-        {
+        ) -> crate::admin::error::AdminResult<$response> {
             tracing::info!($log_label);
             let items = fetch_project_scoped_entities_axum::<$entity>(
                 &state,

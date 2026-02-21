@@ -128,17 +128,14 @@ pub async fn list_collections(
 pub async fn list_collections_axum(
     _auth: super::auth::AxumAdminAuth,
     axum::extract::State(state): axum::extract::State<Arc<BrowseState>>,
-) -> Result<
-    axum::Json<CollectionListResponse>,
-    (axum::http::StatusCode, axum::Json<BrowseErrorResponse>),
-> {
+) -> crate::admin::error::AdminResult<CollectionListResponse> {
+    use crate::admin::error::AdminError;
     tracing::info!("list_collections called");
-    let collections = state.browser.list_collections().await.map_err(|e| {
-        (
-            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-            axum::Json(BrowseErrorResponse::internal(e.to_string())),
-        )
-    })?;
+    let collections = state
+        .browser
+        .list_collections()
+        .await
+        .map_err(|e| AdminError::internal(e.to_string()))?;
 
     let collection_responses = collections
         .into_iter()
@@ -168,8 +165,8 @@ pub async fn list_collection_files_axum(
     axum::extract::State(state): axum::extract::State<Arc<BrowseState>>,
     axum::extract::Path(name): axum::extract::Path<String>,
     axum::extract::Query(params): axum::extract::Query<BrowseFilesQuery>,
-) -> Result<axum::Json<FileListResponse>, (axum::http::StatusCode, axum::Json<BrowseErrorResponse>)>
-{
+) -> crate::admin::error::AdminResult<FileListResponse> {
+    use crate::admin::error::AdminError;
     tracing::info!("list_collection_files called");
     let limit = params.limit.unwrap_or(DEFAULT_BROWSE_FILES_LIMIT);
     let collection = CollectionId::from_string(&name);
@@ -181,15 +178,9 @@ pub async fn list_collection_files_axum(
         .map_err(|e| {
             let error_msg = e.to_string();
             if error_msg.contains("not found") || error_msg.contains("does not exist") {
-                (
-                    axum::http::StatusCode::NOT_FOUND,
-                    axum::Json(BrowseErrorResponse::not_found("Collection")),
-                )
+                AdminError::not_found("Collection not found")
             } else {
-                (
-                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                    axum::Json(BrowseErrorResponse::internal(error_msg)),
-                )
+                AdminError::internal(error_msg)
             }
         })?;
 

@@ -10,6 +10,8 @@ use axum::http::header;
 use axum::response::IntoResponse;
 use serde::Serialize;
 
+use mcb_infrastructure::logging::log_operation_warn;
+
 use crate::admin::AdminRegistry;
 use crate::admin::crud_adapter::resolve_adapter;
 use crate::admin::handlers::AdminState;
@@ -32,44 +34,9 @@ pub async fn dashboard_ui(state: Option<State<AdminState>>) -> Template {
     render_dashboard_template("Dashboard", state.as_deref()).await
 }
 
-/// Configuration page handler
-pub async fn config_page() -> Template {
-    tracing::info!("config_page called");
-    Template::render(
-        "admin/config",
-        context! {
-            title: "Configuration",
-            current_page: "config",
-            nav_groups: nav_groups(),
-        },
-    )
-}
-
-/// Health status page handler
-pub async fn health_page() -> Template {
-    tracing::info!("health_page called");
-    Template::render(
-        "admin/health",
-        context! {
-            title: "Health Status",
-            current_page: "health",
-            nav_groups: nav_groups(),
-        },
-    )
-}
-
-/// Jobs page handler
-pub async fn jobs_page() -> Template {
-    tracing::info!("jobs_page called");
-    Template::render(
-        "admin/jobs",
-        context! {
-            title: "Jobs",
-            current_page: "jobs",
-            nav_groups: nav_groups(),
-        },
-    )
-}
+template_page!(config_page, "admin/config", "Configuration", "config");
+template_page!(health_page, "admin/health", "Health Status", "health");
+template_page!(jobs_page, "admin/jobs", "Jobs", "jobs");
 
 /// Favicon handler - returns a simple SVG icon
 pub async fn favicon() -> impl IntoResponse {
@@ -95,18 +62,7 @@ pub async fn shared_js() -> impl IntoResponse {
     )
 }
 
-/// Browse collections page handler
-pub async fn browse_page() -> Template {
-    tracing::info!("browse_page called");
-    Template::render(
-        "admin/browse",
-        context! {
-            title: "Browse Indexed Code",
-            current_page: "browse",
-            nav_groups: nav_groups(),
-        },
-    )
-}
+template_page!(browse_page, "admin/browse", "Browse Indexed Code", "browse");
 
 /// Browse collection files page handler
 pub async fn browse_collection_page(Path(_collection): Path<String>) -> Template {
@@ -134,18 +90,12 @@ pub async fn browse_file_page(Path(_collection): Path<String>) -> Template {
     )
 }
 
-/// Browse tree view page handler (Phase 8b Wave 3)
-pub async fn browse_tree_page() -> Template {
-    tracing::info!("browse_tree_page called");
-    Template::render(
-        "admin/browse_tree",
-        context! {
-            title: "Browse Collection Tree",
-            current_page: "browse-tree",
-            nav_groups: nav_groups(),
-        },
-    )
-}
+template_page!(
+    browse_tree_page,
+    "admin/browse_tree",
+    "Browse Collection Tree",
+    "browse-tree"
+);
 
 #[derive(Debug, Clone, Serialize)]
 struct RecentActivityItem {
@@ -165,7 +115,7 @@ async fn render_dashboard_template(title: &str, state: Option<&AdminState>) -> T
             Some(adapter) => match adapter.list_all().await {
                 Ok(rows) => rows.len(),
                 Err(e) => {
-                    tracing::warn!(entity = entity.slug, error = %e, "list_all failed");
+                    log_operation_warn("AdminWeb", "list_all failed", &e);
                     0
                 }
             },

@@ -7,12 +7,15 @@
 
 use std::sync::Arc;
 
+use axum::Json as AxumJson;
+use axum::extract::State as AxumState;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{State, get};
 use serde::Serialize;
 
-use crate::admin::auth::AdminAuth;
+use crate::admin::auth::{AdminAuth, AxumAdminAuth};
+use crate::admin::error::{AdminError, AdminResult};
 use crate::admin::handlers::AdminState;
 
 /// Cache error response
@@ -60,32 +63,13 @@ pub async fn get_cache_stats(
 /// # Errors
 /// Returns `503` when cache provider is unavailable and `500` when stats retrieval fails.
 pub async fn get_cache_stats_axum(
-    _auth: crate::admin::auth::AxumAdminAuth,
-    axum::extract::State(state): axum::extract::State<Arc<AdminState>>,
-) -> Result<
-    axum::Json<mcb_domain::ports::CacheStats>,
-    (axum::http::StatusCode, axum::Json<CacheErrorResponse>),
-> {
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<AdminState>>,
+) -> AdminResult<mcb_domain::ports::CacheStats> {
     tracing::info!("get_cache_stats called");
-    let Some(cache) = &state.cache else {
-        return Err((
-            axum::http::StatusCode::SERVICE_UNAVAILABLE,
-            axum::Json(CacheErrorResponse {
-                error: "Cache provider not available".to_owned(),
-            }),
-        ));
-    };
-
-    match cache.stats().await {
-        Ok(stats) => Ok(axum::Json(stats)),
-        Err(e) => {
-            tracing::error!(error = %e, "failed to get cache stats");
-            Err((
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                axum::Json(CacheErrorResponse {
-                    error: "Failed to retrieve cache statistics".to_owned(),
-                }),
-            ))
-        }
-    }
+    let cache = require_service!(state, cache, "Cache provider not available");
+    cache.stats().await.map(AxumJson).map_err(|e| {
+        tracing::error!(error = %e, "failed to get cache stats");
+        AdminError::internal("Failed to retrieve cache statistics")
+    })
 }

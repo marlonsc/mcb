@@ -7,12 +7,18 @@
 
 use std::sync::Arc;
 
+use axum::Json as AxumJson;
+use axum::extract::State as AxumState;
+use mcb_infrastructure::logging::log_operation_error;
+
+use crate::admin::auth::AxumAdminAuth;
 use crate::admin::browse_models::{
     IssuesBrowseResponse, OrganizationsBrowseResponse, PlansBrowseResponse, ProjectsBrowseResponse,
     RepositoriesBrowseResponse,
 };
 use crate::admin::browse_runtime::execute_tool_json;
-use crate::admin::handlers::{AdminState, CacheErrorResponse};
+use crate::admin::error::{AdminError, AdminResult};
+use crate::admin::handlers::AdminState;
 
 /// Query parameters for project-scoped browse endpoints.
 #[derive(Debug, serde::Deserialize)]
@@ -26,17 +32,16 @@ async fn fetch_browse_items_axum<T: serde::de::DeserializeOwned>(
     tool_name: &str,
     args: serde_json::Value,
     unavailable_message: &str,
-) -> Result<Vec<T>, (axum::http::StatusCode, axum::Json<CacheErrorResponse>)> {
+) -> Result<Vec<T>, AdminError> {
     execute_tool_json::<Vec<T>>(state, tool_name, args)
         .await
-        .map_err(|_error| {
-            tracing::error!("failed to list browse items via unified execution");
-            (
-                axum::http::StatusCode::SERVICE_UNAVAILABLE,
-                axum::Json(CacheErrorResponse {
-                    error: unavailable_message.to_owned(),
-                }),
-            )
+        .map_err(|e| {
+            log_operation_error(
+                "Browse",
+                "failed to list browse items via unified execution",
+                &e,
+            );
+            AdminError::unavailable(unavailable_message)
         })
 }
 
@@ -56,7 +61,7 @@ async fn fetch_project_scoped_entities_axum<T: serde::de::DeserializeOwned>(
     resource: &'static str,
     project_id: Option<String>,
     unavailable_message: &'static str,
-) -> Result<Vec<T>, (axum::http::StatusCode, axum::Json<CacheErrorResponse>)> {
+) -> Result<Vec<T>, AdminError> {
     fetch_browse_items_axum::<T>(
         state,
         "entity",
@@ -69,9 +74,9 @@ async fn fetch_project_scoped_entities_axum<T: serde::de::DeserializeOwned>(
 fn build_browse_response_axum<T, R>(
     items: Vec<T>,
     map: impl FnOnce(Vec<T>, usize) -> R,
-) -> axum::Json<R> {
+) -> AxumJson<R> {
     let total = items.len();
-    axum::Json(map(items, total))
+    AxumJson(map(items, total))
 }
 
 /// List workflow projects for browse entity graph.
@@ -79,12 +84,9 @@ fn build_browse_response_axum<T, R>(
 /// # Errors
 /// Returns `503 Service Unavailable` when the backend service is unavailable.
 pub async fn list_browse_projects(
-    _auth: crate::admin::auth::AxumAdminAuth,
-    axum::extract::State(state): axum::extract::State<Arc<AdminState>>,
-) -> Result<
-    axum::Json<ProjectsBrowseResponse>,
-    (axum::http::StatusCode, axum::Json<CacheErrorResponse>),
-> {
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<AdminState>>,
+) -> AdminResult<ProjectsBrowseResponse> {
     tracing::info!("list_browse_projects called");
     let args = build_project_list_args("project", None);
 
@@ -139,12 +141,9 @@ define_project_scoped_browse_endpoint!(
 /// # Errors
 /// Returns `503 Service Unavailable` when the backend service is unavailable.
 pub async fn list_browse_organizations(
-    _auth: crate::admin::auth::AxumAdminAuth,
-    axum::extract::State(state): axum::extract::State<Arc<AdminState>>,
-) -> Result<
-    axum::Json<OrganizationsBrowseResponse>,
-    (axum::http::StatusCode, axum::Json<CacheErrorResponse>),
-> {
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<AdminState>>,
+) -> AdminResult<OrganizationsBrowseResponse> {
     let args = build_project_list_args("org", None);
 
     let organizations =

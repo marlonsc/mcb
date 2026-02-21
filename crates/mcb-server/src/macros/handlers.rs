@@ -83,3 +83,40 @@ macro_rules! require_arg {
             .ok_or_else(|| McpError::invalid_params($msg, None))?
     };
 }
+
+/// Extract a required `Option` field from `AdminState`, returning
+/// `AdminError::unavailable` when `None`.
+///
+/// ```ignore
+/// let cache = require_service!(state, cache, "Cache provider not available");
+/// ```
+macro_rules! require_service {
+    ($state:expr, $field:ident, $msg:literal) => {
+        match $state.$field {
+            Some(ref svc) => svc,
+            None => return Err($crate::admin::error::AdminError::unavailable($msg)),
+        }
+    };
+}
+
+/// Generate a simple template page handler that renders a Handlebars template
+/// with standard nav context.
+///
+/// ```ignore
+/// template_page!(config_page, "admin/config", "Configuration", "config");
+/// ```
+macro_rules! template_page {
+    ($fn_name:ident, $template:literal, $title:literal, $page:literal) => {
+        pub async fn $fn_name() -> $crate::templates::Template {
+            tracing::info!(concat!(stringify!($fn_name), " called"));
+            $crate::templates::Template::render(
+                $template,
+                context! {
+                    title: $title,
+                    current_page: $page,
+                    nav_groups: $crate::admin::web::view_model::nav_groups(),
+                },
+            )
+        }
+    };
+}
