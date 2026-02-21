@@ -33,6 +33,13 @@ use super::models::{
 };
 use crate::constants::LIST_FILE_PATHS_LIMIT;
 
+/// Query parameters for browse collection file listing (Axum).
+#[derive(Debug, serde::Deserialize)]
+pub struct BrowseFilesQuery {
+    /// Maximum number of files to return (default: 100).
+    pub limit: Option<usize>,
+}
+
 /// Browse handler state containing the vector store browser
 #[derive(Clone)]
 pub struct BrowseState {
@@ -111,6 +118,98 @@ pub async fn list_collections(
     Ok(Json(CollectionListResponse {
         collections: collection_responses,
         total,
+    }))
+}
+
+/// Axum handler: list all indexed collections.
+///
+/// # Errors
+/// Returns `500` for backend failures.
+pub async fn list_collections_axum(
+    _auth: super::auth::AxumAdminAuth,
+    axum::extract::State(state): axum::extract::State<Arc<BrowseState>>,
+) -> Result<
+    axum::Json<CollectionListResponse>,
+    (axum::http::StatusCode, axum::Json<BrowseErrorResponse>),
+> {
+    tracing::info!("list_collections called");
+    let collections = state.browser.list_collections().await.map_err(|e| {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            axum::Json(BrowseErrorResponse::internal(e.to_string())),
+        )
+    })?;
+
+    let collection_responses = collections
+        .into_iter()
+        .map(|c| CollectionInfoResponse {
+            id: c.id.to_string(),
+            name: c.name,
+            vector_count: c.vector_count,
+            file_count: c.file_count,
+            last_indexed: c.last_indexed,
+            provider: c.provider,
+        })
+        .collect::<Vec<_>>();
+
+    let total = collection_responses.len();
+    Ok(axum::Json(CollectionListResponse {
+        collections: collection_responses,
+        total,
+    }))
+}
+
+/// Axum handler: list files in a collection.
+///
+/// # Errors
+/// Returns `404` for unknown collections and `500` for backend failures.
+pub async fn list_collection_files_axum(
+    _auth: super::auth::AxumAdminAuth,
+    axum::extract::State(state): axum::extract::State<Arc<BrowseState>>,
+    axum::extract::Path(name): axum::extract::Path<String>,
+    axum::extract::Query(params): axum::extract::Query<BrowseFilesQuery>,
+) -> Result<
+    axum::Json<FileListResponse>,
+    (axum::http::StatusCode, axum::Json<BrowseErrorResponse>),
+> {
+    tracing::info!("list_collection_files called");
+    let limit = params.limit.unwrap_or(DEFAULT_BROWSE_FILES_LIMIT);
+    let collection = CollectionId::from_string(&name);
+
+    let files = state
+        .browser
+        .list_file_paths(&collection, limit)
+        .await
+        .map_err(|e| {
+            let error_msg = e.to_string();
+            if error_msg.contains("not found") || error_msg.contains("does not exist") {
+                (
+                    axum::http::StatusCode::NOT_FOUND,
+                    axum::Json(BrowseErrorResponse::not_found("Collection")),
+                )
+            } else {
+                (
+                    axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                    axum::Json(BrowseErrorResponse::internal(error_msg)),
+                )
+            }
+        })?;
+
+    let file_responses = files
+        .into_iter()
+        .map(|f| FileInfoResponse {
+            path: f.path,
+            chunk_count: f.chunk_count,
+            language: f.language,
+            size_bytes: f.size_bytes,
+        })
+        .collect::<Vec<_>>();
+
+    let total = file_responses.len();
+    Ok(axum::Json(FileListResponse {
+        files: file_responses,
+        total,
+        collection: name,
     }))
 }
 

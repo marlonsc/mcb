@@ -20,6 +20,8 @@ async fn axum_health_check() {
         indexing: DefaultIndexingOperations::new_shared(),
         browser: None,
         mcp_server: None,
+        admin_state: None,
+        auth_config: None,
     });
 
     let server_state = Arc::clone(&state);

@@ -409,4 +409,3 @@ pub async fn services_health_axum(
         checks: checks_json,
     }))
 }
-

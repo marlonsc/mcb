@@ -17,6 +17,8 @@ pub fn test_app() -> Router {
         indexing: DefaultIndexingOperations::new_shared(),
         browser: None,
         mcp_server: None,
+        admin_state: None,
+        auth_config: None,
     });
     build_router(state)
 }
