@@ -8,18 +8,16 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use crate::config::AppConfig;
+use crate::config::loader::ConfigLoader;
+use crate::error_ext::ErrorContext;
+use crate::logging::log_config_loaded;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::EventBusProvider;
 use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use tokio::runtime::Handle;
 use tokio::sync::RwLock;
-use tracing::warn;
-
-use crate::config::AppConfig;
-use crate::config::loader::ConfigLoader;
-use crate::error_ext::ErrorContext;
-use crate::logging::log_config_loaded;
 
 /// Configuration watcher for hot-reloading
 pub struct ConfigWatcher {
@@ -129,7 +127,7 @@ impl ConfigWatcher {
                             }
                         }
                         Err(e) => {
-                            warn!(error = %e, "File watch error");
+                            tracing::warn!(error = %e, "File watch error");
                         }
                     }
                 });
@@ -171,7 +169,7 @@ impl ConfigWatcher {
                 log_config_loaded(&config_path, true);
             }
             Err(e) => {
-                warn!(error = %e, "Failed to reload configuration");
+                tracing::warn!(error = %e, "Failed to reload configuration");
 
                 log_config_loaded(&config_path, false);
             }
@@ -186,7 +184,7 @@ impl ConfigWatcher {
             })
             .await
         {
-            warn!(error = %e, "Failed to publish config reload event");
+            tracing::warn!(error = %e, "Failed to publish config reload event");
         }
     }
 }

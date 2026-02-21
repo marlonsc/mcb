@@ -16,7 +16,7 @@ use super::{
     ConfigReloadResponse, ConfigResponse, ConfigSectionUpdateRequest, ConfigSectionUpdateResponse,
     SanitizedConfig,
 };
-use mcb_infrastructure::logging::log_operation_error;
+use mcb_domain::error;
 
 use crate::admin::auth::AdminAuth;
 use crate::admin::handlers::AdminState;
@@ -70,7 +70,7 @@ pub async fn reload_config(
             (Status::Ok, Json(ConfigReloadResponse::success(sanitized)))
         }
         Err(e) => {
-            log_operation_error("reload_config", "configuration reload failed", &e);
+            error!("reload_config", "configuration reload failed", &e);
             (
                 Status::InternalServerError,
                 Json(ConfigReloadResponse::failure(
@@ -139,10 +139,9 @@ impl ConfigUpdateError {
                 )),
             ),
             Self::ReadFailed(e) => {
-                log_operation_error(
+                error!(
                     "update_config_section",
-                    "failed to read configuration file",
-                    e,
+                    "failed to read configuration file", e
                 );
                 (
                     Status::InternalServerError,
@@ -150,10 +149,9 @@ impl ConfigUpdateError {
                 )
             }
             Self::ParseFailed(e) => {
-                log_operation_error(
+                error!(
                     "update_config_section",
-                    "failed to parse configuration file",
-                    e,
+                    "failed to parse configuration file", e
                 );
                 (
                     Status::InternalServerError,
@@ -165,10 +163,9 @@ impl ConfigUpdateError {
                 Json(Resp::failure(section, "Invalid configuration value format")),
             ),
             Self::SerializeFailed(e) => {
-                log_operation_error(
+                error!(
                     "update_config_section",
-                    "failed to serialize configuration",
-                    e,
+                    "failed to serialize configuration", e
                 );
                 (
                     Status::InternalServerError,
@@ -176,10 +173,9 @@ impl ConfigUpdateError {
                 )
             }
             Self::WriteFailed(e) => {
-                log_operation_error(
+                error!(
                     "update_config_section",
-                    "failed to write configuration file",
-                    e,
+                    "failed to write configuration file", e
                 );
                 (
                     Status::InternalServerError,
@@ -187,10 +183,9 @@ impl ConfigUpdateError {
                 )
             }
             Self::ReloadFailed(e) => {
-                log_operation_error(
+                error!(
                     "update_config_section",
-                    "configuration updated but reload failed",
-                    e,
+                    "configuration updated but reload failed", e
                 );
                 (
                     Status::InternalServerError,
@@ -217,6 +212,11 @@ use axum::http::StatusCode;
 use crate::admin::auth::AxumAdminAuth;
 use crate::admin::error::{AdminError, AdminStatusResult};
 
+/// Axum variant: get current configuration (sanitized, protected).
+/// Axum handler: get current configuration (sanitized, protected).
+///
+/// # Errors
+/// Returns `500` only if response serialization fails.
 pub async fn get_config_axum(
     _auth: AxumAdminAuth,
     AxumState(state): AxumState<Arc<AdminState>>,
@@ -244,6 +244,11 @@ pub async fn get_config_axum(
     ))
 }
 
+/// Axum variant: reload configuration from file (protected).
+/// Axum handler: reload configuration from file (protected).
+///
+/// # Errors
+/// Returns `503` when config watcher is unavailable and `500` on reload failures.
 pub async fn reload_config_axum(
     _auth: AxumAdminAuth,
     AxumState(state): AxumState<Arc<AdminState>>,
@@ -263,12 +268,18 @@ pub async fn reload_config_axum(
             ))
         }
         Err(e) => {
-            log_operation_error("reload_config_axum", "configuration reload failed", &e);
+            error!("reload_config_axum", "configuration reload failed", &e);
             Err(AdminError::internal("Failed to reload configuration"))
         }
     }
 }
 
+/// Axum variant: update a specific configuration section (protected).
+/// Axum handler: update a specific configuration section (protected).
+///
+/// # Errors
+/// Returns `400` for invalid input, `503` when configuration services are unavailable,
+/// and `500` for read/write/reload failures.
 pub async fn update_config_section_axum(
     _auth: AxumAdminAuth,
     AxumState(state): AxumState<Arc<AdminState>>,
@@ -312,40 +323,39 @@ impl ConfigUpdateError {
                 AdminError::unavailable("Configuration file path not available")
             }
             Self::ReadFailed(e) => {
-                log_operation_error(
+                error!(
                     "update_config_section_axum",
-                    "failed to read configuration file",
-                    e,
+                    "failed to read configuration file", e
                 );
                 AdminError::internal("Failed to read configuration file")
             }
             Self::ParseFailed(e) => {
-                log_operation_error(
+                error!(
                     "update_config_section_axum",
-                    "failed to parse configuration file",
-                    e,
+                    "failed to parse configuration file", e
                 );
                 AdminError::internal("Failed to parse configuration file")
             }
             Self::InvalidFormat => AdminError::bad_request("Invalid configuration value format"),
             Self::SerializeFailed(e) => {
-                log_operation_error(
+                error!(
                     "update_config_section_axum",
-                    "failed to serialize configuration",
-                    e,
+                    "failed to serialize configuration", e
                 );
                 AdminError::internal("Failed to serialize configuration")
             }
             Self::WriteFailed(e) => {
-                log_operation_error(
+                error!(
                     "update_config_section_axum",
-                    "failed to write configuration file",
-                    e,
+                    "failed to write configuration file", e
                 );
                 AdminError::internal("Failed to write configuration file")
             }
             Self::ReloadFailed(e) => {
-                tracing::error!(handler = "update_config_section_axum", section = section, error = %e, "configuration updated but reload failed");
+                error!(
+                    "update_config_section_axum",
+                    "configuration updated but reload failed", e
+                );
                 AdminError::internal("Configuration updated but reload failed")
             }
         }

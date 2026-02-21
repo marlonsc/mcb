@@ -12,13 +12,13 @@ pub struct Sensitive<T>(pub T);
 
 impl<T> fmt::Debug for Sensitive<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", REDACTED)
+        write!(f, "{REDACTED}")
     }
 }
 
 impl<T> fmt::Display for Sensitive<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", REDACTED)
+        write!(f, "{REDACTED}")
     }
 }
 

@@ -271,7 +271,7 @@ async fn execute_service_action_axum(
 ///
 /// # Errors
 /// Returns `503` when service manager is unavailable.
-pub fn list_services_axum(
+pub async fn list_services_axum(
     _auth: AxumAdminAuth,
     AxumState(state): AxumState<Arc<AdminState>>,
 ) -> AdminResult<ServiceListResponse> {

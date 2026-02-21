@@ -12,6 +12,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use mcb_domain::SearchResult;
+use mcb_domain::error;
 use mcb_domain::ports::ValidationReport;
 use mcb_domain::ports::{IndexingResult, IndexingStatus};
 use rmcp::ErrorData as McpError;
@@ -57,7 +58,8 @@ impl ResponseFormatter {
     /// Format indexing error response
     pub fn format_indexing_error(error: &str, path: &Path) -> CallToolResult {
         let message = build_indexing_error_message(error, path);
-        tracing::error!(path = %path.display(), error = %error, "indexing failed");
+        let detail = format!("path={} error={error}", path.display());
+        error!("ResponseFormatter", "indexing failed", &detail);
         CallToolResult::error(vec![Content::text(message)])
     }
 
@@ -109,7 +111,8 @@ impl ResponseFormatter {
     /// Format validation error response
     pub fn format_validation_error(error: &str, path: &Path) -> CallToolResult {
         let message = build_validation_error_message(error, path);
-        tracing::error!(path = %path.display(), error = %error, "validation failed");
+        let detail = format!("path={} error={error}", path.display());
+        error!("ResponseFormatter", "validation failed", &detail);
         CallToolResult::error(vec![Content::text(message)])
     }
 }

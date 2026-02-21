@@ -4,7 +4,7 @@
 use std::io::IsTerminal;
 
 use mcb_domain::error::{Error, Result};
-use tracing::{Level, debug, error, info, warn};
+use tracing::Level;
 use tracing_subscriber::{EnvFilter, Registry, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 use super::event_bus_layer;
@@ -23,6 +23,8 @@ pub type LogEventReceiver = tokio::sync::mpsc::UnboundedReceiver<mcb_domain::eve
 ///
 /// Returns an error if the log level is invalid or tracing subscriber initialization fails.
 pub fn init_logging(config: &LoggingConfig) -> Result<Option<LogEventReceiver>> {
+    mcb_domain::infra::logging::set_log_fn(crate::logging::log_facade_shim);
+
     let level = parse_log_level(&config.level)?;
     let filter = create_log_filter(&config.level);
     let file_appender = create_file_appender(&config.file_output);
@@ -36,9 +38,9 @@ pub fn init_logging(config: &LoggingConfig) -> Result<Option<LogEventReceiver>> 
         init_text_logging(filter, file_appender, event_layer)?;
     }
 
-    info!("Logging initialized with level: {}", level);
+    tracing::info!("Logging initialized with level: {}", level);
     if receiver.is_some() {
-        info!(event_bus_level = %config.event_bus_level, "Event bus log forwarding enabled");
+        tracing::info!(event_bus_level = %config.event_bus_level, "Event bus log forwarding enabled");
     }
     Ok(receiver)
 }
@@ -236,18 +238,18 @@ pub fn parse_log_level(level: &str) -> Result<Level> {
 /// Log configuration loading status
 pub fn log_config_loaded(config_path: &std::path::Path, success: bool) {
     if success {
-        info!("Configuration loaded from {}", config_path.display());
+        tracing::info!("Configuration loaded from {}", config_path.display());
     } else {
-        warn!("Configuration file not found: {}", config_path.display());
+        tracing::warn!("Configuration file not found: {}", config_path.display());
     }
 }
 
 /// Log health check result
 pub fn log_health_check(component: &str, healthy: bool, details: Option<&str>) {
     if healthy {
-        debug!(component = component, "Health check passed");
+        tracing::debug!(component = component, "Health check passed");
     } else {
-        error!(
+        tracing::error!(
             component = component,
             details = details.unwrap_or("Unknown failure"),
             "Health check failed"

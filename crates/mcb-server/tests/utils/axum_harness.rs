@@ -16,6 +16,7 @@ pub fn test_app() -> Router {
         metrics: AtomicPerformanceMetrics::new_shared(),
         indexing: DefaultIndexingOperations::new_shared(),
         browser: None,
+        browse_state: None,
         mcp_server: None,
         admin_state: None,
         auth_config: None,

@@ -18,12 +18,6 @@ use mcb_domain::ports::{
     VectorStoreAdminInterface,
 };
 
-use mcb_providers::database::{
-    SqliteFileHashConfig, SqliteFileHashRepository, SqliteMemoryRepository,
-    create_agent_repository_from_executor, create_project_repository_from_executor,
-};
-use tracing::info;
-
 use crate::config::{AppConfig, ConfigLoader};
 use crate::constants::providers::DEFAULT_DB_CONFIG_NAME;
 use crate::constants::services::{
@@ -45,6 +39,10 @@ use crate::infrastructure::admin::{AtomicPerformanceMetrics, DefaultIndexingOper
 use crate::infrastructure::lifecycle::DefaultShutdownCoordinator;
 use crate::project::ProjectService;
 use crate::services::HighlightServiceImpl;
+use mcb_providers::database::{
+    SqliteFileHashConfig, SqliteFileHashRepository, SqliteMemoryRepository,
+    create_agent_repository_from_executor, create_project_repository_from_executor,
+};
 use mcb_providers::events::TokioEventBusProvider;
 
 /// Application context with provider handles and infrastructure services
@@ -347,7 +345,7 @@ impl std::fmt::Debug for AppContext {
 ///
 /// Returns an error if provider resolution, database connection, or service initialization fails.
 pub async fn init_app(config: AppConfig) -> Result<AppContext> {
-    info!("Initializing application context with provider handles");
+    tracing::info!("Initializing application context with provider handles");
 
     let config = Arc::new(config);
 
@@ -442,7 +440,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     let indexing_operations: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());
 
-    info!("Created infrastructure services");
+    tracing::info!("Created infrastructure services");
 
     // ========================================================================
     // Create Domain Services & Repositories
@@ -504,7 +502,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 
     let crypto_service = Arc::new(create_crypto_service(&config)?);
 
-    info!("Created domain services and repositories");
+    tracing::info!("Created domain services and repositories");
 
     Ok(AppContext {
         config,

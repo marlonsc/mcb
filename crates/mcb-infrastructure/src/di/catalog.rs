@@ -7,16 +7,6 @@
 
 use std::sync::Arc;
 
-use dill::{Catalog, CatalogBuilder};
-use mcb_domain::error::Result;
-use mcb_domain::ports::{
-    CacheAdminInterface, CacheProvider, EmbeddingAdminInterface, EmbeddingProvider,
-    EventBusProvider, IndexingOperationsInterface, LanguageAdminInterface,
-    LanguageChunkingProvider, PerformanceMetricsInterface, ShutdownCoordinator,
-    VectorStoreAdminInterface, VectorStoreProvider,
-};
-use tracing::info;
-
 use crate::config::AppConfig;
 use crate::constants::services::{
     CACHE_SERVICE_NAME, EMBEDDING_SERVICE_NAME, LANGUAGE_SERVICE_NAME, VECTOR_STORE_SERVICE_NAME,
@@ -35,6 +25,14 @@ use crate::infrastructure::{
     admin::{AtomicPerformanceMetrics, DefaultIndexingOperations},
     lifecycle::DefaultShutdownCoordinator,
 };
+use dill::{Catalog, CatalogBuilder};
+use mcb_domain::error::Result;
+use mcb_domain::ports::{
+    CacheAdminInterface, CacheProvider, EmbeddingAdminInterface, EmbeddingProvider,
+    EventBusProvider, IndexingOperationsInterface, LanguageAdminInterface,
+    LanguageChunkingProvider, PerformanceMetricsInterface, ShutdownCoordinator,
+    VectorStoreAdminInterface, VectorStoreProvider,
+};
 use mcb_providers::events::TokioEventBusProvider;
 
 /// Build the dill Catalog with all application services
@@ -43,7 +41,7 @@ use mcb_providers::events::TokioEventBusProvider;
 ///
 /// Returns an error if provider resolution or service initialization fails.
 pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
-    info!("Building dill Catalog");
+    tracing::info!("Building dill Catalog");
 
     let config = Arc::new(config);
 
@@ -128,7 +126,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     let indexing_operations: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());
 
-    info!("Created infrastructure services");
+    tracing::info!("Created infrastructure services");
 
     // ========================================================================
     // Build the Catalog

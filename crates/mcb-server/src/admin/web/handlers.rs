@@ -5,12 +5,11 @@
 //!
 //! HTTP handlers for the admin web interface.
 
-use axum::extract::{Path, State};
+use axum::extract::State;
 use axum::http::header;
 use axum::response::IntoResponse;
+use mcb_domain::warn;
 use serde::Serialize;
-
-use mcb_infrastructure::logging::log_operation_warn;
 
 use crate::admin::AdminRegistry;
 use crate::admin::crud_adapter::resolve_adapter;
@@ -23,15 +22,15 @@ const SHARED_JS: &str = include_str!("templates/shared.js");
 const THEME_CSS: &str = include_str!("templates/theme.css");
 
 /// Dashboard page handler
-pub async fn dashboard(state: Option<State<AdminState>>) -> Template {
+pub async fn dashboard(State(state): State<AdminState>) -> Template {
     tracing::info!("dashboard called");
-    render_dashboard_template("Dashboard", state.as_deref()).await
+    render_dashboard_template("Dashboard", Some(&state)).await
 }
 
 /// Dashboard page handler (alias)
-pub async fn dashboard_ui(state: Option<State<AdminState>>) -> Template {
+pub async fn dashboard_ui(State(state): State<AdminState>) -> Template {
     tracing::info!("dashboard_ui called");
-    render_dashboard_template("Dashboard", state.as_deref()).await
+    render_dashboard_template("Dashboard", Some(&state)).await
 }
 
 template_page!(config_page, "admin/config", "Configuration", "config");
@@ -64,31 +63,21 @@ pub async fn shared_js() -> impl IntoResponse {
 
 template_page!(browse_page, "admin/browse", "Browse Indexed Code", "browse");
 
-/// Browse collection files page handler
-pub async fn browse_collection_page(Path(_collection): Path<String>) -> Template {
-    tracing::info!("browse_collection_page called");
-    Template::render(
-        "admin/browse_collection",
-        context! {
-            title: "Browse Files",
-            current_page: "browse",
-            nav_groups: nav_groups(),
-        },
-    )
-}
+template_page_with_path!(
+    browse_collection_page,
+    collection: String,
+    "admin/browse_collection",
+    "Browse Files",
+    "browse"
+);
 
-/// Browse file chunks page handler
-pub async fn browse_file_page(Path(_collection): Path<String>) -> Template {
-    tracing::info!("browse_file_page called");
-    Template::render(
-        "admin/browse_file",
-        context! {
-            title: "View Code",
-            current_page: "browse",
-            nav_groups: nav_groups(),
-        },
-    )
-}
+template_page_with_path!(
+    browse_file_page,
+    collection: String,
+    "admin/browse_file",
+    "View Code",
+    "browse"
+);
 
 template_page!(
     browse_tree_page,
@@ -115,7 +104,7 @@ async fn render_dashboard_template(title: &str, state: Option<&AdminState>) -> T
             Some(adapter) => match adapter.list_all().await {
                 Ok(rows) => rows.len(),
                 Err(e) => {
-                    log_operation_warn("AdminWeb", "list_all failed", &e);
+                    warn!("AdminWeb", "list_all failed", &e);
                     0
                 }
             },

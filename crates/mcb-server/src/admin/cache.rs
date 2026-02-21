@@ -47,7 +47,7 @@ pub async fn get_cache_stats(
     match cache.stats().await {
         Ok(stats) => Ok(Json(stats)),
         Err(e) => {
-            tracing::error!(error = %e, "failed to get cache stats");
+            mcb_domain::error!("AdminCache", "failed to get cache stats", &e);
             Err((
                 Status::InternalServerError,
                 Json(CacheErrorResponse {
@@ -69,7 +69,7 @@ pub async fn get_cache_stats_axum(
     tracing::info!("get_cache_stats called");
     let cache = require_service!(state, cache, "Cache provider not available");
     cache.stats().await.map(AxumJson).map_err(|e| {
-        tracing::error!(error = %e, "failed to get cache stats");
+        mcb_domain::error!("AdminCache", "failed to get cache stats", &e);
         AdminError::internal("Failed to retrieve cache statistics")
     })
 }

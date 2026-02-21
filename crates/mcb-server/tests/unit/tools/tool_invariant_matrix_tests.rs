@@ -3,6 +3,7 @@ extern crate mcb_providers;
 
 use std::sync::Arc;
 
+use axum::http::StatusCode;
 use mcb_server::McpServer;
 use mcb_server::tools::router::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use rmcp::model::CallToolRequestParams;
@@ -146,7 +147,7 @@ async fn client_hybrid_allows_server_side_tools(
     ];
     let (status, response) = post_mcp(&ctx, &request, &headers).await?;
 
-    assert_eq!(status, rocket::http::Status::Ok);
+    assert_eq!(status, StatusCode::OK);
     let error_opt = response.error;
     // Tools should now be allowed through the matrix check in client-hybrid mode.
     // They may fail for other reasons (e.g., missing arguments), but NOT due to mode violation.
@@ -170,7 +171,7 @@ async fn server_hybrid_blocks_validate() -> Result<(), Box<dyn std::error::Error
     ];
     let (status, response) = post_mcp(&ctx, &request, &headers).await?;
 
-    assert_eq!(status, rocket::http::Status::Ok);
+    assert_eq!(status, StatusCode::OK);
     let error_opt = response.error;
     assert!(
         error_opt.is_some(),

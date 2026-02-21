@@ -1,7 +1,9 @@
 //!
 //! **Documentation**: [docs/modules/infrastructure.md](../../../docs/modules/infrastructure.md)
 //!
-//! Common macros for infrastructure layer
+//! Common macros for infrastructure layer.
+//!
+//! Logging macros live in `mcb_domain` (SSOT); infra registers the shim in `init_logging`.
 
 // ============================================================================
 // Provider Resolver Implementation

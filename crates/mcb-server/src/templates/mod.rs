@@ -17,4 +17,4 @@ mod template;
 
 pub use engine::Engines;
 pub use metadata::Metadata;
-pub use template::Template;
+pub use template::{Template, init_axum_context};

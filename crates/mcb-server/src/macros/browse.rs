@@ -31,7 +31,6 @@
 /// Callers must have the following in scope:
 /// - `ProjectIdQuery` (defined in `admin::browse`)
 /// - `AdminState` (defined in `admin::handlers`)
-/// - `CacheErrorResponse` (defined in `admin::handlers`)
 /// - `fetch_project_scoped_entities_axum` (defined in `admin::browse`)
 /// - `build_browse_response_axum` (defined in `admin::browse`)
 ///

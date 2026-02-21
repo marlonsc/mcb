@@ -8,8 +8,13 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use axum::Router;
+use axum::body::Body;
+use axum::http::{Method, Request, StatusCode};
+use http_body_util::BodyExt;
 use mcb_domain::ports::HighlightServiceInterface;
 use mcb_domain::ports::VectorStoreProvider;
+use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_domain::value_objects::{CollectionId, Embedding};
 use mcb_infrastructure::infrastructure::{
     AtomicPerformanceMetrics, DefaultIndexingOperations, create_test_vector_store_for_e2e,
@@ -20,9 +25,8 @@ use mcb_infrastructure::services::highlight_service::HighlightServiceImpl;
 use mcb_server::admin::auth::AdminAuthConfig;
 use mcb_server::admin::browse_handlers::BrowseState;
 use mcb_server::admin::handlers::AdminState;
-use mcb_server::admin::routes::admin_rocket;
-use rocket::http::{Header, Status};
-use rocket::local::asynchronous::Client;
+use mcb_server::transport::axum_http::{AppState, build_router};
+use tower::ServiceExt;
 
 use crate::utils::test_fixtures::TEST_EMBEDDING_DIMENSIONS;
 
@@ -56,10 +60,92 @@ fn create_test_admin_state() -> Result<AdminState, Box<dyn std::error::Error>> {
     })
 }
 
-/// Create a test Rocket client with browse state
+#[derive(Clone)]
+struct TestClient {
+    app: Router,
+}
+
+struct Header {
+    name: String,
+    value: String,
+}
+
+impl Header {
+    fn new(name: impl Into<String>, value: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            value: value.into(),
+        }
+    }
+}
+
+struct TestResponse {
+    status: StatusCode,
+    body: String,
+}
+
+impl TestResponse {
+    fn status(&self) -> StatusCode {
+        self.status
+    }
+
+    async fn into_string(self) -> Option<String> {
+        Some(self.body)
+    }
+}
+
+struct RequestBuilder {
+    app: Router,
+    method: Method,
+    path: String,
+    headers: Vec<(String, String)>,
+}
+
+impl RequestBuilder {
+    fn header(mut self, header: Header) -> Self {
+        self.headers.push((header.name, header.value));
+        self
+    }
+
+    async fn dispatch(self) -> TestResponse {
+        let mut builder = Request::builder().method(self.method).uri(self.path);
+        for (name, value) in &self.headers {
+            builder = builder.header(name, value);
+        }
+        let req = builder.body(Body::empty()).expect("valid request");
+        let resp = self
+            .app
+            .oneshot(req)
+            .await
+            .expect("router should handle request");
+        let status = resp.status();
+        let body = resp
+            .into_body()
+            .collect()
+            .await
+            .expect("collect body")
+            .to_bytes();
+        TestResponse {
+            status,
+            body: String::from_utf8(body.to_vec()).unwrap_or_default(),
+        }
+    }
+}
+
+impl TestClient {
+    fn get(&self, path: &str) -> RequestBuilder {
+        RequestBuilder {
+            app: self.app.clone(),
+            method: Method::GET,
+            path: path.to_owned(),
+            headers: Vec::new(),
+        }
+    }
+}
+
 async fn create_test_client(
     browse_state: BrowseState,
-) -> Result<Client, Box<dyn std::error::Error>> {
+) -> Result<TestClient, Box<dyn std::error::Error>> {
     let admin_state = create_test_admin_state()?;
     let auth_config = Arc::new(AdminAuthConfig {
         enabled: true,
@@ -67,8 +153,18 @@ async fn create_test_client(
         api_key: Some("test-key".to_owned()),
     });
 
-    let rocket = admin_rocket(admin_state, auth_config, Some(browse_state));
-    Ok(Client::tracked(rocket).await?)
+    let app_state = Arc::new(AppState {
+        metrics: Arc::clone(&admin_state.metrics) as Arc<dyn PerformanceMetricsInterface>,
+        indexing: Arc::clone(&admin_state.indexing) as Arc<dyn IndexingOperationsInterface>,
+        browser: Some(Arc::clone(&browse_state.browser)),
+        browse_state: Some(Arc::new(browse_state)),
+        mcp_server: None,
+        admin_state: Some(Arc::new(admin_state)),
+        auth_config: Some(auth_config),
+    });
+    Ok(TestClient {
+        app: build_router(app_state),
+    })
 }
 
 /// Helper to create metadata for a code chunk
@@ -198,7 +294,7 @@ async fn test_e2e_real_store_list_collections() -> Result<(), Box<dyn std::error
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response
         .into_string()
         .await
@@ -243,7 +339,7 @@ async fn test_e2e_real_store_list_files() -> Result<(), Box<dyn std::error::Erro
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response
         .into_string()
         .await
@@ -301,7 +397,7 @@ async fn test_e2e_real_store_get_file_chunks() -> Result<(), Box<dyn std::error:
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response
         .into_string()
         .await
@@ -370,7 +466,7 @@ async fn test_e2e_real_store_navigate_full_flow() -> Result<(), Box<dyn std::err
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response
         .into_string()
         .await
@@ -401,7 +497,7 @@ async fn test_e2e_real_store_navigate_full_flow() -> Result<(), Box<dyn std::err
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response
         .into_string()
         .await
@@ -429,7 +525,7 @@ async fn test_e2e_real_store_navigate_full_flow() -> Result<(), Box<dyn std::err
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response
         .into_string()
         .await
@@ -474,7 +570,8 @@ async fn test_e2e_real_store_collection_not_found() -> Result<(), Box<dyn std::e
         .await;
 
     assert!(
-        response.status() == Status::NotFound || response.status() == Status::InternalServerError,
+        response.status() == StatusCode::NOT_FOUND
+            || response.status() == StatusCode::INTERNAL_SERVER_ERROR,
         "Expected 404 or 500 for non-existent collection, got {:?}",
         response.status()
     );
@@ -501,7 +598,7 @@ async fn test_e2e_real_store_multiple_collections() -> Result<(), Box<dyn std::e
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response
         .into_string()
         .await

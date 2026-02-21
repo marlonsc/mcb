@@ -57,6 +57,8 @@ pub mod entities;
 pub mod error;
 /// Domain event interfaces
 pub mod events;
+/// Domain surface for infrastructure (plug points; infra registers at startup).
+pub mod infra;
 /// External provider port interfaces
 pub mod ports;
 /// Provider auto-registration registry

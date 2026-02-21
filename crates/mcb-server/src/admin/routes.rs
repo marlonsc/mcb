@@ -4,11 +4,8 @@
 //! Admin API routes
 //!
 //! Route definitions for the admin API endpoints.
-#![allow(clippy::redundant_type_annotations)]
-
 use std::sync::Arc;
 
-use crate::templates::Template;
 use rocket::{Build, Rocket};
 
 use super::auth::AdminAuthConfig;
@@ -26,16 +23,6 @@ use super::jobs::get_jobs_status;
 use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,
 };
-use super::web::entity_handlers::{
-    entities_bulk_delete, entities_create, entities_delete, entities_delete_confirm,
-    entities_detail, entities_edit_form, entities_index, entities_list, entities_new_form,
-    entities_update,
-};
-use super::web::handlers::{
-    browse_collection_page, browse_file_page, browse_page, browse_tree_page, config_page,
-    dashboard, dashboard_ui, favicon, health_page, jobs_page, shared_js, theme_css,
-};
-use super::web::lov_handlers::lov_endpoint;
 use super::web::router::template_dir;
 
 /// Create the admin API rocket instance
@@ -74,12 +61,7 @@ pub fn admin_rocket(
 ) -> Rocket<Build> {
     let figment = rocket::Config::figment().merge(("template_dir", template_dir()));
 
-    let mut rocket = rocket::custom(figment)
-        .manage(state)
-        .manage(auth_config)
-        .attach(Template::custom(|engines| {
-            crate::utils::handlebars::register_helpers(&mut engines.handlebars);
-        }));
+    let mut rocket = rocket::custom(figment).manage(state).manage(auth_config);
 
     rocket = rocket
         .mount(
@@ -109,40 +91,7 @@ pub fn admin_rocket(
                 restart_service,
             ],
         )
-        .mount("/", rocket::routes![get_cache_stats])
-        .mount(
-            "/",
-            rocket::routes![
-                dashboard,
-                dashboard_ui,
-                favicon,
-                config_page,
-                health_page,
-                jobs_page,
-                browse_page,
-                browse_collection_page,
-                browse_file_page,
-                browse_tree_page,
-                theme_css,
-                shared_js,
-            ],
-        )
-        .mount(
-            "/",
-            rocket::routes![
-                entities_index,
-                entities_list,
-                entities_new_form,
-                entities_detail,
-                entities_edit_form,
-                entities_delete_confirm,
-                entities_create,
-                entities_update,
-                entities_delete,
-                entities_bulk_delete,
-                lov_endpoint,
-            ],
-        );
+        .mount("/", rocket::routes![get_cache_stats]);
 
     // Add browse routes only if BrowseState is available
     if let Some(browse) = browse_state {

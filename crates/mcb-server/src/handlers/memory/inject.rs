@@ -3,11 +3,11 @@
 //!
 use std::sync::Arc;
 
+use mcb_domain::error;
 use mcb_domain::ports::MemoryServiceInterface;
 use mcb_infrastructure::project::context_resolver::capture_vcs_context;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
-use tracing::error;
 
 use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
@@ -59,8 +59,8 @@ pub async fn inject_context(
                 }
             }))
         }
-        Err(_e) => {
-            error!("Failed to inject context");
+        Err(e) => {
+            error!("inject_context", "Failed to inject context", &e);
             Ok(tool_error("Failed to inject context"))
         }
     }

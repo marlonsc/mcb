@@ -8,12 +8,12 @@
 //! `?parent_id=` scoping for hierarchical relationships.
 
 use axum::Json;
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
+use axum::extract::{Path, Query, State};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::admin::crud_adapter::resolve_adapter;
+use crate::admin::error::AdminError;
 use crate::admin::handlers::AdminState;
 use crate::admin::registry::{AdminEntityMeta, AdminRegistry};
 use crate::constants::limits::DEFAULT_LOV_LIMIT;
@@ -99,20 +99,13 @@ pub struct LovQuery {
 /// Returns `404 Not Found` when the entity slug is not registered.
 pub async fn lov_endpoint(
     Path(entity_slug): Path<String>,
-    axum::extract::Query(query): axum::extract::Query<LovQuery>,
-    state: Option<State<AdminState>>,
-) -> Result<Json<Vec<LovItem>>, (StatusCode, String)> {
-    let entity = AdminRegistry::find(&entity_slug).ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            format!("Unknown entity: {entity_slug}"),
-        )
-    })?;
+    Query(query): Query<LovQuery>,
+    State(state): State<AdminState>,
+) -> Result<Json<Vec<LovItem>>, AdminError> {
+    let entity = AdminRegistry::find(&entity_slug)
+        .ok_or_else(|| AdminError::not_found(format!("Unknown entity: {entity_slug}")))?;
 
-    let Some(admin_state) = state.as_deref() else {
-        return Ok(Json(Vec::new()));
-    };
-    let adapter = match resolve_adapter(&entity_slug, admin_state) {
+    let adapter = match resolve_adapter(&entity_slug, &state) {
         Some(adapter) => adapter,
         None => return Ok(Json(Vec::new())),
     };

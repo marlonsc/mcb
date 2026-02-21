@@ -1,10 +1,6 @@
-use std::sync::Arc;
-
 use mcb_domain::ports::IndexingOperationsInterface;
 use mcb_domain::value_objects::CollectionId;
-use mcb_server::admin::{auth::AdminAuthConfig, routes::admin_rocket};
 use rocket::http::Status;
-use rocket::local::asynchronous::Client;
 
 use crate::utils::timeouts::TEST_TIMEOUT;
 
@@ -121,19 +117,12 @@ async fn test_readiness_probe_not_ready() {
 
 #[rocket::async_test]
 async fn test_readiness_probe_ready() {
-    let state = AdminTestHarness::new().build_state();
-    let client = tokio::time::timeout(TEST_TIMEOUT, async {
+    let (client, _, _) = AdminTestHarness::new().build_client().await;
+    tokio::time::timeout(TEST_TIMEOUT, async {
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-        Client::tracked(admin_rocket(
-            state,
-            Arc::new(AdminAuthConfig::default()),
-            None,
-        ))
-        .await
     })
     .await
-    .expect("readiness setup timed out")
-    .expect("valid rocket instance");
+    .expect("readiness setup timed out");
 
     let response = client.get("/ready").dispatch().await;
 

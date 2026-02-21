@@ -48,10 +48,10 @@ impl VcsEntityHandler {
             action = args.action,
             resource = args.resource,
             fallback = |action, resource| {
-                tracing::warn!(
-                    ?action,
-                    ?resource,
-                    "unsupported action/resource combination"
+                mcb_domain::warn!(
+                    "VcsEntity",
+                    "unsupported action/resource combination",
+                    &format!("action={action:?} resource={resource:?}")
                 );
                 Err(McpError::invalid_params(
                     "unsupported action/resource combination",

@@ -9,7 +9,6 @@ use mcb_domain::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Value;
-use tracing::error;
 
 use super::common::{
     MemoryOriginOptions, SearchMemoriesJsonSpec, build_observation_metadata, opt_str, require_bool,
@@ -144,8 +143,8 @@ pub async fn store_execution(
             FIELD_OBSERVATION_ID: observation_id,
             "deduplicated": deduplicated,
         })),
-        Err(_e) => {
-            error!("Failed to store execution");
+        Err(e) => {
+            mcb_domain::error!("store_execution", "Failed to store execution", &e);
             Ok(tool_error("Failed to store execution"))
         }
     }

@@ -18,7 +18,7 @@ use super::handlers;
 use super::lov_handlers;
 use crate::admin::handlers::AdminState;
 use crate::constants::limits::DEFAULT_SHUTDOWN_TIMEOUT_SECS;
-use crate::templates::Template;
+use crate::templates::init_axum_context;
 use crate::utils::config::load_startup_config_or_default;
 
 fn default_admin_state() -> AdminState {
@@ -42,6 +42,7 @@ fn default_admin_state() -> AdminState {
     }
 }
 
+/// Resolves the template directory path (disk or fallback for embedded).
 #[must_use]
 pub fn template_dir() -> String {
     const MANIFEST_TEMPLATE_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/templates");
@@ -61,9 +62,10 @@ pub fn template_dir() -> String {
     "templates".to_owned()
 }
 
+/// Builds the admin web UI router with the given state (dashboard, /ui/*, entities, LOV).
 #[must_use]
-pub fn web_router() -> Router {
-    let _template_layer = Template::custom(|engines| {
+pub fn web_router_with_state(state: AdminState) -> Router {
+    init_axum_context(&template_dir(), |engines| {
         crate::utils::handlebars::register_helpers(&mut engines.handlebars);
     });
 
@@ -76,11 +78,11 @@ pub fn web_router() -> Router {
         .route("/ui/browse", get(handlers::browse_page))
         .route("/ui/browse/tree", get(handlers::browse_tree_page))
         .route(
-            "/ui/browse/:collection",
+            "/ui/browse/{collection}",
             get(handlers::browse_collection_page),
         )
         .route(
-            "/ui/browse/:collection/file",
+            "/ui/browse/{collection}/file",
             get(handlers::browse_file_page),
         )
         .route("/favicon.ico", get(handlers::favicon))
@@ -88,29 +90,35 @@ pub fn web_router() -> Router {
         .route("/ui/shared.js", get(handlers::shared_js))
         .route("/ui/entities", get(entity_handlers::entities_index))
         .route(
-            "/ui/entities/:slug",
+            "/ui/entities/{slug}",
             get(entity_handlers::entities_list).post(entity_handlers::entities_create),
         )
         .route(
-            "/ui/entities/:slug/new",
+            "/ui/entities/{slug}/new",
             get(entity_handlers::entities_new_form),
         )
         .route(
-            "/ui/entities/:slug/bulk-delete",
+            "/ui/entities/{slug}/bulk-delete",
             post(entity_handlers::entities_bulk_delete),
         )
         .route(
-            "/ui/entities/:slug/:id",
+            "/ui/entities/{slug}/{id}",
             get(entity_handlers::entities_detail).post(entity_handlers::entities_update),
         )
         .route(
-            "/ui/entities/:slug/:id/edit",
+            "/ui/entities/{slug}/{id}/edit",
             get(entity_handlers::entities_edit_form),
         )
         .route(
-            "/ui/entities/:slug/:id/delete",
+            "/ui/entities/{slug}/{id}/delete",
             get(entity_handlers::entities_delete_confirm).post(entity_handlers::entities_delete),
         )
-        .route("/ui/lov/:entity_slug", get(lov_handlers::lov_endpoint))
-        .with_state(default_admin_state())
+        .route("/ui/lov/{entity_slug}", get(lov_handlers::lov_endpoint))
+        .with_state(state)
+}
+
+/// Default admin web UI router with default state (for tests and standalone use).
+#[must_use]
+pub fn web_router() -> Router {
+    web_router_with_state(default_admin_state())
 }

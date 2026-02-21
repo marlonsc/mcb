@@ -3,44 +3,38 @@
 //!
 //! Entity CRUD handlers — schema-driven Handlebars template rendering.
 
+use axum::extract::Query;
 use axum::extract::{Form, Path, State};
-use axum::http::StatusCode;
 use axum::response::Redirect;
 
 use std::collections::HashSet;
 
+use mcb_domain::warn;
+
 use crate::admin::AdminRegistry;
 use crate::admin::crud_adapter::resolve_adapter;
+use crate::admin::error::AdminError;
 use crate::admin::handlers::AdminState;
 use crate::admin::web::filter::FilterParams;
 use crate::admin::web::view_model::nav_groups;
 use crate::templates::Template;
 
-fn find_or_404(
-    slug: &str,
-) -> Result<&'static crate::admin::registry::AdminEntityMeta, (StatusCode, String)> {
-    AdminRegistry::find(slug).ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            format!("Unknown entity slug: {slug}"),
-        )
-    })
+fn find_or_404(slug: &str) -> Result<&'static crate::admin::registry::AdminEntityMeta, AdminError> {
+    AdminRegistry::find(slug)
+        .ok_or_else(|| AdminError::not_found(format!("Unknown entity slug: {slug}")))
 }
 
 /// Entity catalog page — lists all registered entities with field counts.
-pub async fn entities_index(state: Option<State<AdminState>>) -> Template {
+pub async fn entities_index(State(state): State<AdminState>) -> Template {
     let mut entities = Vec::new();
     let mut total_records: usize = 0;
 
     for entity in AdminRegistry::all() {
-        let record_count = match state
-            .as_deref()
-            .and_then(|s| resolve_adapter(entity.slug, s))
-        {
+        let record_count = match resolve_adapter(entity.slug, &state) {
             Some(adapter) => match adapter.list_all().await {
                 Ok(v) => v.len(),
                 Err(e) => {
-                    tracing::warn!(entity = entity.slug, error = %e, "list_all failed");
+                    warn!("AdminWeb", "list_all failed", &e);
                     0
                 }
             },
@@ -79,9 +73,9 @@ pub async fn entities_index(state: Option<State<AdminState>>) -> Template {
 /// Returns `404` when entity slug is not registered.
 pub async fn entities_list(
     Path(slug): Path<String>,
-    axum::extract::Query(params): axum::extract::Query<FilterParams>,
-    state: Option<State<AdminState>>,
-) -> Result<Template, (StatusCode, String)> {
+    Query(params): Query<FilterParams>,
+    State(state): State<AdminState>,
+) -> Result<Template, AdminError> {
     let entity = find_or_404(&slug)?;
 
     let fields = entity
@@ -95,7 +89,7 @@ pub async fn entities_list(
         .collect::<Vec<_>>();
     let valid_sort_fields = field_names.iter().cloned().collect::<HashSet<_>>();
 
-    let result = match state.as_deref().and_then(|s| resolve_adapter(&slug, s)) {
+    let result = match resolve_adapter(&slug, &state) {
         Some(adapter) => adapter
             .list_filtered(&params, &valid_sort_fields)
             .await
@@ -134,7 +128,7 @@ pub async fn entities_list(
 ///
 /// # Errors
 /// Returns `404` when entity slug is not registered.
-pub async fn entities_new_form(Path(slug): Path<String>) -> Result<Template, (StatusCode, String)> {
+pub async fn entities_new_form(Path(slug): Path<String>) -> Result<Template, AdminError> {
     let entity = find_or_404(&slug)?;
 
     let fields = entity
@@ -164,8 +158,8 @@ pub async fn entities_new_form(Path(slug): Path<String>) -> Result<Template, (St
 /// Returns `404` when entity slug is not registered.
 pub async fn entities_detail(
     Path((slug, id)): Path<(String, String)>,
-    state: Option<State<AdminState>>,
-) -> Result<Template, (StatusCode, String)> {
+    State(state): State<AdminState>,
+) -> Result<Template, AdminError> {
     let entity = find_or_404(&slug)?;
     let fields = entity
         .fields()
@@ -173,7 +167,7 @@ pub async fn entities_detail(
         .filter(|field| !field.hidden)
         .collect::<Vec<_>>();
 
-    let (record, has_record) = match state.as_deref().and_then(|s| resolve_adapter(&slug, s)) {
+    let (record, has_record) = match resolve_adapter(&slug, &state) {
         Some(adapter) => match adapter.get_by_id(&id).await {
             Ok(val) => (val, true),
             Err(_) => (serde_json::Value::Null, false),
@@ -203,8 +197,8 @@ pub async fn entities_detail(
 /// Returns `404` when entity slug is not registered.
 pub async fn entities_edit_form(
     Path((slug, id)): Path<(String, String)>,
-    state: Option<State<AdminState>>,
-) -> Result<Template, (StatusCode, String)> {
+    State(state): State<AdminState>,
+) -> Result<Template, AdminError> {
     let entity = find_or_404(&slug)?;
     let fields = entity
         .fields()
@@ -212,7 +206,7 @@ pub async fn entities_edit_form(
         .filter(|field| !field.hidden)
         .collect::<Vec<_>>();
 
-    let record = match state.as_deref().and_then(|s| resolve_adapter(&slug, s)) {
+    let record = match resolve_adapter(&slug, &state) {
         Some(adapter) => adapter
             .get_by_id(&id)
             .await
@@ -242,8 +236,8 @@ pub async fn entities_edit_form(
 /// Returns `404` when entity slug is not registered.
 pub async fn entities_delete_confirm(
     Path((slug, id)): Path<(String, String)>,
-    state: Option<State<AdminState>>,
-) -> Result<Template, (StatusCode, String)> {
+    State(state): State<AdminState>,
+) -> Result<Template, AdminError> {
     let entity = find_or_404(&slug)?;
     let fields = entity
         .fields()
@@ -251,7 +245,7 @@ pub async fn entities_delete_confirm(
         .filter(|field| !field.hidden)
         .collect::<Vec<_>>();
 
-    let (record, has_record) = match state.as_deref().and_then(|s| resolve_adapter(&slug, s)) {
+    let (record, has_record) = match resolve_adapter(&slug, &state) {
         Some(adapter) => match adapter.get_by_id(&id).await {
             Ok(val) => (val, true),
             Err(_) => (serde_json::Value::Null, false),
@@ -281,21 +275,22 @@ pub async fn entities_delete_confirm(
 /// Returns `404` for unknown entity slugs, `400` for invalid form payloads, and `500` for persistence failures.
 pub async fn entities_create(
     Path(slug): Path<String>,
-    state: Option<State<AdminState>>,
+    State(state): State<AdminState>,
     Form(form): Form<std::collections::HashMap<String, String>>,
-) -> Result<Redirect, (StatusCode, String)> {
+) -> Result<Redirect, AdminError> {
     find_or_404(&slug)?;
 
-    if let Some(adapter) = state.as_deref().and_then(|s| resolve_adapter(&slug, s)) {
+    if let Some(adapter) = resolve_adapter(&slug, &state) {
         let data =
-            serde_json::to_value(form).map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+            serde_json::to_value(form).map_err(|e| AdminError::bad_request(e.to_string()))?;
         adapter
             .create_from_json(data)
             .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+            .map_err(AdminError::internal)?;
     }
 
-    Ok(Redirect::to(format!("/ui/entities/{slug}?toast=created")))
+    let url = format!("/ui/entities/{slug}?toast=created");
+    Ok(Redirect::to(&url))
 }
 
 /// Update entity — persists via service adapter and redirects to the detail page.
@@ -304,25 +299,23 @@ pub async fn entities_create(
 /// Returns `404` for unknown entity slugs, `400` for invalid form payloads, and `500` for persistence failures.
 pub async fn entities_update(
     Path((slug, id)): Path<(String, String)>,
-    state: Option<State<AdminState>>,
+    State(state): State<AdminState>,
     Form(form): Form<std::collections::HashMap<String, String>>,
-) -> Result<Redirect, (StatusCode, String)> {
+) -> Result<Redirect, AdminError> {
     find_or_404(&slug)?;
 
-    if let Some(adapter) = state.as_deref().and_then(|s| resolve_adapter(&slug, s)) {
+    if let Some(adapter) = resolve_adapter(&slug, &state) {
         let mut map = form;
         map.insert("id".to_owned(), id.clone());
-        let data =
-            serde_json::to_value(map).map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+        let data = serde_json::to_value(map).map_err(|e| AdminError::bad_request(e.to_string()))?;
         adapter
             .update_from_json(data)
             .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+            .map_err(AdminError::internal)?;
     }
 
-    Ok(Redirect::to(format!(
-        "/ui/entities/{slug}/{id}?toast=updated"
-    )))
+    let url = format!("/ui/entities/{slug}/{id}?toast=updated");
+    Ok(Redirect::to(&url))
 }
 
 /// Bulk delete — deletes multiple records by comma-separated IDs.
@@ -331,9 +324,9 @@ pub async fn entities_update(
 /// Returns `404` when entity slug is not registered.
 pub async fn entities_bulk_delete(
     Path(slug): Path<String>,
-    state: Option<State<AdminState>>,
+    State(state): State<AdminState>,
     Form(form): Form<std::collections::HashMap<String, String>>,
-) -> Result<Redirect, (StatusCode, String)> {
+) -> Result<Redirect, AdminError> {
     find_or_404(&slug)?;
 
     let ids_raw = form.get("ids").map_or("", std::string::String::as_str);
@@ -343,7 +336,7 @@ pub async fn entities_bulk_delete(
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>();
 
-    if let Some(adapter) = state.as_deref().and_then(|s| resolve_adapter(&slug, s)) {
+    if let Some(adapter) = resolve_adapter(&slug, &state) {
         let total = ids.len();
         let mut failed = 0usize;
         for id in &ids {
@@ -359,12 +352,12 @@ pub async fn entities_bulk_delete(
         } else {
             format!("bulk_partial&success={success}&failed={failed}")
         };
-        return Ok(Redirect::to(format!("/ui/entities/{slug}?toast={toast}")));
+        let url = format!("/ui/entities/{slug}?toast={toast}");
+        return Ok(Redirect::to(&url));
     }
 
-    Ok(Redirect::to(format!(
-        "/ui/entities/{slug}?toast=bulk_error&count=0"
-    )))
+    let url = format!("/ui/entities/{slug}?toast=bulk_error&count=0");
+    Ok(Redirect::to(&url))
 }
 
 /// Delete entity — removes via service adapter and redirects to the list page.
@@ -373,16 +366,17 @@ pub async fn entities_bulk_delete(
 /// Returns `404` for unknown entity slugs and `500` for persistence failures.
 pub async fn entities_delete(
     Path((slug, id)): Path<(String, String)>,
-    state: Option<State<AdminState>>,
-) -> Result<Redirect, (StatusCode, String)> {
+    State(state): State<AdminState>,
+) -> Result<Redirect, AdminError> {
     find_or_404(&slug)?;
 
-    if let Some(adapter) = state.as_deref().and_then(|s| resolve_adapter(&slug, s)) {
+    if let Some(adapter) = resolve_adapter(&slug, &state) {
         adapter
             .delete_by_id(&id)
             .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+            .map_err(AdminError::internal)?;
     }
 
-    Ok(Redirect::to(format!("/ui/entities/{slug}?toast=deleted")))
+    let url = format!("/ui/entities/{slug}?toast=deleted");
+    Ok(Redirect::to(&url))
 }

@@ -10,13 +10,10 @@
 //!
 //! This ensures the `AdminAuth` guard works correctly in production.
 
-use std::sync::Arc;
-
 use mcb_domain::ports::IndexingOperationsInterface;
 use mcb_domain::value_objects::CollectionId;
-use mcb_server::admin::{auth::AdminAuthConfig, routes::admin_rocket};
+use mcb_server::admin::auth::AdminAuthConfig;
 use rocket::http::{Header, Status};
-use rocket::local::asynchronous::Client;
 
 use crate::utils::timeouts::TEST_TIMEOUT;
 
@@ -320,15 +317,15 @@ async fn test_live_public_no_auth_required() {
 /// Test: /ready should work WITHOUT API key and return ready status
 #[rocket::async_test]
 async fn test_ready_public_no_auth_required() {
-    let state = AdminTestHarness::new().build_state();
-    let auth_config = Arc::new(create_auth_config());
-    let client = tokio::time::timeout(TEST_TIMEOUT, async {
+    let (client, _, _) = AdminTestHarness::new()
+        .with_auth_config(create_auth_config())
+        .build_client()
+        .await;
+    tokio::time::timeout(TEST_TIMEOUT, async {
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-        Client::tracked(admin_rocket(state, auth_config, None)).await
     })
     .await
-    .expect("ready probe setup timed out")
-    .expect("valid rocket instance");
+    .expect("ready probe setup timed out");
 
     let response = client.get("/ready").dispatch().await;
 

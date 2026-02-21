@@ -107,6 +107,7 @@ macro_rules! require_service {
 /// ```
 macro_rules! template_page {
     ($fn_name:ident, $template:literal, $title:literal, $page:literal) => {
+        #[allow(missing_docs)]
         pub async fn $fn_name() -> $crate::templates::Template {
             tracing::info!(concat!(stringify!($fn_name), " called"));
             $crate::templates::Template::render(
@@ -114,6 +115,32 @@ macro_rules! template_page {
                 context! {
                     title: $title,
                     current_page: $page,
+                    nav_groups: $crate::admin::web::view_model::nav_groups(),
+                },
+            )
+        }
+    };
+}
+
+macro_rules! template_page_with_path {
+    (
+        $fn_name:ident,
+        $param:ident : $param_ty:ty,
+        $template:literal,
+        $title:literal,
+        $current_page:literal
+    ) => {
+        #[allow(missing_docs)]
+        pub async fn $fn_name(
+            axum::extract::Path($param): axum::extract::Path<$param_ty>,
+        ) -> $crate::templates::Template {
+            let _ = $param;
+            tracing::info!(concat!(stringify!($fn_name), " called"));
+            $crate::templates::Template::render(
+                $template,
+                context! {
+                    title: $title,
+                    current_page: $current_page,
                     nav_groups: $crate::admin::web::view_model::nav_groups(),
                 },
             )

@@ -1,12 +1,15 @@
 use std::net::TcpListener;
 use std::sync::Arc;
 
+use axum::Router;
+use axum::body::Body;
+use axum::http::{Request, StatusCode};
+use http_body_util::BodyExt;
 use mcb_server::McpServer;
 use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
 use mcb_server::transport::types::{McpRequest, McpResponse};
-use rocket::http::{ContentType, Header, Status};
-use rocket::local::asynchronous::Client;
 use tempfile::TempDir;
+use tower::ServiceExt;
 
 use crate::utils::test_fixtures::create_test_mcp_server;
 
@@ -20,7 +23,7 @@ pub fn get_free_port() -> std::io::Result<u16> {
 }
 
 pub struct McpTestContext {
-    pub client: Client,
+    pub client: Router,
     pub server: Arc<McpServer>,
     pub _temp: TempDir,
 }
@@ -34,8 +37,7 @@ impl McpTestContext {
         let http_config = HttpTransportConfig::localhost(port);
         let transport = HttpTransport::new(http_config, Arc::clone(&server));
 
-        let rocket = transport.rocket();
-        let client = Client::tracked(rocket).await?;
+        let client = transport.router();
 
         Ok(Self {
             client,
@@ -49,19 +51,23 @@ pub async fn post_mcp(
     ctx: &McpTestContext,
     request: &McpRequest,
     headers: &[(&str, &str)],
-) -> TestResult<(Status, McpResponse)> {
-    let mut builder = ctx.client.post("/mcp").header(ContentType::JSON);
+) -> TestResult<(StatusCode, McpResponse)> {
+    let mut builder = Request::builder()
+        .method("POST")
+        .uri("/mcp")
+        .header("Content-Type", "application/json");
     for (name, value) in headers {
-        builder = builder.header(Header::new((*name).to_owned(), (*value).to_owned()));
+        builder = builder.header(*name, *value);
     }
 
-    let response = builder
-        .body(serde_json::to_string(request)?)
-        .dispatch()
-        .await;
+    let req = builder.body(Body::from(serde_json::to_vec(request)?))?;
+    let response = ctx.client.clone().oneshot(req).await;
+
+    let response = response.map_err(Box::<dyn std::error::Error>::from)?;
 
     let status = response.status();
-    let body = response.into_string().await.unwrap_or_default();
+    let body = response.into_body().collect().await?.to_bytes();
+    let body = String::from_utf8(body.to_vec())?;
     let parsed: McpResponse = serde_json::from_str(&body)?;
     Ok((status, parsed))
 }

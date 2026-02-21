@@ -48,10 +48,10 @@ pub use admin::{
 pub use infrastructure::{
     AuthServiceInterface, DatabaseExecutor, DatabaseProvider, DependencyHealth,
     DependencyHealthCheck, DomainEventStream, EventBusProvider, ExtendedHealthResponse,
-    LifecycleManaged, PortServiceState, ProviderContext, ProviderHealthStatus, ProviderRouter,
-    SharedSyncCoordinator, ShutdownCoordinator, SnapshotProvider, SqlParam, SqlRow,
-    StateStoreProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult, SystemMetrics,
-    SystemMetricsCollectorInterface,
+    LifecycleManaged, LogLevel, OperationLogger, PortServiceState, ProviderContext,
+    ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator, ShutdownCoordinator,
+    SnapshotProvider, SqlParam, SqlRow, StateStoreProvider, SyncCoordinator, SyncOptions,
+    SyncProvider, SyncResult, SystemMetrics, SystemMetricsCollectorInterface,
 };
 
 // --- Providers ---

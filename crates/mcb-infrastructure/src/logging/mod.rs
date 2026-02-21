@@ -9,11 +9,13 @@
 
 mod event_bus_layer;
 mod forwarder;
+mod sensitive;
 mod setup;
 
 // Re-export LoggingConfig for convenience
 pub use crate::config::LoggingConfig;
 pub use forwarder::spawn_log_forwarder;
+pub use sensitive::{log_facade_shim, log_operation, set_global_operation_logger};
 pub use setup::{
     LogEventReceiver, init_logging, log_config_loaded, log_health_check, parse_log_level,
 };

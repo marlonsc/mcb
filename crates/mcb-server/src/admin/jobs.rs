@@ -7,6 +7,8 @@
 
 use std::sync::Arc;
 
+use axum::Json as AxumJson;
+use axum::extract::State as AxumState;
 use mcb_domain::ports::{Job, JobStatus, JobType};
 use rocket::serde::json::Json;
 use rocket::{State, get};
@@ -73,9 +75,10 @@ fn build_jobs_response(
     }
 }
 
+/// Axum handler: get indexing job status.
 pub async fn get_jobs_status_axum(
-    axum::extract::State(state): axum::extract::State<Arc<AdminState>>,
-) -> axum::Json<JobsStatusResponse> {
+    AxumState(state): AxumState<Arc<AdminState>>,
+) -> AxumJson<JobsStatusResponse> {
     tracing::info!("get_jobs_status called");
-    axum::Json(build_jobs_response(state.indexing.as_ref()))
+    AxumJson(build_jobs_response(state.indexing.as_ref()))
 }

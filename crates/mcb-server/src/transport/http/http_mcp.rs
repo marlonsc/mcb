@@ -1,10 +1,10 @@
 //!
 //! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
 //!
+use mcb_domain::error;
 use rmcp::ServerHandler;
 use rocket::serde::json::Json;
 use rocket::{State, post};
-use tracing::error;
 
 use super::HttpTransportState;
 use super::http_bridge::BridgeProvenance;
@@ -68,7 +68,7 @@ async fn handle_tools_list(request: &McpRequest) -> McpResponse {
             )
         }
         Err(e) => {
-            error!(error = ?e, "Failed to list tools");
+            error!("HttpMcp", "Failed to list tools", &e);
             McpResponse::error(
                 request.id.clone(),
                 JSONRPC_INTERNAL_ERROR,

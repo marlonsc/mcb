@@ -8,10 +8,10 @@
 use std::sync::Arc;
 
 use mcb_domain::value_objects::ids::SessionId;
+use mcb_domain::warn;
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolRequestParams, CallToolResult};
 use serde_json::Value;
-use tracing::warn;
 
 use crate::handlers::{
     AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
@@ -177,7 +177,7 @@ pub async fn route_tool_call(
     )
     .await
     {
-        warn!("PostToolUse hook failed (non-fatal): {}", e);
+        warn!("ToolRouter", "PostToolUse hook failed (non-fatal)", &e);
     }
 
     Ok(result)

@@ -19,6 +19,7 @@ async fn axum_health_check() {
         metrics: AtomicPerformanceMetrics::new_shared(),
         indexing: DefaultIndexingOperations::new_shared(),
         browser: None,
+        browse_state: None,
         mcp_server: None,
         admin_state: None,
         auth_config: None,
@@ -59,6 +60,7 @@ fn app_state_completeness() {
         metrics: AtomicPerformanceMetrics::new_shared(),
         indexing: DefaultIndexingOperations::new_shared(),
         browser: None,
+        browse_state: None,
         mcp_server: None,
         admin_state: None,
         auth_config: None,
@@ -67,6 +69,7 @@ fn app_state_completeness() {
     assert!(Arc::strong_count(&state.metrics) >= 1);
     assert!(Arc::strong_count(&state.indexing) >= 1);
     assert!(state.browser.is_none());
+    assert!(state.browse_state.is_none());
     assert!(state.mcp_server.is_none());
     assert!(state.admin_state.is_none());
     assert!(state.auth_config.is_none());

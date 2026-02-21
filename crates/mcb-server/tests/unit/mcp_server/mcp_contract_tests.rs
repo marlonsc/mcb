@@ -4,10 +4,10 @@ extern crate mcb_providers;
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
+use axum::http::StatusCode;
 use mcb_server::McpServer;
 use mcb_server::tools::router::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use rmcp::model::CallToolRequestParams;
-use rocket::http::Status;
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp, tools_call_request, tools_list_request};
 
@@ -31,7 +31,7 @@ async fn test_tool_name_set_stability() -> Result<(), Box<dyn std::error::Error>
     let request = tools_list_request();
     let (status, response) = post_mcp(&ctx, &request, &[]).await?;
 
-    assert_eq!(status, Status::Ok);
+    assert_eq!(status, StatusCode::OK);
     assert!(response.error.is_none(), "tools/list should not error");
 
     let result_opt = response.result;
@@ -70,7 +70,7 @@ async fn test_tool_count_stability() -> Result<(), Box<dyn std::error::Error>> {
     let request = tools_list_request();
     let (status, response) = post_mcp(&ctx, &request, &[]).await?;
 
-    assert_eq!(status, Status::Ok);
+    assert_eq!(status, StatusCode::OK);
     assert!(response.error.is_none(), "tools/list should not error");
 
     let result_opt = response.result;
@@ -97,7 +97,7 @@ async fn test_each_tool_has_non_null_object_input_schema_with_properties()
     let request = tools_list_request();
     let (status, response) = post_mcp(&ctx, &request, &[]).await?;
 
-    assert_eq!(status, Status::Ok);
+    assert_eq!(status, StatusCode::OK);
     assert!(response.error.is_none(), "tools/list should not error");
 
     let result_opt = response.result;
@@ -244,7 +244,7 @@ async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid()
     ];
     let (status, response) = post_mcp(&ctx, &request, &headers).await?;
 
-    assert_eq!(status, Status::Ok);
+    assert_eq!(status, StatusCode::OK);
     let error_opt = response.error;
     assert!(
         error_opt.is_some(),
@@ -281,7 +281,7 @@ async fn test_operation_mode_matrix_allows_tools_in_client_hybrid(
     ];
     let (status, response) = post_mcp(&ctx, &request, &headers).await?;
 
-    assert_eq!(status, Status::Ok);
+    assert_eq!(status, StatusCode::OK);
     let error_opt = response.error;
     if let Some(error) = error_opt {
         assert!(

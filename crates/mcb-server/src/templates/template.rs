@@ -3,6 +3,7 @@
 //!
 use std::borrow::Cow;
 use std::path::PathBuf;
+use std::sync::OnceLock;
 
 use rocket::fairing::Fairing;
 use rocket::figment::{error::Error, value::Value};
@@ -164,5 +165,57 @@ impl Sentinel for Template {
         }
 
         false
+    }
+}
+
+static AXUM_CONTEXT: OnceLock<ContextManager> = OnceLock::new();
+
+/// # Panics
+/// Panics if the template context cannot be initialized.
+pub fn init_axum_context(
+    template_dir: &str,
+    callback: impl Fn(&mut super::engine::Engines) + Send + Sync + 'static,
+) {
+    use super::context::Context;
+
+    if AXUM_CONTEXT.get().is_some() {
+        return;
+    }
+
+    let root = PathBuf::from(template_dir);
+    let boxed_cb: super::context::Callback = Box::new(move |engines| {
+        callback(engines);
+        Ok(())
+    });
+    let ctxt =
+        Context::initialize(&root, &boxed_cb).expect("Template context initialization failed");
+    let _ = AXUM_CONTEXT.set(ContextManager::new(ctxt));
+}
+
+impl axum::response::IntoResponse for Template {
+    fn into_response(self) -> axum::response::Response {
+        let Some(cm) = AXUM_CONTEXT.get() else {
+            mcb_domain::error!(
+                "Template",
+                "Template rendered before init_axum_context() was called"
+            );
+            return (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Template engine not initialized",
+            )
+                .into_response();
+        };
+
+        match self.finalize(&cm.context()) {
+            Ok((content_type, body)) => {
+                let ct_str = content_type.to_string();
+                ([(axum::http::header::CONTENT_TYPE, ct_str)], body).into_response()
+            }
+            Err(_status) => (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "Template rendering failed",
+            )
+                .into_response(),
+        }
     }
 }

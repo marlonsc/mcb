@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use axum::Json as AxumJson;
 use axum::extract::State as AxumState;
-use mcb_infrastructure::logging::log_operation_error;
+use mcb_domain::error;
 
 use crate::admin::auth::AxumAdminAuth;
 use crate::admin::browse_models::{
@@ -36,10 +36,9 @@ async fn fetch_browse_items_axum<T: serde::de::DeserializeOwned>(
     execute_tool_json::<Vec<T>>(state, tool_name, args)
         .await
         .map_err(|e| {
-            log_operation_error(
+            error!(
                 "Browse",
-                "failed to list browse items via unified execution",
-                &e,
+                "failed to list browse items via unified execution", &e
             );
             AdminError::unavailable(unavailable_message)
         })

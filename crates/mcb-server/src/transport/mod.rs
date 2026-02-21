@@ -21,6 +21,7 @@
 /// Axum-based HTTP transport skeleton used during Rocket migration.
 pub mod axum_http;
 pub mod config;
+/// Rocket-compatible HTTP transport (MCP + admin API and optional admin UI via Axum).
 pub mod http;
 pub mod http_client;
 pub mod stdio;

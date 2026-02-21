@@ -25,7 +25,10 @@ pub async fn list_repositories(
         .map(PathBuf::from)
         .or_else(|| std::env::current_dir().ok())
         .ok_or_else(|| {
-            tracing::error!("no repo_path provided and current_dir() failed");
+            mcb_domain::error!(
+                "list_repositories",
+                "no repo_path provided and current_dir() failed"
+            );
             McpError::invalid_params(
                 "repo_path is required when working directory cannot be determined",
                 None,

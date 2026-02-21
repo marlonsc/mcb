@@ -8,12 +8,13 @@ use mcb_domain::ports::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
+use mcb_domain::error;
+
 use super::common::require_session_id_str;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
-use tracing::error;
 
 /// Retrieves an agent session by ID.
 #[tracing::instrument(skip_all)]
@@ -44,7 +45,7 @@ pub async fn get_session(
         })),
         Ok(None) => Ok(tool_error("Agent session not found")),
         Err(e) => {
-            error!("Failed to get agent session: {:?}", e);
+            error!("get_session", "Failed to get agent session", &e);
             Ok(to_contextual_tool_error(e))
         }
     }

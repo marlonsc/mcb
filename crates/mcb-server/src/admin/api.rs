@@ -15,14 +15,12 @@
 //! - **Browse (GET /collections, ...)**: Call `.with_browse_state(browse_state)` so browse routes
 //!   are mounted; otherwise /collections returns 404.
 
-use std::net::IpAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 
 use mcb_domain::ports::EventBusProvider;
 use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_infrastructure::config::watcher::ConfigWatcher;
-use rocket::config::{Config as RocketConfig, LogLevel};
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::BrowseState;
@@ -88,24 +86,6 @@ impl AdminApiConfig {
         Self {
             host: config.server.network.host,
             port,
-        }
-    }
-
-    /// Get the Rocket configuration
-    #[must_use]
-    pub fn rocket_config(&self) -> RocketConfig {
-        let address = match self.host.parse::<IpAddr>() {
-            Ok(address) => address,
-            Err(error) => {
-                tracing::error!(host = %self.host, error = %error, "invalid admin host, falling back to 127.0.0.1");
-                IpAddr::V4(std::net::Ipv4Addr::LOCALHOST)
-            }
-        };
-        RocketConfig {
-            address,
-            port: self.port,
-            log_level: LogLevel::Normal,
-            ..RocketConfig::default()
         }
     }
 }

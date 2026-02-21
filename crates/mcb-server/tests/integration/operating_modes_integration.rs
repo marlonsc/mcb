@@ -10,8 +10,13 @@
 use rstest::rstest;
 extern crate mcb_providers;
 
+use axum::Router;
+use axum::body::Body;
+use axum::http::{Request, StatusCode};
+use http_body_util::BodyExt;
 use std::sync::Arc;
 use std::time::Duration;
+use tower::ServiceExt;
 
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::ConfigLoader;
@@ -567,7 +572,39 @@ async fn create_test_mcp_server() -> (McpServer, tempfile::TempDir) {
     crate::utils::test_fixtures::create_test_mcp_server().await
 }
 
-type TestClient = rocket::local::asynchronous::Client;
+#[derive(Clone)]
+struct TestClient {
+    app: Router,
+}
+
+impl TestClient {
+    async fn post_mcp(
+        &self,
+        request: &McpRequest,
+        headers: &[(&str, &str)],
+    ) -> Result<(StatusCode, String), Box<dyn std::error::Error>> {
+        let mut builder = Request::builder()
+            .method("POST")
+            .uri("/mcp")
+            .header("Content-Type", "application/json");
+
+        for (name, value) in headers {
+            builder = builder.header(*name, *value);
+        }
+
+        let req = builder.body(Body::from(serde_json::to_vec(request)?))?;
+        let response = self
+            .app
+            .clone()
+            .oneshot(req)
+            .await
+            .map_err(Box::<dyn std::error::Error>::from)?;
+
+        let status = response.status();
+        let body = response.into_body().collect().await?.to_bytes();
+        Ok((status, String::from_utf8(body.to_vec())?))
+    }
+}
 
 async fn create_http_test_client(
     port: u16,
@@ -576,8 +613,9 @@ async fn create_http_test_client(
     let server = Arc::new(server_instance);
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket).await?;
+    let client = TestClient {
+        app: transport.router(),
+    };
 
     Ok((client, temp_dir))
 }
@@ -593,10 +631,9 @@ async fn test_http_server_tools_list() {
     let transport = HttpTransport::new(http_config, server);
 
     // Spawn the server in background
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
+    let client = TestClient {
+        app: transport.router(),
+    };
 
     // Send tools/list request
     let request = McpRequest {
@@ -605,36 +642,22 @@ async fn test_http_server_tools_list() {
         id: Some(serde_json::json!(1)),
     };
 
-    let response = client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .header(rocket::http::Header::new(
-            "X-Session-Id",
-            "test-session-index-status",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Project-Id",
-            "test-project-index-status",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Repo-Id",
-            "test-repo-index-status",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Workspace-Root",
-            "/tmp/test-workspace",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Repo-Path",
-            "/tmp/test-workspace",
-        ))
-        .body(serde_json::to_string(&request).unwrap())
-        .dispatch()
-        .await;
+    let (status, body) = client
+        .post_mcp(
+            &request,
+            &[
+                ("X-Session-Id", "test-session-index-status"),
+                ("X-Project-Id", "test-project-index-status"),
+                ("X-Repo-Id", "test-repo-index-status"),
+                ("X-Workspace-Root", "/tmp/test-workspace"),
+                ("X-Repo-Path", "/tmp/test-workspace"),
+            ],
+        )
+        .await
+        .expect("dispatch mcp request");
 
-    assert_eq!(response.status(), rocket::http::Status::Ok);
+    assert_eq!(status, StatusCode::OK);
 
-    let body = response.into_string().await.expect("Response body");
     let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
 
     assert!(mcp_response.error.is_none(), "Should not have error");
@@ -684,42 +707,24 @@ async fn test_http_server_core_methods(
         id: Some(serde_json::json!(request_id)),
     };
 
-    let response = client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .header(rocket::http::Header::new(
-            "X-Workspace-Root",
-            "/tmp/test-workspace",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Repo-Path",
-            "/tmp/test-workspace",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Worktree-Id",
-            "wt-index-status",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Operator-Id",
-            "operator-index-status",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Machine-Id",
-            "machine-index-status",
-        ))
-        .header(rocket::http::Header::new("X-Agent-Program", "opencode"))
-        .header(rocket::http::Header::new("X-Model-Id", "gpt-5.3-codex"))
-        .header(rocket::http::Header::new("X-Delegated", "false"))
-        .body(serde_json::to_string(&request)?)
-        .dispatch()
-        .await;
+    let (status, body) = client
+        .post_mcp(
+            &request,
+            &[
+                ("X-Workspace-Root", "/tmp/test-workspace"),
+                ("X-Repo-Path", "/tmp/test-workspace"),
+                ("X-Worktree-Id", "wt-index-status"),
+                ("X-Operator-Id", "operator-index-status"),
+                ("X-Machine-Id", "machine-index-status"),
+                ("X-Agent-Program", "opencode"),
+                ("X-Model-Id", "gpt-5.3-codex"),
+                ("X-Delegated", "false"),
+            ],
+        )
+        .await?;
 
-    assert_eq!(response.status(), rocket::http::Status::Ok);
+    assert_eq!(status, StatusCode::OK);
 
-    let body = response
-        .into_string()
-        .await
-        .ok_or("Response body missing")?;
     let mcp_response: McpResponse = serde_json::from_str(&body)?;
 
     if expect_error {
@@ -757,10 +762,9 @@ async fn test_http_server_with_session_header() {
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
 
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
+    let client = TestClient {
+        app: transport.router(),
+    };
 
     // Send request with session header
     let request = McpRequest {
@@ -769,20 +773,13 @@ async fn test_http_server_with_session_header() {
         id: Some(serde_json::json!(1)),
     };
 
-    let response = client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .header(rocket::http::Header::new(
-            "X-Session-Id",
-            "test-session-12345",
-        ))
-        .body(serde_json::to_string(&request).unwrap())
-        .dispatch()
-        .await;
+    let (status, body) = client
+        .post_mcp(&request, &[("X-Session-Id", "test-session-12345")])
+        .await
+        .expect("dispatch mcp request");
 
-    assert_eq!(response.status(), rocket::http::Status::Ok);
+    assert_eq!(status, StatusCode::OK);
 
-    let body = response.into_string().await.expect("Response body");
     let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
 
     // Request should succeed with session header
@@ -801,10 +798,9 @@ async fn test_http_server_tools_call_index_status() {
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
 
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
+    let client = TestClient {
+        app: transport.router(),
+    };
 
     // Call index tool with status action
     let request = McpRequest {
@@ -819,50 +815,27 @@ async fn test_http_server_tools_call_index_status() {
         id: Some(serde_json::json!(1)),
     };
 
-    let response = client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .header(rocket::http::Header::new(
-            "X-Session-Id",
-            "test-session-index-status",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Project-Id",
-            "test-project-index-status",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Repo-Id",
-            "test-repo-index-status",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Workspace-Root",
-            "/tmp/test-workspace",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Worktree-Id",
-            "test-worktree-index-status",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Operator-Id",
-            "test-operator-index-status",
-        ))
-        .header(rocket::http::Header::new(
-            "X-Machine-Id",
-            "test-machine-index-status",
-        ))
-        .header(rocket::http::Header::new("X-Agent-Program", "opencode"))
-        .header(rocket::http::Header::new(
-            "X-Model-Id",
-            "openai/gpt-5.3-codex",
-        ))
-        .header(rocket::http::Header::new("X-Delegated", "false"))
-        .body(serde_json::to_string(&request).unwrap())
-        .dispatch()
-        .await;
+    let (status, body) = client
+        .post_mcp(
+            &request,
+            &[
+                ("X-Session-Id", "test-session-index-status"),
+                ("X-Project-Id", "test-project-index-status"),
+                ("X-Repo-Id", "test-repo-index-status"),
+                ("X-Workspace-Root", "/tmp/test-workspace"),
+                ("X-Worktree-Id", "test-worktree-index-status"),
+                ("X-Operator-Id", "test-operator-index-status"),
+                ("X-Machine-Id", "test-machine-index-status"),
+                ("X-Agent-Program", "opencode"),
+                ("X-Model-Id", "openai/gpt-5.3-codex"),
+                ("X-Delegated", "false"),
+            ],
+        )
+        .await
+        .expect("dispatch mcp request");
 
-    assert_eq!(response.status(), rocket::http::Status::Ok);
+    assert_eq!(status, StatusCode::OK);
 
-    let body = response.into_string().await.expect("Response body");
     let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
 
     // Tool call should return a result (even if collection doesn't exist)
@@ -881,10 +854,9 @@ async fn test_http_server_tools_call_without_workspace_provenance_is_rejected() 
     let http_config = HttpTransportConfig::localhost(port);
     let transport = HttpTransport::new(http_config, server);
 
-    let rocket = transport.rocket();
-    let client = rocket::local::asynchronous::Client::tracked(rocket)
-        .await
-        .expect("Failed to create test client");
+    let client = TestClient {
+        app: transport.router(),
+    };
 
     let request = McpRequest {
         method: "tools/call".to_owned(),
@@ -898,16 +870,13 @@ async fn test_http_server_tools_call_without_workspace_provenance_is_rejected() 
         id: Some(serde_json::json!(1)),
     };
 
-    let response = client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request).unwrap())
-        .dispatch()
-        .await;
+    let (status, body) = client
+        .post_mcp(&request, &[])
+        .await
+        .expect("dispatch mcp request");
 
-    assert_eq!(response.status(), rocket::http::Status::Ok);
+    assert_eq!(status, StatusCode::OK);
 
-    let body = response.into_string().await.expect("Response body");
     let mcp_response: McpResponse = serde_json::from_str(&body).expect("Parse response");
 
     let error = mcp_response
@@ -951,19 +920,10 @@ async fn test_http_server_tools_call_invalid_params_return_error(
         id: Some(serde_json::json!(1)),
     };
 
-    let response = client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request)?)
-        .dispatch()
-        .await;
+    let (status, body) = client.post_mcp(&request, &[]).await?;
 
-    assert_eq!(response.status(), rocket::http::Status::Ok);
+    assert_eq!(status, StatusCode::OK);
 
-    let body = response
-        .into_string()
-        .await
-        .ok_or("Response body missing")?;
     let mcp_response: McpResponse = serde_json::from_str(&body)?;
 
     let error = mcp_response.error.ok_or(expected_message)?;

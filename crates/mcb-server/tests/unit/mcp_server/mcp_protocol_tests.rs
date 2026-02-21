@@ -11,9 +11,10 @@
 use rstest::rstest;
 extern crate mcb_providers;
 
-use mcb_server::transport::types::{McpRequest, McpResponse};
+use axum::http::StatusCode;
+use mcb_server::transport::types::McpRequest;
 
-use crate::utils::http_mcp::McpTestContext;
+use crate::utils::http_mcp::{McpTestContext, post_mcp};
 
 // =============================================================================
 // PROTOCOL VERSION & INITIALIZE TESTS
@@ -29,18 +30,8 @@ async fn test_initialize_response() -> Result<(), Box<dyn std::error::Error>> {
         id: Some(serde_json::json!(1)),
     };
 
-    let response = ctx
-        .client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request)?)
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), rocket::http::Status::Ok);
-
-    let body = response.into_string().await.unwrap_or_default();
-    let mcp_response: McpResponse = serde_json::from_str(&body)?;
+    let (status, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
+    assert_eq!(status, StatusCode::OK);
 
     assert!(mcp_response.error.is_none(), "Initialize should not error");
 
@@ -134,16 +125,7 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
         id: Some(serde_json::json!(1)),
     };
 
-    let response = ctx
-        .client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request)?)
-        .dispatch()
-        .await;
-
-    let body = response.into_string().await.unwrap_or_default();
-    let mcp_response: McpResponse = serde_json::from_str(&body)?;
+    let (_, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
     let result_opt = mcp_response.result;
     assert!(result_opt.is_some(), "Should have result");
     let result = match result_opt {
@@ -271,16 +253,7 @@ async fn test_response_has_jsonrpc_field(
         id: Some(serde_json::json!(1)),
     };
 
-    let response = ctx
-        .client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request)?)
-        .dispatch()
-        .await;
-
-    let body = response.into_string().await.unwrap_or_default();
-    let mcp_response: McpResponse = serde_json::from_str(&body)?;
+    let (_, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
 
     assert_eq!(
         mcp_response.jsonrpc, "2.0",
@@ -303,16 +276,7 @@ async fn test_response_echoes_request_id(
         id: Some(id.clone()),
     };
 
-    let response = ctx
-        .client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request)?)
-        .dispatch()
-        .await;
-
-    let body = response.into_string().await.unwrap_or_default();
-    let mcp_response: McpResponse = serde_json::from_str(&body)?;
+    let (_, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
 
     assert_eq!(mcp_response.id, Some(id));
     Ok(())
@@ -328,16 +292,7 @@ async fn test_error_response_structure() -> Result<(), Box<dyn std::error::Error
         id: Some(serde_json::json!(1)),
     };
 
-    let response = ctx
-        .client
-        .post("/mcp")
-        .header(rocket::http::ContentType::JSON)
-        .body(serde_json::to_string(&request)?)
-        .dispatch()
-        .await;
-
-    let body = response.into_string().await.unwrap_or_default();
-    let mcp_response: McpResponse = serde_json::from_str(&body)?;
+    let (_, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
 
     assert!(mcp_response.error.is_some(), "Should have error");
     let error = match mcp_response.error {

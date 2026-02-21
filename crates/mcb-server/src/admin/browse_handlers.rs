@@ -16,6 +16,8 @@
 
 use std::sync::Arc;
 
+use axum::Json as AxumJson;
+use axum::extract::{Path, Query, State as AxumState};
 use mcb_domain::ports::HighlightServiceInterface;
 use mcb_domain::ports::VectorStoreBrowser;
 use mcb_domain::value_objects::CollectionId;
@@ -31,6 +33,8 @@ use super::models::{
     ChunkDetailResponse, ChunkListResponse, CollectionInfoResponse, CollectionListResponse,
     FileInfoResponse, FileListResponse,
 };
+use crate::admin::auth::AxumAdminAuth;
+use crate::admin::error::{AdminError, AdminResult};
 use crate::constants::LIST_FILE_PATHS_LIMIT;
 
 /// Query parameters for browse collection file listing (Axum).
@@ -126,10 +130,9 @@ pub async fn list_collections(
 /// # Errors
 /// Returns `500` for backend failures.
 pub async fn list_collections_axum(
-    _auth: super::auth::AxumAdminAuth,
-    axum::extract::State(state): axum::extract::State<Arc<BrowseState>>,
-) -> crate::admin::error::AdminResult<CollectionListResponse> {
-    use crate::admin::error::AdminError;
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<BrowseState>>,
+) -> AdminResult<CollectionListResponse> {
     tracing::info!("list_collections called");
     let collections = state
         .browser
@@ -150,7 +153,7 @@ pub async fn list_collections_axum(
         .collect::<Vec<_>>();
 
     let total = collection_responses.len();
-    Ok(axum::Json(CollectionListResponse {
+    Ok(AxumJson(CollectionListResponse {
         collections: collection_responses,
         total,
     }))
@@ -161,12 +164,11 @@ pub async fn list_collections_axum(
 /// # Errors
 /// Returns `404` for unknown collections and `500` for backend failures.
 pub async fn list_collection_files_axum(
-    _auth: super::auth::AxumAdminAuth,
-    axum::extract::State(state): axum::extract::State<Arc<BrowseState>>,
-    axum::extract::Path(name): axum::extract::Path<String>,
-    axum::extract::Query(params): axum::extract::Query<BrowseFilesQuery>,
-) -> crate::admin::error::AdminResult<FileListResponse> {
-    use crate::admin::error::AdminError;
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<BrowseState>>,
+    Path(name): Path<String>,
+    Query(params): Query<BrowseFilesQuery>,
+) -> AdminResult<FileListResponse> {
     tracing::info!("list_collection_files called");
     let limit = params.limit.unwrap_or(DEFAULT_BROWSE_FILES_LIMIT);
     let collection = CollectionId::from_string(&name);
@@ -195,11 +197,112 @@ pub async fn list_collection_files_axum(
         .collect::<Vec<_>>();
 
     let total = file_responses.len();
-    Ok(axum::Json(FileListResponse {
+    Ok(AxumJson(FileListResponse {
         files: file_responses,
         total,
         collection: name,
     }))
+}
+
+pub async fn get_file_chunks_axum(
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<BrowseState>>,
+    Path((name, path)): Path<(String, String)>,
+) -> AdminResult<ChunkListResponse> {
+    tracing::info!("get_file_chunks called");
+    let file_path = path.replace('\\', "/");
+    let collection_id = CollectionId::from_string(&name);
+
+    let chunks = state
+        .browser
+        .get_chunks_by_file(&collection_id, &file_path)
+        .await
+        .map_err(|e| {
+            let error_msg = e.to_string();
+            if error_msg.contains("not found") || error_msg.contains("does not exist") {
+                AdminError::not_found("File or collection")
+            } else {
+                AdminError::internal(error_msg)
+            }
+        })?;
+
+    let mut chunk_responses = Vec::with_capacity(chunks.len());
+    for c in chunks {
+        let line_count = c.content.lines().count() as u32;
+        let end_line = c.start_line.saturating_add(line_count.saturating_sub(1));
+
+        let (highlighted_html, content, language) = match state
+            .highlight_service
+            .highlight(&c.content, &c.language)
+            .await
+        {
+            Ok(h) => {
+                let html =
+                    mcb_infrastructure::services::highlight_renderer::HtmlRenderer::render(&h);
+                (html, c.content, c.language)
+            }
+            Err(_) => {
+                let fallback = mcb_domain::value_objects::browse::HighlightedCode::new(
+                    c.content,
+                    vec![],
+                    c.language,
+                );
+                let html = mcb_infrastructure::services::highlight_renderer::HtmlRenderer::render(
+                    &fallback,
+                );
+                (html, fallback.original, fallback.language)
+            }
+        };
+
+        chunk_responses.push(ChunkDetailResponse {
+            id: c.id,
+            content,
+            highlighted_html,
+            file_path: c.file_path,
+            start_line: c.start_line,
+            end_line,
+            language,
+            score: c.score,
+        });
+    }
+
+    let total = chunk_responses.len();
+    Ok(AxumJson(ChunkListResponse {
+        chunks: chunk_responses,
+        file_path,
+        collection: name,
+        total,
+    }))
+}
+
+pub async fn get_collection_tree_axum(
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<BrowseState>>,
+    Path(name): Path<String>,
+) -> AdminResult<FileTreeNode> {
+    tracing::info!("get_collection_tree called");
+    let collection_id = CollectionId::from_string(&name);
+    let files = state
+        .browser
+        .list_file_paths(&collection_id, LIST_FILE_PATHS_LIMIT)
+        .await
+        .map_err(|e| {
+            let error_msg = e.to_string();
+            if error_msg.contains("not found") || error_msg.contains("does not exist") {
+                AdminError::not_found("Collection")
+            } else {
+                AdminError::internal(error_msg)
+            }
+        })?;
+
+    let mut root = FileTreeNode::directory(&name, "");
+    for file in files {
+        let parts = file.path.split('/').collect::<Vec<_>>();
+        insert_into_tree(&mut root, &parts, &file);
+    }
+
+    root.sort_children();
+    Ok(AxumJson(root))
 }
 
 /// List files in a collection

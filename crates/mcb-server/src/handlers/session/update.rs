@@ -11,13 +11,14 @@ use rmcp::model::CallToolResult;
 use serde_json::Map;
 use serde_json::Value;
 
+use mcb_domain::error;
+
 use super::common::{json_map, opt_str, require_session_id_str};
 use crate::args::SessionArgs;
 use crate::constants::fields::FIELD_UPDATED;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::{resolve_identifier_precedence, tool_error};
-use tracing::error;
 
 /// Updates an existing agent session.
 #[tracing::instrument(skip_all)]
@@ -60,14 +61,17 @@ pub async fn update_session(
                     (FIELD_UPDATED): true,
                 })),
                 Err(e) => {
-                    error!("Failed to update agent session: {:?}", e);
+                    error!("update_session", "Failed to update agent session", &e);
                     Ok(to_contextual_tool_error(e))
                 }
             }
         }
         Ok(None) => Ok(tool_error("Agent session not found")),
         Err(e) => {
-            error!("Failed to update agent session (get failed): {:?}", e);
+            error!(
+                "update_session",
+                "Failed to update agent session (get failed)", &e
+            );
             Ok(to_contextual_tool_error(e))
         }
     }

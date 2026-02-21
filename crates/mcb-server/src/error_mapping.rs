@@ -3,6 +3,7 @@
 //!
 mod groups;
 
+use mcb_domain::error;
 use mcb_domain::error::Error;
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 
@@ -10,8 +11,8 @@ use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 ///
 /// Use this instead of `McpError::internal_error(e.to_string(), None)` so that
 /// underlying error details are never leaked to MCP clients.
-pub fn safe_internal_error(context: &str, _error: &dyn std::fmt::Display) -> McpError {
-    tracing::error!(context = %context, "internal operation failed");
+pub fn safe_internal_error(context: &str, err: &dyn std::fmt::Display) -> McpError {
+    error!(context, "internal operation failed", err);
     McpError::internal_error("internal server error", None)
 }
 
@@ -24,10 +25,10 @@ pub fn safe_internal_error(context: &str, _error: &dyn std::fmt::Display) -> Mcp
 /// # Security
 /// Never exposes provider/internal details to external callers.
 pub fn to_opaque_mcp_error(e: &Error) -> McpError {
+    error!("McpError", "operation failed", e);
     if matches!(e, Error::NotFound { .. } | Error::InvalidArgument { .. }) {
         McpError::invalid_params(e.to_string(), None)
     } else {
-        tracing::error!("operation failed");
         McpError::internal_error("internal server error", None)
     }
 }
@@ -43,7 +44,7 @@ pub fn to_opaque_mcp_error(e: &Error) -> McpError {
 pub fn to_contextual_tool_error(e: impl Into<Error>) -> CallToolResult {
     let error: Error = e.into();
     let message = groups::map_error_message(&error).unwrap_or_else(|| {
-        tracing::error!("unmapped error variant");
+        error!("ErrorMapping", "unmapped error variant", &error);
         "Internal error".to_owned()
     });
     CallToolResult::error(vec![Content::text(message)])

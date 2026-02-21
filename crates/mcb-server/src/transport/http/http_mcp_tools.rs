@@ -3,8 +3,8 @@
 //!
 use std::sync::Arc;
 
+use mcb_domain::error;
 use rmcp::model::CallToolRequestParams;
-use tracing::error;
 
 use super::HttpTransportState;
 use super::http_bridge::BridgeProvenance;
@@ -195,7 +195,7 @@ pub(super) async fn handle_tools_call(
     match route_tool_call(call_request, &handlers, execution_context).await {
         Ok(result) => McpResponse::success(request.id.clone(), tool_result_to_json(&result)),
         Err(e) => {
-            error!(error = ?e, "Tool call failed");
+            error!("HttpMcpTools", "Tool call failed", &e);
             let code = if e.code.0 == JSONRPC_INVALID_PARAMS {
                 JSONRPC_INVALID_PARAMS
             } else {
