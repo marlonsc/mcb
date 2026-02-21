@@ -185,14 +185,12 @@ impl MemoryServiceImpl {
             ),
         );
         let fts_results = fts_result?;
-        let (vector_results, _vector_search_failed) = match vector_result {
-            Ok(results) => (results, false),
+        let vector_results = match vector_result {
+            Ok(results) => results,
             Err(e) => {
-                tracing::warn!(
-                    error = %e,
-                    "Vector search failed — falling back to FTS-only results"
-                );
-                (Vec::new(), true)
+                tracing::warn!("Vector search failed — falling back to FTS-only results");
+                let _ = e;
+                Vec::new()
             }
         };
 

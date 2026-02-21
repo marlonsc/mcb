@@ -9,6 +9,7 @@ pub mod handlers;
 pub mod tools;
 
 mod admin_api_integration;
+mod axum_harness_smoke;
 mod axum_health_integration;
 mod browse_api_integration;
 mod error_recovery_integration;

@@ -43,7 +43,7 @@ impl fmt::Debug for EmbeddingConfig {
             .field("provider", &self.provider)
             .field("model", &self.model)
             .field("api_key", &self.api_key.as_ref().map(|_| REDACTED))
-            .field("base_url", &self.base_url)
+            .field("base_url", &self.base_url.as_ref().map(|_| REDACTED))
             .field("dimensions", &self.dimensions)
             .field("max_tokens", &self.max_tokens)
             .finish()
@@ -74,7 +74,7 @@ impl fmt::Debug for VectorStoreConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("VectorStoreConfig")
             .field("provider", &self.provider)
-            .field("address", &self.address)
+            .field("address", &self.address.as_ref().map(|_| REDACTED))
             .field("token", &self.token.as_ref().map(|_| REDACTED))
             .field("collection", &self.collection)
             .field("dimensions", &self.dimensions)
@@ -107,7 +107,7 @@ impl fmt::Debug for CacheConfig {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("CacheConfig")
             .field("provider", &self.provider)
-            .field("address", &self.address)
+            .field("address", &self.address.as_ref().map(|_| REDACTED))
             .field("password", &self.password.as_ref().map(|_| REDACTED))
             .field("database", &self.database)
             .field("max_size", &self.max_size)

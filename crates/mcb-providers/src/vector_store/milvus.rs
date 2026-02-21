@@ -85,9 +85,7 @@ impl MilvusVectorStoreProvider {
                     "Milvus connection timed out after {timeout} seconds"
                 ))
             })?
-            .map_err(|e| {
-                Error::vector_db(format!("Failed to connect to Milvus at {endpoint}: {e}"))
-            })?;
+            .map_err(|e| Error::vector_db(format!("Failed to connect to Milvus: {e}")))?;
 
         Ok(Self { client })
     }
@@ -114,10 +112,7 @@ impl MilvusVectorStoreProvider {
                 || err_str.contains("collection not found")
                 || err_str.contains("not exist")
             {
-                tracing::debug!(
-                    "Collection '{}' does not exist, returning empty results",
-                    collection
-                );
+                tracing::debug!("Collection does not exist, returning empty results");
                 return Err(Error::vector_db(format!(
                     "Collection '{collection}' not found"
                 )));

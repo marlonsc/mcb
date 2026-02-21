@@ -10,6 +10,7 @@
 //! This provider communicates via Qdrant's REST API using the reqwest HTTP client.
 
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -44,6 +45,16 @@ pub struct QdrantVectorStoreProvider {
     http_client: Client,
     /// Track collection dimensions locally
     collections: Arc<DashMap<String, usize>>,
+}
+
+impl fmt::Debug for QdrantVectorStoreProvider {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("QdrantVectorStoreProvider")
+            .field("base_url", &self.base_url)
+            .field("api_key", &self.api_key.as_ref().map(|_| "REDACTED"))
+            .field("timeout", &self.timeout)
+            .finish()
+    }
 }
 
 impl QdrantVectorStoreProvider {

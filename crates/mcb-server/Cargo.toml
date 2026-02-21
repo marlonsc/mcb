@@ -130,6 +130,8 @@ fastembed = { workspace = true }
 rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
+tower = { workspace = true }
+http-body-util = { workspace = true }
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
 mcb-infrastructure = { path = "../mcb-infrastructure", features = ["test-utils"] }
 

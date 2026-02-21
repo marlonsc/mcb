@@ -20,6 +20,8 @@
 
 use std::sync::Arc;
 
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use rocket::http::Status;
 use rocket::outcome::Outcome;
 use rocket::request::{self, FromRequest, Request};
@@ -195,4 +197,122 @@ impl<'r> FromRequest<'r> for AdminAuth {
 #[must_use]
 pub fn is_unauthenticated_route(path: &str) -> bool {
     matches!(path, "/live" | "/ready")
+}
+
+/// Axum-compatible admin authentication extractor.
+///
+/// Implements [`axum::extract::FromRequestParts`] with the same validation
+/// logic as the Rocket [`AdminAuth`] guard. Extract `X-Admin-Key` (or the
+/// configured header), validate against [`AdminAuthConfig`], and reject with
+/// a JSON error body on failure.
+///
+/// # Usage
+///
+/// ```rust,ignore
+/// async fn protected_handler(
+///     _auth: AxumAdminAuth,
+///     State(state): State<Arc<AppState>>,
+/// ) -> impl IntoResponse { /* ... */ }
+/// ```
+pub struct AxumAdminAuth;
+
+/// JSON error body returned by the Axum auth extractor on rejection.
+///
+/// Mirrors the same `{ "error": "...", "message": "..." }` format used by
+/// [`AuthErrorResponse`] in the Rocket guard.
+#[derive(Debug, Serialize)]
+pub struct AxumAuthError {
+    /// Error type identifier (e.g. `"missing_api_key"`, `"invalid_api_key"`)
+    pub error: &'static str,
+    /// Human-readable error message
+    pub message: String,
+}
+
+impl IntoResponse for AxumAuthError {
+    fn into_response(self) -> Response {
+        let status = match self.error {
+            "auth_not_configured" => StatusCode::SERVICE_UNAVAILABLE,
+            _ => StatusCode::UNAUTHORIZED,
+        };
+        let body = serde_json::to_string(&self).unwrap_or_else(|_| {
+            r#"{"error":"internal","message":"Failed to serialize error"}"#.to_owned()
+        });
+        (
+            status,
+            [(axum::http::header::CONTENT_TYPE, "application/json")],
+            body,
+        )
+            .into_response()
+    }
+}
+
+impl<S> axum::extract::FromRequestParts<S> for AxumAdminAuth
+where
+    S: Send + Sync,
+{
+    type Rejection = AxumAuthError;
+
+    async fn from_request_parts(
+        parts: &mut axum::http::request::Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        let auth_config = match parts.extensions.get::<Arc<AdminAuthConfig>>() {
+            Some(config) => Arc::clone(config),
+            None => return Ok(Self),
+        };
+
+        if !auth_config.enabled {
+            return Ok(Self);
+        }
+
+        if !auth_config.is_configured() {
+            return Err(AxumAuthError {
+                error: "auth_not_configured",
+                message: "Admin authentication is enabled but no API key is configured. \
+                         Set MCP__AUTH__ADMIN__KEY environment variable or auth.admin.key in config."
+                    .to_owned(),
+            });
+        }
+
+        let api_key = parts
+            .headers
+            .get(&auth_config.header_name)
+            .and_then(|v| v.to_str().ok());
+
+        match api_key {
+            Some(key) if auth_config.validate_key(key) => Ok(Self),
+            Some(_) => Err(AxumAuthError {
+                error: "invalid_api_key",
+                message: "Invalid admin API key".to_owned(),
+            }),
+            None => Err(AxumAuthError {
+                error: "missing_api_key",
+                message: format!(
+                    "Admin API key required. Provide it in the '{}' header.",
+                    auth_config.header_name
+                ),
+            }),
+        }
+    }
+}
+
+/// Axum middleware layer that injects [`AdminAuthConfig`] into request extensions.
+///
+/// Use with [`axum::middleware::from_fn_with_state`] or add as a layer:
+///
+/// ```rust,ignore
+/// let app = Router::new()
+///     .route("/protected", get(handler))
+///     .layer(axum::Extension(Arc::new(auth_config)));
+/// ```
+///
+/// Alternatively, use this function as a `from_fn` middleware that injects
+/// the config and optionally short-circuits unauthenticated routes.
+pub async fn axum_admin_auth_layer(
+    axum::extract::Extension(config): axum::extract::Extension<Arc<AdminAuthConfig>>,
+    mut request: axum::http::Request<axum::body::Body>,
+    next: axum::middleware::Next,
+) -> Response {
+    request.extensions_mut().insert(config);
+    next.run(request).await
 }

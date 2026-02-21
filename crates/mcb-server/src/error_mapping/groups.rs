@@ -8,12 +8,12 @@ fn format_error(label: &str, detail: impl std::fmt::Display) -> String {
 }
 
 fn log_and_format_error(log: &str, label: &str, detail: impl std::fmt::Display) -> String {
-    tracing::error!(category = label, detail = %detail, "{log}");
+    tracing::error!(category = %label, "{log}");
     format_error(label, detail)
 }
 
 fn log_and_static_error(log: &str, message: &str) -> String {
-    tracing::error!(detail = message, "{log}");
+    tracing::error!("{log}");
     message.to_owned()
 }
 
@@ -32,7 +32,7 @@ fn map_client_error(error: &Error) -> Option<String> {
             format!("Invalid regex pattern '{pattern}': {message}")
         }
         _ => {
-            tracing::trace!(mapper = "client", error = %error, "skipped unmatched variant");
+            tracing::trace!(mapper = "client", "skipped unmatched variant");
             return None;
         }
     };
@@ -65,7 +65,7 @@ fn map_provider_error(error: &Error) -> Option<String> {
             log_and_format_error("VCS operation failed", "VCS error", message)
         }
         _ => {
-            tracing::trace!(mapper = "provider", error = %error, "skipped unmatched variant");
+            tracing::trace!(mapper = "provider", "skipped unmatched variant");
             return None;
         }
     };
@@ -85,7 +85,7 @@ fn map_config_error(error: &Error) -> Option<String> {
     if let Error::Authentication { message, .. } = error {
         return Some(format_error("Authentication error", message));
     }
-    tracing::trace!(mapper = "config", error = %error, "skipped unmatched variant");
+    tracing::trace!(mapper = "config", "skipped unmatched variant");
     None
 }
 
@@ -111,7 +111,7 @@ fn map_system_error(error: &Error) -> Option<String> {
             message,
         ));
     }
-    tracing::trace!("map_system_error skipped variant: {error}");
+    tracing::trace!("map_system_error skipped variant");
     None
 }
 
@@ -135,7 +135,7 @@ fn map_encoding_error(error: &Error) -> Option<String> {
             "Encoding error: invalid base64",
         ));
     }
-    tracing::trace!("map_encoding_error skipped variant: {error}");
+    tracing::trace!("map_encoding_error skipped variant");
     None
 }
 
@@ -154,7 +154,7 @@ fn map_io_error(error: &Error) -> Option<String> {
             message,
         ));
     }
-    tracing::trace!("map_io_error skipped variant: {error}");
+    tracing::trace!("map_io_error skipped variant");
     None
 }
 
@@ -180,7 +180,7 @@ fn map_generic_error(error: &Error) -> Option<String> {
             e,
         ));
     }
-    tracing::trace!("map_generic_error skipped variant: {error}");
+    tracing::trace!("map_generic_error skipped variant");
     None
 }
 
