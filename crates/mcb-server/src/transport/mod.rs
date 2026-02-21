@@ -18,6 +18,8 @@
 //! Transport selection is typically handled by the initialization system.
 //! The initialization system configures transports based on the operating mode.
 
+/// Axum-based HTTP transport skeleton used during Rocket migration.
+pub mod axum_http;
 pub mod config;
 pub mod http;
 pub mod http_client;
