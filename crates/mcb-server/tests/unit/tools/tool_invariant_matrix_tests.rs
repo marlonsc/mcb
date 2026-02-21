@@ -135,7 +135,7 @@ async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str)
 #[case("vcs")]
 #[case("entity")]
 #[tokio::test]
-async fn client_hybrid_blocks_server_side_tools(
+async fn client_hybrid_allows_server_side_tools(
     #[case] tool_name: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
@@ -148,20 +148,15 @@ async fn client_hybrid_blocks_server_side_tools(
 
     assert_eq!(status, rocket::http::Status::Ok);
     let error_opt = response.error;
-    assert!(
-        error_opt.is_some(),
-        "{tool_name} should be blocked in client-hybrid"
-    );
-    let error = match error_opt {
-        Some(error) => error,
-        None => return Ok(()),
-    };
-    assert_eq!(error.code, -32602);
-    assert!(
-        error.message.contains("Operation mode matrix violation"),
-        "{tool_name}: expected mode violation, got: {}",
-        error.message
-    );
+    // Tools should now be allowed through the matrix check in client-hybrid mode.
+    // They may fail for other reasons (e.g., missing arguments), but NOT due to mode violation.
+    if let Some(error) = error_opt {
+        assert!(
+            !error.message.contains("Operation mode matrix violation"),
+            "{tool_name}: should NOT have mode violation in client-hybrid, got: {}",
+            error.message
+        );
+    }
     Ok(())
 }
 
