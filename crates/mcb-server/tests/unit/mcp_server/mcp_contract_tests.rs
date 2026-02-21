@@ -169,10 +169,8 @@ async fn test_provenance_gating_requires_full_provenance_fields(
     assert!(error.message.contains("Missing execution provenance"));
     for field in [
         "session_id",
-        "project_id",
         "repo_id",
         "repo_path",
-        "worktree_id",
         "operator_id",
         "machine_id",
         "agent_program",
@@ -272,7 +270,7 @@ async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid()
 #[case("vcs")]
 #[case("entity")]
 #[tokio::test]
-async fn test_operation_mode_matrix_blocks_tools_in_client_hybrid(
+async fn test_operation_mode_matrix_allows_tools_in_client_hybrid(
     #[case] tool_name: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
@@ -285,17 +283,12 @@ async fn test_operation_mode_matrix_blocks_tools_in_client_hybrid(
 
     assert_eq!(status, Status::Ok);
     let error_opt = response.error;
-    assert!(
-        error_opt.is_some(),
-        "tool should be blocked in client-hybrid"
-    );
-    let error = match error_opt {
-        Some(error) => error,
-        None => return Ok(()),
-    };
-    assert_eq!(error.code, -32602);
-    assert!(error.message.contains("Operation mode matrix violation"));
-    assert!(error.message.contains(tool_name));
-    assert!(error.message.contains("client-hybrid"));
+    if let Some(error) = error_opt {
+        assert!(
+            !error.message.contains("Operation mode matrix violation"),
+            "tool should not be blocked by matrix in client-hybrid, but got: {}",
+            error.message
+        );
+    }
     Ok(())
 }

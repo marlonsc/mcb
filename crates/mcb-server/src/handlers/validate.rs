@@ -73,12 +73,9 @@ impl ValidateHandler {
     }
 
     async fn handle_list_rules(&self, args: &ValidateArgs) -> Result<CallToolResult, McpError> {
-        if let Some(ref category) = args.category {
-            match self
-                .validation_service
-                .get_rules(Some(category.as_str()))
-                .await
-            {
+        let effective_category = args.category.as_deref().filter(|c| !c.trim().is_empty());
+        if let Some(category) = effective_category {
+            match self.validation_service.get_rules(Some(category)).await {
                 Ok(rules) => ResponseFormatter::json_success(&serde_json::json!({
                     "rules": rules,
                     "count": rules.len(),

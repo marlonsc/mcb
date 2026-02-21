@@ -15,6 +15,7 @@ pub mod hooks;
 pub mod init;
 pub mod macros;
 pub mod mcp_server;
+pub mod rmcp_http_feature;
 pub mod services;
 pub mod templates;
 pub mod tools;

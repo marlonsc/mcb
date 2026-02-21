@@ -114,26 +114,79 @@ pub(super) async fn handle_tools_call(
         Err((code, msg)) => return McpResponse::error(request.id.clone(), code, msg),
     };
 
-    let execution_context = ToolExecutionContext {
-        session_id: bridge_provenance.session_id.clone(),
-        parent_session_id: bridge_provenance.parent_session_id.clone(),
-        project_id: bridge_provenance.project_id.clone(),
-        worktree_id: bridge_provenance.worktree_id.clone(),
-        repo_id: bridge_provenance.repo_id.clone(),
-        repo_path: bridge_provenance
-            .repo_path
-            .clone()
-            .or_else(|| bridge_provenance.workspace_root.clone()),
-        operator_id: bridge_provenance.operator_id.clone(),
-        machine_id: bridge_provenance.machine_id.clone(),
-        agent_program: bridge_provenance.agent_program.clone(),
-        model_id: bridge_provenance.model_id.clone(),
-        delegated: parse_delegated_flag(bridge_provenance.delegated.as_deref()),
-        timestamp: Some(chrono::Utc::now().timestamp()),
-        execution_flow: bridge_provenance
-            .execution_flow
-            .clone()
-            .or_else(|| Some("server-hybrid".to_owned())),
+    let execution_context = {
+        let mut ctx = ToolExecutionContext {
+            session_id: bridge_provenance.session_id.clone(),
+            parent_session_id: bridge_provenance.parent_session_id.clone(),
+            project_id: bridge_provenance.project_id.clone(),
+            worktree_id: bridge_provenance.worktree_id.clone(),
+            repo_id: bridge_provenance.repo_id.clone(),
+            repo_path: bridge_provenance
+                .repo_path
+                .clone()
+                .or_else(|| bridge_provenance.workspace_root.clone()),
+            operator_id: bridge_provenance.operator_id.clone(),
+            machine_id: bridge_provenance.machine_id.clone(),
+            agent_program: bridge_provenance.agent_program.clone(),
+            model_id: bridge_provenance.model_id.clone(),
+            delegated: parse_delegated_flag(bridge_provenance.delegated.as_deref()),
+            timestamp: Some(chrono::Utc::now().timestamp()),
+            execution_flow: bridge_provenance
+                .execution_flow
+                .clone()
+                .or_else(|| Some("server-hybrid".to_owned())),
+        };
+
+        // Env var fallbacks (mirrors stdio mode in mcp_server.rs)
+        if ctx
+            .operator_id
+            .as_deref()
+            .is_none_or(|s| s.trim().is_empty())
+        {
+            ctx.operator_id = std::env::var("USER").ok();
+        }
+        if ctx
+            .machine_id
+            .as_deref()
+            .is_none_or(|s| s.trim().is_empty())
+        {
+            ctx.machine_id = std::env::var("HOSTNAME").ok();
+        }
+        if ctx
+            .agent_program
+            .as_deref()
+            .is_none_or(|s| s.trim().is_empty())
+        {
+            ctx.agent_program = Some("mcb-http-bridge".to_owned());
+        }
+        if ctx.model_id.as_deref().is_none_or(|s| s.trim().is_empty()) {
+            ctx.model_id = Some("unknown".to_owned());
+        }
+        if ctx.delegated.is_none() {
+            ctx.delegated = Some(ctx.parent_session_id.is_some());
+        }
+
+        // VCS repo_id auto-derivation (mirrors mcp_server.rs)
+        if let Some(ref path_str) = ctx.repo_path {
+            if ctx.repo_id.as_deref().is_none_or(|s| s.trim().is_empty()) {
+                if let Ok(repo) = state
+                    .server
+                    .vcs_provider()
+                    .open_repository(std::path::Path::new(path_str))
+                    .await
+                {
+                    ctx.repo_id = Some(
+                        state
+                            .server
+                            .vcs_provider()
+                            .repository_id(&repo)
+                            .into_string(),
+                    );
+                }
+            }
+        }
+
+        ctx
     };
 
     execution_context.apply_to_request_if_missing(&mut call_request);

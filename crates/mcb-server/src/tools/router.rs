@@ -198,17 +198,11 @@ fn validate_execution_context(
     if is_missing_text(&execution_context.session_id) {
         missing.push("session_id");
     }
-    if is_missing_text(&execution_context.project_id) {
-        missing.push("project_id");
-    }
     if is_missing_text(&execution_context.repo_id) {
         missing.push("repo_id");
     }
     if is_missing_text(&execution_context.repo_path) {
         missing.push("repo_path");
-    }
-    if is_missing_text(&execution_context.worktree_id) {
-        missing.push("worktree_id");
     }
     if is_missing_text(&execution_context.operator_id) {
         missing.push("operator_id");
@@ -257,22 +251,7 @@ fn validate_operation_mode_matrix(
 ) -> Result<(), McpError> {
     let flow = normalize_execution_flow(execution_context.execution_flow.as_deref())?;
 
-    let allowed = if matches!(
-        tool_name,
-        "search"
-            | "memory"
-            | "session"
-            | "agent"
-            | "project"
-            | "vcs"
-            | "vcs_entity"
-            | "plan_entity"
-            | "issue_entity"
-            | "org_entity"
-            | "entity"
-    ) {
-        &["stdio-only", "server-hybrid"][..]
-    } else if matches!(tool_name, "validate") {
+    let allowed = if matches!(tool_name, "validate") {
         &["stdio-only", "client-hybrid"][..]
     } else {
         &["stdio-only", "client-hybrid", "server-hybrid"][..]
@@ -383,15 +362,15 @@ mod tests {
     #[test]
     fn rejects_blank_provenance_scope_for_search() {
         let mut context = valid_context();
-        context.project_id = Some("   ".to_owned());
+        context.operator_id = Some("   ".to_owned());
 
         let validation = validate_execution_context("search", &context);
-        assert!(validation.is_err(), "blank project_id must be rejected");
+        assert!(validation.is_err(), "blank operator_id must be rejected");
         let error = match validation {
             Ok(()) => return,
             Err(error) => error,
         };
-        assert!(error.message.contains("project_id"));
+        assert!(error.message.contains("operator_id"));
     }
 
     #[test]
@@ -454,20 +433,15 @@ mod tests {
     }
 
     #[test]
-    fn rejects_search_in_client_hybrid_flow() {
+    fn allows_search_in_client_hybrid_flow() {
         let mut context = valid_context();
         context.execution_flow = Some("client-hybrid".to_owned());
 
         let validation = validate_execution_context("search", &context);
         assert!(
-            validation.is_err(),
-            "search must be rejected in client-hybrid flow"
+            validation.is_ok(),
+            "search must be allowed in client-hybrid flow"
         );
-        let err = match validation {
-            Ok(()) => return,
-            Err(error) => error,
-        };
-        assert!(err.message.contains("Operation mode matrix violation"));
     }
 
     #[test]
