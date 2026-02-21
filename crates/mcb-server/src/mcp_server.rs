@@ -90,6 +90,19 @@ pub struct McpServices {
     pub entities: McpEntityRepositories,
 }
 
+/// Generate `Arc`-cloning accessor methods for `McpServer` fields.
+macro_rules! impl_arc_accessors {
+    ($($(#[doc = $doc:literal])* $name:ident -> $ty:ty => $($path:ident).+),+ $(,)?) => {
+        $(
+            $(#[doc = $doc])*
+            #[must_use]
+            pub fn $name(&self) -> Arc<$ty> {
+                Arc::clone(&self.$($path).+)
+            }
+        )+
+    };
+}
+
 impl McpServer {
     /// Builds the execution context for a tool call.
     ///
@@ -237,173 +250,61 @@ impl McpServer {
         }
     }
 
-    /// Create a new MCP server from domain services
-    /// This is the preferred constructor that uses the DI container
-    #[must_use]
-    pub fn from_services(services: McpServices, execution_flow: Option<String>) -> Self {
-        Self::new(services, execution_flow)
-    }
-
-    /// Access to indexing service
-    #[must_use]
-    pub fn indexing_service(&self) -> Arc<dyn IndexingServiceInterface> {
-        Arc::clone(&self.services.indexing)
-    }
-
-    /// Access to context service
-    #[must_use]
-    pub fn context_service(&self) -> Arc<dyn ContextServiceInterface> {
-        Arc::clone(&self.services.context)
-    }
-
-    /// Access to VCS provider (for branch/repo handlers)
-    #[must_use]
-    pub fn vcs_provider(&self) -> Arc<dyn VcsProvider> {
-        Arc::clone(&self.services.vcs)
-    }
-
-    /// Access to search service
-    #[must_use]
-    pub fn search_service(&self) -> Arc<dyn SearchServiceInterface> {
-        Arc::clone(&self.services.search)
-    }
-
-    /// Access to validation service
-    #[must_use]
-    pub fn validation_service(&self) -> Arc<dyn ValidationServiceInterface> {
-        Arc::clone(&self.services.validation)
-    }
-
-    /// Access to memory service
-    #[must_use]
-    pub fn memory_service(&self) -> Arc<dyn MemoryServiceInterface> {
-        Arc::clone(&self.services.memory)
-    }
-
-    /// Access to agent session service
-    #[must_use]
-    pub fn agent_session_service(&self) -> Arc<dyn AgentSessionServiceInterface> {
-        Arc::clone(&self.services.agent_session)
-    }
-
-    /// Access to project service
-    #[must_use]
-    pub fn project_service(&self) -> Arc<dyn ProjectDetectorService> {
-        Arc::clone(&self.services.project)
-    }
-
-    /// Access to project workflow repository.
-    #[must_use]
-    pub fn project_workflow_repository(&self) -> Arc<dyn ProjectRepository> {
-        Arc::clone(&self.services.project_workflow)
-    }
-
-    /// Access to VCS entity repository.
-    #[must_use]
-    pub fn vcs_entity_repository(&self) -> Arc<dyn VcsEntityRepository> {
-        Arc::clone(&self.services.entities.vcs)
-    }
-
-    /// Access to plan entity repository.
-    #[must_use]
-    pub fn plan_entity_repository(&self) -> Arc<dyn PlanEntityRepository> {
-        Arc::clone(&self.services.entities.plan)
-    }
-
-    /// Access to issue entity repository.
-    #[must_use]
-    pub fn issue_entity_repository(&self) -> Arc<dyn IssueEntityRepository> {
-        Arc::clone(&self.services.entities.issue)
-    }
-
-    /// Access to organization entity repository.
-    #[must_use]
-    pub fn org_entity_repository(&self) -> Arc<dyn OrgEntityRepository> {
-        Arc::clone(&self.services.entities.org)
-    }
-
-    /// Access to index handler (for HTTP transport)
-    #[must_use]
-    pub fn index_handler(&self) -> Arc<IndexHandler> {
-        Arc::clone(&self.handlers.index)
-    }
-
-    /// Access to search handler (for HTTP transport)
-    #[must_use]
-    pub fn search_handler(&self) -> Arc<SearchHandler> {
-        Arc::clone(&self.handlers.search)
-    }
-
-    /// Access to validate handler (for HTTP transport)
-    #[must_use]
-    pub fn validate_handler(&self) -> Arc<ValidateHandler> {
-        Arc::clone(&self.handlers.validate)
-    }
-
-    /// Access to memory handler (for HTTP transport)
-    #[must_use]
-    pub fn memory_handler(&self) -> Arc<MemoryHandler> {
-        Arc::clone(&self.handlers.memory)
-    }
-
-    /// Access to session handler (for HTTP transport)
-    #[must_use]
-    pub fn session_handler(&self) -> Arc<SessionHandler> {
-        Arc::clone(&self.handlers.session)
-    }
-
-    /// Access to agent handler (for HTTP transport)
-    #[must_use]
-    pub fn agent_handler(&self) -> Arc<AgentHandler> {
-        Arc::clone(&self.handlers.agent)
-    }
-
-    /// Access to VCS handler (for HTTP transport)
-    #[must_use]
-    pub fn vcs_handler(&self) -> Arc<VcsHandler> {
-        Arc::clone(&self.handlers.vcs)
-    }
-
-    /// Access to unified entity handler (for HTTP transport)
-    #[must_use]
-    pub fn entity_handler(&self) -> Arc<EntityHandler> {
-        Arc::clone(&self.handlers.entity)
-    }
-
-    /// Access to project handler (for HTTP transport)
-    #[must_use]
-    pub fn project_handler(&self) -> Arc<ProjectHandler> {
-        Arc::clone(&self.handlers.project)
-    }
-
-    /// Access to VCS entity handler (for HTTP transport)
-    #[must_use]
-    pub fn vcs_entity_handler(&self) -> Arc<VcsEntityHandler> {
-        Arc::clone(&self.handlers.vcs_entity)
-    }
-
-    /// Access to plan entity handler (for HTTP transport)
-    #[must_use]
-    pub fn plan_entity_handler(&self) -> Arc<PlanEntityHandler> {
-        Arc::clone(&self.handlers.plan_entity)
-    }
-
-    /// Access to issue entity handler (for HTTP transport)
-    #[must_use]
-    pub fn issue_entity_handler(&self) -> Arc<IssueEntityHandler> {
-        Arc::clone(&self.handlers.issue_entity)
-    }
-
-    /// Access to org entity handler (for HTTP transport)
-    #[must_use]
-    pub fn org_entity_handler(&self) -> Arc<OrgEntityHandler> {
-        Arc::clone(&self.handlers.org_entity)
-    }
-
-    /// Access to hook processor (for automatic memory operations)
-    #[must_use]
-    pub fn hook_processor(&self) -> Arc<HookProcessor> {
-        Arc::clone(&self.handlers.hook_processor)
+    impl_arc_accessors! {
+        /// Access to indexing service
+        indexing_service -> dyn IndexingServiceInterface => services.indexing,
+        /// Access to context service
+        context_service -> dyn ContextServiceInterface => services.context,
+        /// Access to search service
+        search_service -> dyn SearchServiceInterface => services.search,
+        /// Access to validation service
+        validation_service -> dyn ValidationServiceInterface => services.validation,
+        /// Access to memory service
+        memory_service -> dyn MemoryServiceInterface => services.memory,
+        /// Access to agent session service
+        agent_session_service -> dyn AgentSessionServiceInterface => services.agent_session,
+        /// Access to project service
+        project_service -> dyn ProjectDetectorService => services.project,
+        /// Access to project workflow repository
+        project_workflow_repository -> dyn ProjectRepository => services.project_workflow,
+        /// Access to VCS provider
+        vcs_provider -> dyn VcsProvider => services.vcs,
+        /// Access to VCS entity repository
+        vcs_entity_repository -> dyn VcsEntityRepository => services.entities.vcs,
+        /// Access to plan entity repository
+        plan_entity_repository -> dyn PlanEntityRepository => services.entities.plan,
+        /// Access to issue entity repository
+        issue_entity_repository -> dyn IssueEntityRepository => services.entities.issue,
+        /// Access to organization entity repository
+        org_entity_repository -> dyn OrgEntityRepository => services.entities.org,
+        /// Access to index handler (for HTTP transport)
+        index_handler -> IndexHandler => handlers.index,
+        /// Access to search handler (for HTTP transport)
+        search_handler -> SearchHandler => handlers.search,
+        /// Access to validate handler (for HTTP transport)
+        validate_handler -> ValidateHandler => handlers.validate,
+        /// Access to memory handler (for HTTP transport)
+        memory_handler -> MemoryHandler => handlers.memory,
+        /// Access to session handler (for HTTP transport)
+        session_handler -> SessionHandler => handlers.session,
+        /// Access to agent handler (for HTTP transport)
+        agent_handler -> AgentHandler => handlers.agent,
+        /// Access to VCS handler (for HTTP transport)
+        vcs_handler -> VcsHandler => handlers.vcs,
+        /// Access to unified entity handler (for HTTP transport)
+        entity_handler -> EntityHandler => handlers.entity,
+        /// Access to project handler (for HTTP transport)
+        project_handler -> ProjectHandler => handlers.project,
+        /// Access to VCS entity handler (for HTTP transport)
+        vcs_entity_handler -> VcsEntityHandler => handlers.vcs_entity,
+        /// Access to plan entity handler (for HTTP transport)
+        plan_entity_handler -> PlanEntityHandler => handlers.plan_entity,
+        /// Access to issue entity handler (for HTTP transport)
+        issue_entity_handler -> IssueEntityHandler => handlers.issue_entity,
+        /// Access to org entity handler (for HTTP transport)
+        org_entity_handler -> OrgEntityHandler => handlers.org_entity,
+        /// Access to hook processor (for automatic memory operations)
+        hook_processor -> HookProcessor => handlers.hook_processor,
     }
 
     /// Clone the complete tool handlers set for unified internal execution.

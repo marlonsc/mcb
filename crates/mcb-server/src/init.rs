@@ -337,7 +337,7 @@ async fn create_mcp_server(
             org: services.org_entity_repository,
         },
     };
-    let server = McpServer::from_services(mcp_services, Some(execution_flow.to_owned()));
+    let server = McpServer::new(mcp_services, Some(execution_flow.to_owned()));
 
     Ok((server, app_context))
 }

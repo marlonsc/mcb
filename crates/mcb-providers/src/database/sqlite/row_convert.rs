@@ -6,9 +6,7 @@
 use mcb_domain::constants::keys as schema;
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, CheckpointType};
 use mcb_domain::entities::issue::{IssueComment, IssueLabel};
-use mcb_domain::entities::memory::{
-    Observation, ObservationMetadata, OriginContext, SessionSummary,
-};
+use mcb_domain::entities::memory::{Observation, ObservationMetadata, SessionSummary};
 use mcb_domain::entities::project::Project;
 use mcb_domain::entities::project::{IssueStatus, IssueType, ProjectIssue};
 use mcb_domain::error::{Error, Result};
@@ -28,14 +26,37 @@ fn required_i64(row: &dyn SqlRow, field_name: &str) -> Result<i64> {
         .ok_or_else(|| Error::memory(format!("Missing {field_name}")))
 }
 
+/// Parse an optional JSON column into a `Vec<T>`, defaulting to empty.
+fn json_vec<T: serde::de::DeserializeOwned>(
+    row: &dyn SqlRow,
+    field: &str,
+    err_ctx: &str,
+) -> Result<Vec<T>> {
+    match row.try_get_string(field)? {
+        Some(json) => {
+            serde_json::from_str(&json).map_err(|e| Error::memory_with_source(err_ctx, e))
+        }
+        None => Ok(Vec::new()),
+    }
+}
+
+/// Parse an optional JSON column into `Option<T>`, defaulting to `None`.
+fn json_opt<T: serde::de::DeserializeOwned>(
+    row: &dyn SqlRow,
+    field: &str,
+    err_ctx: &str,
+) -> Result<Option<T>> {
+    match row.try_get_string(field)? {
+        Some(json) => {
+            serde_json::from_str(&json).map_err(|e| Error::memory_with_source(err_ctx, e))
+        }
+        None => Ok(None),
+    }
+}
+
 /// Build an `Observation` from a port row.
 pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
-    let tags_json: Option<String> = row.try_get_string("tags")?;
-    let tags: Vec<String> = match tags_json {
-        Some(json) => serde_json::from_str(&json)
-            .map_err(|e| Error::memory_with_source("invalid observation tags JSON", e))?,
-        None => Vec::new(),
-    };
+    let tags: Vec<String> = json_vec(row, "tags", "invalid observation tags JSON")?;
 
     let obs_type_str: String = row
         .try_get_string(COL_OBSERVATION_TYPE)?
@@ -44,12 +65,9 @@ pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
         .parse()
         .map_err(|e| Error::memory(format!("Invalid observation_type: {e}")))?;
 
-    let metadata_json: Option<String> = row.try_get_string("metadata")?;
-    let metadata: ObservationMetadata = match metadata_json {
-        Some(json) => serde_json::from_str(&json)
-            .map_err(|e| Error::memory_with_source("invalid observation metadata JSON", e))?,
-        None => return Err(Error::memory("Missing metadata")),
-    };
+    let metadata: ObservationMetadata =
+        json_opt(row, "metadata", "invalid observation metadata JSON")?
+            .ok_or_else(|| Error::memory("Missing metadata"))?;
 
     Ok(Observation {
         id: required_string(row, schema::ID)?,
@@ -59,58 +77,28 @@ pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
         tags,
         r#type: observation_type,
         metadata,
-        created_at: row
-            .try_get_i64(schema::CREATED_AT)?
-            .ok_or_else(|| Error::memory("Missing created_at"))?,
+        created_at: required_i64(row, schema::CREATED_AT)?,
         embedding_id: row.try_get_string("embedding_id")?,
     })
 }
 
 /// Build a `SessionSummary` from a port row.
 pub fn row_to_session_summary(row: &dyn SqlRow) -> Result<SessionSummary> {
-    let topics_json: Option<String> = row.try_get_string("topics")?;
-    let decisions_json: Option<String> = row.try_get_string("decisions")?;
-    let next_steps_json: Option<String> = row.try_get_string("next_steps")?;
-    let key_files_json: Option<String> = row.try_get_string("key_files")?;
-    let origin_context_json: Option<String> = row.try_get_string("origin_context")?;
-
     Ok(SessionSummary {
         id: required_string(row, "id")?,
         project_id: required_string(row, "project_id")?,
         org_id: required_string(row, "org_id")?,
         session_id: required_string(row, "session_id")?,
-        topics: match topics_json {
-            Some(json) => serde_json::from_str(&json)
-                .map_err(|e| Error::memory_with_source("invalid session summary topics JSON", e))?,
-            None => Vec::new(),
-        },
-        decisions: match decisions_json {
-            Some(json) => serde_json::from_str(&json).map_err(|e| {
-                Error::memory_with_source("invalid session summary decisions JSON", e)
-            })?,
-            None => Vec::new(),
-        },
-        next_steps: match next_steps_json {
-            Some(json) => serde_json::from_str(&json).map_err(|e| {
-                Error::memory_with_source("invalid session summary next_steps JSON", e)
-            })?,
-            None => Vec::new(),
-        },
-        key_files: match key_files_json {
-            Some(json) => serde_json::from_str(&json).map_err(|e| {
-                Error::memory_with_source("invalid session summary key_files JSON", e)
-            })?,
-            None => Vec::new(),
-        },
-        origin_context: match origin_context_json {
-            Some(json) => serde_json::from_str::<Option<OriginContext>>(&json).map_err(|e| {
-                Error::memory_with_source("invalid session summary origin_context JSON", e)
-            })?,
-            None => None,
-        },
-        created_at: row
-            .try_get_i64("created_at")?
-            .ok_or_else(|| Error::memory("Missing created_at"))?,
+        topics: json_vec(row, "topics", "invalid session summary topics JSON")?,
+        decisions: json_vec(row, "decisions", "invalid session summary decisions JSON")?,
+        next_steps: json_vec(row, "next_steps", "invalid session summary next_steps JSON")?,
+        key_files: json_vec(row, "key_files", "invalid session summary key_files JSON")?,
+        origin_context: json_opt(
+            row,
+            "origin_context",
+            "invalid session summary origin_context JSON",
+        )?,
+        created_at: required_i64(row, "created_at")?,
     })
 }
 
@@ -131,20 +119,12 @@ pub fn row_to_agent_session(row: &dyn SqlRow) -> Result<AgentSession> {
         .map_err(|e| Error::memory(format!("Invalid status: {e}")))?;
 
     Ok(AgentSession {
-        id: row
-            .try_get_string(schema::ID)?
-            .ok_or_else(|| Error::memory("Missing id"))?,
-        session_summary_id: row
-            .try_get_string(schema::SESSION_SUMMARY_ID)?
-            .ok_or_else(|| Error::memory("Missing session_summary_id"))?,
+        id: required_string(row, schema::ID)?,
+        session_summary_id: required_string(row, schema::SESSION_SUMMARY_ID)?,
         agent_type,
-        model: row
-            .try_get_string(schema::MODEL)?
-            .ok_or_else(|| Error::memory("Missing model"))?,
+        model: required_string(row, schema::MODEL)?,
         parent_session_id: row.try_get_string(schema::PARENT_SESSION_ID)?,
-        started_at: row
-            .try_get_i64(schema::STARTED_AT)?
-            .ok_or_else(|| Error::memory("Missing started_at"))?,
+        started_at: required_i64(row, schema::STARTED_AT)?,
         ended_at: row.try_get_i64(schema::ENDED_AT)?,
         duration_ms: row.try_get_i64(schema::DURATION_MS)?,
         status,
@@ -179,20 +159,12 @@ pub fn row_to_checkpoint(row: &dyn SqlRow) -> Result<Checkpoint> {
         != 0;
 
     Ok(Checkpoint {
-        id: row
-            .try_get_string("id")?
-            .ok_or_else(|| Error::memory("Missing id"))?,
-        session_id: row
-            .try_get_string("session_id")?
-            .ok_or_else(|| Error::memory("Missing session_id"))?,
+        id: required_string(row, "id")?,
+        session_id: required_string(row, "session_id")?,
         checkpoint_type,
-        description: row
-            .try_get_string("description")?
-            .ok_or_else(|| Error::memory("Missing description"))?,
+        description: required_string(row, "description")?,
         snapshot_data,
-        created_at: row
-            .try_get_i64("created_at")?
-            .ok_or_else(|| Error::memory("Missing created_at"))?,
+        created_at: required_i64(row, "created_at")?,
         restored_at: row.try_get_i64("restored_at")?,
         expired,
     })
@@ -205,12 +177,8 @@ pub fn row_to_project(row: &dyn SqlRow) -> Result<Project> {
         org_id: required_string(row, "org_id")?,
         name: required_string(row, "name")?,
         path: required_string(row, "path")?,
-        created_at: row
-            .try_get_i64("created_at")?
-            .ok_or_else(|| Error::memory("Missing created_at"))?,
-        updated_at: row
-            .try_get_i64("updated_at")?
-            .ok_or_else(|| Error::memory("Missing updated_at"))?,
+        created_at: required_i64(row, "created_at")?,
+        updated_at: required_i64(row, "updated_at")?,
     })
 }
 

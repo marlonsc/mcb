@@ -31,6 +31,24 @@ use crate::constants::providers::{
     DEFAULT_DB_CONFIG_NAME, FALLBACK_EMBEDDING_PROVIDER, FALLBACK_VECTOR_STORE_PROVIDER,
 };
 
+macro_rules! impl_resolver_common {
+    ($resolver:ident) => {
+        impl $resolver {
+            #[must_use]
+            /// Creates a new resolver with the provided application config.
+            pub fn new(config: Arc<AppConfig>) -> Self {
+                Self { config }
+            }
+        }
+
+        impl std::fmt::Debug for $resolver {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.debug_struct(stringify!($resolver)).finish()
+            }
+        }
+    };
+}
+
 // ============================================================================
 // Embedding Provider Resolver
 // ============================================================================
@@ -44,12 +62,6 @@ pub struct EmbeddingProviderResolver {
 }
 
 impl EmbeddingProviderResolver {
-    /// Create a new resolver with config
-    #[must_use]
-    pub fn new(config: Arc<AppConfig>) -> Self {
-        Self { config }
-    }
-
     /// Resolve provider from current application config
     ///
     /// # Errors
@@ -107,12 +119,7 @@ impl EmbeddingProviderResolver {
         mcb_domain::registry::embedding::list_embedding_providers()
     }
 }
-
-impl std::fmt::Debug for EmbeddingProviderResolver {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("EmbeddingProviderResolver").finish()
-    }
-}
+impl_resolver_common!(EmbeddingProviderResolver);
 
 // ============================================================================
 // Vector Store Provider Resolver
@@ -127,12 +134,6 @@ pub struct VectorStoreProviderResolver {
 }
 
 impl VectorStoreProviderResolver {
-    /// Create a new resolver with config
-    #[must_use]
-    pub fn new(config: Arc<AppConfig>) -> Self {
-        Self { config }
-    }
-
     /// Resolve provider from current application config
     ///
     /// # Errors
@@ -224,11 +225,7 @@ where
     }
 }
 
-impl std::fmt::Debug for VectorStoreProviderResolver {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("VectorStoreProviderResolver").finish()
-    }
-}
+impl_resolver_common!(VectorStoreProviderResolver);
 
 // ============================================================================
 // Cache Provider Resolver
@@ -243,12 +240,6 @@ pub struct CacheProviderResolver {
 }
 
 impl CacheProviderResolver {
-    /// Create a new resolver with config
-    #[must_use]
-    pub fn new(config: Arc<AppConfig>) -> Self {
-        Self { config }
-    }
-
     /// Resolve provider from current application config
     ///
     /// # Errors
@@ -290,12 +281,7 @@ impl CacheProviderResolver {
         mcb_domain::registry::cache::list_cache_providers()
     }
 }
-
-impl std::fmt::Debug for CacheProviderResolver {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("CacheProviderResolver").finish()
-    }
-}
+impl_resolver_common!(CacheProviderResolver);
 
 // ============================================================================
 // Language Provider Resolver
@@ -310,12 +296,6 @@ pub struct LanguageProviderResolver {
 }
 
 impl LanguageProviderResolver {
-    /// Create a new resolver with config
-    #[must_use]
-    pub fn new(config: Arc<AppConfig>) -> Self {
-        Self { config }
-    }
-
     /// Resolve provider from current application config
     ///
     /// # Errors
@@ -348,12 +328,7 @@ impl LanguageProviderResolver {
         mcb_domain::registry::language::list_language_providers()
     }
 }
-
-impl std::fmt::Debug for LanguageProviderResolver {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("LanguageProviderResolver").finish()
-    }
-}
+impl_resolver_common!(LanguageProviderResolver);
 
 // ============================================================================
 // Helper Functions

@@ -2,7 +2,7 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
@@ -89,7 +89,7 @@ fn record_declarations(
     declaration_locations: &mut BTreeMap<String, Vec<(PathBuf, usize)>>,
     declaration_pattern: &regex::Regex,
     line: &str,
-    path: &PathBuf,
+    path: &Path,
     line_number: usize,
 ) {
     for cap in declaration_pattern.captures_iter(line) {
@@ -97,7 +97,7 @@ fn record_declarations(
             declaration_locations
                 .entry(name_match.as_str().to_owned())
                 .or_default()
-                .push((path.clone(), line_number));
+                .push((path.to_path_buf(), line_number));
         }
     }
 }
@@ -105,7 +105,7 @@ fn record_declarations(
 fn push_raw_id_field_violations(
     violations: &mut Vec<SsotViolation>,
     forbidden_raw_id_field_pattern: &regex::Regex,
-    path: &PathBuf,
+    path: &Path,
     line: &str,
     line_number: usize,
 ) {
@@ -122,7 +122,7 @@ fn push_raw_id_field_violations(
         }
 
         violations.push(SsotViolation::ForbiddenRawIdFieldType {
-            file: path.clone(),
+            file: path.to_path_buf(),
             line: line_number,
             field_name: field_name_match.as_str().to_owned(),
             field_type: field_type_match.as_str().to_owned(),

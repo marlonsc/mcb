@@ -144,7 +144,7 @@ impl PatternRegistry {
         }
 
         // Load generic configuration from "config" section
-        for config in yaml.get(YAML_FIELD_CONFIG) {
+        if let Some(config) = yaml.get(YAML_FIELD_CONFIG) {
             self.configs.insert(rule_id.to_owned(), config.clone());
         }
 
@@ -155,7 +155,7 @@ impl PatternRegistry {
                 serde_yaml::Value::from(YAML_FIELD_CRATE_NAME),
                 crate_name.clone(),
             );
-            for allowed in yaml.get(YAML_FIELD_ALLOWED_DEPS) {
+            if let Some(allowed) = yaml.get(YAML_FIELD_ALLOWED_DEPS) {
                 map.insert(
                     serde_yaml::Value::from(YAML_FIELD_ALLOWED_DEPS),
                     allowed.clone(),

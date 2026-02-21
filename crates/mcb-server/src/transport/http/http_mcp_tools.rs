@@ -73,22 +73,7 @@ fn parse_delegated_flag(raw: Option<&str>) -> Option<bool> {
 }
 
 fn build_tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
-    ToolHandlers {
-        index: server.index_handler(),
-        search: server.search_handler(),
-        validate: server.validate_handler(),
-        memory: server.memory_handler(),
-        session: server.session_handler(),
-        agent: server.agent_handler(),
-        project: server.project_handler(),
-        vcs: server.vcs_handler(),
-        vcs_entity: server.vcs_entity_handler(),
-        plan_entity: server.plan_entity_handler(),
-        issue_entity: server.issue_entity_handler(),
-        org_entity: server.org_entity_handler(),
-        entity: server.entity_handler(),
-        hook_processor: server.hook_processor(),
-    }
+    server.tool_handlers()
 }
 
 pub(super) async fn handle_tools_call(

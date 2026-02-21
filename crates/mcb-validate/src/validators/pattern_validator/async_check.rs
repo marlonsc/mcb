@@ -20,9 +20,9 @@ pub fn check_async_traits(path: &Path, content: &str) -> crate::Result<Vec<Patte
     let allow_async_fn_trait = compile_regex(r"#\[allow\(async_fn_in_trait\)\]")?;
 
     let has_async_methods = |trait_line: usize| {
-        crate::scan::extract_balanced_block(&lines, trait_line)
-            .map(|(body_lines, _)| body_lines.into_iter().any(|l| async_fn_pattern.is_match(l)))
-            .unwrap_or(false)
+        crate::scan::extract_balanced_block(&lines, trait_line).is_some_and(|(body_lines, _)| {
+            body_lines.into_iter().any(|l| async_fn_pattern.is_match(l))
+        })
     };
 
     let has_attr_nearby = |line_num: usize, pattern: &regex::Regex| {
