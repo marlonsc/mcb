@@ -5,7 +5,18 @@
 //!
 //! Used by `admin/` for browse endpoints and `templates/` for context building.
 
-/// Define a project-scoped REST endpoint for browsing entities
+/// Query parameters for project-scoped browse endpoints.
+#[derive(Debug, serde::Deserialize)]
+pub(crate) struct ProjectIdQuery {
+    /// Optional project ID to scope the browse results.
+    pub project_id: Option<String>,
+}
+
+/// Define a project-scoped REST endpoint for browsing entities (Axum).
+///
+/// Generates an `async fn` handler compatible with [`axum::routing::get`].
+/// The handler uses [`AxumAdminAuth`] for authentication and
+/// [`axum::extract::Query`] for the optional `project_id` parameter.
 macro_rules! define_project_scoped_browse_endpoint {
     (
         $fn_name:ident,
@@ -22,24 +33,23 @@ macro_rules! define_project_scoped_browse_endpoint {
         #[doc = ""]
         #[doc = "# Errors"]
         #[doc = "Returns `503 Service Unavailable` when backend services are unavailable."]
-        #[get($route)]
         pub async fn $fn_name(
-            _auth: AdminAuth,
-            state: &State<AdminState>,
-            project_id: Option<String>,
-        ) -> Result<Json<$response>, (Status, Json<CacheErrorResponse>)> {
+            _auth: crate::admin::auth::AxumAdminAuth,
+            axum::extract::State(state): axum::extract::State<std::sync::Arc<AdminState>>,
+            axum::extract::Query(params): axum::extract::Query<crate::macros::web::ProjectIdQuery>,
+        ) -> Result<axum::Json<$response>, (axum::http::StatusCode, axum::Json<CacheErrorResponse>)>
+        {
             tracing::info!($log_label);
-            let items = fetch_project_scoped_entities::<$entity>(
-                state,
+            let items = fetch_project_scoped_entities_axum::<$entity>(
+                &state,
                 $resource,
-                project_id,
+                params.project_id,
                 $unavailable,
             )
             .await?;
 
-            Ok(build_browse_response(items, |$field, total| $response {
-                $field,
-                total,
+            Ok(build_browse_response_axum(items, |$field, total| {
+                $response { $field, total }
             }))
         }
     };
@@ -49,7 +59,7 @@ macro_rules! define_project_scoped_browse_endpoint {
 #[macro_export]
 macro_rules! context {
     ($($key:ident $(: $value:expr)?),*$(,)?) => {{
-        use ::rocket::serde::ser::{Serialize, SerializeMap, Serializer};
+        use ::serde::ser::{Serialize, SerializeMap, Serializer};
         use ::std::fmt::{Debug, Formatter};
         use ::std::result::Result;
 
