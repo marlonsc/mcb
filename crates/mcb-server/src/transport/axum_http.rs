@@ -2,13 +2,13 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use axum::extract::State;
-use axum::http::Method;
+use axum::http::{Method, StatusCode};
+use axum::response::IntoResponse;
 use axum::routing::{get, patch, post};
 use axum::{Extension, Json, Router};
 use mcb_domain::ports::{
     IndexingOperationsInterface, PerformanceMetricsInterface, VectorStoreBrowser,
 };
-use serde::Serialize;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 
@@ -21,6 +21,8 @@ use crate::admin::config::handlers::{
 use crate::admin::control::shutdown_axum;
 use crate::admin::handlers::AdminState;
 use crate::admin::jobs::get_jobs_status_axum;
+use crate::admin::models::{AdminHealthResponse, ReadinessResponse};
+use crate::admin::sse::events_stream;
 
 /// Shared state for Axum transport endpoints.
 #[derive(Clone)]
@@ -60,11 +62,6 @@ impl AxumRouter {
     }
 }
 
-#[derive(Debug, Serialize)]
-struct HealthResponse {
-    status: &'static str,
-}
-
 /// Builds the Axum router with middleware and routes.
 #[must_use]
 pub fn build_router(state: Arc<AppState>) -> Router {
@@ -75,6 +72,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
 
     let mut app = Router::new()
         .route("/health", get(health_handler))
+        .route("/ready", get(readiness_handler))
         .with_state(state.clone());
 
     // Mount config routes when admin state is available
@@ -93,6 +91,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
 
         let public_admin_routes = Router::new()
             .route("/jobs", get(get_jobs_status_axum))
+            .route("/events", get(events_stream))
             .with_state(admin_state);
 
         app = app.merge(admin_routes).merge(public_admin_routes);
@@ -115,6 +114,32 @@ pub async fn run_axum_server(
     Ok(())
 }
 
-async fn health_handler(State(_state): State<Arc<AppState>>) -> Json<HealthResponse> {
-    Json(HealthResponse { status: "healthy" })
+async fn health_handler(State(state): State<Arc<AppState>>) -> Json<AdminHealthResponse> {
+    let metrics = state.metrics.get_performance_metrics();
+    let operations = state.indexing.get_operations();
+
+    Json(AdminHealthResponse {
+        status: "healthy",
+        uptime_seconds: metrics.uptime_seconds,
+        active_indexing_operations: operations.len(),
+    })
+}
+
+async fn readiness_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    let metrics = state.metrics.get_performance_metrics();
+
+    let ready = metrics.uptime_seconds >= 1;
+    let status = if ready {
+        StatusCode::OK
+    } else {
+        StatusCode::SERVICE_UNAVAILABLE
+    };
+
+    (
+        status,
+        Json(ReadinessResponse {
+            ready,
+            uptime_seconds: metrics.uptime_seconds,
+        }),
+    )
 }
