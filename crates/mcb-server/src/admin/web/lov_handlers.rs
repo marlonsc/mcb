@@ -7,11 +7,10 @@
 //! elements in the admin UI.  Supports optional `?q=` search filtering and
 //! `?parent_id=` scoping for hierarchical relationships.
 
-use rocket::State;
-use rocket::http::Status;
-use rocket::response::status;
-use rocket::serde::json::Json;
-use serde::Serialize;
+use axum::Json;
+use axum::extract::{Path, State};
+use axum::http::StatusCode;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::admin::crud_adapter::resolve_adapter;
@@ -78,6 +77,15 @@ fn record_matches_parent_id(obj: &serde_json::Map<String, Value>, parent_id_lowe
     })
 }
 
+/// Query parameters for the LOV endpoint.
+#[derive(Debug, Deserialize)]
+pub struct LovQuery {
+    /// Optional case-insensitive substring filter on the label field.
+    pub q: Option<String>,
+    /// Optional scoping filter; retains records where any `*_id` field matches.
+    pub parent_id: Option<String>,
+}
+
 /// LOV endpoint — returns `[{id, label}]` JSON for FK dropdown population.
 ///
 /// # Query parameters
@@ -89,21 +97,22 @@ fn record_matches_parent_id(obj: &serde_json::Map<String, Value>, parent_id_lowe
 /// # Errors
 ///
 /// Returns `404 Not Found` when the entity slug is not registered.
-#[rocket::get("/ui/lov/<entity_slug>?<q>&<parent_id>")]
 pub async fn lov_endpoint(
-    entity_slug: &str,
-    q: Option<&str>,
-    parent_id: Option<&str>,
-    state: Option<&State<AdminState>>,
-) -> Result<Json<Vec<LovItem>>, status::Custom<String>> {
-    let entity = AdminRegistry::find(entity_slug).ok_or_else(|| {
-        status::Custom(Status::NotFound, format!("Unknown entity: {entity_slug}"))
+    Path(entity_slug): Path<String>,
+    axum::extract::Query(query): axum::extract::Query<LovQuery>,
+    state: Option<State<AdminState>>,
+) -> Result<Json<Vec<LovItem>>, (StatusCode, String)> {
+    let entity = AdminRegistry::find(&entity_slug).ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            format!("Unknown entity: {entity_slug}"),
+        )
     })?;
 
-    let Some(admin_state) = state else {
+    let Some(admin_state) = state.as_deref() else {
         return Ok(Json(Vec::new()));
     };
-    let adapter = match resolve_adapter(entity_slug, admin_state.inner()) {
+    let adapter = match resolve_adapter(&entity_slug, admin_state) {
         Some(adapter) => adapter,
         None => return Ok(Json(Vec::new())),
     };
@@ -116,7 +125,7 @@ pub async fn lov_endpoint(
         .filter_map(|rec| map_lov_item(rec, &label_field))
         .collect();
 
-    if let Some(pid) = parent_id.filter(|p| !p.is_empty()) {
+    if let Some(pid) = query.parent_id.as_deref().filter(|p| !p.is_empty()) {
         let pid_lower = pid.to_lowercase();
         let matching_ids = records
             .iter()
@@ -129,8 +138,8 @@ pub async fn lov_endpoint(
         items.retain(|item| matching_ids.contains(&item.id));
     }
 
-    if let Some(query) = q.filter(|q| !q.is_empty()) {
-        let q_lower = query.to_lowercase();
+    if let Some(q) = query.q.as_deref().filter(|q| !q.is_empty()) {
+        let q_lower = q.to_lowercase();
         items.retain(|item| item.label.to_lowercase().contains(&q_lower));
     }
 

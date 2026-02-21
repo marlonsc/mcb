@@ -115,3 +115,56 @@ fn spawn_graceful_shutdown(coord: Arc<dyn ShutdownCoordinator>, timeout: u64) {
         coord.signal_shutdown();
     });
 }
+
+/// Axum handler: initiate graceful server shutdown (protected).
+///
+/// # Errors
+/// Returns `503` when the shutdown coordinator is unavailable and `409` when
+/// a shutdown is already in progress.
+pub async fn shutdown_axum(
+    _auth: crate::admin::auth::AxumAdminAuth,
+    axum::extract::State(state): axum::extract::State<Arc<AdminState>>,
+    axum::Json(request): axum::Json<ShutdownRequest>,
+) -> (axum::http::StatusCode, axum::Json<ShutdownResponse>) {
+    tracing::info!("shutdown called");
+
+    let Some(coordinator) = &state.shutdown_coordinator else {
+        return (
+            axum::http::StatusCode::SERVICE_UNAVAILABLE,
+            axum::Json(ShutdownResponse::error(
+                "Shutdown coordinator not available",
+                0,
+            )),
+        );
+    };
+
+    if coordinator.is_shutting_down() {
+        return (
+            axum::http::StatusCode::CONFLICT,
+            axum::Json(ShutdownResponse::error(
+                "Shutdown already in progress",
+                state.shutdown_timeout_secs,
+            )),
+        );
+    }
+
+    let timeout_secs = request.timeout_secs.unwrap_or(state.shutdown_timeout_secs);
+
+    if request.immediate {
+        info!("Immediate shutdown requested");
+        coordinator.signal_shutdown();
+        return (
+            axum::http::StatusCode::OK,
+            axum::Json(ShutdownResponse::success("Immediate shutdown initiated", 0)),
+        );
+    }
+
+    info!(timeout_secs = timeout_secs, "Graceful shutdown requested");
+    spawn_graceful_shutdown(Arc::clone(coordinator), timeout_secs);
+
+    let msg = format!("Graceful shutdown initiated, server will stop in {timeout_secs} seconds");
+    (
+        axum::http::StatusCode::OK,
+        axum::Json(ShutdownResponse::success(msg, timeout_secs)),
+    )
+}

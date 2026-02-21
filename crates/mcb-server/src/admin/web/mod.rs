@@ -24,6 +24,5 @@ pub mod pipeline;
 pub mod router;
 pub mod view_model;
 
-// Re-export public functions
 pub use handlers::{config_page, dashboard, dashboard_ui, favicon, health_page, jobs_page};
-pub use router::web_rocket;
+pub use router::web_router;

@@ -168,10 +168,8 @@ pub async fn list_collection_files_axum(
     axum::extract::State(state): axum::extract::State<Arc<BrowseState>>,
     axum::extract::Path(name): axum::extract::Path<String>,
     axum::extract::Query(params): axum::extract::Query<BrowseFilesQuery>,
-) -> Result<
-    axum::Json<FileListResponse>,
-    (axum::http::StatusCode, axum::Json<BrowseErrorResponse>),
-> {
+) -> Result<axum::Json<FileListResponse>, (axum::http::StatusCode, axum::Json<BrowseErrorResponse>)>
+{
     tracing::info!("list_collection_files called");
     let limit = params.limit.unwrap_or(DEFAULT_BROWSE_FILES_LIMIT);
     let collection = CollectionId::from_string(&name);

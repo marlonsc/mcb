@@ -60,10 +60,14 @@ fn app_state_completeness() {
         indexing: DefaultIndexingOperations::new_shared(),
         browser: None,
         mcp_server: None,
+        admin_state: None,
+        auth_config: None,
     };
 
     assert!(Arc::strong_count(&state.metrics) >= 1);
     assert!(Arc::strong_count(&state.indexing) >= 1);
     assert!(state.browser.is_none());
     assert!(state.mcp_server.is_none());
+    assert!(state.admin_state.is_none());
+    assert!(state.auth_config.is_none());
 }

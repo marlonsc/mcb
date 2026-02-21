@@ -1,168 +1,123 @@
 //! Tests for Admin Web UI
 //!
-//! Tests the web dashboard pages and routes.
+//! Tests the web dashboard pages and routes using Axum's in-process dispatch.
 
-use mcb_server::admin::web::web_rocket;
-use rocket::http::Status;
-use rocket::local::asynchronous::Client;
+use axum::body::Body;
+use axum::http::{Request, StatusCode};
+use http_body_util::BodyExt;
+use mcb_server::admin::web::web_router;
+use tower::ServiceExt;
 
-#[rocket::async_test]
-async fn test_dashboard_returns_html() {
-    let client = Client::tracked(web_rocket())
+async fn get(path: &str) -> (StatusCode, String) {
+    let app = web_router();
+    let req = Request::builder()
+        .uri(path)
+        .body(Body::empty())
+        .expect("valid request");
+    let resp = app.oneshot(req).await.expect("router handles request");
+    let status = resp.status();
+    let body = resp
+        .into_body()
+        .collect()
         .await
-        .expect("valid rocket instance");
+        .expect("collect body")
+        .to_bytes();
+    (status, String::from_utf8(body.to_vec()).expect("utf-8"))
+}
 
-    let response = client.get("/").dispatch().await;
+async fn post_form(path: &str, form_body: &str) -> StatusCode {
+    let app = web_router();
+    let req = Request::builder()
+        .method("POST")
+        .uri(path)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(Body::from(form_body.to_owned()))
+        .expect("valid request");
+    let resp = app.oneshot(req).await.expect("router handles request");
+    resp.status()
+}
 
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+#[tokio::test]
+async fn test_dashboard_returns_html() {
+    let (status, html) = get("/").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("<!DOCTYPE html>"));
     assert!(html.contains("Dashboard"));
     assert!(html.contains("Entity Coverage"));
     assert!(html.contains("Domain Entities"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_config_page_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/config").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/config").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("Configuration"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_health_page_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/health").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/health").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("Health Status"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_jobs_page_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/jobs").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/jobs").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(
         html.contains("Indexing Summary") || html.contains("Indexing") || html.contains("Jobs")
     );
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_removed_indexing_route_returns_not_found() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/indexing").dispatch().await;
-    assert_eq!(response.status(), Status::NotFound);
+    let (status, _) = get("/ui/indexing").await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
 }
 
-// ── Bulk Delete Tests ──────────────────────────────────────────────────────
-
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_bulk_delete_redirects_to_list() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client
-        .post("/ui/entities/organizations/bulk-delete")
-        .header(rocket::http::ContentType::Form)
-        .body("ids=id1,id2")
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::SeeOther);
+    let status = post_form("/ui/entities/organizations/bulk-delete", "ids=id1,id2").await;
+    assert_eq!(status, StatusCode::SEE_OTHER);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_bulk_delete_unknown_slug_returns_404() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client
-        .post("/ui/entities/nonexistent/bulk-delete")
-        .header(rocket::http::ContentType::Form)
-        .body("ids=a,b")
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::NotFound);
+    let status = post_form("/ui/entities/nonexistent/bulk-delete", "ids=a,b").await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
 }
 
-// ── LOV Endpoint Tests ─────────────────────────────────────────────────────
-
-#[rocket::async_test]
+#[tokio::test]
 async fn test_lov_endpoint_returns_json_array() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/lov/organizations").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
-    // Should be a JSON array (possibly empty since no adapter in web_rocket)
+    let (status, body) = get("/ui/lov/organizations").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(
         body.starts_with('['),
         "LOV endpoint must return JSON array, got: {body}"
     );
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_lov_endpoint_unknown_slug_returns_404() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/lov/nonexistent").dispatch().await;
-
-    assert_eq!(response.status(), Status::NotFound);
+    let (status, _) = get("/ui/lov/nonexistent").await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_index_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/entities").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/entities").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("<!DOCTYPE html>"));
     assert!(html.contains("Entities"));
     assert!(html.contains("Organizations"));
     assert!(html.contains("Users"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_list_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/entities/organizations").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/entities/organizations").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("<!DOCTYPE html>"));
     assert!(html.contains("Organizations"));
     assert!(html.contains("org"));
@@ -170,109 +125,60 @@ async fn test_entities_list_returns_html() {
     assert!(html.contains("Domain Entities"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_agent_sessions_list_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/entities/agent-sessions").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/entities/agent-sessions").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("Agent Sessions"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_delegations_list_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/entities/delegations").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/entities/delegations").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("Delegations"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_tool_calls_list_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/entities/tool-calls").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/entities/tool-calls").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("Tool Calls"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_checkpoints_list_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/entities/checkpoints").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/entities/checkpoints").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("Checkpoints"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_list_unknown_slug_returns_404() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/entities/nonexistent").dispatch().await;
-
-    assert_eq!(response.status(), Status::NotFound);
+    let (status, _) = get("/ui/entities/nonexistent").await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_new_form_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/entities/users/new").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/entities/users/new").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("<!DOCTYPE html>"));
     assert!(html.contains("New Users"));
     assert!(html.contains("<form"));
     assert!(html.contains("Save"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_new_form_unknown_slug_returns_404() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/entities/nonexistent/new").dispatch().await;
-
-    assert_eq!(response.status(), Status::NotFound);
+    let (status, _) = get("/ui/entities/nonexistent/new").await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_detail_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client
-        .get("/ui/entities/organizations/test-id-123")
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/entities/organizations/test-id-123").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("<!DOCTYPE html>"));
     assert!(html.contains("Organizations"));
     assert!(html.contains("test-id-123"));
@@ -280,132 +186,62 @@ async fn test_entities_detail_returns_html() {
     assert!(html.contains("Delete"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_detail_unknown_slug_returns_404() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client
-        .get("/ui/entities/nonexistent/some-id")
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::NotFound);
+    let (status, _) = get("/ui/entities/nonexistent/some-id").await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_edit_form_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client
-        .get("/ui/entities/users/test-id-456/edit")
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/entities/users/test-id-456/edit").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("<!DOCTYPE html>"));
     assert!(html.contains("Edit Users"));
     assert!(html.contains("<form"));
     assert!(html.contains("PUT"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_delete_confirm_returns_html() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client
-        .get("/ui/entities/plans/test-id-789/delete")
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/entities/plans/test-id-789/delete").await;
+    assert_eq!(status, StatusCode::OK);
     assert!(html.contains("<!DOCTYPE html>"));
     assert!(html.contains("Delete Plans"));
     assert!(html.contains("test-id-789"));
     assert!(html.contains("Confirm Deletion"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_new_form_has_enum_options() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client.get("/ui/entities/plans/new").dispatch().await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let html = response.into_string().await.expect("response body");
+    let (status, html) = get("/ui/entities/plans/new").await;
+    assert_eq!(status, StatusCode::OK);
     let html_lower = html.to_lowercase();
     assert!(html.contains("<select"));
     assert!(html_lower.contains("draft"));
     assert!(html_lower.contains("active"));
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_create_redirects_to_list() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client
-        .post("/ui/entities/organizations")
-        .header(rocket::http::ContentType::Form)
-        .body("name=TestOrg&slug=test-org")
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::SeeOther);
+    let status = post_form("/ui/entities/organizations", "name=TestOrg&slug=test-org").await;
+    assert_eq!(status, StatusCode::SEE_OTHER);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_update_redirects_to_detail() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client
-        .post("/ui/entities/organizations/test-id")
-        .header(rocket::http::ContentType::Form)
-        .body("name=Updated")
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::SeeOther);
+    let status = post_form("/ui/entities/organizations/test-id", "name=Updated").await;
+    assert_eq!(status, StatusCode::SEE_OTHER);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_delete_redirects_to_list() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client
-        .post("/ui/entities/organizations/test-id/delete")
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::SeeOther);
+    let status = post_form("/ui/entities/organizations/test-id/delete", "").await;
+    assert_eq!(status, StatusCode::SEE_OTHER);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_entities_create_unknown_slug_returns_404() {
-    let client = Client::tracked(web_rocket())
-        .await
-        .expect("valid rocket instance");
-
-    let response = client
-        .post("/ui/entities/nonexistent")
-        .header(rocket::http::ContentType::Form)
-        .body("name=Test")
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::NotFound);
+    let status = post_form("/ui/entities/nonexistent", "name=Test").await;
+    assert_eq!(status, StatusCode::NOT_FOUND);
 }

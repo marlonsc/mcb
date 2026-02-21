@@ -4,27 +4,23 @@
 //! Web Router Module
 //!
 //! Router configuration for the admin web interface.
-#![allow(clippy::redundant_type_annotations)]
 
 use std::sync::Arc;
 
-use crate::templates::Template;
+use axum::Router;
+use axum::routing::{get, post};
 use mcb_infrastructure::infrastructure::{
     AtomicPerformanceMetrics, DefaultIndexingOperations, default_event_bus,
 };
-use rocket::{Build, Rocket};
 
 use super::entity_handlers;
 use super::handlers;
 use super::lov_handlers;
 use crate::admin::handlers::AdminState;
 use crate::constants::limits::DEFAULT_SHUTDOWN_TIMEOUT_SECS;
+use crate::templates::Template;
 use crate::utils::config::load_startup_config_or_default;
 
-/// Build a minimal [`AdminState`] with no real service backends.
-///
-/// Entity handlers degrade gracefully (return empty lists / null records)
-/// when the service adapters resolve to `None`.
 fn default_admin_state() -> AdminState {
     AdminState {
         metrics: Arc::new(AtomicPerformanceMetrics::new()),
@@ -46,13 +42,6 @@ fn default_admin_state() -> AdminState {
     }
 }
 
-/// Returns the path to the templates directory (Handlebars).
-///
-/// Searches multiple candidate locations to support both workspace-level
-/// execution (cargo test from root) and crate-level execution.
-/// Falls back to `"templates"` when no directory is found on disk;
-/// the embedded template fallback in `Context::initialize` handles
-/// the case where this path does not exist at runtime.
 #[must_use]
 pub fn template_dir() -> String {
     const MANIFEST_TEMPLATE_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/templates");
@@ -72,61 +61,56 @@ pub fn template_dir() -> String {
     "templates".to_owned()
 }
 
-/// Create the admin web UI rocket instance
-///
-/// Routes:
-/// - GET `/` - Dashboard
-/// - GET `/ui` - Dashboard (alias)
-/// - GET `/ui/config` - Configuration page
-/// - GET `/ui/health` - Health status page
-/// - GET `/ui/jobs` - Jobs monitoring page
-/// - GET `/ui/browse` - Browse collections page
-/// - GET `/ui/browse/<collection>` - Browse collection files page
-/// - GET `/ui/browse/<collection>/file` - Browse file chunks page
-/// - GET `/ui/browse/tree` - Browse tree view page (Wave 3)
-/// - GET `/ui/lov/<entity_slug>` - LOV endpoint for FK dropdown selects
-/// - GET `/favicon.ico` - Favicon
 #[must_use]
-pub fn web_rocket() -> Rocket<Build> {
-    let figment = rocket::Config::figment().merge(("template_dir", template_dir()));
+pub fn web_router() -> Router {
+    let _template_layer = Template::custom(|engines| {
+        crate::utils::handlebars::register_helpers(&mut engines.handlebars);
+    });
 
-    rocket::custom(figment)
-        .manage(default_admin_state())
-        .attach(Template::custom(|engines| {
-            crate::utils::handlebars::register_helpers(&mut engines.handlebars);
-        }))
-        .mount(
-            "/",
-            rocket::routes![
-                handlers::dashboard,
-                handlers::dashboard_ui,
-                handlers::config_page,
-                handlers::health_page,
-                handlers::jobs_page,
-                handlers::browse_page,
-                handlers::browse_collection_page,
-                handlers::browse_file_page,
-                handlers::browse_tree_page,
-            ],
+    Router::new()
+        .route("/", get(handlers::dashboard))
+        .route("/ui", get(handlers::dashboard_ui))
+        .route("/ui/config", get(handlers::config_page))
+        .route("/ui/health", get(handlers::health_page))
+        .route("/ui/jobs", get(handlers::jobs_page))
+        .route("/ui/browse", get(handlers::browse_page))
+        .route("/ui/browse/tree", get(handlers::browse_tree_page))
+        .route(
+            "/ui/browse/:collection",
+            get(handlers::browse_collection_page),
         )
-        .mount(
-            "/",
-            rocket::routes![handlers::shared_js, handlers::theme_css, handlers::favicon],
+        .route(
+            "/ui/browse/:collection/file",
+            get(handlers::browse_file_page),
         )
-        .mount(
-            "/",
-            rocket::routes![
-                entity_handlers::entities_index,
-                entity_handlers::entities_list,
-                entity_handlers::entities_new_form,
-                entity_handlers::entities_detail,
-                entity_handlers::entities_edit_form,
-                entity_handlers::entities_delete_confirm,
-                entity_handlers::entities_create,
-                entity_handlers::entities_update,
-                entity_handlers::entities_delete,
-                entity_handlers::entities_bulk_delete,
-                lov_handlers::lov_endpoint,
-            ],
+        .route("/favicon.ico", get(handlers::favicon))
+        .route("/ui/theme.css", get(handlers::theme_css))
+        .route("/ui/shared.js", get(handlers::shared_js))
+        .route("/ui/entities", get(entity_handlers::entities_index))
+        .route(
+            "/ui/entities/:slug",
+            get(entity_handlers::entities_list).post(entity_handlers::entities_create),
         )
+        .route(
+            "/ui/entities/:slug/new",
+            get(entity_handlers::entities_new_form),
+        )
+        .route(
+            "/ui/entities/:slug/bulk-delete",
+            post(entity_handlers::entities_bulk_delete),
+        )
+        .route(
+            "/ui/entities/:slug/:id",
+            get(entity_handlers::entities_detail).post(entity_handlers::entities_update),
+        )
+        .route(
+            "/ui/entities/:slug/:id/edit",
+            get(entity_handlers::entities_edit_form),
+        )
+        .route(
+            "/ui/entities/:slug/:id/delete",
+            get(entity_handlers::entities_delete_confirm).post(entity_handlers::entities_delete),
+        )
+        .route("/ui/lov/:entity_slug", get(lov_handlers::lov_endpoint))
+        .with_state(default_admin_state())
 }

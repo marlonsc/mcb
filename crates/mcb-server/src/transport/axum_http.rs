@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use axum::extract::State;
 use axum::http::Method;
-use axum::routing::get;
-use axum::{Json, Router};
+use axum::routing::{get, patch, post};
+use axum::{Extension, Json, Router};
 use mcb_domain::ports::{
     IndexingOperationsInterface, PerformanceMetricsInterface, VectorStoreBrowser,
 };
@@ -13,6 +13,14 @@ use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
 
 use crate::McpServer;
+use crate::admin::auth::{AdminAuthConfig, axum_admin_auth_layer};
+use crate::admin::cache::get_cache_stats_axum;
+use crate::admin::config::handlers::{
+    get_config_axum, reload_config_axum, update_config_section_axum,
+};
+use crate::admin::control::shutdown_axum;
+use crate::admin::handlers::AdminState;
+use crate::admin::jobs::get_jobs_status_axum;
 
 /// Shared state for Axum transport endpoints.
 #[derive(Clone)]
@@ -25,6 +33,10 @@ pub struct AppState {
     pub browser: Option<Arc<dyn VectorStoreBrowser>>,
     /// Optional MCP server handle for protocol endpoints.
     pub mcp_server: Option<Arc<McpServer>>,
+    /// Optional admin state for config/lifecycle endpoints.
+    pub admin_state: Option<Arc<AdminState>>,
+    /// Optional auth configuration for admin endpoints.
+    pub auth_config: Option<Arc<AdminAuthConfig>>,
 }
 
 /// Wrapper type holding the composed Axum router.
@@ -61,11 +73,32 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::OPTIONS])
         .allow_headers(Any);
 
-    Router::new()
+    let mut app = Router::new()
         .route("/health", get(health_handler))
-        .layer(TraceLayer::new_for_http())
-        .layer(cors)
-        .with_state(state)
+        .with_state(state.clone());
+
+    // Mount config routes when admin state is available
+    if let (Some(admin_state), Some(auth_config)) =
+        (state.admin_state.clone(), state.auth_config.clone())
+    {
+        let admin_routes = Router::new()
+            .route("/config", get(get_config_axum))
+            .route("/config/reload", post(reload_config_axum))
+            .route("/config/{section}", patch(update_config_section_axum))
+            .route("/shutdown", post(shutdown_axum))
+            .route("/cache/stats", get(get_cache_stats_axum))
+            .layer(axum::middleware::from_fn(axum_admin_auth_layer))
+            .layer(Extension(auth_config))
+            .with_state(Arc::clone(&admin_state));
+
+        let public_admin_routes = Router::new()
+            .route("/jobs", get(get_jobs_status_axum))
+            .with_state(admin_state);
+
+        app = app.merge(admin_routes).merge(public_admin_routes);
+    }
+
+    app.layer(TraceLayer::new_for_http()).layer(cors)
 }
 
 /// Binds an address and serves the Axum router.

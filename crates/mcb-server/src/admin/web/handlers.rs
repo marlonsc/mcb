@@ -5,38 +5,35 @@
 //!
 //! HTTP handlers for the admin web interface.
 
-use crate::templates::Template;
-use rocket::State;
-use rocket::get;
-use rocket::http::ContentType;
+use axum::extract::{Path, State};
+use axum::http::header;
+use axum::response::IntoResponse;
 use serde::Serialize;
 
 use crate::admin::AdminRegistry;
 use crate::admin::crud_adapter::resolve_adapter;
 use crate::admin::handlers::AdminState;
 use crate::admin::web::view_model::{DashboardEntityCard, nav_groups};
+use crate::templates::Template;
 
 // Static assets remain as compile-time embeds (not Handlebars templates)
 const SHARED_JS: &str = include_str!("templates/shared.js");
 const THEME_CSS: &str = include_str!("templates/theme.css");
 
 /// Dashboard page handler
-#[get("/")]
-pub async fn dashboard(state: Option<&State<AdminState>>) -> Template {
+pub async fn dashboard(state: Option<State<AdminState>>) -> Template {
     tracing::info!("dashboard called");
-    render_dashboard_template("Dashboard", state).await
+    render_dashboard_template("Dashboard", state.as_deref()).await
 }
 
 /// Dashboard page handler (alias)
-#[get("/ui")]
-pub async fn dashboard_ui(state: Option<&State<AdminState>>) -> Template {
+pub async fn dashboard_ui(state: Option<State<AdminState>>) -> Template {
     tracing::info!("dashboard_ui called");
-    render_dashboard_template("Dashboard", state).await
+    render_dashboard_template("Dashboard", state.as_deref()).await
 }
 
 /// Configuration page handler
-#[get("/ui/config")]
-pub fn config_page() -> Template {
+pub async fn config_page() -> Template {
     tracing::info!("config_page called");
     Template::render(
         "admin/config",
@@ -49,8 +46,7 @@ pub fn config_page() -> Template {
 }
 
 /// Health status page handler
-#[get("/ui/health")]
-pub fn health_page() -> Template {
+pub async fn health_page() -> Template {
     tracing::info!("health_page called");
     Template::render(
         "admin/health",
@@ -63,8 +59,7 @@ pub fn health_page() -> Template {
 }
 
 /// Jobs page handler
-#[get("/ui/jobs")]
-pub fn jobs_page() -> Template {
+pub async fn jobs_page() -> Template {
     tracing::info!("jobs_page called");
     Template::render(
         "admin/jobs",
@@ -77,32 +72,31 @@ pub fn jobs_page() -> Template {
 }
 
 /// Favicon handler - returns a simple SVG icon
-#[get("/favicon.ico")]
-pub fn favicon() -> (ContentType, &'static str) {
+pub async fn favicon() -> impl IntoResponse {
     tracing::info!("favicon called");
     (
-        ContentType::SVG,
+        [(header::CONTENT_TYPE, "image/svg+xml")],
         r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📊</text></svg>"#,
     )
 }
 
 /// Theme CSS handler
-#[get("/ui/theme.css")]
-pub fn theme_css() -> (ContentType, &'static str) {
+pub async fn theme_css() -> impl IntoResponse {
     tracing::info!("theme_css called");
-    (ContentType::CSS, THEME_CSS)
+    ([(header::CONTENT_TYPE, "text/css")], THEME_CSS)
 }
 
 /// Shared JavaScript utilities for admin UI
-#[get("/ui/shared.js")]
-pub fn shared_js() -> (ContentType, &'static str) {
+pub async fn shared_js() -> impl IntoResponse {
     tracing::info!("shared_js called");
-    (ContentType::JavaScript, SHARED_JS)
+    (
+        [(header::CONTENT_TYPE, "application/javascript")],
+        SHARED_JS,
+    )
 }
 
 /// Browse collections page handler
-#[get("/ui/browse")]
-pub fn browse_page() -> Template {
+pub async fn browse_page() -> Template {
     tracing::info!("browse_page called");
     Template::render(
         "admin/browse",
@@ -115,8 +109,7 @@ pub fn browse_page() -> Template {
 }
 
 /// Browse collection files page handler
-#[get("/ui/browse/<_collection>")]
-pub fn browse_collection_page(_collection: &str) -> Template {
+pub async fn browse_collection_page(Path(_collection): Path<String>) -> Template {
     tracing::info!("browse_collection_page called");
     Template::render(
         "admin/browse_collection",
@@ -129,8 +122,7 @@ pub fn browse_collection_page(_collection: &str) -> Template {
 }
 
 /// Browse file chunks page handler
-#[get("/ui/browse/<_collection>/file")]
-pub fn browse_file_page(_collection: &str) -> Template {
+pub async fn browse_file_page(Path(_collection): Path<String>) -> Template {
     tracing::info!("browse_file_page called");
     Template::render(
         "admin/browse_file",
@@ -143,8 +135,7 @@ pub fn browse_file_page(_collection: &str) -> Template {
 }
 
 /// Browse tree view page handler (Phase 8b Wave 3)
-#[get("/ui/browse/tree")]
-pub fn browse_tree_page() -> Template {
+pub async fn browse_tree_page() -> Template {
     tracing::info!("browse_tree_page called");
     Template::render(
         "admin/browse_tree",
@@ -163,14 +154,14 @@ struct RecentActivityItem {
     timestamp: i64,
 }
 
-async fn render_dashboard_template(title: &str, state: Option<&State<AdminState>>) -> Template {
+async fn render_dashboard_template(title: &str, state: Option<&AdminState>) -> Template {
     let mut cards = Vec::<DashboardEntityCard>::new();
     let mut recent_activity = Vec::<RecentActivityItem>::new();
     let now_ts = chrono::Utc::now().timestamp();
     let mut total_records = 0usize;
 
     for entity in AdminRegistry::all() {
-        let record_count = match state.and_then(|s| resolve_adapter(entity.slug, s.inner())) {
+        let record_count = match state.and_then(|s| resolve_adapter(entity.slug, s)) {
             Some(adapter) => match adapter.list_all().await {
                 Ok(rows) => rows.len(),
                 Err(e) => {
