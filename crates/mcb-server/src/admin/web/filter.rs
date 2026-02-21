@@ -3,11 +3,11 @@
 //!
 //! Query parameter types for server-side entity list filtering, sorting, and pagination.
 
-use rocket::form::FromForm;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 /// Column sort direction.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum SortOrder {
     /// Ascending (A→Z, 0→9).
     Asc,
@@ -15,43 +15,48 @@ pub enum SortOrder {
     Desc,
 }
 
-impl<'v> rocket::form::FromFormField<'v> for SortOrder {
-    fn from_value(field: rocket::form::ValueField<'v>) -> rocket::form::Result<'v, Self> {
-        match field.value.to_lowercase().as_str() {
-            "desc" => Ok(SortOrder::Desc),
-            _ => Ok(SortOrder::Asc),
-        }
+impl Default for SortOrder {
+    fn default() -> Self {
+        SortOrder::Asc
     }
 }
 
 /// Query-string parameters for entity list pages.
 ///
-/// Parsed by Rocket from `?q=&sort=&order=&page=&per_page=&parent_field=&parent_id=&date_from=&date_to=`.
-#[derive(Debug, Clone, FromForm, Serialize)]
+/// Parsed from query parameters: `?q=&sort=&order=&page=&per_page=&parent_field=&parent_id=&date_from=&date_to=`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct FilterParams {
     /// FK field name to scope by (e.g. `"team_id"`).
     pub parent_field: Option<String>,
     /// Value of the parent FK (e.g. the team's UUID).
     pub parent_id: Option<String>,
-    /// Full-text search term.
-    #[field(name = "q")]
+    /// Full-text search term (from query param "q").
+    #[serde(rename = "q", default)]
     pub search: Option<String>,
-    /// Column to sort by (validated against `AdminFieldMeta` names).
-    #[field(name = "sort")]
+    /// Column to sort by (validated against `AdminFieldMeta` names, from query param "sort").
+    #[serde(rename = "sort", default)]
     pub sort_field: Option<String>,
-    /// Sort direction.
-    #[field(name = "order")]
+    /// Sort direction (from query param "order").
+    #[serde(rename = "order", default)]
     pub sort_order: Option<SortOrder>,
-    /// 1-based page number.
-    #[field(default = 1)]
+    /// 1-based page number (default 1).
+    #[serde(default = "default_page")]
     pub page: usize,
-    /// Records per page.
-    #[field(default = 20)]
+    /// Records per page (default 20).
+    #[serde(default = "default_per_page")]
     pub per_page: usize,
     /// ISO date string lower bound for timestamp filtering (e.g. "2026-01-15").
     pub date_from: Option<String>,
     /// ISO date string upper bound for timestamp filtering (e.g. "2026-02-11").
     pub date_to: Option<String>,
+}
+
+fn default_page() -> usize {
+    1
+}
+
+fn default_per_page() -> usize {
+    20
 }
 
 /// Parse an ISO date string ("YYYY-MM-DD") to a Unix epoch timestamp (start of day UTC).
