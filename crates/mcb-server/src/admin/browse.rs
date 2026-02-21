@@ -157,7 +157,6 @@ pub async fn list_browse_projects_axum(
 
 define_project_scoped_browse_endpoint!(
     list_browse_repositories,
-    "/repositories?<project_id>",
     mcb_domain::entities::repository::Repository,
     RepositoriesBrowseResponse,
     repositories,
@@ -169,7 +168,6 @@ define_project_scoped_browse_endpoint!(
 
 define_project_scoped_browse_endpoint!(
     list_browse_plans,
-    "/plans?<project_id>",
     mcb_domain::entities::plan::Plan,
     PlansBrowseResponse,
     plans,
@@ -181,7 +179,6 @@ define_project_scoped_browse_endpoint!(
 
 define_project_scoped_browse_endpoint!(
     list_browse_issues,
-    "/issues?<project_id>",
     mcb_domain::entities::project::ProjectIssue,
     IssuesBrowseResponse,
     issues,
