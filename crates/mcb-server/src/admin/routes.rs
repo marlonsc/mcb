@@ -12,10 +12,7 @@ use crate::templates::Template;
 use rocket::{Build, Rocket};
 
 use super::auth::AdminAuthConfig;
-use super::browse::{
-    list_browse_issues, list_browse_organizations, list_browse_plans, list_browse_projects,
-    list_browse_repositories,
-};
+use super::browse::{list_browse_organizations, list_browse_projects};
 use super::browse_handlers::{
     BrowseState, get_collection_tree, get_file_chunks, list_collection_files, list_collections,
 };
@@ -100,13 +97,7 @@ pub fn admin_rocket(
         )
         .mount(
             "/",
-            rocket::routes![
-                list_browse_projects,
-                list_browse_repositories,
-                list_browse_plans,
-                list_browse_issues,
-                list_browse_organizations,
-            ],
+            rocket::routes![list_browse_projects, list_browse_organizations,],
         )
         .mount("/", rocket::routes![shutdown])
         .mount(

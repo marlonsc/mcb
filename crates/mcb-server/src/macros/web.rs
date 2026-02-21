@@ -1,22 +1,17 @@
 //!
 //! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
 //!
-//! Rocket route and template macros.
+//! Web route and template macros.
 //!
 //! Used by `admin/` for browse endpoints and `templates/` for context building.
-
-/// Query parameters for project-scoped browse endpoints.
-#[derive(Debug, serde::Deserialize)]
-pub(crate) struct ProjectIdQuery {
-    /// Optional project ID to scope the browse results.
-    pub project_id: Option<String>,
-}
 
 /// Define a project-scoped REST endpoint for browsing entities (Axum).
 ///
 /// Generates an `async fn` handler compatible with [`axum::routing::get`].
 /// The handler uses [`AxumAdminAuth`] for authentication and
 /// [`axum::extract::Query`] for the optional `project_id` parameter.
+///
+/// Callers must have `ProjectIdQuery` in scope (defined in `admin::browse`).
 macro_rules! define_project_scoped_browse_endpoint {
     (
         $fn_name:ident,
@@ -36,7 +31,7 @@ macro_rules! define_project_scoped_browse_endpoint {
         pub async fn $fn_name(
             _auth: crate::admin::auth::AxumAdminAuth,
             axum::extract::State(state): axum::extract::State<std::sync::Arc<AdminState>>,
-            axum::extract::Query(params): axum::extract::Query<crate::macros::web::ProjectIdQuery>,
+            axum::extract::Query(params): axum::extract::Query<ProjectIdQuery>,
         ) -> Result<axum::Json<$response>, (axum::http::StatusCode, axum::Json<CacheErrorResponse>)>
         {
             tracing::info!($log_label);
