@@ -487,74 +487,29 @@ mod tests {
         assert!(HttpClientTransport::require_secure_transport("ftp://files.example.com").is_err());
     }
 
-    #[tokio::test]
-    async fn machine_id_detected_from_gethostname_without_env() {
-        // Simulate environment without HOSTNAME set
-        let original_hostname = std::env::var("HOSTNAME").ok();
-        unsafe {
-            std::env::remove_var("HOSTNAME");
-        }
-
-        // Create a mock request to test header building
-        let config = McpClientConfig {
-            server_url: "http://127.0.0.1:8080".to_string(),
-            client_instance_id: "test-client".to_string(),
-            public_session_id: "test-session".to_string(),
-            timeout: Duration::from_secs(10),
-            workspace_root: None,
-            repo_path: None,
-        };
-
-        // Get hostname from gethostname syscall
+    #[test]
+    fn machine_id_detected_from_gethostname_without_env() {
         let expected_hostname = hostname::get()
             .ok()
             .and_then(|h| h.into_string().ok())
             .unwrap_or_else(|| "unknown".to_string());
 
-        // Verify it's not empty and not "unknown" (unless system is misconfigured)
         assert!(
             !expected_hostname.is_empty(),
             "hostname should not be empty"
         );
-
-        // Restore original HOSTNAME if it existed
-        if let Some(h) = original_hostname {
-            unsafe {
-                std::env::set_var("HOSTNAME", h);
-            }
-        }
     }
 
-    #[tokio::test]
-    async fn machine_id_prefers_gethostname_over_env() {
-        // Set a fake HOSTNAME env var
-        let original_hostname = std::env::var("HOSTNAME").ok();
-        unsafe {
-            std::env::set_var("HOSTNAME", "fake-hostname-from-env");
-        }
-
-        // Get hostname from gethostname syscall
+    #[test]
+    fn machine_id_prefers_gethostname_over_env() {
         let gethostname_result = hostname::get()
             .ok()
             .and_then(|h| h.into_string().ok())
             .unwrap_or_else(|| "unknown".to_string());
 
-        // Verify gethostname is different from env var (in most cases)
-        // This test documents the expected behavior: gethostname() is preferred
         assert!(
             !gethostname_result.is_empty(),
             "gethostname should return a value"
         );
-
-        // Restore original HOSTNAME
-        if let Some(h) = original_hostname {
-            unsafe {
-                std::env::set_var("HOSTNAME", h);
-            }
-        } else {
-            unsafe {
-                std::env::remove_var("HOSTNAME");
-            }
-        }
     }
 }
