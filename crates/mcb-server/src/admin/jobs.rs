@@ -5,6 +5,8 @@
 //!
 //! Provides endpoints for monitoring background job status.
 
+use std::sync::Arc;
+
 use mcb_domain::ports::{Job, JobStatus, JobType};
 use rocket::serde::json::Json;
 use rocket::{State, get};
@@ -29,7 +31,13 @@ pub struct JobsStatusResponse {
 #[get("/jobs")]
 pub fn get_jobs_status(state: &State<AdminState>) -> Json<JobsStatusResponse> {
     tracing::info!("get_jobs_status called");
-    let operations = state.indexing.get_operations();
+    Json(build_jobs_response(state.indexing.as_ref()))
+}
+
+fn build_jobs_response(
+    indexing: &dyn mcb_domain::ports::IndexingOperationsInterface,
+) -> JobsStatusResponse {
+    let operations = indexing.get_operations();
 
     let jobs = operations
         .values()
@@ -57,10 +65,17 @@ pub fn get_jobs_status(state: &State<AdminState>) -> Json<JobsStatusResponse> {
         .collect::<Vec<_>>();
 
     let running = jobs.len();
-    Json(JobsStatusResponse {
+    JobsStatusResponse {
         total: running,
         running,
         queued: 0,
         jobs,
-    })
+    }
+}
+
+pub async fn get_jobs_status_axum(
+    axum::extract::State(state): axum::extract::State<Arc<AdminState>>,
+) -> axum::Json<JobsStatusResponse> {
+    tracing::info!("get_jobs_status called");
+    axum::Json(build_jobs_response(state.indexing.as_ref()))
 }

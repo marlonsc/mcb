@@ -27,6 +27,8 @@ pub mod database;
 /// Event bus provider port
 pub mod events;
 pub mod lifecycle;
+/// Operation logging port (level + context + message + optional detail).
+pub mod logging;
 /// System metrics collector port
 pub mod metrics;
 /// Provider routing and selection port
@@ -46,6 +48,7 @@ pub use lifecycle::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, LifecycleManaged,
     PortServiceState, ShutdownCoordinator,
 };
+pub use logging::{LogLevel, OperationLogger};
 pub use metrics::{SystemMetrics, SystemMetricsCollectorInterface};
 pub use routing::{ProviderContext, ProviderHealthStatus, ProviderRouter};
 pub use snapshot::{SnapshotProvider, SyncProvider};
