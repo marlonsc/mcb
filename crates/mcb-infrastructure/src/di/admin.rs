@@ -28,7 +28,6 @@ use mcb_domain::registry::language::LanguageProviderConfig;
 use mcb_domain::registry::vector_store::VectorStoreProviderConfig;
 
 use super::handle::Handle;
-use super::handles::{CacheHandleExt, EmbeddingHandleExt};
 use super::provider_resolvers::{
     CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
     VectorStoreProviderResolver,

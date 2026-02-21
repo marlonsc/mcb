@@ -60,8 +60,7 @@ pub use bootstrap::*;
 pub use catalog::build_catalog;
 pub use handle::Handle;
 pub use handles::{
-    CacheHandleExt, CacheProviderHandle, EmbeddingHandleExt, EmbeddingProviderHandle,
-    LanguageProviderHandle, VectorStoreProviderHandle,
+    CacheProviderHandle, EmbeddingProviderHandle, LanguageProviderHandle, VectorStoreProviderHandle,
 };
 pub use modules::{DomainServicesContainer, DomainServicesFactory, ServiceDependencies};
 pub use provider_resolvers::{

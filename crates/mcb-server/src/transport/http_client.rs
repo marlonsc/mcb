@@ -39,6 +39,12 @@ pub struct McpClientConfig {
 
     /// Request timeout
     pub timeout: Duration,
+
+    /// Workspace root path for provenance headers (auto-detected from CWD).
+    pub workspace_root: Option<String>,
+
+    /// Repository path for provenance headers.
+    pub repo_path: Option<String>,
 }
 
 /// HTTP client transport
@@ -69,11 +75,17 @@ impl HttpClientTransport {
         let public_session_id = Self::generate_session_id(session_prefix.clone());
         Self::initialize_session_state(session_prefix, session_id_override, session_file_override)?;
 
+        let workspace_root = std::env::current_dir()
+            .ok()
+            .and_then(|p| p.to_str().map(String::from));
+
         let config = McpClientConfig {
             server_url,
             client_instance_id: domain_id::generate().to_string(),
             public_session_id,
             timeout,
+            workspace_root: workspace_root.clone(),
+            repo_path: workspace_root,
         };
 
         let client = reqwest::Client::builder()
@@ -243,7 +255,7 @@ impl HttpClientTransport {
             "Sending request to server"
         );
 
-        let response = post_mcp_request(&self.client, &url, request).await?;
+        let response = post_mcp_request(&self.client, &url, request, &self.config).await?;
 
         let status = response.status();
         debug!(status = %status, "Received response from server");
@@ -321,14 +333,22 @@ async fn post_mcp_request(
     client: &reqwest::Client,
     url: &str,
     request: &McpRequest,
+    config: &McpClientConfig,
 ) -> Result<reqwest::Response, reqwest::Error> {
-    client
+    let mut builder = client
         .post(url)
         .header("Content-Type", CONTENT_TYPE_JSON)
-        .header(HTTP_HEADER_EXECUTION_FLOW, EXECUTION_FLOW_HYBRID)
-        .json(request)
-        .send()
-        .await
+        .header(HTTP_HEADER_EXECUTION_FLOW, EXECUTION_FLOW_HYBRID);
+
+    if let Some(ref ws) = config.workspace_root {
+        builder = builder.header("X-Workspace-Root", ws);
+    }
+    if let Some(ref rp) = config.repo_path {
+        builder = builder.header("X-Repo-Path", rp);
+    }
+    builder = builder.header("X-Session-Id", &config.public_session_id);
+
+    builder.json(request).send().await
 }
 
 #[cfg(test)]

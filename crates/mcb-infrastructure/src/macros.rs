@@ -63,7 +63,7 @@ macro_rules! impl_admin_interface {
             }
 
             fn current_provider(&self) -> String {
-                self.handle.provider_name()
+                self.handle.get().provider_name().to_owned()
             }
 
             fn switch_provider(&self, config: $config) -> Result<(), String> {

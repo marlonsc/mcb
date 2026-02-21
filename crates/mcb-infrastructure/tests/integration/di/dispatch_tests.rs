@@ -6,7 +6,6 @@
 //! providers are registered via linkme distributed slices.
 
 use mcb_infrastructure::config::{AppConfig, ConfigLoader};
-use mcb_infrastructure::di::EmbeddingHandleExt;
 use mcb_infrastructure::di::bootstrap::init_app;
 use serial_test::serial;
 
@@ -51,7 +50,7 @@ async fn test_di_container_builder() -> Result<(), Box<dyn std::error::Error>> {
 
     // Verify handles are accessible
     let embedding_handle = app_context.embedding_handle();
-    assert!(!embedding_handle.provider_name().is_empty());
+    assert!(!embedding_handle.get().provider_name().is_empty());
     Ok(())
 }
 
