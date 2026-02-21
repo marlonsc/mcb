@@ -26,7 +26,6 @@ use super::jobs::get_jobs_status;
 use super::lifecycle_handlers::{
     list_services, restart_service, services_health, start_service, stop_service,
 };
-use super::sse::events_stream;
 use super::web::entity_handlers::{
     entities_bulk_delete, entities_create, entities_delete, entities_delete_confirm,
     entities_detail, entities_edit_form, entities_index, entities_list, entities_new_form,
@@ -52,7 +51,7 @@ use super::web::router::template_dir;
 /// - GET /config - View current configuration (protected)
 /// - POST /config/reload - Trigger configuration reload (protected)
 /// - PATCH /config/:section - Update configuration section (protected)
-/// - GET /events - SSE event stream for real-time updates
+/// - GET /events - SSE event stream (served via Axum transport)
 /// - GET /services - List registered services (protected)
 /// - GET /services/health - Health check all services (protected)
 /// - POST /services/:name/start - Start a service (protected)
@@ -99,7 +98,7 @@ pub fn admin_rocket(
             "/",
             rocket::routes![get_config, reload_config, update_config_section],
         )
-        .mount("/", rocket::routes![events_stream])
+        // SSE events_stream is now served via Axum transport (see axum_http.rs)
         .mount(
             "/",
             rocket::routes![

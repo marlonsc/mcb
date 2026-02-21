@@ -33,10 +33,13 @@
 //! });
 //! ```
 
+use std::convert::Infallible;
+use std::sync::Arc;
+
+use axum::extract::State;
+use axum::response::sse::{Event, KeepAlive, Sse};
 use futures::StreamExt;
 use mcb_domain::events::DomainEvent;
-use rocket::response::stream::{Event, EventStream};
-use rocket::{State, get};
 use tracing::{debug, warn};
 
 use super::handlers::AdminState;
@@ -45,21 +48,22 @@ use super::handlers::AdminState;
 ///
 /// Streams domain events to connected clients in real-time.
 /// Uses the `EventBusProvider`'s `subscribe_events()` method to receive events.
-#[get("/events")]
-#[allow(tail_expr_drop_order, impl_trait_overcaptures)]
-pub async fn events_stream(state: &State<AdminState>) -> EventStream![] {
+pub async fn events_stream(
+    State(state): State<Arc<AdminState>>,
+) -> Sse<impl futures::Stream<Item = Result<Event, Infallible>>> {
     tracing::info!("events_stream called");
-    let event_bus = std::sync::Arc::clone(&state.event_bus);
+    let event_bus = Arc::clone(&state.event_bus);
 
-    EventStream! {
+    let stream = async_stream::stream! {
         // Subscribe to domain events
         let mut event_stream = match event_bus.subscribe_events().await {
             Ok(stream) => stream,
             Err(e) => {
                 warn!("Failed to subscribe to events: {}", e);
                 // Yield an error event and exit
-                yield Event::data(format!("Failed to subscribe: {e}"))
-                    .event("error");
+                yield Ok(Event::default()
+                    .event("error")
+                    .data(format!("Failed to subscribe: {e}")));
                 return;
             }
         };
@@ -78,11 +82,13 @@ pub async fn events_stream(state: &State<AdminState>) -> EventStream![] {
             };
 
             debug!("Sending SSE event: {}", event_name);
-            yield Event::data(event_data).event(event_name);
+            yield Ok(Event::default().event(event_name).data(event_data));
         }
 
         debug!("SSE event stream closed");
-    }
+    };
+
+    Sse::new(stream).keep_alive(KeepAlive::default())
 }
 
 /// Get the event name string for SSE event type header
