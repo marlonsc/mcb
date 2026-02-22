@@ -397,7 +397,11 @@ impl MutableValueObject {
             let config = ValidationConfig::new(&root);
 
             // Verify config was created correctly
-            assert_eq!(config.workspace_root, root);
+            // The workspace_root inside config is canonicalized, so we must canonicalize `root` to compare properly
+            assert_eq!(
+                config.workspace_root,
+                std::fs::canonicalize(&root).unwrap_or(root.clone())
+            );
 
             // Create empty report to verify the flow works
             let violations: Vec<Box<dyn Violation>> = vec![];

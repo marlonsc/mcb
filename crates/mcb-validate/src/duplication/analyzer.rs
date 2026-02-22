@@ -89,9 +89,11 @@ impl DuplicationAnalyzer {
         let Some(path_str) = path.to_str() else {
             return false;
         };
+        // Normalize path separators to forward slashes for consistent regex matching across OSes
+        let normalized_path = path_str.replace('\\', "/");
         for pattern in &self.thresholds.exclude_patterns {
             let pattern_regex = pattern.replace("**", ".*").replace('*', "[^/]*");
-            if compile_regex(&pattern_regex).is_ok_and(|r| r.is_match(path_str)) {
+            if compile_regex(&pattern_regex).is_ok_and(|r| r.is_match(&normalized_path)) {
                 return false;
             }
         }
