@@ -42,8 +42,8 @@ Technical architecture documentation following C4 model principles.
 - [ADR 003: Unified Provider Architecture](adr/003-unified-provider-architecture.md)
 - [ADR 012: Two-Layer DI Strategy](adr/012-di-strategy-two-layer-approach.md) - historical
 - [ADR 013: Clean Architecture Crate Separation](adr/013-clean-architecture-crate-separation.md) - historical
-- [ADR 024: Simplified Dependency Injection](adr/024-simplified-dependency-injection.md) → ADR-029
-- [ADR 029: Hexagonal Architecture with dill](adr/029-hexagonal-architecture-dill.md) - DI IoC
+- [ADR 024: Simplified Dependency Injection](adr/024-simplified-dependency-injection.md) → ADR-029 (superseded by ADR-050)
+- [ADR 029: Hexagonal Architecture](adr/029-hexagonal-architecture-dill.md) - Superseded by ADR-050 (manual composition root)
 - [ADR 030: Multi-Provider Strategy](adr/030-multi-provider-strategy.md)
 - [ADR 031: Documentation Excellence](adr/031-documentation-excellence.md)
 - [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.3-v0.4.0)

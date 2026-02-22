@@ -64,7 +64,7 @@ tokio = { version = "1.49", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 async-trait = "0.1"
 thiserror = "1.0"
-dill = "0.9"
+linkme = "0.3"
 
 # ... existing deps
 
@@ -150,8 +150,7 @@ serde_json = "1.0"
 thiserror = "1.0"
 anyhow = "1.0"
 
-# DI framework (ADR-029)
-dill = "0.9"
+# DI framework (ADR-050; ADR-029 superseded)
 linkme = "0.3"
 
 # ... plus ~100 more dependencies

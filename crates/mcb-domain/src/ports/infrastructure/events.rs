@@ -9,7 +9,7 @@
 //!
 //! This port defines the abstraction for event-driven communication.
 //! Implementations (TokioBroadcastEventBus, NatsEventBus, etc.) are in
-//! the infrastructure layer and registered via dill Catalog.
+//! the infrastructure layer and wired via `AppContext` in `bootstrap.rs`.
 //!
 //! ## Usage
 //!
@@ -46,7 +46,7 @@ pub type DomainEventStream = Pin<Box<dyn Stream<Item = DomainEvent> + Send + Syn
 /// Event bus provider interface for typed event pub/sub
 ///
 /// This trait defines the contract for event-driven communication in the system.
-/// All implementations MUST be resolved via dill Catalog - never instantiate directly.
+/// All implementations are wired via `AppContext` - never instantiate directly.
 ///
 /// ## Methods
 ///

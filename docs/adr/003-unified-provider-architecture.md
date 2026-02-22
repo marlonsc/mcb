@@ -33,7 +33,7 @@ memory, external providers, etc.), originally handled in different ways. Each
 increased complexity in adding new providers and maintaining consistency. We
 identified the opportunity to unify how providers are defined and loaded by the
 system, standardizing the interface and lifecycle. In addition, integrating
-providers into the DI container (Shaku, later dill) would bring consistency in
+providers into a unified composition root (Shaku first, then manual AppContext) would bring consistency in
 dependency resolution.
 
 Additionally, the system depends on external AI and storage services that have
@@ -56,7 +56,7 @@ We defined a unified interface for context providers, so that all providers
 implement the same basic trait (for example, ContextProvider) with standard
 operations (such as init, shutdown, and search/storage methods). We unified the
 registration of these providers in the system as well: now, all providers are
-registered via dill Catalog (ADR-029) during initialization, instead of ad-hoc
+registered via AppContext composition root (ADR-050; ADR-029 superseded) during initialization, instead of ad-hoc
 initializations scattered around. This means that to add a new provider, simply
 create an implementation of the trait and register it in the project's DI
 module - the lifecycle (initialization, use, and termination) will be managed
@@ -388,8 +388,8 @@ production = "milvus"       # Use Milvus for production
   Provider creation via factories
 - [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
   Provider crate organization
-- [ADR-029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) -
-  Current DI implementation
+- [ADR-029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) -
+  Historical DI implementation (superseded by ADR-050)
 
 ## References
 

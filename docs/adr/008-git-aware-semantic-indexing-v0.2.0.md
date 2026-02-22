@@ -29,12 +29,12 @@ implementation_status: Incomplete
 > **Target crate structure (v0.2.0)**:
 >
 > - `crates/mcb-domain/src/git.rs` - Git domain types
-> - `crates/mcb-domain/src/ports/providers/vcs.rs` - VCS port trait (see ADR-029)
+> - `crates/mcb-domain/src/ports/providers/vcs.rs` - VCS port trait (see ADR-029, superseded by ADR-050)
 > - `crates/mcb-providers/src/git/` - git2 implementation
 > - `crates/mcb-application/src/use_cases/git_indexing.rs` - Git-aware indexing service
 >
 > **⚠ Architecture note (2026-02-20)**: Code paths referencing
-> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029,
+> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029 (superseded by ADR-050),
 > all port traits are defined in `mcb-domain/src/ports/providers/`. When
 > implementing, use the corrected locations.
 
@@ -646,7 +646,7 @@ git2 = "0.20"
 
 > **Note**: This ADR is a historical decision record. For current architecture
 > details, consult the normative documents below. Code paths referencing
-> `mcb-application/src/ports/providers/` are outdated; per ADR-029, all port
+> `mcb-application/src/ports/providers/` are outdated; per ADR-029 (superseded by ADR-050), all port
 > traits now reside in `mcb-domain/src/ports/providers/`.
 
 - [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
@@ -666,4 +666,4 @@ git2 = "0.20"
 
 - [git2 crate](https://docs.rs/git2/)
 - [libgit2](https://libgit2.org/)
-- [dill Documentation](https://docs.rs/dill) (current DI; see ADR-029)
+- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI; see ADR-050)

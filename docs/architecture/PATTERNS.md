@@ -16,23 +16,23 @@ Providers (`mcb-providers`) implement domain ports — never depend upstream.
 ```text
 mcb-domain         → Entities, ports (traits), errors, value objects, macros, registry
 mcb-application    → Use cases, decorators, services (orchestration)
-mcb-infrastructure → DI (dill+Handle), config, crypto, logging, health, routing
+mcb-infrastructure → DI (linkme+Handle), config, crypto, logging, health, routing
 mcb-providers      → Embedding, vector store, cache, database, git, language, events
 mcb-server         → MCP handlers, admin UI (Handlebars), transport (stdio/HTTP), hooks
 mcb-validate       → Architecture rules, AST analysis, linters, metrics
 ```
 
-## Three-Layer DI: linkme → dill → Handle
+## Two-Layer DI: linkme → Handle (ADR-050)
 
-MCB uses a three-layer dependency injection pattern that combines compile-time discovery with runtime flexibility:
+MCB uses a two-layer dependency injection pattern that combines compile-time discovery with runtime flexibility:
 
 1. **linkme** — Compile-time discovery via `#[distributed_slice]`. Each provider registers itself at compile time, so the runtime can discover all available implementations without manual wiring.
 
-2. **dill** — Runtime IoC `Catalog` wiring (`mcb-infrastructure/src/di/catalog.rs`). The catalog assembles the full dependency graph at startup, resolving traits to concrete implementations based on configuration.
+2. **Handle\<T\>** — `RwLock<Arc<dyn T>>` for runtime provider switching (`di/handle.rs`). Handles allow hot-swapping provider implementations without restarting the server — useful for failover and configuration changes.
 
-3. **Handle\<T\>** — `RwLock<Arc<dyn T>>` for runtime provider switching (`di/handle.rs`). Handles allow hot-swapping provider implementations without restarting the server — useful for failover and configuration changes.
+Services are wired in `init_app()` (`bootstrap.rs`), which queries linkme registries via resolvers, resolves providers from config, and assembles the `AppContext` with explicit field assignment.
 
-**Why three layers?** linkme discovers *what's available*, dill wires *what's active*, and Handle enables *runtime switching*. This separation means adding a new provider requires only a `#[distributed_slice]` annotation — zero changes to wiring code.
+**Why two layers?** linkme discovers *what's available*, and Handle enables *runtime switching*. Adding a new provider requires only a `#[distributed_slice]` annotation — zero changes to wiring code.
 
 ## Provider Registration
 
@@ -159,7 +159,7 @@ This cycle is architecture optimization only.
 | --------- | ------------- | ------------- |
 | Clean Architecture | `*/lib.rs` | All new features |
 | linkme registration | `mcb-domain/src/registry/` | New provider types |
-| Three-layer DI | `mcb-infrastructure/src/di/` | Service wiring |
+| Two-layer DI (linkme+Handle) | `mcb-infrastructure/src/di/` | Service wiring |
 | Error factories | `mcb-domain/src/error/mod.rs` | All error handling |
 | Handle\<T\> | `di/handle.rs` | Runtime-switchable providers |
 | define_id! | `value_objects/ids.rs` | New domain IDs |

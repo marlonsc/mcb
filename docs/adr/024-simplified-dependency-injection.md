@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 24
-title: Shaku to dill DI Migration
+title: Shaku to Manual Composition Root DI Migration
 status: SUPERSEDED
 created:
 updated: 2026-02-05
@@ -13,22 +13,22 @@ implementation_status: Complete
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
-# ADR 024: Shaku to dill DI Migration
+# ADR 024: Shaku to Manual Composition Root DI Migration
 
 ## Status
 
-**Superseded by [ADR 029: Hexagonal Architecture with dill]
-(029-hexagonal-architecture-dill.md)** (v0.1.2)
+**Superseded by [ADR 029: Hexagonal Architecture]
+(029-hexagonal-architecture-dill.md) (superseded by ADR-050)** (v0.1.2)
 
 > Original replacement for [ADR 002: Dependency Injection with Shaku]
 > (002-dependency-injection-shaku.md) using a handle-based DI pattern with
 > linkme registry.
 >
-> **Update (2026-01-20)**: dill Catalog is now implemented as IoC container
-> with `add_value()` pattern. See [ADR 029]
-> (029-hexagonal-architecture-dill.md) for current architecture.
+> **Update (2026-01-20)**: The interim container-based approach was implemented
+> and later replaced by `init_app()` + `AppContext`. See [ADR 029]
+> (029-hexagonal-architecture-dill.md) (superseded by ADR-050) for migration history.
 >
-> **Implementation Note (2026-01-19)**: The dill `#[component]` macro is
+> **Implementation Note (2026-01-19)**: The interim `#[component]` macro approach is
 > incompatible with our domain error types and manual constructors. We use a
 > handle-based pattern instead: Provider Handles (RwLock wrappers), Resolvers
 > (linkme registry), and Admin Services (runtime switching via API).
@@ -56,13 +56,13 @@ We evaluated modern Rust DI alternatives:
 | --------- | ------ | ------------- | ------- | --------- |
 | **Shaku** (current) | Compile-time | Yes | No | High boilerplate |
 | **nject** | Compile-time | **NO** | No | Rejected (cross-crate limitation) |
-| **dill** | Runtime | Yes | Tokio | Partial use |
+| Runtime container (historical) | Runtime | Yes | Tokio | Partial use |
 | Manual injection | N/A | N/A | N/A | **SELECTED** (with patterns) |
 
 ### Why Handle-Based Pattern
 
-After implementing the dill catalog approach, we discovered that
-`dill::Catalog::get_one()` doesn't work well with `add_value` for interface
+After implementing the container-based catalog approach, we discovered that
+catalog lookups don't work well with value-based registration for interface
 resolution. Instead, we adopted a handle-based pattern that provides:
 
 1. **Runtime provider switching** via RwLock handles
@@ -312,5 +312,5 @@ crates/mcb-infrastructure/src/di/
 
 - [linkme crate](https://docs.rs/linkme) -
   Compile-time distributed slices for provider registration
-- [dill-rs GitHub](https://github.com/sergiimk/dill-rs) -
-  Evaluated but `add_value` pattern insufficient
+- [linkme crate](https://docs.rs/linkme) -
+  Compile-time provider registration used in the current DI architecture

@@ -41,8 +41,7 @@ implementation_status: N/A
 > - `language/` - 12 language processors with
 >   `UniversalLanguageChunkingProvider`
 >
-> All providers implement port traits from `mcb-domain`; DI is dill-based
-> (ADR-029).
+> All providers implement port traits from `mcb-domain`; DI uses an AppContext manual composition root with linkme + handles (ADR-050; ADR-029 superseded).
 
 ## Context
 
@@ -186,7 +185,7 @@ impl<P: Provider> ProviderRouter<P> {
 
 ### Provider Factory (mcb-infrastructure)
 
-**Note:** DI has migrated to dill (ADR-029). The following describes the factory
+**Note:** DI has migrated to `init_app()` + AppContext composition root (ADR-050; ADR-029 superseded). The following describes the factory
 pattern; Shaku is no longer used.
 
 Production providers are created via factories (e.g. resolvers + linkme registry):
@@ -218,7 +217,7 @@ impl EmbeddingProviderFactory {
 
 // Usage in DI bootstrap
 // crates/mcb-infrastructure/src/di/bootstrap.rs
-// DomainServicesFactory::create_services(deps) wires everything via dill Catalog
+// DomainServicesFactory::create_services(deps) wires everything via init_app()/AppContext
 
 ```
 
@@ -528,5 +527,5 @@ The existing router pattern extends to new provider types:
 - [Circuit Breaker Pattern](https://microservices.io/patterns/reliability/circuit-breaker.html)
 - [Provider Selection Strategies](https://aws.amazon.com/blogs/architecture/)
 - [Multicloud on AWS](https://aws.amazon.com/multicloud/)
-- [ADR-029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) - Current DI
-- [dill Documentation](https://docs.rs/dill) - IoC container
+- [ADR-029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) - Historical DI (superseded by ADR-050)
+- [linkme Documentation](https://docs.rs/linkme) - Compile-time provider discovery

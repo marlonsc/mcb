@@ -527,7 +527,7 @@ Beyond embedding and vector store providers, the system defines 12 additional po
 | `IndexingServiceInterface` | Codebase indexing | `IndexingService` |
 | `ChunkingOrchestratorInterface` | Batch chunking coordination | `ChunkingOrchestrator` |
 
-All 20+ port traits are defined in mcb-domain and registered in dill Catalog for DI container integration.
+All 20+ port traits are defined in mcb-domain and wired through the AppContext composition root for DI integration.
 
 ---
 
@@ -710,25 +710,20 @@ pub static CONCRETE_NEW_SERVICE: ProviderRegistration = ProviderRegistration {
 
 This pattern enables compile-time provider discovery with zero runtime overhead while maintaining Clean Architecture boundaries.
 
-### DI Strategy (ADR-024 → ADR-029)
+### DI Strategy (ADR-024 → ADR-029 → ADR-050)
 
-The dependency injection system uses a**handle-based pattern with dill IoC Container** documented in [ADR-029: Hexagonal Architecture with dill](../adr/029-hexagonal-architecture-dill.md):
+The dependency injection system uses a handle-based pattern with a manual composition root documented in [ADR-050](../adr/050-manual-composition-root-dill-removal.md):
 
-#### dill Catalog (IoC Container)
+#### AppContext (Manual Composition Root)
 
-The dill `Catalog` manages service registration and resolution:
+`init_app()` wires service registration and resolution into `AppContext`:
 
 ```rust
-// Build catalog with all services (mcb-infrastructure/src/di/catalog.rs)
-pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
-    CatalogBuilder::new()
-        .add_value(config)
-        .add_value(embedding_provider)    // From linkme registry
-        .add_value(embedding_handle)      // RwLock wrapper
-        .add_value(embedding_admin)       // Runtime switching
-        .add_value(performance_metrics)   // AtomicPerformanceMetrics
-        .add_value(event_bus)             // TokioBroadcast
-        .build()
+// Build AppContext with all services (mcb-infrastructure/src/di/bootstrap.rs)
+pub async fn init_app(config: AppConfig) -> Result<AppContext> {
+    // Resolve providers from linkme registries
+    // Construct handles/admin services
+    // Return AppContext with typed fields
 }
 
 // Service retrieval via AppContext (bootstrap.rs)
@@ -740,7 +735,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 
 **DI Components** (in `mcb-infrastructure/src/di/`):
 
-- `catalog.rs`: dill Catalog configuration and service resolution
+- `bootstrap.rs`: AppContext composition root and service wiring
 - `handles.rs`: RwLock wrappers for runtime provider switching
 - `provider_resolvers.rs`: linkme registry access
 - `admin.rs`: Admin services for API-based provider management
@@ -768,11 +763,11 @@ impl EmbeddingProviderHandle {
 
 ### Why This Pattern
 
-| Aspect | dill Catalog | Provider Handles |
+| Aspect | AppContext composition root | Provider Handles |
 | -------- | -------------- | ------------------ |
-| **When** | Runtime | Runtime |
-| **Purpose** | Service resolution | Provider switching |
-| **Configuration** | `add_value()` | Via admin API |
+| **When** | Startup/bootstrap | Runtime |
+| **Purpose** | Explicit service wiring | Provider switching |
+| **Configuration** | `init_app()` field assignment | Via admin API |
 | **Async Init** | Fully supported | Via resolvers |
 
 ### Port/Adapter Pattern
@@ -826,10 +821,10 @@ async fn test_search_service() {
     // Test without infrastructure dependencies
 }
 
-// Integration testing - default providers via dill Catalog
+// Integration testing - default providers via AppContext composition root
 #[tokio::test]
 async fn test_full_flow() {
-    let catalog = build_catalog(AppConfig::default()).await?;
+    let app_context = init_app(AppConfig::default()).await?;
     // Uses MokaCacheProvider, FastEmbedProvider, etc.
     // Safe for CI/CD without external services
 }
@@ -892,8 +887,8 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 ### Key Components (1)
 
-- `di/`: dill IoC Container with handle-based pattern (ADR-029)
-- `di/catalog.rs`: dill Catalog configuration
+- `di/`: AppContext manual composition root with handle-based pattern (ADR-050)
+- `di/bootstrap.rs`: AppContext composition root configuration
 - `di/handles.rs`: RwLock provider handles
 - `di/admin.rs`: Admin services for runtime switching
 - `config/`: Configuration management (Figment)
@@ -1243,7 +1238,7 @@ CREATE INDEX idx_chunks_metadata ON code_chunks USING GIN(metadata);
 1. **Default Cache**: Moka in-memory LRU cache (high-performance, single-node)
 2. **Distributed Cache**: Redis (optional, for multi-node deployments)
 
-Cache provider is resolved via DI (linkme registry → dill Catalog → `CacheProviderHandle`).
+Cache provider is resolved via DI (linkme registry → AppContext composition root → `CacheProviderHandle`).
 
 ### Data Lifecycle Management
 
@@ -1931,22 +1926,22 @@ impl QualityGateChecker {
 - ⚠️ Configuration complexity
 - ⚠️ Testing complexity across providers
 
-#### ADR-024 → ADR-029: Hexagonal Architecture with dill
+#### ADR-024 → ADR-029 → ADR-050: DI evolution
 
-**Status**: Accepted (ADR-024 superseded by ADR-029)
+**Status**: Accepted (ADR-024 superseded by ADR-029; ADR-029 superseded by ADR-050)
 
-**Context**: Handle-based DI pattern needed IoC container for proper service lifecycle management and architectural enforcement.
+**Context**: Handle-based DI pattern needed explicit composition root wiring for service lifecycle management and architectural enforcement.
 
-**Decision**: Use dill Catalog as IoC Container with handle-based pattern for runtime provider switching. Ports defined in mcb-domain.
+**Decision**: Use `init_app()` + `AppContext` as manual composition root with handle-based pattern for runtime provider switching. Ports remain defined in mcb-domain.
 
 ### Consequences (4)
 
 - ✅ Clear layer separation (hexagonal architecture)
-- ✅ dill Catalog manages service lifecycle
+- ✅ AppContext composition root manages service lifecycle
 - ✅ Runtime switching via admin API
 - ✅ Architecture enforced via mcb-validate (CA007–CA009)
 
-See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
+See [ADR-050](../adr/050-manual-composition-root-dill-removal.md) for full details.
 
 #### ADR-013: Clean Architecture Crate Separation
 

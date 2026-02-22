@@ -6,7 +6,7 @@
 //! Validates strict Clean Architecture compliance:
 //! - Domain layer contains only traits and types (minimal implementations)
 //! - Handlers use dependency injection (no direct service creation)
-//! - Port implementations have dill provider registration
+//! - Port implementations have linkme provider registration
 //! - Entities have identity fields
 //! - Value objects are immutable
 //! - Server layer boundaries are respected
@@ -48,7 +48,7 @@ define_violations! {
             context: String,
             severity: Severity,
         },
-        /// Port implementation missing dill provider registration
+        /// Port implementation missing linkme provider registration
         #[violation(
             id = "CA003",
             severity = Warning,

@@ -31,7 +31,7 @@ typed-builder = { workspace = true }
 # Async traits - needed for port definitions
 async-trait = { workspace = true }
 
-# Dependency injection interfaces - port traits for dill IoC
+# Dependency injection interfaces - port traits (linkme + AppContext)
 
 # Schema generation for MCP - pure lib acceptable for domain
 schemars = { workspace = true, features = ["uuid1"] }

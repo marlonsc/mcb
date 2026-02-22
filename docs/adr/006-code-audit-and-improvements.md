@@ -32,8 +32,7 @@ Accepted
 > - ✅ **Seven-crate Clean Architecture** implemented (see [ADR-013]
 (013-clean-architecture-crate-separation.md))
 > - ✅ **20+ port traits** in `crates/mcb-domain/src/ports/`
-> - ✅ **Three-layer DI strategy** (linkme + dill + handles; see [ADR-029]
-(029-hexagonal-architecture-dill.md))
+> - ✅ **Two-layer DI strategy** (linkme + handles; see ADR-050, ADR-029 superseded)
 > - ✅ **All traits use `Send + Sync`** bounds for async DI compatibility
 > - ✅ **mcb-validate crate** enforces architecture boundaries
 
@@ -407,5 +406,5 @@ v0.2.0 is purely architectural:
 - [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
 - [Builder Pattern](https://refactoring.guru/design-patterns/builder)
 - [Strategy Pattern](https://refactoring.guru/design-patterns/strategy)
-- [dill Documentation]
-(<https://docs.rs/dill>) (current DI; see ADR-029)
+- [linkme Documentation]
+(<https://docs.rs/linkme>) (compile-time discovery in current DI; see ADR-050)

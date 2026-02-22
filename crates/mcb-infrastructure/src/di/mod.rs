@@ -1,29 +1,27 @@
-//! Dependency Injection System - dill `IoC` + Handle-based Pattern + linkme Registry
+//! Dependency Injection System — Manual Composition Root + linkme + Handle
 //!
 //! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
 //!
-//! This module implements dependency injection using:
-//! - **dill Catalog**: `IoC` container for service resolution
-//! - **Handle-based pattern**: Runtime-swappable provider handles with `RwLock`
-//! - **linkme registry**: Compile-time discovery of external providers
+//! Two-layer DI combining compile-time discovery with runtime flexibility:
 //!
-//! ## Architecture
+//! - **linkme registry**: `#[distributed_slice]` for compile-time provider discovery
+//! - **Handle pattern**: `RwLock<Arc<dyn T>>` for runtime provider switching
 //!
 //! ```text
-//! linkme (compile-time)     dill Catalog (runtime)     Handle-based
-//! ─────────────────────     ─────────────────────      ────────────
-//! EMBEDDING_PROVIDERS  →    Resolver → add_value() →   Handle (RwLock)
-//! (list of factories)                                       ↓
-//!                                                     AdminService
-//!                                                    (switch via API)
+//! linkme (compile-time)       AppContext (manual wiring)     Handle-based
+//! ─────────────────────       ─────────────────────────      ────────────
+//! EMBEDDING_PROVIDERS    →    Resolver → init_app()     →   Handle (RwLock)
+//! (distributed slices)                                           ↓
+//!                                                          AdminService
+//!                                                         (switch via API)
 //! ```
 //!
 //! ## Key Principles
 //!
-//! - **`IoC` Container**: dill Catalog manages service lifecycle
+//! - **Manual Composition Root**: `init_app()` in `bootstrap.rs` wires all services
 //! - **Trait-based DI**: All dependencies injected as `Arc<dyn Trait>`
-//! - **Composition Root**: Services composed in catalog.rs `build_catalog()`
-//! - **Runtime Switching**: Providers can be changed via admin API
+//! - **Compile-time Discovery**: linkme `#[distributed_slice]` registers providers
+//! - **Runtime Switching**: Providers can be changed via admin API + Handle
 //! - **Testability**: Default local providers (`FastEmbed`, `EdgeVec`) enable isolated testing
 //!
 //! ## For Consumer Crates (mcb-server tests, golden tests, etc.)
@@ -40,7 +38,6 @@
 
 pub mod admin;
 pub mod bootstrap;
-pub mod catalog;
 pub mod database_resolver;
 pub mod handle;
 pub mod handles;
@@ -57,7 +54,6 @@ pub use admin::{
     ProviderResolver, VectorStoreAdminInterface, VectorStoreAdminService,
 };
 pub use bootstrap::*;
-pub use catalog::build_catalog;
 pub use handle::Handle;
 pub use handles::{
     CacheProviderHandle, EmbeddingProviderHandle, LanguageProviderHandle, VectorStoreProviderHandle,

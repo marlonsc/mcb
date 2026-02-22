@@ -17,7 +17,7 @@
 
 The providers module implements a trait-based abstraction layer for AI and storage services. All integrations follow port/adapter — the domain defines traits, providers implement. This enables flexible deployment with multiple providers, intelligent routing, and automatic failover.
 
-All port traits are resolved via**dill Catalog** (ADR-029) for dependency injection.
+All port traits are resolved via the **AppContext composition root** (ADR-050) for dependency injection.
 
 ## Embedding Providers
 

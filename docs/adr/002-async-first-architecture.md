@@ -29,11 +29,11 @@ Accepted
 > - `mcb-application` - Use case services (ContextService, SearchService,
 >   IndexingService)
 > - `mcb-providers` - Provider implementations (embedding, vector_store, cache)
-> - `mcb-infrastructure` - DI bootstrap (dill+linkme), factories, event bus
+> - `mcb-infrastructure` - DI bootstrap (AppContext + linkme), factories, event bus
 > - `mcb-server` - MCP protocol handlers, admin API
 >
 > All provider ports use `async_trait` with `Send + Sync` bounds.
-> DI via dill Catalog + linkme distributed slices (ADR-029).
+> DI via AppContext composition root + linkme distributed slices (ADR-050; ADR-029 superseded).
 > Structured concurrency with `tokio::spawn` and async channels.
 
 ## Context
@@ -321,14 +321,14 @@ mod tests {
     }
 }
 
-// Integration test with DI catalog (dill, ADR-029)
+// Integration test with AppContext composition root (ADR-050)
 // crates/mcb-infrastructure/tests/di_test.rs
 #[tokio::test]
 async fn test_full_async_flow_with_di() {
-    use mcb_infrastructure::di::catalog::build_catalog;
+    use mcb_infrastructure::di::bootstrap::init_app;
 
-    let catalog = build_catalog(&config).await.unwrap();
-    let embedding: Arc<dyn EmbeddingProvider> = catalog.get().unwrap();
+    let app_context = init_app(config).await.unwrap();
+    let embedding: Arc<dyn EmbeddingProvider> = app_context.embedding_handle().get();
 
     let result = embedding.embed("test").await;
     assert!(result.is_ok());
@@ -435,4 +435,4 @@ fn compute_complexity(content: &str) -> Result<ComplexityReport> {
 - [Rayon: Data Parallelism](https://docs.rs/rayon/latest/rayon/)
 - [Tokio spawn_blocking]
 (<https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html>) <!-- markdownlint-disable-line MD013 -->
-- [dill Documentation](https://docs.rs/dill) (current DI; see ADR-029)
+- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI; see ADR-050)

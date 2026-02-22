@@ -35,14 +35,14 @@ Three-tier testing strategy:
 Pattern:
 
 ```rust
-// crates/mcb-application/tests/search_service_test.rs — uses dill Catalog (ADR-029)
+// crates/mcb-application/tests/search_service_test.rs — uses AppContext composition root (ADR-050)
 
 #[tokio::test]
 async fn test_search_returns_relevant_results() {
-    // Use default providers via dill Catalog
-    let catalog = build_catalog(&config).await.unwrap();
-    let embedding: Arc<dyn EmbeddingProvider> = catalog.get().unwrap();
-    let vector_store: Arc<dyn VectorStoreProvider> = catalog.get().unwrap();
+    // Use default providers via init_app()/AppContext
+    let app_context = init_app(config).await.unwrap();
+    let embedding: Arc<dyn EmbeddingProvider> = app_context.embedding_handle().get();
+    let vector_store: Arc<dyn VectorStoreProvider> = app_context.vector_store_handle().get();
     let service = SearchService::new(embedding, vector_store);
 
     // Test with mock data

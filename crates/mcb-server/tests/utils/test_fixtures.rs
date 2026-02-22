@@ -262,6 +262,7 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                             let msg = err.to_string();
                             if msg.contains("model.onnx")
                                 || msg.contains("Failed to initialize FastEmbed")
+                                || msg.contains("ONNX Runtime")
                             {
                                 let mut fallback = ConfigLoader::new().load()?;
                                 let fallback_db_path = std::env::temp_dir().join(format!(

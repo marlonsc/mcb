@@ -83,7 +83,7 @@ External integrations (source: `crates/mcb-providers/src/`):
 Configuration and DI (source: `crates/mcb-infrastructure/src/`):
 
 - `config::AppConfig`, `ServerConfig`, `InfrastructureConfig` — typed TOML config
-- `di::` — dill Catalog IoC container ([ADR-029](../adr/029-hexagonal-architecture-dill.md))
+- `di::` — AppContext manual composition root in `bootstrap.rs` ([ADR-050](../adr/050-manual-composition-root-dill-removal.md))
 - `routing::` — provider routing and selection
 - `crypto::` — AES-GCM encryption
 - `cache::` — Moka/Redis infrastructure

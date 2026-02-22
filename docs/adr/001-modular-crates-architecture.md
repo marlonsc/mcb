@@ -20,7 +20,7 @@ implementation_status: Complete
 
 **Implemented** (v0.1.1)
 
-> Fully implemented with Clean Architecture + dill/linkme DI across 7 crates.
+> Fully implemented with Clean Architecture + linkme + Handle DI across 7 crates.
 
 ## Context
 
@@ -39,10 +39,10 @@ divided into independent sub-modules compiled separately. Each crate
 encapsulates specific services and logics (e.g., core server crate, providers
 crate, EventBus crate, etc.), but all operate in an integrated manner. To
 coordinate the lifecycle of modules, we introduced a central component called
-a dill Catalog (ADR-029) responsible for composing, initializing, and resolving
-all services across crates. Providers register via linkme distributed slices
-(ADR-023) for compile-time auto-discovery, and the Catalog wires them into
-the application at startup via `init_app()` in mcb-infrastructure.
+an AppContext composition root (ADR-050) responsible for composing,
+initializing, and resolving all services across crates. Providers register via
+linkme distributed slices (ADR-023) for compile-time auto-discovery, and
+`init_app()` wires them into the application at startup in mcb-infrastructure.
 
 ## Implementation
 
@@ -176,22 +176,17 @@ The system uses a two-layer approach for DI (see [ADR-012](012-di-strategy-two-l
 
 ```rust
 // Providers register via distributed_slice — DI resolves by config
-// (see ADR-029 for dill Catalog)
+// (legacy details in ADR-029, superseded by ADR-050)
 let resolver = EmbeddingProviderResolver::new(config);
 let provider = resolver.resolve_from_config()?;
 // Defaults to FastEmbedProvider when no config override
 ```
 
-**Layer 2: dill Catalog** - IoC container composes services from resolved providers:
+**Layer 2: AppContext composition root** - manual composition root composes services from resolved providers:
 
 ```rust
-// mcb-infrastructure/src/di/catalog.rs — dill Catalog (ADR-029)
-let catalog = CatalogBuilder::new()
-    .add_value(config)
-    .add_value(embedding_provider)    // Resolved from linkme registry
-    .add_value(vector_store_provider) // Resolved from linkme registry
-    .add_value(embedding_handle)      // RwLock<Arc<dyn EmbeddingProvider>>
-    .build();
+// mcb-infrastructure/src/di/bootstrap.rs — AppContext manual composition root (ADR-050)
+let app_context = init_app(config).await?;
 ```
 
 ### Testing Pattern
@@ -224,7 +219,7 @@ Developers can evolve modules in isolation and even publish reusable crates. The
 modular architecture also facilitates unit testing and integration testing
 focused per module. On the other hand, it added complexity in managing versions
 between internal crates and required an orchestration layer
-(dill Catalog + linkme registry) to coordinate dependencies and
+(AppContext composition root + linkme registry) to coordinate dependencies and
 initialization order. These additional structures increase robustness at the cost
 of a small coordination overhead. Overall, the decision aligned with the goal of
 a pluggable and extensible design, allowing inclusion or removal of
@@ -254,7 +249,7 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 ## Related ADRs
 
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md)
-- [ADR-029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) (supersedes Shaku DI)
+- [ADR-029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) (superseded by ADR-050)
 - [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md)
 - [ADR-004: Event Bus (Local and Distributed)](004-event-bus-local-distributed.md)
 - [ADR-005: Context Cache Support (Moka and Redis)](005-context-cache-support.md)

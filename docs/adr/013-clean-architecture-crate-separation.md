@@ -141,7 +141,7 @@ mcb-providers/src/
 Characteristics:
 
 - Depends on `mcb-domain`, `mcb-application`, `mcb-providers`
-- Contains the dill+linkme DI system (ADR-029)
+- Contains the linkme + Handle DI system with AppContext composition root (ADR-050; ADR-029 superseded)
 - Contains configuration management (Figment)
 - Contains cross-cutting services (metrics, events)
 - Provides factories for production provider creation
@@ -152,7 +152,7 @@ Key Directories:
 mcb-infrastructure/src/
 ├── di/
 │   ├── bootstrap.rs    # Application init (init_app)
-│   ├── catalog.rs      # dill Catalog composition root
+│   ├── bootstrap.rs    # AppContext manual composition root
 │   ├── admin.rs        # Admin service wiring
 │   └── resolvers/      # Provider resolvers (from linkme registry)
 ├── config/             # Configuration types (Figment)
@@ -312,7 +312,7 @@ cargo run -p mcb-validate
 
 ### Adding a New Use Case
 
-1. Define service interface in `mcb-domain/src/ports/` (port traits are in domain per ADR-029)
+1. Define service interface in `mcb-domain/src/ports/` (port traits are in domain per ADR-029, superseded by ADR-050)
 2. Implement service in `mcb-application/src/services/`
 3. Inject port dependencies via constructor
 4. Wire in `mcb-infrastructure/src/di/` if needed
@@ -329,11 +329,11 @@ async fn test_search_service() {
     // Test without infrastructure
 }
 
-// Integration test (mcb-server) — uses dill Catalog (ADR-029)
+// Integration test (mcb-server) — uses AppContext composition root (ADR-050)
 #[tokio::test]
 async fn test_full_indexing_flow() {
-    let catalog = build_catalog(&config).await?;
-    let service: Arc<dyn IndexingService> = catalog.get().unwrap();
+    let app_context = init_app(config).await?;
+    let service: Arc<dyn IndexingService> = app_context.indexing_service().clone();
     // Uses default providers resolved from config
 }
 ```
@@ -362,5 +362,5 @@ async fn test_full_indexing_flow() {
 ## References
 
 - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-- [dill Documentation](https://docs.rs/dill) (current DI; see ADR-029)
+- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI; see ADR-050)
 - Workspace-next refactoring plan (January 2026)

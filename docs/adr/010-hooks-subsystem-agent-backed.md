@@ -22,7 +22,7 @@ implementation_status: Partial
 > Not yet implemented. Target crate structure for v0.2.0:
 >
 > - `crates/mcb-domain/src/hooks.rs` - Hook domain types
-> - `crates/mcb-domain/src/ports/providers/hooks.rs` - HookProcessor port trait (see ADR-029)
+> - `crates/mcb-domain/src/ports/providers/hooks.rs` - HookProcessor port trait (see ADR-029, superseded by ADR-050)
 > - `crates/mcb-application/src/use_cases/hooks.rs` - HookService
 > - `crates/mcb-providers/src/hooks/` - Hook provider implementations
 > - `crates/mcb-server/src/handlers/hook_tools.rs` - MCP tool handlers
@@ -32,7 +32,7 @@ implementation_status: Partial
 > - Requires ADR-009 memory integration for hook observations
 >
 > **⚠ Architecture note (2026-02-20)**: Code paths referencing
-> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029,
+> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029 (superseded by ADR-050),
 > all port traits are defined in `mcb-domain/src/ports/providers/`. When
 > implementing, use the corrected locations.
 
@@ -1164,7 +1164,7 @@ if let Some(git) = &self.git_provider {
 
 > **Note**: This ADR is a historical decision record. For current architecture
 > details, consult the normative documents below. Code paths referencing
-> `mcb-application/src/ports/providers/` are outdated; per ADR-029, all port
+> `mcb-application/src/ports/providers/` are outdated; per ADR-029 (superseded by ADR-050), all port
 > traits now reside in `mcb-domain/src/ports/providers/`.
 
 - [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
@@ -1184,5 +1184,5 @@ if let Some(git) = &self.git_provider {
 ## References
 
 - [Claude Code Hooks Documentation](https://docs.anthropic.com/claude-code/hooks)
-- [dill Documentation](https://docs.rs/dill) - DI framework (see ADR-029)
+- [linkme Documentation](https://docs.rs/linkme) - Compile-time provider discovery (see ADR-050)
 - Existing patterns: `crates/mcb-infrastructure/src/events/mod.rs`, `crates/mcb-infrastructure/src/di/registry.rs`, `crates/mcb-application/src/use_cases/context.rs`

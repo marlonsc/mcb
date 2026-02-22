@@ -2,13 +2,13 @@
 ---
 adr: 29
 title: Hexagonal Architecture with dill IoC
-status: IMPLEMENTED
+status: SUPERSEDED
 created:
-updated: 2026-02-05
+updated: 2026-02-22
 related: []
 supersedes: []
-superseded_by: []
-implementation_status: Complete
+superseded_by: [50]
+implementation_status: Superseded
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,11 +17,12 @@ implementation_status: Complete
 
 ## Status
 
-**Implemented** (v0.1.2)
+**Superseded** by [ADR 050: Manual Composition Root — dill Removal](050-manual-composition-root-dill-removal.md) (v0.2.1)
 
-> Evolution of [ADR 024: Simplified Dependency Injection]
+> Originally: Evolution of [ADR 024: Simplified Dependency Injection]
 > (024-simplified-dependency-injection.md), adding dill Catalog as IoC
-> container while maintaining the handle-based pattern.
+> container. dill was removed in v0.2.1 because `build_catalog()` was
+> never called in production and dill was the sole nightly Rust dependency.
 
 ## Context
 

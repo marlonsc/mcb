@@ -1,10 +1,10 @@
 ---
 # =============================================================================
-# CI Pipeline — 3-Stage Optimized
+# CI Pipeline — 3-Stage with Shared Compilation Cache
 # =============================================================================
-# Stage 1: Fast checks (lint, audit, docs) — parallel
-# Stage 2a: Linux stable tests + startup smoke — gated by lint
-# Stage 2b: Cross-platform tests + validate + golden + coverage — gated by linux stable
+# Stage 1: Fast checks (lint, audit, docs) — parallel. Lint SAVES rust cache.
+# Stage 2a: Test + Validate (parallel, both after lint, REUSE lint cache)
+# Stage 2b: Cross-platform + golden + coverage — gated by test-linux
 # Stage 3: Release builds — gated by tests + validate + audit
 # Gate: rust-ci consolidated check
 # Post-gate: CodeQL analysis (most expensive, runs last)
@@ -123,7 +123,8 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          save-if: false
+          shared-key: ci-ubuntu-stable
+          save-if: true
       - run: make lint MCB_CI=1
 
   audit:
@@ -142,7 +143,8 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
+          shared-key: ci-ubuntu-stable
+          save-if: false
       - run: make audit
 
   validate-docs:
@@ -191,7 +193,7 @@ jobs:
           include-hidden-files: false
 
   # ===========================================================================
-  # Stage 2a — Primary Test Gate (linux stable first, ~15 min)
+  # Stage 2a — Primary Test Gate (reuses lint cache, ~8 min)
   # ===========================================================================
 
   test-linux:
@@ -212,29 +214,12 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
+          shared-key: ci-ubuntu-stable
           save-if: false
-      - run: make test THREADS=4
-
-  startup-smoke:
-    name: Startup Smoke (DDL/Init)
-    needs: [changes, classify, lint]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-        with:
-          save-if: false
-      - run: make test SCOPE=startup
+      - name: Startup Smoke (DDL/Init)
+        run: make test SCOPE=startup THREADS=4
+      - name: Full Test Suite
+        run: make test THREADS=4
 
   # ===========================================================================
   # Stage 2b — Extended Testing (after linux stable, all parallel)
@@ -282,7 +267,7 @@ jobs:
 
   validate:
     name: Architecture Validation
-    needs: [changes, classify, lint, startup-smoke]
+    needs: [changes, classify, lint]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
       (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
@@ -297,6 +282,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
+          shared-key: ci-ubuntu-stable
           save-if: false
       - run: make validate
         env:
@@ -331,6 +317,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
+          shared-key: ci-ubuntu-stable
           save-if: false
       - run: make test SCOPE=golden THREADS=2
 
@@ -353,6 +340,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
+          shared-key: ci-ubuntu-stable
           save-if: false
       - run: make coverage MCB_CI=1 THREADS=4
       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
@@ -442,7 +430,6 @@ jobs:
       - lint
       - test-linux
       - test-cross
-      - startup-smoke
       - validate
       - audit
       - golden-tests
@@ -459,7 +446,6 @@ jobs:
           LINT_RESULT: ${{ needs.lint.result }}
           TEST_LINUX_RESULT: ${{ needs.test-linux.result }}
           TEST_CROSS_RESULT: ${{ needs.test-cross.result }}
-          STARTUP_RESULT: ${{ needs.startup-smoke.result }}
           VALIDATE_RESULT: ${{ needs.validate.result }}
           AUDIT_RESULT: ${{ needs.audit.result }}
           GOLDEN_RESULT: ${{ needs.golden-tests.result }}
@@ -474,7 +460,6 @@ jobs:
           echo "Lint:          $LINT_RESULT"
           echo "Test Linux:    $TEST_LINUX_RESULT"
           echo "Test Cross:    $TEST_CROSS_RESULT"
-          echo "Startup Smoke: $STARTUP_RESULT"
           echo "Validate:      $VALIDATE_RESULT"
           echo "Audit:         $AUDIT_RESULT"
           echo "Golden:        $GOLDEN_RESULT"
@@ -489,7 +474,7 @@ jobs:
 
           if [[ "$RUN_SIMPLIFIED" == "true" ]]; then
             echo "=== Bot PR Policy (Simplified) ==="
-            for job in LINT_RESULT TEST_LINUX_RESULT STARTUP_RESULT VALIDATE_RESULT; do
+            for job in LINT_RESULT TEST_LINUX_RESULT VALIDATE_RESULT; do
               result="${!job}"
               if [[ "$result" != "success" ]]; then
                 echo "✗ $job: $result"
@@ -503,7 +488,7 @@ jobs:
           if [[ "$RUN_FULL" == "true" ]]; then
             echo "=== Full Suite Policy (Human Ready PR) ==="
             FAILED=0
-            for job in LINT_RESULT TEST_LINUX_RESULT TEST_CROSS_RESULT STARTUP_RESULT \
+            for job in LINT_RESULT TEST_LINUX_RESULT TEST_CROSS_RESULT \
                        VALIDATE_RESULT AUDIT_RESULT GOLDEN_RESULT COVERAGE_RESULT \
                        RELEASE_BUILD_RESULT; do
               result="${!job}"

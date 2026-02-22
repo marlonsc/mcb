@@ -79,7 +79,7 @@ mcb/
 **v0.1.1** (Current release):
 
 - Seven-crate Clean Architecture implemented
-- dill+linkme DI with three-layer strategy (ADR-029)
+- linkme + Handle DI with AppContext manual composition root (ADR-050; ADR-029 superseded)
 - 20+ port traits with `Send + Sync` bounds (in mcb-domain)
 - mcb-validate enforces layer boundaries
 
@@ -119,13 +119,13 @@ Mitigation:
 v0.1.1 (Completed):
 
 - [x] Seven-crate Clean Architecture implemented
-- [x] dill+linkme DI with three-layer strategy (ADR-029)
+- [x] linkme + Handle DI with AppContext manual composition root (ADR-050; ADR-029 superseded)
 - [x] 20+ port traits with `Send + Sync` bounds (in mcb-domain)
 - [x] mcb-validate enforces layer boundaries
 
 v0.3.0 (Planned):
 
-- [ ] Create `crates/mcb-domain/src/ports/analysis/` (analysis domain ports; per ADR-029, ports are in mcb-domain)
+- [ ] Create `crates/mcb-domain/src/ports/analysis/` (analysis domain ports; per ADR-050 current DI architecture, ports are in mcb-domain)
 - [ ] Create `crates/mcb-providers/src/analyzers/` (PMAT adapters)
 - [ ] Define `AnalysisInterface` trait
 - [ ] Port PMAT complexity/TDG/SATD algorithms

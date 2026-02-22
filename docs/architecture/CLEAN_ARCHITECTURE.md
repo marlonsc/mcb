@@ -13,6 +13,6 @@
 | Dependency direction & crate graph | [ARCHITECTURE.md § Dependency Rules](./ARCHITECTURE.md#dependency-rules) |
 | Port categories & trait locations | [ARCHITECTURE.md § Port Categories](./ARCHITECTURE.md#port-categories) |
 | Extension patterns (new providers) | [ARCHITECTURE.md § Extensibility](./ARCHITECTURE.md#extensibility---adding-new-providers) |
-| Three-layer DI (linkme → dill → Handle) | [PATTERNS.md § Three-Layer DI](./PATTERNS.md#three-layer-di-linkme--dill--handle) |
+| Two-layer DI (linkme → Handle) | [PATTERNS.md § Two-Layer DI](./PATTERNS.md#two-layer-di-linkme--handle-adr-050) |
 | Error factory pattern | [PATTERNS.md § Error Handling](./PATTERNS.md#error-handling) |
 | Boundary enforcement rules | [ARCHITECTURE_BOUNDARIES.md](./ARCHITECTURE_BOUNDARIES.md) |

@@ -10,7 +10,7 @@
 | --------- | ---- |
 | Code → Docs | [`crates/mcb-application/src/lib.rs`](../../crates/mcb-application/src/lib.rs) links here |
 | Docs → Code | [`crates/mcb-application/src/lib.rs`](../../crates/mcb-application/src/lib.rs) — crate root |
-| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) · [`ADR-029`](../adr/029-hexagonal-architecture-dill.md) |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) · [`ADR-050`](../adr/050-manual-composition-root-dill-removal.md) |
 | Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
 
 ## Overview

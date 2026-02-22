@@ -279,10 +279,7 @@ tracing-appender = "0.2"
 # Benchmarking
 criterion = "0.8.1"
 
-# Dependency Injection (IoC Container)
-dill = "0.15"
-
-# Plugin registration
+# Plugin registration (compile-time provider discovery)
 linkme = "0.3"
 
 # Development/testing

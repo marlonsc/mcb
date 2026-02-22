@@ -233,7 +233,7 @@ make docs-validate QUICK=1
 ## 🚀 Code References
 
 - **Config**: `mcb_infrastructure::config::ConfigLoader` — See [CONFIGURATION.md](../CONFIGURATION.md), [ADR-025](../adr/025-figment-configuration.md)
-- **DI**: `mcb_infrastructure::di::bootstrap::init_app(config)` — See [ADR-029](../adr/029-hexagonal-architecture-dill.md)
+- **DI**: `mcb_infrastructure::di::bootstrap::init_app(config)` — See [ADR-050](../adr/050-manual-composition-root-dill-removal.md) (ADR-029 superseded)
 - **Patterns**: See [PATTERNS.md](../architecture/PATTERNS.md) for implementation patterns
 - **Run server**: `cargo run --bin mcb` or `make build` then run the binary
 

@@ -30,7 +30,7 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 - 4 MCP tools (index, search, clear, status)
 - 308+ tests (100% pass rate)
 - Seven-crate Clean Architecture
-- Three-layer DI strategy (linkme + dill + handles; ADR-029)
+- Two-layer DI strategy (linkme + handles; ADR-050, ADR-029 superseded)
 
 **PMAT** (Code Analysis):
 
@@ -53,7 +53,7 @@ Deliverables:
 - [x] mcb-domain: Core entities, repositories, events, value objects
 - [x] mcb-application: Port traits (~20+) + Context, Search, Indexing services
 - [x] mcb-providers: 7 embedding + 4 vector store providers
-- [x] mcb-infrastructure: dill+linkme DI + config management
+- [x] mcb-infrastructure: linkme + Handle DI + config management
 - [x] mcb-server: MCP protocol + Admin API
 - [x] mcb-validate: Architecture enforcement
 - [x] mcb: Facade crate with re-exports

@@ -25,7 +25,7 @@ implementation_status: Partial
 > Not yet implemented. Target crate structure for v0.2.0:
 >
 > - `crates/mcb-domain/src/memory.rs` - Memory domain types
-> - `crates/mcb-domain/src/ports/providers/memory.rs` - MemoryProvider port trait (see ADR-029)
+> - `crates/mcb-domain/src/ports/providers/memory.rs` - MemoryProvider port trait (see ADR-029, superseded by ADR-050)
 > - `crates/mcb-application/src/use_cases/session.rs` - Session manager service
 > - `crates/mcb-application/src/use_cases/memory_search.rs` - Memory search
 >   service
@@ -37,7 +37,7 @@ implementation_status: Partial
 > - Requires ADR-008 git integration for git-tagged observations
 >
 > **⚠ Architecture note (2026-02-20)**: Code paths referencing
-> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029,
+> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029 (superseded by ADR-050),
 > all port traits are defined in `mcb-domain/src/ports/providers/`. When
 > implementing, use the corrected locations.
 
@@ -1442,7 +1442,7 @@ fn reciprocal_rank_fusion(
 
 > **Note**: This ADR is a historical decision record. For current architecture
 > details, consult the normative documents below. Code paths referencing
-> `mcb-application/src/ports/providers/` are outdated; per ADR-029, all port
+> `mcb-application/src/ports/providers/` are outdated; per ADR-029 (superseded by ADR-050), all port
 > traits now reside in `mcb-domain/src/ports/providers/`.
 
 - [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
@@ -1471,4 +1471,4 @@ fn reciprocal_rank_fusion(
 ## References
 
 - [Claude-mem v8.5.2](https://github.com/thedotmack/claude-mem) - Reference implementation
-- [dill Documentation](https://docs.rs/dill) - DI framework (see ADR-029)
+- [linkme Documentation](https://docs.rs/linkme) - Compile-time provider discovery (see ADR-050)

@@ -60,7 +60,7 @@ pub enum PatternViolation {
         /// Severity level of the violation.
         severity: Severity,
     },
-    /// Missing Interface trait bound for dill DI
+    /// Missing Interface trait bound for DI
     MissingInterfaceBound {
         /// File where the violation occurred.
         file: PathBuf,
@@ -228,9 +228,7 @@ impl Violation for PatternViolation {
                 Some(format!("Add {missing_bound} bounds to trait"))
             }
             Self::MissingAsyncTrait { .. } => Some("Add #[async_trait] attribute".to_owned()),
-            Self::MissingInterfaceBound { .. } => {
-                Some("Add : Interface bound for dill DI".to_owned())
-            }
+            Self::MissingInterfaceBound { .. } => Some("Add : Interface bound for DI".to_owned()),
         }
     }
 }

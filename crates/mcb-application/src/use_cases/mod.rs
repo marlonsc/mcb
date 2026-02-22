@@ -15,7 +15,7 @@
 //!
 //! ## Dependency Injection
 //!
-//! All use cases are designed to work with dependency injection via dill `IoC`.
+//! All use cases receive their dependencies through constructor injection.
 //! They receive their dependencies (ports) through constructor injection.
 
 pub mod agent_session_service;

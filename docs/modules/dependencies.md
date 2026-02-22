@@ -93,7 +93,7 @@ Major external crates:
 | ---------- | ------- | --------- |
 | Async | `tokio` | Async runtime |
 | HTTP | `poem` | HTTP server (ADR-026) |
-| DI | `dill` | IoC container, handle-based DI (ADR-029) |
+| DI | `linkme` | Compile-time provider discovery + manual composition root with handles (ADR-050) |
 | Serialization | `serde` | JSON/TOML serialization |
 | Error handling | `thiserror`, `anyhow` | Error types |
 | Parsing | `tree-sitter-*` | AST parsing |
@@ -101,4 +101,4 @@ Major external crates:
 
 ---
 
-### Updated 2026-01-28 - dill DI, v0.2.1
+### Updated 2026-02-22 - linkme + AppContext manual composition root, v0.2.1

@@ -295,7 +295,7 @@ async fn handle_mcp_get(
 - **MCP Specification**: [Model Context Protocol](https://modelcontextprotocol.io/)
 - **Transport Layer**: `crates/mcb-server/src/transport/http.rs`, `crates/mcb-server/src/transport/session.rs`
 - **Related Issues**: See GitHub issues tagged with "sse" or "streaming"
-- [dill Documentation](https://docs.rs/dill) - DI framework (see ADR-029)
+- [linkme Documentation](https://docs.rs/linkme) - Compile-time provider discovery (see ADR-050)
 
 ## Reviewers
 

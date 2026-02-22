@@ -10,7 +10,7 @@
 | --------- | ---- |
 | Code → Docs | [`crates/mcb-infrastructure/src/lib.rs`](../../crates/mcb-infrastructure/src/lib.rs) links here |
 | Docs → Code | [`crates/mcb-infrastructure/src/lib.rs`](../../crates/mcb-infrastructure/src/lib.rs) — crate root |
-| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-029`](../adr/029-hexagonal-architecture-dill.md) · [`ADR-023`](../adr/023-inventory-to-linkme-migration.md) |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-050`](../adr/050-manual-composition-root-dill-removal.md) · [`ADR-023`](../adr/023-inventory-to-linkme-migration.md) |
 | Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
 
 ## Overview
@@ -21,14 +21,14 @@ The infrastructure module contains the technical plumbing of the system: DI boot
 
 ## Dependency Injection
 
-Dependency injection system using **dill IoC Container** with linkme registry for provider discovery and handle-based runtime switching.
+Dependency injection system using a **manual composition root (`AppContext` + `init_app()`)** with linkme registry for provider discovery and handle-based runtime switching.
 
 ### Architecture
 
 ```text
-linkme (compile-time)     dill Catalog (runtime)     Handle-based
-─────────────────────     ─────────────────────      ────────────
-EMBEDDING_PROVIDERS  →    Resolver → add_value() →   Handle (RwLock)
+linkme (compile-time)     AppContext (bootstrap)     Handle-based
+─────────────────────     ──────────────────────      ────────────
+EMBEDDING_PROVIDERS  →    Resolver → init_app() →    Handle (RwLock)
 (list of factories)                                       ↓
                                                     AdminService
                                                    (switch via API)
@@ -36,7 +36,7 @@ EMBEDDING_PROVIDERS  →    Resolver → add_value() →   Handle (RwLock)
 
 - **Bootstrap** ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/di/bootstrap.rs)): Application initialization.
 - **Handles** ([`handles.rs`](../../crates/mcb-infrastructure/src/di/handles.rs)): RwLock wrappers for runtime switching.
-- **Catalog** ([`catalog.rs`](../../crates/mcb-infrastructure/src/di/catalog.rs)): dill IoC Container configuration.
+- **Composition Root** ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/di/bootstrap.rs)): AppContext manual composition root configuration.
 
 ---
 

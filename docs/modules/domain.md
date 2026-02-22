@@ -63,8 +63,8 @@ MCB delivers semantic code search by combining vector embeddings, git context, a
 
 | Port | File | Purpose |
 | ------ | ------ | --------- |
-| `ChunkRepository` | `chunk_repository.rs` | Code chunk CRUD (`Send + Sync`; DI via dill, ADR-029) |
-| `SearchRepository` | `search_repository.rs` | Search operations (`Send + Sync`; DI via dill, ADR-029) |
+| `ChunkRepository` | `chunk_repository.rs` | Code chunk CRUD (`Send + Sync`; wired via AppContext composition root, ADR-050) |
+| `SearchRepository` | `search_repository.rs` | Search operations (`Send + Sync`; wired via AppContext composition root, ADR-050) |
 
 ## Domain Events (`events/domain_events.rs`)
 
