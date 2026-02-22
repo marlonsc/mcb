@@ -175,6 +175,12 @@ impl EmbeddingProvider for DeterministicEmbeddingProvider {
                     for (i, value) in vector.iter_mut().enumerate() {
                         *value = base + (i as f32 / 1000.0);
                     }
+                    let norm = vector.iter().map(|x| x * x).sum::<f32>().sqrt();
+                    if norm > 0.0 {
+                        for v in &mut vector {
+                            *v /= norm;
+                        }
+                    }
                 }
                 Embedding {
                     vector,
