@@ -444,14 +444,12 @@ impl IndexingServiceImpl {
 
         // Incremental check using file hashes
         let current_hash = mcb_domain::utils::compute_content_hash(&content);
-        #[allow(clippy::collapsible_if)]
-        if let Some(repo) = &self.file_hash_repository {
-            if !repo
+        if let Some(repo) = &self.file_hash_repository
+            && !repo
                 .has_changed(&collection.to_string(), &relative_path, &current_hash)
                 .await?
-            {
-                return Ok(ProcessResult::Skipped);
-            }
+        {
+            return Ok(ProcessResult::Skipped);
         }
 
         // Generate semantic chunks

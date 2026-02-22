@@ -22,15 +22,23 @@ fn test_error_context_extension() {
 }
 
 #[rstest]
-#[allow(clippy::wildcard_enum_match_arm)]
 fn test_infra_error_creation() {
     let error = infra::infrastructure_error_msg("test error message");
 
-    match error {
+    match &error {
         Error::Infrastructure { message, source } => {
             assert_eq!(message, "test error message");
             assert!(source.is_none());
         }
-        _ => panic!("Expected Infrastructure error"),
+        Error::Vcs(_)
+        | Error::Database(_)
+        | Error::Validation(_)
+        | Error::Embedding(_)
+        | Error::VectorStore(_)
+        | Error::Cache(_)
+        | Error::Config(_)
+        | Error::NotFound(_)
+        | Error::Language(_)
+        | Error::Other(_) => panic!("Expected Infrastructure error, got {error:?}"),
     }
 }

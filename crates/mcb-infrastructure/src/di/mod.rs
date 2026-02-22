@@ -46,6 +46,7 @@ pub mod provider_resolvers;
 pub mod repositories;
 pub mod resolver;
 pub mod test_factory;
+#[allow(missing_docs)]
 pub mod vcs;
 
 pub use admin::{

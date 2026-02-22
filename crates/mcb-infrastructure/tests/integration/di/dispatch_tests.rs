@@ -6,6 +6,7 @@
 //! providers are registered via linkme distributed slices.
 
 use mcb_infrastructure::config::{AppConfig, ConfigLoader};
+use mcb_infrastructure::di::VcsProviderResolver;
 use mcb_infrastructure::di::bootstrap::init_app;
 use serial_test::serial;
 
@@ -194,4 +195,58 @@ async fn test_infrastructure_services_from_app_context() {
         std::sync::Arc::strong_count(&indexing) >= 1,
         "Indexing service should have valid Arc reference"
     );
+}
+
+#[tokio::test]
+#[serial]
+async fn test_vcs_provider_resolver_detects_git_repository_by_structure()
+-> Result<(), Box<dyn std::error::Error>> {
+    let default_path =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../config/default.toml");
+    let config = ConfigLoader::new().with_config_path(default_path).load()?;
+    let resolver = VcsProviderResolver::new(std::sync::Arc::new(config));
+
+    let vcs_provider = resolver.resolve_from_config()?;
+    assert!(!vcs_provider.vcs_name().is_empty());
+
+    let temp_dir = tempfile::tempdir()?;
+    let git_init = std::process::Command::new("git")
+        .args(["init", "--quiet"])
+        .current_dir(temp_dir.path())
+        .output()?;
+
+    assert!(
+        git_init.status.success(),
+        "git init must succeed to validate VCS detection"
+    );
+
+    std::fs::write(temp_dir.path().join("README.md"), "mcb test")?;
+    let add = std::process::Command::new("git")
+        .args(["add", "."])
+        .current_dir(temp_dir.path())
+        .output()?;
+    assert!(add.status.success(), "git add must succeed");
+    let commit = std::process::Command::new("git")
+        .args([
+            "-c",
+            "user.name=MCB Test",
+            "-c",
+            "user.email=test@mcb.local",
+            "commit",
+            "-m",
+            "init",
+            "--quiet",
+        ])
+        .current_dir(temp_dir.path())
+        .output()?;
+    assert!(commit.status.success(), "git commit must succeed");
+
+    let opened_repo = vcs_provider.open_repository(temp_dir.path()).await?;
+    assert_eq!(opened_repo.path(), temp_dir.path());
+
+    let repos = vcs_provider.list_repositories(temp_dir.path()).await?;
+    assert_eq!(repos.len(), 1, "expected exactly one git repository");
+    assert_eq!(repos[0].path(), temp_dir.path());
+
+    Ok(())
 }

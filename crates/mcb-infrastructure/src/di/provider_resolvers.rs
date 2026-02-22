@@ -341,8 +341,12 @@ pub struct EventBusProviderResolver {
     config: Arc<AppConfig>,
 }
 
-#[allow(missing_docs, clippy::missing_errors_doc)]
+#[allow(missing_docs)]
 impl EventBusProviderResolver {
+    /// Resolves the event bus provider from application config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved or configured.
     pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn EventBusProvider>> {
         let mut cfg = EventBusProviderConfig::new(
             match self.config.system.infrastructure.event_bus.provider {
@@ -370,6 +374,10 @@ impl EventBusProviderResolver {
         resolve_event_bus_provider(&cfg)
     }
 
+    /// Resolves the event bus provider from an override config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
     pub fn resolve_from_override(
         &self,
         override_config: &EventBusProviderConfig,
@@ -389,13 +397,21 @@ pub struct VcsProviderResolver {
     config: Arc<AppConfig>,
 }
 
-#[allow(missing_docs, clippy::missing_errors_doc)]
+#[allow(missing_docs)]
 impl VcsProviderResolver {
+    /// Resolves the VCS provider from application config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
     pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn VcsProvider>> {
         let _ = self.config.as_ref();
-        resolve_vcs_provider(&VcsProviderConfig::new("git2"))
+        crate::di::vcs::default_vcs_provider()
     }
 
+    /// Resolves the VCS provider from an override config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
     pub fn resolve_from_override(
         &self,
         override_config: &VcsProviderConfig,
@@ -415,13 +431,21 @@ pub struct FileSystemProviderResolver {
     config: Arc<AppConfig>,
 }
 
-#[allow(missing_docs, clippy::missing_errors_doc)]
+#[allow(missing_docs)]
 impl FileSystemProviderResolver {
+    /// Resolves the file system provider from application config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
     pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn FileSystemProvider>> {
         let _ = self.config.as_ref();
         resolve_file_system_provider(&FileSystemProviderConfig::new("local"))
     }
 
+    /// Resolves the file system provider from an override config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
     pub fn resolve_from_override(
         &self,
         override_config: &FileSystemProviderConfig,
@@ -441,13 +465,21 @@ pub struct TaskRunnerProviderResolver {
     config: Arc<AppConfig>,
 }
 
-#[allow(missing_docs, clippy::missing_errors_doc)]
+#[allow(missing_docs)]
 impl TaskRunnerProviderResolver {
+    /// Resolves the task runner provider from application config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
     pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn TaskRunnerProvider>> {
         let _ = self.config.as_ref();
         resolve_task_runner_provider(&TaskRunnerProviderConfig::new("tokio"))
     }
 
+    /// Resolves the task runner provider from an override config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
     pub fn resolve_from_override(
         &self,
         override_config: &TaskRunnerProviderConfig,
