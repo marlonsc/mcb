@@ -147,3 +147,46 @@ macro_rules! template_page_with_path {
         }
     };
 }
+
+/// Generate a handler constructor that extracts dependencies from `AppContext`.
+///
+/// This macro eliminates boilerplate `pub fn new(...)` constructors by automatically
+/// generating them from a list of field names and their types.
+///
+/// # Example
+///
+/// ```ignore
+/// handler_new!(MyHandler {
+///     repo: Arc<dyn MyRepository>,
+///     service: Arc<dyn MyService>,
+/// });
+/// ```
+///
+/// Expands to:
+///
+/// ```ignore
+/// impl MyHandler {
+///     pub fn new(repo: Arc<dyn MyRepository>, service: Arc<dyn MyService>) -> Self {
+///         Self {
+///             repo,
+///             service,
+///         }
+///     }
+/// }
+/// ```
+macro_rules! handler_new {
+    (
+        $handler_name:ident {
+            $($field:ident: $field_ty:ty),* $(,)?
+        }
+    ) => {
+        impl $handler_name {
+            /// Create a new handler with the given dependencies.
+            pub fn new($($field: $field_ty),*) -> Self {
+                Self {
+                    $($field),*
+                }
+            }
+        }
+    };
+}

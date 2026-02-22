@@ -26,13 +26,13 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
 
-use ignore::WalkBuilder;
 use mcb_domain::constants::{INDEXING_STATUS_COMPLETED, INDEXING_STATUS_STARTED};
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::{
-    ContextServiceInterface, EventBusProvider, FileHashRepository, IndexingOperationsInterface,
-    IndexingResult, IndexingServiceInterface, IndexingStatus, LanguageChunkingProvider,
+    ContextServiceInterface, EventBusProvider, FileHashRepository, FileSystemProvider,
+    IndexingOperationsInterface, IndexingResult, IndexingServiceInterface, IndexingStatus,
+    LanguageChunkingProvider, TaskRunnerProvider,
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
 use tracing::{error, info, warn};
@@ -102,11 +102,14 @@ pub struct IndexingServiceImpl {
     language_chunker: Arc<dyn LanguageChunkingProvider>,
     indexing_ops: Arc<dyn IndexingOperationsInterface>,
     event_bus: Arc<dyn EventBusProvider>,
+    file_system_provider: Arc<dyn FileSystemProvider>,
+    task_runner_provider: Arc<dyn TaskRunnerProvider>,
     file_hash_repository: Option<Arc<dyn FileHashRepository>>,
     supported_extensions: Vec<String>,
 }
 
 /// `IndexingServiceDeps` struct.
+#[allow(missing_docs)]
 pub struct IndexingServiceDeps {
     /// Service for Context operations
     pub context_service: Arc<dyn ContextServiceInterface>,
@@ -116,6 +119,8 @@ pub struct IndexingServiceDeps {
     pub indexing_ops: Arc<dyn IndexingOperationsInterface>,
     /// Event bus
     pub event_bus: Arc<dyn EventBusProvider>,
+    pub file_system_provider: Arc<dyn FileSystemProvider>,
+    pub task_runner_provider: Arc<dyn TaskRunnerProvider>,
     /// Supported file extensions
     pub supported_extensions: Vec<String>,
 }
@@ -139,6 +144,8 @@ impl IndexingServiceImpl {
         language_chunker: Arc<dyn LanguageChunkingProvider>,
         indexing_ops: Arc<dyn IndexingOperationsInterface>,
         event_bus: Arc<dyn EventBusProvider>,
+        file_system_provider: Arc<dyn FileSystemProvider>,
+        task_runner_provider: Arc<dyn TaskRunnerProvider>,
         supported_extensions: Vec<String>,
     ) -> Self {
         Self {
@@ -146,6 +153,8 @@ impl IndexingServiceImpl {
             language_chunker,
             indexing_ops,
             event_bus,
+            file_system_provider,
+            task_runner_provider,
             file_hash_repository: None,
             supported_extensions: Self::normalize_supported_extensions(supported_extensions),
         }
@@ -163,6 +172,8 @@ impl IndexingServiceImpl {
             language_chunker: service.language_chunker,
             indexing_ops: service.indexing_ops,
             event_bus: service.event_bus,
+            file_system_provider: service.file_system_provider,
+            task_runner_provider: service.task_runner_provider,
             file_hash_repository: Some(file_hash_repository),
             supported_extensions: Self::normalize_supported_extensions(
                 service.supported_extensions,
@@ -185,31 +196,32 @@ impl IndexingServiceImpl {
         progress: &mut IndexingProgress,
     ) -> Vec<std::path::PathBuf> {
         let mut files = Vec::new();
-        let walker = WalkBuilder::new(path)
-            .hidden(false)
-            .filter_entry(|entry| {
-                if !entry.file_type().is_some_and(|ft| ft.is_dir()) {
-                    return true;
-                }
+        let mut dirs = vec![path.to_path_buf()];
 
-                entry
-                    .file_name()
-                    .to_str()
-                    .is_none_or(|name| !SKIP_DIRS.contains(&name))
-            })
-            .build();
+        while let Some(dir) = dirs.pop() {
+            match self.file_system_provider.read_dir_entries(&dir).await {
+                Ok(entries) => {
+                    for entry in entries {
+                        if entry.is_dir {
+                            let should_skip = entry
+                                .path
+                                .file_name()
+                                .and_then(|n| n.to_str())
+                                .is_some_and(|name| SKIP_DIRS.contains(&name));
 
-        for entry_result in walker {
-            match entry_result {
-                Ok(entry) => {
-                    if entry.file_type().is_some_and(|ft| ft.is_file())
-                        && self.is_supported_file(entry.path())
-                    {
-                        files.push(entry.path().to_path_buf());
+                            if !should_skip {
+                                dirs.push(entry.path);
+                            }
+                            continue;
+                        }
+
+                        if entry.is_file && self.is_supported_file(&entry.path) {
+                            files.push(entry.path);
+                        }
                     }
                 }
                 Err(e) => {
-                    progress.record_error("Failed to read directory entry", path, e);
+                    progress.record_error("Failed to read directory entries", &dir, e);
                 }
             }
         }
@@ -286,9 +298,13 @@ impl IndexingServiceInterface for IndexingServiceImpl {
 
         // Fire-and-forget: caller gets operation_id immediately, polling for completion.
         // Sync execution path available via run_indexing_task() directly in tests.
-        let _handle = tokio::spawn(async move {
+        let task = Box::pin(async move {
             Self::run_indexing_task(service, files, workspace_root, collection_id, op_id).await;
         });
+
+        if let Err(e) = self.task_runner_provider.spawn(task) {
+            warn!("Failed to spawn indexing background task: {}", e);
+        }
 
         // Return immediately with operation_id
         Ok(IndexingResult {
@@ -424,19 +440,16 @@ impl IndexingServiceImpl {
             .update_progress(operation_id, Some(relative_path.clone()), index);
 
         // Read file content
-        let content = std::fs::read_to_string(file_path)
-            .map_err(|e| mcb_domain::error::Error::internal(format!("Failed to read file: {e}")))?;
+        let content = self.file_system_provider.read_to_string(file_path).await?;
 
         // Incremental check using file hashes
         let current_hash = mcb_domain::utils::compute_content_hash(&content);
-        #[allow(clippy::collapsible_if)]
-        if let Some(repo) = &self.file_hash_repository {
-            if !repo
+        if let Some(repo) = &self.file_hash_repository
+            && !repo
                 .has_changed(&collection.to_string(), &relative_path, &current_hash)
                 .await?
-            {
-                return Ok(ProcessResult::Skipped);
-            }
+        {
+            return Ok(ProcessResult::Skipped);
         }
 
         // Generate semantic chunks

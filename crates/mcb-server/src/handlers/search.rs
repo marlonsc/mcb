@@ -35,18 +35,12 @@ pub struct SearchHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }
 
-impl SearchHandler {
-    /// Create a new `SearchHandler`.
-    pub fn new(
-        search_service: Arc<dyn SearchServiceInterface>,
-        memory_service: Arc<dyn MemoryServiceInterface>,
-    ) -> Self {
-        Self {
-            search_service,
-            memory_service,
-        }
-    }
+handler_new!(SearchHandler {
+    search_service: Arc<dyn SearchServiceInterface>,
+    memory_service: Arc<dyn MemoryServiceInterface>,
+});
 
+impl SearchHandler {
     /// Handle a search tool request.
     ///
     /// # Errors

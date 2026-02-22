@@ -112,147 +112,104 @@ macro_rules! define_id {
     };
 }
 
-/// Define an entity with `id` and `created_at` fields.
+/// Define an entity with a selected set of shared fields.
 #[macro_export]
-macro_rules! define_entity_id_created {
-    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
-        $(#[$meta])*
+macro_rules! define_entity {
+    ($name:ident { $($field:ident),* $(,)? }) => {
+        define_entity! { pub struct $name { $($field),* } {} }
+    };
+    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($field:ident),* $(,)? } { $($body:tt)* }) => {
+        define_entity!(
+            @collect
+            [$(#[$meta])*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            []
+            $($field),*
+        );
+    };
+    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*]) => {
+        $($meta)*
         $vis struct $name {
-            /// Unique identifier for the entity.
-            pub id: String,
             $($body)*
-            /// Timestamp when the entity was created (Unix epoch).
-            pub created_at: i64,
+            $($shared)*
         }
     };
-}
-
-/// Define an entity with `id`, `created_at`, and `updated_at` fields.
-#[macro_export]
-macro_rules! define_entity_id_audited {
-    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
-        $(#[$meta])*
-        $vis struct $name {
-            /// Unique identifier for the entity.
-            pub id: String,
-            $($body)*
-            /// Timestamp when the entity was created (Unix epoch).
-            pub created_at: i64,
-            /// Timestamp when the entity was last updated (Unix epoch).
-            pub updated_at: i64,
-        }
+    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] id $(, $rest:ident)*) => {
+        define_entity!(
+            @collect
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [
+                $($shared)*
+                /// Unique identifier for the entity.
+                pub id: String,
+            ]
+            $($rest),*
+        );
     };
-}
-
-/// Define an entity with `id`, `org_id`, and `created_at` fields.
-#[macro_export]
-macro_rules! define_entity_org_created {
-    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
-        $(#[$meta])*
-        $vis struct $name {
-            /// Unique identifier for the entity.
-            pub id: String,
-            $($body)*
-            /// Organization identifier for tenant isolation.
-            pub org_id: String,
-            /// Timestamp when the entity was created (Unix epoch).
-            pub created_at: i64,
-        }
+    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] org_id $(, $rest:ident)*) => {
+        define_entity!(
+            @collect
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [
+                $($shared)*
+                /// Organization identifier for tenant isolation.
+                pub org_id: String,
+            ]
+            $($rest),*
+        );
     };
-}
-
-/// Define an entity with `id`, `org_id`, `created_at`, and `updated_at` fields.
-#[macro_export]
-macro_rules! define_entity_org_audited {
-    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
-        $(#[$meta])*
-        $vis struct $name {
-            /// Unique identifier for the entity.
-            pub id: String,
-            $($body)*
-            /// Organization identifier for tenant isolation.
-            pub org_id: String,
-            /// Timestamp when the entity was created (Unix epoch).
-            pub created_at: i64,
-            /// Timestamp when the entity was last updated (Unix epoch).
-            pub updated_at: i64,
-        }
+    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] project_id $(, $rest:ident)*) => {
+        define_entity!(
+            @collect
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [
+                $($shared)*
+                /// Project identifier the entity belongs to.
+                pub project_id: String,
+            ]
+            $($rest),*
+        );
     };
-}
-
-/// Define an entity with `id`, `org_id`, `project_id`, and `created_at` fields.
-#[macro_export]
-macro_rules! define_entity_project_created {
-    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
-        $(#[$meta])*
-        $vis struct $name {
-            /// Unique identifier for the entity.
-            pub id: String,
-            $($body)*
-            /// Project identifier the entity belongs to.
-            pub project_id: String,
-            /// Timestamp when the entity was created (Unix epoch).
-            pub created_at: i64,
-        }
+    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] created_at $(, $rest:ident)*) => {
+        define_entity!(
+            @collect
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [
+                $($shared)*
+                /// Timestamp when the entity was created (Unix epoch).
+                pub created_at: i64,
+            ]
+            $($rest),*
+        );
     };
-}
-
-/// Define an entity with `id`, `project_id`, `created_at`, and `updated_at` fields.
-#[macro_export]
-macro_rules! define_entity_project_audited {
-    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
-        $(#[$meta])*
-        $vis struct $name {
-            /// Unique identifier for the entity.
-            pub id: String,
-            $($body)*
-            /// Project identifier the entity belongs to.
-            pub project_id: String,
-            /// Timestamp when the entity was created (Unix epoch).
-            pub created_at: i64,
-            /// Timestamp when the entity was last updated (Unix epoch).
-            pub updated_at: i64,
-        }
-    };
-}
-
-/// Define an entity with `id`, `org_id`, `project_id`, `created_at`, and `updated_at` fields.
-#[macro_export]
-macro_rules! define_entity_org_project_audited {
-    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
-        $(#[$meta])*
-        $vis struct $name {
-            /// Unique identifier for the entity.
-            pub id: String,
-            $($body)*
-            /// Organization identifier for tenant isolation.
-            pub org_id: String,
-            /// Project identifier the entity belongs to.
-            pub project_id: String,
-            /// Timestamp when the entity was created (Unix epoch).
-            pub created_at: i64,
-            /// Timestamp when the entity was last updated (Unix epoch).
-            pub updated_at: i64,
-        }
-    };
-}
-
-/// Define an entity with `id`, `org_id`, `project_id`, and `created_at` fields.
-#[macro_export]
-macro_rules! define_entity_org_project_created {
-    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($body:tt)* }) => {
-        $(#[$meta])*
-        $vis struct $name {
-            /// Unique identifier for the entity.
-            pub id: String,
-            $($body)*
-            /// Organization identifier for tenant isolation.
-            pub org_id: String,
-            /// Project identifier the entity belongs to.
-            pub project_id: String,
-            /// Timestamp when the entity was created (Unix epoch).
-            pub created_at: i64,
-        }
+    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] updated_at $(, $rest:ident)*) => {
+        define_entity!(
+            @collect
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [
+                $($shared)*
+                /// Timestamp when the entity was last updated (Unix epoch).
+                pub updated_at: i64,
+            ]
+            $($rest),*
+        );
     };
 }
 

@@ -13,10 +13,10 @@ use serde::{Deserialize, Serialize};
 // Worktree
 // ---------------------------------------------------------------------------
 
-crate::define_entity_id_audited! {
+crate::define_entity! {
     /// A git worktree checkout associated with a repository and branch.
     #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-    pub struct Worktree {
+    pub struct Worktree { id, created_at, updated_at } {
         /// Repository this worktree belongs to.
         pub repository_id: String,
         /// Branch checked out in this worktree.

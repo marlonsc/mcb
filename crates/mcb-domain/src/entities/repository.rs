@@ -48,10 +48,10 @@ impl VcsType {
 // Repository
 // ---------------------------------------------------------------------------
 
-crate::define_entity_org_project_audited! {
+crate::define_entity! {
     /// A tracked repository registered in the platform.
     #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-    pub struct Repository {
+    pub struct Repository { id, org_id, project_id, created_at, updated_at } {
         /// Display name of the repository.
         pub name: String,
         /// Remote URL of the repository (e.g. <https://github.com/user/repo.git>).
@@ -67,10 +67,10 @@ crate::define_entity_org_project_audited! {
 // Branch
 // ---------------------------------------------------------------------------
 
-crate::define_entity_org_created! {
+crate::define_entity! {
     /// A tracked branch within a repository.
     #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-    pub struct Branch {
+    pub struct Branch { id, org_id, created_at } {
         /// Repository this branch belongs to.
         pub repository_id: String,
         /// Branch name (e.g. "main", "feat/data-model-v2").

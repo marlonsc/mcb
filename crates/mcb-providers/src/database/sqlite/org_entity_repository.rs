@@ -123,14 +123,14 @@ impl OrgRegistry for SqliteOrgEntityRepository {
 
     /// Retrieves an organization by ID.
     async fn get_org(&self, id: &str) -> Result<Organization> {
-        query_helpers::query_one(
+        let org = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM organizations WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_org,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "Organization", id))
+        .await?;
+        Error::not_found_or(org, "Organization", id)
     }
 
     /// Lists all organizations.
@@ -196,19 +196,19 @@ impl UserRegistry for SqliteOrgEntityRepository {
 
     /// Retrieves a user by ID.
     async fn get_user(&self, id: &str) -> Result<User> {
-        query_helpers::query_one(
+        let user = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM users WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_user,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "User", id))
+        .await?;
+        Error::not_found_or(user, "User", id)
     }
 
     /// Retrieves a user by email within an organization.
     async fn get_user_by_email(&self, org_id: &str, email: &str) -> Result<User> {
-        query_helpers::query_one(
+        let user = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM users WHERE org_id = ? AND email = ?",
             &[
@@ -217,8 +217,8 @@ impl UserRegistry for SqliteOrgEntityRepository {
             ],
             row_to_user,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "User", email))
+        .await?;
+        Error::not_found_or(user, "User", email)
     }
 
     /// Lists users in an organization.
@@ -282,14 +282,14 @@ impl TeamRegistry for SqliteOrgEntityRepository {
 
     /// Retrieves a team by ID.
     async fn get_team(&self, id: &str) -> Result<Team> {
-        query_helpers::query_one(
+        let team = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM teams WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_team,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "Team", id))
+        .await?;
+        Error::not_found_or(team, "Team", id)
     }
 
     /// Lists teams in an organization.
@@ -384,14 +384,14 @@ impl ApiKeyRegistry for SqliteOrgEntityRepository {
 
     /// Retrieves an API key by ID.
     async fn get_api_key(&self, id: &str) -> Result<ApiKey> {
-        query_helpers::query_one(
+        let key = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM api_keys WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_api_key,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "ApiKey", id))
+        .await?;
+        Error::not_found_or(key, "ApiKey", id)
     }
 
     /// Lists API keys for an organization.

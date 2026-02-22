@@ -63,7 +63,7 @@ impl ProjectRepository for SqliteProjectRepository {
 
     /// Retrieves a project by ID.
     async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Project> {
-        query_helpers::query_one(
+        let proj = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND id = ? LIMIT 1",
             &[
@@ -72,13 +72,13 @@ impl ProjectRepository for SqliteProjectRepository {
             ],
             row_convert::row_to_project,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "Project", id))
+        .await?;
+        Error::not_found_or(proj, "Project", id)
     }
 
     /// Retrieves a project by name.
     async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Project> {
-        query_helpers::query_one(
+        let proj = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND name = ? LIMIT 1",
             &[
@@ -87,13 +87,13 @@ impl ProjectRepository for SqliteProjectRepository {
             ],
             row_convert::row_to_project,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "Project", name))
+        .await?;
+        Error::not_found_or(proj, "Project", name)
     }
 
     /// Retrieves a project by path.
     async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Project> {
-        query_helpers::query_one(
+        let proj = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM projects WHERE org_id = ? AND path = ? LIMIT 1",
             &[
@@ -102,8 +102,8 @@ impl ProjectRepository for SqliteProjectRepository {
             ],
             row_convert::row_to_project,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "Project", path))
+        .await?;
+        Error::not_found_or(proj, "Project", path)
     }
 
     /// Lists all projects in an organization.

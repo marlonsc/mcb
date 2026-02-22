@@ -24,23 +24,14 @@ pub struct EntityHandler {
     org: Arc<OrgEntityHandler>,
 }
 
-impl EntityHandler {
-    /// Create a new unified entity handler.
-    #[must_use]
-    pub fn new(
-        vcs: Arc<VcsEntityHandler>,
-        plan: Arc<PlanEntityHandler>,
-        issue: Arc<IssueEntityHandler>,
-        org: Arc<OrgEntityHandler>,
-    ) -> Self {
-        Self {
-            vcs,
-            plan,
-            issue,
-            org,
-        }
-    }
+handler_new!(EntityHandler {
+    vcs: Arc<VcsEntityHandler>,
+    plan: Arc<PlanEntityHandler>,
+    issue: Arc<IssueEntityHandler>,
+    org: Arc<OrgEntityHandler>,
+});
 
+impl EntityHandler {
     /// Route an `entity` tool call to the matching legacy entity handler.
     ///
     /// # Errors

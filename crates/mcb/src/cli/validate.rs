@@ -1,6 +1,6 @@
 //! Validate command - runs architecture validation
-#![allow(clippy::print_stdout)]
 
+use std::io::Write;
 use std::path::PathBuf;
 
 use clap::Args;
@@ -112,7 +112,7 @@ impl ValidateArgs {
     /// Print report as JSON
     fn print_json(report: &mcb_validate::GenericReport) -> Result<(), Box<dyn std::error::Error>> {
         let json = serde_json::to_string_pretty(report)?;
-        println!("{json}");
+        writeln!(std::io::stdout(), "{json}")?;
         Ok(())
     }
 
@@ -150,7 +150,7 @@ impl ValidateArgs {
         }
 
         if has_violations {
-            println!();
+            let _ = writeln!(std::io::stdout());
         }
     }
 
@@ -167,26 +167,34 @@ impl ValidateArgs {
         let file_display = violation.file.as_deref().unwrap_or("-");
         let line = violation.line.unwrap_or(0);
 
-        println!(
+        let _ = writeln!(
+            std::io::stdout(),
             "[{}] {}: {} ({}:{})",
-            violation.severity, violation.id, violation.message, file_display, line
+            violation.severity,
+            violation.id,
+            violation.message,
+            file_display,
+            line
         );
         if let Some(ref suggestion) = violation.suggestion {
-            println!("  → {suggestion}");
+            let _ = writeln!(std::io::stdout(), "  → {suggestion}");
         }
     }
 
     fn print_summary(&self, report: &mcb_validate::GenericReport) {
-        println!(
+        let _ = writeln!(
+            std::io::stdout(),
             "Validation complete: {} error(s), {} warning(s), {} info(s)",
-            report.summary.errors, report.summary.warnings, report.summary.infos
+            report.summary.errors,
+            report.summary.warnings,
+            report.summary.infos
         );
 
         // Print category breakdown (unless quick mode)
         if !self.quick && !report.summary.by_category.is_empty() {
-            println!("\nBy category:");
+            let _ = writeln!(std::io::stdout(), "\nBy category:");
             for (category, count) in &report.summary.by_category {
-                println!("  {category}: {count}");
+                let _ = writeln!(std::io::stdout(), "  {category}: {count}");
             }
         }
     }

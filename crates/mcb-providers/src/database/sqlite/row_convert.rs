@@ -13,6 +13,13 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::SqlRow;
 use mcb_domain::schema::COL_OBSERVATION_TYPE;
 
+/// Trait for converting a database row to an entity type.
+#[allow(dead_code)]
+pub trait FromRow: Sized {
+    /// Convert a database row to an instance of this type.
+    fn from_row(row: &dyn SqlRow) -> Result<Self>;
+}
+
 /// Build an `Observation` from a port row.
 pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
     let tags: Vec<String> = json_vec(row, "tags", "invalid observation tags JSON")?;
@@ -177,4 +184,52 @@ pub fn row_to_label(row: &dyn SqlRow) -> Result<IssueLabel> {
         color: req_str(row, "color")?,
         created_at: req_i64(row, "created_at")?,
     })
+}
+
+impl FromRow for Observation {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        row_to_observation(row)
+    }
+}
+
+impl FromRow for SessionSummary {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        row_to_session_summary(row)
+    }
+}
+
+impl FromRow for AgentSession {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        row_to_agent_session(row)
+    }
+}
+
+impl FromRow for Checkpoint {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        row_to_checkpoint(row)
+    }
+}
+
+impl FromRow for Project {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        row_to_project(row)
+    }
+}
+
+impl FromRow for ProjectIssue {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        row_to_issue(row)
+    }
+}
+
+impl FromRow for IssueComment {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        row_to_comment(row)
+    }
+}
+
+impl FromRow for IssueLabel {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        row_to_label(row)
+    }
 }

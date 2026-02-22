@@ -24,12 +24,11 @@ pub struct ValidateHandler {
     validation_service: Arc<dyn ValidationServiceInterface>,
 }
 
-impl ValidateHandler {
-    /// Create a new `ValidateHandler`.
-    pub fn new(validation_service: Arc<dyn ValidationServiceInterface>) -> Self {
-        Self { validation_service }
-    }
+handler_new!(ValidateHandler {
+    validation_service: Arc<dyn ValidationServiceInterface>,
+});
 
+impl ValidateHandler {
     /// Handle a validate tool request.
     ///
     /// # Errors

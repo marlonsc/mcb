@@ -35,12 +35,20 @@ impl DatabaseProviderResolver {
     ///
     /// Returns an error if the provider resolution or database connection fails.
     pub async fn resolve_and_connect(&self, path: &Path) -> Result<Arc<dyn DatabaseExecutor>> {
-        let provider_name = self.config.providers.database.provider.as_str();
-
-        let config = DatabaseProviderConfig::new(provider_name);
-        let provider = self.resolve_from_override(&config)?;
+        let provider = self.resolve_provider()?;
 
         provider.connect(path).await
+    }
+
+    /// Resolve the configured database provider instance from linkme registry.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the configured provider name cannot be resolved.
+    pub fn resolve_provider(&self) -> Result<Arc<dyn DatabaseProvider>> {
+        let provider_name = self.config.providers.database.provider.as_str();
+        let config = DatabaseProviderConfig::new(provider_name);
+        self.resolve_from_override(&config)
     }
 
     /// Resolve a provider from specific configuration

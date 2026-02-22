@@ -424,15 +424,12 @@ impl MilvusVectorStoreProvider {
         ]
     }
 
-    #[allow(clippy::str_to_string)] // False positive: iter yields &i64, not &str
     fn parse_milvus_ids(result: &milvus::proto::milvus::MutationResult) -> Vec<String> {
         match &result.i_ds {
             Some(ids) => match &ids.id_field {
-                Some(milvus::proto::schema::i_ds::IdField::IntId(int_ids)) => int_ids
-                    .data
-                    .iter()
-                    .map(std::string::ToString::to_string)
-                    .collect(),
+                Some(milvus::proto::schema::i_ds::IdField::IntId(int_ids)) => {
+                    int_ids.data.iter().map(|id: &i64| id.to_string()).collect()
+                }
                 Some(milvus::proto::schema::i_ds::IdField::StrId(str_ids)) => str_ids.data.clone(),
                 None => Vec::new(),
             },

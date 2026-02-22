@@ -124,7 +124,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     /// Retrieves a repository by ID.
     async fn get_repository(&self, org_id: &str, id: &str) -> Result<Repository> {
-        query_helpers::query_one(
+        let repo = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM repositories WHERE org_id = ? AND id = ?",
             &[
@@ -133,8 +133,8 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             ],
             row_to_repository,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "Repository", id))
+        .await?;
+        Error::not_found_or(repo, "Repository", id)
     }
 
     /// Lists repositories in an organization for a project.
@@ -225,14 +225,14 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     /// Retrieves a branch by ID.
     async fn get_branch(&self, id: &str) -> Result<Branch> {
-        query_helpers::query_one(
+        let branch = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM branches WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_branch,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "Branch", id))
+        .await?;
+        Error::not_found_or(branch, "Branch", id)
     }
 
     /// Lists branches in a repository.
@@ -317,14 +317,14 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     /// Retrieves a worktree by ID.
     async fn get_worktree(&self, id: &str) -> Result<Worktree> {
-        query_helpers::query_one(
+        let wt = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM worktrees WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_worktree,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "Worktree", id))
+        .await?;
+        Error::not_found_or(wt, "Worktree", id)
     }
 
     /// Lists worktrees in a repository.
@@ -406,14 +406,14 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
 
     /// Retrieves an assignment by ID.
     async fn get_assignment(&self, id: &str) -> Result<AgentWorktreeAssignment> {
-        query_helpers::query_one(
+        let asgn = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM agent_worktree_assignments WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_assignment,
         )
-        .await
-        .and_then(|opt| Error::not_found_or(opt, "Assignment", id))
+        .await?;
+        Error::not_found_or(asgn, "Assignment", id)
     }
 
     /// Lists assignments for a worktree.

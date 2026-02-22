@@ -391,24 +391,37 @@ impl Error {
         }
     }
 
-    /// Convert an `Option<T>` to a `Result<T>` with a "not found" error.
+    /// Convert an `Option<T>` to a `Result<T>` with a not found error
     ///
-    /// This helper consolidates the common pattern of `ok_or_else(|| Error::not_found(...))`.
+    /// This helper consolidates the common pattern of converting an optional value
+    /// to a result, returning a not found error if the value is `None`.
+    ///
+    /// # Arguments
+    ///
+    /// * `opt` - The optional value to convert
+    /// * `entity_type` - The type of entity that was not found (e.g., "Repository", "Branch")
+    /// * `id` - The identifier of the entity that was not found
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(value)` if `opt` is `Some(value)`
+    /// * `Err(Error::not_found(...))` if `opt` is `None`
     ///
     /// # Errors
     ///
-    /// Returns `Error::NotFound` if the option is `None`.
+    /// Returns `Error::not_found` if the option is `None`.
     ///
     /// # Example
     ///
     /// ```ignore
-    /// let entity = db.find_by_id(id)
-    ///     .ok_or_else(|| Error::not_found(format!("Entity {id}")))?;
+    /// let repo = find_repo(id)?;
+    /// let branch = repo.get_branch(name)
+    ///     .ok_or_else(|| Error::not_found(format!("Branch with id {name} not found")))?;
     ///
-    /// // Becomes:
-    /// let entity = Error::not_found_or(db.find_by_id(id), "Entity", id)?;
+    /// // Can be simplified to:
+    /// let branch = Error::not_found_or(repo.get_branch(name), "Branch", name)?;
     /// ```
     pub fn not_found_or<T>(opt: Option<T>, entity_type: &str, id: &str) -> Result<T> {
-        opt.ok_or_else(|| Error::not_found(format!("{entity_type} {id}")))
+        opt.ok_or_else(|| Error::not_found(format!("{entity_type} with id {id} not found")))
     }
 }

@@ -59,11 +59,11 @@ pub use providers::vector_store::{VectorStoreAdmin, VectorStoreBrowser};
 pub use providers::{
     CacheEntryConfig, CacheProvider, CacheStats, ComplexityAnalyzer, ComplexityFinding,
     CryptoProvider, DEFAULT_CACHE_NAMESPACE, DEFAULT_CACHE_TTL_SECS, DeadCodeDetector,
-    DeadCodeFinding, EmbeddingProvider, EncryptedData, FileMetrics, FunctionMetrics,
-    HalsteadMetrics, HttpClientConfig, HttpClientProvider, HybridSearchProvider,
-    HybridSearchResult, LanguageChunkingProvider, MetricLabels, MetricsAnalysisProvider,
-    MetricsError, MetricsProvider, MetricsResult, ProjectDetector, ProjectDetectorConfig,
-    ProjectDetectorEntry, ProviderConfigManagerInterface, TdgFinding, TdgScorer, ValidationOptions,
+    DeadCodeFinding, DirEntry, EmbeddingProvider, EncryptedData, FileMetrics, FileSystemProvider,
+    FunctionMetrics, HalsteadMetrics, HybridSearchProvider, HybridSearchResult,
+    LanguageChunkingProvider, MetricLabels, MetricsAnalysisProvider, MetricsError, MetricsProvider,
+    MetricsResult, ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
+    ProviderConfigManagerInterface, TaskRunnerProvider, TdgFinding, TdgScorer, ValidationOptions,
     ValidationProvider, ValidatorInfo, VcsProvider, VectorStoreProvider,
 };
 

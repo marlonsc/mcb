@@ -62,8 +62,6 @@ futures = { workspace = true }
 # Plugin registration
 linkme = { workspace = true }
 
-# HTTP Client types for providers
-reqwest = { workspace = true }
 toml = { workspace = true, optional = true }
 
 [features]

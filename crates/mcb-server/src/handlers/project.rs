@@ -18,12 +18,11 @@ pub struct ProjectHandler {
     repo: Arc<dyn ProjectRepository>,
 }
 
-impl ProjectHandler {
-    /// Create a new project handler backed by a repository implementation.
-    pub fn new(repo: Arc<dyn ProjectRepository>) -> Self {
-        Self { repo }
-    }
+handler_new!(ProjectHandler {
+    repo: Arc<dyn ProjectRepository>,
+});
 
+impl ProjectHandler {
     /// Route an incoming `project` tool call to the appropriate operation.
     ///
     /// # Errors

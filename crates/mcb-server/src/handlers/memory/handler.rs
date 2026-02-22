@@ -30,12 +30,11 @@ pub struct MemoryHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }
 
-impl MemoryHandler {
-    /// Creates a new `MemoryHandler` with the given memory service.
-    pub fn new(memory_service: Arc<dyn MemoryServiceInterface>) -> Self {
-        Self { memory_service }
-    }
+handler_new!(MemoryHandler {
+    memory_service: Arc<dyn MemoryServiceInterface>,
+});
 
+impl MemoryHandler {
     /// Handles a memory tool invocation.
     ///
     /// # Errors

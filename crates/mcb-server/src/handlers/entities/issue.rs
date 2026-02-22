@@ -22,12 +22,11 @@ pub struct IssueEntityHandler {
     repo: Arc<dyn IssueEntityRepository>,
 }
 
-impl IssueEntityHandler {
-    /// Create a new issue entity handler backed by a repository implementation.
-    pub fn new(repo: Arc<dyn IssueEntityRepository>) -> Self {
-        Self { repo }
-    }
+handler_new!(IssueEntityHandler {
+    repo: Arc<dyn IssueEntityRepository>,
+});
 
+impl IssueEntityHandler {
     /// Route an incoming `issue_entity` tool call to the appropriate CRUD operation.
     ///
     /// # Errors

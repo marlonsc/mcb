@@ -61,6 +61,8 @@ pub fn create_test_dependencies(
         language_chunker: app_context.language_handle().get(),
         indexing_ops: app_context.indexing(),
         event_bus: app_context.event_bus(),
+        file_system_provider: app_context.file_system_provider(),
+        task_runner_provider: app_context.task_runner_provider(),
         memory_repository,
         agent_repository,
         file_hash_repository,

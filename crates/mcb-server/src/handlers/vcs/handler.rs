@@ -22,12 +22,11 @@ pub struct VcsHandler {
     vcs_provider: Arc<dyn VcsProvider>,
 }
 
-impl VcsHandler {
-    /// Create a new `VcsHandler`.
-    pub fn new(vcs_provider: Arc<dyn VcsProvider>) -> Self {
-        Self { vcs_provider }
-    }
+handler_new!(VcsHandler {
+    vcs_provider: Arc<dyn VcsProvider>,
+});
 
+impl VcsHandler {
     /// Handle a VCS tool request.
     ///
     /// # Errors

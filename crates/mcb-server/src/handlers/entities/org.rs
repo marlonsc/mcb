@@ -21,12 +21,11 @@ pub struct OrgEntityHandler {
     repo: Arc<dyn OrgEntityRepository>,
 }
 
-impl OrgEntityHandler {
-    /// Create a new handler backed by the given repository.
-    pub fn new(repo: Arc<dyn OrgEntityRepository>) -> Self {
-        Self { repo }
-    }
+handler_new!(OrgEntityHandler {
+    repo: Arc<dyn OrgEntityRepository>,
+});
 
+impl OrgEntityHandler {
     /// Route an incoming `org_entity` tool call to the appropriate CRUD operation.
     ///
     /// # Errors

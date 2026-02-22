@@ -24,17 +24,18 @@ fn get_mcb_path() -> PathBuf {
     }
 
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    let debug_path = PathBuf::from(manifest_dir).join("../../target/debug/mcb");
+    let bin = format!("mcb{}", std::env::consts::EXE_SUFFIX);
+    let debug_path = PathBuf::from(manifest_dir).join(format!("../../target/debug/{bin}"));
     if debug_path.exists() {
         return debug_path;
     }
 
-    let release_path = PathBuf::from(manifest_dir).join("../../target/release/mcb");
+    let release_path = PathBuf::from(manifest_dir).join(format!("../../target/release/{bin}"));
     if release_path.exists() {
         release_path
     } else {
         unreachable!(
-            "mcb binary not found. Checked CARGO_BIN_EXE_mcb and target/debug|release/mcb from {manifest_dir}"
+            "mcb binary not found. Checked CARGO_BIN_EXE_mcb and target/debug|release/{bin} from {manifest_dir}"
         )
     }
 }

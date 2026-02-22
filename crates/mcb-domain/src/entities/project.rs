@@ -17,10 +17,10 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-crate::define_entity_org_audited! {
+crate::define_entity! {
     /// Registered project in MCB - serves as root entity linking collections, observations, and file hashes.
     #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
-    pub struct Project {
+    pub struct Project { id, org_id, created_at, updated_at } {
         /// Display name of the project.
         pub name: String,
         /// Root filesystem path of the project.
@@ -233,10 +233,10 @@ pub enum DependencyType {
 
 crate::impl_as_str_from_as_ref!(DependencyType);
 
-crate::define_entity_project_audited! {
+crate::define_entity! {
     /// Represents a distinct stage in the project roadmap.
     #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct ProjectPhase {
+    pub struct ProjectPhase { id, project_id, created_at, updated_at } {
         /// Name of the phase.
         pub name: String,
         /// Detailed description of phase objectives.
@@ -252,10 +252,10 @@ crate::define_entity_project_audited! {
     }
 }
 
-crate::define_entity_org_project_audited! {
+crate::define_entity! {
     /// Represents a unit of work, bug, or feature request within a project.
     #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-    pub struct ProjectIssue {
+    pub struct ProjectIssue { id, org_id, project_id, created_at, updated_at } {
         /// User identifier of the issue creator.
         pub created_by: String,
         /// Optional phase this issue belongs to.
@@ -300,10 +300,10 @@ crate::define_entity_org_project_audited! {
     }
 }
 
-crate::define_entity_id_created! {
+crate::define_entity! {
     /// Represents a directed relationship between two issues.
     #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct ProjectDependency {
+    pub struct ProjectDependency { id, created_at } {
         /// Source issue of the relationship.
         pub from_issue_id: String,
         /// Target issue of the relationship.
@@ -313,10 +313,10 @@ crate::define_entity_id_created! {
     }
 }
 
-crate::define_entity_project_created! {
+crate::define_entity! {
     /// Represents a recorded architectural or project decision.
     #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-    pub struct ProjectDecision {
+    pub struct ProjectDecision { id, project_id, created_at } {
         /// Optional issue this decision relates to.
         pub issue_id: Option<String>,
         /// Title of the decision.

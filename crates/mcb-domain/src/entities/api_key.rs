@@ -6,12 +6,12 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-crate::define_entity_org_created! {
+crate::define_entity! {
     /// An API key is a bearer credential scoped to a user within an
     /// organization. Keys can be narrowed by JSON-encoded scopes and
     /// optionally expire. Revocation is tracked via `revoked_at`.
     #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-    pub struct ApiKey {
+    pub struct ApiKey { id, org_id, created_at } {
         /// User identifier this key is associated with.
         pub user_id: String,
         /// Hashed representation of the API key.

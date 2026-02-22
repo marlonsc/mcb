@@ -4,13 +4,13 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-crate::define_entity_org_audited! {
+crate::define_entity! {
     /// Represents a user within the system.
     ///
     /// Users are associated with an organization and have specific roles that
     /// determine their permissions.
     #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-    pub struct User {
+    pub struct User { id, org_id, created_at, updated_at } {
         /// Email address of the user.
         pub email: String,
         /// Name to be displayed for the user.

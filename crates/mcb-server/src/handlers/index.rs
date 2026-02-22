@@ -25,12 +25,11 @@ pub struct IndexHandler {
     indexing_service: Arc<dyn IndexingServiceInterface>,
 }
 
-impl IndexHandler {
-    /// Create a new `IndexHandler`.
-    pub fn new(indexing_service: Arc<dyn IndexingServiceInterface>) -> Self {
-        Self { indexing_service }
-    }
+handler_new!(IndexHandler {
+    indexing_service: Arc<dyn IndexingServiceInterface>,
+});
 
+impl IndexHandler {
     fn validate_request(args: &IndexArgs) -> Result<(PathBuf, CollectionId), McpError> {
         let path_str = args
             .path

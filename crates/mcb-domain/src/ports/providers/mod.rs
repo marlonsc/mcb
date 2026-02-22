@@ -30,8 +30,7 @@ pub mod config;
 pub mod crypto;
 /// Embedding provider port
 pub mod embedding;
-/// HTTP client provider port
-pub mod http;
+pub mod fs;
 /// Hybrid search provider port
 pub mod hybrid_search;
 /// Language chunking provider port
@@ -42,6 +41,8 @@ pub mod metrics;
 pub mod metrics_analysis;
 /// Project detection provider port
 pub mod project_detection;
+/// Background task runner provider port
+pub mod task;
 /// Validation provider port
 pub mod validation;
 /// Version control system provider port
@@ -59,7 +60,7 @@ pub use cache::{
 pub use config::ProviderConfigManagerInterface;
 pub use crypto::{CryptoProvider, EncryptedData};
 pub use embedding::EmbeddingProvider;
-pub use http::{HttpClientConfig, HttpClientProvider};
+pub use fs::{DirEntry, FileSystemProvider};
 pub use hybrid_search::{HybridSearchProvider, HybridSearchResult};
 pub use language_chunking::LanguageChunkingProvider;
 pub use metrics::{MetricLabels, MetricsError, MetricsProvider, MetricsResult};
@@ -67,6 +68,7 @@ pub use metrics_analysis::{
     FileMetrics, FunctionMetrics, HalsteadMetrics, MetricsAnalysisProvider,
 };
 pub use project_detection::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
+pub use task::TaskRunnerProvider;
 pub use validation::{ValidationOptions, ValidationProvider, ValidatorInfo};
 pub use vcs::VcsProvider;
 pub use vector_store::VectorStoreProvider;

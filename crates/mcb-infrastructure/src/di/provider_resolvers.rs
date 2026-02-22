@@ -16,17 +16,23 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use mcb_domain::ports::{
-    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
+    CacheProvider, EmbeddingProvider, EventBusProvider, FileSystemProvider,
+    LanguageChunkingProvider, TaskRunnerProvider, VcsProvider, VectorStoreProvider,
 };
 use mcb_domain::registry::cache::{CacheProviderConfig, resolve_cache_provider};
 use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
+use mcb_domain::registry::event_bus::{EventBusProviderConfig, resolve_event_bus_provider};
+use mcb_domain::registry::fs::{FileSystemProviderConfig, resolve_file_system_provider};
 use mcb_domain::registry::language::{LanguageProviderConfig, resolve_language_provider};
+use mcb_domain::registry::task_runner::{TaskRunnerProviderConfig, resolve_task_runner_provider};
+use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
 use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
 use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 
 use crate::config::AppConfig;
+use crate::config::types::EventBusProvider as InfraEventBusProvider;
 use crate::constants::providers::{
     DEFAULT_DB_CONFIG_NAME, FALLBACK_EMBEDDING_PROVIDER, FALLBACK_VECTOR_STORE_PROVIDER,
 };
@@ -329,6 +335,164 @@ impl LanguageProviderResolver {
     }
 }
 impl_resolver_common!(LanguageProviderResolver);
+
+#[allow(missing_docs)]
+pub struct EventBusProviderResolver {
+    config: Arc<AppConfig>,
+}
+
+#[allow(missing_docs)]
+impl EventBusProviderResolver {
+    /// Resolves the event bus provider from application config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved or configured.
+    pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn EventBusProvider>> {
+        let mut cfg = EventBusProviderConfig::new(
+            match self.config.system.infrastructure.event_bus.provider {
+                InfraEventBusProvider::Tokio => "tokio",
+                InfraEventBusProvider::Nats => "nats",
+            },
+        );
+
+        cfg.extra.insert(
+            "capacity".to_owned(),
+            self.config
+                .system
+                .infrastructure
+                .event_bus
+                .capacity
+                .to_string(),
+        );
+        if let Some(url) = &self.config.system.infrastructure.event_bus.nats_url {
+            cfg.extra.insert("url".to_owned(), url.clone());
+        }
+        if let Some(name) = &self.config.system.infrastructure.event_bus.nats_client_name {
+            cfg.extra.insert("client_name".to_owned(), name.clone());
+        }
+
+        resolve_event_bus_provider(&cfg)
+    }
+
+    /// Resolves the event bus provider from an override config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
+    pub fn resolve_from_override(
+        &self,
+        override_config: &EventBusProviderConfig,
+    ) -> mcb_domain::error::Result<Arc<dyn EventBusProvider>> {
+        resolve_event_bus_provider(override_config)
+    }
+
+    #[must_use]
+    pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
+        mcb_domain::registry::event_bus::list_event_bus_providers()
+    }
+}
+impl_resolver_common!(EventBusProviderResolver);
+
+#[allow(missing_docs)]
+pub struct VcsProviderResolver {
+    config: Arc<AppConfig>,
+}
+
+#[allow(missing_docs)]
+impl VcsProviderResolver {
+    /// Resolves the VCS provider from application config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
+    pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn VcsProvider>> {
+        let _ = self.config.as_ref();
+        crate::di::vcs::default_vcs_provider()
+    }
+
+    /// Resolves the VCS provider from an override config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
+    pub fn resolve_from_override(
+        &self,
+        override_config: &VcsProviderConfig,
+    ) -> mcb_domain::error::Result<Arc<dyn VcsProvider>> {
+        resolve_vcs_provider(override_config)
+    }
+
+    #[must_use]
+    pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
+        mcb_domain::registry::vcs::list_vcs_providers()
+    }
+}
+impl_resolver_common!(VcsProviderResolver);
+
+#[allow(missing_docs)]
+pub struct FileSystemProviderResolver {
+    config: Arc<AppConfig>,
+}
+
+#[allow(missing_docs)]
+impl FileSystemProviderResolver {
+    /// Resolves the file system provider from application config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
+    pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn FileSystemProvider>> {
+        let _ = self.config.as_ref();
+        resolve_file_system_provider(&FileSystemProviderConfig::new("local"))
+    }
+
+    /// Resolves the file system provider from an override config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
+    pub fn resolve_from_override(
+        &self,
+        override_config: &FileSystemProviderConfig,
+    ) -> mcb_domain::error::Result<Arc<dyn FileSystemProvider>> {
+        resolve_file_system_provider(override_config)
+    }
+
+    #[must_use]
+    pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
+        mcb_domain::registry::fs::list_file_system_providers()
+    }
+}
+impl_resolver_common!(FileSystemProviderResolver);
+
+#[allow(missing_docs)]
+pub struct TaskRunnerProviderResolver {
+    config: Arc<AppConfig>,
+}
+
+#[allow(missing_docs)]
+impl TaskRunnerProviderResolver {
+    /// Resolves the task runner provider from application config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
+    pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn TaskRunnerProvider>> {
+        let _ = self.config.as_ref();
+        resolve_task_runner_provider(&TaskRunnerProviderConfig::new("tokio"))
+    }
+
+    /// Resolves the task runner provider from an override config.
+    ///
+    /// # Errors
+    /// Returns an error if the provider cannot be resolved.
+    pub fn resolve_from_override(
+        &self,
+        override_config: &TaskRunnerProviderConfig,
+    ) -> mcb_domain::error::Result<Arc<dyn TaskRunnerProvider>> {
+        resolve_task_runner_provider(override_config)
+    }
+
+    #[must_use]
+    pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
+        mcb_domain::registry::task_runner::list_task_runner_providers()
+    }
+}
+impl_resolver_common!(TaskRunnerProviderResolver);
 
 // ============================================================================
 // Helper Functions
