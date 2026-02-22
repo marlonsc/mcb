@@ -256,7 +256,14 @@ jobs:
         run: bash .github/setup-ci.sh
       - name: Install protoc (Windows)
         if: runner.os == 'Windows'
-        run: choco install protoc -y
+        shell: pwsh
+        env:
+          PROTOC_VERSION: "29.3"
+        run: |
+          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\protoc.zip"
+          Expand-Archive "$env:TEMP\protoc.zip" -DestinationPath "$env:TEMP\protoc" -Force
+          "$env:TEMP\protoc\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ matrix.rust }}
@@ -390,7 +397,14 @@ jobs:
         run: bash .github/setup-ci.sh
       - name: Install protoc (Windows)
         if: runner.os == 'Windows'
-        run: choco install protoc -y
+        shell: pwsh
+        env:
+          PROTOC_VERSION: "29.3"
+        run: |
+          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\protoc.zip"
+          Expand-Archive "$env:TEMP\protoc.zip" -DestinationPath "$env:TEMP\protoc" -Force
+          "$env:TEMP\protoc\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable

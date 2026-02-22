@@ -31,7 +31,15 @@ Darwin)
 	;;
 MINGW* | MSYS* | CYGWIN*)
 	if ! command -v protoc &>/dev/null; then
-		choco install protoc -y --no-progress
+		PROTOC_VERSION="${PROTOC_VERSION:-29.3}"
+		PROTOC_URL="https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-win64.zip"
+		PROTOC_DIR="${TEMP:-/tmp}/protoc"
+		curl -sSfL "$PROTOC_URL" -o "${TEMP:-/tmp}/protoc.zip"
+		unzip -qo "${TEMP:-/tmp}/protoc.zip" -d "$PROTOC_DIR"
+		export PATH="$PROTOC_DIR/bin:$PATH"
+		if [[ -n "${GITHUB_PATH:-}" ]]; then
+			echo "$PROTOC_DIR/bin" >>"$GITHUB_PATH"
+		fi
 	fi
 	;;
 esac
