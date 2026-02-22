@@ -92,8 +92,8 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_with = "3.15"
 
-# Byte manipulation (RUSTSEC-2026-0007: require >=1.11.1)
-bytes = "1.11.1"
+# Byte manipulation
+bytes = "1.11"
 
 # Error handling
 anyhow = "1.0"
@@ -142,7 +142,6 @@ aes-gcm = "0.10"
 rand = "0.10"
 
 # Authentication
-# NOTE: jsonwebtoken removed in v0.1.4 (RUSTSEC-2023-0071) - was never actually used
 bcrypt = "0.18"
 argon2 = "0.5"
 base64 = "0.22"
@@ -162,12 +161,9 @@ hex = "0.4"
 uuid = { version = "1.21", features = ["v4", "v5", "serde"] }
 dirs = "6.0"
 
-# HTTP server - Rocket (migrated from Axum in v0.1.2 - ADR-026)
-rocket = { version = "0.5", features = ["json"] }
-
-# HTTP server - Axum (migration in progress - ADR-026)
+# HTTP server (Axum)
 axum = "0.8"
-axum-extra = { version = "0.8", features = ["typed-header", "query"] }
+axum-extra = { version = "0.12", features = ["typed-header", "query"] }
 tower = { version = "0.5", features = ["util"] }
 http-body-util = "0.1"
 tower-http = { version = "0.6", features = ["cors", "trace"] }

@@ -112,18 +112,20 @@ impl RequestBuilder {
         for (name, value) in &self.headers {
             builder = builder.header(name, value);
         }
-        let req = builder.body(Body::empty()).expect("valid request");
+        let req = builder
+            .body(Body::empty())
+            .unwrap_or_else(|_| unreachable!("valid request"));
         let resp = self
             .app
             .oneshot(req)
             .await
-            .expect("router should handle request");
+            .unwrap_or_else(|_| unreachable!("router should handle request"));
         let status = resp.status();
         let body = resp
             .into_body()
             .collect()
             .await
-            .expect("collect body")
+            .unwrap_or_else(|_| unreachable!("collect body"))
             .to_bytes();
         TestResponse {
             status,
@@ -163,7 +165,7 @@ async fn create_test_client(
         auth_config: Some(auth_config),
     });
     Ok(TestClient {
-        app: build_router(app_state),
+        app: build_router(&app_state),
     })
 }
 

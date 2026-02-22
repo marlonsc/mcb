@@ -48,7 +48,7 @@ async fn axum_health_check() {
     let payload: serde_json::Value = response.json().await.expect("parse health payload");
     assert_eq!(payload["status"], "healthy");
 
-    let built_router = build_router(state);
+    let built_router = build_router(&state);
     drop(built_router);
 
     server_task.abort();

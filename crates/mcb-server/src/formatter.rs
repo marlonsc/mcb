@@ -12,9 +12,9 @@ use std::path::Path;
 use std::time::Duration;
 
 use mcb_domain::SearchResult;
-use mcb_domain::error;
 use mcb_domain::ports::ValidationReport;
 use mcb_domain::ports::{IndexingResult, IndexingStatus};
+use mcb_domain::{error, info};
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
@@ -36,26 +36,32 @@ impl ResponseFormatter {
         limit: usize,
     ) -> Result<CallToolResult, McpError> {
         let message = build_search_response_message(query, results, duration, limit);
-        tracing::info!(results = results.len(), ?duration, "search completed");
+        info!(
+            "ResponseFormatter",
+            "search completed",
+            &format!("results={} duration={:?}", results.len(), duration)
+        );
         Ok(CallToolResult::success(vec![Content::text(message)]))
     }
 
     /// Format indexing completion response
+    #[must_use]
     pub fn format_indexing_success(
         result: &IndexingResult,
         path: &Path,
         duration: Duration,
     ) -> CallToolResult {
         let message = build_indexing_success_message(result, path, duration);
-        tracing::info!(
-            chunks = result.chunks_created,
-            ?duration,
-            "indexing completed"
+        info!(
+            "ResponseFormatter",
+            "indexing completed",
+            &format!("chunks={} duration={:?}", result.chunks_created, duration)
         );
         CallToolResult::success(vec![Content::text(message)])
     }
 
     /// Format indexing error response
+    #[must_use]
     pub fn format_indexing_error(error: &str, path: &Path) -> CallToolResult {
         let message = build_indexing_error_message(error, path);
         let detail = format!("path={} error={error}", path.display());
@@ -90,16 +96,20 @@ impl ResponseFormatter {
     }
 
     /// Format validation success response
+    #[must_use]
     pub fn format_validation_success(
         report: &ValidationReport,
         path: &Path,
         duration: Duration,
     ) -> CallToolResult {
         let message = build_validation_message(report, path, duration);
-        tracing::info!(
-            violations = report.total_violations,
-            ?duration,
-            "validation completed"
+        info!(
+            "ResponseFormatter",
+            "validation completed",
+            &format!(
+                "violations={} duration={:?}",
+                report.total_violations, duration
+            )
         );
         if report.passed {
             CallToolResult::success(vec![Content::text(message)])
@@ -109,6 +119,7 @@ impl ResponseFormatter {
     }
 
     /// Format validation error response
+    #[must_use]
     pub fn format_validation_error(error: &str, path: &Path) -> CallToolResult {
         let message = build_validation_error_message(error, path);
         let detail = format!("path={} error={error}", path.display());

@@ -17,7 +17,7 @@ use std::time::Duration;
 use hostname;
 use mcb_domain::utils::id as domain_id;
 use mcb_domain::utils::mask_id;
-use tracing::{debug, error, info, warn};
+use mcb_domain::{debug, error, info, warn};
 
 use super::types::{McpRequest, McpResponse};
 use crate::constants::protocol::{
@@ -197,9 +197,13 @@ impl HttpClientTransport {
     /// Returns an error when writing responses to stdout fails.
     pub async fn run(&self) -> Result<(), Box<dyn std::error::Error>> {
         info!(
-            server_url = %self.config.server_url,
-            client_instance_id = %mask_id(&self.config.client_instance_id),
-            "MCB client transport started"
+            "HttpClient",
+            "MCB client transport started",
+            &format!(
+                "server_url={} client_instance_id={}",
+                self.config.server_url,
+                mask_id(&self.config.client_instance_id)
+            )
         );
 
         let stdin = io::stdin();
@@ -210,10 +214,10 @@ impl HttpClientTransport {
                 Ok(l) => l,
                 Err(e) => {
                     if e.kind() == io::ErrorKind::UnexpectedEof {
-                        info!("stdin closed, shutting down");
+                        info!("HttpClient", "stdin closed, shutting down");
                         break;
                     }
-                    error!(error = %e, "Error reading from stdin");
+                    error!("HttpClient", "Error reading from stdin", &e);
                     continue;
                 }
             };
@@ -223,13 +227,17 @@ impl HttpClientTransport {
                 continue;
             }
 
-            debug!(request_len = line.len(), "Received request from stdin");
+            debug!("HttpClient", "Received request from stdin", &line.len());
 
             // Parse the request
             let request: McpRequest = match serde_json::from_str(&line) {
                 Ok(req) => req,
                 Err(e) => {
-                    warn!(error = %e, request_len = line.len(), "Failed to parse request");
+                    warn!(
+                        "HttpClient",
+                        "Failed to parse request",
+                        &format!("error={e} len={}", line.len())
+                    );
                     let error_response = Self::create_parse_error(&e);
                     Self::write_response(&mut stdout, &error_response)?;
                     continue;
@@ -241,7 +249,7 @@ impl HttpClientTransport {
             Self::write_response(&mut stdout, &response)?;
         }
 
-        info!("MCB client transport finished");
+        info!("HttpClient", "MCB client transport finished");
         Ok(())
     }
 
@@ -250,19 +258,22 @@ impl HttpClientTransport {
         let url = format!("{}{MCP_ENDPOINT_PATH}", self.config.server_url);
 
         debug!(
-            url = %url,
-            method = %request.method,
-            client_instance_id = %mask_id(&self.config.client_instance_id),
-            "Sending request to server"
+            "HttpClient",
+            "Sending request to server",
+            &format!(
+                "url={url} method={} client_instance_id={}",
+                request.method,
+                mask_id(&self.config.client_instance_id)
+            )
         );
 
         let response = post_mcp_request(&self.client, &url, request, &self.config).await?;
 
         let status = response.status();
-        debug!(status = %status, "Received response from server");
+        debug!("HttpClient", "Received response from server", &status);
 
         if !status.is_success() {
-            warn!(status = %status, "Server returned non-success status");
+            warn!("HttpClient", "Server returned non-success status", &status);
         }
 
         response.json::<McpResponse>().await
@@ -285,7 +296,7 @@ impl HttpClientTransport {
         match self.send_request(request).await {
             Ok(resp) => resp,
             Err(e) => {
-                error!(error = %e, "Failed to send request to server");
+                error!("HttpClient", "Failed to send request to server", &e);
                 Self::create_server_error(&e, request.id.clone())
             }
         }
@@ -323,7 +334,7 @@ impl HttpClientTransport {
         response: &McpResponse,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let response_json = serde_json::to_string(response)?;
-        debug!(response = %response_json, "Sending response to stdout");
+        debug!("HttpClient", "Sending response to stdout", &response_json);
         writeln!(stdout, "{response_json}")?;
         stdout.flush()?;
         Ok(())
@@ -357,7 +368,7 @@ async fn post_mcp_request(
         .ok()
         .and_then(|h| h.into_string().ok())
         .or_else(|| std::env::var("HOSTNAME").ok())
-        .unwrap_or_else(|| "unknown".to_string());
+        .unwrap_or_else(|| "unknown".to_owned());
     builder = builder.header("X-Machine-Id", machine_id);
 
     builder = builder.header("X-Agent-Program", "mcb-client");
@@ -492,7 +503,7 @@ mod tests {
         let expected_hostname = hostname::get()
             .ok()
             .and_then(|h| h.into_string().ok())
-            .unwrap_or_else(|| "unknown".to_string());
+            .unwrap_or_else(|| "unknown".to_owned());
 
         assert!(
             !expected_hostname.is_empty(),
@@ -505,7 +516,7 @@ mod tests {
         let gethostname_result = hostname::get()
             .ok()
             .and_then(|h| h.into_string().ok())
-            .unwrap_or_else(|| "unknown".to_string());
+            .unwrap_or_else(|| "unknown".to_owned());
 
         assert!(
             !gethostname_result.is_empty(),

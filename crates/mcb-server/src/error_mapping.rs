@@ -24,6 +24,7 @@ pub fn safe_internal_error(context: &str, err: &dyn std::fmt::Display) -> McpErr
 ///
 /// # Security
 /// Never exposes provider/internal details to external callers.
+#[must_use]
 pub fn to_opaque_mcp_error(e: &Error) -> McpError {
     error!("McpError", "operation failed", e);
     if matches!(e, Error::NotFound { .. } | Error::InvalidArgument { .. }) {

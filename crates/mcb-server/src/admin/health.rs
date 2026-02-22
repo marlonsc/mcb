@@ -5,6 +5,7 @@
 //!
 //! Provides endpoints for liveness, readiness, and extended health checks.
 
+use mcb_domain::info;
 use mcb_domain::ports::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, PerformanceMetricsData,
 };
@@ -15,96 +16,10 @@ use std::sync::Arc;
 use axum::Json as AxumJson;
 use axum::extract::State as AxumState;
 use axum::http::StatusCode;
-use rocket::http::Status;
-use rocket::serde::json::Json;
-use rocket::{State, get};
 
-use crate::admin::auth::{AdminAuth, AxumAdminAuth};
+use crate::admin::auth::AxumAdminAuth;
 use crate::admin::handlers::AdminState;
-use crate::admin::models::{AdminHealthResponse, LivenessResponse, ReadinessResponse};
-
-/// Health check endpoint
-#[get("/health")]
-pub fn health_check(state: &State<AdminState>) -> Json<AdminHealthResponse> {
-    tracing::info!("health_check called");
-    let metrics = state.metrics.get_performance_metrics();
-    let operations = state.indexing.get_operations();
-
-    Json(AdminHealthResponse {
-        status: "healthy",
-        uptime_seconds: metrics.uptime_seconds,
-        active_indexing_operations: operations.len(),
-    })
-}
-
-/// Readiness check endpoint (for k8s/docker health checks)
-#[get("/ready")]
-pub fn readiness_check(state: &State<AdminState>) -> (Status, Json<ReadinessResponse>) {
-    tracing::info!("readiness_check called");
-    let metrics = state.metrics.get_performance_metrics();
-
-    // Consider ready if server has been up for at least 1 second
-    if metrics.uptime_seconds >= 1 {
-        (
-            Status::Ok,
-            Json(ReadinessResponse {
-                ready: true,
-                uptime_seconds: metrics.uptime_seconds,
-            }),
-        )
-    } else {
-        (
-            Status::ServiceUnavailable,
-            Json(ReadinessResponse {
-                ready: false,
-                uptime_seconds: metrics.uptime_seconds,
-            }),
-        )
-    }
-}
-
-/// Liveness check endpoint (for k8s/docker health checks)
-#[get("/live")]
-pub fn liveness_check(state: &State<AdminState>) -> (Status, Json<LivenessResponse>) {
-    tracing::info!("liveness_check called");
-    let metrics = state.metrics.get_performance_metrics();
-    (
-        Status::Ok,
-        Json(LivenessResponse {
-            alive: true,
-            uptime_seconds: metrics.uptime_seconds,
-        }),
-    )
-}
-
-/// Extended health check with dependency status (protected)
-#[get("/health/extended")]
-pub fn extended_health_check(
-    _auth: AdminAuth,
-    state: &State<AdminState>,
-) -> Json<ExtendedHealthResponse> {
-    tracing::info!("extended_health_check called");
-    let metrics = state.metrics.get_performance_metrics();
-    let operations = state.indexing.get_operations();
-    let now = domain_time::epoch_secs_u64().unwrap_or(0);
-
-    let dependencies = build_dependency_checks(&metrics, &operations, now);
-    let dependencies_status = calculate_overall_health(&dependencies);
-
-    let response = ExtendedHealthResponse {
-        status: if dependencies_status == DependencyHealth::Unhealthy {
-            "degraded"
-        } else {
-            "healthy"
-        },
-        uptime_seconds: metrics.uptime_seconds,
-        active_indexing_operations: operations.len(),
-        dependencies,
-        dependencies_status,
-    };
-
-    Json(response)
-}
+use crate::admin::models::{LivenessResponse, ReadinessResponse};
 
 fn build_dependency_checks(
     metrics: &PerformanceMetricsData,
@@ -186,19 +101,11 @@ fn calculate_overall_health(dependencies: &[DependencyHealthCheck]) -> Dependenc
     }
 }
 
-/// Get performance metrics endpoint (protected)
-#[get("/metrics")]
-pub fn get_metrics(_auth: AdminAuth, state: &State<AdminState>) -> Json<PerformanceMetricsData> {
-    tracing::info!("get_metrics called");
-    let metrics = state.metrics.get_performance_metrics();
-    Json(metrics)
-}
-
 #[allow(missing_docs)]
 pub async fn readiness_check_axum(
     AxumState(state): AxumState<Arc<AdminState>>,
 ) -> (StatusCode, AxumJson<ReadinessResponse>) {
-    tracing::info!("readiness_check called");
+    info!("health", "readiness_check called");
     let metrics = state.metrics.get_performance_metrics();
     if metrics.uptime_seconds >= 1 {
         (
@@ -223,7 +130,7 @@ pub async fn readiness_check_axum(
 pub async fn liveness_check_axum(
     AxumState(state): AxumState<Arc<AdminState>>,
 ) -> (StatusCode, AxumJson<LivenessResponse>) {
-    tracing::info!("liveness_check called");
+    info!("health", "liveness_check called");
     let metrics = state.metrics.get_performance_metrics();
     (
         StatusCode::OK,
@@ -239,7 +146,7 @@ pub async fn extended_health_check_axum(
     _auth: AxumAdminAuth,
     AxumState(state): AxumState<Arc<AdminState>>,
 ) -> AxumJson<ExtendedHealthResponse> {
-    tracing::info!("extended_health_check called");
+    info!("health", "extended_health_check called");
     let metrics = state.metrics.get_performance_metrics();
     let operations = state.indexing.get_operations();
     let now = domain_time::epoch_secs_u64().unwrap_or(0);
@@ -263,6 +170,6 @@ pub async fn get_metrics_axum(
     _auth: AxumAdminAuth,
     AxumState(state): AxumState<Arc<AdminState>>,
 ) -> AxumJson<PerformanceMetricsData> {
-    tracing::info!("get_metrics called");
+    info!("health", "get_metrics called");
     AxumJson(state.metrics.get_performance_metrics())
 }

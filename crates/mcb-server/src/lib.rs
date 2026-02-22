@@ -59,9 +59,6 @@
 // Documentation configuration for docs.rs
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[macro_use]
-extern crate rocket;
-
 /// Common macros for the server layer
 #[macro_use]
 mod macros;

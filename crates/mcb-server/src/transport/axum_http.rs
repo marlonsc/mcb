@@ -6,6 +6,7 @@ use axum::http::{Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::{get, patch, post};
 use axum::{Extension, Json, Router};
+use mcb_domain::info;
 use mcb_domain::ports::{
     IndexingOperationsInterface, PerformanceMetricsInterface, VectorStoreBrowser,
 };
@@ -65,22 +66,20 @@ pub struct AxumRouter {
 impl AxumRouter {
     /// Creates an [`AxumRouter`] from shared state.
     #[must_use]
-    pub fn new(state: Arc<AppState>) -> Self {
+    pub fn new(state: &Arc<AppState>) -> Self {
         Self {
             router: build_router(state),
         }
     }
 
     /// Returns the wrapped [`Router`].
-    #[must_use]
     pub fn into_inner(self) -> Router {
         self.router
     }
 }
 
 /// Builds the Axum router with middleware and routes.
-#[must_use]
-pub fn build_router(state: Arc<AppState>) -> Router {
+pub fn build_router(state: &Arc<AppState>) -> Router {
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::OPTIONS])
@@ -90,7 +89,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .route("/health", get(health_handler))
         .route("/ready", get(readiness_handler))
         .route("/live", get(liveness_handler))
-        .with_state(state.clone());
+        .with_state(Arc::clone(state));
 
     // Mount config routes when admin state is available
     if let (Some(admin_state), Some(auth_config)) =
@@ -148,14 +147,17 @@ pub fn build_router(state: Arc<AppState>) -> Router {
 }
 
 /// Binds an address and serves the Axum router.
+///
+/// # Errors
+/// Returns an error if binding or serving fails.
 pub async fn run_axum_server(
     addr: SocketAddr,
     state: Arc<AppState>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    let router = AxumRouter::new(state).into_inner();
-
-    tracing::info!("Axum transport listening on {}", listener.local_addr()?);
+    let router = AxumRouter::new(&state).into_inner();
+    let local_addr = listener.local_addr()?;
+    info!("AxumTransport", "Axum transport listening", &local_addr);
     axum::serve(listener, router).await?;
 
     Ok(())

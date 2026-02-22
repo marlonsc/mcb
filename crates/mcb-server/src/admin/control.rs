@@ -11,14 +11,11 @@ use std::time::Duration;
 use axum::Json as AxumJson;
 use axum::extract::State as AxumState;
 use axum::http::StatusCode;
+use mcb_domain::info;
 use mcb_domain::ports::ShutdownCoordinator;
-use rocket::http::Status;
-use rocket::serde::json::Json;
-use rocket::{State, post};
 use serde::Serialize;
-use tracing::info;
 
-use crate::admin::auth::{AdminAuth, AxumAdminAuth};
+use crate::admin::auth::AxumAdminAuth;
 use crate::admin::error::{AdminError, AdminStatusResult};
 use crate::admin::handlers::AdminState;
 
@@ -62,57 +59,6 @@ impl ShutdownResponse {
     }
 }
 
-/// Initiate graceful server shutdown (protected)
-#[post("/shutdown", format = "json", data = "<request>")]
-pub fn shutdown(
-    _auth: AdminAuth,
-    state: &State<AdminState>,
-    request: Json<ShutdownRequest>,
-) -> (Status, Json<ShutdownResponse>) {
-    tracing::info!("shutdown called");
-    let request = request.into_inner();
-
-    let Some(coordinator) = &state.shutdown_coordinator else {
-        return (
-            Status::ServiceUnavailable,
-            Json(ShutdownResponse::error(
-                "Shutdown coordinator not available",
-                0,
-            )),
-        );
-    };
-
-    if coordinator.is_shutting_down() {
-        return (
-            Status::Conflict,
-            Json(ShutdownResponse::error(
-                "Shutdown already in progress",
-                state.shutdown_timeout_secs,
-            )),
-        );
-    }
-
-    let timeout_secs = request.timeout_secs.unwrap_or(state.shutdown_timeout_secs);
-
-    if request.immediate {
-        info!("Immediate shutdown requested");
-        coordinator.signal_shutdown();
-        return (
-            Status::Ok,
-            Json(ShutdownResponse::success("Immediate shutdown initiated", 0)),
-        );
-    }
-
-    info!(timeout_secs = timeout_secs, "Graceful shutdown requested");
-    spawn_graceful_shutdown(Arc::clone(coordinator), timeout_secs);
-
-    let msg = format!("Graceful shutdown initiated, server will stop in {timeout_secs} seconds");
-    (
-        Status::Ok,
-        Json(ShutdownResponse::success(msg, timeout_secs)),
-    )
-}
-
 fn spawn_graceful_shutdown(coord: Arc<dyn ShutdownCoordinator>, timeout: u64) {
     tokio::spawn(async move {
         tokio::time::sleep(Duration::from_secs(timeout)).await;
@@ -130,7 +76,7 @@ pub async fn shutdown_axum(
     AxumState(state): AxumState<Arc<AdminState>>,
     AxumJson(request): AxumJson<ShutdownRequest>,
 ) -> AdminStatusResult<ShutdownResponse> {
-    tracing::info!("shutdown called");
+    info!("control", "shutdown called");
 
     let coordinator = require_service!(
         state,
@@ -148,7 +94,7 @@ pub async fn shutdown_axum(
     let timeout_secs = request.timeout_secs.unwrap_or(state.shutdown_timeout_secs);
 
     if request.immediate {
-        info!("Immediate shutdown requested");
+        info!("control", "Immediate shutdown requested");
         coordinator.signal_shutdown();
         return Ok((
             StatusCode::OK,
@@ -156,7 +102,7 @@ pub async fn shutdown_axum(
         ));
     }
 
-    info!(timeout_secs = timeout_secs, "Graceful shutdown requested");
+    info!("control", "Graceful shutdown requested", &timeout_secs);
     spawn_graceful_shutdown(Arc::clone(coordinator), timeout_secs);
 
     let msg = format!("Graceful shutdown initiated, server will stop in {timeout_secs} seconds");

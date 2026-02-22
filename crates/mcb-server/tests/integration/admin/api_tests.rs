@@ -1,18 +1,18 @@
+use axum::http::StatusCode;
 use mcb_domain::ports::IndexingOperationsInterface;
 use mcb_domain::value_objects::CollectionId;
-use rocket::http::Status;
 
 use crate::utils::timeouts::TEST_TIMEOUT;
 
 use crate::utils::admin_harness::AdminTestHarness;
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_health_endpoint() {
     let (client, _, _) = AdminTestHarness::new().build_client().await;
 
     let response = client.get("/health").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
@@ -22,7 +22,7 @@ async fn test_health_endpoint() {
     assert_eq!(json["active_indexing_operations"], 0);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_metrics_endpoint() {
     let (client, _, _) = AdminTestHarness::new()
         .with_recorded_metrics(&[(100, true, true), (200, false, false)], 3)
@@ -31,7 +31,7 @@ async fn test_metrics_endpoint() {
 
     let response = client.get("/metrics").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
@@ -43,13 +43,13 @@ async fn test_metrics_endpoint() {
     assert!(json["average_response_time_ms"].as_f64().unwrap() > 0.0);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_jobs_endpoint_no_operations() {
     let (client, _, _) = AdminTestHarness::new().build_client().await;
 
     let response = client.get("/jobs").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
@@ -60,7 +60,7 @@ async fn test_jobs_endpoint_no_operations() {
     assert!(json["jobs"].as_array().unwrap().is_empty());
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_jobs_endpoint_with_operations() {
     let harness = AdminTestHarness::new();
     let op_id = harness
@@ -73,7 +73,7 @@ async fn test_jobs_endpoint_with_operations() {
 
     let response = client.get("/jobs").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
@@ -96,7 +96,7 @@ async fn test_jobs_endpoint_with_operations() {
     assert_eq!(op["progress_percent"], 20);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_readiness_probe_not_ready() {
     let (client, _, _) = AdminTestHarness::new().build_client().await;
 
@@ -104,7 +104,7 @@ async fn test_readiness_probe_not_ready() {
 
     let status = response.status();
     assert!(
-        status == Status::Ok || status == Status::ServiceUnavailable,
+        status == StatusCode::OK || status == StatusCode::SERVICE_UNAVAILABLE,
         "Expected Ok or ServiceUnavailable, got {status:?}"
     );
 
@@ -115,7 +115,7 @@ async fn test_readiness_probe_not_ready() {
     assert!(json["ready"].is_boolean());
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_readiness_probe_ready() {
     let (client, _, _) = AdminTestHarness::new().build_client().await;
     tokio::time::timeout(TEST_TIMEOUT, async {
@@ -126,7 +126,7 @@ async fn test_readiness_probe_ready() {
 
     let response = client.get("/ready").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
@@ -134,13 +134,13 @@ async fn test_readiness_probe_ready() {
     assert_eq!(json["ready"], true);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_liveness_probe() {
     let (client, _, _) = AdminTestHarness::new().build_client().await;
 
     let response = client.get("/live").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
@@ -148,7 +148,7 @@ async fn test_liveness_probe() {
     assert_eq!(json["alive"], true);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_health_with_active_operations() {
     let (client, _, _) = AdminTestHarness::new()
         .with_indexing_operations(&[("coll-1", 100), ("coll-2", 200)])
@@ -157,7 +157,7 @@ async fn test_health_with_active_operations() {
 
     let response = client.get("/health").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
@@ -165,7 +165,7 @@ async fn test_health_with_active_operations() {
     assert_eq!(json["active_indexing_operations"], 2);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_metrics_with_cache_hits() {
     let (client, _, _) = AdminTestHarness::new()
         .with_recorded_metrics(

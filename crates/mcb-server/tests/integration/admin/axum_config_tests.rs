@@ -1,7 +1,7 @@
 //! Axum config endpoint integration tests.
 //!
 //! Verifies GET /config, POST /config/reload, and PATCH /config/{section}
-//! work correctly through the Axum router with AxumAdminAuth.
+//! work correctly through the Axum router with `AxumAdminAuth`.
 
 use std::sync::Arc;
 
@@ -66,8 +66,13 @@ fn auth_enabled() -> AdminAuthConfig {
 }
 
 async fn body_json(body: Body) -> serde_json::Value {
-    let bytes = body.collect().await.unwrap().to_bytes();
-    serde_json::from_slice(&bytes).unwrap()
+    let bytes = body
+        .collect()
+        .await
+        .unwrap_or_else(|_| unreachable!("collect body"))
+        .to_bytes();
+    serde_json::from_slice(&bytes)
+        .unwrap_or_else(|_| unreachable!("response body should be valid JSON"))
 }
 
 // ---- GET /config ----
@@ -148,8 +153,7 @@ async fn reload_config_returns_503_without_watcher() {
 
     assert_eq!(resp.status(), StatusCode::SERVICE_UNAVAILABLE);
     let json = body_json(resp.into_body()).await;
-    assert_eq!(json["success"], false);
-    assert!(json["message"].as_str().unwrap().contains("watcher"));
+    assert!(json["error"].as_str().unwrap_or("").contains("watcher"));
 }
 
 #[tokio::test]
@@ -189,8 +193,7 @@ async fn update_config_invalid_section_returns_400() {
 
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     let json = body_json(resp.into_body()).await;
-    assert_eq!(json["success"], false);
-    assert!(json["message"].as_str().unwrap().contains("Unknown"));
+    assert!(json["error"].as_str().unwrap_or("").contains("Invalid"));
 }
 
 #[tokio::test]
@@ -211,7 +214,7 @@ async fn update_config_valid_section_no_watcher_returns_503() {
 
     assert_eq!(resp.status(), StatusCode::SERVICE_UNAVAILABLE);
     let json = body_json(resp.into_body()).await;
-    assert_eq!(json["success"], false);
+    assert!(json["error"].as_str().unwrap_or("").contains("watcher"));
 }
 
 #[tokio::test]

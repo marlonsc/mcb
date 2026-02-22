@@ -1,18 +1,18 @@
+use axum::http::StatusCode;
 use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_domain::value_objects::CollectionId;
-use rocket::http::Status;
 
 use crate::utils::timeouts::TEST_TIMEOUT;
 
 use crate::utils::admin_harness::AdminTestHarness;
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_full_admin_stack_integration() {
     let (client, metrics, indexing) = AdminTestHarness::new().build_client().await;
 
     let response = client.get("/health").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
     assert_eq!(json["status"], "healthy");
@@ -25,7 +25,7 @@ async fn test_full_admin_stack_integration() {
 
     let response = client.get("/metrics").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
 
@@ -46,7 +46,7 @@ async fn test_full_admin_stack_integration() {
     // 6. Verify jobs endpoint shows operations
     let response = client.get("/jobs").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
 
@@ -88,7 +88,7 @@ async fn test_full_admin_stack_integration() {
     // 9. Verify liveness probe (always OK)
     let response = client.get("/live").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
     assert_eq!(json["alive"], true);
@@ -102,13 +102,13 @@ async fn test_full_admin_stack_integration() {
 
     let response = client.get("/ready").dispatch().await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).unwrap();
     assert_eq!(json["ready"], true);
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_metrics_accumulation_integration() {
     let (client, metrics, _) = AdminTestHarness::new().build_client().await;
 
@@ -142,7 +142,7 @@ async fn test_metrics_accumulation_integration() {
     );
 }
 
-#[rocket::async_test]
+#[tokio::test]
 async fn test_indexing_lifecycle_integration() {
     let (client, _, indexing) = AdminTestHarness::new().build_client().await;
 

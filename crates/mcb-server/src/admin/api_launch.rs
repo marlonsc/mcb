@@ -4,6 +4,8 @@
 use std::future::Future;
 use std::sync::Arc;
 
+use mcb_domain::info;
+
 use super::api::AdminApi;
 use crate::transport::axum_http::{AppState, build_router};
 
@@ -26,15 +28,9 @@ impl AdminApi {
             admin_state: Some(Arc::new(self.state)),
             auth_config: Some(self.auth_config),
         });
-        let router = build_router(app_state);
+        let router = build_router(&app_state);
         let listener = tokio::net::TcpListener::bind(addr).await?;
-
-        tracing::info!(
-            "Admin API server listening on {}:{}",
-            addr.ip(),
-            addr.port()
-        );
-
+        info!("ApiLaunch", "Admin API server listening", &addr);
         axum::serve(listener, router).await?;
         Ok(())
     }
@@ -60,15 +56,9 @@ impl AdminApi {
             admin_state: Some(Arc::new(self.state)),
             auth_config: Some(self.auth_config),
         });
-        let router = build_router(app_state);
+        let router = build_router(&app_state);
         let listener = tokio::net::TcpListener::bind(addr).await?;
-
-        tracing::info!(
-            "Admin API server listening on {}:{}",
-            addr.ip(),
-            addr.port()
-        );
-
+        info!("ApiLaunch", "Admin API server listening", &addr);
         axum::serve(listener, router)
             .with_graceful_shutdown(shutdown_signal)
             .await

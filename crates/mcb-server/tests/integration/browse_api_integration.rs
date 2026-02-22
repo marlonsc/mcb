@@ -220,7 +220,7 @@ async fn create_test_client(
         auth_config: Some(auth_config),
     });
     Ok(TestClient {
-        app: build_router(app_state),
+        app: build_router(&app_state),
     })
 }
 

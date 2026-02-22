@@ -19,6 +19,7 @@ use std::sync::Arc;
 
 use axum::Router;
 use axum::body::Body;
+use axum::http::StatusCode;
 use axum::http::{Method, Request};
 use http_body_util::BodyExt;
 use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
@@ -27,17 +28,13 @@ use mcb_infrastructure::infrastructure::default_event_bus;
 use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexingOperations};
 use mcb_server::admin::{auth::AdminAuthConfig, handlers::AdminState};
 use mcb_server::transport::axum_http::{AppState, build_router};
-use rocket::http::{ContentType, Header, Status};
 use tower::ServiceExt;
 
 // ============================================================================
 // Admin Test Harness Builder
 // ============================================================================
 
-/// Builder for creating admin test state and Rocket client.
-///
-/// Provides a fluent API for configuring `AdminState` with metrics,
-/// indexing operations, authentication, and other settings.
+/// Builder for creating admin test state and Axum test client.
 pub struct AdminTestHarness {
     metrics: Arc<AtomicPerformanceMetrics>,
     indexing: Arc<DefaultIndexingOperations>,
@@ -101,7 +98,7 @@ impl AdminTestHarness {
         &self.indexing
     }
 
-    /// Build an `AdminState` without creating a Rocket client.
+    /// Build an `AdminState` without creating a test client.
     pub fn build_state(&self) -> AdminState {
         let current_config = mcb_infrastructure::config::ConfigLoader::new()
             .load()
@@ -152,7 +149,7 @@ impl AdminTestHarness {
             auth_config: Some(auth_config),
         });
         let client = Client {
-            app: build_router(app_state),
+            app: build_router(&app_state),
         };
 
         (client, metrics, indexing)
@@ -221,22 +218,21 @@ impl RequestBuilder {
 
         let request = builder
             .body(Body::from(self.body.unwrap_or_default()))
-            .expect("valid test request");
+            .unwrap_or_else(|_| unreachable!("valid test request"));
 
         let response = self
             .app
             .clone()
             .oneshot(request)
             .await
-            .expect("router should handle request");
+            .unwrap_or_else(|_| unreachable!("router should handle request"));
 
-        let status =
-            Status::from_code(response.status().as_u16()).unwrap_or(Status::InternalServerError);
+        let status = response.status();
         let body = response
             .into_body()
             .collect()
             .await
-            .expect("collect response body")
+            .unwrap_or_else(|_| unreachable!("collect response body"))
             .to_bytes();
 
         TestResponse {
@@ -250,26 +246,20 @@ pub trait IntoTestHeader {
     fn into_test_header(self) -> (String, String);
 }
 
-impl IntoTestHeader for Header<'_> {
+impl IntoTestHeader for (&str, &str) {
     fn into_test_header(self) -> (String, String) {
-        (self.name().to_string(), self.value().to_owned())
-    }
-}
-
-impl IntoTestHeader for ContentType {
-    fn into_test_header(self) -> (String, String) {
-        ("Content-Type".to_owned(), self.to_string())
+        (self.0.to_owned(), self.1.to_owned())
     }
 }
 
 pub struct TestResponse {
-    status: Status,
+    status: StatusCode,
     body: String,
 }
 
 impl TestResponse {
     #[must_use]
-    pub fn status(&self) -> Status {
+    pub fn status(&self) -> StatusCode {
         self.status
     }
 

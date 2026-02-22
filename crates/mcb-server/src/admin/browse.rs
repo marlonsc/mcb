@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use axum::Json as AxumJson;
 use axum::extract::State as AxumState;
-use mcb_domain::error;
+use mcb_domain::{error, info};
 
 use crate::admin::auth::AxumAdminAuth;
 use crate::admin::browse_models::{
@@ -86,7 +86,7 @@ pub async fn list_browse_projects(
     _auth: AxumAdminAuth,
     AxumState(state): AxumState<Arc<AdminState>>,
 ) -> AdminResult<ProjectsBrowseResponse> {
-    tracing::info!("list_browse_projects called");
+    info!("browse", "list_browse_projects called");
     let args = build_project_list_args("project", None);
 
     let projects = fetch_browse_items_axum::<mcb_domain::entities::project::Project>(

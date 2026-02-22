@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use axum::Router;
 use axum::routing::{get, post};
+use mcb_domain::{debug, info};
 use mcb_infrastructure::infrastructure::{
     AtomicPerformanceMetrics, DefaultIndexingOperations, default_event_bus,
 };
@@ -54,16 +55,18 @@ pub fn template_dir() -> String {
     for candidate in &candidates {
         let path = std::path::Path::new(candidate);
         if path.exists() && path.is_dir() {
-            tracing::debug!(template_dir = %candidate, "Resolved template directory");
+            debug!("web_router", "Resolved template directory", candidate);
             return (*candidate).to_owned();
         }
     }
-    tracing::info!("No template directory found on disk, embedded templates will be used");
+    info!(
+        "web_router",
+        "No template directory found on disk, embedded templates will be used"
+    );
     "templates".to_owned()
 }
 
 /// Builds the admin web UI router with the given state (dashboard, /ui/*, entities, LOV).
-#[must_use]
 pub fn web_router_with_state(state: AdminState) -> Router {
     init_axum_context(&template_dir(), |engines| {
         crate::utils::handlebars::register_helpers(&mut engines.handlebars);
@@ -118,7 +121,6 @@ pub fn web_router_with_state(state: AdminState) -> Router {
 }
 
 /// Default admin web UI router with default state (for tests and standalone use).
-#[must_use]
 pub fn web_router() -> Router {
     web_router_with_state(default_admin_state())
 }

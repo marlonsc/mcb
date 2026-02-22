@@ -1,11 +1,11 @@
 //! TDD RED: Test for serde Deserialize form handling
 //!
-//! This test verifies that form data can be POSTed and deserialized using serde
-//! instead of Rocket's FromForm trait.
+//! This test verifies that form data can be `POSTed` and deserialized using serde
+//! instead of Rocket's `FromForm` trait.
 
 use serde::{Deserialize, Serialize};
 
-/// Test form struct using serde Deserialize instead of Rocket's FromForm
+/// Test form struct using serde Deserialize instead of Rocket's `FromForm`
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct TestFilterParams {
     /// Full-text search term (renamed from query param "q")
@@ -51,9 +51,9 @@ fn test_filter_params_deserialize_from_form_data() {
     let params: TestFilterParams =
         serde_json::from_value(form_data).expect("Failed to deserialize form data");
 
-    assert_eq!(params.search, Some("search term".to_string()));
-    assert_eq!(params.sort_field, Some("name".to_string()));
-    assert_eq!(params.sort_order, Some("desc".to_string()));
+    assert_eq!(params.search, Some("search term".to_owned()));
+    assert_eq!(params.sort_field, Some("name".to_owned()));
+    assert_eq!(params.sort_order, Some("desc".to_owned()));
     assert_eq!(params.page, 2);
     assert_eq!(params.per_page, 50);
 }
@@ -68,7 +68,7 @@ fn test_filter_params_deserialize_with_defaults() {
     let params: TestFilterParams =
         serde_json::from_value(form_data).expect("Failed to deserialize form data with defaults");
 
-    assert_eq!(params.search, Some("search".to_string()));
+    assert_eq!(params.search, Some("search".to_owned()));
     assert_eq!(params.sort_field, None);
     assert_eq!(params.sort_order, None);
     assert_eq!(params.page, 1);

@@ -13,16 +13,22 @@ async fn get(path: &str) -> (StatusCode, String) {
     let req = Request::builder()
         .uri(path)
         .body(Body::empty())
-        .expect("valid request");
-    let resp = app.oneshot(req).await.expect("router handles request");
+        .unwrap_or_else(|_| unreachable!("valid request"));
+    let resp = app
+        .oneshot(req)
+        .await
+        .unwrap_or_else(|_| unreachable!("router handles request"));
     let status = resp.status();
     let body = resp
         .into_body()
         .collect()
         .await
-        .expect("collect body")
+        .unwrap_or_else(|_| unreachable!("collect body"))
         .to_bytes();
-    (status, String::from_utf8(body.to_vec()).expect("utf-8"))
+    (
+        status,
+        String::from_utf8(body.to_vec()).unwrap_or_else(|_| unreachable!("utf-8")),
+    )
 }
 
 async fn post_form(path: &str, form_body: &str) -> StatusCode {
@@ -32,8 +38,11 @@ async fn post_form(path: &str, form_body: &str) -> StatusCode {
         .uri(path)
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(Body::from(form_body.to_owned()))
-        .expect("valid request");
-    let resp = app.oneshot(req).await.expect("router handles request");
+        .unwrap_or_else(|_| unreachable!("valid request"));
+    let resp = app
+        .oneshot(req)
+        .await
+        .unwrap_or_else(|_| unreachable!("router handles request"));
     resp.status()
 }
 

@@ -109,7 +109,7 @@ macro_rules! template_page {
     ($fn_name:ident, $template:literal, $title:literal, $page:literal) => {
         #[allow(missing_docs)]
         pub async fn $fn_name() -> $crate::templates::Template {
-            tracing::info!(concat!(stringify!($fn_name), " called"));
+            mcb_domain::info!("web", concat!(stringify!($fn_name), " called"));
             $crate::templates::Template::render(
                 $template,
                 context! {
@@ -135,7 +135,7 @@ macro_rules! template_page_with_path {
             axum::extract::Path($param): axum::extract::Path<$param_ty>,
         ) -> $crate::templates::Template {
             let _ = $param;
-            tracing::info!(concat!(stringify!($fn_name), " called"));
+            mcb_domain::info!("web", concat!(stringify!($fn_name), " called"));
             $crate::templates::Template::render(
                 $template,
                 context! {

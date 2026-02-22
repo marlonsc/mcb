@@ -5,76 +5,26 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 
-use rocket::fairing::Fairing;
-use rocket::figment::{error::Error, value::Value};
-use rocket::http::{ContentType, Status};
-use rocket::request::Request;
-use rocket::response::{self, Responder};
-use rocket::serde::Serialize;
-use rocket::yansi::Paint;
-use rocket::{Ignite, Orbit, Rocket, Sentinel};
+use serde::Serialize;
 
 use super::context::{Context, ContextManager};
-use super::engine::Engines;
-use super::fairing::TemplateFairing;
-
-pub(crate) const DEFAULT_TEMPLATE_DIR: &str = "templates";
 
 #[derive(Debug)]
 pub(crate) struct TemplateInfo {
     pub(crate) path: Option<PathBuf>,
     pub(crate) engine_ext: &'static str,
-    pub(crate) data_type: ContentType,
+    pub(crate) data_type: String,
 }
 
-/// Responder that renders a dynamic template.
-///
-/// `Template` serves as a _proxy_ type for rendering a template and _does not_
-/// contain the rendered template itself. The template is lazily rendered, at
-/// response time. To render a template greedily, use [`Template::show()`].
+/// A rendered template response for Axum, backed by `serde_json::Value`.
 #[derive(Debug)]
 pub struct Template {
     name: Cow<'static, str>,
-    value: Result<Value, Error>,
+    value: Result<serde_json::Value, serde_json::Error>,
 }
 
 impl Template {
-    /// Returns a fairing that initializes and maintains templating state.
-    ///
-    /// This fairing, or the one returned by [`Template::custom()`], _must_ be
-    /// attached to any `Rocket` instance that wishes to render templates.
-    #[must_use]
-    pub fn fairing() -> impl Fairing {
-        Template::custom(|_| {})
-    }
-
-    /// Returns a fairing that initializes and maintains templating state.
-    ///
-    /// Unlike [`Template::fairing()`], this method allows you to configure
-    /// templating engines via the function `f`.
-    pub fn custom<F>(f: F) -> impl Fairing
-    where
-        F: Send + Sync + 'static + Fn(&mut Engines),
-    {
-        Self::try_custom(move |engines| {
-            f(engines);
-            Ok(())
-        })
-    }
-
-    /// Returns a fairing that initializes and maintains templating state.
-    ///
-    /// This variant of [`Template::custom()`] allows a fallible `f`.
-    pub fn try_custom<F>(f: F) -> impl Fairing
-    where
-        F: Send + Sync + 'static + Fn(&mut Engines) -> Result<(), Box<dyn std::error::Error>>,
-    {
-        TemplateFairing {
-            callback: Box::new(f),
-        }
-    }
-
-    /// Render the template named `name` with the context `context`.
+    /// Creates a new [`Template`] by serializing `context` for the template `name`.
     #[inline]
     pub fn render<S, C>(name: S, context: C) -> Template
     where
@@ -83,35 +33,12 @@ impl Template {
     {
         Template {
             name: name.into(),
-            value: Value::serialize(context),
+            value: serde_json::to_value(context),
         }
     }
 
-    /// Render the template named `name` with the context `context` into a
-    /// `String`. This method should only be used during testing.
-    #[inline]
-    pub fn show<S, C>(rocket: &Rocket<Orbit>, name: S, context: C) -> Option<String>
-    where
-        S: Into<Cow<'static, str>>,
-        C: Serialize,
-    {
-        let ctxt = rocket
-            .state::<ContextManager>()
-            .map(ContextManager::context)
-            .or_else(|| {
-                warn!("Uninitialized template context: missing fairing.");
-                info!("To use templates, you must attach `Template::fairing()`.");
-                None
-            })?;
-
-        Template::render(name, context)
-            .finalize(&ctxt)
-            .ok()
-            .map(|v| v.1)
-    }
-
     #[inline(always)]
-    pub(crate) fn finalize(self, ctxt: &Context) -> Result<(ContentType, String), Status> {
+    pub(crate) fn finalize(self, ctxt: &Context) -> Result<(String, String), ()> {
         let name = &*self.name;
         let info = ctxt.templates.get(name).ok_or_else(|| {
             let ts: Vec<_> = ctxt
@@ -119,52 +46,24 @@ impl Template {
                 .keys()
                 .map(std::string::String::as_str)
                 .collect();
-            error_!("Template '{}' does not exist.", name);
-            info_!("Known templates: {}.", ts.join(", "));
-            info_!("Searched in {:?}.", ctxt.root);
-            Status::InternalServerError
+            let detail = format!(
+                "'{}' not found. Known: {}. Root: {:?}",
+                name,
+                ts.join(", "),
+                ctxt.root
+            );
+            mcb_domain::error!("Template", "Template does not exist", &detail);
         })?;
 
         let value = self.value.map_err(|e| {
-            error_!("Template context failed to serialize: {}.", e);
-            Status::InternalServerError
+            mcb_domain::error!("Template", "Context serialization failed", &e);
         })?;
 
         let string = ctxt.engines.render(name, info, value).ok_or_else(|| {
-            error_!("Template '{}' failed to render.", name);
-            Status::InternalServerError
+            mcb_domain::error!("Template", "Template failed to render", &name);
         })?;
 
         Ok((info.data_type.clone(), string))
-    }
-}
-
-impl<'r> Responder<'r, 'static> for Template {
-    fn respond_to(self, req: &'r Request<'_>) -> response::Result<'static> {
-        let ctxt = req.rocket().state::<ContextManager>().ok_or_else(|| {
-            error_!("Uninitialized template context: missing fairing.");
-            info_!("To use templates, you must attach `Template::fairing()`.");
-            Status::InternalServerError
-        })?;
-
-        self.finalize(&ctxt.context())?.respond_to(req)
-    }
-}
-
-impl Sentinel for Template {
-    fn abort(rocket: &Rocket<Ignite>) -> bool {
-        if rocket.state::<ContextManager>().is_none() {
-            let template = "Template".primary().bold();
-            let fairing = "Template::fairing()".primary().bold();
-            error!(
-                "returning `{}` responder without attaching `{}`.",
-                template, fairing
-            );
-            info_!("To use or query templates, you must attach `{}`.", fairing);
-            return true;
-        }
-
-        false
     }
 }
 
@@ -187,8 +86,11 @@ pub fn init_axum_context(
         callback(engines);
         Ok(())
     });
-    let ctxt =
-        Context::initialize(&root, &boxed_cb).expect("Template context initialization failed");
+    let ctxt = Context::initialize(&root, &boxed_cb).unwrap_or_else(|| {
+        unreachable!(
+            "Template context initialization is infallible when template dir and callback are valid"
+        );
+    });
     let _ = AXUM_CONTEXT.set(ContextManager::new(ctxt));
 }
 
@@ -208,10 +110,9 @@ impl axum::response::IntoResponse for Template {
 
         match self.finalize(&cm.context()) {
             Ok((content_type, body)) => {
-                let ct_str = content_type.to_string();
-                ([(axum::http::header::CONTENT_TYPE, ct_str)], body).into_response()
+                ([(axum::http::header::CONTENT_TYPE, content_type)], body).into_response()
             }
-            Err(_status) => (
+            Err(()) => (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 "Template rendering failed",
             )

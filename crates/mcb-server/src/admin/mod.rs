@@ -34,6 +34,5 @@ pub mod registry;
 pub use api::{AdminApi, AdminApiConfig};
 pub use registry::AdminRegistry;
 
-pub mod routes;
 pub mod sse;
 pub mod web;

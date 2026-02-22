@@ -7,11 +7,28 @@ use std::path::{Path, PathBuf};
 
 use mcb_domain::utils::path as domain_path;
 use normpath::PathExt;
-use rocket::http::ContentType;
 
 use super::embedded;
 use super::engine::Engines;
 use super::template::TemplateInfo;
+
+pub(crate) fn mime_for_extension(ext: &str) -> Option<String> {
+    let mime = match ext {
+        "html" | "htm" => "text/html",
+        "xml" => "application/xml",
+        "json" => "application/json",
+        "css" => "text/css",
+        "js" | "mjs" => "application/javascript",
+        "txt" => "text/plain",
+        "csv" => "text/csv",
+        "svg" => "image/svg+xml",
+        "md" | "markdown" => "text/markdown",
+        "yaml" | "yml" => "application/yaml",
+        "toml" => "application/toml",
+        _ => return None,
+    };
+    Some(mime.to_owned())
+}
 
 pub(crate) type Callback =
     Box<dyn Fn(&mut Engines) -> Result<(), Box<dyn Error>> + Send + Sync + 'static>;
@@ -35,9 +52,10 @@ impl Context {
         let root = match root.normalize() {
             Ok(root) => root.into_path_buf(),
             Err(_) => {
-                info!(
-                    "Template directory '{}' not found on disk, using embedded templates.",
-                    root.display()
+                mcb_domain::info!(
+                    "Template",
+                    "Directory not found, using embedded templates",
+                    &root.display()
                 );
                 return Self::initialize_embedded(callback);
             }
@@ -54,31 +72,32 @@ impl Context {
                 let (name, data_type_str) = match split_path(&root, entry.path()) {
                     Ok(parts) => parts,
                     Err(error) => {
-                        warn_!(
-                            "Failed to split template path '{}' against root '{}': {}",
+                        let detail = format!(
+                            "path={}, root={}, error={error}",
                             entry.path().display(),
-                            root.display(),
-                            error
+                            root.display()
                         );
+                        mcb_domain::warn!("Template", "Failed to split template path", &detail);
                         continue;
                     }
                 };
                 if let Some(info) = templates.get(&*name) {
-                    warn_!("Template name '{}' does not have a unique source.", name);
-                    match info.path {
-                        Some(ref path) => info_!("Existing path: {:?}", path),
-                        None => info_!("Existing Content-Type: {}", info.data_type),
-                    }
-
-                    info_!("Additional path: {:?}", entry.path());
-                    warn_!("Keeping existing template '{}'.", name);
+                    let existing = match info.path {
+                        Some(ref path) => format!("path: {path:?}"),
+                        None => format!("type: {}", info.data_type),
+                    };
+                    let detail = format!(
+                        "'{name}' duplicate (existing {existing}, additional {:?}) — keeping existing",
+                        entry.path()
+                    );
+                    mcb_domain::warn!("Template", "Template name not unique", &detail);
                     continue;
                 }
 
                 let data_type = data_type_str
                     .as_ref()
-                    .and_then(|ext| ContentType::from_extension(ext))
-                    .unwrap_or(ContentType::Text);
+                    .and_then(|ext| mime_for_extension(ext))
+                    .unwrap_or_else(|| "text/plain".to_owned());
 
                 templates.insert(
                     name,
@@ -93,8 +112,7 @@ impl Context {
 
         let mut engines = Engines::init(&templates)?;
         if let Err(e) = callback(&mut engines) {
-            error_!("Template customization callback failed.");
-            error_!("{}", e);
+            mcb_domain::error!("Template", "Customization callback failed", &e);
             return None;
         }
 
@@ -103,8 +121,8 @@ impl Context {
                 let data_type = Path::new(name)
                     .extension()
                     .and_then(|osstr| osstr.to_str())
-                    .and_then(ContentType::from_extension)
-                    .unwrap_or(ContentType::Text);
+                    .and_then(mime_for_extension)
+                    .unwrap_or_else(|| "text/plain".to_owned());
 
                 let info = TemplateInfo {
                     path: None,
@@ -125,7 +143,7 @@ impl Context {
     fn initialize_embedded(callback: &Callback) -> Option<Context> {
         let mut engines = Engines::init_embedded()?;
         if let Err(e) = callback(&mut engines) {
-            error_!("Template customization callback failed: {}", e);
+            mcb_domain::error!("Template", "Customization callback failed", &e);
             return None;
         }
 
@@ -134,8 +152,8 @@ impl Context {
             let data_type = Path::new(name)
                 .extension()
                 .and_then(|osstr| osstr.to_str())
-                .and_then(ContentType::from_extension)
-                .unwrap_or(ContentType::HTML);
+                .and_then(mime_for_extension)
+                .unwrap_or_else(|| "text/html".to_owned());
 
             templates.insert(
                 name.to_owned(),
@@ -152,8 +170,8 @@ impl Context {
                 let data_type = Path::new(name)
                     .extension()
                     .and_then(|osstr| osstr.to_str())
-                    .and_then(ContentType::from_extension)
-                    .unwrap_or(ContentType::Text);
+                    .and_then(mime_for_extension)
+                    .unwrap_or_else(|| "text/plain".to_owned());
 
                 templates.insert(
                     name.to_owned(),
@@ -199,13 +217,13 @@ mod manager {
 
 #[cfg(debug_assertions)]
 mod manager {
-    use std::ops::{Deref, DerefMut};
+    use std::ops::Deref;
     use std::sync::mpsc::{Receiver, channel};
     use std::sync::{Mutex, RwLock};
 
     use notify::{Event, RecommendedWatcher, RecursiveMode, Result as NotifyResult, Watcher};
 
-    use super::{Callback, Context};
+    use super::Context;
 
     pub(crate) struct ContextManager {
         context: RwLock<Context>,
@@ -226,9 +244,7 @@ mod manager {
             let watcher = match watcher {
                 Ok(watcher) => Some((watcher, Mutex::new(rx))),
                 Err(e) => {
-                    warn!("Failed to enable live template reloading: {}", e);
-                    debug_!("Reload error: {:?}", e);
-                    warn_!("Live template reloading is unavailable.");
+                    mcb_domain::warn!("Template", "Live reloading unavailable", &e);
                     None
                 }
             };
@@ -241,48 +257,13 @@ mod manager {
 
         pub fn context(&self) -> impl Deref<Target = Context> + '_ {
             self.context.read().unwrap_or_else(|poisoned| {
-                warn_!(
-                    "Template context RwLock poisoned while reading; continuing with inner value."
-                );
+                mcb_domain::warn!("Template", "RwLock poisoned, continuing with inner value");
                 poisoned.into_inner()
             })
         }
 
         pub fn is_reloading(&self) -> bool {
             self.watcher.is_some()
-        }
-
-        fn context_mut(&self) -> impl DerefMut<Target = Context> + '_ {
-            self.context.write().unwrap_or_else(|poisoned| {
-                warn_!(
-                    "Template context RwLock poisoned while writing; continuing with inner value."
-                );
-                poisoned.into_inner()
-            })
-        }
-
-        pub fn reload_if_needed(&self, callback: &Callback) {
-            let templates_changes = self.watcher.as_ref().map(|(_, rx)| {
-                rx.lock()
-                    .unwrap_or_else(|poisoned| {
-                        warn_!("Template watcher mutex poisoned; continuing with inner receiver.");
-                        poisoned.into_inner()
-                    })
-                    .try_iter()
-                    .count()
-                    > 0
-            });
-
-            if let Some(true) = templates_changes {
-                info_!("Change detected: reloading templates.");
-                let root = self.context().root.clone();
-                if let Some(new_ctxt) = Context::initialize(&root, callback) {
-                    *self.context_mut() = new_ctxt;
-                } else {
-                    warn_!("An error occurred while reloading templates.");
-                    warn_!("Existing templates will remain active.");
-                };
-            }
         }
     }
 }

@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use handlebars::Handlebars;
-use rocket::serde::Serialize;
+use serde::Serialize;
 
 use crate::templates::embedded;
 use crate::templates::template::TemplateInfo;

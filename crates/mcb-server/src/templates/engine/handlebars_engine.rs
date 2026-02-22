@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use handlebars::Handlebars;
-use rocket::serde::Serialize;
+use serde::Serialize;
 
 use super::Engine;
 
@@ -16,9 +16,8 @@ impl Engine for Handlebars<'static> {
         let mut ok = true;
         for (name, path) in templates {
             if let Err(e) = hb.register_template_file(name, path) {
-                error!("Handlebars template '{}' failed to register.", name);
-                error_!("{}", e);
-                info_!("Template path: '{}'.", path.display());
+                let detail = format!("{name}: {e} (path: {})", path.display());
+                mcb_domain::error!("Template", "Handlebars failed to register", &detail);
                 ok = false;
             }
         }
@@ -28,12 +27,12 @@ impl Engine for Handlebars<'static> {
 
     fn render<C: Serialize>(&self, name: &str, context: C) -> Option<String> {
         if self.get_template(name).is_none() {
-            error_!("Handlebars template '{}' does not exist.", name);
+            mcb_domain::error!("Template", "Handlebars template does not exist", &name);
             return None;
         }
 
         Handlebars::render(self, name, &context)
-            .map_err(|e| error_!("Handlebars: {}", e))
+            .map_err(|e| mcb_domain::error!("Template", "Handlebars render error", &e))
             .ok()
     }
 }

@@ -22,10 +22,6 @@ use std::sync::Arc;
 
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use rocket::http::Status;
-use rocket::outcome::Outcome;
-use rocket::request::{self, FromRequest, Request};
-use rocket::serde::json::Json;
 use serde::Serialize;
 
 /// Admin authentication configuration for the middleware
@@ -95,116 +91,17 @@ pub struct AuthErrorResponse {
     pub message: String,
 }
 
-impl AuthErrorResponse {
-    /// Create error for not configured auth
-    #[must_use]
-    pub fn not_configured() -> (Status, Json<Self>) {
-        (
-            Status::ServiceUnavailable,
-            Json(Self {
-                error: "auth_not_configured",
-                message: "Admin authentication is enabled but no API key is configured. \
-                         Set MCP__AUTH__ADMIN__KEY environment variable or auth.admin.key in config.".to_owned(),
-            }),
-        )
-    }
-
-    /// Create error for invalid key
-    #[must_use]
-    pub fn invalid_key() -> (Status, Json<Self>) {
-        (
-            Status::Unauthorized,
-            Json(Self {
-                error: "invalid_api_key",
-                message: "Invalid admin API key".to_owned(),
-            }),
-        )
-    }
-
-    /// Create error for missing key
-    #[must_use]
-    pub fn missing_key(header_name: &str) -> (Status, Json<Self>) {
-        (
-            Status::Unauthorized,
-            Json(Self {
-                error: "missing_api_key",
-                message: format!(
-                    "Admin API key required. Provide it in the '{header_name}' header."
-                ),
-            }),
-        )
-    }
-}
-
-/// Request guard for admin authentication
-///
-/// Add this guard to route handlers that require authentication.
-/// Routes that include `AdminAuth` as a parameter will require valid
-/// API key authentication. Routes without this guard (like health checks)
-/// will bypass authentication.
-pub struct AdminAuth;
-
-/// Error type for admin authentication failures
-#[derive(Debug)]
-pub enum AdminAuthError {
-    /// Authentication not configured
-    NotConfigured,
-    /// Invalid API key
-    InvalidKey,
-    /// Missing API key
-    MissingKey(String),
-}
-
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for AdminAuth {
-    type Error = AdminAuthError;
-
-    async fn from_request(request: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        // Get auth config from managed state
-        let auth_config = match request.rocket().state::<Arc<AdminAuthConfig>>() {
-            Some(config) => config,
-            None => {
-                // No auth config means auth is disabled
-                return Outcome::Success(AdminAuth);
-            }
-        };
-
-        // If authentication is disabled, allow all requests
-        if !auth_config.enabled {
-            return Outcome::Success(AdminAuth);
-        }
-
-        // Check if auth is properly configured
-        if !auth_config.is_configured() {
-            return Outcome::Error((Status::ServiceUnavailable, AdminAuthError::NotConfigured));
-        }
-
-        // Get the API key from headers
-        let api_key = request.headers().get_one(&auth_config.header_name);
-
-        match api_key {
-            Some(key) if auth_config.validate_key(key) => Outcome::Success(AdminAuth),
-            Some(_) => Outcome::Error((Status::Unauthorized, AdminAuthError::InvalidKey)),
-            None => Outcome::Error((
-                Status::Unauthorized,
-                AdminAuthError::MissingKey(auth_config.header_name.clone()),
-            )),
-        }
-    }
-}
-
 /// Check if a route should bypass authentication
 #[must_use]
 pub fn is_unauthenticated_route(path: &str) -> bool {
     matches!(path, "/live" | "/ready")
 }
 
-/// Axum-compatible admin authentication extractor.
+/// Admin authentication extractor for Axum handlers.
 ///
-/// Implements [`axum::extract::FromRequestParts`] with the same validation
-/// logic as the Rocket [`AdminAuth`] guard. Extract `X-Admin-Key` (or the
-/// configured header), validate against [`AdminAuthConfig`], and reject with
-/// a JSON error body on failure.
+/// Implements [`axum::extract::FromRequestParts`] to extract and validate
+/// the `X-Admin-Key` header (or the configured header name) against
+/// [`AdminAuthConfig`], rejecting with a JSON error body on failure.
 ///
 /// # Usage
 ///

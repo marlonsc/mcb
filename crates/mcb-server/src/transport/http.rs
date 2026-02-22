@@ -6,32 +6,22 @@ use axum::routing::{get, post};
 use axum::{Json, Router};
 use rmcp::ServerHandler;
 use rmcp::model::CallToolRequestParams;
-use rocket::{Build, Rocket};
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
+
+use mcb_domain::info;
 
 use crate::McpServer;
 use crate::admin::auth::AdminAuthConfig;
 use crate::admin::browse_handlers::BrowseState;
 use crate::admin::handlers::AdminState;
-use crate::admin::routes::admin_rocket;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
 use crate::tools::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use crate::transport::axum_http::{AppState, build_router};
 use crate::transport::types::{McpRequest, McpResponse};
 
-#[path = "http/http_bridge.rs"]
-mod http_bridge;
 #[path = "http/http_config.rs"]
 mod http_config;
-#[path = "http/http_cors.rs"]
-mod http_cors;
-#[path = "http/http_health.rs"]
-mod http_health;
-#[path = "http/http_mcp.rs"]
-mod http_mcp;
-#[path = "http/http_mcp_tools.rs"]
-mod http_mcp_tools;
 pub use http_config::HttpTransportConfig;
 
 #[derive(Clone)]
@@ -85,7 +75,7 @@ pub struct HttpTransportState {
     pub server: Arc<McpServer>,
 }
 
-/// HTTP transport: serves MCP over HTTP and optionally the admin UI (Axum) and admin API (Rocket).
+#[allow(missing_docs)]
 pub struct HttpTransport {
     config: HttpTransportConfig,
     state: HttpTransportState,
@@ -122,7 +112,6 @@ impl HttpTransport {
     }
 
     /// Builds the Axum router (MCP + optional admin UI routes).
-    #[must_use]
     pub fn router(&self) -> Router {
         let mut app = Router::new()
             .route("/mcp", post(handle_mcp_request))
@@ -144,7 +133,7 @@ impl HttpTransport {
                         .unwrap_or_else(|| Arc::new(AdminAuthConfig::default())),
                 ),
             });
-            app = app.merge(build_router(app_state));
+            app = app.merge(build_router(&app_state));
         }
 
         if self.config.enable_cors {
@@ -158,39 +147,13 @@ impl HttpTransport {
         app.layer(TraceLayer::new_for_http())
     }
 
-    /// Builds the Rocket instance for admin API (when not using Axum for admin).
-    #[must_use]
-    pub fn rocket(&self) -> Rocket<Build> {
-        let mut rocket = if let Some(ref admin_state) = self.admin_state {
-            let auth_config = self
-                .auth_config
-                .clone()
-                .unwrap_or_else(|| Arc::new(AdminAuthConfig::default()));
-            admin_rocket(admin_state.clone(), auth_config, self.browse_state.clone())
-        } else {
-            rocket::custom(rocket::Config::figment())
-        };
-
-        rocket = rocket.manage(self.state.clone()).mount(
-            "/",
-            rocket::routes![
-                http_mcp::handle_mcp_request,
-                http_health::healthz,
-                http_health::readyz
-            ],
-        );
-
-        if self.config.enable_cors {
-            rocket = rocket.attach(http_cors::Cors);
-        }
-
-        rocket
-    }
-
     /// Binds and serves the HTTP transport until the process exits.
+    ///
+    /// # Errors
+    /// Returns an error if socket address is invalid or bind/serve fails.
     pub async fn start(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let addr = self.config.socket_addr()?;
-        tracing::info!("HTTP transport listening on {}", addr);
+        info!("HttpTransport", "HTTP transport listening", &addr);
 
         let listener = tokio::net::TcpListener::bind(addr).await?;
         axum::serve(listener, self.router()).await?;
@@ -198,12 +161,15 @@ impl HttpTransport {
     }
 
     /// Serves the HTTP transport until the given shutdown future completes.
+    ///
+    /// # Errors
+    /// Returns an error if socket address is invalid or bind/serve fails.
     pub async fn start_with_shutdown(
         self,
         shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let addr = self.config.socket_addr()?;
-        tracing::info!("HTTP transport listening on {}", addr);
+        info!("HttpTransport", "HTTP transport listening", &addr);
 
         let listener = tokio::net::TcpListener::bind(addr).await?;
         axum::serve(listener, self.router())
@@ -438,23 +404,21 @@ async fn handle_tools_call(
             ctx.delegated = Some(ctx.parent_session_id.is_some());
         }
 
-        if let Some(ref path_str) = ctx.repo_path {
-            if ctx.repo_id.as_deref().is_none_or(|s| s.trim().is_empty()) {
-                if let Ok(repo) = state
+        if let Some(ref path_str) = ctx.repo_path
+            && ctx.repo_id.as_deref().is_none_or(|s| s.trim().is_empty())
+            && let Ok(repo) = state
+                .server
+                .vcs_provider()
+                .open_repository(std::path::Path::new(path_str))
+                .await
+        {
+            ctx.repo_id = Some(
+                state
                     .server
                     .vcs_provider()
-                    .open_repository(std::path::Path::new(path_str))
-                    .await
-                {
-                    ctx.repo_id = Some(
-                        state
-                            .server
-                            .vcs_provider()
-                            .repository_id(&repo)
-                            .into_string(),
-                    );
-                }
-            }
+                    .repository_id(&repo)
+                    .into_string(),
+            );
         }
 
         ctx

@@ -59,5 +59,3 @@ pub struct AdminState {
     /// Unified MCP tool handlers used to execute admin operations via command gateway.
     pub tool_handlers: Option<ToolHandlers>,
 }
-
-pub use crate::admin::cache::CacheErrorResponse;

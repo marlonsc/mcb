@@ -140,7 +140,8 @@ pub(crate) fn register_embedded(hb: &mut Handlebars<'static>) -> bool {
     let mut ok = true;
     for &(name, content) in EMBEDDED_TEMPLATES {
         if let Err(e) = hb.register_template_string(name, content) {
-            error!("Embedded template '{}' failed to register: {}", name, e);
+            let detail = format!("{name}: {e}");
+            mcb_domain::error!("Template", "Embedded template failed to register", &detail);
             ok = false;
         }
     }

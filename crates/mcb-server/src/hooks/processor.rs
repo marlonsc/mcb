@@ -11,8 +11,8 @@ use mcb_domain::entities::memory::{MemoryFilter, ObservationType, OriginContext}
 use mcb_domain::ports::MemoryServiceInterface;
 use mcb_domain::utils::mask_id;
 
+use mcb_domain::debug;
 use mcb_domain::utils::id as domain_id;
-use tracing::debug;
 
 use crate::constants::fields::TAG_TOOL;
 
@@ -53,9 +53,12 @@ impl HookProcessor {
             .ok_or(HookError::MemoryServiceUnavailable)?;
 
         debug!(
-            tool_name = %context.tool_name,
-            status = ?context.status,
-            "Processing PostToolUse hook"
+            "HookProcessor",
+            "Processing PostToolUse hook",
+            &format!(
+                "tool_name={} status={:?}",
+                context.tool_name, context.status
+            )
         );
 
         let content = format!(
@@ -66,7 +69,10 @@ impl HookProcessor {
         let project_id = match context.metadata.get("project_id").cloned() {
             Some(id) if !id.trim().is_empty() => id,
             _ => {
-                debug!("PostToolUse hook skipped: missing project_id in metadata");
+                debug!(
+                    "HookProcessor",
+                    "PostToolUse hook skipped: missing project_id in metadata"
+                );
                 return Ok(());
             }
         };
@@ -119,7 +125,7 @@ impl HookProcessor {
             .await
             .map_err(|e| HookError::FailedToStoreObservation(e.to_string()))?;
 
-        debug!("PostToolUse hook processed successfully");
+        debug!("HookProcessor", "PostToolUse hook processed successfully");
         Ok(())
     }
 
@@ -137,8 +143,9 @@ impl HookProcessor {
         let session_id_str = context.session_id.to_string();
 
         debug!(
-            session_id = %mask_id(&session_id_str),
-            "Processing SessionStart hook"
+            "HookProcessor",
+            "Processing SessionStart hook",
+            &format!("session_id={}", mask_id(&session_id_str))
         );
 
         let filter = MemoryFilter {
@@ -160,8 +167,9 @@ impl HookProcessor {
             .map_err(|e| HookError::FailedToInjectContext(e.to_string()))?;
 
         debug!(
-            count = results.len(),
-            "SessionStart hook processed successfully"
+            "HookProcessor",
+            "SessionStart hook processed successfully",
+            &format!("count={}", results.len())
         );
         Ok(())
     }

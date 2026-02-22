@@ -23,7 +23,7 @@
 /// | `$field`       | ident  | Field name on the response struct for the items   |
 /// | `$resource`    | literal| Entity resource name passed to the backend        |
 /// | `$unavailable` | literal| Error message when the backend is unavailable     |
-/// | `$log_label`   | literal| `tracing::info!` message emitted on each call     |
+/// | `$log_label`   | literal| domain `info!` message emitted on each call      |
 /// | `$doc`         | literal| Doc comment attached to the generated function    |
 ///
 /// # Requirements
@@ -68,7 +68,7 @@ macro_rules! define_project_scoped_browse_endpoint {
             axum::extract::State(state): axum::extract::State<std::sync::Arc<AdminState>>,
             axum::extract::Query(params): axum::extract::Query<ProjectIdQuery>,
         ) -> crate::admin::error::AdminResult<$response> {
-            tracing::info!($log_label);
+            mcb_domain::info!("browse", $log_label);
             let items = fetch_project_scoped_entities_axum::<$entity>(
                 &state,
                 $resource,

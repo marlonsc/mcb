@@ -5,10 +5,10 @@
 
 use std::sync::Arc;
 
+use mcb_domain::info;
 use mcb_domain::ports::ProjectRepository;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
-use tracing::info;
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
 use crate::utils::mcp::{map_opaque_error, ok_json, resolve_org_id};
@@ -41,10 +41,12 @@ impl ProjectHandler {
         }
 
         info!(
-            action = ?args.action,
-            resource = ?args.resource,
-            project_id = %project_id,
-            "project request"
+            "ProjectHandler",
+            "project request",
+            &format!(
+                "action={:?} resource={:?} project_id={project_id}",
+                args.action, args.resource
+            )
         );
 
         match (args.action, args.resource) {

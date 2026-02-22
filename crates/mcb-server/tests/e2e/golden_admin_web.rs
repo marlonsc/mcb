@@ -54,7 +54,7 @@ async fn post_form(path: &str, body: &str) -> StatusCode {
 }
 
 #[tokio::test]
-async fn test_admin_rocket_dashboard_is_accessible() {
+async fn test_admin_web_dashboard_is_accessible() {
     let (status, html, _) = get("/").await;
     assert_eq!(status, StatusCode::OK, "Dashboard (/) must return 200 OK");
     assert!(
@@ -68,104 +68,104 @@ async fn test_admin_rocket_dashboard_is_accessible() {
 }
 
 #[tokio::test]
-async fn test_admin_rocket_config_page_is_accessible() {
+async fn test_admin_web_config_page_is_accessible() {
     let (status, _, _) = get("/ui/config").await;
     assert_eq!(status, StatusCode::OK);
 }
 
 #[tokio::test]
-async fn test_admin_rocket_health_page_is_accessible() {
+async fn test_admin_web_health_page_is_accessible() {
     let (status, _, _) = get("/ui/health").await;
     assert_eq!(status, StatusCode::OK);
 }
 
 #[tokio::test]
-async fn test_admin_rocket_removed_indexing_route_returns_not_found() {
+async fn test_admin_web_removed_indexing_route_returns_not_found() {
     let (status, _, _) = get("/ui/indexing").await;
     assert_eq!(status, StatusCode::NOT_FOUND);
 }
 
 #[tokio::test]
-async fn test_admin_rocket_jobs_page_is_accessible() {
+async fn test_admin_web_jobs_page_is_accessible() {
     let (status, _, _) = get("/ui/jobs").await;
     assert_eq!(status, StatusCode::OK);
 }
 
 #[tokio::test]
-async fn test_admin_rocket_browse_page_is_accessible() {
+async fn test_admin_web_browse_page_is_accessible() {
     let (status, _, _) = get("/ui/browse").await;
     assert_eq!(status, StatusCode::OK);
 }
 
 #[tokio::test]
-async fn test_admin_rocket_favicon_is_accessible() {
+async fn test_admin_web_favicon_is_accessible() {
     let (status, _, content_type) = get("/favicon.ico").await;
     assert_eq!(status, StatusCode::OK);
     assert!(
         content_type
             .as_ref()
-            .map_or(false, |ct| ct.starts_with("image/svg+xml")),
+            .is_some_and(|ct| ct.starts_with("image/svg+xml")),
         "Unexpected Content-Type: {content_type:?}"
     );
 }
 
 #[tokio::test]
-async fn test_admin_rocket_theme_css_is_accessible() {
+async fn test_admin_web_theme_css_is_accessible() {
     let (status, _, content_type) = get("/ui/theme.css").await;
     assert_eq!(status, StatusCode::OK);
     assert!(
         content_type
             .as_ref()
-            .map_or(false, |ct| ct.starts_with("text/css")),
+            .is_some_and(|ct| ct.starts_with("text/css")),
         "Unexpected Content-Type: {content_type:?}"
     );
 }
 
 #[tokio::test]
-async fn test_admin_rocket_shared_js_is_accessible() {
+async fn test_admin_web_shared_js_is_accessible() {
     let (status, _, content_type) = get("/ui/shared.js").await;
     assert_eq!(status, StatusCode::OK);
     assert!(
         content_type
             .as_ref()
-            .map_or(false, |ct| ct.contains("javascript")),
+            .is_some_and(|ct| ct.contains("javascript")),
         "Unexpected Content-Type for /ui/shared.js: {content_type:?}"
     );
 }
 
 #[tokio::test]
-async fn test_admin_rocket_entities_bulk_delete_is_accessible() {
+async fn test_admin_web_entities_bulk_delete_is_accessible() {
     let status = post_form("/ui/entities/organizations/bulk-delete", "ids=a,b").await;
     assert_eq!(status, StatusCode::SEE_OTHER);
 }
 
 #[tokio::test]
-async fn test_admin_rocket_lov_endpoint_is_accessible() {
+async fn test_admin_web_lov_endpoint_is_accessible() {
     let (status, body, _) = get("/ui/lov/organizations").await;
     assert_eq!(status, StatusCode::OK);
     assert!(body.starts_with('['), "LOV endpoint must return JSON array");
 }
 
 #[tokio::test]
-async fn test_admin_rocket_agent_sessions_page_is_accessible() {
+async fn test_admin_web_agent_sessions_page_is_accessible() {
     let (status, _, _) = get("/ui/entities/agent-sessions").await;
     assert_eq!(status, StatusCode::OK);
 }
 
 #[tokio::test]
-async fn test_admin_rocket_delegations_page_is_accessible() {
+async fn test_admin_web_delegations_page_is_accessible() {
     let (status, _, _) = get("/ui/entities/delegations").await;
     assert_eq!(status, StatusCode::OK);
 }
 
 #[tokio::test]
-async fn test_admin_rocket_tool_calls_page_is_accessible() {
+async fn test_admin_web_tool_calls_page_is_accessible() {
     let (status, _, _) = get("/ui/entities/tool-calls").await;
     assert_eq!(status, StatusCode::OK);
 }
 
 #[tokio::test]
-async fn test_admin_rocket_checkpoints_page_is_accessible() {
+async fn test_admin_web_checkpoints_page_is_accessible() {
     let (status, _, _) = get("/ui/entities/checkpoints").await;
     assert_eq!(status, StatusCode::OK);
 }

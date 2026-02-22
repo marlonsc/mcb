@@ -8,7 +8,7 @@
 use axum::extract::State;
 use axum::http::header;
 use axum::response::IntoResponse;
-use mcb_domain::warn;
+use mcb_domain::{info, warn};
 use serde::Serialize;
 
 use crate::admin::AdminRegistry;
@@ -23,13 +23,13 @@ const THEME_CSS: &str = include_str!("templates/theme.css");
 
 /// Dashboard page handler
 pub async fn dashboard(State(state): State<AdminState>) -> Template {
-    tracing::info!("dashboard called");
+    info!("web", "dashboard called");
     render_dashboard_template("Dashboard", Some(&state)).await
 }
 
 /// Dashboard page handler (alias)
 pub async fn dashboard_ui(State(state): State<AdminState>) -> Template {
-    tracing::info!("dashboard_ui called");
+    info!("web", "dashboard_ui called");
     render_dashboard_template("Dashboard", Some(&state)).await
 }
 
@@ -39,7 +39,7 @@ template_page!(jobs_page, "admin/jobs", "Jobs", "jobs");
 
 /// Favicon handler - returns a simple SVG icon
 pub async fn favicon() -> impl IntoResponse {
-    tracing::info!("favicon called");
+    info!("web", "favicon called");
     (
         [(header::CONTENT_TYPE, "image/svg+xml")],
         r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📊</text></svg>"#,
@@ -48,13 +48,13 @@ pub async fn favicon() -> impl IntoResponse {
 
 /// Theme CSS handler
 pub async fn theme_css() -> impl IntoResponse {
-    tracing::info!("theme_css called");
+    info!("web", "theme_css called");
     ([(header::CONTENT_TYPE, "text/css")], THEME_CSS)
 }
 
 /// Shared JavaScript utilities for admin UI
 pub async fn shared_js() -> impl IntoResponse {
-    tracing::info!("shared_js called");
+    info!("web", "shared_js called");
     (
         [(header::CONTENT_TYPE, "application/javascript")],
         SHARED_JS,

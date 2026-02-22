@@ -60,14 +60,11 @@ tracing-subscriber = { workspace = true }
 # CLI
 clap = { workspace = true }
 
-# HTTP server - migrated from Axum to Rocket in v0.1.2 (ADR-026)
-rocket = { workspace = true }
-walkdir = { workspace = true }
-normpath = { workspace = true }
-
-# HTTP server - Axum (migration in progress - ADR-026)
+# HTTP server (Axum)
 axum = { workspace = true }
 tower-http = { workspace = true }
+walkdir = { workspace = true }
+normpath = { workspace = true }
 
 # HTTP client - for client mode connecting to remote server
 reqwest = { workspace = true }

@@ -1,19 +1,9 @@
-//! Real Auth Integration Tests
-//!
-//! These tests verify that authentication ACTUALLY WORKS with a real Rocket server.
-//! Unlike the unit tests in `auth_test.rs`, these tests:
-//!
-//! 1. Start a real Rocket server with authentication ENABLED
-//! 2. Make HTTP requests WITH and WITHOUT the API key
-//! 3. Verify correct HTTP status codes (401 for unauthorized, 200 for authorized)
-//! 4. Validate the response body contains correct error messages and data
-//!
-//! This ensures the `AdminAuth` guard works correctly in production.
+//! Auth integration tests verifying Axum admin middleware with real HTTP dispatch.
 
+use axum::http::StatusCode;
 use mcb_domain::ports::IndexingOperationsInterface;
 use mcb_domain::value_objects::CollectionId;
 use mcb_server::admin::auth::AdminAuthConfig;
-use rocket::http::{Header, Status};
 
 use crate::utils::timeouts::TEST_TIMEOUT;
 
@@ -26,7 +16,7 @@ use crate::utils::admin_harness::{
 // =============================================================================
 
 /// Test: /metrics without API key should return 401 with proper error message
-#[rocket::async_test]
+#[tokio::test]
 async fn test_metrics_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -37,7 +27,7 @@ async fn test_metrics_without_key_returns_401() {
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "GET /metrics without API key should return 401 Unauthorized"
     );
 
@@ -46,7 +36,7 @@ async fn test_metrics_without_key_returns_401() {
 }
 
 /// Test: /metrics with wrong API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_metrics_with_wrong_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -55,19 +45,19 @@ async fn test_metrics_with_wrong_key_returns_401() {
 
     let response = client
         .get("/metrics")
-        .header(Header::new(TEST_AUTH_HEADER, "wrong-key"))
+        .header((TEST_AUTH_HEADER, "wrong-key"))
         .dispatch()
         .await;
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "GET /metrics with wrong API key should return 401 Unauthorized"
     );
 }
 
 /// Test: /metrics with correct API key returns 200 and VALID metrics data
-#[rocket::async_test]
+#[tokio::test]
 async fn test_metrics_with_correct_key_returns_200() {
     let (client, _, _) = AdminTestHarness::new()
         .with_recorded_metrics(
@@ -80,13 +70,13 @@ async fn test_metrics_with_correct_key_returns_200() {
 
     let response = client
         .get("/metrics")
-        .header(Header::new(TEST_AUTH_HEADER, TEST_API_KEY))
+        .header((TEST_AUTH_HEADER, TEST_API_KEY))
         .dispatch()
         .await;
 
     assert_eq!(
         response.status(),
-        Status::Ok,
+        StatusCode::OK,
         "GET /metrics with correct API key should return 200 OK"
     );
 
@@ -126,7 +116,7 @@ async fn test_metrics_with_correct_key_returns_200() {
 }
 
 /// Test: /health/extended without API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_extended_health_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -137,13 +127,13 @@ async fn test_extended_health_without_key_returns_401() {
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "GET /health/extended without API key should return 401 Unauthorized"
     );
 }
 
 /// Test: /health/extended with correct API key returns 200 and VALID health data
-#[rocket::async_test]
+#[tokio::test]
 async fn test_extended_health_with_correct_key_returns_200() {
     let (client, _, _) = AdminTestHarness::new()
         .with_recorded_metrics(&[(100, true, true)], 0)
@@ -153,13 +143,13 @@ async fn test_extended_health_with_correct_key_returns_200() {
 
     let response = client
         .get("/health/extended")
-        .header(Header::new(TEST_AUTH_HEADER, TEST_API_KEY))
+        .header((TEST_AUTH_HEADER, TEST_API_KEY))
         .dispatch()
         .await;
 
     assert_eq!(
         response.status(),
-        Status::Ok,
+        StatusCode::OK,
         "GET /health/extended with correct API key should return 200 OK"
     );
 
@@ -212,7 +202,7 @@ async fn test_extended_health_with_correct_key_returns_200() {
 }
 
 /// Test: POST /shutdown without API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_shutdown_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -221,20 +211,20 @@ async fn test_shutdown_without_key_returns_401() {
 
     let response = client
         .post("/shutdown")
-        .header(rocket::http::ContentType::JSON)
+        .header(("Content-Type", "application/json"))
         .body("{}")
         .dispatch()
         .await;
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "POST /shutdown without API key should return 401 Unauthorized"
     );
 }
 
 /// Test: /cache/stats without API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_cache_stats_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -245,7 +235,7 @@ async fn test_cache_stats_without_key_returns_401() {
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "GET /cache/stats without API key should return 401 Unauthorized"
     );
 }
@@ -255,7 +245,7 @@ async fn test_cache_stats_without_key_returns_401() {
 // =============================================================================
 
 /// Test: /health should work WITHOUT API key and return valid health data
-#[rocket::async_test]
+#[tokio::test]
 async fn test_health_public_no_auth_required() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -266,7 +256,7 @@ async fn test_health_public_no_auth_required() {
 
     assert_eq!(
         response.status(),
-        Status::Ok,
+        StatusCode::OK,
         "GET /health should work without API key (public endpoint)"
     );
 
@@ -289,7 +279,7 @@ async fn test_health_public_no_auth_required() {
 }
 
 /// Test: /live should work WITHOUT API key and return alive: true
-#[rocket::async_test]
+#[tokio::test]
 async fn test_live_public_no_auth_required() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -300,7 +290,7 @@ async fn test_live_public_no_auth_required() {
 
     assert_eq!(
         response.status(),
-        Status::Ok,
+        StatusCode::OK,
         "GET /live should work without API key (Kubernetes probe)"
     );
 
@@ -315,7 +305,7 @@ async fn test_live_public_no_auth_required() {
 }
 
 /// Test: /ready should work WITHOUT API key and return ready status
-#[rocket::async_test]
+#[tokio::test]
 async fn test_ready_public_no_auth_required() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth_config(create_auth_config())
@@ -333,7 +323,7 @@ async fn test_ready_public_no_auth_required() {
     // The important thing is it doesn't return 401 (unauthorized)
     assert_ne!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "GET /ready should not require authentication"
     );
 
@@ -348,7 +338,7 @@ async fn test_ready_public_no_auth_required() {
 }
 
 /// Test: /jobs should work WITHOUT API key and return valid status
-#[rocket::async_test]
+#[tokio::test]
 async fn test_jobs_public_no_auth_required() {
     let harness = AdminTestHarness::new().with_auth(TEST_API_KEY);
     let op_id = harness
@@ -363,7 +353,7 @@ async fn test_jobs_public_no_auth_required() {
 
     assert_eq!(
         response.status(),
-        Status::Ok,
+        StatusCode::OK,
         "GET /jobs should work without API key (public endpoint)"
     );
 
@@ -398,7 +388,7 @@ async fn test_jobs_public_no_auth_required() {
 // =============================================================================
 
 /// Test: Auth enabled but no key configured should return 503
-#[rocket::async_test]
+#[tokio::test]
 async fn test_auth_enabled_no_key_configured_returns_503() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth_config(create_auth_config_no_key())
@@ -409,13 +399,13 @@ async fn test_auth_enabled_no_key_configured_returns_503() {
 
     assert_eq!(
         response.status(),
-        Status::ServiceUnavailable,
+        StatusCode::SERVICE_UNAVAILABLE,
         "Auth enabled but no key configured should return 503 ServiceUnavailable"
     );
 }
 
 /// Test: Custom header name works correctly
-#[rocket::async_test]
+#[tokio::test]
 async fn test_custom_header_name() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth_config(AdminAuthConfig {
@@ -429,32 +419,32 @@ async fn test_custom_header_name() {
     // Wrong header name should fail
     let response = client
         .get("/metrics")
-        .header(Header::new("X-Admin-Key", "custom-key"))
+        .header(("X-Admin-Key", "custom-key"))
         .dispatch()
         .await;
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "Using default header when custom header is configured should return 401"
     );
 
     // Correct header name should work
     let response = client
         .get("/metrics")
-        .header(Header::new("X-Custom-Auth", "custom-key"))
+        .header(("X-Custom-Auth", "custom-key"))
         .dispatch()
         .await;
 
     assert_eq!(
         response.status(),
-        Status::Ok,
+        StatusCode::OK,
         "Using correct custom header should return 200"
     );
 }
 
 /// Test: Auth disabled allows all requests (backwards compatibility)
-#[rocket::async_test]
+#[tokio::test]
 async fn test_auth_disabled_allows_all() {
     let (client, _, _) = AdminTestHarness::new().build_client().await;
 
@@ -462,7 +452,7 @@ async fn test_auth_disabled_allows_all() {
 
     assert_eq!(
         response.status(),
-        Status::Ok,
+        StatusCode::OK,
         "With auth disabled, protected endpoints should be accessible"
     );
 }
@@ -472,7 +462,7 @@ async fn test_auth_disabled_allows_all() {
 // =============================================================================
 
 /// Test: GET /config without API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_config_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -483,13 +473,13 @@ async fn test_config_without_key_returns_401() {
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "GET /config without API key should return 401 Unauthorized"
     );
 }
 
 /// Test: POST /config/reload without API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_config_reload_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -500,13 +490,13 @@ async fn test_config_reload_without_key_returns_401() {
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "POST /config/reload without API key should return 401 Unauthorized"
     );
 }
 
 /// Test: PATCH /config/server without API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_config_update_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -515,14 +505,14 @@ async fn test_config_update_without_key_returns_401() {
 
     let response = client
         .patch("/config/server")
-        .header(rocket::http::ContentType::JSON)
+        .header(("Content-Type", "application/json"))
         .body(r#"{"values": {}}"#)
         .dispatch()
         .await;
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "PATCH /config/server without API key should return 401 Unauthorized"
     );
 }
@@ -532,7 +522,7 @@ async fn test_config_update_without_key_returns_401() {
 // =============================================================================
 
 /// Test: GET /services without API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_services_list_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -543,13 +533,13 @@ async fn test_services_list_without_key_returns_401() {
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "GET /services without API key should return 401 Unauthorized"
     );
 }
 
 /// Test: POST /services/test/start without API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_services_start_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -560,13 +550,13 @@ async fn test_services_start_without_key_returns_401() {
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "POST /services/test/start without API key should return 401 Unauthorized"
     );
 }
 
 /// Test: POST /services/test/stop without API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_services_stop_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -577,13 +567,13 @@ async fn test_services_stop_without_key_returns_401() {
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "POST /services/test/stop without API key should return 401 Unauthorized"
     );
 }
 
 /// Test: POST /services/test/restart without API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_services_restart_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -594,13 +584,13 @@ async fn test_services_restart_without_key_returns_401() {
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "POST /services/test/restart without API key should return 401 Unauthorized"
     );
 }
 
 /// Test: GET /services/health without API key should return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_services_health_without_key_returns_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -611,7 +601,7 @@ async fn test_services_health_without_key_returns_401() {
 
     assert_eq!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "GET /services/health without API key should return 401 Unauthorized"
     );
 }
@@ -621,7 +611,7 @@ async fn test_services_health_without_key_returns_401() {
 // =============================================================================
 
 /// Test: GET /config with correct API key should not return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_config_with_correct_key_does_not_return_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -630,20 +620,20 @@ async fn test_config_with_correct_key_does_not_return_401() {
 
     let response = client
         .get("/config")
-        .header(Header::new(TEST_AUTH_HEADER, TEST_API_KEY))
+        .header((TEST_AUTH_HEADER, TEST_API_KEY))
         .dispatch()
         .await;
 
     // May return 503 (no config watcher) but should NOT return 401
     assert_ne!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "GET /config with correct key should not return 401"
     );
 }
 
 /// Test: GET /services with correct API key should not return 401
-#[rocket::async_test]
+#[tokio::test]
 async fn test_services_with_correct_key_does_not_return_401() {
     let (client, _, _) = AdminTestHarness::new()
         .with_auth(TEST_API_KEY)
@@ -652,14 +642,14 @@ async fn test_services_with_correct_key_does_not_return_401() {
 
     let response = client
         .get("/services")
-        .header(Header::new(TEST_AUTH_HEADER, TEST_API_KEY))
+        .header((TEST_AUTH_HEADER, TEST_API_KEY))
         .dispatch()
         .await;
 
     // May return 503 (no service manager) but should NOT return 401
     assert_ne!(
         response.status(),
-        Status::Unauthorized,
+        StatusCode::UNAUTHORIZED,
         "GET /services with correct key should not return 401"
     );
 }

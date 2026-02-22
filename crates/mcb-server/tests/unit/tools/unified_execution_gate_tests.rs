@@ -8,7 +8,7 @@ fn route_calls_are_routed_via_unified_dispatch(#[case] source_key: &str) {
     let source = match source_key {
         "crud_adapter" => include_str!("../../../src/admin/crud_adapter/unified.rs"),
         "mcp_server" => include_str!("../../../src/mcp_server.rs"),
-        "http_transport" => include_str!("../../../src/transport/http/http_mcp_tools.rs"),
+        "http_transport" => include_str!("../../../src/transport/http.rs"),
         _ => panic!("unknown source"),
     };
     assert!(source.contains("route_tool_call("));

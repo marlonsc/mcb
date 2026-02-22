@@ -9,9 +9,8 @@ use std::sync::Arc;
 
 use axum::Json as AxumJson;
 use axum::extract::State as AxumState;
+use mcb_domain::info;
 use mcb_domain::ports::{Job, JobStatus, JobType};
-use rocket::serde::json::Json;
-use rocket::{State, get};
 use serde::Serialize;
 
 use crate::admin::handlers::AdminState;
@@ -27,13 +26,6 @@ pub struct JobsStatusResponse {
     pub queued: usize,
     /// Job details
     pub jobs: Vec<Job>,
-}
-
-/// List all background jobs
-#[get("/jobs")]
-pub fn get_jobs_status(state: &State<AdminState>) -> Json<JobsStatusResponse> {
-    tracing::info!("get_jobs_status called");
-    Json(build_jobs_response(state.indexing.as_ref()))
 }
 
 fn build_jobs_response(
@@ -79,6 +71,6 @@ fn build_jobs_response(
 pub async fn get_jobs_status_axum(
     AxumState(state): AxumState<Arc<AdminState>>,
 ) -> AxumJson<JobsStatusResponse> {
-    tracing::info!("get_jobs_status called");
+    info!("jobs", "get_jobs_status called");
     AxumJson(build_jobs_response(state.indexing.as_ref()))
 }

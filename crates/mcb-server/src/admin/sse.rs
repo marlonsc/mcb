@@ -40,7 +40,7 @@ use axum::extract::State;
 use axum::response::sse::{Event, KeepAlive, Sse};
 use futures::StreamExt;
 use mcb_domain::events::DomainEvent;
-use tracing::{debug, warn};
+use mcb_domain::{debug, info, warn};
 
 use super::handlers::AdminState;
 
@@ -51,7 +51,7 @@ use super::handlers::AdminState;
 pub async fn events_stream(
     State(state): State<Arc<AdminState>>,
 ) -> Sse<impl futures::Stream<Item = Result<Event, Infallible>>> {
-    tracing::info!("events_stream called");
+    info!("sse", "events_stream called");
     let event_bus = Arc::clone(&state.event_bus);
 
     let stream = async_stream::stream! {
@@ -59,7 +59,7 @@ pub async fn events_stream(
         let mut event_stream = match event_bus.subscribe_events().await {
             Ok(stream) => stream,
             Err(e) => {
-                warn!("Failed to subscribe to events: {}", e);
+                warn!("sse", "Failed to subscribe to events", &e);
                 // Yield an error event and exit
                 yield Ok(Event::default()
                     .event("error")
@@ -68,7 +68,7 @@ pub async fn events_stream(
             }
         };
 
-        debug!("SSE client connected, streaming events");
+        debug!("sse", "SSE client connected, streaming events");
 
         // Stream events to the client
         while let Some(event) = event_stream.next().await {
@@ -76,16 +76,16 @@ pub async fn events_stream(
             let event_data = match serde_json::to_string(&event) {
                 Ok(data) => data,
                 Err(e) => {
-                    warn!("Failed to serialize event: {}", e);
+                    warn!("sse", "Failed to serialize event", &e);
                     continue;
                 }
             };
 
-            debug!("Sending SSE event: {}", event_name);
+            debug!("sse", "Sending SSE event", &event_name);
             yield Ok(Event::default().event(event_name).data(event_data));
         }
 
-        debug!("SSE event stream closed");
+        debug!("sse", "SSE event stream closed");
     };
 
     Sse::new(stream).keep_alive(KeepAlive::default())

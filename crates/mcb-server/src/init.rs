@@ -38,11 +38,11 @@
 use std::path::Path;
 use std::sync::Arc;
 
+use mcb_domain::{error, info, warn};
 use mcb_infrastructure::config::{
     AppConfig,
     types::{OperatingMode, TransportMode},
 };
-use tracing::{error, info, warn};
 
 use crate::McpServer;
 use crate::admin::auth::AdminAuthConfig;
@@ -107,10 +107,12 @@ async fn run_server_mode(
     log_receiver: Option<mcb_infrastructure::logging::LogEventReceiver>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(
-        transport_mode = ?config.server.transport_mode,
-        host = %config.server.network.host,
-        port = %config.server.network.port,
-        "Starting MCB server daemon (single port)"
+        "Init",
+        "Starting MCB server daemon (single port)",
+        &format!(
+            "transport_mode={:?} host={} port={}",
+            config.server.transport_mode, config.server.network.host, config.server.network.port
+        )
     );
 
     let transport_mode = config.server.transport_mode;
@@ -118,7 +120,7 @@ async fn run_server_mode(
     let http_port = config.server.network.port;
 
     let (server, app_context) = create_mcp_server(config.clone(), "server").await?;
-    info!("MCP server initialized successfully");
+    info!("Init", "MCP server initialized successfully");
 
     let event_bus = app_context.event_bus();
 
@@ -128,7 +130,7 @@ async fn run_server_mode(
             receiver,
             Arc::<dyn mcb_domain::ports::EventBusProvider>::clone(&event_bus),
         );
-        info!("Log event forwarder connected to event bus");
+        info!("Init", "Log event forwarder connected to event bus");
     }
 
     // Create admin state for consolidated single-port operation
@@ -186,12 +188,17 @@ async fn run_server_mode(
     match transport_mode {
         TransportMode::Stdio => {
             warn!(
+                "Init",
                 "Server mode with stdio-only transport. Consider using 'hybrid' for client connections."
             );
             run_stdio_transport(server).await
         }
         TransportMode::Http => {
-            info!(host = %http_host, port = http_port, "Starting HTTP transport (MCP + Admin)");
+            info!(
+                "Init",
+                "Starting HTTP transport (MCP + Admin)",
+                &format!("host={http_host} port={http_port}")
+            );
             Box::pin(run_http_transport_with_admin(
                 server,
                 &http_host,
@@ -206,9 +213,9 @@ async fn run_server_mode(
         }
         TransportMode::Hybrid => {
             info!(
-                host = %http_host,
-                port = http_port,
-                "Starting hybrid transport (stdio + HTTP with Admin)"
+                "Init",
+                "Starting hybrid transport (stdio + HTTP with Admin)",
+                &format!("host={http_host} port={http_port}")
             );
             run_hybrid_transport_with_admin(
                 server,
@@ -235,8 +242,9 @@ async fn run_standalone(
     log_receiver: Option<mcb_infrastructure::logging::LogEventReceiver>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(
-        transport_mode = ?config.server.transport_mode,
-        "Starting MCB standalone mode"
+        "Init",
+        "Starting MCB standalone mode",
+        &format!("transport_mode={:?}", config.server.transport_mode)
     );
 
     let transport_mode = config.server.transport_mode;
@@ -244,7 +252,7 @@ async fn run_standalone(
     let http_port = config.server.network.port;
 
     let (server, app_context) = create_mcp_server(config, "standalone").await?;
-    info!("MCP server initialized successfully");
+    info!("Init", "MCP server initialized successfully");
 
     // Connect log event channel to the event bus for SSE streaming
     if let Some(receiver) = log_receiver {
@@ -264,10 +272,12 @@ async fn run_client(config: AppConfig) -> Result<(), Box<dyn std::error::Error>>
     let session_prefix = config.mode.session_prefix.as_deref();
 
     info!(
-        server_url = %server_url,
-        session_prefix = ?session_prefix,
-        timeout_secs = config.mode.timeout_secs,
-        "Starting MCB client mode"
+        "Init",
+        "Starting MCB client mode",
+        &format!(
+            "server_url={server_url} session_prefix={session_prefix:?} timeout_secs={}",
+            config.mode.timeout_secs
+        )
     );
 
     use crate::transport::http_client::HttpClientTransport;
@@ -355,18 +365,22 @@ async fn start_transport(
 ) -> Result<(), Box<dyn std::error::Error>> {
     match transport_mode {
         TransportMode::Stdio => {
-            info!("Starting stdio transport");
+            info!("Init", "Starting stdio transport");
             run_stdio_transport(server).await
         }
         TransportMode::Http => {
-            info!(host = %http_host, port = http_port, "Starting HTTP transport");
+            info!(
+                "Init",
+                "Starting HTTP transport",
+                &format!("host={http_host} port={http_port}")
+            );
             run_http_transport(server, http_host, http_port).await
         }
         TransportMode::Hybrid => {
             info!(
-                host = %http_host,
-                port = http_port,
-                "Starting hybrid transport (stdio + HTTP)"
+                "Init",
+                "Starting hybrid transport (stdio + HTTP)",
+                &format!("host={http_host} port={http_port}")
             );
             run_hybrid_transport(server, http_host, http_port).await
         }
@@ -447,15 +461,19 @@ async fn run_hybrid_transport(
     let http_host = host.to_owned();
 
     let stdio_handle = tokio::spawn(async move {
-        info!("Hybrid: starting stdio transport");
+        info!("Init", "Hybrid: starting stdio transport");
         if let Err(e) = stdio_server.serve_stdio().await {
-            error!(error = %e, "Hybrid: stdio transport failed");
+            error!("Init", "Hybrid: stdio transport failed", &e);
         }
-        info!("Hybrid: stdio transport finished");
+        info!("Init", "Hybrid: stdio transport finished");
     });
 
     let http_handle = tokio::spawn(async move {
-        info!("Hybrid: starting HTTP transport on {}:{}", http_host, port);
+        info!(
+            "Init",
+            "Hybrid: starting HTTP transport",
+            &format!("{http_host}:{port}")
+        );
         let http_config = HttpTransportConfig {
             host: http_host,
             port,
@@ -464,18 +482,18 @@ async fn run_hybrid_transport(
 
         let http_transport = HttpTransport::new(http_config, http_server);
         if let Err(e) = http_transport.start().await {
-            error!(error = %e, "Hybrid: HTTP transport failed");
+            error!("Init", "Hybrid: HTTP transport failed", &e);
         }
-        info!("Hybrid: HTTP transport finished");
+        info!("Init", "Hybrid: HTTP transport finished");
     });
 
     let (stdio_result, http_result) = tokio::join!(stdio_handle, http_handle);
 
     if let Err(e) = stdio_result {
-        error!(error = %e, "Hybrid: stdio transport task panicked");
+        error!("Init", "Hybrid: stdio transport task panicked", &e);
     }
     if let Err(e) = http_result {
-        error!(error = %e, "Hybrid: HTTP transport task panicked");
+        error!("Init", "Hybrid: HTTP transport task panicked", &e);
     }
 
     Ok(())
@@ -498,17 +516,18 @@ async fn run_hybrid_transport_with_admin(
     } = admin_context;
 
     let stdio_handle = tokio::spawn(async move {
-        info!("Hybrid: starting stdio transport");
+        info!("Init", "Hybrid: starting stdio transport");
         if let Err(e) = stdio_server.serve_stdio().await {
-            error!(error = %e, "Hybrid: stdio transport failed");
+            error!("Init", "Hybrid: stdio transport failed", &e);
         }
-        info!("Hybrid: stdio transport finished");
+        info!("Init", "Hybrid: stdio transport finished");
     });
 
     let http_handle = tokio::spawn(async move {
         info!(
-            "Hybrid: starting HTTP+Admin transport on {}:{}",
-            http_host, port
+            "Init",
+            "Hybrid: starting HTTP+Admin transport",
+            &format!("{http_host}:{port}")
         );
         let http_config = HttpTransportConfig {
             host: http_host,
@@ -522,18 +541,18 @@ async fn run_hybrid_transport_with_admin(
             browse_state,
         );
         if let Err(e) = http_transport.start().await {
-            error!(error = %e, "Hybrid: HTTP+Admin transport failed");
+            error!("Init", "Hybrid: HTTP+Admin transport failed", &e);
         }
-        info!("Hybrid: HTTP+Admin transport finished");
+        info!("Init", "Hybrid: HTTP+Admin transport finished");
     });
 
     let (stdio_result, http_result) = tokio::join!(stdio_handle, http_handle);
 
     if let Err(e) = stdio_result {
-        error!(error = %e, "Hybrid: stdio transport task panicked");
+        error!("Init", "Hybrid: stdio transport task panicked", &e);
     }
     if let Err(e) = http_result {
-        error!(error = %e, "Hybrid: HTTP transport task panicked");
+        error!("Init", "Hybrid: HTTP transport task panicked", &e);
     }
 
     Ok(())

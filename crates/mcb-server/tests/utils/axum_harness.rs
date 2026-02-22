@@ -10,7 +10,6 @@ use mcb_infrastructure::infrastructure::{AtomicPerformanceMetrics, DefaultIndexi
 use mcb_server::transport::axum_http::{AppState, build_router};
 use tower::ServiceExt;
 
-#[must_use]
 pub fn test_app() -> Router {
     let state = Arc::new(AppState {
         metrics: AtomicPerformanceMetrics::new_shared(),
@@ -21,11 +20,10 @@ pub fn test_app() -> Router {
         admin_state: None,
         auth_config: None,
     });
-    build_router(state)
+    build_router(&state)
 }
 
-#[must_use]
-pub fn test_app_with_state(state: Arc<AppState>) -> Router {
+pub fn test_app_with_state(state: &Arc<AppState>) -> Router {
     build_router(state)
 }
 
@@ -37,11 +35,13 @@ pub struct TestResponse {
 impl TestResponse {
     #[must_use]
     pub fn text(&self) -> String {
-        String::from_utf8(self.body.clone()).expect("response body should be valid UTF-8")
+        String::from_utf8(self.body.clone())
+            .unwrap_or_else(|_| unreachable!("response body should be valid UTF-8"))
     }
 
     pub fn json<T: serde::de::DeserializeOwned>(&self) -> T {
-        serde_json::from_slice(&self.body).expect("response body should be valid JSON")
+        serde_json::from_slice(&self.body)
+            .unwrap_or_else(|_| unreachable!("response body should be valid JSON"))
     }
 
     #[must_use]
@@ -55,7 +55,7 @@ pub async fn test_get(app: &Router, path: &str) -> TestResponse {
         .method("GET")
         .uri(path)
         .body(Body::empty())
-        .expect("valid GET request");
+        .unwrap_or_else(|_| unreachable!("valid GET request"));
 
     dispatch(app.clone(), request).await
 }
@@ -66,7 +66,7 @@ pub async fn test_post(app: &Router, path: &str, body: &str) -> TestResponse {
         .uri(path)
         .header("Content-Type", "application/json")
         .body(Body::from(body.to_owned()))
-        .expect("valid POST request");
+        .unwrap_or_else(|_| unreachable!("valid POST request"));
 
     dispatch(app.clone(), request).await
 }
@@ -77,7 +77,7 @@ pub async fn test_get_auth(app: &Router, path: &str, api_key: &str) -> TestRespo
         .uri(path)
         .header("X-Admin-Key", api_key)
         .body(Body::empty())
-        .expect("valid authenticated GET request");
+        .unwrap_or_else(|_| unreachable!("valid authenticated GET request"));
 
     dispatch(app.clone(), request).await
 }
@@ -89,7 +89,7 @@ pub async fn test_post_auth(app: &Router, path: &str, body: &str, api_key: &str)
         .header("Content-Type", "application/json")
         .header("X-Admin-Key", api_key)
         .body(Body::from(body.to_owned()))
-        .expect("valid authenticated POST request");
+        .unwrap_or_else(|_| unreachable!("valid authenticated POST request"));
 
     dispatch(app.clone(), request).await
 }
@@ -98,14 +98,14 @@ async fn dispatch(app: Router, request: Request<Body>) -> TestResponse {
     let response = app
         .oneshot(request)
         .await
-        .expect("router should handle request");
+        .unwrap_or_else(|_| unreachable!("router should handle request"));
 
     let status = response.status();
     let body = response
         .into_body()
         .collect()
         .await
-        .expect("should collect response body")
+        .unwrap_or_else(|_| unreachable!("should collect response body"))
         .to_bytes()
         .to_vec();
 

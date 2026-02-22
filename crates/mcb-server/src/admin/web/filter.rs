@@ -6,19 +6,14 @@
 use serde::{Deserialize, Serialize};
 
 /// Column sort direction.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum SortOrder {
     /// Ascending (A→Z, 0→9).
+    #[default]
     Asc,
     /// Descending (Z→A, 9→0).
     Desc,
-}
-
-impl Default for SortOrder {
-    fn default() -> Self {
-        SortOrder::Asc
-    }
 }
 
 /// Query-string parameters for entity list pages.
