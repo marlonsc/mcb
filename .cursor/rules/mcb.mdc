@@ -15,7 +15,7 @@ All project rules, architecture, conventions, and commands are defined in
 - **Full gate**: `make check` (fmt + lint + test + validate)
 - **Architecture**: Clean Architecture — dependencies flow inward only (`server -> infra -> app -> domain`)
 - **Error handling**: `thiserror` constructors (`Error::vcs("msg")`), no `unwrap()` in production
-- **DI**: linkme (compile-time) + dill (runtime) + Handle pattern (hot-swap)
+- **DI**: linkme (compile-time) + Handle pattern (hot-swap) — ADR-050
 - **Lints**: `unsafe_code = "deny"`, `dead_code = "deny"`, `unused_imports = "deny"`
 
 ## Change Philosophy

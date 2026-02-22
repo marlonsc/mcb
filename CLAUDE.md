@@ -38,7 +38,7 @@ Clean Architecture with strict inward-only dependency flow, enforced at compile 
 ```
 mcb (CLI facade binary)
   -> mcb-server       (MCP protocol, Rocket HTTP, handlers, admin UI)
-    -> mcb-infrastructure (DI/dill, config/Figment, cache/Moka, logging/tracing)
+    -> mcb-infrastructure (DI/linkme+Handle, config/Figment, cache/Moka, logging/tracing)
       -> mcb-application  (use cases, service orchestration)
         -> mcb-domain     (entities, port traits, errors — ZERO infra deps)
   -> mcb-providers    (adapters: embedding, vector store, DB, git, language parsers)
@@ -57,9 +57,9 @@ mcb (CLI facade binary)
 
 **Port/Adapter**: Port traits defined in `mcb-domain/src/ports/`, adapters in `mcb-providers/`.
 
-**DI (3-layer, ADR-024/029)**:
+**DI (2-layer, ADR-050)**:
 1. `linkme` distributed slices — compile-time auto-discovery of providers
-2. `dill` Catalog — runtime IoC composition root in `mcb-infrastructure/src/di/catalog.rs`
+2. `AppContext` — manual composition root in `mcb-infrastructure/src/di/bootstrap.rs`
 3. Handle pattern (`RwLock<Arc<dyn Trait>>`) — live provider hot-swap
 
 **Provider registration**: `#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]` with function pointer factories. `extern crate mcb_providers` in `main.rs` forces linkme registrations to link.
