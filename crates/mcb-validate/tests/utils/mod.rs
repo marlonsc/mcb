@@ -185,18 +185,23 @@ pub fn assert_violations_exact<V: std::fmt::Debug>(
     expected: &[(&str, usize, &str)],
     context: &str,
 ) {
-    let debug_strs: Vec<String> = violations.iter().map(|v| format!("{v:?}")).collect();
+    let debug_strs: Vec<String> = violations
+        .iter()
+        .map(|v| format!("{v:?}").replace('\\', "/"))
+        .collect();
 
     // Check each expected violation is present
     let mut missing: Vec<String> = Vec::new();
     for (file_suffix, line, msg_contains) in expected {
+        // Normalize the expected suffix just in case it contains backslashes
+        let normalized_suffix = file_suffix.replace('\\', "/");
         let found = debug_strs.iter().any(|d| {
-            d.contains(file_suffix)
+            d.contains(&normalized_suffix)
                 && (*line == 0 || d.contains(&format!("line: {line}")))
                 && d.contains(msg_contains)
         });
         if !found {
-            missing.push(format!("  {file_suffix}:{line} {msg_contains:?}"));
+            missing.push(format!("  {normalized_suffix}:{line} {msg_contains:?}"));
         }
     }
 
@@ -205,7 +210,8 @@ pub fn assert_violations_exact<V: std::fmt::Debug>(
     if violations.len() != expected.len() {
         for (i, d) in debug_strs.iter().enumerate() {
             let matched = expected.iter().any(|(file_suffix, line, msg_contains)| {
-                d.contains(file_suffix)
+                let normalized_suffix = file_suffix.replace('\\', "/");
+                d.contains(&normalized_suffix)
                     && (*line == 0 || d.contains(&format!("line: {line}")))
                     && d.contains(msg_contains)
             });
