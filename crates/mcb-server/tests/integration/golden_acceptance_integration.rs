@@ -25,9 +25,10 @@ use mcb_domain::entities::CodeChunk;
 // Note: EmbeddingProvider/VectorStoreProvider traits are used via ctx.embedding_handle().get()
 use mcb_domain::value_objects::CollectionId;
 use mcb_infrastructure::config::{AppConfig, ConfigLoader};
-use mcb_infrastructure::di::bootstrap::init_app;
 use rstest::rstest;
 use serde_json::json;
+
+use crate::utils::test_fixtures::safe_init_app;
 
 /// Test query structure matching the JSON fixture format
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -257,7 +258,7 @@ use crate::utils::test_fixtures::shared_fastembed_test_cache_dir;
 #[tokio::test]
 async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>> {
     let config = unique_test_config()?;
-    let ctx = init_app(config).await?;
+    let ctx = safe_init_app(config).await?;
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
@@ -327,7 +328,7 @@ async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>
 #[tokio::test]
 async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std::error::Error>> {
     let config = unique_test_config()?;
-    let ctx = init_app(config).await?;
+    let ctx = safe_init_app(config).await?;
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
@@ -421,7 +422,7 @@ async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std
 #[tokio::test]
 async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std::error::Error>> {
     let config = unique_test_config()?;
-    let ctx = init_app(config).await?;
+    let ctx = safe_init_app(config).await?;
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
@@ -537,7 +538,7 @@ async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error
     // 6. Validate expected_files found
 
     let app_config = unique_test_config()?;
-    let ctx = init_app(app_config).await?;
+    let ctx = safe_init_app(app_config).await?;
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();

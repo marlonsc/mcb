@@ -16,7 +16,7 @@ use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::ports::IndexingResult;
 use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
 use mcb_domain::value_objects::Embedding;
-use mcb_infrastructure::config::{ConfigLoader, DatabaseConfig};
+use mcb_infrastructure::config::{AppConfig, ConfigLoader, DatabaseConfig};
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
 use mcb_infrastructure::di::modules::domain_services::DomainServicesFactory;
 use mcb_server::McpServerBuilder;
@@ -392,6 +392,52 @@ pub fn shared_app_context() -> &'static AppContext {
         mcb_domain::error!("test_fixtures", "shared AppContext init failed");
         panic!("shared AppContext init failed");
     })
+}
+
+// ---------------------------------------------------------------------------
+// safe_init_app — ort-panic-safe wrapper for integration tests
+// ---------------------------------------------------------------------------
+
+/// `init_app` wrapper that catches ort panics (missing `libonnxruntime.so`)
+/// and retries with an `OpenAI` config + [`DeterministicEmbeddingProvider`].
+///
+/// Use in place of bare `init_app(config)` in any test that might run in CI.
+pub async fn safe_init_app(
+    config: AppConfig,
+) -> std::result::Result<AppContext, mcb_domain::error::Error> {
+    let fallback_config = config.clone();
+
+    match tokio::task::spawn(async move { init_app(config).await }).await {
+        Ok(Ok(ctx)) => Ok(ctx),
+        Ok(Err(err)) => {
+            let msg = err.to_string();
+            let is_ort = msg.contains("model.onnx")
+                || msg.contains("Failed to initialize FastEmbed")
+                || msg.contains("ONNX Runtime")
+                || msg.contains("ort");
+            if !is_ort {
+                return Err(err);
+            }
+            init_app_deterministic_fallback(fallback_config).await
+        }
+        Err(_) => init_app_deterministic_fallback(fallback_config).await,
+    }
+}
+
+async fn init_app_deterministic_fallback(
+    mut config: AppConfig,
+) -> std::result::Result<AppContext, mcb_domain::error::Error> {
+    config.providers.embedding.provider = Some("openai".to_owned());
+    config.providers.embedding.api_key = Some("test-key".to_owned());
+    if let Some(cfg) = config.providers.embedding.configs.get_mut("default") {
+        cfg.provider = "openai".to_owned();
+        cfg.model = "text-embedding-3-small".to_owned();
+        cfg.api_key = Some("test-key".to_owned());
+    }
+    let ctx = init_app(config).await?;
+    ctx.embedding_handle()
+        .set(Arc::new(DeterministicEmbeddingProvider));
+    Ok(ctx)
 }
 
 // ---------------------------------------------------------------------------
