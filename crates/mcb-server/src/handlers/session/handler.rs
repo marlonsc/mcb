@@ -24,18 +24,12 @@ pub struct SessionHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }
 
-impl SessionHandler {
-    /// Create a new `SessionHandler`.
-    pub fn new(
-        agent_service: Arc<dyn AgentSessionServiceInterface>,
-        memory_service: Arc<dyn MemoryServiceInterface>,
-    ) -> Self {
-        Self {
-            agent_service,
-            memory_service,
-        }
-    }
+handler_new!(SessionHandler {
+    agent_service: Arc<dyn AgentSessionServiceInterface>,
+    memory_service: Arc<dyn MemoryServiceInterface>,
+});
 
+impl SessionHandler {
     /// Handle a session tool request.
     ///
     /// # Errors

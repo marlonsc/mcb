@@ -26,12 +26,11 @@ pub struct AgentHandler {
     agent_service: Arc<dyn AgentSessionServiceInterface>,
 }
 
-impl AgentHandler {
-    /// Create a new `AgentHandler`.
-    pub fn new(agent_service: Arc<dyn AgentSessionServiceInterface>) -> Self {
-        Self { agent_service }
-    }
+handler_new!(AgentHandler {
+    agent_service: Arc<dyn AgentSessionServiceInterface>,
+});
 
+impl AgentHandler {
     /// Handle an agent tool request.
     ///
     /// # Errors

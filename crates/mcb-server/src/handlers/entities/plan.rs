@@ -21,12 +21,11 @@ pub struct PlanEntityHandler {
     repo: Arc<dyn PlanEntityRepository>,
 }
 
-impl PlanEntityHandler {
-    /// Create a new plan entity handler backed by a repository implementation.
-    pub fn new(repo: Arc<dyn PlanEntityRepository>) -> Self {
-        Self { repo }
-    }
+handler_new!(PlanEntityHandler {
+    repo: Arc<dyn PlanEntityRepository>,
+});
 
+impl PlanEntityHandler {
     /// Route an incoming `plan_entity` tool call to the appropriate CRUD operation.
     ///
     /// This method acts as a dispatcher for all plan-related entities including plans,

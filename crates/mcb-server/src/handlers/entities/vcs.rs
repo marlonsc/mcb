@@ -23,12 +23,11 @@ pub struct VcsEntityHandler {
     repo: Arc<dyn VcsEntityRepository>,
 }
 
-impl VcsEntityHandler {
-    /// Create a new VCS entity handler backed by a repository implementation.
-    pub fn new(repo: Arc<dyn VcsEntityRepository>) -> Self {
-        Self { repo }
-    }
+handler_new!(VcsEntityHandler {
+    repo: Arc<dyn VcsEntityRepository>,
+});
 
+impl VcsEntityHandler {
     /// Route an incoming `vcs_entity` tool call to the appropriate CRUD operation.
     ///
     /// # Errors
