@@ -239,65 +239,123 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                         };
                     }
                 };
-                let result = rt.block_on(async {
-                    let temp_dir = tempfile::tempdir().map_err(|err| {
-                        mcb_domain::error::Error::config(format!("create temp dir: {err}"))
-                    })?;
-                    let temp_root = temp_dir.keep();
-                    let temp_path = temp_root.join("mcb-fixtures-shared.db");
+                // ort 2.x panics (instead of returning Err) when
+                // libonnxruntime.so is missing. catch_unwind traps the
+                // panic so we can fall through to the OpenAI fallback.
+                let first_try = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    rt.block_on(async {
+                        let temp_dir = tempfile::tempdir().map_err(|err| {
+                            mcb_domain::error::Error::config(format!("create temp dir: {err}"))
+                        })?;
+                        let temp_root = temp_dir.keep();
+                        let temp_path = temp_root.join("mcb-fixtures-shared.db");
 
-                    let mut config = ConfigLoader::new().load()?;
-                    config.providers.database.configs.insert(
+                        let mut config = ConfigLoader::new().load()?;
+                        config.providers.database.configs.insert(
+                            "default".to_owned(),
+                            DatabaseConfig {
+                                provider: "sqlite".to_owned(),
+                                path: Some(temp_path),
+                            },
+                        );
+                        config.providers.embedding.cache_dir =
+                            Some(shared_fastembed_test_cache_dir());
+
+                        init_app(config).await
+                    })
+                }));
+
+                let need_fallback = match &first_try {
+                    Ok(Ok(_)) => false,
+                    Ok(Err(err)) => {
+                        let msg = err.to_string();
+                        let is_ort = msg.contains("model.onnx")
+                            || msg.contains("Failed to initialize FastEmbed")
+                            || msg.contains("ONNX Runtime")
+                            || msg.contains("ort");
+                        if !is_ort {
+                            mcb_domain::warn!(
+                                "test_fixtures",
+                                "shared init_app failed (non-ort)",
+                                &msg
+                            );
+                        }
+                        is_ort
+                    }
+                    Err(_) => true,
+                };
+
+                if !need_fallback {
+                    return match first_try {
+                        Ok(Ok(ctx)) => SharedState {
+                            ctx: Some(ctx),
+                            _rt: Some(rt),
+                        },
+                        Ok(Err(err)) => {
+                            mcb_domain::warn!(
+                                "test_fixtures",
+                                "shared init_app failed",
+                                &err.to_string()
+                            );
+                            SharedState {
+                                ctx: None,
+                                _rt: None,
+                            }
+                        }
+                        Err(_) => unreachable!(),
+                    };
+                }
+
+                // Fallback: OpenAI config + DeterministicEmbeddingProvider.
+                // Fresh runtime because the old one may be tainted by the
+                // ort panic.
+                drop(rt);
+                let rt = match tokio::runtime::Runtime::new() {
+                    Ok(r) => r,
+                    Err(err) => {
+                        mcb_domain::warn!(
+                            "test_fixtures",
+                            "failed to create fallback runtime",
+                            &err.to_string()
+                        );
+                        return SharedState {
+                            ctx: None,
+                            _rt: None,
+                        };
+                    }
+                };
+
+                mcb_domain::info!(
+                    "test_fixtures",
+                    "ort/FastEmbed unavailable, using deterministic embedding fallback"
+                );
+
+                let fallback_result = rt.block_on(async {
+                    let mut fallback = ConfigLoader::new().load()?;
+                    let fallback_db_path = std::env::temp_dir()
+                        .join(format!("mcb-fixtures-fallback-{}.db", std::process::id()));
+                    fallback.providers.database.configs.insert(
                         "default".to_owned(),
                         DatabaseConfig {
                             provider: "sqlite".to_owned(),
-                            path: Some(temp_path),
+                            path: Some(fallback_db_path),
                         },
                     );
-                    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-
-                    match init_app(config).await {
-                        Ok(ctx) => Ok(ctx),
-                        Err(err) => {
-                            let msg = err.to_string();
-                            if msg.contains("model.onnx")
-                                || msg.contains("Failed to initialize FastEmbed")
-                                || msg.contains("ONNX Runtime")
-                            {
-                                let mut fallback = ConfigLoader::new().load()?;
-                                let fallback_db_path = std::env::temp_dir().join(format!(
-                                    "mcb-fixtures-fallback-{}.db",
-                                    std::process::id()
-                                ));
-                                fallback.providers.database.configs.insert(
-                                    "default".to_owned(),
-                                    DatabaseConfig {
-                                        provider: "sqlite".to_owned(),
-                                        path: Some(fallback_db_path),
-                                    },
-                                );
-                                fallback.providers.embedding.provider = Some("openai".to_owned());
-                                fallback.providers.embedding.api_key = Some("test-key".to_owned());
-                                if let Some(cfg) =
-                                    fallback.providers.embedding.configs.get_mut("default")
-                                {
-                                    cfg.provider = "openai".to_owned();
-                                    cfg.model = "text-embedding-3-small".to_owned();
-                                    cfg.api_key = Some("test-key".to_owned());
-                                }
-
-                                let ctx = init_app(fallback).await?;
-                                ctx.embedding_handle()
-                                    .set(Arc::new(DeterministicEmbeddingProvider));
-                                Ok(ctx)
-                            } else {
-                                Err(err)
-                            }
-                        }
+                    fallback.providers.embedding.provider = Some("openai".to_owned());
+                    fallback.providers.embedding.api_key = Some("test-key".to_owned());
+                    if let Some(cfg) = fallback.providers.embedding.configs.get_mut("default") {
+                        cfg.provider = "openai".to_owned();
+                        cfg.model = "text-embedding-3-small".to_owned();
+                        cfg.api_key = Some("test-key".to_owned());
                     }
+
+                    let ctx = init_app(fallback).await?;
+                    ctx.embedding_handle()
+                        .set(Arc::new(DeterministicEmbeddingProvider));
+                    Ok::<_, mcb_domain::error::Error>(ctx)
                 });
 
-                match result {
+                match fallback_result {
                     Ok(ctx) => SharedState {
                         ctx: Some(ctx),
                         _rt: Some(rt),
@@ -305,7 +363,7 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                     Err(err) => {
                         mcb_domain::warn!(
                             "test_fixtures",
-                            "shared init_app failed",
+                            "shared init_app fallback also failed",
                             &err.to_string()
                         );
                         SharedState {
