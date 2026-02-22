@@ -112,6 +112,7 @@ fn corrupted_db_is_backed_up_and_recreated() {
                 || line.contains("Memory database recreated")
             {
                 recovered_clone.store(true, Ordering::SeqCst);
+                break;
             }
         }
     });
@@ -152,7 +153,6 @@ fn corrupted_db_is_backed_up_and_recreated() {
 #[test]
 fn ddl_error_messages_include_source_context() {
     let db_path = unique_temp_path("ddl-ctx.db");
-    // Write just enough zeros to look like a file but be invalid header
     fs::write(&db_path, vec![0u8; 100]).unwrap_or_else(|e| unreachable!("write invalid db: {e}"));
 
     let mut child = spawn_mcb_serve(&db_path);
@@ -163,25 +163,39 @@ fn ddl_error_messages_include_source_context() {
         .unwrap_or_else(|| unreachable!("capture stderr"));
     let reader = BufReader::new(stderr);
 
-    let mut logs = String::new();
-    // Read logs for a bit
-    let start = std::time::Instant::now();
-    for line in reader.lines() {
-        if start.elapsed() > Duration::from_secs(5) {
-            break;
-        }
-        if let Ok(l) = line {
-            logs.push_str(&l);
-            logs.push('\n');
-            if l.contains("Memory database recreated") || l.contains("Observation storage error") {
+    let logs = Arc::new(std::sync::Mutex::new(String::new()));
+    let found = Arc::new(AtomicBool::new(false));
+    let logs_w = Arc::clone(&logs);
+    let found_w = Arc::clone(&found);
+
+    let log_thread = thread::spawn(move || {
+        for line in reader.lines().map_while(Result::ok) {
+            let has_target = line.contains("Memory database recreated")
+                || line.contains("Observation storage error");
+            {
+                let mut buf = logs_w.lock().unwrap();
+                buf.push_str(&line);
+                buf.push('\n');
+            }
+            if has_target {
+                found_w.store(true, Ordering::SeqCst);
                 break;
             }
         }
+    });
+
+    for _ in 0..10 {
+        if found.load(Ordering::SeqCst) {
+            break;
+        }
+        thread::sleep(Duration::from_millis(500));
     }
 
     let _ = child.kill();
     let _ = child.wait();
+    let _ = log_thread.join();
 
+    let logs = logs.lock().unwrap();
     let recovery_worked = logs.contains("recreated") || logs.contains("backing up");
     let error_has_context = logs.contains("Observation storage error")
         || logs.contains("connect SQLite")
