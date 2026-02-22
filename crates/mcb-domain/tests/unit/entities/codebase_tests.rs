@@ -125,9 +125,9 @@ fn snapshot_changes_variants(
     #[case] expected_total: usize,
 ) {
     let changes = SnapshotChanges {
-        added: added.into_iter().map(str::to_string).collect(),
-        modified: modified.into_iter().map(str::to_string).collect(),
-        removed: removed.into_iter().map(str::to_string).collect(),
+        added: added.into_iter().map(ToOwned::to_owned).collect(),
+        modified: modified.into_iter().map(ToOwned::to_owned).collect(),
+        removed: removed.into_iter().map(ToOwned::to_owned).collect(),
     };
 
     assert_eq!(changes.has_changes(), expected_has_changes);

@@ -1,3 +1,4 @@
+#![allow(clippy::str_to_string)] // False positive: Error::to_string != &str::to_string
 //! Tests for provider registries
 //!
 //! Tests the auto-registration system for embedding, vector store, cache, and language providers.

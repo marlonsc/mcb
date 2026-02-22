@@ -63,7 +63,7 @@ fn worktree_variants(
         branch_id: branch_id.to_owned(),
         path: path.to_owned(),
         status: status.clone(),
-        assigned_agent_id: assigned_agent_id.map(str::to_string),
+        assigned_agent_id: assigned_agent_id.map(ToOwned::to_owned),
         created_at: 1000,
         updated_at: 1000,
     };

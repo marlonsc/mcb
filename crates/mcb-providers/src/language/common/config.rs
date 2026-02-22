@@ -33,7 +33,7 @@ impl NodeExtractionRule {
     #[must_use]
     pub fn primary(types: &[&str]) -> Self {
         Self {
-            node_types: types.iter().map(std::string::ToString::to_string).collect(),
+            node_types: types.iter().map(|s| (*s).to_owned()).collect(),
             min_length: 40,
             min_lines: 2,
             max_depth: 4,
@@ -46,7 +46,7 @@ impl NodeExtractionRule {
     #[must_use]
     pub fn secondary(types: &[&str]) -> Self {
         Self {
-            node_types: types.iter().map(std::string::ToString::to_string).collect(),
+            node_types: types.iter().map(|s| (*s).to_owned()).collect(),
             min_length: 25,
             min_lines: 1,
             max_depth: 3,
@@ -59,7 +59,7 @@ impl NodeExtractionRule {
     #[must_use]
     pub fn tertiary(types: &[&str]) -> Self {
         Self {
-            node_types: types.iter().map(std::string::ToString::to_string).collect(),
+            node_types: types.iter().map(|s| (*s).to_owned()).collect(),
             min_length: 15,
             min_lines: 1,
             max_depth: 2,

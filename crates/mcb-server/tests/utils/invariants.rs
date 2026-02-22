@@ -6,7 +6,7 @@ pub fn error_text(result: &CallToolResult) -> String {
         .and_then(|value| value.as_array().cloned())
         .and_then(|items| items.first().cloned())
         .and_then(|item| item.get("text").cloned())
-        .and_then(|text| text.as_str().map(str::to_string))
+        .and_then(|text| text.as_str().map(ToOwned::to_owned))
         .unwrap_or_default()
 }
 

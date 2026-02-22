@@ -7,7 +7,7 @@ fn build_search_args(query: &str, min_score: Option<f32>, collection: Option<&st
         query: query.to_owned(),
         org_id: None,
         resource: SearchResource::Code,
-        collection: collection.map(str::to_string),
+        collection: collection.map(ToOwned::to_owned),
         extensions: None,
         filters: None,
         limit: Some(10),
@@ -33,8 +33,8 @@ fn test_search_args_validation(#[case] args: SearchArgs, #[case] expected_valid:
 fn build_index_args(path: Option<&str>, collection: Option<&str>) -> IndexArgs {
     IndexArgs {
         action: IndexAction::Start,
-        path: path.map(str::to_string),
-        collection: collection.map(str::to_string),
+        path: path.map(ToOwned::to_owned),
+        collection: collection.map(ToOwned::to_owned),
         extensions: None,
         exclude_dirs: None,
         ignore_patterns: None,

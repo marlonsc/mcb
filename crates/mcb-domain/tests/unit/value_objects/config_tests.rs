@@ -14,8 +14,8 @@ fn make_embedding_config(
     EmbeddingConfig {
         provider: provider.to_owned(),
         model: model.to_owned(),
-        api_key: api_key.map(str::to_string),
-        base_url: base_url.map(str::to_string),
+        api_key: api_key.map(ToOwned::to_owned),
+        base_url: base_url.map(ToOwned::to_owned),
         dimensions,
         max_tokens,
     }
@@ -31,9 +31,9 @@ fn make_vector_store_config(
 ) -> VectorStoreConfig {
     VectorStoreConfig {
         provider: provider.to_owned(),
-        address: address.map(str::to_string),
-        token: token.map(str::to_string),
-        collection: collection.map(str::to_string),
+        address: address.map(ToOwned::to_owned),
+        token: token.map(ToOwned::to_owned),
+        collection: collection.map(ToOwned::to_owned),
         dimensions,
         timeout_secs,
     }

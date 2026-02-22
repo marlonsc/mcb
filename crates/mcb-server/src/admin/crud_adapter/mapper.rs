@@ -82,7 +82,7 @@ pub fn extract_project_id(data: &Value) -> Option<String> {
         .and_then(Value::as_str)
         .map(str::trim)
         .filter(|s| !s.is_empty())
-        .map(ToString::to_string)
+        .map(ToOwned::to_owned)
 }
 
 /// Serialize `EntityArgs` into a JSON map suitable for tool dispatch.

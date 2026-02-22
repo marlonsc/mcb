@@ -424,6 +424,7 @@ impl MilvusVectorStoreProvider {
         ]
     }
 
+    #[allow(clippy::str_to_string)] // False positive: iter yields &i64, not &str
     fn parse_milvus_ids(result: &milvus::proto::milvus::MutationResult) -> Vec<String> {
         match &result.i_ds {
             Some(ids) => match &ids.id_field {
@@ -493,7 +494,7 @@ impl MilvusVectorStoreProvider {
             .map(|index| {
                 let file_path = file_path_override.map_or_else(
                     || Self::extract_string_field(query_results, VECTOR_FIELD_FILE_PATH, index),
-                    std::string::ToString::to_string,
+                    ToOwned::to_owned,
                 );
                 let start_line =
                     Self::extract_long_field(query_results, VECTOR_FIELD_START_LINE, index).max(

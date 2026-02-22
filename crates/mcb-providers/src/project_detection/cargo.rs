@@ -59,7 +59,7 @@ impl ProjectDetector for CargoDetector {
         let version = package
             .version
             .get()
-            .map(ToString::to_string)
+            .map(ToOwned::to_owned)
             .unwrap_or_default();
 
         let dependencies: Vec<String> = manifest.dependencies.keys().cloned().collect();

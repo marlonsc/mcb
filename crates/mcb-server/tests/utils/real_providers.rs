@@ -59,13 +59,10 @@ mod tests {
         if std::env::var("CI").is_ok() || std::env::var("GITHUB_ACTIONS").is_ok() {
             // In CI, only run if explicitly enabled
             return std::env::var("MCB_RUN_DOCKER_INTEGRATION_TESTS")
-                .map(|v| v == "1" || v == "true")
-                .unwrap_or(false);
+                .is_ok_and(|v| v == "1" || v == "true");
         }
         // Local: run unless disabled
-        std::env::var("MCB_RUN_DOCKER_INTEGRATION_TESTS")
-            .map(|v| v != "0" && v != "false")
-            .unwrap_or(true)
+        std::env::var("MCB_RUN_DOCKER_INTEGRATION_TESTS").map_or(true, |v| v != "0" && v != "false")
     }
 
     #[tokio::test]

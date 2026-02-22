@@ -23,7 +23,7 @@ fn required_names(schema: &Value) -> Vec<String> {
             values
                 .iter()
                 .filter_map(Value::as_str)
-                .map(str::to_string)
+                .map(ToOwned::to_owned)
                 .collect::<Vec<_>>()
         })
         .unwrap_or_default()
@@ -46,7 +46,7 @@ fn enum_values(schema: &Value) -> Vec<String> {
                 values
                     .iter()
                     .filter_map(Value::as_str)
-                    .map(str::to_string)
+                    .map(ToOwned::to_owned)
                     .collect(),
             );
         }
@@ -157,6 +157,6 @@ fn enum_schema_values_match_snake_case(
     #[case] actual: Vec<String>,
     #[case] expected: Vec<&str>,
 ) {
-    let expected: Vec<String> = expected.into_iter().map(str::to_string).collect();
+    let expected: Vec<String> = expected.into_iter().map(ToOwned::to_owned).collect();
     assert_eq!(actual, expected, "enum '{enum_name}' values changed");
 }

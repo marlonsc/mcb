@@ -11,10 +11,7 @@ use rstest::rstest;
 #[case("", None)]
 #[case("not-a-url", None)]
 fn test_parse_owner_repo(#[case] input: &str, #[case] expected: Option<&str>) {
-    assert_eq!(
-        parse_owner_repo(input),
-        expected.map(std::string::ToString::to_string)
-    );
+    assert_eq!(parse_owner_repo(input), expected.map(ToOwned::to_owned));
 }
 
 #[rstest]

@@ -26,7 +26,7 @@ fn test_admin_auth_key_validation(
     let config = AdminAuthConfig {
         enabled: true,
         header_name: "X-Admin-Key".to_owned(),
-        api_key: api_key.map(std::string::ToString::to_string),
+        api_key: api_key.map(ToOwned::to_owned),
     };
 
     assert_eq!(config.validate_key(candidate_key), expected_valid);

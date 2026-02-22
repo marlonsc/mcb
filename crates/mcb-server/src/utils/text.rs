@@ -12,7 +12,9 @@ pub fn extract_text_with_sep(content: &[Content], sep: &str) -> String {
         .iter()
         .filter_map(|c| {
             if let Ok(v) = serde_json::to_value(c) {
-                v.get("text").and_then(|t| t.as_str()).map(str::to_string)
+                v.get("text")
+                    .and_then(|t| t.as_str())
+                    .map(ToOwned::to_owned)
             } else {
                 None
             }
