@@ -36,14 +36,22 @@ impl ProjectDetector for CargoDetector {
         let manifest = match Manifest::from_path(&manifest_path) {
             Ok(m) => m,
             Err(e) => {
-                tracing::debug!(path = ?manifest_path, error = %e, "Failed to parse Cargo.toml");
+                mcb_domain::debug!(
+                    "cargo",
+                    "Failed to parse Cargo.toml",
+                    &format!("path = {manifest_path:?}, error = {e}")
+                );
                 return Ok(None);
             }
         };
 
         let Some(package) = manifest.package else {
             // Workspace root without package
-            tracing::debug!(path = ?manifest_path, "Cargo.toml is workspace root, no package");
+            mcb_domain::debug!(
+                "cargo",
+                "Cargo.toml is workspace root, no package",
+                &format!("path = {manifest_path:?}")
+            );
             return Ok(None);
         };
 

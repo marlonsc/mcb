@@ -84,11 +84,15 @@ fn push_violation(
             });
         }
         other => {
-            tracing::debug!(
-                method = other,
-                file = %file.display(),
-                line = detection.line,
-                "unhandled detection method type"
+            mcb_domain::debug!(
+                "unwrap",
+                "unhandled detection method type",
+                &format!(
+                    "method = {:?}, file = {}, line = {}",
+                    other,
+                    file.display(),
+                    detection.line
+                )
             );
         }
     }

@@ -20,7 +20,7 @@ pub fn set_log_fn(f: LogFn) {
 
 /// Dispatches to the registered log function, or no-op if none set.
 #[inline]
-pub fn log_operation(
+pub fn dispatch(
     level: LogLevel,
     context: &str,
     message: &str,

@@ -1,7 +1,4 @@
 //! Axum admin auth extractor integration tests.
-//!
-//! Verifies `AxumAdminAuth` extractor rejects/accepts requests with the same
-//! behavior as the Rocket `AdminAuth` guard.
 
 use std::sync::Arc;
 

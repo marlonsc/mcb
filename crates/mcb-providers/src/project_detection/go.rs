@@ -55,7 +55,11 @@ impl ProjectDetector for GoDetector {
         let content = match read_to_string(&gomod_path).await {
             Ok(c) => c,
             Err(e) => {
-                tracing::debug!(path = ?gomod_path, error = %e, "Failed to read go.mod");
+                mcb_domain::debug!(
+                    "go",
+                    "Failed to read go.mod",
+                    &format!("path = {gomod_path:?}, error = {e}")
+                );
                 return Ok(None);
             }
         };

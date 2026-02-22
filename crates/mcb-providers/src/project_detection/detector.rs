@@ -28,27 +28,31 @@ pub async fn detect_all_projects(path: &Path) -> Vec<ProjectType> {
         match (entry.build)(&config) {
             Ok(detector) => match detector.detect(path).await {
                 Ok(Some(project_type)) => {
-                    tracing::debug!(
-                        detector = entry.name,
-                        project = ?project_type.name(),
-                        "Project detected"
+                    mcb_domain::debug!(
+                        "detector",
+                        "Project detected",
+                        &format!(
+                            "detector = {}, project = {:?}",
+                            entry.name,
+                            project_type.name()
+                        )
                     );
                     results.push(project_type);
                 }
                 Ok(None) => {}
                 Err(e) => {
-                    tracing::warn!(
-                        detector = entry.name,
-                        error = %e,
-                        "Project detection failed"
+                    mcb_domain::warn!(
+                        "detector",
+                        "Project detection failed",
+                        &format!("detector = {}, error = {}", entry.name, e)
                     );
                 }
             },
             Err(e) => {
-                tracing::warn!(
-                    detector = entry.name,
-                    error = %e,
-                    "Failed to create detector"
+                mcb_domain::warn!(
+                    "detector",
+                    "Failed to create detector",
+                    &format!("detector = {}, error = {}", entry.name, e)
                 );
             }
         }

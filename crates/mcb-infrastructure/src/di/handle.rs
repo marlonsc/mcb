@@ -67,10 +67,10 @@ impl<T: ?Sized + Send + Sync> Handle<T> {
         self.inner
             .read()
             .unwrap_or_else(|poisoned| {
-                tracing::error!(
-                    component = "Handle",
-                    action = "get",
-                    "lock poisoned, recovering with poisoned value"
+                mcb_domain::error!(
+                    "handle",
+                    "lock poisoned, recovering with poisoned value",
+                    &"action = get"
                 );
                 poisoned.into_inner()
             })
@@ -83,10 +83,10 @@ impl<T: ?Sized + Send + Sync> Handle<T> {
     /// to the old provider remain valid until dropped.
     pub fn set(&self, new_provider: Arc<T>) {
         *self.inner.write().unwrap_or_else(|poisoned| {
-            tracing::error!(
-                component = "Handle",
-                action = "set",
-                "lock poisoned during set, recovering"
+            mcb_domain::error!(
+                "handle",
+                "lock poisoned during set, recovering",
+                &"action = set"
             );
             poisoned.into_inner()
         }) = new_provider;

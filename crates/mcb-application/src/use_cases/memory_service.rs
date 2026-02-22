@@ -188,7 +188,10 @@ impl MemoryServiceImpl {
         let vector_results = match vector_result {
             Ok(results) => results,
             Err(e) => {
-                tracing::warn!("Vector search failed — falling back to FTS-only results");
+                mcb_domain::warn!(
+                    "memory",
+                    "Vector search failed — falling back to FTS-only results"
+                );
                 let _ = e;
                 Vec::new()
             }

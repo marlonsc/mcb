@@ -46,7 +46,11 @@ impl ProjectDetector for NpmDetector {
         let content = match read_to_string(&package_path).await {
             Ok(c) => c,
             Err(e) => {
-                tracing::debug!(path = ?package_path, error = %e, "Failed to read package.json");
+                mcb_domain::debug!(
+                    "npm",
+                    "Failed to read package.json",
+                    &format!("path = {package_path:?}, error = {e}")
+                );
                 return Ok(None);
             }
         };
@@ -54,7 +58,11 @@ impl ProjectDetector for NpmDetector {
         let package: PackageJson = match serde_json::from_str(&content) {
             Ok(p) => p,
             Err(e) => {
-                tracing::debug!(path = ?package_path, error = %e, "Failed to parse package.json");
+                mcb_domain::debug!(
+                    "npm",
+                    "Failed to parse package.json",
+                    &format!("path = {package_path:?}, error = {e}")
+                );
                 return Ok(None);
             }
         };

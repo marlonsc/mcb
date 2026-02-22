@@ -87,10 +87,10 @@ impl SubmoduleProvider {
 
         while let Some((current_repo, parent_id, depth)) = queue.pop_front() {
             if depth >= max_depth {
-                tracing::debug!(
-                    depth = depth,
-                    max_depth = max_depth,
-                    "Max submodule depth reached, stopping traversal"
+                mcb_domain::debug!(
+                    "submodule",
+                    "Max submodule depth reached, stopping traversal",
+                    &format!("depth = {depth}, max_depth = {max_depth}")
                 );
                 continue;
             }
@@ -98,7 +98,7 @@ impl SubmoduleProvider {
             let submodules = match current_repo.submodules() {
                 Ok(s) => s,
                 Err(e) => {
-                    tracing::warn!(error = %e, "Failed to list submodules");
+                    mcb_domain::warn!("submodule", "Failed to list submodules", &e.to_string());
                     if continue_on_error {
                         continue;
                     }
@@ -112,9 +112,10 @@ impl SubmoduleProvider {
                 // Check for circular references
                 let unique_key = format!("{parent_id}:{path}");
                 if visited.contains(&unique_key) {
-                    tracing::warn!(
-                        path = %path,
-                        "Circular submodule reference detected, skipping"
+                    mcb_domain::warn!(
+                        "submodule",
+                        "Circular submodule reference detected, skipping",
+                        &path
                     );
                     continue;
                 }
@@ -124,9 +125,10 @@ impl SubmoduleProvider {
                 let url = match submodule.url() {
                     Some(u) => u.to_owned(),
                     None => {
-                        tracing::warn!(
-                            path = %path,
-                            "Orphaned submodule (no URL in .gitmodules), skipping"
+                        mcb_domain::warn!(
+                            "submodule",
+                            "Orphaned submodule (no URL in .gitmodules), skipping",
+                            &path
                         );
                         continue;
                     }
@@ -150,10 +152,7 @@ impl SubmoduleProvider {
                     submodule_path.join(".git").exists() || submodule_path.join(".git").is_file(); // .git can be a file for nested
 
                 if skip_uninitialized && !is_initialized {
-                    tracing::debug!(
-                        path = %path,
-                        "Skipping uninitialized submodule"
-                    );
+                    mcb_domain::debug!("submodule", "Skipping uninitialized submodule", &path);
                     continue;
                 }
 
@@ -180,10 +179,10 @@ impl SubmoduleProvider {
                             queue.push_back((sub_repo, sub_id, depth + 1));
                         }
                         Err(e) => {
-                            tracing::warn!(
-                                path = %path,
-                                error = %e,
-                                "Cannot access submodule repository, skipping nested submodules"
+                            mcb_domain::warn!(
+                                "submodule",
+                                "Cannot access submodule repository, skipping nested submodules",
+                                &format!("path = {path}, error = {e}")
                             );
                             // Continue with other submodules - don't block parent
                         }
@@ -192,10 +191,10 @@ impl SubmoduleProvider {
             }
         }
 
-        tracing::info!(
-            count = results.len(),
-            max_depth = max_depth,
-            "Submodule discovery complete"
+        mcb_domain::info!(
+            "submodule",
+            "Submodule discovery complete",
+            &format!("count = {}, max_depth = {}", results.len(), max_depth)
         );
 
         Ok(results)

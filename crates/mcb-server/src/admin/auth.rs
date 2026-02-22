@@ -116,7 +116,7 @@ pub struct AxumAdminAuth;
 /// JSON error body returned by the Axum auth extractor on rejection.
 ///
 /// Mirrors the same `{ "error": "...", "message": "..." }` format used by
-/// [`AuthErrorResponse`] in the Rocket guard.
+/// [`AuthErrorResponse`] in the auth middleware.
 #[derive(Debug, Serialize)]
 pub struct AxumAuthError {
     /// Error type identifier (e.g. `"missing_api_key"`, `"invalid_api_key"`)

@@ -112,7 +112,10 @@ impl MilvusVectorStoreProvider {
                 || err_str.contains("collection not found")
                 || err_str.contains("not exist")
             {
-                tracing::debug!("Collection does not exist, returning empty results");
+                mcb_domain::debug!(
+                    "milvus",
+                    "Collection does not exist, returning empty results"
+                );
                 return Err(Error::vector_db(format!(
                     "Collection '{collection}' not found"
                 )));
@@ -543,10 +546,10 @@ impl MilvusVectorStoreProvider {
             Err(e) => {
                 let err_str = e.to_string();
                 if err_str.contains("message length too large") {
-                    tracing::warn!(
-                        offset = offset,
-                        results = current_total,
-                        "hit gRPC message size limit, returning partial results"
+                    mcb_domain::warn!(
+                        "milvus",
+                        "hit gRPC message size limit, returning partial results",
+                        &format!("offset = {offset}, results = {current_total}")
                     );
                     return Ok(None);
                 }
@@ -719,7 +722,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let query_results = match self.client.query(&name_str, &expr, &query_options).await {
             Ok(results) => results,
             Err(e) => {
-                tracing::warn!(error = %e, "failed to query file paths");
+                mcb_domain::warn!("milvus", "failed to query file paths", &e.to_string());
                 return Ok(Vec::new());
             }
         };
@@ -763,7 +766,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let query_results = match self.client.query(&name_str, &expr, &query_options).await {
             Ok(results) => results,
             Err(e) => {
-                tracing::warn!(error = %e, "failed to query chunks by file");
+                mcb_domain::warn!("milvus", "failed to query chunks by file", &e.to_string());
                 return Ok(Vec::new());
             }
         };

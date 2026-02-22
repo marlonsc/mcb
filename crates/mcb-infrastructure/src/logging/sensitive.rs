@@ -13,23 +13,18 @@ pub fn set_global_operation_logger(logger: Arc<dyn OperationLogger>) {
     let _ = GLOBAL_LOGGER.set(logger);
 }
 
-/// Shim for `mcb_domain::infra::logging`: forwards domain macro calls to `log_operation`.
-pub fn log_facade_shim(
+/// Forwards domain macro calls to the global logger (registered with `set_log_fn`).
+pub fn forward(
     level: LogLevel,
     context: &str,
     message: &str,
     detail: Option<&dyn std::fmt::Display>,
 ) {
-    log_operation(level, context, message, detail);
+    dispatch(level, context, message, detail);
 }
 
 /// Logs via the global logger at the given level, or fallback (message only).
-pub fn log_operation(
-    level: LogLevel,
-    context: &str,
-    message: &str,
-    detail: Option<&dyn std::fmt::Display>,
-) {
+fn dispatch(level: LogLevel, context: &str, message: &str, detail: Option<&dyn std::fmt::Display>) {
     if let Some(logger) = GLOBAL_LOGGER.get() {
         logger.log(level, context, message, detail);
     } else {

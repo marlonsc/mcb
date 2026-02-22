@@ -114,10 +114,10 @@ impl IntelligentChunker {
                     }
                 }
                 Err(e) => {
-                    tracing::warn!(
-                        file = %file_name,
-                        error = %e,
-                        "tree-sitter parse failed, using generic chunking"
+                    mcb_domain::warn!(
+                        "engine",
+                        "tree-sitter parse failed, using generic chunking",
+                        &format!("file = {file_name}, error = {e}")
                     );
                 }
             }

@@ -143,7 +143,11 @@ pub fn create_vcs_entity_repository_from_executor(
 
 async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
     use mcb_domain::error::Error;
-    tracing::info!(path = %path.display(), "connecting to SQLite database");
+    mcb_domain::info!(
+        "sqlite",
+        "connecting to SQLite database",
+        &path.display().to_string()
+    );
 
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)
@@ -154,10 +158,10 @@ async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
     match try_connect_and_init(&path, &db_url).await {
         Ok(pool) => Ok(pool),
         Err(first_err) if path.exists() => {
-            tracing::warn!(
-                error = %first_err,
-                path = %path.display(),
-                "Database initialization failed on existing file, backing up and recreating"
+            mcb_domain::warn!(
+                "sqlite",
+                "Database initialization failed on existing file, backing up and recreating",
+                &format!("error = {}, path = {}", first_err, path.display())
             );
             backup_and_remove(&path)?;
 
@@ -166,17 +170,18 @@ async fn connect_and_init(path: PathBuf) -> Result<sqlx::SqlitePool> {
                 .map_err(|e| Error::memory_with_source("reconnect SQLite after backup", e))?;
             configure_pragmas(&fresh_pool).await?;
             apply_schema(&fresh_pool).await?;
-            tracing::info!(
-                path = %path.display(),
-                "memory database recreated (old data backed up)"
+            mcb_domain::info!(
+                "sqlite",
+                "memory database recreated (old data backed up)",
+                &path.display().to_string()
             );
             Ok(fresh_pool)
         }
         Err(first_err) => {
-            tracing::error!(
-                error = %first_err,
-                path = %path.display(),
-                "Database initialization failed on NEW file (path.exists()=false)"
+            mcb_domain::error!(
+                "sqlite",
+                "Database initialization failed on NEW file (path.exists()=false)",
+                &format!("error = {}, path = {}", first_err, path.display())
             );
             Err(first_err)
         }
@@ -197,7 +202,11 @@ async fn try_connect_and_init(path: &std::path::Path, db_url: &str) -> Result<sq
 
     match apply_schema(&pool).await {
         Ok(()) => {
-            tracing::info!(path = %path.display(), "memory database initialized");
+            mcb_domain::info!(
+                "sqlite",
+                "memory database initialized",
+                &path.display().to_string()
+            );
             Ok(pool)
         }
         Err(schema_err) => {
@@ -236,7 +245,11 @@ fn backup_and_remove(path: &std::path::Path) -> Result<()> {
             let _ = std::fs::remove_file(&wal);
         }
     }
-    tracing::info!(backup = %backup.display(), "Old database backed up");
+    mcb_domain::info!(
+        "sqlite",
+        "Old database backed up",
+        &backup.display().to_string()
+    );
     Ok(())
 }
 
@@ -309,10 +322,10 @@ async fn migrate_and_verify_schema(pool: &sqlx::SqlitePool) -> Result<()> {
                 )));
             }
             let alter_sql = super::ddl::alter_table_add_column_sqlite(&table_def.name, col);
-            tracing::info!(
-                table = %table_def.name,
-                column = %col.name,
-                "Migrating schema: adding missing column"
+            mcb_domain::info!(
+                "sqlite",
+                "Migrating schema: adding missing column",
+                &format!("table = {}, column = {}", table_def.name, col.name)
             );
             sqlx::query(&alter_sql).execute(pool).await.map_err(|e| {
                 Error::memory_with_source(

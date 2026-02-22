@@ -1,11 +1,7 @@
-//! TDD RED: Test for serde Deserialize form handling
-//!
-//! This test verifies that form data can be `POSTed` and deserialized using serde
-//! instead of Rocket's `FromForm` trait.
+//! Test for serde Deserialize form handling.
 
 use serde::{Deserialize, Serialize};
 
-/// Test form struct using serde Deserialize instead of Rocket's `FromForm`
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
 pub struct TestFilterParams {
     /// Full-text search term (renamed from query param "q")

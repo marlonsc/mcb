@@ -77,7 +77,7 @@ pub mod hooks;
 pub mod init;
 pub mod mcp_server;
 pub mod session;
-/// Internal template engine (Handlebars-only, forked from Rocket contrib).
+/// Internal template engine (Handlebars-only).
 pub mod templates;
 pub mod tools;
 pub mod transport;

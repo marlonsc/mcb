@@ -24,7 +24,6 @@ use mcb_domain::ports::{
 };
 use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 use mcb_domain::utils::mask_id;
-use tracing::debug;
 
 use super::row_convert;
 use crate::utils::sqlite::query as query_helpers;
@@ -126,7 +125,11 @@ impl AgentSessionRepository for SqliteAgentRepository {
             )
             .await?;
 
-        debug!("Stored agent session: {}", mask_id(session.id.as_str()));
+        mcb_domain::debug!(
+            "sqlite",
+            "Stored agent session",
+            &mask_id(session.id.as_str())
+        );
         Ok(())
     }
 
@@ -206,7 +209,11 @@ impl AgentSessionRepository for SqliteAgentRepository {
             )
             .await?;
 
-        debug!("Updated agent session: {}", mask_id(session.id.as_str()));
+        mcb_domain::debug!(
+            "sqlite",
+            "Updated agent session",
+            &mask_id(session.id.as_str())
+        );
         Ok(())
     }
 
@@ -327,7 +334,7 @@ impl AgentEventRepository for SqliteAgentRepository {
             )
             .await?;
 
-        debug!("Stored delegation: {}", delegation.id);
+        mcb_domain::debug!("sqlite", "Stored delegation", &delegation.id);
         Ok(())
     }
 
@@ -368,7 +375,7 @@ impl AgentEventRepository for SqliteAgentRepository {
             )
             .await?;
 
-        debug!("Stored tool call: {}", tool_call.id);
+        mcb_domain::debug!("sqlite", "Stored tool call", &tool_call.id);
         Ok(())
     }
 }
@@ -410,7 +417,7 @@ impl AgentCheckpointRepository for SqliteAgentRepository {
             )
             .await?;
 
-        debug!("Stored checkpoint: {}", checkpoint.id);
+        mcb_domain::debug!("sqlite", "Stored checkpoint", &checkpoint.id);
         Ok(())
     }
 
@@ -458,7 +465,7 @@ impl AgentCheckpointRepository for SqliteAgentRepository {
             )
             .await?;
 
-        debug!("Updated checkpoint: {}", checkpoint.id);
+        mcb_domain::debug!("sqlite", "Updated checkpoint", &checkpoint.id);
         Ok(())
     }
 }

@@ -161,7 +161,11 @@ impl ProjectDetector for MavenDetector {
         let content = match read_to_string(&pom_path).await {
             Ok(c) => c,
             Err(e) => {
-                tracing::debug!(path = ?pom_path, error = %e, "Failed to read pom.xml");
+                mcb_domain::debug!(
+                    "maven",
+                    "Failed to read pom.xml",
+                    &format!("path = {pom_path:?}, error = {e}")
+                );
                 return Ok(None);
             }
         };

@@ -38,7 +38,10 @@ async fn test_instrumented_records_metrics(
     #[future] instrumented: Option<(InstrumentedEmbeddingProvider, Arc<AtomicPerformanceMetrics>)>,
 ) {
     let Some((provider, metrics)) = instrumented.await else {
-        tracing::warn!("skipping: shared AppContext unavailable (FastEmbed model missing)");
+        mcb_domain::warn!(
+            "instrumented_embedding_test",
+            "skipping: shared AppContext unavailable (FastEmbed model missing)"
+        );
         return;
     };
 
@@ -61,7 +64,10 @@ async fn test_instrumented_delegates_to_inner(
     #[future] instrumented: Option<(InstrumentedEmbeddingProvider, Arc<AtomicPerformanceMetrics>)>,
 ) {
     let Some((provider, _metrics)) = instrumented.await else {
-        tracing::warn!("skipping: shared AppContext unavailable (FastEmbed model missing)");
+        mcb_domain::warn!(
+            "instrumented_embedding_test",
+            "skipping: shared AppContext unavailable (FastEmbed model missing)"
+        );
         return;
     };
 

@@ -6,7 +6,6 @@
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
-use tracing::warn;
 
 use crate::Result;
 use crate::ValidationConfig;
@@ -59,7 +58,11 @@ impl DeclarativeValidator {
             files.push(entry.absolute_path.clone());
             Ok(())
         }) {
-            warn!(error = ?e, "Failed to scan workspace for files");
+            mcb_domain::warn!(
+                "validate",
+                "Failed to scan workspace for files",
+                &e.to_string()
+            );
         }
         files
     }
@@ -95,11 +98,15 @@ impl DeclarativeValidator {
                             .extend(typed.into_iter().map(|v| Box::new(v) as Box<dyn Violation>));
                     }
                     Err(e) => {
-                        warn!(
-                            rule_id = %rule.id,
-                            file = %file.display(),
-                            error = ?e,
-                            "Metrics analysis failed"
+                        mcb_domain::warn!(
+                            "validate",
+                            "Metrics analysis failed",
+                            &format!(
+                                "rule_id = {}, file = {}, error = {:?}",
+                                rule.id,
+                                file.display(),
+                                e
+                            )
                         );
                     }
                 }
@@ -162,10 +169,10 @@ impl DeclarativeValidator {
                     }));
                 }
                 Err(error) => {
-                    warn!(
-                        rule_id = %rule.id,
-                        error = %error,
-                        "Lint rule execution failed"
+                    mcb_domain::warn!(
+                        "validate",
+                        "Lint rule execution failed",
+                        &format!("rule_id = {}, error = {}", rule.id, error)
                     );
                 }
             }
@@ -190,7 +197,11 @@ impl DeclarativeValidator {
         let workspace_deps = match filter_executor.parse_workspace_dependencies() {
             Ok(deps) => deps,
             Err(e) => {
-                warn!(error = ?e, "Failed to parse workspace dependencies for regex rules");
+                mcb_domain::warn!(
+                    "validate",
+                    "Failed to parse workspace dependencies for regex rules",
+                    &e.to_string()
+                );
                 return Vec::new();
             }
         };
@@ -249,11 +260,13 @@ impl DeclarativeValidator {
                 match compile_regex(pat) {
                     Ok(rx) => Some(rx),
                     Err(e) => {
-                        warn!(
-                            rule_id = %rule.id,
-                            pattern_name = %name,
-                            error = ?e,
-                            "Malformed regex pattern in rule"
+                        mcb_domain::warn!(
+                            "validate",
+                            "Malformed regex pattern in rule",
+                            &format!(
+                                "rule_id = {}, pattern_name = {}, error = {:?}",
+                                rule.id, name, e
+                            )
                         );
                         None
                     }
@@ -278,7 +291,7 @@ impl DeclarativeValidator {
                 match compile_regex(pat) {
                     Ok(rx) => Some(rx),
                     Err(_) => {
-                        warn!(rule_id = %rule.id, "Invalid ignore pattern regex");
+                        mcb_domain::warn!("validate", "Invalid ignore pattern regex", &rule.id);
                         None
                     }
                 }
@@ -310,10 +323,10 @@ impl DeclarativeValidator {
         let content = match std::fs::read_to_string(file) {
             Ok(c) => c,
             Err(e) => {
-                warn!(
-                    file = %file.display(),
-                    error = ?e,
-                    "Failed to read file for regex validation"
+                mcb_domain::warn!(
+                    "validate",
+                    "Failed to read file for regex validation",
+                    &format!("file = {}, error = {:?}", file.display(), e)
                 );
                 return Vec::new();
             }
@@ -364,9 +377,10 @@ impl DeclarativeValidator {
             .collect();
 
         if !ast_rules.is_empty() {
-            warn!(
-                count = ast_rules.len(),
-                "DeclarativeValidator: AST rules skipped (not yet implemented)"
+            mcb_domain::warn!(
+                "validate",
+                "DeclarativeValidator: AST rules skipped (not yet implemented)",
+                &format!("count = {}", ast_rules.len())
             );
         }
 

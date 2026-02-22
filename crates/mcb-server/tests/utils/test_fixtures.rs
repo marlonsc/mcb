@@ -202,7 +202,11 @@ pub fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
             std::path::PathBuf::from,
         );
         if let Err(err) = std::fs::create_dir_all(&cache_dir) {
-            tracing::warn!("failed to create shared fastembed cache dir: {err}");
+            mcb_domain::warn!(
+                "test_fixtures",
+                "failed to create shared fastembed cache dir",
+                &err.to_string()
+            );
             return std::env::temp_dir().join("mcb-fastembed-test-cache");
         }
         cache_dir
@@ -224,7 +228,11 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                 let rt = match tokio::runtime::Runtime::new() {
                     Ok(rt) => rt,
                     Err(err) => {
-                        tracing::warn!("failed to create runtime for shared app context: {err}");
+                        mcb_domain::warn!(
+                            "test_fixtures",
+                            "failed to create runtime for shared app context",
+                            &err.to_string()
+                        );
                         return SharedState {
                             ctx: None,
                             _rt: None,
@@ -294,7 +302,11 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                         _rt: Some(rt),
                     },
                     Err(err) => {
-                        tracing::warn!("shared init_app failed: {err}");
+                        mcb_domain::warn!(
+                            "test_fixtures",
+                            "shared init_app failed",
+                            &err.to_string()
+                        );
                         SharedState {
                             ctx: None,
                             _rt: None,
@@ -304,7 +316,7 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
             })
             .join()
             .unwrap_or_else(|_| {
-                tracing::warn!("shared app context init thread panicked");
+                mcb_domain::warn!("test_fixtures", "shared app context init thread panicked");
                 SharedState {
                     ctx: None,
                     _rt: None,
@@ -318,7 +330,7 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
 #[allow(clippy::panic)]
 pub fn shared_app_context() -> &'static AppContext {
     try_shared_app_context().unwrap_or_else(|| {
-        tracing::error!(component = "test_fixtures", "shared AppContext init failed");
+        mcb_domain::error!("test_fixtures", "shared AppContext init failed");
         panic!("shared AppContext init failed");
     })
 }

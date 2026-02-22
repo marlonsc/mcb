@@ -109,13 +109,22 @@ impl ServiceManager {
     /// The service will be tracked and can be controlled via this manager.
     pub fn register(&self, service: Arc<dyn LifecycleManaged>) {
         let name = service.name().to_owned();
-        tracing::info!(service = %name, "Registering service for lifecycle management");
+        mcb_domain::info!(
+            "lifecycle",
+            "Registering service for lifecycle management",
+            &name
+        );
         self.services.insert(name, service);
     }
 
     /// Unregister a service from lifecycle management
+    #[must_use]
     pub fn unregister(&self, name: &str) -> Option<Arc<dyn LifecycleManaged>> {
-        tracing::info!(service = %name, "Unregistering service from lifecycle management");
+        mcb_domain::info!(
+            "lifecycle",
+            "Unregistering service from lifecycle management",
+            &name
+        );
         self.services.remove(name).map(|(_, v)| v)
     }
 
@@ -215,7 +224,11 @@ impl ServiceManager {
         };
 
         let previous_state = service.state();
-        tracing::info!(service = %name, previous = ?previous_state, "{} service", op_present);
+        mcb_domain::info!(
+            "lifecycle",
+            "service op",
+            &format!("service = {name}, previous = {previous_state:?}, op = {op_present}")
+        );
 
         operation(Arc::clone(&service)).await?;
 
@@ -223,7 +236,11 @@ impl ServiceManager {
         self.emit_state_change(name, new_state, Some(previous_state))
             .await;
 
-        tracing::info!(service = %name, state = ?new_state, "Service {}", op_past);
+        mcb_domain::info!(
+            "lifecycle",
+            "Service state changed",
+            &format!("service = {name}, state = {new_state:?}, op_past = {op_past}")
+        );
         Ok(())
     }
 
@@ -288,13 +305,21 @@ impl ServiceManager {
         let payload = match serde_json::to_vec(&event) {
             Ok(p) => p,
             Err(e) => {
-                tracing::warn!("Failed to serialize state change event: {}", e);
+                mcb_domain::warn!(
+                    "lifecycle",
+                    "Failed to serialize state change event",
+                    &e.to_string()
+                );
                 return;
             }
         };
 
         if let Err(e) = self.event_bus.publish("service.state", &payload).await {
-            tracing::error!("Failed to publish state change event: {}", e);
+            mcb_domain::error!(
+                "lifecycle",
+                "Failed to publish state change event",
+                &e.to_string()
+            );
         }
     }
 }
@@ -366,7 +391,7 @@ impl std::fmt::Debug for DefaultShutdownCoordinator {
 
 impl ShutdownCoordinator for DefaultShutdownCoordinator {
     fn signal_shutdown(&self) {
-        tracing::info!("Shutdown signal received");
+        mcb_domain::info!("lifecycle", "Shutdown signal received");
         self.shutdown_signal.store(true, Ordering::SeqCst);
         self.notify.notify_waiters();
     }

@@ -6,7 +6,7 @@
 #[macro_export]
 macro_rules! trace {
     ($ctx:expr, $msg:expr) => {
-        $crate::infra::logging::log_operation(
+        $crate::infra::logging::dispatch(
             $crate::ports::LogLevel::Trace,
             $ctx,
             $msg,
@@ -14,12 +14,7 @@ macro_rules! trace {
         )
     };
     ($ctx:expr, $msg:expr, $detail:expr) => {
-        $crate::infra::logging::log_operation(
-            $crate::ports::LogLevel::Trace,
-            $ctx,
-            $msg,
-            Some($detail),
-        )
+        $crate::infra::logging::dispatch($crate::ports::LogLevel::Trace, $ctx, $msg, Some($detail))
     };
 }
 
@@ -27,7 +22,7 @@ macro_rules! trace {
 #[macro_export]
 macro_rules! debug {
     ($ctx:expr, $msg:expr) => {
-        $crate::infra::logging::log_operation(
+        $crate::infra::logging::dispatch(
             $crate::ports::LogLevel::Debug,
             $ctx,
             $msg,
@@ -35,12 +30,7 @@ macro_rules! debug {
         )
     };
     ($ctx:expr, $msg:expr, $detail:expr) => {
-        $crate::infra::logging::log_operation(
-            $crate::ports::LogLevel::Debug,
-            $ctx,
-            $msg,
-            Some($detail),
-        )
+        $crate::infra::logging::dispatch($crate::ports::LogLevel::Debug, $ctx, $msg, Some($detail))
     };
 }
 
@@ -48,7 +38,7 @@ macro_rules! debug {
 #[macro_export]
 macro_rules! info {
     ($ctx:expr, $msg:expr) => {
-        $crate::infra::logging::log_operation(
+        $crate::infra::logging::dispatch(
             $crate::ports::LogLevel::Info,
             $ctx,
             $msg,
@@ -56,12 +46,7 @@ macro_rules! info {
         )
     };
     ($ctx:expr, $msg:expr, $detail:expr) => {
-        $crate::infra::logging::log_operation(
-            $crate::ports::LogLevel::Info,
-            $ctx,
-            $msg,
-            Some($detail),
-        )
+        $crate::infra::logging::dispatch($crate::ports::LogLevel::Info, $ctx, $msg, Some($detail))
     };
 }
 
@@ -69,7 +54,7 @@ macro_rules! info {
 #[macro_export]
 macro_rules! warn {
     ($ctx:expr, $msg:expr) => {
-        $crate::infra::logging::log_operation(
+        $crate::infra::logging::dispatch(
             $crate::ports::LogLevel::Warn,
             $ctx,
             $msg,
@@ -77,12 +62,7 @@ macro_rules! warn {
         )
     };
     ($ctx:expr, $msg:expr, $detail:expr) => {
-        $crate::infra::logging::log_operation(
-            $crate::ports::LogLevel::Warn,
-            $ctx,
-            $msg,
-            Some($detail),
-        )
+        $crate::infra::logging::dispatch($crate::ports::LogLevel::Warn, $ctx, $msg, Some($detail))
     };
 }
 
@@ -90,7 +70,7 @@ macro_rules! warn {
 #[macro_export]
 macro_rules! error {
     ($ctx:expr, $msg:expr) => {
-        $crate::infra::logging::log_operation(
+        $crate::infra::logging::dispatch(
             $crate::ports::LogLevel::Error,
             $ctx,
             $msg,
@@ -98,11 +78,6 @@ macro_rules! error {
         )
     };
     ($ctx:expr, $msg:expr, $detail:expr) => {
-        $crate::infra::logging::log_operation(
-            $crate::ports::LogLevel::Error,
-            $ctx,
-            $msg,
-            Some($detail),
-        )
+        $crate::infra::logging::dispatch($crate::ports::LogLevel::Error, $ctx, $msg, Some($detail))
     };
 }

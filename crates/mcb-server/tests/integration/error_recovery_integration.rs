@@ -37,7 +37,11 @@ async fn try_init_app_or_skip(
             if e.to_string().contains("model.onnx")
                 || e.to_string().contains("Failed to initialize") =>
         {
-            tracing::warn!("Skipping: embedding model unavailable in offline env: {e}");
+            mcb_domain::warn!(
+                "error_recovery",
+                "Skipping: embedding model unavailable in offline env",
+                &e.to_string()
+            );
             Ok(None)
         }
         Err(e) => Err(format!("init_app failed unexpectedly: {e}").into()),

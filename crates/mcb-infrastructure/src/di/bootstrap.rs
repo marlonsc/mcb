@@ -345,7 +345,10 @@ impl std::fmt::Debug for AppContext {
 ///
 /// Returns an error if provider resolution, database connection, or service initialization fails.
 pub async fn init_app(config: AppConfig) -> Result<AppContext> {
-    tracing::info!("Initializing application context with provider handles");
+    mcb_domain::info!(
+        "bootstrap",
+        "Initializing application context with provider handles"
+    );
 
     let config = Arc::new(config);
 
@@ -440,7 +443,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     let indexing_operations: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());
 
-    tracing::info!("Created infrastructure services");
+    mcb_domain::info!("bootstrap", "Created infrastructure services");
 
     // ========================================================================
     // Create Domain Services & Repositories
@@ -502,7 +505,7 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 
     let crypto_service = Arc::new(create_crypto_service(&config)?);
 
-    tracing::info!("Created domain services and repositories");
+    mcb_domain::info!("bootstrap", "Created domain services and repositories");
 
     Ok(AppContext {
         config,

@@ -217,18 +217,18 @@ impl ConfigLoader {
                             return Some(settings);
                         }
                         Err(e) => {
-                            tracing::warn!(
-                                path = %path.display(),
-                                error = %e,
-                                "Failed to parse project settings"
+                            mcb_domain::warn!(
+                                "config_loader",
+                                "Failed to parse project settings",
+                                &format!("path = {}, error = {}", path.display(), e)
                             );
                         }
                     },
                     Err(e) => {
-                        tracing::warn!(
-                            path = %path.display(),
-                            error = %e,
-                            "Failed to read project settings"
+                        mcb_domain::warn!(
+                            "config_loader",
+                            "Failed to read project settings",
+                            &format!("path = {}, error = {}", path.display(), e)
                         );
                     }
                 }

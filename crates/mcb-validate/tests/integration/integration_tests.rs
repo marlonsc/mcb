@@ -126,13 +126,17 @@ fn test_full_validation_report() {
     {
         Ok(handle) => handle,
         Err(err) => {
-            tracing::warn!("Failed to spawn full-report thread: {err}");
+            mcb_domain::warn!(
+                "validate_test",
+                "Failed to spawn full-report thread",
+                &err.to_string()
+            );
             std::thread::spawn(run_full_validation_report)
         }
     };
 
     if handle.join().is_err() {
-        tracing::warn!("full-report thread join failed");
+        mcb_domain::warn!("validate_test", "full-report thread join failed");
     }
 }
 
@@ -156,7 +160,7 @@ fn run_full_validation_report() {
                 v.and_then(|v| v.validate(&config).ok())
             })
             .unwrap_or_else(|_| {
-                tracing::warn!("Failed to spawn validator thread for {name}");
+                mcb_domain::warn!("validate_test", "Failed to spawn validator thread", &name);
                 std::thread::spawn(|| None)
             })
             .join();
@@ -164,10 +168,18 @@ fn run_full_validation_report() {
         match result {
             Ok(Some(violations)) => all_violations.extend(violations),
             Ok(None) => {
-                tracing::warn!("Validator '{name}' returned error or was not found");
+                mcb_domain::warn!(
+                    "validate_test",
+                    "Validator returned error or was not found",
+                    &name
+                );
             }
             Err(_) => {
-                tracing::warn!("Validator '{name}' panicked (likely stack overflow)");
+                mcb_domain::warn!(
+                    "validate_test",
+                    "Validator panicked (likely stack overflow)",
+                    &name
+                );
             }
         }
     }

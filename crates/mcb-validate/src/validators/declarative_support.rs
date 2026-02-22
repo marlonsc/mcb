@@ -1,7 +1,6 @@
 use std::path::{Path, PathBuf};
 
 use derive_more::Display;
-use tracing::warn;
 
 use crate::config::FileConfig;
 use crate::filters::rule_filters::RuleFilterExecutor;
@@ -137,7 +136,11 @@ pub(crate) fn validate_path_rules(
     let workspace_deps = match filter_executor.parse_workspace_dependencies() {
         Ok(deps) => deps,
         Err(e) => {
-            warn!(error = ?e, "Failed to parse workspace dependencies for path rules");
+            mcb_domain::warn!(
+                "validate",
+                "Failed to parse workspace dependencies for path rules",
+                &e.to_string()
+            );
             return Vec::new();
         }
     };

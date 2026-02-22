@@ -30,7 +30,6 @@ use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::{FtsSearchResult, MemoryRepository};
 use mcb_domain::utils::mask_id;
 use mcb_domain::value_objects::ids::{ObservationId, SessionId};
-use tracing::debug;
 
 use super::row_convert;
 use crate::utils::sqlite::query as query_helpers;
@@ -197,7 +196,7 @@ impl MemoryRepository for SqliteMemoryRepository {
             )
             .await?;
 
-        debug!("Stored observation: {}", observation.id);
+        mcb_domain::debug!("sqlite", "Stored observation", &observation.id);
         Ok(())
     }
 
@@ -352,9 +351,10 @@ impl MemoryRepository for SqliteMemoryRepository {
             )
             .await?;
 
-        debug!(
-            "Stored session summary for session: {}",
-            mask_id(&summary.session_id.clone())
+        mcb_domain::debug!(
+            "sqlite",
+            "Stored session summary for session",
+            &mask_id(&summary.session_id.clone())
         );
         Ok(())
     }

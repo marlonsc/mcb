@@ -30,9 +30,6 @@ async fn test_metrics_without_key_returns_401() {
         StatusCode::UNAUTHORIZED,
         "GET /metrics without API key should return 401 Unauthorized"
     );
-
-    // Verify the response body is empty (Rocket doesn't send error body for guard failures)
-    // This is expected behavior - the 401 status code is the indicator
 }
 
 /// Test: /metrics with wrong API key should return 401

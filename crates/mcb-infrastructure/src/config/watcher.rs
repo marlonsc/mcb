@@ -127,7 +127,7 @@ impl ConfigWatcher {
                             }
                         }
                         Err(e) => {
-                            tracing::warn!(error = %e, "File watch error");
+                            mcb_domain::warn!("config_watcher", "File watch error", &e.to_string());
                         }
                     }
                 });
@@ -169,7 +169,11 @@ impl ConfigWatcher {
                 log_config_loaded(&config_path, true);
             }
             Err(e) => {
-                tracing::warn!(error = %e, "Failed to reload configuration");
+                mcb_domain::warn!(
+                    "config_watcher",
+                    "Failed to reload configuration",
+                    &e.to_string()
+                );
 
                 log_config_loaded(&config_path, false);
             }
@@ -184,7 +188,11 @@ impl ConfigWatcher {
             })
             .await
         {
-            tracing::warn!(error = %e, "Failed to publish config reload event");
+            mcb_domain::warn!(
+                "config_watcher",
+                "Failed to publish config reload event",
+                &e.to_string()
+            );
         }
     }
 }

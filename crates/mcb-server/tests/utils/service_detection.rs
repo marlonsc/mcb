@@ -75,9 +75,10 @@ pub fn should_run_docker_integration_tests() -> bool {
             "1" | "true" | "yes" => true,
             "0" | "false" | "no" => false,
             other => {
-                tracing::warn!(
-                    value = other,
-                    "Unknown value for MCB_RUN_DOCKER_INTEGRATION_TESTS. Falling back to !is_ci()"
+                mcb_domain::warn!(
+                    "service_detection",
+                    "Unknown value for MCB_RUN_DOCKER_INTEGRATION_TESTS. Falling back to !is_ci()",
+                    &other
                 );
                 !is_ci()
             }

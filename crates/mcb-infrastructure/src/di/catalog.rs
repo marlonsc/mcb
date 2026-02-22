@@ -41,7 +41,7 @@ use mcb_providers::events::TokioEventBusProvider;
 ///
 /// Returns an error if provider resolution or service initialization fails.
 pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
-    tracing::info!("Building dill Catalog");
+    mcb_domain::info!("di", "Building dill Catalog");
 
     let config = Arc::new(config);
 
@@ -126,7 +126,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
     let indexing_operations: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());
 
-    tracing::info!("Created infrastructure services");
+    mcb_domain::info!("di", "Created infrastructure services");
 
     // ========================================================================
     // Build the Catalog
