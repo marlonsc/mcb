@@ -122,9 +122,6 @@ dill = { workspace = true }
 itertools = { workspace = true }
 humantime = { workspace = true }
 
-# Shell expansion
-shellexpand = { workspace = true }
-
 tempfile = { workspace = true }
 
 # Additional crypto

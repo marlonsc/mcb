@@ -91,10 +91,7 @@ impl DuplicationAnalyzer {
         };
         for pattern in &self.thresholds.exclude_patterns {
             let pattern_regex = pattern.replace("**", ".*").replace('*', "[^/]*");
-            if compile_regex(&pattern_regex)
-                .map(|r| r.is_match(path_str))
-                .unwrap_or(false)
-            {
+            if compile_regex(&pattern_regex).is_ok_and(|r| r.is_match(path_str)) {
                 return false;
             }
         }

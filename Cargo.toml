@@ -261,9 +261,6 @@ fastembed = { version = "5.11", default-features = false, features = [
 notify = "8.2"
 arc-swap = "1.8"
 
-# Shell expansion
-shellexpand = "3.1"
-
 # Compression
 flate2 = "1.1"
 tar = "0.4"

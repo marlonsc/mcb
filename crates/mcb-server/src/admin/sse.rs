@@ -54,6 +54,9 @@ pub async fn events_stream(
     info!("sse", "events_stream called");
     let event_bus = Arc::clone(&state.event_bus);
 
+    // Allow: drop order change is harmless — async_stream temporaries have no
+    // meaningful Drop impl, and the stream is consumed by Sse::new immediately.
+    #[allow(tail_expr_drop_order)]
     let stream = async_stream::stream! {
         // Subscribe to domain events
         let mut event_stream = match event_bus.subscribe_events().await {
