@@ -79,7 +79,7 @@ impl IssueRegistry for SqliteIssueEntityRepository {
     }
 
     async fn get_issue(&self, org_id: &str, id: &str) -> Result<ProjectIssue> {
-        query_helpers::query_one(
+        let issue = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM project_issues WHERE org_id = ? AND id = ?",
             &[
@@ -88,8 +88,8 @@ impl IssueRegistry for SqliteIssueEntityRepository {
             ],
             row_convert::row_to_issue,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Issue {id}")))
+        .await?;
+        Error::not_found_or(issue, "Issue", id)
     }
 
     async fn list_issues(&self, org_id: &str, project_id: &str) -> Result<Vec<ProjectIssue>> {
@@ -169,14 +169,14 @@ impl IssueCommentRegistry for SqliteIssueEntityRepository {
     }
 
     async fn get_comment(&self, id: &str) -> Result<IssueComment> {
-        query_helpers::query_one(
+        let comment = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM issue_comments WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_convert::row_to_comment,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("IssueComment {id}")))
+        .await?;
+        Error::not_found_or(comment, "IssueComment", id)
     }
 
     async fn list_comments_by_issue(&self, issue_id: &str) -> Result<Vec<IssueComment>> {
@@ -219,14 +219,14 @@ impl IssueLabelRegistry for SqliteIssueEntityRepository {
     }
 
     async fn get_label(&self, id: &str) -> Result<IssueLabel> {
-        query_helpers::query_one(
+        let label = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM issue_labels WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_convert::row_to_label,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("IssueLabel {id}")))
+        .await?;
+        Error::not_found_or(label, "IssueLabel", id)
     }
 
     async fn list_labels(&self, org_id: &str, project_id: &str) -> Result<Vec<IssueLabel>> {

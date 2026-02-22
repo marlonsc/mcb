@@ -95,7 +95,7 @@ impl PlanRegistry for SqlitePlanEntityRepository {
 
     /// Retrieves a plan by org ID and plan ID.
     async fn get_plan(&self, org_id: &str, id: &str) -> Result<Plan> {
-        query_helpers::query_one(
+        let plan = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM plans WHERE org_id = ? AND id = ?",
             &[
@@ -104,8 +104,8 @@ impl PlanRegistry for SqlitePlanEntityRepository {
             ],
             row_to_plan,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Plan {id}")))
+        .await?;
+        Error::not_found_or(plan, "Plan", id)
     }
 
     /// Lists plans in an organization for a project.
@@ -178,14 +178,14 @@ impl PlanVersionRegistry for SqlitePlanEntityRepository {
 
     /// Retrieves a plan version by ID.
     async fn get_plan_version(&self, id: &str) -> Result<PlanVersion> {
-        query_helpers::query_one(
+        let version = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM plan_versions WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_plan_version,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("PlanVersion {id}")))
+        .await?;
+        Error::not_found_or(version, "PlanVersion", id)
     }
 
     /// Lists versions of a plan.
@@ -224,14 +224,14 @@ impl PlanReviewRegistry for SqlitePlanEntityRepository {
 
     /// Retrieves a plan review by ID.
     async fn get_plan_review(&self, id: &str) -> Result<PlanReview> {
-        query_helpers::query_one(
+        let review = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM plan_reviews WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
             row_to_plan_review,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("PlanReview {id}")))
+        .await?;
+        Error::not_found_or(review, "PlanReview", id)
     }
 
     /// Lists reviews for a plan version.
