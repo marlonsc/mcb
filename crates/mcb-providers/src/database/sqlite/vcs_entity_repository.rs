@@ -133,8 +133,8 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             ],
             row_to_repository,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Repository {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "Repository", id))
     }
 
     /// Lists repositories in an organization for a project.
@@ -231,8 +231,8 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             &[SqlParam::String(id.to_owned())],
             row_to_branch,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Branch {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "Branch", id))
     }
 
     /// Lists branches in a repository.
@@ -323,8 +323,8 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             &[SqlParam::String(id.to_owned())],
             row_to_worktree,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Worktree {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "Worktree", id))
     }
 
     /// Lists worktrees in a repository.
@@ -412,8 +412,8 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             &[SqlParam::String(id.to_owned())],
             row_to_assignment,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Assignment {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "Assignment", id))
     }
 
     /// Lists assignments for a worktree.

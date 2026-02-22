@@ -72,8 +72,8 @@ impl ProjectRepository for SqliteProjectRepository {
             ],
             row_convert::row_to_project,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Project {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "Project", id))
     }
 
     /// Retrieves a project by name.
@@ -87,8 +87,8 @@ impl ProjectRepository for SqliteProjectRepository {
             ],
             row_convert::row_to_project,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Project {name}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "Project", name))
     }
 
     /// Retrieves a project by path.
@@ -102,8 +102,8 @@ impl ProjectRepository for SqliteProjectRepository {
             ],
             row_convert::row_to_project,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Project {path}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "Project", path))
     }
 
     /// Lists all projects in an organization.

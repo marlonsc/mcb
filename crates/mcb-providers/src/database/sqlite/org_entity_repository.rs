@@ -129,8 +129,8 @@ impl OrgRegistry for SqliteOrgEntityRepository {
             &[SqlParam::String(id.to_owned())],
             row_to_org,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Organization {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "Organization", id))
     }
 
     /// Lists all organizations.
@@ -202,8 +202,8 @@ impl UserRegistry for SqliteOrgEntityRepository {
             &[SqlParam::String(id.to_owned())],
             row_to_user,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("User {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "User", id))
     }
 
     /// Retrieves a user by email within an organization.
@@ -217,8 +217,8 @@ impl UserRegistry for SqliteOrgEntityRepository {
             ],
             row_to_user,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("User {email}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "User", email))
     }
 
     /// Lists users in an organization.
@@ -288,8 +288,8 @@ impl TeamRegistry for SqliteOrgEntityRepository {
             &[SqlParam::String(id.to_owned())],
             row_to_team,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Team {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "Team", id))
     }
 
     /// Lists teams in an organization.
@@ -390,8 +390,8 @@ impl ApiKeyRegistry for SqliteOrgEntityRepository {
             &[SqlParam::String(id.to_owned())],
             row_to_api_key,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("ApiKey {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "ApiKey", id))
     }
 
     /// Lists API keys for an organization.

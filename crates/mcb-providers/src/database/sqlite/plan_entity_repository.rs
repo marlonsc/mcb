@@ -104,8 +104,8 @@ impl PlanRegistry for SqlitePlanEntityRepository {
             ],
             row_to_plan,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Plan {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "Plan", id))
     }
 
     /// Lists plans in an organization for a project.
@@ -184,8 +184,8 @@ impl PlanVersionRegistry for SqlitePlanEntityRepository {
             &[SqlParam::String(id.to_owned())],
             row_to_plan_version,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("PlanVersion {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "PlanVersion", id))
     }
 
     /// Lists versions of a plan.
@@ -230,8 +230,8 @@ impl PlanReviewRegistry for SqlitePlanEntityRepository {
             &[SqlParam::String(id.to_owned())],
             row_to_plan_review,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("PlanReview {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "PlanReview", id))
     }
 
     /// Lists reviews for a plan version.

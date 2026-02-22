@@ -88,8 +88,8 @@ impl IssueRegistry for SqliteIssueEntityRepository {
             ],
             row_convert::row_to_issue,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("Issue {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "Issue", id))
     }
 
     async fn list_issues(&self, org_id: &str, project_id: &str) -> Result<Vec<ProjectIssue>> {
@@ -175,8 +175,8 @@ impl IssueCommentRegistry for SqliteIssueEntityRepository {
             &[SqlParam::String(id.to_owned())],
             row_convert::row_to_comment,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("IssueComment {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "IssueComment", id))
     }
 
     async fn list_comments_by_issue(&self, issue_id: &str) -> Result<Vec<IssueComment>> {
@@ -225,8 +225,8 @@ impl IssueLabelRegistry for SqliteIssueEntityRepository {
             &[SqlParam::String(id.to_owned())],
             row_convert::row_to_label,
         )
-        .await?
-        .ok_or_else(|| Error::not_found(format!("IssueLabel {id}")))
+        .await
+        .and_then(|opt| Error::not_found_or(opt, "IssueLabel", id))
     }
 
     async fn list_labels(&self, org_id: &str, project_id: &str) -> Result<Vec<IssueLabel>> {

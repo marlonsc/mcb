@@ -390,4 +390,25 @@ impl Error {
             source: Some(Box::new(source)),
         }
     }
+
+    /// Convert an `Option<T>` to a `Result<T>` with a "not found" error.
+    ///
+    /// This helper consolidates the common pattern of `ok_or_else(|| Error::not_found(...))`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Error::NotFound` if the option is `None`.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let entity = db.find_by_id(id)
+    ///     .ok_or_else(|| Error::not_found(format!("Entity {id}")))?;
+    ///
+    /// // Becomes:
+    /// let entity = Error::not_found_or(db.find_by_id(id), "Entity", id)?;
+    /// ```
+    pub fn not_found_or<T>(opt: Option<T>, entity_type: &str, id: &str) -> Result<T> {
+        opt.ok_or_else(|| Error::not_found(format!("{entity_type} {id}")))
+    }
 }
