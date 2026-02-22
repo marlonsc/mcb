@@ -122,6 +122,7 @@ async fn test_multiple_handles_reference_same_underlying_provider() {
 // ============================================================================
 
 #[tokio::test]
+#[ignore = "ort-2.0.0-rc.11 Mutex poisoned panic in CI (GitHub Actions runner)"]
 async fn test_provider_factories_return_working_providers() {
     // Test that factory functions create working providers, not just return Ok
 
